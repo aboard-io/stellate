@@ -315,7 +315,16 @@ import { mount as mountBoard, paintBoard, voiceMix,
 // `produced()` is `genreFor` with the note stack applied, so push() below has
 // exactly one place where a genre is registered, as it always did.
 import { produced as producedDoc, revise as reviseProd,
-         mount as mountProduce } from "./produce.js";
+         mount as mountProduce, say as prodSay,
+         targets as prodTargets } from "./produce.js";
+/* THE BAND TABLE (2026-09-04, TABLE.md wave 2b) — the pane that REPLACED the
+   Band pane and the Structure pane. Paul, 2026-09-03: *"a song can be
+   understood as a grid with sections as rows and instruments as columns …
+   The producer becomes basically a vector manipulator across the table."*
+   The module draws; this file hands it `tableAPI()`, which is a list of
+   DOORS — every one of them a function that already existed and already had
+   one owner (§5: "No op adds a second write path"). */
+import { bandTable } from "./table.js";
 // THE ATLAS (D6), above #app: a time slider and a world map. It composes
 // nothing itself — it picks a genre key, calls precompose.js and hands the
 // whole record to CTX.setDocument.
@@ -11193,6 +11202,304 @@ function wCell(sp) {
            set: sp.set };
 }
 
+/* ===== THE BAND TABLE, AND THE SEAM IT IS DRAWN THROUGH ================
+   TABLE.md wave 2b. `ui/table.js` draws; this is the list of DOORS it draws
+   through, and the rule for the list is that every entry is a function this
+   file (or document.js, or produce.js) already had. §5: "Every op is one
+   document write through the existing doors (`putPhrase` / `commit` / `push`)
+   and lands at the next bar while playing. No op adds a second write path."
+   Nothing below invents a write; `changed()` is still the one owner of
+   recompile and `push()` of the next-bar landing.
+
+   WHY A SEAM AND NOT SIX HUNDRED MORE LINES HERE. This file is sixteen
+   thousand lines and two other panels (Rules, Mix) already stand outside it
+   behind exactly this shape (`mountRules(host, CTX)`, `mountBoard(host, CTX)`).
+   The table is the third. What is here is what only this file can answer:
+   which section is being written, which voice is which colour, what a word
+   means to avail.js, and where a lamp goes. */
+let tableFacing = "sections";        // "sections" | "voices" — §5's transpose
+let tableGrid = null;                // the live component, for the playhead
+
+/* WHAT A CELL PRINTS WITHOUT BEING OPENED, and it is a fact about the record
+   rather than about the table: the motif this voice reads in this section, or
+   — for the two kinds that are TOLD rather than asked — the word for what it
+   does. `cellAt` is the same reader the roster, the score and the two
+   compilers use. */
+function tableCellWord(i, vi) {
+  const v = DOC.voices[vi], s2 = DOC.form.sections[i];
+  if (!v || !s2) return "—";
+  if (v.kind === "line") return cellAt(v, i) || "—";
+  const d = (v.development || {})[s2.id];
+  if (d) return String(d);
+  /* THE BASS IS TOLD: both compilers hand `K.bass` the first line's phrase
+     (document.js scoreOf, ui/derive.js sectionEvents), so what it plays here
+     is what the tune says — printed rather than invented. */
+  if (v.kind === "bass") { const l = LINES()[0]; return l ? (cellAt(l, i) || "—") : "—"; }
+  return "—";
+}
+/* DOES THIS CELL DEVIATE — §2's whole reading, and the one thing that decides
+   quiet from bold. "A cell stores only what a hand wrote there. The table
+   draws only deviations: an inherited value is drawn quiet, a written one is
+   drawn bold."
+
+   AND THE DOCUMENT ALREADY SPELLS THE INHERIT LAW, WHICH IS WHY THIS IS THREE
+   READS AND NOT A GUESS. MEASURED on Kingston 1969 at reading 1:
+     · `voice.material` is a MAP whose `""` KEY IS THE COLUMN DEFAULT and whose
+       `s<n>` keys are the cell overrides — the stab reads `counter` by default
+       and names something else in seven of thirteen sections. So a material
+       entry AT THE SECTION'S ID is a deviation and the `""` one is not.
+     · `voice.development` is a FULL map — thirteen of thirteen — most of whose
+       entries are the sheet's own ABSENT word ("as written" for a line, `""`
+       for a bass or a kit). avail.js `SHEETS[...].absent` is the one owner of
+       that word, so a neutral entry is read as neutral rather than as a hand.
+       Without this line every cell on the page drew bold and §2's reading was
+       gone: the first draft of this table shipped that way for an hour.
+     · `voice.cells[secId]` is wave 1's own sparse cell tier and is a
+       deviation by construction — it exists only where a hand wrote. */
+function tableWritten(i, vi) {
+  const v = DOC.voices[vi], s2 = DOC.form.sections[i];
+  if (!v || !s2) return false;
+  const id = s2.id;
+  const m = v.material;
+  if (m && typeof m === "object" && !Array.isArray(m) && m[id] != null) return true;
+  const d = v.development && v.development[id];
+  if (d != null && d !== "") {
+    const row = NuAvail.SHEETS[NuAvail.devSheetFor(v.kind)] || {};
+    if (String(d) !== String(row.absent == null ? "" : row.absent)) return true;
+  }
+  const c = v.cells && v.cells[id];
+  return !!(c && Object.keys(c).length);
+}
+
+function tableAPI() {
+  const SEC = () => DOC.form.sections;
+  const V = () => DOC.voices;
+  /* ONE RECOMPILE PER OP, AND IT IS `changed()`. Every door below ends here
+     (or in a function that ends here), which is what makes "one document
+     write" measurable: T4 diffs the document across the tap. */
+  const after = () => { changed(); };
+  const subjOf = (v) => (v.kind === "drums" ? "drums"
+                      : v.kind === "bass" ? "bass" : "line");
+  return {
+    doc: () => DOC,
+    facing: () => tableFacing,
+    setFacing: (f) => { tableFacing = f; tabStale.add("Band"); draw(); },
+    /* THE VOCABULARY, ASKED THE ONE WAY. `shSpec` throws on a key avail.js
+       does not know and on a scope it cannot answer for; a table that asked
+       for a bass's `cast.part` would be asking a question the record refuses
+       rather than committing an error, so the refusal is a `null` field and
+       the sheet simply does not draw the row. */
+    sh: (key, scope, label) => {
+      try { return shSpec(key, scope, label); } catch (e) { return null; } },
+    hasSheet: (key, scope) => {
+      try { return !!shSpec(key, scope, null); } catch (e) { return false; } },
+    wcell: (sp) => wCell(sp),
+    /* THE COMBO BOX, for the four vocabularies that are menus (ui/table.js
+       COMBOKEYS says which and why). `selectEl` is ui/selects.js's own widget
+       at its own `data-sel` address, so a menu inside a sheet is the SAME
+       control test/selects.js has always driven — the table seats it, it does
+       not re-draw it. */
+    combo: (sp) => selectEl(sp),
+    /* THE VOICE'S OWN CHANNEL STRIP, DRAWN IN ITS COLUMN SHEET (2026-09-04).
+       §1 files `seat` (PARTMIX: the fader, the pan, the three sends and the
+       three insert slots) on the COLUMN, and the first draft of the inventory
+       filed it "elsewhere: the board" — which was WRONG, and test/sheets.js
+       said so within the hour: it counted zero insert seats on the whole page.
+       MEASURED — the board has bus strips and the section-automation grid and
+       NO per-voice channels at all, because Paul took them off it on
+       2026-08-28 (*"remove the voices from the mixing board … add another nav
+       item for the mixing per voice"*). So the voice's strip had exactly one
+       home, the Band pane's `mix` facet, and deleting that pane without this
+       line would have deleted eight controls per player — which is the loss
+       T7 exists to refuse. `voiceMix` is ui/engineer.js's own strip, drawn
+       into the sheet's row: one owner, one widget, a new seat. */
+    voiceStrip: (name) => { const box = el("div", null, "nu-seatstrip");
+      try { voiceMix(box, CTX, name); } catch (e) {}
+      return box; },
+    devSheetFor: (kind) => NuAvail.devSheetFor(kind),
+    secName: (i) => secName(i),
+    roleWord: (r) => ROLES[r] || r,
+    playsWhat: (v) => playsWhat(v),
+    vpaintOf: (vi) => vpaintOf(vi),
+    editSec: () => editSec(),
+    hasKind: (k) => V().some((v) => v.kind === k),
+    /* THE COLUMN LAMP, and it is the SAME lamp the Structure grids lit: a
+       `[data-live]` span the clock may write into, registered in `bandLamps`,
+       existing while the record is stopped because "a surface that only
+       appears once playing is the editing interface changing on play"
+       (test/motif-frozen A2). */
+    lampFor: (name) => { const lamp = el("span", null, "nu-scollamp");
+      lamp.dataset.live = "lamp";
+      lamp.setAttribute("aria-hidden", "true");
+      bandLamps.push({ name, node: lamp });
+      return lamp; },
+    /* A MOTIF'S PICTURE AND ITS PROVENANCE (§3). Both leaves: ui/preview.js
+       reads a phrase and document.js `provWord` reads the bank's own map. */
+    previewOf: (name) => { const c = name && DOC.material.cells[name];
+      return c ? preview(c) : null; },
+    provWord: (name) => { try {
+      return NuDocument.provWord(NuDocument.provOf(DOC, name)); } catch (e) { return null; } },
+
+    /* ---- the three tiers, read and written through wave 1's owner ---- */
+    cellWord: (i, vi) => tableCellWord(i, vi),
+    written: (i, vi) => tableWritten(i, vi),
+    cellOf: (i, vi, f) => { const v = V()[vi], s2 = SEC()[i];
+      const c = v && s2 && v.cells && v.cells[s2.id];
+      return c ? c[f] : null; },
+    resolve: (i, vi, f) => NuDocument.resolve(DOC, i, vi, f, GENRES),
+    castOf: (vi, f) => { const v = V()[vi]; return v && v.cast ? v.cast[f] : null; },
+    putCell: (i, vi, f, val) => { NuDocument.putCell(DOC, i, vi, f, val); after(); },
+    putRow: (i, f, val) => { NuDocument.putRow(DOC, i, f, val); after(); },
+    putCast: (vi, f, val) => { const v = V()[vi]; if (!v) return;
+      v.cast = v.cast || {};
+      if (val == null) delete v.cast[f]; else v.cast[f] = val;
+      after(); },
+
+    /* ---- §5's op grammar, every one an existing door ---------------- */
+    /* THE STRUCTURAL OPS END IN `push(); draw()` — the sequence the section
+       tray has always used (`secOpsTrayItems`), which `changed()` IS plus a
+       producer revision. NONE of `addSection` / `dupSection` / `moveSection` /
+       `dropSection` / `addVoice` / `dropVoice` redraws on its own; every caller
+       has always had to. MEASURED: the first draft of this seam left the
+       redraw off duplicate and T4 caught it — the document grew a section and
+       the table did not, which is the same class of bug as a control that
+       writes and does not arrive. */
+    addSection: (at) => { const secs = SEC();
+      /* `addSection` inserts after whichever section is being written, which
+         is what a hand means by "after this one" — so the op names the row and
+         lets the one owner do the splice. */
+      formSec = secs[Math.max(0, at - 1)] ? secs[at - 1].id : formSec;
+      addSection(); after(); },
+    moveSection: (i, d) => { if (moveSection(i, d)) { normalize(); after(); } },
+    dupSection: (id) => { dupSection(id); after(); },
+    dropSection: (id) => { if (dropSection(id)) after(); },
+    repeatSection: (id, n) => { for (let k = 1; k < n; k++) dupSection(id);
+      after(); },
+    /* DEAL AGAIN = give this row (or this column) back to the genre. A
+       precomposed record's cells ARE the genre's deal at the seed, so taking
+       the hand's words off them is exactly "deal again with the seed" — and it
+       is one write per cell through the same two maps normalize() prunes. */
+    dealRow: (i) => { const s2 = SEC()[i]; if (!s2) return;
+      for (const v of V()) {
+        const m = v.material;
+        if (m && typeof m === "object" && !Array.isArray(m)) delete m[s2.id];
+        if (v.development) delete v.development[s2.id];
+        if (v.cells) delete v.cells[s2.id];
+      }
+      normalize(); after(); },
+    dealCol: (vi) => { const v = V()[vi]; if (!v) return;
+      if (v.material && typeof v.material === "object" && !Array.isArray(v.material))
+        delete v.material;
+      delete v.development; delete v.cells;
+      normalize(); after(); },
+    addVoice: (kind) => { addVoice(kind); after(); },
+    dropVoice: (name) => { dropVoice(name); after(); },
+    moveVoice: (vi, d) => { const vs = V(), j = vi + d;
+      if (j < 0 || j >= vs.length) return;
+      const t = vs[vi]; vs[vi] = vs[j]; vs[j] = t;
+      settleVoiceTab(); after(); },
+    soloVoice: (name) => { const v = VOICE(name); if (v) auditionMember(v); },
+    clearCell: (i, vi) => { const v = V()[vi], s2 = SEC()[i];
+      if (!v || !s2) return;
+      const m = v.material;
+      if (m && typeof m === "object" && !Array.isArray(m)) delete m[s2.id];
+      if (v.development) delete v.development[s2.id];
+      if (v.cells) delete v.cells[s2.id];
+      normalize(); after(); },
+    copyCell: (i, vi, way) => { const v = V()[vi], s2 = SEC()[i];
+      if (!v || !s2) return;
+      const m = v.material, word = (m && typeof m === "object" && !Array.isArray(m))
+        ? m[s2.id] : null;
+      const dev = (v.development || {})[s2.id];
+      const cell = (v.cells || {})[s2.id];
+      const put = (voice, sid) => {
+        if (word != null) { voice.material = (voice.material &&
+          typeof voice.material === "object" && !Array.isArray(voice.material))
+          ? voice.material : {}; voice.material[sid] = word; }
+        if (dev != null) { voice.development = voice.development || {};
+          voice.development[sid] = dev; }
+        if (cell) { voice.cells = voice.cells || {};
+          voice.cells[sid] = JSON.parse(JSON.stringify(cell)); }
+      };
+      if (way === "row") for (const w of V()) { if (w.kind === v.kind) put(w, s2.id); }
+      else for (const t of SEC()) put(v, t.id);
+      normalize(); after(); },
+    /* "MAKE X Y" AS A COLUMN OP (§5). The verb, the qualities and the note are
+       ui/produce.js's — `targets` says which qualities this subject can
+       honestly take and WHY the rest cannot, and `say` writes the note into
+       `doc.produce`. What the column adds is the X: you opened a player, so
+       the sentence is half said before you get there.
+       A VOICE IS A PRODUCER SUBJECT BY ITS KIND and by nothing else — the
+       three the table can hire are the three producer.js SUB ids `drums`,
+       `bass` and `line`. A quality the record cannot honestly take arrives
+       here wearing produce.js's own reason and is drawn refused, which is the
+       same no-silent-grey law every other control on this surface obeys. */
+    makeQualities: (name) => { try {
+      const v = VOICE(name); if (!v) return [];
+      const t = prodTargets(DOC, null, "make", subjOf(v));
+      return (t.adj || []).map((a) => ({ v: a.id, w: a.w, why: a.on ? null : a.why }));
+    } catch (e) { return []; } },
+    makeXY: (name, q) => { const v = VOICE(name); if (!v) return;
+      prodSay(DOC, "make", subjOf(v), q); reviseProd(); after(); },
+    /* THE TWO TABLE-WIDE OPS THAT ARE DOORS AND SAY SO. "Fill from a genre" is
+       the atlas — the one place a record is started from, and the place the
+       page opens on; "re-seed" is the die in the foot, which is the one owner
+       of a new reading (it arms `seedSwaps` so a playing record EVOLVES rather
+       than restarting, which is the wave-4 law and not a thing to re-derive). */
+    fillFromGenre: () => { showTab("Where"); },
+    reseed: () => { rewriteNow(); },
+    showBoard: () => { showTab("Mix"); },
+
+    /* ---- the record's own footer (§1 RECORD) ------------------------ */
+    MASTERROWS: NuFields.MASTER,
+    masterOf: (k) => (DOC.sound && DOC.sound.master && DOC.sound.master[k]) || null,
+    setMaster: (k, v) => { NuDeskDoc.writeMaster(DOC, k, v || ""); after(); },
+    perfOf: (k) => (DOC.performance || {})[k],
+    putPerf: (k, v) => { DOC.performance = DOC.performance || {};
+      if (v == null) delete DOC.performance[k]; else DOC.performance[k] = v;
+      after(); },
+    PERFROWS: NuFields.nudgesFor("performance")
+      .filter((r) => r.options)
+      .map((r) => ({ key: "performance." + r.key, short: r.key, label: r.ask })),
+  };
+}
+
+/* THE PANEL. One call, and the component's own registries are handed to the
+   playhead exactly the way the five Structure grids handed theirs: a row head
+   carries a `[data-live="count"]` span and `markForm` marks it, so the table
+   lights the sounding section off the SAME feed as every other surface. */
+function tablePanel(host) {
+  normalize();
+  structCells = [];
+  bandLamps = [];
+  /* ===== THE CRATE IS STILL THE BAND TAB'S SECOND STATE =================
+     `ui/samples.js` draws the record's FILES — which sample is under which
+     chair, where it came from, what it sounds like. That is not a vector and
+     has no cell in this table; the inventory files it as `elsewhere: the
+     crate`, reached from a column's instrument row. Until the two old panes
+     come out (the deletion is its own step, one agent at a time on this file),
+     the crate keeps the tray row it has and this is the branch that draws it.
+     It returns rather than falling through, for `rosterBlock`'s own reason. */
+  if (bandCrate) { crateBlock(host, null); return null; }
+  const A = tableAPI();
+  const g = bandTable(host, A);
+  tableGrid = g;
+  const secs = DOC.form.sections;
+  if (tableFacing === "sections")
+    structCells.push(secs.map((s2) => { const h = g.rowHeads.get(s2.id);
+      return h ? h.live : null; }));
+  /* ...AND A VOICE OPENED FROM ANYWHERE ELSE LANDS ON ITS COLUMN SHEET.
+     `openVoice(name)` is called by the gutter, by the board's own heads and by
+     Structure's column heads, and it has always meant "show me this player".
+     On the table that is the column head's own sheet, opened on arrival, so a
+     gesture that used to reach a facet reaches the whole VOICE vector. */
+  if (tab) {
+    const b = host.querySelector('[data-k="tcol|' + CSS.escape(tab) + '"]');
+    if (b) b.click();
+  }
+  return g;
+}
+
 function structureGrids(parent) {
   structCells = [];
   bandLamps = [];
@@ -12081,7 +12388,14 @@ const BUILD = {
   Tempo: timeAxis,
   Key: alphaAxis,
   Motif: (host) => materialAxis(axis(host, "ax-material", "Motifs")),
-  Band: (host) => bandBlock(axis(host, "ax-band", "The band")),
+  /* ===== BAND IS THE TABLE, 2026-09-04 (TABLE.md wave 2b) ==============
+     It read `Band: (host) => bandBlock(axis(host, "ax-band", "The band"))`.
+     `bandBlock` and `structurePanel` are DELETED with the two panes they drew
+     (§6 ¶A: "Band and Structure are DELETED, not hidden"), and every control
+     either of them offered has a home in this one — test/table-inventory.json
+     names each one and T7 reads the rendered page to prove it is reachable by
+     tap at 320px. */
+  Band: (host) => tablePanel(axis(host, "ax-band", "The band")),
   Mix: (host) => mountBoard(host, CTX),
   Produce: (host) => mountProduce(host, CTX),
   Score: (host) => deckBlock(host),

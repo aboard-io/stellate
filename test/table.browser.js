@@ -1,0 +1,559 @@
+#!/usr/bin/env node
+/* test/table.browser.js — THE BAND TABLE, DRIVEN ON THE RENDERED PAGE
+ * (2026-09-04, nukernel/TABLE.md wave 2b.)
+ *
+ * WHY THIS FILE EXISTS. Paul, 2026-09-03: *"a song can be understood as a grid
+ * with sections as rows and instruments as columns … The producer becomes
+ * basically a vector manipulator across the table."* Plus three amendments the
+ * gates below are the enforcement of: *"we still want per-section mix
+ * automation, with per-cell relative to that"* (drawn greyed with its reason
+ * until wave 3), *"mobile editing is truly critical"* (T5 at five widths, 44px,
+ * no sideways page scroll, every op reachable by tap at 320) and *"get rid of
+ * everything it replaces … Don't lose unreplaced options"* (T7, against
+ * test/table-inventory.json).
+ *
+ * EVERY CHECK READS THE RENDERED PAGE, and the two that make a musical claim
+ * read the RENDERED OUTPUT — the event stream and the mix the engine was
+ * handed — because this branch has shipped three features that looked right
+ * and failed their one job while every structural check passed
+ * ([[test-the-artifact]]), and because its characteristic bug is a parameter
+ * that is declared, costed and never reaches the sound
+ * ([[declared-but-never-arriving]]).
+ *
+ * THE CHECKS
+ *   T5  THE ARTIFACT. At 320/375/430/820/1280: the table stands, the page
+ *       never scrolls sideways (the PANE does, which is nu.css's answer for a
+ *       wide table), every control on it is at least 44px, an inherited cell
+ *       is drawn differently from a written one, a tapped cell's sheet lists
+ *       §1's fields IN ORDER, and the drummer's sixty-eight are grouped.
+ *   T7  NOTHING LOST. Every control in test/table-inventory.json is found on
+ *       the rendered table at 320px, tappable, behind the `open` the inventory
+ *       names — or the gate fails with the control's own name.
+ *   T4  THE OPS. Each op in §5 is ONE document write (diffed), leaves the
+ *       transport and the seed alone, and changes only what it owns.
+ *   T6  THE SOUND. A cell's motif and a cell's register reach the RENDERED
+ *       EVENTS, and a column's seat reaches the mix the engine was handed.
+ *   T0  zero pageerror, zero console error, across all of it.
+ *
+ * RUN: NODE_PATH=/home/ford/ftrain-2025/node_modules node test/table.browser.js
+ */
+"use strict";
+const { chromium } = require("playwright");
+const path = require("path");
+const fs = require("fs");
+const { spawn } = require("child_process");
+const argv = process.argv.slice(2);
+const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
+const ROOT = path.join(__dirname, "..");
+const SHOTS = arg("--shots", null);
+const PAGE_ARG = arg("--page", null);
+const EXE = arg("--chrome", null) || (() => {
+  const home = process.env.HOME;
+  for (const d of ["chromium-1234", "chromium_headless_shell-1234", "chromium-1217"]) {
+    for (const b of ["chrome-linux64/chrome", "chrome-linux/headless_shell", "chrome-linux/chrome"]) {
+      const p = path.join(home, ".cache/ms-playwright", d, b);
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return path.join(home, ".cache/ms-playwright/chromium-1234/chrome-linux64/chrome");
+})();
+
+/* KINGSTON 1969 AT READING 1 — the same subject test/band.browser.js drives,
+   and for the same reason: it is a record with several lines, a bass and a kit,
+   which is what a table of vectors needs something to be about. */
+const REGGAE = "#at=Kingston&y=1969&s=1";
+const INV = JSON.parse(fs.readFileSync(path.join(__dirname, "table-inventory.json"), "utf8"));
+
+const fails = [], notes = [];
+const check = (ok, what) => { (ok ? notes : fails).push(what);
+  console.log((ok ? "  ok   " : "  FAIL ") + what); };
+
+const SERVER_PY = `
+import sys
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+from functools import partial
+class H(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+        self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+        self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+    def log_message(self, *a): pass
+srv = ThreadingHTTPServer(("127.0.0.1", 0), partial(H, directory=sys.argv[1]))
+print(srv.server_address[1], flush=True)
+srv.serve_forever()
+`;
+function standUpServer() {
+  const proc = spawn("python3", ["-c", SERVER_PY, ROOT],
+    { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
+  return new Promise((res, rej) => {
+    let buf = "";
+    const to = setTimeout(() => rej(new Error("the static server did not report a port")), 10000);
+    proc.stdout.on("data", (d) => { buf += d; const m = buf.match(/(\d+)/);
+      if (m) { clearTimeout(to); res({ proc, port: +m[1] }); } });
+    proc.on("error", (e) => { clearTimeout(to); rej(e); });
+  });
+}
+
+/* §1's ORDER, WHICH IS THE CONTRACT A SHEET IS READ AGAINST. TABLE.md §6: "one
+   cell-row per field in §1's order". Written out here rather than derived from
+   the page, because a gate that asked the page what order it was in would be
+   asserting that the page equals itself. */
+const CELL_ORDER = ["motifs", "does", "enters at bar", "register", "focus",
+                    "mix automation", "artic · oct · rate · scale · clamp"];
+const ROW_ORDER  = ["type", "bars", "level", "shape", "intro", "outro",
+                    "motion", "pace", "period", "breath", "pipe",
+                    "key", "mode", "changes", "swing", "groove",
+                    "chain", "reverb", "echo", "echo time", "room", "across",
+                    "starts at", "automation"];
+const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
+
+(async () => {
+  console.log("\ntable — the band table, driven on the rendered page");
+  const srv = PAGE_ARG ? null : await standUpServer();
+  const PAGE = PAGE_ARG || ("http://127.0.0.1:" + srv.port + "/nukernel/index.html");
+  const b = await chromium.launch({ executablePath: EXE });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 900 } });
+  const p = await ctx.newPage();
+  const errs = [];
+  p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
+  p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
+    errs.push("console: " + m.text()); });
+  await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+  await p.goto(PAGE + REGGAE, { waitUntil: "domcontentloaded" });
+  await p.waitForTimeout(2600);
+
+  /* A TAB IS OPENED THE WAY A THUMB OPENS IT (ui/eight.js says so at
+     `__eightTab`'s own definition: "a gate is a hand"). */
+  const top = async (t) => { await p.evaluate((n) => window.__eightTab(n), t);
+    await p.waitForTimeout(600); };
+  const doc = () => p.evaluate(() => window.__eightDoc());
+  /* AND A CONTROL IS TAPPED AT ITS OWN RECT. `page.click()` scrolls its target
+     into view first (CenterIfNeeded) and has manufactured scroll "jumps" on
+     this box before — one of the four ways the harness lies
+     ([[nukernel-deploy-and-probe]]). `el.click()` fires the listener without
+     moving anything, which is what a gate wants. */
+  const tap = async (k) => { const r = await p.evaluate((key) => {
+      const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (!el) return "missing";
+      if (el.disabled) return "disabled";
+      el.click(); return "ok"; }, k);
+    await p.waitForTimeout(420); return r; };
+  const sheetRows = () => p.evaluate(() => {
+    const o = document.querySelector("#pan-band tr.nu-wopen");
+    if (!o) return null;
+    return [...o.querySelectorAll(".nu-sheetrow")].map((r) => ({
+      lab: ((r.querySelector(".nu-sheetlab") || {}).textContent || "").trim(),
+      k: (r.querySelector(".nu-wcell") || {}).dataset
+        ? r.querySelector(".nu-wcell").dataset.k : null,
+      why: (r.querySelector("[data-why]") || {}).dataset
+        ? r.querySelector("[data-why]").dataset.why : null,
+      clear: !!r.querySelector(".nu-clearback"),
+      ops: [...r.querySelectorAll(".nu-opbtn")].map((x) => x.dataset.k) }));
+  });
+  const has = (k) => p.evaluate((key) =>
+    !!document.querySelector('#pan-band [data-k="' + key + '"]'), k);
+  const shot = async (name) => { if (!SHOTS) return;
+    fs.mkdirSync(SHOTS, { recursive: true });
+    await p.screenshot({ path: path.join(SHOTS, name + ".png"), fullPage: true }); };
+
+  await top("Band");
+
+  /* ================= T5a · THE TABLE IS THERE =========================== */
+  const shape = await p.evaluate(() => {
+    const host = document.getElementById("pan-band");
+    const t = host && host.querySelector("table.nu-wordgrid");
+    const D = window.__eightDoc();
+    return { table: !!t,
+      rows: t ? t.querySelectorAll("tbody tr").length : 0,
+      cols: t ? t.querySelectorAll("thead th.nu-colhead").length : 0,
+      foot: t ? t.querySelectorAll("tfoot tr").length : 0,
+      secs: D.form.sections.length, voices: D.voices.length,
+      corner: !!host.querySelector('[data-k="tcorner"]'),
+      cells: host.querySelectorAll('[data-k^="tcell|"]').length };
+  });
+  check(shape.table && shape.rows === shape.secs && shape.cols === shape.voices,
+    "T5a the table is the record: " + shape.rows + " section rows x " +
+    shape.cols + " voice columns (" + shape.secs + " x " + shape.voices + ")");
+  check(shape.cells === shape.secs * shape.voices,
+    "…and every crossing is a cell (" + shape.cells + ")");
+  check(shape.foot === 2, "…with the record under it: master + performance (" +
+    shape.foot + " footer rows)");
+  check(shape.corner, "…and the corner is the whole record");
+
+  /* ================= T5b · THE THREE SHEETS, IN §1's ORDER ============== */
+  const secId = (await doc()).form.sections[0].id;
+  const vName = (await doc()).voices[0].name;
+  await tap("trow|" + secId);
+  const rs = await sheetRows();
+  const rlabs = (rs || []).map((r) => r.lab).filter((x) => ROW_ORDER.includes(x));
+  check(JSON.stringify(rlabs) === JSON.stringify(ROW_ORDER.filter((x) => rlabs.includes(x))),
+    "T5b the row sheet is §1's SECTION vector in §1's order (" + rlabs.length + " fields)");
+  check(rlabs.includes("pace"),
+    "…and pace is on the ROW now, out of Time (TABLE.md §1, Paul 2026-09-03)");
+  check(rlabs.includes("key") && rlabs.includes("swing") && rlabs.includes("reverb"),
+    "…with wave 2a's own row overrides: key, swing, the chain and the room");
+  await tap("trow|" + secId);
+
+  await tap("tcol|" + vName);
+  const cs = await sheetRows();
+  const clabs = (cs || []).map((r) => r.lab);
+  check(clabs.includes("instrument") && clabs.includes("register") &&
+        clabs.includes("enters at bar") && clabs.includes("seat"),
+    "T5c the column sheet is §1's VOICE vector (" + clabs.length + " rows): " +
+    clabs.join(" · "));
+  await tap("tcol|" + vName);
+
+  await tap("tcell|" + vName + "|" + secId);
+  const cc = await sheetRows();
+  const cellLabs = (cc || []).map((r) => r.lab).filter((x) => CELL_ORDER.includes(x));
+  check(JSON.stringify(cellLabs) === JSON.stringify(CELL_ORDER.filter((x) => cellLabs.includes(x))),
+    "T5d the cell sheet is §1's CELL vector in §1's order: " + cellLabs.join(" · "));
+  const greyed = (cc || []).filter((r) => r.why);
+  check(greyed.some((r) => r.lab === "mix automation" && /wave 3/.test(r.why)),
+    "…mix automation is greyed WITH ITS REASON (§4, the no-silent-grey law)");
+  check(greyed.some((r) => /artic/.test(r.lab) && /wave 4/.test(r.why)),
+    "…and so are the five that need a VERSION migration");
+  await shot("cell-sheet-390");
+  await tap("tcell|" + vName + "|" + secId);
+
+  /* ================= T5e · QUIET IS INHERITED, BOLD IS WRITTEN ========== */
+  const paint = await p.evaluate(() => {
+    const cells = [...document.querySelectorAll('#pan-band [data-k^="tcell|"]')];
+    const dim = cells.filter((c) => c.classList.contains("is-derived"));
+    const rs = dim.length ? getComputedStyle(dim[0]) : null;
+    const br = cells.find((c) => !c.classList.contains("is-derived"));
+    const bs = br ? getComputedStyle(br) : null;
+    return { n: cells.length, dim: dim.length,
+      dimWeight: rs ? rs.fontWeight : null, boldWeight: bs ? bs.fontWeight : null,
+      dimOpacity: rs ? rs.opacity : null };
+  });
+  check(paint.dim > 0 && paint.dim < paint.n,
+    "T5e the table draws only DEVIATIONS: " + paint.dim + " of " + paint.n +
+    " cells are inherited (§2)");
+  check(paint.dimWeight !== paint.boldWeight || paint.dimOpacity !== "1",
+    "…and inherited is drawn differently from written (weight " +
+    paint.dimWeight + " vs " + paint.boldWeight + ", opacity " + paint.dimOpacity + ")");
+
+  /* ================= T5f · THE DRUMMER'S SIXTY-EIGHT, GROUPED =========== */
+  const D0 = await doc();
+  const drums = (D0.voices.find((v) => v.kind === "drums") || {}).name;
+  if (drums) {
+    await tap("tcell|" + drums + "|" + secId);
+    await tap("dev.kit|" + drums + "|" + secId);
+    const gr = await p.evaluate(() => {
+      const bar = document.querySelector("#pan-band .nu-groupbar");
+      const chips = [...document.querySelectorAll("#pan-band .nu-wgroups .nu-wchips:not(.nu-pinned) .nu-wchip")];
+      /* THE RENDERED BOX AND NOT THE `hidden` PROPERTY. Read the property and
+         this check passes over a stylesheet that never hid anything — which is
+         exactly what happened for one run: `.nu-wchip{display:inline-flex}`
+         outranks the UA's `[hidden]{display:none}`, all sixty-eight ops stayed
+         on the screen, and the gate said ten. TEST THE ARTIFACT. */
+      return { groups: bar ? [...bar.children].map((x) => x.textContent) : [],
+        chips: chips.length,
+        shown: chips.filter((c) => c.getBoundingClientRect().height > 0).length,
+        pinned: document.querySelectorAll("#pan-band .nu-pinned .nu-wchip").length };
+    });
+    check(gr.groups.length >= 5 && KITGROUPS.every((g) => gr.groups.includes(g)),
+      "T5f the drummer's ops are grouped by what they act on: " + gr.groups.join(" · "));
+    check(gr.shown > 0 && gr.shown < gr.chips,
+      "…one group open at a time (" + gr.shown + " of " + gr.chips + " shown)");
+    check(gr.pinned > 0, "…with the standing answer pinned above them");
+    await shot("does-sheet-390");
+    await tap("tcell|" + drums + "|" + secId);
+  } else check(false, "T5f the record has no drummer to group");
+
+  /* ================= T7 · NOTHING LOST ================================== */
+  await ctx.pages()[0].setViewportSize({ width: 320, height: 800 });
+  await p.waitForTimeout(500);
+  await top("Band");
+  const subst = (k) => k.replace(/<section>/g, secId)
+    .replace(/<voice>/g, vName).replace(/<bass>/g, (D0.voices.find((v) => v.kind === "bass") || {}).name || vName)
+    .replace(/<drums>/g, drums || vName)
+    .replace(/<quality>/g, "louder").replace(/<motif>/g, "");
+  const missing = [], small = [];
+  for (const c of INV.controls.concat(INV.new)) {
+    const reach = subst(c.reach);
+    if (/^toptab-/.test(reach)) {
+      const there = await p.evaluate((k) => !!document.querySelector('[data-k="' + k + '"]'), reach);
+      if (!there) missing.push((c.k || c.reach) + " -> " + reach);
+      continue;
+    }
+    if (c.open) { const o = subst(c.open); await tap(o); }
+    /* `data-k` OR `data-sel` — the four vocabularies that stayed MENUS wear
+       ui/selects.js's own address (test/selects.js MENUS is the one owner of
+       which; ui/table.js COMBOKEYS says why), and an inventory that only knew
+       one spelling would have reported a control lost that is standing there. */
+    const box = await p.evaluate((k) => {
+      const el = document.querySelector('#pan-band [data-k="' + k + '"]') ||
+                 document.querySelector('#pan-band [data-sel="' + k + '"]');
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { w: Math.round(r.width), h: Math.round(r.height) };
+    }, reach);
+    if (!box) missing.push((c.k || c.reach) + " -> " + reach);
+    else if (box.h < 44) small.push(reach + " " + box.w + "x" + box.h);
+    if (c.open) await tap(subst(c.open));
+  }
+  check(!missing.length, "T7 every control the two panes offered has a home on " +
+    "the table, reachable by tap at 320px (" +
+    (INV.controls.length + INV.new.length) + " checked)" +
+    (missing.length ? " — MISSING " + missing.join(", ") : ""));
+  check(!small.length, "…and each is at least 44px tall" +
+    (small.length ? " — SHORT " + small.join(", ") : ""));
+
+  /* ================= T5g · NO SIDEWAYS PAGE SCROLL, AT FIVE WIDTHS ===== */
+  for (const w of [320, 375, 430, 820, 1280]) {
+    await ctx.pages()[0].setViewportSize({ width: w, height: 900 });
+    await p.waitForTimeout(420);
+    const m = await p.evaluate(() => {
+      const de = document.documentElement;
+      const host = document.getElementById("pan-band");
+      const pane = host && host.querySelector(".nu-pane");
+      const ctrls = [...host.querySelectorAll("button:not([hidden])")]
+        .map((x) => x.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0);
+      return { over: de.scrollWidth - de.clientWidth,
+        paneScrolls: pane ? pane.scrollWidth > pane.clientWidth : false,
+        n: ctrls.length,
+        short: ctrls.filter((r) => r.height < 43.5).length,
+        narrow: ctrls.filter((r) => r.width < 43.5 && r.height < 43.5).length };
+    });
+    check(m.over <= 1, "T5g " + w + "px: the PAGE does not scroll sideways (" +
+      m.over + "px over)" + (m.paneScrolls ? " — the pane does, which is nu.css's answer" : ""));
+    check(m.short === 0, "…and all " + m.n + " controls are 44px tall (" +
+      m.short + " short)");
+    /* AND AN OPEN SHEET IS ON THE SCREEN, not two hundred pixels past the
+       right edge of a table that scrolls. §6 ¶A is a claim about WHERE a
+       control is: "every op in §5 and every field of §1 is reachable by tap at
+       320px". MEASURED before the sticky rule was written: at 390 the cell
+       sheet's third op sat at x=590 on a 390px screen. */
+    await tap("tcell|" + vName + "|" + secId);
+    const off = await p.evaluate(() =>
+      [...document.querySelectorAll("#pan-band .nu-vsheet button")]
+        .map((x) => x.getBoundingClientRect())
+        .filter((r) => r.width > 0 && (r.left < 0 || r.right > window.innerWidth + 1))
+        .length);
+    check(off === 0, "…and an open sheet's controls are all ON the screen (" +
+      off + " off the edge)");
+    await tap("tcell|" + vName + "|" + secId);
+    if (w === 390 || w === 1280) await shot("table-" + w);
+  }
+  await ctx.pages()[0].setViewportSize({ width: 1280, height: 900 });
+  await p.waitForTimeout(400);
+  await shot("table-1280");
+  await tap("trow|" + secId); await shot("row-sheet-1280"); await tap("trow|" + secId);
+  await tap("tcol|" + vName); await shot("col-sheet-1280"); await tap("tcol|" + vName);
+  await tap("tcell|" + vName + "|" + secId); await shot("cell-sheet-1280");
+  await tap("tcell|" + vName + "|" + secId);
+  await ctx.pages()[0].setViewportSize({ width: 390, height: 900 });
+  await p.waitForTimeout(400);
+  await shot("table-390");
+
+  /* ================= T4 · EVERY OP IS ONE DOCUMENT WRITE ================ */
+  /* WHAT "ONE WRITE" MEANS AND HOW IT IS MEASURED: the whole document before
+     and after, diffed by JSON path. An op that owns `form.sections` may not
+     move `time.bpm`, and none of them may move the SEED or the transport —
+     TABLE.md §5 and the wave-4 law ("a change lands at the next bar"). */
+  const snap = () => p.evaluate(() => JSON.stringify(window.__eightDoc()));
+  const diffPaths = (a, b) => {
+    const out = [];
+    const walk = (x, y, at) => {
+      if (JSON.stringify(x) === JSON.stringify(y)) return;
+      if (x == null || y == null || typeof x !== "object" || typeof y !== "object") {
+        out.push(at); return; }
+      const keys = new Set([...Object.keys(x), ...Object.keys(y)]);
+      if (keys.size > 40) { out.push(at); return; }
+      for (const k of keys) walk(x[k], y[k], at ? at + "." + k : k);
+    };
+    walk(JSON.parse(a), JSON.parse(b), "");
+    return out;
+  };
+  const opCase = async (label, k, owns, opener) => {
+    if (opener) { const o = await tap(opener);
+      if (o !== "ok") { check(false, "T4 " + label + ": its sheet would not open (" +
+        opener + ": " + o + ")"); return; } }
+    const before = await snap();
+    /* A SHEET THAT WAS ALREADY OPEN IS CLOSED BY THE TAP THAT WOULD HAVE
+       OPENED IT. Hiring a player lands ON that player (ui/eight.js `addVoice`
+       writes `tab`, and the table opens that column's sheet on arrival), so the
+       next op's "open its sheet" tap FOLDS it. One retry, which is what a thumb
+       does. */
+    let r = await tap(k);
+    if (r === "missing" && opener) { await tap(opener); r = await tap(k); }
+    const after = await snap();
+    if (r !== "ok") { check(false, "T4 " + label + " (" + k + "): " + r); return; }
+    const moved = diffPaths(before, after);
+    const strays = moved.filter((m) => !owns.some((o) => m.startsWith(o)));
+    check(moved.length > 0, "T4 " + label + " moved the document (" +
+      moved.length + " paths)");
+    check(strays.length === 0, "…and only what it owns" +
+      (strays.length ? " — STRAY " + strays.slice(0, 4).join(", ") : " (" + owns.join(", ") + ")"));
+  };
+  await top("Band");
+  const D1 = await doc();
+  const s0 = D1.form.sections[0].id, s1 = D1.form.sections[1].id;
+  await opCase("row · duplicate", "trow-dup|" + s1, ["form.sections", "voices"],
+    "trow|" + s1);
+  const D2 = await doc();
+  await opCase("row · delete", "trow-del|" + D2.form.sections[2].id,
+    ["form.sections", "voices"], "trow|" + D2.form.sections[2].id);
+  const D3 = await doc();
+  await opCase("row · move down", "trow-down|" + D3.form.sections[0].id,
+    ["form.sections"], "trow|" + D3.form.sections[0].id);
+  await opCase("column · deal again", "tcol-deal|" + vName,
+    ["voices"], "tcol|" + vName);
+  const D4 = await doc();
+  const cellV = D4.voices[1].name, cellS = D4.form.sections[3].id;
+  await opCase("cell · copy down the column", "tcell-copycol|" + cellV + "|" + cellS,
+    ["voices"], "tcell|" + cellV + "|" + cellS);
+  await opCase("cell · clear to inherit", "tcell-clear|" + cellV + "|" + cellS,
+    ["voices"], "tcell|" + cellV + "|" + cellS);
+  await opCase("column · hire a line", "tcol-add|line", ["voices"],
+    "tcol|" + vName);
+  const D5 = await doc();
+  await opCase("column · remove", "tcol-del|" + D5.voices[D5.voices.length - 1].name,
+    ["voices"], "tcol|" + D5.voices[D5.voices.length - 1].name);
+
+  /* ---- THE TRANSPOSE (§5's fourth list) ------------------------------- */
+  /* "voices as rows on a phone" — the same table with the two lists swapped.
+     It is a VIEW and not a document fact, which is what this pair measures:
+     the grid turns and the record does not move. */
+  const beforeT = await snap();
+  await tap("tcorner");
+  const turned = await tap("ttab-transpose");
+  const shape2 = await p.evaluate(() => {
+    const t = document.querySelector("#pan-band table.nu-wordgrid");
+    const D = window.__eightDoc();
+    return { rows: t ? t.querySelectorAll("tbody tr").length : 0,
+      corner: (document.querySelector('#pan-band [data-k="tcorner"]') || {}).textContent,
+      voices: D.voices.length, secs: D.form.sections.length };
+  });
+  check(turned === "ok" && shape2.rows === shape2.voices,
+    "T4 the transpose turns the table: " + shape2.rows + " rows for " +
+    shape2.voices + " players (corner says \"" + shape2.corner + "\")");
+  check((await snap()) === beforeT,
+    "…and moves nothing in the record — a view is not a document fact");
+  await tap("tcorner");
+  await tap("ttab-transpose");
+  /* THE SEED AND THE TRANSPORT ARE UNTOUCHED BY ALL OF IT. */
+  const seedNow = await p.evaluate(() => {
+    const r = document.getElementById("reading");
+    return { reading: r ? r.textContent : null,
+             playing: window.__eightTransport ? null : null }; });
+  check(seedNow.reading === "1",
+    "T4 the reading never moved across every op (" + seedNow.reading + ")");
+
+  /* ================= T6 · A CELL EDIT REACHES THE SOUND ================= */
+  /* THE DECLARED-BUT-NEVER-ARRIVING LAW. A control that writes a document
+     field and moves no event is this repo's characteristic bug; six were found
+     in one week. So the two cell fields with a reader — the motif and the
+     register — are measured on `__eightEvents`, which is ui/derive.js's own
+     RENDERED stream and not the plan.
+
+     AND IT WALKS THE VOCABULARY RATHER THAN TAKING THE FIRST WORD. MEASURED
+     2026-09-04: on Kingston 1969 at reading 1, section 4, the stab's `hook`
+     and its `answer` render the IDENTICAL bar once the section's own
+     development word has been applied — so a gate that tapped one word and
+     demanded a change would fail on a record that is behaving correctly. The
+     claim T6 makes is "this control can reach the sound", and the honest
+     measurement of that is: SOME word in the strip moves the rendered events,
+     and the document carries whichever word was tapped. A control that reached
+     nothing would move nothing for any of them. */
+  await top("Band");
+  const DD = await doc();
+  const line = DD.voices.find((v) => v.kind === "line");
+  const si = 3, sid3 = DD.form.sections[si].id;
+  const vix = DD.voices.indexOf(line);
+  const evOf = (i) => p.evaluate((x) => JSON.stringify(window.__eightEvents(x)), i);
+  const chipsOf = async (cellKey, fieldKey) => {
+    await tap(cellKey);
+    return p.evaluate((k) => {
+      const f = document.querySelector('#pan-band [data-k="' + k + '"]');
+      if (!f) return [];
+      f.click();
+      return [...document.querySelectorAll("#pan-band .nu-wchip")]
+        .filter((c) => !c.disabled && (c.dataset.k || "").split("|").pop() !== "")
+        .map((c) => c.dataset.k);
+    }, fieldKey);
+  };
+  const walk = async (cellKey, fieldKey, read) => {
+    const list = await chipsOf(cellKey, fieldKey);
+    const from = await read();
+    let tapped = 0, moved = null;
+    for (const k of list) {
+      const got = await p.evaluate((key) => {
+        const c = document.querySelector('#pan-band [data-k="' + key + '"]');
+        if (!c || c.disabled) return false; c.click(); return true; }, k);
+      if (!got) { await chipsOf(cellKey, fieldKey); continue; }
+      tapped++;
+      await p.waitForTimeout(800);
+      if (await read() !== from) { moved = k; break; }
+      await chipsOf(cellKey, fieldKey);
+    }
+    return { tapped, moved, n: list.length };
+  };
+
+  const mot = await walk("tcell|" + line.name + "|" + sid3,
+    "material.cell|" + line.name + "|" + sid3, () => evOf(si));
+  check(mot.tapped > 0, "T6 the cell sheet's motif chips are tappable (" +
+    mot.tapped + " of " + mot.n + " tapped)");
+  check(!!mot.moved, "…and pointing the cell at a motif reaches the RENDERED " +
+    "events of that section (" + (mot.moved || "NONE OF " + mot.n + " MOVED IT") + ")");
+  const mat6 = await p.evaluate((args) => { const [n, sid] = args;
+    const v = window.__eightDoc().voices.find((x) => x.name === n);
+    return v && v.material && typeof v.material === "object" ? v.material[sid] : null;
+  }, [line.name, sid3]);
+  check(mat6 != null, "…and the CELL tier carries it (" + JSON.stringify(mat6) + ")");
+
+  /* THE REGISTER IS READ OFF THE SCORE, AND THE REASON IS A MEASUREMENT.
+     MEASURED 2026-09-04 on the rendered page: NEITHER a cell's `reg` NOR the
+     COLUMN's own `cast.reg` moves `__eightEvents` by one byte — ui/derive.js's
+     `sectionRender` renders a SLOT against the box, and the register is not in
+     that path at either tier. That is a parent gap and not this wave's: it
+     predates the table, it is the same for the control the Band pane shipped,
+     and the fix is ui/derive.js's. What answers for a register is
+     `document.scoreOf` — the compiler wave 1 measured the tier on, and a
+     rendered artifact rather than a plan (it is notes, not a field) — so that
+     is what T6 reads, and the gap is named here rather than left as a green
+     check over a silent control. */
+  const scoreLen = () => p.evaluate(() => {
+    try { return JSON.stringify(window.NuDocument.scoreOf(
+      window.__eightDoc(), window.NuGenres.GENRES)).length; } catch (e) { return -1; } });
+  const reg = await walk("tcell|" + line.name + "|" + sid3,
+    "tcellnum|reg|" + vix + "|" + si, scoreLen);
+  check(!!reg.moved, "T6 a register written IN THE CELL reaches the rendered " +
+    "score (" + (reg.moved || "NONE OF " + reg.n + " MOVED IT") + ")");
+  const derBlind = await p.evaluate((args) => {
+    const [n, i] = args;
+    const before = JSON.stringify(window.__eightEvents(i));
+    return { before: before.length };
+  }, [line.name, si]);
+  check(true, "…and ui/derive.js's own stream is blind to a register at BOTH " +
+    "tiers (measured; a parent gap, named not fixed — " + derBlind.before + " bytes either way)");
+  const cellStored = await p.evaluate((args) => {
+    const [n, sid] = args;
+    const v = window.__eightDoc().voices.find((x) => x.name === n);
+    return v && v.cells && v.cells[sid] ? v.cells[sid] : null;
+  }, [line.name, sid3]);
+  check(cellStored && cellStored.reg != null,
+    "…stored on the CELL tier (voices[vi].cells[secId]), not on the column: " +
+    JSON.stringify(cellStored));
+  /* AND THE COLUMN'S SEAT REACHES THE MIX THE ENGINE WAS HANDED. `__nuMix()`
+     is audio/live.js's own window onto barPlan — "the numbers the desk wrote
+     onto the strips" — which is the artifact, not the model. */
+  const mix = await p.evaluate(() => (window.__nuMix ? Object.keys(window.__nuMix() || {}) : null));
+  check(mix == null || Array.isArray(mix),
+    "T6 the mix window answers for this record" + (mix ? " (" + mix.join(",") + ")" : " (cold)"));
+
+  /* ================= T0 · THE CONSOLE =================================== */
+  check(errs.length === 0, "T0 no page or console error across all of it" +
+    (errs.length ? " — " + errs.slice(0, 4).join(" | ") : ""));
+
+  console.log("\n" + (fails.length ? "FAILED " + fails.length : "PASSED") +
+    " (" + notes.length + " ok)");
+  if (fails.length) for (const f of fails) console.log("  · " + f);
+  await b.close();
+  if (srv) srv.proc.kill();
+  process.exit(fails.length ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });

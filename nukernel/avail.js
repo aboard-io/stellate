@@ -959,6 +959,76 @@
         get: (doc, s) => SEC(doc, s)[key] || "",
         set: (doc, s, v) => { const x = SEC(doc, s); if (x.id) x[key] = v || null; } };
     }
+  /* ===== THE ROW'S OWN FACTS, MINTED THE SAME WAY (2026-09-04) ==========
+     TABLE.md wave 2a gave a SECTION a document address for its harmony, its
+     feel, its chain and its room — `key mode prog swing groove fx rev echo
+     dtime room pan` — and wave 2b draws them, which means each one needs a
+     VOCABULARY with an owner. It has one already: `fields.js FIELD[<key>]` is
+     the box registry's row, with the same `table` and `labels` the box, the
+     desk and the export have always read. So these are minted off that row
+     rather than typed out again, exactly as the axis loop above mints the
+     nudges — a second list of five reverb words is the thing this file's own
+     header refuses.
+
+     WHY THEY ARE NOT IN THE AXIS LOOP. That loop mints from `f.axis`, which is
+     what puts a question in Structure's "the rest" grid and in the interview;
+     giving these eleven an axis would have moved eleven controls onto a
+     surface being deleted this wave and changed `restKeys()` under two gates.
+     One list, here, named for what it is.
+
+     `fx` IS A LIST AND IS OFFERED AS ONE WORD. The box field is `type: "list"`
+     (a chain of up to MAX_FX), and a sheet says one word — so the words on
+     offer are "no chain" plus each single effect, and choosing one REPLACES
+     the chain. A section the composer dealt two effects on prints both, joined,
+     with neither chip pressed: you can see what is true and you can say one
+     thing, which is the honest half of what a strip of words can do here. The
+     rest of the chain is the rack's, and the rack is on Mix.
+
+     `swing` and `groove` HAVE NO BOX ROW at all — they are the record's, and
+     wave 2a made the section able to override them — so their tables are named
+     here off fields.js's own SWINGLABEL / GROOVELABEL, which is still the one
+     owner of those words. */
+  const ROWFACTS = [
+    ["key",   "what key is this section in?",     "the record's key"],
+    ["mode",  "and what mode?",                   "the record's mode"],
+    ["prog",  "what changes does it run?",        "the record's own"],
+    ["swing", "how does this section swing?",     "the record's swing"],
+    ["groove","and how does it sit?",             "the record's groove"],
+    ["fx",    "what is in its chain?",            "no chain"],
+    ["rev",   "how much reverb?",                 "the genre's own"],
+    ["echo",  "how much echo?",                   "the genre's own"],
+    ["dtime", "how long is the echo?",            "the record's delay"],
+    ["room",  "how much room on the kit?",        "the genre's own"],
+    ["pan",   "where does it sit across?",        "centre"],
+  ];
+  const ROWTABLE = { swing: NF.SWINGLABEL, groove: NF.GROOVELABEL };
+  for (const [key, ask, none] of ROWFACTS) {
+    const f = NF.FIELD[key];
+    const labels = ROWTABLE[key] || (f && (f.labels || f.table));
+    if (!labels) continue;
+    const list = key === "fx"
+      ? Object.keys(labels).map((k) => [k, (NF.FXLABEL || labels)[k] || k])
+      : Object.keys(labels).map((k) => [k, labels[k]]);
+    SHEETS["form." + key] = { label: ask, scope: "section", rowfact: key,
+      values: () => [{ value: "", label: none },
+                     ...list.map(([v, w]) => ({ value: v, label: String(w) }))],
+      /* THE LIST FIELD READS BACK AS ONE WORD OR AS THE JOIN. A chain of one
+         is the word (and its chip is pressed); a chain of two prints both and
+         matches no chip, which is exactly what "you can see what is true" and
+         "you can say one thing" look like together. */
+      get: (doc, s) => { const x = SEC(doc, s);
+        const v = x[key];
+        if (key === "fx") return Array.isArray(v) ? (v.length === 1 ? v[0] : "") : (v || "");
+        return v == null ? "" : String(v); },
+      say: (doc, s) => { const x = SEC(doc, s);
+        if (key !== "fx") return null;
+        const v = x.fx;
+        return Array.isArray(v) && v.length > 1 ? v.join(" + ") : null; },
+      set: (doc, s, v) => { const x = SEC(doc, s); if (!x.id) return;
+        if (key === "fx") { x.fx = v ? [v] : []; return; }
+        x[key] = v || null; } };
+  }
+
   for (const r of NF.nudgesFor("performance")) {
     const key = r.key;
     SHEETS["performance." + key] = { label: r.ask, scope: "song",

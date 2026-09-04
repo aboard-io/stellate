@@ -327,6 +327,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       for (const f of facets) views.push({ top: t, k, f });
     }
   }
+  /* ...AND A COLUMN'S SHEET, WHICH IS WHERE A SEAT LIVES NOW (2026-09-04,
+     TABLE.md wave 2b). The Band pane WAS a voice's four facets and one of
+     them, `mix`, drew that voice's channel strip; the Band pane is the TABLE
+     now and a voice is a COLUMN, whose head opens the whole VOICE vector with
+     the strip in it (ui/table.js seats `voiceMix` there).
+     IT IS NOT THE BOARD, and this file is why that is known: the first draft
+     of test/table-inventory.json filed the seat as "elsewhere: the board" and
+     this check went red at zero seats within the hour — the board has bus
+     strips and no per-voice channel at all, because Paul took the voices off
+     it on 2026-08-28. A control with no home is what T7 refuses and what this
+     line measures. `pane` is a tap INSIDE the panel rather than on the
+     stripe, which is what a column head is. */
+  if (REAL) views.push({ top: "Band", pane: "thead .nu-colbtn" });
   const eachView = async (fn) => {
     const out = [];
     for (const v of views) {
@@ -337,6 +350,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
           if (s2) { s2.click(); await new Promise((r) => setTimeout(r, 300)); }
         });
         if (v.sec) await p.waitForTimeout(350);
+        if (v.pane) await p.evaluate(async (sel) => {
+          const b = document.querySelector("#pan-band " + sel);
+          if (b) { b.click(); await new Promise((r) => setTimeout(r, 300)); }
+        }, v.pane);
         if (v.k) {
           await tapK(v.k);
           if (v.f) await tapK(v.f);
@@ -522,8 +539,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      caused this; measured red on HEAD before the slice, at 29 of 30.) */
   if (REAL)
     check(seats.length > 0, "…and the strip that carries them is on the page at " +
-      "all: the voices' `mix` facet is one of the views this survey walks, so a " +
-      "strip that stopped being drawn fails here rather than passing quietly " +
+      "all: a COLUMN'S OWN SHEET is one of the views this survey walks (the " +
+      "seat's home since the Band pane became the table), so a strip that " +
+      "stopped being drawn fails here rather than passing quietly " +
       JSON.stringify(seats.slice(0, 3)));
   else notes.push("     (no channel strips here — the engineer is not in this " +
     "harness, so the insert seats are index.html's claim, above)");

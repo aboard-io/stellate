@@ -1,0 +1,610 @@
+// nukernel/ui/table.js — THE BAND TABLE. A song is a table of vectors.
+//
+// Paul, 2026-09-03: *"a song can be understood as a grid with sections as rows
+// and instruments as columns … A good way to 'build' a song is to add and
+// remove columns and rows using a table building interface … Each cell can be
+// understood as a vector … The producer becomes basically a vector manipulator
+// across the table. It's a next generation futuristic gig sheet for robots."*
+//
+// This is nukernel/TABLE.md wave 2b. It REPLACES the Band pane and the
+// Structure pane — both deleted, not hidden (§6 ¶A, "get rid of everything it
+// replaces … Don't lose unreplaced options"), with test/table-inventory.json
+// as the contract that says where each of their controls went and T7 as the
+// gate that reads the rendered page and finds it.
+//
+// ===== WHAT IT DRAWS ====================================================
+//   the HEADER ROW is the voices      — part · instrument; tap for the column
+//                                       sheet (§1's VOICE vector)
+//   the HEADER COLUMN is the sections — type · bars; tap for the row sheet
+//                                       (§1's SECTION vector)
+//   a CELL is a section × a voice     — tap for the cell sheet (§1's CELL
+//                                       vector), which is the whole point
+//   the FOOTER is the RECORD          — the master's seven words, and the
+//                                       performance five under them
+//   the CORNER is the TABLE           — fill from a genre, re-seed, transpose
+//
+// ===== WHAT IT IS NOT ===================================================
+// It is NOT a second table renderer. ui/wordgrid.js has been the one owner of
+// this skin since 2026-09-02 ("institutionalize it") and it grew a SHEET body
+// and a FOOTER for this wave rather than being copied: one accordion, one
+// refusal spelling, one dim-is-derived reading, one keyboard model. What is
+// here is which questions get asked, of whom, and what each answer would do.
+//
+// It is NOT a second vocabulary either. Every word on every chip comes from
+// `NuAvail.SHEETS` through the host's `sh()` (which is ui/eight.js `shSpec`),
+// and every write lands through a door that already existed — `putCell` /
+// `putRow` in document.js, `addSection` / `dupSection` / `moveSection` /
+// `dropSection` / `addVoice` / `dropVoice` in ui/eight.js, and `push()` /
+// `commit()` / `CTX.evolve` for the recompile. TABLE.md §5: "Every op is one
+// document write through the existing doors and lands at the next bar while
+// playing. No op adds a second write path." Nothing in this file writes to a
+// document field directly.
+//
+// ===== THE INHERIT LAW IS DRAWN, NOT RE-IMPLEMENTED =====================
+// §2: `cell → column → row → record → the genre's row`, first value wins, and
+// the table draws only DEVIATIONS — inherited quiet, written bold, a clear-back
+// on every written row. document.js `resolveFrom` is the one owner of that
+// order (wave 1) and this file asks it; `derived` on a sheet row is "no hand
+// has written at THIS tier", which is the same fact `.is-derived` has meant on
+// the trim grid since it was written.
+//
+// ===== THE PHONE IS THE FIRST LAYOUT, AND WHICH WAY THE TABLE FACES =====
+// §6 ¶A: *"mobile editing is truly critical"*, and §5 offers the transpose
+// ("voices as rows on a phone") as an op to be picked BY MEASUREMENT.
+// MEASURED 2026-09-04 at 320px on the rendered page (T5): sections-down is
+// 13ch + n×9ch of table inside a `.nu-pane`, which SCROLLS SIDEWAYS ITSELF and
+// leaves `document.documentElement.scrollWidth === clientWidth` — no sideways
+// PAGE scroll, which is the shell gate's law and the one that matters. The
+// transposed view is the same table with the two lists swapped and is one tap
+// away in the corner sheet, because which way you want to read a song depends
+// on whether you are arranging (down the sections) or casting (across the
+// band). Sections-down is the DEFAULT because a record has more voices than
+// most phones have columns and fewer sections than most songs have bars, so
+// the scroll it costs is the shorter one.
+
+import { wordGrid } from "./wordgrid.js";
+import { preview } from "./preview.js";
+
+const el = (tag, text, cls) => { const n = document.createElement(tag);
+  if (text != null) n.textContent = text;
+  if (cls) n.className = cls; return n; };
+
+/* ===== THE DRUMMER'S SIXTY-EIGHT, GROUPED BY WHAT THEY ACT ON ==========
+   TABLE.md §6: *"the does-array sheet groups the 68 ops by what they act on —
+   kick, snare, hats, toms and fills, dynamics, feel — one group open at a
+   time, the active ops pinned at the top."*
+
+   THE GROUPS ARE KITOPS' OWN COMMENT HEADINGS, read off kernel.js and written
+   down here rather than derived, because a comment is not data and a regex
+   over a comment is worse than a list. kernel.js's headings are THE
+   TIMEKEEPING HAND MOVES / CYMBALS / THE SNARE HAND / THE KICK FOOT / TOMS /
+   DENSITY, DYNAMICS AND THE HAND / NAMED PATTERNS, plus an unheaded
+   subtractive block at the top; Paul's six fold the cymbals in with the toms
+   (both are the fill hand) and the named patterns in with feel (a groove's
+   name IS a feel). The per-lane generated ops — `k.rot`, `s.thin`, `h.dens`
+   and their eighteen siblings, minted by kernel.js as `<lane>.<verb>` — go to
+   the lane they name, which is the only grouping they could have.
+   ANY OP NOT NAMED HERE FALLS INTO `feel`, so a new KITOP appears on the
+   sheet with no edit in this file and T5 counts sixty-eight either way. */
+const KITGROUPS = [
+  ["kick",  ["nokick", "kickdoubles", "four"]],
+  ["snare", ["snareonly", "backbeat", "onthree", "stickside", "claps",
+             "ghosts", "flams", "drags", "roll"]],
+  ["hats",  ["nohats", "busy", "offbeat", "ride", "pedal", "opens", "shuffle"]],
+  ["toms & fills", ["tomtime", "tomfill", "tomrun", "tomroll",
+                    "crash", "crashback"]],
+  ["dynamics", ["accents", "crescendo", "soft", "loud", "humanize"]],
+  ["feel",  []],
+];
+const LANEOF = { k: "kick", s: "snare", h: "hats" };
+function groupOf(op) {
+  const dot = String(op).indexOf(".");
+  if (dot > 0) { const g = LANEOF[op.slice(0, dot)]; if (g) return g; }
+  for (const [name, list] of KITGROUPS) if (list.includes(op)) return name;
+  return "feel";
+}
+
+/* ===== THE REGISTERS AND THE ENTRIES A HAND SAYS ======================
+   A REGISTER IS −4..3 AND THE RANGE IS NOT THIS FILE'S TO CHOOSE.
+   document.js `normalize` is the one owner of it ("`reg` … Number.isInteger &&
+   >= -4 && <= 3") and precompose §7b says what the units are: `cast.reg` is
+   the SOUNDING register, and `toGenre` hands the kernel back the base it
+   implies. MEASURED 2026-09-04: the first draft of this table offered
+   semitones (−24…24), every chip outside −4..3 was written and then silently
+   PRUNED by normalize on the next recompile, and the gate read the cell tier
+   back empty — a control that writes and does not arrive, which is this
+   repo's characteristic bug drawn by the file that was supposed to be gating
+   against it. The list is the whole legal range, which is eight words and
+   needs no ceiling argument at all.
+   The COLUMN's own value is added even when it is outside, so no cell can be
+   shown a value it cannot get back to. */
+const REGSTEPS = [-4, -3, -2, -1, 0, 1, 2, 3];
+const BARSTEPS = [1, 2, 4, 8, 12, 16, 24, 32];
+const REPEATS  = [2, 3, 4];
+
+/**
+ * Draw the Band table into `host`.
+ *
+ * `A` is the host's own seam — ui/eight.js builds it (see `tableAPI`) and it is
+ * a list of DOORS, not of data: every one of them is a function that already
+ * existed and already had one owner. The table holds no state of its own
+ * except which way it faces, which is the host's too (`A.facing()`), because a
+ * view that remembered its own orientation across a rebuild would be a second
+ * page state beside `openTab`.
+ */
+export function bandTable(host, A) {
+  const doc = A.doc();
+  const secs = (doc.form && doc.form.sections) || [];
+  const voices = doc.voices || [];
+  const across = A.facing() === "voices";     // the transpose (§5)
+
+  /* ---------- THE THINGS A SECTION SAYS (§1 SECTION) ------------------- */
+  const secWord = (i) => A.roleWord(secs[i].role);
+  const rowSheet = (i) => {
+    const s = secs[i], sid = s.id;
+    const f = [];
+    f.push(shField(A, "form.role", { section: sid }, "type"));
+    f.push(numField(A, "bars|" + sid, "bars", s.bars, BARSTEPS,
+      (v) => A.putRow(i, "bars", +v), false));
+    for (const [key, lab] of [["form.lvl", "level"], ["form.env", "shape"],
+                              ["form.intro", "intro"], ["form.outro", "outro"],
+                              ["form.mot", "motion"], ["form.pace", "pace"],
+                              ["development.period", "period"],
+                              ["development.breath", "breath"],
+                              ["development.pipe", "pipe"]])
+      f.push(shField(A, key, { section: sid }, lab));
+    /* THE ROW'S OWN HARMONY AND FEEL (wave 2a's five). They resolve
+       row-before-record, so the WORD a row prints when it says nothing is the
+       RECORD's word and the row is drawn quiet — which is §2 exactly, and the
+       reason the label says "the record's key" rather than "—". */
+    for (const [key, lab] of [["form.key", "key"], ["form.mode", "mode"],
+                              ["form.prog", "changes"], ["form.swing", "swing"],
+                              ["form.groove", "groove"]])
+      f.push(shField(A, key, { section: sid }, lab));
+    /* ...AND ITS CHAIN AND ITS ROOM (wave 2a's six). */
+    for (const [key, lab] of [["form.fx", "chain"], ["form.rev", "reverb"],
+                              ["form.echo", "echo"], ["form.dtime", "echo time"],
+                              ["form.room", "room"], ["form.pan", "across"]])
+      f.push(shField(A, key, { section: sid }, lab));
+    f.push(numField(A, "nudge|" + sid, "starts at", s.nudge || 0,
+      [0, 1, 2, 3, 4, 6, 8], (v) => A.putRow(i, "nudge", +v), true));
+    /* THE COMPILED LANES ARE READ-ONLY ON THE ROW (§1: "written by mot and by
+       cells"), and saying so is the refused-control law rather than a silence:
+       the motion above IS the writer, and this line is where a reader finds
+       that out. */
+    f.push({ kind: "say", label: "automation",
+      word: (s.auto && s.auto.length ? s.auto.length + " lanes" : "none"),
+      why: "compiled from the motion above — wave 3 makes a lane editable" });
+    f.push({ kind: "ops", label: "this section", ops: rowOps(A, i, s) });
+    return f;
+  };
+
+  /* ---------- THE THINGS A VOICE SAYS (§1 VOICE) ----------------------- */
+  const colSheet = (vi) => {
+    const v = voices[vi];
+    const f = [];
+    if (v.kind === "line") f.push(shField(A, "cast.part", { voice: v.name }, "plays"));
+    const ik = v.kind === "bass" ? "sound.bassinstrument"
+             : v.kind === "drums" ? "sound.drumkit" : "sound.instrument";
+    f.push(shField(A, ik, { voice: v.name }, v.kind === "drums" ? "machine" : "instrument"));
+    if (v.kind === "line") f.push(shField(A, "cast.material", { voice: v.name }, "reads by default"));
+    if (v.kind === "bass") f.push(shField(A, "cast.bassStyle", { voice: v.name }, "does by default"));
+    /* THE CHAIR'S OWN KNOBS, for the kinds that have them. These are the four
+       `sound.*` sheets a member's instrument facet drew; a sheet is where they
+       already lived, so they arrive here as themselves. */
+    for (const k of ["sound.attack", "sound.release", "sound.double", "sound.looping"])
+      if (A.hasSheet(k, { voice: v.name })) f.push(shField(A, k, { voice: v.name }, null));
+    /* THE COLUMN DEFAULTS A CELL MAY OVERRIDE (§1: "the column DEFAULT; a cell
+       may override"). Written here, they move every cell that says nothing. */
+    f.push(numField(A, "reg|" + v.name, "register",
+      A.castOf(vi, "reg") == null ? "" : A.castOf(vi, "reg"),
+      REGSTEPS, (x) => A.putCast(vi, "reg", x === "" ? null : +x), true,
+      "the genre's"));
+    f.push(numField(A, "entry|" + v.name, "enters at bar",
+      A.castOf(vi, "entry") == null ? "" : A.castOf(vi, "entry"),
+      [0, 1, 2, 4, 8], (x) => A.putCast(vi, "entry", x === "" ? null : +x), true,
+      "bar one"));
+    /* WHERE IT SITS IN THE MIX, AND THE STRIP ITSELF. §1 files `seat` on the
+       column: the fader, the pan, the three sends and the three insert slots.
+       This block said "it is the BOARD's, and this is the door" and that was
+       WRONG — MEASURED 2026-09-04, test/sheets.js counted zero insert seats on
+       the whole page the moment the Band pane became this table. The board has
+       bus strips and the section-automation grid and NO per-voice channel at
+       all, because Paul took the voices off it on 2026-08-28 (*"remove the
+       voices from the mixing board … add another nav item for the mixing per
+       voice"*). So the strip's only home was the Band pane's `mix` facet and
+       it comes here WHOLE. `voiceMix` is ui/engineer.js's own widget; this
+       seats it, and does not redraw one control of it.
+       THE BUSES STAY THE BOARD'S and keep their door beside it: a send goes
+       somewhere, and where it goes is not a fact about this player. */
+    f.push({ kind: "node", label: "seat", node: A.voiceStrip(v.name) });
+    f.push({ kind: "ops", label: "the buses", ops: [
+      { k: "tseat|" + v.name, word: "on the board",
+        aria: v.name + " — the buses its sends feed, on the board",
+        act: () => A.showBoard(v.name) } ] });
+    f.push({ kind: "ops", label: "this player", ops: colOps(A, vi, v) });
+    return f;
+  };
+
+  /* ---------- THE CELL, WHICH IS THE POINT (§1 CELL) ------------------- */
+  const cellSheet = (i, vi) => {
+    const s = secs[i], v = voices[vi], sid = s.id;
+    const f = [];
+    /* 1 · THE MOTIFS, WITH THEIR PREVIEWS AND THEIR PROVENANCE (§3). One
+       control and not two: the chips ARE the motif list, each wearing its own
+       `ui/preview.js` picture and the word that says where it came from — own,
+       guest: <genre>, or hand. The address is `material.cell|<voice>|<section>`
+       unchanged, which is the address Structure's reads grid used and three
+       gates drive. */
+    const reads = A.sh("material.cell", { voice: v.name, section: sid },
+                       v.name + " reads · " + A.secName(i));
+    if (reads) {
+      const w = A.wcell(reads);
+      /* THE PICTURE AND THE PROVENANCE RIDE ON THE MOTIFS ONLY. The first
+         option is the ABSENT detent — "—", the column's own answer — and it
+         names no motif, so asking the bank where it came from returned "hand"
+         and the strip labelled the empty chip as a hand's work. */
+      w.options = w.options.map((o) => (o.v === "" || o.v == null ? o : { ...o,
+        pv: A.previewOf(String(o.v)), prov: A.provWord(String(o.v)) }));
+      /* AN INHERITED MOTIF PRINTS WHAT IT INHERITS, QUIETLY — §2: "an
+         inherited value is drawn quiet", not an em dash. avail.js's absent
+         detent for this sheet is "—" (right for a `<select>`, which has to
+         spell "nothing stored"), and a table whose whole reading is
+         quiet-vs-bold has to print the WORD THAT SOUNDS and let the paint say
+         where it came from. `cellWord` is the same reader the grid's own cell
+         uses, so the sheet and the cell behind it can never disagree. */
+      f.push({ key: w.key, label: "motifs",
+               word: w.derived ? A.cellWord(i, vi) : w.label, value: w.value,
+               derived: w.derived, options: w.options, set: w.set, why: w.why,
+               clear: w.derived ? null : () => w.set("") });
+    }
+    /* 2 · WHAT IT DOES HERE. For a drummer that is an array out of the
+       sixty-eight, grouped; for anybody else it is the development word. */
+    const devKey = A.devSheetFor(v.kind);
+    const dev = A.sh(devKey, { voice: v.name, section: sid },
+                     v.name + " does · " + A.secName(i));
+    if (dev) {
+      const w = A.wcell(dev);
+      const fld = { key: w.key, label: "does", word: w.label, value: w.value,
+                    derived: w.derived, options: w.options, set: w.set, why: w.why,
+                    clear: w.derived ? null : () => w.set("") };
+      if (v.kind === "drums") fld.groups = groupsFor(w.options);
+      f.push(fld);
+    }
+    /* 3 · THE TWO COLUMN DEFAULTS A CELL MAY OVERRIDE (wave 1's cell tier). */
+    f.push(cellNum(A, i, vi, "entry", "enters at bar", [0, 1, 2, 4, 8]));
+    f.push(cellNum(A, i, vi, "reg", "register", REGSTEPS));
+    /* 4 · FOCUS — stored, resolved, and reaching nothing, which TABLE.md §1a
+       measured and T2e pins. A control that pretended otherwise would be the
+       declared-but-never-arriving bug drawn on purpose. */
+    f.push({ kind: "say", label: "focus",
+      word: A.cellOf(i, vi, "focus") ? "featured" : "no",
+      why: "measured 2026-09-04: box.focus indexes a one-entry stack and " +
+           "moves no event — the gate names it the day a reader lands" });
+    /* 5 · THE TWO WAVES THAT ARE NOT HERE YET, GREYED WITH THEIR REASON (§4's
+       "no silent grey"). */
+    f.push({ kind: "say", label: "mix automation", word: "rides the section",
+      why: "wave 3: a cell lane is an OFFSET on the row's, and the desk does " +
+           "not read one yet" });
+    f.push({ kind: "say", label: "artic · oct · rate · scale · clamp",
+      word: "the row's", why: "wave 4: these are per box today and moving " +
+            "them to the cell needs a song.js VERSION migration" });
+    f.push({ kind: "ops", label: "this cell", ops: cellOps(A, i, vi) });
+    return f;
+  };
+
+  /* ---------- WHAT A CELL PRINTS WITHOUT BEING OPENED ------------------ */
+  /* THE ONE WORD A PRODUCER SCANS DOWN A COLUMN is what this voice PLAYS here
+     — the motif for anybody who reads one, and the development word for the
+     two kinds that are told rather than asked (the bass takes the first line's
+     phrase; a kit has no motif at all). DIM means nothing has been written in
+     this cell OR its column for this section: §2's "the table draws only
+     deviations", which is what makes eighty cells readable. */
+  const cellRecord = (i, vi) => {
+    const s = secs[i], v = voices[vi];
+    const hand = A.written(i, vi);
+    const word = A.cellWord(i, vi);
+    return { key: "tcell|" + v.name + "|" + s.id,
+             value: word, label: word, derived: !hand,
+             say: v.name + " · " + A.secName(i),
+             sheet: () => cellSheet(i, vi) };
+  };
+
+  /* ---------- THE FOOTER: THE RECORD (§1 RECORD) ----------------------- */
+  const masterCells = () => A.MASTERROWS.map((m) => {
+    const cur = A.masterOf(m.key);
+    return { key: "tmaster|" + m.key, value: cur == null ? "" : cur,
+             label: m.key + " " + (cur == null ? "—" : (m.labels[cur] || cur)),
+             derived: cur == null, say: "the master's " + m.label,
+             options: [{ v: "", w: "none" },
+                       ...Object.keys(m.table).map((k) => ({ v: k, w: m.labels[k] || k }))],
+             set: (v) => A.setMaster(m.key, v || null) };
+  });
+  const perfCells = () => A.PERFROWS.map((p) => {
+    const sp = A.sh(p.key, {}, p.label);
+    if (!sp) return { text: "—" };
+    const w = A.wcell(sp);
+    return { ...w, key: "tperf|" + p.short, say: p.label,
+             label: p.short + " " + w.label };
+  });
+
+  /* ---------- AND THE TWO WAYS ROUND ----------------------------------- */
+  const secRows = () => secs.map((s, i) => ({
+    id: s.id, k: "trow|" + s.id, num: i + 1,
+    word: secWord(i), sub: s.bars + " bars",
+    here: i === A.editSec(),
+    aria: A.secName(i) + ", " + s.bars + " bars — open this section's vector",
+    sheet: () => rowSheet(i) }));
+  const voiceCols = () => voices.map((v, vi) => ({
+    id: "tcol|" + v.name, word: v.name, sub: A.playsWhat(v) || "",
+    vi: A.vpaintOf(vi),
+    aria: v.name + " — " + (A.playsWhat(v) || "no instrument") +
+          " — open this player's vector",
+    title: v.name + (A.playsWhat(v) ? " — " + A.playsWhat(v) : ""),
+    extra: A.lampFor(v.name),
+    sheet: () => colSheet(vi) }));
+  const voiceRows = () => voices.map((v, vi) => ({
+    id: "v" + v.name, k: "trow|" + v.name, word: v.name,
+    sub: A.playsWhat(v) || "",
+    aria: v.name + " — open this player's vector",
+    sheet: () => colSheet(vi) }));
+  const secCols = () => secs.map((s, i) => ({
+    id: "tcol|" + s.id, word: secWord(i), sub: s.bars + " bars",
+    aria: A.secName(i) + " — open this section's vector",
+    sheet: () => rowSheet(i) }));
+
+  const spec = across
+    ? { key: "table", corner: "player", rows: voiceRows(), cols: secCols(),
+        cell: (rid, cid) => {
+          const vi = voices.findIndex((v) => "v" + v.name === rid);
+          const i = secs.findIndex((s) => "tcol|" + s.id === cid);
+          return (vi < 0 || i < 0) ? null : cellRecord(i, vi); } }
+    : { key: "table", corner: "section", rows: secRows(), cols: voiceCols(),
+        cell: (rid, cid) => {
+          const i = secs.findIndex((s) => s.id === rid);
+          const vi = voices.findIndex((v) => "tcol|" + v.name === cid);
+          return (i < 0 || vi < 0) ? null : cellRecord(i, vi); },
+        foot: [
+          { id: "master", k: "tfoot|master", word: "master",
+            aria: "the master chain — the record's own last stage",
+            cells: masterCells(),
+            sheet: () => [{ kind: "say", label: "the master",
+              word: "drive · glue · tape · space · width · tilt · ceiling",
+              sub: "the seven words are the cells across this row" }] },
+          { id: "perf", k: "tfoot|perf", word: "performance",
+            aria: "how the band plays it — the record's own performance",
+            cells: perfCells(),
+            /* THE THREE PERFORMANCE FACTS THAT ARE NUMBERS. They were three
+               range inputs on the Structure pane, which is a pointer-only
+               control and therefore a refused one (§6 ¶A). Said as words here,
+               where they can be tapped. */
+            sheet: () => [
+              numField(A, "take", "take", A.perfOf("take") || 0,
+                [1, 2, 3, 4, 5, 6, 8, 12], (v) => A.putPerf("take", +v), false),
+              numField(A, "humanize", "humanize",
+                A.perfOf("humanize") == null ? "" : A.perfOf("humanize"),
+                [0, 0.2, 0.4, 0.6, 0.8, 1], (v) => A.putPerf("humanize", v === "" ? null : +v),
+                true, "the genre's"),
+              { key: "ontime", label: "on time",
+                word: A.perfOf("ontime") ? "dead on the grid" : "as the band plays",
+                derived: !A.perfOf("ontime"),
+                options: [{ v: "", w: "as the band plays" },
+                          { v: "1", w: "dead on the grid" }],
+                set: (v) => A.putPerf("ontime", v ? true : null),
+                clear: A.perfOf("ontime") ? () => A.putPerf("ontime", null) : null },
+            ] },
+        ] };
+
+  /* THE CORNER IS THE TABLE ITSELF (§5's fourth list). It is the `<th>` every
+     table already has and the only place on the surface that is about the
+     WHOLE record rather than a row, a column or a cell. */
+  spec.cornerSheet = () => [
+    { kind: "ops", label: "this record", ops: tableOps(A, across) },
+  ];
+  spec.cap = null;
+
+  const g = wordGrid(host, spec);
+  /* THE CORNER, WIRED AFTER THE FACT because the component's corner is a plain
+     `<th>` word and every other caller wants it to stay one. One button, one
+     address, and the same sheet body the three heads open. */
+  const cornerTh = g.table.querySelector("thead th:first-child");
+  if (cornerTh) {
+    cornerTh.textContent = "";
+    const cb = el("button", spec.corner, "nu-rowjump nu-corner");
+    cb.type = "button";
+    cb.dataset.k = "tcorner";
+    cb.setAttribute("aria-label", "the whole record — fill it from a genre, " +
+      "re-seed it, or turn the table round");
+    cb.addEventListener("click", () => g.openCorner(spec.cornerSheet(), cb));
+    cornerTh.append(cb);
+  }
+  return g;
+}
+
+/* ===================================================================== */
+/* ---- the field builders: one shape, three sources -------------------- */
+
+/* WHICH VOCABULARIES ARE MENUS AND NOT STRIPS OF WORDS, and the list is not
+   this file's opinion. test/selects.js's `MENUS` is the one owner of the
+   controls Paul named on 2026-09-02 (*"The combo boxes just don't work … I was
+   expecting more of onfocus show custom dropdown then filter based on input"*)
+   and these three are on it; `sound.bassinstrument` is the bass's spelling of
+   one of them. The FOURTH rule is a measurement rather than a name: a strip
+   longer than twenty-four words is a page of words, which is what
+   `bandBlock`'s own comment said about the instrument list ("a sheet of 108 lit
+   words is a page of them"). Everything shorter is chips, because chips are
+   decisions and this page has said so since 2026-08-16. */
+const COMBOKEYS = new Set(["cast.part", "sound.instrument",
+                           "sound.bassinstrument", "sound.drumkit"]);
+const LONGSTRIP = 24;
+
+/** A field off an avail.js sheet — the ordinary case, and the only one that
+ *  needs no vocabulary of its own. `label` null means "the sheet's own". */
+function shField(A, key, scope, label) {
+  const sp = A.sh(key, scope, null);
+  if (!sp) return { kind: "say", label: label || key, word: "—",
+                    why: "no vocabulary owner for " + key };
+  if (COMBOKEYS.has(key) || (sp.options || []).length > LONGSTRIP) {
+    const w2 = A.wcell(sp);
+    return { key: w2.key, label: label || sp.label, word: w2.label,
+             value: w2.value, derived: w2.derived, why: w2.why,
+             node: A.combo(sp),
+             clear: w2.derived ? null : () => w2.set("") };
+  }
+  const w = A.wcell(sp);
+  /* `value` IS NOT `word`, AND BOTH HAVE TO TRAVEL. The word is what the row
+     PRINTS (avail.js's label for the standing option, or the inherited one);
+     the value is what the record STORES, and it is what the strip presses.
+     The first draft of this file passed only the word, so every sheet field
+     pressed the absent chip and a person tapping the word they were already on
+     wrote nothing — the gate read `hook -> hook` and correctly called the
+     control silent. */
+  return { key: w.key, label: label || sp.label, word: w.label,
+           value: w.value, derived: w.derived, options: w.options,
+           set: w.set, why: w.why,
+           clear: w.derived ? null : () => w.set("") };
+}
+
+/** A NUMBER SAID AS WORDS. There is no `<input type=range>` anywhere on this
+ *  surface, and that is §6's law rather than a taste: *"A control that only
+ *  works with a pointer is a refused control."* A range needs a drag; a strip
+ *  of chips needs a tap. */
+function numField(A, key, label, cur, steps, set, clearable, noneWord) {
+  const has = cur !== "" && cur != null;
+  const list = steps.slice();
+  if (has && !list.includes(+cur)) list.push(+cur);
+  list.sort((a, b) => a - b);
+  return { key, label,
+    word: has ? String(cur) : (noneWord || "—"),
+    value: has ? String(cur) : "",
+    derived: !has,
+    options: [...(clearable ? [{ v: "", w: noneWord || "none" }] : []),
+              ...list.map((n) => ({ v: String(n), w: String(n) }))],
+    set,
+    clear: (clearable && has) ? () => set("") : null };
+}
+
+/** A CELL OVERRIDE OF A COLUMN DEFAULT — §2 drawn as a control. The word it
+ *  prints when nothing is written here is what it INHERITS, and it is drawn
+ *  quiet; the clear-back appears the moment a hand writes. */
+function cellNum(A, i, vi, field, label, steps) {
+  const own = A.cellOf(i, vi, field);
+  const inh = A.resolve(i, vi, field);
+  const has = own != null;
+  const list = steps.slice();
+  for (const n of [own, inh]) if (n != null && !list.includes(+n)) list.push(+n);
+  list.sort((a, b) => a - b);
+  return { key: "tcellnum|" + field + "|" + vi + "|" + i, label,
+    word: has ? String(own) : (inh == null ? "—" : String(inh)),
+    value: has ? String(own) : "",
+    derived: !has,
+    sub: has ? null : "the column's",
+    options: [{ v: "", w: "the column's" },
+              ...list.map((n) => ({ v: String(n), w: String(n) }))],
+    set: (v) => A.putCell(i, vi, field, v === "" ? null : +v),
+    clear: has ? () => A.putCell(i, vi, field, null) : null };
+}
+
+/** THE DRUMMER'S GROUPS, built from the options the sheet actually offers so a
+ *  refused word keeps its refusal and a group with nothing in it is not drawn.
+ *  The order is KITGROUPS', which is the order a drummer's own limbs are in. */
+function groupsFor(options) {
+  const by = new Map();
+  for (const o of options) {
+    if (o.v === "" || o.v == null) continue;
+    const g = groupOf(o.v);
+    if (!by.has(g)) by.set(g, []);
+    by.get(g).push(String(o.v));
+  }
+  const out = [];
+  for (const [name] of KITGROUPS) if (by.has(name)) out.push({ word: name, vals: by.get(name) });
+  for (const [name, vals] of by) if (!out.find((x) => x.word === name)) out.push({ word: name, vals });
+  return out;
+}
+
+/* ===================================================================== */
+/* ---- the op grammar (§5), every one of them one existing door -------- */
+
+function rowOps(A, i, s) {
+  const n = A.doc().form.sections.length;
+  return [
+    { k: "trow-add", word: "+ section", aria: "add a section after this one",
+      act: () => A.addSection(i + 1) },
+    { k: "trow-up|" + s.id, word: "▲ up", aria: "move this section earlier",
+      why: i === 0 ? "it is already first" : null, act: () => A.moveSection(i, -1) },
+    { k: "trow-down|" + s.id, word: "▼ down", aria: "move this section later",
+      why: i === n - 1 ? "it is already last" : null, act: () => A.moveSection(i, 1) },
+    { k: "trow-dup|" + s.id, word: "duplicate", aria: "duplicate this section",
+      act: () => A.dupSection(s.id) },
+    ...REPEATS.map((r) => ({ k: "trow-rep|" + s.id + "|" + r, word: "×" + r,
+      aria: "repeat this section " + r + " times", act: () => A.repeatSection(s.id, r) })),
+    { k: "trow-deal|" + s.id, word: "deal again",
+      aria: "deal this section's cells again from the genre",
+      act: () => A.dealRow(i) },
+    { k: "trow-del|" + s.id, word: "delete", aria: "delete this section",
+      why: n <= 1 ? "a record needs one section" : null,
+      act: () => A.dropSection(s.id) },
+  ];
+}
+
+function colOps(A, vi, v) {
+  const n = A.doc().voices.length;
+  return [
+    { k: "tcol-solo|" + v.name, word: "▶ alone", aria: "play " + v.name + " alone",
+      act: () => A.soloVoice(v.name) },
+    { k: "tcol-add|line", word: "+ line", aria: "hire another line",
+      act: () => A.addVoice("line") },
+    { k: "tcol-add|bass", word: "+ bass", aria: "hire a bass",
+      why: A.hasKind("bass") ? "the record already has a bass" : null,
+      act: () => A.addVoice("bass") },
+    { k: "tcol-add|drums", word: "+ drums", aria: "hire a drummer",
+      why: A.hasKind("drums") ? "the record already has a drummer" : null,
+      act: () => A.addVoice("drums") },
+    { k: "tcol-left|" + v.name, word: "◀ left", aria: "move this player left",
+      why: vi === 0 ? "it is already first" : null, act: () => A.moveVoice(vi, -1) },
+    { k: "tcol-right|" + v.name, word: "right ▶", aria: "move this player right",
+      why: vi === n - 1 ? "it is already last" : null, act: () => A.moveVoice(vi, 1) },
+    { k: "tcol-deal|" + v.name, word: "deal again",
+      aria: "deal this player's cells again from the genre",
+      act: () => A.dealCol(vi) },
+    /* "MAKE X Y" IS A COLUMN OP NOW (§5). ui/produce.js owns the verb and its
+       qualities (louder · quieter · gone · back · alone); what the table adds
+       is the X — the column you opened is the subject, so the sentence is
+       already half said when you get there. */
+    ...A.makeQualities(v.name).map((q) => ({ k: "tcol-make|" + v.name + "|" + q.v,
+      word: q.w, aria: "make " + v.name + " " + q.w,
+      act: () => A.makeXY(v.name, q.v) })),
+    { k: "tcol-del|" + v.name, word: "remove", aria: "remove " + v.name + " from the band",
+      why: n <= 1 ? "a band needs one player" : null,
+      act: () => A.dropVoice(v.name) },
+  ];
+}
+
+function cellOps(A, i, vi) {
+  const v = A.doc().voices[vi], s = A.doc().form.sections[i];
+  return [
+    { k: "tcell-clear|" + v.name + "|" + s.id, word: "clear to inherit",
+      aria: "clear everything written in this cell",
+      why: A.written(i, vi) ? null : "nothing is written here",
+      act: () => A.clearCell(i, vi) },
+    { k: "tcell-copyrow|" + v.name + "|" + s.id, word: "copy across the row",
+      aria: "give every player in this section what this cell says",
+      act: () => A.copyCell(i, vi, "row") },
+    { k: "tcell-copycol|" + v.name + "|" + s.id, word: "copy down the column",
+      aria: "give this player the same thing in every section",
+      act: () => A.copyCell(i, vi, "col") },
+  ];
+}
+
+function tableOps(A, across) {
+  return [
+    { k: "ttab-fill", word: "fill from a genre",
+      aria: "start this record again from a genre", act: () => A.fillFromGenre() },
+    { k: "ttab-seed", word: "re-seed",
+      aria: "deal this record again at a new reading", act: () => A.reseed() },
+    { k: "ttab-transpose", word: across ? "sections down" : "players down",
+      aria: across ? "turn the table back: sections down the side"
+                   : "turn the table round: players down the side",
+      act: () => A.setFacing(across ? "sections" : "voices") },
+  ];
+}

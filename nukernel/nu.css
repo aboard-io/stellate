@@ -7079,6 +7079,118 @@ table.nu-trims{ color: var(--ink); }
    said to be quiet, in the same italic the sheets use for the same fact. */
 .nu-wchip.is-quiet{ font-style: italic; color: var(--dim); }
 
+/* ===== THE SHEET, THE OPS AND THE GROUPS (2026-09-04, TABLE.md 2b) ======
+   The Band table's accordion opens onto a VECTOR rather than onto one strip of
+   words (ui/wordgrid.js says why): one cell-row per field, the label on the
+   left, the word that is true on the right, a clear-back where a hand has
+   written, and the field's own strip of words growing under its own row.
+
+   IT IS A LIST AND NOT A GRID, and that is the phone-first law rather than a
+   preference: two columns at 320px give a label 12ch and a value 12ch, which
+   is not enough for "artic · oct · rate · scale · clamp" or for "yamaha grand
+   piano". The label WRAPS above the control below 30rem and stands beside it
+   above; the control is the 44px plate at both widths, because a target may
+   not shrink to fit a layout.
+   NOTHING HERE SCROLLS INSIDE ITSELF. `.nu-pane` is still the one scroller
+   and the sheet's row is still a `<tr>` in the table, so a long sheet makes
+   the TABLE taller and the page scrolls, which is nu.css's standing law about
+   menus (2026-08-16, "Don't make me scroll INSIDE a popup"). */
+/* `.nu-vsheet` AND NOT `.nu-sheet`: that name is TAKEN. ui/selects.js's
+   multi-choice widget has been a `<fieldset class="nu-sheet">` since the sheets
+   shipped, with its own grid CSS above and three readers in test/selects.js
+   (`.nu-sheet[data-sheet=…] .nu-opt`). The first draft of this block took the
+   name and test/selects.js immediately reported thirty-two lit sheets with no
+   key — a collision found by the gate whose whole job is that vocabulary. The
+   V is for the VECTOR, which is what this one holds. */
+.nu-vsheet{ display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s2); background: var(--well); border-radius: var(--r2);
+  border: var(--bw) solid var(--rule);
+  /* ---- AND IT STAYS WHERE THE THUMB IS ------------------------------
+     THE TABLE IS WIDER THAN THE PANE and the pane is what scrolls sideways
+     (`.nu-pane`, this page's standing answer for a wide table). An open row
+     spans every column, so without this the sheet was as wide as the TABLE:
+     at 390px the third op — "copy down the column" — sat 200px past the right
+     edge and a thumb had to scroll the grid sideways to reach a control that
+     is not about a column at all. MEASURED on the rendered page before the
+     rule and after.
+     `sticky` on the CELL and a viewport width on the sheet: the row stays a
+     real `<tr>` (the accordion's whole argument), the sheet rides the scroll
+     to the pane's left edge, and it is never wider than the screen minus the
+     stripe. §6 ¶A — "every op in §5 … reachable by tap at 320px" — is a claim
+     about where a control IS, not only about whether it exists. */
+  position: sticky; inset-inline-start: 0;
+  inline-size: min(100%, calc(100vw - var(--tray-w) - 2 * var(--s3))); }
+.nu-wopen > td{ position: relative; }
+.nu-sheetrow{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); }
+.nu-sheetlab{ flex: 0 0 auto; min-inline-size: 11ch;
+  font: 700 var(--t1)/1.25 var(--sans, inherit); color: var(--dim); }
+.nu-sheetrow > .nu-wcell{ flex: 1 1 12ch; max-inline-size: 26ch;
+  text-align: start; }
+.nu-sheetsub{ flex: 0 0 auto; color: var(--dim); font-size: var(--t0); }
+/* A ROW WITH A WIDGET IN IT IS A BLOCK, not a label-beside-a-control. The
+   channel strip is the one user and it is 207px wide at its narrowest; the
+   label stands above it and it takes the sheet's whole width, which is the
+   pane's. See ui/wordgrid.js's `nu-noderow` for the measurement. */
+.nu-sheetrow.nu-noderow{ flex-direction: column; align-items: stretch; }
+.nu-sheetrow.nu-noderow > .nu-sheetlab{ min-inline-size: 0; }
+.nu-seatstrip{ inline-size: 100%; min-inline-size: 0; }
+/* A READOUT, AND A REFUSAL IS A READOUT WITH A REASON. `.is-refused` is the
+   cell plate's own dashed grey, said again for a span — a field the engine
+   cannot reach yet (a cell's mix lane, wave 3) prints its word, wears the
+   dash, and carries `data-why` where a gate and a long-press both read it. */
+.nu-sheetsay{ flex: 1 1 auto; min-block-size: var(--tap);
+  display: flex; align-items: center;
+  font: var(--fw-body) var(--t1)/1.25 var(--sans, inherit); color: var(--ink); }
+.nu-sheetsay.is-refused{ opacity: .6; border-block-end: var(--bw) dashed var(--rule);
+  cursor: help; }
+/* THE CLEAR-BACK (TABLE.md §2), and it is drawn only where there is something
+   to clear — so its presence is itself the reading "a hand wrote here". */
+.nu-clearback{ flex: 0 0 auto; min-block-size: var(--tap);
+  padding-inline: var(--s3);
+  font: var(--btn-fw) var(--t0)/1.2 var(--sans, inherit); color: var(--dim); }
+/* THE OPS (§5's grammar). Chunky, wrapping, 44px, never a menu: an op is a
+   decision and decisions are chips on this page. */
+.nu-opbar{ display: flex; flex-wrap: wrap; gap: var(--s2); flex: 1 1 100%; }
+.nu-opbtn{ min-block-size: var(--tap); padding-inline: var(--s3);
+  font: var(--btn-fw) var(--t1)/1.2 var(--sans, inherit); }
+.nu-opbtn[disabled]{ opacity: .5; cursor: not-allowed; }
+/* THE DRUMMER'S SIX GROUPS, one open at a time, the standing answer pinned
+   above them so you can always see the word you are on. */
+.nu-wgroups{ display: flex; flex-direction: column; gap: var(--s2); }
+.nu-groupbar{ display: flex; flex-wrap: wrap; gap: var(--s2); }
+.nu-groupbtn{ min-block-size: var(--tap); padding-inline: var(--s3);
+  font: var(--btn-fw) var(--t1)/1.2 var(--sans, inherit); }
+.nu-groupbtn[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
+  border-color: var(--hand); }
+.nu-wchips.nu-pinned{ background: transparent; border-style: dashed; }
+/* A MOTIF CHIP CARRIES ITS PICTURE AND WHERE IT CAME FROM (§3). The preview is
+   ui/preview.js's svg and the provenance is one small word under it — own,
+   guest: <genre>, or hand — so two motifs are told apart by SHAPE before
+   either name is read and neither is mistaken for the record's own. */
+.nu-wchip{ display: inline-flex; align-items: center; gap: var(--s1);
+  flex-wrap: wrap; justify-content: center; }
+/* ...AND `display` ON A CHIP MEANS `[hidden]` HAS TO BE SAID AGAIN. The
+   browser's own `[hidden] { display: none }` is a UA rule of the same
+   specificity, so the line above WON and every one of the drummer's
+   sixty-eight ops stayed on the screen with one group "open". The gate said
+   ten of sixty-eight because it read the `hidden` PROPERTY — a check on the
+   plan and not on the artifact, which is the failure this branch legislates
+   against; it measures the rendered box now, and this is the rule that makes
+   the measurement true. */
+.nu-wchip[hidden]{ display: none; }
+.nu-chipword{ flex: 0 0 auto; }
+.nu-chipprov{ flex: 0 0 100%; font-size: var(--t0); opacity: .8; }
+/* THE CORNER IS A CONTROL NOW — the whole record, where every table has a
+   blank square. It wears the row head's own plate because it IS a head. */
+.nu-corner{ font: 700 .62rem/1.3 var(--mono, monospace); text-transform: uppercase;
+  letter-spacing: .04em; }
+/* THE FOOTER: the record's own two rows, held apart from the sections by a
+   rule rather than by a gap, because they are part of the same table and a gap
+   would read as a second table. */
+.nu-wordgrid tfoot .nu-footrow > th,
+.nu-wordgrid tfoot .nu-footrow > td{ border-block-start: var(--bw-hard) solid var(--rule); }
+
 /* ---- THE BOARD'S LEGEND RESERVES ITS TALLEST STATE ---------------------
    nukernel/desk-gate.js, on the run of 2026-09-02: *"at 390: tapping each of
    the 5 children of the Mix icon … moves neither scrollY nor the board's panel

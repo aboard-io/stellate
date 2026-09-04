@@ -1,0 +1,633 @@
+{
+  "what": "T7, TABLE.md §6 ¶A and §7 — the inventory of every control the Band pane and the Structure pane offered at HEAD (v265, 3ce6125), with the home each one has in the Band table. Paul, 2026-09-03: 'get rid of everything it replaces. Move things around as needed. Don't lose unreplaced options. Find places for things and keep discoverability high.'",
+  "how": "MEASURED, not read off the source: test/table-inventory.probe.js walked the rendered DOM of #pan-band and #pan-structure through all 36 states the two panes have (the roster, the crate, each voice x each of its four facets, the section list, each section's own questions, performance) at 390x844 and collected every button/select/input/[data-k]/[data-sel] in each. 72 control families, plus the two panes' own nav-tree children, which are controls too.",
+  "law": "A home is (tier, where) — tier is row | column | cell | footer | table | elsewhere, and `reach` is the data-k the gate must find on the rendered table at 320px, tappable, at least 44px. `open` is what has to be tapped first to reach it (the sheet it lives in). A control with no home fails T7; so does a home that is not tap-reachable at 320.",
+  "elsewhere": "Two homes are outside the table on purpose and each says why: the Motifs bank owns a motif's own editor, and Where owns starting a record. Each is reached by ONE tap from the table, and the reach names that door. The SEAT is not one of them: it was filed as the board's in the first draft and test/sheets.js measured that wrong within the hour (zero insert seats on the whole page), so the voice's channel strip is drawn in its column sheet.",
+  "controls": [
+    {
+      "k": "member|<voice>",
+      "pane": "Band / roster",
+      "was": "the member box — opens this player",
+      "home": "column",
+      "field": "the column head IS the player; tapping it opens the VOICE vector",
+      "reach": "tcol|<voice>",
+      "open": null
+    },
+    {
+      "k": "memreads|<voice>|<motif>",
+      "pane": "Band / roster",
+      "was": "a chip per motif the player reads; opens the motif editor",
+      "home": "cell",
+      "field": "motifs — the cell sheet's motif chips, each with its preview and its provenance",
+      "reach": "material.cell|<voice>|<section>",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "k": "solo|<voice>",
+      "pane": "Band / roster, Band / instrument facet",
+      "was": "play this player alone",
+      "home": "column op",
+      "field": "hear it alone",
+      "reach": "tcol-solo|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "panel-addvoice<kind>",
+      "pane": "Band / roster",
+      "was": "+ line / + bass / + drums — hire another player",
+      "home": "column op",
+      "field": "add a voice (build-the-band's own three offers)",
+      "reach": "tcol-add|line",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "addvoice",
+      "pane": "Band / nav tree",
+      "was": "+ line on the stripe",
+      "home": "column op",
+      "field": "the same three offers; the stripe keeps its own row",
+      "reach": "tcol-add|line",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "dropvoice",
+      "pane": "Band / nav tree (voice level)",
+      "was": "drop this voice",
+      "home": "column op",
+      "field": "remove",
+      "reach": "tcol-del|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:cast.part|<voice>",
+      "pane": "Band / plays facet",
+      "was": "what this line plays — riff, lead, counter, pad, stab, drone",
+      "home": "column",
+      "field": "plays",
+      "reach": "cast.part|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:cast.material|<voice>",
+      "pane": "Band / plays facet",
+      "was": "the motif this line reads BY DEFAULT",
+      "home": "column",
+      "field": "reads by default (the `\"\"` key of the material map — the column tier of §2)",
+      "reach": "cast.material|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:cast.bassStyle|<voice>",
+      "pane": "Band / plays facet (bass)",
+      "was": "the bass's default operator",
+      "home": "column",
+      "field": "does by default",
+      "reach": "cast.bassStyle|<bass>",
+      "open": "tcol|<bass>"
+    },
+    {
+      "k": "sel:sound.instrument|<voice>",
+      "pane": "Band / instrument facet",
+      "was": "the chair's instrument",
+      "home": "column",
+      "field": "instrument",
+      "reach": "sound.instrument|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:sound.bassinstrument|<voice>",
+      "pane": "Band / instrument facet (bass)",
+      "was": "the bass's instrument",
+      "home": "column",
+      "field": "instrument",
+      "reach": "sound.bassinstrument|<bass>",
+      "open": "tcol|<bass>"
+    },
+    {
+      "k": "sel:sound.drumkit|<voice>",
+      "pane": "Band / instrument facet (drums)",
+      "was": "the machine",
+      "home": "column",
+      "field": "machine",
+      "reach": "sound.drumkit|<drums>",
+      "open": "tcol|<drums>"
+    },
+    {
+      "k": "sel:sound.attack|<voice>",
+      "pane": "Band / instrument facet",
+      "was": "the chair's attack",
+      "home": "column",
+      "field": "attack — the chair's own knobs, in its sheet",
+      "reach": "sound.attack|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:sound.release|<voice>",
+      "pane": "Band / instrument facet",
+      "was": "the chair's release",
+      "home": "column",
+      "field": "release",
+      "reach": "sound.release|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:sound.double|<voice>",
+      "pane": "Band / instrument facet",
+      "was": "doubling",
+      "home": "column",
+      "field": "doubling",
+      "reach": "sound.double|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:sound.looping|<voice>",
+      "pane": "Band / instrument facet (a sampler)",
+      "was": "looping — the zone's own, or a hand's",
+      "home": "column",
+      "field": "looping",
+      "reach": "sound.looping|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "loopin<voice> / loopout<voice> / looping<voice> / loopreset<voice> / loopstrip<voice>",
+      "pane": "Band / instrument facet (a sampler)",
+      "was": "the loop points strip — in, out, on, reset",
+      "home": "column",
+      "field": "looping opens the strip; the POINTS are the sampler's own and stay with the crate, one tap away",
+      "reach": "sound.looping|<voice>",
+      "open": "tcol|<voice>",
+      "note": "the four numeric loop points are a sampler zone's fact, not a vector field; they are drawn where the sample is (the crate), which the column sheet's instrument row reaches."
+    },
+    {
+      "k": "reg<voice>",
+      "pane": "Band / plays facet",
+      "was": "the player's register (a range input — a pointer-only control, §6's refusal)",
+      "home": "column",
+      "field": "register, as chips; and a CELL may override it (§1: 'the column DEFAULT; a cell may override')",
+      "reach": "reg|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "entry<voice>",
+      "pane": "Band / plays facet",
+      "was": "enters at bar (a range input)",
+      "home": "column",
+      "field": "enters at bar, as chips; a cell may override it",
+      "reach": "entry|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "ins|<voice>|<n>",
+      "pane": "Band / mix facet",
+      "was": "the three insert slots",
+      "home": "column",
+      "field": "seat — the voice's own channel strip (ui/engineer.js voiceMix), drawn in its column sheet",
+      "reach": "ins|<voice>|1",
+      "open": "tcol|<voice>",
+      "note": "MEASURED 2026-09-04: the board has NO per-voice channel (Paul took the voices off it 2026-08-28), so the strip's only home was the Band pane's mix facet and it moves into the column sheet whole."
+    },
+    {
+      "k": "b|<voice>|<bus>",
+      "pane": "Band / mix facet",
+      "was": "the three bus sends",
+      "home": "column",
+      "field": "seat — the sends on the same strip; the BUSES they feed stay the board's, one tap away",
+      "reach": "ins|<voice>|1",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "material.cell|<voice>|<section>",
+      "pane": "Band / plays facet, Structure / reads grid",
+      "was": "what this voice reads in this section",
+      "home": "cell",
+      "field": "motifs",
+      "reach": "material.cell|<voice>|<section>",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "k": "dev.line|<voice>|<section>",
+      "pane": "Band / plays facet, Structure / does grid",
+      "was": "what a line DOES in this section",
+      "home": "cell",
+      "field": "does",
+      "reach": "dev.line|<voice>|<section>",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "k": "dev.bass|<voice>|<section>",
+      "pane": "Structure / does grid",
+      "was": "the bass's operator in this section",
+      "home": "cell",
+      "field": "does",
+      "reach": "dev.bass|<bass>|<section>",
+      "open": "tcell|<bass>|<section>"
+    },
+    {
+      "k": "dev.kit|<voice>|<section>",
+      "pane": "Structure / does grid",
+      "was": "what the drummer does in this section — the 68 KITOPS",
+      "home": "cell",
+      "field": "does, GROUPED by what each op acts on (kick · snare · hats · toms & fills · dynamics · feel), one group open at a time, the standing answer pinned",
+      "reach": "dev.kit|<drums>|<section>",
+      "open": "tcell|<drums>|<section>"
+    },
+    {
+      "k": "tray|<motif>",
+      "pane": "Band / motif tray",
+      "was": "assign a motif to the open member",
+      "home": "cell",
+      "field": "motifs — the same chips, now with previews and provenance",
+      "reach": "material.cell|<voice>|<section>",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "k": "tray-new",
+      "pane": "Band / motif tray",
+      "was": "+ new motif — mint one and give it to this member",
+      "home": "elsewhere: Motifs",
+      "field": "the bank is the record's material (§3) and Motifs keeps its own pane; a motif is minted and edited there",
+      "reach": "toptab-Motif",
+      "open": null,
+      "note": "TABLE.md §8 wave 2: 'Motif becomes Motifs and stays.'"
+    },
+    {
+      "k": "sample-play|<id>",
+      "pane": "Band / samples crate",
+      "was": "hear this sample alone",
+      "home": "elsewhere: the crate",
+      "field": "the crate is the record's files, not a vector; it is reached from the column sheet's instrument row",
+      "reach": "sound.instrument|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "sel:sample-swap|<voice>",
+      "pane": "Band / samples crate",
+      "was": "swap the sample under this chair",
+      "home": "column",
+      "field": "instrument — the same avail.js write",
+      "reach": "sound.instrument|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "scol|<grid>|<voice>",
+      "pane": "Structure / five grids",
+      "was": "the column head — open this player's instrument",
+      "home": "column",
+      "field": "the column head, and it opens the whole VOICE vector rather than one facet of it",
+      "reach": "tcol|<voice>",
+      "open": null
+    },
+    {
+      "k": "srow|<grid>|<section>",
+      "pane": "Structure / five grids",
+      "was": "the row head — open this section's questions and put the ear on it",
+      "home": "row",
+      "field": "the row head, and it opens the whole SECTION vector",
+      "reach": "trow|<section>",
+      "open": null
+    },
+    {
+      "k": "secs<i>",
+      "pane": "Structure / the form list",
+      "was": "the numbered section button",
+      "home": "row",
+      "field": "the row head carries the ordinal as its live playhead cell",
+      "reach": "trow|<section>",
+      "open": null
+    },
+    {
+      "k": "sel:form.role|<section>",
+      "pane": "Structure / the form list",
+      "was": "the section's name",
+      "home": "row",
+      "field": "type",
+      "reach": "form.role|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "form.bars|<section>",
+      "pane": "Structure / the form list",
+      "was": "how many bars (a number input)",
+      "home": "row",
+      "field": "bars, as chips",
+      "reach": "bars|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "form.lvl|<section>",
+      "pane": "Structure / the level grid",
+      "was": "where does it sit?",
+      "home": "row",
+      "field": "level",
+      "reach": "form.lvl|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "form.env|<section>",
+      "pane": "Structure / the shape grid",
+      "was": "what does it do over the section?",
+      "home": "row",
+      "field": "shape",
+      "reach": "form.env|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "form.intro|<section>",
+      "pane": "Structure / the rest grid",
+      "was": "how do we get into it?",
+      "home": "row",
+      "field": "intro",
+      "reach": "form.intro|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "form.outro|<section>",
+      "pane": "Structure / the rest grid",
+      "was": "how do we get out of it?",
+      "home": "row",
+      "field": "outro",
+      "reach": "form.outro|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "form.mot|<section>",
+      "pane": "Structure / the rest grid",
+      "was": "the filter over it?",
+      "home": "row",
+      "field": "motion",
+      "reach": "form.mot|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "development.period|<section>",
+      "pane": "Structure / the rest grid",
+      "was": "and bar by bar?",
+      "home": "row",
+      "field": "period",
+      "reach": "development.period|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "development.breath|<section>",
+      "pane": "Structure / the rest grid",
+      "was": "how long may the notes be?",
+      "home": "row",
+      "field": "breath",
+      "reach": "development.breath|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "development.pipe|<section>",
+      "pane": "Structure / the rest grid",
+      "was": "what happens to it after it's played?",
+      "home": "row",
+      "field": "pipe",
+      "reach": "development.pipe|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "nudges<i>",
+      "pane": "Structure / the form list",
+      "was": "how far into the tune does it start? (a range input)",
+      "home": "row",
+      "field": "starts at, as chips",
+      "reach": "nudge|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "addsec",
+      "pane": "Structure / nav tree",
+      "was": "+ section",
+      "home": "row op",
+      "field": "add — a section of a type, dealt by compose from the record's own rules",
+      "reach": "trow-add",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "secup",
+      "pane": "Structure / nav tree (section level)",
+      "was": "move this section earlier",
+      "home": "row op",
+      "field": "move up (tap, never a drag — §6's pointer-only refusal)",
+      "reach": "trow-up|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "secdown",
+      "pane": "Structure / nav tree (section level)",
+      "was": "move this section later",
+      "home": "row op",
+      "field": "move down",
+      "reach": "trow-down|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "secdup",
+      "pane": "Structure / nav tree (section level)",
+      "was": "duplicate this section",
+      "home": "row op",
+      "field": "duplicate",
+      "reach": "trow-dup|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "secdrop",
+      "pane": "Structure / nav tree (section level)",
+      "was": "delete this section",
+      "home": "row op",
+      "field": "delete",
+      "reach": "trow-del|<section>",
+      "open": "trow|<section>"
+    },
+    {
+      "k": "secnavs<i>",
+      "pane": "Structure / nav tree",
+      "was": "the section rows of the stripe",
+      "home": "row",
+      "field": "the nav tree keeps them — §6: 'the nav tree gains the table's rows and columns as children'",
+      "reach": "trow|<section>",
+      "open": null
+    },
+    {
+      "k": "sel:performance.stress",
+      "pane": "Structure / performance",
+      "was": "how much does the band lean on the beat?",
+      "home": "footer",
+      "field": "the performance row of the footer — a RECORD fact, drawn under the sections",
+      "reach": "tperf|stress",
+      "open": null
+    },
+    {
+      "k": "sel:performance.phrase",
+      "pane": "Structure / performance",
+      "was": "does the line breathe?",
+      "home": "footer",
+      "field": "the performance row",
+      "reach": "tperf|phrase",
+      "open": null
+    },
+    {
+      "k": "sel:performance.orn",
+      "pane": "Structure / performance",
+      "was": "how much decoration?",
+      "home": "footer",
+      "field": "the performance row",
+      "reach": "tperf|orn",
+      "open": null
+    },
+    {
+      "k": "take",
+      "pane": "Structure / performance",
+      "was": "which take of this record (a range input)",
+      "home": "footer",
+      "field": "take, as chips, in the performance row's own sheet",
+      "reach": "take",
+      "open": "tfoot|perf"
+    },
+    {
+      "k": "humanize",
+      "pane": "Structure / performance",
+      "was": "how loose is the band (a range input)",
+      "home": "footer",
+      "field": "humanize, as chips",
+      "reach": "humanize",
+      "open": "tfoot|perf"
+    },
+    {
+      "k": "ontime",
+      "pane": "Structure / performance",
+      "was": "how close to the grid (a range input)",
+      "home": "footer",
+      "field": "on time, as chips",
+      "reach": "ontime",
+      "open": "tfoot|perf"
+    },
+    {
+      "k": "tabperformance",
+      "pane": "Structure / nav tree",
+      "was": "the performance child of the stripe",
+      "home": "footer",
+      "field": "the performance row of the footer",
+      "reach": "tfoot|perf",
+      "open": null
+    },
+    {
+      "k": "bandroster",
+      "pane": "Band / nav tree",
+      "was": "'everyone' — the roster state",
+      "home": "table",
+      "field": "the table IS the roster: every player is a column head with its name and its instrument on it",
+      "reach": "tcorner",
+      "open": null
+    },
+    {
+      "k": "bandsamples",
+      "pane": "Band / nav tree",
+      "was": "'samples' — the crate state",
+      "home": "elsewhere: the crate",
+      "field": "reached from the column sheet's instrument row",
+      "reach": "sound.instrument|<voice>",
+      "open": "tcol|<voice>"
+    },
+    {
+      "k": "tab<voice>",
+      "pane": "Band / nav tree",
+      "was": "the voice rows of the stripe",
+      "home": "column",
+      "field": "the nav tree keeps them; the column head is the other door",
+      "reach": "tcol|<voice>",
+      "open": null
+    },
+    {
+      "k": "facet-inst / facet-plays / facet-mix / facet-samples",
+      "pane": "Band / nav tree (voice level)",
+      "was": "a voice is asked one question at a time — four facets",
+      "home": "column",
+      "field": "ONE sheet asks all four, in §1's order; a facet was a filter over a pile and the sheet is the pile made short",
+      "reach": "tcol|<voice>",
+      "open": null
+    }
+  ],
+  "new": [
+    {
+      "reach": "tcell|<voice>|<section>",
+      "why": "the CELL had no control at all at HEAD: the two grids that touched a cell asked one question each (reads, does) and nothing on the page drew a cell's VECTOR.",
+      "open": null
+    },
+    {
+      "reach": "trow-rep|<section>|2",
+      "why": "§5: repeat xN",
+      "open": "trow|<section>"
+    },
+    {
+      "reach": "trow-deal|<section>",
+      "why": "§5: deal this row's cells again from the genre",
+      "open": "trow|<section>"
+    },
+    {
+      "reach": "tcol-deal|<voice>",
+      "why": "§5: deal this column again",
+      "open": "tcol|<voice>"
+    },
+    {
+      "reach": "tcol-left|<voice>",
+      "why": "§5: reorder a column, by tap",
+      "open": "tcol|<voice>"
+    },
+    {
+      "reach": "tcol-make|<voice>|<quality>",
+      "why": "§5: 'make X Y' is a column op now",
+      "open": "tcol|<voice>"
+    },
+    {
+      "reach": "tcell-clear|<voice>|<section>",
+      "why": "§2: clear back to inherit",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "reach": "tcell-copyrow|<voice>|<section>",
+      "why": "§5: copy a cell to its row",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "reach": "tcell-copycol|<voice>|<section>",
+      "why": "§5: copy a cell to its column",
+      "open": "tcell|<voice>|<section>"
+    },
+    {
+      "reach": "tmaster|drive",
+      "why": "§1: the master is the table's footer row",
+      "open": null
+    },
+    {
+      "reach": "ttab-fill",
+      "why": "§5: fill from a genre",
+      "open": "tcorner"
+    },
+    {
+      "reach": "ttab-seed",
+      "why": "§5: re-seed",
+      "open": "tcorner"
+    },
+    {
+      "reach": "ttab-transpose",
+      "why": "§5: transpose the view",
+      "open": "tcorner"
+    },
+    {
+      "reach": "form.key|<section>",
+      "why": "wave 2a gave a section its own key; nothing drew it",
+      "open": "trow|<section>"
+    },
+    {
+      "reach": "form.rev|<section>",
+      "why": "wave 2a gave a section its own chain and room; nothing drew it",
+      "open": "trow|<section>"
+    },
+    {
+      "reach": "form.pace|<section>",
+      "why": "TABLE.md: pace MOVES to the row, out of Time",
+      "open": "trow|<section>"
+    }
+  ]
+}

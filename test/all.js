@@ -812,6 +812,29 @@ const GATES = [
     argv: ["test/structure.browser.js"], need: ["test/structure.browser.js"],
     covers: ["test/structure.browser.js", "nukernel/ui/eight.js",
              "nukernel/avail.js", "nukernel/fields.js"] },
+  /* THE BAND TABLE, DRIVEN (2026-09-04, TABLE.md wave 2b). Paul, 2026-09-03:
+     "a song can be understood as a grid with sections as rows and instruments
+     as columns … The producer becomes basically a vector manipulator across
+     the table."
+     IT IS FOUR GATES IN ONE PROCESS because all four are about the same
+     rendered page and standing the page up is the expensive part: T5 the
+     artifact at five widths, T7 the inventory (nothing the two old panes
+     offered was lost), T4 the ops (one document write each, diffed) and T6 the
+     sound (a cell's motif reaches the rendered events; a cell's register
+     reaches the rendered score).
+     `covers` names the seven files an edit to any of which has to re-run it:
+     the table and the component it is drawn with, the page that seams them,
+     the stylesheet the 44px and the quiet-vs-bold live in, the vocabulary
+     every chip comes from, the resolver every tier is read through, and the
+     inventory itself — which is a CONTRACT, so changing it re-runs the gate
+     that reads it. */
+  { name: "table-page", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/table.browser.js"], need: ["test/table.browser.js",
+             "test/table-inventory.json"],
+    covers: ["test/table.browser.js", "test/table-inventory.json",
+             "nukernel/ui/table.js", "nukernel/ui/wordgrid.js",
+             "nukernel/ui/eight.js", "nukernel/nu.css",
+             "nukernel/avail.js", "nukernel/document.js"] },
   /* THE MIX PLATE'S HEADS (2026-09-02, slice 2e). Paul, B11: "the columns
      should list the instrument and when I click on the column head let me edit
      the instrument! Light up which instrument is playing, make a little volume

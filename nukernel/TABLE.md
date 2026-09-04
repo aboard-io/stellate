@@ -144,6 +144,49 @@ every field's tier and note. Where §1 guessed and the tree disagreed:
   and are the two commonest guests. Guest census at seed 1: 17 of 4,344
   motifs on 17 of 479 records, all on the `counter` kind.
 
+### 1b · What wave 2b measured, and where §6 was wrong
+
+The table shipped 2026-09-04 (`nukernel/ui/table.js`, drawn with
+`ui/wordgrid.js`'s accordion grown a SHEET body and a FOOTER). Five things the
+spec did not know, each found by driving the rendered page:
+
+- **A register is −4..3, not semitones.** `document.js normalize` is the one
+  owner of the range and the first draft of the cell sheet offered −24…24 —
+  every chip outside the range was written and silently PRUNED on the next
+  recompile, so the cell tier read back empty. A control that writes and does
+  not arrive, drawn by the wave that is supposed to gate against it.
+- **A sheet field has a WORD and a VALUE and both have to travel.** The word is
+  what the row prints (the inherited one, quiet); the value is what the record
+  stores and what the strip presses. The first draft carried only the word, so
+  every strip pressed the absent chip.
+- **`.nu-sheet` was taken.** ui/selects.js's multi-choice fieldset has worn it
+  since the sheets shipped; the table's is `.nu-vsheet` (the VECTOR sheet), and
+  test/selects.js found the collision within the hour.
+- **Four vocabularies stay MENUS.** `cast.part`, `sound.instrument`,
+  `sound.bassinstrument` and `sound.drumkit` are on test/selects.js's own
+  `MENUS` list (Paul, 2026-09-02) and an instrument list is 108 words, which is
+  a page and not a strip. `ui/table.js COMBOKEYS` names them; anything over
+  twenty-four words joins them by measurement. Everything shorter is chips.
+- **§6's "the board owns a seat" was wrong.** The board has bus strips and the
+  automation grid and NO per-voice channel — Paul took the voices off it on
+  2026-08-28 — so the fader, the pan, the three sends and the three insert
+  slots had exactly one home, the Band pane's `mix` facet. `voiceMix` is drawn
+  in the column's own sheet. test/sheets.js counted zero insert seats on the
+  whole page and said so.
+
+And two gaps NAMED rather than fixed, because both predate the table and are
+the same for the controls the two old panes shipped:
+
+- **`ui/derive.js` is blind to a register.** Neither a cell's `reg` nor the
+  COLUMN's own `cast.reg` moves `__eightEvents` by one byte; `sectionRender`
+  renders a slot against a box and the register is not in that path at either
+  tier. `document.scoreOf` answers for it, and that is what T6 reads.
+- **Two motifs can render the identical bar.** On Kingston 1969 at reading 1,
+  `hook` and `answer` come out the same once the section's own development word
+  has been applied — so T6 walks the vocabulary and asks whether SOME word
+  moves the render, which is the honest form of "this control can reach the
+  sound".
+
 ## 2 · The inherit law
 
 A cell's vector starts EMPTY. Every field resolves in this order and the first
@@ -294,6 +337,22 @@ children (indented and coloured by level, 2026-09-03).
 2. **The table**: the Band table replaces Band and Structure; row/column/cell
    ops of §5 through the existing doors; the cell sheet; motif previews;
    drums grouping; pace on the row; Time = tempo + key; T4–T6 green.
+   **2a SHIPPED** (the carry + the row's own fields). **2b SHIPPED
+   2026-09-04**: the PANE — `ui/table.js`, the three sheets, the footer, the
+   op grammar, the inventory (`test/table-inventory.json`, 76 controls) and
+   T4/T5/T6/T7 green on the rendered page (`test/table.browser.js`, 54 checks).
+   **2c REMAINS**: the DELETION. `bandBlock`, `rosterBlock`, `crateBlock`,
+   `structurePanel`, `structureGrids`, `sectionDetail`, `formTable`,
+   `performanceTab` and the four page states they run on (`tab`, `voiceFacet`,
+   `bandCrate`, `formSec`) are still in ui/eight.js, still reachable from the
+   Structure tab, and the Band tray still lists the facets the table's column
+   sheet replaced. With them go the Time fold (Tempo + Key -> one), the Motif
+   -> Motifs rename, `bandTrayItems` becoming the table's columns and
+   `sectionTrayItems` its rows (§6), and test/band.browser.js and
+   test/structure.browser.js — folded into the table's gate or deleted with
+   their subject. It is a ~3,000-line removal across the four states and it is
+   its own step, one agent at a time on that file (the standing law), which is
+   why it is not in the same commit as the pane.
 3. **Per-cell mix automation, relative to the row's** (¶A): desk + walk read
    row lane + cell offset; the Live export writes the sum per track once; the
    greyed field lights.
