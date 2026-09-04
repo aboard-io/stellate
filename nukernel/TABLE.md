@@ -1091,9 +1091,20 @@ things up to be tappable is good"*.
   (knobs.js rows today), the SAMPLED chairs (the sampler lane gains an ADSR
   it applies per note — measured to arrive), the synth blocks' `fenv`, and
   the section/cell automation lanes as breakpoint curves.
+- THE GRAPHICAL EDITORS, one family (Paul: *"Look for places where UX could
+  help like eq editors too"*): the envelope editor is the first of a plate-
+  handles-curve family that owns every control the page types as numbers
+  today but a hand would rather draw — the audit before the round lists
+  each: the per-voice EQ (lo/mid/hi shelves, the desk's FAM_EQ and the seat
+  eq) and the master tilt as an EQ CURVE with draggable bands; cutoff and
+  resonance as an XY pad; the tempo map and rubato as a curve over bars;
+  the section and cell automation lanes as breakpoint curves; pan and width
+  as a stereo field; the kit's velocity lanes stay a grid. Each replaces its
+  number rows only where the drawing is the honest control (a shelf is a
+  curve; a bar count is a number), and prints the numbers beside the curve.
 - Order after §10: cells as cells at rest (~10 lines) → the envelope editor
-  and its wiring (samples first) → the in-cell typed editor + synonyms →
-  the restyle pass over the rest.
+  and its wiring (samples first) → the EQ curve and the XY pad → the in-cell
+  typed editor + synonyms → the restyle pass over the rest.
 
 ### 11a · The in-cell editor: type, and the options filter semantically
 
