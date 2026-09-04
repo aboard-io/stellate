@@ -1347,8 +1347,13 @@ and its "longest state" measured on the Band branch: 1234px of a 560px list at
 390), `test/producer.browser.js` (**35**), `test/seed.js` (**36**),
 `test/atlas.js` (**111**, its heading count MEASURED down from four to one:
 Time and Harmony left with the TIME row and Motifs with this one, so the Band
-panel answers `["The band"]`), `test/nav-tree.js` (**27 of 28**). Two findings
-came out of that walk and neither is this round's to fix:
+panel answers `["The band"]`), `test/nav-tree.js` (**27 of 28**). Its N9 is the second
+reading of this round's lamp, taken from the other end and by a different
+hand: `#pan-band .nu-banklamp > i`, **one of ten lit** while the record plays,
+each lit row carrying its own `readby|` strip, `--clock` red and dark again on
+stop — which is the claim `lightMotifs` used to make on ten `motiftab-` rows of
+the stripe, at the surface that replaced them. Two findings came out of that
+walk and neither is this round's to fix:
   · **THE TREE IS EXACTLY TWO LEVELS DEEP NOW, EVERYWHERE.** `motifTrayItems`
     was the LAST depth-2 branch — the section ops left on 2026-09-05 (§9a) and
     the mix plates with step 3 — so N3's "a branch of actions" and N8's "three
