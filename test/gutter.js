@@ -1253,17 +1253,27 @@ function standUpServer() {
                which is the seed's one owner. */
   const shorten = () => p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const tap = async (k) => {
-      const b = document.querySelector('#nu-tray [data-k="' + k + '"]');
-      if (!b || b.disabled) return false;
-      b.click(); await wait(120); return true;
-    };
+    /* (A `#nu-tray` `tap` STOOD HERE and had no reader left once the delete
+       moved: the only stripe key this function pressed was `secdrop`, and the
+       stripe presses no ops at all now. The two scoped tappers below are the
+       whole of it — one for the table, one for the tempo panel.) */
     /* ...AND THEY ARE `Band`'s AGAIN SINCE 2026-09-04 (nukernel/TABLE.md wave
        2c), which is not a reversal of Paul's "not buried under band": the Band
        tab IS the sections now — the table's rows, one tap from its arrival,
-       beside its columns — so `Structure` has no tab to be top-level in. The
-       addresses did not move: `secnav<id>` and `secdrop` are the same keys on
-       the same rows, one branch over. */
+       beside its columns — so `Structure` has no tab to be top-level in.
+
+       THE DELETE IS THE TABLE'S SINCE 2026-09-05 (TABLE.md §9a: *"NO OP LIVES
+       IN THE NAV: the tray keeps the Band tab and, at most, jump links"*).
+       `secdrop` was a CHILD of the section row in the stripe and is gone with
+       the whole branch of acts; the row op it filed onto — `trow-del|<id>`, in
+       that section's own ROW SHEET — is where it has been since wave 2b, and
+       the gesture here is the same two taps it always was. The tray row is
+       still the first of them, and it is now a pure JUMP: tapping `secnav<id>`
+       runs `openSection`, which writes `formSec`, and `tablePanel` lands the
+       arrival by clicking `trow|<id>` — so the sheet with the delete in it is
+       open by the time the second tap goes out. Driving it this way keeps the
+       jump link itself under test, which is the only thing left on that branch
+       worth breaking. */
     /* DOWN TO ONE SECTION, AND THE BOUND IS A SAFETY RAIL RATHER THAN A
        COUNT (2026-09-02). It read `i < 8`, which was the record this file was
        measured against — "5 sections / 36 bars / 149.1 s" in the paragraph
@@ -1273,13 +1283,20 @@ function standUpServer() {
        than for anything the gutter does. The loop's own exit is the honest
        one — it stops when there is one section left — and the number here only
        has to be larger than any record the composer deals. */
+    const tapTable = async (k) => {
+      const b = document.querySelector('#pan-band [data-k="' + CSS.escape(k) + '"]');
+      if (!b || b.disabled) return false;
+      b.click(); await wait(150); return true;
+    };
     for (let i = 0; i < 32; i++) {                   // down to one section
       window.__eightTab("Band"); await wait(120);
       const secs = [...document.querySelectorAll("#nu-tray .nu-traylist button")]
         .filter((b) => /^secnav/.test(b.dataset.k || ""));
       if (secs.length <= 1) break;
-      secs[secs.length - 1].click(); await wait(150);
-      if (!await tap("secdrop")) break;
+      const last = secs[secs.length - 1];
+      const id = (last.dataset.k || "").replace(/^secnav/, "");
+      last.click(); await wait(250);                 // the jump opens trow|<id>
+      if (!await tapTable("trow-del|" + id)) break;
     }
     /* AND THE EIGHT TEMPO OPERATIONS ARE IN THE PANEL (2026-09-02). Paul: *"The
        left nav elements for tweaking tempo should be brought inside tempo."*

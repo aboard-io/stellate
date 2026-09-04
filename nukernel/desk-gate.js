@@ -1368,9 +1368,12 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                         is a strip's; `bus|<bus>|fx<n>` is the genre bus's, and
                         it is the SAME control drawn by the same function for
                         the same reason — ui/engineer.js `slotEl` with a second
-                        owner. It is a raw <select> like its twin rather than a
-                        ui/selects.js combo, which is what this filter has to be
-                        told. */
+                        owner. ...AND SINCE 2026-09-06 IT IS A MENU LIKE EVERY
+                        OTHER ONE: `seatSelect` goes through ui/menus.js, so a
+                        seat is a `<select>` on a thumb and a `role=combobox` on
+                        a keyboard, at the same `data-k` either way — which is
+                        why the sweep above asks for both spellings and this
+                        filter reads the ADDRESS and not the tag. */
                      seat: /^ins\|/.test(s.dataset.k || "") ||
                            /^bus\|[a-z]+\|fx[123]$/.test(s.dataset.k || ""),
                      strip: !!s.closest(".nu-strip"),
@@ -2627,8 +2630,12 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         }
         return false;
       };
+      /* THE TAG IS NOT THE CONTROL, 2026-09-06. A seat is drawn by
+         ui/menus.js now and is a `<select>` on a coarse pointer and an
+         `<input role=combobox>` on a fine one; both answer to a value written
+         in and a `change` fired, which is the gesture this has always made. */
       const seat = (v) => {
-        const s = document.querySelector('select[data-k="ins|' + name + '|1"]');
+        const s = document.querySelector('[data-k="ins|' + name + '|1"][data-sel]');
         if (!s) return false;
         s.value = v; s.dispatchEvent(new Event("change", { bubbles: true }));
         return true;
@@ -2804,15 +2811,16 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         }
         return false;
       };
+      // the tag is not the control — see the strip's own note above
+      const seatOf = (n) => document.querySelector(
+        '[data-k="bus|genre|fx' + n + '"][data-sel]');
       const seat = (n, v) => {
-        const sel = document.querySelector(
-          'select[data-k="bus|genre|fx' + n + '"]');
+        const sel = seatOf(n);
         if (!sel) return false;
         sel.value = v; sel.dispatchEvent(new Event("change", { bubbles: true }));
         return true;
       };
-      const before = { seats: [1, 2, 3].map((n) => !!document.querySelector(
-                         'select[data-k="bus|genre|fx' + n + '"]')),
+      const before = { seats: [1, 2, 3].map((n) => !!seatOf(n)),
                        pots: !!document.querySelector(
                          'input[data-k="bus|genre|fxw1"]'),
                        chip: /chip/i.test((plate() || {}).textContent || ""),
@@ -2825,9 +2833,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const face = drive("bus|genre|fxa1", "most"); await wait();
       seat(2, "chorus"); await wait();
       const after = row();
+      /* AND THE WORD A MENU IS STANDING ON IS ITS `data-v`, not its `.value`:
+         a combo's `.value` is the LABEL a reader sees ("ring mod"), and the row
+         answers to the VALUE ("ringmod"). `data-v` is the address either widget
+         carries and it did not move. */
       const chained = [1, 2, 3].map((n) => {
-        const sel = document.querySelector('select[data-k="bus|genre|fx' + n + '"]');
-        return sel ? sel.value : null;
+        const sel = seatOf(n);
+        return sel ? (sel.dataset.v == null ? sel.value : sel.dataset.v) : null;
       });
       seat(1, ""); await wait();
       seat(1, ""); await wait();          // the compaction moved chorus into 1

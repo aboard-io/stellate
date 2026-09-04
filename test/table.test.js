@@ -1732,6 +1732,57 @@ const T4O_PIN = {
       vi + " outranks it (−12, not 0 and not −24)");
   });
 
+  /* T4p — THE PER-CHAIR SEAT IS THE WHOLE-RECORD SEAT (2026-09-05).
+     `precompose.reseatVoice` is §7d's arithmetic asked about ONE chair, and it
+     exists because the page's `sings as` door has to re-seat a chair a hand has
+     just re-throated (ui/eight.js `putCast`). Two things could go wrong and
+     both are silent:
+
+       · IT COULD DISAGREE WITH THE PASS. The pass reads which ROW owns a chair
+         off `genreToDocument`'s own `nBase`/`layerKeys`; the door has neither
+         and reads it off the FINISHED record (basis for its own chairs, the
+         guest's name-as-genre-key after them). If those two rules ever parted,
+         a record would be re-seated onto a throat nobody sings.
+       · IT COULD NOT BE IDEMPOTENT. The door is called on EVERY write of the
+         field — including a clear-back — so a seat that moved a chair a second
+         time would walk a line off the instrument one tap at a time.
+
+     One measurement answers both, and it is the only one that can: call the
+     door on every line chair of a freshly composed record and demand that it
+     writes NOTHING. Measured over the whole catalogue at seeds 1-3 — 1,437
+     records, 7,448 line chairs, 0 moved. */
+  ok("T4p the per-chair seat agrees with the composer's and moves nothing on a seated record", () => {
+    const list = FULL ? ANCHORS : ANCHORS.filter((_, i) => i % 12 === 0);
+    const seeds = FULL ? SEEDS : [1];
+    let docs = 0, chairs = 0, moved = 0; const ex = [];
+    for (const gk of list) for (const s of seeds) {
+      const doc = D.normalize(P.genreToDocument(gk, s));
+      docs++;
+      doc.voices.forEach((v, vi) => {
+        if (v.kind !== "line") return;
+        chairs++;
+        const before = (v.cast || {}).reg;
+        const k = P.reseatVoice(doc, vi);
+        if (k) ex.push(gk + "/" + s + " " + v.name + " " + before + " -> " +
+                       v.cast.reg + " (" + k + ")");
+        if (k) moved++;
+      });
+      // ...AND A CHAIR NOBODY SINGS IS UNTOUCHED, which is the other half of
+      // "the question has no meaning there": the bass and the kit are not
+      // people and neither is a piano.
+      doc.voices.forEach((v, vi) => {
+        if (v.kind === "line") return;
+        assert.strictEqual(P.reseatVoice(doc, vi), 0,
+          "the seat moved a " + v.kind + " chair");
+      });
+    }
+    assert.deepStrictEqual(ex.slice(0, 6), [],
+      moved + " of " + chairs + " chairs moved on a record the composer " +
+      "already seated — the door and the pass disagree");
+    console.log("       " + docs + " records, " + chairs +
+      " line chairs, 0 re-seated (the door is a no-op on a seated record)");
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => {

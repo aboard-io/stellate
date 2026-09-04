@@ -7773,3 +7773,40 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    `.nu-why` face, on its own line under the row it belongs to. */
 .nu-crefuse{ flex: 1 0 100%; margin: var(--s1) 0 0; }
 .nu-curl{ overflow-wrap: anywhere; font-size: var(--t1); }
+
+/* ======================================================================
+   THE MENU IS THREE WIDGETS AND ONE CHASSIS (2026-09-06)
+
+   Paul, 2026-09-05: *"In general dropdowns barely work."* `nukernel/src/menus/`
+   is the one owner of every menu on the page now, and `src/menus/pick.ts` gives
+   a vocabulary one of three: CHIPS up to eight words, the NATIVE `<select>`
+   above eight on a coarse pointer, the TYPED COMBO above eight with a keyboard.
+   All three sit inside the same `<span class="nu-combo">`, because the chassis
+   above — the plate, the ▾, the 30ch cap, the `is-seated` / `is-said` detent —
+   is what makes a menu read as a menu, and a control may not read as a
+   different species for being drawn a different way.
+
+   THREE DECLARATIONS ARE ALL THE PAINT THIS ROUND NEEDS, and each is a
+   correction to a chassis rule that assumed there was one widget in the box:
+
+     · NO ▾ OVER A STRIP OF CHIPS. `.nu-combo::after` is the arrow that says
+       "there is a list under this"; a strip has no list, and an arrow over its
+       last chip is a lie with a 44px target under it.
+     · A STRIP IS AS WIDE AS ITS WORDS, NOT 30ch. `.nu-sel > label > .nu-combo`
+       caps the box at `min(100%, 30ch)`, which is right for one word in a field
+       and wrong for eight chips: capped, the strip wrapped to four rows under a
+       label that had 60% of the line to itself. It takes the whole line and
+       wraps inside itself, which is what `.nu-wchips` does anyway.
+     · AND THE NATIVE PICKER IS 44px AND 16px LIKE EVERYTHING ELSE A THUMB
+       TOUCHES: it wears `.nu-combofield`, which is the plate, the tap height
+       and the iOS type floor said once for both elements. What it needs on top
+       is the `appearance: none` the `.nu-combo > select` rule above already
+       gives it — that rule was written for the 2026-09-02 wrapper, matched
+       nothing for four days, and matches again now. Nothing to add.
+   ====================================================================== */
+.nu-combo[data-widget="chips"]::after{ content: none; }
+.nu-sel > label > .nu-combo[data-widget="chips"],
+.nu-combo[data-widget="chips"]{
+  inline-size: 100%; max-inline-size: 100%; flex: 1 1 100%; }
+/* the strip fills the box it is in, and never scrolls inside itself */
+.nu-combo > .nu-wchips{ inline-size: 100%; min-inline-size: 0; }

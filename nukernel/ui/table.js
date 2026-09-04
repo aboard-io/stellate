@@ -426,6 +426,28 @@ var o3 = e2(class extends i2 {
   }
 });
 
+// nukernel/src/menus/pick.ts
+var CHIPMAX = 8;
+var LONGSTRIP = 24;
+var COARSE = null;
+function coarse() {
+  if (COARSE == null) {
+    try {
+      COARSE = !!(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    } catch (e4) {
+      COARSE = false;
+    }
+  }
+  return COARSE;
+}
+function pickerFor(n3, opts) {
+  if (opts && opts.tight) return coarse() ? "native" : "combo";
+  if (n3 <= CHIPMAX) return "chips";
+  if (coarse()) return "native";
+  if (opts && opts.strip) return "chips";
+  return "combo";
+}
+
 // nukernel/src/table/model.ts
 var KITGROUPS = [
   ["kick", ["nokick", "kickdoubles", "four"]],
@@ -472,8 +494,6 @@ var COMBOKEYS = /* @__PURE__ */ new Set([
   "sound.drumkit",
   "form.role"
 ]);
-var LONGSTRIP = 24;
-var CHIPMAX = 8;
 var CHORDCHAIRS = /* @__PURE__ */ new Set(["pad", "stab"]);
 function shField(A2, key, scope, label) {
   const sp = A2.sh(key, scope, null);
@@ -588,6 +608,7 @@ function cellVecField(A2, i5, vi, spec) {
     clear: has ? () => A2.putCell(i5, vi, spec.key, null) : null
   };
 }
+var RAMPWHY = "measured 2026-09-05: a document's motifs carry no ramp — document.js toPhrase writes inc and stk all-zero on every phrase, so 0 of 18,793 motifs across 479 anchors at three readings has a ramp for a limit to limit. It is the tracker's control; the address is kept, and the gate lights it the day a ramp column lands";
 function cellVecSay(A2, i5, vi, spec, chordChair) {
   const own = A2.cellOf(i5, vi, spec.key);
   const row = A2.rowOf ? A2.rowOf(i5, spec.key) : null;
@@ -596,7 +617,16 @@ function cellVecSay(A2, i5, vi, spec, chordChair) {
     kind: "say",
     label: spec.label,
     word: said == null ? "as the genre asks" : String(spec.labels[String(said)] || said),
-    why: chordChair ? "measured 2026-09-04: this chair voices the bar's CHORD (kernel.js render sends a pad and any chordLock part down the chord branch), so it never reads an articulation or a subject alphabet — its octave and its time still answer. Give it a line part to say this." : "measured 2026-09-04: a document's motifs carry no ramp (document.js toPhrase writes inc and stk all-zero), so a ramp limit moves no note here — it is the tracker's control, and this cell keeps the address for the day a ramp lands"
+    why: chordChair ? "measured 2026-09-04: this chair voices the bar's CHORD (kernel.js render sends a pad and any chordLock part down the chord branch), so it never reads an articulation or a subject alphabet — its octave and its time still answer. Give it a line part to say this." : RAMPWHY
+  };
+}
+function rowVecSay(A2, i5, spec) {
+  const said = A2.rowOf ? A2.rowOf(i5, spec.key) : null;
+  return {
+    kind: "say",
+    label: spec.label,
+    word: said == null ? "as the genre asks" : String(spec.labels[String(said)] || said),
+    why: RAMPWHY
   };
 }
 function groupsFor(options) {
@@ -657,9 +687,14 @@ function rowSheet(A2, i5) {
     ["form.pan", "across"]
   ])
     f2.push(shField(A2, key, { section: sid }, lab));
-  for (const spec of A2.CELLVEC || [])
+  for (const spec of A2.CELLVEC || []) {
+    if (spec.key === "clamp") {
+      f2.push(rowVecSay(A2, i5, spec));
+      continue;
+    }
     if (A2.hasSheet("form." + spec.key, { section: sid }))
       f2.push(shField(A2, "form." + spec.key, { section: sid }, spec.label));
+  }
   f2.push(numField(
     A2,
     "nudge|" + sid,
@@ -1132,22 +1167,9 @@ function sectionOffer(A2) {
 }
 
 // nukernel/src/table/sheet.ts
-var COARSE = null;
-function coarse() {
-  if (COARSE == null) {
-    try {
-      COARSE = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
-    } catch (e4) {
-      COARSE = false;
-    }
-  }
-  return COARSE;
-}
-function pickerFor(f2) {
+function pickerFor2(f2) {
   if (f2.node) return "combo";
-  const n3 = (f2.options || []).length;
-  if (n3 <= CHIPMAX) return "chips";
-  return coarse() ? "native" : "chips";
+  return pickerFor((f2.options || []).length, { strip: true });
 }
 var wordOf = (f2) => f2.word == null || f2.word === "" ? "—" : String(f2.word);
 function chipStrip(f2, onWrite) {
@@ -1258,7 +1280,7 @@ function fieldRow(f2, openField, setOpenField, after) {
     </div>`;
   }
   const sf = f2;
-  const pick = pickerFor(sf);
+  const pick = pickerFor2(sf);
   const open = openField === sf.key;
   const write = (v3) => {
     setOpenField(null);

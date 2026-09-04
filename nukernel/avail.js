@@ -1055,6 +1055,23 @@
      vocabulary and a value outside it must be refused at the door rather than
      carried as a lie the kernel would play. */
   for (const f of (NF.CELLVEC || [])) {
+    /* ...FOUR OF THE FIVE, AND `clamp` IS NOT ONE OF THEM (2026-09-05).
+       Minting it here would put a live strip on the row sheet that writes
+       `section.clamp`, resolves through `document.js toGenre` onto the
+       compiled genre's `incClamp`, reaches `kernel.js rampOf` — and moves no
+       note, because `document.js toPhrase` writes `inc` and `stk` all-zero on
+       every phrase this box can hold (0 of 18,793 motifs across 479 anchors at
+       three readings carries a ramp column; `nukernel/gates.json`'s own census
+       reads `form.clamp` as 165 rows and 0 alive, and said so before this line
+       existed). A control that writes and does not arrive is the one bug this
+       tree keeps, so the ROW SHEET SAYS THE MEASUREMENT INSTEAD — the cell's
+       own treatment one tier up (`src/table/model.ts rowVecSay`, whose
+       `RAMPWHY` is the one spelling of the sentence). A sheet nothing draws
+       would be the dead half of the same problem, so none is minted: the day a
+       ramp column lands in the hook editor, `test/table.test.js` T4m goes red,
+       this `continue` comes out, and the strip is back with its vocabulary
+       unchanged. */
+    if (f.key === "clamp") continue;
     SHEETS["form." + f.key] = { label: f.ask, scope: "section", rowvec: f.key,
       values: () => [{ value: "", label: "as the genre asks" },
                      ...Object.keys(f.table)

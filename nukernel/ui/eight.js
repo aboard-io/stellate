@@ -9972,9 +9972,30 @@ function tableAPI() {
     castOf: (vi, f) => { const v = V()[vi]; return v && v.cast ? v.cast[f] : null; },
     putCell: (i, vi, f, val) => { NuDocument.putCell(DOC, i, vi, f, val); after(); },
     putRow: (i, f, val) => { NuDocument.putRow(DOC, i, f, val); after(); },
+    /* ...AND A HAND-CHANGED THROAT RE-SEATS THE WRITTEN REGISTER (2026-09-05).
+       `voice` is the one cast field whose answer decides where the chair is
+       WRITTEN. `precompose.js` §7d writes every sung chair at the octave its
+       throat actually sings, and this door — the column sheet's `sings as`
+       strip — wrote the new throat and left `cast.reg` where the OLD throat had
+       put it, which puts the record back into the exact state §7d exists to
+       end: the audio fold quietly corrects the sound while the staff, the piano
+       roll and the notated .mid are an octave out. MEASURED on Kingston 1969 at
+       reading 1: `vocal` is seated at reg 0 for its tenor; asking it to sing
+       soprano wanted a fold of +1 and bass wanted −1, and before this line
+       neither reached the document.
+       ONE OWNER FOR THE SEAT AND IT IS NOT HERE: `NuPrecompose.reseatVoice` is
+       §7d's own arithmetic asked about one chair (it needs the compass table,
+       `throatVoiceOf`'s precedence and the played-bar walk, none of which this
+       file has), and it is IDEMPOTENT on a seated document — `homeFor` is
+       octave-covariant, so a chair already written where it sings answers 0 and
+       writes nothing — which is why it can be called on every write of the
+       field, including a clear-back to the row's throat.
+       IT LANDS AT THE NEXT BAR like every other op on this surface, because
+       `after()` is the same `changed()` every one of them ends in. */
     putCast: (vi, f, val) => { const v = V()[vi]; if (!v) return;
       v.cast = v.cast || {};
       if (val == null) delete v.cast[f]; else v.cast[f] = val;
+      if (f === "voice") { try { NuPrecompose.reseatVoice(DOC, vi); } catch (e) {} }
       after(); },
 
     /* ---- §5's op grammar, every one an existing door ---------------- */
@@ -11886,11 +11907,14 @@ const rootTrayItems = () => TABS.filter(([name]) => name !== "Where")
 
    THE TREE IS THE TABLE SAID DOWNWARDS. A table has two lists and the stripe
    has one column, so the branch is the two lists in the table's own reading
-   order — the VOICES (its columns) and then the SECTIONS (its rows) — each
-   with its ops as children, exactly the way a member had facets and a section
-   had `secup/secdown/secdup/secdrop`. Tapping a player opens its COLUMN sheet
-   and tapping a section opens its ROW sheet, because `openVoice`/`openSection`
-   are the one door each and `tablePanel` lands the arrival on the sheet.
+   order — the VOICES (its columns) and then the SECTIONS (its rows). Each row
+   carried its ops as children for a day, the way a member had facets and a
+   section had `secup/secdown/secdup/secdrop`; since 2026-09-05 NONE OF THEM
+   HAS CHILDREN (the block below says why). Tapping a player opens its COLUMN
+   sheet and tapping a section opens its ROW sheet, because
+   `openVoice`/`openSection` are the one door each and `tablePanel` lands the
+   arrival on the sheet — so the ops are one tap from the row that used to
+   hold them, in the surface that owns them.
 
    WHAT LEFT THIS LEVEL WITH THE PANES (§6 ¶A, "deleted, not hidden"):
      · `bandroster` — the roster was a PANEL STATE and the table has none; the
@@ -11901,12 +11925,31 @@ const rootTrayItems = () => TABS.filter(([name]) => name !== "Where")
        it swaps, which is the one place the question "what is this chair
        actually playing" is asked. T7 files it on `sound.instrument|<voice>`.
      · `tabperformance` — performance is the table's FOOTER row (`tfoot|perf`).
-   `addvoice`/`addbass`/`adddrums` and `addsec` KEEP THEIR ADDRESSES, because
-   an address does not move when a row does and four gates reach them by name.
+   NO OP LIVES IN THE NAV, SINCE 2026-09-05 (TABLE.md §9a). Paul, on the v270
+   table: *"Move all the nav into the table, I should be able to add players
+   without using the nav and sections too. I click band and all further
+   operations are buttons around the table."* So this branch is TWO LISTS OF
+   JUMPS and nothing else — a player row opens that player's column sheet, a
+   section row opens that section's row sheet, and NEITHER HAS CHILDREN.
 
-   THE FACETS ARE NOT CHILDREN ANY MORE either; a member's one child is
-   `remove` (see `voiceTrayItems`). A player's whole vector is the sheet its
-   own row opens. */
+   WHAT LEFT, AND WHERE EACH ONE ALREADY WAS. Every one of the nine had a home
+   on the table BEFORE this deletion (test/table-inventory.json has filed all
+   nine since wave 2b), so what is deleted is a SECOND COPY of nine controls and
+   not one control:
+     · `addvoice` / `addbass` / `adddrums` -> the adder cell at the end of the
+       player axis (`ui/src/table/model.ts playerOffers`, `tcol-add|line`,
+       `tcol-add|bass`, `tcol-add|drums`);
+     · `addsec` -> the adder row under the last section (`sectionOffer`,
+       `trow-add`);
+     · `secup` / `secdown` / `secdup` / `secdrop` -> the first line of that
+       section's own ROW SHEET (`rowOps`: `trow-up|<id>`, `trow-down|<id>`,
+       `trow-dup|<id>`, `trow-del|<id>`), beside the ear, the repeats and the
+       re-deal, which the stripe never carried at all;
+     · `dropvoice` -> the first line of that player's COLUMN SHEET
+       (`colOps`: `tcol-del|<voice>`).
+   THE ADDRESSES THAT MOVED SAID SO IN THE SAME EDIT: `test/shell.js` A6l and
+   `test/gutter.js`'s `shorten` were the two gates that drove these branches by
+   name, and both read the table's own ops now. */
 function bandTrayItems() {
   normalize();
   const tabs = settleVoiceTab();
@@ -11924,24 +11967,8 @@ function bandTrayItems() {
                 still): a member row that closed itself on a second tap made
                 `tab<name>` mean two things and broke the two gates that tap a
                 member twice on purpose. */
-             act: () => openVoice(name),
-             kids: () => (name === tab ? voiceTrayItems() : []) };
+             act: () => openVoice(name) };
   });
-  const offer = [["line", "+ line"]];
-  if (!BASSV()) offer.push(["bass", "+ bass"]);
-  if (!DRUMV()) offer.push(["drums", "+ drums"]);
-  for (const [kind, label] of offer) {
-    out.push({ key: kind === "line" ? "addvoice" : "add" + kind,
-               glyph: "+" + kindGlyph(kind), word: label,
-               say: label + " — hire another player and give them their own column",
-               /* ...AND HIRING ONE OPENS IT (2026-09-02). `addVoice` already
-                  sets `tab` to the new player; expanding its row is what puts
-                  "what does it sound like" under the thumb that just asked for
-                  a player. The facet it used to land on is the whole column
-                  sheet now, which is what `tablePanel` opens on arrival. */
-               act: () => { addVoice(kind); expand("tab" + tab, true);
-                            push(); draw(); } });
-  }
   out.push(...sectionTrayItems());
   return out;
 }
@@ -12045,87 +12072,44 @@ function sectionTrayItems() {
        questions are on the screen" is not. Tapping a mark makes both true at
        once — `openSection` writes `setViewSec` and `formSec` together. */
     on: i === editSec(),
-    act: () => { openSection(s2.id); },
-    /* AND ITS THREE OPERATIONS ARE ITS CHILDREN (2026-09-02). They were a
-       LEVEL — `trayLevel = "section"`, reached by a descent and left by a ↑ —
-       and they are the same three items, under the section's own row, in the
-       tree. Only the OPEN section has any, for the reason a member has facets
-       only while it is open: `secup`/`secdown`/`secdrop` are one address each
-       and two sections expanded at once would draw two of each. */
-    acts: true,
-    kids: () => (s2.id === formSec ? secOpsTrayItems() : []) }));
-  out.push({ key: "addsec", glyph: GLYPH.sec.add.g, word: GLYPH.sec.add.w,
-             say: GLYPH.sec.add.s,
-             act: () => { addSection(); push(); draw(); } });
+    /* A SECTION ROW IS A JUMP AND NOTHING ELSE, SINCE 2026-09-05 (TABLE.md
+       §9a, "NO OP LIVES IN THE NAV"). Its four operations were its children
+       here — `secup`/`secdown`/`secdup`/`secdrop`, a branch of acts since
+       2026-09-02 — and they are the first line of that section's ROW SHEET
+       now (`trow-up|<id>` · `trow-down|<id>` · `trow-dup|<id>` ·
+       `trow-del|<id>`), beside the ear, the repeats and the re-deal, which
+       this stripe never carried at all. Tapping the row is what opens that
+       sheet: `openSection` writes `formSec` and `tablePanel` lands the arrival
+       on `trow|<id>`, so the ops are one tap from where they always were. */
+    act: () => { openSection(s2.id); } }));
+  /* ...AND `+ section` IS THE ROW UNDER THE LAST ROW (`sectionOffer`,
+     `trow-add`), which is where a spreadsheet has always put "one more". */
   return out;
 }
 
-/* ONE SECTION'S OPERATIONS. Three actions, no sibling marked — the same
-   declaration `motifops` makes, for the same reason: none of these is "open",
-   pressing one is a WRITE, and three `aria-pressed="false"` buttons would tell
-   a screen reader there is a state to be in. What says where you are is the
-   head, which names the section: "up — out of verse 2, back to the sections".
+/* ===== TOMBSTONE: `secOpsTrayItems` and `voiceTrayItems`, 2026-09-05 =====
+   The section's four operations (`secup` · `secdown` · `secdup` · `secdrop`)
+   and the player's one (`dropvoice`) were the two branches of ACTS on the Band
+   tree. Paul, looking at the table on staging: *"Move all the nav into the
+   table … I click band and all further operations are buttons around the
+   table."* TABLE.md §9a wrote it down as a law: NO OP LIVES IN THE NAV; the
+   tray keeps the Band tab and, at most, jump links.
 
-   RECHARACTERIZE IS NOT ONE OF THEM, and that is the one-owner law rather than
-   an omission. Paul asked for four verbs; three of them move or delete the
-   section and have no control anywhere else on the page, and the fourth —
-   changing its role — is the `form.role` <select> that has stood at the top of
-   `sectionDetail` since 2026-08-25 and is the FIRST thing under the heading
-   this level's marks sit beside. A mark here would be a second writable owner
-   of one word, which is the failure this codebase has a standing law against.
-   Said out loud so the next reader does not "restore" a verb nobody lost.
+   ALL FIVE WERE ON THE TABLE BEFORE THIS DELETION, which is why it is a
+   deletion and not a loss: `test/table-inventory.json` has filed them on
+   `trow-up|<id>` / `trow-down|<id>` / `trow-dup|<id>` / `trow-del|<id>` /
+   `tcol-del|<voice>` since wave 2b, each one reachable by opening the row or
+   the column the tray row already jumps to. `+ line` / `+ bass` / `+ drums` /
+   `+ section` went with them, to the table's two adder cells at
+   `tcol-add|line` / `tcol-add|bass` / `tcol-add|drums` / `trow-add` — the
+   addresses build-the-band's own offers have carried since §9a's first step.
 
-   EVERY REFUSAL CARRIES A MEASURED REASON (ui/glyph.js `paintIcon`, which grew
-   the spelling today so this level and `tempo` share it): the first section
-   cannot move up, the last cannot move down, and the only section cannot be
-   removed — because `DOC.form.sections` with nothing in it is a record with no
-   bars, which `scoreOf` would compile to silence and `barsOf` would answer 1
-   for. The numbers in the sentences are read off the record at paint time.
+   WHAT THE TREE'S ROWS DO NOW is the JUMP and only the jump: a player row
+   opens that player's column sheet, a section row opens that section's row
+   sheet, and neither has children. (`test/shell.js` A6l and
+   `test/gutter.js`'s `shorten` drove these two branches by name; both read the
+   table's own ops in the same edit, and say so.) */
 
-   IT READS `formSec` AT CLICK TIME, exactly as `motifOpsTrayItems` reads
-   `motifTab`: `paintTray` repaints a level in place when its keys have not
-   moved — which is these three, always — so the listener bound on the first
-   build is the one that runs after `move up` has changed which section you are
-   standing on. */
-function secOpsTrayItems() {
-  const secs = DOC.form.sections;
-  const i = secs.findIndex((s2) => s2.id === formSec);
-  if (i < 0) return [];
-  const n = secs.length, here = secName(i);
-  const at = () => DOC.form.sections.findIndex((s2) => s2.id === formSec);
-  return [
-    { key: "secup", glyph: GLYPH.sec.up.g, word: GLYPH.sec.up.w,
-      say: GLYPH.sec.up.s,
-      why: i > 0 ? null : here + " is already the first section",
-      act: () => { moveSection(at(), -1); push(); draw(); } },
-    { key: "secdown", glyph: GLYPH.sec.down.g, word: GLYPH.sec.down.w,
-      say: GLYPH.sec.down.s,
-      why: i < n - 1 ? null : here + " is already the last section",
-      act: () => { moveSection(at(), 1); push(); draw(); } },
-    /* DUPLICATE SITS BETWEEN THE MOVES AND THE REMOVAL, which is COMPOSER.md
-       §2.1's own order ("up · down · duplicate · remove") and is also the
-       order of consequence: two that rearrange, one that grows, one that
-       destroys. IT WEARS `+\u25a6` — `GLYPH.sec.add`'s picture, because what it
-       does IS adding a section and the gutter's one idiom is that the picture
-       says the KIND — and its own WORD, because "another one of these, with
-       everything it knows" is not "+ section". Two words, one picture, and
-       ui/glyph.js keeps a single row.
-       AND IT IS REFUSED BY NOTHING, said out loud so the next reader does not
-       go looking for the missing `why`: the sections list has no ceiling
-       anywhere in the document tier (band-kit's MAXSECS is the /band page's
-       fence and this record is not one of its songs), so there is no measured
-       sentence to print and a coined one would be furniture. */
-    { key: "secdup", glyph: GLYPH.sec.add.g, word: "duplicate",
-      say: "another " + here + ", after this one — the same bars, the same " +
-           "words, and the same thing every player reads and does here",
-      act: () => { dupSection(formSec); push(); draw(); } },
-    { key: "secdrop", glyph: GLYPH.sec.drop.g, word: GLYPH.sec.drop.w,
-      say: GLYPH.sec.drop.s,
-      why: n > 1 ? null
-        : "this is the record's only section — a record with none has no bars",
-      act: () => { dropSection(formSec); push(); draw(); } },
-  ];
-}
 
 /* ===== THE FACETS ARE DELETED, 2026-09-04 (TABLE.md wave 2c) =============
    `FACETS = ["inst", "mix", "plays"]`, `voiceFacet`, `settledFacet` and the
@@ -12169,22 +12153,6 @@ function openVoice(name) {
   markLink();
 }
 
-/* ONE PLAYER'S CHILDREN, AND THERE IS ONE OF THEM. `remove` is an ACT and not
-   a facet (2026-09-02): it draws no panel, it is not a state to be in, so it
-   carries no `on` — AND IT CARRIES ITS REFUSAL, measured off the roster at
-   paint time. The three facet marks that stood beside it are deleted with the
-   pane they switched; the whole voice vector is one tap away in the table's
-   column sheet, which is what `tab<name>` opens. */
-function voiceTrayItems() {
-  const v = VOICE(tab);
-  if (!v) return [];
-  return [{ key: "dropvoice", glyph: "\u2212" + kindGlyph(v.kind),
-            word: "remove", say: "remove " + v.name + " from the band",
-            why: DOC.voices.length > 1 ? null
-              : v.name + " is the only player \u2014 a record with none is the " +
-                "blank state, which is a genre you choose",
-            act: () => { dropVoice(v.name); push(); draw(); } }];
-}
 
 /* ===== MIX'S FIVE CHILDREN, 2026-09-02 =================================
    Paul: *"Instead of having four icons on top and section automation that

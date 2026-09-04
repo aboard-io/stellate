@@ -67,6 +67,11 @@
 "use strict";
 const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
+/* THE ONE DRIVER FOR A MENU, shared with every other browser gate. It knows all
+   three widgets `nukernel/src/menus/` draws (2026-09-06) and it is installed
+   once, after the goto, because check 5b drives a control whose widget is now
+   decided by the vocabulary rather than named in this file. */
+const { installCombo } = require("./lib-combo.js");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
 const PAGE = arg("--page", "http://localhost:8777/nukernel/index.html");
@@ -330,6 +335,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      run. Naming the fixture is the honest half of the change: what this file
      asserts about "the record" is now a claim about a record it chose. */
   await p.goto(PAGE + CHANT, { waitUntil: "networkidle" });
+  await installCombo(p);
   await p.waitForFunction(() => document.querySelectorAll("#app [role=combobox], #app select, #app .nu-sheet").length > 0,
     null, { timeout: 20000 }).catch(() => {});
   await p.evaluate(() => { window.__D = window.__eightDoc || window.__doc; });
@@ -358,9 +364,25 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
        ui/selects.js's own note says why: "every gate that reads the shape of
        the possible off the rendered artifact can still read it without opening
        forty controls"), so this is a query and never a gesture. */
-    const isCombo = (s) => s.getAttribute("role") === "combobox";
+    /* ...AND ON A CHIP SINCE 2026-09-06, WHICH IS THE THIRD WIDGET AND THE
+       REASON THIS ROUND EXISTS. Paul, 2026-09-05: *"In general dropdowns
+       barely work."* `nukernel/src/menus/` is the one owner of every menu on
+       this page now and `src/menus/pick.ts` gives a vocabulary one of three —
+       CHIPS up to eight words, the NATIVE `<select>` above eight on a coarse
+       pointer, the TYPED COMBO above eight with a keyboard. `data-widget` says
+       which, on the same addressed element, so this reader asks the ARTIFACT
+       what it is instead of guessing from a tag. */
+    const widgetOf = (s) => s.dataset.widget ||
+      (s.getAttribute("role") === "combobox" ? "combo"
+       : s.classList.contains("nu-wchips") ? "chips" : "native");
+    const isCombo = (s) => widgetOf(s) === "combo";
     const optionEls = (s) => {
-      if (!isCombo(s)) return [...s.querySelectorAll("option")].map((o) => ({
+      const kind = widgetOf(s);
+      if (kind === "chips") return [...s.querySelectorAll(".nu-wchip")].map((o) => ({
+        t: o.textContent, v: o.dataset.v == null ? "" : o.dataset.v,
+        off: o.disabled || o.getAttribute("aria-disabled") === "true",
+        why: o.dataset.why || "", ph: o.hasAttribute("data-placeholder") }));
+      if (kind !== "combo") return [...s.querySelectorAll("option")].map((o) => ({
         t: o.textContent, v: o.value, off: o.disabled,
         why: o.dataset.why || "", ph: o.hasAttribute("data-placeholder") }));
       const box = s.closest(".nu-combo") || s.parentElement;
@@ -373,12 +395,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     return {
       sel: q("#app [data-sel]").map((s) => ({
         key: s.dataset.sel, k: bare(s.dataset.sel), name: nameOf(s),
-        combo: isCombo(s),
+        combo: isCombo(s), widget: widgetOf(s),
         // THE WORD A COMBO IS STANDING ON IS ITS `data-v` — its `.value` is the
         // LABEL a reader sees (and, while it is open, whatever is being typed
         // into it). `data-v` is the address the record answers to and it did
         // not move.
-        value: isCombo(s) ? (s.dataset.v == null ? "" : s.dataset.v) : s.value,
+        value: s.dataset.v == null ? (s.value == null ? "" : s.value) : s.dataset.v,
         // THE COMBO BOX, READ OFF THE ARTIFACT. A menu on this page is a
         // `role=combobox` that owns a `role=listbox`, and the three are asked
         // for separately so "it says it is one" and "it has one" cannot pass
@@ -399,7 +421,8 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
         // a control whose value is not in its own table ("choose one"), and
         // that is a state of the page, not a choice on offer.
         n: optionEls(s).filter((o) => !o.ph).length,
-        inCell: !!s.closest("td"), disabled: !!s.disabled,
+        inCell: !!s.closest("td"),
+        disabled: !!s.disabled || s.getAttribute("aria-disabled") === "true",
         why: s.dataset.why || "",
         /* ...AND WHETHER THE REASON IS ON THE SCREEN *HERE*, 2026-08-28. The
            check below used to read `document.body.innerText` ONCE, at the end
@@ -493,7 +516,10 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
    * one. */
   await openTop("Band");
   await p.evaluate(() => {
-    const add = document.querySelector('[data-k="adddrums"]');
+    // `tcol-add|drums` SINCE 2026-09-05 (TABLE.md §9a, "no op lives in the
+    // nav") — the same rewrite as test/sheets.js's, for the same reason: the
+    // stripe's `adddrums` row is the table's own adder cell now.
+    const add = document.querySelector('#pan-band [data-k="tcol-add|drums"]');
     if (add) { add.click(); return; }
     if (window.__addDrums) window.__addDrums(true);
   });
@@ -857,22 +883,22 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   const dark = await p.evaluate(async () => {
     const h = document.querySelector('#app [data-sel="alphabet.harmony"]');
     if (!h) return "no harmony menu";
-    /* THE SAME GESTURE, ON THE COMBO BOX (2026-09-02): write the option's own
-       VALUE into the control and fire `change`. ui/selects.js answers a
-       synthetic `change` on a shut combo exactly the way a `<select>` did, and
-       says so in its own comment ("A SYNTHETIC `change` IS A COMMIT"), so this
-       driver is unchanged in everything but where it reads the options from. */
-    const words = [...(h.closest(".nu-combo") || h.parentElement)
-      .querySelectorAll("li[role=option]")]
-      .filter((x) => x.getAttribute("aria-disabled") !== "true" &&
-                     !x.hasAttribute("data-placeholder"));
-    const os = words.filter((x) => x.dataset.v !== "cycle");
-    const o = os.find((x) => x.dataset.v === "modal") || os[0];
+    /* THE SAME GESTURE, WHICHEVER WIDGET IT IS (2026-09-06). `alphabet.harmony`
+       is THREE words, so `src/menus/pick.ts` draws it as a strip of chips now
+       and it has no `<li role=option>` to read — which is exactly the silent
+       no-op test/lib-combo.js's header was written about, and it turned this
+       check red the hour the rule moved ("no non-cycle harmony", on a control
+       that offers three). `window.__combo` is the one driver every browser gate
+       shares and it knows all three; the CLAIM below has not moved a word. */
+    const words = window.__combo.words(h)
+      .filter((x) => !x.off && !x.ph);
+    const os = words.filter((x) => x.v !== "cycle");
+    const o = os.find((x) => x.v === "modal") || os[0];
     if (!o) return "no non-cycle harmony";
-    h.value = o.dataset.v; h.dispatchEvent(new Event("change", { bubbles: true }));
+    if (!window.__combo.say(h, o.v)) return "the harmony refused " + o.v;
     await new Promise((r) => setTimeout(r, 300));
     const q = [...document.querySelectorAll('#app [data-sel^="alphabet.quality"]')];
-    return { said: o.dataset.v, harmony: window.__D().alphabet.harmony,
+    return { said: o.v, harmony: window.__D().alphabet.harmony,
              n: q.length, off: q.filter((x) => x.disabled).length,
              said2: document.body.innerText
                .includes("editing the changes makes the harmony a cycle") };
@@ -1223,21 +1249,34 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   });
   }
 
-  /* ---- 7L THE MENU IS A COMBO BOX, AND IT IS ONE CONTROL ---------------
+  /* ---- 7L THE MENU IS ONE OF THREE WIDGETS, AND IT IS ONE CONTROL -------
      (Paul, 2026-09-02: "The combo boxes just don't work and are confusing. I
      was expecting more of onfocus show custom dropdown then filter based on
      input — one line instead of two.")
 
-     FOUR CLAIMS, ALL OFF THE ARTIFACT, and the fourth is the one that says
-     "one line instead of two": every menu in `#app` is a `role=combobox` that
-     OWNS a `role=listbox` through `aria-controls`, shut (`aria-expanded` is
-     false until a hand asks), and there is no second box above it — the
-     `.nu-combo-filter` the wrapper round drew is gone from the page, not just
-     from the source. */
-  const notCombo = sel.filter((s) => !s.multi && s.role !== "combobox")
-    .map((s) => s.key + " is a " + s.role);
-  check(!notCombo.length, "every menu in #app is an <input role=combobox> — " +
-    "also found: " + JSON.stringify(notCombo.slice(0, 6)));
+     THIS SAID "EVERY MENU IN #app IS AN `<input role=combobox>`" AND IT WAS
+     RIGHT UNTIL 2026-09-05, when Paul said the next sentence — *"In general
+     dropdowns barely work"* — and the phone said why (see check 7P below, and
+     `nukernel/src/menus/pick.ts` for the whole measurement). A combo box is a
+     good control WITH A KEYBOARD and a bad one without, so it is now one of
+     three that `nukernel/src/menus/` draws, chosen by the vocabulary and the
+     pointer. The claim is re-pointed and not weakened: a menu is a control this
+     page's ONE menu owner drew, and it says which widget it is on the artifact
+     (`data-widget`), so a hand-rolled `<select>` appearing somewhere new is
+     still a fail — it would carry no `data-widget` and no `data-sel` and would
+     be caught by check 3's law and by desk-gate's own sweep.
+
+     The three combo claims under it are unchanged and now ask only the menus
+     that ARE combos: a combo owns a `role=listbox` through `aria-controls`, it
+     is shut until a hand asks, and there is no second box above it — the
+     `.nu-combo-filter` the wrapper round drew is gone from the page. */
+  const WIDGETS = ["combo", "chips", "native"];
+  const notCombo = sel.filter((s) => !s.multi && WIDGETS.indexOf(s.widget) < 0)
+    .map((s) => s.key + " is a " + s.role + " / " + s.widget);
+  check(!notCombo.length, "every menu in #app is one of the three widgets " +
+    "ui/menus.js draws — also found: " + JSON.stringify(notCombo.slice(0, 6)));
+  notes.push("     widgets drawn: " + JSON.stringify(WIDGETS.map((w) =>
+    w + " x" + sel.filter((s) => s.widget === w).length).join(" · ")));
   const noList = sel.filter((s) => s.combo && s.controls !== "listbox")
     .map((s) => s.key);
   check(!noList.length, "...and each owns a role=listbox through aria-controls " +
@@ -1709,6 +1748,135 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     " control-level reasons are still in body.innerText " + JSON.stringify(off.missing));
 
   check(!errs.length, "zero console errors / pageerrors " + JSON.stringify(errs.slice(0, 3)));
+
+  /* ==== 7P · AND IT WORKS ON A PHONE, WHICH IS THE WHOLE OF THIS ROUND ====
+     Paul, 2026-09-05: *"In general dropdowns barely work."*
+
+     EVERY CHECK ABOVE RUNS AT 1280 WITH A MOUSE AND A KEYBOARD, and every one
+     of them was green on the widget Paul was complaining about — which is the
+     standing "test the artifact" failure said one axis along: the gate was
+     measuring the right object on the wrong machine. So this block opens a
+     SECOND context with `hasTouch` and a `(pointer: coarse)` media override at
+     390x844 and asks the four questions a thumb asks. What it found on the
+     widget this round replaced, before the replacement (the full table is in
+     `nukernel/src/menus/pick.ts`): 33 of 33 menus came up as a focused,
+     WRITABLE `<input type=text>` — a soft keyboard, every time — and with that
+     keyboard eating 320 of the 844 pixels, NINE of the thirteen menus driven
+     had exactly ONE option a thumb could reach without scrolling, `rule.instr.0`
+     among them at 1 of 120. Four of thirteen flashed open and shut inside the
+     one gesture.
+
+     THE KEYBOARD IS ASSERTED AS ITS CAUSE AND NOT AS ITS SYMPTOM, because a
+     headless browser has no soft keyboard to measure: what raises one is a
+     focused editable `<input>`, so "no menu on a coarse pointer is a typed
+     input" IS the claim "no menu can be covered by a keyboard", stated where a
+     machine can check it. */
+  {
+    const ctx2 = await b.newContext({ hasTouch: true,
+      viewport: { width: 390, height: 844 } });
+    const p2 = await ctx2.newPage();
+    const errs2 = [];
+    p2.on("pageerror", (e) => errs2.push("pageerror: " + e.message));
+    await p2.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+    const cdp = await ctx2.newCDPSession(p2);
+    await cdp.send("Emulation.setEmulatedMedia", { features: [
+      { name: "pointer", value: "coarse" }, { name: "any-pointer", value: "coarse" },
+      { name: "hover", value: "none" }, { name: "any-hover", value: "none" }] });
+    await cdp.send("Emulation.setTouchEmulationEnabled",
+      { enabled: true, maxTouchPoints: 5 });
+    await p2.goto(PAGE + CHANT, { waitUntil: "networkidle" });
+    await installCombo(p2);
+    await p2.waitForTimeout(1200);
+    const coarse2 = await p2.evaluate(() => matchMedia("(pointer: coarse)").matches);
+    check(coarse2, "the phone pass really is a coarse pointer (the checks under " +
+      "this are worthless if it is not)");
+    /* THE WHOLE PAGE, NOT THE FIRST TAB OF IT — the same walk the survey above
+       makes, through the page's own tab door. */
+    const tops2 = await p2.evaluate(() =>
+      window.__eightTabs ? window.__eightTabs() : []);
+    let ph = [];
+    for (const t of tops2) {
+      await p2.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
+                                  window.__eightTab(tt); }, t);
+      await p2.waitForTimeout(t === "Score" ? 900 : 250);
+      ph = ph.concat(await p2.evaluate(() =>
+        [...document.querySelectorAll("[data-sel]")].map((n) => {
+          const r = n.getBoundingClientRect();
+          return { k: n.dataset.sel, tag: n.tagName,
+                   widget: n.dataset.widget || null,
+                   typed: n.tagName === "INPUT",
+                   h: Math.round(r.height),
+                   n: window.__combo.words(n).filter((o) => !o.ph).length };
+        })));
+    }
+    const byKey = new Map();
+    for (const r of ph) if (!byKey.has(r.k)) byKey.set(r.k, r);
+    const rows = [...byKey.values()];
+    check(rows.length > 20, "the phone pass found the menus (" + rows.length +
+      " addressed controls across " + tops2.length + " tabs)");
+    /* 1 · NO MENU IS A TYPED INPUT. See the paragraph above: this is the
+           keyboard claim, said where it can be measured. */
+    const typed = rows.filter((r) => r.typed).map((r) => r.k);
+    check(!typed.length, "on a coarse pointer NO menu is a typed input — a " +
+      "focused editable <input> is what raises a soft keyboard, and a keyboard " +
+      "is what hid the list " + JSON.stringify(typed.slice(0, 6)));
+    /* 2 · AND EACH IS ONE OF THE TWO WIDGETS A THUMB GETS. */
+    const wrongW = rows.filter((r) => r.widget !== "chips" && r.widget !== "native")
+      .map((r) => r.k + " is " + r.widget);
+    check(!wrongW.length, "...and every one of them is CHIPS or the NATIVE " +
+      "picker, which is src/menus/pick.ts's answer for a thumb " +
+      JSON.stringify(wrongW.slice(0, 6)));
+    /* 3 · A CONTROL IS A THUMB TARGET. 44px, this page's own `--tap`. */
+    const short = rows.filter((r) => r.h > 0 && r.h < 43)
+      .map((r) => r.k + " " + r.h + "px");
+    check(!short.length, "...and each is at least 44px tall, which is what a " +
+      "thumb needs " + JSON.stringify(short.slice(0, 6)));
+    /* 4 · IT OPENS, COMMITS AND CLOSES BY TAP. Driven at real coordinates on
+           one of each widget, because a value written by script would pass on a
+           control nothing can reach. A chip is tapped; a native picker's own
+           wheel is the platform's and cannot be opened from here, which IS the
+           reason it is the right widget — it cannot be covered by the page or
+           scrolled off by the pane under it — so it is driven at its address
+           and the record is read back. */
+    const drove = [];
+    for (const r of rows.slice(0, 400)) {
+      if (r.n < 2) continue;
+      const done = await p2.evaluate(async (k) => {
+        const q = '[data-sel="' + k.replace(/"/g, '\\"') + '"]';
+        const n = document.querySelector(q);
+        if (!n) return null;
+        n.scrollIntoView({ block: "center" });
+        await new Promise((r2) => setTimeout(r2, 60));
+        const was = n.dataset.v;
+        const want = window.__combo.words(n)
+          .find((o) => !o.off && !o.ph && o.v !== was);
+        if (!want) return null;
+        const box = n.getBoundingClientRect();
+        if (box.top < 0 || box.bottom > innerHeight) return null;
+        const took = window.__combo.say(n, want.v);
+        await new Promise((r2) => setTimeout(r2, 250));
+        const now = document.querySelector(q);
+        return { k, was, want: want.v, took,
+                 // the widget is SHUT afterwards: a strip has no open state and
+                 // a native picker's popup is the platform's own
+                 open: now ? now.getAttribute("aria-expanded") === "true" : false,
+                 now: now ? now.dataset.v : null };
+      }, r.k);
+      if (done) drove.push(done);
+      if (drove.length >= 8) break;
+    }
+    const stuck = drove.filter((d) => d.now !== d.want).map((d) => d.k);
+    const gaping2 = drove.filter((d) => d.open).map((d) => d.k);
+    check(drove.length >= 5 && !stuck.length,
+      "...and a TAP commits: " + drove.length + " menus driven at their own " +
+      "rects on the phone, every one of them standing on the word that was " +
+      "said " + JSON.stringify(stuck.slice(0, 4)));
+    check(!gaping2.length, "...and each is shut again afterwards " +
+      JSON.stringify(gaping2.slice(0, 4)));
+    check(!errs2.length, "...with zero console errors on the phone " +
+      JSON.stringify(errs2.slice(0, 3)));
+    await ctx2.close();
+  }
 
   for (const n of notes) console.log(n);
   for (const f of fails) console.log(f);

@@ -1246,6 +1246,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       await p.waitForTimeout(320);
     };
 
+    /* THE ACCORDION HAS ONE OPEN HEAD AND EVERY HEAD IS A TOGGLE, so a check
+       that opens three sheets in a row shuts whatever is open first rather
+       than trusting the last one's redraw. (T6's own `shut` is bound to one
+       cell key; this one closes whichever head is open.) */
+    const shutAll = async () => { await p.evaluate(() => {
+      const el = document.querySelector(
+        '#pan-band [aria-expanded="true"].nu-rowjump, ' +
+        '#pan-band [aria-expanded="true"].nu-wcell');
+      if (el) el.click(); }); await p.waitForTimeout(320); };
+
     /* 9a · A TAP SELECTS, AND THE ADDRESS SAYS WHICH CELL. */
     await tap(cell(v9a, s9a));
     const a1 = await addr(), sel1 = await sel();
@@ -1488,6 +1498,168 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     }
     await ctx.pages()[0].setViewportSize({ width: 390, height: 900 });
     await p.waitForTimeout(420);
+
+    /* 9u · A HAND-CHANGED THROAT RE-SEATS THE WRITTEN REGISTER.
+       `precompose.js` §7d writes every sung chair at the octave its throat
+       actually sings, so that the STAFF, the piano roll and the notated .mid
+       say what the box sounds instead of leaving `audio/plan.js`'s fold to
+       correct the sound behind them. The one door that could undo that was on
+       this page: the column sheet's `sings as` strip wrote a new throat and
+       left `cast.reg` where the OLD throat had put it, and the record was an
+       octave out again one tap later. `NuPrecompose.reseatVoice` is §7d's own
+       arithmetic asked about one chair, called at `putCast`.
+
+       DRIVEN ON THE PAGE, and the fold is COMPUTED HERE from what the page
+       exposes rather than taken on trust: `window.NuKernel.homeFor` is the
+       same function the seat uses and `window.NuKnobs`'s `voice` compass is the
+       same table `precompose` reads, so what this measures is what the audio
+       layer would do to the rendered line. THREE CLAIMS:
+         · the write moves `cast.reg` by exactly the fold the NEW throat was
+           about to apply (measured on Kingston 1969 / reading 1: the `vocal`
+           chair is seated at 0 for its tenor and soprano wants +1);
+         · after it, the fold is ZERO — the line is written where it is sung;
+         · and the SUNG LINE IS UNCHANGED, which is the whole reason it is done
+           this way: `pitch + 12 × fold` is the same set of notes before and
+           after, so the seat moves the notation and never the sound. */
+    {
+      const DT = await doc();
+      const PROBE = (name) => p.evaluate((vn) => {
+        const D = window.__eightDoc();
+        const li = D.voices.filter((v) => v.kind === "line")
+                           .findIndex((v) => v.name === vn);
+        const vi = D.voices.findIndex((v) => v.name === vn);
+        /* THE COMPASS, off ui/knobs' own published table — the extraction of
+           the parent's VOICE_TYPE, which is where precompose reads it too. */
+        const m = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
+        const winOf = (w) => { const V = (window.NuKnobs || {}).voices || {};
+          for (const dsp of ["voice_lead", "voice_choir"]) {
+            const row = (((V[dsp] || {}).rows) || [])
+              .find((r) => r && r.key === "voice" && r.compass);
+            const c = row && row.compass && row.compass[w];
+            if (!c || !(c[0] > 0) || !(c[1] > 0)) continue;
+            if (m(c[1]) - m(c[0]) < 12) continue;
+            return [m(c[0]), m(c[1])];
+          }
+          return null; };
+        const notes = [];
+        for (let s = 0; s < D.form.sections.length; s++)
+          for (const e of window.__eightEvents(s))
+            if (e.kind === "line" && e.lv === li && e.n != null) notes.push(e.n);
+        const th = (D.voices[vi].cast || {}).voice || null;
+        const sheetWord = (() => { const b = document.querySelector(
+          '#pan-band [data-k="' + CSS.escape("throat|" + vn) + '"]');
+          return b ? (b.textContent || "").trim() : null; })();
+        const win = winOf(th || sheetWord);
+        const fold = (win && notes.length && window.NuKernel.homeFor)
+          ? window.NuKernel.homeFor(notes, win) : null;
+        return { vi, li, reg: (D.voices[vi].cast || {}).reg,
+                 throat: th, word: sheetWord, win, fold,
+                 sung: notes.map((n) => n + 12 * (fold || 0)).join(","),
+                 n: notes.length };
+      }, name);
+      /* WHICH CHAIR SINGS is asked of the PAGE — the `sings as` row is drawn
+         only where `A.throat` answers, which is the same `throatVoiceOf` walk
+         the seat makes, so a chair with the row IS a chair with a throat. */
+      let sungName = null;
+      for (const v of DT.voices.filter((x) => x.kind === "line")) {
+        await shutAll();
+        await tap("tcol|" + v.name);
+        if (await has("throat|" + v.name)) { sungName = v.name; break; }
+      }
+      if (!sungName) check(false, "T9u no chair on this record draws a `sings as` row");
+      else {
+        const before = await PROBE(sungName);
+        await tap("throat|" + sungName);              // grow the strip
+        const words = await p.evaluate((vn) =>
+          [...document.querySelectorAll('#pan-band [data-k^="' +
+            CSS.escape("throat|" + vn) + '|"]')]
+            .map((b) => b.dataset.k.split("|")[2]).filter(Boolean), sungName);
+        /* THE WORD THAT ASKS FOR A MOVE. A compass is a wall, not a target, so
+           most throats leave a well-seated line alone (measured: on reggae's
+           `vocal`, alto and countertenor and its own tenor all answer 0) — the
+           gate picks the one that does move, because "it re-seats" is only a
+           claim about a chair that needed re-seating. */
+        const want = words.includes("soprano") ? "soprano"
+                   : words.find((w) => w && w !== before.throat && w !== before.word);
+        if (!want) check(false, "T9u the throat strip offered no second word: " +
+          JSON.stringify(words));
+        else {
+          await tap("throat|" + sungName + "|" + want);
+          const after = await PROBE(sungName);
+          check(after.throat === want && after.reg !== before.reg,
+            "T9u the `sings as` write re-seats the written register: " +
+            sungName + " " + (before.throat || before.word) + "@reg " +
+            before.reg + " -> " + want + "@reg " + after.reg);
+          check(after.fold === 0,
+            "T9v …and the fold audio/plan.js would apply is now ZERO — the " +
+            "chair is written where it sings (" + JSON.stringify(
+              { win: after.win, notes: after.n, fold: after.fold }) + ")");
+          /* ...AND THE SOUND DID NOT MOVE. `before.sung` is the line the OLD
+             throat sounded and is not the comparison; what is compared is the
+             NEW throat's sounding line with the seat against the same line
+             without it — which is `before.n` pitches + 12 × the fold the new
+             compass asks of them. */
+          const movedBy = after.reg - before.reg;
+          const wouldHave = before.sung.split(",").filter(Boolean)
+            .map((n) => +n + 12 * movedBy).join(",");
+          check(after.sung === wouldHave && movedBy !== 0,
+            "T9w …and the SUNG line is unchanged: the octave written (" +
+            movedBy + ") is exactly the fold the new throat was about to " +
+            "apply, so pitch + 12 x fold is the same " + after.n +
+            " notes either way (" + (after.sung === wouldHave) + ")");
+          /* AND IT IS IDEMPOTENT, which is what lets the door call it on every
+             write: pressing the same word again re-seats nothing. */
+          await tap("throat|" + sungName);
+          await tap("throat|" + sungName + "|" + want);
+          const again = await PROBE(sungName);
+          check(again.reg === after.reg && again.fold === 0,
+            "T9x …and a second write of the same throat moves nothing — the " +
+            "seat is idempotent on a seated chair (reg " + again.reg +
+            ", fold " + again.fold + ")");
+        }
+      }
+      await shutAll();
+    }
+
+    /* 9y · A ROW `clamp` MOVES NOTHING, AND THE ROW SAYS SO.
+       The row tier of §1's five landed as five strips and four of them reach
+       the sound. The fifth wrote `section.clamp`, resolved through
+       `document.js toGenre` onto the compiled genre's `incClamp`, reached
+       `kernel.js rampOf` — and moved no note, because `document.js toPhrase`
+       writes `inc` and `stk` all-zero on every phrase this box can hold (0 of
+       18,793 motifs across 479 anchors at three readings carries a ramp
+       column; `nukernel/gates.json`'s own census reads `form.clamp` as 165
+       rows and 0 alive). A control that writes and does not arrive is the bug
+       this tree keeps, and a grey one with no reason is the other half of it —
+       so the row sheet SAYS the measurement, the way the cell sheet has since
+       wave 4 (T6j). This asserts the sentence AND that there is nothing on the
+       page that can write the field. */
+    {
+      const DR = await doc();
+      const sidR = DR.form.sections[0].id;
+      await shutAll();
+      await tap("trow|" + sidR);
+      const rr = await sheetRows();
+      const ramp = (rr || []).find((r) => r.lab === "ramp limit");
+      const writable = await p.evaluate(() => ({
+        strip: !!document.querySelector('#pan-band [data-k="form.clamp"]'),
+        chips: document.querySelectorAll(
+          '#pan-band [data-k^="form.clamp|"]').length,
+        sheet: !!(window.NuAvail && window.NuAvail.SHEETS["form.clamp"]) }));
+      check(!!ramp && !ramp.k && !!ramp.why && /ramp/.test(ramp.why || ""),
+        "T9y the row's ramp limit is a SENTENCE with its measurement on it, " +
+        "not a strip — " + JSON.stringify(ramp));
+      check(!writable.strip && writable.chips === 0 && !writable.sheet,
+        "T9z …and nothing on the page can write it: no form.clamp control, no " +
+        "chips, and avail.js mints no sheet for it — " + JSON.stringify(writable));
+      const wrote = await p.evaluate(() => {
+        const D = window.__eightDoc();
+        return D.form.sections.filter((s) => s.clamp != null).length; });
+      check(wrote === 0,
+        "…and no section of the record carries a `clamp` after the sheet has " +
+        "been opened (" + wrote + " of " + DR.form.sections.length + ")");
+      await shutAll();
+    }
   }
 
   /* ================= T0 · THE CONSOLE =================================== */

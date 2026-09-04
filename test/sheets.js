@@ -758,7 +758,12 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // `[data-k="adddrums"]` is not on the page until you are there.
   if (REAL) await openTop("Band");
   await p.evaluate(async () => {
-    const add = document.querySelector('[data-k="adddrums"]');
+    // `tcol-add|drums` SINCE 2026-09-05 (TABLE.md §9a, "no op lives in the
+    // nav"): `adddrums` was a row in the stripe's Band branch and the offer is
+    // the adder cell at the end of the table's player axis now, at the address
+    // the T7 inventory filed it onto. The tab still has to be open, for the
+    // same reason as before — the Band PANE is where the table is drawn.
+    const add = document.querySelector('#pan-band [data-k="tcol-add|drums"]');
     if (add) { add.click(); return; }
     if (window.__addDrums) window.__addDrums(true);
   });

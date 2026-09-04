@@ -2965,6 +2965,59 @@
   const seatKey = (gk, seed, rules) => gk + "|" + seed + "|" +
     (rules && rules.length ? JSON.stringify(rules.map((e) => [e.f, e.v])) : "");
 
+  /* THE WALK, AND THERE IS ONE OF IT. Two callers ask what a seated chair
+     actually plays — the composer's whole-record pass below and the page's
+     per-chair re-seat at a hand-changed throat (`reseatVoice`) — and a second
+     copy of this loop would be a second opinion about what a chair plays.
+     `wins[pi]` null means "do not ask about this chair", which is how the
+     one-chair caller borrows the whole-record walk.
+
+     THE RECORD'S OWN NOTES, walked the way the record is PLAYED — the phrase
+     per section, the kernel's voices dealt round the chairs, and the section
+     rounded UP to a whole number of the genre's own loops, which is
+     `ui/derive.js sectionRender`'s `ceil((nudge + len) / g.bars) * g.bars`
+     and not `scoreOf`'s bare section length. It has to be the played count:
+     the seat this pass is anticipating folds the notes the BOX renders, and a
+     doowop section of two bars against an eight-bar cycle plays six bars of
+     line that `scoreOf` never asks for. Measured both ways over the whole
+     catalogue: with `scoreOf`'s count hundreds of chairs still folded at the
+     seat because the seat was reading notes this pass never saw; with the
+     played count, 0 of 2,459 do. */
+  function chairNotes(doc, lines, wins) {
+    const per = lines.map(() => []);
+    const nP = lines.length;
+    if (!wins.some(Boolean)) return per;
+    for (let i = 0; i < doc.form.sections.length; i++) {
+      const g = ND.toGenre(doc, i, GENRES);
+      const len = Math.max(1, doc.form.sections[i].bars || g.bars);
+      const total = Math.ceil(len / g.bars) * g.bars;
+      const secId = doc.form.sections[i].id;
+      lines.forEach((c, pi) => {
+        if (!wins[pi]) return;
+        const evs = K.render(ND.toPhrase(doc, ND.materialAt(c, secId)), g, total);
+        for (let v = pi; v < g.voices; v += nP)
+          for (const e of evs) if (e.v === v && e.n != null) per[pi].push(e.n);
+      });
+    }
+    return per;
+  }
+
+  /* ...AND THE ARITHMETIC, ALSO ONCE. IT IS IDEMPOTENT ON A SEATED CHAIR, and
+     that is the property the page leans on: the notes handed in are rendered at
+     the chair's CURRENT `cast.reg`, and `homeFor` is octave-covariant (folding
+     a line already moved k octaves returns the same answer minus k), so a chair
+     already written where its throat sings answers 0 and nothing is written.
+     Returns the octaves written. */
+  function applySeat(c, notes, win) {
+    if (!win || !notes.length) return 0;
+    const home = K.homeFor(notes, win);
+    if (!home) return 0;
+    const to = (c.cast.reg | 0) + home;
+    if (to < -4 || to > 3) return 0;              // unwritable: leave it to the fold
+    c.cast.reg = to;
+    return home;
+  }
+
   /** The pass itself. `doc` is the finished record; `nBase` and `layerKeys` say
    *  which line chair belongs to which ROW, because a guest sings with its own
    *  genre's throat (plan.js reads the owner off the event's layer). */
@@ -2982,46 +3035,59 @@
       return compassOf(throatVoiceOf(row, owner, c));
     });
     if (!wins.some(Boolean)) return doc;          // nobody sings: nothing to do
-    // THE RECORD'S OWN NOTES, walked the way the record is PLAYED — the phrase
-    // per section, the kernel's voices dealt round the chairs, and the section
-    // rounded UP to a whole number of the genre's own loops, which is
-    // `ui/derive.js sectionRender`'s `ceil((nudge + len) / g.bars) * g.bars`
-    // and not `scoreOf`'s bare section length. It has to be the played count:
-    // the seat this pass is anticipating folds the notes the BOX renders, and a
-    // doowop section of two bars against an eight-bar cycle plays six bars of
-    // line that `scoreOf` never asks for. Measured both ways over the whole
-    // catalogue: with `scoreOf`'s count hundreds of chairs still folded at the
-    // seat because the seat was reading notes this pass never saw; with the
-    // played count, 0 of 2,459 do.
-    const per = lines.map(() => []);
-    const nP = lines.length;
-    for (let i = 0; i < doc.form.sections.length; i++) {
-      const g = ND.toGenre(doc, i, GENRES);
-      const len = Math.max(1, doc.form.sections[i].bars || g.bars);
-      const total = Math.ceil(len / g.bars) * g.bars;
-      const secId = doc.form.sections[i].id;
-      lines.forEach((c, pi) => {
-        if (!wins[pi]) return;
-        const evs = K.render(ND.toPhrase(doc, ND.materialAt(c, secId)), g, total);
-        for (let v = pi; v < g.voices; v += nP)
-          for (const e of evs) if (e.v === v && e.n != null) per[pi].push(e.n);
-      });
-    }
-    const moves = lines.map(() => 0);
-    lines.forEach((c, pi) => {
-      if (!wins[pi] || !per[pi].length) return;
-      const home = K.homeFor(per[pi], wins[pi]);
-      if (!home) return;
-      const to = c.cast.reg + home;
-      if (to < -4 || to > 3) return;              // unwritable: leave it to the fold
-      c.cast.reg = to;
-      moves[pi] = home;
-    });
+    const per = chairNotes(doc, lines, wins);
+    const moves = lines.map((c, pi) => applySeat(c, per[pi], wins[pi]));
     if (memoKey != null) {
       if (SEATMEMO.size > 512) SEATMEMO.clear();
       SEATMEMO.set(memoKey, moves);
     }
     return doc;
+  }
+
+  /* ===== ONE CHAIR, WHEN A HAND MOVES ITS THROAT (2026-09-05) ============
+     §7d writes every sung chair where its throat sings AT COMPOSE TIME, and
+     until today the page's own "sings as" door (`ui/eight.js` A.throat ->
+     `putCast(vi, "voice", …)`, the column sheet's `throat|<voice>` strip) wrote
+     the new throat and left `cast.reg` exactly where the OLD throat had put it.
+     That put the record straight back into the state §7d exists to end: the
+     audio fold quietly corrects the sound and the STAFF, the piano roll and the
+     notated .mid are an octave out — "a record whose notation disagrees with
+     its sound by an octave", one hand-tap later. MEASURED on Kingston 1969 at
+     reading 1: the `vocal` chair is seated at reg 0 for its tenor (fold 0);
+     asking it to sing soprano wanted a fold of +1 and asking for bass wanted
+     −1, and neither reached `cast.reg` before this door existed.
+
+     ONE OWNER, AND IT IS THIS FILE. `document.js` beside `resolve` was the
+     other candidate; the seat needs the COMPASS table, `throatVoiceOf`'s
+     precedence and the played-bar walk above, all three of which live here and
+     none of which document.js has any other use for. So the door CALLS this and
+     there is exactly one seat in the tree.
+
+     `vi` IS THE INDEX INTO `doc.voices` — the TABLE's column index — because
+     that is what the caller holds; turning it into a line index is this file's
+     business. Returns the octaves written, 0 for a chair nobody sings (and for
+     one whose seat would need a register the document cannot spell, which is
+     §7d's own "if the seat cannot say it, it says nothing"). */
+  function reseatVoice(doc, vi) {
+    const v = doc && doc.voices && doc.voices[vi];
+    if (!v || v.kind !== "line") return 0;
+    const gk = doc.basis, G = GENRES[gk];
+    if (!G) return 0;
+    const lines = ND.LINES(doc);
+    const li = lines.indexOf(v);
+    if (li < 0) return 0;
+    /* WHICH ROW OWNS THE CHAIR is §7d's own rule, read off the FINISHED record
+       rather than off `genreToDocument`'s locals: the record's basis for its own
+       chairs, and a GUEST's own genre for the ones after them — and a guest's
+       NAME is its genre key, which is what `nameFor(lk)` wrote and what the
+       column sheet's `A.throat` already reads it back as. */
+    const nBase = G.voices | 0;
+    const owner = (li >= nBase && GENRES[v.name]) ? v.name : gk;
+    const win = compassOf(throatVoiceOf(GENRES[owner], owner, v));
+    if (!win) return 0;
+    v.cast = v.cast || {};
+    const wins = lines.map((c, i) => (i === li ? win : null));
+    return applySeat(v, chairNotes(doc, lines, wins)[li], win);
   }
 
   /* ======================================================================
@@ -4163,5 +4229,10 @@
            RELEASE, RELDEAL, DEVDEAL, DEVCAP, developOf, keepsIts,
            // § 7, exported so the gate measures THE CHOOSER rather than a
            // second copy of it — the same law `idiomOf` is exported under
-           grooveOf, busesOf, soundFxOf, kitFacts, retOf, ROOM, ECHOSEND };
+           grooveOf, busesOf, soundFxOf, kitFacts, retOf, ROOM, ECHOSEND,
+           // §7d's SEAT, asked about ONE chair — the door `ui/eight.js`'s
+           // "sings as" strip calls when a hand changes a throat, exported on
+           // the same law as `idiomOf`: there is one seat and it is here, so a
+           // caller re-seats by asking rather than by copying the arithmetic.
+           reseatVoice };
 });

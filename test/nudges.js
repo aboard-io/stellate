@@ -588,7 +588,11 @@ const spread = (ev) => {
 
   /* ---- 7 HIRE A DRUMMER AND ALL SEVEN COME ALIVE ---------------------- */
   await openBand();                       // ...and so is the button that hires one
-  const hired = await tap("adddrums");
+  /* `tcol-add|drums` SINCE 2026-09-05 (TABLE.md §9a: "NO OP LIVES IN THE NAV").
+     `adddrums` was a row in the stripe's Band branch; the offer is the adder
+     cell at the end of the table's player axis now, at the address the T7
+     inventory filed it onto. Same hire, same one door (`addVoice("drums")`). */
+  const hired = await tap("tcol-add|drums");
   check(hired, "the page offers a drummer (+ drums)");
   await openSection(S2);
   const g1 = await greys();

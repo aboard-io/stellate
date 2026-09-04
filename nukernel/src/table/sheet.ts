@@ -25,49 +25,45 @@
 // ===== ONE OWNER FOR WHICH WIDGET A VOCABULARY GETS ====================
 // TABLE.md 9b: *"Dropdowns: the native picker on touch, the typed combo on
 // desktop with a keyboard, chips for a vocabulary of <= 8 words."* Paul,
-// 2026-09-05: *"In general dropdowns barely work."* `pickerFor` below is that
-// one owner, and it is asked once per field:
-//   1. THE CALLER'S OWN COMBO WINS. The five MENUS keys (ui/selects.js
-//      `selectEl` at its own `data-sel` address) are a hundred and eight words
-//      and are already the typed combo; the table seats it and does not
-//      re-draw it.
-//   2. CHIPS UP TO EIGHT WORDS. Chips are decisions and this page has said so
-//      since 2026-08-16 — and eight is what fits one line at 320 without
-//      becoming a wall.
-//   3. THE NATIVE PICKER ON A COARSE POINTER. `(pointer: coarse)` is the only
-//      honest test for "a thumb": a phone's own wheel beats any list this page
-//      can draw, and it is the one control that cannot be scrolled off the
-//      screen by the pane underneath it.
-//   4. CHIPS OTHERWISE. On a desktop with a keyboard a strip of up to
-//      twenty-four words is arrowable and readable, which a `<select>` is not.
+// 2026-09-05: *"In general dropdowns barely work."*
+//
+// THE OWNER IS `src/menus/pick.ts` AND IT IS THE WHOLE PAGE'S, 2026-09-06. It
+// was written here first, and the four rules it was written as are that file's
+// four rules now, argued there and measured there. `pickerFor` below is what is
+// left: the one clause that is about the GRID rather than about a vocabulary —
+// a field carrying the CALLER'S own control is SEATED and never re-drawn — plus
+// `strip: true`, the named flag that keeps a cell row's 9-to-24-word strip a
+// strip on a desktop (test/table.browser.js T9's chip walk drives it).
 
 import { html, nothing } from "lit/html.js";
 import type { TemplateResult } from "lit/html.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import type { Field, StripField, Choice } from "./api.js";
-import { CHIPMAX } from "./model.js";
+import { pickerFor as pick } from "../menus/pick.js";
 
 export type Picker = "combo" | "chips" | "native";
 
-/** Is there a thumb on this screen? Asked once and cached: a pointer does not
- *  change under a running page, and `matchMedia` in a loop over eighteen
- *  fields is eighteen style resolutions. */
-let COARSE: boolean | null = null;
-export function coarse(): boolean {
-  if (COARSE == null) {
-    try { COARSE = !!(window.matchMedia &&
-      window.matchMedia("(pointer: coarse)").matches); }
-    catch (e) { COARSE = false; }
-  }
-  return COARSE;
-}
+/* THE RULE IS NOT THIS FILE'S ANY MORE, 2026-09-06. It was written here first
+   and it was right here first — chips <= 8, the native picker on a coarse
+   pointer, TABLE.md 9b — while `ui/selects.js` was answering COMBO to every
+   vocabulary at every size on every pointer, which is what Paul was holding
+   when he said *"In general dropdowns barely work."* So the rule moved UP to
+   `src/menus/pick.ts`, where the page's own menus read it too, and this file
+   asks it the same question every other caller does. What stays here is the
+   one clause that is about the GRID and not about a vocabulary: a field
+   carrying the CALLER'S OWN control is seated, never re-drawn. */
+export { coarse } from "../menus/pick.js";
 
 export function pickerFor(f: StripField): Picker {
+  // 1 · A CALLER'S OWN WIDGET WINS. `model.ts` hands the long vocabularies a
+  //     built control (`A.combo`, which is `ui/menus.js` `menuEl` — so on a
+  //     coarse pointer that control is ALREADY the native picker, and this
+  //     branch is "seat it", not "draw a combo").
   if (f.node) return "combo";
-  const n = (f.options || []).length;
-  if (n <= CHIPMAX) return "chips";
-  return coarse() ? "native" : "chips";
+  //     `strip: true` — a cell sheet's row is inside a spreadsheet; see
+  //     `PickOpts.strip` for the measurement that keeps it chips to 24.
+  return pick((f.options || []).length, { strip: true });
 }
 
 const wordOf = (f: { word?: string | null }) =>

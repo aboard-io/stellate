@@ -729,9 +729,14 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     await page.waitForTimeout(100);
     await page.click('[data-k="toptab-Band"]');
     await page.waitForTimeout(TAB_SETTLE("Band"));
+    /* ...AND THE HIRE IS ON THE TABLE SINCE 2026-09-05 (TABLE.md §9a). The
+       stripe's `addvoice` went with the rest of the Band branch's ops; the
+       offer it filed onto is the adder cell at the end of the player axis,
+       `tcol-add|line`, which is build-the-band's own address and is in the DOM
+       whenever the Band pane is drawn. */
     if (!(await page.$('[data-k="tabvoice2"]')) &&
         !(await nowT()).rows.some((r) => r.depth === 1 && /^tab/.test(r.key))) {
-      const add = await page.$('[data-k="addvoice"]');
+      const add = await page.$('#pan-band [data-k="tcol-add|line"]');
       if (add) { await add.click(); await page.waitForTimeout(900); }
     }
     const anyUp = await page.$('[data-k="trayup"]');
@@ -817,14 +822,29 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       + "expanded ancestor, its players AND its sections on the stripe, one "
       + "<mark> — " + JSON.stringify(both));
 
-    /* A6l — A MEMBER'S FOUR CHILDREN ARE REAL ROWS AT DEPTH 2. It read
-       `r.subs === 4` off `.nu-traylist .nu-sub` — one shaded depth, a boolean
-       — and the four were `inst · mix · plays · per-section`. The fourth is
-       Structure's now (the per-section grids), and `remove` took its place as
-       an ACT with its own refusal, so it is still four and the COUNT is still
-       not what this asserts: what it asserts is that a mark DESCENDS, that its
-       children are rows of the stripe at a real depth, and that exactly one
-       thing is marked. */
+    /* A6l — A BAND ROW IS A JUMP, AND THE OPS IT USED TO CARRY ARE ON THE
+       TABLE. THE THIRD REWRITE OF THIS CHECK AND THE ONLY ONE THAT IS ABOUT A
+       LAW RATHER THAN A COUNT. It read `r.subs === 4` off `.nu-traylist
+       .nu-sub` when the four were `inst · mix · plays · per-section`; wave 2c
+       made them one act (`remove`) and it read "at least one row at depth 2".
+       TABLE.md §9a (APPROVED 2026-09-05) settles it in the other direction —
+       Paul: *"Move all the nav into the table, I should be able to add players
+       without using the nav and sections too. I click band and all further
+       operations are buttons around the table."* — so the claim is now:
+
+         · a member row and a section row have NO CHILDREN AT ALL. Nothing at
+           depth 2 anywhere on the stripe while you stand on Band, which is
+           what "no op lives in the nav" looks like from the tree's side;
+         · the row still carries the state and the single <mark>, because the
+           jump IS the state — a childless row that stopped being markable
+           would have moved the mark up to the tab, which is the failure the
+           2026-09-01 discipline names;
+         · and every op that left is REACHABLE, at its own address, in the
+           sheet the jump just opened. A deletion nobody can undo by tapping is
+           a lost control, so this reads the table rather than trusting the
+           inventory: `tcol-del|<voice>` in the open column sheet, and
+           `trow-up|<id> · trow-down|<id> · trow-dup|<id> · trow-del|<id>` in
+           the open row sheet — the same four verbs, one surface over. */
     {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
@@ -834,54 +854,53 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       const vk = (L0.rows.find((r) => r.depth === 1 && /^tab/.test(r.key)) || {}).key;
       if (vk) {
         await page.click('[data-k="' + vk + '"]');
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(500);
         const r = await page.evaluate((key) => {
           const T = window.__eightTree();
           const b = document.querySelector('[data-k="' + key + '"]');
+          const name = key.replace(/^tab/, "");
           return { deep: T.rows.filter((x) => x.depth === 2).map((x) => x.key),
                    exp: b ? b.getAttribute("aria-expanded") : null,
                    pressedOnParent: b ? b.getAttribute("aria-pressed") : null,
                    marks: document.querySelectorAll("#nu-tray mark").length,
                    depthAttr: [...document.querySelectorAll(".nu-traylist [data-depth]")]
-                     .length };
+                     .length,
+                   /* THE OP, ON THE TABLE, IN THE SHEET THE JUMP OPENED. */
+                   del: !!document.querySelector(
+                     '#pan-band [data-k="' + CSS.escape("tcol-del|" + name) + '"]'),
+                   hire: ["line", "bass", "drums"].filter((k) =>
+                     document.querySelector(
+                       '#pan-band [data-k="' + CSS.escape("tcol-add|" + k) + '"]')).length };
         }, vk);
-        /* ...AND THE FOUR FACETS ARE ONE ACT SINCE 2026-09-04 (TABLE.md wave
-           2c). `inst · mix · plays` were three PANELS to switch between and
-           they are deleted with the pane: a player is ONE VECTOR and the whole
-           of it is the column sheet its own row opens. So the member's branch
-           holds the one thing that is not a question about the player —
-           `remove`, an act with its own refusal — and the member row itself
-           carries the <mark>, because being open IS the state now and there is
-           no child left to hold it. What this still asserts is the shape a
-           tree can get wrong: a mark DESCENDS into real rows at a real depth,
-           and exactly one thing on the stripe is marked. */
-        is(r.deep.length >= 1 && r.exp === "true" &&
-           r.pressedOnParent === "true" && r.marks === 1 && r.depthAttr > 0,
-          "A6l " + width + " · the open member's children are real rows at "
-          + "depth 2, the member wears the state (it IS the open column), and "
-          + "one <mark> still names the open thing — " + JSON.stringify(r));
-        /* ...AND A SECTION IS THE OTHER HALF OF THE SAME BRANCH. The table's
-           ROWS are children of Band beside its columns, and a section's four
-           operations are the depth-2 branch of ACTIONS the facets used not to
-           be: `secup · secdown · secdup · secdrop`, not one of them a state. */
+        is(r.deep.length === 0 && r.exp === null &&
+           r.pressedOnParent === "true" && r.marks === 1 && r.depthAttr > 0 &&
+           r.del && r.hire === 3,
+          "A6l " + width + " · a player row is a JUMP: no children, no "
+          + "aria-expanded, it wears the state and the one <mark>, and its "
+          + "`remove` and the three hires are on the table — " + JSON.stringify(r));
+        /* ...AND A SECTION IS THE OTHER HALF OF THE SAME BRANCH. Its four
+           operations were the depth-2 branch of ACTIONS here; they are the
+           first line of its ROW SHEET now, which the jump opens. */
         const sk = (await nowT()).rows
           .filter((x) => x.depth === 1 && /^secnav/.test(x.key))[0];
         if (sk) {
           await page.click('[data-k="' + sk.key + '"]');
-          await page.waitForTimeout(500);
-          const rs = await page.evaluate(() => {
+          await page.waitForTimeout(600);
+          const rs = await page.evaluate((key) => {
             const T = window.__eightTree();
-            const kids = T.rows.filter((x) => x.depth === 2);
-            return { deep: kids.map((x) => x.key),
-                     pressed: kids.filter((x) => {
-                       const b = document.querySelector('[data-k="' + x.key + '"]');
-                       return b && b.getAttribute("aria-pressed") === "true";
-                     }).length,
-                     marks: document.querySelectorAll("#nu-tray mark").length };
-          });
-          is(rs.deep.length === 4 && rs.pressed === 0 && rs.marks === 1,
-            "A6l " + width + " · …and an open SECTION's four operations are a "
-            + "branch of acts under it — " + JSON.stringify(rs));
+            const id = key.replace(/^secnav/, "");
+            const at = (k) => !!document.querySelector(
+              '#pan-band [data-k="' + CSS.escape(k) + '"]');
+            return { deep: T.rows.filter((x) => x.depth === 2).map((x) => x.key),
+                     marks: document.querySelectorAll("#nu-tray mark").length,
+                     ops: ["trow-up|", "trow-down|", "trow-dup|", "trow-del|"]
+                       .filter((k) => at(k + id)).length,
+                     add: at("trow-add") };
+          }, sk.key);
+          is(rs.deep.length === 0 && rs.marks === 1 && rs.ops === 4 && rs.add,
+            "A6l " + width + " · …and a section row is a jump too: nothing at "
+            + "depth 2, one <mark>, and its four operations plus `+ section` "
+            + "are on the table at their own addresses — " + JSON.stringify(rs));
         } else skip(width + " · no section row for A6l");
       } else skip(width + " · no member row for A6l");
     }
@@ -891,11 +910,15 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     // ...AND THE BUTTON THAT HIRES ONE IS INSIDE THE BAND TAB since 2026-08-27,
     // so the tab is opened first. Before this line the gate found no such
     // button on the tabbed page and skipped at all four widths.
+    // ...AND IT IS THE TABLE'S OFFER SINCE 2026-09-05 (TABLE.md §9a, "no op
+    // lives in the nav"): `adddrums` was a row in the Band branch of the
+    // stripe and is `tcol-add|drums` on the player axis's adder cell, which is
+    // the address the T7 inventory filed it onto the day the ops left the tray.
     await page.evaluate(() => window.__eightTab("Band"));
     await page.waitForTimeout(TAB_SETTLE("Band"));
-    const add = await page.$('[data-k="adddrums"]');
+    const add = await page.$('#pan-band [data-k="tcol-add|drums"]');
     if (add) { await add.click(); await page.waitForTimeout(1200); }
-    else skip(width + " · no [data-k=adddrums] button — the kit grid was not measured");
+    else skip(width + " · no [data-k=tcol-add|drums] button — the kit grid was not measured");
 
     for (const tab of tabs) {
       await page.evaluate((t) => window.__eightTab(t), tab);

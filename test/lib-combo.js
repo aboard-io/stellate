@@ -40,6 +40,17 @@
  * anything not yet converted still draw one, and a driver that could only see
  * one of the two widgets is the bug this file is repairing, one widget along.
  *
+ * ...AND A STRIP OF CHIPS, SINCE 2026-09-06, WHICH IS THE THIRD WIDGET. Paul,
+ * 2026-09-05: *"In general dropdowns barely work."* `nukernel/src/menus/` is
+ * the one owner of every menu on the page now and it draws three things — chips
+ * up to eight words, the native `<select>` above eight on a thumb, the typed
+ * combo above eight with a keyboard (`src/menus/pick.ts`). All three carry the
+ * SAME `data-sel` / `data-k` / `data-v`, and all three say which they are in
+ * `data-widget`, so this driver reads the address and the widget and never the
+ * tag. A gate that spelled its driver `select[data-sel=…]` is exactly the
+ * silent no-op this file was written about; a gate that assumed `combobox` is
+ * the same bug one widget along.
+ *
  * The page-side half is installed as `window.__combo` — the GATE's helper and
  * not the page's: nothing in nukernel/ reads it. test/sheets.js installed the
  * first copy of it on 2026-09-02; this file is now that copy's only owner and
@@ -54,7 +65,21 @@ function INSTALL() {
     const b = box(n);
     return b ? [...b.querySelectorAll("li[role=option]")] : [];
   };
+  /* WHICH OF THE THREE THIS IS, off the artifact. `data-widget` is stamped by
+     nukernel/src/menus/index.ts on the addressed element; the two fallbacks
+     read the shape, so a control drawn before that stamp existed (a harness
+     page's own `<select>`) still answers. */
+  const widget = (n) => {
+    if (!n) return null;
+    const w = n.dataset && n.dataset.widget;
+    if (w) return w;
+    if (n.getAttribute("role") === "combobox") return "combo";
+    if (n.classList && n.classList.contains("nu-wchips")) return "chips";
+    return "native";
+  };
+  const chips = (n) => [...n.querySelectorAll(".nu-wchip")];
   window.__combo = {
+    widget,
     is: (n) => !!n && n.getAttribute("role") === "combobox",
     /* ONE ROW PER OFFERED WORD, in the shape the gates' checks already read —
        `{ v, w, off, quiet, why, on }` — whichever element it came off. `w` is
@@ -63,18 +88,30 @@ function INSTALL() {
        beside the hard one. */
     words: (n) => {
       if (!n) return [];
-      if (n.getAttribute("role") !== "combobox")
+      const kind = widget(n);
+      if (kind === "chips")
+        return chips(n).map((c) => ({
+          v: c.dataset.v == null ? "" : c.dataset.v,
+          w: c.textContent, off: c.disabled ||
+             c.getAttribute("aria-disabled") === "true",
+          quiet: c.classList.contains("is-quiet"),
+          why: c.dataset.why || "",
+          ph: c.hasAttribute("data-placeholder"),
+          on: c.getAttribute("aria-pressed") === "true" }));
+      if (kind !== "combo")
         return [...n.querySelectorAll("option")].map((o) => ({
           v: o.dataset.v == null ? o.value : o.dataset.v,
           w: o.textContent, off: o.disabled,
           quiet: o.classList.contains("is-quiet"),
-          why: o.dataset.why || "", on: o.selected }));
+          why: o.dataset.why || "",
+          ph: o.hasAttribute("data-placeholder"), on: o.selected }));
       return opts(n).map((o) => ({
         v: o.dataset.v == null ? "" : o.dataset.v,
         w: o.textContent,
         off: o.getAttribute("aria-disabled") === "true",
         quiet: o.classList.contains("is-quiet"),
         why: o.dataset.why || "",
+        ph: o.hasAttribute("data-placeholder"),
         on: o.getAttribute("aria-selected") === "true" }));
     },
     /* WHETHER THE WORD IS REFUSED, without saying it — so a grey-out check
@@ -87,7 +124,17 @@ function INSTALL() {
     say: (n, v) => {
       if (!n || n.disabled) return false;
       const want = String(v);
-      if (n.getAttribute("role") !== "combobox") {
+      const kind = widget(n);
+      /* A STRIP IS SAID BY TAPPING ITS CHIP, which is the only gesture it has.
+         There is no list to open and nothing to type, which is the whole of why
+         a vocabulary of eight is drawn this way. */
+      if (kind === "chips") {
+        const c = chips(n).find((x) => (x.dataset.v == null ? "" : x.dataset.v) === want);
+        if (!c || c.disabled || c.getAttribute("aria-disabled") === "true") return false;
+        c.click();
+        return String(n.dataset.v) === want;
+      }
+      if (kind !== "combo") {
         const o = [...n.options].find(
           (x) => (x.dataset.v == null ? x.value : x.dataset.v) === want);
         if (!o || o.disabled) return false;

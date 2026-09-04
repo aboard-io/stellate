@@ -584,41 +584,54 @@ function writeSlots(ctx, voice, slots) {
   }
   ctx.changed();
 }
-// one seat's <select>: default "—" + the FX vocabulary. Keyed by the owner
+// one seat's MENU: default "—" + the FX vocabulary. Keyed by the owner
 // (`ins|voice|n` on a strip, `bus|genre|fx<n>` on the bus).
+//
+// IT WAS A BARE `<select>` UNTIL 2026-09-06, and it was the last one on the
+// page — the header of this file counted them in Paul's own words (*"Raw
+// `<select>`s bypass `.nu-combo` on: Mix genre fx"*), fixed the bus PLATES with
+// `selectField` and left the fifteen SEATS behind. They go through
+// `ui/menus.js` now, which is the one owner of every menu on this page: twelve
+// words, so a thumb gets the native picker and a keyboard gets the typed combo,
+// and either way the seat wears the page's own plate, its ▾ and its detent
+// (`is-seated` / `is-said`, which have a stylesheet, where the bare `seated` /
+// `said` this wrote had none).
+//
+// THE ADDRESS DID NOT MOVE, WHICH IS THE MEASUREMENT THAT MAKES THIS A SWAP:
+// `data-k` is still `own.seatK(n)` exactly — `spec.k` exists in the menu API
+// for this caller, because nukernel/desk-gate.js drives these at that literal
+// string — and `data-sel` is the same key, so the seats join the menu census
+// they should always have been in.
 function seatSelect(ctx, own, slots, i, why) {
-  const sel = document.createElement("select");
-  sel.dataset.k = own.seatK(i + 1);
-  sel.setAttribute("aria-label", own.seatAria(i + 1));
   const cur = slots[i] ? slots[i].k : null;
-  const og0 = document.createElement("optgroup"); og0.label = "default";
-  const o0 = document.createElement("option");
-  o0.value = ""; o0.textContent = "—"; o0.selected = !cur;
-  og0.append(o0); sel.append(og0);
-  const og1 = document.createElement("optgroup"); og1.label = "as you say";
   const taken = slots.map((s, j) => (j === i ? null : s.k));
+  const words = [{ value: "", label: "—", group: "default" }];
   for (const k of Object.keys(FX)) {
-    const o = document.createElement("option");
-    o.value = k; o.textContent = FXLABEL[k] || k;
-    if (k === cur) o.selected = true;
+    const w = { value: k, label: FXLABEL[k] || k, group: "as you say" };
     // AN EFFECT SEATS ONCE PER CHAIN: the slots are a chain and the same pedal
     // twice in it is the same pedal once, louder about it.
-    if (taken.includes(k)) { o.disabled = true;
-      o.dataset.why = "already seated in another slot"; }
-    og1.append(o);
+    if (taken.includes(k) && k !== cur) {
+      w.disabled = true; w.why = "already seated in another slot";
+    }
+    words.push(w);
   }
-  sel.append(og1);
-  sel.className = cur ? "said" : "seated";
+  const key = own.seatK(i + 1);
+  const sel = selectEl({ key, k: key, label: own.seatAria(i + 1),
+    options: words, value: cur || "", why: why || null,
+    set: (word) => {
+      const next = slots.slice();
+      if (!word) { if (i < next.length) next.splice(i, 1); }
+      else if (i < next.length) next[i] = { k: word, w: null, a: null, b: null };
+      else next.push({ k: word, w: null, a: null, b: null });
+      own.write(next);
+    } });
   let whyEl = null;
-  if (why) whyEl = refuse(sel, why, "refused");
-  sel.addEventListener("change", () => {
-    const word = sel.value || null;
-    const next = slots.slice();
-    if (!word) { if (i < next.length) next.splice(i, 1); }
-    else if (i < next.length) next[i] = { k: word, w: null, a: null, b: null };
-    else next.push({ k: word, w: null, a: null, b: null });
-    own.write(next);
-  });
+  // ...AND THE SENTENCE, NOT THE WORD "refused". It printed the short word while
+  // the seat had no `data-sel` and so was invisible to test/selects.js's census;
+  // it is a menu now, check 5's *"every one of those reasons is printed on the
+  // page"* reads it, and it was right to: a control that is off and says only
+  // "refused" is the silent grey with one syllable in front of it.
+  if (why) whyEl = refuse(sel.querySelector("[data-sel]") || sel, why, why);
   return { sel, whyEl };
 }
 // one whole slot: seat + wet + the effect's own one-or-two settings

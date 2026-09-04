@@ -68,10 +68,12 @@ export const REPEATS  = [2, 3, 4];
 export const COMBOKEYS = new Set(["cast.part", "sound.instrument",
                                   "sound.bassinstrument", "sound.drumkit",
                                   "form.role"]);
-export const LONGSTRIP = 24;
-/** TABLE.md 9a: "a control is a little bigger than its word". Eight words is
- *  what fits one line of chips at 320 without becoming a wall. */
-export const CHIPMAX = 8;
+/* ...AND THE TWO NUMBERS ARE `src/menus/pick.ts`'s SINCE 2026-09-06. They were
+   declared here and read by `sheet.ts`; they are the menu rule's own constants
+   and the menu rule has one owner now. Re-exported under their old names so no
+   reader of this module loses them. */
+import { LONGSTRIP, CHIPMAX } from "../menus/pick.js";
+export { LONGSTRIP, CHIPMAX };
 
 /** THE TWO CHAIRS THAT VOICE THE BAR'S CHORD rather than reading a subject.
  *  `kernel.js render` takes the chord branch for `part === "pad"` and for any
@@ -207,10 +209,23 @@ function cellVecField(A: TableAPI, i: number, vi: number, spec: LaneSpec): Strip
     clear: has ? () => A.putCell(i, vi, spec.key, null) : null };
 }
 
+/** THE RAMP LIMIT'S REFUSAL, IN ONE SPELLING, BECAUSE TWO TIERS PRINT IT.
+ *  MEASURED 2026-09-04 and re-measured over the whole catalogue 2026-09-05:
+ *  `document.js toPhrase` returns `inc: z(n), stk: z(n)` unconditionally
+ *  (document.js:581), so `kernel.js rampOf`'s raw ramp is `(0 + 0) * loop` and
+ *  a limit has nothing to limit — 0 of 18,793 motif phrases across 479 anchors
+ *  at three readings carries a ramp column, and `nukernel/gates.json`'s own
+ *  census says the same from the other end (`form.clamp`, 165 rows, 0 alive).
+ *  test/table.test.js T4m fails the day a ramp column lands. */
+const RAMPWHY =
+  "measured 2026-09-05: a document's motifs carry no ramp — document.js " +
+  "toPhrase writes inc and stk all-zero on every phrase, so 0 of 18,793 " +
+  "motifs across 479 anchors at three readings has a ramp for a limit to " +
+  "limit. It is the tracker's control; the address is kept, and the gate " +
+  "lights it the day a ramp column lands";
+
 /** ...AND THE ONE OF THE FIVE THAT IS TOLD RATHER THAN ASKED, with the
- *  measurement that makes it a sentence. MEASURED 2026-09-04: `document.js
- *  toPhrase` returns `inc: z(n), stk: z(n)` for every motif in every bank, so
- *  `rampOf`'s raw ramp is zero and a limit has nothing to limit. */
+ *  measurement that makes it a sentence. */
 function cellVecSay(A: TableAPI, i: number, vi: number, spec: LaneSpec,
                     chordChair: boolean): Field {
   const own = A.cellOf(i, vi, spec.key);
@@ -224,10 +239,24 @@ function cellVecSay(A: TableAPI, i: number, vi: number, spec: LaneSpec,
         "render sends a pad and any chordLock part down the chord branch), " +
         "so it never reads an articulation or a subject alphabet — its " +
         "octave and its time still answer. Give it a line part to say this."
-      : "measured 2026-09-04: a document's motifs carry no ramp " +
-        "(document.js toPhrase writes inc and stk all-zero), so a ramp " +
-        "limit moves no note here — it is the tracker's control, and this " +
-        "cell keeps the address for the day a ramp lands" };
+      : RAMPWHY };
+}
+
+/** THE SAME SENTENCE ON THE ROW (2026-09-05). The row tier of the five landed
+ *  as five strips, and four of them reach the sound; the fifth WROTE
+ *  `section.clamp`, resolved through `document.js toGenre` onto `incClamp`,
+ *  reached `kernel.js rampOf` and moved nothing — a control that writes and
+ *  does not arrive, which is the one bug this tree keeps. It is the cell's own
+ *  treatment (`cellVecSay`) applied one tier up, and the refused-control law
+ *  rather than a silence or a grey: no silent grey, a sentence with the
+ *  measurement on it. `avail.js` mints no `form.clamp` sheet at all, so there
+ *  is no writable strip anywhere on the page to disagree with this. */
+function rowVecSay(A: TableAPI, i: number, spec: LaneSpec): Field {
+  const said = A.rowOf ? A.rowOf(i, spec.key) : null;
+  return { kind: "say", label: spec.label,
+    word: said == null ? "as the genre asks"
+                       : String(spec.labels[String(said)] || said),
+    why: RAMPWHY };
 }
 
 /** THE DRUMMER'S GROUPS, built from the options the sheet actually offers so a
@@ -289,9 +318,16 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
      cells override is a ladder with a rung missing. They are asked through the
      same `sh()` as everything else, so if avail.js has not minted the sheet
      the row is simply not drawn — no second vocabulary. */
-  for (const spec of (A.CELLVEC || []))
+  for (const spec of (A.CELLVEC || [])) {
+    /* ...FOUR OF THEM. `clamp` is the ROW's sentence for exactly the reason it
+       is the cell's (`rowVecSay` / `RAMPWHY` carry the measurement): the row's
+       word writes `section.clamp`, resolves onto the compiled genre's
+       `incClamp`, reaches `kernel.js rampOf` — and moves no note, because no
+       document phrase has a ramp for it to limit. */
+    if (spec.key === "clamp") { f.push(rowVecSay(A, i, spec)); continue; }
     if (A.hasSheet("form." + spec.key, { section: sid }))
       f.push(shField(A, "form." + spec.key, { section: sid }, spec.label));
+  }
   f.push(numField(A, "nudge|" + sid, "starts at", (s.nudge as number) || 0,
     [0, 1, 2, 3, 4, 6, 8], (v) => A.putRow(i, "nudge", +v), true));
   /* THE COMPILED LANES ARE READ-ONLY ON THE ROW (1: "written by mot and by
