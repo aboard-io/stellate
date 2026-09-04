@@ -933,7 +933,14 @@ export function alsFromScore(donorXml, score, opts = {}) {
   for (const b of boxes) for (const k of (b.fx || [])) if (!chips.includes(k)) chips.push(k);
   const anyCut = boxes.some((b) => laneFor(b, "cutoff"));
   const anyHpf = boxes.some((b) => laneFor(b, "hpf"));
-  const anyLevel = boxes.some((b) => laneFor(b, "level") || b.lvl);
+  /* A CELL'S OWN LEVEL OFFSET COUNTS AS AUTOMATION (TABLE.md wave 3): without
+     this clause a record whose only ride is a cell's `+6` would build no
+     volume envelope at all and the offset would be exported as nothing — the
+     declared-but-never-arriving bug, one tier out. */
+  const coOfBox = (b, name) => (b.cellauto && b.cellauto[name]) || null;
+  const anyCell = (k) => boxes.some((b) =>
+    b.cellauto && Object.values(b.cellauto).some((o) => o[k]));
+  const anyLevel = boxes.some((b) => laneFor(b, "level") || b.lvl) || anyCell("fader");
   // what the run did to the SOUND, printed by the CLI beside the clip list
   const sound = { params: 0, envelopes: 0, devices: 0, unmapped: [], notes: [] };
   const sawUnmapped = new Set();
@@ -955,6 +962,16 @@ export function alsFromScore(donorXml, score, opts = {}) {
   if (anyHpf && lib.AutoFilter2)
     sound.notes.push('the "rise" sweep -> a second AutoFilter2 at Filter_Type ' + AF_HIGHPASS +
       " (HIGHPASS, decoded from donor/Answers.als)");
+  /* ...AND THE ONE CELL LANE THAT STAYS HOME, said in the same place and for
+     the same reason (TABLE.md wave 3). A cell's `darker`/`brighter` is a
+     per-voice HIGH SHELF on the engine's own board EQ; a Live track's EQ here
+     is the STATIC strip and the donor carries no per-band automation target,
+     so there is nothing to ride and nothing honest to fake. This is the
+     paragraph above's law pointed the other way: the sweep got written the day
+     a donor answered the question, and this one is named until one does. */
+  if (anyCell("eq"))
+    sound.notes.push("a cell's tone offset (darker/brighter) is a per-voice high " +
+      "shelf and stays on the engine — the donor has no per-band automation target");
 
   const trackXml = laneNames.map((laneName) => {
     const info = laneInfoOf(boxes, laneName);
@@ -1204,9 +1221,35 @@ export function alsFromScore(donorXml, score, opts = {}) {
       envs.push(automationEnvelope(envId++, target, evs));
       sound.envelopes++;
     };
+    /* THE CELL'S OFFSET FOR **THIS TRACK**, PER BOX (TABLE.md wave 3, ¶A:
+       "per-cell relative to" the section's). `box.cellauto` is keyed by unit
+       key — which IS this track's `laneName`, re-keyed once in export/score.js
+       off the compile's own ADDR — so one lookup answers "what does this voice
+       ride this section's lane by".
+
+       IT IS WRITTEN ONCE, INTO THE ENVELOPE THE ROW ALREADY OWNS, which is
+       the whole of the P3 double-count law: `ride` below builds ONE envelope
+       per parameter per track out of `laneFor(box, param)` (the ROW's lane)
+       mapped through `map(box)`, and the cell's offset rides in the MAP. So
+       the file carries row-lane + cell-offset in one breakpoint list, exactly
+       once, and never a second envelope on the same target. A box with no
+       offset maps identically to yesterday, so a record with no cell lane
+       exports the byte-identical file.
+
+       THE ONE LANE KIND THAT DOES NOT TRAVEL is `cutoff`. A cell's tone offset
+       is a per-voice HIGH SHELF (fields.js CELLAUTO says why the row's master
+       sweep has no per-voice half to offset), and a track's EQ here is the
+       STATIC strip `setStrip` just wrote — there is no per-band automation
+       target in the donor to ride. Named in `sound.notes` below rather than
+       faked with a filter that would sound like a different gesture; the
+       `rise` sweep's paragraph above settles the precedent in the other
+       direction and this one settles it in this. */
+    const cellOf = (box) => coOfBox(box, laneName);
     if (!isDrums && anyLevel)
       ride(mixTarget("Volume"), "level", () => 1, (box) => {
-        const g = vol * (LEVEL_GAIN[box.lvl] == null ? 1 : LEVEL_GAIN[box.lvl]);
+        const co = cellOf(box);
+        const g = vol * (LEVEL_GAIN[box.lvl] == null ? 1 : LEVEL_GAIN[box.lvl]) *
+          (co && co.fader ? Math.pow(10, co.fader / 20) : 1);
         return (x) => clamp(g * x, SEND_FLOOR, 1.99526238);
       });
     /* THE OTHER THREE LANES A BOX CAN DRAW, and they land on Live's own mixer
@@ -1221,11 +1264,33 @@ export function alsFromScore(donorXml, score, opts = {}) {
       const panHold = strip.pan == null ? 0 : strip.pan;
       const revHold = strip.rev == null ? SEND_FLOOR : clamp(strip.rev, SEND_FLOOR, 1);
       const delHold = strip.del == null ? SEND_FLOOR : clamp(strip.del, SEND_FLOOR, 1);
-      const toPan = () => (x) => clamp(x, -1, 1);
-      const toSend = () => (x) => clamp(x, SEND_FLOOR, 1);
+      /* ...EACH OF THEM PLUS WHATEVER THIS CELL RIDES IT BY, AND IN THE `map`
+         ALONE. That is not a style choice, it is where the one application
+         lives: `stitchEnvelope` puts a box that draws no lane through
+         `map(b.hold)` as well — the hold is stated in the LANE's units and the
+         map is the ONE conversion into the device's — so an offset added to
+         both would be applied twice on exactly the boxes that draw nothing.
+         (Measured 2026-09-04 by als-gate X on techno: the first cut of this
+         line moved the pan of the offset box by +0.70 for an offset of +0.35,
+         which is ¶A's "no curve applied twice" broken by the wave that wrote
+         the law down. The volume ride above has always passed `() => 1` as its
+         hold and multiplied in the map for the same reason.)
+
+         PAN AND THE SENDS ARE ADDITIVE, in Live's own units, because they are
+         additive at the desk — audio/desk.js sums cell + row + seat on one
+         line — which is what makes these the most exact translations in the
+         round. */
+      const offOf = (box, k) => { const co = cellOf(box); return (co && co[k]) || 0; };
+      // NO OFFSET RETURNS THE OLD CLOSURE, not `x + 0`: identity has to be
+      // identity to the byte, and `-0 + 0` is `0`.
+      const toPan = (box) => { const d = offOf(box, "pan");
+        return d ? (x) => clamp(x + d, -1, 1) : (x) => clamp(x, -1, 1); };
+      const toSend = (k) => (box) => { const d = offOf(box, k);
+        return d ? (x) => clamp(x + d, SEND_FLOOR, 1)
+                 : (x) => clamp(x, SEND_FLOOR, 1); };
       ride(mixTarget("Pan"), "pan", () => panHold, toPan);
-      ride(sendTarget(0), "send.rev", () => revHold, toSend);
-      ride(sendTarget(1), "send.echo", () => delHold, toSend);
+      ride(sendTarget(0), "send.rev", () => revHold, toSend("rev"));
+      ride(sendTarget(1), "send.echo", () => delHold, toSend("del"));
     }
     if (motionTarget != null)
       ride(motionTarget, "cutoff", () => FILTER_OPEN, () => (x) => clamp(x, 20, FILTER_OPEN));

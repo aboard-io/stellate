@@ -91,8 +91,15 @@ import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { balancedAt, elementAfter, pointeeIds, paceView, addDevice,
          columnNames, clipNameOf, colorOfLane, TRACK_COLOR,
-         CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
+         CHAIR_LEVEL, LEVEL_GAIN,
+         // gate X re-runs the whole writer twice with one cell offset between
+         // the runs, which is the only way to read a per-cell envelope OUT OF
+         // THE FILE rather than out of the plan (TABLE.md wave 3)
+         alsFromScore } from "../../nukernel/export/als.js";
 import { instrumentTagOf, deviceOf, instrumentParams, paramRange, getParam,
+         // gate X finds a knob's envelope the way Live does — by the
+         // AutomationTarget id the Mixer prints beside it
+         targetIdOf,
          resOfQ, FX_PARAMS, KIT_FILTER, deviceLibrary, masterDevices, buildFx,
          chipParams, delaySyncIndex, delaySixteenthsAt, AF_LOWPASS, AF_HIGHPASS,
          DELAY_SYNC_MAX, DELAY_SYNC_BUTTONS, DELAY_SYNC_WITNESSES,
@@ -732,6 +739,170 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
         "open 320→16000 · close 16000→320 · rise 20→1400 (hpf) · pump 0.32→1 per beat · " +
         "the kit refuses " + realKit.join("/") + ", same as desk.js");
     } catch (e) { ok = fail("gate A", "cannot read compileAuto: " + e.message); }
+  /* ---- Gate X: A CELL'S OFFSET MOVES ITS OWN TRACK, IN ITS OWN SECTION ----
+     (TABLE.md wave 3, 2026-09-04.)
+
+     ¶A: *"we still want per-section mix automation, with per-cell relative to
+     that."* The section's ride is gate E's business; this is the other half —
+     what ONE VOICE rides it by in ONE SECTION — and it is gated the way
+     everything in this file is gated: by reading the finished document. The
+     probe writes an offset into the Score, re-runs the WHOLE writer, and asks
+     the two files what changed. Nothing here consults als.js's intentions.
+
+     WHAT IT ASSERTS, in ¶A's own language:
+       · the offset track's VOLUME is the base's TIMES the offset's own dB
+         through THAT SECTION's beats and exactly the base's everywhere else,
+         so the cell rides the row's lane rather than replacing it and no curve
+         is applied twice;
+       · its PAN is the base's PLUS the offset, on the same span;
+       · EVERY OTHER TRACK is byte-identical — a cell is one cell.
+
+     WHY THE PROBE INJECTS AT THE SCORE AND NOT AT THE DOCUMENT. `box.cellauto`
+     is keyed by UNIT KEY, which is what a Live track IS; the walk that gets a
+     document's per-CHAIR cell lanes onto those keys is export/score.js's, and
+     it is gated where it lives (test/table.test.js T4k reads the same offset
+     off the DESK, on the rendered unit table). This gate owns the WRITER, so
+     it starts where the writer starts.
+
+     AND IT PROVES ITS OWN RECONSTRUCTION FIRST: run A, with nothing injected,
+     must equal the shipped file byte for byte, or the two runs below are a
+     conversation about some other export. */
+  {
+    const { RACK_GZIP_B64 } = await import("../../nukernel/export/drumrack.js");
+    const { FXRACK_GZIP_B64 } = await import("../../nukernel/export/fxrack.js");
+    const { FXRACK2_GZIP_B64 } = await import("../../nukernel/export/fxrack2.js");
+    const { MASTERRACK_GZIP_B64 } = await import("../../nukernel/export/masterrack.js");
+    const unz = (b) => gunzipSync(Buffer.from(b, "base64")).toString("utf8");
+    const OPTS = { all, drumRack: unz(RACK_GZIP_B64), fxRack: unz(FXRACK_GZIP_B64),
+                   masterRack: unz(MASTERRACK_GZIP_B64), fxRack2: unz(FXRACK2_GZIP_B64) };
+    const J = (o) => JSON.parse(JSON.stringify(o));
+    // the lane to put the offset on: the drums track is a Drum Rack and als.js
+    // rides neither a fader nor a pan on it, so it has nothing to measure
+    const lane = (all ? boxes[0].lanes : boxes[0].lanes.slice(0, 1))
+      .map((l) => l.name).find((n) => n !== "drums");
+    const si = 1;
+    const DB = 6, PAN = 0.35;
+    if (!lane || boxes.length < 2) {
+      pass("gate X", "this export carries " + boxes.length + " box(es)" +
+        (lane ? "" : " and no non-drum track") + " — a per-cell offset is a " +
+        "fact about ONE section of one voice, and it needs a second section " +
+        "to be absent from before there is anything here to measure (the " +
+        "--all row does)");
+    } else {
+      const runA = alsFromScore(donorXml, J(score), OPTS).xml;
+      const probe = J(score);
+      probe.boxes[si].cellauto = { [lane]: { fader: DB, pan: PAN } };
+      const runB = alsFromScore(donorXml, probe, OPTS).xml;
+      /* THE ENVELOPE, READ OUT OF A TRACK. An AutomationEnvelope names its
+         target by PointeeId and the Mixer prints that id beside the knob, so
+         the knob is found the way Live finds it and never by position. A
+         parameter with no envelope answers with its Manual value, which is
+         what Live plays for it. */
+      const envOf = (text, path) => {
+        const mix = elementAfter(text, "Mixer");
+        const id = mix ? targetIdOf(mix.text, path) : null;
+        if (id == null) return null;
+        let out = null;
+        for (const m of text.matchAll(/<AutomationEnvelope Id="\d+">/g)) {
+          const [a, b] = balancedAt(text, m.index);
+          const seg = text.slice(a, b);
+          if (!seg.includes('<PointeeId Value="' + id + '" />')) continue;
+          out = [...seg.matchAll(/<FloatEvent Id="\d+" Time="([-\d.eE]+)" Value="([-\d.eE]+)" \/>/g)]
+            .map((e) => ({ time: +e[1], value: +e[2] }));
+          break;
+        }
+        return { manual: +getParam(mix.text, path), events: out };
+      };
+      // what the parameter reads at a beat: the last breakpoint at or before it
+      // (a box boundary is written as a STEP — als.js stitchEnvelope — so
+      // sampling mid-box never lands on a ramp between two sections), or the
+      // Manual value when the record wrote no envelope at all
+      const at = (e, t) => {
+        if (!e) return null;
+        if (!e.events) return e.manual;
+        let v = e.events.length ? e.events[0].value : e.manual;
+        for (const ev of e.events) { if (ev.time > t + 1e-9) break; v = ev.value; }
+        return v;
+      };
+      const views = paceView(boxes);
+      const mid = views.map((v) => v.beat0 + v.beats / 2);
+      const laneNames = [];
+      for (const b of boxes) for (const l of (all ? b.lanes : b.lanes.slice(0, 1)))
+        if (!laneNames.includes(l.name)) laneNames.push(l.name);
+      const col = columnNames(boxes, laneNames)[lane];
+      const trackOf = (x) => (tracksOf(x).find((t) => t.name === col) || {}).text || "";
+      const A = trackOf(runA), B = trackOf(runB);
+      const g = Math.pow(10, DB / 20);
+      let bad = null;
+      if (runA !== xml)
+        bad = "gate X could not reproduce the shipped file (" + runA.length + " vs " +
+              xml.length + " chars) — the two runs below would be about some other export";
+      else if (!A || !B) bad = 'gate X cannot find the track named "' + col + '"';
+      if (!bad) {
+        // ...AND EVERY OTHER TRACK IS UNTOUCHED. A cell is one cell.
+        const others = (x) => tracksOf(x).filter((t) => t.name !== col)
+          .map((t) => t.text).join(" ");
+        if (others(runA) !== others(runB))
+          bad = "one cell's offset changed a track that is not its own";
+      }
+      const moved = [];
+      /* ONE PARAMETER, READ OFF BOTH FILES. `eA` is what the record exports
+         without the cell and `eB` with it, and the claim is ¶A's in two
+         halves: the offset box moved by exactly the offset, and every other
+         box did not move at all.
+
+         WHERE THE BASE COMES FROM, and why it is not the Manual value. A
+         parameter the record does not automate has NO envelope in run A — so
+         its base is what run B itself holds through the boxes the cell did not
+         touch, which is the number Live plays there. Reading the mixer's
+         `Manual` instead would be reading a different knob: als.js writes the
+         static strip and the envelope hold from two places and this gate is
+         not the place to conflate them (measured 2026-09-04: Manual 0.22 while
+         the pan hold is 0.57 on techno). The "did not move" half keeps its
+         teeth either way — every untouched box has to agree with every other
+         untouched box, which a leak across sections would break. */
+      const check = (name, eA, eB, apply, fmt) => {
+        if (bad) return;
+        if (!eB || eB.events == null) {
+          bad = "the cell offset wrote NO " + name + " envelope on its track"; return;
+        }
+        const drew = !!(eA && eA.events);
+        let flat = null;
+        for (let i = 0; i < mid.length; i++) {
+          if (i === si) continue;
+          const got = at(eB, mid[i]);
+          const want = drew ? at(eA, mid[i]) : (flat == null ? (flat = got) : flat);
+          if (Math.abs(got - want) > 1e-5 * Math.max(1, Math.abs(want))) {
+            bad = "the " + name + " of box " + i + " reads " + got + " and the record " +
+                  "without the cell says " + want + " — the offset leaked out of its section";
+            return;
+          }
+        }
+        const base = drew ? at(eA, mid[si]) : flat;
+        const got = at(eB, mid[si]), want = apply(base);
+        if (Math.abs(got - want) > 1e-5 * Math.max(1, Math.abs(want))) {
+          bad = "the " + name + " of box " + si + " reads " + got + ", and the row's own " +
+                base + " plus this cell's offset is " + want;
+          return;
+        }
+        moved.push(fmt(base, got));
+      };
+      if (!bad) {
+        check("volume", envOf(A, "Volume"), envOf(B, "Volume"), (b) => b * g,
+              (b, x) => "volume " + b.toFixed(4) + " -> " + x.toFixed(4) +
+                        " (+" + (20 * Math.log10(x / b)).toFixed(2) + " dB, asked +" + DB + ")");
+        check("pan", envOf(A, "Pan"), envOf(B, "Pan"), (b) => b + PAN,
+              (b, x) => "pan " + b.toFixed(3) + " -> " + x.toFixed(3) +
+                        " (+" + PAN + ")");
+      }
+      if (bad) ok = fail("gate X", bad);
+      else pass("gate X", 'a cell offset on "' + col + '" in box ' + si + " of " +
+        boxes.length + " moves that track's exported envelopes THERE AND NOWHERE ELSE (" +
+        moved.join(" · ") + ") · every other track byte-identical · run A " +
+        "reproduces the shipped file exactly");
+    }
+  }
+
     // F — the eleven chips' declared knobs
     {
       const req = createRequire(import.meta.url);

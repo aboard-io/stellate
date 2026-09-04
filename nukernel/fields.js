@@ -694,6 +694,102 @@
       fader: faderDb((Number.isFinite(base.fader) ? base.fader : 0) + TRIMS[word]) };
   };
 
+  /* ---------- THE CELL'S OWN LANE, RELATIVE TO THE ROW'S (TABLE.md wave 3) ---
+     ¶A (Paul, 2026-09-03): *"we still want per-section mix automation, with
+     per-cell relative to that."* So the SECTION keeps its lanes (`mot` ->
+     `auto[]`, audio/desk.js compileAuto) and a CELL says an OFFSET on top of
+     them: a cell that says nothing rides the section's curve exactly, a cell
+     that says +3 dB rides it 3 dB up. Resolution, once and in one place —
+     cell offset + row lane + the seat's static level, and no curve applied
+     twice (§4's P3 double-count law).
+
+     A VOCABULARY, NOT A CURVE. Four lane kinds, a handful of words each: the
+     chips-not-sliders law the rest of this registry is built on, for the extra
+     reason §6 gives — a cell is a 44px tap target on a phone and a freehand
+     curve is not drawable there. The numbers are the tables above's own rungs,
+     deliberately, so a cell and the strip beside it cannot mean different
+     things by "a bit louder":
+       · level   the desk's own dB steps, at TRIMS' resolution
+       · pan     PANS' half positions, as an OFFSET on the seat the record placed
+       · send    half a step of SENDS (touch 0.12 -> some 0.30), on bus 1
+       · cutoff  the board's HIGH SHELF, which is what "darker" already means on
+                 this machine (band-kit.js mixOf: `darker` IS `eq: { hi: -3 }`)
+
+     WHY A SHELF AND NOT A FILTER FREQUENCY, said out loud rather than implied.
+     The ROW's `cutoff` lane is a MASTER sweep — audio/desk.js deskSweeps writes
+     one fx_bus `mcut` for the whole box, and its own comment explains why a
+     global parameter has to be answered by every box — so there is no per-voice
+     cutoff at that stage for a cell to offset. The board's hi shelf IS per
+     voice, it is measured to reach a modelled chair as well as a sampled one
+     (engine sampler.js BOARD_EQ, 7200 Hz, +/-12 dB, desk-gate G8), and BOTH its
+     directions move, which a lowpass ceiling laid on a unit that has none does
+     not. "Brighter" that brightens nothing would be this repo's own
+     characteristic bug drawn on purpose (memory: declared-but-never-arriving).
+
+     THE SHAPE THE DESK IS HANDED IS THE MIX-OFFSET LAYER'S, verbatim
+     (ui/state.js MIXER: `{fader, pan, rev, del, eq}`) — because that layer is
+     already applied per unit per channel, OVER the composed section values, on
+     the exact wire three rounds of measurement proved reaches a modelled voice
+     as well as a sampled one (audio/desk.js, the o.fader / o.pan / o.rev / o.eq
+     blocks and the tape-reach gate behind them). A second spelling of "this
+     channel, that much louder" is what fields.js:651 records the cost of. */
+  const CELLAUTO = [
+    { key: "level",  label: "level", short: "lvl",
+      table:  { "-6": -6, "-3": -3, "0": 0, "+3": 3, "+6": 6 },
+      labels: { "-6": "−6 dB", "-3": "−3 dB", "0": "as mixed",
+                "+3": "+3 dB", "+6": "+6 dB" } },
+    { key: "pan",    label: "place", short: "pan",
+      table:  { l: -0.35, c: 0, r: 0.35 },
+      labels: { l: "left", c: "as placed", r: "right" } },
+    { key: "send",   label: "send",  short: "send",
+      table:  { less: -0.18, same: 0, more: 0.18 },
+      labels: { less: "less", same: "as sent", more: "more" } },
+    { key: "cutoff", label: "tone",  short: "tone",
+      table:  { darker: -3, same: 0, brighter: 3 },
+      labels: { darker: "darker", same: "as toned", brighter: "brighter" } },
+  ];
+  const CELLAUTOBY = {};
+  for (const f of CELLAUTO) CELLAUTOBY[f.key] = f;
+  /* A CELL'S WORDS -> ONE MIXER-DIALECT OFFSET, or null when it says nothing.
+     Null is the whole of absent-is-today: audio/desk.js appends nothing to its
+     offset list for that channel, the unit table is byte-identical, and "rides
+     the row exactly" keeps exactly one spelling in the record. The NEUTRAL word
+     of each lane resolves to 0 and is dropped for the same reason `trimApply`'s
+     table has no zero rung and `cleanEntry` drops a 0 dB fader. */
+  function cellAutoOffset(m) {
+    if (!m || typeof m !== "object" || Array.isArray(m)) return null;
+    const out = {};
+    for (const f of CELLAUTO) {
+      const w = m[f.key];
+      if (w == null ||
+          !Object.prototype.hasOwnProperty.call(f.table, String(w))) continue;
+      const n = f.table[String(w)];
+      if (!n) continue;
+      if (f.key === "level") out.fader = faderDb(n);
+      else if (f.key === "pan") out.pan = n;
+      else if (f.key === "send") out.rev = n;
+      else out.eq = { hi: eqDb(n) };
+    }
+    return Object.keys(out).length ? out : null;
+  }
+  /* ...AND THE SAME QUESTION ASKED OF THE STORED WORDS, for the two doors that
+     have to refuse one: document.js `putCell` (a hand) and `normalize` (a file
+     from another build). ONE reader, so the resolver and the doors cannot
+     disagree about what a legal cell lane is — the drift `chairsOf`/`voiceRoster`
+     already pays a gate to prevent. Returns the words kept, or null. */
+  const cellAutoClean = (m) => {
+    if (!m || typeof m !== "object" || Array.isArray(m)) return null;
+    const out = {};
+    for (const f of CELLAUTO) {
+      const w = m[f.key];
+      if (w == null ||
+          !Object.prototype.hasOwnProperty.call(f.table, String(w))) continue;
+      if (!f.table[String(w)]) continue;            // the neutral word IS absent
+      out[f.key] = String(w);
+    }
+    return Object.keys(out).length ? out : null;
+  };
+
   // THE REVERB RETURN, absolute rather than a multiplier: it IS `state.reverb`,
   // and the parent reads `rgain = clamp(reverb * 3.2, 0, 2) * reverbScale`
   // (engine/faust/voices/state-engine.js fxParams) — so `huge` is the
@@ -2944,6 +3040,7 @@
                 FXWETS, FXWETLABEL, FXPOTS, FXPOTLABEL, FXFACE,
                 fxHasMix, fxChainFor, busFxChain,
                 TRIMS, TRIMLABEL, trimApply,
+                CELLAUTO, CELLAUTOBY, cellAutoOffset, cellAutoClean,
                 SENDS, SENDLABEL,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,

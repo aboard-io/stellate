@@ -195,6 +195,10 @@ export async function pageScore({ grid = true, engine = true, say = () => {} } =
     // chips live on. See export/score.js for why cast() cannot answer either.
     return scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
                      seats: engine ? plan.seats() : null, sections: state.SONG,
+                     // the compile's own unit-key -> desk-address record, which
+                     // is what re-keys a section's cell lanes onto its TRACKS
+                     // (TABLE.md wave 3). The CLI passes the same one.
+                     addr: plan.addrOf,
                      drums: engine ? plan.drumStrip() : null, master: state.MASTER,
                      bpm: state.bpm, grid, engine, title: "the record" });
   } finally {

@@ -535,6 +535,41 @@
       }
       return Object.keys(o).length ? o : null;
     };
+    /* ONE MIX OFFSET, CLEANED — the board's `{fader, pan, rev, del, eq}` and
+       nothing else. HOISTED HERE 2026-09-04 (TABLE.md wave 3) because the
+       shape now has TWO homes: `song.mix`, the board's own offset layer, and
+       `box.cellauto`, the per-cell lanes the table writes (¶A: "per-cell
+       relative to" the section's). Two copies of this number policy would be
+       two answers to "what is a legal offset", which is the drift this file
+       spends its whole length preventing. `master` (the four master trims) and
+       `fx` (the board's chips) are the board's alone and are asked for by the
+       caller — a CELL is one voice in one section and has neither. */
+    const OFFNUM = (v, lo, hi) => (typeof v === "number" && Number.isFinite(v))
+      ? Math.max(lo, Math.min(hi, Math.round(v * 100) / 100)) : null;
+    const cleanOffset = (e, o2) => {
+      if (e == null || typeof e !== "object" || Array.isArray(e)) return null;
+      const o = {};
+      const put = (k, lo, hi) => { const v = OFFNUM(e[k], lo, hi); if (v) o[k] = v; };
+      put("fader", -24, 12); put("pan", -1, 1);
+      put("rev", -1, 1); put("del", -1, 1);
+      if (o2 && o2.master) { put("drive", -1, 1); put("glue", -1, 1);
+                             put("tape", -1, 1); put("space", -1, 1); }
+      if (o2 && o2.mute && e.mute === true) o.mute = true;
+      // the board's own chips ("make guitar distorted"): known FX only, capped
+      if (o2 && o2.fx && Array.isArray(e.fx)) {
+        const fx = e.fx.filter(k => typeof k === "string" &&
+          Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX);
+        if (fx.length) o.fx = fx;
+      }
+      if (e.eq != null && typeof e.eq === "object" && !Array.isArray(e.eq)) {
+        const q = {};
+        for (const b of ["lo", "mid", "hi"]) {
+          const v = OFFNUM(e.eq[b], -12, 12); if (v) q[b] = v;
+        }
+        if (Object.keys(q).length) o.eq = q;
+      }
+      return Object.keys(o).length ? o : null;
+    };
 
     // ---- THE SONG'S OWN GENRES, read BEFORE the boxes because the boxes are
     // allowed to point at them. A genre invented in the LAB lives in the SONG:
@@ -750,6 +785,31 @@
           b.parts = Object.keys(clean).length ? clean : null;
         }
       }
+      /* ...AND THE CELL LANES OF THIS SECTION (TABLE.md wave 3, 2026-09-04).
+         Chair key -> a mix offset, exactly `parts`' addressing and exactly
+         `mix`'s value shape, written per box by ui/eight.js push() out of the
+         document's cells. Both halves of the filter rule at their own level,
+         the same split `parts` uses one block up: an address that is not an
+         ADDRESS is dropped (a key naming a chair this stack lacks is KEPT —
+         swap the genre and it is back, and audio/desk.js reads only the chairs
+         the box really has), a VALUE is cleaned to the board's own clamps.
+         Present-only: absent stays absent, so a record with no cell lane is
+         the byte-identical box it was before this existed. NO `mute`, NO `fx`
+         and NO master trims — fields.js CELLAUTO offers four lane kinds and a
+         key the vocabulary cannot say must not arrive through a saved file. */
+      if (b.cellauto != null) {
+        if (typeof b.cellauto !== "object" || Array.isArray(b.cellauto))
+          err(at + ".cellauto", b.cellauto, "a map of chair key -> mix offset");
+        else {
+          const cc = {};
+          for (const k of Object.keys(b.cellauto)) {
+            if (!okPartKey(k)) continue;
+            const o = cleanOffset(b.cellauto[k], null);
+            if (o) cc[k] = o;
+          }
+          if (Object.keys(cc).length) b.cellauto = cc; else delete b.cellauto;
+        }
+      }
       for (const f of FIELDS) {
         if (f.type === "list" || f.type === "int" || f.type === "vox") continue;
         if (f.type === "parts") continue;            // the map above, not an enum
@@ -891,35 +951,16 @@
       if (typeof s.mix !== "object" || Array.isArray(s.mix))
         err("mix", s.mix, "a map of channel -> offset values");
       else {
-        const num = (v, lo, hi) => (typeof v === "number" && Number.isFinite(v))
-          ? Math.max(lo, Math.min(hi, Math.round(v * 100) / 100)) : null;
         const clean = {};
         for (const [chan, e] of Object.entries(s.mix)) {
           if (e == null) continue;
           if (typeof e !== "object" || Array.isArray(e)) {
             err("mix." + chan, e, "an offset object"); continue;
           }
-          const o = {};
-          const put = (k, lo, hi) => { const v = num(e[k], lo, hi); if (v) o[k] = v; };
-          put("fader", -24, 12); put("pan", -1, 1);
-          put("rev", -1, 1); put("del", -1, 1);
-          if (chan === "master") { put("drive", -1, 1); put("glue", -1, 1);
-                                   put("tape", -1, 1); put("space", -1, 1); }
-          if (e.mute === true) o.mute = true;
-          // the board's own chips ("make guitar distorted"): known FX only, capped
-          if (Array.isArray(e.fx)) {
-            const fx = e.fx.filter(k => typeof k === "string" &&
-              Object.prototype.hasOwnProperty.call(FX, k)).slice(0, MAX_FX);
-            if (fx.length) o.fx = fx;
-          }
-          if (e.eq != null && typeof e.eq === "object" && !Array.isArray(e.eq)) {
-            const q = {};
-            for (const b of ["lo", "mid", "hi"]) {
-              const v = num(e.eq[b], -12, 12); if (v) q[b] = v;
-            }
-            if (Object.keys(q).length) o.eq = q;
-          }
-          if (Object.keys(o).length) clean[chan] = o;
+          // the board speaks all five lanes plus the master's four and its
+          // chips; `cleanOffset` above is the one owner of every clamp
+          const o = cleanOffset(e, { master: chan === "master", mute: true, fx: true });
+          if (o) clean[chan] = o;
         }
         s.mix = Object.keys(clean).length ? clean : null;
       }

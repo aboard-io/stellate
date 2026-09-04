@@ -248,7 +248,14 @@ const GATES = [
              "nukernel/ui/produce.js", "nukernel/TABLE.md",
              // T4's own reach: the three modules the carried fields land in.
              "nukernel/ui/derive.js", "nukernel/audio/desk.js",
-             "nukernel/audio/plan.js"] },
+             "nukernel/audio/plan.js",
+             /* ...AND WAVE 3's, which is the cell's mix lane end to end: the
+                vocabulary (fields.js CELLAUTO), the voice -> channel walk that
+                projects it onto a box (desk-doc.js cellAutoOf) and the door
+                that keeps a saved one honest (song.js). T4k/T4l read the
+                DESK's own unit table through all three. */
+             "nukernel/fields.js", "nukernel/desk-doc.js",
+             "nukernel/song.js"] },
   { name: "instrumentation", wave: 1, kind: "node",
     argv: ["test/instrumentation.test.js"],
     need: ["test/instrumentation.test.js"], covers: ["test/instrumentation.test.js"] },

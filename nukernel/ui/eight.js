@@ -657,6 +657,21 @@ function push(first) {
       if (P) b.parts = P;
     });
   }
+  /* ...AND THE CELL LANES, ONE MAP PER BOX (TABLE.md wave 3, 2026-09-04).
+     ¶A: "we still want per-section mix automation, with per-cell relative to
+     that." The row's own lanes are `mot` -> `auto[]`, compiled by
+     audio/desk.js; this is the OFFSET each voice rides them by in THIS
+     section. Written here rather than in `boxesOf` for the same reason
+     `b.parts` is: the map from a voice to a desk CHANNEL is desk-doc.js's one
+     walk (`channelVoicesOf`, pinned to audio/desk.js voiceRoster by desk-gate
+     G2), and a second copy of it would silently re-address every lane.
+     PRESENT-ONLY: a record with no cell lane writes no key and the unit table
+     the desk builds is byte-identical (audio/desk.js keys its branch on the
+     absence). */
+  boxes.forEach((b, i) => {
+    const ca = NuDeskDoc.cellAutoOf(DOC, GENRES, secs[i].id);
+    if (ca) b.cellauto = ca;
+  });
   setMaster(NuDeskDoc.masterOf(DOC));
   setBuses(NuDeskDoc.busesOf(DOC));
   // THE PRODUCER'S HAND ON THE DESK. Offsets ADD (audio/desk.js:593), so a note
@@ -10022,6 +10037,13 @@ function tableAPI() {
     reseed: () => { rewriteNow(); },
     showBoard: () => { showTab("Mix"); },
 
+    /* THE CELL'S OWN LANE VOCABULARY (TABLE.md wave 3). A door and not a
+       second table: fields.js CELLAUTO is the one owner of the four lane
+       kinds, their words and what each word is worth, and `putCell` is the
+       one writer — the table draws whatever the registry offers, which is why
+       it never has to be told a new word. */
+    CELLAUTO: NuFields.CELLAUTO,
+
     /* ---- the record's own footer (§1 RECORD) ------------------------ */
     MASTERROWS: NuFields.MASTER,
     masterOf: (k) => (DOC.sound && DOC.sound.master && DOC.sound.master[k]) || null,
@@ -14963,7 +14985,15 @@ window.__eightViewSec = () => editSec();      // the section being WRITTEN
 window.__eightCaptions = () => (scoreCap ? [scoreCap.textContent] : []);
 window.__eightCells = () => hookCells.map((h) => h.cells.length).join(",");
 window.__eightPhraseOf = (n) => phrase(n);   // a gate reads the COMPILED hook
-window.__eightSong = () => SONG.map((b) => ({ g: b.stack[0].g, len: b.len, role: b.role }));
+window.__eightSong = () => SONG.map((b) => ({ g: b.stack[0].g, len: b.len, role: b.role,
+  /* ...AND THE CELL LANES THIS BOX CARRIES (TABLE.md wave 3). PRESENT-ONLY,
+     like the fact itself: a record no hand has written a cell lane on reports
+     the same three keys it always did. It is here because the projection
+     document -> box is the one step between `putCell` and the desk, and a
+     lane that reached the document and not the box is this repo's
+     characteristic bug with a wave built on top of it (test/table.browser.js
+     T6e reads it; the dB itself is T4k's, on the unit table). */
+  ...(b.cellauto ? { cellauto: b.cellauto } : {}) }));
 /* THE THREE SONG FACTS THAT ARE NOT IN THE DOCUMENT (2026-09-02, slice 2a).
    The groove, the swing and the breathing do not travel on `DOC` alone: the
    groove and the swing are the SONG's — ui/state.js carries them beside the

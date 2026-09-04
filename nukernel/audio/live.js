@@ -119,8 +119,17 @@ W.__nuRender = () => ({ chunks: lastBar + 1, bars: barCount(),
 // makes the sound rather than of a copy beside it: what is this voice's level,
 // where is it placed, how much of it goes to the reverb and the delay, and what
 // tone is on its strip. A gate that reads this is reading the artifact.
-W.__nuMix = () => {
-  const p = barPlan(Math.max(0, lastBar));
+/* ...AND IT MAY BE ASKED ABOUT A NAMED BAR (2026-09-04, TABLE.md wave 3), the
+   same argument `__nuHits` above already takes and for the same reason: a
+   per-CELL mix lane is a fact about one voice in one SECTION, so a gate that
+   could only read the bar that happens to be sounding could not ask whether
+   the offset stayed inside its own section. `barPlan(n)` is the artifact for
+   any n — it is what the renderer is handed for that bar — so this is the same
+   reading, aimed. Absent = the sounding bar, so every existing caller is
+   byte-identical. */
+W.__nuMix = (bar) => {
+  const at = bar == null ? Math.max(0, lastBar) : bar;
+  const p = barPlan(at);
   if (!p) return null;
   const units = {};
   for (const [k, u] of Object.entries(p.units)) {
@@ -142,7 +151,7 @@ W.__nuMix = () => {
       // a window that calls itself "the artifact" has to show both carriers.
       strip: (u.sampler && u.sampler.strip) || u.strip || null };
   }
-  return { si: playingSec, bar: lastBar, route: st.route, units,
+  return { si: playingSec, bar: bar == null ? lastBar : at, route: st.route, units,
            notes: p.ev.pitched.length, hits: p.ev.drums.length,
            sweeps: p.ev.sfx.length, master: engineReport() };
 };

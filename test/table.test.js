@@ -686,11 +686,23 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
      (voice v, section i -> slot v*NS+i). Nothing here is a second answer to
      "what does this record play": it is the same two functions the page calls. */
   const GK = "table.gate.";
+  const DD = N("desk-doc.js");
   const boxesFor = (doc) => {
     doc.form.sections.forEach((s2, i) => {
       GENRES[GK + i] = D.toGenre(doc, i, GENRES, []);
     });
-    return D.boxesOf(doc, GK);
+    const boxes = D.boxesOf(doc, GK);
+    /* ...AND THE TWO THINGS `push()` WRITES ONTO A BOX THAT `boxesOf` DOES
+       NOT. A desk address is not a document fact — the map from a voice to a
+       CHANNEL is desk-doc.js's one walk — so the per-section cell lanes are
+       laid on here exactly as ui/eight.js lays them on (TABLE.md wave 3).
+       Absent on every composed record, so every T4 above reads the same boxes
+       it read before this line existed. */
+    boxes.forEach((b, i) => {
+      const ca = DD.cellAutoOf(doc, GENRES, doc.form.sections[i].id);
+      if (ca) b.cellauto = ca;
+    });
+    return boxes;
   };
   const slotsFor = (doc) => {
     const secs = doc.form.sections, lines = doc.voices.filter((v) => v.kind === "line");
@@ -1145,6 +1157,146 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
       "focus reached the rendered bars — say what it does and rewrite this test");
     // ...and a row may not claim it: a cell flag has exactly one home.
     assert.strictEqual(D.putRow(doc, 1, "focus", true), false);
+  });
+
+  /* T4k — A CELL'S MIX LANE REACHES THE DESK, AS AN OFFSET ON THE ROW'S
+     (TABLE.md wave 3, ¶A: "we still want per-section mix automation, with
+     per-cell relative to that").
+
+     READ OFF THE UNIT TABLE, which is the artifact the engine is handed:
+     `deskUnits` is what audio/plan.js barPlan hands the renderer every bar,
+     and `lvl` / `pan` / `rev` / `strip.hi` on a unit are the four numbers a
+     cell lane can move. Reading `document.scoreOf` here would prove nothing —
+     it is the small half and knows no desk at all — and reading the
+     document back would be reading the plan. Same recipe as T4a/T4b.
+
+     THE FOUR CLAIMS, in ¶A's own words:
+       · the offset moves the voice it is written on, by the offset it says;
+       · in the section it is written in, and in no other;
+       · on that voice only, and no other voice of that section;
+       · and clearing it puts the record back exactly where it was. */
+  ok("T4k a cell mix offset moves that voice in that section only, by the offset", () => {
+    const doc = D.normalize(P.genreToDocument("acid", 1));
+    /* THE UNIT TABLE, PER BOX. A synthetic unit per seat rather than the
+       engine's: `deskUnits` is a pure function of (units, addr, sec) and the
+       thing under measurement is what it WRITES, so a flat unit at lvl 1 makes
+       every number below a pure reading of the desk's own arithmetic. `addr`
+       is voiceRoster's own answer — the same walk audio/plan.js castOf uses to
+       build ADDR, and the one desk-gate G2 pins desk-doc.js `channelVoicesOf`
+       to, so this is not a second opinion about which chair is which. */
+    const unitsOf = (box) => {
+      const addr = {}, units = {};
+      for (const r of DESK.voiceRoster(box)) {
+        addr["v" + r.v] = r.key; units["v" + r.v] = { lvl: 1, dry: 1 };
+      }
+      units.drums = { drum: true, lvl: 1 };
+      const out = DESK.deskUnits(units, addr, box, (x) => x, null);
+      const o = {};
+      for (const k of Object.keys(units)) {
+        const u = out[k];
+        o[k] = { lvl: u.lvl, pan: u.pan == null ? null : u.pan, rev: u.rev || 0,
+                 hi: (u.strip && u.strip.hi) || 0 };
+      }
+      return o;
+    };
+    const read = (d) => boxesFor(d).map(unitsOf);
+    const before = read(doc);
+    const si = 1, vi = doc.voices.findIndex((v) => v.kind === "line");
+    assert.ok(vi >= 0 && doc.form.sections.length > 2,
+      "the fixture has no line voice or too few sections to be absent from");
+    const key = "v" + vi;                       // roster v === the line ordinal
+    const d0 = JSON.stringify(doc);
+    assert.strictEqual(
+      D.putCell(doc, si, vi, "mixauto",
+                { level: "+6", pan: "r", send: "more", cutoff: "darker" }), true);
+    /* THE DIFF MOVES ONLY ITS OWN FIELD. One document write, one key — §5's
+       "every op is one document write through the existing doors" measured as
+       a diff rather than asserted. */
+    const d1 = JSON.parse(d0), d2 = JSON.parse(JSON.stringify(doc));
+    d1.voices[vi].cells = d2.voices[vi].cells;
+    assert.strictEqual(JSON.stringify(d1), JSON.stringify(d2),
+      "putCell(mixauto) moved something that is not a cell lane");
+    assert.deepStrictEqual(Object.keys(d2.voices[vi].cells[doc.form.sections[si].id]),
+      ["mixauto"], "the cell grew a second field");
+
+    const after = read(doc);
+    const dB = (a, b) => 20 * Math.log10(b / a);
+    const A = before[si][key], B = after[si][key];
+    // LEVEL: the desk's own unit gain, in dB, against the same unit unoffset.
+    const moved = dB(A.lvl, B.lvl);
+    assert.ok(Math.abs(moved - 6) < 0.01,
+      "a +6 dB cell offset moved the rendered level " + moved.toFixed(3) + " dB");
+    // PAN: cell + row + seat on one line, so an `r` is +0.35 on where it sat.
+    assert.ok(Math.abs((B.pan || 0) - ((A.pan || 0) + 0.35)) < 1e-9,
+      "pan " + A.pan + " -> " + B.pan + ", want +0.35");
+    // SEND: half a step of SENDS onto bus 1, added to what the section sends.
+    assert.ok(B.rev > A.rev, "the send did not open: " + A.rev + " -> " + B.rev);
+    // CUTOFF: the board's high shelf, which is what darker means here.
+    assert.strictEqual(B.hi - A.hi, -3, "darker moved the hi shelf " + (B.hi - A.hi));
+    console.log("       acid seed 1, voice " + key + " in section " + si +
+      ": level " + moved.toFixed(2) + " dB · pan " + (A.pan || 0) + " -> " + B.pan +
+      " · rev " + A.rev.toFixed(3) + " -> " + B.rev.toFixed(3) +
+      " · hi shelf " + A.hi + " -> " + B.hi + " dB");
+
+    // ...AND NOWHERE ELSE. Every other section, and every other voice of this
+    // one, reads exactly what it read before the cell was written.
+    for (let i = 0; i < before.length; i++)
+      for (const k of Object.keys(before[i]))
+        if (i !== si || k !== key)
+          assert.deepStrictEqual(after[i][k], before[i][k],
+            "the cell lane leaked onto " + k + " in section " + i);
+
+    // ...AND CLEARING IT PUTS THE RECORD BACK (§2's clear-to-inherit).
+    assert.strictEqual(D.putCell(doc, si, vi, "mixauto", null), true);
+    assert.deepStrictEqual(read(doc), before, "clearing the cell lane did not restore");
+    assert.strictEqual(JSON.stringify(doc), d0, "clearing left something behind");
+  });
+
+  /* T4l — AND A ROW LANE AND A CELL OFFSET COMPOSE RATHER THAN REPLACE (¶A's
+     "a cell that says nothing rides the section's curve exactly; a cell that
+     says +3 dB rides it 3 dB up", and §4's "neither the Live export nor the
+     desk may apply a curve twice").
+
+     The row's `level` lane rides the NOTES (audio/desk.js deskAmp, per beat,
+     because a `pump` is a per-beat sidechain) and the cell's offset rides the
+     UNIT. So the proof that they compose once each is that with both set, the
+     note gain is the row's alone and the unit gain is the cell's alone —
+     neither number carries the other, and the product is the sum in dB. */
+  ok("T4l the row's lane and the cell's offset compose, each applied once", () => {
+    const doc = D.normalize(P.genreToDocument("acid", 1));
+    const si = 1, vi = doc.voices.findIndex((v) => v.kind === "line");
+    assert.strictEqual(D.putRow(doc, si, "mot", "pump"), true);
+    const unitLvl = (d) => {
+      const box = boxesFor(d)[si];
+      const addr = {}, units = {};
+      for (const r of DESK.voiceRoster(box)) {
+        addr["v" + r.v] = r.key; units["v" + r.v] = { lvl: 1, dry: 1 };
+      }
+      const amp = DESK.deskAmp(box, addr, (x) => x);
+      /* THE NOTE IS SAMPLED AT THE TOP OF THE BEAT, where a `pump` is at its
+         DUCK (compileAuto writes [b, 0.32] then [b + 0.85, 1] and laneAt reads
+         the curve exponentially between them). MEASURED 2026-09-04: sampling
+         mid-beat instead reads 0.6255, which is a real point on a real ramp
+         and says nothing about whether the lane is there. */
+      return { unit: DESK.deskUnits(units, addr, box, (x) => x, null)["v" + vi].lvl,
+               note: amp("v" + vi, 0), top: amp("v" + vi, 0.85) };
+    };
+    const rowOnly = unitLvl(doc);
+    assert.ok(rowOnly.note < 0.5 && rowOnly.top > 0.95,
+      "the row's pump is not ducking the notes: " + rowOnly.note + " -> " + rowOnly.top);
+    assert.strictEqual(D.putCell(doc, si, vi, "mixauto", { level: "+6" }), true);
+    const both = unitLvl(doc);
+    // the ROW's curve is untouched by the cell — it is not multiplied in twice
+    assert.strictEqual(both.note, rowOnly.note,
+      "the cell offset reached the note gain as well as the unit gain — " +
+      "that is the same curve applied twice");
+    assert.strictEqual(both.top, rowOnly.top, "…at the top of the pump too");
+    // ...and the CELL's offset is exactly 6 dB on the unit, whatever the row does
+    const d6 = 20 * Math.log10(both.unit / rowOnly.unit);
+    assert.ok(Math.abs(d6 - 6) < 0.01, "the cell offset came out " + d6.toFixed(3) + " dB");
+    console.log("       a pump row + a +6 cell: the note gain is the row's " +
+      rowOnly.note.toFixed(4) + " unchanged, the unit gain is +" + d6.toFixed(2) +
+      " dB — one application each");
   });
 
   console.log("\n" + pass + " passed, " + fail + " failed");

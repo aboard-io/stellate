@@ -922,8 +922,16 @@
     prov:   { tier: "record", at: "material.prov",
               note: "a motif's provenance is a fact about the MOTIF (§3), " +
                     "and the bank is the record's — a cell POINTS at a motif" },
-    mixauto:{ tier: "cell", wave: 3,
-              note: "¶A: a cell lane is an OFFSET on the row's (§4)" },
+    /* THE CELL'S OWN LANE (TABLE.md wave 3, 2026-09-04). ¶A: "a cell lane is
+       an OFFSET on the row's" — so this is a CELL-ONLY field with no column
+       and no row reader below it, which is not an omission but the law: a cell
+       that says nothing must ride the section's curve EXACTLY, and a default
+       arriving from anywhere would be a second curve. The value is a small map
+       of lane kind -> word (fields.js CELLAUTO), and `cellAutoOffset` is the
+       one owner of what a word is worth. */
+    mixauto:{ tier: "cell", at: "voices[vi].cells[secId].mixauto",
+              note: "¶A: a cell lane is an OFFSET on the row's (§4); " +
+                    "words in fields.js CELLAUTO, resolved by cellAutoOffset" },
     artic:  { tier: "row", wave: 4, note: "per box today (§4)" },
     oct:    { tier: "row", wave: 4, note: "per box today (§4)" },
     rate:   { tier: "record", at: "time.rate", note: "§1 files this per box" },
@@ -1007,6 +1015,22 @@
       if (!Object.keys(v.cells).length) delete v.cells;
       return true;
     }
+    /* ...AND A LANE MAP IS CLEANED AT THE DOOR (wave 3). `mixauto` is the one
+       cell field whose value is an OBJECT, so "is this writable" is not the
+       whole question a hand can get wrong: a word this build does not know,
+       and the NEUTRAL word of a lane (which means "as mixed" and is therefore
+       absent), both have to be dropped HERE or the record grows a second
+       spelling of nothing. fields.js `cellAutoClean` is the one reader, shared
+       with `normalize` below — never a second copy of the table. */
+    if (field === "mixauto") {
+      const clean = NF.cellAutoClean(value);
+      if (!clean) return putCell(doc, si, vi, field, null);
+      if (JSON.stringify(had) === JSON.stringify(clean)) return false;
+      v.cells = v.cells || {};
+      v.cells[id] = v.cells[id] || {};
+      v.cells[id][field] = clean;
+      return true;
+    }
     if (had === value) return false;
     v.cells = v.cells || {};
     v.cells[id] = v.cells[id] || {};
@@ -1054,6 +1078,16 @@
       cell:   (c) => c && c.focus,
       column: null, row: null, record: null,
       genre:  () => undefined,       // nothing under the table features a voice
+    },
+    /* THE CELL'S MIX LANE (wave 3). Four nulls under it on purpose — ¶A's
+       "relative to that" is only true if ABSENT means "add nothing", and a
+       tier that answered here would be adding something. The row's own lanes
+       are not this field: they are `mot` -> `auto[]`, compiled one tier down
+       by audio/desk.js, and the desk SUMS the two. */
+    mixauto: {
+      cell:   (c) => c && c.mixauto,
+      column: null, row: null, record: null,
+      genre:  () => undefined,       // no anchor rides a cell
     },
     /* ---- THE ROW'S OWN FIELDS (wave 2a, 2026-09-04) --------------------
        Every field below answers from the SECTION first and the RECORD (or
@@ -1444,6 +1478,16 @@
               delete v.cells[id]; continue;
             }
             for (const f of Object.keys(c)) {
+              /* `mixauto` is the one cell field with a STRUCTURE, so it is
+                 filtered rather than tested (wave 3): fields.js
+                 `cellAutoClean` keeps the words this build can play and drops
+                 the rest, and a map with nothing left deletes itself — the
+                 same law `desk.trim` two blocks down already keeps. */
+              if (f === "mixauto") {
+                const clean = NF.cellAutoClean(c[f]);
+                if (clean) c[f] = clean; else delete c[f];
+                continue;
+              }
               const bad = !CELLWRITE(f) ||
                 (f === "entry" && !(Number.isInteger(c[f]) && c[f] >= 0)) ||
                 (f === "reg" && !(Number.isInteger(c[f]) && c[f] >= -4 && c[f] <= 3)) ||

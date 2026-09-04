@@ -342,11 +342,17 @@ export function bandTable(host, A) {
       word: A.cellOf(i, vi, "focus") ? "featured" : "no",
       why: "measured 2026-09-04: box.focus indexes a one-entry stack and " +
            "moves no event — the gate names it the day a reader lands" });
-    /* 5 · THE TWO WAVES THAT ARE NOT HERE YET, GREYED WITH THEIR REASON (§4's
+    /* 5 · THE CELL'S MIX LANE, RELATIVE TO THE ROW'S (wave 3, 2026-09-04).
+       This row was GREYED with its reason until today ("wave 3: a cell lane is
+       an OFFSET on the row's, and the desk does not read one yet") and the
+       reason has expired: audio/desk.js reads one now, at the same site the
+       board's own offset layer lands, and nukernel/export/als.js writes the
+       sum per track. One strip per lane kind, each word an OFFSET and never an
+       absolute — the absent detent is "rides the section", which is ¶A's own
+       sentence for a cell that says nothing. */
+    for (const spec of (A.CELLAUTO || [])) f.push(cellLane(A, i, vi, spec));
+    /* 6 · AND THE WAVE THAT IS STILL NOT HERE, GREYED WITH ITS REASON (§4's
        "no silent grey"). */
-    f.push({ kind: "say", label: "mix automation", word: "rides the section",
-      why: "wave 3: a cell lane is an OFFSET on the row's, and the desk does " +
-           "not read one yet" });
     f.push({ kind: "say", label: "artic · oct · rate · scale · clamp",
       word: "the row's", why: "wave 4: these are per box today and moving " +
             "them to the cell needs a song.js VERSION migration" });
@@ -591,6 +597,50 @@ function cellNum(A, i, vi, field, label, steps) {
               ...list.map((n) => ({ v: String(n), w: String(n) }))],
     set: (v) => A.putCell(i, vi, field, v === "" ? null : +v),
     clear: has ? () => A.putCell(i, vi, field, null) : null };
+}
+
+/** ONE LANE OF A CELL'S MIX AUTOMATION, RELATIVE TO THE SECTION'S (TABLE.md
+ *  wave 3, ¶A: "we still want per-section mix automation, with per-cell
+ *  relative to that").
+ *
+ *  A CELL LANE HAS NO INHERITED VALUE, and that is the law rather than an
+ *  omission: an OFFSET whose absent state was anything but zero would be a
+ *  second curve, so the quiet word here is "rides the section" and not a
+ *  column's or a row's answer (document.js CELLFIELD.mixauto has four nulls
+ *  under it for the same reason).
+ *
+ *  THE NEUTRAL WORD IS NOT OFFERED. Each lane's table carries one word worth
+ *  0 — "as mixed", "as placed", "as sent", "as toned" — and fields.js
+ *  `cellAutoClean` drops it, because zero IS absent and a record may have only
+ *  one spelling of it. A chip that wrote and then vanished on the next
+ *  recompile is exactly the bug §1b records this file shipping once already
+ *  (the −24…31 registers), so the chip is not drawn: the clear-back is how
+ *  a hand says "as mixed", and it is on every written row.
+ *
+ *  ONE WRITE, THROUGH THE ONE DOOR. The whole map is read, one key is changed
+ *  and `putCell` is handed the result — so a hand that sets a level and then a
+ *  pan has one cell with two lanes in it, and §5's "every op is one document
+ *  write" holds for the second one as much as the first. */
+function cellLane(A, i, vi, spec) {
+  const read = () => A.cellOf(i, vi, "mixauto") || {};
+  const cur = read()[spec.key] == null ? "" : String(read()[spec.key]);
+  const has = cur !== "";
+  const put = (w) => {
+    const next = { ...read() };
+    if (w === "") delete next[spec.key]; else next[spec.key] = w;
+    A.putCell(i, vi, "mixauto", Object.keys(next).length ? next : null);
+  };
+  const words = Object.keys(spec.table).filter((k) => spec.table[k]);
+  return { key: "tcellauto|" + spec.key + "|" + vi + "|" + i,
+    label: "mix · " + spec.label,
+    word: has ? (spec.labels[cur] || cur) : "rides the section",
+    value: cur,
+    derived: !has,
+    sub: has ? null : "the section's own lane, unchanged",
+    options: [{ v: "", w: "rides the section" },
+              ...words.map((k) => ({ v: k, w: spec.labels[k] || k }))],
+    set: (v) => put(v || ""),
+    clear: has ? () => put("") : null };
 }
 
 /** THE DRUMMER'S GROUPS, built from the options the sheet actually offers so a

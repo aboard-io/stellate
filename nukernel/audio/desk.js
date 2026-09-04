@@ -895,6 +895,15 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
   };
   const autoPan = lane("pan", null);
   const autoRev = lane("send.rev", null), autoDel = lane("send.echo", null);
+  /* THE CELL LANES OF THIS SECTION, RELATIVE TO THE ROW'S (TABLE.md wave 3,
+     ¶A: "we still want per-section mix automation, with per-cell relative to
+     that"). `sec.cellauto` is chair key -> a mix-layer offset, written per box
+     by ui/eight.js push() out of desk-doc.js `cellAutoOf` — the same walk that
+     writes `sec.parts`, so a cell and a strip cannot disagree about which
+     channel a voice is. Null (every record no hand has written a cell lane on)
+     is byte-identical: nothing is appended below and `o` is what it was. */
+  const CELL = sec.cellauto && typeof sec.cellauto === "object" &&
+               !Array.isArray(sec.cellauto) ? sec.cellauto : null;
   // one answer to "where does each group land", for the whole unit walk
   const ROUTE = NuFields.busRoute(BUSES);
   const out = {};
@@ -935,6 +944,39 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     if (/voice_|vox|choir|voices/.test(mid)) chans.push("vocals");
     for (const [fam, re] of INST_CHANS) if (re.test(mid)) chans.push("inst:" + fam);
     const os = MIXER ? chans.map(c => MIXER[c]).filter(Boolean) : [];
+    /* ...AND THE CELL'S OWN OFFSET IS ONE MORE OF THEM, APPLIED LAST — which
+       is the ONE site in this file where a cell reaches the sound, and it is
+       this one on purpose (TABLE.md wave 3).
+
+       WHY HERE AND NOT AT `laneAt`. `laneAt` evaluates a lane at a beat and
+       has no unit and no channel in its hands; the place the walk reads a lane
+       FOR A UNIT is this loop, and everything below it — `v.lvl`, the
+       modelled-voice route trim, the `pan` sum, `v.rev`/`v.del`, `eqAll` — is
+       already written to take an offset from exactly this list. So the cell
+       lane costs one push instead of five new branches, and it lands on the
+       five wires that were each separately MEASURED to reach a modelled chair
+       as well as a sampled one (the o.fader / o.pan / o.rev / o.eq blocks
+       below and the tape-reach, pp-send and od-route gates behind them).
+
+       THE SUM IS ¶A's, AND NO CURVE IS APPLIED TWICE. Per lane kind:
+         level   the cell's dB rides `v.lvl` here, ONCE; the ROW's `level` lane
+                 rides the NOTES (deskAmp, which is per beat because a pump is);
+                 the seat's static level is `p.gain`, also here and also once.
+                 Three multiplies, three different facts, one each — which is
+                 §4's "cell offset + row lane + the seat's static level".
+         pan     summed into the `pan` line below beside `autoPan` (the row's
+                 lane) and `p.pan` (the seat), literally cell + row + seat.
+         send    summed into `v.rev` beside `autoRev`, same shape.
+         cutoff  the cell's is a hi SHELF and the row's is the master sweep —
+                 two different stages, so there is nothing to sum and nothing
+                 to double. fields.js CELLAUTO carries the whole argument.
+       LAST IN THE LIST because the list is most-specific-last (the board's own
+       law three lines up), and a cell is the most specific address there is.
+       With a MIXER present the numeric lanes SUM through `sum()`; `eq` takes
+       the last writer, which is this layer's existing law and is named rather
+       than quietly changed. */
+    const co = CELL && chan ? CELL[chan] : null;
+    if (co) os.push(co);
     const sum = (k2) => os.reduce((a, x) => a + (x[k2] || 0), 0) || undefined;
     const o = os.length === 1 ? os[0] : os.length ? Object.assign({}, ...os,
       { fader: sum("fader"), rev: sum("rev"), del: sum("del"), pan: sum("pan"),

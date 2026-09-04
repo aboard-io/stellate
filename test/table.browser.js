@@ -32,7 +32,9 @@
  *   T4  THE OPS. Each op in §5 is ONE document write (diffed), leaves the
  *       transport and the seed alone, and changes only what it owns.
  *   T6  THE SOUND. A cell's motif and a cell's register reach the RENDERED
- *       EVENTS, and a column's seat reaches the mix the engine was handed.
+ *       EVENTS, a column's seat reaches the mix the engine was handed, and
+ *       (T6e, wave 3) a cell's MIX LANE is a strip a thumb can reach whose tap
+ *       lands on the cell tier and on the box the desk reads.
  *   T0  zero pageerror, zero console error, across all of it.
  *
  * RUN: NODE_PATH=/home/ford/ftrain-2025/node_modules node test/table.browser.js
@@ -100,7 +102,12 @@ function standUpServer() {
    the page, because a gate that asked the page what order it was in would be
    asserting that the page equals itself. */
 const CELL_ORDER = ["motifs", "does", "enters at bar", "register", "focus",
-                    "mix automation", "artic · oct · rate · scale · clamp"];
+                    /* ...AND THE FOUR LANE KINDS THAT REPLACED ONE GREY ROW
+                       (TABLE.md wave 3, 2026-09-04). §1's "mix automation" was
+                       one line while it was a promise; it is four strips now,
+                       one per lane kind, in fields.js CELLAUTO's own order. */
+                    "mix · level", "mix · place", "mix · send", "mix · tone",
+                    "artic · oct · rate · scale · clamp"];
 const ROW_ORDER  = ["type", "bars", "level", "shape", "intro", "outro",
                     "motion", "pace", "period", "breath", "pipe",
                     "key", "mode", "changes", "swing", "groove",
@@ -210,8 +217,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   check(JSON.stringify(cellLabs) === JSON.stringify(CELL_ORDER.filter((x) => cellLabs.includes(x))),
     "T5d the cell sheet is §1's CELL vector in §1's order: " + cellLabs.join(" · "));
   const greyed = (cc || []).filter((r) => r.why);
-  check(greyed.some((r) => r.lab === "mix automation" && /wave 3/.test(r.why)),
-    "…mix automation is greyed WITH ITS REASON (§4, the no-silent-grey law)");
+  /* THIS CHECK USED TO READ "mix automation is greyed WITH ITS REASON" and to
+     demand the words "wave 3" in it. The wave arrived (2026-09-04): the row is
+     four live strips now, so the assertion is inverted rather than deleted —
+     the mix lanes must be DRAWN and carry no refusal, which is the same law
+     ("no silent grey") pointed at a control that works. T6e drives them. */
+  check(!greyed.some((r) => /^mix/.test(r.lab)),
+    "…the cell's mix lanes are LIVE, not greyed (wave 3 arrived; the strips " +
+    "are drawn and refuse nothing)");
   check(greyed.some((r) => /artic/.test(r.lab) && /wave 4/.test(r.why)),
     "…and so are the five that need a VERSION migration");
   await shot("cell-sheet-390");
@@ -545,6 +558,136 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   const mix = await p.evaluate(() => (window.__nuMix ? Object.keys(window.__nuMix() || {}) : null));
   check(mix == null || Array.isArray(mix),
     "T6 the mix window answers for this record" + (mix ? " (" + mix.join(",") + ")" : " (cold)"));
+
+  /* T6e · THE CELL'S MIX LANE, WHICH WAS GREY UNTIL TODAY (TABLE.md wave 3,
+     ¶A: "we still want per-section mix automation, with per-cell relative to
+     that"). One strip per lane kind, every word an OFFSET, the absent detent
+     "rides the section".
+
+     WHAT THIS GATE OWNS AND WHAT IT DOES NOT. The dB is measured on the
+     RENDERED UNIT TABLE by test/table.test.js T4k — `deskUnits` is a pure
+     function and node can read what the engine is handed without a sound card
+     — and T4l holds the other half of ¶A there (the row's lane rides the notes
+     and the cell's offset rides the unit, one application each). What only
+     THIS gate can say is that a thumb can reach it: the chips are drawn, they
+     are tappable at 320px, and the tap lands on the CELL tier of the document
+     through `putCell` and no other door. `__nuMix()` is read as well and its
+     answer is NAMED rather than asserted away, exactly as T8b names it: this
+     file never presses play, so audio/live.js has no bar list to report and
+     "cold" is the honest word for it. */
+  await top("Band");
+  {
+    const D6 = await doc();
+    const l6 = D6.voices.find((v) => v.kind === "line");
+    const vi6 = D6.voices.indexOf(l6);
+    const si6 = 3, sid6 = D6.form.sections[si6].id;
+    const fkey = "tcellauto|level|" + vi6 + "|" + si6;
+    const chips = await chipsOf("tcell|" + l6.name + "|" + sid6, fkey);
+    check(chips.length >= 4, "T6e the cell sheet draws a mix-automation strip " +
+      "with the offset words (" + chips.map((k) => k.split("|").pop()).join(" ") + ")");
+    /* THE NEUTRAL WORD IS NOT OFFERED, and that is the point of the check:
+       fields.js `cellAutoClean` drops a zero offset because zero IS absent, so
+       a chip for it would write and then vanish — §1b's own register bug. The
+       clear-back is how a hand says "as mixed". */
+    check(!chips.some((k) => k.split("|").pop() === "0"),
+      "…and it offers no zero chip: absent has one spelling, and it is the " +
+      "clear-back on the row");
+    const hit = chips.find((k) => k.split("|").pop() === "+6");
+    check(!!hit, "…including a +6 dB offset (" + hit + ")");
+    /* WHAT THE ENGINE WAS HANDED, BAR BY BAR (2026-09-04). `__nuMix(bar)` is
+       audio/live.js's window onto `barPlan(bar)` — the unit table the renderer
+       is given — and it takes a bar argument for exactly this question: a
+       per-CELL lane is a fact about one voice in one SECTION, so a reading
+       that could only see the bar that happens to be sounding could not ask
+       whether the offset stayed inside its own.
+
+       IT WALKS EVERY BAR RATHER THAN COMPUTING WHICH ONES ARE THE SECTION'S,
+       and that is deliberate: the bar list is the COMPILE's (pace stretches
+       it, the loop wraps it), so arithmetic here would be a second opinion
+       about which bar belongs to which box — and a wrong one would read as a
+       green check over a dead control. The claim is measured in the shape the
+       artifact can actually answer: SOME bars move by the offset, on ONE unit,
+       and the rest of the song does not move at all.
+
+       It can honestly be COLD (this gate never presses play) and the case is
+       named rather than asserted away. */
+    const allLvls = async () => p.evaluate(() => {
+      try {
+        const out = {};
+        for (let b = 0; b < 200; b++) {
+          const m = window.__nuMix ? window.__nuMix(b) : null;
+          if (!m || !m.units) break;
+          out[b] = Object.fromEntries(Object.entries(m.units).map(([k, u]) => [k, u.lvl]));
+        }
+        return Object.keys(out).length ? out : null;
+      } catch (e) { return null; }
+    });
+    const mixBefore = await allLvls();
+    const mixWarm = mixBefore ? Object.keys(mixBefore["0"] || {}).length : 0;
+    if (hit) {
+      await p.evaluate((k) => {
+        const c = document.querySelector('#pan-band [data-k="' + k + '"]');
+        if (c) c.click(); }, hit);
+      await p.waitForTimeout(700);
+      const stored = await p.evaluate((args) => { const [n, sid] = args;
+        const v = window.__eightDoc().voices.find((x) => x.name === n);
+        return v && v.cells && v.cells[sid] ? v.cells[sid].mixauto || null : null;
+      }, [l6.name, sid6]);
+      check(stored && stored.level === "+6",
+        "…and the tap lands on the CELL tier through putCell: " + JSON.stringify(stored));
+      /* ...AND ON THE BOX THE DESK READS. `push()` re-projects the document
+         onto the boxes on every write (desk-doc.js cellAutoOf), so a cell lane
+         that reached the document and not the box would be the wave's own
+         declared-but-never-arriving bug. This reads the SONG the engine is
+         compiled from, which is one tier below the document and one above the
+         unit table T4k measures. */
+      const onBox = await p.evaluate((i) => { try {
+        const b = window.__eightSong ? window.__eightSong()[i] : null;
+        return b ? b.cellauto || null : "no-song-window";
+      } catch (e) { return "threw"; } }, si6);
+      check(onBox && typeof onBox === "object" &&
+        Object.values(onBox).some((o) => o && o.fader === 6),
+        "…and onto the BOX the desk reads, as a +6 dB channel offset: " +
+        JSON.stringify(onBox));
+      /* ...AND ALL THE WAY TO THE UNIT TABLE THE RENDERER IS HANDED. This is
+         the declared-but-never-arriving law spent at its full price: the chip,
+         the document, the box and now the NUMBER the engine plays, read off
+         `barPlan` bar by bar. */
+      const mixAfter = mixBefore ? await allLvls() : null;
+      const bars = mixAfter ? Object.keys(mixAfter) : [];
+      const moved = bars.map((b) => ({ b,
+        keys: Object.keys(mixAfter[b]).filter((k) => mixBefore[b] &&
+          Math.abs(mixAfter[b][k] - mixBefore[b][k]) > 1e-4) }))
+        .filter((x) => x.keys.length);
+      const dbs = [...new Set(moved.flatMap((x) => x.keys.map((k) =>
+        k + " " + (20 * Math.log10(mixAfter[x.b][k] / mixBefore[x.b][k])).toFixed(2))))];
+      if (!mixAfter)
+        check(true, "…the engine's own unit table is cold here (this gate " +
+          "never presses play) — the dB is measured by test/table.test.js T4k");
+      else {
+        check(moved.length > 0 && dbs.length === 1 && /\s6\.0\d$/.test(dbs[0]),
+          "…and the RENDERED unit table moves by the offset, on exactly one " +
+          "unit and by the dB the chip says (" + (dbs.join(" · ") || "NOTHING MOVED") +
+          ", " + mixWarm + " units over " + bars.length + " bars)");
+        check(moved.length > 0 && moved.length < bars.length,
+          "…in " + moved.length + " of the song's " + bars.length + " bars — " +
+          "its own section's, and not the record's (bars " +
+          (moved.length ? moved[0].b + ".." + moved[moved.length - 1].b : "none") + ")");
+      }
+      // ...and the clear-back returns the cell to riding the section (§2).
+      await chipsOf("tcell|" + l6.name + "|" + sid6, fkey);
+      await p.evaluate((k) => {
+        const c = document.querySelector('#pan-band [data-k="' + k + '"]');
+        if (c) c.click(); }, fkey + "|");
+      await p.waitForTimeout(700);
+      const gone = await p.evaluate((args) => { const [n, sid] = args;
+        const v = window.__eightDoc().voices.find((x) => x.name === n);
+        return v && v.cells && v.cells[sid] ? v.cells[sid].mixauto || null : null;
+      }, [l6.name, sid6]);
+      check(gone == null, "…and clearing it returns the cell to riding the " +
+        "section, with nothing left behind (" + JSON.stringify(gone) + ")");
+    }
+  }
 
   /* ================= T8 · WHAT THE TWO RETIRED GATES PROVED ============ */
   /* (2026-09-04, TABLE.md wave 2c.) `test/band.browser.js` and

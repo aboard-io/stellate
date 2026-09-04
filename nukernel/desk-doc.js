@@ -109,6 +109,40 @@
     }
     return Object.keys(out).length ? out : null;
   }
+  /* sec.cellauto — THE CELL LANES OF ONE SECTION, keyed by the same chair
+     address `deskPartsOf` keys (TABLE.md wave 3, 2026-09-04).
+
+     ¶A: "we still want per-section mix automation, with per-cell relative to
+     that." The section's own lanes are `mot` -> `auto[]` one tier down
+     (audio/desk.js compileAuto); THIS is the other half — what each VOICE says
+     on top of them in THIS section, as an offset in the mix layer's own
+     dialect (fields.js cellAutoOffset).
+
+     IT IS THE SAME WALK AS EVERY OTHER ADDRESS IN THIS FILE, and that is the
+     whole reason it lives here rather than in document.js `boxesOf`: a cell
+     override is stored on the COLUMN (`voice.cells[secId]`, TABLE.md §2) and
+     the desk addresses a CHANNEL, so somebody has to map voice -> chair key.
+     `channelVoicesOf` is that map, desk-gate G2 pins it to audio/desk.js
+     `voiceRoster`, and a second copy of it would silently re-address every
+     lane — the exact failure mode the comment above it names.
+
+     ABSENT IS TODAY: a record where no hand has written a cell lane answers
+     null for every section, `ui/eight.js push()` writes no `cellauto` key, and
+     audio/desk.js appends nothing to its offset list. Byte-identical.
+
+     PER SECTION, unlike `deskPartsOf`, because that is what a cell IS. */
+  function cellAutoOf(doc, GENRES, secId) {
+    if (secId == null) return null;
+    const out = {};
+    for (const c of channelVoicesOf(doc, GENRES)) {
+      const cells = c.voice && c.voice.cells;
+      const cell = cells && cells[secId];
+      const off = cell ? F.cellAutoOffset(cell.mixauto) : null;
+      if (off) out[c.key] = off;
+    }
+    return Object.keys(out).length ? out : null;
+  }
+
   // WHAT SURVIVES OF A STORED ENTRY: the PARTMIX keys and nothing else, with
   // every dead spelling of a default removed. Walked off the registry rather
   // than listed, so a field added to PARTMIX is carried here by existing.
@@ -196,6 +230,7 @@
     S.master = F.masterIsDefault(M) ? undefined : M;
     if (S.master === undefined) delete S.master;
   }
-  return { channelsOf, channelVoicesOf, chairsOf, deskPartsOf, masterOf, busesOf,
+  return { channelsOf, channelVoicesOf, chairsOf, deskPartsOf, cellAutoOf,
+           masterOf, busesOf,
            deskIsDefault, writeDesk, writeBus, writeMaster };
 });

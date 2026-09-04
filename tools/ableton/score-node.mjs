@@ -181,6 +181,12 @@ export async function loadScore({ songPath = null, genre = null, scorePath = nul
   // the two ends to still holds.
   const score = scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
                           seats: engine ? plan.seats() : null, sections: state.SONG,
+                          // ...and the compile's own unit-key -> desk-address
+                          // record, which re-keys a section's cell lanes onto
+                          // its TRACKS (TABLE.md wave 3). The page passes the
+                          // same one, which is what keeps the two ends
+                          // byte-identical.
+                          addr: plan.addrOf,
                           drums: engine ? plan.drumStrip() : null,
                           // ...and the record's master words, which live on the
                           // SONG rather than on any box (state.js:68) — the

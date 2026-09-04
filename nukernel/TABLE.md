@@ -66,7 +66,7 @@ point at (§3).
 | register | override of the column default | |
 | artic / oct / rate / scale / clamp | today per box, applied to every voice | become per cell with the row as default |
 | focus | `focus` (today a section index) | a cell flag: this section features this voice |
-| mix automation | NEW | a level / pan / send / cutoff lane for this voice in this section, RELATIVE to the section's own lane (§4, ¶A) |
+| mix automation | `cells[secId].mixauto` (wave 3) | a level / pan / send / cutoff OFFSET for this voice in this section, RELATIVE to the section's own lane (§4, ¶A). Words in `fields.js CELLAUTO`; a cell-only field with no column and no row default, because an offset whose absent state was anything but zero would be a second curve |
 | provenance | NEW | of each motif: own genre · a named guest genre · hand (§3) |
 
 ### RECORD (the table itself)
@@ -186,6 +186,61 @@ the same for the controls the two old panes shipped:
   has been applied — so T6 walks the vocabulary and asks whether SOME word
   moves the render, which is the honest form of "this control can reach the
   sound".
+
+### 1c · What wave 3 measured, and the one bug it wrote and caught
+
+Per-cell mix automation shipped 2026-09-04. Four things worth writing down:
+
+- **The vocabulary is four lane kinds, not a curve** (`fields.js CELLAUTO`):
+  level `−6/−3/0/+3/+6` dB, pan `l/c/r` at PANS' half positions, send
+  `less/same/more` at half a step of SENDS on bus 1, cutoff
+  `darker/same/brighter`. The neutral word of each resolves to 0, which IS
+  absent, so `cellAutoClean` drops it and the strip does not draw a chip for
+  it — §1b's register bug (a chip that writes and is silently pruned) written
+  down in advance rather than shipped twice.
+- **A cell's `cutoff` is a HIGH SHELF and the row's is a master sweep.** They
+  are two stages, so there is nothing to sum and nothing to double. The row's
+  lane writes one fx_bus `mcut` for the whole box (`audio/desk.js deskSweeps`
+  says why a global parameter must be answered by every box); there is no
+  per-voice cutoff at that stage to offset. The board's hi shelf IS per voice,
+  is measured to reach modelled and sampled chairs alike (BOARD_EQ at 7200 Hz,
+  desk-gate G8), and moves in BOTH directions — which a lowpass laid on a unit
+  that has none does not. "Brighter" that brightened nothing would have been
+  the declared-but-never-arriving bug drawn on purpose.
+- **THERE IS ONE DESK SITE AND IT IS NOT `laneAt`.** `laneAt` evaluates a lane
+  at a beat and holds no unit and no channel; the place the walk reads a lane
+  FOR A UNIT is `deskUnits`' own loop, where the board's mix-offset layer
+  already lands. So a cell's offset is appended to THAT list (last: most
+  specific) and rides the five wires — `v.lvl`, the modelled-voice route trim,
+  the `pan` sum, `v.rev`, `eqAll` — that three earlier rounds each measured
+  separately as reaching a modelled chair as well as a sampled one. Measured
+  on acid seed 1: `+6/r/more/darker` on one cell moves that unit +6.00 dB, pan
+  +0.35, rev 0.550 → 0.730 before the route trim, hi shelf −2 → −5, and moves
+  no other unit in that section and no unit of any other section.
+- **The export applied the offset TWICE, and the wave's own gate caught it.**
+  `als.js ride()` takes a `hold` (what a box that draws no lane takes) and a
+  `map` (what a drawn lane's values become) — and `stitchEnvelope` puts the
+  hold THROUGH the map, so the first cut of the pan/send lines, which added
+  the offset to both, moved a +0.35 cell by +0.70 on exactly the boxes that
+  automate nothing. ¶A's "no curve applied twice", broken by the wave that was
+  writing the law down, and caught within the hour by als-gate X reading the
+  finished XML. The offset lives in the `map` alone, which is where the volume
+  ride has always put its multiplier.
+
+The one lane kind that does not travel to Live is `cutoff`: a track's EQ there
+is the static strip and the donor carries no per-band automation target, so it
+is NAMED in the run's own notes rather than faked — the `rise` sweep's
+precedent settled in the other direction.
+
+And one thing the GATE got wrong before the code did, worth the line because
+it is the same lesson from the other end: T6e's first cut sampled the engine's
+unit table at ONE bar, computed from the boxes' own `len`, and read the offset
+as dead — the page had not recompiled its bar list yet, so bar 8 was still the
+old arrangement's bar 8. A gate that arithmetically decides which bar belongs
+to which section is holding a second opinion about the compile. It walks every
+bar now and asserts the SHAPE the artifact can answer: some bars move, by the
+dB the chip says, on exactly one unit, and the rest of the record does not
+move at all (measured: 24 of 200, one unit, +6.00 dB).
 
 ## 2 · The inherit law
 
@@ -329,6 +384,19 @@ children (indented and coloured by level, 2026-09-03).
 - **T6 the sound**: a cell edit reaches the mix (the declared-but-never-
   arriving law): change a cell's motif, register and level and read each off
   the rendered output.
+- **Wave 3's own three** (2026-09-04). `test/table.test.js` **T4k**: a cell's
+  four offsets move that voice's numbers in `deskUnits`' RENDERED unit table by
+  exactly what they say, in that section only, on that voice only, and clearing
+  restores the record byte for byte; the document diff moves one key. **T4l**:
+  a `pump` row and a `+6` cell compose — the row's curve stays on the notes
+  (`deskAmp`) untouched and the cell's stays on the unit, one application each.
+  `tools/ableton/als-gate.js` **gate X**: the writer is run twice with one cell
+  offset between the runs, and the finished XML says the offset track's volume
+  is the base's times the dB and its pan the base's plus the offset THROUGH
+  THAT SECTION'S BEATS and nowhere else, while every other track is
+  byte-identical — with run A proving it reproduces the shipped file first.
+  `test/table.browser.js` **T6e**: the strip is drawn, has no zero chip, is
+  tappable, and the tap lands on the cell tier AND on the box the desk reads.
 
 ## 8 · Waves
 
@@ -379,7 +447,7 @@ children (indented and coloured by level, 2026-09-03).
    a row still puts the ear on its section).
 3. **Per-cell mix automation, relative to the row's** (¶A): desk + walk read
    row lane + cell offset; the Live export writes the sum per track once; the
-   greyed field lights.
+   greyed field lights. **SHIPPED 2026-09-04** — see §1c.
 4. **Per-cell artic/oct/rate/scale/clamp** with the VERSION migration.
 
 Each wave one agent at a time on the shared files, the parent rebuilds, gates,

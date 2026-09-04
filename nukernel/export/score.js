@@ -252,12 +252,18 @@ export function autoOf(sec, beats) {
  *                             blocks — cast() flattens those to a boolean
  * @param {Array}  o.sections  ui/state.js SONG, indexed by the box's own `si`:
  *                             where `mot`, `auto` and the `fx` chips live
+ * @param {Function} o.addr    plan.addrOf — box index -> { unit key: desk
+ *                             address }. The ONLY thing that can turn a
+ *                             section's per-CHAIR cell lanes into per-TRACK
+ *                             ones (TABLE.md wave 3); absent = every Score
+ *                             folded before today, byte for byte.
  * @param {number} o.bpm       state.bpm
  * @param {boolean} o.grid     whether rubato was OFF when this was compiled
  * @param {boolean} o.engine   whether the engine was warmed (cast + register home)
  * @param {string} o.title     what to call the song in the CLI's own printout
  */
 export function scoreOf({ timeline, cast = [], seats = null, sections = null,
+                          addr = null,
                           bpm, grid = true, engine = true,
                           drums = null, master = null, title = "nukernel" }) {
   if (!timeline || !timeline.length) throw new Error("compile() produced no bars");
@@ -374,6 +380,34 @@ export function scoreOf({ timeline, cast = [], seats = null, sections = null,
     // reason: a stale word in a saved song must not reach a builder
     const fx = (sec && Array.isArray(sec.fx) ? sec.fx : []).filter((k) => typeof k === "string");
     if (fx.length) box.fx = fx;
+    /* ...AND THE SECTION'S CELL LANES, RE-KEYED ONTO THIS BOX'S TRACKS
+       (TABLE.md wave 3, 2026-09-04). ¶A: a cell's lane is an OFFSET on the
+       row's, so the exporter needs BOTH — `box.auto` above is the row's and
+       this is what each track rides it by.
+
+       WHY IT IS RE-KEYED HERE AND NOT READ AS IT STANDS. `sec.cellauto` is
+       keyed by DESK ADDRESS (fields.js chairKeys — `lead`, `pad2`, `bass`,
+       `drums`), which is the box's own numbering; a Score's lane is keyed by
+       UNIT KEY (`v3`, `drums`), which is the SONG's cast and is what a Live
+       track is one of. `addr` is audio/plan.js's own record of that mapping
+       (`ADDR`: "unit key -> the desk address it answers to", built per box by
+       castOf), so this is the compile's answer and not a second opinion — the
+       same reason this file takes `cast` and `seats` rather than deriving a
+       band. Nothing here knows what an offset MEANS; the numbers were resolved
+       once, by fields.js `cellAutoOffset`, three tiers up.
+
+       PRESENT-ONLY, like `auto` and `fx`: a caller with no `addr` (a `--score`
+       file, a re-fold of a saved Score) and a record with no cell lane both
+       write no key, so every Score folded before today is the same object. */
+    const A = addr ? addr(box.si) : null;
+    if (A && sec && sec.cellauto) {
+      const ca = {};
+      for (const l of box.lanes) {
+        const off = sec.cellauto[A[l.name]];
+        if (off) ca[l.name] = off;
+      }
+      if (Object.keys(ca).length) box.cellauto = ca;
+    }
     delete box.bars;
   }
   /* THE RECORD'S DECLARED METER RIDES THE SCORE (2026-08-30, the five-walls
