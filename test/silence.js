@@ -191,7 +191,10 @@ function standUpServer() {
        that is a presence rather than an absence: *"Add a genre editor nav
        element."* The row is in the stripe, at the ROOT, addressable — so the
        editor the pick no longer forces on you is one tap away. */
-    rulesRow: !!document.querySelector('.nu-traylist [data-k="toptab-Rules"]'),
+    /* ...AND IT IS A ROW OF THE TABLE SINCE 2026-09-06 (TABLE.md §10b step
+       2), not a row of the stripe. The claim is the same one — the editor is
+       one tap away — read at the address it now has. */
+    rulesRow: !!document.querySelector('#pan-band [data-k="trules"]'),
     word: (document.getElementById("play").getAttribute("aria-label") || "").trim(),
     plate: (() => { const b2 = document.querySelector('.nu-trayfoot [data-k="toptab-Where"] .nu-vh');
       return b2 ? b2.textContent.trim() : null; })() }));

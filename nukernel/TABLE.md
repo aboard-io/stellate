@@ -941,3 +941,123 @@ everything in the table and the nav space reclaimed."*
 Each step a Lit source directory (or a module under src/table), a committed
 build, one gate per claim, shipped and deployed before the next (Paul,
 2026-09-05: "Don't overtest for now. Just move stuff along.").
+
+### 10c · What steps 1 and 2 landed, and the five things they measured
+
+**SHIPPED 2026-09-06 (uncommitted).** `nukernel/src/table/special.ts` is the
+new module and it is small on purpose — 200 lines, of which the TIME row's
+sheet is fourteen `push`es and the RULES row's is one. `grid.ts` gained the
+`<thead>` rows, the orphan-sheet branch, the keyboard's one exemption and
+`stick()`; `api.ts` gained thirteen doors; `ui/eight.js` lost `timeAxis`,
+`alphaAxis` and `check()` (323 + 17 lines) and gained five widget builders
+(143) plus the doors. `index.html` lost `#pan-tempo` and `#rulesdeck`; `TABS`
+lost two rows, `BUILD` two builders, `TABKIDS` two branches, and
+`rulesAxisRows` went with the Rules branch.
+
+**WHAT A SPECIAL ROW IS, IN THE MARKUP.** One `<tr class="nu-sprow">` in the
+`<thead>`, above the column heads, holding ONE `<th colspan="<every column>">`
+whose whole content is a button: the WORD (`TIME`, `RULES`) and, beside it, the
+FACE — `79 a minute · four · D natural minor`, and `nothing written — the genre
+as the atlas deals it`. The sheet opens where a column head's has always
+opened, at the top of `<tbody>`, because a sheet inside a frozen head is a
+sheet that covers the grid it is editing.
+
+**FIVE THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT.**
+
+- **A HEAD OF THREE ROWS CANNOT BE PINNED AT ONE OFFSET.** `nu.css` pins every
+  `thead th` at `inset-block-start: 0`, which is exactly right for a head of
+  one row: TIME, RULES and the column heads all declared the same line and
+  painted over each other. The offsets are MEASURED — `grid.ts stick()` walks
+  `thead > tr` after every render and writes each row's own — because the
+  heights are the faces' own (a long key name is a taller line at 320) and a
+  hard-coded pair of pixels is the rule that reads right and moves nothing this
+  table has already shipped twice (§9d).
+- **A MERGED ROW IS THE PANE'S WIDTH, NOT THE TABLE'S.** A `<th>` that spans
+  nine players is nine players wide — measured 857px at a 390px screen — so the
+  face's last word was off the side of the phone with no ellipsis, because
+  `text-overflow` had 857px of room to not need. The cell is frozen at the
+  pane's left edge, so the honest width for the LINE inside it is what a hand
+  can see: `--panew`, written by `stick()`, and the face ellipsises against it.
+- **THE SPECIAL ROW'S OPEN STATE MUST SURVIVE A REBUILD, AND IT IS THE ONLY
+  ONE THAT MAY.** §9d's law is that a rebuild closes the sheet, for three
+  measured reasons — `tablePanel` lands an arrival by clicking a head, every
+  door is a toggle, the transpose is reached through the corner — and not one
+  of them is true of TIME or RULES. What IS true is the opposite: every control
+  in these two rows recompiles (a tempo, a meter word, a rule), `changed()`
+  throws the panel away, and a row that closed on a rebuild would shut under
+  the thumb using it. So `OPEN` survives iff it begins `sp|`.
+- **A SPREADSHEET'S TAB IS THE WRONG TAB INSIDE A MERGED ROW.** In the grid,
+  Tab moves the SELECTION, which is what a spreadsheet's Tab does; inside a row
+  of chips it is the one thing a hand expects Tab to do least. The keyboard
+  lets a special row's own controls alone (`.nu-sprow`, and the open sheet
+  while a special row owns it) and keeps Escape, which is how the row closes.
+- **THE CIRCLE OF FIFTHS IS THE ONE CONTROL T7 COULD NOT MEASURE.** Its
+  twenty-four radios are 1×1 by design — the LABEL is the target, which is what
+  `test/shell.js` A3 measures at 24px — so filing `opt|alphabet.key|0` as a
+  reach reported the whole circle as a short control. The reach is the widget's
+  own `data-circ`, and T7 learned the third spelling in the same edit.
+
+**WHAT `ui/rules.js` BECOMES: THE RULES ROW'S SHEET BUILDER.** Not a pane
+builder, and not deleted. Its rows ARE this week's two-line row — *"the
+sentence with its value, the control under it"* (Paul, 2026-09-03) — drawn by
+`sentenceInto` out of `nukernel/rules.js`'s own `parts`, which no other
+renderer on this page can build; re-typing nine hundred lines of it into
+`Field[]` would be a second owner of thirty-eight sentences bought for a shape
+it already has. `mountRules(host, ctx)` is called from exactly one place now —
+`tableAPI().rulesNode()` — with the same `CTX`, so `apply()` still lands a
+compose rule through `ctx.evolve` while the transport runs and a render rule
+through `ctx.changed()`. `nukernel/rules.js` (the table, the tiers, the evolve
+logic) did not move a line. What is deleted is the pane: the tab, the tray
+branch, `#rulesdeck`, the `BUILD` entry and `rulesStop`.
+
+**THE EIGHT AXIS JUMPS ARE THE ONE CONTROL RETIRED RATHER THAN MOVED**, and it
+is filed with its reason: `rulax-<axis>` scrolled the Rules PANEL to one
+`section.nu-rulax`, and there is no panel to scroll — the eight blocks are
+inside the one row, one tap from the top of the sheet, and a jump link into a
+row you have already opened does what the scroll you are already doing does.
+`test/table-inventory.json` files it under `rules-row` all the same, because
+T7's question is "can a thumb reach it", not "does it still have a button".
+
+**GATES.** `test/table.browser.js` **T10** (twelve claims: the two rows are
+merged rows of the sheet above the column heads at 320/390/1280, the head
+freezes as a measured STACK, the face is the record's own line, the TIME row
+holds all twenty-five control families the pane offered at 320 with none under
+44px and no sideways page scroll, a meter chip writes the record and the face
+re-reads it, the nine tempo marks move it, Enter opens and Escape closes, the
+Time pane is gone and each fact has exactly one control page-wide, the RULES
+sheet is the panel — axis blocks, name plate, two-line rows, palettes, a tier
+per row — a rule written in the row reaches `doc.rules` and the row stays open
+across the evolve, and the Rules pane is gone with the editor drawn once) —
+**159 ok, 0 failed**, T4–T9 unmoved.
+`test/table-inventory.json` grew twenty-four rows measured off the two panes
+BEFORE the deletion (22 control families in `#pan-tempo`, 9 in `#rulesdeck`,
+the two tab rows, the eight axis jumps). `test/tempo-key.browser.js` (23) and
+`test/rules-view.browser.js` (42) are RE-POINTED, not retired: between them
+they make sixty-five claims about what these controls DO, every one of which is
+about the control and not the panel, so `__eightTab("Time")` became
+`__eightRow("time")` — a new page door that opens Band and presses the row's
+head, idempotent — and `#pan-tempo`/`#rulesdeck` became `#pan-band`. The same
+one-line repair re-points `selects`, `sheets`, `knobs`, `gutter`, `atlas` and
+`silence`; `shell` and `text-diet` lose two tab rows and three headings from
+their quoted lists, with the amendment dated under Paul's own sentence.
+Measured after the re-point: `tempo-key` **23 ok / 0 failed**, `shell` **PASS**
+(A8 now reads the first `<th>` that is a COLUMN — a merged row's cell spans its
+own containing block and has nowhere to stick, so the row pins its own LINE
+instead), `rules.test` **22 / 0**, `text-diet` **PASS** (static prose 1,070 of a 1,170
+ceiling — a row's face is inside its own button, so the diet does not count it),
+`rules-view` **40 of 42**.
+
+**THE TWO REDS ARE NOT THIS ROUND'S, AND THE PROOF IS ONE FLAG.**
+`rules-view` R9's "every single-answer row is a sentence line plus a control
+line" and R5a's "no silent grey" fail on `rate` (129px), `harmony` (176px),
+`plan` (129px) and on two greyed palette offers — and all five are the CHIPS
+widget that `src/menus/pick.ts` began handing to every vocabulary of eight
+words or fewer in v272 (2026-09-06, the round before this one): a chip strip of
+three long words is three lines where a combo was one, and a refused CHIP puts
+its reason in `data-why`, `title` and its accessible name but does NOT append it
+to the visible word the way `optionText` does for the native picker and the
+combo. MEASURED: with `CHIPMAX` temporarily set to 0 and nothing else changed,
+`rules-view` is **42 ok, 0 failed**. Neither claim touches where the panel is
+drawn — `ui/rules.js` is not edited by this round at all — so both belong to the
+menus round's own queue: either the chip appends its reason like its two
+siblings, or R5a's `said` clause learns the third widget.

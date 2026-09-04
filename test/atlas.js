@@ -797,7 +797,10 @@ function g18() {
        `Structure` is deleted with its pane — so the walk is Time · Motifs ·
        Band and the Time panel contributes TWO headings, which is why every
        `<h2>` of the open panel is collected rather than only its first. */
-    for (const t of ["Time", "Motifs", "Band"]) {
+    /* TWO SINCE 2026-09-06 (TABLE.md §10b): the Time tab is deleted and its
+       two axis headings with it — TIME is a merged row of the Band table and a
+       row's name is its own word, not an `<h2>`. */
+    for (const t of ["Motifs", "Band"]) {
       window.__eightTab(t);
       await new Promise((r) => setTimeout(r, 250));
       const pan = document.querySelector(".nu-pan:not([data-off])");

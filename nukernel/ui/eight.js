@@ -149,6 +149,11 @@ import { GENRES, MODES, KEYS, ROLES, DRUMNAME,
             rather than typed here. */
          NuPrecompose, NuWiki,
          NuSong,
+         /* ...AND `NuRules`, FOR ONE WORD (2026-09-06, TABLE.md §10b step 2).
+            The RULES row's collapsed face names the sentence that moved last,
+            and `nukernel/rules.js byField[f].head` is the one owner of what a
+            rule is called. `ui/rules.js` asks the same table the same way. */
+         NuRules,
          /* WHOSE THROAT A CHAIR IS (2026-09-04, the per-chair round). The
             column sheet asks it so a person can see whose voice sings a chair
             before deciding to change it; `instruments.js throatVoiceOf` is the
@@ -396,7 +401,14 @@ import { GLYPH, kindGlyph, sayVoice, sayUp, sayLog, icon, paintIcon,
    same handle the film and the dance floor take, so the tab can be torn down
    the day it grows a listener outside its own DOM. */
 import { mountRules } from "./rules.js";
-let rulesStop = null;
+/* (`let rulesStop = null` STOOD HERE, 2026-09-02 to 2026-09-06. The stop
+   handle was the Rules TAB's — a tab rebuilt while the last mount still held
+   something would stack two — and there is no Rules tab: the panel is the
+   merged RULES ROW's sheet now (TABLE.md §10b step 2), built by
+   `tableAPI().rulesNode()` and thrown away with the row's own accordion. The
+   handle is still RETURNED by `mountRules` and still holds nothing, which is
+   what its own `return` says; the day it holds something, the caller is
+   `src/table/special.ts rulesSheet` and the seat is one line.) */
 
 /* ===== THE SAMPLE CRATE (2026-09-03) ===================================
    Paul, 2026-09-01: *"I can't really access or organize samples used in, say,
@@ -1754,22 +1766,16 @@ function number(key, label, value, set, parent, min, max, step) {
   FIELD(parent, l);
   return r;
 }
-function check(key, label, value, set, parent) {
-  const c = document.createElement("input");
-  c.type = "checkbox"; c.checked = !!value;
-  c.addEventListener("change", () => { set(c.checked); changed(); });
-  // ...AND THE BOX GOES UNDER ITS SENTENCE TOO, which is the one case worth
-  // arguing rather than asserting. A checkbox's words are usually READ as the
-  // control's own name and kept beside it; on this page they are not names,
-  // they are sentences — "the line stays in the key" — and a sentence is one
-  // of Paul's "titles or questions". The whole <label> is still the tap
-  // target, so the box under the sentence is a LARGER gesture than the box
-  // beside it, not a smaller one.
-  const l = el("label"); l.append(el("span", label, "nu-w"), c);
-  FIELD(parent, l);
-  c.dataset.k = key;
-  return c;
-}
+/* (`function check(key, label, value, set, parent)` STOOD HERE — a checkbox
+   under its own sentence. Its two callers were the Time panel's `rubato` and
+   `diatonic`, and the Time panel is deleted (2026-09-06, TABLE.md §10b step
+   1): both facts are two-word CHIP STRIPS in the table's TIME row now, at the
+   same `data-k`, which is this surface's own idiom for a two-word fact
+   (`colSheet`'s "drummer — playing / sitting out"). Nothing else on this page
+   drew a checkbox through it. The `<label>`-wraps-its-sentence argument the
+   function carried is not lost: it is the sheet row's own shape, and
+   `ui/rules.js listFields` keeps the one checkbox this page still draws — the
+   `fx` chip set, the one control that may hold more than one answer.) */
 /* ---------- the two wrappers the stylesheet cannot make itself ---------- */
 // A STICKY HEADING NEEDS SOMETHING TO BE STICKY INSIDE OF. `position: sticky`
 // releases at the bottom of its CONTAINING BLOCK, so while every <h2> was a
@@ -9667,6 +9673,12 @@ function crateBlock(parent, only) {
    name is not prose, the diet skips it) is a claim about THIS FILE's tab
    contract, and the next hand to wonder why a genre's name is a heading will
    grep for `rulesdeck` and land on this.
+   ...AND THE HOST, THE TAB AND THE ARRIVAL ARE NOT THIS FILE'S ANY MORE
+   (2026-09-06, TABLE.md §10b step 2). `#rulesdeck` and the Rules tab are
+   deleted; the panel is the table's merged RULES row, opened by `trules` and
+   built through `tableAPI().rulesNode()`. What the paragraph above argues —
+   that a genre's NAME is a heading, that a heading is not prose, that the diet
+   skips it — is untouched and is still `ui/rules.js`'s own plate.
    THE NAME PLATE IS A HEADING AND NOT PROSE, which is why it is an <h3>: a
    genre's name is a NAME, the same kind of word as a control's label and a
    panel's heading, and the text diet's SKIP list has always exempted those
@@ -10106,6 +10118,94 @@ function tableAPI() {
        the next document the table snapshots against. */
     snapshot: () => JSON.parse(JSON.stringify(DOC)),
     evolve: (next) => { CTX.evolve(next); },
+    /* ---- THE SPECIAL ROWS' DOORS (2026-09-06, TABLE.md §10b) -----------
+       Five widgets and four facts, and every one of them is a line the Time
+       pane used to run inside `#pan-tempo`. The pane is deleted; the builders
+       are above (`bpmNode` and its four siblings) and are called from ONE
+       place — `src/table/special.ts timeSheet` — so there is still exactly one
+       tempo slider, one circle of fifths and one chord grid on this page.
+       A DOOR AND NOT DATA, which is what this whole seam is: the table asks
+       for the control and never for the vocabulary behind it. */
+    /* A MENU IN A SPECIAL ROW IS A FULL-WIDTH LINE WITH A QUESTION OVER IT,
+       which is where `src/menus/pick.ts` says CHIPS belong — and `combo()`
+       above is `menuEl`, the COMPACT form, which answers a picker at every
+       length because it is meant for a 63px table cell. Measured 2026-09-06:
+       seating `combo()` in the TIME row drew `time.meter` (three words) as a
+       typed combo where `#pan-tempo` had drawn three chips. So the widget is
+       built by `selectField` — one builder, one look, one throw — and the
+       element carrying `data-sel` is lifted out of its `<p class="nu-sel">`,
+       which is what ui/rules.js has done to put one inside a sentence since
+       2026-09-02. Whichever of the three widgets `pick.ts` chose, `data-sel`
+       rides the focusable one, so the address does not move. */
+    menuWide: (sp) => { const bin = el("div");
+      try { selectField(bin, sp); } catch (e) {}
+      const box = el("div", null, "nu-seatmenu");
+      /* THE WIDGET IS ITS WRAPPER WHERE IT HAS ONE. `.nu-combo` holds the
+         field AND the list it opens, and lifting only the addressed `<input>`
+         out of it leaves the options behind — measured 2026-09-06:
+         `__combo.say(alphabet.mode, "ionian")` returned false and the record
+         did not move, because the driver's `opts()` reads
+         `n.closest(".nu-combo")`. Chips and the native picker have no wrapper
+         and ARE the addressed element. ui/rules.js has lifted the same
+         `.nu-combo` into a sentence since 2026-09-02. */
+      const w = bin.querySelector(".nu-combo") || bin.querySelector("[data-sel]");
+      if (w) box.append(w);
+      for (const wn of bin.querySelectorAll(".nu-why")) box.append(wn);
+      return box; },
+    /* THE LANDING, LET GO. `tablePanel` re-opens whichever player or section
+       the page says is open by CLICKING its head after every rebuild — which
+       is what makes a column sheet survive a write, and what shut the TIME row
+       the moment anything in it recompiled (measured, T10e/T10f/T10j). A hand
+       that opens a record-level row is not standing in a player any more, so
+       the two page facts are cleared and the stripe's mark goes with them. */
+    leaveLanding: () => { tab = null; formSec = null; },
+    bpmNode: () => bpmNode(),
+    tempoNode: () => tempoNode(),
+    keyNode: () => keyNode(),
+    changesNode: () => changesNode(),
+    boardNode: () => boardNode(),
+    /* THE CAPTION IS DRAWN ONLY WHERE THERE IS SOMETHING TO SAY — `tuningSay`
+       answers null on nine of the twelve modes, so a record in dorian prints
+       nothing at all and the row does not carry a line about microtonality for
+       the records that are not microtonal. */
+    tuningSay: () => { try { return tuningSay(DOC.alphabet.mode) || null; }
+                       catch (e) { return null; } },
+    /* RUBATO IS A DEVICE SETTING AND `setRubato` IS ITS ONE OWNER (ui/state.js,
+       its own localStorage key): the preference is written, no document
+       changes, and a share link carries nothing of it. `changed()` after the
+       write is what makes audio/plan.js recompile the timeline with (or
+       without) `warpBars` — the same two lines the checkbox ran. */
+    rubatoOn: () => !!RUBATO,
+    setRubato: (on) => { setRubato(!!on); changed(); },
+    /* ...AND THE DIATONIC LINE IS A DOCUMENT FACT, written where it always was
+       (`DOC.alphabet.diatonic`) and recompiled the same way. */
+    diatonicOn: () => !!DOC.alphabet.diatonic,
+    setDiatonic: (on) => { DOC.alphabet.diatonic = !!on; changed(); },
+    /* ---- AND THE RULES ROW'S (§10b step 2) -----------------------------
+       `ui/rules.js` is not a PANE builder any more; it is the RULES row's
+       SHEET builder, and this is where it is called. Nothing inside it moved:
+       it still asks `nukernel/rules.js` its four questions, still draws this
+       week's two-line row (the sentence with its value, the control under it),
+       and still lands every edit through its own `apply()` — `ctx.evolve` on a
+       compose rule while the transport runs, `ctx.changed()` on a render one.
+       CTX AND NOT A SECOND CONTEXT: it takes the same object the panel took. */
+    rulesNode: () => { const box = el("div", null, "nu-rulesheet");
+      try { mountRules(box, CTX); } catch (e) {}
+      return box; },
+    /* THE COLLAPSED FACE — how many sentences this hand has written, and which
+       one moved last. A record composed straight off its anchor has written
+       none and says so; the genre's own thirty-eight sentences are all still
+       inside the row, which is what the second half of the line is for. */
+    rulesFace: () => {
+      const rs = (DOC.rules || []);
+      const head = (f) => { try { const R = NuRules.byField[f];
+                                  return (R && R.head) || f; }
+                            catch (e) { return f; } };
+      if (!rs.length) return "nothing written — the genre as the atlas deals it";
+      const last = rs[rs.length - 1];
+      return rs.length + (rs.length === 1 ? " rule" : " rules") +
+             " written · last " + head(last.f);
+    },
     /* "MAKE X Y" AS A COLUMN OP (§5). The verb, the qualities and the note are
        ui/produce.js's — `targets` says which qualities this subject can
        honestly take and WHY the rest cannot, and `say` writes the note into
@@ -10839,8 +10939,23 @@ function draw() {
    appended on 2026-09-02 and Video/Screensaver on 2026-09-01. */
 const TABS = [
   ["Where",   "atlas"],
-  ["Rules",   "rulesdeck"],
-  ["Time",    "pan-tempo"],
+  /* (`["Rules", "rulesdeck"]` STOOD HERE, 2026-09-02 to 2026-09-06. TABLE.md
+     §10b step 2: *"RULES row (ui/rules.js's sheet as chips; a change evolves,
+     as now)."* The whole panel — the name plate, the eight axis blocks, every
+     sentence with its control, the palettes, the resets — is the merged RULES
+     row's sheet at the top of the Band table, and `#rulesdeck` is out of
+     index.html with the tab. `ui/rules.js` did not change: it draws the same
+     rows through the same `apply()` and lands a compose rule through the same
+     `ctx.evolve`.) */
+  /* (`["Time", "pan-tempo"]` STOOD HERE, 2026-09-04 to 2026-09-06. TABLE.md
+     §10b step 1: *"TIME row (Tempo + Key's controls; pace stays on the section
+     row)."* Every control the panel drew is a field of the merged TIME row at
+     the top of the Band table's own sheet — the tempo and its nine marks, the
+     meter, the swing, the groove, the breathing, the circle of fifths, the
+     mode, the scale, the harmony, the diatonic line, the changes and the
+     pointer to the board — and `#pan-tempo` is out of index.html with the tab.
+     §10a: "Rules, Time, Motifs, Mix, Produce, Where as PANES are deleted the
+     same way, one at a time, as each becomes a row or a sheet.") */
   ["Motifs",  "pan-motif"],
   ["Band",    "pan-band"],
   ["Mix",     "deck"],
@@ -10888,25 +11003,14 @@ let tabMs = 0;
    is not rebuilt by draw() and never has been. */
 const BUILD = {
   Where: null,
-  /* THE RULES PANEL IS REAL SINCE 2026-09-02 (slice 2b). It read
-     `Rules: (host) => rulesPanel(host)` and the paragraph here said the panel
-     was "a placeholder in this wave … the sentences the genre is made of are
-     wave 2b's, off nukernel/rules.js, which landed in wave 0". They are, and
-     this is that wave: `ui/rules.js` draws the eight axes, every sentence's
-     value as a control, the palette of addable rules and the tier word that
-     says which edits restart the record. The name plate the placeholder drew
-     moved into it whole, lineage line and all.
-     THE STOP HANDLE, for the reason the film and the floor take one: a tab
-     rebuilt while the last mount still held something would stack two. It
-     holds nothing today and says so at its own `return`. */
-  Rules: (host) => { if (rulesStop) rulesStop();
-                     rulesStop = mountRules(host, CTX); },
-  /* TIME IS TEMPO AND KEY IN ONE PANEL, 2026-09-04. Two builders, one host,
-     in the order the record is read: how fast it counts, then what it counts
-     in. Neither function changed — `timeAxis` opens `#ax-time` and `alphaAxis`
-     opens `#ax-alphabet`, so the panel holds two `axis()` sections and the two
-     hidden headings ("Time", "Harmony") stay the vocabulary's own. */
-  Time: (host) => { timeAxis(host); alphaAxis(host); },
+  /* (`Rules: (host) => { … mountRules(host, CTX) }` STOOD HERE. `mountRules`
+     is unchanged and is called from one place now — the table's
+     `rulesNode()` door — so the panel is the RULES row's sheet rather than a
+     tab's panel. See the tombstone in `TABS`.) */
+  /* (`Time: (host) => { timeAxis(host); alphaAxis(host); }` STOOD HERE. Both
+     builders are deleted with the panel; what each of them DREW is a field of
+     the table's TIME row — see the tombstone in `TABS` and
+     `src/table/special.ts timeSheet`.) */
   Motifs: (host) => materialAxis(axis(host, "ax-material", "Motifs")),
   /* ===== BAND IS THE TABLE, 2026-09-04 (TABLE.md wave 2b) ==============
      It read `Band: (host) => bandBlock(axis(host, "ax-band", "The band"))`.
@@ -11739,62 +11843,28 @@ const treePath = (key) => {
    this says which tabs are branches at all, and the children themselves come
    from the builders that already existed. Six tabs have none, and that is the
    same six that stood at the root before. */
-/* ===== THE EIGHT AXES ARE THE RULES BRANCH (2026-09-02) =================
-   COMPOSER.md §2.1: *"Rules → the eight axes (jump chips into the Rules
-   panel)."* The reds of that morning: *"2b undone: TABKIDS.Rules is null — the
-   eight axes as nav children … not built."*
+/* ===== THE RULES BRANCH IS GONE WITH THE RULES TAB (2026-09-06) ========
+   `const rulesAxisRows = () => …` STOOD HERE — the eight axis rows of the
+   stripe, read off the rendered `#rulesdeck` rather than off a list, each
+   scrolling the panel to one `section.nu-rulax`. COMPOSER.md §2.1 asked for
+   *"Rules -> the eight axes (jump chips into the Rules panel)"* and the branch
+   answered it for four days.
 
-   THEY ARE READ OFF THE RENDERED PANEL AND NOT OFF A LIST. `rules.js AXES` is
-   the one owner of the eight words, and `ui/rules.js` draws a
-   `section.nu-rulax[data-axis]` for each axis THAT HAS ANY ROWS — a genre
-   declaring nothing on an axis gets no block, which is the same rule the tree
-   already keeps ("a level with nothing in it is not a level"). A branch built
-   from the eight words would therefore offer rows that scroll to nothing on
-   the blank state, which is the "declared but never arriving" bug spelled as
-   navigation. Reading the panel makes the branch exactly as long as the panel
-   is, on every record, with no second list.
-   BEFORE THE PANEL IS BUILT THERE IS NO BRANCH, and that is honest rather than
-   awkward: `showTab` builds the panel and then repaints the stripe, so the
-   first tap on Rules arrives, builds, and unfolds its axes in one gesture.
-
-   THEY ARE ACTIONS AND MARK NOTHING (`acts: true`), because none of them is a
-   thing you are IN. There is no "open axis" state — the panel draws all eight
-   blocks down one column and this scrolls you to one — so eight
-   `aria-pressed="false"` buttons would tell a screen reader there is a state to
-   be in, which is the 2026-08-28 law the motif transforms already keep.
-   THE MARK IS `§` FOR ALL OF THEM WITH THE DIGIT SAYING WHICH, which is the
-   gutter's one idiom (the picture says the KIND, the digit says WHICH, the word
-   says who) and is exactly how the sections' rows are drawn. */
-const rulesAxisRows = () => {
-  const host = $("rulesdeck");
-  if (!host) return [];
-  const secs = [...host.querySelectorAll("section.nu-rulax")];
-  return secs.map((sec, i) => {
-    const axis = sec.dataset.axis;
-    const n = sec.querySelectorAll(".nu-rule").length;
-    return {
-      key: "rulax-" + axis, glyph: GLYPH.tab.Rules.g, num: i + 1, word: axis,
-      sub: n ? n + " rule" + (n === 1 ? "" : "s") : null,
-      say: axis + " — " + (n ? n + " of this genre's sentences" : "its palette"),
-      acts: true,
-      act: () => {
-        showTab("Rules");
-        /* AFTER THE PANEL IS ON THE PAGE, WHICH IS THE FRAME AFTER THIS ONE.
-           `showTab` may have just built `#rulesdeck` from nothing, and a
-           `scrollIntoView` on a box that has not been laid out lands on 0.
-           One frame, no timer: the layout is done by the time rAF runs, and
-           `restoreAnchor` has already had its say inside `showTab`. */
-        requestAnimationFrame(() => {
-          const el2 = $("rulesdeck");
-          const s2 = el2 && el2.querySelector(
-            'section.nu-rulax[data-axis="' + axis + '"]');
-          if (s2) s2.scrollIntoView({ block: "start", behavior: "auto" });
-        });
-      } };
-  });
-};
+   WHAT REPLACES IT IS NOT A SECOND LIST, IT IS THE ROW. TABLE.md §10a: *"The
+   tray is deleted … Rules, Time, Motifs, Mix, Produce, Where as PANES are
+   deleted the same way, one at a time, as each becomes a row."* There is no
+   `#rulesdeck` to read and no tab to scroll: the eight axis blocks are inside
+   the table's own RULES row, one tap from the top of the sheet at every width,
+   and a jump link to a block inside a row you have already opened is a control
+   that does what the scroll you are already doing does. The reading the branch
+   kept — that the eight are read off the PANEL and never off `rules.js AXES`,
+   because a genre declaring nothing on an axis gets no block — is kept by the
+   panel itself, which is the only place it was ever true.
+   THE HOME IS FILED: `test/table-inventory.json` carries `rulax-<axis>` with
+   its home `rules-row`, which is T7's law for every deleted control. */
 const TABKIDS = {
-  Rules: () => rulesAxisRows(), Time: null,
+  /* (`Time: null` STOOD HERE — the Time tab had no children and now has no
+     row either.) */
   Motifs: () => motifTrayItems(),
   /* BAND IS THE TABLE, SO ITS BRANCH IS THE TABLE'S TWO LISTS — the columns
      (the players) and then the rows (the sections), each with its own ops as
@@ -13103,328 +13173,148 @@ function tapTempo(now) {
 const tapLive = () => !!tapAt.length &&
   performance.now() - tapAt[tapAt.length - 1] <= TAP_GAP;
 
-function timeAxis(box) {
-  const D = DOC;
-  /* TIME — THE ORDINALS CAME OFF EVERY HEADING, 2026-08-27 (FUTURE.md §5:
-     "4–8" and "9 of eight" proved the numbering scheme broke; scroll order
-     carries the sequence). The AXES order is unchanged — the headings just
-     stopped counting themselves. */
-  const axTime = axis(box, "ax-time", "Time");
-  D.sound = D.sound || { level: 1 };
-  // RECORD GAIN MOVED TO THE BOARD, 2026-08-27. The `level` slider stood here
-  // since the axis existed and it was a SOUND fact filed under Time — the
-  // rename table's "clearest 'spread everywhere' exhibit" (FUTURE.md §5:
-  // "`level` (in Time) → `record gain`, on the master strip"). Same key
-  // (`sound.level`), same write, same clamp; ui/engineer.js draws it on the
-  // main plate. This pointer is what stays behind, so a hand that knew where
-  // it lived is told where it went rather than left to conclude it is gone.
-  /* AND SINCE 2026-08-27 IT OPENS THE TAB IT NAMES. `href="#board"` was a
-     scroll on a page that was one scroll; the board is behind the Mix tab now,
-     and a link that jumps to a fragment inside a `display: none` panel is a
-     dead control — the one thing this page does not allow. So the click opens
-     Mix, which is what the sentence promises, and the `href` STAYS: with no
-     JavaScript, or with the stylesheet off (where every panel is visible and
-     the page is one document again), the fragment is still the right answer.
-     `preventDefault` only on the path that handled it.
-     ...AND IT STANDS AT THE FOOT OF THE PANEL SINCE 2026-08-29, NOT ITS HEAD.
-     It was `axTime.append(pt)` here, before the tempo slider, so the FIRST
-     sentence the Tempo tab said — measured on the rendered page at 390px, the
-     top line of the panel — was a pointer to a fact that lives on another
-     tab. Reading order is working order: a hand opening Tempo came for the
-     tempo, and a cross-reference is back matter, the way the atlas puts its
-     catalogue after its globe and the deck puts its export note under its
-     cards. The pointer is unchanged — same words, same key, same click — and
-     is appended at the very end of this function, which since 2026-09-02 is
-     after the pace strip rather than after the meter/swing row: the panel grew
-     seven controls under it and the pointer stayed LAST, which is the whole
-     claim. */
-  /* ...AND IT IS DRESSED AS A CONTROL SINCE 2026-09-02, for the same reason
-     the board's routing pointer is (ui/engineer.js). Probe of that morning:
-     *"[goto.board] in Tempo is a 261x15px link."* Fifteen pixels of underlined
-     text is not a target on a page whose every other door is 44px, and this
-     one is a door — its click handler opens the Mix tab. `.nu-routelink` is the
-     one owner of that chassis; the `href`, the words and the key are
-     untouched, so the no-JavaScript path and every gate that reads it by name
-     still find what they ask for. */
-  const gainPtr = (() => { const pt = el("p", null, "nu-hint");
-    const a = document.createElement("a");
-    a.href = "#board"; a.textContent = "record gain — on the board's main strip";
-    a.className = "nu-routelink";
-    a.dataset.k = "goto.board";
-    a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
-    pt.append(a);
-    return pt; })();
-  /* ===== THE TEMPO, BIG, AT THE TOP (2026-09-02) =======================
-     Paul, B7: *"The tempo editor does not reflect the richness of our tempo
-     options."* The first thing a tempo editor owes is the tempo, and this
-     panel's first line was a 129px slider with a three-character `<output>`
-     hanging off its end. `--t5` is the display step of the type scale — "a
-     number you read across the room" (nu.css) — and `--fw-display` its
-     weight; both landed in wave 1b and this is the first surface to spend
-     them.
-     IT IS AN `<output>` AND IT IS `aria-hidden`, and both halves are the
-     no-second-owner law. The slider below is the CONTROL: it carries the
-     `data-k`, it is what a screen reader is told, and its own `<output>` is
-     already the accessible readout. This is the same number drawn large for an
-     eye, so it must not be announced twice — and `<output>` is what the page
-     already means by "a number the box computed" (`range`'s own readout is
-     one), which is also why the text diet does not charge for it.
-     IT IS NOT `[data-live]`. The clock may only write inside `[data-live]`
-     (MOTIF.md, test/motif-frozen A1) and this is not the clock: it moves when
-     a HAND moves the tempo — on the slider's `input` as your finger drags, on
-     a tap, and on the rebuild every `changed()` performs. A tempo readout wired
-     to the transport would be a metronome, which is the one thing this page's
-     own law forbids. */
-  const big = el("output", String(D.time.bpm), "nu-bpmbig");
+/* ===== THE TIME PANE IS THE TIME ROW, 2026-09-06 (TABLE.md §10b step 1) ====
+   Paul, 2026-09-05, looking at the nav beside the v271 grid: *"we could
+   integrate rules into a special row, time + key into a special row … a real
+   mobile app now with everything in the table and the nav space reclaimed."*
+
+   `function timeAxis(box)` AND `function alphaAxis(box)` STOOD HERE — the two
+   builders of `#pan-tempo`, the Time tab's one panel, from the fold of Tempo
+   and Key on 2026-09-04 until today. THE TAB, THE PANEL AND THE TWO `axis()`
+   SECTIONS ARE DELETED (§10a: "Rules, Time, Motifs, Mix, Produce, Where as
+   PANES are deleted the same way, one at a time, as each becomes a row"); what
+   is kept is every CONTROL either of them drew, in the merged TIME row at the
+   top of the table's own sheet — `src/table/special.ts timeSheet`, which files
+   them in `#pan-tempo`'s own reading order.
+
+   WHAT SURVIVES HERE IS THE WIDGET AND NOT THE PANEL. Five of the row's
+   fourteen fields carry a control this file builds, because five of them are
+   not vocabularies and have no sheet: the big readout with the tempo slider
+   under it, the row of nine marks that move the tempo, the circle of fifths,
+   the chord grid, and the pointer to the board. Each is the SAME widget, at
+   the same address, writing through the same door it wrote through inside the
+   panel; what each has lost is the `<section class="nu-ax">` around it. The
+   six vocabularies (meter, swing, groove, mode, scale, harmony) are asked
+   through `shSpec` and seated as `selectEl`'s own menu, so `data-sel` does not
+   move either; the two device settings (rubato, the diatonic line) are the
+   table's own two-word chip strips at the `data-k` their checkboxes had.
+
+   ONE OWNER, STILL. Nothing on this page draws any of these twice: the panel
+   that used to is gone, and `#pan-tempo` is out of index.html with it. */
+
+/** the big number and its slider. `<output aria-hidden>` because the SLIDER is
+ *  the control — it carries the `data-k`, it is what a reader is told, and its
+ *  own `<output>` is already the accessible readout; this is the same number
+ *  drawn large for an eye and must not be announced twice. It is NOT
+ *  `[data-live]`: the clock may only write inside one, and this moves when a
+ *  HAND moves the tempo, never with the transport. */
+let bpmBig = null, bpmRange = null;
+function bpmNode() {
+  const box = el("div", null, "nu-timebpm");
+  const big = el("output", String(DOC.time.bpm), "nu-bpmbig");
   big.setAttribute("aria-hidden", "true");
-  axTime.append(big);
-  // `input` and not `change`: the big number follows the finger, exactly as
-  // the slider's own small readout does (`range`, above — "the two events do
-  // different jobs"), and the recompile still waits for `change`.
-  const bpmR = number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v,
-                      axTime, BPM_LO, BPM_HI);
-  bpmR.addEventListener("input", () => { big.textContent = bpmR.value; });
-  /* ===== TAP TEMPO ======================================================
-     Paul, B7: *"Tap tempo, the tempo editor appears."*
-     `tempo-tap` IS ON THE TEMPO OPERATIONS' OWN KEYSPACE ON PURPOSE. It is a
-     ninth mark that moves the tempo, it wears the same face and the same 48px
-     plate as the eight below it, and a gate that asks the page "what moves the
-     tempo here" (`[data-k^="tempo-"]`, test/knobs.js gate 8) must find it. The
-     count is exactly the eight ops plus this one, and that literal moved in
-     the same commit with this sentence beside it.
-     IT WRITES THROUGH THE SLIDER'S OWN KEY. `DOC.time.bpm` and then
-     `changed()` — the same two lines the slider's `change` runs — so this is a
-     second GESTURE for one fact and not a second owner of it. The slider and
-     the big readout are moved to agree before the rebuild lands, so the panel
-     never shows two numbers for one tempo even for a frame. */
-  /* ONE ROW FOR ALL NINE (2026-09-02). The tap and the eight operations were
-     two `<p class="nu-row">`s, one under the other, and the probe of that
-     morning read the result: *"Nine naked glyphs in Tempo (⏱ ♪↓ ♪↑ ♪↓↓ ♪↑↑ ←→
-     →← 1× ↺) … Tap tempo sits alone on its own row."* They are nine marks that
-     do ONE thing — move the tempo — and a row of eight with a ninth stranded
-     above it is two rows saying one thing. The tap goes FIRST because it is the
-     only one of the nine that measures rather than computes: you give it a
-     pulse, the other eight take the number it left. */
-  let tfRow = null;
+  box.append(big);
+  // `input` and not `change`: the big number follows the finger, exactly as the
+  // slider's own small readout does, and the recompile still waits for `change`.
+  const r = number("bpm", "tempo", DOC.time.bpm, (v) => DOC.time.bpm = v,
+                   box, BPM_LO, BPM_HI);
+  r.addEventListener("input", () => { big.textContent = r.value; });
+  bpmBig = big; bpmRange = r;
+  return box;
+}
+
+/** THE NINE MARKS THAT MOVE THE TEMPO — the tap and the eight operations, one
+ *  row, exactly as `#pan-tempo` drew them (2026-09-02: *"Nine naked glyphs …
+ *  Tap tempo sits alone on its own row"* — they are nine marks that do ONE
+ *  thing). The tap goes first because it is the only one that MEASURES; the
+ *  other eight take the number it left. `data-k = "tempo-" + word` and the
+ *  count is nine, which is the literal test/knobs.js gate 8 asserts. */
+function tempoNode() {
+  const row = el("p", null, "nu-row nu-tf-row nu-taprow");
   {
-    const row = el("p", null, "nu-row nu-tf-row nu-taprow");
-    tfRow = row;
     const G = GLYPH.act.tap;
     const out = el("output", tapLive()
       ? tapAt.length + (tapAt.length === 1 ? " tap" : " taps") : "");
-    // (NO CLASS ON THE BUTTON. Its plate is `.nu-taprow button` in nu.css —
-    //  the row names its own marks, the way `.nu-tf-row button` does. A class
-    //  with no rule is the mirror of the dead selector that block tombstones.)
     const b = icon({ k: "tempo-tap", glyph: G.g, word: G.w, say: G.s });
     b.addEventListener("click", () => {
       const t = tapTempo(performance.now());
       out.textContent = t.n + (t.n === 1 ? " tap" : " taps");
       if (t.bpm == null) return;          // one tap measures nothing
-      big.textContent = String(t.bpm);
-      bpmR.value = String(t.bpm);
+      /* THE SLIDER AND THE BIG NUMBER ARE MOVED TO AGREE BEFORE THE REBUILD
+         LANDS, so the row never shows two numbers for one tempo even for a
+         frame. They are module-level because the tap and the slider are two
+         FIELDS of one sheet now rather than two lines of one function — and
+         null-guarded because a caller may seat the marks without the readout
+         (nothing does today; a control that assumed it would be a control that
+         throws the day something does). */
+      if (bpmBig) bpmBig.textContent = String(t.bpm);
+      if (bpmRange) bpmRange.value = String(t.bpm);
       DOC.time.bpm = t.bpm;
       changed();
     });
     row.append(b, document.createTextNode(" "), out);
-    axTime.append(row);
   }
-  /* ===== AND THE EIGHT CAME BACK, 2026-09-02 ===========================
-     Paul: *"The tempo editor does not reflect the richness of our tempo
-     options. … The left nav elements for tweaking tempo should be brought
-     inside tempo."*
-
-     THE TOMBSTONE THAT STOOD HERE SAID WHERE THEY WENT AND THIS IS THE OTHER
-     END OF IT, kept whole because it was right about its own page: "(`tempoRow
-     (axTime)` STOOD HERE — 'THE TEMPO ICONS, directly under the tempo slider
-     and above the reading-speed menu — between the two facts they move, which
-     is where a row that moves both belongs.' Paul, 2026-08-28: *"When I'm in
-     tempo, move the tempo nav to the right nav."* They are the `tempo` level
-     of `#nu-tray` now … the marks are still beside what they change: 56px to
-     the left of it instead of directly under it.)"
-
-     WHAT REVERSES IT is not a change of mind about where a set of siblings
-     goes; it is that the gutter became a TREE and a tab whose children are
-     eight VERBS would spend the one column that has to hold twelve tabs, a
-     band and a form. The eight go back between the two facts they move, which
-     is where the original row put them.
-     NOTHING ABOUT THE OPERATIONS CHANGED. Same `TEMPOS` table, same two
-     readings of the tempo (once at paint to decide the refusal, once inside
-     the listener because a panel can be rebuilt under a live thumb), same
-     `data-k = "tempo-" + d.w`, same measured `data-why` on a mark that cannot
-     be pressed. The face is still the concatenated pair — the gutter's one
-     spelling, kept here so the two surfaces never drew the same operation two
-     ways during the move.
-     WAVE 2a FINISHES THIS PANEL: tap tempo, the big readout, groove, rubato
-     and the pace strip are all Paul's same sentence and none of them is this
-     wave's. */
-  {
-    // ...AND THE EIGHT JOIN THE TAP'S ROW rather than opening a second one —
-    // see the paragraph over `tfRow`. Same table, same keys, same refusals.
-    const row = tfRow;
-    const now = () => ({ bpm: DOC.time.bpm,
-                         rate: DOC.time.rate == null ? null : DOC.time.rate });
-    for (const d of TEMPOS) {
-      const t = now(), next = d.mk(t);
-      const b = icon({ k: "tempo-" + d.w, glyph: (d.g0 || "") + d.g, word: d.w,
-        say: d.w + " — " + (next
-          ? "the record counts " + next.bpm + " a minute" +
-            (next.rate === t.rate ? ""
-              : ", read at " + (next.rate == null ? "the anchor's own speed"
-                                                  : next.rate + "×"))
-          : d.why(t)),
-        why: next ? null : d.why(t) });
-      b.addEventListener("click", () => { const v = d.mk(now()); if (!v) return;
-                                          DOC.time.bpm = v.bpm;
-                                          DOC.time.rate = v.rate; changed(); });
-      row.append(b, document.createTextNode(" "));
-    }
+  /* THE EIGHT. Same `TEMPOS` table, same two readings of the tempo (once at
+     paint to decide the refusal, once inside the listener because the row can
+     be rebuilt under a live thumb), same measured `data-why` on a mark that
+     cannot be pressed. */
+  const now = () => ({ bpm: DOC.time.bpm,
+                       rate: DOC.time.rate == null ? null : DOC.time.rate });
+  for (const d of TEMPOS) {
+    const t = now(), next = d.mk(t);
+    const b = icon({ k: "tempo-" + d.w, glyph: (d.g0 || "") + d.g, word: d.w,
+      say: d.w + " — " + (next
+        ? "the record counts " + next.bpm + " a minute" +
+          (next.rate === t.rate ? ""
+            : ", read at " + (next.rate == null ? "the anchor's own speed"
+                                                : next.rate + "×"))
+        : d.why(t)),
+      why: next ? null : d.why(t) });
+    b.addEventListener("click", () => { const v = d.mk(now()); if (!v) return;
+                                        DOC.time.bpm = v.bpm;
+                                        DOC.time.rate = v.rate; changed(); });
+    row.append(b, document.createTextNode(" "));
   }
-  // THE THREE-WAY RATE MAPPING LIVES IN THE DATA TIER, AND STAYED THERE THROUGH
-  // BOTH REVERSALS. "as written" is rate 1 and has no key in fields.js RATES, so
-  // somebody has to carry it; that somebody is avail.js SHEETS["time.rate"],
-  // where the extractor reads the same three cases the page draws. It moved out
-  // of this file when the menu became a sheet and it did not move back when the
-  // sheet became a menu again — which is the point of one spec for two widgets.
-  // METER AND SWING — SETTLED PARAMETERS (2026-08-24, evening: "We can return
-  // some things to select menus: meter / reading speed / swing"). Each is one
-  // value for the whole record, decided once. A lit sheet is for comparing
-  // many musical options at a time; there is nothing to compare in "is this
-  // in three or in four".
-  //
-  // THE "reading speed" MENU IS DELETED, 2026-08-27 (FUTURE.md §5: "the
-  // 1×/half/double buttons own the fact — one fact, one control"). Verified
-  // on the rendered page before the cut: tempoRow above draws half time /
-  // double time / as written / the default speed, each writing `time.rate`
-  // through the same absent-is-default spelling — the menu was a second
-  // writable owner of one fact. avail.js SHEETS["time.rate"] stays: it is the
-  // data tier's three-way mapping, and the buttons read the same cases.
-  // test/selects.js MENUS dropped the row in the same commit.
-  /* THE SETTLED PARAMETERS, ONE EVEN ROW EACH (2026-09-02). This was one
-     `selectRow` of two — a `.nu-sels` wrapper holding meter and swing side by
-     side. `selectField` direct onto the axis is the same widget with the same
-     spec and no wrapper, which is what makes every row on this panel the same
-     88px `.nu-field` as the tempo slider above it and the rubato box below it:
-     Paul, B4, *"things are uneven based on how text wraps"*. Nothing about
-     either control changed; the `data-sel` keys are the ones test/selects.js
-     MENUS names.
-     ...AND THE GROOVE JOINS THEM, which is the fact this panel was missing.
-     `time.groove` reached the sound through ui/eight.js `setGroove` and
-     ui/state.js and could not be said by any hand (avail.js's new row carries
-     the whole finding). It is a settled parameter of exactly meter and swing's
-     kind — ONE fingerprint for the whole record, 2026-08-16's "nothing in a
-     section tells time" — so it is a menu beside them and not a lit sheet.
-     THE READING SPEED IS STILL NOT HERE and that is still 2026-08-27's
-     decision, not an omission: the four rate operations in the row above own
-     `time.rate`, one fact and one control, and test/text-diet.test.js asserts
-     zero `select[data-sel^="time.rate"]` on this page. */
-  selectField(axTime, shSpec("time.meter", {}));
-  selectField(axTime, shSpec("time.swing", {}));
-  selectField(axTime, shSpec("time.groove", {}));
-  /* RUBATO — THE BREATHING, WITH A SWITCH AT LAST (2026-09-02). ui/state.js
-     has carried `RUBATO` and `setRubato` since the tempo map was written, with
-     its own localStorage key and this note: "somebody working against a grid
-     (or a gate reading the unbreathed timeline) turns the breathing off for
-     their machine, not for the record". It had no control on this page —
-     `export/als-page.js:110` was the only thing in the box that could touch
-     it — so the escape hatch existed and nobody could reach it.
-     IT IS A DEVICE SETTING AND SAYS SO BY BEING STICKY: `setRubato` writes the
-     preference, no document changes, and a share link carries nothing. That is
-     why it is a checkbox in the tempo panel rather than a rule about the
-     record — the record always breathes; this is whether YOUR box plays it
-     that way. `check()` calls `changed()` after the write, which is what makes
-     audio/plan.js recompile the timeline with (or without) `warpBars`. */
-  check("rubato", "the record breathes", RUBATO, (v) => setRubato(v), axTime);
-  /* THE PACE STRIP LEFT THIS PANEL, 2026-09-04 (TABLE.md wave 2c). Pace is a
-     ROW field now — `form.pace|<section>` is a line of the table's own row
-     sheet (§1: "MOVES here from Time") — and a second control on that key
-     one tab over is the duplicate `data-k` this file legislates against. The
-     `GRIDDED` table that named this strip went with `structureGrids`. */
-  axTime.append(gainPtr);
+  return row;
 }
-function alphaAxis(box) {
-  const D = DOC;
-  /* ALPHABET — AND THE HEADING SAYS "HARMONY", 2026-08-27 (FUTURE.md §5:
-     "key/mode/changes is harmony to a musician; key `alphabet` stays"). The
-     AXIS is still Alphabet everywhere the vocabulary speaks — `doc.alphabet.*`,
-     `#ax-alphabet`, avail.js's `alphabet.*` rows — exactly the Material→"Sheet
-     music" precedent; AXES.md carries the join. */
-  const axAlpha = axis(box, "ax-alphabet", "Harmony");
-  // THE CHANGES ARE AN AXIS AND THE PAGE HAS NEVER OFFERED THEM. `harmony` has
-  // been in the document since the first version (songs.js: "modal is the
-  // anchor's own harmony and it means one mode, no changes") and there was no
-  // control for it, so the one fact that decides whether the whole progression
-  // is READ (kernel.js:671, `if (!g.prog || g.harmony !== "cycle")`) could only
-  // be changed by editing JSON. The chord-quality sheet below is greyed on a
-  // modal record; this is the way out of that grey, and greying THIS one would
-  // be a trap — see avail.js's `sheetGate` note.
-  // KEY, MODE, THE CHANGES — named in the same sentence ("key (although please
-  // spell things out like not just A# but A#/Bb) / mode / the changes"), and
-  // the key spells both names of every black note (fields.js KEYNAMES: "A♯/B♭",
-  // not "A♯"), because ui/abc.js picks a signature by the copyist's convention
-  // and would otherwise engrave a Bb over a control that said A♯.
-  //
-  // THE KEY IS DRAWN AS THE CIRCLE OF FIFTHS AND THE OTHER TWO ARE MENUS
-  // (Paul, 2026-08-24: "Maybe put the circle of fifths back in there for key
-  // selection, it was nice."). This line said `shSpec("alphabet.key", {})`
-  // inside the row above until 2026-08-25 and the sentence that put it there
-  // is not withdrawn — the key IS a settled parameter, one value decided once
-  // that nobody browses, and that is still the reason it is not a lit sheet of
-  // twelve. What the menu could not do is show a composer which keys are next
-  // door to the one they are in, which is the only thing anybody ever wants to
-  // know about a key while they are choosing one. Same spec, same `optionsFor`
-  // result, same availability law, better picture. See ui/selects.js
-  // `keyCircle` for the widget and the argument in full.
-  keyCircle(axAlpha, shSpec("alphabet.key", {}), fifthsRing());
-  // ...AND THE MODE STAYS ITS OWN MENU, BESIDE IT. That is this round's own
-  // decision (2026-08-25) and not a sentence of Paul's, so it is written down
-  // with its argument rather than as a quotation: tapping Am gives you A minor,
-  // and you can still push it to A dorian with the menu next to it without the
-  // circle having to grow. The mode list is dorian, phrygian, harmonic minor,
-  // mixolydian, major, lydian, melodic minor and natural minor — longer than
-  // major-and-minor, and seven rings would be a worse object than the one
-  // musicians actually keep in their heads.
-  //
-  // ...AND THE LIST IS TWELVE, NOT EIGHT — THE COMMENT WAS STALE (2026-09-02).
-  // The paragraph above names "dorian, phrygian, harmonic minor, mixolydian,
-  // major, lydian, melodic minor and natural minor". genres.js MODES has held
-  // twelve since the pitch wall came down on 2026-08-30: `hijaz` and, with
-  // fractional semitones and a period of their own, `shur`, `rast` and
-  // `slendro`. The menu has been offering all twelve the whole time (avail.js
-  // reads `Object.keys(MODES)`); what was missing was any word on this page
-  // saying that four of them are not the twelve equal semitones. The argument
-  // above is untouched — it is about a RING versus a MENU and twelve is still
-  // not a ring — and the count is corrected rather than the sentence deleted.
-  //
-  // THE CAPTION IS DRAWN ONLY WHERE THERE IS SOMETHING TO SAY. `tuningSay`
-  // answers null on nine of the twelve rows, so a record in dorian prints
-  // nothing at all: the panel does not carry a line about microtonality for
-  // the records that are not microtonal, which is nearly all of them. Where it
-  // does
-  // answer, it says the measured fact off the MODES row itself — "period
-  // 12.08" for slendro, "a quarter-tone step" for shur and rast — because a
-  // mode with its own octave is a thing a composer has to be told, and the
-  // page said nothing.
-  const modeP = selectField(axAlpha, shSpec("alphabet.mode", {}));
-  {
-    const cap = tuningSay(D.alphabet.mode);
-    if (cap) modeP.append(el("small", cap, "nu-cap"));
-  }
-  /* THE SUBJECT'S OWN ALPHABET, WHICH THE DOCUMENT HAS ALWAYS CARRIED
-     (2026-09-02). `alphabet.scale` decides the chromatic width of every phrase
-     the record sings — document.js:172 resolves it, precompose writes it on 99
-     anchors — and it had no sheet and no control: "declared but never
-     arriving", from the UI end. Its list is two `<optgroup>`s because
-     document.js resolves the word against two tables in that order (SCALES,
-     then MODES); avail.js's new row carries the whole argument.
-     IT IS BELOW THE MODE, NOT BESIDE IT, because it is the harder of the two
-     and it depends on it: the mode is the chords' alphabet, the scale is the
-     tune's, and absent means "the tune sings the mode itself". Read down. */
-  selectField(axAlpha, shSpec("alphabet.scale", {}));
-  selectField(axAlpha, shSpec("alphabet.harmony", {}));
-  check("diatonic", "the line stays in the key", D.alphabet.diatonic,
-    (v) => D.alphabet.diatonic = v, axAlpha);
-  heading(axAlpha, "the changes");
-  chordGrid(axAlpha);
+
+/** THE KEY, AS THE CIRCLE OF FIFTHS (Paul, 2026-08-24: *"Maybe put the circle
+ *  of fifths back in there for key selection, it was nice."*). Same spec, same
+ *  `optionsFor` result, same availability law as the menu it replaced; what a
+ *  menu could not do is show which keys are next door to the one you are in. */
+function keyNode() {
+  const box = el("div", null, "nu-timekey");
+  keyCircle(box, shSpec("alphabet.key", {}), fifthsRing());
+  return box;
+}
+
+/** THE CHANGES, WHOLE — `chordGrid` is a table of its own (a degree slider, a
+ *  quality menu and an inversion slider per bar, `+ bar` and `− bar`) and it
+ *  registers `chordCell`, the playhead's own bar cells. It is not a vector and
+ *  has no cell, so it comes into the row as one node, which is exactly what
+ *  the voice's channel strip does in a column sheet. */
+function changesNode() {
+  const box = el("div", null, "nu-timechanges");
+  chordGrid(box);
+  return box;
+}
+
+/** RECORD GAIN IS ON THE BOARD, AND THIS IS THE POINTER THAT SAYS SO. It moved
+ *  there on 2026-08-27 (the rename table's "clearest 'spread everywhere'
+ *  exhibit"); the pointer is what stays behind, so a hand that knew where it
+ *  lived is told where it went rather than left to conclude it is gone. It is
+ *  dressed as a control (`.nu-routelink`, 44px) because its click OPENS a tab,
+ *  and the `href` stays for the no-JavaScript path where the fragment is still
+ *  the right answer. */
+function boardNode() {
+  const pt = el("p", null, "nu-hint");
+  const a = document.createElement("a");
+  a.href = "#board"; a.textContent = "record gain — on the board's main strip";
+  a.className = "nu-routelink";
+  a.dataset.k = "goto.board";
+  a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
+  pt.append(a);
+  return pt;
 }
 
 /* ---------- the export tab ---------------------------------------------
@@ -14777,6 +14667,27 @@ window.__eightTabNow = () => openTab;
 window.__eightTab = (name) => { showTab(name); return openTab; };
 // …AND WHAT THE LAST SWITCH COST, in milliseconds of main thread.
 window.__eightTabMs = () => tabMs;
+/* A SPECIAL ROW, OPENED — the same door `__eightTab` is, one level in
+   (2026-09-06, TABLE.md §10b). TIME and RULES used to be TABS and are rows of
+   the Band table now, so the nine gates that reached them with
+   `__eightTab("Time")` reach them with `__eightRow("time")`: it opens Band and
+   PRESSES the row's own head, which is a hand's two taps and not a second
+   owner of the accordion. It answers whether the row is open, so a caller can
+   toggle honestly rather than guessing. */
+window.__eightRow = (id, want) => {
+  showTab("Band");
+  const at = () => document.querySelector('#pan-band [data-k="t' + id + '"]');
+  const open = () => { const b = at();
+    return !!b && b.getAttribute("aria-expanded") === "true"; };
+  /* IT IS IDEMPOTENT, AND THAT IS THE WHOLE DIFFERENCE BETWEEN THIS AND THE
+     BUTTON. A gate that opened TIME twice (two checks, two arrivals) would
+     have closed it with the second tap; `__eightTab("Time")` never had that
+     problem because a tab is a state and a row is a toggle. `want` defaults to
+     open; pass false to shut it. */
+  if (want == null) want = true;
+  if (open() !== !!want) { const b = at(); if (b) b.click(); }
+  return open();
+};
 /* THE STRIPE, FOR A PROBE THAT CANNOT TAP (2026-08-28) — the same door
    `__eightTab` is, at the level below it. `__eightTray()` reads what is on
    screen: the level, the parent it would go up to, and the item keys in order.

@@ -267,6 +267,21 @@ the grounded grammar; the summary:
 
 ### 2.5 Tempo and Key
 
+> **SUPERSEDED 2026-09-06 by nukernel/TABLE.md §10b step 1** (Paul,
+> 2026-09-05: *"time + key into a special row"*). The `Time` tab and its two
+> builders — `timeAxis` and `alphaAxis` — are DELETED with `#pan-tempo`. Every
+> control named below is a field of the merged TIME row at the top of the Band
+> table's own sheet, at the same address, writing through the same door: the
+> big readout and the slider, the tap and the eight `TEMPOS` operations, meter,
+> swing, groove, the rubato switch, the circle of fifths, the mode with its
+> tuning caption, the scale, harmony, the diatonic line, the changes grid with
+> `+ bar` / `− bar`, and the gain pointer, still last. (The pace strip left
+> this panel earlier, on 2026-09-04: pace is a section ROW field.) The
+> paragraphs below are kept as the record of what the panel held and what each
+> control does; `test/table-inventory.json` files every one of them under
+> `time-row` and `test/table.browser.js` T10d reads the list back off the
+> rendered sheet at 320px.
+
 **Tempo** (`timeAxis`): tempo readout big at the top (`--t5`), bpm range,
 **tap tempo** (a 44px button; the median of the last four intervals writes
 `time.bpm` through the same key), the eight `TEMPOS` operations as a wrapped

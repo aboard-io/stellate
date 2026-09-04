@@ -278,7 +278,17 @@ const J = (x) => JSON.parse(JSON.stringify(x));
          was standing in front of since 2026-08-27; they are repaired here by
          opening the tab, which is the same one-line repair test/sheets.js and
          test/selects.js already took for `+ drums`. */
-      const top = async (n) => { await p.evaluate((x) => window.__eightTab(x), n);
+  /* ...AND `Time` AND `Rules` ARE NOT TABS ANY MORE (2026-09-06,
+     nukernel/TABLE.md §10b): each is a MERGED ROW at the top of the Band
+     table's own sheet, so the door is `__eightRow`, which opens Band and
+     presses the row's head — a hand's two taps, and idempotent, so a second
+     arrival does not close what the first opened. Every `#pan-tempo` /
+     `#rulesdeck` selector below is the same selector inside `#pan-band`. */
+      const top = async (n) => {
+        if (n === "Time" || n === "Rules") {
+          await p.evaluate((x) => window.__eightRow(x), n.toLowerCase());
+          await p.waitForTimeout(700); return; }
+        await p.evaluate((x) => window.__eightTab(x), n);
         await p.waitForTimeout(500); };
 
       /* ---- SAY A WORD TO A COMBO BOX (2026-09-02) ----------------------

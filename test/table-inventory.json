@@ -558,6 +558,213 @@
       "field": "ONE sheet asks all four, in §1's order; a facet was a filter over a pile and the sheet is the pile made short",
       "reach": "tcol|<voice>",
       "open": null
+    },
+    {
+      "k": "bpm",
+      "pane": "Time (#pan-tempo)",
+      "was": "the tempo slider, 40..220, with the big readout over it",
+      "home": "time-row",
+      "field": "tempo — the same <output class=nu-bpmbig> and the same slider, writing DOC.time.bpm on change",
+      "reach": "bpm",
+      "open": "ttime"
+    },
+    {
+      "k": "tempo-tap",
+      "pane": "Time (#pan-tempo)",
+      "was": "tap tempo — the median of the last four intervals",
+      "home": "time-row",
+      "field": "by hand — first of the nine marks, the only one that MEASURES",
+      "reach": "tempo-tap",
+      "open": "ttime"
+    },
+    {
+      "k": "tempo-<word>",
+      "pane": "Time (#pan-tempo)",
+      "was": "the eight tempo operations (a little slower/faster, half/twice the tempo, half/double time, as written, the default speed)",
+      "home": "time-row",
+      "field": "by hand — the same TEMPOS table, the same eight data-k, the same measured refusals",
+      "reach": "tempo-half time",
+      "open": "ttime"
+    },
+    {
+      "k": "sel|time.meter",
+      "pane": "Time (#pan-tempo)",
+      "was": "the meter menu",
+      "home": "time-row",
+      "field": "meter — selects.js's own widget, SEATED (data-sel does not move)",
+      "reach": "sel|time.meter",
+      "open": "ttime"
+    },
+    {
+      "k": "sel|time.swing",
+      "pane": "Time (#pan-tempo)",
+      "was": "the swing menu",
+      "home": "time-row",
+      "field": "swing — seated",
+      "reach": "sel|time.swing",
+      "open": "ttime"
+    },
+    {
+      "k": "sel|time.groove",
+      "pane": "Time (#pan-tempo)",
+      "was": "the groove menu",
+      "home": "time-row",
+      "field": "groove — seated",
+      "reach": "sel|time.groove",
+      "open": "ttime"
+    },
+    {
+      "k": "rubato",
+      "pane": "Time (#pan-tempo)",
+      "was": "the breathing — a checkbox, a DEVICE setting (ui/state.js setRubato)",
+      "home": "time-row",
+      "field": "the breathing — a two-word chip strip at the same data-k; still sticky, still no document change",
+      "reach": "rubato",
+      "open": "ttime"
+    },
+    {
+      "k": "goto.board",
+      "pane": "Time (#pan-tempo)",
+      "was": "record gain — the pointer to the board's main strip",
+      "home": "time-row",
+      "field": "record gain — the same .nu-routelink, last in the sheet, still opening Mix",
+      "reach": "goto.board",
+      "open": "ttime"
+    },
+    {
+      "k": "opt|alphabet.key|<n> (the circle of fifths)",
+      "pane": "Time (#pan-tempo)",
+      "was": "the circle of fifths — twelve keys and their twelve relative minors",
+      "home": "time-row",
+      "field": "key — ui/selects.js keyCircle whole, same spec, same twenty-four addresses. The REACH is the widget's own `data-circ`, because the twenty-four radios are visually clipped by design and the LABEL is the target (shell.js A3 measures those at 24px); the circle itself is the 44px control a thumb lands on.",
+      "reach": "alphabet.key",
+      "open": "ttime"
+    },
+    {
+      "k": "sel|alphabet.mode",
+      "pane": "Time (#pan-tempo)",
+      "was": "the mode menu, with the tuning caption under it",
+      "home": "time-row",
+      "field": "mode — seated, and tuningSay rides as the row's own sub",
+      "reach": "sel|alphabet.mode",
+      "open": "ttime"
+    },
+    {
+      "k": "sel|alphabet.scale",
+      "pane": "Time (#pan-tempo)",
+      "was": "the subject's alphabet",
+      "home": "time-row",
+      "field": "scale — seated",
+      "reach": "sel|alphabet.scale",
+      "open": "ttime"
+    },
+    {
+      "k": "sel|alphabet.harmony",
+      "pane": "Time (#pan-tempo)",
+      "was": "cycle / emergent / modal",
+      "home": "time-row",
+      "field": "harmony — seated",
+      "reach": "sel|alphabet.harmony",
+      "open": "ttime"
+    },
+    {
+      "k": "diatonic",
+      "pane": "Time (#pan-tempo)",
+      "was": "the line stays in the key — a checkbox",
+      "home": "time-row",
+      "field": "the line — a two-word chip strip at the same data-k",
+      "reach": "diatonic",
+      "open": "ttime"
+    },
+    {
+      "k": "prog<n>d / prog<n>i / sel|alphabet.quality|bar<n>",
+      "pane": "Time (#pan-tempo)",
+      "was": "the changes grid — a degree slider, a quality menu and an inversion slider per bar",
+      "home": "time-row",
+      "field": "the changes — ui/eight.js chordGrid whole, chordCell playhead included",
+      "reach": "prog0d",
+      "open": "ttime"
+    },
+    {
+      "k": "prog-add",
+      "pane": "Time (#pan-tempo)",
+      "was": "+ bar",
+      "home": "time-row",
+      "field": "the changes — unchanged",
+      "reach": "prog-add",
+      "open": "ttime"
+    },
+    {
+      "k": "prog-cut",
+      "pane": "Time (#pan-tempo)",
+      "was": "- bar",
+      "home": "time-row",
+      "field": "the changes — unchanged",
+      "reach": "prog-cut",
+      "open": "ttime"
+    },
+    {
+      "k": "toptab-Time",
+      "pane": "Time (#pan-tempo)",
+      "was": "the Time tab, on the stripe",
+      "home": "time-row",
+      "field": "the row's own head, which is the first line of the sheet at every width",
+      "reach": "ttime",
+      "open": null
+    },
+    {
+      "k": "rules.name",
+      "pane": "Rules (#rulesdeck)",
+      "was": "the genre's name plate (wiki name, place-and-year, one line of lineage)",
+      "home": "rules-row",
+      "field": "the RULES sheet's own first line — ui/rules.js draws it unchanged",
+      "reach": "rules.name",
+      "open": "trules"
+    },
+    {
+      "k": "rule|<field>",
+      "pane": "Rules (#rulesdeck)",
+      "was": "a rule's own control where it is a range, a pair or a checkbox set",
+      "home": "rules-row",
+      "field": "the sentence with its value on line one and the control under it — the two-line row, unchanged. Its `reset` is drawn on the same row the moment a hand writes the rule (`rule-reset|<field>`), which is why it has no row of its own here: it has no address until then.",
+      "reach": "rule|bpm",
+      "open": "trules"
+    },
+    {
+      "k": "sel|rule.<field>",
+      "pane": "Rules (#rulesdeck)",
+      "was": "a rule's own menu (enum, flag, map key, positional list) — `rule.rate`, `rule.harmony`, `rule.plan`, `rule.part.<chair>`",
+      "home": "rules-row",
+      "field": "the same menus, built by the same selectField into the same sentence",
+      "reach": "sel|rule.rate",
+      "open": "trules"
+    },
+    {
+      "k": "rule-add|<axis>",
+      "pane": "Rules (#rulesdeck)",
+      "was": "the palette — one compact + per axis foot",
+      "home": "rules-row",
+      "field": "unchanged, at the foot of each axis block inside the row",
+      "reach": "rule-add|Time",
+      "open": "trules"
+    },
+    {
+      "k": "toptab-Rules",
+      "pane": "Rules (#rulesdeck)",
+      "was": "the Rules tab, on the stripe",
+      "home": "rules-row",
+      "field": "the row's own head; the face says how many sentences are written and which moved last",
+      "reach": "trules",
+      "open": null
+    },
+    {
+      "k": "rulax-<axis>",
+      "pane": "Rules (#rulesdeck)",
+      "was": "the eight axis JUMPS, children of the Rules tab on the stripe",
+      "home": "rules-row",
+      "field": "the eight axis blocks are inside the one row, one tap from the top of the sheet; a jump into a row you have already opened is the scroll you are already doing",
+      "reach": "trules",
+      "open": null
     }
   ],
   "new": [
@@ -691,5 +898,6 @@
       "open": null,
       "why": "§9a: the `+` at the end of the PLAYER axis, in a head cell after the last player. Same three addresses build-the-band already had, which is what keeps the nine nav ops' T7 homes"
     }
-  ]
+  ],
+  "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them."
 }

@@ -2348,7 +2348,10 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    `.nu-ax`, that is the case that needs the hatch. */
 .nu-pan{ --sec: 0; padding: var(--s4) var(--s4) 0; }
 #atlas{ --sec: 0; }
-#pan-tempo{ --sec: 1; }
+/* (`#pan-tempo{ --sec: 1 }` STOOD HERE and is the THIRD hole in the ladder,
+   2026-09-06: the Time tab is deleted (TABLE.md §10b step 1) and its controls
+   are the table's merged TIME row, so the panel that wore hue 1 is gone. The
+   ordinal is left as a hole for the reason the next paragraph gives.) */
 /* (`#pan-key{ --sec: 2 }` STOOD HERE and the ordinal is DELIBERATELY LEFT AS
    A HOLE, 2026-09-04. Tempo and Key are one tab (`Time`, nukernel/TABLE.md §8)
    and `#pan-key` is deleted from index.html, so the selector has no subject —
@@ -3877,9 +3880,11 @@ table.nu-trims{ color: var(--ink); }
    ...AND ONE OF THE TWO ROWS CAME BACK, 2026-09-02, SO THE GEOMETRY DOES TOO.
    Paul, B7: *"The left nav elements for tweaking tempo should be brought
    inside tempo."* The eight tempo operations are a `<p class="nu-row
-   nu-tf-row">` in the Tempo panel again (ui/eight.js `timeAxis`), so this
-   selector has a subject once more and the audit that found it empty would now
-   find eight marks. The rules are NOT restored here — they are written at the
+   nu-tf-row">` in the Tempo panel again, so this selector has a subject once
+   more and the audit that found it empty would now find eight marks.
+   (`ui/eight.js timeAxis` NAMED THE BUILDER and is deleted, 2026-09-06: the
+   row is `tempoNode()` and it is a FIELD of the table's TIME row. Same class,
+   same nine marks, same geometry — what it lost is the panel around it.) The rules are NOT restored here — they are written at the
    foot of this file under the slice-2a banner, beside the tap button they
    share a row shape with — and the arithmetic above is re-measured there for
    a panel column rather than for the motif editor's 366px. The `motifops`
@@ -7282,6 +7287,80 @@ table.nu-trims{ color: var(--ink); }
 .nu-sheetgrid tbody th.nu-addhead{ position: sticky; inset-inline-start: 3px;
   z-index: 1; background: var(--paper); }
 .nu-sheetgrid thead th:first-child{ inset-inline-start: 3px; z-index: 4; }
+
+/* ===== THE SPECIAL ROWS: TIME, RULES (TABLE.md §10a, 2026-09-06) =========
+   Paul: *"we could integrate rules into a special row, time + key into a
+   special row … a real mobile app now with everything in the table and the nav
+   space reclaimed."*
+
+   A ROW OF THE SAME SHEET, MERGED ACROSS THE COLUMNS. One `<th colspan>` per
+   row, so there is nothing to align to a voice — the tempo is not the bass's
+   tempo — and the whole line is ONE button, which is what makes the row a
+   44px target across the full width of a 320px screen rather than a word with
+   a chevron beside it.
+
+   ITS OFFSET IS MEASURED, NOT DECLARED. `thead th` above pins every head at
+   `inset-block-start: 0`, which is right for a head of one row and wrong for a
+   head of three: `src/table/grid.ts stick()` walks `thead > tr` after every
+   render and writes each row's own offset as an inline style, so TIME sits at
+   0, RULES under it and the column heads under both — a stack, frozen
+   together, at whatever height the faces actually take at this width.
+
+   THE FACE ELLIPSISES AND NEVER WRAPS. "83 a minute · four · G natural minor"
+   at 320 is longer than the screen on some records, and a header row whose
+   height depends on the genre's key name is a header row that jumps as you
+   move around the catalogue. The whole line is in the button's accessible
+   name, so nothing is lost to a reader; the hold explainer is the row itself. */
+.nu-sheetgrid tr.nu-sprow > th.nu-spheadcell{ padding: 0; text-align: start;
+  z-index: 5; border-block-end: var(--bw) solid var(--rule); }
+/* AND THE LINE ITSELF IS PINNED TO THE PANE'S LEFT EDGE. The `<th>` cannot be:
+   it spans every column, so its width IS its containing block's and a sticky
+   box has nowhere to travel — measured by test/shell.js A8, which scrolled the
+   Band pane 200px and watched the merged row's cell slide 88 of them. The
+   BUTTON is `--panew` wide inside a cell that is the whole table, so its sticky
+   range is exactly the pane's horizontal scroll, and the face stays where a
+   hand can read it while the grid moves under it. */
+.nu-sphead{ display: flex; inline-size: var(--panew, 100%);
+  max-inline-size: 100%; position: sticky; inset-inline-start: 0;
+  align-items: center;
+  gap: var(--s3); min-block-size: var(--tap);
+  padding: var(--s2) var(--s3); text-align: start;
+  background: var(--paper); color: var(--ink);
+  border: 0; border-radius: var(--r0); box-shadow: none; }
+.nu-sphead[aria-expanded="true"]{ background: var(--hand-tint); }
+.nu-spword{ flex: 0 0 auto;
+  font: var(--fw-block) var(--t3)/1.2 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .06em; }
+.nu-spface{ flex: 1 1 auto; min-inline-size: 0;
+  font: var(--num-fw) var(--t3)/1.2 var(--sans, inherit); color: var(--dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* THE BIG TEMPO AND THE ROW OF NINE MARKS ARE SHEET ROWS NOW, not a panel's
+   first two lines, so each takes the width of the row it is in and the marks
+   wrap at 320 instead of scrolling the pane sideways. */
+.nu-timebpm{ display: flex; flex-direction: column; inline-size: 100%;
+  min-inline-size: 0; }
+.nu-timebpm .nu-field{ margin: 0; }
+.nu-timekey, .nu-timechanges, .nu-rulesheet{ inline-size: 100%;
+  min-inline-size: 0; }
+.nu-vsheet .nu-taprow{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); margin: 0; }
+/* THE RULES ROW'S SHEET IS `ui/rules.js`'s OWN PANEL, seated. It kept its
+   `.nu-ax` chassis — one owner for what a block of questions looks like — and
+   what it loses inside a table cell is the panel's outer air, which the sheet
+   row already pays. */
+.nu-rulesheet > .nu-ax{ padding: 0; margin: 0; }
+/* THE NAME PLATE IS THE SHEET'S FIRST LINE, so it is a line: `test/table-
+   inventory.json` files `rules.name` as a control the row must offer at 320,
+   and T7 measures every filed reach at 44px. It was 40 inside the row — the
+   panel's own `<h3>` rhythm, which was right under a panel heading and is one
+   line short under a row's word. */
+.nu-rulesheet .nu-ruleplate{ min-block-size: var(--tap);
+  display: flex; flex-direction: column; justify-content: center; }
+/* ...AND A SEATED MENU FILLS ITS SHEET ROW. `menuWide` hands the widget over
+   without its `<p class="nu-sel">`, so the row's own label is the question and
+   this is the answer, at the row's full width. */
+.nu-seatmenu{ display: flex; flex-direction: column; gap: var(--s2);
+  inline-size: 100%; min-inline-size: 0; }
 
 /* THE SELECTION, AND THE RANGE. One cell is selected; a shift-arrow or a
    shift-tap makes a rectangle of them. The selected cell wears the hand's own

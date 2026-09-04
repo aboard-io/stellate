@@ -14,7 +14,7 @@
  *   · `time.groove` — ui/eight.js has called `setGroove(DOC.time.groove)`
  *     since the day that writer was written, ui/state.js normalises it against
  *     GROOVELABEL and ui/derive.js hands it to the kernel. No sheet, no menu.
- * `#pan-key` IS `#pan-tempo` THROUGHOUT SINCE 2026-09-04 (nukernel/TABLE.md
+ * `#pan-key` IS `#pan-band` THROUGHOUT SINCE 2026-09-04 (nukernel/TABLE.md
  * §8: *"Tempo and Key fold into one Time structure"*). The Alphabet axis — the
  * changes grid, the quality menus, the circle of fifths, the degree slider —
  * did not move a line; its HOST did, because one tab now holds both axis
@@ -149,7 +149,17 @@ function standUpServer() {
 
   /* A TAB IS OPENED THE WAY A THUMB OPENS IT — `__eightTab` is the same call
      the stripe's own button makes (ui/eight.js says so at its definition). */
-  const top = async (t) => { await p.evaluate((n) => window.__eightTab(n), t);
+  /* ...AND `Time` AND `Rules` ARE NOT TABS ANY MORE (2026-09-06,
+     nukernel/TABLE.md §10b): each is a MERGED ROW at the top of the Band
+     table's own sheet, so the door is `__eightRow`, which opens Band and
+     presses the row's head — a hand's two taps, and idempotent, so a second
+     arrival does not close what the first opened. Every `#pan-band` /
+     `#rulesdeck` selector below is the same selector inside `#pan-band`. */
+  const top = async (t) => {
+    if (t === "Time" || t === "Rules") {
+      await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
+      await p.waitForTimeout(700); return; }
+    await p.evaluate((n) => window.__eightTab(n), t);
     await p.waitForTimeout(400); };
   const doc = () => p.evaluate(() => window.__eightDoc());
   const press = async (k) => { const hit = await p.evaluate((key) => {
@@ -166,6 +176,18 @@ function standUpServer() {
      nothing and then asserted about the groove it had not changed. The driver
      is test/lib-combo.js's, shared with test/nudges.js and
      test/band.browser.js, and it opens the list and taps the option. */
+  /* THE TUNING CAPTION IS THE MODE ROW'S OWN SUB, 2026-09-06. It was a
+     `<small class="nu-cap">` appended to the mode's `.nu-sel` field in the Time
+     PANEL; in the TIME row it is the sheet row's `sub`, which `src/table/
+     sheet.ts` draws as `<small class="nu-sheetsub">` — one owner for what a
+     line under a control looks like. Same words, same one-per-mode rule
+     (`tuningSay` answers null on nine of the twelve), read off the mode's own
+     row so the rubato row's sub is not counted as a second caption. */
+  const modeCap = () => p.evaluate(() => {
+    const el = document.querySelector('#pan-band [data-sel="alphabet.mode"]');
+    const row = el && el.closest(".nu-sheetrow");
+    const s2 = row && row.querySelector(".nu-sheetsub");
+    return s2 ? [s2.textContent.trim()] : []; });
   const say = async (sel, v) => {
     const hit = await p.evaluate(([s, val]) => {
       const el = document.querySelector('[data-sel="' + s + '"]');
@@ -191,11 +213,11 @@ function standUpServer() {
   /* ================= T1 · TAP TEMPO ================================== */
   await top("Time");
   const panel = await p.evaluate(() => ({
-    big: !!document.querySelector("#pan-tempo .nu-bpmbig"),
-    bigLive: !!document.querySelector("#pan-tempo .nu-bpmbig[data-live]"),
-    tap: !!document.querySelector('#pan-tempo [data-k="tempo-tap"]'),
-    ops: document.querySelectorAll('#pan-tempo [data-k^="tempo-"]').length,
-    bpm: !!document.querySelector('#pan-tempo input[data-k="bpm"]'),
+    big: !!document.querySelector("#pan-band .nu-bpmbig"),
+    bigLive: !!document.querySelector("#pan-band .nu-bpmbig[data-live]"),
+    tap: !!document.querySelector('#pan-band [data-k="tempo-tap"]'),
+    ops: document.querySelectorAll('#pan-band [data-k^="tempo-"]').length,
+    bpm: !!document.querySelector('#pan-band input[data-k="bpm"]'),
   }));
   check(panel.big && panel.tap && panel.bpm && panel.ops === 9,
     "the Tempo panel holds the big readout, the slider, the tap and the eight " +
@@ -238,9 +260,9 @@ function standUpServer() {
   const tapped = await p.evaluate(() => ({
     doc: window.__eightDoc().time.bpm,
     state: window.__eightTime().bpm,
-    slider: +document.querySelector('#pan-tempo input[data-k="bpm"]').value,
-    big: (document.querySelector("#pan-tempo .nu-bpmbig") || {}).textContent,
-    count: [...document.querySelectorAll("#pan-tempo .nu-taprow output")]
+    slider: +document.querySelector('#pan-band input[data-k="bpm"]').value,
+    big: (document.querySelector("#pan-band .nu-bpmbig") || {}).textContent,
+    count: [...document.querySelectorAll("#pan-band .nu-taprow output")]
       .map((o) => o.textContent).join(""),
   }));
   check(tapped.doc >= 118 && tapped.doc <= 122,
@@ -353,7 +375,7 @@ function standUpServer() {
      mode, five on slendro (`K.romanOf(MODES[mode]).length - 1`). Read off the
      control, because a duplicate rung is invisible in the document. */
   const rungs = await p.evaluate(() => {
-    const r = document.querySelector('#pan-tempo input[data-k="prog0d"]');
+    const r = document.querySelector('#pan-band input[data-k="prog0d"]');
     return r ? { max: +r.max, mode: window.__eightDoc().alphabet.mode,
                  n: (window.NuKernel.romanOf(
                    window.NuGenres.MODES[window.__eightDoc().alphabet.mode]) || []).length }
@@ -414,7 +436,7 @@ function standUpServer() {
 
     const went = await setSel("alphabet.harmony", "modal");
     const before = await p.evaluate(() => {
-      const q = [...document.querySelectorAll('#pan-tempo [data-sel^="alphabet.quality"]')];
+      const q = [...document.querySelectorAll('#pan-band [data-sel^="alphabet.quality"]')];
       return { harmony: window.__eightDoc().alphabet.harmony,
                n: q.length, off: q.filter((x) => x.disabled).length,
                whys: q.filter((x) => (x.dataset.why || "").trim()).length,
@@ -457,7 +479,7 @@ function standUpServer() {
      fires no `change` on a control that is already where you put it. */
   await say("alphabet.mode", "ionian");
   await p.evaluate(() => { const l =
-    document.querySelector('#pan-tempo .nu-circ .nu-ki[data-v="-3"]');
+    document.querySelector('#pan-band .nu-circ .nu-ki[data-v="-3"]');
     if (l) l.click(); });
   await p.waitForTimeout(500);
   const tet = await p.evaluate(() => ({ key: String(window.__eightDoc().alphabet.key),
@@ -469,13 +491,12 @@ function standUpServer() {
      numbers — so it is not the twelve equal semitones, and the tap must move
      the tonic and leave the alphabet where it is. */
   await say("alphabet.mode", "shur");
-  const cap = await p.evaluate(() =>
-    [...document.querySelectorAll("#pan-tempo .nu-cap")].map((c) => c.textContent.trim()));
+  const cap = await modeCap();
   check(cap.length === 1 && /quarter/.test(cap[0]),
     "T5a …and a non-12-TET mode says what it is, under its own field " +
     JSON.stringify(cap));
   await p.evaluate(() => { const l =
-    document.querySelector('#pan-tempo .nu-circ .nu-ki[data-v="4"]');
+    document.querySelector('#pan-band .nu-circ .nu-ki[data-v="4"]');
     if (l) l.click(); });
   await p.waitForTimeout(500);
   const shur = await p.evaluate(() => ({ key: String(window.__eightDoc().alphabet.key),
@@ -491,11 +512,14 @@ function standUpServer() {
      with its own octave is a thing a composer has to be told. */
   await say("alphabet.mode", "slendro");
   const slen = await p.evaluate(() => {
-    const r = document.querySelector('#pan-tempo input[data-k="prog0d"]');
+    const r = document.querySelector('#pan-band input[data-k="prog0d"]');
     return { mode: window.__eightDoc().alphabet.mode,
              max: r ? +r.max : null,
-             cap: [...document.querySelectorAll("#pan-tempo .nu-cap")]
-               .map((c) => c.textContent.trim()) }; });
+             cap: (() => { const e2 = document.querySelector(
+                     '#pan-band [data-sel="alphabet.mode"]');
+                   const r2 = e2 && e2.closest(".nu-sheetrow");
+                   const s3 = r2 && r2.querySelector(".nu-sheetsub");
+                   return s3 ? [s3.textContent.trim()] : []; })() }; });
   check(slen.mode === "slendro" && slen.max === 4,
     "T5c a five-degree alphabet gives the degree slider four rungs, not six " +
     JSON.stringify(slen));

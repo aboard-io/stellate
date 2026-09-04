@@ -273,7 +273,16 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      find no button. `__eightUp()` is "fold everything", which is the gesture a
      hand makes to get back to the tabs, and it makes each view's route
      deterministic: fold, open the tab, open the member, open the facet. */
+  /* ...AND `Time` AND `Rules` ARE NOT TABS ANY MORE (2026-09-06,
+     nukernel/TABLE.md §10b): each is a MERGED ROW at the top of the Band
+     table's own sheet, so the door is `__eightRow`, which opens Band and
+     presses the row's head — a hand's two taps, and idempotent, so a second
+     arrival does not close what the first opened. Every `#pan-band` /
+     `#rulesdeck` selector below is the same selector inside `#pan-band`. */
   const openTop = async (t) => {
+    if (t === "Time" || t === "Rules") {
+      await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
+      await p.waitForTimeout(700); return; }
     await p.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
                                window.__eightTab(tt); }, t);
     await p.waitForTimeout(t === "Score" ? 1200 : 300);
@@ -1028,7 +1037,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // Paul's `Key`, and the quality menus are cells of its chord table.
   /* ...AND `Key` IS INSIDE `Time` SINCE 2026-09-04 (nukernel/TABLE.md §8:
      *"Tempo and Key fold into one Time structure"*). The Alphabet axis and its
-     chord table did not move a line — `#pan-tempo` holds both axis sections
+     chord table did not move a line — `#pan-band` holds both axis sections
      now — so the door is one word different and nothing below it is. */
   if (REAL) await openTop("Time");
   const qual = await p.evaluate(() => {

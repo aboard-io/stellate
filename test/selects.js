@@ -497,8 +497,17 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      so a walk needs a known starting shape or the second tap on a row closes
      what the first opened. `__eightUp()` is "fold everything", the gesture a
      hand makes to get back to the tabs. */
+  /* ...AND `Time` AND `Rules` ARE NOT TABS ANY MORE (2026-09-06,
+     nukernel/TABLE.md §10b): each is a MERGED ROW at the top of the Band
+     table's own sheet, so the door is `__eightRow`, which opens Band and
+     presses the row's head — a hand's two taps, and idempotent, so a second
+     arrival does not close what the first opened. Every `#pan-band` /
+     `#rulesdeck` selector below is the same selector inside `#pan-band`. */
   const openTop = async (t) => {
     if (!TOPS.length) return;
+    if (t === "Time" || t === "Rules") {
+      await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
+      await p.waitForTimeout(700); return; }
     await p.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
                                window.__eightTab(tt); }, t);
     await p.waitForTimeout(t === "Score" ? 1200 : 250);
@@ -800,7 +809,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   /* THE CHANGES, THE MODE AND THE CIRCLE ARE ALL ON THE `Time` TAB SINCE
      2026-09-04 (nukernel/TABLE.md §8: *"Tempo and Key fold into one Time
      structure"*). They were `Key`'s from 2026-08-27; the Alphabet axis did not
-     move a line — `#pan-tempo` holds both axis sections now — so checks 4, 5,
+     move a line — `#pan-band` holds both axis sections now — so checks 4, 5,
      5b, 7 and 9 read them off the same page through a door with one word
      changed. Nothing between here and check 10 touches the band. */
   await openTop("Time");

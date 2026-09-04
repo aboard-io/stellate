@@ -58,6 +58,7 @@ import { rowSheet, colSheet, cellSheet, masterSheet, perfSheet,
          masterCells, perfCells, tableOps, playerOffers, sectionOffer,
          rowOps, colOps, cellOps } from "./model.js";
 import { sheetBody, onRedraw } from "./sheet.js";
+import { SPECIALS } from "./special.js";
 import { undoStack } from "./undo.js";
 import type { DocUndo } from "./undo.js";
 
@@ -79,6 +80,9 @@ let OPENFIELD: string | null = null;
 const WIDTH = new Map<string, number>();
 /** the clipboard, and it is a VECTOR: what a cell has written, nothing more. */
 let CLIP: { sec: string; voice: string } | null = null;
+/** the ONE resize observer and the CURRENT grid's `stick` — see `armResize`. */
+let RO: ResizeObserver | null = null;
+let STICK: (() => void) | null = null;
 
 /* ---- what a cell is, in the two directions the table can face -------- */
 interface Shape {
@@ -135,7 +139,16 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      spreadsheet does not forget which cell you are on because you typed in it.
      `SEL` and the clipboard and the column widths survive; the open BODY does
      not, and the head above the pane goes on naming the cell. */
-  OPEN = null; OPENFIELD = null;
+  /* ...EXCEPT A SPECIAL ROW'S, WHICH SURVIVES ONE (2026-09-06, §10b). Not one
+     of the three reasons above is true of TIME or RULES: they are not landed
+     on by `tablePanel` (which clicks a COLUMN or a ROW head), they are not
+     reached through the corner, and no gate opens one by toggling. What IS
+     true of them is the other way round: every control inside them recompiles
+     — the tempo slider, a meter word, a rule — and `changed()` throws this
+     panel away and builds it again, so a row that closed on a rebuild would
+     shut under the thumb that was using it. The open BODY is rebuilt like any
+     other; only which row is open is kept. */
+  if (!OPEN || OPEN.indexOf("sp|") !== 0) { OPEN = null; OPENFIELD = null; }
   /* THE SELECTION IS PRUNED AGAINST THE RECORD ON EVERY DRAW. A delete, a
      deal-again or a whole new document can take the selected cell away, and a
      selection pointing at a section that is gone is a formula bar showing a
@@ -169,7 +182,52 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return n;
   };
 
-  const draw = () => { render(view(), host); };
+  const draw = () => { render(view(), host); stick(); };
+  /* ...AND `stick()` RUNS AGAIN WHEN THE PANE CHANGES WIDTH, which a redraw
+     does not cover: a rotation or a resized window moves `--panew` and every
+     frozen offset, and nothing on this page redraws for either. ONE observer,
+     at module scope, always pointed at the CURRENT pane — a per-instance
+     observer would leak one per write, because ui/eight.js throws this panel
+     away and builds it again on every op. It is layout and not a clock: it
+     fires when the box changes and never on a beat. */
+  const armResize = (paneEl2: HTMLElement | null) => {
+    STICK = stick;
+    if (!paneEl2 || typeof ResizeObserver === "undefined") return;
+    if (!RO) RO = new ResizeObserver(() => { if (STICK) STICK(); });
+    RO.disconnect();
+    RO.observe(paneEl2);
+  };
+
+  /* THE WHOLE HEAD FREEZES, AND IT IS A STACK NOW (2026-09-06, §10a: the
+     special rows are *"above the column headers, frozen with them"*). nu.css
+     pins every `thead th` at `inset-block-start: 0`, which is exactly right
+     for a head of one row and exactly wrong for a head of three: TIME, RULES
+     and the column heads would all pin at the same line and paint over each
+     other. The offsets are MEASURED rather than declared because the rows'
+     heights are the face's own — a genre with a long name makes a taller
+     RULES line at 320 — and a hard-coded pair of pixel values would be a rule
+     that reads right and moves nothing, which this table has already shipped
+     twice (§9d). One walk of `thead`, after every render. */
+  function stick(): void {
+    const t = host.querySelector("table.nu-sheetgrid");
+    if (!t) return;
+    /* ...AND A MERGED ROW IS THE PANE'S WIDTH, NOT THE TABLE'S. A `<th>` that
+       spans nine players is nine players wide, and at 390 that is 857px of row
+       with the face's last word off the right of the screen — measured, first
+       drawing. The cell is frozen at the pane's left edge (`thead th:first-
+       child`), so the honest width for the LINE inside it is the width of what
+       a hand can see: `--panew`, written here because only the DOM knows it,
+       and the face ellipsises against it instead of running off. */
+    const pane2 = host.querySelector(".nu-pane") as HTMLElement | null;
+    if (pane2) (t as HTMLElement).style.setProperty(
+      "--panew", (pane2.clientWidth - 6) + "px");
+    let y = 0;
+    for (const tr of Array.from(t.querySelectorAll<HTMLElement>("thead > tr"))) {
+      for (const c of Array.from(tr.children))
+        (c as HTMLElement).style.insetBlockStart = y + "px";
+      y += tr.getBoundingClientRect().height;
+    }
+  }
   onRedraw(draw);
 
   /* EVERY OP GOES THROUGH THE STACK, WHICH IS WHAT "for every op" MEANS.
@@ -265,7 +323,35 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     (S.across ? S.secs.length : S.voices.length) + 2;   // head column + adder
 
   /* ---- THE HEADER ROW ------------------------------------------------ */
+  /* ---- THE SPECIAL ROWS (§10a) ---------------------------------------
+     A ROW OF THE SAME SHEET, MERGED ACROSS THE COLUMNS. One `<th>` spanning
+     every column, because the record has no voices — the tempo is not the
+     bass's tempo — and a `<th scope=row>` rather than a `<td>` because what it
+     names is the whole line, which is what a row header is.
+     ITS FACE IS ITS OWN CONTROL. The word and the line of values are one
+     button, full width, so at 320 the whole row is the target: `ttime` /
+     `trules`, `aria-expanded`, Enter and Escape from the pane's own keyboard,
+     and the sheet under it at the top of the body. */
+  const specialRows = (S: Shape): TemplateResult[] => SPECIALS.map((sp) => {
+    const openKey = "sp|" + sp.id;
+    const open = OPEN === openKey;
+    let face = "";
+    try { face = sp.face(A); } catch (e) { face = ""; }
+    return html`<tr class="nu-sprow" data-special=${sp.id}>
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
+        <button type="button" class="nu-sphead" data-k=${sp.k}
+          aria-expanded=${String(open)}
+          aria-label=${sp.word + " — " + sp.aria}
+          @click=${() => toggle(openKey)}
+          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
+          ><b class="nu-spword">${sp.word}</b
+          ><span class="nu-spface">${face}</span></button>
+      </th>
+    </tr>`;
+  });
+
   const thead = (S: Shape, cols: string[]): TemplateResult => html`<thead>
+    ${specialRows(S)}
     <tr>
       <th class="nu-cornerh">${cornerBtn(S)}</th>
       ${repeat(cols, (c) => c, (c) => S.across ? secHead(S, c) : voiceHead(S, c))}
@@ -390,6 +476,12 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         label: "this record",
         ops: tableOps(A, S.across).map((x) => x.act
           ? { ...x, act: () => op(x.word, x.act!) } : x) }]), "the whole record");
+    /* A SPECIAL ROW'S SHEET IS AN ORPHAN TOO, and for the same reason the
+       column head's is: its row is in the `<thead>`, which freezes, and a
+       frozen sheet is a sheet that covers the grid it is editing. */
+    for (const sp of SPECIALS)
+      if (OPEN === "sp|" + sp.id)
+        return openRow(S, sheetFor(OPEN, () => wrapOps(sp.sheet(A))), sp.word);
     if (OPEN.indexOf("col|") === 0 && !S.across)
       return openRow(S, sheetFor(OPEN, () => colSheetOf(OPEN!.slice(4))), OPEN.slice(4));
     if (OPEN.indexOf("row|") === 0 && S.across)
@@ -592,6 +684,12 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   /* ---- selection, ranges, fills and the keyboard ---------------------- */
 
   function toggle(key: string, keepOpen = false): void {
+    /* OPENING A SPECIAL ROW LETS THE PAGE'S LANDING GO — see `leaveLanding`
+       in api.ts for the measurement. Only on the way OPEN: shutting TIME is
+       not a claim about where you are standing. */
+    if (key.indexOf("sp|") === 0 && (OPEN !== key || keepOpen)) {
+      try { A.leaveLanding(); } catch (e) { /* an older host */ }
+    }
     if (key.indexOf("cell|") === 0) {
       const p = key.split("|");
       SEL = { sec: p[1]!, voice: p[2]! };
@@ -696,8 +794,18 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      is a button in the sheet or on the bar, which is 6's law. */
   function onKey(e: KeyboardEvent, S: Shape): void {
     const meta = e.ctrlKey || e.metaKey;
-    const tag = (e.target as HTMLElement | null)?.tagName;
+    const tg = e.target as HTMLElement | null;
+    const tag = tg?.tagName;
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
+    /* A SPECIAL ROW'S SHEET IS NOT A CELL, SO THE SPREADSHEET'S KEYBOARD LETS
+       IT ALONE (§10b: *"Tab moves through its chips"*). Inside the grid, Tab
+       moves the SELECTION — that is what a spreadsheet's Tab does — and inside
+       a merged row full of chips it is what a hand expects Tab to do least.
+       Escape is the exception, because it is how the row closes, and it is
+       handled by the switch below either way. */
+    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") ||
+      (!!OPEN && OPEN.indexOf("sp|") === 0 && !!tg.closest(".nu-wopen")));
+    if (inSpecial && e.key !== "Escape") return;
     if (meta && (e.key === "z" || e.key === "Z")) {
       e.preventDefault(); if (e.shiftKey) U.redo(); else U.undo(); return; }
     if (meta && (e.key === "y" || e.key === "Y")) { e.preventDefault(); U.redo(); return; }
@@ -779,6 +887,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     }
   };
   reindex();
+  armResize(paneEl);
 
   /* WHO IS SOUNDING, DRIVEN BY THE CALLER FROM ITS EXISTING "pos" PATH. This
      component installs no clock and subscribes to nothing — "a view never

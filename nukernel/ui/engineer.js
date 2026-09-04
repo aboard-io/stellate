@@ -1968,7 +1968,9 @@ export function mount(parent, ctx) {
          tempo, the tempo editor appears, same for key. The tempo editor does
          not reflect the richness of our tempo options."* The pace is the
          richest of them, so it has a control now — the Tempo panel's pace
-         strip (ui/eight.js `timeAxis`), through the `form.pace` sheet.
+         strip (the Time PANE's, ui/eight.js `timeAxis` — both deleted 2026-09-06;
+         the questions are the table's TIME row and its section rows now),
+         through the `form.pace` sheet.
          WHAT DOES NOT CHANGE IS THIS LINE. The row header still PRINTS the
          word and still owns no control — one owner per fact, and the owner is
          one tab over. */

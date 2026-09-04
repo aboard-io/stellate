@@ -126,7 +126,13 @@ const HARD = 1200;
 // The Band tab is the TABLE now: its rows are the sections Structure held and
 // its footer is the performance block, so nothing that tab named is gone from
 // the page — only the tab.
-const TABS = ["Where", "Rules", "Time", "Motifs", "Band",
+// …AND TWO MORE LEAVE, 2026-09-06 (nukernel/TABLE.md §10b). Paul: *"we could
+// integrate rules into a special row, time + key into a special row … a real
+// mobile app now with everything in the table and the nav space reclaimed."*
+// `Time` and `Rules` are MERGED ROWS of the Band table (`ttime`, `trules`) and
+// their two panels are out of index.html; every control either of them drew is
+// inside the row, which is what test/table.browser.js T10 measures.
+const TABS = ["Where", "Motifs", "Band",
               "Mix", "Produce", "Score", "Video",
               "Screensaver", "Export"];
 const NAV_ROWS = TABS.filter((t) => t !== "Where");
@@ -153,7 +159,14 @@ const NAV_ROWS = TABS.filter((t) => t !== "Where");
 // `<h2>` of the open panel rather than its first — which is what keeps
 // "Harmony" asserted after the fold instead of quietly dropping it. "The
 // structure" leaves the list with the panel it named.
-const HEADINGS = ["Where & when", "The rules", "Time", "Harmony", "Motifs",
+// …AND "The rules", "Time" AND "Harmony" LEAVE THE LIST WITH THEIR PANELS,
+// 2026-09-06 (§10b). The two headings the Time panel carried are gone with
+// `timeAxis`/`alphaAxis` — a merged ROW's name is the row's own word, not an
+// `<h2>` — and "The rules" is still drawn, by `ui/rules.js`, INSIDE the Band
+// panel's RULES row, which is why it may not stand in a list read as "the open
+// panel's own heading in tab order". It is still a heading and the diet still
+// skips it; what it stopped being is a PANEL's name.
+const HEADINGS = ["Where & when", "Motifs",
                   "The band",
                   "The board", "The producer", "The score",
                   // the two decks (2026-09-01): the film and the sky —

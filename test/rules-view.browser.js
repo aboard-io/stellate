@@ -151,7 +151,17 @@ function standUpServer() {
 
   /* A TAB IS OPENED THE WAY A THUMB OPENS IT — `__eightTab` is the same call
      the stripe's own button makes (ui/eight.js says so at its definition). */
-  const top = async (t) => { await p.evaluate((n) => window.__eightTab(n), t);
+  /* ...AND `Time` AND `Rules` ARE NOT TABS ANY MORE (2026-09-06,
+     nukernel/TABLE.md §10b): each is a MERGED ROW at the top of the Band
+     table's own sheet, so the door is `__eightRow`, which opens Band and
+     presses the row's head — a hand's two taps, and idempotent, so a second
+     arrival does not close what the first opened. Every `#pan-tempo` /
+     `#pan-band` selector below is the same selector inside `#pan-band`. */
+  const top = async (t) => {
+    if (t === "Time" || t === "Rules") {
+      await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
+      await p.waitForTimeout(900); return; }
+    await p.evaluate((n) => window.__eightTab(n), t);
     await p.waitForTimeout(400); };
   const doc = () => p.evaluate(() => window.__eightDoc());
   /* a slider is DRAGGED, not assigned: `input` moves the readout and `change`
@@ -197,10 +207,17 @@ function standUpServer() {
 
   /* ================= R1 · THE EIGHT AXES AND THE NAME ==================== */
   const shape = await p.evaluate(() => {
-    const q = (s) => [...document.querySelectorAll("#rulesdeck " + s)];
-    const plate = document.querySelector("#rulesdeck .nu-namebar");
+    const q = (s) => [...document.querySelectorAll("#pan-band " + s)];
+    const plate = document.querySelector("#pan-band .nu-namebar");
     return {
-      h2: (document.querySelector("#rulesdeck h2") || {}).textContent,
+      /* THE PANEL'S OWN <h2> IS "The band" SINCE 2026-09-06 (TABLE.md §10b
+         step 2): the editor is the table's RULES ROW, so the heading it draws
+         is the SHEET's and not the panel's. `ui/rules.js` still opens with
+         `ctx.section(host, "ax-rules", "The rules")`, and that is the one this
+         check has always been about — the panel it happens to be inside is the
+         Band table's now. */
+      h2: (document.querySelector("#pan-band #ax-rules > h2") ||
+           document.querySelector("#pan-band h2") || {}).textContent,
       axes: q("section.nu-rulax").map((s) => s.dataset.axis),
       words: q("h3.nu-axword").map((h) => h.textContent.trim()),
       rows: q(".nu-rule").length,
@@ -238,7 +255,7 @@ function standUpServer() {
          asked. Both spellings are read; the CLAIM ("native, then sampled") did
          not move. */
       instr: (() => {
-        const m = document.querySelector('#rulesdeck [data-sel="rule.instr.0"]');
+        const m = document.querySelector('#pan-band [data-sel="rule.instr.0"]');
         if (!m) return null;
         const box = m.closest(".nu-combo") || m.parentElement;
         const groups = m.options
@@ -290,7 +307,7 @@ function standUpServer() {
     "…and every row carries the explainer a hold opens — " + shape.rowsay +
     " of " + shape.rows + " carry data-say");
   const sayText = await p.evaluate(() =>
-    window.__nuSay('#rulesdeck .nu-rule[data-rule="bpm"]'));
+    window.__nuSay('#pan-band .nu-rule[data-rule="bpm"]'));
   await p.evaluate(() => window.__nuSayOff && window.__nuSayOff());
   check(/written again at this seed/.test(String(sayText)),
     "…and holding the tempo row opens the tier it used to print " +
@@ -336,7 +353,7 @@ function standUpServer() {
      share a line with it, and the control is the width of the row. */
   const two = await p.evaluate(() => {
     const out = [];
-    for (const d of document.querySelectorAll("#rulesdeck .nu-rule[data-shape]")) {
+    for (const d of document.querySelectorAll("#pan-band .nu-rule[data-shape]")) {
       const wl = d.querySelector(".nu-wline"), ct = d.querySelector(".nu-ctl");
       if (!wl || !ct) { out.push({ f: d.dataset.rule, missing: true }); continue; }
       const a = wl.getBoundingClientRect(), b2 = ct.getBoundingClientRect();
@@ -397,13 +414,13 @@ function standUpServer() {
     "…and the record carries the sentence it was composed with " +
     JSON.stringify(after.rules));
   const sliderNow = await p.evaluate(() =>
-    +document.querySelector('#rulesdeck [data-k="rule|bpm"]').value);
+    +document.querySelector('#pan-band [data-k="rule|bpm"]').value);
   check(sliderNow === 100, "…and the panel came back showing 100, not the " +
     "jittered tempo (the rule is what a hand said) — " + sliderNow);
 
   /* ================= R3 · RESET ========================================== */
   const hadReset = await p.evaluate(() =>
-    !!document.querySelector('#rulesdeck [data-k="rule-reset|bpm"]'));
+    !!document.querySelector('#pan-band [data-k="rule-reset|bpm"]'));
   check(hadReset, "R3 a rule a hand has written wears a reset");
   await press("rule-reset|bpm");
   const back = await doc();
@@ -412,7 +429,7 @@ function standUpServer() {
     "…and reset takes it off the record and gives the anchor's tempo back " +
     JSON.stringify({ rules: back.rules || null, bpm: back.time.bpm }));
   const gone = await p.evaluate(() =>
-    !!document.querySelector('#rulesdeck [data-k="rule-reset|bpm"]'));
+    !!document.querySelector('#pan-band [data-k="rule-reset|bpm"]'));
   check(!gone, "…and the reset mark goes with it");
 
   /* ================= R4 · THE RENDER TIER, WITHOUT A RECOMPOSE ==========
@@ -503,7 +520,7 @@ function standUpServer() {
   const added = await p.evaluate(() => ({
     rules: window.__eightDoc().rules,
     swing: window.__eightDoc().time.swing,
-    control: !!document.querySelector('#rulesdeck [data-k="rule|swing"]'),
+    control: !!document.querySelector('#pan-band [data-k="rule|swing"]'),
     // `.options` is a `<select>`'s and answered [] on the combo box, which
     // made "the palette stops offering what the record now says" pass on an
     // empty list (2026-09-02)

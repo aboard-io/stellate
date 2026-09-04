@@ -220,8 +220,16 @@ function fieldRow(f: Field, openField: string | null,
         @click=${() => { try { sf.clear!(); } catch (e) {} after(); }}>clear</button>`
     : nothing;
   if (pick === "combo")
+    /* THE SUB IS DRAWN HERE TOO, 2026-09-06. It was on the `native` branch and
+       on the chips branch and not on this one, so a field whose vocabulary is
+       long enough to earn a typed combo lost its caption — measured on the TIME
+       row: `alphabet.mode` carries `tuningSay`'s "a quarter-tone step" for
+       three of its twelve words, and the line simply was not drawn
+       (test/tempo-key.browser.js T5a/T5d read it back empty). A caption is a
+       property of the FIELD, not of which widget the vocabulary earned. */
     return html`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
+      ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
     </div>`;
   if (pick === "native")
     /* THE NATIVE PICKER KEEPS THE FIELD'S OWN ADDRESS, because an address does

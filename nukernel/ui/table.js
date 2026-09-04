@@ -1302,6 +1302,7 @@ function fieldRow(f2, openField, setOpenField, after) {
   if (pick === "combo")
     return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
+      ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
     </div>`;
   if (pick === "native")
     return b`<div class="nu-sheetrow">
@@ -1335,6 +1336,109 @@ function fieldRow(f2, openField, setOpenField, after) {
       ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
     </div>${open ? chipStrip(sf, write) : A}`;
 }
+
+// nukernel/src/table/special.ts
+var SEATED = /* @__PURE__ */ new Set([
+  "time.meter",
+  "time.swing",
+  "time.groove",
+  "alphabet.mode",
+  "alphabet.scale",
+  "alphabet.harmony"
+]);
+function seated(A2, key, label) {
+  const f2 = shField(A2, key, {}, label);
+  const s3 = f2;
+  if (!s3.key || s3.node || !SEATED.has(key)) return f2;
+  const sp = A2.sh(key, {}, null);
+  return sp ? { ...s3, node: A2.menuWide(sp) } : f2;
+}
+function flagField(key, label, on, offWord, onWord, set, sub) {
+  return {
+    key,
+    label,
+    word: on ? onWord : offWord,
+    value: on ? "1" : "",
+    derived: false,
+    sub: sub || null,
+    options: [
+      { v: "", w: offWord },
+      { v: "1", w: onWord }
+    ],
+    set: (v3) => set(!!v3)
+  };
+}
+function timeFace(A2) {
+  const doc = A2.doc();
+  const w2 = (key2) => {
+    const sp = A2.sh(key2, {}, null);
+    if (!sp) return "";
+    const c3 = A2.wcell(sp);
+    return c3.label == null ? "" : String(c3.label);
+  };
+  const bpm = doc.time && doc.time.bpm != null ? String(doc.time.bpm) : "—";
+  const key = [w2("alphabet.key"), w2("alphabet.mode")].filter(Boolean).join(" ");
+  return [bpm + " a minute", w2("time.meter"), key].filter(Boolean).join(" · ");
+}
+function timeSheet(A2) {
+  const f2 = [];
+  f2.push({ kind: "node", label: "tempo", node: A2.bpmNode() });
+  f2.push({ kind: "node", label: "by hand", node: A2.tempoNode() });
+  f2.push(seated(A2, "time.meter", "meter"));
+  f2.push(seated(A2, "time.swing", "swing"));
+  f2.push(seated(A2, "time.groove", "groove"));
+  f2.push(flagField(
+    "rubato",
+    "the breathing",
+    A2.rubatoOn(),
+    "played to the grid",
+    "the record breathes",
+    (on) => A2.setRubato(on),
+    "your box, not the record — a link carries nothing of it"
+  ));
+  f2.push({ kind: "node", label: "key", node: A2.keyNode() });
+  const mode = seated(A2, "alphabet.mode", "mode");
+  const cap = A2.tuningSay();
+  if (cap && mode.key) mode.sub = cap;
+  f2.push(mode);
+  f2.push(seated(A2, "alphabet.scale", "scale"));
+  f2.push(seated(A2, "alphabet.harmony", "harmony"));
+  f2.push(flagField(
+    "diatonic",
+    "the line",
+    !!A2.diatonicOn(),
+    "follows the chords",
+    "stays in the key",
+    (on) => A2.setDiatonic(on)
+  ));
+  f2.push({ kind: "node", label: "the changes", node: A2.changesNode() });
+  f2.push({ kind: "node", label: "record gain", node: A2.boardNode() });
+  return f2;
+}
+function rulesFace(A2) {
+  return A2.rulesFace();
+}
+function rulesSheet(A2) {
+  return [{ kind: "node", node: A2.rulesNode() }];
+}
+var SPECIALS = [
+  {
+    k: "ttime",
+    id: "time",
+    word: "time",
+    aria: "the record's own time — how fast it counts, what it counts in, and what it counts in the key of",
+    face: timeFace,
+    sheet: timeSheet
+  },
+  {
+    k: "trules",
+    id: "rules",
+    word: "rules",
+    aria: "the genre, as sentences you can edit",
+    face: rulesFace,
+    sheet: rulesSheet
+  }
+];
 
 // nukernel/src/table/undo.ts
 var DEPTH = 25;
@@ -1453,6 +1557,8 @@ var OPEN = null;
 var OPENFIELD = null;
 var WIDTH = /* @__PURE__ */ new Map();
 var CLIP = null;
+var RO = null;
+var STICK = null;
 function shapeOf(A2) {
   const doc = A2.doc();
   const secs = (doc.form && doc.form.sections || []).map((s3, i5) => ({ id: s3.id, i: i5 }));
@@ -1471,8 +1577,10 @@ function shapeOf(A2) {
 }
 function bandTable(host, A2) {
   const U = undoStack(A2);
-  OPEN = null;
-  OPENFIELD = null;
+  if (!OPEN || OPEN.indexOf("sp|") !== 0) {
+    OPEN = null;
+    OPENFIELD = null;
+  }
   const sh0 = shapeOf(A2);
   if (SEL && !sh0.at()) {
     SEL = null;
@@ -1505,7 +1613,32 @@ function bandTable(host, A2) {
   };
   const draw = () => {
     D(view(), host);
+    stick();
   };
+  const armResize = (paneEl2) => {
+    STICK = stick;
+    if (!paneEl2 || typeof ResizeObserver === "undefined") return;
+    if (!RO) RO = new ResizeObserver(() => {
+      if (STICK) STICK();
+    });
+    RO.disconnect();
+    RO.observe(paneEl2);
+  };
+  function stick() {
+    const t4 = host.querySelector("table.nu-sheetgrid");
+    if (!t4) return;
+    const pane2 = host.querySelector(".nu-pane");
+    if (pane2) t4.style.setProperty(
+      "--panew",
+      pane2.clientWidth - 6 + "px"
+    );
+    let y2 = 0;
+    for (const tr of Array.from(t4.querySelectorAll("thead > tr"))) {
+      for (const c3 of Array.from(tr.children))
+        c3.style.insetBlockStart = y2 + "px";
+      y2 += tr.getBoundingClientRect().height;
+    }
+  }
   onRedraw(draw);
   const op = (name, fn) => U.run(name, fn);
   const wrap = (name, fn) => () => op(name, fn);
@@ -1596,7 +1729,32 @@ function bandTable(host, A2) {
     </div>`;
   };
   const nCols = (S2) => (S2.across ? S2.secs.length : S2.voices.length) + 2;
+  const specialRows = (S2) => SPECIALS.map((sp) => {
+    const openKey = "sp|" + sp.id;
+    const open = OPEN === openKey;
+    let face = "";
+    try {
+      face = sp.face(A2);
+    } catch (e4) {
+      face = "";
+    }
+    return b`<tr class="nu-sprow" data-special=${sp.id}>
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <button type="button" class="nu-sphead" data-k=${sp.k}
+          aria-expanded=${String(open)}
+          aria-label=${sp.word + " — " + sp.aria}
+          @click=${() => toggle(openKey)}
+          @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle(openKey, true);
+    }}
+          ><b class="nu-spword">${sp.word}</b
+          ><span class="nu-spface">${face}</span></button>
+      </th>
+    </tr>`;
+  });
   const thead = (S2, cols) => b`<thead>
+    ${specialRows(S2)}
     <tr>
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
       ${c2(cols, (c3) => c3, (c3) => S2.across ? secHead(S2, c3) : voiceHead(S2, c3))}
@@ -1711,6 +1869,9 @@ function bandTable(host, A2) {
         label: "this record",
         ops: tableOps(A2, S2.across).map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
       }]), "the whole record");
+    for (const sp of SPECIALS)
+      if (OPEN === "sp|" + sp.id)
+        return openRow(S2, sheetFor(OPEN, () => wrapOps(sp.sheet(A2))), sp.word);
     if (OPEN.indexOf("col|") === 0 && !S2.across)
       return openRow(S2, sheetFor(OPEN, () => colSheetOf(OPEN.slice(4))), OPEN.slice(4));
     if (OPEN.indexOf("row|") === 0 && S2.across)
@@ -1936,6 +2097,12 @@ function bandTable(host, A2) {
     return fields;
   }
   function toggle(key, keepOpen = false) {
+    if (key.indexOf("sp|") === 0 && (OPEN !== key || keepOpen)) {
+      try {
+        A2.leaveLanding();
+      } catch (e4) {
+      }
+    }
     if (key.indexOf("cell|") === 0) {
       const p3 = key.split("|");
       SEL = { sec: p3[1], voice: p3[2] };
@@ -2019,8 +2186,11 @@ function bandTable(host, A2) {
   }
   function onKey(e4, S2) {
     const meta = e4.ctrlKey || e4.metaKey;
-    const tag = e4.target?.tagName;
+    const tg = e4.target;
+    const tag = tg?.tagName;
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
+    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!OPEN && OPEN.indexOf("sp|") === 0 && !!tg.closest(".nu-wopen"));
+    if (inSpecial && e4.key !== "Escape") return;
     if (meta && (e4.key === "z" || e4.key === "Z")) {
       e4.preventDefault();
       if (e4.shiftKey) U.redo();
@@ -2167,6 +2337,7 @@ function bandTable(host, A2) {
     }
   };
   reindex();
+  armResize(paneEl);
   let litRow = null, litCols = "";
   const paint = (nowRowId, soundingColIds) => {
     if (nowRowId !== litRow) {

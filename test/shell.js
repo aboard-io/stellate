@@ -505,7 +505,17 @@ const LANE = async () => {
   for (const pane of document.querySelectorAll(".nu-pane")) {
     if (!pane.getClientRects().length) continue;   // a shut tab's pane (2026-08-27)
     if (pane.scrollWidth - pane.clientWidth < 20) continue;
-    const th = pane.querySelector("th:first-child") || pane.querySelector("td:first-child");
+    /* THE FIRST th THAT IS A COLUMN, 2026-09-06. A8's subject is "this pane's
+       sticky first COLUMN", and since TABLE.md §10b the Band pane's first `<th>`
+       is a MERGED row's — TIME, spanning every column — which has no column to
+       be: its width is its containing block's, so a sticky box has nowhere to
+       travel and it slid 88 of a 200px scroll the hour the row landed. The
+       merged row pins its own LINE instead (`.nu-sphead`, which is the pane's
+       width inside a cell that is the table's), and that is a different claim,
+       measured by test/table.browser.js T10a. Here the corner is what is asked
+       about, exactly as it was before the row existed. */
+    const th = [...pane.querySelectorAll("th")].find((x) => x.colSpan === 1) ||
+               pane.querySelector("td:first-child");
     if (!th || getComputedStyle(th).position !== "sticky") continue;
     const t = pane.querySelector("table");
     const before = th.getBoundingClientRect().left;
@@ -571,7 +581,25 @@ const LANE = async () => {
    sheet and the cell sheet, and its performance block is the table's footer.
    The 2026-08-27 quotation above is kept whole; this is the amendment under
    it, which is how every previous change to this list was made. */
-const PAULS_TABS = ["Where", "Rules", "Time", "Motifs", "Band",
+/* ...AND A SECOND AMENDMENT, 2026-09-06 (nukernel/TABLE.md §10, approved by
+   Paul on 2026-09-05). The list loses two more rows, and both are HIS
+   sentence: *"we could integrate rules into a special row, time + key into a
+   special row … a real mobile app now with everything in the table and the nav
+   space reclaimed."* §10b orders the work — TIME first, RULES second — and
+   each is a merged row at the top of the Band table's own sheet:
+     · `Time`   -> the TIME row  (`ttime`):  the tempo and its nine marks, the
+                   meter, the swing, the groove, the breathing, the circle of
+                   fifths, the mode, the scale, the harmony, the diatonic line,
+                   the changes, and the pointer to the board.
+     · `Rules`  -> the RULES row (`trules`): `ui/rules.js`'s whole panel — the
+                   name plate, the eight axis blocks, every sentence with its
+                   control, the palettes and the resets — unchanged, seated.
+   `#pan-tempo` and `#rulesdeck` are out of index.html with the two tabs, and
+   the Rules branch of the stripe (the eight axis jumps) goes with them: a jump
+   link into a row you have already opened is a control that does what the
+   scroll you are already doing does. The 2026-08-27 quotation stays whole;
+   this is the second amendment under it, made the way the first one was. */
+const PAULS_TABS = ["Where", "Motifs", "Band",
                     "Mix", "Produce", "Score", "Video",
                     "Screensaver", "Export"];
 const NAV_ROWS = PAULS_TABS.filter((t) => t !== "Where");

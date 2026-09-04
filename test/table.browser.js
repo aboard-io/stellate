@@ -424,9 +424,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        ui/selects.js's own address (test/selects.js MENUS is the one owner of
        which; ui/table.js COMBOKEYS says why), and an inventory that only knew
        one spelling would have reported a control lost that is standing there. */
+    /* ...AND `data-circ`, SINCE 2026-09-06. The circle of fifths is the one
+       control on this page whose own inputs are visually clipped ON PURPOSE —
+       twenty-four radios at 1x1 with their LABELS as the targets, which is what
+       test/shell.js A3 measures at 24px — so the address a thumb reaches is the
+       widget's, `data-circ="alphabet.key"`, and an inventory that only knew the
+       other two spellings would report the whole circle short. */
     const box = await p.evaluate((k) => {
       const el = document.querySelector('#pan-band [data-k="' + k + '"]') ||
-                 document.querySelector('#pan-band [data-sel="' + k + '"]');
+                 document.querySelector('#pan-band [data-sel="' + k + '"]') ||
+                 document.querySelector('#pan-band [data-circ="' + k + '"]');
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { w: Math.round(r.width), h: Math.round(r.height) };
@@ -1148,9 +1155,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                                        '[data-sel="form.pace|' + sid + '"]')].length,
     inBand: [...document.querySelectorAll('#pan-band [data-k="form.pace|' + sid + '"], ' +
                                           '#pan-band [data-sel="form.pace|' + sid + '"]')].length,
-    inTempo: [...document.querySelectorAll('#pan-tempo [data-k^="form.pace"]')].length,
+    /* `inTempo: #pan-tempo […]` STOOD HERE, 2026-09-04 to 2026-09-06, and a
+       selector for a deleted host is a check that always passes — the same sin
+       as a check that always skips (§9d, A8). The Time PANE is gone, so the
+       honest question is the page-wide one: how many controls anywhere answer
+       to `form.pace` at all, in either spelling. */
+    anyPace: [...document.querySelectorAll(
+      '[data-k^="form.pace"], [data-sel^="form.pace"]')].length,
   }), secId);
-  check(paceOwners.all === 1 && paceOwners.inBand === 1 && paceOwners.inTempo === 0,
+  check(paceOwners.all === 1 && paceOwners.inBand === 1 && paceOwners.anyPace === 1,
     "T8d `form.pace|<section>` has exactly one control page-wide and it is the " +
     "row sheet's — " + JSON.stringify(paceOwners));
   await tap("trow|" + secId);
@@ -1660,6 +1673,326 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         "been opened (" + wrote + " of " + DR.form.sections.length + ")");
       await shutAll();
     }
+  }
+
+
+  /* ================= T10 · THE SPECIAL ROWS (TABLE.md §10b) =============
+     Paul, 2026-09-05: *"we could integrate rules into a special row, time +
+     key into a special row … a real mobile app now with everything in the
+     table and the nav space reclaimed."*
+
+     THIS GROUP IS WHERE TWO PANES' CLAIMS LANDED. `test/tempo-key.browser.js`
+     and `test/rules-view.browser.js` are NOT retired — they are re-pointed, and
+     that is the cheaper and the more honest of the two moves the plan offered:
+     between them they make sixty-five claims about what those controls DO (a
+     tap tempo measures a pulse, a groove word reaches ui/state.js, a chord
+     quality reaches the compiled genre, a rule evolves instead of restarting,
+     the catalogue is byte-identical afterwards), every one of which is about
+     the control and not about the panel it was in. Re-typing them here would
+     be a second copy of sixty-five assertions to gain nothing; changing
+     `__eightTab("Time")` to `__eightRow("time")` and `#pan-tempo` to
+     `#pan-band` keeps every one of them being made, at the address the control
+     now has. WHAT IS HERE IS WHAT ONLY THIS FILE CAN SAY: that the row is a
+     row of this sheet, merged, frozen, faced, expandable, keyboard-reachable,
+     that every control the pane offered is inside it, and that the pane is
+     GONE — T7's nothing-lost law, asked of two more panes. */
+  {
+    const wide = async (w) => { await ctx.pages()[0].setViewportSize(
+      { width: w, height: 900 }); await p.waitForTimeout(400); };
+    /* the accordion's one open head, shut — T9's own `shutAll` is inside its
+       block, and a special row's head is a `.nu-sphead` rather than a
+       `.nu-rowjump`, so this asks for all three. */
+    const shutAll = async () => { await p.evaluate(() => {
+      const el = document.querySelector(
+        '#pan-band [aria-expanded="true"].nu-rowjump, ' +
+        '#pan-band [aria-expanded="true"].nu-wcell, ' +
+        '#pan-band [aria-expanded="true"].nu-sphead');
+      if (el) el.click(); }); await p.waitForTimeout(400); };
+    const rowInfo = () => p.evaluate(() => {
+      const t = document.querySelector("#pan-band table.nu-sheetgrid");
+      if (!t) return { missing: true };
+      const heads = [...t.querySelectorAll("thead > tr")];
+      const cols = t.querySelectorAll("thead th.nu-colhead, thead th.nu-cornerh," +
+                                      " thead th.nu-addhead").length;
+      const rows = heads.filter((r) => r.classList.contains("nu-sprow"));
+      const pane = document.querySelector("#pan-band .nu-pane");
+      return {
+        order: heads.map((r) => r.dataset.special || "heads"),
+        cols,
+        rows: rows.map((r) => {
+          const th = r.querySelector("th");
+          const b = r.querySelector("button");
+          const cs = getComputedStyle(th);
+          return { id: r.dataset.special, k: b && b.dataset.k,
+            colspan: th.colSpan, pos: cs.position,
+            top: Math.round(parseFloat(cs.insetBlockStart || "0")),
+            h: Math.round(b.getBoundingClientRect().height),
+            w: Math.round(b.getBoundingClientRect().width),
+            paneW: pane ? pane.clientWidth : 0,
+            word: (r.querySelector(".nu-spword") || {}).textContent,
+            face: (r.querySelector(".nu-spface") || {}).textContent,
+            aria: b.getAttribute("aria-label"),
+            open: b.getAttribute("aria-expanded") === "true" };
+        }) };
+    });
+
+    /* T10a · A ROW OF THE SAME SHEET, MERGED, ABOVE THE COLUMN HEADS. */
+    await shutAll();
+    for (const w of [320, 390, 1280]) {
+      await wide(w);
+      const r = await rowInfo();
+      const ok = !r.missing &&
+        r.order.length === 3 && r.order[0] === "time" &&
+        r.order[1] === "rules" && r.order[2] === "heads" &&
+        r.rows.every((x) => x.colspan === r.cols) &&
+        r.rows.every((x) => x.h >= 44) &&
+        /* WITHIN 12px OF THE PANE, and the 12 is `.nu-trims`' own 3px
+           border-spacing on both sides plus the `<th>`'s padding: `--panew` is
+           the pane's client width less that, and `max-inline-size: 100%` clamps
+           the line to the cell when the table is NARROWER than the pane (1280,
+           measured: pane 1078, row 1068). Both readings are "the row is as wide
+           as what a hand can see", which is what §10b asks for. */
+        r.rows.every((x) => x.w >= x.paneW - 12 && x.w <= x.paneW + 2);
+      check(ok, "T10a " + w + " · TIME and RULES are merged rows of the sheet, " +
+        "above the column heads, colspan = the whole table, 44px, the pane's " +
+        "own width — " + JSON.stringify(r));
+      /* T10b · FROZEN WITH THE HEADS, AND STACKED. Three head rows pinned at
+         one offset would paint over each other; `grid.ts stick()` measures. */
+      const st = await p.evaluate(() => [...document.querySelectorAll(
+        "#pan-band table.nu-sheetgrid thead > tr")].map((tr) => {
+          const c = tr.querySelector("th");
+          const cs = getComputedStyle(c);
+          return { pos: cs.position,
+                   top: Math.round(parseFloat(cs.insetBlockStart || "0")),
+                   h: Math.round(tr.getBoundingClientRect().height) }; }));
+      const stacked = st.every((x) => x.pos === "sticky") &&
+        st[1].top >= st[0].top + st[0].h - 2 &&
+        st[2].top >= st[1].top + st[1].h - 2;
+      check(stacked, "T10b " + w + " · the whole head freezes as a STACK — " +
+        "each row pinned under the one above it, measured — " + JSON.stringify(st));
+    }
+    await wide(390);
+
+    /* T10c · THE FACE IS THE RECORD'S OWN LINE, AND IT FOLLOWS THE RECORD. */
+    {
+      const before = (await rowInfo()).rows[0];
+      const D0 = await doc();
+      const said = String(before.face || "");
+      const carries = said.indexOf(String(D0.time.bpm)) === 0 ||
+                      said.indexOf(String(D0.time.bpm) + " ") === 0;
+      check(carries && said.split("·").length === 3,
+        "T10c the TIME face is bpm · meter · key on one line — “" + said + "”");
+    }
+
+    /* T10d · EXPANDED, IT HOLDS EVERY CONTROL `#pan-tempo` OFFERED. The list
+       is `test/table-inventory.json`'s `time-row` homes, read back off the
+       rendered sheet at 320 — which is T7's own question asked of a third
+       pane: not "does the source mention it" but "can a thumb reach it". */
+    await wide(320);
+    await tap("ttime");
+    const timeKeys = await p.evaluate(() => {
+      const o = document.querySelector("#pan-band tr.nu-wopen");
+      if (!o) return null;
+      const ks = new Set();
+      for (const e of o.querySelectorAll("[data-k],[data-sel]"))
+        ks.add(e.dataset.sel ? "sel:" + e.dataset.sel : e.dataset.k);
+      const short = [...o.querySelectorAll("button,select,a")].filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.height < 44 &&
+               !e.closest(".nu-circ"); })
+        .map((e) => (e.dataset.k || e.tagName) + "@" +
+                    Math.round(e.getBoundingClientRect().height));
+      return { keys: [...ks], short,
+               sw: document.documentElement.scrollWidth,
+               cw: document.documentElement.clientWidth };
+    });
+    {
+      const WANT = ["bpm", "tempo-tap", "tempo-half time", "tempo-double time",
+                    "tempo-as written", "tempo-the default speed",
+                    "tempo-a little slower", "tempo-a little faster",
+                    "tempo-half the tempo", "tempo-twice the tempo",
+                    "sel:time.meter", "sel:time.swing", "sel:time.groove",
+                    "rubato", "opt|alphabet.key|0", "sel:alphabet.mode",
+                    "sel:alphabet.scale", "sel:alphabet.harmony", "diatonic",
+                    "prog0d", "sel:alphabet.quality|bar0", "prog0i",
+                    "prog-add", "prog-cut", "goto.board"];
+      const missing = timeKeys ? WANT.filter((k) => !timeKeys.keys.includes(k)) : WANT;
+      check(missing.length === 0,
+        "T10d 320 · the TIME row holds all " + WANT.length + " control " +
+        "families the Time pane offered" +
+        (missing.length ? " — MISSING " + missing.join(", ") : ""));
+      check(!!timeKeys && timeKeys.short.length === 0 &&
+            timeKeys.sw === timeKeys.cw,
+        "T10d 320 · …every one of them at least 44px, and the page does not " +
+        "scroll sideways — " + JSON.stringify(timeKeys && {
+          short: timeKeys.short.slice(0, 5), sw: timeKeys.sw, cw: timeKeys.cw }));
+    }
+
+    /* T10e · A CHIP IN THE ROW WRITES THE RECORD, THROUGH THE PANE'S OWN
+       DOOR, AND THE FACE MOVES WITH IT. */
+    {
+      const was = (await doc()).time.meter;
+      const want = was === "three" ? "four" : "three";
+      const hit = await p.evaluate((v) => { const b = document.querySelector(
+        '#pan-band [data-k="time.meter|' + v + '"]');
+        if (!b || b.disabled) return false; b.click(); return true; }, want);
+      await p.waitForTimeout(700);
+      const now = (await doc()).time.meter;
+      const face = String(((await rowInfo()).rows[0] || {}).face || "");
+      check(hit && now === want,
+        "T10e a meter chip in the row writes doc.time.meter (" + was + " -> " +
+        now + ", asked for " + want + ")");
+      check(face.indexOf("·") > 0 && face.length > 4,
+        "T10e …and the collapsed face is re-read from the record — “" + face + "”");
+      await p.evaluate((v) => { const b = document.querySelector(
+        '#pan-band [data-k="time.meter|' + v + '"]');
+        if (b && !b.disabled) b.click(); }, was);
+      await p.waitForTimeout(600);
+    }
+
+    /* T10f · THE NINE MARKS STILL MOVE THE TEMPO. (What a tap MEASURES is
+       test/tempo-key.browser.js T1's claim, at this row's address now.) */
+    {
+      const b0 = (await doc()).time.bpm;
+      await p.evaluate(() => { const b = document.querySelector(
+        '#pan-band [data-k="tempo-a little faster"]');
+        if (b && !b.disabled) b.click(); });
+      await p.waitForTimeout(700);
+      const b1 = (await doc()).time.bpm;
+      const nine = await p.evaluate(() => document.querySelectorAll(
+        '#pan-band [data-k^="tempo-"]').length);
+      check(nine === 9 && b1 > b0,
+        "T10f the nine tempo marks are in the row and one press moves the " +
+        "record (" + b0 + " -> " + b1 + ", " + nine + " marks)");
+    }
+
+    /* T10g · ENTER OPENS AND ESCAPE CLOSES, which is §10b's keyboard law. */
+    /* THE KEYS ARE PRESSED, NOT DISPATCHED. `new KeyboardEvent("keydown")` on
+       a `<button>` does NOT produce the browser's own activation click — it is
+       a synthetic event with no default action — so a check written that way
+       measures its own `dispatchEvent` and nothing else. `page.keyboard` is
+       the real key, which is what "a gate is a hand" means for a keyboard. */
+    await shutAll();
+    {
+      const was = (await rowInfo()).rows[0].open;
+      await p.evaluate(() => {
+        document.querySelector('#pan-band [data-k="ttime"]').focus(); });
+      await p.keyboard.press("Enter");
+      await p.waitForTimeout(600);
+      const isOpen = (await rowInfo()).rows[0].open;
+      await p.keyboard.press("Escape");
+      await p.waitForTimeout(600);
+      const shut = !(await rowInfo()).rows[0].open;
+      check(!was && isOpen && shut,
+        "T10g Enter on the row opens it and Escape closes it (was " + was +
+        ", open " + isOpen + ", then shut " + shut + ")");
+    }
+
+    /* T10h · THE TIME PANE IS GONE, AND NOTHING IS DRAWN TWICE. T7's law:
+       a deleted pane is proven by the absence of its host AND by exactly one
+       control page-wide for each fact it used to own. */
+    {
+      const gone = await p.evaluate(() => ({
+        host: !!document.getElementById("pan-tempo"),
+        tab: (window.__eightTabs() || []).indexOf("Time"),
+        tray: !!document.querySelector('[data-k="toptab-Time"]'),
+        axTime: !!document.getElementById("ax-time"),
+        axAlpha: !!document.getElementById("ax-alphabet") }));
+      check(!gone.host && gone.tab < 0 && !gone.tray &&
+            !gone.axTime && !gone.axAlpha,
+        "T10h the Time PANE is deleted — no #pan-tempo, no Time tab, no tray " +
+        "row, neither axis section — " + JSON.stringify(gone));
+      await shutAll();
+      await tap("ttime");
+      const owners = await p.evaluate(() => ({
+        bpm: document.querySelectorAll('[data-k="bpm"]').length,
+        meter: document.querySelectorAll('[data-sel="time.meter"]').length,
+        key: document.querySelectorAll('[data-k="opt|alphabet.key|0"]').length,
+        changes: document.querySelectorAll('[data-k="prog0d"]').length }));
+      check(owners.bpm === 1 && owners.meter === 1 && owners.key === 1 &&
+            owners.changes === 1,
+        "T10h …and each fact has exactly ONE control on the whole page — " +
+        JSON.stringify(owners));
+      await tap("ttime");
+    }
+
+    /* T10i · THE RULES ROW: the face is the count and the last change, and
+       the sheet under it is `ui/rules.js`'s own, two-line rows and all. */
+    await shutAll();
+    {
+      const face0 = String(((await rowInfo()).rows[1] || {}).face || "");
+      check(/nothing written|rule/.test(face0),
+        "T10i the RULES face says how many sentences are written — “" +
+        face0 + "”");
+      await tap("trules");
+      const sheet = await p.evaluate(() => {
+        const o = document.querySelector("#pan-band tr.nu-wopen");
+        if (!o) return null;
+        const rows = [...o.querySelectorAll(".nu-rule")];
+        const twoLine = rows.filter((r) =>
+          r.querySelector(".nu-wline") && r.querySelector(".nu-ctl")).length;
+        return { axes: o.querySelectorAll("section.nu-rulax").length,
+                 rules: rows.length, twoLine,
+                 plate: !!o.querySelector(".nu-ruleplate"),
+                 palettes: o.querySelectorAll(".nu-pal").length,
+                 tiers: rows.filter((r) => r.dataset.tier).length,
+                 sw: document.documentElement.scrollWidth,
+                 cw: document.documentElement.clientWidth };
+      });
+      check(!!sheet && sheet.axes >= 4 && sheet.rules >= 8 &&
+            sheet.twoLine >= 5 && sheet.plate && sheet.palettes >= 4 &&
+            sheet.tiers === sheet.rules && sheet.sw === sheet.cw,
+        "T10i …and the sheet is the panel — axis blocks, the name plate, the " +
+        "two-line rows (the sentence with its value, the control under it), " +
+        "the palettes, a tier on every row, no sideways scroll — " +
+        JSON.stringify(sheet));
+    }
+
+    /* T10j · A RULE WRITTEN IN THE ROW LANDS THROUGH `apply()` -> evolve. */
+    {
+      const hasRule = await p.evaluate(() =>
+        !!document.querySelector('#pan-band [data-k="rule|bpm"]'));
+      if (!hasRule) check(true, "T10j (this record states no tempo rule to drive — " +
+        "test/rules-view.browser.js drives one on reggae)");
+      else {
+        await p.evaluate(() => { const r = document.querySelector(
+          '#pan-band [data-k="rule|bpm"]');
+          r.value = String(Math.min(+r.max, +r.value + 11));
+          r.dispatchEvent(new Event("input", { bubbles: true }));
+          r.dispatchEvent(new Event("change", { bubbles: true })); });
+        await p.waitForTimeout(1400);
+        const D = await doc();
+        const wrote = (D.rules || []).some((e) => e.f === "bpm");
+        const face = String(((await rowInfo()).rows[1] || {}).face || "");
+        const still = (await rowInfo()).rows[1].open;
+        check(wrote && /1 rule|rules/.test(face) && still,
+          "T10j a rule written in the row reaches doc.rules, the face re-reads " +
+          "it, and the row is STILL OPEN across the evolve — " +
+          JSON.stringify({ wrote, face, still }));
+      }
+      await shutAll();
+    }
+
+    /* T10k · THE RULES PANE IS GONE, and its editor is drawn once. */
+    {
+      const gone = await p.evaluate(() => ({
+        host: !!document.getElementById("rulesdeck"),
+        tab: (window.__eightTabs() || []).indexOf("Rules"),
+        tray: !!document.querySelector('[data-k="toptab-Rules"]'),
+        axes: document.querySelectorAll("section.nu-rulax").length }));
+      check(!gone.host && gone.tab < 0 && !gone.tray && gone.axes === 0,
+        "T10k the Rules PANE is deleted — no #rulesdeck, no Rules tab, no tray " +
+        "branch, and with the row shut no axis block on the page — " +
+        JSON.stringify(gone));
+      await tap("trules");
+      const twice = await p.evaluate(() => ({
+        plates: document.querySelectorAll(".nu-ruleplate").length,
+        bpmRows: document.querySelectorAll('.nu-rule[data-rule="bpm"]').length }));
+      check(twice.plates === 1 && twice.bpmRows <= 1,
+        "T10k …and the editor is drawn exactly once — " + JSON.stringify(twice));
+      await shutAll();
+    }
+    await wide(390);
   }
 
   /* ================= T0 · THE CONSOLE =================================== */

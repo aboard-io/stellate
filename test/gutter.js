@@ -447,7 +447,9 @@ function standUpServer() {
      have passed vacuously against a page that could not move.) */
   const deepest = await p.evaluate(async () => {
     let best = null;
-    for (const name of ["Where", "Time", "Motifs", "Band", "Mix",
+    /* `Time` LEFT THIS WALK WITH ITS TAB, 2026-09-06 (TABLE.md §10b): it is a
+       merged ROW of the Band table, and Band is already in the list. */
+    for (const name of ["Where", "Motifs", "Band", "Mix",
                         "Produce", "Score", "Export"]) {
       window.__eightTab(name);
       await new Promise((r) => setTimeout(r, 120));
@@ -1209,7 +1211,11 @@ function standUpServer() {
     mark: !!document.querySelector('#nu-tray [data-k="explain"]'),
     byId: !!document.getElementById("explain"),
     panel: !!document.getElementById("nu-explain"),
-    rules: !!document.querySelector('.nu-traylist [data-k="toptab-Rules"]'),
+    /* THE GENRE EDITOR IS THE TABLE'S RULES ROW SINCE 2026-09-06 (TABLE.md
+       §10b step 2), so what stands in the ? mark's place is that row's own
+       head and not a tray row — the claim ("the editor is reachable") is
+       unchanged; only where it is reached moved. */
+    rules: !!document.querySelector('#pan-band [data-k="trules"]'),
     log: !!document.querySelector('#nu-tray .nu-trayfoot [data-k="logger"]') }));
   check(!t8gone.mark && !t8gone.byId && !t8gone.panel,
     "T8 · the ? mark and its panel are GONE from the rendered page — " +
@@ -1302,12 +1308,15 @@ function standUpServer() {
        left nav elements for tweaking tempo should be brought inside tempo."*
        Same `data-k`, same eight verbs, same refusals — a `#nu-tray` scope is
        what changed, so this taps the panel instead. */
+    /* ...AND THE PANEL IS THE TABLE'S TIME ROW SINCE 2026-09-06 (TABLE.md
+       §10b step 1): same `data-k`, same eight verbs, same refusals, and the
+       scope is `#pan-band` because the Time TAB is deleted. */
     const tapPanel = async (k) => {
-      const b = document.querySelector('#pan-tempo [data-k="' + k + '"]');
+      const b = document.querySelector('#pan-band [data-k="' + k + '"]');
       if (!b || b.disabled) return false;
       b.click(); await wait(120); return true;
     };
-    window.__eightTab("Time"); await wait(150);      // and as fast as it counts
+    window.__eightRow("time"); await wait(400);      // and as fast as it counts
     await tapPanel("tempo-twice the tempo");
     for (let i = 0; i < 12; i++) await tapPanel("tempo-a little faster");
     await tapPanel("tempo-double time");

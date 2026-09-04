@@ -191,4 +191,57 @@ export interface TableAPI {
      op and this table has fourteen of them. */
   snapshot(): Doc;
   evolve(next: Doc): void;
+
+  /* ---- THE SPECIAL ROWS' OWN DOORS (2026-09-06, TABLE.md 10b) ---------
+     10a: *"Special rows are rows of the same sheet: TIME, RULES, PRODUCE are
+     record-level and MERGED across the columns, expandable, chips inside."*
+     A special row's SHEET is built out of the same four field kinds every
+     other sheet on this surface is built out of, and the four below are the
+     `node` kind — a caller's own widget, seated and never re-drawn, exactly as
+     the voice's channel strip and the samples crate already are. They are the
+     Time PANE's own builders with the pane taken off them: `#pan-tempo` is
+     deleted and `timeAxis`/`alphaAxis` with it, so each of these is now the
+     ONE place its widget is built, and every write is the write it always
+     made (`DOC.time.bpm` + `changed()`, `NuAvail.SHEETS[...].set`,
+     `setRubato`). */
+  /** A MENU IN A SPECIAL ROW IS NOT A MENU IN A CELL. `combo()` above is
+   *  `menuEl`, which is `compact: true` — *"the bare widget in a cell, a slot
+   *  row or a bus plate"* — and `pick.ts` answers `tight` with a picker at
+   *  every length, because a chip strip cannot live in a 63px bar column.
+   *  A special row is the opposite case: it is a full-width line with a printed
+   *  question over it, which is exactly where `pick.ts` says chips belong, and
+   *  it is the widget `#pan-tempo` drew. So this door builds the SAME control
+   *  through `selectField` (one owner, one look, one throw) and lifts the
+   *  focusable element — the one carrying `data-sel`, whichever of the three
+   *  widgets was picked — out of its wrapper, the way ui/rules.js has lifted
+   *  one into a sentence since 2026-09-02. */
+  menuWide(sp: Spec): HTMLElement;
+  /** A HAND THAT OPENS A RECORD-LEVEL ROW IS NO LONGER STANDING IN A PLAYER.
+   *  `tablePanel` re-lands the page's open voice or section by CLICKING its
+   *  head after every rebuild, which is what makes a column sheet survive a
+   *  write — and it would close a special row under the thumb on the first
+   *  recompile. Measured, T10e/T10f/T10j: TIME shut itself the moment a meter
+   *  word, a tempo mark or a rule wrote anything, but only after some earlier
+   *  gesture had left a voice open. So opening TIME or RULES lets the landing
+   *  go, which is the true state of things. */
+  leaveLanding(): void;
+  bpmNode(): HTMLElement;
+  tempoNode(): HTMLElement;
+  keyNode(): HTMLElement;
+  changesNode(): HTMLElement;
+  boardNode(): HTMLElement;
+  /** the caption under the mode, on the three rows whose octave is not twelve
+   *  equal semitones — null on the other nine (ui/eight.js `tuningSay`). */
+  tuningSay(): string | null;
+  rubatoOn(): boolean;
+  setRubato(on: boolean): void;
+  diatonicOn(): boolean;
+  setDiatonic(on: boolean): void;
+
+  /** the RULES row: ui/rules.js's whole sheet, built into a box of its own,
+   *  through the same `apply()` -> `ctx.evolve` door it has used since
+   *  2026-09-03. `rulesFace` is the collapsed line — how many sentences this
+   *  hand has written and which one moved last. */
+  rulesNode(): HTMLElement;
+  rulesFace(): string;
 }
