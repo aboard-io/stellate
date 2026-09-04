@@ -1099,6 +1099,32 @@ export function mount(parent, ctx) {
     const c = tops[i] + hs[i] / 2;
     idx.scrollTop = Math.max(0, Math.min(max, c / (1 + H / max)));
   }
+  /* AND THE SAME QUESTION ASKED OF A YEAR RATHER THAN OF A RECORD (2026-09-05).
+     `syncIndex` points the instrument at `here`, and a box that opens on the
+     BLANK STATE has no `here` — so nothing scrolled the list at boot, `sweep()`
+     took the first screenful as the reader's position, and the year the mount
+     had just set was dragged to the top of the chronology. MEASURED at 390x844
+     before this: `setYear(indexOf(600))` ran, the boot sweep overwrote it with
+     YEARS[0] = −33000, and the box sat on a year nobody had asked for while it
+     played silence. The instrument has to be pointing at the year the page
+     opened on BEFORE the sweep reads it, exactly as it points at the record
+     when there is one — same `scrollToRow`, same read head, same "the two
+     directions agree by arithmetic" no-op.
+     NEAREST ROW AND NOT AN EXACT MATCH, because a year is not obliged to have
+     a row: every year in YEARS is some record's year today, and the day a stop
+     exists between two records this still lands somewhere honest. */
+  function scrollToYear(Y) {
+    if (!idxBuilt || !tops.length) return;
+    const li = idxRows.children;
+    let best = -1, bd = Infinity;
+    for (let i = 0; i < li.length; i++) {
+      const y = li[i].dataset.year;
+      if (!y) continue;                      // the pin and the roles carry none
+      const d = Math.abs(+y - Y);
+      if (d < bd) { bd = d; best = i; }
+    }
+    if (best >= 0) scrollToRow(best);
+  }
   // the largest i with tops[i] <= y, or 0 — a binary search, so a scroll never
   // walks 201 rows to find where it is
   function rowAt(y) {
@@ -2453,12 +2479,24 @@ export function mount(parent, ctx) {
      moves the year without naming a record.) */
 
   /* ---------- showing(gk): the handle §2.2 names ------------------------ */
-  function showing(gk) {
+  /* `asked` IS WHETHER A HAND CHOSE THIS RECORD, and it is the difference
+     between an answer and a non-sequitur (2026-09-05). A role or the blank
+     state has no place, and saying so is the right sentence for a reader who
+     just picked one — it is the wrong sentence for a box that merely OPENED on
+     the blank state, which is what every cold boot does. Measured: the page
+     booted on a real year (600, Rome) with `“silence” has no place on the
+     map` printed above the map, so #atlasSay was refusing a request nobody had
+     made and the one fact the pane had — the year — was nowhere on the page.
+     Unasked, the pane says what it says about any year with no record chosen:
+     `sentence()`, its own line, the same one the sweep writes. */
+  function showing(gk, asked) {
     here = WHEN[gk] ? gk : null;
     if (!WHEN[gk]) {
       // A ROLE IS NOT A CITY, and that is not an error (genres.js:306: "a role
-      // has a job, not a history"). Clear the ring and say so.
+      // has a job, not a history"). Clear the ring and say so — or, when
+      // nobody asked, say what the year holds.
       redraw();
+      if (!asked) { sentence(); return; }
       say.textContent = EXCLUDE[gk]
         ? "“" + gk + "” has no place on the map — " + EXCLUDE[gk] + "."
         : "“" + gk + "” has no place on the map yet.";
@@ -2522,6 +2560,17 @@ export function mount(parent, ctx) {
      which marks the first screenful of rows lights. */
   buildIndex();
   setYear(indexOf(WHEN[TERMS.basis] ? WHEN[TERMS.basis].year : YEARS[0]));
+  /* ...AND THE INSTRUMENT IS PUT ON THAT YEAR BEFORE THE SWEEP READS IT
+     (2026-09-05). The paragraph above says `syncIndex` has already centred the
+     record's own row — and that is only true when there IS a record. The box
+     opens on the blank state (`silence`, which has no place and no year), so
+     `syncIndex` found nothing to scroll to, the list stayed at the top, and the
+     sweep below took the top of the chronology as the reader's position:
+     measured at 390x844, `#atlasMap[data-year]` read −33000 one frame after
+     this line set 600, and the first hand gesture stamped that year into the
+     address. `scrollToYear` is `syncIndex`'s half of the deal for a year with
+     no record — see its own note. */
+  scrollToYear(YEARS[yi]);
   /* AND THE FIRST SWEEP IS RUN BY HAND, because nobody has scrolled yet and
      the lit ring is a fact about which rows are on the screen — which is true
      at boot exactly as it is after a flick. It runs AFTER `setYear` so that

@@ -493,7 +493,7 @@ function g18() {
       window.__eightTabNow() !== "Where" && window.__eightTab)
       window.__eightTab("Where"); });
     await p.waitForSelector("#atlasIndexRows li[data-year]", { timeout: 10000 });
-    await p.evaluate((y) => {
+    const put = await p.evaluate((y) => {
       const idx = document.getElementById("atlasIndex");
       const rows = [...idx.querySelectorAll("#atlasIndexRows li[data-year]")];
       let best = rows[0], bd = Infinity;
@@ -515,8 +515,28 @@ function g18() {
       const max = document.getElementById("atlasIndexRows").scrollHeight - H;
       const c = idx.scrollTop + best.getBoundingClientRect().top
         - idx.getBoundingClientRect().top + best.offsetHeight / 2;
+      const from = idx.scrollTop;
       idx.scrollTop = Math.max(0, Math.min(max, c / (1 + H / max)));
+      return { from, to: idx.scrollTop };
     }, y);
+    /* AND IF THE LIST WAS ALREADY THERE, IT IS SCROLLED AWAY AND BACK
+       (2026-09-05). An assignment that writes the scrollTop the scroller
+       already has fires no `scroll` event, so `sweep()` never runs and this
+       helper returns a year the page is standing on for some OTHER reason —
+       which is not the same claim. It went red for real: the boot year moved
+       onto the basis's own 600 the day the boot scroll landed, G22's first
+       year is 600, and the gate's "set the year to 600" became a no-op that
+       proved nothing about the instrument. The nudge is a reader's gesture and
+       not a poke at the page's internals — the list goes to the top of the
+       chronology and comes back — and it makes the check hold from BOTH
+       directions: whatever the page was showing, the sentence and the marks
+       under this assertion were computed by a sweep this helper caused. */
+    if (Math.abs(put.to - put.from) < 1) {
+      await p.evaluate(() => { document.getElementById("atlasIndex").scrollTop = 0; });
+      await p.waitForTimeout(250);
+      await p.evaluate((t) => { document.getElementById("atlasIndex").scrollTop = t; },
+                       put.to);
+    }
     // the sweep is rAF-coalesced and settles its labels 120 ms after the last
     // scroll event, so the gate waits for the page rather than racing it
     await p.waitForTimeout(400);

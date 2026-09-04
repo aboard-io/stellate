@@ -3,6 +3,10 @@
 //
 //   node test/soak-nukernel.js [--mins 12] [--load 2] [--url <page>] [--no-deep]
 //
+// It opens on Kingston 1969 at reading 1 by default and not on the box's own
+// boot record, which is the blank state — a starvation gate needs a record that
+// asks the engine for work. `--url` overrides it, fragment and all.
+//
 // WHAT PAUL SAID, 2026-08-24: "after a few minutes the audio crackles like
 // vinyl." The defect is a ring starvation and it does not happen on a quiet
 // machine. Two things follow, and they are the whole reason this file is not
@@ -143,7 +147,18 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
 (async () => {
   if (!CHROME) { console.error("no chromium build found; set CHROME_PATH"); process.exit(2); }
   const srv = await serve();
-  const URL = argOf("--url", `http://localhost:${srv.port}/nukernel/index.html`);
+  /* ...AND IT OPENS ON A RECORD, NOT ON THE BLANK STATE (2026-09-05). The box
+     boots on `silence` — Paul's own blank state — and this gate then pressed
+     #play and measured a starvation instrument against a song with nothing in
+     it. The crackle Paul reported is a RING starvation, and a ring is starved
+     by a record that is asking the engine for work: voices, sends, a producer
+     with something to produce. So the default fragment is a link, and the same
+     one the atlas's own gates drive — Kingston 1969, reggae, at reading 1 so
+     the twelve minutes are the same twelve minutes on every run (`s=` is
+     clamped by ui/atlas.js `open`, and a boot with no seed draws a random one).
+     `--url` still overrides the whole thing, fragment included. */
+  const URL = argOf("--url",
+    `http://localhost:${srv.port}/nukernel/index.html#at=Kingston&y=1969&s=1`);
   console.log(`soak [${TAG}]  ${MINS} min · ${LOAD} busy core(s) · poll ${POLL}s`);
   console.log(`  serving ${ROOT} on :${srv.port} with COOP:same-origin + COEP:require-corp`);
   console.log(`  page ${URL}`);
