@@ -16,7 +16,7 @@
  * state on purpose, which is what this file does.
  *
  * N1  no ↑ anywhere, at any depth, on any tab — it is ABSENT, not disabled
- * N2  ONE PATH: opening Structure folds Band — one `aria-expanded="true"`
+ * N2  ONE PATH: opening Band folds Motifs — one `aria-expanded="true"`
  *     ancestor, only its children on the stripe, and exactly ONE <mark>
  *     (rewritten in place 2026-09-02; the old claim and Paul's reversal of it
  *     are at the check itself)
@@ -156,35 +156,36 @@ const RECORD = "#at=Kingston&y=1969&s=1";
      ui/eight.js `setChain` now guarantees it is. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  await p.click('[data-k="toptab-Band"]');
+  /* THE PAIR IS `Motifs` THEN `Band` SINCE 2026-09-04 (TABLE.md wave 2c).
+     `Structure` is deleted and its sections are CHILDREN OF BAND, so the two
+     branches this gate needs cannot be Band and Structure any more — they are
+     one branch. The claim and the gesture are unchanged: open a tab with
+     children, open another, and the first must be gone. Band arrives SECOND so
+     the assertion can name what its branch holds after wave 2c — the players
+     AND the sections, which is the table's two lists said downwards. */
+  await p.click('[data-k="toptab-Motifs"]');
   await p.waitForTimeout(700);
-  await p.click('[data-k="toptab-Structure"]');
+  await p.click('[data-k="toptab-Band"]');
   await p.waitForTimeout(700);
   const two = await p.evaluate(() => {
     const T = window.__eightTree();
     const doors = [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
       .map((x) => x.dataset.k || x.id).filter((k) => k !== "playops");
-    /* `tabperformance` IS A CHILD OF STRUCTURE and its key starts with `tab`
-       — the address it wore at the band level, kept because an address does
-       not move when a row moves (ui/eight.js sectionTrayItems says so). So
-       "how many BAND members are on the stripe" cannot be `/^tab/` alone; it
-       was harmless while both branches stood and it counts one row too many
-       the moment the claim is that Band is folded. */
     return { doors, exp: T.expanded,
-      band: T.rows.filter((r) => r.depth === 1 && /^tab/.test(r.key) &&
-                                 r.key !== "tabperformance").length,
+      motifs: T.rows.filter((r) => r.depth === 1 && /^motiftab-/.test(r.key)).length,
+      band: T.rows.filter((r) => r.depth === 1 && /^tab/.test(r.key)).length,
       secs: T.rows.filter((r) => r.depth === 1 && /^secnav/.test(r.key)).length,
       marks: document.querySelectorAll("#nu-tray mark").length,
       pressed: [...document.querySelectorAll('#nu-tray [aria-pressed="true"]')]
         .map((x) => x.dataset.k || x.id),
       on: T.mark };
   });
-  check(two.doors.length === 1 && two.band === 0 && two.secs > 0 &&
-        two.exp.length === 1 && two.exp[0] === "toptab-Structure",
-    "N2 · opening Structure folds Band; one path — " + two.doors.length +
-    " expanded ancestor (" + JSON.stringify(two.doors) + "), " + two.band +
-    " member rows and " + two.secs + " section rows on the stripe, the open " +
-    "path " + JSON.stringify(two.exp));
+  check(two.doors.length === 1 && two.motifs === 0 && two.secs > 0 &&
+        two.exp.length === 1 && two.exp[0] === "toptab-Band",
+    "N2 · opening Band folds Motifs; one path — " + two.doors.length +
+    " expanded ancestor (" + JSON.stringify(two.doors) + "), " + two.motifs +
+    " motif rows, " + two.band + " player rows and " + two.secs +
+    " section rows on the stripe, the open path " + JSON.stringify(two.exp));
   check(two.marks === 1 && two.pressed.length === 1 &&
         two.pressed[0] === two.on,
     "N2 · …and exactly ONE <mark> and one aria-pressed, on the deepest open " +
@@ -199,7 +200,7 @@ const RECORD = "#at=Kingston&y=1969&s=1";
      changed, and it is asserted here rather than assumed. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  await p.click('[data-k="toptab-Motif"]');
+  await p.click('[data-k="toptab-Motifs"]');
   await p.waitForTimeout(700);
   const cellKey = await p.evaluate(() => {
     const T = window.__eightTree();
@@ -246,11 +247,11 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     await p.evaluate(async () => {
       window.__eightUp();
       await new Promise((r) => setTimeout(r, 100));
+      const mo = document.querySelector('[data-k="toptab-Motifs"]');
+      if (mo) mo.click();
+      await new Promise((r) => setTimeout(r, 400));
       const band = document.querySelector('[data-k="toptab-Band"]');
       if (band) band.click();
-      await new Promise((r) => setTimeout(r, 400));
-      const st = document.querySelector('[data-k="toptab-Structure"]');
-      if (st) st.click();
     });
     await p.waitForTimeout(700);
     widths.push(await p.evaluate((w2) => {
@@ -375,9 +376,19 @@ const RECORD = "#at=Kingston&y=1969&s=1";
       .getPropertyValue("--clock").trim(),
     meter: getComputedStyle(document.documentElement)
       .getPropertyValue("--meter").trim() }));
-  check(lit && onNow.lit.length > 0 && members.length > 0 &&
-        onNow.lit.every((k) => members.indexOf(k) >= 0),
-    "N6 · a band member lights up within 6 s of #play on the record in the " +
+  /* THE SECTIONS ARE IN THIS BRANCH TOO SINCE 2026-09-04 (TABLE.md wave 2c),
+     and the sounding SECTION lights the same way the sounding player does — so
+     "everything lit is a member" is no longer the claim; "every lit PLAYER row
+     is a member of this band" is, and the section lamp is asserted beside it
+     rather than tripping this one. `secnav*` rows are the table's own rows and
+     `lightSections` has lit them since before the table existed. */
+  const litMembers = onNow.lit.filter((k) => /^tab/.test(k || ""));
+  const litSecs = onNow.lit.filter((k) => /^secnav/.test(k || ""));
+  check(lit && litMembers.length > 0 && members.length > 0 &&
+        litMembers.every((k) => members.indexOf(k) >= 0) &&
+        onNow.lit.every((k) => /^(tab|secnav)/.test(k || "")),
+    "N6 · a band member lights up within 6 s of #play (and " + litSecs.length +
+    " section row) on the record in the " +
     "address: " + JSON.stringify(onNow.lit) + " of " + JSON.stringify(members));
   check(onNow.marks === 1 && onNow.pressedLit <= 1,
     "N6 · …and the lamp is a CLASS, not a mark: still exactly one <mark> in " +
@@ -544,7 +555,7 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     await p.waitForTimeout(350);
     await p.evaluate(() => window.__eightUp());
     await p.waitForTimeout(150);
-    await p.click('[data-k="toptab-Motif"]');
+    await p.click('[data-k="toptab-Motifs"]');
     await p.waitForTimeout(600);
     const cell = await p.evaluate(() => (window.__eightTree().rows
       .find((r) => /^motiftab-/.test(r.key)) || {}).key || null);
@@ -606,7 +617,7 @@ const RECORD = "#at=Kingston&y=1969&s=1";
   await p.waitForTimeout(300);
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  await p.click('[data-k="toptab-Motif"]');
+  await p.click('[data-k="toptab-Motifs"]');
   await p.waitForTimeout(600);
   const bank = await p.evaluate(() => window.__eightTree().rows
     .filter((r) => /^motiftab-/.test(r.key))

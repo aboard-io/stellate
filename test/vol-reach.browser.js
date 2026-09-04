@@ -213,7 +213,11 @@ function standUpServer() {
     if (!btn) { if (window.__eightUp) { window.__eightUp(); await wait(250); }
       btn = document.querySelector('[data-k="tab' + name + '"]'); }
     if (btn) btn.click(); await wait(300);
-    const f = document.querySelector('[data-k="facet-mix"]'); if (f) f.click();
+    /* THE STRIP IS THE COLUMN SHEET'S SINCE 2026-09-04 (TABLE.md wave 2c) —
+       `facet-mix` is deleted with the pane; the head the mark opens carries
+       `voiceMix` in its own sheet, opened on arrival. */
+    const h = document.querySelector('#pan-band [data-k="tcol|' + name + '"]');
+    if (h && h.getAttribute("aria-expanded") !== "true") h.click();
   }, n); await p.waitForTimeout(700); };
   /* THE DESK CHANNEL KEY IS NOT THE UNIT KEY. channelVoicesOf answers "line",
      "line2", "bass"…; the unit table answers "v0", "v1"… — audio/plan.js

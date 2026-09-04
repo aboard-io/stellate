@@ -293,6 +293,17 @@ length (the slendro duplicate-rung bug is closed).
 
 ### 2.6 Structure — top level, with grids
 
+> **SUPERSEDED 2026-09-04 by nukernel/TABLE.md §6 ¶A** (Paul: *"get rid of
+> everything it replaces"*). The `Structure` tab and its five grids are
+> DELETED; both of Paul's sentences below are kept by the TABLE instead — the
+> sections are its ROWS (top level, one tap from the Band tab's arrival, and
+> children of `Band` in the stripe), every question per section is the ROW
+> SHEET, every question per section per player is the CELL SHEET, and
+> performance is the FOOTER. `openSection` lands on the row sheet;
+> `sectionTrayItems`/`secOpsTrayItems` are unchanged and hang under `Band`;
+> `SONGTABS` is deleted outright rather than kept empty. The paragraph below
+> is left as written, because it is the round that made those controls exist.
+
 New tab `Structure` (host `#pan-structure`, glyph ▦, h2 "The structure"),
 between Band and Mix. It owns what `tabform`/`tabperformance` owned:
 `sectionTrayItems`/`secOpsTrayItems` become its children (§2.1),

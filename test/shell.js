@@ -558,8 +558,21 @@ const LANE = async () => {
    so a tab added to his list is added to the walk by existing, and the fact
    that `Where` left the list is asserted separately, below, where it can be
    read as the claim it is. */
-const PAULS_TABS = ["Where", "Rules", "Tempo", "Key", "Motif", "Band",
-                    "Structure", "Mix", "Produce", "Score", "Video",
+/* ...AND AN AMENDMENT WITH A DATE ON IT, 2026-09-04 (nukernel/TABLE.md §8,
+   approved by Paul on 2026-09-03: *"When done, build the table according to
+   the spec"*). The list loses two rows and renames two words, and every one of
+   those moves is a sentence of the spec rather than a tidy-up:
+     · *"Tempo and Key fold into one Time structure."*  -> `Time`
+     · *"Motif becomes Motifs and stays."*              -> `Motifs`
+     · *"get rid of everything it replaces … Band and Structure are DELETED,
+       not hidden."*                                    -> `Structure` goes
+   Nothing Structure named left the page: its sections are the Band TABLE's
+   rows (children of `Band` in this same stripe), its five grids are the row
+   sheet and the cell sheet, and its performance block is the table's footer.
+   The 2026-08-27 quotation above is kept whole; this is the amendment under
+   it, which is how every previous change to this list was made. */
+const PAULS_TABS = ["Where", "Rules", "Time", "Motifs", "Band",
+                    "Mix", "Produce", "Score", "Video",
                     "Screensaver", "Export"];
 const NAV_ROWS = PAULS_TABS.filter((t) => t !== "Where");
 // how long a tab is given to settle after it is opened. The Score engraves a
@@ -731,7 +744,7 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        that expanded with `__eightExpand` would be proving the probe agrees
        with itself. */
     const walk = [];
-    for (const word of ["Band", "Structure", "Motif", "Score", "Mix"]) {
+    for (const word of ["Band", "Motifs", "Score", "Mix"]) {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
       await page.click('[data-k="toptab-' + word + '"]');
@@ -774,31 +787,35 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        chain and not as a set. */
     await page.evaluate(() => window.__eightUp());
     await page.waitForTimeout(120);
+    /* ...AND THE PAIR IT DRIVES IS `Motifs` AND `Band` SINCE 2026-09-04,
+       because `Structure` is deleted (TABLE.md §6 ¶A) and its sections are
+       CHILDREN of Band now — "opening Structure folds Band" cannot be asked of
+       two branches that are one branch. The claim is unchanged and so is the
+       gesture: open one tab with children, open another, and the first must be
+       gone — one expanded ancestor, one <mark>, and the arriving tab's own
+       rows on the stripe. Band is the second of the two here so the assertion
+       can still name the rows it expects: the players AND the sections, which
+       is the whole of what the wave-2c stripe says the Band tab is. */
+    await page.click('[data-k="toptab-Motifs"]');
+    await page.waitForTimeout(TAB_SETTLE("Motifs"));
     await page.click('[data-k="toptab-Band"]');
     await page.waitForTimeout(TAB_SETTLE("Band"));
-    await page.click('[data-k="toptab-Structure"]');
-    await page.waitForTimeout(TAB_SETTLE("Structure"));
     const both = await page.evaluate(() => {
       const T = window.__eightTree();
       return { exp: T.expanded,
         expandedRows: [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
           .map((b) => b.dataset.k || b.id).filter((k) => k !== "playops"),
         marks: document.querySelectorAll("#nu-tray mark").length,
-        /* NOT `/^tab/` ALONE: `tabperformance` is a CHILD of Structure and
-           keeps the address it wore at the band level (ui/eight.js
-           sectionTrayItems), so the loose test counts a Structure row as a
-           band member — harmless while both branches stood, wrong the moment
-           the claim is that Band is folded. */
-        band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key) &&
-                                 r.key !== "tabperformance"),
+        motifs: T.rows.some((r) => r.depth === 1 && /^motiftab-/.test(r.key)),
+        band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key)),
         secs: T.rows.some((r) => r.depth === 1 && /^secnav/.test(r.key)) };
     });
     is(both.expandedRows.length === 1 && both.marks === 1 &&
-       !both.band && both.secs &&
-       both.exp.length === 1 && both.exp[0] === "toptab-Structure",
-      "A6k " + width + " · opening Structure folds Band; one path — one "
-      + "expanded ancestor, only its rows on the stripe, one <mark> — "
-      + JSON.stringify(both));
+       !both.motifs && both.band && both.secs &&
+       both.exp.length === 1 && both.exp[0] === "toptab-Band",
+      "A6k " + width + " · opening Band folds Motifs; one path — one "
+      + "expanded ancestor, its players AND its sections on the stripe, one "
+      + "<mark> — " + JSON.stringify(both));
 
     /* A6l — A MEMBER'S FOUR CHILDREN ARE REAL ROWS AT DEPTH 2. It read
        `r.subs === 4` off `.nu-traylist .nu-sub` — one shaded depth, a boolean
@@ -828,11 +845,44 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
                    depthAttr: [...document.querySelectorAll(".nu-traylist [data-depth]")]
                      .length };
         }, vk);
-        is(r.deep.length === 4 && r.exp === "true" &&
-           r.pressedOnParent === "false" && r.marks === 1 && r.depthAttr > 0,
-          "A6l " + width + " · the open member's four children are real rows at "
-          + "depth 2, the member wears a DOOR and not a state, and one <mark> "
-          + "still names the open thing — " + JSON.stringify(r));
+        /* ...AND THE FOUR FACETS ARE ONE ACT SINCE 2026-09-04 (TABLE.md wave
+           2c). `inst · mix · plays` were three PANELS to switch between and
+           they are deleted with the pane: a player is ONE VECTOR and the whole
+           of it is the column sheet its own row opens. So the member's branch
+           holds the one thing that is not a question about the player —
+           `remove`, an act with its own refusal — and the member row itself
+           carries the <mark>, because being open IS the state now and there is
+           no child left to hold it. What this still asserts is the shape a
+           tree can get wrong: a mark DESCENDS into real rows at a real depth,
+           and exactly one thing on the stripe is marked. */
+        is(r.deep.length >= 1 && r.exp === "true" &&
+           r.pressedOnParent === "true" && r.marks === 1 && r.depthAttr > 0,
+          "A6l " + width + " · the open member's children are real rows at "
+          + "depth 2, the member wears the state (it IS the open column), and "
+          + "one <mark> still names the open thing — " + JSON.stringify(r));
+        /* ...AND A SECTION IS THE OTHER HALF OF THE SAME BRANCH. The table's
+           ROWS are children of Band beside its columns, and a section's four
+           operations are the depth-2 branch of ACTIONS the facets used not to
+           be: `secup · secdown · secdup · secdrop`, not one of them a state. */
+        const sk = (await nowT()).rows
+          .filter((x) => x.depth === 1 && /^secnav/.test(x.key))[0];
+        if (sk) {
+          await page.click('[data-k="' + sk.key + '"]');
+          await page.waitForTimeout(500);
+          const rs = await page.evaluate(() => {
+            const T = window.__eightTree();
+            const kids = T.rows.filter((x) => x.depth === 2);
+            return { deep: kids.map((x) => x.key),
+                     pressed: kids.filter((x) => {
+                       const b = document.querySelector('[data-k="' + x.key + '"]');
+                       return b && b.getAttribute("aria-pressed") === "true";
+                     }).length,
+                     marks: document.querySelectorAll("#nu-tray mark").length };
+          });
+          is(rs.deep.length === 4 && rs.pressed === 0 && rs.marks === 1,
+            "A6l " + width + " · …and an open SECTION's four operations are a "
+            + "branch of acts under it — " + JSON.stringify(rs));
+        } else skip(width + " · no section row for A6l");
       } else skip(width + " · no member row for A6l");
     }
 

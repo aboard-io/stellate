@@ -235,8 +235,11 @@ function standUpServer() {
                                    b2 = document.querySelector('[data-k="tab' + n + '"]'); }
     if (!b2) return { found: false };
     b2.click(); await wait(350);
-    const f = document.querySelector('[data-k="facet-mix"]');
-    if (f) f.click();
+    /* THE MUTE IS IN THE PLAYER'S COLUMN SHEET SINCE 2026-09-04 (TABLE.md wave
+       2c): `facet-mix` is deleted and `voiceMix` is seated in the sheet the
+       column head opens, which the mark's own `openVoice` opens on arrival. */
+    const h2 = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+    if (h2 && h2.getAttribute("aria-expanded") !== "true") h2.click();
     await wait(500);
     const m = document.querySelector('[data-k="b|mute|' + n + '"]');
     if (!m) return { found: false, facet: true };
@@ -345,7 +348,13 @@ function standUpServer() {
     await wait(600);
     const tray = window.__eightTray ? window.__eightTray() : null;
     return { found: true, tab: window.__eightTabNow && window.__eightTabNow(),
-             facet: !!document.querySelector('#nu-tray [data-k="facet-inst"]'),
+             /* ...AND "ITS FACET IS OPEN" IS "ITS COLUMN SHEET IS OPEN"
+                SINCE 2026-09-04: a player is one vector and its head opens all
+                of it, so what X6 asserts is that the head this landed on is
+                EXPANDED — the same claim, at the tier that now holds it. */
+             facet: (() => { const h = document.querySelector(
+               '#pan-band [data-k="tcol|' + n + '"]');
+               return !!h && h.getAttribute("aria-expanded") === "true"; })(),
              marked: tray ? tray.mark : null,
              strip: !!document.querySelector('[data-sel^="sound.instrument"],' +
                                             '[data-k^="sel|sound.instrument"]') };

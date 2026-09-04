@@ -142,7 +142,7 @@ function standUpServer() {
   /* AND A HAND WRITES ONE. The other half of the same rule: the address is
      still worth copying the moment somebody has moved something (`markLink`
      is guarded by `booted`, not deleted). */
-  await p1.evaluate(() => window.__eightTab("Motif"));
+  await p1.evaluate(() => window.__eightTab("Motifs"));
   /* AND THE ADDRESS IS WAITED FOR, NOT SLEPT THROUGH (2026-09-02). This was
      `waitForTimeout(600)` and it went red in the full suite while passing
      alone: the write is DEBOUNCED (`markLink` arms a 250 ms timer and every

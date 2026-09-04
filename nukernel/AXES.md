@@ -34,9 +34,8 @@ the paragraphs below is one row of the join:
 | tab (Paul) | heading (vocabulary) | axis | host |
 |---|---|---|---|
 | Where | Where & when | — (the atlas) | `#atlas` |
-| Tempo | Time | **Time** | `#pan-tempo` |
-| Key | Harmony | **Alphabet** | `#pan-key` |
-| Motif | Motifs | **Material** | `#pan-motif` |
+| Time | Time · Harmony | **Time + Alphabet** | `#pan-tempo` |
+| Motifs | Motifs | **Material** | `#pan-motif` |
 | Band | The band | **Form · Cast · Development · Sound · Performance** | `#pan-band` |
 | Mix | The board | (Sound, landed) | `#deck` |
 | Produce | The producer | — (a session fact) | `#produce` |
@@ -229,3 +228,10 @@ this because it is one voice and one cell.
 They carry no provenance — who said what, "named" versus "chose" — and both the
 take law and the producer's `held` set depend on it. The eight plus the
 interview is the session; the eight alone is the song.
+
+**2026-09-04 (nukernel/TABLE.md §8), the join table amended:** `Tempo` and
+`Key` fold into one tab, `Time`, whose host holds BOTH axis sections — so that
+row names two headings and two axes and `#pan-key` is deleted. `Motif` is
+`Motifs`, the word its heading always used. `Structure` is deleted with its
+pane: the sections are the Band table's ROWS and performance is its FOOTER, so
+Form and Performance are read where they always were, under `Band`.

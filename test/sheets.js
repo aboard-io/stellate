@@ -288,9 +288,13 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
        stopped at the section LIST would see the form and none of the words.
        This is `if (t === "tabform")`'s second tap, moved to the tab that owns
        the sections. */
-    if (t === "Structure") { views.push({ top: t, k: null }, { top: t, sec: 1 });
-                             continue; }
     if (t !== "Band") { views.push({ top: t, k: null }); continue; }
+    /* ...AND THE SECTIONS ARE `Band`'s OWN BRANCH SINCE 2026-09-04 (TABLE.md
+       wave 2c). `if (t === "Structure")` stood above this line and pushed the
+       section LIST and one section's questions; the Structure tab is deleted
+       and the sections are the TABLE's rows, so the same two views are pushed
+       from inside the Band walk below — the row list is the table itself and a
+       section's questions are its row sheet. */
     await openTop(t);
     /* THE BAND'S VOICE KEYS, OFF THE STRIPE (2026-08-28). This read
        `#tabs [data-k^="tab"]` — the horizontal strip inside the Band panel.
@@ -313,6 +317,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
        for want of a control. The facet keys are read off the stripe rather than
        typed, exactly as the voice keys above are; a voice with none (the form
        and performance marks) yields the single view it always did. */
+    views.push({ top: t, sec: 1 }, { top: t, cell: 1 });
     for (const k of voices) {
       views.push({ top: t, k });
       // BACK TO THE BAND LEVEL BEFORE EACH ONE. A mark DESCENDS since
@@ -350,6 +355,20 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
           if (s2) { s2.click(); await new Promise((r) => setTimeout(r, 300)); }
         });
         if (v.sec) await p.waitForTimeout(350);
+        /* ...AND A CELL, which is where the per-section `dev.*` and
+           `material.cell` questions live since 2026-09-04 (TABLE.md §1's cell
+           tier). Without this view every development word drops out of the
+           census and the "one control per address" checks below start passing
+           for want of a control. */
+        if (v.cell) { await p.evaluate(async () => {
+          if (!window.__eightDoc) return;
+          const D = window.__eightDoc();
+          const vv = D.voices[0], s2 = D.form.sections[0];
+          if (!vv || !s2) return;
+          const c = document.querySelector('#pan-band [data-k="tcell|' + vv.name + '|' + s2.id + '"]');
+          if (c && c.getAttribute("aria-expanded") !== "true") c.click();
+          await new Promise((r) => setTimeout(r, 300));
+        }); await p.waitForTimeout(350); }
         if (v.pane) await p.evaluate(async (sel) => {
           const b = document.querySelector("#pan-band " + sel);
           if (b) { b.click(); await new Promise((r) => setTimeout(r, 300)); }
@@ -752,10 +771,46 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      names the facet it needs instead of assuming one panel holds all of them.
      `facet` is a no-op wherever the mark is absent, so the harness page — which
      has no gutter at all — is untouched. */
-  const facet = async (f) => {
-    await p.evaluate((k) => { const n2 = document.querySelector('[data-k="' + k + '"]');
-      if (n2) n2.click(); }, f);
-    await p.waitForTimeout(250);
+  /* ===== A VOICE IS ONE SHEET NOW, 2026-09-04 (nukernel/TABLE.md wave 2c) ==
+     `facet-inst` / `facet-plays` / `facet-mix` are deleted with the pane they
+     switched between: a player is a COLUMN of the Band table and its whole
+     vector — what it plays, what it is, its sampler's four words, its seat,
+     its throat's knobs, its files — is one sheet, opened by its column head.
+     So the three taps this file made are ONE tap, and it is idempotent by
+     construction: it opens the sheet only if it is not already open, because a
+     second tap on a head FOLDS it (the accordion's own law). The name is kept
+     so the call sites still read as the sentence they were making — "the
+     machine is what the kit IS", "`cast.part` is what it PLAYS" — which are
+     both still true and are now both true in one place. */
+  const facet = async (_f) => {
+    await p.evaluate(async () => {
+      if (!window.__eightDoc) return;
+      const D = window.__eightDoc();
+      const open = document.querySelector('#pan-band thead [aria-expanded="true"]');
+      if (open) return;                       // a sheet is already open
+      const names = D.voices.map((v) => v.name);
+      for (const n of names) {
+        const b = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+        if (b && b.getAttribute("aria-pressed") === "true") { b.click(); return; }
+      }
+      const first = document.querySelector('#pan-band thead [data-k^="tcol|"]');
+      if (first) first.click();
+    });
+    await p.waitForTimeout(300);
+  };
+  /* ...AND THE COLUMN OF A NAMED PLAYER, which is what the walks that switch
+     player actually mean. `openVoice` is the page's own one door and the table
+     opens that column's sheet on arrival, so this is the gesture rather than a
+     second spelling of it. */
+  const openCol = async (name) => {
+    await p.evaluate(async (n) => {
+      if (!window.__eightTab || !n) return;
+      window.__eightTab("Band");
+      await new Promise((r) => setTimeout(r, 250));
+      const b = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+      if (b && b.getAttribute("aria-expanded") !== "true") b.click();
+    }, name);
+    await p.waitForTimeout(350);
   };
   /* ===== THE PER-SECTION WORDS ARE A SECTION'S QUESTION NOW (2026-09-02) ==
      Paul: *"Make a section automation interface for the manipulation of the
@@ -774,17 +829,30 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      IT IS A NO-OP ON THE HARNESS PAGE, exactly as `facet` is — the tier
      fixture has no gutter and no sections, and `tapK`/`facet` have always been
      written so this file can drive both pages. */
-  const openDoes = async () => {
-    const went = await p.evaluate(async () => {
-      if (!window.__eightTab) return false;
-      window.__eightTab("Structure");
+  /* ...AND SINCE 2026-09-04 IT IS A CELL. The Structure grids are deleted with
+     their pane; "what does this player DO in this section" is a row of the
+     CELL's own sheet on the Band table (`tcell|<voice>|<section>`), which is
+     the tier TABLE.md §1 files it on. The sheet KEYS did not move — `dev.kit|
+     kit|<secId>`, `dev.line|<voice>|<secId>`, `material.cell|…` are the same
+     addresses they have been since 2026-08-24 — so every assertion below is
+     untouched; only the door is, again. It takes the voice's NAME because a
+     cell is a crossing and the old grid drew a whole column of them at once. */
+  const openDoes = async (vname) => {
+    const went = await p.evaluate(async (n) => {
+      if (!window.__eightTab || !window.__eightDoc) return false;
+      window.__eightTab("Band");
       await new Promise((r) => setTimeout(r, 300));
-      const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
-      if (!s2) return false;
-      s2.click();
+      const D = window.__eightDoc();
+      const v = (n && D.voices.find((x) => x.name === n)) ||
+                D.voices.find((x) => x.kind === "drums") || D.voices[0];
+      const s2 = D.form.sections[0];
+      if (!v || !s2) return false;
+      const c = document.querySelector('#pan-band [data-k="tcell|' + v.name + '|' + s2.id + '"]');
+      if (!c) return false;
+      if (c.getAttribute("aria-expanded") !== "true") c.click();
       return true;
-    });
-    await p.waitForTimeout(400);
+    }, vname || null);
+    await p.waitForTimeout(450);
     return went;
   };
   /* THE KIT'S DEVELOPMENT WORDS MOVED WIDGET, THE LAW DID NOT — the same
@@ -795,12 +863,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      while the kit was fine. Measured 2026-08-25: `dev.kit|kit|c1` is a
      `<select>` of 69 options, and it lives on the drummer's own tab, so the
      tab has to be opened before it can be looked at. */
-  await p.evaluate(() => {
-    const t = document.querySelector('[data-k="tabkit"]');
-    if (t) t.click();
-  });
-  await p.waitForTimeout(250);
-  await openDoes();
+  await openDoes("kit");
   /* ...AND A THIRD WIDGET, 2026-09-02 (wave 4). Paul: *"make those tables of
      dropdowns full of tappable grids that change options rather than dropdowns
      — like the other selection table in mix … institutionalize it."* Every
@@ -822,15 +885,31 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   });
   check(kitLive.live, "with a drummer, the kit's development words are live " +
     "(as a " + kitLive.as + ")");
-  await facet("facet-plays");             // the drummer's on/off lives here
-  await p.evaluate(() => {
+  await openCol("kit");                   // the drummer's on/off lives here
+  /* ...AND IT IS TWO WORDS RATHER THAN A TICK SINCE 2026-09-04 (TABLE.md wave
+     2c). `data-k="drums"` did not move — it is the same address, in the
+     drummer's COLUMN SHEET — but the table has no `<input type=checkbox>` on
+     it anywhere (§6: chips are decisions, and a control that needs a pointer
+     is a refused control), so the hand is the one every other field on that
+     sheet takes: tap the field, then tap the word. The harness page keeps its
+     checkbox and its `__D()` fallback below. */
+  await p.evaluate(async () => {
     const c = document.querySelector('[data-k="drums"]');
-    if (c) { c.checked = false; c.dispatchEvent(new Event("change", { bubbles: true })); return; }
-    const d = window.__D().voices.find((v) => v.kind === "drums");
+    if (c && c.tagName === "INPUT") {
+      c.checked = false; c.dispatchEvent(new Event("change", { bubbles: true })); return; }
+    if (c) {
+      c.click();
+      await new Promise((r) => setTimeout(r, 250));
+      const off = [...document.querySelectorAll('#pan-band .nu-wchip')]
+        .find((x) => /sitting out/.test(x.textContent || ""));
+      if (off) { off.click(); return; }
+    }
+    const D = window.__D ? window.__D() : null;
+    const d = D && D.voices.find((v) => v.kind === "drums");
     if (d) { d.cast.on = false; (window.__draw || (() => {}))(); }
   });
-  await p.waitForTimeout(200);
-  await openDoes();               // ...and the words it greys do not
+  await p.waitForTimeout(500);
+  await openDoes("kit");          // ...and the words it greys do not
   // ...AND IT IS READ BACK THROUGH WHICHEVER WIDGET IT IS, for the reason
   // above. A disabled <select> keeps its <option>s in the list exactly as a
   // disabled fieldset keeps its `.nu-opt` rows: greyed, not hidden, which is
@@ -859,10 +938,14 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const off = !!c.disabled || c.getAttribute("aria-disabled") === "true";
     if (!c.disabled && c.getAttribute("aria-expanded") !== "true") c.click();
     await new Promise((r) => setTimeout(r, 120));
+    /* THE STRIP IS A SIBLING `<div>` INSIDE A SHEET (2026-09-04) and a `<tr
+       class="nu-wopen">` inside a grid — see `padRead` for the argument. */
     const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-    const chips = tr && tr.classList.contains("nu-wopen")
-      ? [...tr.querySelectorAll(".nu-wchip")] : [];
-    const live = chips.filter((x) => !x.disabled).length;
+    const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
+      : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+    const chips = strip ? [...strip.querySelectorAll(".nu-wchip")] : [];
+    const live = chips.filter((x) => !x.disabled &&
+      x.getAttribute("aria-disabled") !== "true").length;
     const out = { as: "cell", off, why: c.dataset.why || null,
                   visible: chips.length, liveChips: live };
     if (c.getAttribute("aria-expanded") === "true") c.click();
@@ -887,12 +970,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      one a plain single `<select>`: a multiselect offering one legal answer is a
      worse lie than the checkboxes were. The drummer hired above is still on the
      record; his tab is where the control lives. */
-  await p.evaluate(() => {
-    const t = document.querySelector('[data-k="tabkit"]');
-    if (t) t.click();
-  });
-  await p.waitForTimeout(250);
-  await facet("facet-inst");              // the machine is what the kit IS
+  await openCol("kit");                   // the machine is what the kit IS
   const dk = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="sound.drumkit"]');
     const s2 = document.querySelector('[data-sel^="sound.drumkit"]');
@@ -942,7 +1020,11 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      compiled progression back. */
   // ON THE KEY TAB (2026-08-27): "the changes" is the Alphabet axis, which is
   // Paul's `Key`, and the quality menus are cells of its chord table.
-  if (REAL) await openTop("Key");
+  /* ...AND `Key` IS INSIDE `Time` SINCE 2026-09-04 (nukernel/TABLE.md §8:
+     *"Tempo and Key fold into one Time structure"*). The Alphabet axis and its
+     chord table did not move a line — `#pan-tempo` holds both axis sections
+     now — so the door is one word different and nothing below it is. */
+  if (REAL) await openTop("Time");
   const qual = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="alphabet.quality"]');
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
@@ -985,7 +1067,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // above names one: `dev.line` is a per-SECTION word and a voice draws one
   // facet at a time now. `cast.part` — the word this gate SAYS — is on the
   // `plays` facet, so the three reads below each stand where their control is.
-  await openDoes();
+  await openDoes(PADV);
   // ...AND READ THE WORDS BEFORE ANYTHING IS SAID, so "8 greyed" is evidence
   // about the pad rather than about the record it happened to be measured on.
   /* ...AND IT IS THAT VOICE'S ROW AND NOT THE FIRST ONE ON THE PAGE
@@ -1040,13 +1122,8 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      to be said. So the walk goes back to the band, opens the voice, opens its
      `plays` facet, says the word, and only then returns to the section to read
      what greyed. That is also exactly the gesture a hand makes. */
-  if (REAL) {
-    await openTop("Band");
-    await p.evaluate((vn) => { const t = vn &&
-      document.querySelector('[data-k="tab' + vn + '"]'); if (t) t.click(); }, PADV);
-    await p.waitForTimeout(250);
-  }
-  await facet("facet-plays");             // `cast.part` is what it PLAYS
+  if (REAL) await openCol(PADV);
+  // (`cast.part` is what it PLAYS, and `openCol` above is where it is asked)
   await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="cast.part"]');
     const i = f && f.querySelector('.nu-opt[data-v="pad"] input');
@@ -1054,7 +1131,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     window.__combo.say(document.querySelector('[data-sel^="cast.part"]'), "pad");
   });
   await p.waitForTimeout(200);
-  await openDoes();               // ...and the words it greys are per-section
+  await openDoes(PADV);               // ...and the words it greys are per-section
   /* READ THE LAW OFF THE PAGE, NOT ONE WORD OFF A TABLE THAT IS DERIVED.
      WAS: `a pad's \`at the fifth\` is disabled and \`out\` is not`. That was
      true when it was written and it is stale for a reason worth keeping: the
@@ -1086,15 +1163,24 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (s2) { for (const o of window.__combo.words(s2))
       rows.push({ v: o.v, off: o.off, why: o.why }); return rows; }
     // ...and the word grid's cell, read off the strip it opens (2026-09-02)
+    /* ...AND THE SAME CELL INSIDE A SHEET, 2026-09-04 (TABLE.md wave 2c).
+       `dev.line` is a row of the CELL's own sheet now, not a cell of a grid,
+       and ui/wordgrid.js opens a sheet row's strip with
+       `line.insertAdjacentElement("afterend", strip)` — a sibling `<div>`,
+       not a `<tr class="nu-wopen">`. Same button, same chips, same `data-k`;
+       one more place to look for the strip it opened. */
     const c = pick('.nu-wcell[data-k^="dev.line"]');
     if (c && !c.disabled) {
       const shut = c.getAttribute("aria-expanded") !== "true";
       if (shut) c.click();
       const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      if (tr && tr.classList.contains("nu-wopen"))
-        for (const o of tr.querySelectorAll(".nu-wchip"))
+      const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
+        : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      if (strip)
+        for (const o of strip.querySelectorAll(".nu-wchip"))
           rows.push({ v: o.dataset.k.slice(c.dataset.k.length + 1),
-                      off: !!o.disabled, why: o.dataset.why || "" });
+                      off: !!o.disabled || o.getAttribute("aria-disabled") === "true",
+                      why: o.dataset.why || "" });
       if (shut && c.getAttribute("aria-expanded") === "true") c.click();
     }
     return rows;
@@ -1139,7 +1225,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // ...AND A FACET TAP IS ITSELF A REDRAW, 2026-08-28: `cast.part` is on the
   // `plays` facet and gate 6 above leaves the page on `sec`, so the trip out
   // and back is both the way to reach the control and the redraw this needs.
-  await facet("facet-plays");
+  await openCol(PADV);
   await p.evaluate(() => {
     const i = document.querySelector('.nu-sheet[data-sheet^="cast.part"] .nu-opt[data-v="pad"] input');
     if (i) { i.dispatchEvent(new Event("change", { bubbles: true })); return; }
@@ -1148,7 +1234,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (window.__draw) window.__draw();
   });
   await p.waitForTimeout(200);
-  await openDoes();
+  await openDoes(PADV);
   // ...THROUGH WHICHEVER WIDGET, for the reason gate 5 gives. WAS: the sheet
   // branch alone, which found nothing on the shipped page and read `null` —
   // "the standing answer is gone" — while the answer was sitting selected in a
@@ -1175,9 +1261,14 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       if (c.disabled) continue;
       const shut = c.getAttribute("aria-expanded") !== "true";
       if (shut) c.click();
+      /* THE STRIP IS A SIBLING `<div>` INSIDE A SHEET (2026-09-04) and a
+         `<tr class="nu-wopen">` inside a grid — same button, same chips, two
+         places to look. See `padRead` above, which carries the argument. */
       const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      const chip = tr && tr.classList.contains("nu-wopen")
-        ? [...tr.querySelectorAll(".nu-wchip")].find((x) =>
+      const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
+        : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      const chip = strip
+        ? [...strip.querySelectorAll(".nu-wchip")].find((x) =>
             x.getAttribute("aria-pressed") === "true") : null;
       const v = chip ? chip.dataset.k.slice(c.dataset.k.length + 1) : null;
       const out = v === "at the fifth"

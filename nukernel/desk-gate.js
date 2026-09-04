@@ -1037,8 +1037,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       }
       if (b) b.click();
       await wait(250);
-      const f = document.querySelector('[data-k="facet-mix"]');
-      if (f) f.click();
+      /* ...AND A VOICE'S STRIP IS ITS COLUMN SHEET SINCE 2026-09-04
+         (nukernel/TABLE.md wave 2c): `facet-mix` is deleted with the pane it
+         switched, and `voiceMix` is seated in the column sheet the head opens
+         — which `openVoice` already opens on arrival. The tap below is the
+         belt: it opens the head if the arrival did not. */
+      const h = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+      if (h && h.getAttribute("aria-expanded") !== "true") h.click();
     }, name);
     await page.waitForFunction((n) => {
       const s = document.querySelector("#voicemix .nu-strip .nu-sname");

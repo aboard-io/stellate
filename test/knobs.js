@@ -340,11 +340,17 @@ const J = (x) => JSON.parse(JSON.stringify(x));
          an address does not move when a row does; the branch it hangs under
          did. Every other name this helper is called with is a voice, and
          voices are still the Band's. */
+      /* ...AND `performance` IS THE BAND TABLE'S FOOTER SINCE 2026-09-04
+         (nukernel/TABLE.md §1 RECORD, wave 2c). `Structure` is deleted and
+         `tabperformance` with it; the three performance sheets are `tperf|
+         <key>` in the footer row, whose door is `tfoot|perf`. The sheet keys
+         this file says did not move. */
       const tab = async (name) => {
         if (name === "performance" || name === "form") {
-          await top("Structure");
+          await band();
           await p.evaluate(() => { const t =
-            document.querySelector('[data-k="tabperformance"]'); if (t) t.click(); });
+            document.querySelector('#pan-band [data-k="tfoot|perf"]');
+            if (t && t.getAttribute("aria-expanded") !== "true") t.click(); });
           await p.waitForTimeout(450);
           return;
         }
@@ -369,7 +375,14 @@ const J = (x) => JSON.parse(JSON.stringify(x));
              query needed no third selector: the field ui/selects.js draws
              carries the same `data-why` the `<select>` did. */
           const off = t ? [...t.querySelectorAll("input:disabled,select:disabled")] : [];
-          const h3 = [...document.querySelectorAll("#app h3")].map((x) => x.textContent);
+          /* THE HEADING IS A SHEET ROW'S LABEL SINCE 2026-09-04 (TABLE.md wave
+             2c): the block is drawn in the table's COLUMN SHEET, where the row
+             carries the word and an `<h3>` inside it would print the same name
+             twice one line apart (ui/eight.js `knobsBlock`'s `named` argument
+             says so). Both spellings are read, so this file still runs against
+             a page that draws the heading. */
+          const h3 = [...document.querySelectorAll("#app h3, #app .nu-sheetlab")]
+            .map((x) => x.textContent);
           return { has: !!t, silent: off.filter((c) => !c.dataset.why).length,
                    n: t ? t.querySelectorAll("input,select").length : 0,
                    heading: h3.includes("the mouth") ? "the mouth"
@@ -415,14 +428,21 @@ const J = (x) => JSON.parse(JSON.stringify(x));
         const v = window.__eightDoc().voices.find((x) => x.kind === "line");
         return { set: v.set ? { ...v.set } : null,
                  live: document.querySelectorAll("[data-live] input,[data-live] select").length,
-                 clear: !!document.querySelector('[data-k^="clear|"]') };
+                 /* SCOPED TO THE KNOBS TABLE SINCE 2026-09-04. `clear|<key>`
+                    is ui/wordgrid.js's clear-back spelling too, and the block
+                    is drawn INSIDE a sheet now — so an unscoped query finds
+                    whichever `clear|` comes first in the document, which is a
+                    sheet field's and not this knob's. The knob's own clear is
+                    the third column of `table.nu-knobs`, where it has always
+                    been. */
+                 clear: !!document.querySelector('.nu-knobs [data-k^="clear|"]') };
       });
       check(after.set && after.set.breath != null, "6 a slider writes voice.set " +
         JSON.stringify(after.set) + tag);
       check(after.live === 0 && wrote.frozenBefore === 0,
         "6b a slider is not a live surface — no control inside [data-live]" + tag);
       check(after.clear, "6c …and a set key offers `clear`" + tag);
-      await p.evaluate(() => document.querySelector('[data-k^="clear|"]').click());
+      await p.evaluate(() => document.querySelector('.nu-knobs [data-k^="clear|"]').click());
       await p.waitForTimeout(600);
       const gone = await p.evaluate(() => {
         const v = window.__eightDoc().voices.find((x) => x.kind === "line");
@@ -644,8 +664,10 @@ const J = (x) => JSON.parse(JSON.stringify(x));
           JSON.stringify(missing.map((x) => x.k)) + tag);
       }
       /* ---- 8 THE TEMPO ICONS ARE ABOUT TEMPO ------------------------- */
-      // ...AND THEY ARE ON THE TEMPO TAB, which this never opened (see `top`).
-      await top("Tempo");
+      // ...AND THEY ARE ON THE `Time` TAB SINCE 2026-09-04 (nukernel/TABLE.md
+      // §8: "Tempo and Key fold into one Time structure"). The nine marks did
+      // not move a line; the tab's word did.
+      await top("Time");
       const t0 = await p.evaluate(() => ({ bpm: window.__eightDoc().time.bpm,
         rate: window.__eightDoc().time.rate,
         n: document.querySelectorAll('[data-k^="tempo-"]').length,
@@ -692,17 +714,42 @@ const J = (x) => JSON.parse(JSON.stringify(x));
         const abcOf = () => { const s = document.querySelector("[data-live=score] svg");
           return s ? s.outerHTML.length + "|" + (s.textContent || "").slice(0, 400) : ""; };
         const evOf = () => JSON.stringify(window.__eightSong ? window.__eightSong() : null);
-        const r = document.querySelector('input[data-k="take"]');
-        const was = { has: !!r, v: r && r.value };
+        const r = document.querySelector('[data-k="take"]');
+        const was = { has: !!r, v: r && (r.value != null ? r.value : r.textContent) };
         return { was, abc: abcOf(), ev: evOf() };
       });
       check(take.was.has, "10 there IS a take control on the page" + tag);
+      /* A TAKE IS SAID IN WORDS SINCE 2026-09-04 (nukernel/TABLE.md §1 RECORD,
+         wave 2c). It was an `<input type=range data-k="take">` in the
+         Structure pane's performance block; that pane is deleted and the take
+         is a field of the table's FOOTER sheet — the same address, drawn the
+         way every field on that surface is drawn (a cell you tap, then a word
+         you tap), because §6 refuses a control that needs a pointer. Both
+         spellings are driven here so this file still runs against a harness
+         page that has the range. */
       const bumped = await p.evaluate(async () => {
-        const r = document.querySelector('input[data-k="take"]');
-        r.value = "7"; r.dispatchEvent(new Event("change", { bubbles: true }));
+        const r = document.querySelector('[data-k="take"]');
+        if (r && r.tagName === "INPUT") {
+          r.value = "7"; r.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (r) {
+          /* THE STRIP OFFERS THE TAKES IT OFFERS, and 7 is not one of them:
+             ui/table.js's `numField` deals `[1,2,3,4,5,6,8,12]` plus whatever
+             the record already says. So the hand is "tap a take that is not
+             the one we are on" and the assertion is that the document took
+             THAT number, which is the claim either widget was ever making. */
+          if (r.getAttribute("aria-expanded") !== "true") r.click();
+          await new Promise((z) => setTimeout(z, 300));
+          const now = String(window.__eightDoc().performance.take || 1);
+          const chip = [...document.querySelectorAll('.nu-wchip[data-k^="take|"]')]
+            .find((x) => { const v = x.dataset.k.slice(5);
+              return v && v !== now && !x.disabled; });
+          if (chip) { const v = chip.dataset.k.slice(5); chip.click();
+            await new Promise((z) => setTimeout(z, 700));
+            return { take: window.__eightDoc().performance.take, want: +v }; }
+        }
         await new Promise((z) => setTimeout(z, 700));
         const g = window.__eightDoc();
-        return { take: g.performance.take };
+        return { take: g.performance.take, want: 7 };
       });
       await p.waitForTimeout(500);
       const seeded = await p.evaluate(() => {
@@ -710,7 +757,9 @@ const J = (x) => JSON.parse(JSON.stringify(x));
         const ks = G ? Object.values(G).map((x) => x && x.kitSeed).filter((x) => x != null) : [];
         return { ks: ks.slice(0, 4), n: ks.length };
       });
-      check(bumped.take === 7, "10b the take slider writes performance.take" + tag);
+      check(bumped.take === bumped.want && bumped.want > 1,
+        "10b the take control writes performance.take (" +
+        JSON.stringify(bumped) + ")" + tag);
       check(seeded.n > 0 && new Set(seeded.ks).size === seeded.ks.length,
         "10c …and every section of the compiled record carries its own seed " +
         JSON.stringify(seeded) + tag);

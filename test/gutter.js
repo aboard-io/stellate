@@ -447,7 +447,7 @@ function standUpServer() {
      have passed vacuously against a page that could not move.) */
   const deepest = await p.evaluate(async () => {
     let best = null;
-    for (const name of ["Where", "Tempo", "Key", "Motif", "Band", "Mix",
+    for (const name of ["Where", "Time", "Motifs", "Band", "Mix",
                         "Produce", "Score", "Export"]) {
       window.__eightTab(name);
       await new Promise((r) => setTimeout(r, 120));
@@ -885,10 +885,11 @@ function standUpServer() {
   const reach = await p.evaluate(async () => {
     /* THE LONGEST STATE THE TREE HAS, MADE BY HAND: the Motif tab, whose
        arrival opens the bank AND the open cell's fourteen transforms. It was
-       `__eightTab("Motif")` alone while that was a LEVEL; on a tree the tab
-       unfolds the bank and the cell has to be opened for the transforms, which
-       is the same two facts the old `motifops` level carried in one word. */
-    window.__eightTab("Motif");
+       `__eightTab("Motif")` alone while that was a LEVEL (the tab is `Motifs`
+       since 2026-09-04); on a tree the tab unfolds the bank and the cell has
+       to be opened for the transforms, which is the same two facts the old
+       `motifops` level carried in one word. */
+    window.__eightTab("Motifs");
     await new Promise((r) => setTimeout(r, 200));
     const cell = document.querySelector('.nu-traylist [data-k^="motiftab-"]');
     if (cell) { cell.click(); await new Promise((r) => setTimeout(r, 200)); }
@@ -1257,10 +1258,12 @@ function standUpServer() {
       if (!b || b.disabled) return false;
       b.click(); await wait(120); return true;
     };
-    /* THE SECTIONS ARE `Structure`'s NOW (2026-09-02). Paul: *"It should be
-       top level, not buried under band, and below band."* This walked
-       Band → `tabform` → the sections; the tab IS the sections, so the
-       `tabform` hop is gone and the tab's own arrival unfolds them. */
+    /* ...AND THEY ARE `Band`'s AGAIN SINCE 2026-09-04 (nukernel/TABLE.md wave
+       2c), which is not a reversal of Paul's "not buried under band": the Band
+       tab IS the sections now — the table's rows, one tap from its arrival,
+       beside its columns — so `Structure` has no tab to be top-level in. The
+       addresses did not move: `secnav<id>` and `secdrop` are the same keys on
+       the same rows, one branch over. */
     /* DOWN TO ONE SECTION, AND THE BOUND IS A SAFETY RAIL RATHER THAN A
        COUNT (2026-09-02). It read `i < 8`, which was the record this file was
        measured against — "5 sections / 36 bars / 149.1 s" in the paragraph
@@ -1271,7 +1274,7 @@ function standUpServer() {
        one — it stops when there is one section left — and the number here only
        has to be larger than any record the composer deals. */
     for (let i = 0; i < 32; i++) {                   // down to one section
-      window.__eightTab("Structure"); await wait(120);
+      window.__eightTab("Band"); await wait(120);
       const secs = [...document.querySelectorAll("#nu-tray .nu-traylist button")]
         .filter((b) => /^secnav/.test(b.dataset.k || ""));
       if (secs.length <= 1) break;
@@ -1287,7 +1290,7 @@ function standUpServer() {
       if (!b || b.disabled) return false;
       b.click(); await wait(120); return true;
     };
-    window.__eightTab("Tempo"); await wait(150);     // and as fast as it counts
+    window.__eightTab("Time"); await wait(150);      // and as fast as it counts
     await tapPanel("tempo-twice the tempo");
     for (let i = 0; i < 12; i++) await tapPanel("tempo-a little faster");
     await tapPanel("tempo-double time");

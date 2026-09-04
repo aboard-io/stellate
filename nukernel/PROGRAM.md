@@ -513,6 +513,11 @@ palette decision, still "137.5 degrees apart". **The ladder is TWELVE long
 since 2026-09-02**: `#atlas` 0 · `#pan-tempo` 1 · `#pan-key` 2 · `#pan-motif` 3
 · `#pan-band` 4 · `#deck` 5 · `#produce` 6 · `#scoredeck` 7 · `#videodeck` 8 ·
 `#saverdeck` 9 · `#rulesdeck` 10 · `#pan-structure` 11 · `#exportdeck` 12.
+**Two of those hosts were deleted on 2026-09-04** (TABLE.md wave 2c: Tempo and
+Key are one tab, and Structure's pane is the Band table) and their ORDINALS are
+left as holes rather than closed — 2 and 11 are spent, because renumbering to
+close a gap repaints every panel after it and the ladder's only meaning is that
+consecutive numbers are 137.5deg apart.
 Video and the screensaver shipped on 2026-09-01 with no number and inherited
 `--sec: 0`, so two panels wore the atlas's hue; Rules and Structure are this
 round's (Paul: the Rules view *"will need a new icon in the left nav"*,

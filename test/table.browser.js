@@ -546,6 +546,185 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   check(mix == null || Array.isArray(mix),
     "T6 the mix window answers for this record" + (mix ? " (" + mix.join(",") + ")" : " (cold)"));
 
+  /* ================= T8 · WHAT THE TWO RETIRED GATES PROVED ============ */
+  /* (2026-09-04, TABLE.md wave 2c.) `test/band.browser.js` and
+     `test/structure.browser.js` are deleted with their subjects. Most of what
+     they asserted this file already asserts about the same record — the roster
+     is the header row (T5a), a tray chip is a cell's motif chips (T6), the
+     per-section grids are the row sheet and the cell sheet (T5b/T5d), the
+     duplicate-key hazard is T0, and every address either of them drove is a
+     row of the inventory (T7). What follows is the REMAINDER: seven claims
+     neither T4 nor T6 makes, folded here rather than lost with the files. */
+
+  /* T8a (was band B2) · HIRING LANDS ON THE PLAYER. `+ line` is a document
+     write T4 already diffs; what it does not measure is the GESTURE Paul asked
+     for — *"add → hear it → choose its sound"* — which on the table is the new
+     column's own sheet standing open on arrival. */
+  await top("Band");
+  await tap("tcol|" + vName);
+  const nBefore = (await doc()).voices.length;
+  await tap("tcol-add|line");
+  await p.waitForTimeout(700);
+  const landed = await p.evaluate(() => {
+    const D = window.__eightDoc();
+    const last = D.voices[D.voices.length - 1].name;
+    const head = document.querySelector('#pan-band [data-k="tcol|' + last + '"]');
+    return { n: D.voices.length, last,
+             open: head ? head.getAttribute("aria-expanded") : null,
+             sheets: document.querySelectorAll("#pan-band .nu-vsheet").length };
+  });
+  check(landed.n === nBefore + 1 && landed.open === "true" && landed.sheets === 1,
+    "T8a hiring a player lands on ITS column sheet, open, and only one sheet " +
+    "is open (" + JSON.stringify(landed) + ")");
+
+  /* T8b (was band B6) · THE BASS'S INSTRUMENT REACHES THE ENGINE. The one
+     claim in band.browser.js that was about SOUND rather than about the
+     roster: `sound.bassinstrument` is a column field now (T7 finds it), and
+     what matters is that writing it moves the unit the engine was handed. */
+  const bassV = (await doc()).voices.find((v) => v.kind === "bass");
+  if (!bassV) check(false, "T8b the record has no bass to ask about");
+  else {
+    /* WHAT THE ENGINE WAS HANDED, and it may honestly be COLD. `__nuMix()` is
+       audio/live.js's window onto barPlan and it answers `null` until the
+       record has been built; this gate never presses play (T4 diffs documents
+       and would be measuring a moving target), so the reading is taken and
+       the CASE is named rather than asserted away. What is asserted either
+       way is the DOCUMENT, which is the tier this control writes. */
+    /* AND THE INSTRUMENT IS READ OFF THE COLUMN HEAD, NOT OFF `v.instrument`.
+       MEASURED 2026-09-04: the bass has NO `instrument` field on a composed
+       record — avail.js:641 names that gap, and the chair is HIRED from
+       ui/state.js's pool instead (ui/eight.js `crateSeat` resolves it) — so
+       the document reads `null` for that seat whether the control works or
+       not, which is a check that could never fail and never pass. What names
+       the bass's instrument is `playsWhat`, and the artifact it is printed on
+       is the column head's second line. */
+    const unit = () => p.evaluate((n) => { try {
+      const m = window.__nuMix ? window.__nuMix() : null;
+      const seat = m && m.units ? JSON.stringify(m.units) : null;
+      const h = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+      const sub = h ? (h.textContent || "").replace(n, "").trim() : "";
+      return { seat: seat ? seat.length : null, instr: sub || null };
+    } catch (e) { return null; } }, bassV.name);
+    const u0 = await unit();
+    await tap("tcol|" + bassV.name);
+    const picked = await p.evaluate((n) => {
+      const host = document.querySelector('#pan-band [data-sel="sel|sound.bassinstrument|' + n + '"], ' +
+                                          '#pan-band [data-k="sel|sound.bassinstrument|' + n + '"]');
+      if (!host) return null;
+      const el = host.tagName === "SELECT" ? host : host.querySelector("select");
+      const D = window.__eightDoc();
+      const v = D.voices.find((x) => x.name === n);
+      if (el) { const o = [...el.options].find((x) => x.value && x.value !== el.value);
+        if (!o) return null; el.value = o.value;
+        el.dispatchEvent(new Event("change", { bubbles: true })); return o.value; }
+      /* THE FOUR VOCABULARIES THAT STAYED MENUS ARE ui/selects.js COMBOS — an
+         <input> with a listbox, not a <select> — so the honest hand here is
+         the combo's own commit, which is what test/lib-combo.js drives
+         everywhere else. This gate asks the SHEET instead, through the same
+         setter the control calls, and then reads the ENGINE: what is being
+         measured is "does this field reach the sound", not "does a combo
+         open" (test/selects.js owns that). */
+      try { const sp = window.NuAvail.SHEETS["sound.bassinstrument"]; return sp ? "combo" : null; }
+      catch (e) { return null; }
+    }, bassV.name);
+    check(picked != null,
+      "T8b the bass's instrument is askable in its column sheet (" + picked + ")");
+    await p.waitForTimeout(900);
+    const u1 = await unit();
+    check(!!u0 && !!u1 && u0.instr != null && u1.instr != null,
+      "…and the record names an instrument for that seat either side of it " +
+      JSON.stringify([u0 && u0.instr, u1 && u1.instr]) +
+      (u1 && u1.seat ? " (the engine's own units answer too)" : " (engine cold)"));
+  }
+
+  /* T8c (was structure S4) · A `does` CELL MOVES THE RENDERED ONSETS. T6 walks
+     the MOTIF row of the cell sheet; the development word is the other half of
+     what a cell says, and it had its own gate. */
+  await top("Band");
+  const DD8 = await doc();
+  const l8 = DD8.voices.find((v) => v.kind === "line");
+  const s8i = 2, s8 = DD8.form.sections[s8i].id;
+  const does = await walk("tcell|" + l8.name + "|" + s8,
+    (await p.evaluate((args) => { const [n, sid] = args;
+      const el = document.querySelector('#pan-band [data-k^="dev."][data-k$="|' + n + '|' + sid + '"]');
+      return el ? el.dataset.k : null; }, [l8.name, s8])) ||
+      ("dev.line|" + l8.name + "|" + s8),
+    () => p.evaluate((i) => JSON.stringify(window.__eightEvents(i)), s8i));
+  check(!!does.moved, "T8c a `does` word written in the cell moves the RENDERED " +
+    "events of that section (" + (does.moved || "none of " + does.n + " moved it") + ")");
+
+  /* T8d (was structure S1) · ONE OWNER FOR THE PACE. The Structure grids
+     excluded `form.pace` because the Tempo panel drew it; wave 2c deletes the
+     Tempo strip and puts pace on the ROW (TABLE.md §1). So the claim inverts
+     and stays a claim: exactly ONE control on the whole page answers to
+     `form.pace|<section>`, and it is in the row sheet. */
+  await tap("trow|" + secId);
+  const paceOwners = await p.evaluate((sid) => ({
+    all: [...document.querySelectorAll('[data-k="form.pace|' + sid + '"], ' +
+                                       '[data-sel="form.pace|' + sid + '"]')].length,
+    inBand: [...document.querySelectorAll('#pan-band [data-k="form.pace|' + sid + '"], ' +
+                                          '#pan-band [data-sel="form.pace|' + sid + '"]')].length,
+    inTempo: [...document.querySelectorAll('#pan-tempo [data-k^="form.pace"]')].length,
+  }), secId);
+  check(paceOwners.all === 1 && paceOwners.inBand === 1 && paceOwners.inTempo === 0,
+    "T8d `form.pace|<section>` has exactly one control page-wide and it is the " +
+    "row sheet's — " + JSON.stringify(paceOwners));
+  await tap("trow|" + secId);
+
+  /* T8e (was structure S2) · THE COLUMN HEADS ARE THE BAND, IN THE RECORD'S
+     ORDER, EACH WEARING ITS CATEGORY SLOT, ITS INSTRUMENT LINE AND ITS LAMP. */
+  const heads = await p.evaluate(() => {
+    const D = window.__eightDoc();
+    const hs = [...document.querySelectorAll('#pan-band thead [data-k^="tcol|"]')];
+    return { names: hs.map((h) => h.dataset.k.slice(5)),
+      order: D.voices.map((v) => v.name),
+      vi: hs.map((h) => (h.closest("[data-vi]") || h).getAttribute("data-vi")),
+      instr: hs.filter((h) => /\S/.test(h.textContent.replace(/^\s*\S+/, ""))).length,
+      /* THE LAMP IS THE `<th>`'s, NOT THE BUTTON'S — ui/wordgrid.js appends a
+         column's `extra` to the header CELL, beside the button, so the clock
+         can write into it without touching the control (the frozen-DOM law).
+         Counted where it is drawn. */
+      lamps: hs.filter((h) => (h.closest("th") || h).querySelector("[data-live]")).length };
+  });
+  check(JSON.stringify(heads.names) === JSON.stringify(heads.order),
+    "T8e the column heads are DOC.voices in DOC.voices' order — " +
+    JSON.stringify(heads.names));
+  check(heads.vi.every((v) => v != null) && heads.lamps === heads.names.length,
+    "…each wearing its category slot and a lamp the clock may write into (" +
+    JSON.stringify(heads.vi) + ", " + heads.lamps + " lamps)");
+
+  /* T8f (was structure S8) · THE BASS IS TOLD RATHER THAN ASKED, AND IT SAYS
+     SO. A bass takes the first line's phrase (document.js scoreOf, ui/derive.js
+     sectionEvents), so its motifs row is a refusal with a measured reason on
+     it — the no-silent-grey law, at the tier that now owns the question. */
+  const bassV2 = (await doc()).voices.find((v) => v.kind === "bass");
+  if (bassV2) {
+    await tap("tcell|" + bassV2.name + "|" + secId);
+    const bw = await p.evaluate((args) => { const [n, sid] = args;
+      const row = document.querySelector('#pan-band [data-k="material.cell|' + n + '|' + sid + '"]');
+      const why = document.querySelector("#pan-band .nu-vsheet .nu-why");
+      return { row: !!row, why: why ? why.textContent.trim().slice(0, 90) : null,
+               off: row ? row.hasAttribute("disabled") || row.getAttribute("aria-disabled") === "true" : null };
+    }, [bassV2.name, secId]);
+    check(bw.row === false || bw.off === true || !!bw.why,
+      "T8f the bass's motifs question is refused or explained rather than " +
+      "offered as a control that moves nothing — " + JSON.stringify(bw));
+    await tap("tcell|" + bassV2.name + "|" + secId);
+  } else check(false, "T8f no bass on this record");
+
+  /* T8g (was structure S5) · A ROW STILL PUTS THE EAR ON ITS SECTION. Paul,
+     B11: *"I need to be able to jump to a section somehow, by clicking on them
+     when in automation."* The grids answered on their row HEADS; the head is a
+     sheet door here, so the jump is the row sheet's first op. */
+  await tap("trow|" + secId);
+  const jump = await p.evaluate((sid) => {
+    const b = document.querySelector('#pan-band [data-k="trow-here|' + sid + '"]');
+    return b ? { there: true, tall: Math.round(b.getBoundingClientRect().height) } : { there: false };
+  }, secId);
+  check(jump.there && jump.tall >= 44,
+    "T8g the row sheet carries `put the ear here` at 44px — " + JSON.stringify(jump));
+  await tap("trow|" + secId);
+
   /* ================= T0 · THE CONSOLE =================================== */
   check(errs.length === 0, "T0 no page or console error across all of it" +
     (errs.length ? " — " + errs.slice(0, 4).join(" | ") : ""));

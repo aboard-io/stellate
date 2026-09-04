@@ -217,7 +217,7 @@ function firstDiff(a, b) {
       await page.evaluate((tt) => window.__eightTab(tt), t);
       await page.waitForTimeout(t === "Score" ? 1500 : 350);
     }
-    await page.evaluate(() => window.__eightTab("Motif"));
+    await page.evaluate(() => window.__eightTab("Motifs"));
     await page.waitForTimeout(800);
 
     // ---- the page has to have the probes, or nothing below means anything
@@ -446,7 +446,11 @@ function firstDiff(a, b) {
       const s0 = await page.evaluate(() => window.__eightStep());
       const t0 = Date.now();
       const walked = [];
-      for (const t of ["Score", "Mix", "Band", "Motif"]) {
+      /* `Motifs` SINCE 2026-09-04 (nukernel/TABLE.md §8). The last leg is the
+         way BACK to the tab D0 was taken on, so a stale word here is not a
+         missing step — it is a no-op that leaves the walk ending on Band and
+         compares two different tabs, which is exactly what it read. */
+      for (const t of ["Score", "Mix", "Band", "Motifs"]) {
         await page.evaluate((tt) => window.__eightTab(tt), t);
         // ~7.5s a leg: four legs is the thirty seconds of playback asked for
         await page.waitForTimeout(7500);

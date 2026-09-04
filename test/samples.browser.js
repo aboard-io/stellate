@@ -28,9 +28,12 @@
  *       second press stops it — `aria-pressed` follows both ways
  *   S4  a swap through the combobox moves the chair's instrument in
  *       `__eightDoc()` AND the file the compiled recipe names for that chair
- *   S5  the nav row (`bandsamples`) and the facet (`facet-samples`) both
- *       exist, the facet only on a member whose chair is sampled, and a
- *       refused swap carries its reason on the control
+ *   S5  a player's crate is a row of ITS COLUMN SHEET, drawn only where that
+ *       chair IS played by a recording, and a refused swap carries its reason
+ *       on the control (2026-09-04, TABLE.md wave 2c: the record-wide
+ *       `bandsamples` state and the per-member `facet-samples` are deleted
+ *       with the Band pane; the crate's one door is the instrument row of the
+ *       column sheet, which is where the question is asked)
  *   S5f a press while the record RUNS sounds nothing and says why — on the
  *       control and beside it (the one refusal here a redraw cannot pre-paint)
  *   S6  zero console errors, and no sideways scroll at 320 / 390 / 1280
@@ -137,8 +140,6 @@ const COUNTER = () => {
   /* A ROW IS PRESSED THE WAY A THUMB PRESSES IT — `__eightExpand` runs the
      node's own act and toggles its own branch, exactly as the listener does
      (ui/eight.js says so at its definition). */
-  const nav = async (k) => { await p.evaluate((key) => window.__eightExpand(key), k);
-    await p.waitForTimeout(800); };
   const press = async (k) => { const hit = await p.evaluate((key) => {
       const el = document.querySelector('[data-k="' + key + '"]');
       if (!el || el.disabled) return false; el.click(); return true; }, k);
@@ -155,7 +156,26 @@ const COUNTER = () => {
   await top("Band");
   const treeBefore = await p.evaluate(() =>
     window.__eightTree().rows.map((r) => r.key));
-  await nav("bandsamples");
+  /* THE CRATE IS OPENED BY OPENING A PLAYER (2026-09-04). `nav("bandsamples")`
+     stood here — the Band panel's record-wide crate state — and there is no
+     panel state on a table. The rows below are read off `__nuSamples()` and
+     off the ENGINE either way; what the page has to show is the same files,
+     one column at a time. */
+  const openCrate = async (name) => {
+    await top("Band");
+    await p.evaluate(async (n) => {
+      const D = window.__eightDoc();
+      const v = n ? D.voices.find((x) => x.name === n)
+        : (window.__nuSamples() || []).map((r) => D.voices.find((x) => x.name === r.voice))
+            .find(Boolean);
+      if (!v) return;
+      const h = document.querySelector('#pan-band [data-k="tcol|' + v.name + '"]');
+      if (h && h.getAttribute("aria-expanded") !== "true") h.click();
+      await new Promise((r) => setTimeout(r, 300));
+    }, name || null);
+    await p.waitForTimeout(700);
+  };
+  await openCrate(null);
 
   /* ================= S1 · THE CRATE NAMES WHAT THE ENGINE PLAYS ========= */
   const S1 = await p.evaluate(() => {
@@ -302,18 +322,13 @@ const COUNTER = () => {
     "S4c …and the ENGINE was handed the new unit " + JSON.stringify(target.to));
 
   /* ================= S5 · THE ROW, THE FACET, AND A REFUSAL ============= */
-  check(treeBefore.indexOf("bandsamples") >= 0 &&
-        treeBefore.indexOf("bandroster") >= 0,
-    "S5 the crate is a row in the Band branch, beside `everyone`");
-  const marks = await p.evaluate(() => {
-    const t = window.__eightTree();
-    return { on: t.mark, rows: t.rows.filter((r) => r.key === "bandsamples" ||
-                                                    r.key === "bandroster")
-                            .map((r) => r.key + (r.on ? "*" : "")) };
-  });
-  check(marks.rows.join(" ") === "bandroster bandsamples*",
-    "S5a …and standing on it, ONE of the two wears the mark " +
-    JSON.stringify(marks.rows));
+  check(treeBefore.filter((k) => /^tab/.test(k)).length > 0,
+    "S5 the Band branch is the table's columns — one row per player, and a " +
+    "player's row is the crate's door (" +
+    treeBefore.filter((k) => /^tab/.test(k)).length + " players)");
+  check(treeBefore.indexOf("bandsamples") < 0 && treeBefore.indexOf("bandroster") < 0,
+    "S5a …and the two panel STATES are gone with the pane — no `bandsamples`, " +
+    "no `bandroster` (TABLE.md §6 ¶A: deleted, not hidden)");
   /* THE FACET IS EARNED. Open a member the crate has files for and the row is
      there; open one it has none for and it is not — which is the whole of "a
      control that cannot exist is absent, never grey". */
@@ -324,33 +339,30 @@ const COUNTER = () => {
     return { with: d.voices.filter((v) => have.has(v.name)).map((v) => v.name),
              without: d.voices.filter((v) => !have.has(v.name)).map((v) => v.name) };
   });
-  await nav("tab" + chairs.with[0]);
-  const facets1 = await p.evaluate(() =>
-    [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')].map((x) => x.dataset.k));
-  check(facets1.indexOf("facet-samples") >= 0,
-    "S5b a sampled member is offered its own crate " + JSON.stringify(facets1));
-  await press("facet-samples");
-  const own = await p.evaluate((c) => ({
-    groups: document.querySelectorAll(".nu-crategrp").length,
-    who: [...document.querySelectorAll(".nu-cratewho")].map((x) => x.textContent),
-  }), chairs.with[0]);
+  await openCrate(chairs.with[0]);
+  const own = await p.evaluate(() => ({
+    groups: document.querySelectorAll("#pan-band .nu-crategrp").length,
+    who: [...document.querySelectorAll("#pan-band .nu-cratewho")].map((x) => x.textContent),
+  }));
   check(own.groups === 1 && own.who[0] === chairs.with[0],
-    "S5c …and the facet draws that member's files alone " + JSON.stringify(own.who));
+    "S5b a sampled member's column sheet draws that member's files alone " +
+    JSON.stringify(own.who));
+  check(own.groups === 1,
+    "S5c …one group, because a column is one player " + JSON.stringify(own.groups));
   if (chairs.without.length) {
-    await nav("tab" + chairs.without[0]);
-    const facets2 = await p.evaluate(() =>
-      [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')].map((x) => x.dataset.k));
-    check(facets2.indexOf("facet-samples") < 0,
-      "S5d …and a member with no recording is not offered one (" +
-      chairs.without[0] + ") " + JSON.stringify(facets2));
+    await openCrate(chairs.without[0]);
+    const none = await p.evaluate(() =>
+      document.querySelectorAll("#pan-band .nu-crate").length);
+    check(none === 0,
+      "S5d …and a member with no recording is offered no crate at all (" +
+      chairs.without[0] + ") — absent, never a grey one");
   } else {
     notes.push("S5d every chair on this record is a recording — nothing to refuse");
     console.log("  --   S5d every chair on this record is a recording");
   }
   /* NO SILENT GREY, on the crate's own controls: whatever is refused says why,
      on the control, where a gate can read it off the artifact. */
-  await top("Band");
-  await nav("bandsamples");
+  await openCrate(chairs.with[0]);
   const greys = await p.evaluate(() => {
     const out = [];
     for (const n of document.querySelectorAll(
@@ -386,7 +398,10 @@ const COUNTER = () => {
         refused.name.indexOf(refused.why) > 0 &&
         refused.started === bsPlay.started,
     "S5f a press while the record runs sounds nothing and says why, on the " +
-    "control and beside it " + JSON.stringify(refused.why));
+    "control and beside it " + JSON.stringify(refused.why) + " " +
+    JSON.stringify({ wasPlaying, line: refused.line,
+                     inName: refused.name.indexOf(refused.why),
+                     started: [bsPlay.started, refused.started] }));
   await p.evaluate(() => { const b = document.getElementById("play"); if (b) b.click(); });
   await p.waitForTimeout(900);
 

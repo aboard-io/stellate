@@ -187,6 +187,35 @@ export function bandTable(host, A) {
     const ik = v.kind === "bass" ? "sound.bassinstrument"
              : v.kind === "drums" ? "sound.drumkit" : "sound.instrument";
     f.push(shField(A, ik, { voice: v.name }, v.kind === "drums" ? "machine" : "instrument"));
+    /* IS THERE A DRUMMER AT ALL — `cast.on`, and it is the one control of the
+       Band pane that the T7 probe's roll-up did not carry into the inventory
+       (found by reading test/sheets.js, which drives it: it was a bare
+       `<input type=checkbox data-k="drums">` on the drummer's `plays` facet).
+       It is not decoration: avail.js `f["voice.on"]` is read off it and greys
+       all sixty-eight kit words when it is false, so deleting the pane without
+       this line would have left a record with a drummer nobody could sit out
+       and a refusal nobody could clear. Said in the table's own two words
+       rather than as a tick, which is this surface's law (§6: no control that
+       needs a pointer, and chips are decisions). */
+    if (v.kind === "drums") {
+      const on = A.castOf(vi, "on") !== false;
+      f.push({ key: "drums", label: "drummer",
+               word: on ? "playing" : "sitting out",
+               value: on ? "1" : "",
+               derived: false,
+               options: [{ v: "1", w: "playing" }, { v: "", w: "sitting out" }],
+               set: (x) => A.putCast(vi, "on", !!x) });
+    }
+    /* ...AND ITS FILES, DIRECTLY UNDER IT (2026-09-04, wave 2c). §6 ¶A's
+       "don't lose unreplaced options": the samples crate is not a vector and
+       has no cell, so it comes here WHOLE — every recording on this chair with
+       its provenance, an audition each, the loop points and the SWAP, which is
+       the instrument row said again in the crate's own narrower words (only
+       what the sampler can play). It sits under the instrument because that is
+       the question it answers, and it is absent on a chair no recording plays
+       (`hasCrate`), which is the same law the loop strip is drawn under. */
+    if (A.hasCrate(v.name))
+      f.push({ kind: "node", label: "its files", node: A.voiceCrate(v.name) });
     if (v.kind === "line") f.push(shField(A, "cast.material", { voice: v.name }, "reads by default"));
     if (v.kind === "bass") f.push(shField(A, "cast.bassStyle", { voice: v.name }, "does by default"));
     /* THE CHAIR'S OWN KNOBS, for the kinds that have them. These are the four
@@ -194,6 +223,16 @@ export function bandTable(host, A) {
        already lived, so they arrive here as themselves. */
     for (const k of ["sound.attack", "sound.release", "sound.double", "sound.looping"])
       if (A.hasSheet(k, { voice: v.name })) f.push(shField(A, k, { voice: v.name }, null));
+    /* ...AND THE MODELLED CHAIR'S OWN THROAT (2026-09-04, wave 2c). VOICE.md's
+       knob table and its tract pad: the rows the extractor measured off this
+       instrument, each printing the value it is overriding, with a clear-back
+       where a hand has written. It had exactly one home — the Band pane's
+       `inst` facet — and the T7 probe could not see it, because Kingston 1969
+       seats no modelled voice. Null on a chair that has nothing to turn (a
+       recording has one breath in it); ui/eight.js `voiceKnobs` decides, and
+       the row's label is the block's own word for what it is editing. */
+    const kn = A.voiceKnobs(v.name);
+    if (kn) f.push({ kind: "node", label: kn.label, node: kn.node });
     /* THE COLUMN DEFAULTS A CELL MAY OVERRIDE (§1: "the column DEFAULT; a cell
        may override"). Written here, they move every cell that says nothing. */
     f.push(numField(A, "reg|" + v.name, "register",
@@ -236,8 +275,30 @@ export function bandTable(host, A) {
        guest: <genre>, or hand. The address is `material.cell|<voice>|<section>`
        unchanged, which is the address Structure's reads grid used and three
        gates drive. */
-    const reads = A.sh("material.cell", { voice: v.name, section: sid },
-                       v.name + " reads · " + A.secName(i));
+    /* ...EXCEPT FOR A BASS, WHICH IS TOLD RATHER THAN ASKED, AND IS TOLD SO
+       (restored 2026-09-04, wave 2c). Both compilers hand `K.bass` the FIRST
+       LINE's compiled phrase and read its accents off it — `const lead =
+       phrases[0]` in document.js `scoreOf` and in ui/derive.js
+       `sectionEvents` — and `toGenre` gives the bass a `bassStyle` and no
+       material at all. So a bass cell that named a motif would name it into
+       nothing: the control would move, the record would not. The Structure
+       grid drew that cell REFUSED with this measurement in its `data-why`;
+       wave 2b's first draft of this sheet offered it as a live control, which
+       is the declared-but-never-arriving bug drawn by the wave that is
+       supposed to gate against it, and test/table.browser.js T8f found it the
+       hour the grid came out. An honest sentence beats a dead control. */
+    if (v.kind === "bass") {
+      const b = A.bassReads();
+      f.push({ kind: "say", label: "motifs",
+        word: b && b.cell ? b.cell + " · " + b.lead + "'s" : "the first line's",
+        why: "the bass takes its accents from the first line's phrase " +
+             "(document.js scoreOf, ui/derive.js sectionEvents), so it reads " +
+             "what " + ((b && b.lead) || "that line") + " reads. Give it a " +
+             "motif of its own by changing that cell." });
+    }
+    const reads = v.kind === "bass" ? null
+      : A.sh("material.cell", { voice: v.name, section: sid },
+             v.name + " reads · " + A.secName(i));
     if (reads) {
       const w = A.wcell(reads);
       /* THE PICTURE AND THE PROVENANCE RIDE ON THE MOTIFS ONLY. The first
@@ -320,12 +381,20 @@ export function bandTable(host, A) {
                        ...Object.keys(m.table).map((k) => ({ v: k, w: m.labels[k] || k }))],
              set: (v) => A.setMaster(m.key, v || null) };
   });
+  /* THE PERFORMANCE CELLS KEEP THE SHEET'S OWN ADDRESS, and that is a fix with
+     a date on it (2026-09-04, wave 2c). The first draft re-keyed them
+     `tperf|<short>` — a table cell wants a unique key and `tperf|` was the
+     table's own prefix — and that MOVED THREE ADDRESSES that three gates drive
+     by name (test/nudges.js says `performance.phrase` to prove the phrase tent
+     reaches the rendered spread; test/selects.js's MENUS names them). An
+     address does not move when a row does, which is this page's oldest law,
+     and `performance.stress` is already unique. `tfoot|perf` is the DOOR and
+     keeps its own key. */
   const perfCells = () => A.PERFROWS.map((p) => {
     const sp = A.sh(p.key, {}, p.label);
     if (!sp) return { text: "—" };
     const w = A.wcell(sp);
-    return { ...w, key: "tperf|" + p.short, say: p.label,
-             label: p.short + " " + w.label };
+    return { ...w, say: p.label, label: p.short + " " + w.label };
   });
 
   /* ---------- AND THE TWO WAYS ROUND ----------------------------------- */
@@ -379,7 +448,17 @@ export function bandTable(host, A) {
                control and therefore a refused one (§6 ¶A). Said as words here,
                where they can be tapped. */
             sheet: () => [
-              numField(A, "take", "take", A.perfOf("take") || 0,
+              /* A TAKE IS ONE WHEN NOTHING IS SAID, NOT NOUGHT (fixed
+                 2026-09-04). It read `|| 0`, so an untouched record printed
+                 "0" and the strip grew a `take|0` chip out of the "add the
+                 value we are on" rule — a word a hand could tap that writes a
+                 take the record cannot hold: `takeSeed` is
+                 `Math.max(1, take|0)`, so nought reads back as one and the
+                 control lies about what it did. ui/eight.js `takeSeed` is the
+                 one owner of that floor and this is it, said in the offer.
+                 Found by test/knobs.js 10b, which taps a take it has not got
+                 and reads the document back. */
+              numField(A, "take", "take", A.perfOf("take") || 1,
                 [1, 2, 3, 4, 5, 6, 8, 12], (v) => A.putPerf("take", +v), false),
               numField(A, "humanize", "humanize",
                 A.perfOf("humanize") == null ? "" : A.perfOf("humanize"),
@@ -434,8 +513,17 @@ export function bandTable(host, A) {
    `bandBlock`'s own comment said about the instrument list ("a sheet of 108 lit
    words is a page of them"). Everything shorter is chips, because chips are
    decisions and this page has said so since 2026-08-16. */
+/* ...AND A FIFTH, 2026-09-04 (wave 2c): `form.role`. It is on test/selects.js's
+   MENUS list — Paul named it there as "the band > form" — and the row sheet's
+   first draft drew it as a strip of eight chips, which is a defensible reading
+   of "chips are decisions" and is not what the one owner of that list says. It
+   was a combo in the form table it replaces (`.nu-form td > .nu-sel`, a
+   stripped-down `selectField`) and it is a combo here, at the same address a
+   thumb and three gates already know. Found by test/selects.js check 1 the
+   hour the form table came out, which is exactly the job that list has. */
 const COMBOKEYS = new Set(["cast.part", "sound.instrument",
-                           "sound.bassinstrument", "sound.drumkit"]);
+                           "sound.bassinstrument", "sound.drumkit",
+                           "form.role"]);
 const LONGSTRIP = 24;
 
 /** A field off an avail.js sheet — the ordinary case, and the only one that
@@ -528,6 +616,17 @@ function groupsFor(options) {
 function rowOps(A, i, s) {
   const n = A.doc().form.sections.length;
   return [
+    /* PUT THE EAR HERE — Paul, B11: *"I need to be able to jump to a section
+       somehow, by clicking on them when in automation."* The five Structure
+       grids answered that on their ROW HEADS and the head is a sheet door on
+       this table, so the jump is the row's first op rather than a second
+       meaning on one press. `CTX.playFrom` is the one play door: cold it
+       seeks, playing it QUEUES on the next box line and the gutter's countdown
+       says how far. (Added 2026-09-04 with the deletion of the grids: it was
+       the one control of theirs the inventory filed on a head that could not
+       carry it, which is the loss T7 exists to refuse.) */
+    { k: "trow-here|" + s.id, word: "put the ear here",
+      aria: "play from this section", act: () => A.playFrom(i) },
     { k: "trow-add", word: "+ section", aria: "add a section after this one",
       act: () => A.addSection(i + 1) },
     { k: "trow-up|" + s.id, word: "▲ up", aria: "move this section earlier",

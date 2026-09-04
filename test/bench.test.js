@@ -130,7 +130,10 @@ async function touchDrag(page, x0, y0, x1, y1, steps = 8) {
    private state to flip a panel would be testing its own idea of the shell. */
 async function openMotif(pg) {
   const ok2 = await pg.evaluate(() =>
-    !!(window.__eightTab && window.__eightTab("Motif") === "Motif"));
+    /* `Motifs` SINCE 2026-09-04 (nukernel/TABLE.md §8: "Motif becomes Motifs
+       and stays"). The panel, the bench and the bank did not move a line; the
+       tab's WORD did, and it is the word `__eightTab` answers with. */
+    !!(window.__eightTab && window.__eightTab("Motifs") === "Motifs"));
   await pg.waitForTimeout(500);
   return ok2;
 }

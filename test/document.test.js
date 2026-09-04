@@ -356,7 +356,7 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
      bass instrument, so every record composed before this line existed hands
      the kernel the object it handed it yesterday — the key is not written at
      all rather than written as null. (The other end of the wire — the ENGINE's
-     bass unit actually moving — is test/band.browser.js B6c, which reads it off
+     bass unit actually moving — is test/table.browser.js T8b (was band.browser.js B6c), which reads it off
      `__nuMix()` on the rendered page.) */
   ok("G12 toGenre carries the bass's instrument, and absent is today", () => {
     const P2 = require(R + "/nukernel/precompose.js");

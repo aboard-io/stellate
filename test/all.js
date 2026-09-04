@@ -774,11 +774,12 @@ const GATES = [
      the page, the offer table (the tray writes through `cast.material` and
      `material.cell`), the record's own rename door and its `toGenre` bass wire,
      and the plan that seats the bass. */
-  { name: "band",       wave: 3, kind: "browser", url: { flag: "--page" },
-    argv: ["test/band.browser.js"], need: ["test/band.browser.js"],
-    covers: ["test/band.browser.js", "nukernel/ui/eight.js",
-             "nukernel/avail.js", "nukernel/document.js",
-             "nukernel/ui/preview.js", "nukernel/audio/plan.js"] },
+  /* (`band` STOOD HERE and is deleted with its subject, 2026-09-04, TABLE.md
+     wave 2c. It drove the ROSTER — the band as boxes, the motif tray, the four
+     facets — and the roster is the table's header row now. What it proved that
+     `table-page` did not is folded there as T8a (hiring lands on the new
+     player's column sheet) and T8b (the bass's instrument reaches the engine);
+     everything else it asserted is T5a, T6, T7 or T0 about the same record.) */
   /* THE SAMPLE CRATE, DRIVEN (2026-09-03). Paul, 2026-09-01: "I can't really
      access or organize samples used in, say, San Francisco 1996. They aren't
      accessible to the app in any way." Nothing existing could reach any of it:
@@ -808,10 +809,14 @@ const GATES = [
      It covers `avail.js` and `fields.js` as well as the view, because the grid
      draws whatever `nudgesFor` names and whatever `SHEETS` offers — a row added
      to either is a column added here with no edit in eight.js. */
-  { name: "structure",  wave: 3, kind: "browser", url: { flag: "--page" },
-    argv: ["test/structure.browser.js"], need: ["test/structure.browser.js"],
-    covers: ["test/structure.browser.js", "nukernel/ui/eight.js",
-             "nukernel/avail.js", "nukernel/fields.js"] },
+  /* (`structure` STOOD HERE and is deleted with its subject, 2026-09-04. It
+     drove the five section-automation grids; they are the table's ROW SHEET
+     and CELL SHEET. Folded into `table-page`: T8c (a `does` cell moves the
+     rendered onsets), T8d (one owner for `form.pace`, now the row), T8e (the
+     column heads are the band in the record's order, with slot and lamp), T8f
+     (the bass is told rather than asked, and says so) and T8g (a row still
+     puts the ear on its section). Its `avail.js`/`fields.js` coverage moved
+     onto `table-page` for the same reason it had it.) */
   /* THE BAND TABLE, DRIVEN (2026-09-04, TABLE.md wave 2b). Paul, 2026-09-03:
      "a song can be understood as a grid with sections as rows and instruments
      as columns … The producer becomes basically a vector manipulator across
@@ -834,7 +839,11 @@ const GATES = [
     covers: ["test/table.browser.js", "test/table-inventory.json",
              "nukernel/ui/table.js", "nukernel/ui/wordgrid.js",
              "nukernel/ui/eight.js", "nukernel/nu.css",
-             "nukernel/avail.js", "nukernel/document.js"] },
+             "nukernel/avail.js", "nukernel/document.js",
+             /* ...AND THE TWO FILES `structure` COVERED, 2026-09-04: the grids
+                drew whatever `nudgesFor` named and whatever `SHEETS` offered,
+                and so does the row sheet. */
+             "nukernel/fields.js", "nukernel/ui/samples.js"] },
   /* THE MIX PLATE'S HEADS (2026-09-02, slice 2e). Paul, B11: "the columns
      should list the instrument and when I click on the column head let me edit
      the instrument! Light up which instrument is playing, make a little volume

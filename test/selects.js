@@ -547,12 +547,21 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     await openTop("Band");
     await p.click('[data-k="' + t + '"]'); await p.waitForTimeout(150);
     eat(await survey());
-    const facets = await p.evaluate(() =>
-      [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')].map((n2) => n2.dataset.k));
-    for (const f of facets) {
-      await p.click('[data-k="' + f + '"]'); await p.waitForTimeout(200);
-      eat(await survey());
-    }
+    /* ...AND A VOICE IS ONE SHEET SINCE 2026-09-04 (nukernel/TABLE.md wave
+       2c). The three facets are deleted with the pane they switched: a player
+       is a COLUMN of the Band table and its whole vector is one sheet, opened
+       by its column head. So the walk that was "the mark, then each of its
+       facets" is "the mark, then its column head" — one more surface than the
+       stripe alone, exactly as before, and every `cast.*` and `sound.*` menu
+       is on the page for the survey to eat. */
+    const opened = await p.evaluate((k) => {
+      const name = String(k).replace(/^tab/, "");
+      const b = document.querySelector('#pan-band [data-k="tcol|' + name + '"]');
+      if (!b) return false;
+      if (b.getAttribute("aria-expanded") !== "true") b.click();
+      return true;
+    }, t);
+    if (opened) { await p.waitForTimeout(300); eat(await survey()); }
   }
   /* ===== AND THE SECTION'S OWN QUESTIONS, WHICH ARE A TAB NOW (2026-09-02) ==
      Paul: *"Sections/Structure has the same challenges. … It should be top
@@ -565,16 +574,34 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      panel's. The survey has to visit them or every `form.*` and per-section
      `dev.*` menu drops out of this file's census and the checks below start
      passing for want of a control rather than because it is a menu. */
-  await openTop("Structure");
+  /* ...AND THEY ARE THE BAND TABLE'S ROWS SINCE 2026-09-04 (wave 2c). The
+     Structure tab is deleted; a section's questions are the ROW SHEET, opened
+     by the same `secnav<id>` mark in the stripe — the address did not move,
+     the branch it hangs under did. The CELL sheet is visited too, because the
+     per-section `dev.*` and `material.cell` menus are a CELL's now and would
+     otherwise drop out of this file's census. */
+  await openTop("Band");
   eat(await survey());
   const openedSec = await p.evaluate(async () => {
     const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
     if (!s2) return false;
     s2.click();
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 400));
     return true;
   });
   if (openedSec) { await p.waitForTimeout(300); eat(await survey()); }
+  const openedCell = await p.evaluate(async () => {
+    if (!window.__eightDoc) return false;
+    const D = window.__eightDoc();
+    const v = D.voices[0], s2 = D.form.sections[0];
+    if (!v || !s2) return false;
+    const c = document.querySelector('#pan-band [data-k="tcell|' + v.name + '|' + s2.id + '"]');
+    if (!c) return false;
+    if (c.getAttribute("aria-expanded") !== "true") c.click();
+    await new Promise((r) => setTimeout(r, 400));
+    return true;
+  });
+  if (openedCell) { await p.waitForTimeout(300); eat(await survey()); }
   const selKeys = new Set(sel.map((s) => s.k));
   const sheetKeys = new Set(sheets.map((s) => s.k));
   notes.push("     " + (tabs.length ? "tabs walked: " + tabs.join(" ") : "no tab strip") +
@@ -744,11 +771,13 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     JSON.stringify([...new Set(sel.filter((s) => !MENUS[s.k] && !MULTI[s.k])
       .map((s) => bare(s.key)))]));
 
-  /* THE CHANGES, THE MODE AND THE CIRCLE ARE ALL ON THE `Key` TAB (2026-08-27)
-     and checks 4, 5, 5b, 7 and 9 all read them off the rendered page, so the
-     page is put on that tab once, here, and left there. Nothing between here
-     and check 10 touches the band. */
-  await openTop("Key");
+  /* THE CHANGES, THE MODE AND THE CIRCLE ARE ALL ON THE `Time` TAB SINCE
+     2026-09-04 (nukernel/TABLE.md §8: *"Tempo and Key fold into one Time
+     structure"*). They were `Key`'s from 2026-08-27; the Alphabet axis did not
+     move a line — `#pan-tempo` holds both axis sections now — so checks 4, 5,
+     5b, 7 and 9 read them off the same page through a door with one word
+     changed. Nothing between here and check 10 touches the band. */
+  await openTop("Time");
 
   /* ---- 4 THE CHORD QUALITY IS INSIDE THE CHANGES TABLE, ONE PER BAR ---- */
   const bars = await p.evaluate(() => (window.__D().alphabet.prog || []).length);
@@ -1229,7 +1258,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      page puts the thumb back on the same control (`data-k`) and the list stays
      SHUT — the 2026-08-25 bug ("When I select something the box just pops up
      again") must not come back wearing a new element. */
-  await openTop("Key");
+  await openTop("Time");
   const wasMode = await p.evaluate(() => window.__D().alphabet.mode);
   await p.click('#app [data-sel="alphabet.mode"]');
   await p.waitForTimeout(250);

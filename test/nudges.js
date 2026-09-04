@@ -215,19 +215,43 @@ const spread = (ev) => {
     await p.evaluate(() => window.__eightTab("Band"));
     await p.waitForTimeout(300);
   };
-  const openStructure = async () => {
-    await p.evaluate(() => window.__eightTab("Structure"));
-    await p.waitForTimeout(300);
-  };
+  /* ...AND `Structure` IS DELETED, 2026-09-04 (nukernel/TABLE.md wave 2c):
+     the sections are the BAND TABLE's rows, children of `Band` in the same
+     stripe, and a section's questions are its ROW SHEET. `secnav<id>` did not
+     move — it is the same mark on the same row, one branch over — and what it
+     lands on is `trow|<id>` instead of the `sec<id>` heading, because a row
+     head is the door on a table. */
   const openSection = async (id) => {
-    await openStructure();
-    /* THE SECTION'S OWN ROW IN THE GUTTER IS THE DOOR, and it is the same
-       gesture the numbered button in the form table makes (`openSection` is
-       one function with two spellings, ui/eight.js). `secnav<id>` is the
-       stripe's key for it; `sec<id>` is the heading it lands on, which is what
-       the tap below confirms arrived. */
+    await openBand();
     await tap("secnav" + id);
-    return tap("sec" + id);
+    await p.waitForTimeout(300);
+    const got = await p.evaluate((sid) => {
+      const b = document.querySelector('#pan-band [data-k="trow|' + sid + '"]');
+      if (!b) return false;
+      if (b.getAttribute("aria-expanded") !== "true") b.click();
+      return b.getAttribute("aria-expanded") === "true";
+    }, id);
+    /* THE SHEET IS WAITED FOR, NOT ASSUMED. `openSection` ends in `draw()`,
+       which rebuilds the whole panel and re-opens this row's sheet from
+       `tablePanel`; a scan that ran in the same turn read a table that was
+       being replaced under it and found no strip at all — measured
+       2026-09-04, `dis` came back empty and the seven drum edges read as
+       "missing" on a page that was greying all seven correctly. */
+    await p.waitForTimeout(400);
+    return got;
+  };
+  /* ...AND A CELL'S QUESTIONS ARE THE CELL'S. `dev.line|<voice>|<section>` was
+     a column of the Structure grid and is a row of the CELL sheet now (§1's
+     cell tier), so the door for a per-section word about ONE PLAYER is that
+     player's crossing with that section. */
+  const openCell = async (voice, id) => {
+    await openBand();
+    return p.evaluate(([v, sid]) => {
+      const c = document.querySelector('#pan-band [data-k="tcell|' + v + '|' + sid + '"]');
+      if (!c) return false;
+      if (c.getAttribute("aria-expanded") !== "true") c.click();
+      return true;
+    }, [voice, id]);
   };
   await openSection(S2);
 
@@ -375,9 +399,15 @@ const spread = (ev) => {
       const field = key.split(".")[1];
       const shut = c.getAttribute("aria-expanded") !== "true";
       if (shut) c.click();
+      /* THE STRIP IS A SIBLING `<div>` INSIDE A SHEET (2026-09-04, TABLE.md
+         wave 2c) and a `<tr class="nu-wopen">` inside a grid: ui/wordgrid.js
+         opens a sheet row's words with `insertAdjacentElement("afterend")`.
+         The nudges are ROW SHEET fields now (the five Structure grids are
+         deleted with their pane), so both places are looked in. */
       const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      const chips = tr && tr.classList.contains("nu-wopen")
-        ? [...tr.querySelectorAll(".nu-wchip")] : [];
+      const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
+        : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      const chips = strip ? [...strip.querySelectorAll(".nu-wchip")] : [];
       for (const o of chips) {
         const why = o.dataset.why || "";
         const name = field + ":" + o.dataset.k.slice(c.dataset.k.length + 1);
@@ -453,7 +483,7 @@ const spread = (ev) => {
      the addresses that table emitted, which is why the table had to go rather
      than stand beside them — and it is drawn today in the section's own
      detail, which `openSection` opens. */
-  await openSection(S2);
+  await openCell("cantor", S2);
   const moved = await say("dev.line|cantor|" + S2, "the rhythm, moved");
   const ev1 = await events(1);
   check(moved, "the development sheet offers `the rhythm, moved` (songs.js, new)");
@@ -514,8 +544,17 @@ const spread = (ev) => {
      than a tab of the band, and `tabperformance` is the row in the stripe that
      scrolls you to it — the key did not move, because an address does not move
      when a row does. */
-  await openStructure();
-  await tap("tabperformance");
+  /* ...AND PERFORMANCE IS THE TABLE'S FOOTER SINCE 2026-09-04 (TABLE.md §1
+     RECORD). `tabperformance` was a row of the Structure branch and is deleted
+     with it; the three performance sheets are `tperf|<key>` in the footer row,
+     opened by `tfoot|perf`. The KEYS the driver says did not move
+     (`performance.phrase` is the same `data-sel`), only the door. */
+  await openBand();
+  await p.evaluate(() => {
+    const f = document.querySelector('#pan-band [data-k="tfoot|perf"]');
+    if (f && f.getAttribute("aria-expanded") !== "true") f.click();
+  });
+  await p.waitForTimeout(350);
   const flatOk = await say("performance.phrase", "flat");
   const sTentOff = spread(await events(1));
   const archOk2 = await say("performance.phrase", "it arches");

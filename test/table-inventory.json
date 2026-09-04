@@ -2,6 +2,8 @@
   "what": "T7, TABLE.md §6 ¶A and §7 — the inventory of every control the Band pane and the Structure pane offered at HEAD (v265, 3ce6125), with the home each one has in the Band table. Paul, 2026-09-03: 'get rid of everything it replaces. Move things around as needed. Don't lose unreplaced options. Find places for things and keep discoverability high.'",
   "how": "MEASURED, not read off the source: test/table-inventory.probe.js walked the rendered DOM of #pan-band and #pan-structure through all 36 states the two panes have (the roster, the crate, each voice x each of its four facets, the section list, each section's own questions, performance) at 390x844 and collected every button/select/input/[data-k]/[data-sel] in each. 72 control families, plus the two panes' own nav-tree children, which are controls too.",
   "law": "A home is (tier, where) — tier is row | column | cell | footer | table | elsewhere, and `reach` is the data-k the gate must find on the rendered table at 320px, tappable, at least 44px. `open` is what has to be tapped first to reach it (the sheet it lives in). A control with no home fails T7; so does a home that is not tap-reachable at 320.",
+  "unmoved": "2026-09-04 (wave 2c): the three performance sheets keep the address they had — `performance.stress|phrase|orn` — because an address does not move when a row does and three gates drive them by name. Wave 2b's first draft re-keyed them `tperf|<short>` for uniqueness inside the table; `tperf|` is gone from the page with that draft; the footer's other three fields (take, humanize, on time) already carried their own names.",
+  "renamed": "2026-09-04 (wave 2c): the Motif tab is `Motifs` (TABLE.md §8), so `tray-new`'s reach is `toptab-Motifs`. The HOME did not move — the bank still owns a motif's own editor — only the door's word; an inventory row is edited when its address is renamed and never when a control is lost.",
   "elsewhere": "Two homes are outside the table on purpose and each says why: the Motifs bank owns a motif's own editor, and Where owns starting a record. Each is reached by ONE tap from the table, and the reach names that door. The SEAT is not one of them: it was filed as the board's in the first draft and test/sheets.js measured that wrong within the hour (zero insert seats on the whole page), so the voice's channel strip is drawn in its column sheet.",
   "controls": [
     {
@@ -75,6 +77,16 @@
       "field": "reads by default (the `\"\"` key of the material map — the column tier of §2)",
       "reach": "cast.material|<voice>",
       "open": "tcol|<voice>"
+    },
+    {
+      "k": "drums",
+      "pane": "Band / plays facet (drums)",
+      "was": "a checkbox — is there a drummer at all (`cast.on`)",
+      "home": "column",
+      "field": "drummer — playing / sitting out, said in words rather than as a tick",
+      "reach": "drums",
+      "open": "tcol|<drums>",
+      "added": "2026-09-04, wave 2c: the probe's roll-up by address family did not carry this one into the inventory (it is a bare `<input type=checkbox>` with no family before a `|`), and the deletion found it by reading test/sheets.js, which drives it. avail.js `f[\"voice.on\"]` greys all sixty-eight kit words off it, so it is a control with a reader. The inventory GAINS a row rather than the page losing one."
     },
     {
       "k": "sel:cast.bassStyle|<voice>",
@@ -246,7 +258,7 @@
       "was": "+ new motif — mint one and give it to this member",
       "home": "elsewhere: Motifs",
       "field": "the bank is the record's material (§3) and Motifs keeps its own pane; a motif is minted and edited there",
-      "reach": "toptab-Motif",
+      "reach": "toptab-Motifs",
       "open": null,
       "note": "TABLE.md §8 wave 2: 'Motif becomes Motifs and stays.'"
     },
@@ -454,7 +466,7 @@
       "was": "how much does the band lean on the beat?",
       "home": "footer",
       "field": "the performance row of the footer — a RECORD fact, drawn under the sections",
-      "reach": "tperf|stress",
+      "reach": "performance.stress",
       "open": null
     },
     {
@@ -463,7 +475,7 @@
       "was": "does the line breathe?",
       "home": "footer",
       "field": "the performance row",
-      "reach": "tperf|phrase",
+      "reach": "performance.phrase",
       "open": null
     },
     {
@@ -472,7 +484,7 @@
       "was": "how much decoration?",
       "home": "footer",
       "field": "the performance row",
-      "reach": "tperf|orn",
+      "reach": "performance.orn",
       "open": null
     },
     {

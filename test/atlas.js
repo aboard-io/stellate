@@ -772,12 +772,17 @@ function g18() {
      swap") is exactly the claim it was, asked of the page that exists. */
   const after = await p.evaluate(async () => {
     const h2 = [];
-    for (const t of ["Tempo", "Key", "Motif", "Band"]) {
+    /* THREE TABS SINCE 2026-09-04 (nukernel/TABLE.md §8): `Tempo` and `Key`
+       fold into one `Time` whose panel holds BOTH axis sections, and
+       `Structure` is deleted with its pane — so the walk is Time · Motifs ·
+       Band and the Time panel contributes TWO headings, which is why every
+       `<h2>` of the open panel is collected rather than only its first. */
+    for (const t of ["Time", "Motifs", "Band"]) {
       window.__eightTab(t);
       await new Promise((r) => setTimeout(r, 250));
       const pan = document.querySelector(".nu-pan:not([data-off])");
-      const h = pan && pan.querySelector(".nu-ax > h2");
-      if (h) h2.push(h.textContent.trim());
+      if (pan) for (const h of pan.querySelectorAll(".nu-ax > h2"))
+        h2.push(h.textContent.trim());
     }
     window.__eightTab("Where");
     await new Promise((r) => setTimeout(r, 250));
@@ -789,6 +794,10 @@ function g18() {
     sections: window.__eightDoc().form.sections.length }; });
   check(gotTitle, "G8 · one tap on Kingston at 1969 makes #title read " +
     JSON.stringify(after.title) + " within 4 s");
+  // `>= 4` STILL, AND IT IS STILL FOUR: Time, Harmony, Motifs, The band. What
+  // changed on 2026-09-04 is which TABS they hang under — Time and Harmony are
+  // one panel now — so the walk above is three tabs for four headings and the
+  // number this check asserts did not have to move.
   // `>= 4`, WAS `>= 5` UNTIL 2026-08-27: the producer's section left #app for
   // its own host between the board and the score deck ("producer last to say,
   // score last to see" — FUTURE.md; ui/eight.js redrawApp), so four axis

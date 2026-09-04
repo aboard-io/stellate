@@ -116,8 +116,18 @@ const HARD = 1200;
 // Paul's words, in Paul's order" — is about the LIST, so the list is measured
 // against the list's own twelve, DERIVED from his thirteen by dropping the one
 // he moved. Nothing here is typed twice.
-const TABS = ["Where", "Rules", "Tempo", "Key", "Motif", "Band",
-              "Structure", "Mix", "Produce", "Score", "Video",
+// …and to ELEVEN (2026-09-04, nukernel/TABLE.md §8), by an amendment with a
+// date on it rather than an edit of his sentence above:
+//   "Rules stays. Tempo and Key fold into one Time structure. Motif becomes
+//    Motifs and stays."                             -> Tempo + Key = Time
+//                                                    -> Motif = Motifs
+//   "get rid of everything it replaces … Band and Structure are DELETED, not
+//    hidden."                                        -> Structure, deleted
+// The Band tab is the TABLE now: its rows are the sections Structure held and
+// its footer is the performance block, so nothing that tab named is gone from
+// the page — only the tab.
+const TABS = ["Where", "Rules", "Time", "Motifs", "Band",
+              "Mix", "Produce", "Score", "Video",
               "Screensaver", "Export"];
 const NAV_ROWS = TABS.filter((t) => t !== "Where");
 
@@ -138,8 +148,13 @@ const NAV_ROWS = TABS.filter((t) => t !== "Where");
 // an <h3> name plate inside it, which this diet skips the way it skips every
 // other heading and label) and "The structure" for the form, the grids and the
 // performance controls he asked to be brought in with them.
+// …AND THE TIME PANEL HAS TWO OF THEM, 2026-09-04. `Tempo` and `Key` are one
+// tab and `#pan-tempo` holds both axis sections, so the list is read as EVERY
+// `<h2>` of the open panel rather than its first — which is what keeps
+// "Harmony" asserted after the fold instead of quietly dropping it. "The
+// structure" leaves the list with the panel it named.
 const HEADINGS = ["Where & when", "The rules", "Time", "Harmony", "Motifs",
-                  "The band", "The structure",
+                  "The band",
                   "The board", "The producer", "The score",
                   // the two decks (2026-09-01): the film and the sky —
                   // vocabulary words, not the tab glyph names
@@ -200,8 +215,9 @@ const MEASURE = () => {
        document-wide query would return the headings of every tab the walk has
        already visited, in build order, and grow by one on every step. */
     h2: (() => { const pan = document.querySelector(".nu-pan:not([data-off])");
-      const h = pan && pan.querySelector("h2");
-      return h ? h.textContent.trim() : null; })(),
+      if (!pan) return [null];
+      const hs = [...pan.querySelectorAll("h2")].map((h) => h.textContent.trim());
+      return hs.length ? hs : [null]; })(),
     /* THE TAB'S NAME IS ITS `aria-label` SINCE 2026-08-28, because the nine
        are glyphs now (Paul: "make all the tabs and top buttons into sensible
        icons"). T2's claim never was "these characters are painted here" — it
@@ -300,7 +316,7 @@ const MEASURE = () => {
       m.total += r.total;
       m.per[t] = r.total;
       m.top = m.top.concat(r.top).sort((a, b) => b.chars - a.chars).slice(0, 8);
-      m.h2.push(r.h2);
+      m.h2.push(...r.h2);
       m.naked = m.naked.concat(r.naked);
       m.rateSel += r.rateSel;
       m.tabNames = r.tabNames;
@@ -318,7 +334,7 @@ const MEASURE = () => {
       "T1 " + width + " · …and under the plan's own hard line " + HARD +
       " (FUTURE.md Phase 1)");
     check(JSON.stringify(m.tabNames) === JSON.stringify(NAV_ROWS),
-      "T2 " + width + " · the twelve rows are Paul's words in Paul's order, " +
+      "T2 " + width + " · the ten rows are Paul's words in Paul's order, " +
       "with Where in the foot — " + JSON.stringify(m.tabNames));
     /* T2 · …AND NO CONTROL IS NAKED, which is the half of this gate's claim
        that a row of pictures can newly get wrong (2026-08-28). A glyph button

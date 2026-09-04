@@ -2349,7 +2349,13 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-pan{ --sec: 0; padding: var(--s4) var(--s4) 0; }
 #atlas{ --sec: 0; }
 #pan-tempo{ --sec: 1; }
-#pan-key{ --sec: 2; }
+/* (`#pan-key{ --sec: 2 }` STOOD HERE and the ordinal is DELIBERATELY LEFT AS
+   A HOLE, 2026-09-04. Tempo and Key are one tab (`Time`, nukernel/TABLE.md §8)
+   and `#pan-key` is deleted from index.html, so the selector has no subject —
+   but the ladder's whole meaning is that consecutive numbers are 137.5deg
+   apart, and renumbering nine panels to close a gap would repaint every one of
+   them. `#pan-structure` two rules down is the same hole for the same reason,
+   with the same date. */
 #pan-motif{ --sec: 3; }
 #pan-band{ --sec: 4; }
 #deck{ --sec: 5; }
@@ -2380,7 +2386,9 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 #videodeck{ --sec: 8; }
 #saverdeck{ --sec: 9; }
 #rulesdeck{ --sec: 10; }
-#pan-structure{ --sec: 11; }
+/* (`#pan-structure{ --sec: 11 }` STOOD HERE — deleted with its host on
+   2026-09-04 (TABLE.md §6 ¶A). Another hole, kept for the reason above: 11 is
+   spent, and 12 stays 12 so `#exportdeck` keeps the hue it has. */
 #exportdeck{ --sec: 12; }
 
 /* ===== TABLES ==========================================================
@@ -5344,11 +5352,13 @@ table.nu-trims{ color: var(--ink); }
   text-align: start; }
 
 /* ---- ...AND THE REST OF THE KIT, OFFERED UNDER IT ------------------------
-   `+ kick / + snare / + ride` under the grid. It is `.nu-memadd`'s rule
+   `+ kick / + snare / + ride` under the grid. It was `.nu-memadd`'s rule
    verbatim — the band pane's own "hire another player" row — because it is the
    same gesture on a different roster, and ui/eight.js `laneAdd` says so at
-   more length. Written as its own selector rather than added to that one so
-   the two can part company the day either has a reason to. */
+   more length. It was written as its own selector rather than added to that
+   one so the two could part company; the roster's went with the pane on
+   2026-09-04 and this is the surviving copy, which is what that choice was
+   for. */
 .nu-laneadd{ display: flex; flex-wrap: wrap; gap: var(--s2);
   margin-block: var(--s3); }
 
@@ -6176,94 +6186,17 @@ table.nu-trims{ color: var(--ink); }
    instrument is one hue across the roster, the score's caps and the roll. The
    melodic lanes take 0..3 and wrap, which is the table's own arithmetic. */
 
-/* ---- the roster: the band as boxes ---------------------------------- */
-/* A GRID AND NOT A ROW, so three players are three boxes at 320px and four
-   across at 1280 without a media query: `auto-fill` with a 13em floor is the
-   one line that says "as many as fit, all the same width". */
-/* `min(13em, 100%)` AND NOT `13em`: a bare minmax floor is a track that does
-   not shrink, so at 320px — where the panel is ~217px wide inside the gutter
-   and its own inset — a 208px floor plus a single long name is a page that
-   scrolls sideways, which shell A6b and gutter T8 both forbid. The `min()`
-   makes the floor "13em, or all of it, whichever is less". */
-.nu-roster{ display: grid; gap: var(--s3); margin-block: var(--s3);
-  grid-template-columns: repeat(auto-fill, minmax(min(13em, 100%), 1fr)); }
-.nu-member{ padding: var(--s3); background: var(--paper);
-  border-block-end: var(--bw) solid var(--well); }
-/* THE WHOLE HEAD IS THE BUTTON — the name, the glyph and the instrument line
-   are inside it, which makes the box a target and (see ui/eight.js `rosterBlock`)
-   keeps the instrument out of the text diet's count, because a control's own
-   words are its label. Left-aligned and full width: it is a row of a list, not
-   a pill. */
-/* IT GIVES UP THE BUTTON CHASSIS, which is the same trade the table-cell rule
-   above already makes and for the same measured reason: the MEMBER BOX is the
-   frame (its own ground, its rule and its category edge), so a plate, a border
-   and a hard shadow inside it is a second frame 3px in from the first, and at
-   430px the shadow painted over the box's own trailing edge. What it keeps is
-   everything a button IS — the 44px floor, the cursor, the focus ring, and the
-   whole head as one tap target. */
-.nu-memopen{ display: grid; inline-size: 100%; max-inline-size: 100%;
-  min-inline-size: 0; text-align: start;
-  grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s2);
-  align-items: baseline; padding: 0; background: transparent;
-  border: 0; border-radius: var(--r0); box-shadow: none;
-  overflow-wrap: anywhere; }
-.nu-memopen:hover{ background: var(--flag-tint); }
-.nu-memglyph{ grid-row: 1 / span 2; font-size: var(--t4); align-self: center; }
-.nu-memname{ font-size: var(--t4); font-weight: var(--fw-block);
-  line-height: 1.15; }
-.nu-meminstr{ grid-column: 2; font-size: var(--t1); color: var(--dim);
-  line-height: 1.2; overflow-wrap: anywhere; }
-/* WHAT THEY READ: a picture and a word, wrapped, and each one is a DOOR into
-   that motif's editor (ui/eight.js `rosterBlock` carries the argument). It is
-   a button, so it takes the page's own 44px tap floor from `button` and needs
-   no size of its own; what it declines is the button CHASSIS — no plate, no
-   border — because a row of six framed pills inside a member's box reads as a
-   toolbar rather than as a list of what somebody plays. */
-.nu-memreads{ display: flex; flex-wrap: wrap; gap: var(--s2);
-  margin-block: var(--s2) 0; }
-.nu-memchip{ display: inline-flex; align-items: center; gap: var(--s1);
-  max-inline-size: 100%; min-inline-size: 0; overflow-wrap: anywhere;
-  font-size: var(--t1); color: var(--dim); background: transparent;
-  border: 0; border-radius: var(--r0); box-shadow: none;
-  padding: 0 var(--s1) 0 0; }
-.nu-memchip:hover{ background: var(--flag-tint); }
-.nu-memchip > i{ font-style: normal; }
-.nu-memchip .nu-preview{ --pv-base: 2.6em; inline-size: var(--pv-base); flex: 0 0 auto; }
-.nu-memfoot{ margin-block: var(--s2) 0; }
-.nu-memadd{ display: flex; flex-wrap: wrap; gap: var(--s2);
-  margin-block: var(--s3); }
-
-/* ---- the motif tray: chips that carry their own picture -------------- */
-/* PRESSED IS THE PAGE'S OWN PRESSED — `button[aria-pressed="true"]`'s hand
-   plate, the same face every tab and every segment button on this page wears.
-   It was drawn as an outline first and that was a mistake worth recording: the
-   global cap sets `background: var(--hand); color: #FFFFFF`, so an override
-   that painted the WORD `var(--hand)` too put blue text on a blue plate and
-   the chip came out as a solid rectangle with nothing in it (measured at 430px
-   on Kingston 1969). One face for "pressed", declared once, at line 727.
-
-   TWO MARKS BECAUSE THERE ARE TWO FACTS (ui/eight.js `motifTray` carries the
-   argument): `aria-pressed` is "this player reads it somewhere", which several
-   chips can say at once, and `[data-default]` is the ONE the `""` key names —
-   a thicker ink edge, which is the page's existing spelling for "and this one
-   in particular" and costs no colour. */
-.nu-tray-chips{ display: flex; flex-wrap: wrap; gap: var(--s2);
-  margin-block: var(--s2); }
-.nu-traychip{ display: inline-flex; align-items: center; gap: var(--s2);
-  padding-inline: var(--s2); max-inline-size: 100%; min-inline-size: 0;
-  overflow-wrap: anywhere; }
-.nu-traychip .nu-preview{ --pv-base: 3.2em; inline-size: var(--pv-base); }
-/* THE THUMBNAIL ON THE PLATE, AND IT HAS TO BE SAID TWICE. `.nu-preview` sets
-   its OWN `color` — `var(--vpaint, var(--hand))`, which is the point of it
-   beside a member box — so the cap's `color: #FFFFFF` never reaches the rects,
-   and a hand-blue thumbnail on a hand-blue plate is a chip with nothing in it
-   (measured at 430px on Kingston 1969, which is how this was found). Both the
-   bars and the rests are re-stated here, on the plate, and nowhere else. */
-.nu-traychip[aria-pressed="true"] .nu-preview{ color: #FFFFFF; }
-.nu-traychip[aria-pressed="true"] .nu-preview .nu-preview-rest{
-  fill: rgba(255, 255, 255, .45); }
-.nu-traychip[data-default="true"]{ border-width: var(--bw-hard); }
-.nu-traychip[data-default="true"] .nu-chipw{ font-weight: var(--fw-block); }
+/* ---- (THE ROSTER AND THE MOTIF TRAY STOOD HERE) ----------------------
+   Twenty-two declarations across `.nu-roster` / `.nu-member` / `.nu-memopen`
+   / `.nu-memglyph` / `.nu-memname` / `.nu-meminstr` / `.nu-memreads` /
+   `.nu-memchip` / `.nu-memfoot` / `.nu-memadd` and `.nu-tray-chips` /
+   `.nu-traychip`. The band as BOXES and the motif tray as CHIPS are both
+   deleted with the Band pane (2026-09-04, nukernel/TABLE.md §6 ¶A): the band
+   is a table's header row and a player's motifs are the chips of a CELL's
+   own sheet, drawn by ui/table.js through ui/wordgrid.js's strip — which
+   already carries the preview, the pressed face and the ink edge these
+   rules were spelling a second time. `.nu-vpaint`, `.nu-preview` and
+   `.nu-readby` below are untouched; they were never the roster's. */
 
 /* ---- the readers of a motif, as players ------------------------------ */
 /* THE ONE PLACE ON THIS PAGE WHERE A CATEGORY HUE IS A FILL rather than an
@@ -6645,33 +6578,13 @@ table.nu-trims{ color: var(--ink); }
   margin-inline-end: auto; overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums; }
 
-/* ---- 2b · HOW LONG A SECTION IS, IN THE FORM LIST ----------------------
-   ui/eight.js `barsCell`. A spinner in a table cell: 5ch is "32" with the
-   browser's own stepper beside it, and the 44px floor is the page's `button,
-   select, input[...]` rule, which this element is already in. */
-.nu-barsin{ inline-size: 5ch; min-inline-size: 0; text-align: end;
-  padding-inline: var(--s1); font-variant-numeric: tabular-nums; }
-/* ...AND THE FORM TABLE'S CELLS ARE CELLS, WHICH IS THE THIRD EXEMPTION TO
-   `.nu-field`'S EVEN-ROW RULE (2026-09-02) — the other two are named in that
-   rule's own block (`.nu-plate .nu-sel`, `.nu-circ .nu-opt`).
-   THE MEASUREMENT THAT FORCED IT. Wave 3 put the section's ROLE through
-   `selectField` (probe 6: *"Structure's form-list role combos"* wear no
-   `.nu-combo`), which is right about the chassis and brings the rest of
-   `.nu-sel` with it: a question on its own 44px line, a second 44px line for
-   the control, and a 30ch cap. In a `<td>` that is an 88px row and a 300px
-   table inside a 217px panel — measured at 320, 375 and 390, the document
-   scrolled sideways by 82, 40 and 29px, and test/nav-tree N4 caught all three.
-   SO THE CHASSIS STAYS AND THE PARAGRAPH GOES. The `<select>` keeps its
-   `.nu-combo` (the detent, the filter, the page's own look) and gives up the
-   printed label, which in a table is the COLUMN HEAD's job and is said once
-   there instead of once per row. Nothing is lost to a screen reader:
-   `selectEl` writes `aria-label` = "section N name" on the control itself, and
-   that is the name it has always had. */
-.nu-form td > .nu-sel{ margin: 0; }
-.nu-form td > .nu-sel > label{ display: block; min-block-size: 0; }
-.nu-form td > .nu-sel > label > .nu-w{ display: none; }
-.nu-form td > .nu-sel > label > .nu-combo{ display: block;
-  inline-size: 100%; max-inline-size: none; }
+/* ---- 2b · (THE FORM LIST'S OWN TWO RULES STOOD HERE) -----------------
+   `.nu-barsin` (the bars spinner in a `<td>`) and the four `.nu-form td`
+   declarations that stripped a `<select>`'s printed label inside a table
+   cell. Both belonged to `formTable`, deleted 2026-09-04 with the Structure
+   pane. A section's length and its role are rows of the table's ROW SHEET
+   now — words on a strip, not a spinner and a combo in a cell — so neither
+   selector matches anything the page draws. */
 
 /* ---- 12 · THE TEMPO OPERATIONS WEAR THEIR WORDS FROM 640px -------------
    Probe: *"Nine naked glyphs in Tempo (⏱ ♪↓ ♪↑ ♪↓↓ ♪↑↑ ←→ →← 1× ↺) — words
@@ -6709,8 +6622,8 @@ table.nu-trims{ color: var(--ink); }
    flex row, so each chip was as wide as its own words and as tall as however
    many lines they took — which is exactly the failure `.nu-field` was written
    for, one surface over. `repeat(auto-fill, minmax(min(13em, 100%), 1fr))` is
-   `.nu-roster`'s own track recipe (the one measured surface on this page where
-   equal boxes are already solved), and grid's default `stretch` makes every
+   the roster's own track recipe (the surface where equal boxes were first
+   solved on this page), and grid's default `stretch` makes every
    chip in a row the height of the tallest — so a two-line chip lifts its
    neighbours instead of stepping past them.
    THE INDENT SURVIVES: `[data-under]` is still a margin, and in a grid cell a
@@ -6734,21 +6647,15 @@ table.nu-trims{ color: var(--ink); }
   grid-template-columns: repeat(auto-fill, minmax(min(13em, 100%), 1fr)); }
 .nu-castchip{ display: grid; align-content: center;
   min-block-size: calc(var(--tap) + var(--s2)); }
-/* (b) THE ROSTER BOX PUTS "play alone" AT ITS FOOT. The boxes in a row are
-   already equal height — `.nu-roster` is a grid and `stretch` is its default —
-   and what was ragged was the CONTENT inside them: a member with seven motif
-   chips pushed its button 250px below a member with two. A column with the
-   last child pushed to the bottom is the whole fix, and it is one declaration
-   plus `margin-block-start: auto`, which is the same "pinned by being last"
-   arithmetic `.nu-trayfoot` uses in the gutter. */
-.nu-member{ display: flex; flex-direction: column; align-items: stretch; }
-.nu-member > .nu-memreads{ flex: 1 1 auto; align-content: start; }
-.nu-member > button:last-of-type{ margin-block-start: auto; }
+/* ((b) WAS THE ROSTER BOX'S FOOT — `.nu-member` as a column with 'play
+   alone' pushed to the bottom. The roster is deleted (2026-09-04, the Band
+   table); a player is a COLUMN HEAD now and its ops are rows of its sheet,
+   which the accordion already lays out evenly.) */
 /* (c) THE AUTOMATION GRID'S COLUMNS ARE EQUAL. `table-layout: fixed` makes
    every unsized column an equal share of the table, which is what turns seven
    meters into one scale; the section column is sized so the row heads keep
    their names. THE TABLE IS ALLOWED TO BE WIDER THAN THE PANE — `--cols` is
-   written by ui/eight.js `structureGrids` (a count, not a width) and the pane
+   written by ui/wordgrid.js (a count, not a width) and the pane
    around it already scrolls sideways (`pane()`), which is this page's standing
    answer for a wide table. Without the minimum, `fixed` + `100%` would crush
    nine players into 20px each rather than scrolling. */
@@ -7135,6 +7042,13 @@ table.nu-trims{ color: var(--ink); }
 .nu-sheetrow.nu-noderow{ flex-direction: column; align-items: stretch; }
 .nu-sheetrow.nu-noderow > .nu-sheetlab{ min-inline-size: 0; }
 .nu-seatstrip{ inline-size: 100%; min-inline-size: 0; }
+/* ...AND SO ARE THE OTHER TWO WIDGETS A COLUMN SHEET SEATS (2026-09-04, wave
+   2c): the chair's THROAT (`knobsBlock` — VOICE.md's knob table and its tract
+   pad) and its FILES (`crateBlock` — ui/samples.js's crate, filtered to this
+   one player). Both were blocks of the deleted Band pane and both bring their
+   own `pane()` where they need one, so all this row has to do is give them the
+   sheet's whole width and stop the flex row from squeezing them. */
+.nu-seatknobs, .nu-seatcrate{ inline-size: 100%; min-inline-size: 0; }
 /* A READOUT, AND A REFUSAL IS A READOUT WITH A REASON. `.is-refused` is the
    cell plate's own dashed grey, said again for a span — a field the engine
    cannot reach yet (a cell's mix lane, wave 3) prints its word, wears the

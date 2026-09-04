@@ -1902,7 +1902,7 @@ export function mount(parent, ctx) {
         aria: c.voice.name + (line ? " on " + line : "") +
               " — open this player's instrument",
         title: "open " + c.voice.name + "'s instrument",
-        act: () => { if (ctx.openVoice) ctx.openVoice(c.voice.name, "inst"); },
+        act: () => { if (ctx.openVoice) ctx.openVoice(c.voice.name); },
         chan: c };
       headMeters.push({ chan: c.key, th: null, well, bar, said: null,
                         // WHICH LANE THIS CHAIR IS MEASURED ON, so the title

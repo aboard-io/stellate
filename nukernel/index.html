@@ -354,32 +354,33 @@
 <h2 id="atlasHead">Where &amp; when</h2>
 </section>
 
-<!-- 2-5 · TEMPO · KEY · MOTIF · BAND — the four axis panels, and the four
+<!-- 2-4 · TIME · MOTIFS · BAND — the three axis panels, and the four
      reasons #app still exists as one box around them: it is what
      `window.__eightFrozen` snapshots (the frozen half of the interface, the
      half the clock may not write), what test/shell.js A0 watches for the
      `overflow-x: hidden` that would kill both sticky bands, and what
      `holdHeight` props open across a rebuild. Everything that was ONE `.nu-ax`
      per axis inside it still is; what changed is that each axis now sits in
-     its own panel, and only one of the four is on the page at a time.
-     (Tempo and Key are Paul's names for what this page draws as the Time and
-     Alphabet axes — AXES.md carries the join, exactly as it does for
-     Material/Motif.) -->
+     its own panel, and only one of the three is on the page at a time.
+     THREE AND NOT FIVE SINCE 2026-09-04 (nukernel/TABLE.md §8): `#pan-tempo`
+     holds the Time AND Alphabet axes, because Tempo and Key are one tab now;
+     `#pan-structure` is deleted with the Structure tab, whose sections are the
+     Band table's rows. AXES.md still carries the join between Paul's tab words
+     and the axis names. -->
 <div id="app">
   <div id="pan-tempo" class="nu-pan"></div>
-  <div id="pan-key" class="nu-pan"></div>
+  <!-- (#pan-key STOOD HERE and is deleted with the Key tab: `#pan-tempo` holds
+       both axis sections since 2026-09-04, so the second host has nothing to
+       hold and a host with no builder is a panel that can never be filled.) -->
   <div id="pan-motif" class="nu-pan"></div>
   <div id="pan-band" class="nu-pan"></div>
-  <!-- #pan-structure (2026-09-02). Paul: "Sections/Structure has the same
-       challenges. … It should be top level, not buried under band, and below
-       band. Bring performance into structure." So the host stands directly
-       after the band's, which is where the tab stands in `TABS` and therefore
-       where it reads in the gutter: DOM order is reading order is tab order.
-       It is inside #app with the other four axes because it IS one — the form
-       is the record's own structure and `formTable`, `sectionDetail` and
-       `performanceTab` are the three functions that drew it inside the band
-       panel until today. Its <h2> is the builder's, like the four above it. -->
-  <div id="pan-structure" class="nu-pan"></div>
+  <!-- (#pan-structure STOOD HERE, 2026-09-02 to 2026-09-04. Paul:
+       "Sections/Structure … should be top level, not buried under band, and
+       below band. Bring performance into structure." Both sentences are kept
+       by the TABLE rather than by a tab: the sections are the Band table's
+       ROWS — top level, one tap, every question per section in the row sheet —
+       and performance is its FOOTER. TABLE.md §6 ¶A: "Band and Structure are
+       DELETED, not hidden." -->
 </div>
 
 <!-- 6 · MIX — THE BOARD, and NOT inside #app (Paul, 2026-08-24: "an actual

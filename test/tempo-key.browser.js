@@ -14,6 +14,12 @@
  *   · `time.groove` — ui/eight.js has called `setGroove(DOC.time.groove)`
  *     since the day that writer was written, ui/state.js normalises it against
  *     GROOVELABEL and ui/derive.js hands it to the kernel. No sheet, no menu.
+ * `#pan-key` IS `#pan-tempo` THROUGHOUT SINCE 2026-09-04 (nukernel/TABLE.md
+ * §8: *"Tempo and Key fold into one Time structure"*). The Alphabet axis — the
+ * changes grid, the quality menus, the circle of fifths, the degree slider —
+ * did not move a line; its HOST did, because one tab now holds both axis
+ * sections. Every selector below is the same selector inside a different id.
+ *
  *   · `form.pace` — compose.js dealPaces has stamped a mensural word on every
  *     box since 2026-08-30 and audio/plan.js paceTL multiplies it into bar
  *     seconds. ui/engineer.js PRINTED it, in a row header, with a note saying a
@@ -183,7 +189,7 @@ function standUpServer() {
     await p.waitForTimeout(700); return hit; };
 
   /* ================= T1 · TAP TEMPO ================================== */
-  await top("Tempo");
+  await top("Time");
   const panel = await p.evaluate(() => ({
     big: !!document.querySelector("#pan-tempo .nu-bpmbig"),
     bigLive: !!document.querySelector("#pan-tempo .nu-bpmbig[data-live]"),
@@ -256,17 +262,36 @@ function standUpServer() {
     "T2 the groove menu writes the document AND reaches ui/state.js GROOVE " +
     JSON.stringify({ was: g0, now: g1 }));
 
-  /* ================= T3 · THE PACE STRIP ============================== */
+  /* ================= T3 · THE PACE, WHICH IS A ROW FIELD NOW ========== */
+  /* MOVED 2026-09-04 (nukernel/TABLE.md §1, Paul 2026-09-03: *"pace MOVES here
+     from Time"*). It was a one-column word grid at the foot of the Tempo panel
+     — one cell per section — and it is a line of each SECTION's own row sheet
+     on the Band table, at the same address (`form.pace|<section>`). The strip
+     was deleted rather than kept beside it, because two controls on one
+     `data-k` is the duplicate ui/selects.js console.errors about; T8d in
+     test/table.browser.js asserts there is exactly one page-wide. So the count
+     this check makes is per SECTION-SHEET rather than down a column, and the
+     drive below — tap the cell, tap the chip, read audio/plan.js's own bar
+     seconds — is unchanged. */
   const secs = (await doc()).form.sections.map((s) => s.id);
-  /* ONE CELL PER SECTION IN ONE COLUMN, which is what "one row per section"
-     became when the strip became a grid — same count, same addresses, and the
-     rows are now a table's rows rather than eight stacked fields. */
-  const strip = await p.evaluate(() =>
-    [...document.querySelectorAll('#pan-tempo .nu-wcell[data-k^="form.pace"]')]
-      .map((s) => s.dataset.k));
+  const openRow = async (sid) => { await top("Band");
+    return p.evaluate((id) => {
+      const b = document.querySelector('#pan-band [data-k="trow|' + id + '"]');
+      if (!b) return false;
+      if (b.getAttribute("aria-expanded") !== "true") b.click();
+      return true; }, sid); };
+  let strip = [];
+  for (const sid of secs) {
+    if (!await openRow(sid)) continue;
+    await p.waitForTimeout(350);
+    const there = await p.evaluate((id) => !!document.querySelector(
+      '#pan-band [data-k="form.pace|' + id + '"]'), sid);
+    if (there) strip.push("form.pace|" + sid);
+  }
   check(strip.length === secs.length,
-    "T3 one pace cell per section, in one column of a word grid (" +
-    strip.length + " of " + secs.length + ")");
+    "T3 every section's row sheet asks the pace, at the address the Tempo " +
+    "strip used (" + strip.length + " of " + secs.length + ")");
+  await openRow(secs[1]);
   /* THE BAR SECONDS BEFORE AND AFTER, off audio/plan.js's own compiled
      timeline — `paceTL` has already had its say by the time `timeline()`
      answers, so this is the number the transport would play. */
@@ -287,10 +312,11 @@ function standUpServer() {
     (was == null ? "?" : was.toFixed(3)) + "s -> " +
     (now == null ? "?" : now.toFixed(3)) + "s");
   /* put it back, so T4 and T5 measure a record nobody has paced */
+  await openRow(secs[1]);
   await pick("form.pace|" + secs[1], "");
 
   /* ================= T4 · THE CYCLE GROWS ============================= */
-  await top("Key");
+  await top("Time");
   const p0 = await p.evaluate(() => ({
     doc: window.__eightDoc().alphabet.prog.length,
     add: !!document.querySelector('[data-k="prog-add"]'),
@@ -327,7 +353,7 @@ function standUpServer() {
      mode, five on slendro (`K.romanOf(MODES[mode]).length - 1`). Read off the
      control, because a duplicate rung is invisible in the document. */
   const rungs = await p.evaluate(() => {
-    const r = document.querySelector('#pan-key input[data-k="prog0d"]');
+    const r = document.querySelector('#pan-tempo input[data-k="prog0d"]');
     return r ? { max: +r.max, mode: window.__eightDoc().alphabet.mode,
                  n: (window.NuKernel.romanOf(
                    window.NuGenres.MODES[window.__eightDoc().alphabet.mode]) || []).length }
@@ -388,7 +414,7 @@ function standUpServer() {
 
     const went = await setSel("alphabet.harmony", "modal");
     const before = await p.evaluate(() => {
-      const q = [...document.querySelectorAll('#pan-key [data-sel^="alphabet.quality"]')];
+      const q = [...document.querySelectorAll('#pan-tempo [data-sel^="alphabet.quality"]')];
       return { harmony: window.__eightDoc().alphabet.harmony,
                n: q.length, off: q.filter((x) => x.disabled).length,
                whys: q.filter((x) => (x.dataset.why || "").trim()).length,
@@ -431,7 +457,7 @@ function standUpServer() {
      fires no `change` on a control that is already where you put it. */
   await say("alphabet.mode", "ionian");
   await p.evaluate(() => { const l =
-    document.querySelector('#pan-key .nu-circ .nu-ki[data-v="-3"]');
+    document.querySelector('#pan-tempo .nu-circ .nu-ki[data-v="-3"]');
     if (l) l.click(); });
   await p.waitForTimeout(500);
   const tet = await p.evaluate(() => ({ key: String(window.__eightDoc().alphabet.key),
@@ -444,12 +470,12 @@ function standUpServer() {
      the tonic and leave the alphabet where it is. */
   await say("alphabet.mode", "shur");
   const cap = await p.evaluate(() =>
-    [...document.querySelectorAll("#pan-key .nu-cap")].map((c) => c.textContent.trim()));
+    [...document.querySelectorAll("#pan-tempo .nu-cap")].map((c) => c.textContent.trim()));
   check(cap.length === 1 && /quarter/.test(cap[0]),
     "T5a …and a non-12-TET mode says what it is, under its own field " +
     JSON.stringify(cap));
   await p.evaluate(() => { const l =
-    document.querySelector('#pan-key .nu-circ .nu-ki[data-v="4"]');
+    document.querySelector('#pan-tempo .nu-circ .nu-ki[data-v="4"]');
     if (l) l.click(); });
   await p.waitForTimeout(500);
   const shur = await p.evaluate(() => ({ key: String(window.__eightDoc().alphabet.key),
@@ -465,10 +491,10 @@ function standUpServer() {
      with its own octave is a thing a composer has to be told. */
   await say("alphabet.mode", "slendro");
   const slen = await p.evaluate(() => {
-    const r = document.querySelector('#pan-key input[data-k="prog0d"]');
+    const r = document.querySelector('#pan-tempo input[data-k="prog0d"]');
     return { mode: window.__eightDoc().alphabet.mode,
              max: r ? +r.max : null,
-             cap: [...document.querySelectorAll("#pan-key .nu-cap")]
+             cap: [...document.querySelectorAll("#pan-tempo .nu-cap")]
                .map((c) => c.textContent.trim()) }; });
   check(slen.mode === "slendro" && slen.max === 4,
     "T5c a five-degree alphabet gives the degree slider four rungs, not six " +

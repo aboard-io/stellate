@@ -448,7 +448,7 @@
      expression is read off `env.pool` here in the same three tokens and named
      as the borrowing rather than left to look like a second policy. If the two
      ever disagree the bass menu will say one instrument and the engine will
-     play another, which is what `test/band.browser.js` B6 measures. */
+     play another, which is what `test/table.browser.js` T8b measures (it was band.browser.js B6, folded there when that gate retired with its subject on 2026-09-04). */
   const bassChairName = (env) => {
     const id = ((env || {}).pool || {}).bass || NI.BASS_INSTR;
     return BASSCHOICES[id] || INSTRCHOICES[id] || String(id);

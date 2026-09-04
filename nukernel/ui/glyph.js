@@ -158,14 +158,19 @@ export const GLYPH = {
                s: "the globe and the when-slider — where and when the record comes from" },
     Rules:   { g: "§", w: "Rules",
                s: "the genre as sentences — the rules this record was written from" },
-    Tempo:   { g: "♩", w: "Tempo",
-               s: "how fast it counts, how a bar is divided, and how it swings" },
-    Key:     { g: "♯", w: "Key",
-               s: "the key, the mode and the changes" },
-    Motif:   { g: "♬", w: "Motif",
+    /* TIME AND MOTIFS, 2026-09-04 (nukernel/TABLE.md §8). `Tempo` and `Key`
+       folded into one tab and the mark is the CLOCK's, because the panel opens
+       on how fast it counts and the harmony is the section under it; `Key`'s ♯
+       is not lost — it is the Harmony heading's own subject inside the panel.
+       `Motif` -> `Motifs`, which is the word its heading, its bench and its
+       bank have always used. */
+    Time:    { g: "♩", w: "Time",
+               s: "how fast it counts, how a bar is divided, and the key it is in" },
+    Motifs:  { g: "♬", w: "Motifs",
                s: "the motifs — the little tunes and beats the record is built from" },
     Band:    { g: "☰", w: "Band",
-               s: "the form, the players, and what each one plays in each section" },
+               s: "the table — sections down, players across, and a vector in " +
+                  "every cell" },
     /* STRUCTURE (2026-09-02). Paul, 2026-09-01: *"Sections/Structure has the
        same challenges … It should be top level, not buried under band, and
        below band. Bring performance into structure."* ▦ is the ruled block,
@@ -174,16 +179,18 @@ export const GLYPH = {
        that holds the sections wearing the same mark its own rows wear is the
        one-owner law working — a reader learns the picture once. `song.form`
        carries ▦ for the same subject and is not a tab. */
-    Structure: { g: "▦", w: "Structure",
-               s: "the sections, and every question per section per player" },
+
     /* THE CLAUSE MOVED WITH THE VOICES, 2026-08-28. It read "the board — a
        strip per voice, then the bus series, then main"; the strips are inside
        the voices now (Paul: "remove the voices from the mixing board and just
        put them as nav items in the voices themselves"), so what this tab holds
        is the series and the automation grid. The MARK does not move: it is the
        voice's `mix` facet's mark too, one scope down. */
-    Structure: { g: "▦", w: "Structure",
-               s: "the sections, the grids, and how the record is performed" },
+    /* (`Structure` STOOD HERE, twice — a duplicated key, the second winning.
+       The tab is deleted with its pane on 2026-09-04: the sections are the
+       Band table's rows and the tree draws them under `Band`. ▦ is still this
+       page's mark for a section and `sec` and `facet.sections` still wear
+       it.) */
     Mix:     { g: "⇅", w: "Mix",
                s: "the bus series — genre fx, delay, reverb, main — and the " +
                   "section automation grid" },

@@ -438,9 +438,19 @@ export function wordGrid(host, spec) {
         line.insertAdjacentElement("afterend", strip);
         openField = b; openStrip = strip;
         b.setAttribute("aria-expanded", "true");
+        /* `preventScroll` ON EVERY ONE OF THESE FOUR (2026-09-04). Opening a
+           body puts the thumb on its first word, which is right for a keyboard
+           and wrong for a finger: a control inside an open sheet that WRITES —
+           a knob, a chip — ends in `changed()` -> `draw()`, and the table
+           re-opens the sheet you were standing in on arrival, so the focus()
+           that follows scrolled the page under the hand that had just turned
+           something. Measured 2026-09-04 by test/knobs.js 11e, dragging the
+           tract pad inside a column sheet: the page moved. Focus is still
+           moved — the accessibility half is untouched — it just no longer
+           drags the viewport with it. */
         const first = strip.querySelector('button[aria-pressed="true"]')
                    || strip.querySelector("button:not([disabled])");
-        if (first) first.focus();
+        if (first) first.focus({ preventScroll: true });
       });
       line.append(b);
       /* THE CLEAR-BACK (§2), ON EVERY WRITTEN ROW AND ON NO OTHER. "Deleting a
@@ -483,7 +493,7 @@ export function wordGrid(host, spec) {
     const box = sheetBody(fields, name);
     insertOpen(box, afterTr, key, btn);
     const first = box.querySelector("button:not([disabled])");
-    if (first) first.focus();
+    if (first) first.focus({ preventScroll: true });
   }
 
   /* A CELL OPENS ONE OF TWO BODIES, and which one is the caller's word: a
@@ -499,7 +509,7 @@ export function wordGrid(host, spec) {
     insertOpen(body, tr || trOf.get(row.id), c.key, btn);
     const first = body.querySelector('button[aria-pressed="true"]')
                || body.querySelector("button:not([disabled])");
-    if (first) first.focus();
+    if (first) first.focus({ preventScroll: true });
   }
 
   function paintCell(rowId, c) {
@@ -689,7 +699,7 @@ export function wordGrid(host, spec) {
     if (e.key !== "Escape" || !openKey) return;
     const b = cellBtns.get(openKey);
     close();
-    if (b) b.focus();
+    if (b) b.focus({ preventScroll: true });
     e.stopPropagation();
   });
 

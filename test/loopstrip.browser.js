@@ -126,8 +126,13 @@ function standUpServer() {
       const v = window.__eightDoc().voices.find((x) => x.kind === "line");
       const tab = document.querySelector('#nu-tray [data-k="tab' + v.name + '"]');
       if (tab) { tab.click(); await new Promise((r) => setTimeout(r, 250)); }
-      const fi = document.querySelector('#nu-tray [data-k="facet-inst"]');
-      if (fi) { fi.click(); await new Promise((r) => setTimeout(r, 250)); }
+      /* ...AND THE INSTRUMENT AND ITS LOOP POINTS ARE THE COLUMN SHEET'S
+         SINCE 2026-09-04 (TABLE.md wave 2c): `facet-inst` is deleted with the
+         pane, and the mark above lands on this player's column sheet, which
+         holds `sound.instrument`, `sound.looping` and the strip itself. */
+      const fi = document.querySelector('#pan-band [data-k="tcol|' + v.name + '"]');
+      if (fi && fi.getAttribute("aria-expanded") !== "true") {
+        fi.click(); await new Promise((r) => setTimeout(r, 300)); }
       return { name: v.name, tab: !!tab };
     });
     check(who.tab, W + " · the band level offers a tab for voice " + JSON.stringify(who.name));

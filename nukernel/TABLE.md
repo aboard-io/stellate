@@ -6,7 +6,7 @@ columns and rows using a table building interface … Each cell can be
 understood as a vector … The producer becomes basically a vector manipulator
 across the table … It's a next generation futuristic gig sheet for robots."*
 
-Status: APPROVED 2026-09-03 (Paul: "When done, build the table according to the spec") with three amendments, marked ¶A below. Replaces the Band and Structure panes with one Band
+Status: APPROVED 2026-09-03 (Paul: "When done, build the table according to the spec") with three amendments, marked ¶A below. Waves 1, 2a, 2b and 2c SHIPPED (2026-09-04); the Band tab is the table and Band and Structure are deleted. Replaces the Band and Structure panes with one Band
 table. Rules stays. Tempo and Key fold into one Time structure. Motif becomes
 Motifs and stays. Pace leaves Time and joins the section vector. Nothing else
 moves. This document is the contract the waves are built and gated against;
@@ -341,18 +341,42 @@ children (indented and coloured by level, 2026-09-03).
    2026-09-04**: the PANE — `ui/table.js`, the three sheets, the footer, the
    op grammar, the inventory (`test/table-inventory.json`, 76 controls) and
    T4/T5/T6/T7 green on the rendered page (`test/table.browser.js`, 54 checks).
-   **2c REMAINS**: the DELETION. `bandBlock`, `rosterBlock`, `crateBlock`,
-   `structurePanel`, `structureGrids`, `sectionDetail`, `formTable`,
-   `performanceTab` and the four page states they run on (`tab`, `voiceFacet`,
-   `bandCrate`, `formSec`) are still in ui/eight.js, still reachable from the
-   Structure tab, and the Band tray still lists the facets the table's column
-   sheet replaced. With them go the Time fold (Tempo + Key -> one), the Motif
-   -> Motifs rename, `bandTrayItems` becoming the table's columns and
-   `sectionTrayItems` its rows (§6), and test/band.browser.js and
-   test/structure.browser.js — folded into the table's gate or deleted with
-   their subject. It is a ~3,000-line removal across the four states and it is
-   its own step, one agent at a time on that file (the standing law), which is
-   why it is not in the same commit as the pane.
+   **2c SHIPPED 2026-09-04**: the DELETION. `bandBlock` (439 lines),
+   `rosterBlock` (85), `motifTray` (135), `structurePanel` (34),
+   `structureGrids` (159), `sectionDetail` (181), `formTable` + `secNumber` +
+   `barsCell` + `bassReadsWhy` (314 together), `performanceTab` (51),
+   `soloButton`/`paintSolos` (106), `readsOf` (15), `GRIDDED`/`restKeys` (45)
+   and the pace strip (63) are gone — 1,627 lines out of ui/eight.js, plus 89
+   of nu.css. Two of the four page states went with them (`voiceFacet` and
+   `bandCrate`, and `SONGTABS`, `FORMGLYPH`, `PERFGLYPH`, `FACETS`,
+   `settledFacet` with them); `tab` and `formSec` STAY, because they are which
+   player and which section is open and the table opens that sheet on arrival
+   (`openVoice`/`openSection` are one door each and write the other's fact to
+   null). `crateBlock` stays and changes address: the samples crate is an
+   unreplaced option and it is a row of the COLUMN SHEET now, under the
+   instrument it swaps, drawn only where the chair has files.
+   With it: Tempo + Key -> `Time` (one panel, `timeAxis` then `alphaAxis`;
+   `#pan-key` deleted), `Motif` -> `Motifs`, `Structure` deleted as a tab, and
+   the tray's Band branch is the table's two lists — the voices (its columns)
+   then the sections (its rows), each with its ops as children.
+   THREE CONTROLS WERE RESTORED RATHER THAN LOST, and each is a hole the
+   inventory could not see because the probe walked one record: the chair's
+   own KNOBS (`knobsBlock`, VOICE.md's throat editor — Kingston 1969 seats no
+   modelled voice, so the probe never drew one), the drummer's ON/OFF
+   (`cast.on`, a bare checkbox with no address family to roll up, which
+   avail.js `voice.on` greys all sixty-eight kit words from), and the bass's
+   REFUSAL (the Structure grid drew its `reads` cell refused with the
+   measurement; the cell sheet was offering it as a live control that moves
+   nothing). A fourth is new: `trow-here|<section>`, "put the ear here", which
+   the grids' row heads carried and a sheet door could not.
+   `test/band.browser.js` and `test/structure.browser.js` are deleted with
+   their subjects; what neither T4 nor T6 already said is folded into
+   `test/table.browser.js` as T8a–T8g (say which: hiring lands on the new
+   player's column sheet; the bass's instrument is askable and the engine
+   answers; a `does` word moves the rendered events; `form.pace` has exactly
+   one control page-wide and it is the row's; the column heads are the band in
+   the record's order with slot and lamp; the bass is told rather than asked;
+   a row still puts the ear on its section).
 3. **Per-cell mix automation, relative to the row's** (¶A): desk + walk read
    row lane + cell offset; the Live export writes the sum per track once; the
    greyed field lights.

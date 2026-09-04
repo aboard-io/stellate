@@ -374,16 +374,38 @@ function v1Bars(abc, steps, secAt) {
        by KEY and skipped, so the walk always ends. */
     const stripped = await pg.evaluate(async () => {
       const nap = (ms) => new Promise((r) => setTimeout(r, ms));
-      window.__eightTab("Structure");
+      /* THE LEVEL AND SHAPE GRIDS ARE A SECTION'S OWN SHEET SINCE 2026-09-04
+         (nukernel/TABLE.md wave 2c). They were two of Structure's five word
+         grids — every section down one column — and Structure is deleted; the
+         same two questions are lines of each ROW SHEET on the Band table, at
+         the SAME addresses (`form.lvl|<id>`, `form.env|<id>`). So the walk
+         opens one row at a time instead of reading a whole column, and
+         everything below it — tap the cell, tap the absent chip, let
+         `changed()` rebuild — is unchanged. */
+      window.__eightTab("Band");
       await nap(600);
+      const rows = window.__eightDoc().form.sections.map((x) => x.id);
+      let ri = 0;
+      const openRow = () => {
+        const b = document.querySelector('#pan-band [data-k="trow|' + rows[ri] + '"]');
+        if (b && b.getAttribute("aria-expanded") !== "true") b.click();
+        return !!b;
+      };
+      openRow();
+      await nap(400);
       const skip = new Set();
       let n = 0;
-      for (let guard = 0; guard < 200; guard++) {
+      for (let guard = 0; guard < 400; guard++) {
         const cell = [...document.querySelectorAll(
             'button[data-k^="form.lvl|"], button[data-k^="form.env|"]')]
           .find((b) => !b.disabled && !skip.has(b.dataset.k) &&
                        !b.classList.contains("is-derived"));
-        if (!cell) break;
+        /* NOTHING LEFT IN THIS ROW: open the next one. The loop ends when the
+           last section has nothing left either. */
+        if (!cell) {
+          if (++ri >= rows.length) break;
+          openRow(); await nap(400); continue;
+        }
         const key = cell.dataset.k;
         skip.add(key);                       // one attempt per cell, either way
         cell.click();                        // tap the cell: the strip unfolds
@@ -393,7 +415,9 @@ function v1Bars(abc, steps, secAt) {
         if (!chip || chip.disabled) continue;
         chip.click();                        // tap the absent word
         n++;
-        await nap(200);                      // the rebuild `changed()` causes
+        await nap(250);                      // the rebuild `changed()` causes
+        openRow();                           // …which throws the sheet away
+        await nap(250);
       }
       window.__eightTab("Score");
       await nap(1200);
