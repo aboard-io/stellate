@@ -190,7 +190,20 @@
     const A = doc.alphabet, T = doc.time, P = doc.performance;
     const BASIS = basisRow(doc, GENRES);
     const NATIVE = fleet || [];
-    const mode = MODES[A.mode] || MODES.aeolian;
+    /* THE ROW MAY MODULATE, AND THE RESOLVER IS HOW (TABLE.md wave 2a, §2).
+       Five facts the record used to own alone — its key, its mode, its
+       progression, its swing and its groove — now resolve `row -> record`,
+       and this is the ONE place they are read, for both paths: `boxesOf`
+       registers this genre per section, so a bridge that modulates lands its
+       key in the box the walk plays AND in the score `scoreOf` renders. With
+       no row override every one of them answers off `doc.alphabet` /
+       `doc.time` exactly as the four lines below read them before this
+       existed, which is what makes the two the composer never deals
+       (swing, groove) byte-identical on all 479 anchors. */
+    const rrow = (f) => resolveRow(doc, si, f, GENRES);
+    const mode = MODES[rrow("mode")] || MODES.aeolian;
+    const prog = rrow("prog") || A.prog;
+    const swing = rrow("swing");
     const lines = LINES(doc), drums = DRUMV(doc), bass = BASSV(doc);
     // THE TABLE'S RESOLVER IS THE ONE OWNER of `entry` and `reg` from here on
     // (TABLE.md §2). `LIX` turns the kernel's line index into the column index
@@ -215,7 +228,7 @@
     return {
       ...BASIS,
       label: (BASIS || {}).label || doc.basis,
-      /* TIME */        bpm: T.bpm, swing: T.swing == null ? 0 : SWINGS[T.swing],
+      /* TIME */        bpm: T.bpm, swing: swing == null ? 0 : SWINGS[swing],
                         ...(T.rate ? { rate: T.rate } : {}),
                         ...(T.meter && METERS[T.meter] ? { meter: METERS[T.meter] } : {}),
       // THE SUBJECT'S ALPHABET IS ITS OWN. This said `scale: mode`, which meant
@@ -223,10 +236,10 @@
       // of the 122 anchors declare a `scale` and every one of them was being
       // overwritten with the chord alphabet. Absent still means the mode, so
       // the shipped chant is byte-identical (it states no scale).
-      /* ALPHABET */    key: KEYS[A.key] || 0, mode,
+      /* ALPHABET */    key: KEYS[rrow("key")] || 0, mode,
                         scale: (A.scale && (SCALES[A.scale] || MODES[A.scale])) || mode,
                         diatonic: !!A.diatonic, harmony: A.harmony,
-                        prog: A.prog, roots: A.prog.map((c) => c.d),
+                        prog, roots: prog.map((c) => c.d),
       /* MATERIAL */    kit, ...(on ? {} : noKit),
       /* CAST */        voices: lines.length,
                         // ...AND IT IS RESOLVED PER SECTION, WHICH IS WHERE IT
@@ -469,7 +482,35 @@
   function boxesOf(doc, gk) {
     const secs = doc.form.sections, NS = secs.length, lines = LINES(doc);
     const bass = BASSV(doc), drums = DRUMV(doc), pre = gk == null ? "lab.eight." : gk;
-    return secs.map((s2, i) => ({ ...NuSong.emptyBox(),
+    // THE ROW, THROUGH §2's ONE OWNER. The three fields whose answer this box
+    // carries and the section genre cannot (swing, groove) plus the six the
+    // box has always had a slot for (fx, rev, echo, dtime, room, pan) all ask
+    // here; `key`, `mode` and `prog` deliberately do NOT, because `toGenre`
+    // already resolved them onto the per-section genre this box points at and
+    // ui/derive.js `genreOf` would apply them a second time (¶A).
+    const rrow = (i, f) => resolveRow(doc, i, f);
+    /* ...AND FOR THE TWO WITH A RECORD TIER, ONLY WHAT THE ROW ITSELF SAID —
+       which is avail.js's idiom, verbatim and for the same reason ("only the
+       two tiers this facet is entitled to speak for are taken … resolveFrom's
+       `from` is what makes that distinction sayable rather than guessed at").
+       `swing` and `groove` resolve `row -> record`, and the RECORD's answer
+       already reaches ui/derive.js by its own road: ui/eight.js calls
+       `setSwing`/`setGroove` off `DOC.time` and derive takes both as
+       arguments. Writing the resolved answer onto the box would put the
+       record's own word on EVERY box and let it outrank the song's — the
+       transport's groove control fighting a value baked at compile time,
+       which is the "I tap groove and nothing happens" bug from the other end.
+       MEASURED before this line existed, by nukernel/gates-extract.js: the
+       `time.groove` sheet went from `alive: 0` to `alive: 40` — 40 records
+       whose sound moved for a reason this wave never claimed. So the box
+       carries the ROW's own word and nothing else, and a record whose rows
+       say nothing produces the byte-identical box it always did. */
+    const rowOnly = (i, f) => {
+      const r = resolveFrom(doc, i, 0, f);
+      return r.from === "row" ? r.v : undefined;
+    };
+    return secs.map((s2, i) => { const sw = rowOnly(i, "swing"), gv = rowOnly(i, "groove");
+      return ({ ...NuSong.emptyBox(),
       stack: [{ g: pre + i, slots: lines.map((c, v) => v * NS + i) }],
       len: s2.bars, role: s2.role, cue: s2.role,
       bassop: wordAt(doc, bass, i) || null,
@@ -492,17 +533,51 @@
       // each, so a document that says nothing produces the identical box it
       // produced before this line existed — which is what D7's gate measures
       // first (velocity spread 0 with nothing set).
-      intro: s2.intro || null, env: s2.env || null, outro: s2.outro || null,
-      mot: s2.mot || null, lvl: s2.lvl || null, breath: s2.breath || null,
-      pipe: s2.pipe || null, period: s2.period || null,
+      // (the four with a resolver row ask through it, for the reason `rrow`
+      // gives above: the row is a TIER of §2's law, not a field somebody
+      // reaches into. `env` and `lvl` keep the direct read — TIERS names them
+      // `shape` and `level` and a second spelling of a field's name inside the
+      // resolver is exactly the drift the 2026-09-01 rename law forbids.)
+      intro: rrow(i, "intro") || null, env: s2.env || null,
+      outro: rrow(i, "outro") || null,
+      mot: rrow(i, "mot") || null, lvl: s2.lvl || null,
+      breath: rrow(i, "breath") || null,
+      pipe: rrow(i, "pipe") || null, period: rrow(i, "period") || null,
       // ...AND ITS PACE (2026-08-30, the per-section-pace round): the section
       // word that multiplies the record's one bpm under this section alone —
       // compose deals it (dealPaces), audio/plan.js PACE_RATE is what a word
       // is worth at the clock, the same words/numbers split lvl/LEVELS made.
       // `|| null` like every key above it: a record that says nothing writes
       // nothing.
-      pace: s2.pace || null,
-      nudge: s2.nudge | 0 }));
+      pace: rrow(i, "pace") || null,
+      nudge: s2.nudge | 0,
+      /* ---- THE SECTION'S CHAIN, ITS SENDS, ITS ROOM AND ITS PLACE
+         (TABLE.md wave 2a, 2026-09-04). Every key below is one `emptyBox`
+         already defaults and `song.js validateSong` already filters, and the
+         only thing missing was — again — somebody writing them down: compose
+         deals an fx chain on 1,441 of 4,859 sections, a reverb send on 1,835
+         and an echo send on 552, and the projection dropped all three. Read
+         through the RESOLVER rather than off `s2` directly, so the row is one
+         tier of §2's law and not a special case with its own reader; with
+         nothing said the resolver returns undefined and each key lands on the
+         identical default `...emptyBox()` put there two lines up. `dtime`,
+         `pan` and `room` have no dealer at all and are the hand's. */
+      fx: rrow(i, "fx") || [],
+      rev: rrow(i, "rev") || null,
+      echo: rrow(i, "echo") || null,
+      dtime: rrow(i, "dtime") || null,
+      room: rrow(i, "room") || null,
+      pan: rrow(i, "pan") || null,
+      /* ...AND THE TWO THE SECTION GENRE CANNOT CARRY. `swing` and `groove`
+         reach the kernel as ARGUMENTS to ui/derive.js `sectionEvents`, not as
+         genre fields — the song's drummer, handed in once for the whole
+         record — so the resolved row answer has to ride on the BOX for derive
+         to prefer it over the song's. Present-only (a conditional spread and
+         not a `|| null`), because neither is an `emptyBox` key: a record whose
+         rows say nothing produces the byte-identical box it produced before
+         this line, which is what document.test.js G6 measures. */
+      ...(sw ? { swing: sw } : {}),
+      ...(gv ? { groove: gv } : {}) }); });
   }
 
   // EVERY VOICE HAS A WORD FOR EVERY SECTION, and the words are keyed by the
@@ -699,26 +774,27 @@
     bars:   { tier: "row", at: "form.sections[si].bars" },
     level:  { tier: "row", at: "form.sections[si].lvl" },
     shape:  { tier: "row", at: "form.sections[si].env" },
-    /* THESE THREE ARE DEALT AND THEN DROPPED, which is a finding and not a
-       tier. MEASURED 2026-09-03 over 479 anchors x seed 1 = 4,859 composed
-       sections: `compose()` deals `outro` on 1,718 of them, `mot` on 1,042 and
-       `intro` on 580 — and `genreToDocument`'s section projection copies
-       none of the three, so `boxesOf` writes `intro/outro/mot: null` on every
-       precomposed record and the section's arrival, its departure and its
-       motion never reach a box. It is the SAME bug precompose's own comment
-       records having fixed for `lvl` and `env` on 2026-08-28 ("compose.js
-       deals `env` on nearly every section … and this map dropped both on the
-       floor"), two fields further along the same line. Not fixed here:
-       carrying them would move the sound, which is exactly what wave 1 may
-       not do (T2). The address is right and the composer is silent.
-       `breath`, `pipe` and `nudge` are dealt by nobody at all — hand fields
-       with an address and no writer. */
+    /* THESE THREE WERE DEALT AND THEN DROPPED, AND ARE CARRIED NOW (wave 2a,
+       2026-09-04 — the first step of the wave, gated on its own). MEASURED
+       2026-09-03 over 479 anchors x seed 1 = 4,859 composed sections:
+       `compose()` deals `outro` on 1,718 of them, `mot` on 1,042 and `intro`
+       on 580 — and `genreToDocument`'s section projection copied none of the
+       three, so `boxesOf` wrote `intro/outro/mot: null` on every precomposed
+       record and the section's arrival, its departure and its motion never
+       reached a box. It was the SAME bug precompose's own comment records
+       having fixed for `lvl` and `env` on 2026-08-28 ("compose.js deals `env`
+       on nearly every section … and this map dropped both on the floor"),
+       two fields further along the same line. precompose now carries all
+       three by the same present-only extraction; the document holds 579
+       intros, 1,714 outros and 1,038 mots at seed 1, and 478 of 479 anchors'
+       RENDERED bars moved (T4c; T4a for the lanes). `breath`, `pipe` and `nudge` are dealt by
+       nobody at all — hand fields with an address and no writer. */
     intro:  { tier: "row", at: "form.sections[si].intro",
-              note: "compose deals it on 580 of 4,859 sections; precompose drops it" },
+              note: "carried 2026-09-04; 579 of 4,859 sections, 458 records" },
     outro:  { tier: "row", at: "form.sections[si].outro",
-              note: "compose deals it on 1,718 of 4,859 sections; precompose drops it" },
+              note: "carried 2026-09-04; 1,714 of 4,859 sections, 472 records" },
     mot:    { tier: "row", at: "form.sections[si].mot",
-              note: "compose deals it on 1,042 of 4,859 sections; precompose drops it" },
+              note: "carried 2026-09-04; 1,038 sections -> auto[] lanes, 280 records" },
     period: { tier: "row", at: "form.sections[si].period" },
     breath: { tier: "row", at: "form.sections[si].breath",
               note: "an address with no writer: nothing deals a breath" },
@@ -738,37 +814,80 @@
               note: "§1 files this on the row; boxesOf reads it off the bass VOICE" },
     kit:    { tier: "column", at: "voices[drums].development[secId]",
               note: "§1 files this on the row; boxesOf reads it off the drums VOICE" },
-    /* ...AND THESE FOUR ARE NOT ROW FIELDS AT ALL TODAY. §1 files key, mode,
-       prog, swing and groove on the section ("a bridge modulates, so key is a
-       row override of Time's key") and the shipped document carries exactly
-       ONE of each, on the RECORD: `alphabet.key/mode/prog` and
-       `time.swing/groove`. precompose says so out loud — "the document carries
-       ONE key: precompose drops compose()'s per-section modulations" — and
-       ui/state.js says the same about the other two ("a record swings or it
-       does not; a per-section swing would be the drummer changing hands
-       mid-song"). So they are RECORD fields until wave 2 gives the row a
-       place to say otherwise, and calling them row fields now would be a
-       control that promises a modulation the engine cannot be handed. */
-    key:    { tier: "record", at: "alphabet.key",
-              note: "§1 files this on the row; the document carries ONE key (wave 2)" },
-    mode:   { tier: "record", at: "alphabet.mode", note: "as key" },
-    prog:   { tier: "record", at: "alphabet.prog", note: "as key" },
-    swing:  { tier: "record", at: "time.swing",
-              note: "§1 files this on the row; ui/state.js: a record swings or it does not" },
-    groove: { tier: "record", at: "time.groove", note: "as swing" },
-    /* ...AND THE SECTION'S CHAIN AND ROOM HAVE NO DOCUMENT ADDRESS AT ALL.
-       `fx rev verb echo dtime pan auto` are BOX fields — `song.js emptyBox`
-       defaults them and `boxesOf` never writes one — so a document cannot say
-       them per section today. `auto[]` is additionally READ-ONLY on the row by
-       §1's own line (compiled from `mot`). Declared here so the inventory is
-       complete and the gate can see that they are unreachable rather than
-       missing. */
-    fx:     { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
-    rev:    { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
-    verb:   { tier: "row", wave: 2, note: "retired 2026-08-28; a box field" },
-    echo:   { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
-    dtime:  { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
-    pan:    { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
+    /* ...AND THESE FIVE ARE STORED ON THE RECORD AND OVERRIDDEN BY THE ROW
+       (wave 2a, 2026-09-04). §1 files key, mode, prog, swing and groove on the
+       section ("a bridge modulates, so key is a row override of Time's key")
+       and the shipped document carried exactly ONE of each, on the RECORD:
+       `alphabet.key/mode/prog` and `time.swing/groove`. precompose said so out
+       loud — "the document carries ONE key: precompose drops compose()'s
+       per-section modulations" — and that drop was measurable: at seed 1
+       compose modulates the MODE on 399 sections (every bridge it writes: a
+       dorian/phrygian/harmonic/mixolydian middle eight), the KEY on 275
+       sections of 228 records (the relative-minor bridge and the truck-driver
+       last chorus) and names a PROG on 12. All three are carried now, and the
+       row may say any of the five where the composer said nothing.
+
+       THE TIER IS STILL THE RECORD, which is what `tier` means here — where
+       the fact is STORED when nobody overrode it — and `over: "row"` is the
+       tier that may. Absent on the row is the record's, byte for byte, which
+       is what makes 479 anchors x 3 seeds render identically for the two
+       fields (swing, groove) the composer deals no per-section value for.
+
+       ONE OWNER: `toGenre` resolves all five, and `boxesOf` writes key, mode
+       and prog onto the box for NOBODY — ui/derive.js `genreOf` reads
+       `sec.key`/`sec.mode`/`sec.prog` off a box, and writing them there as
+       well as resolving them here would apply the same modulation twice
+       (¶A's "no curve applied twice"). `swing` and `groove` ARE written on
+       the box, and for the opposite reason: they are the two the section
+       genre cannot carry — derive.js takes the song's swing and groove as
+       ARGUMENTS and would stomp the row's answer, so the box carries the flag
+       that says the row spoke. */
+    key:    { tier: "record", at: "alphabet.key", over: "row",
+              note: "the row modulates: 275 of 4,859 sections at seed 1" },
+    mode:   { tier: "record", at: "alphabet.mode", over: "row",
+              note: "the row modulates: 399 sections, every composed bridge" },
+    prog:   { tier: "record", at: "alphabet.prog", over: "row",
+              note: "the row names a PROGS key; both tiers answer in chord arrays" },
+    swing:  { tier: "record", at: "time.swing", over: "row",
+              note: "the composer deals none per section; the row may say one" },
+    groove: { tier: "record", at: "time.groove", over: "row", note: "as swing" },
+    /* ...AND THE SECTION'S CHAIN AND ROOM HAVE AN ADDRESS NOW (wave 2a,
+       2026-09-04). This block used to read "no document address at all":
+       `fx rev verb echo dtime pan` were BOX fields that `song.js emptyBox`
+       defaulted and `boxesOf` never wrote, so a document could not say any of
+       them per section — while compose was dealing an fx CHAIN on 1,441 of
+       4,859 sections (272 records), a reverb send on 1,835 (479 records) and
+       an echo send on 552 (331 records), all of them thrown away by the same
+       projection that threw away lvl and env. They are row fields now, dealt
+       where the composer deals them and a hand's otherwise, and `boxesOf`
+       writes each onto the box at exactly the key `emptyBox` already
+       defaults — so a section that says nothing produces the identical box.
+
+       `verb` IS NOT ONE OF THEM, and this row is its tombstone read
+       correctly: §1 lists `verb` beside `rev`, but the box field of that name
+       was RETIRED on 2026-08-28 and its live successor is `room` — the KIT's
+       own ambience send (audio/desk.js: "`sec.room` reaches the DRUMS ONLY,
+       because it is the kit-ambience lane nukernel has always had"). So the
+       row that carries an address is `room`, and giving `verb` one as well
+       would be two names for one send, which is the thing the 2026-09-01
+       rename law forbids. `song.js migrate` folds an old save's `verb` onto
+       `room` and that is the only place the word survives.
+
+       `auto[]` is still READ-ONLY on the row by §1's own line (compiled from
+       `mot`, which the row now says) and is wave 3's field. */
+    fx:     { tier: "row", at: "form.sections[si].fx",
+              note: "carried 2026-09-04; compose deals a chain on 1,441 sections" },
+    rev:    { tier: "row", at: "form.sections[si].rev",
+              note: "carried 2026-09-04; compose deals it on 1,835 sections" },
+    room:   { tier: "row", at: "form.sections[si].room",
+              note: "§1 calls this `verb`; that box field was retired 2026-08-28 " +
+                    "and `room` is the kit-ambience send it became" },
+    echo:   { tier: "row", at: "form.sections[si].echo",
+              note: "carried 2026-09-04; compose deals it on 552 sections" },
+    dtime:  { tier: "row", at: "form.sections[si].dtime",
+              note: "an address with no writer: nothing deals a delay time" },
+    pan:    { tier: "row", at: "form.sections[si].pan",
+              note: "an address with no writer: nothing deals a section pan" },
     auto:   { tier: "row", wave: 3, note: "compiled from mot; READ-ONLY on the row (§1)" },
 
     /* VOICE (a column) — `doc.voices[vi]`. */
@@ -875,7 +994,11 @@
      document moved, so a caller can skip a recompile. */
   function putCell(doc, si, vi, field, value) {
     const v = doc.voices && doc.voices[vi], id = SECID(doc, si);
-    if (!v || id == null || !CELLFIELD[field]) return false;
+    // ...AND ONLY A FIELD THE CELL TIER ANSWERS FOR. `CELLFIELD` grew the
+    // row's own fields in wave 2a and a key written in a cell would be a
+    // second home for a control the table draws on the row — refused here and
+    // dropped at the door, one rule, one derivation (`CELLWRITE`).
+    if (!v || id == null || !CELLWRITE(field)) return false;
     const had = (v.cells && v.cells[id] && v.cells[id][field]);
     if (value == null || value === "") {
       if (!v.cells || !v.cells[id] || !(field in v.cells[id])) return false;
@@ -932,7 +1055,109 @@
       column: null, row: null, record: null,
       genre:  () => undefined,       // nothing under the table features a voice
     },
+    /* ---- THE ROW'S OWN FIELDS (wave 2a, 2026-09-04) --------------------
+       Every field below answers from the SECTION first and the RECORD (or
+       nothing) second, which is §2's law with the two upper tiers empty: a
+       key is not a fact about one chair, and a section's reverb send is the
+       whole box's. They live in this table rather than beside it because §2
+       has ONE owner and a second walk over the same five tiers is how the two
+       drift apart — `resolveFrom` is the only function that knows the order.
+
+       WHAT A `cell` READER MEANS HERE, and it is load-bearing: a field with
+       one is a field `putCell` may write and `normalize` will keep on
+       `voice.cells[secId]`. The rows below have none, so a cell that claims a
+       key is dropped at the door — the table draws a key on the ROW, and a
+       control with two homes is a control that disagrees with itself.
+
+       AND THE TIERS ANSWER IN THE SAME UNITS, per field, which is the rule
+       `reg` already set ("the four tiers cannot disagree about what a 0
+       is"): `prog` is a chord ARRAY on both tiers (the row names a
+       genres.js PROGS key and this reader resolves it), `key` is a
+       fields.js KEYS value on both, `mode` a MODES name on both. A caller
+       gets one kind of answer whichever tier won. */
+    key: {
+      cell: null, column: null,
+      row:    (s) => s && s.key,
+      record: (d) => d.alphabet && d.alphabet.key,
+      // NO GENRE TIER, and that is `toGenre`'s own arithmetic protected: it
+      // reads `KEYS[A.key] || 0`, so a record with no key at all plays C, and
+      // falling through to the anchor's `g.key` here would hand it a number
+      // in a different unit than the one this tier answers in.
+      genre:  () => undefined,
+    },
+    mode: {
+      cell: null, column: null,
+      row:    (s) => s && s.mode,
+      record: (d) => d.alphabet && d.alphabet.mode,
+      genre:  () => undefined,       // toGenre's own aeolian default is the floor
+    },
+    prog: {
+      cell: null, column: null,
+      // THE ROW NAMES A PROGRESSION, THE RECORD CARRIES ONE. fields.js
+      // PROGCHOICES is the row's vocabulary (the same twelve words the box's
+      // `prog` chip offers) and genres.js PROGS is what each one IS; the
+      // record stores the resolved array already, so this reader resolves the
+      // name and both tiers hand back the same shape.
+      row:    (s) => (s && s.prog && s.prog !== "off") ? NG.PROGS[s.prog] : undefined,
+      record: (d) => d.alphabet && d.alphabet.prog,
+      genre:  () => undefined,       // as key: `toGenre` reads A.prog and no lower
+    },
+    swing: {
+      cell: null, column: null,
+      row:    (s) => s && s.swing,
+      record: (d) => d.time && d.time.swing,
+      genre:  () => undefined,       // a genre's lean is inside its own rate
+    },
+    groove: {
+      cell: null, column: null,
+      row:    (s) => s && s.groove,
+      record: (d) => d.time && d.time.groove,
+      genre:  () => undefined,
+    },
+    /* THE SECTION'S TEMPO WORD. Already a row field with an address (dealt by
+       compose.js dealPaces, carried since 2026-08-30, PACE_RATE at the clock)
+       and the resolver is what makes it reachable the way every other row
+       field is: there is no record-wide pace — the record's tempo is
+       `time.bpm` and a pace is a multiplier ON it — so the row is the only
+       tier that answers, and absent means the record's own clock. */
+    pace: { cell: null, column: null, row: (s) => s && s.pace,
+            record: null, genre: () => undefined },
+    /* ...AND THE SECTION'S CHAIN, ITS TWO SENDS, ITS ROOM AND ITS PLACE.
+       None of these has a record tier at all: `emptyBox`'s default IS the
+       floor (an empty chain, no send, centre) and that is what "absent is
+       today" means for them — the genre's own `tone.verb` is applied one
+       level down, by audio/desk.js `sectionOf`, exactly as it is today for a
+       box that says nothing. */
+    fx:    { cell: null, column: null, row: (s) => (s && s.fx && s.fx.length) ? s.fx : undefined,
+             record: null, genre: () => undefined },
+    rev:   { cell: null, column: null, row: (s) => s && s.rev,   record: null, genre: () => undefined },
+    room:  { cell: null, column: null, row: (s) => s && s.room,  record: null, genre: () => undefined },
+    echo:  { cell: null, column: null, row: (s) => s && s.echo,  record: null, genre: () => undefined },
+    dtime: { cell: null, column: null, row: (s) => s && s.dtime, record: null, genre: () => undefined },
+    pan:   { cell: null, column: null, row: (s) => s && s.pan,   record: null, genre: () => undefined },
+    /* ...AND THE SECTION'S ARRIVAL, DEPARTURE, MOTION AND SENTENCE — the
+       three step 1 carries plus the one that was always carried. No record
+       tier: a song does not have an intro figure, a SECTION does, and
+       `emptyBox`'s null is the floor. */
+    intro:  { cell: null, column: null, row: (s) => s && s.intro,  record: null, genre: () => undefined },
+    outro:  { cell: null, column: null, row: (s) => s && s.outro,  record: null, genre: () => undefined },
+    mot:    { cell: null, column: null, row: (s) => s && s.mot,    record: null, genre: () => undefined },
+    period: { cell: null, column: null, row: (s) => s && s.period, record: null, genre: () => undefined },
+    /* ...AND THE THREE THE ROW HAS ALWAYS ADDRESSED AND NOBODY DEALS.
+       `boxesOf` has copied all three onto the box since 2026-08-24; what they
+       lacked was a resolver call site, which is what a table cell asks
+       through. Reachable, and still dealt by no composer. */
+    breath:{ cell: null, column: null, row: (s) => s && s.breath, record: null, genre: () => undefined },
+    pipe:  { cell: null, column: null, row: (s) => s && s.pipe,   record: null, genre: () => undefined },
+    nudge: { cell: null, column: null, row: (s) => s && s.nudge,  record: null, genre: () => undefined },
   };
+  // WHICH OF THEM A HAND MAY WRITE IN A CELL (§2: "a cell stores only what a
+  // hand wrote there") — the fields with a `cell` reader, and no others. One
+  // derivation, two readers: `putCell` refuses the rest and `normalize` drops
+  // them at the door, so a cell can never grow a field the table draws on the
+  // row. `ROWWRITE` is the same question for the section.
+  const CELLWRITE = (f) => !!(CELLFIELD[f] && CELLFIELD[f].cell);
+  const ROWWRITE  = (f) => !!(CELLFIELD[f] && CELLFIELD[f].row);
   const TIERORDER = ["cell", "column", "row", "record", "genre"];
   /* `vi` INDEXES `doc.voices`, not the kernel's line list. A column IS a
      voice — that is the whole of §1's second table — and the kernel's index is
@@ -943,6 +1168,30 @@
     for (const f of Object.keys(CELLFIELD)) out[f] = resolveFrom(doc, si, vi, f, GENRES);
     return out;
   }
+  /* THE ROW'S WRITER (wave 2a), and it keeps the same sparse law `putCell`
+     keeps: a value equal to nothing DELETES the override, so "the record's"
+     has exactly one spelling on a section too. `vi` is not an argument
+     because a row field is not a fact about a chair — the resolver is asked
+     at voice 0 and its cell and column readers are null, so the answer is the
+     row's or the record's and nothing else can reach it. Returns whether the
+     document moved, like `putCell`, so a caller can skip a recompile. */
+  function putRow(doc, si, field, value) {
+    const sec = doc.form.sections && doc.form.sections[si];
+    if (!sec || !ROWWRITE(field)) return false;
+    if (value == null || value === "" ||
+        (Array.isArray(value) && !value.length)) {
+      if (!(field in sec)) return false;
+      delete sec[field];
+      return true;
+    }
+    if (JSON.stringify(sec[field]) === JSON.stringify(value)) return false;
+    sec[field] = value;
+    return true;
+  }
+  // A ROW FIELD, RESOLVED — the same walk, asked without a chair. `toGenre`
+  // and `boxesOf` are its two callers and neither has a voice in hand.
+  const resolveRow = (doc, si, field, GENRES) =>
+    resolveFrom(doc, si, 0, field, GENRES).v;
   function resolveFrom(doc, si, vi, field, GENRES) {
     const R = CELLFIELD[field];
     if (!R) return { v: undefined, from: null };
@@ -1072,6 +1321,58 @@
       if (v.rules) doc.rules = v.rules; else delete doc.rules;
     }
     const ids = doc.form.sections.map((s2) => s2.id);
+    /* ---- THE ROW'S OWN WORDS, AT THE DOOR (TABLE.md wave 2a) -------------
+       The same paranoid half song.js applies to every enum, applied at last
+       to the section: "an unknown level means the file is from a build this
+       one cannot honestly play". Until 2026-09-04 nothing checked a section
+       field at all, because nothing WROTE one — the projection dropped every
+       word the composer dealt and a hand had no control. Both halves changed
+       in the same round, so the door lands with them.
+
+       ONE OWNER FOR EACH VOCABULARY, and it is the registry the BOX already
+       validates against (`song.js validateSong` walks the same FIELDS rows for
+       the same words), so the row and the box can never mean different things
+       by `hush`. `swing` and `groove` are the two the box has no field for —
+       they are song facts there — and their tables are the ones ui/state.js
+       `setSwing`/`setGroove` normalize against, which is the same answer read
+       from the other end.
+
+       DROP, NEVER ERROR: a word this build does not know is an obsolete chip
+       (song.js's FILTER rule), and the row falls back to the record's, which
+       is a record that still plays. MEASURED over 479 anchors x seeds 1-3:
+       not one composed word is dropped here. */
+    const ROWTABLE = (f) => {
+      if (f === "swing") return NF.SWINGLABEL;
+      if (f === "groove") return NF.GROOVELABEL;
+      if (f === "prog") return NF.PROGCHOICES;
+      const row = NF.FIELDS.find((x) => x.key === f);
+      return (row && row.table) || null;
+    };
+    for (const s2 of doc.form.sections) {
+      for (const f of Object.keys(s2)) {
+        if (!ROWWRITE(f) || f === "nudge") continue;   // nudge is a count, not a word
+        if (f === "fx") {
+          const keep = (Array.isArray(s2.fx) ? s2.fx : [])
+            .filter((k) => Object.prototype.hasOwnProperty.call(NF.FX, k))
+            .slice(0, NF.MAX_FX);
+          if (keep.length) s2.fx = keep; else delete s2.fx;
+          continue;
+        }
+        // ...AND THE ROW'S `prog` VOCABULARY IS PROGCHOICES MINUS ONE WORD.
+        // The box's chip offers `off` — "strip the progression back to the
+        // degenerate triads" (ui/derive.js genreOf) — and the row cannot say
+        // it, because the row's `prog` is resolved to a CHORD ARRAY so that
+        // both tiers answer in the same units, and there is no array that
+        // spells "no array". A row that wants no progression is a record
+        // that wants none; the word stays a box control and is dropped here
+        // rather than kept as a value the resolver would read as silence.
+        if (f === "prog" && s2.prog === "off") { delete s2.prog; continue; }
+        const t = ROWTABLE(f);
+        if (t && !Object.prototype.hasOwnProperty.call(t, String(s2[f])))
+          delete s2[f];
+      }
+      if (s2.nudge != null && !Number.isFinite(s2.nudge)) delete s2.nudge;
+    }
     /* ---- THE RETIRED RECORD-WIDE CHIP, RESOLVED ON READ (2026-08-27) -------
        Paul: *"We can get rid of Character right? We don't really use it any
        more do we?"* — and FUTURE.md §5 had ruled the same way already:
@@ -1143,7 +1444,7 @@
               delete v.cells[id]; continue;
             }
             for (const f of Object.keys(c)) {
-              const bad = !CELLFIELD[f] ||
+              const bad = !CELLWRITE(f) ||
                 (f === "entry" && !(Number.isInteger(c[f]) && c[f] >= 0)) ||
                 (f === "reg" && !(Number.isInteger(c[f]) && c[f] >= -4 && c[f] <= 3)) ||
                 (f === "focus" && typeof c[f] !== "boolean");
@@ -1242,7 +1543,8 @@
               section asks here, so a cell override reaches the sound by
               construction. `LINEIX` is exported with them because a caller
               holding a KERNEL voice index needs the column index to ask. */
-           TIERS, addressOf, resolve, resolveFrom, vectorOf, putCell, cellVec,
+           TIERS, addressOf, resolve, resolveFrom, resolveRow, vectorOf,
+           putCell, putRow, cellVec,
            CELLFIELD, TIERORDER, LINES, LINEIX,
            // ...and §3, a motif's provenance: own · guest:<genre> · hand.
            provOf, provWord, stampProv, handWrote, fingerprint,

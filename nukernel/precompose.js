@@ -3001,6 +3001,53 @@
       // and carried the way lvl/env are: an EXTRACTION, present-only, so a
       // record whose composer dealt nothing writes nothing.
       ...(b.pace ? { pace: b.pace } : {}),
+      /* ...AND ITS ARRIVAL, ITS DEPARTURE AND ITS MOTION (2026-09-04,
+         TABLE.md wave 2a). THE SAME BUG AS `lvl`/`env` ABOVE, two fields
+         further along the same line, and it stood for eleven days after that
+         comment was written. MEASURED over 479 anchors x seed 1 = 4,859
+         composed sections: compose() deals `outro` on 1,718 of them (on 472
+         of the 479 records), `mot` on 1,042 (281 records) and `intro` on 580
+         (458 records) — every one of them dropped on this floor, so
+         `boxesOf` wrote `intro/outro/mot: null` on every precomposed record
+         and no section in the catalogue ever arrived, left or moved.
+         Everything downstream was already waiting, exactly as it was for
+         lvl/env: document.js `boxesOf` copies all three onto the box,
+         ui/derive.js `edges()` REPLACES the first and last bars with the
+         named figure, and audio/desk.js `compileAuto` turns `mot` into the
+         section's `auto[]` lanes (open/close -> a cutoff sweep, rise -> hpf,
+         pump -> a level lane) which `deskSweeps` and `deskAmp` then play.
+         An EXTRACTION like every other line here: no word is invented, the
+         vocabularies are fields.js INLABEL / OUTLABEL / SECMOVE verbatim, and
+         a genre whose composer deals nothing still writes nothing. */
+      ...(b.intro ? { intro: b.intro } : {}),
+      ...(b.outro ? { outro: b.outro } : {}),
+      ...(b.mot   ? { mot:   b.mot   } : {}),
+      /* ...AND THE SECTION'S OWN HARMONY, WHERE COMPOSE MODULATES IT
+         (2026-09-04, TABLE.md wave 2a step 2). The sentence three screens
+         down — "the document carries ONE key: precompose drops compose()'s
+         per-section modulations" — was true and was a loss: at seed 1
+         compose gives EVERY bridge it writes a mode of its own (399 sections
+         — dorian, phrygian, harmonic, mixolydian; compose.js:1714 "a bridge
+         already changes colour") and moves the KEY on 275 sections of 228
+         records (the relative-minor bridge at :1728 and the truck-driver last
+         chorus at :1711). Both are the oldest gestures in the form and
+         neither had ever been heard on a precomposed record.
+         `mode` and `prog` are verbatim words; the KEY is a number and has to
+         be MOVED BY THE READING first, so it is written a few screens down
+         where `rd` exists — one arithmetic, one place. */
+      ...(b.mode ? { mode: b.mode } : {}),
+      ...(b.prog && b.prog !== "off" ? { prog: b.prog } : {}),
+      /* ...AND ITS CHAIN AND ITS TWO SENDS (step 3). compose deals an fx
+         chain on 1,441 of 4,859 sections (`dress()` — the bridge that goes
+         underwater, the era-gated sweep), a reverb send on 1,835 and an echo
+         on 552, and this map dropped every one of them: `song.js emptyBox`
+         defaults `fx: []`, `rev: null`, `echo: null` and `boxesOf` wrote no
+         other answer, so the production decisions compose made per section
+         never reached audio/desk.js `sectionOf`. Present-only, capped at the
+         same MAX_FX both ends already keep. */
+      ...(b.fx && b.fx.length ? { fx: b.fx.slice(0, NF.MAX_FX) } : {}),
+      ...(b.rev ? { rev: b.rev } : {}),
+      ...(b.echo ? { echo: b.echo } : {}),
     }));
     const minBars = Math.min(...sections.map((x) => x.bars));
 
@@ -3228,6 +3275,25 @@
     // actually deals, and before the loop because the loop must ask and not
     // decide. `null` on reading 1: the loop then calls cellOf exactly as it did.
     const rd = reading(gk, s, usedKinds);
+    /* THE SECTION'S KEY, MOVED BY THE READING (2026-09-04, wave 2a step 2).
+       `alphabet.key` below is `wrapKey(R.song[0].key + rd.key)` — the record's
+       tonic shifted by this reading's own transposition — and a section that
+       modulates has to take the same shift or a bridge would arrive a
+       reading's-worth away from the song it belongs to. So the modulation is
+       computed here, where `rd` exists, and written on the row ONLY WHERE IT
+       DIFFERS from the record's: a section that plays the record's key says
+       nothing, which is the one spelling of "as the record" the resolver
+       reads (document.js §2, absent = the record's). */
+    {
+      const kshift = rd ? rd.key : 0;
+      const home = NF.wrapKey(R.song[0].key + kshift);
+      sections.forEach((sec, i) => {
+        const b = silent ? null : R.song[i];
+        if (!b || b.key == null) return;
+        const k = NF.wrapKey(b.key + kshift);
+        if (k !== home) sec.key = k;
+      });
+    }
     // ...AND THIS RECORD'S OWN DEVELOPMENT (§6c), on its own stream, after the
     // reading and before the cells: the reading says what the figure IS and the
     // deal says what happens to it. `null` on reading 1, and then every call

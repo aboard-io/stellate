@@ -86,19 +86,55 @@ every field's tier and note. Where §1 guessed and the tree disagreed:
   importer in the tree. It is stored and resolved as a cell flag that reaches
   nothing; T2e pins that it moves no event, so the day a reader lands the gate
   names it.
-- **`swing`, `groove`, `key`, `mode`, `prog` are RECORD fields today.** The
-  document carries one of each; precompose drops compose's per-section
-  modulations. A row override is wave 2 work and moves the sound.
+- **`swing`, `groove`, `key`, `mode`, `prog` were RECORD fields; the row
+  overrides them now (wave 2a, 2026-09-04).** The document still stores one of
+  each on the record and `document.js` resolves `row → record` through the
+  wave-1 resolver, so absent on a row is the record's, byte for byte. The
+  modulations precompose was dropping are carried: at seed 1 compose gives
+  every bridge it writes a MODE of its own (398 sections on 398 records), moves
+  the KEY on 275 sections of 228 records (the relative-minor bridge and the
+  truck-driver last chorus) and names a PROG on 12. `swing` and `groove` the
+  composer deals none of per section, so they are override-only. `toGenre` is
+  the one owner of all five — `boxesOf` writes key/mode/prog onto no box,
+  because `ui/derive.js genreOf` reads them off one and would apply the same
+  modulation twice — while swing and groove DO ride on the box, because
+  derive takes the song's own as arguments and would stomp the row's.
 - **`bassop` and `kit` are COLUMN fields** — read off the bass's and the
   drummer's `development` word, not off the section.
-- **`fx`, `rev`, `verb`, `echo`, `dtime`, `pan`, `auto` have no document
-  address** — `emptyBox` defaults them, `boxesOf` writes none. `breath`,
-  `pipe`, `nudge` are addresses with no writer.
-- **`intro`, `outro`, `mot` are dealt and then DROPPED.** Over 4,859 composed
-  sections at seed 1 compose deals `outro` on 1,718, `mot` on 1,042, `intro`
-  on 580, and `genreToDocument`'s projection copies none — the box's
-  characteristic bug, live. Not fixed in wave 1 (T2 forbids moving the sound);
-  wave 2 carries them as its first, separately gated step, so Paul can hear it.
+- **`fx`, `rev`, `echo`, `dtime`, `pan` and the room have an address now
+  (wave 2a).** They had none: `emptyBox` defaulted them and `boxesOf` wrote
+  none, while compose was dealing an fx CHAIN on 1,441 of 4,859 sections (272
+  records), a reverb send on 1,835 (479 records) and an echo send on 552 (331
+  records) — all thrown away by the same projection that threw away `lvl` and
+  `env`. All three are carried; `dtime` and `pan` are addresses a hand fills.
+  §1's `verb` is NOT one of them: that box field was retired 2026-08-28 and
+  its live successor is `room`, the kit-ambience send, so the row that carries
+  an address is `room` and giving `verb` one as well would be two names for
+  one send. `auto` stays READ-ONLY on the row (compiled from `mot`) and is
+  wave 3's. `breath`, `pipe`, `nudge` are still addresses with no writer, and
+  are reachable through the resolver now.
+- **`intro`, `outro`, `mot` were dealt and then DROPPED; wave 2a carries
+  them.** Over 4,859 composed sections at seed 1 compose deals `outro` on
+  1,718, `mot` on 1,042 and `intro` on 580, and `genreToDocument`'s projection
+  copied none — the box's characteristic bug, live. Carried 2026-09-04 as
+  wave 2a's first, separately gated step: the document now holds 579 intros,
+  1,714 outros and 1,038 mots, **478 of 479 anchors render different bars**
+  (19,790 events removed and 108 added at seed 1 — an intro and an outro
+  REPLACE the first and last bars of their section), and 501 of the 1,038 mot
+  sections move a rendered desk lane. The other 537 are `rise`, which compiles
+  to a HIGHPASS sweep the parent's master stage has no floor for — audio/desk.js
+  names that gap itself ("rendered by nothing") and it is the parent's, not
+  this wave's.
+
+- **The gate for a sound-moving wave cannot be `document.scoreOf`.** It is
+  "deliberately the SMALL half" and has zero references to `intro`, `outro` or
+  `mot`, so it is structurally blind to the carry. T4 stands the data tier up
+  on a stub window and imports the real `ui/derive.js`, `audio/desk.js` and
+  `audio/plan.js` — the desk-gate recipe — and reads the rendered bars, the
+  compiled lanes, the composed channel and the paced clock. T2's baseline
+  moved from v263 to v264 in the same edit, and the identity gates compare
+  with this wave's row fields stripped back off: an unintended change is still
+  caught against v264 for everything the wave does not deliberately carry.
 - **The hand is derived, not stamped.** `putPhrase` is called once per voice
   per section on every recompile, so a stamp there would mark every motif
   the hand's on first draw. `hand` = a cell absent from the provenance map or

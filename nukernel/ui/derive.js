@@ -306,8 +306,9 @@ export const genreOf = (sec, ent) => {
   // byte-identical.
   if (sec.bassop && sec.bassop !== "nobass") out.nobass = false;
   if (sec.drumkit) out.drumkit = sec.drumkit;      // borrow another kit's SOUND
-  // (no sec.swing branch: the swing is the SONG's now, like the groove — it
-  // arrives as sectionEvents' own argument and lands on the genre there)
+  // (no sec.swing branch HERE: swing and groove both land in sectionEvents,
+  // where the song's own answer arrives as an argument — the row's word wins
+  // over it there, which is the one place the two can be compared)
   if (sec.kit) {
     // A KIT WORD ON A KITLESS GENRE IMPLIES A FOUR UNDERNEATH. The operators
     // are kit->kit, so on a genre that never had lanes every word but `four`
@@ -470,7 +471,15 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // bass render through this same g — one assignment, everything leans
   // together. "straight" is 0, and means it — the override a null never is;
   // null leaves the genre's own lean standing, because swing is identity there.
-  if (songSwing) g.swing = SWINGS[songSwing];
+  // ...UNLESS THE ROW SAYS OTHERWISE (TABLE.md wave 2a, 2026-09-04). A
+  // section may now carry its own swing — document.js resolves `row ->
+  // record` and `boxesOf` writes the answer onto the box present-only — and
+  // this assignment is the one thing that could stomp it, because the song's
+  // swing arrives as an ARGUMENT and knows nothing about a section. The box's
+  // word wins; a box that says nothing takes the song's, byte for byte, which
+  // is every record written before this line.
+  if (sec.swing) g.swing = SWINGS[sec.swing];
+  else if (songSwing) g.swing = SWINGS[songSwing];
   // NUDGE is an absolute bar offset, not a phase modulo the form. Nudging a
   // fugue past bar 4 starts it AFTER the exposition, which is a different piece
   // of music from nudging within the first four bars — so it must not wrap.
@@ -604,9 +613,13 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // sitting flat on the grid, which is exactly what you notice. The groove is
   // the SONG's (one drummer for the record), applied here because this is
   // where the section's final stream exists.
+  // (…and the same door for the groove: `sec.groove` is the row's answer,
+  // resolved and written by document.js `boxesOf`, and the song's is what a
+  // box that says nothing still gets. One drummer for the record unless a
+  // section hires another for its own bars.)
   const ev = groove(edges(envelope(win, sec.env, span, barSteps), sec.intro, sec.outro,
                           span, barSteps, g.meter),
-                    songGroove, barSteps, 1, g.meter);
+                    sec.groove || songGroove, barSteps, 1, g.meter);
   // (a singEvents pass appended `sing` events here — a syllable and a voice
   // index rather than a note and a chair — after the groove, so the words
   // followed the tune off the grid. It left with the espeak organ on
@@ -638,9 +651,10 @@ const rcache = new WeakMap();               // box -> { sig, out }
 export function sectionRender(sec, slots, songGroove, songSwing) {
   const ids = new Set();
   for (const e of stackOf(sec)) for (const i of e.slots) ids.add(i);
-  // the song groove AND swing are IN the signature: neither is a key of `sec`
-  // any more, and a cache that ignored them would keep serving the old feel
-  // after a change
+  // the song groove AND swing are IN the signature: a box need not carry
+  // either (the row's own words are optional, wave 2a) and a cache that
+  // ignored the song's would keep serving the old feel after a change. The
+  // row's own ride along inside `JSON.stringify(sec)` already.
   // ...AND THE GENRE'S OWN VERSION. A session genre can be REWRITTEN IN
   // PLACE under an unchanged key (the drum machine at nukernel/drums.html
   // does it on every word), and a signature that read only the box served

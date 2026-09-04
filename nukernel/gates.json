@@ -1,5 +1,5 @@
 {
- "built": "2026-09-03",
+ "built": "2026-09-04",
  "from": "nukernel/gates-extract.js",
  "corpus": {
   "records": 55,
@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 53563
+  "compiles": 53545
  },
  "sheets": {
   "time.meter": {
@@ -460,7 +460,7 @@
    },
    "census": {
     "rows": 120,
-    "alive": 120
+    "alive": 119
    }
   },
   "dev.kit": {
@@ -491,13 +491,7 @@
   "form.intro": {
    "scope": "section",
    "regenerates": true,
-   "options": {
-    "cold": {
-     "inert": {
-      "rule": "always"
-     }
-    }
-   },
+   "options": {},
    "census": {
     "rows": 165,
     "alive": 165
@@ -620,8 +614,8 @@
   }
  },
  "proof": {
-  "rows": 18631,
-  "identical": 18544,
+  "rows": 18622,
+  "identical": 18535,
   "moved": 0,
   "overOffered": 87,
   "bad": {
@@ -648,8 +642,8 @@
   }
  },
  "proofHeld": {
-  "rows": 11474,
-  "identical": 11407,
+  "rows": 11461,
+  "identical": 11394,
   "moved": 0,
   "overOffered": 67,
   "bad": {

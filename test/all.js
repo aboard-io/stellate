@@ -226,14 +226,29 @@ const GATES = [
      compiled genre with its closures CALLED, and the kernel's own events —
      plus the other half: an override that reaches no sound is a field that is
      not there), T3 provenance (own · guest:<genre> · hand over every bank).
-     Wave 1 and `kind: "node"`: it is the document tier and nothing else. It
-     shells out to `git worktree` once and caches the tree in /tmp. */
+     It shells out to `git worktree` once and caches the tree in /tmp.
+
+     ...AND T4, THE SOUND (2026-09-04, wave 2a). The wave that carries the
+     nine section fields `genreToDocument` was dropping — intro, outro, mot,
+     mode, prog, key, fx, rev, echo — is the first one whose job is to MOVE
+     the sound, so the baseline moved to v264 and the identity gates compare
+     with those fields stripped back off. The new half cannot read
+     `document.scoreOf`: that function has zero references to intro/outro/mot
+     and is structurally blind to them. So T4 stands the data tier up on a
+     stub window and imports the REAL ui/derive.js, audio/desk.js and
+     audio/plan.js on top of it (nukernel/desk-gate.js's own recipe) and reads
+     the rendered bars, the desk's compiled lanes, the composed channel and
+     the paced clock. Still `kind: "node"` — none of the three touches a DOM
+     or an AudioContext — and still one process. */
   { name: "table", wave: 1, kind: "node",
     argv: ["test/table.test.js"],
     need: ["test/table.test.js"],
     covers: ["test/table.test.js", "nukernel/document.js",
              "nukernel/precompose.js", "nukernel/avail.js",
-             "nukernel/ui/produce.js", "nukernel/TABLE.md"] },
+             "nukernel/ui/produce.js", "nukernel/TABLE.md",
+             // T4's own reach: the three modules the carried fields land in.
+             "nukernel/ui/derive.js", "nukernel/audio/desk.js",
+             "nukernel/audio/plan.js"] },
   { name: "instrumentation", wave: 1, kind: "node",
     argv: ["test/instrumentation.test.js"],
     need: ["test/instrumentation.test.js"], covers: ["test/instrumentation.test.js"] },

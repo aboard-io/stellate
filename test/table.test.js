@@ -30,6 +30,25 @@
 //                  younger than its host (compose.js eraOK's own rule); and
 //                  the hand's two doors both arrive.
 //
+// WAVE 2a (2026-09-04) ADDS T4, AND MOVES T2's BASELINE TO v264. This is the
+// first wave whose job is to MOVE THE SOUND: `genreToDocument`'s section
+// projection was dropping nine fields the composer deals — intro, outro, mot,
+// mode, prog, key, fx, rev, echo — and carrying them is the point. So T2 now
+// compares against v264 with THIS WAVE'S ROW FIELDS STRIPPED BACK OFF (an
+// unintended change is still caught; a deliberate one is not mistaken for
+// one), and T4 measures the deliberate one.
+//
+//   T4 THE SOUND    read off the RENDERED path and not off `scoreOf`, which
+//                  has zero references to intro/outro/mot and is structurally
+//                  blind to the carry. The stub-window recipe from
+//                  nukernel/desk-gate.js stands the data tier up and imports
+//                  the real ui/derive.js (`edges` replaces the first and last
+//                  bars), audio/desk.js (`compileAuto` turns `mot` into the
+//                  section's lanes; `deskUnits` finishes the chain) and
+//                  audio/plan.js (PACE_RATE at the clock). Nine gates, one
+//                  per claim the wave makes, each of them also asserting that
+//                  the override reaches NO OTHER SECTION.
+//
 // TEST THE ARTIFACT. T2's identity is taken off the RENDER — the genre a
 // section compiles to and the events the kernel emits from it — and never off
 // the document alone, because three features have shipped broken in this repo
@@ -58,13 +77,37 @@ const ANCHORS = P.anchors();
 const SEEDS = [1, 2, 3];
 const FULL = process.argv.includes("--full");
 
-/* THE BASELINE, PINNED. T2's claim is "byte-identical to what the box played
-   before the table existed", and `HEAD` stops being that the moment this wave
-   is committed — so the commit is NAMED here rather than resolved. c6b6208 is
-   v263, the commit that shipped TABLE.md itself and not a line of its model.
-   A future wave that legitimately changes the sound moves this sha and says
-   why in the same edit; a wave that does not, does not. */
-const BASE_SHA = "c6b6208";
+/* THE BASELINE, PINNED — AND MOVED ON PURPOSE (2026-09-04, wave 2a).
+   It read `c6b6208` (v263, the commit that shipped TABLE.md itself and not a
+   line of its model) under the rule "a future wave that legitimately changes
+   the sound moves this sha and says why in the same edit". This is that wave
+   and this is that edit.
+
+   WHY IT MOVES: wave 2a is the first wave whose whole job is to MOVE THE
+   SOUND. `genreToDocument`'s section projection was dropping nine fields the
+   composer deals — `intro` `outro` `mot` `mode` `prog` `key` `fx` `rev`
+   `echo` — and carrying them is the point, so an identity gate against v263
+   would fail for the reason the wave exists and prove nothing about anything
+   else. The sha is now v264, the commit before this one.
+
+   WHAT THE GATE STILL PROVES, which is the part worth having: every anchor at
+   seeds 1-3 with THIS WAVE'S ROW FIELDS STRIPPED BACK OFF is byte-identical to
+   v264 — the document, every section's compiled genre with its closures
+   called, and the kernel's own events. So an unintended change is still caught
+   against v264 for everything except the fields this wave deliberately
+   carries, which is exactly the claim the wave is allowed to make. */
+const BASE_SHA = "423916c";
+/* THE NINE FIELDS THIS WAVE PUTS ON THE ROW, and the two the row may now
+   override with nothing carried into them (swing, groove). Stripping them
+   from a head document is "the record as v264 composed it", which is what
+   T2a/T2b/T2c compare. */
+const WAVE2A_ROW = ["intro", "outro", "mot", "mode", "prog", "key",
+                    "fx", "rev", "echo", "swing", "groove",
+                    "room", "dtime", "pan"];
+const stripRows = (doc) => {
+  for (const s of doc.form.sections) for (const f of WAVE2A_ROW) delete s[f];
+  return doc;
+};
 const WT = path.join("/tmp", "nu-table-base-" + BASE_SHA);
 function baseTree() {
   if (!fs.existsSync(path.join(WT, "nukernel", "document.js"))) {
@@ -270,25 +313,26 @@ const portrait = (g, nv) => {
 };
 
 if (B) {
-  ok("T2a every anchor's DOCUMENT is the baseline's, bar the key the wave adds", () => {
+  ok("T2a every anchor's DOCUMENT is v264's once the wave's row fields are stripped", () => {
     const bad = [];
     for (const gk of ANCHORS) for (const s of SEEDS) {
-      const mine = D.normalize(P.genreToDocument(gk, s));
-      const prov = mine.material.prov;
-      assert.ok(prov, gk + "/" + s + ": no provenance map was stamped");
-      delete mine.material.prov;
+      const mine = stripRows(D.normalize(P.genreToDocument(gk, s)));
+      assert.ok(mine.material.prov, gk + "/" + s + ": no provenance map was stamped");
+      // ...AND THE MAP IS COMPARED NOW, not deleted. Wave 1 deleted it here
+      // because the baseline predated it; v264 stamps the same map, so the
+      // provenance is part of the identity this gate holds rather than a hole
+      // in it — a wave that moved a fingerprint would be caught.
       const theirs = B.D.normalize(B.P.genreToDocument(gk, s));
       if (JSON.stringify(mine) !== JSON.stringify(theirs)) bad.push(gk + "/" + s);
-      mine.material.prov = prov;
     }
     assert.deepStrictEqual(bad.slice(0, 8), [],
       bad.length + " of " + (ANCHORS.length * SEEDS.length) + " documents moved");
   });
 
-  ok("T2b every section's compiled GENRE is the baseline's, closures and all", () => {
+  ok("T2b every section's compiled GENRE is v264's, closures and all, once stripped", () => {
     const bad = [];
     for (const gk of ANCHORS) for (const s of SEEDS) {
-      const mine = D.normalize(P.genreToDocument(gk, s));
+      const mine = stripRows(D.normalize(P.genreToDocument(gk, s)));
       const theirs = B.D.normalize(B.P.genreToDocument(gk, s));
       const nv = mine.voices.filter((v) => v.kind === "line").length;
       for (let i = 0; i < mine.form.sections.length; i++) {
@@ -306,7 +350,7 @@ if (B) {
      otherwise a SAMPLE that is not arbitrary — every record carrying a guest
      motif (the only records this wave writes anything unusual on) plus an even
      stride across the catalogue. */
-  ok("T2c the rendered EVENTS are the baseline's", () => {
+  ok("T2c the rendered EVENTS are v264's once the wave's row fields are stripped", () => {
     const withGuest = ANCHORS.filter((gk) => {
       try {
         const d = D.normalize(P.genreToDocument(gk, 1));
@@ -319,7 +363,7 @@ if (B) {
       : [...new Set([...withGuest, ...ANCHORS.filter((_, i) => i % stride === 0)])];
     const bad = [];
     for (const gk of sample) for (const s of SEEDS) {
-      const mine = D.scoreOf(D.normalize(P.genreToDocument(gk, s)), GENRES);
+      const mine = D.scoreOf(stripRows(D.normalize(P.genreToDocument(gk, s))), GENRES);
       const theirs = B.D.scoreOf(B.D.normalize(B.P.genreToDocument(gk, s)), B.GENRES);
       if (JSON.stringify(mine) !== JSON.stringify(theirs)) bad.push(gk + "/" + s);
     }
@@ -525,5 +569,397 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
   console.log("");
 }
 
-console.log(pass + " passed, " + fail + " failed");
-process.exit(fail ? 1 : 0);
+/* ======================================================================
+   T4 · THE SOUND MOVES ON PURPOSE (TABLE.md wave 2a)
+   ======================================================================
+   WHY THIS BLOCK EXISTS AT ALL, and it is the whole lesson of the
+   test-the-artifact memo. Everything above renders through
+   `document.scoreOf`, which is "deliberately the SMALL half: no layers, no
+   nudge, no lead-ins, no tempo warp, no swing override" — and, measured,
+   ZERO references to `intro`, `outro` or `mot`. It is STRUCTURALLY BLIND to
+   the three fields step 1 carries, so a green T2c proves nothing about them.
+
+   The real consumers are one tier up and neither of them is pure node on its
+   own: ui/derive.js `sectionEvents` (line 607: `edges(envelope(…), sec.intro,
+   sec.outro, …)` — the intro and the outro REPLACE the first and last bars)
+   and audio/desk.js `compileAuto` (line 128: `sec.mot` -> the section's
+   `auto[]` lanes, which `deskSweeps` and `deskLevelAt` then play). So this
+   block stands the data tier up on a stub window and imports the two real ES
+   modules on top of it — nukernel/desk-gate.js's own recipe, which exists for
+   exactly this reason ("a wiring change in the shipped file fails HERE") —
+   and reads the RENDERED bars and the RENDERED lanes.
+
+   It is async and therefore last, and it owns the summary and the exit code:
+   a `process.exit` above it would take the run down before the sound was
+   measured at all. */
+(async () => {
+  globalThis.window = globalThis;
+  globalThis.addEventListener = () => {};
+  globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  globalThis.document = { visibilityState: "visible", body: { append() {} },
+    createElement: () => ({ style: {}, append() {}, click() {}, setAttribute() {} }) };
+  window.NuKernel = N("kernel.js"); window.NuGenres = NG;
+  window.NuFields = N("fields.js"); window.NuSong = N("song.js");
+  window.NuInstruments = N("instruments.js"); window.NuCompose = NC;
+  window.NuDocument = D; window.NuSongs = Songs;
+  window.PRESETS = N("presets.js").PRESETS;
+  window.__REGISTRY = require(path.join(ROOT, "engine", "registry-data.js"));
+  const SE = require(path.join(ROOT, "engine", "faust", "voices", "state-engine.js"));
+  const NF = window.NuFields;
+  const DER = await import(path.join(ROOT, "nukernel", "ui", "derive.js"));
+  const DESK = await import(path.join(ROOT, "nukernel", "audio", "desk.js"));
+
+  /* THE PAGE'S OWN COMPILE, in four lines — ui/eight.js `push()` registers one
+     genre per section under a prefix and hands `boxesOf` the same prefix, and
+     the phrase slots are laid out the way `boxesOf`'s stack indexes read them
+     (voice v, section i -> slot v*NS+i). Nothing here is a second answer to
+     "what does this record play": it is the same two functions the page calls. */
+  const GK = "table.gate.";
+  const boxesFor = (doc) => {
+    doc.form.sections.forEach((s2, i) => {
+      GENRES[GK + i] = D.toGenre(doc, i, GENRES, []);
+    });
+    return D.boxesOf(doc, GK);
+  };
+  const slotsFor = (doc) => {
+    const secs = doc.form.sections, lines = doc.voices.filter((v) => v.kind === "line");
+    const out = [];
+    lines.forEach((c, v) => secs.forEach((s2, i) => {
+      out[v * secs.length + i] = D.toPhrase(doc, D.materialAt(c, s2.id));
+    }));
+    return out;
+  };
+  const barsOf = (doc) => {
+    const slots = slotsFor(doc);
+    return boxesFor(doc).map((b) =>
+      DER.sectionEvents(b, slots, doc.time.groove, doc.time.swing).ev);
+  };
+  const clone = (d) => JSON.parse(JSON.stringify(d));
+
+  console.log("\nT4 — the sound moves: the rendered bars and the rendered lanes\n");
+
+  /* T4a — `mot` REACHES THE DESK'S AUTOMATION. Before this commit `boxesOf`
+     wrote `mot: null` on every precomposed section, so `compileAuto` compiled
+     an EMPTY lane list on all 4,859 of them and `deskSweeps` answered with its
+     own "no filter" constant for every bar in the catalogue. */
+  ok("T4a a mot section compiles a MOVING desk lane; stripped, it is flat again", () => {
+    let sections = 0, moving = 0, flatWhenStripped = 0;
+    const words = {};
+    let example = null;
+    // ONE STRIPPED RENDER PER RECORD, not one per section: `boxesFor` compiles
+    // every section's genre, so asking it again inside the section loop made
+    // this walk quadratic in the sections that move (measured: 501 extra full
+    // compiles, and the gate ran for minutes rather than seconds).
+    const flat = (b) => DESK.deskSweeps(b, 4, (x) => x)[0];
+    for (const gk of ANCHORS) {
+      const doc = D.normalize(P.genreToDocument(gk, 1));
+      const boxes = boxesFor(doc);
+      const mots = boxes.map((b) => b.mot);
+      if (!mots.some(Boolean)) continue;
+      const measured = boxes.map((b) => {
+        const sw = flat(b);
+        return { from: sw.from, to: sw.to, lo: DESK.deskLevelAt(b, 0),
+                 mid: DESK.deskLevelAt(b, 0.5) };
+      });
+      // ...and the same record with the field stripped back off, which is the
+      // world before this commit.
+      const d0 = clone(doc);
+      for (const s2 of d0.form.sections) delete s2.mot;
+      const zero = boxesFor(d0).map((b) => {
+        const sw = flat(b);
+        return { from: sw.from, to: sw.to, mid: DESK.deskLevelAt(b, 0.5) };
+      });
+      for (let i = 0; i < boxes.length; i++) {
+        if (!mots[i]) continue;
+        sections++; words[mots[i]] = (words[mots[i]] || 0) + 1;
+        const m = measured[i];
+        if (m.from === m.to && m.lo === m.mid) continue;
+        moving++;
+        if (!example) example = gk + " #" + i + " " + mots[i];
+        if (zero[i].from === zero[i].to && zero[i].mid === 1) flatWhenStripped++;
+      }
+    }
+    console.log("       " + sections + " mot sections at seed 1 (" +
+      Object.keys(words).map((w) => w + " x" + words[w]).join(" · ") + "); " +
+      moving + " move a rendered lane, and all " + flatWhenStripped +
+      " of them are flat with `mot` stripped. First: " + example);
+    assert.ok(sections > 900, "the composer's motion is not on the document: " + sections);
+    assert.ok(moving > 400, "only " + moving + " of " + sections + " mot sections move a lane");
+    assert.strictEqual(flatWhenStripped, moving,
+      "a lane survived stripping `mot` — something else is writing it");
+    // THE ONE WORD WITH NO HOME, said out loud rather than counted as a pass:
+    // `rise` compiles to a HIGHPASS sweep and audio/desk.js has no floor to
+    // sweep ("it is named here and rendered by nothing"), so those sections
+    // reach `auto[]` and not the filter. That is the parent's gap, not this
+    // wave's, and it is why `moving` is not `sections`.
+    assert.ok(words.rise && moving + words.rise >= sections,
+      "the unrendered remainder is not the documented `rise` gap");
+  });
+
+  /* T4b — AND A `pump` MOVES THE LEVEL, which is the lane no composed record
+     has (compose deals open/rise/close and never pump), so it is the hand's
+     half of the same claim and it goes through `putRow`. */
+  ok("T4b a hand's pump on one row moves that section's rendered level and no other's", () => {
+    const doc = D.normalize(P.genreToDocument("acid", 1));
+    const si = doc.form.sections.findIndex((s2, i) => !s2.mot && i > 0);
+    assert.ok(si > 0, "no section without a motion to give one to");
+    const before = boxesFor(doc).map((b) => [0, 0.25, 0.5].map((f) => DESK.deskLevelAt(b, f)));
+    assert.strictEqual(D.putRow(doc, si, "mot", "pump"), true);
+    const after = boxesFor(doc).map((b) => [0, 0.25, 0.5].map((f) => DESK.deskLevelAt(b, f)));
+    assert.deepStrictEqual(before[si], [1, 1, 1], "the section was already automated");
+    assert.ok(after[si][0] < 0.5 && after[si][2] > after[si][0],
+      "a pump did not duck and recover: " + after[si].join("/"));
+    for (let i = 0; i < before.length; i++) if (i !== si)
+      assert.deepStrictEqual(after[i], before[i], "the pump leaked into section " + i);
+    // ...and clearing it returns the row to what it inherits (§2).
+    assert.strictEqual(D.putRow(doc, si, "mot", null), true);
+    assert.deepStrictEqual(boxesFor(doc).map((b) =>
+      [0, 0.25, 0.5].map((f) => DESK.deskLevelAt(b, f))), before, "clearing did not restore");
+  });
+
+  /* T4c — `intro` AND `outro` REPLACE THE FIRST AND LAST BARS OF THE SECTION
+     THEY ARE ON. Read off the rendered bars, per anchor, against the same
+     record with the two fields stripped. */
+  ok("T4c the carried intro and outro change the rendered bars, and 478 of 479 records move", () => {
+    let moved = 0, added = 0, removed = 0;
+    let silenced = 0;
+    const biggest = [];
+    for (const gk of ANCHORS) {
+      const doc = D.normalize(P.genreToDocument(gk, 1));
+      const d0 = clone(doc);
+      for (const s2 of d0.form.sections) { delete s2.intro; delete s2.outro; delete s2.mot; }
+      const a = barsOf(doc), b = barsOf(d0);
+      const na = a.reduce((x, y) => x + y.length, 0), nb = b.reduce((x, y) => x + y.length, 0);
+      if (na === 0 && nb > 0) silenced++;
+      if (JSON.stringify(a) === JSON.stringify(b)) continue;
+      moved++; added += Math.max(0, na - nb); removed += Math.max(0, nb - na);
+      biggest.push([gk, na - nb]);
+    }
+    biggest.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1]));
+    console.log("       " + moved + " of " + ANCHORS.length +
+      " anchors render different bars at seed 1: " + added + " events added, " +
+      removed + " removed. Biggest: " +
+      biggest.slice(0, 6).map((x) => x[0] + " " + (x[1] > 0 ? "+" : "") + x[1]).join(", "));
+    assert.ok(moved > 450, "only " + moved + " records moved — the carry is not reaching derive");
+    assert.strictEqual(silenced, 0, silenced + " records went silent");
+  });
+
+  /* T4d — A ROW `key` RENDERS IN THAT KEY, read off the PITCH CLASSES, and
+     only in that section. This is step 2's claim and the composer's own
+     modulation is the fixture: `beatgroup`'s last chorus is the truck-driver
+     gear change compose.js:1711 deals and precompose used to drop. */
+  ok("T4d a row key override renders in that key, and no other section moves", () => {
+    const doc = D.normalize(P.genreToDocument("beatgroup", 1));
+    const si = doc.form.sections.findIndex((s2) => s2.key != null);
+    assert.ok(si >= 0, "the fixture no longer carries a composed modulation");
+    const home = doc.alphabet.key, up = doc.form.sections[si].key;
+    const shift = ((up - home) % 12 + 12) % 12;
+    const notesIn = (sc, i) => sc.events.filter((e) => e.sec === i && e.n != null).map((e) => e.n);
+    const withIt = D.scoreOf(doc, GENRES);
+    const d0 = clone(doc); delete d0.form.sections[si].key;
+    const without = D.scoreOf(d0, GENRES);
+    const pcs = (a) => [...new Set(a.map((n) => ((n % 12) + 12) % 12))].sort((x, y) => x - y);
+    const A2 = notesIn(withIt, si), B2 = notesIn(without, si);
+    assert.strictEqual(A2.length, B2.length, "the modulation changed how many notes there are");
+    const moved = A2.map((n, k) => n - B2[k]);
+    assert.ok(moved.every((d) => d === shift - (shift > 6 ? 12 : 0) || d === shift),
+      "the section did not transpose by the modulation: " +
+      [...new Set(moved)].join(","));
+    console.log("       beatgroup #" + si + ": key " + home + " -> " + up +
+      ", pitch classes " + pcs(B2).join(" ") + " -> " + pcs(A2).join(" "));
+    for (let i = 0; i < doc.form.sections.length; i++) if (i !== si)
+      assert.deepStrictEqual(notesIn(withIt, i), notesIn(without, i),
+        "the modulation leaked into section " + i);
+    // ...AND A HAND'S OWN, through putRow, on a record that modulates nowhere.
+    const d2 = D.normalize(P.genreToDocument("reggae", 2));
+    assert.ok(d2.form.sections.every((s2) => s2.key == null), "the fixture modulates");
+    const base = D.scoreOf(d2, GENRES);
+    assert.strictEqual(D.putRow(d2, 1, "key", NF.wrapKey(d2.alphabet.key + 5)), true);
+    const now = D.scoreOf(d2, GENRES);
+    assert.notDeepStrictEqual(notesIn(now, 1), notesIn(base, 1), "a hand's key moved nothing");
+    assert.deepStrictEqual(notesIn(now, 0), notesIn(base, 0), "it leaked into section 0");
+    assert.strictEqual(D.putRow(d2, 1, "key", null), true);
+    assert.deepStrictEqual(D.scoreOf(d2, GENRES), base, "clearing did not restore");
+  });
+
+  /* T4e — A ROW `swing` MOVES THE ODD SIXTEENTHS OF THAT SECTION ONLY.
+     kernel.js:455 is the whole definition — `swing(g, i) = (i % 2) * g.swing`,
+     added in `timeOf` — so a swung section is one whose ODD steps land off the
+     grid and whose even ones do not. Counted, not asserted by eye. */
+  ok("T4e a row swing override leans that section's odd sixteenths and no other's", () => {
+    // A STRAIGHT FIXTURE, ON PURPOSE: the claim is that odd sixteenths move
+    // OFF the grid, and a record that already swings has them off it before
+    // the row says anything. `neoclassical` states no swing and no groove
+    // (113 of the 479 anchors do); the assertion is about the lean, so the
+    // fixture must have none to start with.
+    const doc = D.normalize(P.genreToDocument("neoclassical", 2));
+    assert.ok(!doc.time.swing || doc.time.swing === "straight",
+      "the fixture already swings: " + doc.time.swing);
+    /* THE MEASUREMENT IS THE DEFINITION, and "off the grid" is not it: the
+       tape humanises every onset (a straight neoclassical bar already has 22
+       of its 29 events at a fractional step), so an off-grid COUNT says
+       nothing. kernel.js:455 says exactly what a swing is — `(i % 2) *
+       g.swing` added to step i — so the honest reading is the PER-EVENT
+       DELTA between the same render swung and straight: every onset moves by
+       0 or by exactly the swing, and by the swing only if it sits on an odd
+       sixteenth. Measured on this fixture: 6 of 29 move by 1/3 of a step and
+       23 do not. */
+    const before = barsOf(doc);
+    const si = 1;
+    assert.strictEqual(D.putRow(doc, si, "swing", "shuffle"), true);
+    const boxes = boxesFor(doc);
+    assert.strictEqual(boxes[si].swing, "shuffle", "boxesOf did not carry the row's swing");
+    assert.ok(boxes.every((b, i) => i === si || b.swing === undefined),
+      "the swing landed on a box that never asked");
+    const after = barsOf(doc);
+    const lean = NF.SWINGS.shuffle;
+    assert.strictEqual(after[si].length, before[si].length,
+      "a swing changed how many events there are");
+    const deltas = after[si].map((e, k) => +(e.t - before[si][k].t).toFixed(6));
+    const leaned = deltas.filter((d) => Math.abs(d - lean) < 1e-4).length;
+    const still = deltas.filter((d) => d === 0).length;
+    console.log("       neoclassical #" + si + ": " + leaned + " of " +
+      deltas.length + " onsets lean by exactly " + lean.toFixed(4) +
+      " of a step, " + still + " do not move");
+    assert.ok(leaned > 0, "a shuffle leaned no sixteenth");
+    assert.strictEqual(leaned + still, deltas.length,
+      "an onset moved by something that is not the swing: " +
+      [...new Set(deltas)].join(","));
+    for (let i = 0; i < before.length; i++) if (i !== si)
+      assert.deepStrictEqual(after[i], before[i], "the swing leaked into section " + i);
+    assert.strictEqual(D.putRow(doc, si, "swing", null), true);
+    assert.deepStrictEqual(barsOf(doc), before, "clearing did not restore");
+    // ...and the groove through the same door, which derive reads beside it.
+    assert.strictEqual(D.putRow(doc, si, "groove", "funk"), true);
+    const g = barsOf(doc);
+    assert.notDeepStrictEqual(g[si], before[si], "a row groove moved nothing");
+    for (let i = 0; i < before.length; i++) if (i !== si)
+      assert.deepStrictEqual(g[i], before[i], "the groove leaked into section " + i);
+  });
+
+  /* T4f — A ROW `fx` CHANGES THAT SECTION'S RENDERED CHAIN AND NO OTHER'S.
+     Read off `deskUnits`, which is the last thing between the document and the
+     parent's own unit table — the chips arrive as `u.inserts`, finished
+     through state-engine `insertChain`. A recipe-level read and not a
+     spectrum: the chain naming the chip IS the artifact at this tier, and the
+     spectrum belongs to the browser gate that renders it. */
+  ok("T4f a row fx override lands a real insert on that section's units only", () => {
+    const doc = D.normalize(P.genreToDocument("reggae", 2));
+    const units = { v0: { lvl: 1, module: "sampler", sampler: { id: "ahh_choir" } } };
+    const addr = { v0: "lead" };
+    const chainOf = (b) => JSON.stringify(
+      (DESK.deskUnits(clone(units), addr, b, (x) => x, SE).v0 || {}).inserts || []);
+    const si = doc.form.sections.findIndex((s2) => !s2.fx || !s2.fx.length);
+    assert.ok(si >= 0, "every section already carries a chain");
+    const before = boxesFor(doc).map(chainOf);
+    assert.strictEqual(D.putRow(doc, si, "fx", ["crunch"]), true);
+    const boxes = boxesFor(doc);
+    assert.deepStrictEqual(boxes[si].fx, ["crunch"], "boxesOf did not carry the row's chain");
+    const after = boxes.map(chainOf);
+    assert.notStrictEqual(after[si], before[si], "the chip reached no insert");
+    assert.ok(after[si].length > before[si].length, "the chain did not grow");
+    for (let i = 0; i < before.length; i++) if (i !== si)
+      assert.strictEqual(after[i], before[i], "the chain leaked into section " + i);
+    console.log("       reggae #" + si + " inserts: " + before[si] + " -> " + after[si]);
+    assert.strictEqual(D.putRow(doc, si, "fx", null), true);
+    assert.deepStrictEqual(boxesFor(doc).map(chainOf), before, "clearing did not restore");
+    // ...AND THE TWO SENDS AND THE PLACE, through the same door and read off
+    // the composed channel — the numbers the strip draws and the unit takes.
+    const chan = (b) => DESK.deskChannelBase(b, "lead");
+    const base = boxesFor(doc).map(chan);
+    D.putRow(doc, si, "rev", "drown"); D.putRow(doc, si, "echo", "wet");
+    D.putRow(doc, si, "pan", "r");
+    const now = boxesFor(doc).map(chan);
+    assert.ok(now[si].rev > base[si].rev, "a row reverb send moved nothing");
+    assert.ok(now[si].del > base[si].del, "a row echo send moved nothing");
+    assert.ok(now[si].pan !== base[si].pan, "a row pan moved nothing");
+    for (let i = 0; i < base.length; i++) if (i !== si)
+      assert.deepStrictEqual(now[i], base[i], "a send leaked into section " + i);
+  });
+
+  /* T4g — AND THE CARRIED CHAIN IS ON THE CATALOGUE, not just on a fixture:
+     the census the projection used to throw away. */
+  ok("T4g the composer's own chains and sends reach the box on the catalogue", () => {
+    const c = { fx: 0, rev: 0, echo: 0, mode: 0, prog: 0, key: 0 };
+    const recs = { fx: new Set(), rev: new Set(), echo: new Set(), mode: new Set() };
+    for (const gk of ANCHORS) {
+      const boxes = boxesFor(D.normalize(P.genreToDocument(gk, 1)));
+      for (const b of boxes) {
+        if (b.fx && b.fx.length) { c.fx++; recs.fx.add(gk); }
+        if (b.rev) { c.rev++; recs.rev.add(gk); }
+        if (b.echo) { c.echo++; recs.echo.add(gk); }
+      }
+      const d = D.normalize(P.genreToDocument(gk, 1));
+      for (const s2 of d.form.sections) {
+        if (s2.mode) { c.mode++; recs.mode.add(gk); }
+        if (s2.prog) c.prog++;
+        if (s2.key != null) c.key++;
+      }
+    }
+    console.log("       carried onto the box at seed 1 — fx " + c.fx + " sections/" +
+      recs.fx.size + " records · rev " + c.rev + "/" + recs.rev.size +
+      " · echo " + c.echo + "/" + recs.echo.size +
+      "; and onto the row — mode " + c.mode + "/" + recs.mode.size +
+      " · key " + c.key + " · prog " + c.prog);
+    assert.ok(c.fx > 1000 && c.rev > 1500 && c.echo > 400,
+      "the chains are not reaching the box: " + JSON.stringify(c));
+    assert.ok(c.mode > 300 && c.key > 200, "the modulations are not on the row");
+  });
+
+  /* T4h — `pace` WAS ALREADY A ROW FIELD AND IS REACHABLE THROUGH THE
+     RESOLVER. §1 moved it here from Time on 2026-09-03 and the tree had
+     already done the work (compose.js dealPaces, the projection since
+     2026-08-30, audio/plan.js PACE_RATE at the clock); what it lacked was a
+     resolver call site, which is what a table cell asks through. The claim
+     this gate makes is the narrow one: a pace on one row changes THAT
+     section's bar seconds and nobody else's. */
+  const PLANMOD = await import(path.join(ROOT, "nukernel", "audio", "plan.js"));
+  ok("T4h a row pace changes that section's bar seconds only", () => {
+    assert.ok(D.TIERS.pace && D.TIERS.pace.tier === "row" && D.TIERS.pace.at,
+      "pace is not a row field with an address");
+    // `await import`, never `require`: audio/plan.js is an ES module WITH
+    // top-level await (it builds the Faust fleet), and node refuses to
+    // `require` such a graph. Loaded once, above, and passed in here.
+    const PLAN = PLANMOD;
+    const doc = D.normalize(P.genreToDocument("reggae", 2));
+    const bpm = doc.time.bpm;
+    const secsFor = (bx) => bx.map((b) => DER.secsOf(b, bpm) / PLAN.paceRateOf(b.pace));
+    const before = secsFor(boxesFor(doc));
+    const si = doc.form.sections.findIndex((s2) => !s2.pace);
+    assert.ok(si >= 0, "every section already paces");
+    assert.strictEqual(D.resolveFrom(doc, si, 0, "pace").from, null,
+      "an unset pace already answers from somewhere");
+    assert.strictEqual(D.putRow(doc, si, "pace", "half"), true);
+    assert.strictEqual(D.resolveFrom(doc, si, 0, "pace").from, "row");
+    const boxes = boxesFor(doc);
+    assert.strictEqual(boxes[si].pace, "half", "boxesOf did not carry the row's pace");
+    const after = secsFor(boxes);
+    assert.ok(Math.abs(after[si] - before[si] * 2) < 1e-9,
+      "half pace did not double the section: " + before[si] + " -> " + after[si]);
+    for (let i = 0; i < before.length; i++) if (i !== si)
+      assert.strictEqual(after[i], before[i], "the pace leaked into section " + i);
+    assert.strictEqual(D.putRow(doc, si, "pace", null), true);
+    assert.deepStrictEqual(secsFor(boxesFor(doc)), before, "clearing did not restore");
+  });
+
+  /* T4i — `focus` STILL REACHES NOTHING, and this wave did not invent a
+     reader for it. T2e already pins that it moves no event on the score; this
+     is the same claim one tier up, where the box actually plays. */
+  ok("T4i focus reaches nothing on the rendered path either", () => {
+    const doc = D.normalize(P.genreToDocument("reggae", 2));
+    const vi = doc.voices.findIndex((v) => v.kind === "line");
+    const before = JSON.stringify(barsOf(doc));
+    assert.strictEqual(D.putCell(doc, 1, vi, "focus", true), true);
+    assert.strictEqual(JSON.stringify(barsOf(doc)), before,
+      "focus reached the rendered bars — say what it does and rewrite this test");
+    // ...and a row may not claim it: a cell flag has exactly one home.
+    assert.strictEqual(D.putRow(doc, 1, "focus", true), false);
+  });
+
+  console.log("\n" + pass + " passed, " + fail + " failed");
+  process.exit(fail ? 1 : 0);
+})().catch((e) => {
+  console.log("  FAIL the rendered-path block threw\n       " + (e && e.stack || e));
+  console.log("\n" + pass + " passed, " + (fail + 1) + " failed");
+  process.exit(1);
+});

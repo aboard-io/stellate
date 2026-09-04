@@ -350,6 +350,96 @@
     crooning:   { voice: "bass",   vowels: "oau", vib: 0.7,  air: 0.18, vibRate: 4.6, vibRise: 1.1, syll: 1 },
     // four men round one mic, and the lead on top of them
     doowopstack:{ voice: "tenor",  vowels: "ou",  vib: 0.3,  air: 0.16, blend: 0.65, syll: 2 },
+    // ...AND "ON TOP OF THEM" MADE TRUE FOR THE LEAD (2026-09-04). Paul:
+    // *"Fix doowop too, high tenor not baritone -- check for singer register
+    // throughout."* He is right, and the measurement says how wrong it was:
+    // with `doowopstack`'s tenor, `doowop`'s lead sang a median of G#3/G3/A#3
+    // across seeds 1-3 — a BARITONE, a fifth under where a doo-wop lead lives.
+    // The cause is a compass, not a fader: a tenor's is B2-B4 (state-engine
+    // VOICE_TYPE) and every solo lead chair in this catalogue is written
+    // centred on C5, so audio/plan.js homeFor took a whole octave off to make
+    // him fit. A doo-wop lead is not a general male voice, he is the HIGH one
+    // — Frankie Lymon, Tony Williams, the falsetto over the stack — and this
+    // table already has that throat: `countertenor` (F3-D#5), the one
+    // `falsetto` and `boygroup` reach.
+    //   SO THIS IS `doowopstack` WITH ONE FIELD CHANGED, and doowopstack
+    // ITSELF IS UNTOUCHED, which is the part worth writing down. The obvious
+    // edit was to change the shared row in place; measured over the whole
+    // catalogue it moved 81 chairs across TWENTY-FIVE rows, because
+    // instruments.js `throatOf` CASTS this mouth regionally — every Latin and
+    // Caribbean backing coro in the table (son, samba, merengue, mento,
+    // rocksteady, mariachi, vallenato, banda, bossa, calypso, forro, ska,
+    // soca, reggae, reggaeton, huayno, nortena, tropicalia, bailefunk,
+    // corridotumbado, soundsystem, bachata) reads it without naming it. A grep
+    // for `MOUTHS.doowopstack` in the rows finds three declarations and misses
+    // all twenty-two. Raising two dozen coros an octave is not what "fix
+    // doowop" asked for, so the shared row stays and the LEAD gets its own.
+    //   WHAT IT BUYS, measured rather than claimed, sung median over doowop's
+    // lead chairs at seeds 1-3: A#3 -> C4, and the two chairs named `lead`
+    // stop folding altogether — G#3 -> G#4 (s1) and G3 -> G4 (s2), which is
+    // the D4-A4 Paul named, exactly.
+    //   WHAT IT DOES NOT BUY, said out loud: the `vocal` chair precompose
+    // seats beside the `lead` is written about three semitones higher, so it
+    // still crosses D#5 and still folds. That is a SEATING fact, not a throat
+    // fact, and it is not fixable from this table.
+    //   `barbershop` AND `glammetal` ALSO DECLARE doowopstack AND ARE LEFT ON
+    // IT. Barbershop has the better claim of the two — its "tenor" part is by
+    // definition the harmony above the lead — but Paul named doowop, and
+    // glammetal was MEASURED on the countertenor and did not move at all
+    // (C#4/D4/C#4 before and after: its score sits high enough to clear the
+    // countertenor ceiling too). Neither is changed on a guess.
+    doowoplead: { voice: "countertenor", vowels: "ou", vib: 0.3, air: 0.16, blend: 0.65, syll: 2 },
+    // ...AND THE SAME ROOM WITH GIRLS IN IT (2026-09-04). Paul: *"raise the
+    // register of the singing in the girl groups! They're girls!!!"* He is
+    // right and the measurement is worse than the complaint: `girlgroup` — the
+    // Shirelles, New York 1960 — declared `doowopstack` because the STACK is
+    // the fact, and inherited its THROAT with it. A tenor's compass is
+    // B2-B4 (state-engine VOICE_TYPE, 123-494 Hz), the row's lead is written
+    // around ctr 72, and so audio/plan.js homeFor moved the whole line DOWN AN
+    // OCTAVE at all three seeds to make it fit: measured at the
+    // precompose -> toGenre -> render seam, the lead sang D3/A3/G#4 (s1),
+    // E2/A3/E5 (s2), C#3/B3/E5 (s3) — a median of A3 on the first girl-group
+    // number one. This row is `doowopstack` with ONE FIELD CHANGED, on purpose:
+    // the closeness, the ooh, the small wobble, the dry air and the two-beat
+    // syllable are all the same corner and the same microphone, and the only
+    // thing that was wrong was whose throat it was.
+    //   SOPRANO AND NOT ALTO, and the difference is not the register — both
+    // put the lead's home at 0 and both sing a median of A4/A4/B4, which is
+    // the G4-D5 a girl-group lead sits in. It is the TOP. The alto compass
+    // stops at F5 (77) and the girl-group top is E5/F5 and over it, so the
+    // per-note fold rewrote 6/88/30 of the lead's notes at the three seeds
+    // where the soprano's B3-C6 rewrote 0/34/2. Same singing, a fifth more
+    // room above her. It is also the throat this catalogue already casts for
+    // exactly this repertory one scene later — `northernsoul` reaches
+    // `belter`, and Gloria Jones is a Brill Building record played in Wigan.
+    girlstack:  { voice: "soprano", vowels: "ou", vib: 0.3, air: 0.16, blend: 0.65, syll: 2 },
+    // AND THE SAME FAULT ON A WOMAN ALONE (2026-09-04, the same round, found by
+    // the same sentence — Paul: *"raise the register of the singing in the girl
+    // groups! They're girls!!!"*). `nuevacancion` (Santiago 1966) is Violeta
+    // Parra's LAS ULTIMAS COMPOSICIONES, the row's own named record, and it
+    // reached `trobar` — which is the right DESCRIPTION and the wrong throat.
+    // trobar's own comment is "one man in a hall with no polish on him": open
+    // vowels, a straight-ish tone with more breath than any church allows, one
+    // syllable a beat because the words come before the line. Every word of
+    // that is Parra. `voice: "tenor"` is not, and it cost the record an octave
+    // — measured at the precompose -> toGenre -> render seam, seeds 1-3,
+    // homeFor folded the lead DOWN at five of the six lead chairs and she sang
+    // G#3/F4/F5, G#2/A3/G#5 and C#3/B3/C#5.
+    //   So this is `trobar` with ONE FIELD CHANGED, the same discipline
+    // `girlstack` keeps above it, and trobar itself is untouched because seven
+    // other rows read it (troubadour, ballad, appalachia, zajal, nuba, huiju,
+    // nordicfolk) and every one of them is honestly a man in a hall.
+    //   SOPRANO IS NOT A PREFERENCE HERE, IT IS THE ONLY THROAT THAT HOLDS
+    // HER. The alto rows are the right character — `confessional` is literally
+    // "close, plain and full of breath: a voice a foot from the mic telling you
+    // something" — and the alto COMPASS (F3-F5) still folds this record at five
+    // of six lead chairs, measured. The soprano's B3-C6 folds none of them at
+    // any of the three seeds. Character was available and range was not, so the
+    // range decides and the character is carried over from trobar unchanged.
+    //   `cantora` is her own word: in Chile a cantora is the woman who holds
+    // the traditional repertory, which is what Parra spent fourteen years
+    // walking the country collecting before she wrote her own.
+    cantora:    { voice: "soprano", vowels: "aeo", vib: 0.15, air: 0.30, syll: 1 },
     // the British group harmony: bright, close, and only a little wobble
     merseystack:{ voice: "tenor",  vowels: "aou", vib: 0.25, air: 0.14, blend: 0.45, syll: 2 },
     // a boy band is a COUNTERTENOR pushed high and stacked TIGHT — the tightness
