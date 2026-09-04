@@ -1079,9 +1079,13 @@ just being cells."*
 - LICENSE FIRST: AUX is GPL; bundling it puts the page's client code under
   the GPL's terms. The spike reports the exact license and Paul rules before
   a reskin ships.
-- A CELL IS A CELL: its value as text, bold = written, quiet = inherited, no
-  controls or chips inside the grid; the formula bar and the sheets hold the
-  controls; special rows' faces are plain text.
+- A CELL IS A CELL (Paul, correcting the first reading: *"that's too far
+  with the spreadsheet"*): at rest a cell shows its VALUE as plain text,
+  bold = written, quiet = inherited — no boxes drawn around it. The control
+  appears IN the cell only when the cell is selected or being edited, the
+  way a spreadsheet's in-cell editor does, and the formula bar mirrors it.
+  Nothing leaves the grid; fewer boxes, not fewer controls. Special rows'
+  faces are plain text the same way.
 - Order: the spike (install, bundle size, the component map, touch on a
   phone, the license) → the board (faders, sends, meters) → the sheets'
   knobs and the ADSR → the grid's cells as cells → the theme over the rest.
