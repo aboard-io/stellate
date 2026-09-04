@@ -178,10 +178,24 @@ spec did not know, each found by driving the rendered page:
 And two gaps NAMED rather than fixed, because both predate the table and are
 the same for the controls the two old panes shipped:
 
-- **`ui/derive.js` is blind to a register.** Neither a cell's `reg` nor the
-  COLUMN's own `cast.reg` moves `__eightEvents` by one byte; `sectionRender`
-  renders a slot against a box and the register is not in that path at either
-  tier. `document.scoreOf` answers for it, and that is what T6 reads.
+- ~~**`ui/derive.js` is blind to a register.**~~ **CORRECTED 2026-09-05, and
+  the correction is the more useful measurement.** This said neither a cell's
+  `reg` nor the COLUMN's own `cast.reg` moved `__eightEvents` by one byte. What
+  was blind was the PROBE: `window.__eightEvents` carried an event's time, its
+  level and a hit's lane and NOT its PITCH until wave 4 added `n` and `dur`, so
+  a control whose whole job is to move a note by an octave could not appear in
+  it. Re-asked with the fixed probe, on the page and in node against the real
+  `ui/derive.js`: on Kingston 1969 / reading 1 / section 3, the stab's rendered
+  pitches move 62 → 38 for a COLUMN `cast.reg` of −2 (two octaves, exactly),
+  and a CELL `reg` of −2 on that one section moves the same stream by the same
+  24 semitones while every other section stands. The path was never missing —
+  `toGenre` hands `boxesOf` a `reg(v)` closure that IS §2's resolver,
+  `sectionRender` renders against that box, and `kernel.js` computes
+  `ctr = 60 + 12 * g.reg(v)`. Nothing was fixed; T6 now reads `__eightEvents`
+  at both tiers and the `check(true, …)` that narrated the gap is gone. THE
+  LESSON IS THE REPO'S OLDEST, from the other end: a gate reading the wrong
+  object reports a working control as a defect, and the defect then gets
+  written into the spec.
 - **Two motifs can render the identical bar.** On Kingston 1969 at reading 1,
   `hook` and `answer` come out the same once the section's own development word
   has been applied — so T6 walks the vocabulary and asks whether SOME word
@@ -592,3 +606,61 @@ children (indented and coloured by level, 2026-09-03).
 
 Each wave one agent at a time on the shared files, the parent rebuilds, gates,
 commits, deploys to staging.
+
+## 9 · The sonic spreadsheet, and the committed build (APPROVED 2026-09-05)
+
+Paul, on the v270 table: *"Move all the nav into the table, I should be able
+to add players without using the nav and sections too. I click band and all
+further operations are buttons around the table. Cells and dropdowns have
+lots of padding … Clicking '1 head' results in an enormous blank space …
+spread things out to 100% of the screen width and make the buttons a tiny
+bit bigger than the words themselves."* Then: *"In general dropdowns barely
+work."* Then: *"I want the table to just re-use spreadsheet dynamics since
+users know them. Think of song composition as 'sonic spreadsheet'."* And on
+the build: *"Do the committed build. Minimize things where possible."*
+
+### 9a · The dynamics (they are a spreadsheet's, not the box's)
+
+- Tap a cell → it is SELECTED (one selection, its address shown), and its
+  vector appears in the FORMULA BAR above the grid as editable chips. Double-
+  tap or Enter edits in place; Escape cancels; Delete clears back to inherit.
+- Arrow keys and Tab move the selection; Shift+arrows and drag select a
+  range. Phone: swipe moves the selection; the formula bar is the bottom sheet.
+- Blank = inherited (an empty cell), bold = written (§2 unchanged).
+- Copy / paste move a cell's vector; fill right / fill down are §5's copy-to-
+  row / copy-to-column. Insert, delete, duplicate, move a row or column from
+  the header's menu (right-click / long-press) or its buttons; a `+` at the
+  end of each axis adds a player or a section. NO OP LIVES IN THE NAV: the
+  tray keeps the Band tab and, at most, jump links.
+- Frozen headers; resizable columns; the pane uses 100% of its width at
+  every size; a control is a little bigger than its word (44px tall, ~0.5ch
+  side padding), never a box of air.
+- UNDO / REDO at the document level, Cmd/Ctrl-Z, for every op — mandatory:
+  spreadsheet users expect it and the page has only the producer's undo.
+- Formulas are the metaphor's gift, not this wave's: "= B2" (same as that
+  cell) is a reference; inherit is the default formula.
+
+### 9b · The committed build (the extractor pattern, a seventh time)
+
+Source: `nukernel/src/**/*.ts` (Lit + TypeScript). Build: ONE esbuild step,
+`tools/ui/build.js`, bundling Lit INTO each component file so nothing is
+vendored and nothing is fetched — output committed under `nukernel/ui/` as
+plain ES modules the page loads with a `<script type=module>` as today.
+`--check` rebuilds and diffs the committed output; `tsc --noEmit` is the type
+gate. The served tree stays plain files; the deploy stays rsync; the two laws
+(no build in front of the page; plays with the wire cut) hold. Minimal: two
+devDependencies (esbuild, typescript), no bundler config beyond the script,
+no framework beyond Lit. Dropdowns: the native picker on touch, the typed
+combo on desktop with a keyboard, chips for a vocabulary of ≤ 8 words.
+
+### 9c · The strangler order
+
+1. The grid: `nukernel/src/table/*.ts` → `nukernel/ui/table.js` replaced by
+   the component, same doors (putCell/putRow/putPhrase/commit/push/evolve),
+   same data-k addresses so T4–T8 keep reading; document-level undo/redo
+   lands with it. Gate: the sheet-dynamics gate (select, edit, move, range,
+   fill, undo, at 320/390/1280 by tap) beside T5–T8.
+2. The sheets and menus (selects.js's combo → native/typed/chips).
+3. Rules, Time, Motifs, Mix, Produce, Score panes, one at a time.
+4. The shell and the tray last. eight.js shrinks with each step; nothing is
+   hidden, nothing dead (T7's law for every pane).
