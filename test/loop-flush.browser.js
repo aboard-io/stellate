@@ -109,6 +109,15 @@ function serve() {
    jumps over 0.30 and hard clips. Static is broadband energy that grows; a gate
    that read `hits` off the plan could not see any of it. */
 const TAP = () => {
+  /* EVERY NODE CARRIES THE GENERATION THAT MADE IT (2026-09-04). A press opens
+     a whole engine and a stop tears it down, so "did the old run survive" is a
+     question about WHICH RUN a live node belongs to — and an absolute count
+     taken seconds after a stop cannot answer it, because the graph of the run
+     that just ended is still being released then (the curve is in C1). The gate
+     bumps `__gen` before each press; the census answers per generation, and a
+     leak is a generation that is still there after the NEXT one has come and
+     gone. */
+  window.__gen = 1;
   window.__nodes = { made: {}, refs: [] };
   try {
     const P = window.BaseAudioContext ? BaseAudioContext.prototype : AudioContext.prototype;
@@ -120,15 +129,27 @@ const TAP = () => {
       const kind = m.slice(6);
       P[m] = function () {
         const n = orig.apply(this, arguments);
+        // THE INSTRUMENT DOES NOT COUNT ITSELF. `install` below makes one
+        // Analyser per context and its 40 ms poll holds it for the life of the
+        // page — measured, that is +1 standing node per generation for ever,
+        // and it was 3 of the 12 this gate used to read after three presses.
+        // A probe that shows up in its own census is a probe that reports a
+        // leak it caused.
+        if (installing) return n;
         try { const M = window.__nodes.made; M[kind] = (M[kind] || 0) + 1;
-              window.__nodes.refs.push([kind, new WeakRef(n)]); } catch (e) {}
+              window.__nodes.refs.push([kind, new WeakRef(n), window.__gen]); } catch (e) {}
         return n;
       };
     }
   } catch (e) {}
   window.__nodesLive = () => {
-    const keep = [], live = {};
-    for (const r of window.__nodes.refs) { if (!r[1].deref()) continue; keep.push(r); live[r[0]] = (live[r[0]] || 0) + 1; }
+    const keep = [], live = {}, byGen = {};
+    const STAND = { Analyser: 1, Delay: 1, DynamicsCompressor: 1 };
+    for (const r of window.__nodes.refs) {
+      if (!r[1].deref()) continue;
+      keep.push(r); live[r[0]] = (live[r[0]] || 0) + 1;
+      if (STAND[r[0]]) byGen["g" + r[2]] = (byGen["g" + r[2]] || 0) + 1;
+    }
     window.__nodes.refs = keep;
     let tot = 0; for (const k in live) tot += live[k];
     // STANDING vs CHURN. BufferSource/Gain are the per-note lane (one source, one
@@ -136,7 +157,7 @@ const TAP = () => {
     // DynamicsCompressor are the channel strips, one per voice for the player's
     // life (sampler.js F4 hoist). A leak shows in the STANDING half.
     const standing = (live.Analyser || 0) + (live.Delay || 0) + (live.DynamicsCompressor || 0);
-    return { live, total: tot, standing, made: Object.assign({}, window.__nodes.made) };
+    return { live, total: tot, standing, byGen, made: Object.assign({}, window.__nodes.made) };
   };
   window.__life = { ctxMade: 0, ctxClosed: 0, wkMade: 0, wkTerm: 0 };
   try {
@@ -155,12 +176,13 @@ const TAP = () => {
   try {
     const SAB = window.SharedArrayBuffer;
     function WrappedSAB() { const b = new SAB(...arguments); window.__sab.made++; window.__sab.bytes += b.byteLength;
-      try { window.__sab.refs.push(new WeakRef(b)); } catch (e) {} return b; }
+      try { window.__sab.refs.push([new WeakRef(b), window.__gen]); } catch (e) {} return b; }
     WrappedSAB.prototype = SAB.prototype; window.SharedArrayBuffer = WrappedSAB;
-    window.__sabLive = () => { const keep = []; let n = 0, by = 0;
-      for (const r of window.__sab.refs) { const b = r.deref(); if (!b) continue; keep.push(r); n++; by += b.byteLength; }
+    window.__sabLive = () => { const keep = []; let n = 0, by = 0; const byGen = {};
+      for (const r of window.__sab.refs) { const b = r[0].deref(); if (!b) continue; keep.push(r); n++; by += b.byteLength;
+        byGen["g" + r[1]] = (byGen["g" + r[1]] || 0) + 1; }
       window.__sab.refs = keep;
-      return { made: window.__sab.made, live: n, liveMB: +(by / 1048576).toFixed(1) }; };
+      return { made: window.__sab.made, live: n, liveMB: +(by / 1048576).toFixed(1), byGen }; };
   } catch (e) { window.__sabLive = () => null; }
 
   window.__monDrain = () => null;
@@ -408,6 +430,9 @@ const ck = (name, ok, note) => { checks.push([name, !!ok, note]); console.log(` 
   const stopped = await readNow(); rows.push({ tag: "stopped", ...stopped });
   console.log(`  stopped      nodes=${stopped.nodes.total} standing=${stopped.nodes.standing} rings=${stopped.sab.live} heap=${MB(stopped.heap)}MB`);
   const tGo = Date.now();
+  // the second engine is generation 2; everything it makes is tagged so the
+  // census can tell the two runs apart (see C1).
+  await page.evaluate(() => { window.__gen = 2; });
   await page.click("#play");
   let backMs = null;
   for (let i = 0; i < 900; i++) {
@@ -419,22 +444,58 @@ const ck = (name, ok, note) => { checks.push([name, !!ok, note]); console.log(` 
   for (let i = 0; i < 60; i++) { re = await readNow(); if (re.runway > 4 && re.keepUp > 0.9) break; await sleep(1000); }
   rows.push({ tag: "restarted", ...re }); say("restarted", re);
   console.log(`  first sample back ${backMs} ms after the second press`);
-  /* THE FLUSH, AS THREE FACTS ABOUT THE OLD RUN rather than one absolute. The
-     graph must COME DOWN (the standing strips of the run that just ended are
-     gone, not merely quiet), every context but the live one must be closed, and
-     the ring SharedArrayBuffers must not accumulate a generation per press —
-     that last one is the 2026-08-28 leak (20.2 MB a generation, 70 -> 184 MB
-     across four record changes) and it is the reason this is measured and not
-     assumed. `standing` is compared against the run that just ended rather than
-     against 0, because the deferred `ctx.close()` is 1200 ms and the census is
-     a WeakRef sweep, not a promise. */
-  const wasStanding = (loopRef || hole).nodes.standing;
-  ck("C1 a restart flushes: no engine of the old run survives",
-    stopped.nodes.standing <= Math.max(4, Math.round(wasStanding * 0.35))
-      && re.life.ctxClosed === re.life.ctxMade - 1
-      && re.sab.live <= (loopRef || hole).sab.live,
-    `standing ${wasStanding} playing -> ${stopped.nodes.standing} stopped; ctx ${re.life.ctxClosed}/${re.life.ctxMade - 1} closed;`
-    + ` live rings ${(loopRef || hole).sab.live} -> ${re.sab.live} (a leak here is one generation per press)`);
+  /* AND THEN IT IS STOPPED AGAIN, because the flush is a claim about GROWTH and
+     one stop cannot show growth. C1 reads its census here. */
+  console.log("  -- and stopped again, to read what generation 1 left behind --");
+  await page.click("#play");
+  await sleep(2500);
+  const stopped2 = await readNow(); rows.push({ tag: "stopped2", ...stopped2 });
+  console.log(`  stopped2     nodes=${stopped2.nodes.total} standing=${stopped2.nodes.standing}`
+    + ` byGen=${JSON.stringify(stopped2.nodes.byGen)} rings=${stopped2.sab.live}`
+    + ` byGen=${JSON.stringify(stopped2.sab.byGen)} heap=${MB(stopped2.heap)}MB`);
+  /* THE FLUSH, AS GROWTH ACROSS TWO RESTARTS — and it is a rewrite (2026-09-04)
+     of a clause that measured the wrong thing.
+
+     WHAT IT USED TO SAY: `standing` 2.5 s after the stop must be under 35% of
+     what was standing while playing. That is an absolute retention reading, and
+     THE GRAPH OF THE RUN THAT JUST ENDED IS STILL BEING RELEASED AT 2.5 s.
+     Measured on this box (London 1969, quiet, 75 s of real playing, forced GC in
+     its own job before every read — scratch probe, three presses):
+
+         +0.4s  standing 11  total 67  rings 4      ctx not yet closed
+         +2.2s  standing 10  total 62  rings 1      <- where the gate read
+         +4.0s  standing  9  total 48  rings 1
+         +5.8s  standing  1  total  1  rings 0      <- the whole engine is gone
+         ...    flat at 1 through +32s
+
+     The last 1 is the gate's OWN analyser tap, one per context, held for the
+     life of the page by its 40 ms poll — now excluded from the census at
+     source (see TAP). `handle.stop()` defers `ctx.close()` by 1200 ms and Blink
+     releases the render graph asynchronously after that, so 2.5 s reads a
+     teardown in progress and calls it a leak: the same clause failed at v262
+     (standing 10) as at v265 (standing 12), which is the proof that it was never
+     reading a regression.
+
+     WHAT IT SAYS NOW: nothing generation 1 made may still be alive after
+     generation 2 has run and stopped — zero standing nodes and zero ring
+     SharedArrayBuffers, tagged at construction, tens of seconds later. Measured
+     the same way, a healthy engine leaves 0 of each (per-press census 10 / 10 /
+     11 standing, and every one of them belonging to the run that had just
+     stopped; the previous generation's 9 master-chain nodes were gone every
+     time). A leak is one generation per press — the 2026-08-28 ring leak was
+     20.2 MB a generation, 70 -> 184 MB across four record changes — and that is
+     exactly what this now reads. */
+  const g1n = (stopped2.nodes.byGen || {}).g1 | 0, g1s = (stopped2.sab.byGen || {}).g1 | 0;
+  /* AND "ZERO" HAS TO BE AN ANSWER AND NOT AN ABSENCE. A tag that never got
+     written reads 0 too, so the run that just ended must be shown to have HAD a
+     generation-1 graph: `hole` is a census taken while it was playing. */
+  const g1built = ((loopRef || hole).nodes.byGen || {}).g1 | 0;
+  ck("C1 a restart flushes: no engine of the old run survives the next stop",
+    g1built > 0 && g1n === 0 && g1s === 0 && re.life.ctxClosed === re.life.ctxMade - 1,
+    `generation 1 stood ${g1built} nodes up while playing and left ${g1n} standing nodes and ${g1s} rings alive after generation 2 stopped`
+    + ` (standing ${(loopRef || hole).nodes.standing} playing -> ${stopped.nodes.standing} at +2.5s, still being released;`
+    + ` ${stopped2.nodes.standing} after the second stop, all of them generation 2);`
+    + ` ctx ${re.life.ctxClosed}/${re.life.ctxMade - 1} closed`);
   ck("C2 a restart re-primes to minute-0 health",
     re.epi === 0 && re.deficit === 0 && re.healedSec === 0 && re.runway >= 4 && re.keepUp >= 0.9,
     `epi=${re.epi} deficit=${re.deficit} healed=${re.healedSec} runway=${re.runway} keepUp=${re.keepUp}`);
