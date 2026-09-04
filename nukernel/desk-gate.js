@@ -2679,13 +2679,29 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         'button[data-k="t|' + name + '|' + secId + '"]');
       const chip = (w) => document.querySelector(
         'button[data-k="t|' + name + '|' + secId + '|' + w + '"]');
+      /* ...READ OFF THE BOARD AND NOT OFF THE DOCUMENT — re-pointed
+         2026-09-04 (TABLE.md wave 2c), and the CLAIM is word for word what it
+         was. `.nu-wopen` was the automation grid's only accordion on this page
+         when this block was written; the Band pane is a ui/wordgrid.js table
+         now too, and `openVoice` LEAVES ITS COLUMN SHEET OPEN by design — that
+         sheet is where the voice's channel strip lives since the `mix` facet
+         was deleted. So a document-wide read answered "one row open" with the
+         Band pane's own sheet, on a hidden panel, one tab away, and reported
+         a grid that had folded perfectly as a grid that had not. MEASURED:
+         after the `hush` chip, one `.nu-wopen` on the page, `pan-band`,
+         `offsetParent` null. The property being asserted is the GRID's —
+         "one strip open at a time, and none open once a word has been said" —
+         so the scope is the surface the grid is on, which is `#boardpanel`.
+         Scoping the `words` read with it, for the same reason: a chip count
+         taken off the whole document is a count of somebody else's chips. */
+      const board = () => document.getElementById("boardpanel");
       cell().click(); await wait();          // the strip of words opens
-      const words = [...document.querySelectorAll(".nu-wopen .nu-wchip")]
+      const words = [...board().querySelectorAll(".nu-wopen .nu-wchip")]
         .map((b) => b.textContent);
       chip("hush").click(); await wait();     // -> hush
       const trimmed = JSON.parse(JSON.stringify(
         (v0().desk && v0().desk.trim) || null));
-      const shut = !document.querySelector(".nu-wopen");
+      const shut = !board().querySelector(".nu-wopen");
       cell().click(); await wait();
       chip("").click(); await wait();         // -> as mixed, the absent word
       const trimCleared = (v0().desk && v0().desk.trim) || null;
@@ -2909,11 +2925,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         const host = document.querySelector("#voicemix");
         const panel = host.closest("[id^='panel-'],.nu-panel,section,div") || host.parentNode;
         const body = host.querySelector(".nu-strip");
+        /* THE SEAT AND THE SURFACE, added 2026-09-04 for the width check
+           below. The strip is seated in a COLUMN SHEET now (TABLE.md wave 2c):
+           `.nu-seatstrip` is the box the sheet gives it and the `<table>` is
+           the surface that sheet spans — the two things the equality that used
+           to read `strip === plate` is asked of now that the strip is a table
+           cell deep and the plate is not. */
+        const seat = host.closest(".nu-seatstrip") || host;
+        const surf = host.closest("table");
         return { doc: document.documentElement.scrollWidth,
                  win: document.documentElement.clientWidth,
                  kind: host.id,
                  panelScroll: panel.scrollWidth, panelClient: panel.clientWidth,
                  barScroll: 0, barClient: 0,
+                 seatW: Math.round(seat.getBoundingClientRect().width),
+                 surfW: surf ? Math.round(surf.getBoundingClientRect().width) : 0,
                  h: body ? Math.round(body.getBoundingClientRect().height) : 0,
                  bw: body ? Math.round(body.getBoundingClientRect().width) : 0 };
       });
@@ -3047,13 +3073,39 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        stands unchanged and the sentence now says what the equality means.
        (`stripW > 400` stays: it is the check that neither body collapsed and
        made the equality vacuous — two zeroes are also equal.) */
-    const stripW = shape[1280].per["voice|" + voices[0]].bw;
+    /* RE-POINTED 2026-09-04 (TABLE.md wave 2c) — THE SUBJECT MOVED, THE CLAIM
+       DID NOT. `facet-mix` is deleted and the strip is seated in the table's
+       COLUMN SHEET, a `<td>` inside a `<tr class=nu-wopen>` inside the Band
+       pane's grid; the plate still sits straight in `#boardpanel`. So the two
+       CANNOT be one number any more and never will be again: MEASURED at 1280
+       after the footer fix, the surfaces are 1078 and 1078 and the strip is
+       1055 — twenty-three pixels of the table's own border-spacing, the cell's
+       padding and the sheet row's inset, none of which is a cap on the strip.
+       Reading those 23px as "inconsistent" would be reading furniture.
+       WHAT THE ONE NUMBER WAS EVER FOR is in the paragraph above: nu.css
+       capped `.nu-strips` at 780px while the plates ran to 100%, and the strip
+       came up short of the column it was in. That defect is exactly two
+       equalities now, both exact, and together they are the old one:
+         * THE STRIP FILLS ITS SEAT — `.nu-strip` is the full width of the
+           `.nu-seatstrip` the column sheet gives it. A cap of any kind, in any
+           file, shows up here as a strip narrower than its own box.
+         * THE TWO SURFACES ARE ONE WIDTH — the table the strip is seated on
+           and `#boardpanel`, where the plates are, are the same column.
+       (`stripW > 400` stays for the reason it was written: two zeroes are also
+       equal.) */
+    const vm = shape[1280].per["voice|" + voices[0]];
+    const stripW = vm.bw, seatW = vm.seatW, surfW = vm.surfW;
     const plateW = shape[1280].per["bus|main"].bw;
-    ok(stripW > 400 && Math.abs(stripW - plateW) <= 1,
-       "…and a strip and a plate take THE SAME width at 1280 (" + stripW +
-       "px against " + plateW + "px) — whatever the column is, they are both " +
+    const panelW = shape[1280].panelW;
+    ok(stripW > 400 && Math.abs(stripW - seatW) <= 1 &&
+       Math.abs(surfW - panelW) <= 1 && plateW > 400,
+       "…and a strip FILLS ITS SEAT in the column sheet (" + stripW +
+       "px in " + seatW + "px) while the surface it is seated on and the " +
+       "board the plates sit on take THE SAME width at 1280 (" + surfW +
+       "px against " + panelW + "px) — whatever the column is, they are both " +
        "it; the strip and the buses it sends into are one object, which is " +
-       "the whole of \"consistent\"", JSON.stringify({ stripW, plateW }));
+       "the whole of \"consistent\"",
+       JSON.stringify({ stripW, seatW, surfW, panelW, plateW }));
 
     /* EVERY CONTROL REACHABLE — the half a tabbed surface puts at risk, over
        both of them: every voice's `mix` facet AND every bus tab. */

@@ -675,16 +675,67 @@ export function wordGrid(host, spec) {
       th.append(fb);
       if (fr.sub) th.append(el("small", " " + fr.sub));
       tr.append(th);
+      /* THE ROW'S OWN WORDS GO IN ONE SPANNING CELL, AND THEY WRAP — fixed
+         2026-09-04, MEASURED on the rendered page at 390 and 1280.
+
+         IT READ: one `<td>` per word, with "THE LAST CELL TAKES WHAT IS
+         LEFT — seven master words under nine players is not a coincidence to
+         be honoured with empty `<td>`s", spanning the remainder only when
+         `list.length < cols.length`. On the shipped chant there are TWO
+         players and SEVEN master words, so that guard never fired and the
+         footer appended seven `<td>`s under a three-column header. A table's
+         column count is its WIDEST row: the grid silently became EIGHT
+         columns wide, and three defects fell out of that one line —
+           * the body's columns were crushed to 30px each at 390 — under the
+             44px floor, five columns of which nothing but the eight-column
+             footer ever asked for (they are 112px now, and the table is 316px
+             in a 255px pane either way: that sideways scroll is the pane's
+             own, `data-pane`, and is not what this fixes);
+           * the footer's own words were 30x44 plates — a width no thumb has.
+             They are 111x44 now at 320 and at 390, two to a line;
+           * and `insertOpen`'s `colSpan = cols.length + 1` (three) stopped
+             spanning anything: an accordion sheet covered three of eight
+             columns, which is 143px at 390 and 361px at 1280 (308px and
+             1070px now). That is the box the voice's channel strip was
+             seated in when it moved into the column sheet (TABLE.md wave
+             2c), and desk-gate G13 read it as `panel 390 on voice|cantor:
+             206 > 128` and as a strip 346px wide beside a 1078px plate —
+             both of them THIS.
+         SO THE FOOTER STOPS PRETENDING ITS WORDS ARE COLUMNS. Its cells were
+         never the columns' — that is the paragraph above's own point — so
+         they go in ONE `<td>` that spans the table and lay out as a wrapping
+         row of word plates: chunky, 44px, wrapping down rather than pushing
+         the grid sideways, which is the cell-row law said in a footer. The
+         cell itself is still `mkCell`'s, one drawing, one accordion. */
       const list = fr.cells || [];
-      list.forEach((c, i) => {
+      if (list.length) {
         const td = el("td");
-        /* THE LAST CELL TAKES WHAT IS LEFT. Seven master words under nine
-           players is not a coincidence to be honoured with empty `<td>`s. */
-        if (i === list.length - 1 && list.length < cols.length)
-          td.colSpan = cols.length - list.length + 1;
-        mkCell(td, tr, { id: fr.id }, c);
+        // `cols.length` AND NOT `cols.length + 1` — the footer row has already
+        // spent the header column on its own `<th>`, so the `+ 1` that is
+        // right for `insertOpen` (whose `<td>` is the row's only cell) would
+        // have declared a FOURTH column here and left the table one wider than
+        // its header all over again. Measured: 316px table in a 255px pane.
+        td.colSpan = cols.length;
+        /* THE FLEX IS ON A DIV INSIDE THE CELL AND NOT ON THE CELL — measured
+           2026-09-04, and it is a trap worth the line. `display:flex` on a
+           `<td>` takes it OUT of the table's own layout: it stops being a
+           `table-cell`, so `colSpan` is ignored and the browser gives it one
+           column. The footer's seven words came out 112px wide in a 227px
+           span, one per line, ten lines deep. The cell stays a cell; the row
+           of word plates is its child. */
+        const wrap = el("div", null, "nu-footcells");
+        for (const c of list) {
+          // its own box, because `mkCell` may CLAIM the className it is given
+          // (`.nu-sgsay`, a cell that is a reading and not a control), and a
+          // shared parent would be renamed by whichever word did that last.
+          const slot = el("div");
+          mkCell(slot, tr, { id: fr.id }, c);
+          slot.classList.add("nu-footcell");
+          wrap.append(slot);
+        }
+        td.append(wrap);
         tr.append(td);
-      });
+      }
       tf.append(tr);
     }
     t.append(tf);

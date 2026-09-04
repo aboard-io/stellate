@@ -7104,6 +7104,17 @@ table.nu-trims{ color: var(--ink); }
    would read as a second table. */
 .nu-wordgrid tfoot .nu-footrow > th,
 .nu-wordgrid tfoot .nu-footrow > td{ border-block-start: var(--bw-hard) solid var(--rule); }
+/* ...AND ITS WORDS WRAP RATHER THAN WIDENING THE TABLE (2026-09-04). A footer
+   row asks the RECORD its questions and the record has no voices, so its seven
+   or three words are NOT columns: they sit in one spanning cell and lay out as
+   a wrapping row of the same 44px word plates the body draws (ui/wordgrid.js,
+   THE ROW'S OWN WORDS GO IN ONE SPANNING CELL). `9ch` is the basis and the
+   grow/shrink do the rest: MEASURED, the seven master words are 111x44 two to
+   a line at 320 and 390, and 139x44 on one line at 1280. `.nu-trimbtn`
+   already carries the 100% inline-size and the 44px floor. */
+.nu-footcells{ display: flex; flex-wrap: wrap; gap: 3px; align-items: stretch; }
+.nu-footcell{ flex: 1 1 9ch; min-inline-size: 56px; display: flex; }
+.nu-footcell.nu-sgsay{ align-items: center; justify-content: center; }
 
 /* ---- THE BOARD'S LEGEND RESERVES ITS TALLEST STATE ---------------------
    nukernel/desk-gate.js, on the run of 2026-09-02: *"at 390: tapping each of
