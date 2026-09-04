@@ -1089,3 +1089,29 @@ just being cells."*
 - Order: the spike (install, bundle size, the component map, touch on a
   phone, the license) → the board (faders, sends, meters) → the sheets'
   knobs and the ADSR → the grid's cells as cells → the theme over the rest.
+
+### 11a · The in-cell editor: type, and the options filter semantically
+
+Paul: *"I think what I want is to type into the cell and the options get
+filtered for me in a smart semantic way."*
+
+- Select a cell and TYPE (a spreadsheet's own gesture): the cell becomes a
+  single-line editor; the CANDIDATES dock in the formula bar ABOVE the grid
+  — never a listbox under the cell, which is where the v272 measurement
+  found the keyboard covering it — ranked, the top match highlighted;
+  Enter or a tap on it commits, Escape restores; Tab commits and moves.
+- RANKING, from the vocabulary itself, nothing fetched: 1 prefix of the
+  word · 2 substring · 3 a hit in the word's own sentence (fields.js
+  descriptions and `why`, the kit ops' "what a drummer does", the genres'
+  plates and aliases from wiki.js) · 4 a synonym table (`nukernel/src/
+  menus/synonyms.ts`, one owner; e.g. dark → darker · minor · aeolian · the
+  low shelf; slow → half pace · a longer release · ballad; bright → brighter
+  · major · lydian) · 5 the rest in vocabulary order. Numbers (bpm, a
+  register, a bar count) are typed as numbers and clamped by the field.
+- A vocabulary of ≤ 8 words shows the whole list as candidates before any
+  typing, so a tap alone still works; on a phone the editor is the same
+  input and the candidates row is what a thumb reaches.
+- One owner for the editor across the grid and the special rows'
+  sheets: the menus module (§9c step 2) grows it; chips, the native picker
+  and the typed combo remain what a control shows when it is not the
+  selected cell.
