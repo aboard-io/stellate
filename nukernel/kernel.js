@@ -336,6 +336,43 @@
   const foldInto = (n, lo, hi) => { while (n < lo) n += 12; while (n > hi) n -= 12; return n; };
   const fold = (n, c) => foldInto(n, c - 6, c + 6);
 
+  /* ---- AND THE WHOLE-CHAIR FOLD, WHICH USED TO LIVE IN THE AUDIO LAYER ----
+     `homeFor` is the paragraph above it one level up: `fold` moves ONE note
+     into a window, this moves a WHOLE CHAIR by whole octaves until the thing
+     playing it can reach the line, contour intact — the register-home law the
+     parent engine has carried for years and `audio/plan.js` ported.
+       IT MOVED HERE ON 2026-09-04, the singer-register round, because it grew
+     a SECOND caller. `precompose.js` §7d seats a sung chair where its throat
+     actually sings it, which is this exact question asked BEFORE the record is
+     written down instead of after it is compiled — and two copies of a fold is
+     precisely the drift this file exists to prevent (`regOf`'s own header: "the
+     register a chair SHOWED and the register it PLAYED differed … which is the
+     one thing this box legislates against"). audio/plan.js imports it through
+     ui/deps.js and is otherwise untouched; `windowOf` stays over there, because
+     what a WINDOW is is a fact about the engine and not about the music.
+       THE TWO NUMBERS ARE THE PARENT'S, VERBATIM, and so are plan.js's own
+     comments on them. */
+  const HOME_MAX = 3;                          // ±3 octaves is already absurd
+  const REGISTER_FIT = 0.95;                   // the parent's threshold, verbatim
+  function homeFor(notes, win) {
+    if (!win || !notes.length) return 0;
+    const inAt = (k) => {
+      let inside = 0;
+      for (const n of notes) { const m = n + 12 * k; if (m >= win[0] - 0.5 && m <= win[1] + 0.5) inside++; }
+      return inside;
+    };
+    const home = inAt(0);
+    if (home >= REGISTER_FIT * notes.length) return 0;
+    let best = 0, bestIn = home;
+    for (let k = -HOME_MAX; k <= HOME_MAX; k++) {
+      const inside = inAt(k);
+      // strictly better, or as good and a smaller move: the tie-break is what keeps
+      // an already-fitting line exactly where it was written
+      if (inside > bestIn || (inside === bestIn && Math.abs(k) < Math.abs(best))) { bestIn = inside; best = k; }
+    }
+    return best;
+  }
+
   // NEAREST-TONE SEARCH — the one walk behind every "snap this pitch to the
   // harmony" site in the file. Expanding rings around n, the preferred
   // direction FIRST at every distance (that order IS the tie-break, and it is
@@ -3160,7 +3197,7 @@
   const api = { METERS, MET4, metOf, stepsIn, pulseIn,
                 at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, keep,
                 crossmap, excerpt, only, word, slide,
-                PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
+                PENT, MODE, ROMAN, romanOf, pitch, mp, fold, homeFor, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
                 seatNote, tempoWarp, prng,
                 PARTS, partOf, partLean, regOf, periodOps, OPKEYS, pipes, PIPES,

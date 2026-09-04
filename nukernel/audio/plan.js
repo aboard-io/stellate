@@ -35,7 +35,7 @@
 // desk rides in on a glide (stream-renderer feedBar applies changed params to
 // the persistent procs and the DSP smooths them).
 import { GENRES, BASSSYNTH, BASS_INSTR, instrOf, throatOf, voicedAs,
-         VOICINGS } from "../ui/deps.js";
+         VOICINGS, homeFor } from "../ui/deps.js";
 import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
 import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
 import { toEngine, samplerLibFor, recipeFor } from "./to-engine.js";
@@ -103,8 +103,13 @@ export async function warmEngine() { D = await deps(); return D; }
 // same table the parent's per-note fold (state-engine mapEvents) uses as the net
 // under this. Two copies of that table is how the page and the tape came to
 // disagree about where a trumpet lives.
-const HOME_MAX = 3;                                // ±3 octaves is already absurd
-const REGISTER_FIT = 0.95;                         // the parent's threshold, verbatim
+// ...AND THE FOLD ITSELF IS THE KERNEL'S NOW (2026-09-04, the singer-register
+// round). `homeFor` and its two numbers moved to kernel.js, beside `fold`, the
+// per-note version of the same sentence — because precompose.js §7d became a
+// second caller when it started seating a sung chair where its throat actually
+// sings it, and a fold with two implementations is a page and a tape that
+// disagree about where a singer lives. Re-exported here under its old name so
+// the audio layer's own address for it is unchanged.
 const midiOfHz = (hz) => 69 + 12 * Math.log2(hz / 440);
 // A VOICE HAS A COMPASS, AND IT USED TO BE THE ONE THING THIS COULD NOT SAY.
 // This read `unit.sampler` and returned null for everything else — "a synth
@@ -145,24 +150,7 @@ export function windowOf(SE, unit) {
   // every pitch class, so the fold would start refusing notes in key
   return hi - lo >= 12 ? [lo, hi] : null;
 }
-export function homeFor(notes, win) {
-  if (!win || !notes.length) return 0;
-  const inAt = (k) => {
-    let inside = 0;
-    for (const n of notes) { const m = n + 12 * k; if (m >= win[0] - 0.5 && m <= win[1] + 0.5) inside++; }
-    return inside;
-  };
-  const home = inAt(0);
-  if (home >= REGISTER_FIT * notes.length) return 0;
-  let best = 0, bestIn = home;
-  for (let k = -HOME_MAX; k <= HOME_MAX; k++) {
-    const inside = inAt(k);
-    // strictly better, or as good and a smaller move: the tie-break is what keeps
-    // an already-fitting line exactly where it was written
-    if (inside > bestIn || (inside === bestIn && Math.abs(k) < Math.abs(best))) { bestIn = inside; best = k; }
-  }
-  return best;
-}
+export { homeFor };
 
 /* ---------- HOW THE VOCAL CHAIRS ARE REALISED — A VIEW (2026-08-28) ------
    Paul: *"I want to be able to choose whether to use synthesized voices or

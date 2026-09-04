@@ -30,7 +30,7 @@
 //                  younger than its host (compose.js eraOK's own rule); and
 //                  the hand's two doors both arrive.
 //
-// WAVE 2a (2026-09-04) ADDS T4, AND MOVES T2's BASELINE TO v264. This is the
+// WAVE 2a (2026-09-04) ADDS T4, AND MOVES T2's BASELINE (v264, then v265). This is the
 // first wave whose job is to MOVE THE SOUND: `genreToDocument`'s section
 // projection was dropping nine fields the composer deals — intro, outro, mot,
 // mode, prog, key, fx, rev, echo — and carrying them is the point. So T2 now
@@ -64,6 +64,7 @@ const cp = require("child_process");
 const ROOT = path.resolve(__dirname, "..");
 const N = (p) => require(path.join(ROOT, "nukernel", p));
 const D = N("document.js"), P = N("precompose.js"), NG = N("genres.js");
+const NI = N("instruments.js"), K = N("kernel.js"), NK = N("knobs.js");
 const NC = N("compose.js"), Songs = N("songs.js");
 const { GENRES } = NG;
 
@@ -96,16 +97,61 @@ const FULL = process.argv.includes("--full");
    called, and the kernel's own events. So an unintended change is still caught
    against v264 for everything except the fields this wave deliberately
    carries, which is exactly the claim the wave is allowed to make. */
-const BASE_SHA = "423916c";
-/* THE NINE FIELDS THIS WAVE PUTS ON THE ROW, and the two the row may now
-   override with nothing carried into them (swing, groove). Stripping them
-   from a head document is "the record as v264 composed it", which is what
-   T2a/T2b/T2c compare. */
-const WAVE2A_ROW = ["intro", "outro", "mot", "mode", "prog", "key",
-                    "fx", "rev", "echo", "swing", "groove",
-                    "room", "dtime", "pan"];
+/* BASE MOVED 2026-09-04 to e4d44dd (v265): wave 2a carried intro/outro/mot
+   and the row fields on purpose (T4 gates that sound), and the singer round
+   changed three rows' mouths (girlgroup, nuevacancion, doowop) on purpose —
+   T2b read those three sections against v264 and was right to. Everything
+   else must still be byte-identical to THIS base until a hand writes. */
+const BASE_SHA = "e4d44dd";
+/* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
+   TYPED (2026-09-04). The list below is every ROW field any wave has ever
+   carried onto a section — wave 2a's nine plus the two the row may override
+   with nothing carried into them (swing, groove) — and stripping it from a
+   head document used to be unconditional. That was right against v264, which
+   carried none of them, and WRONG the moment the base moved to e4d44dd, which
+   carries all of them: the gate then compared a stripped head against an
+   unstripped base and reported three failures that were the strip's own.
+     SO THE STRIP SET IS DERIVED FROM THE PINNED BASE. `stripSetFor` composes
+   the BASE's own catalogue and keeps only the fields the base never writes —
+   "strip what this base cannot have said, and nothing else". With base
+   e4d44dd that set is EMPTY and the head must equal the base byte for byte;
+   with a base predating a wave it is exactly that wave's fields, which is what
+   the paragraph above always meant. One rule, no sha-keyed table to update the
+   next time the base moves. */
+const ROW_FIELDS_ANY_WAVE =
+  ["intro", "outro", "mot", "mode", "prog", "key",
+   "fx", "rev", "echo", "swing", "groove", "room", "dtime", "pan"];
+function stripSetFor(base) {
+  const seen = new Set();
+  for (const gk of ANCHORS) {
+    let d; try { d = base.D.normalize(base.P.genreToDocument(gk, 1)); } catch (e) { continue; }
+    for (const s of d.form.sections)
+      for (const f of ROW_FIELDS_ANY_WAVE) if (s[f] != null) seen.add(f);
+  }
+  return ROW_FIELDS_ANY_WAVE.filter((f) => !seen.has(f));
+}
+let STRIP = ROW_FIELDS_ANY_WAVE;               // replaced once the base loads
 const stripRows = (doc) => {
-  for (const s of doc.form.sections) for (const f of WAVE2A_ROW) delete s[f];
+  for (const s of doc.form.sections) for (const f of STRIP) delete s[f];
+  return doc;
+};
+
+/* ...AND THE ONE FIELD THIS ROUND MOVES ON PURPOSE (2026-09-04, the singer
+   round). `precompose.js` §7d seats a SUNG chair at the register its throat
+   actually sings — the fold `audio/plan.js` was applying after the fact,
+   written down where the staff, the piano roll and the notated .mid can read
+   it. So `voices[i].cast.reg` differs from the base on 1,354 of 2,459 sung
+   chairs and every reader of the WRITTEN line differs with it, by a whole
+   number of octaves, by design.
+     T2 therefore masks `cast.reg` on the chairs a person sings — and ONLY on
+   those — and T4j below holds the whole claim in its place: the written line
+   moved by exact octaves, the sung line did not move at all, and the fold that
+   was moving it is gone. Masking without T4j would be a hole; T4j is a
+   stronger statement than the byte identity it replaces, because it is taken
+   off the notes rather than off the field. */
+const SUNG = (v) => v.kind === "line" && !!(NI.PATCHES.voice || {})[v.instrument];
+const maskSungReg = (doc) => {
+  for (const v of doc.voices) if (SUNG(v) && v.cast) v.cast.reg = "sung";
   return doc;
 };
 const WT = path.join("/tmp", "nu-table-base-" + BASE_SHA);
@@ -115,7 +161,11 @@ function baseTree() {
                     { cwd: ROOT, stdio: "pipe" });
   }
   const B = (p) => require(path.join(WT, "nukernel", p));
-  return { D: B("document.js"), P: B("precompose.js"), GENRES: B("genres.js").GENRES };
+  return { D: B("document.js"), P: B("precompose.js"), GENRES: B("genres.js").GENRES,
+           // T4j renders BOTH sides, each through its own kernel and its own
+           // instrument table: the claim is about two records, not about one
+           // record read twice.
+           K: B("kernel.js"), NI: B("instruments.js") };
 }
 
 console.log("test/table.test.js — TABLE.md wave 1: the model\n");
@@ -289,13 +339,21 @@ console.log("\nT2 — inherit: the table changes nothing until a hand does\n");
 const B = (() => { try { return baseTree(); } catch (e) {
   console.log("  FAIL T2 could not build the baseline worktree at " + BASE_SHA +
               "\n       " + e.message); fail++; return null; } })();
+if (B) {
+  STRIP = stripSetFor(B);
+  console.log("  strip rule: base " + BASE_SHA + " writes " +
+              (ROW_FIELDS_ANY_WAVE.length - STRIP.length) + " of " +
+              ROW_FIELDS_ANY_WAVE.length + " row fields, so the head is stripped of " +
+              (STRIP.length ? STRIP.join(" ") : "NOTHING — it must equal the base byte for byte"));
+  console.log("  masked: cast.reg on the chairs a person sings (§7d seats them by throat; T4j holds it)\n");
+}
 
 /* THE PORTRAIT. A compiled genre carries four closures and a monotonic `__v`,
    neither of which survives JSON — the same problem `test/fixtures/
    terms-genre.freeze.js` solved for the extraction gate, solved the same way:
    CALL them, for every voice, and freeze the answers. `entry` and `reg` are
    exactly the two this wave rewrote, so they are the two that matter most. */
-const portrait = (g, nv) => {
+const portrait = (g, nv, sung) => {
   const o = {};
   for (const k of Object.keys(g)) {
     if (k === "__v" || typeof g[k] === "function") continue;
@@ -304,7 +362,8 @@ const portrait = (g, nv) => {
   o.__closures = [];
   for (let v = 0; v < nv; v++) o.__closures.push({
     entry: g.entry ? g.entry(v) : null,
-    reg:   g.reg   ? g.reg(v)   : null,
+    // `reg` on a SUNG chair is the field §7d moves on purpose (see maskSungReg)
+    reg:   (sung && sung.has(v)) ? "sung" : (g.reg ? g.reg(v) : null),
     part:  g.part  ? g.part(v)  : null,
     realize: g.realize ? g.realize(v) : null,
     word:  g.word  ? g.word(v).length : null,
@@ -313,31 +372,33 @@ const portrait = (g, nv) => {
 };
 
 if (B) {
-  ok("T2a every anchor's DOCUMENT is v264's once the wave's row fields are stripped", () => {
+  ok("T2a every anchor's DOCUMENT is the pinned base's, once the base's own strip set is applied", () => {
     const bad = [];
     for (const gk of ANCHORS) for (const s of SEEDS) {
-      const mine = stripRows(D.normalize(P.genreToDocument(gk, s)));
+      const mine = maskSungReg(stripRows(D.normalize(P.genreToDocument(gk, s))));
       assert.ok(mine.material.prov, gk + "/" + s + ": no provenance map was stamped");
       // ...AND THE MAP IS COMPARED NOW, not deleted. Wave 1 deleted it here
       // because the baseline predated it; v264 stamps the same map, so the
       // provenance is part of the identity this gate holds rather than a hole
       // in it — a wave that moved a fingerprint would be caught.
-      const theirs = B.D.normalize(B.P.genreToDocument(gk, s));
+      const theirs = maskSungReg(B.D.normalize(B.P.genreToDocument(gk, s)));
       if (JSON.stringify(mine) !== JSON.stringify(theirs)) bad.push(gk + "/" + s);
     }
     assert.deepStrictEqual(bad.slice(0, 8), [],
       bad.length + " of " + (ANCHORS.length * SEEDS.length) + " documents moved");
   });
 
-  ok("T2b every section's compiled GENRE is v264's, closures and all, once stripped", () => {
+  ok("T2b every section's compiled GENRE is the base's, closures and all, once stripped", () => {
     const bad = [];
     for (const gk of ANCHORS) for (const s of SEEDS) {
       const mine = stripRows(D.normalize(P.genreToDocument(gk, s)));
       const theirs = B.D.normalize(B.P.genreToDocument(gk, s));
-      const nv = mine.voices.filter((v) => v.kind === "line").length;
+      const ml = mine.voices.filter((v) => v.kind === "line");
+      const nv = ml.length;
+      const sung = new Set(ml.map((v, i) => (SUNG(v) ? i : -1)).filter((i) => i >= 0));
       for (let i = 0; i < mine.form.sections.length; i++) {
-        const a = portrait(D.toGenre(mine, i, GENRES), nv);
-        const b = portrait(B.D.toGenre(theirs, i, B.GENRES), nv);
+        const a = portrait(D.toGenre(mine, i, GENRES), nv, sung);
+        const b = portrait(B.D.toGenre(theirs, i, B.GENRES), nv, sung);
         if (a !== b) { bad.push(gk + "/" + s + "#" + i); break; }
       }
     }
@@ -350,7 +411,7 @@ if (B) {
      otherwise a SAMPLE that is not arbitrary — every record carrying a guest
      motif (the only records this wave writes anything unusual on) plus an even
      stride across the catalogue. */
-  ok("T2c the rendered EVENTS are v264's once the wave's row fields are stripped", () => {
+  ok("T2c the rendered EVENTS are the base's once stripped (the sung lanes are T4j's)", () => {
     const withGuest = ANCHORS.filter((gk) => {
       try {
         const d = D.normalize(P.genreToDocument(gk, 1));
@@ -363,9 +424,19 @@ if (B) {
       : [...new Set([...withGuest, ...ANCHORS.filter((_, i) => i % stride === 0)])];
     const bad = [];
     for (const gk of sample) for (const s of SEEDS) {
-      const mine = D.scoreOf(stripRows(D.normalize(P.genreToDocument(gk, s))), GENRES);
-      const theirs = B.D.scoreOf(B.D.normalize(B.P.genreToDocument(gk, s)), B.GENRES);
-      if (JSON.stringify(mine) !== JSON.stringify(theirs)) bad.push(gk + "/" + s);
+      const md = stripRows(D.normalize(P.genreToDocument(gk, s)));
+      const td = B.D.normalize(B.P.genreToDocument(gk, s));
+      // THE SUNG LANES ARE NOT COMPARED HERE — they are compared in T4j, on the
+      // notes rather than on the bytes, because their WRITTEN octave is the one
+      // thing this round moves. `lv` is the kernel's voice index and the
+      // document's line chairs are dealt round it, so the chair is `lv % nP`.
+      const ml = md.voices.filter((v) => v.kind === "line"), nP = ml.length;
+      const sung = new Set(ml.map((v, i) => (SUNG(v) ? i : -1)).filter((i) => i >= 0));
+      const cut = (sc) => JSON.stringify(sc.events.filter(
+        (e) => !(e.kind === "line" && sung.has(e.lv % nP))));
+      const mine = cut(D.scoreOf(md, GENRES));
+      const theirs = cut(B.D.scoreOf(td, B.GENRES));
+      if (mine !== theirs) bad.push(gk + "/" + s);
     }
     console.log("       (" + sample.length + " anchors x " + SEEDS.length +
                 " seeds rendered" + (FULL ? ", --full" : ", --full for all " +
@@ -940,6 +1011,126 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
       assert.strictEqual(after[i], before[i], "the pace leaked into section " + i);
     assert.strictEqual(D.putRow(doc, si, "pace", null), true);
     assert.deepStrictEqual(secsFor(boxesFor(doc)), before, "clearing did not restore");
+  });
+
+  /* T4j — A SUNG CHAIR IS WRITTEN WHERE IT SINGS (2026-09-04, the singer
+     round; it is what T2 masks `cast.reg` for).
+
+     THE CLAIM, IN THREE PARTS, all read off the NOTES and none off the field:
+       1  THE SUNG LINE HAS NOT MOVED. For every sung chair on both sides, the
+          notes the throat actually sounds — the rendered line PLUS the octave
+          fold `homeFor` applies at the seat — are identical, note for note.
+       2  THE FOLD IS GONE. On the head, that fold is 0: the written line is
+          already inside the throat's compass, so the staff, the piano roll and
+          the notated .mid draw what is sung instead of a line an octave above
+          it. (Measured over the whole catalogue: 1,354 of 2,459 sung chairs
+          folded before, 0 after; sung median moved on none of them.)
+       3  AND THE MOVE IS AN EXACT OCTAVE. The head's written notes are the
+          base's plus 12 x (the head's register minus the base's), which is
+          what makes part 1 possible: the line was TRANSPOSED, not rewritten,
+          so no contour, no interval and no accidental changed with it.
+
+     WHAT IT MEANS FOR THE .MID, said out loud because it is a file somebody
+     opens. The ⤓ button writes the PLAYED record (`export/smf.js`'s own
+     header: "a .mid is a session another DAW presses play on") off
+     `plan.timeline()`, which has the fold already applied — so the default
+     export is byte-identical, and part 1 is the assertion that says so. The
+     NOTATED export (`writeSmf` over `buildScore`) and the staff and the piano
+     roll all read the WRITTEN line, and those DO move: a tenor lead's notated
+     .mid now sits an octave lower than it did. That is the correction, not a
+     regression — the old file wrote a C5 line no tenor in this box ever sang.
+
+     The compass is read off `knobs.js`, the extraction of the parent's
+     VOICE_TYPE, the same table §7d reads; the claim above is a comparison of
+     two records and does not depend on that table being right. */
+  ok("T4j a sung chair is written where it sings: the sung line is the base's, the fold is gone", () => {
+    const midiOfHz = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
+    const COMPASS = {};
+    for (const dsp of ["voice_lead", "voice_choir"]) {
+      const row = ((((NK.voices || {})[dsp] || {}).rows) || [])
+        .find((r) => r && r.key === "voice" && r.compass);
+      if (!row) continue;
+      for (const w of Object.keys(row.compass)) {
+        const [lo, hi] = row.compass[w] || [];
+        if (lo > 0 && hi > 0) COMPASS[w] = [midiOfHz(lo), midiOfHz(hi)];
+      }
+    }
+    assert.strictEqual(Object.keys(COMPASS).length, 5,
+      "knobs.js no longer publishes the five throats' compasses");
+    // whose throat a chair is, resolved as audio/plan.js castOf resolves it:
+    // the owner's tone, a `mouth` on it winning, then the cast throat, then the
+    // patch's default. A guest sings with its OWN row.
+    const throatOf = (mod, GEN, gk, doc, li, chair) => {
+      const P = (mod.NI.PATCHES.voice || {})[chair.instrument];
+      if (!P) return null;
+      const nBase = (GEN[gk] || {}).voices || 0;
+      const owner = (li < nBase) ? gk : (GEN[chair.name] ? chair.name : gk);
+      const t = (GEN[owner] || {}).tone || null;
+      const M = (t && t.mouth) || (t ? mod.NI.throatOf(owner, chair.instrument) : null);
+      return COMPASS[(M && M.voice) || (t && t.voice) || P.voice] || null;
+    };
+    // the chair's own notes, over the record, in the bars the BOX plays
+    // (ui/derive.js sectionRender rounds the section up to whole loops)
+    const linesOf = (mod, GEN, gk, doc) => {
+      const lines = doc.voices.filter((v) => v.kind === "line"), nP = lines.length;
+      const per = lines.map(() => []);
+      for (let i = 0; i < doc.form.sections.length; i++) {
+        const g = mod.D.toGenre(doc, i, GEN), sec = doc.form.sections[i];
+        const total = Math.ceil(Math.max(1, sec.bars || g.bars) / g.bars) * g.bars;
+        lines.forEach((c, pi) => {
+          if (!throatOf(mod, GEN, gk, doc, pi, c)) return;
+          const evs = mod.K.render(mod.D.toPhrase(doc, mod.D.materialAt(c, sec.id)), g, total);
+          for (let v = pi; v < g.voices; v += nP)
+            for (const e of evs) if (e.v === v && e.n != null) per[pi].push(e.n);
+        });
+      }
+      return { lines, per };
+    };
+    const HEAD = { D, K, NI }, BASE = { D: B.D, K: B.K, NI: B.NI };
+    const stride = Math.max(1, Math.round(ANCHORS.length / 45));
+    const sample = FULL ? ANCHORS : ANCHORS.filter((_, i) => i % stride === 0);
+    const moved = [], stillFolded = [], notOctave = [];
+    let chairs = 0, rewritten = 0;
+    for (const gk of sample) for (const s of SEEDS) {
+      const md = D.normalize(P.genreToDocument(gk, s));
+      const td = B.D.normalize(B.P.genreToDocument(gk, s));
+      const m = linesOf(HEAD, GENRES, gk, md), t = linesOf(BASE, B.GENRES, gk, td);
+      m.lines.forEach((c, pi) => {
+        const win = throatOf(HEAD, GENRES, gk, md, pi, c);
+        if (!win || !m.per[pi].length) return;
+        chairs++;
+        const dReg = c.cast.reg - t.lines[pi].cast.reg;
+        if (dReg) rewritten++;
+        const where = gk + "/" + s + " " + c.name;
+        // 3 — the written line moved by exactly that many octaves
+        if (m.per[pi].length !== t.per[pi].length ||
+            m.per[pi].some((n, i) => n !== t.per[pi][i] + 12 * dReg)) notOctave.push(where);
+        // 2 — and it now needs no fold at all
+        const hHome = K.homeFor(m.per[pi], win);
+        if (hHome !== 0) stillFolded.push(where + " (" + hHome + ")");
+        // 1 — the SUNG line is the base's, note for note. BOTH sides are folded
+        // with the head's `homeFor`, on purpose: at the base that function lived
+        // in audio/plan.js (this round moved it to kernel.js unchanged), so the
+        // base's kernel does not export it, and asking a different question of
+        // the two sides would make the comparison meaningless. It is pure
+        // arithmetic over notes and a window — the same arithmetic the base's
+        // seat ran, byte for byte.
+        const bHome = K.homeFor(t.per[pi], win);
+        const sungM = m.per[pi].map((n) => n + 12 * hHome);
+        const sungT = t.per[pi].map((n) => n + 12 * bHome);
+        if (JSON.stringify(sungM) !== JSON.stringify(sungT)) moved.push(where);
+      });
+    }
+    console.log("       (" + sample.length + " anchors x " + SEEDS.length + " seeds, " +
+                chairs + " sung chairs, " + rewritten + " re-seated" +
+                (FULL ? ", --full" : ", --full for all " + ANCHORS.length) + ")");
+    assert.deepStrictEqual(moved.slice(0, 8), [],
+      moved.length + " sung chairs sing a different line than they did");
+    assert.deepStrictEqual(notOctave.slice(0, 8), [],
+      notOctave.length + " written lines moved by something other than whole octaves");
+    assert.deepStrictEqual(stillFolded.slice(0, 8), [],
+      stillFolded.length + " sung chairs are still written outside their compass");
+    assert.ok(rewritten > 0, "no chair was re-seated — §7d reached nothing");
   });
 
   /* T4i — `focus` STILL REACHES NOTHING, and this wave did not invent a

@@ -79,10 +79,19 @@
     // rather than declared. One owner per half, one call between them:
     // `stampProv` at the foot of `genreToDocument`. index.html loads
     // document.js at :498 and this file at :531, so the global is there.
-    isNode ? require("./document.js")    : root.NuDocument);
+    isNode ? require("./document.js")    : root.NuDocument,
+    /* THE FIVE COMPASSES (2026-09-04, §7d). `state-engine.js VOICE_TYPE` is the
+       one owner of what a throat can reach, and `nukernel/knobs.js` is its
+       EXTRACTION — knobs-extract.js probes the parent's own `pitchedUnit` at
+       both ends and writes the Hz pair per voice word, which is how this tier
+       reads an engine fact without a hand-typed copy of it (the attribute-
+       grammar law: the conversion is done by extraction, never by hand).
+       index.html loads knobs.js at :517 and this file at :531, so the global is
+       there; nothing else in this file reads it. */
+    isNode ? require("./knobs.js")       : root.NuKnobs);
   if (isNode) module.exports = api;
   else root.NuPrecompose = api;
-})(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong, NuRules, ND) {
+})(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong, NuRules, ND, NK) {
   "use strict";
 
   const { GENRES, MODES, SCALES } = NG;
@@ -2813,6 +2822,192 @@
     regAt(G, gk, part, raw, lift) + K.partLean(part);
 
   /* ======================================================================
+     7d · A SUNG CHAIR IS SEATED WHERE ITS THROAT ACTUALLY SINGS (2026-09-04)
+     ======================================================================
+     Paul: *"check for singer register throughout."*
+
+     THE FAULT, MEASURED FIRST — 474 anchors x seeds 1-3, 2,459 sung chairs,
+     every one taken through precompose -> toGenre -> render and folded with the
+     compass its throat declares: 1,354 chairs folded, 873 of them SOLO singers
+     over 320 rows. The cause is one line and it is not a bug in any of them:
+     `kernel.js PARTS.lead` is `ctr: +12`, so EVERY lead chair in the catalogue
+     is written centred on C5 whoever sings it, and `audio/plan.js homeFor` then
+     takes an octave (or two) back off at the seat to make the throat reach it.
+     The landings are honest — a folded lead's median comes out at A#4 for a
+     soprano, D#4 alto, D4 countertenor, B3 tenor, D3 bass — and THAT is exactly
+     the trouble: the sound was right and nothing said so. The fold is a
+     whole-line octave move applied in the AUDIO layer, so the record it
+     corrects is the one nobody reads: `document.js scoreOf`, the staff, the
+     piano roll, the notated .mid and every other reader of the written line all
+     draw the C5 line the throat never sings. A record whose notation disagrees
+     with its sound by an octave is exactly what `regOf`'s own header calls "the
+     one thing this box legislates against", one layer further out.
+
+     SO THE COMPOSER WRITES DOWN WHAT THE SINGER IS GOING TO DO. For every line
+     chair that resolves to a MODELLED THROAT, the record is rendered through
+     its own score seam, the chair's notes are folded against that throat's
+     compass with `K.homeFor` — the SAME function the seat will use, moved to
+     kernel.js this round so there is one of it — and the octaves it asks for
+     are added to `cast.reg`. The chair is then written where it is sung.
+
+     AND THE SOUND MAY NOT MOVE, WHICH IS THE WHOLE OF WHY IT IS DONE THIS WAY
+     rather than by centring the line on the compass. `homeFor` is octave-
+     covariant — folding a line that has already been moved k octaves returns
+     the same answer minus k — and every register the kernel reads is a whole
+     number of octaves away from `ctr` (the line shift is `per * round(...)`,
+     the pad and the stab fold per note into a window that moves with `ctr`), so
+     writing the fold DOWN moves the rendered line by exactly the octaves the
+     seat was about to move it by, and `homeFor` at the seat then answers 0. The
+     played record is identical, note for note; only the written one changes.
+     Seating on the compass CENTRE instead — the obvious reading, and the one
+     asked for — was measured and REFUSED, because it moves the sound. 554 of
+     the 1,181 alto leads written at C5 already fit an alto's F3-F5 there, and
+     so do 5 of the 18 countertenor leads (doowop's among them, cast by name two
+     days ago); centring those on 65 / 64 puts the line on the next lattice
+     point down and drops each a full octave for no reason the record gives. A
+     compass is a WALL, not a target: the part says where in it to sit.
+
+     WHY IT RENDERS. Nothing cheaper is honest: the fold reads the notes, and
+     the notes are what the phrase, the ops, the ornaments, the mode, the chord
+     cycle and the section's own key make together. A proxy over `ctr` and the
+     compass was tried and is wrong for half the catalogue — the same octave
+     seats one line inside the compass and the next outside it, because the two
+     lines have different spreads (measured: of the 1,235 chairs written at C5
+     into an alto's F3-F5, 657 folded and 578 did not; of the 110 into a
+     tenor's B2-B4, 102 folded and 8 did not). Rendering is
+     `test-the-artifact` applied to the composer: measured on 60 anchors it
+     takes a document from 3.2 ms to 52 ms cold and back to 2.2 ms once the
+     memo below has it, against a genre pick that already recompiles and
+     redraws the whole page — and it is the only reading that cannot be wrong
+     about its own record.
+       IF THE SEAT CANNOT SAY IT, IT SAYS NOTHING. A register outside the
+     document's own -4..3 is not writable, so a chair that would need one is
+     left exactly as it was and the audio fold keeps doing its job — a written
+     line that is still wrong, and a sound that is still right, which is the
+     only safe way round. */
+
+  // Hz -> MIDI, the same rounding `audio/plan.js windowOf` does to the same
+  // numbers. (plan.js keeps the fractional form because it compares against
+  // sampler stretch bounds; a compass is a note.)
+  const midiOfHz = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
+  let COMPASS = null;
+  /** What a named throat can reach, in MIDI. Read off knobs.js — the extraction
+   *  of the parent's VOICE_TYPE — and never listed here. Null for a word the
+   *  engine does not model, which is the same answer plan.js's `windowOf` gives
+   *  for a unit with no declared compass: no window, no fold. */
+  const compassOf = (voice) => {
+    if (!COMPASS) {
+      COMPASS = {};
+      const V = (NK && NK.voices) || {};
+      for (const dsp of ["voice_lead", "voice_choir"]) {
+        const row = (((V[dsp] || {}).rows) || []).find((r) => r && r.key === "voice" && r.compass);
+        if (!row) continue;
+        for (const w of Object.keys(row.compass)) {
+          const [lo, hi] = row.compass[w] || [];
+          // an octave is the floor, verbatim from plan.js windowOf: a window
+          // narrower than twelve semitones cannot hold every pitch class
+          if (lo > 0 && hi > 0 && midiOfHz(hi) - midiOfHz(lo) >= 12)
+            COMPASS[w] = [midiOfHz(lo), midiOfHz(hi)];
+        }
+      }
+      // LOUDLY, OR NOT AT ALL. An empty table here would mean this file silently
+      // stopped seating singers — the seat would still be right (the audio fold
+      // is the net under it) and every SCORE would go back to being an octave
+      // out with nothing said. That is the failure mode band-kit.js:1313's law
+      // exists for, so it throws by name instead.
+      if (!Object.keys(COMPASS).length)
+        throw new Error("precompose: knobs.js publishes no voice compass — " +
+                        "load it before this file (index.html) or rebuild it");
+    }
+    return COMPASS[voice] || null;
+  };
+  /** WHOSE THROAT THIS CHAIR IS, resolved exactly the way the seat resolves it
+   *  — `audio/plan.js castOf` then `audio/to-engine.js voiceForInstr`: the row's
+   *  own `tone`, a `mouth` on it winning; the CAST throat (instruments.js
+   *  `throatOf`) only where the row states a tone at all, which is plan.js's own
+   *  `seatTone && !seatTone.mouth`; and last the patch's default singer. Null
+   *  for a chair that is not a person. */
+  const throatVoiceOf = (row, gk, id) => {
+    const P = NI.PATCHES && NI.PATCHES.voice && NI.PATCHES.voice[id];
+    if (!P) return null;
+    const t = (row && row.tone) || null;
+    const M = (t && t.mouth) || (t ? NI.throatOf(gk, id) : null);
+    return (M && M.voice) || (t && t.voice) || P.voice || null;
+  };
+
+  /* AND IT IS REMEMBERED, because it is the only expensive thing in this file.
+     `genreToDocument` is a pure function of (anchor, reading, sentences) — that
+     is the share-link law — so the octaves this pass finds are a pure function
+     of the same three, and a gate that composes `reggae/2` in four different
+     assertions renders it once. Measured on the table gate: 1,422 records
+     composed three times over, 40 ms of render apiece. The value is the OCTAVE
+     PER CHAIR and not the document, so a stale entry cannot smuggle anything
+     else in; the map is cleared rather than trimmed past 512, which is more
+     records than any page holds and a size no gate reaches. */
+  const SEATMEMO = new Map();
+  const seatKey = (gk, seed, rules) => gk + "|" + seed + "|" +
+    (rules && rules.length ? JSON.stringify(rules.map((e) => [e.f, e.v])) : "");
+
+  /** The pass itself. `doc` is the finished record; `nBase` and `layerKeys` say
+   *  which line chair belongs to which ROW, because a guest sings with its own
+   *  genre's throat (plan.js reads the owner off the event's layer). */
+  function seatSungChairs(doc, gk, G, nBase, layerKeys, memoKey) {
+    const lines = ND.LINES(doc);
+    const had = memoKey != null ? SEATMEMO.get(memoKey) : null;
+    if (had) {
+      lines.forEach((c, i) => { if (had[i]) c.cast.reg += had[i]; });
+      return doc;
+    }
+    const wins = lines.map((c, i) => {
+      const owner = i < nBase ? gk : layerKeys[i - nBase];
+      const row = i < nBase ? G : GENRES[owner];
+      if (!row) return null;
+      return compassOf(throatVoiceOf(row, owner, c.instrument));
+    });
+    if (!wins.some(Boolean)) return doc;          // nobody sings: nothing to do
+    // THE RECORD'S OWN NOTES, walked the way the record is PLAYED — the phrase
+    // per section, the kernel's voices dealt round the chairs, and the section
+    // rounded UP to a whole number of the genre's own loops, which is
+    // `ui/derive.js sectionRender`'s `ceil((nudge + len) / g.bars) * g.bars`
+    // and not `scoreOf`'s bare section length. It has to be the played count:
+    // the seat this pass is anticipating folds the notes the BOX renders, and a
+    // doowop section of two bars against an eight-bar cycle plays six bars of
+    // line that `scoreOf` never asks for. Measured both ways over the whole
+    // catalogue: with `scoreOf`'s count hundreds of chairs still folded at the
+    // seat because the seat was reading notes this pass never saw; with the
+    // played count, 0 of 2,459 do.
+    const per = lines.map(() => []);
+    const nP = lines.length;
+    for (let i = 0; i < doc.form.sections.length; i++) {
+      const g = ND.toGenre(doc, i, GENRES);
+      const len = Math.max(1, doc.form.sections[i].bars || g.bars);
+      const total = Math.ceil(len / g.bars) * g.bars;
+      const secId = doc.form.sections[i].id;
+      lines.forEach((c, pi) => {
+        if (!wins[pi]) return;
+        const evs = K.render(ND.toPhrase(doc, ND.materialAt(c, secId)), g, total);
+        for (let v = pi; v < g.voices; v += nP)
+          for (const e of evs) if (e.v === v && e.n != null) per[pi].push(e.n);
+      });
+    }
+    const moves = lines.map(() => 0);
+    lines.forEach((c, pi) => {
+      if (!wins[pi] || !per[pi].length) return;
+      const home = K.homeFor(per[pi], wins[pi]);
+      if (!home) return;
+      const to = c.cast.reg + home;
+      if (to < -4 || to > 3) return;              // unwritable: leave it to the fold
+      c.cast.reg = to;
+      moves[pi] = home;
+    });
+    if (memoKey != null) {
+      if (SEATMEMO.size > 512) SEATMEMO.clear();
+      SEATMEMO.set(memoKey, moves);
+    }
+    return doc;
+  }
+
+  /* ======================================================================
      8 · genreToDocument — the whole record
      ====================================================================== */
   /* THE THIRD INPUT (2026-09-01, the Rules round). This function took
@@ -3798,7 +3993,12 @@
     // writes `material.prov` — one entry per motif in the bank, `own` unless
     // the walk above named a guest, each carrying the fingerprint of the cell
     // AS DEALT so that a later hand edit is MEASURED rather than declared.
-    return ND.stampProv({
+    /* ...AND THE SINGERS ARE SEATED LAST OF ALL (§7d, 2026-09-04). It has to be
+       last and it has to be here: the pass RENDERS the record to find out where
+       each throat actually lands, so it needs a finished document — every
+       section, every cell, the key and the cast — and it writes back exactly
+       one field, `cast.reg`, on the chairs a person sings. */
+    const record = ND.stampProv({
       basis: gk,
       /* THE SENTENCES THIS READING WAS COMPOSED WITH, carried on the record
          (2026-09-01). A record is a pure function of `(gk, seed, rules)` and
@@ -3877,6 +4077,7 @@
       },
       performance: { take: 0, humanize: G.humanize || 0, ontime: true },
     }, provWho);
+    return seatSungChairs(record, gk, G, nBase, layerKeys, seatKey(gk, s, rules));
   }
 
   assertDeskTables();          // after § 7's rows exist, for the reason above

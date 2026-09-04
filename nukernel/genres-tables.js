@@ -382,6 +382,20 @@
     // seats beside the `lead` is written about three semitones higher, so it
     // still crosses D#5 and still folds. That is a SEATING fact, not a throat
     // fact, and it is not fixable from this table.
+    //     ...AND THE SEAT WAS FIXED THE NEXT DAY (2026-09-04). precompose.js
+    // §7d now seats every sung chair at the register its throat actually sings
+    // — the fold, written down where the staff can read it — so the `vocal`
+    // chair is written at reg 0 and folds no longer, and neither does anything
+    // else in this catalogue (measured: 1,354 of 2,459 sung chairs folded
+    // before, 0 after). NOTHING SOUNDS DIFFERENT, which is the point: the seat
+    // moves the WRITTEN line by exactly the octaves the fold was about to move
+    // the played one by, so every sung median in the box, this row's included,
+    // is unchanged to the semitone. What it does change is what the score
+    // says — and it makes one thing visible that the fold had been hiding:
+    // doowop's `riff`, the BASS SINGER, is cast on this row's countertenor and
+    // was being folded UP two octaves, so he is now plainly written ABOVE the
+    // lead (G#4 against G#4 at seed 1). That is a casting question for a round
+    // that is allowed to move the sound; it is not a seating one.
     //   `barbershop` AND `glammetal` ALSO DECLARE doowopstack AND ARE LEFT ON
     // IT. Barbershop has the better claim of the two — its "tenor" part is by
     // definition the harmony above the lead — but Paul named doowop, and
