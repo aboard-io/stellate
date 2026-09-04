@@ -357,13 +357,28 @@ export function project(doc, genreFor) { return state(doc, genreFor).base; }
    `node test/document.test.js`. Verified: it does. */
 function enrich(base, doc) {
   const lines = LINES(doc);
-  return base.map((sec) => {
+  // WHERE EACH LINE SITS IN `doc.voices`, because the resolver addresses a
+  // COLUMN and the chair list is the kernel's projection of it (TABLE.md §1).
+  const lix = doc.voices.reduce((a, v, i) => { if (v.kind === "line") a.push(i); return a; }, []);
+  return base.map((sec, si) => {
     const g = sec.genre;
     const chairs = (g.chairs || []).map((c, i) => {
       const cast = (lines[i] && lines[i].cast) || {};
       const pad = c.pad != null ? c.pad : cast.part === "pad";
+      /* THE REGISTER IS RESOLVED PER SECTION (TABLE.md §2). The producer reads
+         a chair's register to decide what it may move, and this map is per
+         SECTION already — so a cell that puts one chair an octave down in the
+         bridge has to be what the producer sees there, or it would reason
+         about a register nobody is playing. With no override written the
+         resolver answers `cast.reg`, which is the expression this replaced.
+
+         ABSENT IS TODAY, EXACTLY: only the cell and the column are taken, so
+         a chair with no `cast.reg` still reads 0 here rather than acquiring
+         one off the anchor's closure. */
+      const rr = lix[i] != null ? NuDocument.resolveFrom(doc, si, lix[i], "reg") : null;
+      const reg = (rr && (rr.from === "cell" || rr.from === "column")) ? rr.v : cast.reg;
       return { ...c,
-        reg: c.reg != null ? c.reg : (cast.reg || 0),
+        reg: c.reg != null ? c.reg : (reg || 0),
         pad, part: c.part != null ? c.part : (pad ? "pad" : "line") };
     });
     return { ...sec, genre: { ...g, chairs } };

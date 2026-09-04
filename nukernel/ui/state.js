@@ -151,6 +151,17 @@ export let GENRESET = {};                 // session key -> recipe
 const MARK = "✎ ";
 
 export function setSlot(i) { slot = i; SUBJ = SLOTS[i]; }
+/* THIS IS NOT THE HAND'S DOOR, and TABLE.md wave 1 was written expecting it to
+   be. MEASURED 2026-09-03: `putPhrase` has exactly two callers — ui/band.js's
+   own adopt, and ui/eight.js `push()`, which calls it once per VOICE per
+   SECTION on every recompile (`lines.forEach((c, v) => { for (let i = 0; i < NS;
+   i++) putPhrase(v * NS + i, phrase(materialAt(c, secs[i].id))); })`). A
+   provenance stamp here would mark every motif of every record as the hand's
+   the first time the page drew it. The bank a hand actually writes into is
+   `DOC.material.cells`, and §3's `hand` is derived off it instead — a name the
+   composer never dealt, or a cell whose fingerprint has moved (document.js
+   `provOf`), which is a measurement and needs no writer to remember anything.
+   `document.js handWrote` is the explicit door for wave 2's table. */
 export function putPhrase(i, p) { SLOTS[i] = p; if (i === slot) SUBJ = p; }
 export function setViewSec(i) { viewSec = i; }
 export function setLoopOnly(v) { loopOnly = v; }

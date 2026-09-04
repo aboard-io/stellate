@@ -71,10 +71,18 @@
     // the one door that turns it into a resolved row. rules.js reaches BACK
     // into this file lazily (for `idiomOf`) precisely so this require can be
     // an ordinary load-time one.
-    isNode ? require("./rules.js")       : root.NuRules);
+    isNode ? require("./rules.js")       : root.NuRules,
+    // THE TABLE'S DOCUMENT DOORS (TABLE.md wave 1). This file DEALS the
+    // material and so is the only thing that knows which row brought each
+    // motif; `document.js` owns the SHAPE that fact is written in
+    // (`material.prov`) and the fingerprint that lets an edit be measured
+    // rather than declared. One owner per half, one call between them:
+    // `stampProv` at the foot of `genreToDocument`. index.html loads
+    // document.js at :498 and this file at :531, so the global is there.
+    isNode ? require("./document.js")    : root.NuDocument);
   if (isNode) module.exports = api;
   else root.NuPrecompose = api;
-})(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong, NuRules) {
+})(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong, NuRules, ND) {
   "use strict";
 
   const { GENRES, MODES, SCALES } = NG;
@@ -3168,13 +3176,43 @@
     const kindAt = {};
     const sounds = (k, i) => { if (!k) return; usedKinds.add(k);
       (kindAt[k] = kindAt[k] || new Set()).add(i); };
+    /* ---- WHO BROUGHT EACH KIND (TABLE.md §3, PROVENANCE) ----------------
+       The same walk already knows it and used to throw it away. A kind the
+       BASE cast deals is the record's own; a kind that arrives only through a
+       layer belongs to whoever the layer is.
+
+       WHICH LAYERS COUNT AS A GUEST IS `eraOK`'s OWN RULE, and §3 is corrected
+       by measurement here. §3 names "the box's six role rows (vocal, backing,
+       solo, pad, drone, counterpoint)" as the record's own band. MEASURED over
+       all 479 anchors at seed 1, the layer rows that actually appear are:
+           undated  vocal x2178  backing x256  simple x253  pad x233
+                    riff x198    solo x191
+           DATED    counterpoint x69 (Vienna 1725)  drone x63 (New York 1964)
+                    acid x32 (Chicago 1987)  gregorian x28 (Rome 600)
+                    fugue x8 (Leipzig 1725)  neoclassical x4 (Berlin 2011)
+       `drone` and `counterpoint` are not role rows at all — they are dated
+       genres proper, La Monte Young and Fux, and they are the two commonest
+       genre guests in the catalogue. The honest predicate is the one
+       compose.js already uses at its own door: a row with a YEAR is a place
+       and a time, a row without one is "a FUNCTION genre, which is a part and
+       not a place" (eraOK's null branch). So an UNDATED layer is the record's
+       own band, a DATED one is a guest, and the name it is drawn under is its
+       own key. A kind the base cast also deals is OWN whatever else brings it:
+       the record wrote it for itself. */
+    const ownKind = new Set(), guestKind = {};
     for (let i = 0; i < NSEC; i++) {
-      for (let v = 0; v < nBase; v++) sounds(baseKind[i](v), i);
+      for (let v = 0; v < nBase; v++) {
+        const k = baseKind[i](v); sounds(k, i); if (k) ownKind.add(k);
+      }
       // ...asked through `seated` (2026-08-30) so a guest the doors above
       // refused registers no kind: a cell nobody plays is a falsehood in
       // the document, and the reading draw (§6b) reads `usedKinds`.
       for (const e of R.song[i].stack.slice(1))
-        if (seated(e.g) && (e.slots || []).length) sounds(KIND_OF[e.slots[0]], i);
+        if (seated(e.g) && (e.slots || []).length) {
+          const k = KIND_OF[e.slots[0]];
+          sounds(k, i);
+          if (k && guestKind[k] == null && NC.genreYear(e.g) != null) guestKind[k] = e.g;
+        }
     }
     /* EXEMPTION 2 of 3 — a blank state is not repaired into a record. The
        line below is the "a record with no kinds is given a hook" repair, and
@@ -3225,6 +3263,22 @@
       if (cells[name]) devName[key] = name;
     }
     for (const n of Object.keys(cells)) if (!cells[n]) delete cells[n];
+    /* ---- ...AND THE PROVENANCE OF EVERY MOTIF IN THE BANK (§3) ---------
+       `own` is the default and is not written here — `document.js stampProv`
+       fills it for every cell this map does not name, which is §3's own
+       sentence ("dealt for the record's basis genre"). What IS written is the
+       guest: a kind that arrived only through a dated row, and the DEVELOPED
+       returns of that kind, which are the same figure seen again and belong
+       to whoever brought it. `beat` (the anchor's own kit grid) and `motif`
+       (the blank state's empty staff) are the record's own and take no
+       branch. */
+    const provWho = {};
+    for (const k of Object.keys(guestKind))
+      if (!ownKind.has(k) && cells[k]) provWho[k] = { p: "guest", g: guestKind[k] };
+    for (const key of Object.keys(devName)) {
+      const k = key.slice(0, key.indexOf("@")), nm = devName[key];
+      if (provWho[k] && !provWho[nm]) provWho[nm] = { ...provWho[k] };
+    }
     /* EXEMPTION 3 of 3, part three — ONE LINE CELL OF SIXTEEN RESTS, `motif`.
        It is named `motif` and not `hook` because it is not a hook: it is the
        empty staff a hand writes onto, and the Motif editor opens on it. Every
@@ -3674,7 +3728,11 @@
     deskThe(voices, G);
 
     /* ---- the record ----------------------------------------------------- */
-    return {
+    // ...THROUGH ONE MORE DOOR THAN IT USED TO BE (TABLE.md §3): `stampProv`
+    // writes `material.prov` — one entry per motif in the bank, `own` unless
+    // the walk above named a guest, each carrying the fingerprint of the cell
+    // AS DEALT so that a later hand edit is MEASURED rather than declared.
+    return ND.stampProv({
       basis: gk,
       /* THE SENTENCES THIS READING WAS COMPOSED WITH, carried on the record
          (2026-09-01). A record is a pure function of `(gk, seed, rules)` and
@@ -3752,7 +3810,7 @@
         // of Character right?"
       },
       performance: { take: 0, humanize: G.humanize || 0, ontime: true },
-    };
+    }, provWho);
   }
 
   assertDeskTables();          // after § 7's rows exist, for the reason above

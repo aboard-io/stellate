@@ -76,6 +76,38 @@ the basis genre, Rules, the master (drive · glue · tape · space · width ·
 tilt · ceiling), the Motifs bank. The master is drawn as the table's footer
 row; Rules and Time keep their own panes.
 
+### 1a · Measured tiers (wave 1, 2026-09-04) — the spec corrected by the tree
+
+`document.js TIERS` is the table as data, and `test/table.test.js` T1 prints
+every field's tier and note. Where §1 guessed and the tree disagreed:
+
+- **`focus` is not a section index.** `box.focus` indexes the section's stack,
+  every document box has a one-entry stack, and `focusOf`/`focused` have no
+  importer in the tree. It is stored and resolved as a cell flag that reaches
+  nothing; T2e pins that it moves no event, so the day a reader lands the gate
+  names it.
+- **`swing`, `groove`, `key`, `mode`, `prog` are RECORD fields today.** The
+  document carries one of each; precompose drops compose's per-section
+  modulations. A row override is wave 2 work and moves the sound.
+- **`bassop` and `kit` are COLUMN fields** — read off the bass's and the
+  drummer's `development` word, not off the section.
+- **`fx`, `rev`, `verb`, `echo`, `dtime`, `pan`, `auto` have no document
+  address** — `emptyBox` defaults them, `boxesOf` writes none. `breath`,
+  `pipe`, `nudge` are addresses with no writer.
+- **`intro`, `outro`, `mot` are dealt and then DROPPED.** Over 4,859 composed
+  sections at seed 1 compose deals `outro` on 1,718, `mot` on 1,042, `intro`
+  on 580, and `genreToDocument`'s projection copies none — the box's
+  characteristic bug, live. Not fixed in wave 1 (T2 forbids moving the sound);
+  wave 2 carries them as its first, separately gated step, so Paul can hear it.
+- **The hand is derived, not stamped.** `putPhrase` is called once per voice
+  per section on every recompile, so a stamp there would mark every motif
+  the hand's on first draw. `hand` = a cell absent from the provenance map or
+  whose fingerprint moved. `handWrote()` is the explicit door for wave 2.
+- **The undated role rows are vocal, backing, simple, pad, riff, solo.**
+  `drone` (New York 1964) and `counterpoint` (Vienna 1725) are dated genres
+  and are the two commonest guests. Guest census at seed 1: 17 of 4,344
+  motifs on 17 of 479 records, all on the `counter` kind.
+
 ## 2 · The inherit law
 
 A cell's vector starts EMPTY. Every field resolves in this order and the first

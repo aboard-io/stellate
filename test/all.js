@@ -218,6 +218,22 @@ const GATES = [
              "tools/genres/emit.js", "tools/genres/grammar.js",
              "nukernel/genres-tables.js", "nukernel/genres.js",
              "nukernel/GENRES.md"] },
+  /* THE TABLE'S MODEL (2026-09-03, TABLE.md wave 1). Paul: "a song can be
+     understood as a grid with sections as rows and instruments as columns …
+     Each cell can be understood as a vector." T1 shape (the tier table read
+     as DATA, and the record round-tripping), T2 inherit (every anchor at
+     seeds 1-3 against a worktree of v263 — the document, every section's
+     compiled genre with its closures CALLED, and the kernel's own events —
+     plus the other half: an override that reaches no sound is a field that is
+     not there), T3 provenance (own · guest:<genre> · hand over every bank).
+     Wave 1 and `kind: "node"`: it is the document tier and nothing else. It
+     shells out to `git worktree` once and caches the tree in /tmp. */
+  { name: "table", wave: 1, kind: "node",
+    argv: ["test/table.test.js"],
+    need: ["test/table.test.js"],
+    covers: ["test/table.test.js", "nukernel/document.js",
+             "nukernel/precompose.js", "nukernel/avail.js",
+             "nukernel/ui/produce.js", "nukernel/TABLE.md"] },
   { name: "instrumentation", wave: 1, kind: "node",
     argv: ["test/instrumentation.test.js"],
     need: ["test/instrumentation.test.js"], covers: ["test/instrumentation.test.js"] },

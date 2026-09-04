@@ -37,6 +37,12 @@
 
   const { MODES, SCALES } = NG;
   const { KEYS, SWINGS } = NF;
+  // THE CATALOGUE, for the resolver's LAST tier (§2: cell -> column -> row ->
+  // record -> the genre's row). `toGenre` still takes its table as an argument
+  // — the page registers `lab.eight.N` rows into it and a node caller must not
+  // collide with them — so every entry point below takes the same optional
+  // argument and falls back to the catalogue this file already imports.
+  const CATALOG = NG.GENRES;
   const { METERS, stepsIn } = K;
   const { WORDS } = NuSongs;
 
@@ -63,6 +69,12 @@
     ? { dsp: v.instrument, level: v.level == null ? 1 : v.level, set: v.set || {} }
     : null;
   const LINES  = (doc) => doc.voices.filter((v) => v.kind === "line");
+  // ...AND WHERE EACH OF THEM SITS IN `doc.voices` (TABLE.md §1: a COLUMN is a
+  // voice). The kernel counts lines and the table counts columns; this is the
+  // one place the two indexes are joined, so the resolver never has to know
+  // that a line list exists.
+  const LINEIX = (doc) => doc.voices.reduce(
+    (a, v, i) => { if (v.kind === "line") a.push(i); return a; }, []);
   const BASSV  = (doc) => doc.voices.find((v) => v.kind === "bass");
   const DRUMV  = (doc) => doc.voices.find((v) => v.kind === "drums");
   const SECID  = (doc, i) => (doc.form.sections[i] || {}).id;
@@ -180,6 +192,12 @@
     const NATIVE = fleet || [];
     const mode = MODES[A.mode] || MODES.aeolian;
     const lines = LINES(doc), drums = DRUMV(doc), bass = BASSV(doc);
+    // THE TABLE'S RESOLVER IS THE ONE OWNER of `entry` and `reg` from here on
+    // (TABLE.md §2). `LIX` turns the kernel's line index into the column index
+    // the resolver addresses; with no cell override the answer is `cast.entry`
+    // and `cast.reg` exactly as the two closures below read them before this
+    // line existed, which is why every anchor renders byte-identically (T2).
+    const LIX = LINEIX(doc);
     const on = drums && drums.cast.on;
     const kit = on ? (cellOf(doc, materialAt(drums, SECID(doc, si))).lanes || {}) : {};
     // NO DRUMMER MEANS NO DRUM SURFACE AT ALL. Emptying `kit` is not enough:
@@ -211,7 +229,15 @@
                         prog: A.prog, roots: A.prog.map((c) => c.d),
       /* MATERIAL */    kit, ...(on ? {} : noKit),
       /* CAST */        voices: lines.length,
-                        entry: (v) => lines[v].cast.entry,
+                        // ...AND IT IS RESOLVED PER SECTION, WHICH IS WHERE IT
+                        // WAS ALREADY BEING APPLIED. Measured 2026-09-03:
+                        // `entry` is bars into EVERY section (precompose ~3048
+                        // clamps it to the shortest one for exactly that
+                        // reason), so the honest home is the cell with the
+                        // column as its default — TABLE.md §1, and this
+                        // closure is where a cell override reaches the kernel
+                        // (kernel.js:1523 `for (let b = g.entry(v); …)`).
+                        entry: (v) => resolve(doc, si, LIX[v], "entry", GENRES),
                         // THE CHAIR'S OWN PART REACHES THE KERNEL (2026-08-28).
                         // This handed over `realize` and nothing else, so the
                         // kernel fell back to its two-value shim ("pad" or
@@ -233,7 +259,13 @@
                         // add back, which makes the round trip exact by
                         // construction and leaves ONE number — the one on the
                         // chair — saying where the chair sits.
-                        reg: (v) => lines[v].cast.reg - K.partLean(lines[v].cast.part),
+                        // (…and through the same resolver, so a cell may sit
+                        // one chair an octave down in the bridge and nowhere
+                        // else. The `- partLean` fold is unchanged: the tiers
+                        // all answer in SOUNDING register and the kernel is
+                        // handed the base it implies.)
+                        reg: (v) => resolve(doc, si, LIX[v], "reg", GENRES) -
+                                    K.partLean(lines[v].cast.part),
                         realize: (v) => lines[v].cast.part,
                         bassStyle: bass ? bass.cast.style : undefined,
                         nobass: !bass,
@@ -598,6 +630,17 @@
     const next = {};
     for (const k of Object.keys(cells)) next[k === from ? name : k] = cells[k];
     doc.material.cells = next;
+    /* THE PROVENANCE MAP IS A FIFTH THING THAT POINTS AT THE NAME (§3), and
+       the 2026-09-01 rename law is that a walk like this gets ONE door — so it
+       is walked HERE and not in a second copy. Order is kept for the same
+       reason the bank's is. A record with no map (every save older than the
+       table) takes no branch. */
+    if (doc.material.prov) {
+      const pn = {};
+      for (const k of Object.keys(doc.material.prov))
+        pn[k === from ? name : k] = doc.material.prov[k];
+      doc.material.prov = pn;
+    }
     for (const v of (doc.voices || [])) {
       if (v.material === from) { v.material = name; continue; }
       if (v.material && typeof v.material === "object")
@@ -606,6 +649,409 @@
     }
     return true;
   }
+  /* ======================================================================
+     THE TABLE — three vectors, one inherit law, one owner (TABLE.md §1-§3)
+     ======================================================================
+     Paul, 2026-09-03: "a song can be understood as a grid with sections as
+     rows and instruments as columns … Each cell can be understood as a
+     vector." Wave 1 is the MODEL and nothing else: no control moves, no
+     record changes, and the gate that says so (test/table.test.js T2) renders
+     every anchor at seeds 1-3 against a worktree of v263 and demands the
+     events be byte-identical.
+
+     WHAT IS ACTUALLY HERE. Three things, and they are small on purpose:
+       · TIERS   — §1's field/tier table AS DATA, so the gate reads the claim
+                   instead of restating it. It is also where this file records
+                   the places §1 turned out to be WRONG about the shipped
+                   document (each one marked `note`), because the spec is
+                   corrected by measurement and not the other way round.
+       · resolve — the ONE owner of `cell -> column -> row -> record -> genre`.
+                   Every reader that used to reach into `cast.entry` /
+                   `cast.reg` for a voice IN A SECTION now asks here, so a cell
+                   override reaches the sound by construction rather than by
+                   somebody remembering to wire it (the declared-but-never-
+                   arriving law — six params in one week were declared, costed
+                   and silent).
+       · provOf  — a motif's provenance: own · guest:<genre> · hand (§3).
+
+     WHY `voice.cells[secId]` AND NOT A GRID. A cell override is stored on the
+     COLUMN, keyed by the SECTION'S ID — which is exactly where `development`
+     and `desk.trim` already live, for the reason `development`'s own comment
+     gives: "keyed by the section's ID — so adding, removing or reordering
+     sections cannot shift a voice's part under it". A second addressing
+     scheme for the same grid would be a second answer to "which cell is
+     this", and normalize() would need a second pruner. It is SPARSE (§2: "a
+     cell stores only what a hand wrote there"): eighty cells and almost all
+     of them say nothing, so almost all of them do not exist. */
+
+  /* ---- §1 AS DATA ------------------------------------------------------
+     One row per field §1 names, with the tier it is STORED at (`tier`), the
+     address it is stored at (`at`, evaluated by `addressOf` below), and — for
+     the three fields this wave moves — the tier that may OVERRIDE it
+     (`over`). A field with no address today carries the WAVE that will give
+     it one instead, which is the refused-control law (§4: "no silent grey")
+     written down where a gate can read it: a field may be declared and not
+     yet reachable, but it may not be silently either. */
+  const TIERS = {
+    /* SECTION (a row) — `doc.form.sections[si]`, and `boxesOf` copies each of
+       these onto the box the engine reads. */
+    type:   { tier: "row", at: "form.sections[si].role" },
+    bars:   { tier: "row", at: "form.sections[si].bars" },
+    level:  { tier: "row", at: "form.sections[si].lvl" },
+    shape:  { tier: "row", at: "form.sections[si].env" },
+    /* THESE THREE ARE DEALT AND THEN DROPPED, which is a finding and not a
+       tier. MEASURED 2026-09-03 over 479 anchors x seed 1 = 4,859 composed
+       sections: `compose()` deals `outro` on 1,718 of them, `mot` on 1,042 and
+       `intro` on 580 — and `genreToDocument`'s section projection copies
+       none of the three, so `boxesOf` writes `intro/outro/mot: null` on every
+       precomposed record and the section's arrival, its departure and its
+       motion never reach a box. It is the SAME bug precompose's own comment
+       records having fixed for `lvl` and `env` on 2026-08-28 ("compose.js
+       deals `env` on nearly every section … and this map dropped both on the
+       floor"), two fields further along the same line. Not fixed here:
+       carrying them would move the sound, which is exactly what wave 1 may
+       not do (T2). The address is right and the composer is silent.
+       `breath`, `pipe` and `nudge` are dealt by nobody at all — hand fields
+       with an address and no writer. */
+    intro:  { tier: "row", at: "form.sections[si].intro",
+              note: "compose deals it on 580 of 4,859 sections; precompose drops it" },
+    outro:  { tier: "row", at: "form.sections[si].outro",
+              note: "compose deals it on 1,718 of 4,859 sections; precompose drops it" },
+    mot:    { tier: "row", at: "form.sections[si].mot",
+              note: "compose deals it on 1,042 of 4,859 sections; precompose drops it" },
+    period: { tier: "row", at: "form.sections[si].period" },
+    breath: { tier: "row", at: "form.sections[si].breath",
+              note: "an address with no writer: nothing deals a breath" },
+    pipe:   { tier: "row", at: "form.sections[si].pipe",
+              note: "an address with no writer: nothing deals a pipe" },
+    pace:   { tier: "row", at: "form.sections[si].pace" },
+    nudge:  { tier: "row", at: "form.sections[si].nudge",
+              note: "an address with no writer; boxesOf defaults it to 0" },
+    /* MEASURED 2026-09-03, and §1 is corrected here rather than obeyed.
+       `bassop` and `kit` are drawn on the row and the row does not own them:
+       `boxesOf` reads each off a VOICE's `development` map — the bass voice's
+       word and the drummer's word for that section — which is the column
+       tier answering a row-shaped question. That is not a bug (a bass line is
+       a thing the bass plays), it is a tier correction: they resolve from the
+       column, per section, exactly like every other `development` word. */
+    bassop: { tier: "column", at: "voices[bass].development[secId]",
+              note: "§1 files this on the row; boxesOf reads it off the bass VOICE" },
+    kit:    { tier: "column", at: "voices[drums].development[secId]",
+              note: "§1 files this on the row; boxesOf reads it off the drums VOICE" },
+    /* ...AND THESE FOUR ARE NOT ROW FIELDS AT ALL TODAY. §1 files key, mode,
+       prog, swing and groove on the section ("a bridge modulates, so key is a
+       row override of Time's key") and the shipped document carries exactly
+       ONE of each, on the RECORD: `alphabet.key/mode/prog` and
+       `time.swing/groove`. precompose says so out loud — "the document carries
+       ONE key: precompose drops compose()'s per-section modulations" — and
+       ui/state.js says the same about the other two ("a record swings or it
+       does not; a per-section swing would be the drummer changing hands
+       mid-song"). So they are RECORD fields until wave 2 gives the row a
+       place to say otherwise, and calling them row fields now would be a
+       control that promises a modulation the engine cannot be handed. */
+    key:    { tier: "record", at: "alphabet.key",
+              note: "§1 files this on the row; the document carries ONE key (wave 2)" },
+    mode:   { tier: "record", at: "alphabet.mode", note: "as key" },
+    prog:   { tier: "record", at: "alphabet.prog", note: "as key" },
+    swing:  { tier: "record", at: "time.swing",
+              note: "§1 files this on the row; ui/state.js: a record swings or it does not" },
+    groove: { tier: "record", at: "time.groove", note: "as swing" },
+    /* ...AND THE SECTION'S CHAIN AND ROOM HAVE NO DOCUMENT ADDRESS AT ALL.
+       `fx rev verb echo dtime pan auto` are BOX fields — `song.js emptyBox`
+       defaults them and `boxesOf` never writes one — so a document cannot say
+       them per section today. `auto[]` is additionally READ-ONLY on the row by
+       §1's own line (compiled from `mot`). Declared here so the inventory is
+       complete and the gate can see that they are unreachable rather than
+       missing. */
+    fx:     { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
+    rev:    { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
+    verb:   { tier: "row", wave: 2, note: "retired 2026-08-28; a box field" },
+    echo:   { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
+    dtime:  { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
+    pan:    { tier: "row", wave: 2, note: "a box field; boxesOf writes none" },
+    auto:   { tier: "row", wave: 3, note: "compiled from mot; READ-ONLY on the row (§1)" },
+
+    /* VOICE (a column) — `doc.voices[vi]`. */
+    part:       { tier: "column", at: "voices[vi].cast.part" },
+    instrument: { tier: "column", at: "voices[vi].instrument" },
+    drumkit:    { tier: "column", at: "voices[drums].instrument" },
+    seat:       { tier: "column", at: "voices[vi].desk" },
+    sound:      { tier: "column", at: "voices[vi].sound" },
+    material:   { tier: "column", at: "voices[vi].material", over: "cell",
+                  note: "the map form IS the cell tier: material[secId]" },
+    development:{ tier: "column", at: "voices[vi].development", over: "cell",
+                  note: "the map form IS the cell tier: development[secId]" },
+    /* THE TWO §1 MOVED THIS WAVE. Both were measured on 2026-09-03 as being
+       applied PER SECTION already (precompose ~3048: "entry is bars into every
+       section here, not into the record"), which is what makes the column the
+       DEFAULT and the cell the honest home. */
+    entry:  { tier: "column", at: "voices[vi].cast.entry", over: "cell" },
+    reg:    { tier: "column", at: "voices[vi].cast.reg",   over: "cell" },
+
+    /* CELL (a section x a voice) — `doc.voices[vi].cells[secId]`. */
+    focus:  { tier: "cell", at: "voices[vi].cells[secId].focus", reader: 2,
+              /* §1 calls this "today a section index". MEASURED: `box.focus`
+                 is a STACK index — which layer of a box's genre stack the
+                 palette writes to (ui/derive.js focusOf clamps it to
+                 `stack.length - 1`) — and on the document path `boxesOf`
+                 builds a ONE-entry stack, so it is always 0 and reaches
+                 nothing. `focusOf`/`focused` have no importer anywhere in the
+                 tree. So there was no per-section index to migrate: this is a
+                 NEW cell flag with no reader until the table draws it. */
+              note: "box.focus is a STACK index, not a section index; " +
+                    "stored and resolved here, drawn in wave 2" },
+    prov:   { tier: "record", at: "material.prov",
+              note: "a motif's provenance is a fact about the MOTIF (§3), " +
+                    "and the bank is the record's — a cell POINTS at a motif" },
+    mixauto:{ tier: "cell", wave: 3,
+              note: "¶A: a cell lane is an OFFSET on the row's (§4)" },
+    artic:  { tier: "row", wave: 4, note: "per box today (§4)" },
+    oct:    { tier: "row", wave: 4, note: "per box today (§4)" },
+    rate:   { tier: "record", at: "time.rate", note: "§1 files this per box" },
+    scale:  { tier: "record", at: "alphabet.scale", note: "§1 files this per box" },
+    clamp:  { tier: "row", wave: 4, note: "per box today (§4)" },
+
+    /* RECORD (the table itself). */
+    bpm:    { tier: "record", at: "time.bpm" },
+    meter:  { tier: "record", at: "time.meter" },
+    basis:  { tier: "record", at: "basis" },
+    rules:  { tier: "record", at: "rules" },
+    master: { tier: "record", at: "sound.master" },
+    buses:  { tier: "record", at: "sound.buses" },
+    gain:   { tier: "record", at: "sound.level",
+              note: "the RECORD's balance. §1 spells the section's `lvl` " +
+                    "\"level\" too; two fields, two tiers, so they are two names" },
+    motifs: { tier: "record", at: "material.cells" },
+    take:   { tier: "record", at: "performance.take" },
+    humanize:{ tier: "record", at: "performance.humanize" },
+    seed:   { tier: "record", wave: 2,
+              note: "the reading is an ARGUMENT to genreToDocument, not a field" },
+  };
+
+  /* THE ADDRESS, EVALUATED. `at` is a path with three holes in it — `si` the
+     section, `vi` the voice, `secId` the section's id — plus the two named
+     voices the document addresses by KIND rather than by index. The gate walks
+     it to prove a declared field is REACHABLE on a live record; nothing on the
+     hot path reads it. Returns `undefined` for a field with no address, which
+     is the same answer as a field whose address holds nothing — the caller
+     tells them apart by asking TIERS. */
+  function addressOf(doc, si, vi, field) {
+    const T = TIERS[field];
+    if (!T || !T.at) return undefined;
+    const secId = SECID(doc, si);
+    let node = doc;
+    for (const step of T.at.split(".")) {
+      if (node == null) return undefined;
+      const m = /^([A-Za-z]+)((?:\[[^\]]+\])*)$/.exec(step);
+      if (!m) return undefined;
+      node = node[m[1]];
+      for (const k of (m[2].match(/\[[^\]]+\]/g) || [])) {
+        if (node == null) return undefined;
+        const key = k.slice(1, -1);
+        node = key === "si" ? node[si]
+             : key === "vi" ? node[vi]
+             : key === "secId" ? node[secId]
+             : key === "bass" ? node.find((v) => v.kind === "bass")
+             : key === "drums" ? node.find((v) => v.kind === "drums")
+             : node[key];
+      }
+    }
+    return node;
+  }
+
+  /* ---- THE CELL'S OWN VECTOR, SPARSE ----------------------------------- */
+  // What a hand wrote in this one cell, or null. Never created by a reader:
+  // `resolve` must not grow eighty objects on a record nobody has edited.
+  const cellVec = (doc, si, vi) => {
+    const v = doc.voices && doc.voices[vi];
+    const id = SECID(doc, si);
+    return (v && v.cells && id != null && v.cells[id]) || null;
+  };
+  /* THE ONE WRITER, and it is the one that keeps §2's sparse law true: a value
+     equal to nothing (null/undefined) DELETES the override and the emptied
+     shells delete themselves, so "inherited" has exactly one spelling in the
+     record — the same rule normalize() applies to `desk.trim` and the same one
+     ui/state.js setMixOffset applies to the board. Returns whether the
+     document moved, so a caller can skip a recompile. */
+  function putCell(doc, si, vi, field, value) {
+    const v = doc.voices && doc.voices[vi], id = SECID(doc, si);
+    if (!v || id == null || !CELLFIELD[field]) return false;
+    const had = (v.cells && v.cells[id] && v.cells[id][field]);
+    if (value == null || value === "") {
+      if (!v.cells || !v.cells[id] || !(field in v.cells[id])) return false;
+      delete v.cells[id][field];
+      if (!Object.keys(v.cells[id]).length) delete v.cells[id];
+      if (!Object.keys(v.cells).length) delete v.cells;
+      return true;
+    }
+    if (had === value) return false;
+    v.cells = v.cells || {};
+    v.cells[id] = v.cells[id] || {};
+    v.cells[id][field] = value;
+    return true;
+  }
+
+  /* ---- THE INHERIT LAW (§2), AND ITS ONE OWNER ------------------------- */
+  /* Every field resolves `cell -> column -> row -> record -> the genre's row`
+     and THE FIRST VALUE FOUND WINS. A tier ANSWERS when its stored value is
+     neither null nor undefined — which is what makes "absent is today" hold
+     through this function too: on a record where no hand has written a cell,
+     `entry` and `reg` come back off `cast` exactly as `toGenre` read them
+     before this existed, so the record is byte-identical (T2).
+
+     The rows below are per FIELD, one reader per tier, and a `null` reader is
+     a tier that has nothing to say about that field — a register does not
+     default from the section, a level does not default from the voice. Which
+     tier a field defaults from is §1's, not this function's. */
+  const CELLFIELD = {
+    entry: {
+      cell:   (c) => c && c.entry,
+      column: (v) => v && v.cast && v.cast.entry,
+      row:    null,
+      record: null,
+      // THE GENRE'S OWN ENTRY SCHEDULE, which is what a chair with no cast at
+      // all would play: kernel.js:1523 reads `g.entry(v)` per voice, and the
+      // anchor's closure is the last thing under the document.
+      genre:  (G, vi) => (G && typeof G.entry === "function") ? G.entry(vi) : undefined,
+    },
+    reg: {
+      cell:   (c) => c && c.reg,
+      column: (v) => v && v.cast && v.cast.reg,
+      row:    null,
+      record: null,
+      /* THE SOUNDING REGISTER, in the units the chair shows. precompose §7b:
+         "`cast.reg` is now the SOUNDING register … and document.js toGenre
+         hands the kernel back the base it implies (K.partLean)". The genre
+         tier answers in the same units — the anchor's base plus the part's
+         lean — so the four tiers cannot disagree about what a 0 means. */
+      genre:  (G, vi, part) => (G && typeof G.reg === "function")
+        ? G.reg(vi) + K.partLean(part) : undefined,
+    },
+    focus: {
+      cell:   (c) => c && c.focus,
+      column: null, row: null, record: null,
+      genre:  () => undefined,       // nothing under the table features a voice
+    },
+  };
+  const TIERORDER = ["cell", "column", "row", "record", "genre"];
+  /* `vi` INDEXES `doc.voices`, not the kernel's line list. A column IS a
+     voice — that is the whole of §1's second table — and the kernel's index is
+     a projection of it (`LINES`), so the projection is done at the call site
+     that needs it (`toGenre`) and never inside the resolver. */
+  function vectorOf(doc, si, vi, GENRES) {
+    const out = {};
+    for (const f of Object.keys(CELLFIELD)) out[f] = resolveFrom(doc, si, vi, f, GENRES);
+    return out;
+  }
+  function resolveFrom(doc, si, vi, field, GENRES) {
+    const R = CELLFIELD[field];
+    if (!R) return { v: undefined, from: null };
+    const v = doc.voices && doc.voices[vi];
+    for (const tier of TIERORDER) {
+      const rd = R[tier];
+      if (!rd) continue;
+      const got = tier === "cell"   ? rd(cellVec(doc, si, vi))
+                : tier === "column" ? rd(v)
+                : tier === "row"    ? rd(doc.form.sections[si], doc)
+                : tier === "record" ? rd(doc)
+                : rd((GENRES || CATALOG)[doc.basis], vi,
+                     (v && v.cast && v.cast.part) || "line");
+      if (got != null) return { v: got, from: tier };
+    }
+    return { v: undefined, from: null };
+  }
+  const resolve = (doc, si, vi, field, GENRES) =>
+    resolveFrom(doc, si, vi, field, GENRES).v;
+
+  /* ---- §3 · WHERE A MOTIF CAME FROM ------------------------------------
+     Every motif in the bank carries one of three provenances, and the bank is
+     the RECORD's (a cell points at a motif; one motif read by three voices is
+     one motif), so the map lives beside the cells:
+
+         doc.material.prov = { "<cell>": { p: "own" | "guest" | "hand",
+                                           g?: "<genre>", fp?: "<print>" } }
+
+     ABSENT IS OWN. A document with no `prov` at all — every record written
+     before this line, `songs.js TERMS`, a hand-authored fixture — is entirely
+     the record's own material, which is true of every one of them, and it is
+     why `normalize()` stays a byte-identical no-op on the shipped chant (G7).
+
+     A MOTIF THE MAP DOES NOT NAME, ON A RECORD THAT HAS A MAP, IS THE HAND'S.
+     That is not a convention, it is the measurement: the four places a cell is
+     minted on the bench (`+ motif`, `+ drum pattern`, the fork button, the
+     drum-cell repair) all write `DOC.material.cells[<new name>]` and none of
+     them deals anything, so a name the composer never dealt is a name a hand
+     made up.
+
+     ...AND SO IS AN EDITED ONE (§3: "a hand's edit of a dealt motif makes it
+     the hand's"). `fp` is the fingerprint of the cell AS DEALT; when the cell
+     no longer prints the same, a hand has been in it. This is derived rather
+     than stamped ON PURPOSE — the alternative is a flag somebody has to
+     remember to set at each of the ~fourteen writers in ui/eight.js, which is
+     this repo's characteristic bug written down in advance. Measured, not
+     declared. */
+  const PROV_OWN = { p: "own" };
+  const PROVKINDS = { own: 1, guest: 1, hand: 1 };
+  // FNV-1a over the cell's own vectors in a FIXED key order — the order is the
+  // point, because `JSON.stringify` follows insertion order and a hand that
+  // adds `play` to a cell that had none would otherwise print differently for
+  // a reason that is not an edit. 32-bit, base36: eight characters in a save.
+  const FPKEYS = ["kind", "deg", "play", "vel", "acc", "oct", "lanes", "swing"];
+  function fingerprint(cell) {
+    if (!cell) return "";
+    let s = "";
+    for (const k of FPKEYS) if (cell[k] != null) s += k + ":" + JSON.stringify(cell[k]) + ";";
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h.toString(36);
+  }
+  const provMap = (doc) => (doc && doc.material && doc.material.prov) || null;
+  function provOf(doc, name) {
+    const M = provMap(doc);
+    if (!M) return PROV_OWN;                       // absent is own — every old save
+    const e = M[name];
+    if (!e) return { p: "hand" };                  // minted on the bench
+    if (e.p === "hand") return { p: "hand" };
+    if (e.fp && e.fp !== fingerprint((doc.material.cells || {})[name]))
+      return { p: "hand" };                        // dealt, then edited
+    return e.g ? { p: e.p, g: e.g } : { p: e.p };
+  }
+  // THE WORD THE TABLE DRAWS, one owner so the bench, the sheet and the gate
+  // cannot spell it three ways.
+  const provWord = (pr) => pr.p === "guest" ? "guest: " + pr.g : pr.p;
+  /* THE STAMP, called ONCE by the composer as it hands the record over
+     (`precompose.genreToDocument`). It takes `{ <cell>: { p, g } }` — who
+     DEALT what, which only the composer knows — and fingerprints the cells
+     here, which is the half only this file should own. Cells the caller does
+     not name are stamped `own`: the composer deals for the basis genre unless
+     it says otherwise, which is §3's own default. */
+  function stampProv(doc, who) {
+    const cells = (doc.material && doc.material.cells) || {};
+    const M = {};
+    for (const n of Object.keys(cells)) {
+      const e = (who && who[n]) || PROV_OWN;
+      M[n] = { p: e.p, ...(e.g ? { g: e.g } : {}), fp: fingerprint(cells[n]) };
+    }
+    doc.material.prov = M;
+    return doc;
+  }
+  /* THE HAND'S OWN DOOR, for a writer that KNOWS it is a hand — a rename, a
+     paste, an op applied from the tray. The fingerprint derivation above
+     catches an edit whether or not anybody calls this; this is for the case
+     where the bytes happen not to move (a hand that rewrites a cell to what it
+     already was still owns it) and for the table's "make this mine". A record
+     with no prov map is left alone: it is already all own, and giving it a map
+     would make every OTHER cell in it read as the hand's. */
+  function handWrote(doc, name) {
+    const M = provMap(doc);
+    if (!M || !name) return false;
+    M[name] = { p: "hand" };
+    return true;
+  }
+
   function normalize(doc) {
     if (doc && doc.basis && OLDKEYS[doc.basis]) doc.basis = OLDKEYS[doc.basis];
     /* ---- THE SENTENCES THIS READING WAS COMPOSED WITH (2026-09-01) --------
@@ -678,6 +1124,36 @@
       // voice with no trims writes nothing, an emptied map deletes itself, and
       // an emptied desk deletes itself — one spelling of the default, the
       // desk-doc.js writeDesk law.
+      /* ---- THE CELL OVERRIDES FOLLOW development's OWN LAW (TABLE.md §2).
+         Keyed by section id so reordering sections cannot shift an override
+         under a voice, pruned when the id dies, and the VALUE checked against
+         the field's own shape — the paranoid half song.js applies to every
+         enum, because a register from a build with a different range is a lie
+         the kernel would play. `entry` is bars and cannot be negative;
+         `reg` is the chair's own -4..3 (precompose regAt's clamp, the one
+         owner of that range); `focus` is a flag. Absent is today: a voice with
+         no overrides writes nothing, an emptied cell deletes itself and an
+         emptied map deletes itself, so "inherited" keeps ONE spelling. */
+      if (v.cells != null) {
+        if (typeof v.cells !== "object" || Array.isArray(v.cells)) delete v.cells;
+        else {
+          for (const id of Object.keys(v.cells)) {
+            const c = v.cells[id];
+            if (!ids.includes(id) || !c || typeof c !== "object" || Array.isArray(c)) {
+              delete v.cells[id]; continue;
+            }
+            for (const f of Object.keys(c)) {
+              const bad = !CELLFIELD[f] ||
+                (f === "entry" && !(Number.isInteger(c[f]) && c[f] >= 0)) ||
+                (f === "reg" && !(Number.isInteger(c[f]) && c[f] >= -4 && c[f] <= 3)) ||
+                (f === "focus" && typeof c[f] !== "boolean");
+              if (bad) delete c[f];
+            }
+            if (!Object.keys(c).length) delete v.cells[id];
+          }
+          if (!Object.keys(v.cells).length) delete v.cells;
+        }
+      }
       if (v.desk && v.desk.trim != null) {
         const t = v.desk.trim;
         if (typeof t !== "object" || Array.isArray(t)) delete v.desk.trim;
@@ -689,6 +1165,25 @@
           if (!Object.keys(t).length) delete v.desk.trim;
         }
         if (v.desk && !Object.keys(v.desk).length) delete v.desk;
+      }
+    }
+    /* ---- AND THE PROVENANCE MAP IS PRUNED TO THE BANK (§3). A motif is a
+       fact about a cell that exists; an entry for a cell somebody cleared is a
+       claim about nothing. The other direction is NOT filled in — a cell in
+       the bank with no entry is the hand's by measurement (provOf), which is
+       the whole reason the map is allowed to be short. Absent stays absent, so
+       normalize is still a byte-identical no-op on the shipped chant (G7). */
+    if (doc.material && doc.material.prov) {
+      const M = doc.material.prov, bank = doc.material.cells || {};
+      if (typeof M !== "object" || Array.isArray(M)) delete doc.material.prov;
+      else {
+        for (const n of Object.keys(M)) {
+          const e = M[n];
+          if (!Object.prototype.hasOwnProperty.call(bank, n) ||
+              !e || typeof e !== "object" || !PROVKINDS[e.p] ||
+              (e.p === "guest" && !e.g)) delete M[n];
+        }
+        if (!Object.keys(M).length) delete doc.material.prov;
       }
     }
     return doc;
@@ -740,6 +1235,17 @@
   }
 
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
+           /* ---- THE TABLE (TABLE.md wave 1) ---------------------------
+              `TIERS` is §1 as data — the gate reads the claim rather than
+              restating it — and `resolve` is §2's ONE owner: every reader
+              that used to reach into `cast.entry`/`cast.reg` for a voice in a
+              section asks here, so a cell override reaches the sound by
+              construction. `LINEIX` is exported with them because a caller
+              holding a KERNEL voice index needs the column index to ask. */
+           TIERS, addressOf, resolve, resolveFrom, vectorOf, putCell, cellVec,
+           CELLFIELD, TIERORDER, LINES, LINEIX,
+           // ...and §3, a motif's provenance: own · guest:<genre> · hand.
+           provOf, provWord, stampProv, handWrote, fingerprint,
            // THE ONE RENAME DOOR (2026-09-02, slice 2c) — see its own block.
            renameCell,
            // THE RENAME'S ALIAS MAP, EXPORTED (2026-09-01): song.js migrate()

@@ -324,8 +324,28 @@
       f["voice.instrument"] = v.instrument || null;
       f["voice.cell"]     = typeof cell === "string" ? cell : null;
       f["voice.cellKind"] = c.kind || null;
-      f["voice.entry"]  = cast.entry | 0;
-      f["voice.reg"]    = cast.reg | 0;
+      /* THROUGH THE TABLE'S RESOLVER (TABLE.md §2), because this facet knows
+         BOTH coordinates: a voice and a section is a CELL, and `entry` and
+         `reg` are cell fields with the column as their default since wave 1.
+         Asking `cast` directly would have made this the one surface that told
+         a hand its register was 0 while the cell it is looking at plays -2.
+         With no section named, or no override written, the resolver answers
+         off `cast` exactly as these two lines did.
+
+         ABSENT IS TODAY, EXACTLY. Only the two tiers this facet is entitled
+         to speak for are taken — the cell and its column — because the
+         resolver's LAST tier is the anchor's own closure, and a bass or drums
+         scope (no `cast.reg` at all) would start reporting a register off the
+         genre where it has always reported 0. `resolveFrom`'s `from` is what
+         makes that distinction sayable rather than guessed at. */
+      const vix = vs.indexOf(v), six = secs.findIndex((x) => x.id === S.section);
+      const cellv = (fld) => {
+        if (vix < 0 || six < 0) return cast[fld] | 0;
+        const r = ND.resolveFrom(doc, six, vix, fld);
+        return (r.from === "cell" || r.from === "column") ? (r.v | 0) : (cast[fld] | 0);
+      };
+      f["voice.entry"]  = cellv("entry");
+      f["voice.reg"]    = cellv("reg");
       f["voice.on"]     = v.kind === "drums" ? !!cast.on : true;
       // chair.js:326's law, verbatim and from the other end: "A PAD DOES NOT
       // HEAR THE BAR." A word the instrument cannot hear is not a word.
