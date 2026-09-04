@@ -105,7 +105,7 @@ const FULL = process.argv.includes("--full");
    changed three rows' mouths (girlgroup, nuevacancion, doowop) on purpose —
    T2b read those three sections against v264 and was right to. Everything
    else must still be byte-identical to THIS base until a hand writes. */
-const BASE_SHA = "e4d44dd";
+const BASE_SHA = "1d15649";  // moved 2026-09-04 night: the throat round and the sweep changed 17 rows' sound on purpose (T4o pins the throats; gospel and bossa argued in their notes)
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
@@ -1213,7 +1213,17 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
       notOctave.length + " written lines moved by something other than whole octaves");
     assert.deepStrictEqual(stillFolded.slice(0, 8), [],
       stillFolded.length + " sung chairs are still written outside their compass");
-    assert.ok(rewritten > 0, "no chair was re-seated — §7d reached nothing");
+    /* THE RE-SEAT COUNT IS A CLAIM ABOUT THE BASE, NOT THE HEAD (2026-09-04
+       night, when BASE_SHA moved onto a commit that already seats). Before
+       §7d existed at the base, "no chair re-seated" meant §7d reached
+       nothing; once the base seats too, zero is the ONLY right answer and
+       parts 1–3 above are the whole claim. Read off the base's own source
+       rather than remembered. */
+    const baseSeats = /seatSungChairs/.test(
+      fs.readFileSync(path.join(WT, "nukernel", "precompose.js"), "utf8"));
+    if (baseSeats) assert.strictEqual(rewritten, 0,
+      "the base already seats sung chairs, yet " + rewritten + " moved again");
+    else assert.ok(rewritten > 0, "no chair was re-seated — §7d reached nothing");
   });
 
   /* T4o — EACH CHANGED ROW'S PER-CHAIR THROAT AND REGISTER, PINNED
