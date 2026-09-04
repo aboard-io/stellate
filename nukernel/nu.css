@@ -7375,6 +7375,98 @@ table.nu-trims{ color: var(--ink); }
 .nu-spface{ flex: 1 1 auto; min-inline-size: 0;
   font: var(--num-fw) var(--t3)/1.2 var(--sans, inherit); color: var(--dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== THE MOTIFS ROW AND ITS BANK (2026-09-08, TABLE.md §10b step 4) ====
+   §10a: *"MOTIFS is the bank across the top with previews and provenance, and
+   tapping a motif points the SELECTED cell at it."* The ROW is a merged row
+   like TIME and RULES and wears their furniture unchanged; what is new is the
+   LAMP under its face and the BANK inside its sheet.
+
+   THE LAMP IS STICKY FOR THE FACE'S OWN REASON. `.nu-sphead` is `--panew` wide
+   and pinned to the pane's left edge, because a `<th colspan>` spanning nine
+   players is nine players wide and its last word would be off the side of a
+   phone. A lamp that was NOT pinned the same way would be the one thing in the
+   row you had to scroll sideways to see — so it is a sticky block of the same
+   width, directly under the button, carrying the sounding motif's NAME (the
+   head says WHICH, because with the row shut a bare dot would say only THAT).
+   It is a SIBLING of the button and never a child: the clock writes inside
+   `[data-live]` and a control inside one is what test/motif-frozen A1 forbids. */
+/* ...AND ITS LINE IS RESERVED WHETHER OR NOT THE CLOCK HAS WRITTEN IN IT, and
+   that is a LAW and not a preference. It read `:empty { display: none }` for
+   one afternoon and test/bench.test.js B6 caught it inside the hour: this row
+   is in a `<thead>` whose offsets `src/table/grid.ts stick()` MEASURES after
+   every render, so a lamp that appeared when the record started playing made
+   the MOTIFS row 16px taller and moved `inset-block-start` on the column heads
+   from 138px to 154.109px — an inline style, outside `[data-live]`, written
+   because the clock wrote. "Playback mutates nothing outside [data-live]" is
+   the page's oldest law and a lamp that changes the height of the row it is in
+   breaks it two elements away. So the line is always there and always one line
+   tall (`nowrap` and an ellipsis, so a record with four motifs sounding cannot
+   grow it either), and the room is reserved before the thing arrives — the
+   same discipline `staffRoom` uses for a staff that engraves on a promise.
+   AND IT IS `block-size`, NOT `min-block-size`: measured, a `min` of 1.2em on
+   an EMPTY span and one line of text in it are not the same height (151.812px
+   against 154.109px at the column heads — an empty inline box has no strut of
+   its own), so the reservation has to be exact. `content-box` keeps the
+   padding out of the arithmetic. */
+.nu-motlamp{ display: block; position: sticky; inset-inline-start: 0;
+  inline-size: var(--panew, 100%); max-inline-size: 100%;
+  block-size: 1.2em; box-sizing: content-box;
+  padding-inline: var(--s3); padding-block-end: var(--s1);
+  font: var(--num-fw) var(--t1)/1.2 var(--sans, inherit);
+  color: var(--clock); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+
+/* THE SHEET, AND THE ONE THING IT ASKS OF ITS CONTENTS: no minimum width.
+   Everything in it — a bank row, a step grid, a staff — is inside the table's
+   own horizontal scroll, and a child that refuses to shrink would make the
+   grid itself wider than the record. */
+.nu-motifsheet{ inline-size: 100%; min-inline-size: 0; }
+
+/* A BANK ROW IS A PICTURE, A NAME, A PROVENANCE WORD, A LAMP, AN `open`, AND
+   WHO READS IT — in that order, down the row, because that is the order a hand
+   asks them in. The PICTURE is full width and 28px tall: it is the same
+   ui/preview.js drawing the cell sheet's motif options wear, and at this width
+   a sixteen-step tune is legible as a shape without being a second staff. */
+.nu-bank{ display: flex; flex-direction: column; gap: var(--s1); }
+.nu-bankrow{ padding-block: var(--s2);
+  border-block-start: var(--bw) solid var(--rule); }
+.nu-bankrow:first-child{ border-block-start: 0; }
+.nu-bankpic{ display: block; inline-size: 100%; }
+.nu-bankpic svg{ display: block; inline-size: 100%; block-size: 28px; }
+.nu-bankhead{ display: flex; align-items: center; flex-wrap: wrap;
+  gap: var(--s2); margin-block: var(--s1); }
+/* THE NAME IS THE WRITE, so it is the row's biggest target and it takes the
+   line: tapping it points the selected cell at this motif, and with no cell
+   selected it ARMS the next tap and says so with `aria-pressed`. */
+.nu-bankname{ flex: 1 1 auto; min-inline-size: 0; min-block-size: var(--tap);
+  display: inline-flex; align-items: baseline; gap: var(--s2);
+  text-align: start; }
+.nu-bankname[aria-pressed="true"]{ background: var(--hand-tint); }
+.nu-bankword{ font: var(--fw-block) var(--t3)/1.2 var(--sans, inherit); }
+.nu-bankprov{ color: var(--dim); font-size: var(--t1); }
+.nu-bankopen{ flex: 0 0 auto; min-block-size: var(--tap); }
+/* THE ROW'S LAMP IS THE `<i>` THAT COMES AND GOES — the same shape a player's
+   lamp in a column head is, and for the same reason: the name is already the
+   button beside it, so the lamp only has to say YES. */
+.nu-banklamp{ flex: 0 0 auto; display: block;
+  inline-size: 10px; block-size: 10px; }
+.nu-banklamp > i{ display: block; inline-size: 10px; block-size: 10px;
+  border-radius: 50%; background: var(--clock); }
+.nu-bankadd, .nu-bankback{ margin-block: var(--s3); }
+.nu-bankadd button, .nu-bankback button{ min-block-size: var(--tap); }
+/* THE FOURTEEN TRANSFORMS, back under the tune they rewrite: `.nu-tf-row`'s
+   own rules already give each mark its 44px floor and the row its wrap, so
+   what is left is the face over the word, which is how the stripe drew them
+   and how the two bands drew them before that. */
+.nu-tf-row .nu-tfface{ font-style: normal; }
+
+/* THE PRODUCE ROW (§10b step 5) is the master's own shape one line further
+   down — a merged `<th colspan>` in the `<tfoot>` wearing `.nu-sphead`, its
+   line pinned to the pane's left edge so the producer's last sentence reads
+   whole at 320 while the strips scroll under it. It takes the rule back that
+   `.nu-masterrow` gives up, because it is the last row before performance. */
+.nu-prodrow > th.nu-spheadcell{ border-block-start: var(--bw) solid var(--rule); }
 /* THE BIG TEMPO AND THE ROW OF NINE MARKS ARE SHEET ROWS NOW, not a panel's
    first two lines, so each takes the width of the row it is in and the marks
    wrap at 320 instead of scrolling the pane sideways. */

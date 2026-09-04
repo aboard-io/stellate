@@ -138,8 +138,15 @@ const HARD = 1200;
 // is out of index.html with the tab. The prose the board carries is counted
 // where it now stands: inside `Band`, behind a head a hand has to press, which
 // is why the number below did not move when this pane did.
-const TABS = ["Where", "Motifs", "Band",
-              "Produce", "Score", "Video",
+// …AND TWO MORE, 2026-09-08 (§10b steps 4 and 5): `Motifs` is the MOTIFS row
+// of the Band table — the bank across the top with a preview, a provenance
+// word and a read-by strip per motif, and one tap in, that motif's whole
+// editor — and `Produce` is the PRODUCE row under the mix in the footer.
+// `#pan-motif` and `#produce` are out of index.html with the two tabs. The
+// prose both carried is counted where it now stands: inside `Band`, behind a
+// head a hand has to press, which is why the number below did not move when
+// these two panes did.
+const TABS = ["Where", "Band", "Score", "Video",
               "Screensaver", "Export"];
 const NAV_ROWS = TABS.filter((t) => t !== "Where");
 
@@ -177,9 +184,15 @@ const NAV_ROWS = TABS.filter((t) => t !== "Where");
 // row — its `<h2>The board</h2>` is the section `ctx.section` gives it and is
 // still announced, still printed with the stylesheet off, still skipped by the
 // diet. What it stopped being is a PANEL's name, which is what this list reads.
-const HEADINGS = ["Where & when", "Motifs",
+// …AND "Motifs" AND "The producer" LEAVE IT THE SAME WAY, 2026-09-08 (§10b
+// steps 4 and 5). Neither heading is deleted: `motifs()` is drawn inside the
+// Band panel's MOTIFS row and `ui/produce.js mount` inside its PRODUCE row,
+// with the same `<h2>` each was given, still announced, still printed with the
+// stylesheet off, still skipped by the diet. What each stopped being is a
+// PANEL's name, which is what this list reads.
+const HEADINGS = ["Where & when",
                   "The band",
-                  "The producer", "The score",
+                  "The score",
                   // the two decks (2026-09-01): the film and the sky —
                   // vocabulary words, not the tab glyph names
                   //

@@ -374,7 +374,12 @@
        breathing, the key, the mode, the scale, the harmony, the diatonic line
        and the changes are the merged TIME row at the top of the Band table's
        own sheet. A host with no builder is a panel that can never be filled. -->
-  <div id="pan-motif" class="nu-pan"></div>
+  <!-- (`<div id="pan-motif">` STOOD HERE, to 2026-09-08. TABLE.md §10b step 4:
+       the bank, the previews, the provenance words and every motif's editor
+       are the Band table's own merged MOTIFS row — see `src/table/special.ts`
+       and the tombstone over `motifsNode` in ui/eight.js. §10a: "Rules, Time,
+       Motifs, Mix, Produce, Where as PANES are deleted the same way, one at a
+       time, as each becomes a row or a sheet.") -->
   <div id="pan-band" class="nu-pan"></div>
   <!-- (#pan-structure STOOD HERE, 2026-09-02 to 2026-09-04. Paul:
        "Sections/Structure … should be top level, not buried under band, and
@@ -461,7 +466,10 @@
      RULES ROW of the Band table's own sheet. `ui/rules.js mountRules` is
      unchanged and is called by `tableAPI().rulesNode()`; a host with no
      builder is a panel that can never be filled. -->
-<div id="produce" class="nu-pan"></div>
+<!-- (`<div id="produce">` STOOD HERE, to 2026-09-08. TABLE.md §10b step 5:
+     the producer's deals, its adjective sheet and its stack of ten notes are
+     the Band table's own merged PRODUCE row, under the mix — `ui/produce.js
+     mount` is seated through `tableAPI().produceNode()` with the same CTX.) -->
 <div id="scoredeck" class="nu-pan"></div>
 <div id="videodeck" class="nu-pan"></div>
 <!-- #saverdeck (2026-09-01): the star map back as a screensaver, "a new view

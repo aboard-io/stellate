@@ -107,7 +107,8 @@ const report = () => {
      and then surveyed the DOM. Two things had moved under it. `#app` became a
      set of TABS built lazily — `buildTab` (ui/eight.js:9459) builds a panel the
      first time its tab is SHOWN, and the page boots on `Where`, whose panel is
-     the atlas — so `#produce` was an empty div for the whole run and every
+     the atlas — so `#produce` (deleted 2026-09-08; see the note below this
+     one) was an empty div for the whole run and every
      producer assertion was measuring a panel nobody had opened. And the wait
      itself could never end: the producer's taps are all `<select>`s since the
      2026-08-24 settled-parameters conversion, so `.nu-sheet` is not what this
@@ -117,15 +118,45 @@ const report = () => {
      (test/selects.js check 10 says the same thing about its own walk). So the
      tab is opened the way a thumb opens it, and the wait is for the artifact
      the panel actually builds. */
-  await p.waitForFunction(() => !!document.querySelector('[data-k="toptab-Produce"]'),
+  /* AND THE DOOR IS A ROW OF THE BAND TABLE SINCE 2026-09-08 (TABLE.md §10b
+     step 5, *"PRODUCE row"*). IT READ:
+
+       await p.waitForFunction(() => !!document.querySelector('[data-k="toptab-Produce"]'),
+         null, { timeout: 20000 }).catch(() => {});
+       const opened = await p.evaluate(() => {
+         const n = document.querySelector('[data-k="toptab-Produce"]');
+         if (!n) return false; n.click(); return true; });
+
+     There is no Produce TAB: `#produce` is out of index.html, `["Produce",
+     "produce"]` is out of `TABS` and its `BUILD` entry is gone. `ui/produce.js
+     mount` did not change — it is called from one place now,
+     `tableAPI().produceNode()`, with the same `CTX` — so every control this
+     file drives below keeps its address (`prod.name`, `prod.cast`,
+     `cast|<who>`, `sel|prod.*`) and the panel still builds its own
+     `<section id="ax-produce"><h2>The producer</h2>`, which is what P0 waits
+     for two lines down and reads again at the survey.
+     THE DOOR IS `__eightRow("produce")` — the same hand `__eightTab` was, one
+     level in: it opens Band and PRESSES the row's own head, and it is
+     idempotent, so a gate that arrives twice does not close what it opened.
+     What is asserted is the row's head, `[data-k="tproduce"]`, standing
+     `aria-expanded="true"` with the sheet on the page beneath it. */
+  /* THE WAIT IS FOR THE DOOR TO EXIST, NOT FOR THE ROW TO BE OPEN — a
+     `waitForFunction` that pressed the button would be a poll with a side
+     effect, and the press belongs in the gesture below where it can be read. */
+  await p.waitForFunction(() => !!window.__eightRow,
     null, { timeout: 20000 }).catch(() => {});
   const opened = await p.evaluate(() => {
-    const n = document.querySelector('[data-k="toptab-Produce"]');
-    if (!n) return false; n.click(); return true; });
+    if (!window.__eightRow) return null;
+    const on = window.__eightRow("produce");
+    const head = document.querySelector('#pan-band [data-k="tproduce"]');
+    return { on, exp: head ? head.getAttribute("aria-expanded") : null,
+             sheet: !!document.querySelector("#pan-band .nu-prodsheet") };
+  });
   await p.waitForFunction(() => !!document.getElementById("ax-produce"),
     null, { timeout: 20000 }).catch(() => {});
-  check(opened, "P0 · the Produce tab is in the stripe and opens it " +
-    "(data-k=\"toptab-Produce\")");
+  check(!!opened && opened.on === true && opened.exp === "true" && opened.sheet,
+    "P0 · the PRODUCE row is in the Band table and opens its sheet " +
+    "(data-k=\"tproduce\", .nu-prodsheet) " + JSON.stringify(opened));
 
   /* An <input> inside a .nu-opt is hidden BY CLIP and focusable, so playwright's
      actionability checks call it invisible. .click() on the element itself is
@@ -318,7 +349,19 @@ const report = () => {
     if (!t) return null;
     return { rows: t.querySelectorAll("tr").length,
              head: t.querySelector("th").textContent.trim(),
-             ops: [...t.querySelectorAll("td button")].map((b) => b.dataset.k) };
+             /* `:scope` SINCE 2026-09-08, AND THE TRAP IS THE WHOLE REASON.
+                It read `t.querySelectorAll("td button")`. A selector handed to
+                `querySelectorAll` is matched against the WHOLE DOCUMENT and
+                only then filtered to descendants of the root, so `td button`
+                means "a button with a `<td>` ancestor anywhere" — and since
+                §10b step 5 the producer's sheet is a row of the Band TABLE,
+                which puts `.nu-notes` inside a `<td>` of its own. Every button
+                in the stack matched, `note|0` (which is in the row's `<th>`,
+                where it has always been) came back first, and the check went
+                red about a table that had not changed a line. `:scope td
+                button` is the claim this was always making. */
+             ops: [...t.querySelectorAll(":scope td button")]
+               .map((b) => b.dataset.k) };
   });
   check(tbl && tbl.rows === 2, "P1 · the note stack is DRAWN — one heading row " +
     "and one note (" + (tbl ? tbl.rows : 0) + " rows, first says " +

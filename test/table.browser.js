@@ -199,13 +199,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     shape.cols + " voice columns (" + shape.secs + " x " + shape.voices + ")");
   check(shape.cells === shape.secs * shape.voices,
     "…and every crossing is a cell (" + shape.cells + ")");
-  /* THREE FOOTER ROWS SINCE 2026-09-07 (§10b step 3): the MIX row (a seat per
-     voice column), the MASTER under it (merged, its sheet the board), then
-     performance. It was two — master + performance — and the master's own row
-     is where the mix row's master went, at the same seven `master|` words on
-     the board's main plate rather than at a second set of cells. */
-  check(shape.foot === 3, "…with the record under it: the mix row, the " +
-    "master, and performance (" + shape.foot + " footer rows)");
+  /* FOUR FOOTER ROWS SINCE 2026-09-08 (§10b step 5): the MIX row (a seat per
+     voice column), the MASTER under it (merged, its sheet the board), PRODUCE
+     under that (merged, its sheet the producer's own panel), then performance.
+     It was two — master + performance — until 2026-09-07, then three. §10a
+     draws the last two exactly here: *"│ MIX │ strip │ strip │ master │ /
+     │ PRODUCE │ the producer's deals and notes │"*, under the grid, because
+     the producer speaks about a record that has already been dealt. */
+  check(shape.foot === 4, "…with the record under it: the mix row, the " +
+    "master, produce, and performance (" + shape.foot + " footer rows)");
   check(shape.corner, "…and the corner is the whole record");
 
   /* ================= T5b · THE THREE SHEETS, IN §1's ORDER ============== */
@@ -419,10 +421,31 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await ctx.pages()[0].setViewportSize({ width: 320, height: 800 });
   await p.waitForTimeout(500);
   await top("Band");
+  /* `<motif>` AND `<forker>` ARE MEASURED OFF THE RECORD, NOT NAMED (2026-09-08,
+     §10b step 4). The motif chosen is the one the MOST chairs read, because
+     `fork|<cell>|<voice>` is drawn only where a cell is shared — a fixture-
+     specific name here would be an inventory that only holds on one record.
+     `<forker>` is the first of that cell's readers, which is the first fork
+     button `forkRow` draws. */
+  const share = await p.evaluate(() => {
+    const d = window.__eightDoc();
+    const uses = (v, n) => { const m = v.material;
+      return typeof m === "string" ? m === n
+        : m && typeof m === "object"
+          ? Object.keys(m).some((k) => m[k] === n) : false; };
+    let best = null;
+    for (const n of Object.keys(d.material.cells)) {
+      const rs = d.voices.filter((v) => uses(v, n)).map((v) => v.name);
+      if (!best || rs.length > best.readers.length) best = { name: n, readers: rs };
+    }
+    return best || { name: "", readers: [] };
+  });
   const subst = (k) => k.replace(/<section>/g, secId)
     .replace(/<voice>/g, vName).replace(/<bass>/g, (D0.voices.find((v) => v.kind === "bass") || {}).name || vName)
     .replace(/<drums>/g, drums || vName)
-    .replace(/<quality>/g, "louder").replace(/<motif>/g, "");
+    .replace(/<quality>/g, "louder")
+    .replace(/<forker>/g, share.readers[0] || vName)
+    .replace(/<motif>/g, share.name);
   const missing = [], small = [];
   for (const c of INV.controls.concat(INV.new)) {
     const reach = subst(c.reach);
@@ -459,7 +482,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       return { w: Math.round(r.width), h: Math.round(r.height) };
     }, reach);
     if (!box) missing.push((c.k || c.reach) + " -> " + reach);
-    else if (box.h < 44) small.push(reach + " " + box.w + "x" + box.h);
+    /* THE FLOOR IS 44 EVERYWHERE EXCEPT WHERE ANOTHER GATE ALREADY OWNS IT,
+       and the inventory says which and why in its own `note`: the BENCH's step
+       row is 52px (test/bench.test.js B3's own claim, off Paul's "tightened to
+       one line"), and the three kind buttons and two bars INSIDE that row are
+       40 and 30 by that instruction and were 40 and 30 in the pane this walk
+       inherited them from. A second 44px demand here would be a second owner
+       contradicting B3 about a geometry this round did not touch. */
+    else if (box.h < (c.floor || 44))
+      small.push(reach + " " + box.w + "x" + box.h +
+                 (c.floor ? " (floor " + c.floor + ")" : ""));
     if (c.open) await tap(subst(c.open));
   }
   check(!missing.length, "T7 every control the two panes offered has a home on " +
@@ -1761,9 +1793,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     for (const w of [320, 390, 1280]) {
       await wide(w);
       const r = await rowInfo();
+      /* THREE MERGED ROWS ABOVE THE HEADS SINCE 2026-09-08 (§10b step 4) —
+         TIME, RULES, then MOTIFS, in `SPECIALS`' own order, which is §10a's
+         own drawing of the layout. PRODUCE is the fourth merged row on this
+         sheet and is deliberately NOT here: it is in the `<tfoot>`, under the
+         mix, because a row above the column heads is a row above the music and
+         the producer speaks about a record already dealt (T10q reads it). */
       const ok = !r.missing &&
-        r.order.length === 3 && r.order[0] === "time" &&
-        r.order[1] === "rules" && r.order[2] === "heads" &&
+        r.order.length === 4 && r.order[0] === "time" &&
+        r.order[1] === "rules" && r.order[2] === "motifs" &&
+        r.order[3] === "heads" &&
         r.rows.every((x) => x.colspan === r.cols) &&
         r.rows.every((x) => x.h >= 44) &&
         /* WITHIN 12px OF THE PANE, and the 12 is `.nu-trims`' own 3px
@@ -1773,7 +1812,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            measured: pane 1078, row 1068). Both readings are "the row is as wide
            as what a hand can see", which is what §10b asks for. */
         r.rows.every((x) => x.w >= x.paneW - 12 && x.w <= x.paneW + 2);
-      check(ok, "T10a " + w + " · TIME and RULES are merged rows of the sheet, " +
+      check(ok, "T10a " + w + " · TIME, RULES and MOTIFS are merged rows of the sheet, " +
         "above the column heads, colspan = the whole table, 44px, the pane's " +
         "own width — " + JSON.stringify(r));
       /* T10b · FROZEN WITH THE HEADS, AND STACKED. Three head rows pinned at
@@ -1785,9 +1824,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           return { pos: cs.position,
                    top: Math.round(parseFloat(cs.insetBlockStart || "0")),
                    h: Math.round(tr.getBoundingClientRect().height) }; }));
+      /* ...AND THE STACK IS FOUR ROWS DEEP SINCE 2026-09-08. It is asserted as
+         a WALK and not as three named indices, because the next special row
+         above the grid must not need this line edited to be measured. */
       const stacked = st.every((x) => x.pos === "sticky") &&
-        st[1].top >= st[0].top + st[0].h - 2 &&
-        st[2].top >= st[1].top + st[1].h - 2;
+        st.every((x, i) => i === 0 ||
+                 x.top >= st[i - 1].top + st[i - 1].h - 2);
       check(stacked, "T10b " + w + " · the whole head freezes as a STACK — " +
         "each row pinned under the one above it, measured — " + JSON.stringify(st));
     }
@@ -2211,6 +2253,378 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       }
     }
     await wide(390);
+
+    /* =========== T10q–T10v · THE MOTIFS ROW (§10b step 4) ==============
+       Paul, 2026-09-05: *"then do the same with motifs."* §10a: *"MOTIFS is
+       the bank across the top with previews and provenance, and tapping a
+       motif points the SELECTED cell at it (the formula bar's own write)."*
+
+       T10a–T10b have already read this row as a MERGED, FROZEN, FACED row of
+       the same sheet, beside TIME and RULES — those claims are about every
+       special row and are made once. What this group asks is what only MOTIFS
+       has to answer: is the BANK actually drawn (a picture, a provenance word
+       and the chairs, per motif), does a NAME reach the sound, and is the pane
+       gone. Two of the six read the RENDERED OUTPUT rather than the DOM,
+       because this branch's characteristic bug is a control that is declared,
+       costed and never reaches the sound. */
+    {
+      const bank = () => p.evaluate(() => ({
+        now: window.__eightMotifNow(),
+        names: window.__eightBank(),
+        rows: [...document.querySelectorAll("#pan-band .nu-bankrow")].map((r) => {
+          const n = r.querySelector(".nu-bankname");
+          const o = r.querySelector(".nu-bankopen");
+          const svg = r.querySelector(".nu-bankpic svg");
+          return { k: n && n.dataset.k,
+                   word: (r.querySelector(".nu-bankword") || {}).textContent,
+                   prov: (r.querySelector(".nu-bankprov") || {}).textContent || null,
+                   pic: svg ? svg.querySelectorAll("rect,path,line,circle").length : 0,
+                   shape: svg ? svg.innerHTML.length : 0,
+                   nameH: n ? Math.round(n.getBoundingClientRect().height) : 0,
+                   openH: o ? Math.round(o.getBoundingClientRect().height) : 0,
+                   readby: r.querySelectorAll('[data-k^="readby|"]').length,
+                   lamp: !!r.querySelector('.nu-banklamp[data-live]') };
+        }),
+        add: ["addcell", "adddrumcell"].filter((k) =>
+          !!document.querySelector('#pan-band [data-k="' + k + '"]')).length,
+        wide: document.documentElement.scrollWidth <=
+              document.documentElement.clientWidth + 1 }));
+
+      /* T10q · THE BANK IS DRAWN, AND IT IS THE RECORD'S OWN BANK. One row per
+         cell in `material.cells`' order, each with a picture, a name that is a
+         44px control, an `open`, and the two ways to grow the set under the
+         list — at 320 and 390, with no sideways page scroll. */
+      for (const w of [320, 390]) {
+        await wide(w);
+        await p.evaluate(() => window.__eightMotif(null));
+        await p.waitForTimeout(500);
+        const B = await bank();
+        const ok = B.now === null && B.rows.length === B.names.length &&
+          B.rows.every((r, i) => r.word === B.names[i]) &&
+          B.rows.every((r) => r.pic > 0 && r.nameH >= 44 && r.openH >= 44) &&
+          B.add === 2 && B.wide;
+        check(ok, "T10q " + w + " · the MOTIFS row's sheet is THE BANK — one " +
+          "row per cell in the record's own order, each with ui/preview.js's " +
+          "picture, a 44px name and an `open`, `+ motif` and `+ drum pattern` " +
+          "under the list, no sideways page scroll — " +
+          JSON.stringify({ rows: B.rows.length, names: B.names.length,
+                           add: B.add, wide: B.wide }));
+      }
+      await wide(390);
+
+      /* T10r · THE PROVENANCE WORD, AND THE PICTURE IS THIS MOTIF'S.
+         §3: a cell says where it came from — own / guest / hand — and
+         `document.js provWord` is the one owner of the word. The PICTURE is
+         the other half of the same claim and it is asked as a DIFFERENCE: a
+         bank that drew one shape ten times would pass "every row has a picture"
+         and be a lie about every row but one. */
+      {
+        const B = await bank();
+        const WORDS = ["own", "guest", "hand"];
+        const said = B.rows.map((r) => r.prov);
+        const shapes = new Set(B.rows.map((r) => r.shape));
+        const degs = await p.evaluate(() => { const d = window.__eightDoc();
+          return new Set(Object.keys(d.material.cells).map((k) =>
+            JSON.stringify(d.material.cells[k].deg ||
+                           d.material.cells[k].lanes))).size; });
+        check(said.every((s) => WORDS.indexOf(s) >= 0),
+          "T10r every bank row wears its provenance word (§3, document.js's " +
+          "own three) — " + JSON.stringify(said));
+        /* THE CLAIM IS "NOT ONE DRAWING REPEATED" AND IT IS ASKED AS A
+           MAJORITY, not as a bijection. Measured on Kingston 1969: ten cells,
+           ten distinct step arrays, SEVEN distinct pictures — ui/preview.js
+           draws a bar per step at eight levels, so two tunes with the same
+           rhythm that differ by less than a level render the same shape, which
+           is a fact about a 28px picture and not a bug. What the check is
+           actually guarding against is a bank that drew one preview ten times,
+           and a majority of distinct shapes refuses that flatly. */
+        check(shapes.size * 2 > B.rows.length && shapes.size > 1,
+          "T10r …and the picture is THIS motif's, not one drawing repeated — " +
+          shapes.size + " distinct previews over " + B.rows.length +
+          " rows and " + degs + " distinct cells");
+      }
+
+      /* T10s · TAPPING A NAME POINTS THE SELECTED CELL AT IT, AND THE BAR
+         CHANGES. §10a's own sentence, and it is measured twice: in the
+         DOCUMENT (the cell the grid says is selected now reads that motif) and
+         in the RENDERED EVENTS (`__eightEvents`, ui/derive.js's own compile of
+         that section, which is what the engine is handed). A cell that
+         re-pointed in the document and rendered the same bar is this repo's
+         characteristic bug, and it is the whole reason for the second half. */
+      {
+        const pick = await p.evaluate(() => {
+          const d = window.__eightDoc();
+          const v = d.voices.find((x) => x.kind === "line");
+          const s = d.form.sections[0];
+          const now = (v && typeof v.material === "object" && v.material)
+            ? (v.material[s.id] || v.material[""] ) : (v && v.material);
+          const other = Object.keys(d.material.cells)
+            .filter((k) => d.material.cells[k].kind !== "drum" && k !== now)[0];
+          return { voice: v && v.name, sec: s.id, now: now || null, other };
+        });
+        await shutAll();
+        await tap("tcell|" + pick.voice + "|" + pick.sec);
+        const si = await p.evaluate((s) => window.__eightDoc()
+          .form.sections.findIndex((x) => x.id === s), pick.sec);
+        const evBefore = await p.evaluate((i) =>
+          JSON.stringify(window.__eightEvents(i)), si);
+        await p.evaluate(() => window.__eightRow("motifs", true));
+        await p.waitForTimeout(500);
+        await p.evaluate((k) => { const b = document.querySelector(
+          '#pan-band [data-k="motifpoint|' + k + '"]'); if (b) b.click(); },
+          pick.other);
+        await p.waitForTimeout(900);
+        const after = await p.evaluate(([vn, sid]) => {
+          const d = window.__eightDoc();
+          const v = d.voices.find((x) => x.name === vn);
+          const m = v && v.material;
+          return (m && typeof m === "object") ? (m[sid] || null) : m;
+        }, [pick.voice, pick.sec]);
+        const evAfter = await p.evaluate((i) =>
+          JSON.stringify(window.__eightEvents(i)), si);
+        check(after === pick.other,
+          "T10s tapping a motif's name in the bank points the SELECTED cell " +
+          "at it, through avail.js's own material.cell sheet — " +
+          pick.voice + " · " + pick.sec + ": " + pick.now + " -> " + after);
+        check(evBefore !== evAfter,
+          "T10s …and the RENDERED bar changed with it (" + evBefore.length +
+          " -> " + evAfter.length + " bytes of ui/derive.js's own events)");
+      }
+
+      /* T10t · WITH NO CELL SELECTED IT ARMS THE NEXT TAP. A hand that taps a
+         name before it has chosen a cell is early, not wrong: the button says
+         so with `aria-pressed`, and the next cell tapped is the one that gets
+         the motif. Escape clears the selection — the grid's own key. */
+      {
+        /* NO CELL SELECTED IS THE STATE A HAND ARRIVES IN, AND IT IS THE ONLY
+           WAY TO REACH IT — measured. §9a gives the grid Escape for the open
+           sheet, the open field and the range anchor, and nothing on this page
+           un-selects a cell: a spreadsheet does not have an empty selection
+           once you have touched one, which is exactly why the arming exists.
+           So the gate arrives the way a person does. (Driving Escape here
+           instead read as a pass and was a lie: the selection from T10s was
+           still standing, the tap WROTE to that cell, and the check measured a
+           different section and found it unchanged.) */
+        await p.reload({ waitUntil: "domcontentloaded" });
+        await p.waitForTimeout(2600);
+        const target = await p.evaluate(() => {
+          const d = window.__eightDoc();
+          const v = d.voices.find((x) => x.kind === "line");
+          const s = d.form.sections[d.form.sections.length - 1];
+          /* `material` IS A STRING OR A MAP — the document's own two shapes
+             (one cell for the whole record, or one per section) — and both
+             have to be read or the motif this chair already plays would be
+             offered back to it and the check would pass on a write it never
+             made. */
+          const m = v && v.material;
+          const cur = (m && typeof m === "object") ? (m[s.id] || null)
+                    : (typeof m === "string" ? m : null);
+          const other = Object.keys(d.material.cells)
+            .filter((k) => d.material.cells[k].kind !== "drum" && k !== cur)[0];
+          return { voice: v.name, sec: s.id, cur, other };
+        });
+        await p.evaluate(() => window.__eightRow("motifs", true));
+        await p.waitForTimeout(500);
+        const armed = await p.evaluate((k) => {
+          const b = document.querySelector(
+            '#pan-band [data-k="motifpoint|' + k + '"]');
+          if (!b) return null;
+          b.click();
+          return b.getAttribute("aria-pressed");
+        }, target.other);
+        await p.waitForTimeout(400);
+        const stillThere = await p.evaluate(([vn, sid]) => {
+          const d = window.__eightDoc();
+          const v = d.voices.find((x) => x.name === vn);
+          const m = v && v.material;
+          return (m && typeof m === "object") ? (m[sid] || null) : m;
+        }, [target.voice, target.sec]);
+        await tap("tcell|" + target.voice + "|" + target.sec);
+        await p.waitForTimeout(700);
+        const landed = await p.evaluate(([vn, sid]) => {
+          const d = window.__eightDoc();
+          const v = d.voices.find((x) => x.name === vn);
+          const m = v && v.material;
+          return (m && typeof m === "object") ? (m[sid] || null) : m;
+        }, [target.voice, target.sec]);
+        check(armed === "true" && stillThere !== target.other &&
+              landed === target.other,
+          "T10t with no cell selected the name ARMS (aria-pressed) and writes " +
+          "nothing; the next cell tapped is the one that gets it — " +
+          JSON.stringify({ armed, before: stillThere, after: landed,
+                           want: target.other }));
+      }
+
+      /* T10u · THE SOUNDING MOTIF IS LIT IN THE FACE. Paul, 2026-09-03: *"When
+         motifs are open, light them up in the left nav when playing."* There is
+         no left nav; the row's head carries the lamp, and it carries the NAME
+         because with the row shut a bare dot would say THAT and not WHICH. Two
+         claims and the first is the law: the lamp is a `[data-live]` SIBLING of
+         the button (a control inside a live surface is what test/motif-frozen
+         A1 forbids), and while the record plays it names a cell of this
+         record's own bank. */
+      {
+        await shutAll();
+        const shape = await p.evaluate(() => {
+          const b = document.querySelector('#pan-band [data-k="tmotifs"]');
+          const th = b && b.closest("th");
+          const lamp = th && th.querySelector('.nu-motlamp[data-live]');
+          return { lamp: !!lamp, inside: !!(lamp && lamp.querySelector("button")),
+                   sibling: !!(lamp && lamp.parentElement === th &&
+                               !b.contains(lamp)) };
+        });
+        check(shape.lamp && shape.sibling && !shape.inside,
+          "T10u the MOTIFS row's lamp is a [data-live] SIBLING of its head's " +
+          "button, with no control inside it — " + JSON.stringify(shape));
+        await p.click("#play");
+        await p.waitForFunction(() => window.__eightStep && window.__eightStep() >= 0,
+          null, { timeout: 25000 }).catch(() => {});
+        await p.waitForTimeout(2500);
+        const lit = await p.evaluate(() => ({
+          said: (document.querySelector("#pan-band .nu-motlamp") || {}).textContent || "",
+          bank: window.__eightBank() }));
+        await p.click("#play");
+        await p.waitForTimeout(800);
+        const words = lit.said.split(", ").filter(Boolean);
+        check(words.length > 0 && words.every((w) => lit.bank.indexOf(w) >= 0),
+          "T10u …and while the record plays it names a motif of this record's " +
+          "own bank — “" + lit.said + "”");
+      }
+
+      /* T10v · THE MOTIFS PANE IS GONE, and the editor is drawn once. T7's law
+         asked of a fourth pane: no `#pan-motif`, no Motifs tab, no
+         `motiftab-<name>` tray row, no `motifop-` level in the stripe, and no
+         `#ax-material`. And the bench is drawn ONCE page-wide — the pane and
+         the row both drawing it would be two `hookCells` registries and a
+         playhead writing into detached cells. */
+      {
+        const gone = await p.evaluate(() => ({
+          host: !!document.getElementById("pan-motif"),
+          axis: !!document.getElementById("ax-material"),
+          tab: (window.__eightTabs() || []).indexOf("Motifs"),
+          tray: !!document.querySelector('[data-k="toptab-Motifs"]'),
+          trayKids: document.querySelectorAll(
+            '#nu-tray [data-k^="motiftab-"], #nu-tray [data-k^="motifop-"]').length,
+        }));
+        check(!gone.host && !gone.axis && gone.tab < 0 && !gone.tray &&
+              !gone.trayKids,
+          "T10v the Motifs PANE is deleted — no #pan-motif, no #ax-material, " +
+          "no Motifs tab, no motiftab rows and no motifops level — " +
+          JSON.stringify(gone));
+        await p.evaluate(() => { const b = window.__eightBank();
+          if (b.length) window.__eightMotif(b[0]); });
+        await p.waitForTimeout(1200);
+        /* ONE BENCH PER MEASURE, WHICH IS `hookGrid`'S OWN SHAPE and not a
+           second drawing: *"a cell of two measures draws two tables, stacked
+           in order, and the count restarting at `1` IS the bar line"*
+           (ui/eight.js, 2026-08-28). Measured on Kingston 1969: `hook` is 32
+           steps, so two. What "drawn once" means here is that the whole block
+           appears once — one `#staff`, one way back, one rename field, the
+           fourteen transforms once — which is what the pane-and-row both
+           drawing it would have doubled. */
+        const once = await p.evaluate(() => ({
+          bench: document.querySelectorAll("table.nu-bench").length,
+          bars: (() => { const d = window.__eightDoc();
+            const c = d.material.cells[window.__eightMotifNow()];
+            return Math.max(1, Math.round(((c && c.deg) || []).length / 16)); })(),
+          staff: document.querySelectorAll("#staff").length,
+          back: document.querySelectorAll('[data-k="motifback"]').length,
+          tf: document.querySelectorAll(
+            '[data-k^="motifop-"],[data-k^="motiftime-"]').length,
+          name: document.querySelectorAll('[data-k^="motif-name|"]').length }));
+        check(once.bench === once.bars && once.staff === 1 && once.back === 1 &&
+              once.tf === 14 && once.name === 1,
+          "T10v …and one motif opened from the bank draws its editor exactly " +
+          "once — one bench per measure, one #staff, one way back, the " +
+          "fourteen transforms and one rename field — " + JSON.stringify(once));
+        await p.evaluate(() => window.__eightMotif(null));
+        await shutAll();
+      }
+    }
+
+    /* =========== T10w · THE PRODUCE ROW (§10b step 5) ==================
+       §10a: *"│ PRODUCE │ the producer's deals and notes │ (merged,
+       expandable)"*, drawn UNDER the mix. What only this file can say: it is a
+       merged row of the `<tfoot>` at the pane's own width, its face is the
+       producer's own last sentence, its sheet is `ui/produce.js mount` whole,
+       a note said in the row reaches `doc.produce`, and the Produce PANE is
+       gone. What the producer's notes DO is `test/producer.browser.js`'s and
+       `test/producer-eight.test.js`'s, and neither claim is copied here. */
+    {
+      await shutAll();
+      const row = await p.evaluate(() => {
+        const t = document.querySelector("#pan-band table.nu-sheetgrid");
+        const tr = t && t.querySelector("tfoot tr.nu-prodrow");
+        const b = tr && tr.querySelector("button");
+        const th = tr && tr.querySelector("th");
+        const pane = document.querySelector("#pan-band .nu-pane");
+        const foot = t ? [...t.querySelectorAll("tfoot tr")] : [];
+        return { there: !!tr, k: b && b.dataset.k,
+                 colspan: th ? th.colSpan : 0,
+                 cols: t ? t.querySelectorAll("thead th.nu-colhead," +
+                   " thead th.nu-cornerh, thead th.nu-addhead").length : 0,
+                 h: b ? Math.round(b.getBoundingClientRect().height) : 0,
+                 w: b ? Math.round(b.getBoundingClientRect().width) : 0,
+                 paneW: pane ? pane.clientWidth : 0,
+                 word: (tr && (tr.querySelector(".nu-spword") || {}).textContent),
+                 face: (tr && (tr.querySelector(".nu-spface") || {}).textContent),
+                 afterMaster: foot.findIndex((x) =>
+                   x.classList.contains("nu-prodrow")) >
+                   foot.findIndex((x) => x.classList.contains("nu-masterrow")) };
+      });
+      check(row.there && row.k === "tproduce" && row.colspan === row.cols &&
+            row.h >= 44 && row.w >= row.paneW - 12 && row.afterMaster &&
+            row.word === "produce",
+        "T10w PRODUCE is a merged row of the footer UNDER the master, the " +
+        "pane's own width, 44px — " + JSON.stringify(row));
+
+      /* THE FACE IS THE PRODUCER'S OWN LINE, and it is read back off the same
+         two owners the sheet's caption counts against (producer.js `sentence`,
+         `Prod.MAXNOTES`) — never re-assembled here. */
+      const prod0 = await p.evaluate(() => window.__eightProd());
+      check(prod0.notes.length === 0
+              ? /nothing said/.test(row.face || "")
+              : (row.face || "").indexOf(prod0.notes.length + " of ") === 0,
+        "T10w …and its face is the producer's own line — “" + row.face +
+        "” against " + prod0.notes.length + " note(s)");
+
+      /* THE SHEET IS THE PANEL, and a note said in it reaches `doc.produce`. */
+      await tap("tproduce");
+      const panel = await p.evaluate(() => ({
+        box: document.querySelectorAll("#pan-band .nu-prodsheet").length,
+        ax: document.querySelectorAll("#pan-band #ax-produce").length,
+        plate: !!document.querySelector('#pan-band [data-k="prod.name"]'),
+        tree: !!document.querySelector('#pan-band [data-k="prod.cast"]'),
+        chips: document.querySelectorAll('#pan-band [data-k^="cast|"]').length }));
+      check(panel.box === 1 && panel.ax === 1 && panel.plate && panel.tree &&
+            panel.chips > 0,
+        "T10w …and the sheet is ui/produce.js's own panel, drawn once — " +
+        JSON.stringify(panel));
+      const said = await p.evaluate(async () => {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const c = document.querySelector('#pan-band [data-k^="cast|"]');
+        if (!c) return { drove: false };
+        c.click(); await wait(700);
+        /* THE ADDRESS IS `prod.word`, WHICH IS ui/produce.js's OWN SPELLING
+           — `data-sel="prod.word"`, not `sel|prod.word`; the `sel|` prefix is
+           test/selects.js's own key for a menu and never the element's. */
+        const w = [...document.querySelectorAll(
+          '#pan-band .nu-prodsheet [data-sel]')].map((n) => n.dataset.sel);
+        return { drove: true, sels: w };
+      });
+      check(said.drove && (said.sels || []).some((k) => /^prod\./.test(k)),
+        "T10w …and a subject chosen in the row offers the producer's own " +
+        "adjectives — " + JSON.stringify(said));
+
+      const goneP = await p.evaluate(() => ({
+        host: !!document.getElementById("produce"),
+        tab: (window.__eightTabs() || []).indexOf("Produce"),
+        tray: !!document.querySelector('[data-k="toptab-Produce"]') }));
+      check(!goneP.host && goneP.tab < 0 && !goneP.tray,
+        "T10w …and the Produce PANE is deleted — no #produce, no Produce tab, " +
+        "no tray row — " + JSON.stringify(goneP));
+      await shutAll();
+    }
   }
 
   /* ================= T0 · THE CONSOLE =================================== */

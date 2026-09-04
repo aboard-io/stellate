@@ -217,7 +217,15 @@ function firstDiff(a, b) {
       await page.evaluate((tt) => window.__eightTab(tt), t);
       await page.waitForTimeout(t === "Score" ? 1500 : 350);
     }
-    await page.evaluate(() => window.__eightTab("Motifs"));
+    /* ...AND "STANDING ON Motif" IS A ROW AND A MOTIF SINCE 2026-09-08
+       (TABLE.md §10b step 4). The Motifs PANE is deleted and its builders are
+       the Band table's own merged MOTIFS row, so the two things this file is
+       made of — the staves A2 counts inside `#staff` and the bench A3's bytes
+       are taken over — are reached by opening the row and then one motif. Not
+       one claim below moves: `#staff` is the same element `motifs()` has
+       always built, at the same address, with the same engraving count. */
+    await page.evaluate(() => { const b = window.__eightBank && window.__eightBank();
+      if (b && b.length) window.__eightMotif(b[0]); });
     await page.waitForTimeout(800);
 
     // ---- the page has to have the probes, or nothing below means anything

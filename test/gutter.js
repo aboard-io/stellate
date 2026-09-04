@@ -448,9 +448,15 @@ function standUpServer() {
   const deepest = await p.evaluate(async () => {
     let best = null;
     /* `Time` LEFT THIS WALK WITH ITS TAB, 2026-09-06 (TABLE.md §10b): it is a
-       merged ROW of the Band table, and Band is already in the list. */
-    for (const name of ["Where", "Motifs", "Band", "Mix",
-                        "Produce", "Score", "Export"]) {
+       merged ROW of the Band table, and Band is already in the list.
+       ...AND SO DID `Motifs`, `Mix` AND `Produce`, 2026-09-07/08 (§10b steps
+       3, 4 and 5) — all three are rows of that same table now. The list was a
+       TYPED copy of `TABS`' words and it had already drifted (it still named
+       `Mix` a round after the Mix tab was deleted, and `__eightTab` on a word
+       that is not a tab is a no-op, so the walk measured the same panel twice
+       and called it two tabs). It is `window.__eightTabs()` since — the page's
+       own answer, in the page's own order, which cannot drift from `TABS`. */
+    for (const name of window.__eightTabs()) {
       window.__eightTab(name);
       await new Promise((r) => setTimeout(r, 120));
       const over = document.documentElement.scrollHeight - window.innerHeight;
@@ -815,10 +821,20 @@ function standUpServer() {
      nu.css THE MARKS WEAR THEIR WORDS carries the whole table and the three
      things that could give if Paul wants the scroll back.
 
+     AND THE MOTIF OPERATIONS ARE NOT A LEVEL ANY MORE, 2026-09-08 (TABLE.md
+     §10b step 4). The fourteen are a line at the foot of the opened motif's
+     sheet, inside the Band table's MOTIFS row; the numbers above are kept
+     because they are the dated measurement this paragraph was written from and
+     the arithmetic they prove — nine 44px targets are 396px before a gap — is
+     what still binds. What replaced the longest level is measured below and
+     PRINTED, which is what the note under this one already said.
+
      SO THIS CHECK ASSERTS THE TWO THINGS THAT CAN HONESTLY BE ASSERTED:
-       · at 390x844 — the phone this box is drawn for — every level fits
-         except the fourteen motif operations, which is the one level that has
-         never fitted anywhere;
+       · at 390x844 — the phone this box is drawn for — the tree's longest
+         state is reachable (it read "every level fits except the fourteen
+         motif operations, which is the one level that has never fitted
+         anywhere"; overflow is the ORDINARY state of a tree, which is the
+         reversal the note directly below this block already carries);
        · at 320x568 every mark is REACHABLE: the list is a scroller, and after
          scrolling it to the end the last mark of the longest level is inside
          the list's own box. Nothing is silently clipped, which is the law;
@@ -885,16 +901,23 @@ function standUpServer() {
   await p.waitForTimeout(400);
   const t10c = await levelsAt();
   const reach = await p.evaluate(async () => {
-    /* THE LONGEST STATE THE TREE HAS, MADE BY HAND: the Motif tab, whose
+    /* THE LONGEST STATE THE TREE HAS, MADE BY HAND, AND IT IS `Band` SINCE
+       2026-09-08 (TABLE.md §10b step 4). IT READ: *"the Motif tab, whose
        arrival opens the bank AND the open cell's fourteen transforms. It was
        `__eightTab("Motif")` alone while that was a LEVEL (the tab is `Motifs`
        since 2026-09-04); on a tree the tab unfolds the bank and the cell has
-       to be opened for the transforms, which is the same two facts the old
-       `motifops` level carried in one word. */
-    window.__eightTab("Motifs");
+       to be opened for the transforms."* The Motifs tab is deleted with its
+       pane — the bank is a merged ROW of the Band table and the fourteen are a
+       line in the opened motif's sheet — so neither the tab nor the
+       `motiftab-` rows exist to be walked.
+       WHICH LEVEL IS LONGEST IS A MEASUREMENT AND NOT A NAME, and `levelsAt()`
+       above prints every one of them, so the next round can check this by
+       reading the report rather than the source. Measured on the boot record
+       2026-09-08 at 390x844: `toptab-Band` wants 1234px of a 560px list —
+       the players and the sections, one list said downwards — and every other
+       level, root included, wants exactly the list it has. */
+    window.__eightTab("Band");
     await new Promise((r) => setTimeout(r, 200));
-    const cell = document.querySelector('.nu-traylist [data-k^="motiftab-"]');
-    if (cell) { cell.click(); await new Promise((r) => setTimeout(r, 200)); }
     const l = document.querySelector(".nu-traylist");
     l.scrollTop = l.scrollHeight;
     await new Promise((r) => setTimeout(r, 120));

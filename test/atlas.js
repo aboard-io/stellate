@@ -800,7 +800,17 @@ function g18() {
     /* TWO SINCE 2026-09-06 (TABLE.md §10b): the Time tab is deleted and its
        two axis headings with it — TIME is a merged row of the Band table and a
        row's name is its own word, not an `<h2>`. */
-    for (const t of ["Motifs", "Band"]) {
+    /* ONE SINCE 2026-09-08 (TABLE.md §10b step 4), AND IT IS COUNTED.
+       `Motifs` is deleted the same way the Time tab was: the bank is a merged
+       ROW of the Band table, and `materialAxis` — the builder that drew
+       `<section id="ax-material"><h2>Motifs</h2>` — is deleted with the pane
+       rather than moved, because a row's name is its own word. So the walk is
+       `Band` alone and the panel it opens draws exactly one axis section.
+       MEASURED on the boot record at 900px, 2026-09-08: the Band panel answers
+       `["The band"]` for `.nu-ax > h2`, and the only other `.nu-ax` reachable
+       inside it is `#ax-produce`, which appears when the PRODUCE row is opened
+       (test/producer.browser.js P0 owns that one and drives it by hand). */
+    for (const t of ["Band"]) {
       window.__eightTab(t);
       await new Promise((r) => setTimeout(r, 250));
       const pan = document.querySelector(".nu-pan:not([data-off])");
@@ -817,10 +827,22 @@ function g18() {
     sections: window.__eightDoc().form.sections.length }; });
   check(gotTitle, "G8 · one tap on Kingston at 1969 makes #title read " +
     JSON.stringify(after.title) + " within 4 s");
-  // `>= 4` STILL, AND IT IS STILL FOUR: Time, Harmony, Motifs, The band. What
-  // changed on 2026-09-04 is which TABS they hang under — Time and Harmony are
-  // one panel now — so the walk above is three tabs for four headings and the
-  // number this check asserts did not have to move.
+  // `>= 1`, AND IT IS ONE, MEASURED (2026-09-08). It read `>= 4` and the four
+  // were Time, Harmony, Motifs and The band. Three of them are gone as
+  // HEADINGS and none of them is gone as a FACT: Time and Harmony became the
+  // merged TIME row of the Band table on 2026-09-06 and Motifs became the
+  // merged MOTIFS row on 2026-09-08 (TABLE.md §10b steps 1 and 4), and a
+  // merged row's name is its own word — there is no `<h2>` left to count and
+  // `materialAxis` is deleted rather than moved. What this check has always
+  // been about is that A TAP ON THE MAP DOES NOT COST THE RECORD ITS
+  // STRUCTURE, and the two lines under it — `voices >= 2 && sections >= 2` —
+  // say that about the document itself; this one says the surviving axis
+  // section was rebuilt and is named. test/table.browser.js is where the rows
+  // that replaced the other three are held to their contents.
+  // `>= 4` STILL, AND IT WAS STILL FOUR (2026-09-04): Time, Harmony, Motifs,
+  // The band. What changed that day is which TABS they hang under — Time and
+  // Harmony were one panel — so the walk above was three tabs for four
+  // headings and the number this check asserted did not have to move.
   // `>= 4`, WAS `>= 5` UNTIL 2026-08-27: the producer's section left #app for
   // its own host between the board and the score deck ("producer last to say,
   // score last to see" — FUTURE.md; ui/eight.js redrawApp), so four axis
@@ -830,8 +852,10 @@ function g18() {
   // the tabs landed the same day — the tab row is the second band now, nu.css
   // THE SECOND BAND IS THE TAB ROW — and the heading is still the panel's own
   // first child, which is all this check ever read.)
-  check(after.h2.length >= 4, "G8 · the eight-axis headings survived the swap (" +
-    after.h2.length + " h2, one per axis tab: " + after.h2.slice(0, 6).join(" / ") + ")");
+  check(after.h2.length >= 1 && /band/i.test(after.h2.join(" ")),
+    "G8 · the axis headings survived the swap (" +
+    after.h2.length + " h2, one per axis section left: " +
+    after.h2.slice(0, 6).join(" / ") + ")");
   check(after.voices >= 2 && after.sections >= 2,
     "G8 · and it is a whole record — " + after.voices + " voices, " +
     after.sections + " sections, basis " + after.basis);

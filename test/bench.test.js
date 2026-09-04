@@ -128,12 +128,24 @@ async function touchDrag(page, x0, y0, x1, y1, steps = 8) {
    they get there. `__eightTab` is exported by ui/eight.js for exactly this —
    "a gate is a HAND, not a clock" — and a gate that reached into the page's
    private state to flip a panel would be testing its own idea of the shell. */
-async function openMotif(pg) {
-  const ok2 = await pg.evaluate(() =>
-    /* `Motifs` SINCE 2026-09-04 (nukernel/TABLE.md §8: "Motif becomes Motifs
-       and stays"). The panel, the bench and the bank did not move a line; the
-       tab's WORD did, and it is the word `__eightTab` answers with. */
-    !!(window.__eightTab && window.__eightTab("Motifs") === "Motifs"));
+/* ...AND IT IS A ROW SINCE 2026-09-08 (nukernel/TABLE.md §10b step 4). What
+   stood here: *"`Motifs` SINCE 2026-09-04 (§8: 'Motif becomes Motifs and
+   stays'). The panel, the bench and the bank did not move a line; the tab's
+   WORD did, and it is the word `__eightTab` answers with."* The same sentence
+   holds a second time and one word further in: the panel, the bench and the
+   bank still have not moved a line — the Motifs PANE is deleted and its
+   builders are the MOTIFS row's sheet, so the bench is reached by opening the
+   row and then the motif, which is the two taps a thumb makes (`__eightRow`
+   then the bank row's own `open`). `__eightMotif` is the page's own door for
+   exactly this pair, and it is idempotent: asking for the motif you are
+   already in does nothing. NAMING NOTHING opens the FIRST cell in the bank,
+   which is where the pane always landed. */
+async function openMotif(pg, name) {
+  const ok2 = await pg.evaluate((n) => {
+    if (!window.__eightRow || !window.__eightMotif) return false;
+    if (!window.__eightRow("motifs", true)) return false;
+    return !!window.__eightMotif(n || window.__eightBank()[0]);
+  }, name || null);
   await pg.waitForTimeout(500);
   return ok2;
 }
@@ -562,7 +574,14 @@ async function openMotif(pg) {
      Motif branch is open, and the ↑ this block used to press has nothing left
      to do. The paragraph above is kept because it is the history of the mark
      it names. */
+  /* ...AND SINCE 2026-09-08 THE TWO ADD BUTTONS ARE IN THE BANK, which is the
+     row's other state: `+ drum pattern` grows the SET the bank is showing, so
+     it stands under the bank's list and not inside an open motif. `←the bank`
+     first, then the button — the two taps a thumb makes, and `addCell` opens
+     the new cell as it makes it, exactly as it did on the stripe. */
   await page.waitForTimeout(300);
+  await page.evaluate(() => window.__eightMotif(null));
+  await page.waitForTimeout(400);
   await page.evaluate(() => {
     const b = document.querySelector('[data-k="adddrumcell"]');
     if (b) b.click();
@@ -613,9 +632,10 @@ async function openMotif(pg) {
      would have been zero rows and a green light. The motif is re-opened
      through its own mark in the gutter (`motiftab-<name>`, the `motif` level
      of `#nu-tray`), which is the button a hand would press. */
-  await page.evaluate((n) => { const b =
-    document.querySelector('[data-k="motiftab-' + n + '"]'); if (b) b.click(); },
-    spot.name);
+  /* ...AND THE MARK IS THE BANK'S OWN `open` SINCE 2026-09-08: the stripe is
+     deleted with the pane, so going from the beat back to the tune is `← the
+     bank` and then that motif's row — the two taps `__eightMotif` makes. */
+  await page.evaluate((n) => window.__eightMotif(n), spot.name);
   await page.waitForTimeout(700);
   const backOn = await page.evaluate(() =>
     document.querySelectorAll(".nu-bench tr").length);
@@ -830,8 +850,7 @@ async function openMotif(pg) {
   await kitPage.evaluate(() => {
     const d = window.__eightDoc();
     const n = Object.keys(d.material.cells).find((k) => d.material.cells[k].kind === "drum");
-    const b = n && document.querySelector('[data-k="motiftab-' + n + '"]');
-    if (b) b.click();
+    if (n) window.__eightMotif(n);
   });
   await kitPage.waitForTimeout(1000);
   /* B11 · EVERY LANE SAYS ITS DRUM'S NAME, IN FULL (2026-09-03). Paul: *"in

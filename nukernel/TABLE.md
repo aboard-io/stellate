@@ -1184,6 +1184,208 @@ sentence line and the row's padding, so `rate` is 129 against 140, `harmony`
 that grows a THIRD block, is still exactly what it catches. `rules-view`
 **42 ok, 0 failed**.
 
+### 10e · What steps 4 and 5 landed, and the five things they measured
+
+**SHIPPED 2026-09-08 (uncommitted).** `nukernel/src/table/special.ts` grew the
+MOTIFS row's two builders and the PRODUCE row's two (30 lines), and `SPECIALS`
+grew a third member while PRODUCE was deliberately kept OUT of it (§10a's own
+drawing puts it under the mix, and `SPECIALS` is the HEAD's list); `grid.ts`
+gained `produceRow`, `spLamp`, the `ARM` state and the two doors the bank needs
+back out (`pointMotif`, `armedMotif`); `api.ts` gained six; `ui/eight.js` lost
+`materialAxis`, `drawMaterial`, `motifTrayItems` and `motifOpsTrayItems` (321
+lines) and gained `motifsNode`, `motifBank`, `motifOpsLine`, `motifsFace`,
+`produceFace` and the lamp registry (248); `index.html` lost `#pan-motif` and
+`#produce`; `TABS` lost two rows, `BUILD` two builders, `TABKIDS` one branch.
+`ui/produce.js` gained one export — `said(doc)`, the producer's last sentence
+and the count, so the shut row and the open one cannot spell one stack two ways.
+
+**THE ROW, IN THE MARKUP, AND IT HAS TWO STATES.** One
+`<tr class="nu-sprow" data-special="motifs">` in the `<thead>` under RULES, its
+head `tmotifs`, its face `10 in the bank · hook, answer, riff …` — or, when you
+are standing inside one, `in hook · 10 in the bank`. Its sheet is THE BANK: one
+`.nu-bankrow` per cell in `material.cells`' own order, carrying ui/preview.js's
+picture at the row's full width, the NAME as a button (`motifpoint|<name>` —
+the write), the provenance word, `readby|<motif>|<voice>` for every chair, and
+`open` (`motifopen|<name>`). One tap in, the bank is replaced by that motif's
+whole block — `← the bank`, `#staff`, the rename field, clear, play/loop, the
+bench, `+`/`− measure`, the forks and the fourteen transforms as one line at
+the foot. PRODUCE is two rows further down, in the `<tfoot>` under the master:
+one `<th colspan>` at `tproduce` reading `3 of 10 · “make the sound dirtier”`,
+or `nothing said — the record as the atlas dealt it`, opening `ui/produce.js
+mount` unchanged.
+
+**FIVE THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT.**
+
+- **A LAMP THAT APPEARS WHEN THE RECORD STARTS IS A LAYOUT CHANGE TWO ELEMENTS
+  AWAY, AND IT BREAKS THE PAGE'S OLDEST LAW.** The MOTIFS row's lamp names the
+  sounding motif under the row's own face, and it wore `:empty { display: none
+  }` for an afternoon — which is exactly right for a lamp in a footer and
+  exactly wrong for one in a `<thead>` whose offsets `grid.ts stick()` MEASURES
+  after every render. Pressing play made the row 16px taller and moved
+  `inset-block-start` on the column heads from **138px to 154.109px** — an
+  inline style, outside `[data-live]`, written because the clock wrote, and
+  `test/bench.test.js` B6 had it inside the hour. The line is reserved always,
+  and it is `block-size` and not `min-block-size`: an empty inline box has no
+  strut, so a `min` of 1.2em still measured **151.812 against 154.109**. The
+  room is reserved before the thing arrives, which is `staffRoom`'s own
+  discipline applied to a lamp.
+- **A CELL OF TWO MEASURES DRAWS TWO BENCHES, AND "DRAWN ONCE" HAD TO LEARN
+  IT.** T10v was written as `one bench, one #staff, one way back` — the shape
+  that would catch a pane and a row both drawing the editor — and it went red
+  on `bench: 2` for a motif that is 32 steps long. `hookGrid`'s own note has
+  said so since 2026-08-28 (*"a cell of two measures draws two tables, stacked
+  in order, and the count restarting at `1` IS the bar line"*). The claim is a
+  bench PER MEASURE now, read off the open cell's own `deg.length`, and every
+  other half of it — one `#staff`, one way back, one rename field, fourteen
+  transforms — is unchanged, which is the half that would actually double.
+- **THERE IS NO GESTURE ON THIS PAGE THAT UN-SELECTS A CELL, so the gate for
+  the armed bank has to ARRIVE.** §10a's *"tapping a motif points the SELECTED
+  cell at it"* leaves the hand that taps a name first, and the answer is that
+  the button ARMS and the next cell tapped gets it. Driving Escape to reach
+  "no cell selected" read as a PASS and was a lie: §9a gives Escape the open
+  sheet, the open field and the range anchor and nothing else — a spreadsheet
+  does not empty its selection once you have touched one, which is why the
+  arming exists at all — so the tap WROTE to the cell still selected from the
+  check before, and T10t measured a different section and found it unchanged.
+  It reloads now, which is the state a person arrives in.
+- **THE BANK'S PREVIEW IS THE CALLER'S BOX AND NOT THE PICTURE'S.**
+  `ui/preview.js` writes an inline `inline-size: calc(--pv-base × bars)` on any
+  cell longer than one bar — right for a chip in a 136px column, wrong for a
+  full-width line, where a two-bar tune drew twice a one-bar tune and both were
+  thumbnails against 250px of room. The bank writes `100%` on the same
+  property, from the caller that owns the box: a stylesheet rule would lose to
+  preview.js's own inline style and an `!important` to win it would be the
+  second owner of one geometry. And the picture is asserted as a DIFFERENCE
+  rather than a presence — measured on Kingston 1969, ten cells, ten distinct
+  step arrays, **seven distinct pictures** (two tunes with the same rhythm
+  inside one of eight levels draw the same 28px shape) — because a bank that
+  drew one preview ten times would pass "every row has a picture".
+- **TWO GATES WERE RED FOR ONE MISSING HALF OF A WALK, AND NEITHER RED WAS
+  ABOUT ITS SUBJECT.** `test/selects.js` had five since v272 — *"every control
+  Paul named is a combo box"* naming meter, swing, groove, mode, scale, harmony
+  and the changes grid's quality — and the cause was that its census walks
+  `__eightTabs()`, which stopped containing `Time` and `Rules` the round they
+  became rows. The controls never moved; the walk did. It walks the four rows
+  now (and so does the phone pass, which had found **0 addressed controls
+  across 6 tabs**, and which now re-opens each menu's own surface before
+  driving it, because a menu that is not on the screen is not a menu that
+  failed to commit). `nukernel/desk-gate.js`'s two were the same shape one
+  round further on: `bus|genre|fx1..3` were asserted MISSING by a query written
+  as `#rack select[data-k]` and simultaneously reported as EXTRA by a walk that
+  collects `data-sel` — one control, in one list and not the other, because
+  v272 gave a seat to `src/menus/` and it started wearing the other address.
+  `BUSSEAT` had been written at the top of that file waiting for it. **167 of
+  167 now, and 71 of 71.**
+
+**WHAT THE CHIP'S REASON IS ALLOWED TO LOOK LIKE, SETTLED.** §10c left the fork
+open (*"either the chip appends its reason like its two siblings, or R5a's
+`said` clause learns the third widget"*) and §10d took the first branch for
+`rules-view`. Walking the rules row put the same question to `selects` check 5,
+and the answer is that a chip has TWO honest places: its OWN why is the
+`<small class="nu-why">` line inside the button, and a WHOLE-STRIP refusal is
+printed once under the control by `menu()` — measured on the shipped chant,
+`rule-add|Form` is a single chip refused whole with *"every rule this axis has
+is already on the record"*. Demanding the strip's sentence inside each of four
+chips would be demanding the same sentence four times on one line. The LAW is
+asked of the text either way; the SPELLING (`", " + why`) is asked only of the
+two widgets that have one.
+
+**THE FOURTEEN TRANSFORMS ARE A DATED REVERSAL AND THE THIRD SURFACE FOR ONE
+ADDRESS.** Paul, 2026-08-28: *"When I'm in a motif, the motif operations should
+be the right nav elements on the view."* There is no nav to be an element of
+(§10a deletes it) and the surface they rewrite has the pane's full width now,
+so they are one line at the foot of the opened motif's sheet — where they stood
+until 2026-08-28 and where the note that took them away said they belonged
+(*"under the tune they rewrite"*). `motifop-<word>` and `motiftime-<word>` have
+now been on three surfaces without moving, which is the journey
+`boardtab|<kind>|<key>` made a round ago.
+
+**GATES.** `test/table.browser.js` **T10q–T10w** (the bank is drawn at 320 and
+390 — a row per cell in the record's own order, a picture, a 44px name, an
+`open`, the two adders, no sideways page scroll; every row wears one of
+document.js's three provenance words and the pictures are not one drawing
+repeated; tapping a name points the SELECTED cell, measured in the document AND
+in `__eightEvents`' rendered bar; with no cell selected it arms and the next
+cell tapped is the one that gets it; the row's lamp is a `[data-live]` sibling
+with no control in it and names a motif of this record's own bank while it
+plays; the Motifs PANE is gone and the editor is drawn once, a bench per
+measure; PRODUCE is a merged row of the footer under the master at the pane's
+width, its face is the producer's own line, its sheet is the panel drawn once,
+a subject chosen in it offers the producer's own adjectives, and the Produce
+PANE is gone) — **187 ok, 0 failed**, T4–T9 and T10a–T10p unmoved except two
+counts that are facts about this round (`tfoot tr` is four, `thead > tr` is
+four) and T10b's stack, which is asserted as a WALK now so the next special row
+does not need it edited. `test/table-inventory.json` grew **twenty-three rows**
+measured off `#pan-motif` and `#produce` BEFORE the deletion (the nine control
+families of the pane, the fourteen transforms, the `motiftab-<name>` rows, the
+two tabs, the producer's four) under two new homes, `motifs-row` and
+`motif-sheet` and `produce-row`; `tray-new`'s *"elsewhere: Motifs"* home came
+back inside the table with it. T7 learned two substitutions measured off the
+RECORD rather than named (`<motif>` is the cell the most chairs read, so
+`fork|<cell>|<voice>` has a subject on any record; `<forker>` is its first
+reader) and one exemption with its owner written down: the BENCH's step row is
+52px and `test/bench.test.js` B3 owns that claim, so the three kind buttons and
+two bars inside it carry a `floor` of 40 and 30 — the numbers they had in the
+pane this walk inherited them from — rather than a second 44px demand
+contradicting B3 about a geometry this round did not touch.
+Re-pointed, each in a line or two, each still making every claim it made:
+`test/bench.test.js` (**PASS** — one door, `openMotif`, is `__eightRow("motifs")`
+then the bank row's own `open`; `+ drum pattern` is reached through `← the
+bank`), `test/motif-frozen.js` (**PASS** — "standing on Motif" is the row and
+one motif; `#staff` never moved), `test/shell.js` (**PASS** — `PAULS_TABS` is
+six words, A6j walks the two branches the tree has left, A6k drives `Score` and
+`Band`), `test/text-diet.test.js` (**PASS** — "Motifs" and "The producer" leave
+the panel-headings list the way "The board" left it a round ago; both `<h2>`s
+are still drawn, still announced, still skipped by the diet).
+`test/selects.js` **71 of 71** and `nukernel/desk-gate.js` **167 of 167**, both
+for the first time since v272.
+
+**FIVE GATES OUTSIDE THE RELEASE PATH ARE RE-POINTED TOO, AND ONE RED IS LEFT
+HONEST.** `test/gutter.js` (**47**, its typed tab list replaced by
+`__eightTabs()` — which had already drifted, `Mix` having been gone a round —
+and its "longest state" measured on the Band branch: 1234px of a 560px list at
+390), `test/producer.browser.js` (**35**), `test/seed.js` (**36**),
+`test/atlas.js` (**111**, its heading count MEASURED down from four to one:
+Time and Harmony left with the TIME row and Motifs with this one, so the Band
+panel answers `["The band"]`), `test/nav-tree.js` (**27 of 28**). Two findings
+came out of that walk and neither is this round's to fix:
+  · **THE TREE IS EXACTLY TWO LEVELS DEEP NOW, EVERYWHERE.** `motifTrayItems`
+    was the LAST depth-2 branch — the section ops left on 2026-09-05 (§9a) and
+    the mix plates with step 3 — so N3's "a branch of actions" and N8's "three
+    depths" both died with this round. N3 keeps its law at the transforms' new
+    address; N8 counts the depths it finds rather than three named rows, so it
+    reads a third the moment one exists.
+  · **THE OUTSTANDING RED IS `N8 390 · the indent is not what clipped
+    anything`, AND IT IS WAVE 2c's.** At 390 the gutter's word box is 67px
+    against a 7px `--nu-indent`, and that one step of indent is what clips four
+    SECTION labels (`groove 2`, `chorus 6`, `chorus 9`, `outro 13`) — and
+    `notation` on the Score branch, which clips at 7px and fits at 6px, so it
+    is not an artifact of which branch the gate now drives. The section rows
+    entered the stripe in wave 2c and N8 never saw them because it always drove
+    the Motifs branch. The fix is a decision about the 96px gutter's word box
+    against the tap floor — the same arithmetic `gutter.js` T10b owns — and it
+    is deliberately not made in a round that deletes the tray two steps later
+    (§10b step 7). Green at 1280.
+
+**AND ONE SELECTOR BROKE BECAUSE A PANE BECAME A `<td>`.**
+`test/producer.browser.js` read `t.querySelectorAll("td button")` on the
+producer's note table; a descendant selector is matched against the WHOLE
+document and only then filtered to the root, so `td button` means "a button
+with any `<td>` ancestor" — and the producer's sheet is inside a `<td>` of the
+Band table now, which made `note|0` (in the row's own `<th>`, unmoved) start
+matching. `:scope td button`. `ui/produce.js` is untouched, and this is the
+shape to expect from every remaining pane deletion.
+
+**THE PAGE DOORS THIS ROUND ADDED, AND THEY ARE ALL HANDS.** `__eightMotif(name)`
+opens the row and then that motif (`null` goes back to the bank), idempotent
+like `__eightRow` and `__eightMix`; `__eightBank()` is the bank's names in
+order; `__eightMotifNow()` is which one is open. The share-link fragment kept
+its meaning without keeping its slot: `subNow()` no longer answers `Motifs`,
+and `applySub` under `Band` tries the voice names first and then the motif
+names — a player and a motif cannot share a name (one is `voices[].name`, the
+other a key of `material.cells`), so asking in order is unambiguous and a link
+somebody sent from inside `psalm` still opens standing in `psalm`.
+
 ## 11 · The design system: ours, less chunky, with an envelope editor (RULED 2026-09-05)
 
 Paul, after the AUX spike (GPL-3.0-or-later, 93 KB core + a fader at 171 KB,

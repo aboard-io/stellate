@@ -58,7 +58,8 @@ import { rowSheet, colSheet, cellSheet, perfSheet,
          perfCells, tableOps, playerOffers, sectionOffer,
          rowOps, colOps, cellOps } from "./model.js";
 import { sheetBody, onRedraw } from "./sheet.js";
-import { SPECIALS, mixSheet, masterFace, masterMixSheet } from "./special.js";
+import { SPECIALS, PRODUCE, mixSheet, masterFace,
+         masterMixSheet } from "./special.js";
 import { undoStack } from "./undo.js";
 import type { DocUndo } from "./undo.js";
 
@@ -76,6 +77,13 @@ let ANCHOR: Sel = null;
 let OPEN: string | null = null;
 /** which field inside the open sheet has its strip out. */
 let OPENFIELD: string | null = null;
+/* THE ARMED MOTIF (2026-09-08, §10b step 4). §10a: *"tapping a motif points the
+   SELECTED cell at it"* — and a hand that has not selected one yet is not
+   wrong, it is early. So a name tapped with no selection ARMS, the next cell
+   tapped is pointed at it, and the arming is cleared by the write. It lives
+   beside `SEL` and outlives a rebuild for `SEL`'s own reason: the write that
+   would clear it is the write it is waiting for. */
+let ARM: string | null = null;
 /** a column's width in px where a hand has dragged one (9a: resizable). */
 const WIDTH = new Map<string, number>();
 /** the clipboard, and it is a VECTOR: what a cell has written, nothing more. */
@@ -119,6 +127,17 @@ export interface Grid {
   paint(nowRowId: string | null, soundingColIds?: string[]): void;
   close(): void;
   openCorner(fields?: Field[], btn?: HTMLElement | null): void;
+  /* ---- THE MOTIFS ROW'S TWO DOORS BACK OUT (2026-09-08, §10b step 4) ---
+     The bank is drawn by `ui/eight.js` (it holds the previews, the provenance
+     and the editors), and the SELECTION is the grid's — so the one thing the
+     bank cannot answer for itself is "which cell am I pointing". These two are
+     that answer, and they are doors in the same direction `openCorner` already
+     is: the page asking the component to do the thing a thumb would do. */
+  /** point the selected cell at this motif, or ARM the next cell tap.
+   *  Returns true when a cell was written, false when the bank armed. */
+  pointMotif(name: string): boolean;
+  /** which motif the bank is armed with, so the button can wear it. */
+  armedMotif(): string | null;
 }
 
 /** WHICH OPEN DOORS SURVIVE A REBUILD, and the test is the same sentence for
@@ -129,9 +148,13 @@ export interface Grid {
  *  true of either — `tablePanel` lands an arrival by clicking a COLUMN or a ROW
  *  head, the transpose is reached through the corner, and no gate opens one by
  *  toggling. The open BODY is rebuilt like any other; only WHICH door is open
- *  is kept. (§10b step 5's PRODUCE row will be the third and is not written
- *  here until it exists: a prefix nothing can produce is the declared-and-never-
- *  arriving shape this repo has a memory note about.) */
+ *  is kept. §10b step 4 and step 5 added the third and fourth members without
+ *  adding a prefix: MOTIFS is `sp|motifs` (a transform, a note, a rename — all
+ *  of them a `push(); draw()`) and PRODUCE is `sp|produce` (every note the
+ *  producer takes is an `evolve`). The paragraph that stood here said the
+ *  produce prefix was "not written until it exists", which is the
+ *  declared-and-never-arriving shape this repo has a memory note about; it
+ *  exists. */
 const STICKY = (k: string | null): boolean => !!k &&
   (k.indexOf("sp|") === 0 || k.indexOf("mix|") === 0);
 
@@ -187,6 +210,18 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const sheetFor = (key: string, build: () => Field[]): Field[] => {
     if (SHEETKEY !== key || !SHEETFIELDS) { SHEETKEY = key; SHEETFIELDS = build(); }
     return SHEETFIELDS;
+  };
+
+  /* ...AND THE SPECIAL ROWS' OWN, THE SAME WAY (2026-09-08). Only MOTIFS asks
+     for one, and it is cached for the reason every lamp on this surface is:
+     lit re-renders the row on every draw, and a lamp rebuilt under the clock
+     would drop the write that had just landed in it. */
+  const SPLAMPS = new Map<string, HTMLElement | null>();
+  const spLamp = (sp: { id: string; lamp?: (A: TableAPI) => HTMLElement | null }):
+      HTMLElement | typeof nothing => {
+    if (!sp.lamp) return nothing;
+    if (!SPLAMPS.has(sp.id)) SPLAMPS.set(sp.id, sp.lamp(A));
+    return SPLAMPS.get(sp.id) || nothing;
   };
 
   const LAMPS = new Map<string, HTMLElement>();
@@ -369,7 +404,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
           @click=${() => toggle(openKey)}
           @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
           ><b class="nu-spword">${sp.word}</b
-          ><span class="nu-spface">${face}</span></button>
+          ><span class="nu-spface">${face}</span></button>${spLamp(sp)}
       </th>
     </tr>`;
   });
@@ -589,6 +624,13 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         aria-label=${name + " · " + A.secName(i) + ": " + word}
         @click=${(e: MouseEvent) => {
           if (e.shiftKey && SEL) { ANCHOR = { sec: sid, voice: name }; draw(); return; }
+          /* AN ARMED BANK SPENDS ITSELF ON THE NEXT CELL (§10b step 4). The
+             tap still SELECTS — a spreadsheet's tap always does — and the
+             motif lands on the cell it selected, which is what a hand that
+             tapped a name and then a cell asked for in that order. */
+          if (ARM) { const m = ARM; ARM = null;
+                     SEL = { sec: sid, voice: name }; ANCHOR = null;
+                     A.pointCell(i, vi, m); return; }
           ANCHOR = null; toggle(openKey); }}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
         >${word}</button>
@@ -610,6 +652,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      row; `model.ts` carries the tombstone. */
   const tfoot = (S: Shape, cols: string[]): TemplateResult => html`<tfoot>
     ${mixRow(S, cols)}
+    ${produceRow(S)}
     ${footRow(S, "perf", "tfoot|perf", "performance",
               "how the band plays it — the record's own performance",
               perfCells(A), () => perfSheet(A))}
@@ -669,6 +712,34 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     ${cols.map((c) => OPEN === "mix|" + c
       ? openRow(S, sheetFor(OPEN!, () => wrapOps(mixSheet(A, c))), c)
       : nothing)}`;
+  };
+
+  /* ---- THE PRODUCE ROW (§10b step 5) ---------------------------------
+     §10a: *"│ MIX │ strip │ strip │ master │ / │ PRODUCE │ the producer's
+     deals and notes │ (merged, expandable)"*. It is the same merged row the
+     master is, one line under it, wearing the same `.nu-sphead` so its face
+     ellipsises against the pane's own left-pinned width and reads whole at
+     320. It is drawn HERE and not in `SPECIALS` because `SPECIALS` is the
+     HEAD's list: a row above the column heads is a row above the music, and
+     the producer speaks about a record that has already been dealt. */
+  const produceRow = (S: Shape): TemplateResult => {
+    const openKey = "sp|" + PRODUCE.id;
+    let face = "";
+    try { face = PRODUCE.face(A); } catch (e) { face = ""; }
+    return html`<tr class="nu-footrow nu-prodrow" data-row="produce">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
+        <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
+          aria-expanded=${String(OPEN === openKey)}
+          aria-label=${PRODUCE.word + " — " + PRODUCE.aria}
+          @click=${() => toggle(openKey)}
+          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
+          ><b class="nu-spword">${PRODUCE.word}</b
+          ><span class="nu-spface">${face}</span></button>
+      </th>
+    </tr>
+    ${OPEN === openKey
+      ? openRow(S, sheetFor(openKey, () => wrapOps(PRODUCE.sheet(A))), PRODUCE.word)
+      : nothing}`;
   };
 
   /** ONE SEAT, COLLAPSED. The word is the strip's own reading of the fader and
@@ -923,6 +994,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        handled by the switch below either way. */
     const inSpecial = !!tg && (!!tg.closest(".nu-sprow") ||
       !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") ||
+      !!tg.closest(".nu-prodrow") ||
       (STICKY(OPEN) && !!tg.closest(".nu-wopen")));
     if (inSpecial && e.key !== "Escape") return;
     if (meta && (e.key === "z" || e.key === "Z")) {
@@ -1030,6 +1102,23 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     close: () => { OPEN = null; OPENFIELD = null;
                    SHEETKEY = null; SHEETFIELDS = null; draw(); },
     openCorner: () => { toggle("corner"); },
+    /* THE WRITE IS `A.pointCell`, WHICH IS avail.js's OWN `material.cell`
+       SHEET — not `putCell`. That sheet is the one owner of which cells a
+       voice of this kind may read (a drum cell is lanes, a line cell is
+       degrees: document.js:230), of the absent detent, and of the write; the
+       cell sheet's `motifs` row asks the same question through the same door,
+       so the bank and the sheet can never point a cell two different ways. */
+    pointMotif: (name: string): boolean => {
+      const doc = A.doc();
+      if (SEL) {
+        const i = doc.form.sections.findIndex((x) => x.id === SEL!.sec);
+        const vi = doc.voices.findIndex((x) => x.name === SEL!.voice);
+        if (i >= 0 && vi >= 0) { ARM = null; A.pointCell(i, vi, name); return true; }
+      }
+      ARM = name;
+      return false;
+    },
+    armedMotif: () => ARM,
   };
 }
 

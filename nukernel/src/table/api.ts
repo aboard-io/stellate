@@ -269,4 +269,48 @@ export interface TableAPI {
    *  hand has written and which one moved last. */
   rulesNode(): HTMLElement;
   rulesFace(): string;
+
+  /* ---- THE MOTIFS ROW'S OWN DOORS (2026-09-08, TABLE.md §10b step 4) --
+     §10a: *"MOTIFS is the bank across the top with previews and provenance,
+     and tapping a motif points the SELECTED cell at it (the formula bar's own
+     write)."* The row is MERGED like TIME and RULES, and its sheet is ONE
+     node, for the reason `rulesSheet` is one node: what the sheet holds is
+     either the BANK (a row per motif — ui/preview.js's picture, the name, the
+     provenance word, who reads it, and an `open`) or, when a motif has been
+     opened from it, that motif's own block — the rename field, the written
+     staff, the bench, the fourteen transforms — and every one of those is a
+     widget `ui/eight.js` already builds, keyed into playhead registries
+     (`hookCells`, `stepCell`, `written`) that only that file owns. Re-typing
+     any of it into `Field[]` would be a second owner of the motif editor. */
+  /** the collapsed face: how many are in the bank and which one is open. */
+  motifsFace(): string;
+  /** THE BANK, OR THE MOTIF THAT WAS OPENED FROM IT. One node, built fresh on
+   *  every open, because building it is what clears and refills the playhead's
+   *  own registries. */
+  motifsNode(): HTMLElement;
+  /** the row's lamp — a `[data-live]` SIBLING of the head's button (never a
+   *  child: a control inside a live surface is what test/motif-frozen A1
+   *  forbids), carrying the name of the motif that is sounding. */
+  motifLamp(): HTMLElement | null;
+  /** POINT ONE CELL AT A MOTIF — the write the bank's name button makes, and
+   *  it is `avail.js`'s own `material.cell` sheet and NOT `putCell`: that
+   *  sheet is the one owner of which cells a voice of this kind may read (a
+   *  drum cell is lanes and a line cell is degrees), of the absent detent, and
+   *  of the write. The grid says WHICH cell, because the grid owns the
+   *  selection; a bank with no cell selected ARMS the next tap instead. */
+  pointCell(i: number, vi: number, name: string): void;
+
+  /* ---- THE PRODUCE ROW'S OWN DOORS (2026-09-08, §10b step 5) ----------
+     §10a: *"PRODUCE — the producer's deals and notes … MERGED, expandable"*,
+     and the layout puts it under MIX in the footer rather than over the grid,
+     because what the producer says is said ABOUT a record that is already
+     dealt. One node again, and the same reason: `ui/produce.js mount` draws
+     the deal tree, the adjective sheet with every withheld word greyed and its
+     reason printed, the stack of ten notes with their percentages, and its own
+     undo — none of which is a vector and none of which has a cell. */
+  /** the collapsed face: the producer's last sentence, and how many stand. */
+  produceFace(): string;
+  /** `ui/produce.js mount`, seated. The Produce PANE is deleted, so this is
+   *  the one place it is called. */
+  produceNode(): HTMLElement;
 }

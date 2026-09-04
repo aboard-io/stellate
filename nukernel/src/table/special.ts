@@ -1,4 +1,5 @@
-// nukernel/src/table/special.ts — THE SPECIAL ROWS: TIME, RULES, and MIX.
+// nukernel/src/table/special.ts — THE SPECIAL ROWS: TIME, RULES, MOTIFS,
+// MIX and PRODUCE.
 //
 // Paul, 2026-09-05, looking at the nav beside the v271 grid: *"we could
 // integrate rules into a special row, time + key into a special row, then do
@@ -41,10 +42,12 @@
 // `avail.js` through `A.sh()` — the one owner of the vocabulary and of the
 // write — or seats a widget the host built through a door, and the host's
 // builder is the pane's own, with the pane taken off it. `#pan-tempo`,
-// `#rulesdeck`, `#deck`, the three tabs, the three tray branches,
-// `timeAxis`/`alphaAxis` and `mixTrayItems` are DELETED, so nothing on this
-// page draws these controls twice. The strip's SECOND home went in the same
-// edit as the third pane: `model.ts colSheet` no longer draws `voiceStrip`.
+// `#rulesdeck`, `#deck`, `#pan-motif`, `#produce`, the five tabs, the four
+// tray branches, `timeAxis`/`alphaAxis`, `mixTrayItems`, `materialAxis`,
+// `drawMaterial`, `motifTrayItems` and `motifOpsTrayItems` are DELETED, so
+// nothing on this page draws these controls twice. The strip's SECOND home
+// went in the same edit as the third pane: `model.ts colSheet` no longer draws
+// `voiceStrip`.
 
 import type { TableAPI, Field, StripField, Choice } from "./api.js";
 import { shField } from "./model.js";
@@ -187,6 +190,63 @@ export function rulesSheet(A: TableAPI): Field[] {
   return [{ kind: "node", node: A.rulesNode() }];
 }
 
+
+/* ===================================================================== */
+/* ---- THE MOTIFS ROW (§10b step 4) ------------------------------------ */
+//
+// §10a: *"MOTIFS is the bank across the top with previews and provenance, and
+// tapping a motif points the SELECTED cell at it (the formula bar's own
+// write)."* It is MERGED, like TIME and RULES, because a motif belongs to the
+// RECORD and not to a player — the bank is what `DOC.material.cells` is, one
+// map for the whole band, and the fact that six chairs may read one hook is
+// the reason the fork buttons exist.
+
+/** the collapsed face: how big the bank is, and which motif you are standing
+ *  in. Both read off `ui/eight.js`, which owns the bank and the page state
+ *  that says which one is open — a face is not a second opinion. */
+export function motifsFace(A: TableAPI): string {
+  return A.motifsFace();
+}
+
+/** THE BANK, OR THE ONE MOTIF OPENED FROM IT — one node, and the argument is
+ *  `rulesSheet`'s word for word. The bank's row is a picture (ui/preview.js), a
+ *  NAME that points the selected cell, the provenance word (§3: own / guest /
+ *  hand), the chairs that read it, and an `open`; the opened motif is
+ *  `motifs()` — the rename field, the clear, the play, the written staff, the
+ *  bench, `+`/`−` measure, the read-by strip, the forks and the fourteen
+ *  transforms. Every one of those is a widget ui/eight.js already builds, and
+ *  three of them register themselves in playhead registries (`hookCells`,
+ *  `stepCell`, `written`) that only that file owns. A `Field[]` of them would
+ *  be a second owner of the motif editor. */
+export function motifsSheet(A: TableAPI): Field[] {
+  return [{ kind: "node", node: A.motifsNode() }];
+}
+
+/* ===================================================================== */
+/* ---- THE PRODUCE ROW (§10b step 5) ----------------------------------- */
+//
+// §10a draws it *"merged, expandable"* UNDER the mix — `│ PRODUCE │ the
+// producer's deals and notes │` — and under is where it belongs rather than
+// over the grid: the producer speaks ABOUT a record that has already been
+// dealt, and its notes are applied after the deal (`ui/produce.js state()`:
+// the base, then the stack). So it is the `<tfoot>`'s last merged row, drawn
+// by `grid.ts` beside the master's, and it is not in `SPECIALS` — that list is
+// the HEAD's, and a row in the head is a row above the music.
+
+/** the collapsed face: the producer's last sentence, and how many stand. */
+export function produceFace(A: TableAPI): string {
+  return A.produceFace();
+}
+
+/** `ui/produce.js mount`, seated. One node for the third time and the same
+ *  reason: the deal tree, the adjective sheet with every withheld word greyed
+ *  and its own reason printed, the stack of up to ten notes with their
+ *  percentages and their more / less / take-it-off, and the producer's own
+ *  undo. None of it is a vector; none of it has a cell. */
+export function produceSheet(A: TableAPI): Field[] {
+  return [{ kind: "node", node: A.produceNode() }];
+}
+
 /* ---- what the grid needs to know about them, in one table ------------- */
 
 export interface SpecialRow {
@@ -198,6 +258,13 @@ export interface SpecialRow {
   aria: string;
   face(A: TableAPI): string;
   sheet(A: TableAPI): Field[];
+  /** a `[data-live]` SIBLING of the head's button, or nothing. Only MOTIFS has
+   *  one: which motif is SOUNDING is a fact the clock knows and the face
+   *  cannot, and a lamp inside the button would put a control in a live
+   *  surface (test/motif-frozen A1). `grid.ts` caches the node, because lit
+   *  re-renders the row on every draw and a new element each time would drop
+   *  the clock's own writes on the floor. */
+  lamp?(A: TableAPI): HTMLElement | null;
 }
 
 export const SPECIALS: SpecialRow[] = [
@@ -208,7 +275,25 @@ export const SPECIALS: SpecialRow[] = [
   { k: "trules", id: "rules", word: "rules",
     aria: "the genre, as sentences you can edit",
     face: rulesFace, sheet: rulesSheet },
+  { k: "tmotifs", id: "motifs", word: "motifs",
+    aria: "the bank — every tune and beat this record holds, who reads each " +
+          "one, and where it came from; tap a name to point the selected cell " +
+          "at it",
+    face: motifsFace, sheet: motifsSheet,
+    lamp: (A) => A.motifLamp() },
 ];
+
+/** THE FOOTER'S OWN MERGED ROW, WHICH IS NOT IN `SPECIALS` and says so here
+ *  rather than in a comment three files away: `SPECIALS` is the HEAD's list
+ *  and `grid.ts thead` draws every member of it above the column heads.
+ *  PRODUCE is drawn under the master by `grid.ts mixRow`'s neighbour, with the
+ *  same `sp|` open key — so it is STICKY for the same reason the other four
+ *  are (every control in it recompiles) and the keyboard lets it alone. */
+export const PRODUCE: SpecialRow =
+  { k: "tproduce", id: "produce", word: "produce",
+    aria: "the producer — what has been said about this record, and what may " +
+          "be said next",
+    face: produceFace, sheet: produceSheet };
 
 /* ===================================================================== */
 /* ---- THE MIX ROW (§10b step 3) --------------------------------------- */

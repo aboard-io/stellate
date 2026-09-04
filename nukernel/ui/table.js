@@ -1397,6 +1397,18 @@ function rulesFace(A2) {
 function rulesSheet(A2) {
   return [{ kind: "node", node: A2.rulesNode() }];
 }
+function motifsFace(A2) {
+  return A2.motifsFace();
+}
+function motifsSheet(A2) {
+  return [{ kind: "node", node: A2.motifsNode() }];
+}
+function produceFace(A2) {
+  return A2.produceFace();
+}
+function produceSheet(A2) {
+  return [{ kind: "node", node: A2.produceNode() }];
+}
 var SPECIALS = [
   {
     k: "ttime",
@@ -1413,8 +1425,25 @@ var SPECIALS = [
     aria: "the genre, as sentences you can edit",
     face: rulesFace,
     sheet: rulesSheet
+  },
+  {
+    k: "tmotifs",
+    id: "motifs",
+    word: "motifs",
+    aria: "the bank — every tune and beat this record holds, who reads each one, and where it came from; tap a name to point the selected cell at it",
+    face: motifsFace,
+    sheet: motifsSheet,
+    lamp: (A2) => A2.motifLamp()
   }
 ];
+var PRODUCE = {
+  k: "tproduce",
+  id: "produce",
+  word: "produce",
+  aria: "the producer — what has been said about this record, and what may be said next",
+  face: produceFace,
+  sheet: produceSheet
+};
 function mixSheet(A2, name) {
   return [{ kind: "node", node: A2.voiceStrip(name) }];
 }
@@ -1545,6 +1574,7 @@ var SEL = null;
 var ANCHOR = null;
 var OPEN = null;
 var OPENFIELD = null;
+var ARM = null;
 var WIDTH = /* @__PURE__ */ new Map();
 var CLIP = null;
 var RO = null;
@@ -1592,6 +1622,12 @@ function bandTable(host, A2) {
       SHEETFIELDS = build();
     }
     return SHEETFIELDS;
+  };
+  const SPLAMPS = /* @__PURE__ */ new Map();
+  const spLamp = (sp) => {
+    if (!sp.lamp) return A;
+    if (!SPLAMPS.has(sp.id)) SPLAMPS.set(sp.id, sp.lamp(A2));
+    return SPLAMPS.get(sp.id) || A;
   };
   const LAMPS = /* @__PURE__ */ new Map();
   const lamp = (name) => {
@@ -1749,7 +1785,7 @@ function bandTable(host, A2) {
       toggle(openKey, true);
     }}
           ><b class="nu-spword">${sp.word}</b
-          ><span class="nu-spface">${face}</span></button>
+          ><span class="nu-spface">${face}</span></button>${spLamp(sp)}
       </th>
     </tr>`;
   });
@@ -1962,6 +1998,14 @@ function bandTable(host, A2) {
         draw();
         return;
       }
+      if (ARM) {
+        const m3 = ARM;
+        ARM = null;
+        SEL = { sec: sid, voice: name };
+        ANCHOR = null;
+        A2.pointCell(i5, vi, m3);
+        return;
+      }
       ANCHOR = null;
       toggle(openKey);
     }}
@@ -1974,6 +2018,7 @@ function bandTable(host, A2) {
   };
   const tfoot = (S2, cols) => b`<tfoot>
     ${mixRow(S2, cols)}
+    ${produceRow(S2)}
     ${footRow(
     S2,
     "perf",
@@ -2008,6 +2053,30 @@ function bandTable(host, A2) {
     </tr>
     ${OPEN === master ? openRow(S2, sheetFor(master, () => wrapOps(masterMixSheet(A2))), "master") : A}
     ${cols.map((c3) => OPEN === "mix|" + c3 ? openRow(S2, sheetFor(OPEN, () => wrapOps(mixSheet(A2, c3))), c3) : A)}`;
+  };
+  const produceRow = (S2) => {
+    const openKey = "sp|" + PRODUCE.id;
+    let face = "";
+    try {
+      face = PRODUCE.face(A2);
+    } catch (e4) {
+      face = "";
+    }
+    return b`<tr class="nu-footrow nu-prodrow" data-row="produce">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
+          aria-expanded=${String(OPEN === openKey)}
+          aria-label=${PRODUCE.word + " — " + PRODUCE.aria}
+          @click=${() => toggle(openKey)}
+          @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle(openKey, true);
+    }}
+          ><b class="nu-spword">${PRODUCE.word}</b
+          ><span class="nu-spface">${face}</span></button>
+      </th>
+    </tr>
+    ${OPEN === openKey ? openRow(S2, sheetFor(openKey, () => wrapOps(PRODUCE.sheet(A2))), PRODUCE.word) : A}`;
   };
   const mixCell = (name) => {
     const openKey = "mix|" + name;
@@ -2228,7 +2297,7 @@ function bandTable(host, A2) {
     const tg = e4.target;
     const tag = tg?.tagName;
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
-    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || STICKY(OPEN) && !!tg.closest(".nu-wopen"));
+    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || !!tg.closest(".nu-prodrow") || STICKY(OPEN) && !!tg.closest(".nu-wopen"));
     if (inSpecial && e4.key !== "Escape") return;
     if (meta && (e4.key === "z" || e4.key === "Z")) {
       e4.preventDefault();
@@ -2405,7 +2474,28 @@ function bandTable(host, A2) {
     },
     openCorner: () => {
       toggle("corner");
-    }
+    },
+    /* THE WRITE IS `A.pointCell`, WHICH IS avail.js's OWN `material.cell`
+       SHEET — not `putCell`. That sheet is the one owner of which cells a
+       voice of this kind may read (a drum cell is lanes, a line cell is
+       degrees: document.js:230), of the absent detent, and of the write; the
+       cell sheet's `motifs` row asks the same question through the same door,
+       so the bank and the sheet can never point a cell two different ways. */
+    pointMotif: (name) => {
+      const doc = A2.doc();
+      if (SEL) {
+        const i5 = doc.form.sections.findIndex((x2) => x2.id === SEL.sec);
+        const vi = doc.voices.findIndex((x2) => x2.name === SEL.voice);
+        if (i5 >= 0 && vi >= 0) {
+          ARM = null;
+          A2.pointCell(i5, vi, name);
+          return true;
+        }
+      }
+      ARM = name;
+      return false;
+    },
+    armedMotif: () => ARM
   };
 }
 export {

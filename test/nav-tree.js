@@ -16,13 +16,18 @@
  * state on purpose, which is what this file does.
  *
  * N1  no ↑ anywhere, at any depth, on any tab — it is ABSENT, not disabled
- * N2  ONE PATH: opening Band folds Motifs — one `aria-expanded="true"`
+ * N2  ONE PATH: opening Band folds Score — one `aria-expanded="true"`
  *     ancestor, only its children on the stripe, and exactly ONE <mark>
  *     (rewritten in place 2026-09-02; the old claim and Paul's reversal of it
- *     are at the check itself)
- * N3  a branch of ACTIONS marks nothing — its rows carry no aria-pressed at
- *     all (the 2026-08-28 law: fourteen `aria-pressed="false"` buttons would
- *     tell a screen reader there is a state to be in)
+ *     are at the check itself. It read "opening Band folds MOTIFS" until
+ *     2026-09-08: the Motifs tab is deleted with its pane and the second
+ *     branch is `Score`, which is the only other one `TABKIDS` has left)
+ * N3  a set of ACTIONS marks nothing — the fourteen motif transforms carry no
+ *     aria-pressed at all (the 2026-08-28 law: fourteen `aria-pressed="false"`
+ *     buttons would tell a screen reader there is a state to be in). It said
+ *     "a BRANCH of actions" until 2026-09-08 and drove the stripe; the
+ *     transforms are the MOTIFS row's sheet now and the tree has no branch of
+ *     actions left at all — the tombstone at the check carries the measurement
  * N4  every mark in the gutter is a thumb (44px) and the stripe is ONE column
  *     that never scrolls sideways, at 320 / 375 / 430 / 1280
  * N5  the foot reads where · seed · ? · log · opts · play, and #play is the
@@ -30,13 +35,18 @@
  * N6  a band member LIGHTS UP while it sounds and goes dark when the record
  *     stops — a class on the button, never a <mark>, and it is the playhead's
  *     red and not the meter's green
- * N8  A LEVEL LOOKS LIKE ONE: three depths on the stripe wear three inks on
- *     three grounds, monotonically quieter and deeper, each clearing 4.5:1 for
+ * N8  A LEVEL LOOKS LIKE ONE: the depths on the stripe wear an ink and a
+ *     ground apiece, monotonically quieter and deeper, each clearing 4.5:1 for
  *     the word AND its second line; the indent is depth x a step of at least
- *     0.7ch, and it is measured NOT to be what clipped any label
+ *     0.7ch, and it is measured NOT to be what clipped any label. It said
+ *     THREE depths until 2026-09-08; the tree is two levels deep now and the
+ *     tombstone at the check carries the count and where the third went
  * N9  the MOTIF that is sounding lights up while the record plays and goes
- *     dark on stop — a class plus `aria-current`, never a mark, and a join and
- *     not a floodlight (a cell nobody reads in this section stays dark)
+ *     dark on stop — a join and not a floodlight (a cell nobody reads in this
+ *     section stays dark). It was a row of the STRIPE until 2026-09-08; it is
+ *     a row of the BANK, in the Band table's MOTIFS row, since — same
+ *     `lightMotifs`, same `--clock`, and the tombstone at the check says
+ *     which half of the old spelling went with the stripe
  * N7  the list is the ONE thing that shrinks: with Band expanded at 390x844 the
  *     stripe overflows, `.nu-traylist` clips it (scrollHeight > clientHeight),
  *     and once it is scrolled to its end the LAST row stands clear of the foot
@@ -156,14 +166,23 @@ const RECORD = "#at=Kingston&y=1969&s=1";
      ui/eight.js `setChain` now guarantees it is. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  /* THE PAIR IS `Motifs` THEN `Band` SINCE 2026-09-04 (TABLE.md wave 2c).
-     `Structure` is deleted and its sections are CHILDREN OF BAND, so the two
-     branches this gate needs cannot be Band and Structure any more — they are
-     one branch. The claim and the gesture are unchanged: open a tab with
-     children, open another, and the first must be gone. Band arrives SECOND so
-     the assertion can name what its branch holds after wave 2c — the players
-     AND the sections, which is the table's two lists said downwards. */
-  await p.click('[data-k="toptab-Motifs"]');
+  /* THE PAIR IS `Score` THEN `Band` SINCE 2026-09-08 (TABLE.md §10b step 4).
+     IT READ: *"THE PAIR IS `Motifs` THEN `Band` SINCE 2026-09-04 (TABLE.md
+     wave 2c). `Structure` is deleted and its sections are CHILDREN OF BAND, so
+     the two branches this gate needs cannot be Band and Structure any more —
+     they are one branch."* `Motifs` is deleted the same way and one step
+     further in: the bank is a merged ROW of the Band table (`tmotifs`,
+     `__eightMotif`), so the tab, its `motiftab-` rows and `motifTrayItems` are
+     all gone. THE SECOND BRANCH IS THE ONLY OTHER ONE THERE IS — measured on
+     the boot record 2026-09-08, `TABKIDS` answers for `Band` and `Score` and
+     for nothing else, and every other root row is childless. `Score`'s branch
+     is the score's two views (`deck.view.not` / `deck.view.roll`), which is a
+     branch of two and enough to be folded.
+     The claim and the gesture are unchanged: open a tab with children, open
+     another, and the first must be gone. Band arrives SECOND so the assertion
+     can name what its branch holds after wave 2c — the players AND the
+     sections, which is the table's two lists said downwards. */
+  await p.click('[data-k="toptab-Score"]');
   await p.waitForTimeout(700);
   await p.click('[data-k="toptab-Band"]');
   await p.waitForTimeout(700);
@@ -172,7 +191,10 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     const doors = [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
       .map((x) => x.dataset.k || x.id).filter((k) => k !== "playops");
     return { doors, exp: T.expanded,
-      motifs: T.rows.filter((r) => r.depth === 1 && /^motiftab-/.test(r.key)).length,
+      /* `motifs:` STOOD HERE and counted `motiftab-` rows — the bank as a
+         branch of the stripe, deleted 2026-09-08. What is counted is the
+         branch that was folded, and that is Score's two views. */
+      views: T.rows.filter((r) => r.depth === 1 && /^deck\.view\./.test(r.key)).length,
       band: T.rows.filter((r) => r.depth === 1 && /^tab/.test(r.key)).length,
       secs: T.rows.filter((r) => r.depth === 1 && /^secnav/.test(r.key)).length,
       marks: document.querySelectorAll("#nu-tray mark").length,
@@ -180,54 +202,77 @@ const RECORD = "#at=Kingston&y=1969&s=1";
         .map((x) => x.dataset.k || x.id),
       on: T.mark };
   });
-  check(two.doors.length === 1 && two.motifs === 0 && two.secs > 0 &&
+  check(two.doors.length === 1 && two.views === 0 && two.secs > 0 &&
         two.exp.length === 1 && two.exp[0] === "toptab-Band",
-    "N2 · opening Band folds Motifs; one path — " + two.doors.length +
-    " expanded ancestor (" + JSON.stringify(two.doors) + "), " + two.motifs +
-    " motif rows, " + two.band + " player rows and " + two.secs +
+    "N2 · opening Band folds Score; one path — " + two.doors.length +
+    " expanded ancestor (" + JSON.stringify(two.doors) + "), " + two.views +
+    " score-view rows, " + two.band + " player rows and " + two.secs +
     " section rows on the stripe, the open path " + JSON.stringify(two.exp));
   check(two.marks === 1 && two.pressed.length === 1 &&
         two.pressed[0] === two.on,
     "N2 · …and exactly ONE <mark> and one aria-pressed, on the deepest open " +
     "thing inside the tab you are standing in (" + JSON.stringify(two.on) + ")");
 
-  /* ---- N3 A BRANCH OF ACTIONS MARKS NOTHING -------------------------- */
-  /* The 2026-08-28 law, re-made about a BRANCH instead of a level: "fourteen
-     `aria-pressed="false"` buttons would tell a screen reader there is a state
-     to be in". The motif transforms are the branch that has always carried it;
-     the section's three operations are the other one. What says where you are
-     is the branch's own mark, which IS pressed — that is the part the tree
-     changed, and it is asserted here rather than assumed. */
+  /* ---- N3 A SET OF ACTIONS MARKS NOTHING ----------------------------- */
+  /* The 2026-08-28 law: "fourteen `aria-pressed=false` buttons would tell a
+     screen reader there is a state to be in". The motif transforms are the set
+     that has always carried it.
+
+     RE-POINTED 2026-09-08 (TABLE.md §10b step 4), AND HALF OF IT RETIRED WITH
+     A MEASUREMENT. IT READ: *"The 2026-08-28 law, re-made about a BRANCH
+     instead of a level … The motif transforms are the branch that has always
+     carried it; the section's three operations are the other one. What says
+     where you are is the branch's own mark, which IS pressed — that is the
+     part the tree changed, and it is asserted here rather than assumed."* It
+     opened `toptab-Motifs`, opened a `motiftab-<name>` row under it, and read
+     the fourteen `motifop-*`/`motiftime-*` rows at DEPTH 2.
+
+     THERE IS NO BRANCH OF ACTIONS IN THE TREE ANY MORE, and that is a fact
+     about the design rather than a gap in this file. The section's operations
+     left the stripe on 2026-09-05 (TABLE.md §9a, *"NO OP LIVES IN THE NAV: the
+     tray keeps the Band tab and, at most, jump links"*) and the motif's
+     fourteen left with the pane on 2026-09-08 — they are a line at the foot of
+     the opened motif's sheet, back under the tune they rewrite. MEASURED on
+     the boot record the same day: `grep 'acts:' ui/eight.js` finds no tree
+     node that declares it, and `__eightTree()` answers with rows at depth 0
+     and depth 1 and nothing deeper, in every state the stripe can be driven
+     into. So the two halves that were about the BRANCH — that its children
+     carry `acts`, and that the mark sits on the parent motif — are retired
+     with the branch that made them true; N2 above still holds the stripe to
+     exactly one mark and one aria-pressed.
+
+     WHAT IS KEPT IS THE LAW ITSELF, at the fourteen buttons' new address. The
+     door is `__eightMotif(name)` — the two taps a thumb makes, `tmotifs` and
+     then that motif's `open` — and the reading is the same one: not one of
+     them may carry the attribute at all. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  await p.click('[data-k="toptab-Motifs"]');
-  await p.waitForTimeout(700);
-  const cellKey = await p.evaluate(() => {
-    const T = window.__eightTree();
-    return (T.rows.find((r) => /^motiftab-/.test(r.key)) || {}).key || null;
-  });
-  if (!cellKey) check(false, "N3 · no motif row to open");
+  const motifName = await p.evaluate(() => (window.__eightBank() || [])[0] || null);
+  const inMotif = motifName &&
+    await p.evaluate((n) => window.__eightMotif(n), motifName);
+  if (!inMotif) check(false, "N3 · no motif in the bank to open (" +
+    JSON.stringify(motifName) + ")");
   else {
-    await p.click('[data-k="' + cellKey + '"]');
     await p.waitForTimeout(500);
-    const acts = await p.evaluate((k) => {
-      const T = window.__eightTree();
-      const kids = T.rows.filter((r) => r.depth === 2);
-      const pressed = kids.filter((r) => {
-        const b = document.querySelector('[data-k="' + r.key + '"]');
-        return b && b.hasAttribute("aria-pressed");
-      }).map((r) => r.key);
-      const par = document.querySelector('[data-k="' + k + '"]');
-      return { n: kids.length, acts: kids.every((r) => r.acts), pressed,
-               parentPressed: par ? par.getAttribute("aria-pressed") : null,
-               marks: document.querySelectorAll("#nu-tray mark").length };
-    }, cellKey);
-    check(acts.n > 0 && acts.acts && acts.pressed.length === 0 &&
-          acts.parentPressed === "true" && acts.marks === 1,
-      "N3 · the open motif's " + acts.n + " transforms are a branch of ACTIONS: " +
-      "not one of them carries aria-pressed, and the mark is on the motif " +
-      "itself (" + JSON.stringify(acts) + ")");
+    const acts = await p.evaluate(() => {
+      const ops = [...document.querySelectorAll(
+        '#pan-band [data-k^="motifop-"], #pan-band [data-k^="motiftime-"]')];
+      return { n: ops.length, keys: ops.map((b) => b.dataset.k),
+               pressed: ops.filter((b) => b.hasAttribute("aria-pressed"))
+                 .map((b) => b.dataset.k),
+               marks: document.querySelectorAll("#nu-tray mark").length,
+               trayPressed: [...document.querySelectorAll(
+                 '#nu-tray [aria-pressed="true"]')].map((b) => b.dataset.k) };
+    });
+    check(acts.n === 14 && acts.pressed.length === 0 && acts.marks === 1 &&
+          acts.trayPressed.length === 1,
+      "N3 · the open motif's " + acts.n + " transforms are a set of ACTIONS: " +
+      "not one of them carries aria-pressed, and the stripe still wears " +
+      acts.marks + " mark on " + JSON.stringify(acts.trayPressed) + " (" +
+      JSON.stringify(acts.pressed) + ")");
   }
+  await p.evaluate(() => window.__eightMotif(null));
+  await p.waitForTimeout(200);
 
   /* ---- N4 EVERY MARK IS A THUMB AND THE STRIPE IS ONE COLUMN --------- */
   /* At the four widths `--tray-w`'s clamp bends at: 320 and 375 below the
@@ -247,8 +292,13 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     await p.evaluate(async () => {
       window.__eightUp();
       await new Promise((r) => setTimeout(r, 100));
-      const mo = document.querySelector('[data-k="toptab-Motifs"]');
-      if (mo) mo.click();
+      /* `toptab-Motifs` STOOD HERE and is `toptab-Score` since 2026-09-08:
+         the Motifs tab is deleted with its pane and Score is the other branch
+         (see N2's own note, which carries the measurement). The two clicks are
+         kept for the reason the paragraph above gives — what they build is
+         still the deepest state the widths have to hold. */
+      const other = document.querySelector('[data-k="toptab-Score"]');
+      if (other) other.click();
       await new Promise((r) => setTimeout(r, 400));
       const band = document.querySelector('[data-k="toptab-Band"]');
       if (band) band.click();
@@ -476,13 +526,31 @@ const RECORD = "#at=Kingston&y=1969&s=1";
      something is opaque, and computes the contrast itself. Nothing here is
      read off nu.css.
 
+     TWO DEPTHS SINCE 2026-09-08, AND IT IS COUNTED RATHER THAN WISHED.
+     IT READ: *"three depths are on the stripe at once"*, and it built them by
+     opening `toptab-Motifs` and then a `motiftab-<name>` row under it — the
+     bank at depth 1 and that motif's fourteen transforms at depth 2. The
+     Motifs tab is deleted with its pane (TABLE.md §10b step 4) and it was
+     carrying THE LAST DEPTH-2 BRANCH THE TREE HAD: the section's ops went on
+     2026-09-05 (§9a, "NO OP LIVES IN THE NAV") and the mix's plate rows went
+     with step 3, so what is left in `TABKIDS` is `Band` (players + sections)
+     and `Score` (two views), and no node in either declares `kids`. MEASURED
+     on the boot record 2026-09-08, at both widths below: `__eightTree()`
+     answers with rows at depth 0 and depth 1 and nothing deeper, in every
+     state a hand can drive the stripe into.
+     So the COUNT is two and the LAW is untouched — nu.css still writes a third
+     level and the moment a branch grows one this reads it, because the shape
+     below is `byDepth` and not three named rows. What is asserted is that
+     every depth the stripe actually has wears its own ink on its own ground,
+     quietening and deepening as it goes.
+
      THE FOUR CLAIMS:
-       · three depths are on the stripe at once and each wears a DISTINCT ink
-         on a DISTINCT ground (a depth cue that is one colour is not a depth
-         cue — which is exactly what shipped before this round: `--dim` on one
-         wash for every child row at every depth);
+       · the depths on the stripe each wear a DISTINCT ink on a DISTINCT
+         ground (a depth cue that is one colour is not a depth cue — which is
+         exactly what shipped before this round: `--dim` on one wash for every
+         child row at every depth);
        · MONOTONIC — the deeper the row the quieter the ink and the deeper the
-         ground, so three levels read as a thing inside a thing;
+         ground, so the levels read as a thing inside a thing;
        · every level clears 4.5:1, THE WORD AND ITS SECOND LINE BOTH (the old
          pair measured 4.42 and 4.06, which is how a contrast floor gets lost:
          nobody measured the row, only the token);
@@ -555,41 +623,52 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     await p.waitForTimeout(350);
     await p.evaluate(() => window.__eightUp());
     await p.waitForTimeout(150);
-    await p.click('[data-k="toptab-Motifs"]');
+    /* THE DEEPEST STATE THE STRIPE HAS, MADE BY HAND. It was `toptab-Motifs`
+       and then a `motiftab-` row under it; it is `toptab-Band` and then one of
+       its rows, which is as far down as the tree goes (see the count above).
+       The child is CLICKED and not merely present, because a marked row is
+       skipped by `REND` and the walk has to leave an unmarked one at each
+       depth to read. */
+    await p.click('[data-k="toptab-Band"]');
     await p.waitForTimeout(600);
-    const cell = await p.evaluate(() => (window.__eightTree().rows
-      .find((r) => /^motiftab-/.test(r.key)) || {}).key || null);
-    if (cell) { await p.click('[data-k="' + cell + '"]'); await p.waitForTimeout(500); }
+    const kid = await p.evaluate(() => (window.__eightTree().rows
+      .find((r) => r.depth === 1) || {}).key || null);
+    if (kid) { await p.click('[data-k="' + kid + '"]'); await p.waitForTimeout(500); }
     levels[w] = await p.evaluate(REND);
   }
   for (const w of [390, 1280]) {
     const L = levels[w], d = L.byDepth;
-    const three = d[0] && d[1] && d[2];
-    const inks = three ? new Set([d[0].ink, d[1].ink, d[2].ink]) : new Set();
-    const bgs = three ? new Set([d[0].bg, d[1].bg, d[2].bg]) : new Set();
-    check(three && inks.size === 3 && bgs.size === 3,
-      "N8 " + w + " · three depths, three inks, three grounds — " +
-      JSON.stringify(three ? { 0: [d[0].ink, d[0].bg], 1: [d[1].ink, d[1].bg],
-                               2: [d[2].ink, d[2].bg] } : d));
-    check(three && d[0].inkL < d[1].inkL && d[1].inkL < d[2].inkL &&
-          d[0].bgL > d[1].bgL && d[1].bgL > d[2].bgL,
+    /* THE DEPTHS THE STRIPE ACTUALLY HAS, IN ORDER, and there have to be at
+       least two of them — one level is not a hierarchy and a gate that read a
+       single row would pass on a tree that had lost its children. (It read
+       `const three = d[0] && d[1] && d[2]` until 2026-09-08; the tombstone
+       above carries the count and where the third went.) */
+    const D = Object.keys(d).map(Number).sort((a, b2) => a - b2);
+    const deep = D.length >= 2 && D.every((n, i) => n === i);
+    const inks = deep ? new Set(D.map((n) => d[n].ink)) : new Set();
+    const bgs = deep ? new Set(D.map((n) => d[n].bg)) : new Set();
+    check(deep && inks.size === D.length && bgs.size === D.length,
+      "N8 " + w + " · " + D.length + " depths, " + inks.size + " inks, " +
+      bgs.size + " grounds — " +
+      JSON.stringify(deep ? D.map((n) => [d[n].ink, d[n].bg]) : d));
+    check(deep && D.every((n, i) => i === 0 ||
+            (d[n].inkL > d[D[i - 1]].inkL && d[n].bgL < d[D[i - 1]].bgL)),
       "N8 " + w + " · …and it is MONOTONIC: the ink quietens and the ground " +
-      "deepens with every level — ink " + (three ? [d[0].inkL, d[1].inkL, d[2].inkL] : "?") +
-      ", ground " + (three ? [d[0].bgL, d[1].bgL, d[2].bgL] : "?"));
-    const ratios = three ? [d[0].ratio, d[1].ratio, d[2].ratio] : [];
-    const subs = three ? [d[0].subRatio, d[1].subRatio, d[2].subRatio]
-      .filter((x) => x != null) : [];
-    check(three && ratios.every((r) => r >= 4.5) && subs.every((r) => r >= 4.5),
+      "deepens with every level — ink " +
+      JSON.stringify(deep ? D.map((n) => d[n].inkL) : "?") + ", ground " +
+      JSON.stringify(deep ? D.map((n) => d[n].bgL) : "?"));
+    const ratios = deep ? D.map((n) => d[n].ratio) : [];
+    const subs = deep ? D.map((n) => d[n].subRatio).filter((x) => x != null) : [];
+    check(deep && ratios.every((r) => r >= 4.5) && subs.every((r) => r >= 4.5),
       "N8 " + w + " · …and every level clears 4.5:1, the word (" +
       JSON.stringify(ratios) + ") and its second line (" + JSON.stringify(subs) +
       ") on the ground each actually stands on");
-    check(three && L.step >= 6 && d[0].pad === 0 &&
-          Math.abs(d[1].pad - L.step) < 0.6 &&
-          Math.abs(d[2].pad - 2 * L.step) < 0.6 &&
+    check(deep && L.step >= 6 &&
+          D.every((n) => Math.abs(d[n].pad - n * L.step) < 0.6) &&
           (w > 400 || L.step >= 0.7 * L.ch) && L.lefts === 1,
       "N8 " + w + " · …and the indent is depth × " + L.step + "px (" +
       (L.step / L.ch).toFixed(2) + "ch) on the WORD, " +
-      JSON.stringify(three ? [d[0].pad, d[1].pad, d[2].pad] : []) +
+      JSON.stringify(deep ? D.map((n) => d[n].pad) : []) +
       ", with every button still on one left edge (" + L.lefts + ")");
     check(L.now.length === L.under.length &&
           L.now.every((k) => L.under.indexOf(k) >= 0),
@@ -610,63 +689,80 @@ const RECORD = "#at=Kingston&y=1969&s=1";
      section's own `cellAt(voice, si)` — the same call `motifLabels` hangs the
      score's `.nu-mot` caps from — joined to `lightBand`'s sounding players. So
      a lit row is a cell that somebody who is sounding is reading right now,
-     and a row nobody reads cannot light: every lit row's second line says
-     "read by …", which is asserted here because it is the cheap proof that the
-     lamp went through the record rather than through a timer. */
+     and a row nobody reads cannot light, which is the cheap proof that the
+     lamp went through the record rather than through a timer.
+
+     THE LAMP MOVED WITH THE BANK, 2026-09-08 (TABLE.md §10b step 4), AND THE
+     CLAIM IS RE-POINTED RATHER THAN RETIRED — the fact is the same fact, from
+     the same `lightMotifs`, on the surface the bank is drawn on now.
+     WHAT IT SAID AND WHAT IS GONE WITH THE STRIPE'S OWN ROWS: *"every lit
+     row's second line says 'read by …'"*, and *"lit is a CLASS plus
+     `aria-current`, never a mark: still one <mark> and one aria-pressed in the
+     stripe, and aria-current is on exactly the lit rows"*. Those were true of
+     a `motiftab-<name>` BUTTON in `#nu-tray`, where a lamp had to be
+     distinguishable from a mark; there are no motif rows in the stripe at all
+     now (`motifTrayItems` is deleted with the pane) and the bank's lamp is a
+     `<span class="nu-banklamp">` beside the name — a sibling, not the button,
+     so there is no attribute on a control to get wrong and nothing to
+     distinguish it from a mark. `.nu-motlamp` is its other half, on the SHUT
+     row's head, and it carries the sounding motif's NAME.
+     WHAT SURVIVES UNCHANGED, and it is every claim that was about the RECORD:
+     something lights within 15 s of #play, NOT everything does, every lit row
+     is one somebody reads (its own `readby|<motif>|<voice>` strip is the
+     reading), the paint is the playhead's red and never the measured green,
+     and every lamp goes out on stop.
+     THE DOOR IS `__eightMotif(null)` — `tmotifs` pressed, standing on the bank
+     — which is the two taps a thumb makes and the same hand `__eightRow` is. */
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  await p.click('[data-k="toptab-Motifs"]');
+  const onBank = await p.evaluate(() => window.__eightMotif(null));
   await p.waitForTimeout(600);
-  const bank = await p.evaluate(() => window.__eightTree().rows
-    .filter((r) => /^motiftab-/.test(r.key))
-    .map((r) => ({ key: r.key, sub: r.sub })));
+  const bank = await p.evaluate(() => window.__eightBank());
+  check(onBank && bank.length > 1,
+    "N9 · the bank is open in the table's MOTIFS row — " + bank.length +
+    " cells " + JSON.stringify(bank.slice(0, 4)));
   await p.evaluate(() => document.getElementById("play").click());
   const motLit = await p.waitForFunction(
-    () => document.querySelectorAll('#nu-tray [data-k^="motiftab-"].is-sounding')
-      .length > 0, null, { timeout: 15000 }).then(() => true).catch(() => false);
+    () => document.querySelectorAll("#pan-band .nu-banklamp > i").length > 0,
+    null, { timeout: 15000 }).then(() => true).catch(() => false);
   const mot = await p.evaluate(() => {
-    const lit = [...document.querySelectorAll("#nu-tray .is-sounding")];
-    return { lit: lit.map((b) => b.dataset.k),
-             current: [...document.querySelectorAll('#nu-tray [aria-current="true"]')]
-               .map((b) => b.dataset.k),
-             marks: document.querySelectorAll("#nu-tray mark").length,
-             pressed: document.querySelectorAll('#nu-tray [aria-pressed="true"]').length,
-             bar: lit.length ? getComputedStyle(lit[0]).borderInlineStartColor : null,
+    const rows = [...document.querySelectorAll("#pan-band .nu-bankrow")];
+    const on = rows.filter((r) => r.querySelector(".nu-banklamp > i"));
+    const nameOf = (r) => { const b = r.querySelector('[data-k^="motifpoint|"]');
+      return b ? b.dataset.k.split("|")[1] : null; };
+    return { of: rows.length, lit: on.map(nameOf),
+             /* THE PROOF THAT SOMEBODY READS IT: the row's own read-by strip,
+                which the bank draws from the record's cell maps. A lit row
+                with no reader would be a floodlight. */
+             readers: on.map((r) => [...r.querySelectorAll('[data-k^="readby|"]')]
+               .map((b) => b.dataset.k).length),
+             head: (document.querySelector(".nu-motlamp") || {}).textContent,
+             dot: on.length ? getComputedStyle(on[0].querySelector(".nu-banklamp > i"))
+               .backgroundColor : null,
              clock: getComputedStyle(document.documentElement)
                .getPropertyValue("--clock").trim(),
              meter: getComputedStyle(document.documentElement)
                .getPropertyValue("--meter").trim() };
   });
-  const motRows = mot.lit.filter((k) => /^motiftab-/.test(k));
-  check(motLit && motRows.length > 0 &&
-        mot.lit.every((k) => /^motiftab-/.test(k)),
+  check(motLit && mot.lit.length > 0 && mot.lit.every((n) => !!n),
     "N9 · a motif lights up within 15 s of #play: " + JSON.stringify(mot.lit) +
-    " of the bank's " + bank.length + " cells");
-  check(motRows.length < bank.length &&
-        motRows.every((k) => { const r = bank.find((x) => x.key === k);
-          return r && /read by/.test(r.sub || ""); }),
-    "N9 · …and it is a JOIN and not a floodlight: " + motRows.length + " of " +
-    bank.length + " cells lit, every one of them a cell somebody reads (" +
-    JSON.stringify(motRows.map((k) => (bank.find((x) => x.key === k) || {}).sub)) + ")");
-  check(mot.marks === 1 && mot.pressed === 1 &&
-        mot.current.length === mot.lit.length &&
-        mot.lit.every((k) => mot.current.indexOf(k) >= 0),
-    "N9 · …and lit is a CLASS plus `aria-current`, never a mark: still one " +
-    "<mark> and one aria-pressed in the stripe, and aria-current is on " +
-    "exactly the lit rows (" + JSON.stringify(mot.current) + ")");
-  check(!!mot.bar && (!rgb(mot.clock) || mot.bar.indexOf(rgb(mot.clock)) >= 0) &&
-        (!rgb(mot.meter) || mot.bar.indexOf(rgb(mot.meter)) < 0),
+    " of the bank's " + mot.of + " cells");
+  check(mot.lit.length < mot.of && mot.readers.every((n) => n > 0),
+    "N9 · …and it is a JOIN and not a floodlight: " + mot.lit.length + " of " +
+    mot.of + " cells lit, every one of them a cell somebody reads (" +
+    JSON.stringify(mot.readers) + ")");
+  check(!!mot.dot && (!rgb(mot.clock) || mot.dot.indexOf(rgb(mot.clock)) >= 0) &&
+        (!rgb(mot.meter) || mot.dot.indexOf(rgb(mot.meter)) < 0),
     "N9 · …and the lamp is the playhead's red (--clock " + mot.clock +
-    ") and never the measured green: " + JSON.stringify(mot.bar));
+    ") and never the measured green: " + JSON.stringify(mot.dot));
   await p.evaluate(() => document.getElementById("play").click());
   const motDark = await p.waitForFunction(
-    () => document.querySelectorAll("#nu-tray .is-sounding").length === 0 &&
-          document.querySelectorAll('#nu-tray [aria-current="true"]').length === 0,
+    () => document.querySelectorAll("#pan-band .nu-banklamp > i").length === 0,
     null, { timeout: 8000 }).then(() => true).catch(() => false);
   check(motDark,
-    "N9 · …and on stop every motif goes dark and gives up its aria-current");
+    "N9 · …and on stop every motif in the bank goes dark");
 
   check(!errs.length, "N· zero pageerrors / console errors " +
     JSON.stringify(errs.slice(0, 4)));

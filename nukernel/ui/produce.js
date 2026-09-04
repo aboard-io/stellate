@@ -537,6 +537,15 @@ const sentenceOf = (note) => { try { return Prod.sentence(note) || "that"; }
                                catch (e) { return "that"; } };
 const lineAt = (doc, i) => { const n = notes(doc)[i];
                              return n ? sentenceOf(n) : "that"; };
+/* THE LAST THING THE PRODUCER SAID, AND HOW MANY STAND — the PRODUCE row's
+   collapsed face (2026-09-08, TABLE.md §10b step 5). A face is a READING and
+   never a second opinion: it is the same `sentence` assembler `run` uses for
+   the row heading and the undo button's label, and the same ceiling the
+   caption inside the sheet counts against, so the shut row and the open one
+   cannot spell one stack two ways. */
+export const said = (doc) => { const l = notes(doc);
+  return { n: l.length, max: Prod.MAXNOTES,
+           last: l.length ? sentenceOf(l[l.length - 1]) : null }; };
 /** Say a thing. Saying it again is a PUSH, not an eleventh line (producer.js:1657). */
 export const say = (doc, verb, sid, dsc) =>
   thru(doc, (m) => Prod.addNote(m, verb, sid, dsc || null),

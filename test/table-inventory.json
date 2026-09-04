@@ -257,11 +257,11 @@
       "k": "tray-new",
       "pane": "Band / motif tray",
       "was": "+ new motif — mint one and give it to this member",
-      "home": "elsewhere: Motifs",
-      "field": "the bank is the record's material (§3) and Motifs keeps its own pane; a motif is minted and edited there",
-      "reach": "toptab-Motifs",
+      "home": "motifs-row",
+      "field": "the MOTIFS row's bank — `+ motif` under its list, at the same `addcell` address. The 'elsewhere: Motifs' home this row carried was true while Motifs was a pane; the bank is a row of this same table since 2026-09-08, so the home is no longer elsewhere and the reach is the row's own head.",
+      "reach": "tmotifs",
       "open": null,
-      "note": "TABLE.md §8 wave 2: 'Motif becomes Motifs and stays.'"
+      "note": "TABLE.md §8 wave 2: 'Motif becomes Motifs and stays.' ...AND §10b step 4, 2026-09-08: it stays, as a row. The address moved because the DOOR moved; the control did not."
     },
     {
       "k": "sample-play|<id>",
@@ -874,6 +874,225 @@
       "field": "the MIX row's master, `tmix` — one merged row in the table's footer, under the row of seats",
       "reach": "tmix",
       "open": null
+    },
+    {
+      "k": "toptab-Motifs",
+      "pane": "Motifs / the tab",
+      "was": "the Motifs tab — the whole pane's door",
+      "home": "motifs-row",
+      "field": "the merged MOTIFS row of the sheet, above the column heads with TIME and RULES; its face says how big the bank is and which motif you are standing in",
+      "reach": "tmotifs",
+      "open": null
+    },
+    {
+      "k": "motiftab-<name>",
+      "pane": "Motifs / nav tree (the bank level)",
+      "was": "one row per cell in the bank — the glyph, its place, its name, how long it is and who reads it; tapping it opened that motif",
+      "home": "motifs-row",
+      "field": "one BANK ROW per motif, with the two facts a 136px column could not carry: ui/preview.js's picture of the cell and its provenance word. `open` is the tap that goes in",
+      "reach": "motifopen|<motif>",
+      "open": "tmotifs",
+      "then": "motifback"
+    },
+    {
+      "k": "addcell",
+      "pane": "Motifs / nav tree (the bank level)",
+      "was": "+ motif — a new line cell, opened as you make it",
+      "home": "motifs-row",
+      "field": "under the bank's list, at the same address",
+      "reach": "addcell",
+      "open": "tmotifs",
+      "then": "motifback"
+    },
+    {
+      "k": "adddrumcell",
+      "pane": "Motifs / nav tree (the bank level)",
+      "was": "+ drum pattern — a new lane cell",
+      "home": "motifs-row",
+      "field": "under the bank's list, at the same address",
+      "reach": "adddrumcell",
+      "open": "tmotifs",
+      "then": "motifback"
+    },
+    {
+      "k": "readby|<cell>|<voice>",
+      "pane": "Motifs / the block",
+      "was": "the read-by strip — one chip per chair that reads this cell, with its instrument and the sections it reads it in; opens that player",
+      "home": "motifs-row",
+      "field": "under every BANK row, so the whole bank says who plays what without opening one; `motifs()` draws the same strip inside an opened motif",
+      "reach": "readby|<motif>|<voice>",
+      "open": "tmotifs",
+      "then": "motifback"
+    },
+    {
+      "k": "motif-name|<cell>",
+      "pane": "Motifs / the block",
+      "was": "the rename field — a motif's name is the composer's",
+      "home": "motif-sheet",
+      "field": "the first line of the opened motif's sheet",
+      "reach": "motif-name|<motif>",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "motifclear-<cell>",
+      "pane": "Motifs / the block",
+      "was": "clear — every step becomes a rest; the name and who plays it are kept",
+      "home": "motif-sheet",
+      "field": "beside the name, unchanged",
+      "reach": "motifclear-<motif>",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "motifplay-<cell>",
+      "pane": "Motifs / the block",
+      "was": "play once / loop / stop — the audition, with its refusal while the transport runs",
+      "home": "motif-sheet",
+      "field": "under the name, unchanged",
+      "reach": "motifplay-<motif>",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "g<seq><cell>play<n>{n,h,r}",
+      "pane": "Motifs / the bench",
+      "was": "the kind of each step — note, hold, rest",
+      "home": "motif-sheet",
+      "field": "the bench, drawn by the same `hookGrid` with the same registry; test/bench.test.js owns its geometry and drives it here",
+      "reach": "g1-<motif>play0n",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>",
+      "floor": 40,
+      "note": "THE FLOOR IS THE BENCH'S OWN AND IT IS NOT 44. Paul, 2026-08-27: the step row is \"play/hold/rest, pitch offset -12 to 12, velocity 0 to 7, tightened to one line\" — the ROW is 52px and test/bench.test.js B3 asserts exactly that (\"sixteen 52px lines\"), which is the tap target a thumb has; the three kind buttons inside it are 40 and the two bars 30, by that instruction, and were 40 and 30 in the pane this row replaced. A second 44px demand here would be a second owner contradicting B3 about a geometry nothing in this round touched."
+    },
+    {
+      "k": "g<seq><cell>deg<n>",
+      "pane": "Motifs / the bench",
+      "was": "the pitch bar — a step's degree, dragged",
+      "home": "motif-sheet",
+      "field": "the bench, unchanged",
+      "reach": "g1-<motif>deg0",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>",
+      "floor": 30
+    },
+    {
+      "k": "g<seq><cell>vel<n>",
+      "pane": "Motifs / the bench",
+      "was": "the weight bar — ghost / hit / accent",
+      "home": "motif-sheet",
+      "field": "the bench, unchanged",
+      "reach": "g1-<motif>vel0",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>",
+      "floor": 30
+    },
+    {
+      "k": "g<seq><cell>-addbar",
+      "pane": "Motifs / the bench",
+      "was": "+ measure — the cell grows by a bar",
+      "home": "motif-sheet",
+      "field": "under the bench, unchanged",
+      "reach": "g1-<motif>-addbar",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "g<seq><cell>-cutbar",
+      "pane": "Motifs / the bench",
+      "was": "- measure",
+      "home": "motif-sheet",
+      "field": "under the bench, unchanged",
+      "reach": "g1-<motif>-cutbar",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "panel-addcell",
+      "pane": "Motifs / the bench",
+      "was": "+ motif at the foot of the editor — the second door onto the bank, at its own address so two elements never share one data-k",
+      "home": "motif-sheet",
+      "field": "under the bench, unchanged",
+      "reach": "panel-addcell",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "fork|<cell>|<voice>",
+      "pane": "Motifs / the block",
+      "was": "give <voice> its own copy — one per reader, when more than one chair reads the cell",
+      "home": "motif-sheet",
+      "field": "at the foot of the opened motif, unchanged",
+      "reach": "fork|<motif>|<forker>",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "motifop-<word>",
+      "pane": "Motifs / nav tree (the motifops level)",
+      "was": "the seven transforms that rewrite the NOTES — backwards, shift left, shift right, upside down, up a step, down a step, wider",
+      "home": "motif-sheet",
+      "field": "one line at the foot of the opened motif's sheet, back under the tune they rewrite (where they stood until 2026-08-28); the addresses did not move",
+      "reach": "motifop-backwards",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "motiftime-<word>",
+      "pane": "Motifs / nav tree (the motifops level)",
+      "was": "the seven that rewrite the RHYTHM — off the beat, rhythm earlier, rhythm later, twice as busy, half as busy, each note in two, drop every fourth",
+      "home": "motif-sheet",
+      "field": "the same line, in the same order",
+      "reach": "motiftime-off the beat",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
+    },
+    {
+      "k": "toptab-Produce",
+      "pane": "Produce / the tab",
+      "was": "the Produce tab",
+      "home": "produce-row",
+      "field": "the footer's last merged row, under the mix — the producer speaks about a record that has already been dealt",
+      "reach": "tproduce",
+      "open": null
+    },
+    {
+      "k": "prod.name",
+      "pane": "Produce / the name plate",
+      "was": "the producer's plate — how many of the ten have been said",
+      "home": "produce-row",
+      "field": "the first line of the row's sheet, unchanged",
+      "reach": "prod.name",
+      "open": "tproduce"
+    },
+    {
+      "k": "prod.cast",
+      "pane": "Produce / the subject tree",
+      "was": "the tree of what may be spoken about",
+      "home": "produce-row",
+      "field": "unchanged",
+      "reach": "prod.cast",
+      "open": "tproduce"
+    },
+    {
+      "k": "cast|<who>",
+      "pane": "Produce / the subject tree",
+      "was": "one chip per subject — the sound, each player, the mix",
+      "home": "produce-row",
+      "field": "unchanged",
+      "reach": "cast|record",
+      "open": "tproduce"
+    },
+    {
+      "k": "sel|prod.<field>",
+      "pane": "Produce / the adjective sheet",
+      "was": "what to say about the chosen subject, with every withheld word greyed and its reason printed",
+      "home": "produce-row",
+      "field": "unchanged; the subject's own chip is the tap that opens it",
+      "reach": "sel|prod.word",
+      "open": "tproduce",
+      "then": "cast|record"
     }
   ],
   "new": [
@@ -1007,7 +1226,21 @@
       "reach": "tcol-add|line",
       "open": null,
       "why": "§9a: the `+` at the end of the PLAYER axis, in a head cell after the last player. Same three addresses build-the-band already had, which is what keeps the nine nav ops' T7 homes"
+    },
+    {
+      "reach": "motifpoint|<motif>",
+      "why": "§10a: *\"tapping a motif points the SELECTED cell at it (the formula bar's own write)\"*. NEW, and it is the reason the bank is in the table at all: in the pane a motif's name was a label and pointing a chair at it meant finding that chair's cell. The write is `avail.js`'s own `material.cell` sheet — the same door the cell sheet's `motifs` row writes through — so the bank and the sheet cannot point a cell two ways. With no cell selected it ARMS the next cell tap and wears `aria-pressed` until it is spent.",
+      "open": "tmotifs",
+      "then": "motifback"
+    },
+    {
+      "reach": "motifback",
+      "why": "the way out of one motif and back to the bank — the `↑` the stripe's motifops level carried, said as a word because there is no tree to climb: the bank and the motif are two states of one row.",
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     }
   ],
-  "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them.  ...AND THE MIX ROW, 2026-09-07 (§10b step 3). A third pane is DELETED: #deck (the Mix tab, ui/engineer.js `mount`) is the MIX row, which is the one special row that is NOT merged — §10a: *\"MIX is ALIGNED — one channel strip per voice column and the master in the corner.\"* The twelve rows appended below were MEASURED the way the others were: the rendered DOM of #deck was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion, in all six states the pane has (arrival plus the five plates), and it holds 10 control families plus the five tray children and the tab row. Every one of them is reachable through `tmix`, the master's own head, which is one tap at 320. TWO ROWS ALREADY IN THIS FILE CHANGED HOME rather than being added — `ins|<voice>|<n>` and `b|<voice>|<bus>`, the strip, from `column` to `mix-row` — because §10a gives the strip a row of its own and the column sheet's `seat` field is deleted with a pointer left in its place. ONE CONTROL IS DELETED AND NOT MOVED, with its measurement: the footer's seven `tmaster|<key>` cells wrote the same values through the same door as the main plate's own seven menus, and two controls for one fact is what the \"exactly ONE control page-wide\" law forbids.  T7 LEARNED A SECOND TAP IN THE SAME EDIT (`then`): the master's sheet is the BOARD, which has always been one panel holding one of five plates, so a walk that pressed only the row's head would report four plates' worth of controls missing and be right. `then` names the stage button — `boardtab|<kind>|<key>`, the same address nukernel/desk-gate.js presses. ONE THING THE PROBE FOUND IS NOT FILED AS A CONTROL: `board.legend`, the board's `dim is derived · bright is set · green is measured` line. It is a `<p class=\"nu-hint\">` and 185x34, and filing prose as a control is how a 44px floor becomes a lie; it travels with the board it captions."
+  "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them.  ...AND THE MIX ROW, 2026-09-07 (§10b step 3). A third pane is DELETED: #deck (the Mix tab, ui/engineer.js `mount`) is the MIX row, which is the one special row that is NOT merged — §10a: *\"MIX is ALIGNED — one channel strip per voice column and the master in the corner.\"* The twelve rows appended below were MEASURED the way the others were: the rendered DOM of #deck was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion, in all six states the pane has (arrival plus the five plates), and it holds 10 control families plus the five tray children and the tab row. Every one of them is reachable through `tmix`, the master's own head, which is one tap at 320. TWO ROWS ALREADY IN THIS FILE CHANGED HOME rather than being added — `ins|<voice>|<n>` and `b|<voice>|<bus>`, the strip, from `column` to `mix-row` — because §10a gives the strip a row of its own and the column sheet's `seat` field is deleted with a pointer left in its place. ONE CONTROL IS DELETED AND NOT MOVED, with its measurement: the footer's seven `tmaster|<key>` cells wrote the same values through the same door as the main plate's own seven menus, and two controls for one fact is what the \"exactly ONE control page-wide\" law forbids.  T7 LEARNED A SECOND TAP IN THE SAME EDIT (`then`): the master's sheet is the BOARD, which has always been one panel holding one of five plates, so a walk that pressed only the row's head would report four plates' worth of controls missing and be right. `then` names the stage button — `boardtab|<kind>|<key>`, the same address nukernel/desk-gate.js presses. ONE THING THE PROBE FOUND IS NOT FILED AS A CONTROL: `board.legend`, the board's `dim is derived · bright is set · green is measured` line. It is a `<p class=\"nu-hint\">` and 185x34, and filing prose as a control is how a 44px floor becomes a lie; it travels with the board it captions.",
+  "motifs": "2026-09-08 (TABLE.md §10b step 4): the Motifs PANE's own inventory, measured on the rendered `#pan-motif` at 390 across its ten states (the arrival plus one per cell in the bank) before the deletion — nine control families, the fourteen `motifOpsTrayItems` transforms, the ten `motiftab-<name>` rows of the stripe and the tab itself. Two homes: `motifs-row` is the BANK (the row shut is a face; the row open is one line per motif — ui/preview.js's picture, the name as the WRITE, the provenance word, the chairs that read it, and `open`), and `motif-sheet` is one motif OPENED from it (its rename field, clear, play/loop, the written staff, the bench, `+`/`- measure`, the forks and the fourteen transforms). The two are two states of one row, so every reach behind `motif-sheet` names `motifopen|<motif>` as its second tap and every reach behind `motifs-row` names `motifback` — each a no-op in the state that is already right, which is what makes the walk order-independent.",
+  "produce": "2026-09-08 (§10b step 5): the Produce PANE became the footer's last merged row and `ui/produce.js mount` did not change a line, so what is filed is what the panel draws at arrival and one tap in — the name plate with its count, the subject tree, its seventeen chips, and the adjective menus a chosen subject offers. The stack's own row controls (more / less / take it off / forget / undo) appear only once a note stands, which is `test/producer.browser.js`'s subject and not this walk's."
 }

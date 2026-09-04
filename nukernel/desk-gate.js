@@ -1648,9 +1648,22 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     for (const b of F.BUSES) { if (!b.engine) continue;
       for (const kn of b.knobs) if (/^fx[123]$/.test(kn.key))
         wantSeats.push("bus|" + b.bus + "|" + kn.key); }
+    /* ...READ AT `data-sel` AND NOT AT `#rack select[data-k]`, WHICH IS WHY
+       THIS CHECK HAS BEEN RED SINCE v272 (2026-09-08). The menus round made
+       `src/menus/` the one owner of every menu on this page, and a seat is one:
+       `slotEl` hands its spec to `selectField` now, so the addressed element is
+       whatever widget `pick.ts` picks — a `<select>` on a coarse pointer, a
+       chip strip at three words, a typed combo — and it wears `data-sel`, the
+       address every other reader in this file already uses (`sheets` above
+       collects at `[data-sel]` for exactly this reason). A query written for
+       one TAG asked whether the widget had changed; the claim is that the SEAT
+       is on its bus's plate, and the address is what says so. This is the same
+       one-line repair test/sheets.js's seat census took on 2026-09-07, for the
+       same v272 cause, and `BUSSEAT` was written at the top of this file
+       waiting for it. */
     const seatsDrawn = [].concat(...(await perBus(() => page.evaluate(() =>
-      [...document.querySelectorAll("#rack select[data-k]")]
-        .map((n2) => n2.dataset.k)
+      [...document.querySelectorAll("#rack [data-sel], #rack [data-k]")]
+        .map((n2) => n2.dataset.sel || n2.dataset.k)
         .filter((k) => /^bus\|[a-z]+\|fx[123]$/.test(k || ""))))).map(([, v]) => v));
     const missSeat = wantSeats.filter((k) => seatsDrawn.indexOf(k) < 0);
     ok(wantSeats.length > 0 && !missSeat.length,
@@ -1661,7 +1674,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   }
   const wantKeys = new Set(want.map((w) => w[0]));
   const inReg = drawnRack.filter((k) => wantKeys.has(k));
-  const extra = drawnRack.filter((k) => !wantKeys.has(k));
+  /* AND THE THREE SEATS ARE NOT "EXTRA" — the second half of the same v272
+     red. `want` skips every `SLOTKNOB` key on purpose (nine of the twelve
+     exist only once a seat is filled), and until v272 the three SEATS fell out
+     of `drawnRack` too, because it collected `data-sel` and a seat was a
+     `<select data-k>`. `src/menus/` gave it a `data-sel` and the same three
+     keys arrived in one list and not the other, so a walk whose whole point is
+     "no control names a row the rack does not draw" reported the three
+     controls the check directly above it had just asserted must be there.
+     They are claimed, by name, in that check; a hole in a registry walk is
+     honest exactly when what it leaves out is claimed somewhere. */
+  const extra = drawnRack.filter((k) => !wantKeys.has(k) && !BUSSEAT(k));
   const dupes = inReg.filter((k, i) => inReg.indexOf(k) !== i);
   ok(inReg.length === want.length && !dupes.length,
      "…and drawn ONCE each: " + inReg.length + " controls for " + want.length +

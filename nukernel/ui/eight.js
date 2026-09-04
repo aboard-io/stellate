@@ -333,6 +333,7 @@ import { mount as mountBoard, paintBoard, voiceMix,
 // exactly one place where a genre is registered, as it always did.
 import { produced as producedDoc, revise as reviseProd,
          mount as mountProduce, say as prodSay,
+         said as prodSaid,
          targets as prodTargets } from "./produce.js";
 /* THE BAND TABLE (2026-09-04, TABLE.md wave 2b) — the pane that REPLACED the
    Band pane and the Structure pane. Paul, 2026-09-03: *"a song can be
@@ -4861,185 +4862,286 @@ function forkRow(parent, name, readers) {
   parent.append(p);
 }
 
-/* ---------- THE MATERIAL AXIS, AND THE ONE NARROW REBUILD ---------------
-   Everything `viewSec` governs is in here and nowhere else: which composed
-   staves each motif's block is showing, and the drum grid. The form table and
-   every dev sheet show ALL the sections and do not move when you change which
-   one you are writing, which is what makes rebuilding this one <section> a
-   complete answer rather than a shortcut.
+/* ---------- THE MOTIFS ROW'S SHEET (2026-09-08, TABLE.md §10b step 4) ----
+   Paul, 2026-09-05: *"we could integrate rules into a special row, time + key
+   into a special row, then do the same with motifs."* §10a: *"MOTIFS is the
+   bank across the top with previews and provenance, and tapping a motif points
+   the SELECTED cell at it (the formula bar's own write)."*
 
-   A MOTIF BLOCK IS BARELY GOVERNED BY `viewSec` AT ALL NOW, and this is what
-   is left of a paragraph that said it was governed by half. It read: "a cell is
-   the same cell in every section, so its written staff, its editor and its
-   'read by' line are section-independent, and only the composed staves over it
-   change when you tap another section." The composed staves are gone
-   (2026-08-25), so the ONE thing the section still decides here is which
-   voice's register the written staff is engraved in — `motifs()`'s `lead`, and
-   nothing else. It is redrawn with the rest anyway, because the maker registry
-   (`hookCells`) and the kit's (`stepCell`) are cleared at the top of this
-   function and the playhead reads both: rebuilding half an axis and leaving
-   the other half pointing at a stale registry is the bug that ordering note is
-   about. `drawMaterial` pins the page on the axis's own <section>, whose top is
-   above everything this function replaces.
+   (`materialAxis(ax)` AND `drawMaterial()` STOOD HERE, 2026-08-24 to
+   2026-09-08 — the Motif PANE's builder and the narrow rebuild that kept a
+   section tap off the 248–595 ms full `draw()`. Both are DELETED with the
+   pane, and every argument either of them made is answered by where the motifs
+   are now rather than lost:
 
-   WHY THERE IS A SECOND ENTRY POINT AT ALL, with the number. A full `draw()`
-   is the simple, correct answer and it keeps this file's "one owner of
-   recompile" shape, so it was tried first and measured: a section tap costs
-   248-341 ms at 390px and **404-595 ms at 1400px** of frozen main thread
-   (2026-08-24, four taps at each width). That is the same order as the
-   1516 ms rebuild this whole round exists to delete — and a round that killed
-   the rebuild the clock caused, only to sell you one every time you look at
-   another section, would have moved the complaint rather than answered it.
-   Measured again with this in: **125-233 ms at 1400px and 114-165 ms at
-   390px**, same four taps, same machine. Not free, and not a freeze.
+     · THE HEADING, the `<h2>Motifs</h2>` the axis stuck to the top of the
+       pane, is the ROW'S OWN WORD — `motifs`, in the head, above the grid,
+       frozen with the column heads by `grid.ts stick()`. One word, one owner,
+       and it no longer needs a sticky rule of its own.
+     · THE NARROW REBUILD. `drawMaterial` existed because a full rebuild cost
+       a quarter of a second and a section tap caused one. Nothing in this row
+       causes a section tap, and the two things that DID call it are gone with
+       the strip that called them: the bank was a level of the stripe and
+       tapping a motif there rebuilt the axis. Opening a motif from the bank is
+       one `push(); draw()`, at the same price as every other op on this
+       surface — and the EDIT path, which is the one a finger is actually on, is
+       untouched: `edited()` -> `reEngraveWritten()` still re-engraves one
+       staff and rebuilds nothing (that is the law, and `hookGrid`'s own note
+       carries it).
+     · THE SCROLL ANCHOR (`anchorId = "ax-material"`) went with the axis. The
+       sheet opens INSIDE the table's own `<tbody>`, and `keepPanes` /
+       `restoreAnchor` in `draw()` are the page-wide owners of where the thumb
+       was; a second anchor pinned to an element that no longer exists is the
+       "declared but never arriving" shape this repo keeps a memory note about.
+     · THE REGISTRY CLEAR is the one thing that had to MOVE rather than go, and
+       it moved into `motifsNode` below, which is the paragraph under it.)
 
-   IT IS NOT A SECOND COMPILER. Nothing here decides anything: it calls the
-   same three builders draw() calls, in the same order, into the same element.
-   Every OTHER control on the page still ends at `changed()` -> `draw()`. */
-function materialAxis(ax) {
-  // A CONSTANT HEADING. This was a ternary — "the voices, as the verse plays
-  // them" / "the voices, as written" — and it changed ON THE CLOCK, inside
-  // #app, where nothing may (2026-08-24). Both facts it carried are said by the
-  // SCORE's caption at the top of this axis, which names the section, the two
-  // bars and the tense; they were said by the per-voice composed caption until
-  // that staff was deleted on 2026-08-25. One owner per fact, and the owner
-  // moved once.
-  //
-  // ...AND THERE IS ONE HEADING OVER THE MOTIFS, NOT TWO. For a few hours this
-  // axis read "the motifs" — a stack of bare step grids — and then "the
-  // voices", a stack of staves, so a motif's editor and a motif's notation
-  // were two screens apart. Paul, 2026-08-24: "The motifs should stay with
-  // their editors!!!" They do, in one run per motif (motifs(), below), so
-  // there is nothing left for a second heading to name. The voices are not
-  // lost with it: they are established in the band block, which is where Paul
-  // said he expected to find them — "'the band' is where I thought voices
-  // would be established, interpreting the progression, structure, and motif"
-  // (2026-08-24). Material holds the tunes; Cast holds who reads them.
-  //
-  // the maker registry is cleared HERE, ahead of everything that draws into it
+   WHY THE SHEET IS ONE NODE AND NOT A `Field[]`. `ui/rules.js`'s reason, word
+   for word: what this row holds is either the BANK — a preview, a name, a
+   provenance word, the chairs that read it — or ONE MOTIF's whole block, which
+   is `motifs()`: the rename field, the clear, the play-once and the loop, the
+   written staff engraved on a promise, the bench, `+`/`− measure`, the read-by
+   strip, the fork buttons and the fourteen transforms. Three of those register
+   themselves in playhead registries this file owns and nothing else can fill.
+   A `Field[]` of them would be a second owner of the motif editor. */
+
+/* THE LAMPS, AND THEY ARE THE SAME SHAPE `bandLamps` IS. Paul, 2026-09-03:
+   *"When motifs are open, light them up in the left nav when playing."* The
+   left nav is deleted with the pane, so the two surfaces that carry the answer
+   now are the ROW'S HEAD (one lamp, naming whichever motif is sounding, so the
+   fact is on the screen with the row shut) and the BANK'S ROWS (one lamp each,
+   the `<i>` that comes and goes, so with the row open you can see which of the
+   ten it is). Both are `[data-live]` and both are SIBLINGS of their button —
+   the clock writes inside `[data-live]` and nowhere else, and a control inside
+   one is the shape test/motif-frozen A1 forbids. `name === null` is the head's:
+   it carries the NAME, because a lamp with nothing beside it says nothing. */
+let motifLamps = [];
+function motifLampNode(name) {
+  const lamp = el("span", null, name == null ? "nu-motlamp" : "nu-banklamp");
+  lamp.dataset.live = "lamp";
+  lamp.setAttribute("aria-hidden", "true");
+  motifLamps.push({ name: name == null ? null : name, node: lamp });
+  return lamp;
+}
+
+/* THE COLLAPSED FACE. What the row says with nothing open is what the bank IS
+   — how many tunes and beats the record holds and their names — and, when you
+   are standing inside one, which one. Every word is read off the document; the
+   `·` join is the same one TIME and the master wear. */
+function motifsFace() {
+  const names = motifNames();
+  if (!names.length) return "nothing in the bank yet";
+  if (motifTab) return "in " + motifTab + " · " + names.length + " in the bank";
+  return names.length + " in the bank · " + names.join(", ");
+}
+
+/* THE PRODUCE ROW'S COLLAPSED FACE (2026-09-08, §10b step 5) — the producer's
+   LAST SENTENCE, and how many stand out of the ten it may say. Both come back
+   from `ui/produce.js said()`, which assembles the line with producer.js's own
+   `sentence` and counts against `Prod.MAXNOTES` — the same two owners the
+   sheet's own caption uses, so the shut row and the open one cannot spell one
+   stack two ways. A record nobody has said anything about says so, which is
+   this page's spelling of an absence everywhere else. */
+function produceFace() {
+  let S = null;
+  try { S = prodSaid(DOC); } catch (e) { S = null; }
+  if (!S || !S.n) return "nothing said — the record as the atlas dealt it";
+  return S.n + " of " + S.max + " · \u201c" + (S.last || "that") + "\u201d";
+}
+
+/* WHERE IT CAME FROM (§3), IN ONE WORD. `document.js provOf/provWord` is the
+   one owner: `own` is the genre's, `guest` is another genre's row, `hand` is
+   yours and is DERIVED from the fingerprint rather than stamped. */
+function provOfCell(name) {
+  try { return NuDocument.provWord(NuDocument.provOf(DOC, name)); }
+  catch (e) { return null; }
+}
+
+/* ---------- THE BANK ----------------------------------------------------
+   One row per motif, and the row is the four facts §10a names plus the way in:
+   the PICTURE (ui/preview.js, the same drawing the cell sheet's motif options
+   wear, one owner), the NAME as a BUTTON that points the selected cell, the
+   PROVENANCE word, the chairs that READ it (`readBy`, the panel's own strip),
+   and `open`. Under the list stand the two ways to grow it, which are the
+   stripe's `+ motif` / `+ drum pattern` at the addresses they have always had
+   (`addcell`, `adddrumcell`) — Paul, 2026-08-25: *"motifs: give me a way to add
+   a motif and a way to add a drum pattern."*
+
+   THE NAME IS THE WRITE AND THE WRITE IS NOT `putCell`. `tableGrid.pointMotif`
+   hands it to `A.pointCell`, which is avail.js's own `material.cell` sheet —
+   the one owner of which cells a voice of this kind may read (a grid is not a
+   line: document.js:230), of the absent detent and of the write. So the bank
+   and the cell sheet's `motifs` row can never point a cell two different ways.
+   WITH NO CELL SELECTED IT ARMS, and says so on itself with `aria-pressed`:
+   a hand that taps a name before a cell is early, not wrong. */
+function motifBank(box) {
+  const names = motifNames();
+  const armed = tableGrid && tableGrid.armedMotif ? tableGrid.armedMotif() : null;
+  const list = el("div", null, "nu-bank");
+  for (const name of names) {
+    const H = DOC.material.cells[name] || {};
+    const row = el("div", null, "nu-bankrow");
+    // THE PICTURE, and it is `previewOf`'s own drawing rather than a second
+    // one: a `<svg>` of the cell's steps, sixteen bars tall, no text.
+    const pic = el("span", null, "nu-bankpic");
+    pic.setAttribute("aria-hidden", "true");
+    /* THE ROW'S WIDTH IS THE BANK'S TO SAY. `preview()` writes an inline
+       `inline-size` of `--pv-base × bars` on any cell longer than one bar —
+       right for a chip in a column, wrong for a full-width line where a
+       two-bar tune would be twice a one-bar tune and both would be a thumbnail
+       against 250px of room. The same property, written by the caller that
+       owns the box: a stylesheet rule would lose to preview.js's own inline
+       style and a `!important` to win it would be the second owner. */
+    try { const pv = preview(H);
+          if (pv) { pv.style.inlineSize = "100%"; pic.append(pv); } } catch (e) {}
+    row.append(pic);
+    const head = el("p", null, "nu-bankhead");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "nu-bankname";
+    b.dataset.k = "motifpoint|" + name;
+    b.setAttribute("aria-pressed", String(armed === name));
+    b.append(el("b", name, "nu-bankword"));
+    const prov = provOfCell(name);
+    if (prov) b.append(el("small", prov, "nu-bankprov"));
+    const sub = motifSub(name, H);
+    b.setAttribute("aria-label", name + " — " + (prov || "in the bank") +
+      (sub ? ", " + sub : "") + " — point the selected cell at it");
+    b.addEventListener("click", () => {
+      if (!tableGrid || !tableGrid.pointMotif) return;
+      const wrote = tableGrid.pointMotif(name);
+      if (wrote) return;                      // the write redraws the page
+      /* ARMED, AND THE BUTTON SAYS SO WITHOUT A REBUILD. The sheet is built
+         once per open (`sheetFor`), so a `draw()` here would build a second
+         bank inside the same accordion; two attributes are the honest edit. */
+      for (const n of list.querySelectorAll(".nu-bankname"))
+        n.setAttribute("aria-pressed", String(n === b));
+      logPut("act", "point at " + name, "the next cell you tap");
+    });
+    head.append(b, motifLampNode(name));
+    const op = document.createElement("button");
+    op.type = "button";
+    op.className = "nu-bankopen";
+    op.dataset.k = "motifopen|" + name;
+    op.append(el("span", "open"));
+    op.setAttribute("aria-label", "open " + name + " — its staff, its editor " +
+      "and the fourteen ways to rewrite it");
+    op.addEventListener("click", () => { motifTab = name; push(); draw(); });
+    head.append(op);
+    row.append(head);
+    readBy(row, name);
+    list.append(row);
+  }
+  if (!names.length)
+    list.append(el("p", "nothing in the bank — make one", "nu-why"));
+  box.append(list);
+  const add = el("p", null, "nu-bankadd");
+  for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
+    const a = document.createElement("button");
+    a.type = "button";
+    a.dataset.k = kind === "drum" ? "adddrumcell" : "addcell";
+    a.append(el("span", label));
+    a.setAttribute("aria-label", label + " — a new cell in the bank, opened " +
+                                 "as you make it");
+    a.addEventListener("click", () => { motifTab = addCell(kind);
+                                        push(); draw(); });
+    add.append(a, document.createTextNode(" "));
+  }
+  box.append(add);
+}
+
+/* ---------- THE FOURTEEN TRANSFORMS, BACK BESIDE THE TUNE ---------------
+   They were two `.nu-tf-row` bands under the sixteen rows until 2026-08-28,
+   then the `motifops` LEVEL of the stripe (Paul: *"When I'm in a motif, the
+   motif operations should be the right nav elements on the view"*). The stripe
+   is what this round takes the row out of, so they come back to the surface
+   they rewrite — one line at the foot of the opened motif's sheet, which is
+   where a transform's own note always said they belonged ("under the tune they
+   rewrite").
+
+   NOTHING ELSE ABOUT THEM MOVED. The two SETS stay two sets in order (seven
+   that rewrite the NOTES, `DESIGNS`; seven that rewrite the RHYTHM, `TIMES`);
+   the FACE is the row's own glyph off `ui/glyph.js`, concatenated where a face
+   is a pair; the WORD is in the DOM as the button's own text, so the line reads
+   as its fourteen words with the stylesheet off; `design`/`designTime` is still
+   the only thing that decides what a button does; and the ADDRESSES are the
+   ones the stripe wore — `motifop-<word>` and `motiftime-<word>` — because an
+   address that has moved twice without moving is the cheapest kind of move
+   (`boardtab|<kind>|<key>` made the same journey a round ago). A DRUM cell
+   draws none of them: a kit has no degrees to move. */
+function motifOpsLine(box, name) {
+  const H = DOC.material.cells[name];
+  if (!H || H.kind === "drum") return;
+  const face2 = (d) => (d.g0 || "") + d.g;
+  const line = el("p", null, "nu-tf-row");
+  const put = (d, key, say, run) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = key;
+    b.append(el("i", face2(d), "nu-tfface"), el("span", d.w, "nu-tfword"));
+    b.setAttribute("aria-label", say);
+    b.addEventListener("click", () => { const C = DOC.material.cells[motifTab];
+      if (!C || C.kind === "drum") return; run(C); push(); draw(); });
+    line.append(b, document.createTextNode(" "));
+  };
+  for (const d of DESIGNS)
+    put(d, "motifop-" + d.w, d.w + " — rewrites " + name + " itself: " +
+        (d.moves ? "the steps change places and their kinds travel with them"
+                 : "the degrees move and the rhythm stays where it is"),
+        (C) => design(C, d));
+  for (const d of TIMES)
+    put(d, "motiftime-" + d.w, d.w + " — rewrites " + name + "'s rhythm: " +
+        "which steps sound and when, with the degrees left where they are",
+        (C) => designTime(C, d));
+  box.append(line);
+}
+
+/* ---------- THE SHEET ITSELF -------------------------------------------
+   THE REGISTRY CLEAR LIVES HERE NOW, and it is the one line of `materialAxis`
+   that had to move rather than go. `hookCells` (one entry per maker) and
+   `stepCell` (the kit's sixteen header cells) are what the playhead writes
+   into, and both used to be emptied at the top of the axis, ahead of
+   everything that drew into them. This node is that "ahead of everything": it
+   is built once per open (`grid.ts sheetFor`) and building it is the only way
+   a maker gets onto the page, so a stale entry pointing at a detached `<th>`
+   — the exact bug `drumGrid`'s own guard note describes — cannot outlive it.
+   `written` (the staff-by-name map `edited` re-engraves through) and
+   `motifSay` (the block's live sentence) are cleared by `motifs()` itself, and
+   are left there rather than hoisted: one owner each, where they are filled. */
+function motifsNode() {
+  const box = el("div", null, "nu-motifsheet");
   hookCells = [];
   gridSeq = 0;
-  // ...AND THE KIT'S, WHICH USED TO BE CLEARED BY `drumGrid` ITSELF because
-  // `drumGrid` ran on every pass. It does not any more — it runs only when the
-  // open motif IS a drum cell (2026-08-25, "make it part of motifs") — so a
-  // record whose kit tab you have just left would leave sixteen detached <th>s
-  // in the registry and the playhead would spend every beat writing into
-  // elements that are not on the page. That is the exact bug `drumGrid`'s own
-  // guard note describes, arriving from the other direction; it is cleared
-  // where every other registry is cleared, once, before anything draws.
   stepCell = [];
-  // THE SCORE IS NOT HERE ANY MORE — REWRITTEN 2026-08-27. It stood first in
-  // this axis from 2026-08-25 ("add a section ABOVE motifs which is the
-  // current playing music"), and it has MOVED, whole, to the SCORE DECK at
-  // the foot of the page (`deckBlock`, mounted after the board; the design is
-  // nukernel/ideal/score-deck.html and FUTURE.md Phase 3 names the move).
-  // Nothing about the picture changed in transit — same `scoreBlock`, same
-  // steady scroll, same red sounding ink, same captions — only its address:
-  // the band plays its own sheet music at the bottom, beside the piano roll
-  // and the export row, and this axis is left holding exactly what its
-  // heading says: the tunes and their editors. What Paul asked for in the
-  // 2026-08-25 sentence — the whole band, visible, moving — is answered
-  // better one screen down, where it no longer pushes the editors around.
-  //
-  // ...AND THE "the motifs" <h3> WENT WITH IT, 2026-08-27: while the axis
-  // heading read "Sheet music" and held the score too, the h3 said which half
-  // of the section you had reached. The heading says "Motifs" itself now
-  // (FUTURE.md §5), so a sub-heading repeating it was the second owner of one
-  // word — deleted, not moved.
-  // THE SECTION STRIP IS NOT HERE ANY MORE, AND THAT IS THE ROUND OF
-  // 2026-08-25. It stood exactly here and its own note argued the position
-  // well — "which composed staves a motif shows is decided by the section you
-  // are WRITING, so the control that moves that belongs over them" — but the
-  // form list moves that now, and one fact may have one owner. (Later the same
-  // day the composed staves went too, so the strip has lost even the argument
-  // it lost with.) See the
-  // tombstone over `forkRow` for Paul's sentence and what it cost. What is
-  // left in this axis is the motifs and their editors, which is all Paul ever
-  // asked to find here ("The motifs should stay with their editors!!!").
-  //
-  // ONE MOTIF AT A TIME, CHOSEN FROM A STRIP (Paul, 2026-08-25: "organize the
-  // motifs into a table with tabs, each motif a tab, like 'the band' section").
-  // The strip is drawn BEFORE `#staff` because it is navigation and #staff is
-  // notation; see motifTabRow.
-  /* (`motifTabRow(ax)` stood here — see the tombstone above. The bank is a
-     level of the stripe now and the axis opens on the motif itself. What the
-     strip also did on its way past was settle WHICH motif is open, and that
-     is `settleMotifTab` now: one function, called here first, so the axis
-     never waits on the navigation to know what it is drawing.) */
   settleMotifTab();
+  if (!motifTab) { motifBank(box); return box; }
+  /* ONE MOTIF, WITH THE WAY BACK ON IT. `← the bank` is the `↑` the stripe's
+     motifops level used to carry, said as a word instead of an arrow because
+     there is no tree to climb: the bank and the motif are two states of one
+     row, and a row says which state it is in. */
+  const back = el("p", null, "nu-bankback");
+  const bb = document.createElement("button");
+  bb.type = "button";
+  bb.dataset.k = "motifback";
+  bb.append(el("span", "← the bank"));
+  bb.setAttribute("aria-label", "back to the bank — every motif this record holds");
+  bb.addEventListener("click", () => { motifTab = null; push(); draw(); });
+  back.append(bb);
+  box.append(back);
+  /* TWO PARENTS, AND `#staff` MEANS WHAT ITS NAME SAYS (2026-08-25). The
+     staves go in `sys` and everything that is not notation — the name field,
+     the bench, the read-by strip, the forks — goes in the box beside it,
+     because test/motif-frozen.js A2 counts `#staff svg` and asserts it equals
+     the written measures: seven `<svg>` icons per motif inside `#staff` made
+     an engraving gate count buttons (measured: 27 svgs against 6 staves).
+     THE SECTION IS THE ONE YOU ARE WRITING, not the one that is sounding —
+     `editSec()` decides only which register the written staff is engraved in,
+     and that is the whole of what a section still decides in here. */
   const sys = el("div"); sys.id = "staff";
-  ax.append(sys);
-  // THE SECTION YOU ARE WRITING, not the one that is sounding. `motifs(sys,
-  // atSec)` is what made the editable half follow the playhead, and it was the
-  // whole of the confusion Paul named. The written staff under each motif is
-  // engraved from `phrase(name)` — the cell itself, with no section and no
-  // voice in it — so a boundary cannot move a note in it; since 2026-08-25 it
-  // cannot move anything in this axis at all, because there is no composed
-  // staff left for it to move and `editSec()` decides only which register the
-  // staff is drawn in.
-  //
-  // TWO PARENTS, AND `#staff` MEANS WHAT ITS NAME SAYS. The staves go in `sys`
-  // and the chosen motif's EDITOR goes straight after it in the axis itself.
-  // Until 2026-08-25 the editor was inside #staff too, and the seven designing
-  // buttons becoming pictures is what made that untenable: test/motif-frozen.js
-  // A2 counts `document.querySelectorAll("#staff svg")` and asserts it equals
-  // composed + written measures, so seven <svg> icons per motif made an
-  // engraving gate count buttons (measured: 27 svgs against 6 staves). The gate
-  // is a contract and its arithmetic is right — #staff holds notation — so the
-  // icons moved rather than the sum. Same judgement the score block made an
-  // hour earlier when it drew outside #staff for the same reason.
-  //
-  // "The motifs should stay with their editors!!!" is untouched by this: it is
-  // a statement about the ORDER things appear in on the page, which is
-  // unchanged — staff, then the grid that writes it, adjacent and in that
-  // order — and never was one about DOM nesting.
-  motifs(sys, ax, editSec());
-  // (`heading(ax, "the kit"); drumGrid(ax);` stood here — the drum grid as a
-  //  block of its own at the foot of the axis. Paul, 2026-08-25: "don't just
-  //  drop drum pattern in below; make it part of motifs." It is a motif block
-  //  now, with a tab in the same strip, and `motifs()` calls `drumGrid` when
-  //  the open tab is a drum cell. Nothing about the grid itself changed; what
-  //  changed is that the page stopped saying, with its own layout, that a beat
-  //  is a lesser kind of material than a tune.)
-}
-function drawMaterial() {
-  const ax = $("ax-material");
-  if (!ax) { draw(); return; }              // no axis yet: the page has not booted
-  const wasKey = document.activeElement && document.activeElement.dataset
-    ? document.activeElement.dataset.k : null;
-  const wasPicker = opensAPicker(document.activeElement);
-  keepPanes();
-  // THE STICKY <h2> IS THE AXIS'S OWN and it is not rebuilt: it is what
-  // `.nu-ax > h2` sticks with, and re-making it mid-scroll would flicker the
-  // one band that is supposed to stay put.
-  const h2 = ax.querySelector("h2");
-  // …and this axis keeps ITS height while it is rebuilt, for the reason draw()
-  // does (holdHeight): emptying it is what a scroll anchor reacts to.
-  const release = holdHeight(ax);
-  ax.textContent = "";
-  ax.append(h2 || el("h2", "Motifs"));
-  // THE STAVES STILL ARRIVE ON A PROMISE, so the axis is still shorter than it
-  // is about to be, and the page must not jump when they land. This pinned
-  // `#secs` — the strip you had just touched, which sat above everything being
-  // rebuilt. The strip is gone (see the tombstone over `forkRow`), so the
-  // anchor is the axis's own <section>, which is the element the strip was
-  // standing in the top of and is the same guarantee said one level up: its
-  // top is ABOVE every child this function replaces, so pinning it pins the
-  // page while the axis grows underneath.
-  anchorId = "ax-material";
-  const anchor = $(anchorId);
-  anchorWant = (anchorOff || !anchor) ? null : anchor.getBoundingClientRect().top;
-  anchorAt = Date.now();
-  try { materialAxis(ax); } finally { release(); }
-  putPanes();
-  /* …AND THE BANK'S OWN LEVEL OF THE STRIPE, which is the strip this axis used
-     to draw for itself (see the tombstone over `motifTabRow`). `paintTray`
-     rebuilds only if the set of cells moved; opening another motif writes two
-     attributes, which is what keeps `restoreFocus` — scoped to `#ax-material`
-     and therefore blind to the stripe — from having a button to lose. */
-  paintTray();
-  restoreFocus(ax, wasKey, wasPicker);
-  restoreAnchor();
+  box.append(sys);
+  motifs(sys, box, editSec());
+  motifOpsLine(box, motifTab);
+  return box;
 }
 
 /* ---------- ONE MOTIF, ONE BLOCK ---------------------------------------
@@ -5257,7 +5359,13 @@ function reEngraveWritten(name) {
   if (!W) return;
   const ph = phrase(name);
   const bars = Math.max(1, Math.round(ph.deg.length / 16));
-  if (bars !== W.hosts.length) { drawMaterial(); return; }
+  /* ...AND THE FALLBACK IS `draw()` SINCE 2026-09-08, because there is no
+     axis left to rebuild narrowly (the tombstone over `motifsNode` carries
+     why). It is reached only when a cell's LENGTH moved under a re-engrave,
+     which `+ measure` / `− measure` already answer with their own
+     `push(); draw()` — so this is the guard against a silent mismatch and not
+     a path a finger travels. */
+  if (bars !== W.hosts.length) { draw(); return; }
   for (let m = 0; m < W.hosts.length; m++)
     engrave(W.hosts[m].host, barSlice(ph, m), W.opts, W.hosts[m].then);
 }
@@ -5307,8 +5415,17 @@ const motifNames = () => cellNames();
    `motifTab` was still null when `motifs()` asked. Two copies of one rule is
    what caused it and one function is the fix; the axis is the first caller, so
    the stripe can never be the thing that decides what the page draws. */
+/* ...AND SINCE 2026-09-08 IT MAY SETTLE ON NOTHING, WHICH IS THE BANK. While
+   the motifs were a PANE the page was always inside one motif — there was
+   nowhere else in that pane to be — so this picked the first when the open one
+   went away. The row has two states, the bank and one motif (`motifsNode`), so
+   "no motif is open" is a real answer and picking one for a hand that asked
+   for the list would be the row opening a tune nobody chose. What is left is
+   the PRUNE, which is the half that was always load-bearing: a cell a fork
+   took away must not leave the row standing in a motif the record no longer
+   holds. */
 const settleMotifTab = () => { const n = motifNames();
-  if (!n.includes(motifTab)) motifTab = n[0] || null;
+  if (motifTab && !n.includes(motifTab)) motifTab = null;
   return n; };
 // ...AND WHICH CELLS A VOICE OF THIS KIND MAY READ, which is the honest half of
 // the same idea. A drum cell is LANES and a line cell is DEGREES: `toPhrase`
@@ -10279,6 +10396,38 @@ function tableAPI() {
     MASTERROWS: NuFields.MASTER,
     masterOf: (k) => (DOC.sound && DOC.sound.master && DOC.sound.master[k]) || null,
 
+    /* ---- THE MOTIFS ROW'S FOUR DOORS (2026-09-08, §10b step 4) ------
+       Every one of them is a function that already existed on this file's
+       side of the seam; what is new is the row that asks. `motifsNode` is the
+       ONE place the bank and the motif editor are built now, which is what
+       makes "the Motifs pane is deleted" a deletion rather than a second
+       drawing. */
+    motifsFace: () => motifsFace(),
+    motifsNode: () => motifsNode(),
+    motifLamp: () => motifLampNode(null),
+    /* THE WRITE, AND IT IS avail.js's OWN SHEET AND NOT `putCell` — the same
+       door `model.ts cellSheet`'s `motifs` row writes through (`A.sh(
+       "material.cell", …).set`), which is the one owner of which cells a voice
+       of this kind may read, of the absent detent and of the write. A cell
+       sheet and a bank that wrote through two doors would be two opinions
+       about whether a drummer may read a tune. */
+    pointCell: (i, vi, name) => {
+      const v = V()[vi], s2 = SEC()[i];
+      if (!v || !s2) return;
+      let sp = null;
+      try { sp = shSpec("material.cell", { voice: v.name, section: s2.id },
+                        null); } catch (e) { sp = null; }
+      if (!sp) return;
+      sp.set(name);
+      after();
+    },
+
+    /* ---- THE PRODUCE ROW'S TWO DOORS (2026-09-08, §10b step 5) ------ */
+    produceFace: () => produceFace(),
+    produceNode: () => { const box = el("div", null, "nu-prodsheet");
+      try { mountProduce(box, CTX); } catch (e) {}
+      return box; },
+
     /* ---- THE MIX ROW'S THREE DOORS (2026-09-07, §10b step 3) --------- */
     mixWord: (name) => seatWord(DOC, name),
     mixWritten: (name) => seatWritten(DOC, name),
@@ -10311,6 +10460,24 @@ function tablePanel(host) {
   normalize();
   structCells = [];
   bandLamps = [];
+  /* ...AND THE MOTIF LAMPS, FOR THE SAME REASON AND WITH ONE MORE: they are
+     rebuilt with the row and the sheet, so a list kept across a rebuild would
+     grow one dead node per draw. `motifLit` goes with them, because the
+     early-return that keeps `lightMotifs` cheap is a claim about the NODES it
+     last wrote and those nodes are gone. */
+  motifLamps = [];
+  motifLit = "";
+  /* ...AND THE TWO PLAYHEAD REGISTRIES THE MOTIF EDITORS FILL, for the reason
+     `materialAxis` used to clear them at the top of the axis: `hookCells` and
+     `stepCell` are lists of `<th>`s the clock writes into, and a panel rebuilt
+     with the MOTIFS row shut would leave every one of them pointing at a
+     detached element — the exact bug `drumGrid`'s own guard note describes.
+     `motifsNode` clears them again on its way to filling them (it is the only
+     thing that can, being the only thing that draws a maker), and this is the
+     other half: the state where nothing draws one at all. BEFORE `bandTable`,
+     because that call is what builds the sheet. */
+  hookCells = [];
+  stepCell = [];
   const A = tableAPI();
   const g = bandTable(host, A);
   tableGrid = g;
@@ -10597,13 +10764,22 @@ function lightBand(abs) {
    IT IS A SCHEDULE AND NOT A MEASUREMENT, the same honesty `lightBand` states:
    `--clock` red for "this is where the record is", never `--meter` green.
 
-   IT LIGHTS ONLY WHAT IS ON THE STRIPE. `trayBtn` holds the rows that are
-   PAINTED, so this writes nothing at all unless the Motif branch is open —
-   *"when motifs are open"* is true by construction and needs no condition of
-   its own. */
+   IT LIGHTS WHAT IS ON THE PAGE, AND SINCE 2026-09-08 THAT IS THE ROW AND THE
+   BANK (§10b step 4). `trayBtn` held the stripe's `motiftab-` rows and the
+   stripe is deleted; `motifLamps` holds what replaced them, filled by
+   `motifLampNode` as the row and its sheet are built and emptied by
+   `tablePanel`. There are two shapes in the one list and the `name` says
+   which: the ROW HEAD's lamp (`name === null`) carries the sounding motif's
+   NAME, because with the row shut a bare dot beside the word `motifs` would
+   say something is sounding and not what; a BANK ROW's lamp is the `<i>` that
+   comes and goes, exactly as a player's lamp in a column head is, because the
+   name is already the button beside it.
+   *"when motifs are open"* stays true by construction: with the row shut there
+   is one lamp and it is the head's; with it open there are as many as the bank
+   has rows. */
 let motifLit = "";
 function lightMotifs(voices) {
-  if (!trayBtn) return;
+  if (!motifLamps.length) return;
   const want = new Set();
   if (voices && voices.size) {
     const lead = LINES()[0];
@@ -10615,12 +10791,23 @@ function lightMotifs(voices) {
       if (name) want.add(name);
     }
   }
-  const sig = [...want].sort().join(",");
+  const sig = [...want].sort().join(", ");
   if (sig === motifLit) return;
   motifLit = sig;
-  for (const [k, b] of trayBtn) {
-    if (!b || k.slice(0, 9) !== "motiftab-") continue;
-    setSounding(b, want.has(k.slice(9)));
+  for (const L of motifLamps) {
+    if (!L.node) continue;
+    if (L.name === null) {
+      /* THE HEAD'S OWN, AND IT IS A WORD. `__eightFrozen` empties a live
+         element's CHILDREN and keeps its attributes, so a text node is the
+         right shape for it and the frozen half of the page stays
+         byte-identical across a section boundary. */
+      if (L.node.textContent !== sig) L.node.textContent = sig;
+      continue;
+    }
+    const on = want.has(L.name);
+    if (!!L.node.firstChild === on) continue;
+    L.node.textContent = "";
+    if (on) L.node.append(el("i"));
   }
 }
 let stepTimers = [];
@@ -10999,7 +11186,17 @@ const TABS = [
      pointer to the board — and `#pan-tempo` is out of index.html with the tab.
      §10a: "Rules, Time, Motifs, Mix, Produce, Where as PANES are deleted the
      same way, one at a time, as each becomes a row or a sheet.") */
-  ["Motifs",  "pan-motif"],
+  /* (`["Motifs", "pan-motif"]` STOOD HERE, to 2026-09-08. TABLE.md §10b step 4:
+     *"MOTIFS row (the bank, ui/preview.js previews, provenance words; the
+     bench opens from a motif as its sheet)."* §10a: *"MOTIFS is the bank
+     across the top with previews and provenance, and tapping a motif points
+     the SELECTED cell at it."* Every control the pane drew is inside the
+     table's own merged MOTIFS row — the bank with a preview, a provenance
+     word and a read-by strip per motif; and, one tap in, that motif's rename
+     field, clear, play, loop, written staff, bench, `+`/`- measure`, forks and
+     fourteen transforms. `#pan-motif` is out of index.html with the tab.
+     §10a: "Rules, Time, Motifs, Mix, Produce, Where as PANES are deleted the
+     same way, one at a time, as each becomes a row or a sheet.") */
   ["Band",    "pan-band"],
   /* (`["Mix", "deck"]` STOOD HERE, 2026-08-27 to 2026-09-07. TABLE.md §10b
      step 3: *"MIX row (engineer.js's strips per column, the master in the
@@ -11015,7 +11212,17 @@ const TABS = [
      `#deck` is out of index.html with the tab. §10a: "Rules, Time, Motifs,
      Mix, Produce, Where as PANES are deleted the same way, one at a time, as
      each becomes a row or a sheet.") */
-  ["Produce", "produce"],
+  /* (`["Produce", "produce"]` STOOD HERE, to 2026-09-08. TABLE.md §10b step 5:
+     *"PRODUCE row."* §10a draws it merged UNDER the mix — *"│ PRODUCE │ the
+     producer's deals and notes │ (merged, expandable)"* — and under is where
+     it belongs rather than over the grid: the producer speaks ABOUT a record
+     that has already been dealt, and its notes are applied after the deal
+     (`ui/produce.js state()`: the base, then the stack). `#produce` is out of
+     index.html with the tab, and `ui/produce.js mount` is called from one
+     place now, `tableAPI().produceNode()`, with the same `CTX` — so every
+     `evolve` a note lands through is the one it always was. §10a: "Rules,
+     Time, Motifs, Mix, Produce, Where as PANES are deleted the same way, one
+     at a time, as each becomes a row or a sheet.") */
   ["Score",   "scoredeck"],
   ["Video",   "videodeck"],
   /* Screensaver rides with Score/Video/Export — the record LOOKED AT rather
@@ -11067,7 +11274,12 @@ const BUILD = {
      builders are deleted with the panel; what each of them DREW is a field of
      the table's TIME row — see the tombstone in `TABS` and
      `src/table/special.ts timeSheet`.) */
-  Motifs: (host) => materialAxis(axis(host, "ax-material", "Motifs")),
+  /* (the `Motifs` builder STOOD HERE — one call to `materialAxis`, the pane's
+     own axis. `materialAxis` and its narrow rebuild `drawMaterial` are DELETED
+     with the panel; the tombstone over `motifsNode` carries what each of the
+     four things they did is answered by now. The bank and the motif editor are
+     the MOTIFS row's sheet, built through `tableAPI().motifsNode()`. See the
+     tombstone in `TABS`.) */
   /* ===== BAND IS THE TABLE, 2026-09-04 (TABLE.md wave 2b) ==============
      It read `Band: (host) => bandBlock(axis(host, "ax-band", "The band"))`.
      `bandBlock` and `structurePanel` are DELETED with the two panes they drew
@@ -11079,7 +11291,10 @@ const BUILD = {
   /* (`Mix: (host) => mountBoard(host, CTX)` STOOD HERE. `mountBoard` is
      unchanged and is called from one place now — the table's `boardRack()`
      door, which is the MIX row's corner sheet. See the tombstone in `TABS`.) */
-  Produce: (host) => mountProduce(host, CTX),
+  /* (`Produce: (host) => mountProduce(host, CTX)` STOOD HERE. `mountProduce`
+     is unchanged and is called from one place now — the table's
+     `produceNode()` door — so the panel is the PRODUCE row's sheet rather than
+     a tab's. See the tombstone in `TABS`.) */
   Score: (host) => deckBlock(host),
   /* THE VIDEO DECK (2026-09-01). It returns a stop(), which nothing else here
      does, because it owns a rAF loop and a <video>: a tab rebuild that left
@@ -11923,7 +12138,16 @@ const treePath = (key) => {
 const TABKIDS = {
   /* (`Time: null` STOOD HERE — the Time tab had no children and now has no
      row either.) */
-  Motifs: () => motifTrayItems(),
+  /* (`Motifs: () => motifTrayItems()` STOOD HERE — the bank as a level of the
+     stripe, with each motif's fourteen transforms as its children. Both went
+     with the pane (2026-09-08): the BANK is the MOTIFS row's own sheet, one
+     row per motif with the picture and the provenance the column was too
+     narrow to carry, and the FOURTEEN are a line at the foot of the opened
+     motif's sheet — back under the tune they rewrite, which is where they were
+     until 2026-08-28 and where their own note always said they belonged. The
+     homes are filed: `test/table-inventory.json` carries `motiftab-<name>`,
+     `addcell`, `adddrumcell`, `motifop-<word>` and `motiftime-<word>` with
+     their home `motifs-row`, which is T7's law for every deleted control.) */
   /* BAND IS THE TABLE, SO ITS BRANCH IS THE TABLE'S TWO LISTS — the columns
      (the players) and then the rows (the sections), each with its own ops as
      children. `Structure: () => sectionTrayItems()` stood beside it until
@@ -12325,114 +12549,34 @@ function openVoice(name) {
    are eight verbs would be eight rows of the one column that also has to hold
    twelve tabs, a band, and a form. The tempo editor is a PANEL with room. */
 
-/* THE MOTIF LEVEL — `motifTabRow`'s strip, moved whole, with its arguments:
+/* ===== THE MOTIF LEVEL IS GONE WITH THE PANE (2026-09-08) ==============
+   `motifTrayItems()` STOOD HERE — the bank as a level of `#nu-tray`, one row
+   per cell with `kindGlyph`'s ♪ / ◉, the cell's place in the bank as a digit,
+   `motifSub` as a second line, the fourteen transforms as `kids()`, and the
+   two ways to grow it (`addcell`, `adddrumcell`) at the foot. TABLE.md §10b
+   step 4 makes the bank the MOTIFS ROW's own sheet, and §10a's whole reason is
+   that the row has ROOM the column never had: a preview picture, a provenance
+   word and a read-by strip per motif, none of which fit in 136px.
 
-   "A motif is one of two KINDS — a tune or a beat — and `H.kind === 'drum'` is
-   the record's own word for which, so the strip borrows the voices' marks: ♪
-   for a motif, ◉ for a drum pattern, off the one table in ui/glyph.js. The
-   digit is the cell's place in the bank. The NAME is the accessible name, the
-   `.nu-vh` word and what a hold prints, because a motif's name is the
-   composer's and no picture can carry it — `psalm` and `neume` are the sort of
-   word this box exists to let somebody choose. (The block under the strip
-   prints it too — 'psalm — read by cantor' — so nothing about which motif is
-   open depends on the tab alone.)"
-
-   "A TAB IS FOR LOOKING. It used to sound the motif as well, which read as a
-   drum pad while you were writing and as a trap while you were browsing.
-   Hearing is the play button's job now, so moving tabs only ends what the last
-   one was doing."
-
-   "`drawMaterial()` AND NOT `draw()`: which motif is open changes exactly one
-   axis, and drawMaterial is the narrow rebuild that already keeps the pane
-   scrolls, the focus key and the scroll anchor."
-
-   "AND TWO WAYS TO GROW THE BANK (Paul, 2026-08-25: 'motifs: give me a way to
-   add a motif and a way to add a drum pattern')… IN THE STRIP AND NOT UNDER
-   IT, exactly like the band's `+ line` / `+ bass` / `+ drums`. The two
-   surfaces are deliberately the same object and a person who has learned one
-   has learned both." They are one object more literally than that note could
-   have meant it: both are levels of this stripe now, built by two functions
-   that read the same way. */
-function motifTrayItems() {
-  const names = settleMotifTab();
-  const out = names.map((name, i) => {
-    const H = DOC.material.cells[name] || {};
-    const drum = H.kind === "drum";
-    return { key: "motiftab-" + name,
-             glyph: kindGlyph(drum ? "drums" : "line"), num: i + 1, word: name,
-             say: name + " — " + (drum ? "a drum pattern" : "a motif") +
-                  ", " + (i + 1) + " of " + names.length + " in the bank",
-             on: name === motifTab,
-             /* THE SECOND LINE IS HOW LONG AND WHO READS IT — REWRITTEN
-                2026-09-02 (slice 2c). It said the KIND and the length ("a
-                motif · 16 steps") and its own note handed the readers to this
-                slice: *"The 'read by' strip Paul asked for is the PANEL's
-                (wave 2c); one line in a column this narrow says the kind and
-                the length."* The kind is already the GLYPH (♪ / ◉, one table
-                in ui/glyph.js), so saying it again in words was the second
-                owner of one fact in eleven characters. What the line could not
-                say is the thing Paul asked the nav for one branch over — *"On
-                the nav I need to know what they're playing"* — which for a
-                motif is who plays it. So: "2 bars · read by cantor, schola",
-                both halves read off the record, and a cell nobody reads says
-                its length and stops rather than saying "read by nobody" in a
-                column this narrow. */
-             sub: motifSub(name, H),
-             /* AND ITS FOURTEEN TRANSFORMS ARE ITS CHILDREN. `trayLevel =
-                "motifops"` stood in the act below and the way back was a ↑;
-                the transforms are `kids()` now, only for the OPEN cell (each
-                transform is one address and two cells expanded at once would
-                draw two of each), and a DRUM cell answers with an empty list —
-                which is the same arithmetic `trayNow` used to do, made once,
-                where the cell is. */
-             acts: true,
-             kids: () => (name === motifTab ? motifOpsTrayItems() : []),
-             /* AND TAPPING A MOTIF GOES INTO IT (2026-08-28), which is the
-                stripe's own "descend by arriving" applied one level down:
-                opening a tab IS going into it, and opening a motif is going
-                into that motif. `↑` comes back here. Tapping the marked one
-                descends too — it is the way back DOWN after `↑`, and it is
-                the gesture `showTab` already gives the root level. */
-             act: () => {
-               const was = motifTab;
-               motifTab = name;
-               if (was !== name && (motifLoop || motifOnce)) auditionOff();
-               drawMaterial();
-               markLink();
-             } };
-  });
-  for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
-    out.push({ key: kind === "drum" ? "adddrumcell" : "addcell",
-               glyph: "+" + kindGlyph(kind === "drum" ? "drums" : "line"),
-               word: label,
-               say: label + " — a new cell in the bank, opened as you make it",
-               /* ...AND ADDING ONE DOES NOT DESCEND. Growing the bank is a
-                  BANK operation and the answer to it is the bank with one more
-                  thing in it — a stripe that dropped into the new cell's
-                  transforms would take the `+ motif` button out from under a
-                  thumb that is adding two. The cell is opened in the panel, as
-                  it always was; tapping its mark goes in. */
-               /* ...AND IT DESCENDS NOW — A REVERSAL, 2026-09-02 (slice 2c).
-                  What stood here, kept because the argument was a real one:
-                  *"AND ADDING ONE DOES NOT DESCEND. Growing the bank is a BANK
-                  operation and the answer to it is the bank with one more
-                  thing in it — a stripe that dropped into the new cell's
-                  transforms would take the `+ motif` button out from under a
-                  thumb that is adding two."*
-                  It lost to Paul's B8: *"It should be easy to make new motifs
-                  … and jump back the motif editor."* The measurement that
-                  settles it is that the thing this drops into is NOT the
-                  transforms: the tree unfolds the CELL's own row, which stands
-                  in the same list, with `+ motif` still under it and one row
-                  further down. So the cost the old note names is not paid, and
-                  the gesture Paul asked for is. The narrow half of the earlier
-                  reversal (hiring a player descends) is now the whole rule. */
-               act: () => { motifTab = addCell(kind);
-                            expand("motiftab-" + motifTab, true);
-                            push(); draw(); } });
-  }
-  return out;
-}
+   EVERY ARGUMENT THE LEVEL MADE IS ANSWERED BY THE ROW, and each is worth
+   naming because each was a real one:
+     · "A motif is one of two KINDS and the strip borrows the voices' marks."
+       The bank draws the CELL ITSELF — ui/preview.js's picture, which shows a
+       beat as lanes and a tune as steps — so the kind is not a glyph standing
+       in for a picture, it is the picture.
+     · "The NAME is the accessible name … a motif's name is the composer's and
+       no picture can carry it." Unchanged: the name is the button, in words,
+       and it is also the WRITE (`motifpoint|<name>` points the selected cell).
+     · "`drawMaterial()` AND NOT `draw()`." There is no axis to rebuild
+       narrowly; opening a motif is one `push(); draw()` like every other op on
+       this surface, and the EDIT path — the one a finger is on — still never
+       rebuilds at all (`edited` -> `reEngraveWritten`).
+     · "TWO WAYS TO GROW THE BANK … the two surfaces are deliberately the same
+       object." They still are, and more literally: `+ motif` / `+ drum
+       pattern` stand under the bank's list at `addcell` / `adddrumcell`, the
+       same addresses, beside the band's own `+ player` in the same table.
+   `motifSub` below did NOT go with it — the bank's row prints the same "2 bars
+   · read by cantor, schola" line, so the second line has one owner still. */
 
 /* A CELL'S SECOND LINE IN THE GUTTER: how long it is, and who reads it.
    BOTH OFF THE RECORD. The bars are the cell's own steps over the meter's
@@ -12460,58 +12604,31 @@ function motifSub(name, H) {
     .filter(Boolean).join(" · ") || null;
 }
 
-/* THE MOTIF-OPERATIONS LEVEL — the two `.nu-tf-row` bands that used to sit
-   under the sixteen rows (ui/eight.js hookGrid, where the tombstone carries
-   the move and the reason for every argument that came with it).
+/* ===== THE MOTIF-OPERATIONS LEVEL IS GONE, AND THE FOURTEEN WENT BACK =====
+   2026-09-08. `motifOpsTrayItems()` STOOD HERE — the third depth of the
+   gutter (root → the bank → this motif's operations), fourteen marks in two
+   sets, `DESIGNS` then `TIMES`, read at CLICK time so `paintTray`'s
+   repaint-in-place could not bind a stale motif.
 
-   FOURTEEN MARKS, IN TWO SETS, IN ORDER: the seven that rewrite the NOTES
-   (`DESIGNS`, `design`) and the seven that rewrite the RHYTHM (`TIMES`,
-   `designTime`). The two sets were two paragraphs because "fourteen pictures
-   in one wrapped paragraph is a wall"; in a column there is no wrapping to do,
-   so what separates them is the order and the sentence each mark says when you
-   hold it. THE FACE IS THE ROW'S OWN GLYPH, taken off the same table — where a
-   face is a PAIR (`∧∨`, `▫▪`) the two glyphs are concatenated, which loses the
-   two weights of ink `face()` gave them and keeps the mark. That is a real
-   loss and it is the price of one spelling for every button in the gutter
-   (ui/glyph.js `icon`): a second face-builder in here would be the fifth
-   spelling that file exists to prevent.
+   IT IS A DATED REVERSAL OF 2026-08-28 and both sentences were right about
+   their own page. Paul then: *"When I'm in a motif, the motif operations
+   should be the right nav elements on the view."* There is no nav to be an
+   element of — TABLE.md §10a: *"The tray is deleted"* — and the surface the
+   transforms rewrite is a SHEET now, with the full width of the pane in it. So
+   the fourteen are one line at the foot of the opened motif's sheet
+   (`motifOpsLine`), which is where they stood until 2026-08-28 and where the
+   note that took them away said they belonged ("under the tune they rewrite").
 
-   NOTHING IS MARKED AT THIS LEVEL, and that is a statement rather than an
-   omission: these are ACTIONS, not siblings. `aria-pressed` is left off (no
-   `on` key) rather than set false on all fourteen, because a row of fourteen
-   `aria-pressed="false"` buttons tells a screen reader there is a state to be
-   in. What says where you are here is the head: "up — out of psalm, back to
-   the motifs".
+   WHAT MOVED WITH THEM, UNALTERED: the two SETS stay two sets in order; the
+   FACE is `face2` off ui/glyph.js's own table, a pair concatenated; the WORD
+   is in the DOM beside it; `design`/`designTime` is still the only thing that
+   decides what a button does; a DRUM cell draws none of them (a kit has no
+   degrees to move); and the ADDRESSES did not move at all — `motifop-<word>`
+   and `motiftime-<word>`, which is now an address that has been on three
+   surfaces and never changed, the same journey `boardtab|<kind>|<key>` made a
+   round ago. `test/table-inventory.json` files all fourteen under
+   `motifs-row`, because T7's question is "can a thumb reach it". */
 
-   IT READS `motifTab` AT CLICK TIME AND NOT AT BUILD TIME. `paintTray` repaints
-   a level in place when its keys have not moved — which is every one of these
-   fourteen, every time — so the listener bound on the first build is the one
-   that runs after you have moved to another motif. The cell is looked up when
-   the press happens, which is also the only moment at which "which motif is
-   open" is a question with an answer. */
-function motifOpsTrayItems() {
-  const name = motifTab;
-  const H = name ? DOC.material.cells[name] : null;
-  if (!H || H.kind === "drum") return [];        // a kit has no degrees to move
-  const out = [];
-  const face2 = (d) => (d.g0 || "") + d.g;
-  const live = () => { const C = DOC.material.cells[motifTab];
-                       return C && C.kind !== "drum" ? C : null; };
-  for (const d of DESIGNS)
-    out.push({ key: "motifop-" + d.w, glyph: face2(d), word: d.w,
-               say: d.w + " — rewrites " + name + " itself: " + (d.moves
-                 ? "the steps change places and their kinds travel with them"
-                 : "the degrees move and the rhythm stays where it is"),
-               act: () => { const C = live(); if (!C) return;
-                            design(C, d); push(); draw(); } });
-  for (const d of TIMES)
-    out.push({ key: "motiftime-" + d.w, glyph: face2(d), word: d.w,
-               say: d.w + " — rewrites " + name + "'s rhythm: which steps " +
-                    "sound and when, with the degrees left where they are",
-               act: () => { const C = live(); if (!C) return;
-                            designTime(C, d); push(); draw(); } });
-  return out;
-}
 
 /* THE SCORE LEVEL — the deck's own pair, and its argument, moved whole: "▤ is
    ruled paper — the staff, which runs across; ▥ is the roll — blocks standing
@@ -13480,8 +13597,15 @@ const tabFromWire = (w) => TABNAMES.find((n) => tabToWire(n) === tabToWire(w)) |
    nothing: the value is split at its FIRST slash and the tab names are Paul's
    nine words, so `encodeURIComponent` on the item survives one decode by
    `URLSearchParams` and `motif/a%2Fb` comes back as the item `a/b`, whole. */
+/* (`openTab === "Motifs" ? motifTab` STOOD IN THIS TERNARY. The Motifs TAB is
+   deleted (2026-09-08, §10b step 4) and a motif is a row of the Band table
+   now, so the two facts a Band link could carry — which player, which motif —
+   share one slot. WHAT THE SENDER MEANS is still "what I am looking at", and
+   what a hand is looking at on the Band tab is a COLUMN: `tab` is written by
+   `openVoice`, which every arrival on this page goes through. So the outgoing
+   half names the player; the INCOMING half below spends a motif name too,
+   because a fragment that half-lands beats one that refuses.) */
 const subNow = () => openTab === "Band" ? tab
-  : openTab === "Motifs" ? motifTab
   : openTab === "Score" ? deckView : null;
 /* ...AND SPENDING ONE. Matched case-insensitively against the level's own
    list, so a fragment somebody re-typed still lands; an item this record does
@@ -13494,12 +13618,15 @@ function applySub(want) {
   if (openTab === "Band") {
     const n = pick(voiceTabs());
     if (n && n !== tab) { tab = n; formSec = null; draw(); }
-    return !!n;
-  }
-  if (openTab === "Motifs") {
-    const n = pick(motifNames());
-    if (n && n !== motifTab) { motifTab = n; drawMaterial(); }
-    return !!n;
+    if (n) return true;
+    /* ...AND A MOTIF NAME LANDS HERE TOO, since the bank became a row of this
+       same table (2026-09-08). A player and a motif cannot share a name — one
+       is `DOC.voices[].name`, the other a key of `DOC.material.cells` — so
+       asking in order is unambiguous, and a link somebody sent from inside
+       `psalm` opens the MOTIFS row standing in `psalm`. */
+    const m = pick(motifNames());
+    if (m && m !== motifTab) { motifTab = m; tab = null; draw(); }
+    return !!m;
   }
   if (openTab === "Score") {
     const n = pick(["not", "roll"]);
@@ -14737,6 +14864,34 @@ window.__eightMix = (which, want) => {
   }
   return openMixRow(which);
 };
+/* THE MOTIFS ROW'S OWN DOOR, WHICH IS `__eightRow` WITH A MOTIF ON THE END
+   (2026-09-08, §10b step 4). The row has two states — the BANK and one motif —
+   so a caller wants one of the two: `__eightMotif()` opens the row on the bank
+   and `__eightMotif("psalm")` opens the row and then that motif, which is the
+   two taps a thumb makes (the name's `open` button). Passing `null` from
+   inside a motif goes back to the bank through the row's own `← the bank`. It
+   is a HAND — `showTab`, then a `click` on the button a person would press —
+   and it is idempotent for the reason `__eightRow` is. */
+function openMotifRow(name) {
+  const opened = window.__eightRow("motifs", true);
+  if (!opened) return false;
+  const at = (k) => document.querySelector(
+    '#pan-band [data-k="' + String(k).replace(/"/g, '\\"') + '"]');
+  /* THE ROW MAY ALREADY BE STANDING IN A MOTIF, and the way out of one is the
+     way a thumb takes: `← the bank`. Asking for the bank from the bank, or for
+     the motif you are already in, does nothing at all — which is what makes
+     this idempotent. */
+  if (motifTab && motifTab !== name) { const b = at("motifback"); if (b) b.click(); }
+  if (name == null) return !motifTab;
+  if (motifTab !== name) { const b = at("motifopen|" + name); if (b) b.click(); }
+  return motifTab === name;
+}
+window.__eightMotif = (name) => openMotifRow(name === undefined ? null : name);
+/* ...AND WHAT IS IN THE BANK, so a gate can pick a motif without knowing the
+   record. The list is the document's own `material.cells` order, which is what
+   the bank draws. */
+window.__eightBank = () => motifNames().slice();
+window.__eightMotifNow = () => motifTab;
 window.__eightRow = (id, want) => {
   showTab("Band");
   const at = () => document.querySelector('#pan-band [data-k="t' + id + '"]');

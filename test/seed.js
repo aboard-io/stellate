@@ -142,7 +142,15 @@ function standUpServer() {
   /* AND A HAND WRITES ONE. The other half of the same rule: the address is
      still worth copying the moment somebody has moved something (`markLink`
      is guarded by `booted`, not deleted). */
-  await p1.evaluate(() => window.__eightTab("Motifs"));
+  /* THE GESTURE WAS `__eightTab("Motifs")` UNTIL 2026-09-08 (TABLE.md §10b
+     step 4). Any tab switch is the gesture this check needs — what is asserted
+     is that MOVING SOMETHING writes an address, never which thing was moved —
+     and the Motifs tab is deleted with its pane: the bank is a merged row of
+     the Band table now, so `__eightTab("Motifs")` is a no-op on a word that is
+     not in `TABS` and the hash would stay empty for the honest reason that
+     nothing happened. `Score` is a tab this box still has; `linkFrag` writes
+     `t=score/<view>` for it through the same debounced `markLink`. */
+  await p1.evaluate(() => window.__eightTab("Score"));
   /* AND THE ADDRESS IS WAITED FOR, NOT SLEPT THROUGH (2026-09-02). This was
      `waitForTimeout(600)` and it went red in the full suite while passing
      alone: the write is DEBOUNCED (`markLink` arms a 250 ms timer and every
@@ -153,13 +161,14 @@ function standUpServer() {
      written at 600 ms and the check read `""` off a page that was about to be
      right. A poll is the honest shape for a debounced write: what is asserted
      is that the gesture writes an address, never how many milliseconds the
-     debounce takes. */
+     debounce takes. (`t=motif` was the word until 2026-09-08 — see the note at
+     the gesture above.) */
   const h1b = await p1.waitForFunction(
-    () => (/t=motif/.test(location.hash) ? location.hash : false),
+    () => (/t=score/.test(location.hash) ? location.hash : false),
     null, { timeout: 8000, polling: 100 })
     .then((h) => h.jsonValue())
     .catch(() => p1.evaluate(() => location.hash));
-  check(/t=motif/.test(h1b),
+  check(/t=score/.test(h1b),
     "S1 · …but the first gesture writes one: " + JSON.stringify(h1b));
   await p2.close();
 

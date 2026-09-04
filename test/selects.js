@@ -503,10 +503,24 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      presses the row's head — a hand's two taps, and idempotent, so a second
      arrival does not close what the first opened. Every `#pan-band` /
      `#rulesdeck` selector below is the same selector inside `#pan-band`. */
+/* ...AND THERE ARE FOUR OF THEM NOW, 2026-09-08 (§10b steps 4 and 5): MOTIFS
+   is a merged row over the grid and PRODUCE one under the mix, so `Motifs` and
+   `Produce` join `Time` and `Rules` in going through `__eightRow` instead of
+   `__eightTab`. THE LIST IS WHY FIVE CHECKS IN THIS FILE HAVE BEEN RED SINCE
+   v272 AND IT IS THE GATE'S OWN FAULT, measured: the census walks `TOPS`,
+   `TOPS` is `__eightTabs()`, and `Time` and `Rules` came off that list in the
+   round that made them rows — so `sel|time.meter`, `sel|time.swing`,
+   `sel|time.groove`, `sel|alphabet.mode`, `sel|alphabet.scale`,
+   `sel|alphabet.harmony` and every `alphabet.quality` cell of the changes grid
+   dropped out of the survey and checks 1 and 4 went red on controls that were
+   standing on the page the whole time. `ROWS` below is the missing half of the
+   walk, and it is spelled as the four row ids rather than as tab words because
+   that is what these doors take. */
+  const ROWS = ["time", "rules", "motifs", "produce"];
   const openTop = async (t) => {
     if (!TOPS.length) return;
-    if (t === "Time" || t === "Rules") {
-      await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
+    if (ROWS.indexOf(String(t).toLowerCase()) >= 0) {
+      await p.evaluate((x) => window.__eightRow(x, true), String(t).toLowerCase());
       await p.waitForTimeout(700); return; }
     await p.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
                                window.__eightTab(tt); }, t);
@@ -548,6 +562,11 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   // the producer's verbs are each on a panel of their own now, and none of
   // them is reachable from the band's strip.
   for (const t of TOPS) { await openTop(t); eat(await survey()); }
+  /* ...AND THE FOUR SPECIAL ROWS, WHICH ARE WHERE FIVE OF PAUL'S OWN CONTROLS
+     LIVE NOW. See `ROWS` above for the measurement: a walk of the tabs alone
+     has not seen the meter, the swing, the groove, the mode, the scale, the
+     harmony or the changes grid since v272. */
+  for (const r of ROWS) { await openTop(r); eat(await survey()); }
   await openTop("Band");
   eat(await survey());
   // ...AND THE FORM TAB IS A LIST, so its own controls are one tap further in.
@@ -828,7 +847,38 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   for (const s of sel) for (const o of s.opts) {
     if (!o.off && !o.why) continue;
     if (o.off && !o.why) { greyNoWhy.push(s.key + " / " + o.v); continue; }
-    if (o.why && !o.t.endsWith(", " + o.why)) greyNotSaid.push(s.key + " / " + o.v);
+    /* THE THIRD WIDGET SAYS IT ON ITS OWN LINE, AND THE CLAIM IS THE SAME
+       CLAIM (2026-09-08). `optionText` appends a reason to the word it refuses
+       — "the changes, a modal record has no cycle of changes to write" — and
+       both the native picker and the typed combo carry it that way, so the
+       tail is exactly what to demand of them. A CHIP cannot: nu.css's ruling
+       on where a reason may live inside a chip strip is that it costs its OWN
+       chip's height and nothing else's, so it is a `<small class="nu-why">`
+       second line inside the button (`src/menus/`, 2026-09-07) and the button's
+       textContent is the word and then the reason with no comma between them.
+       Demanding the comma of a two-line control would be demanding it be a
+       one-line control, which is the widget question and not the silent-grey
+       one. So the LAW — the reason is in the words the option says, on the
+       glass, where a reader is — is asked of the text either way; the SPELLING
+       is asked of the two widgets that have one. §10d predicted this exact
+       fork for `rules-view` R5a and picked the other branch there because the
+       chip had no visible reason at all; it has one now. */
+    /* ...AND A CHIP HAS TWO PLACES A REASON MAY HONESTLY BE, which is
+       `src/menus/index.ts`'s own ruling and not a loophole: its OWN why is a
+       `<small class="nu-why">` line inside the button, and the WHOLE STRIP's
+       refusal is printed ONCE under the control by `menu()` — *"a tooltip
+       repeating a sentence already on the glass is the noise the refused-
+       control law is against"*. When a strip is refused, every option carries
+       the strip's sentence in `data-why`, so demanding it inside each chip
+       would be demanding the same sentence four times on one line. The second
+       case is not unchecked: the control-level claim three checks down reads
+       every `s.why` back out of the visible text of the panel it was collected
+       from. MEASURED on the shipped chant: `rule-add|Form` is one chip,
+       refused whole, "every rule this axis has is already on the record". */
+    const said = s.widget === "chips"
+      ? (o.t.indexOf(o.why) >= 0 || o.why === s.why)
+      : o.t.endsWith(", " + o.why);
+    if (!said) greyNotSaid.push(s.key + " / " + o.v + " [" + s.widget + "]");
   }
   check(!greyNoWhy.length, "NO SILENT GREY — every refused option carries a reason " +
     JSON.stringify(greyNoWhy.slice(0, 5)));
@@ -1420,6 +1470,10 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   check(held === after, "...and the redrawn menu shows it " + JSON.stringify(held));
 
   // …AND THE PRODUCER HAS HIS OWN TAB NOW (2026-08-27, Paul's list: "Produce").
+  /* ...AND HIS OWN ROW SINCE 2026-09-08 (§10b step 5), which `openTop` knows
+     about: the Produce PANE is deleted and `ui/produce.js mount` is seated in
+     the footer's last merged row, unchanged, so every tap below finds the same
+     control at the same address one surface over. */
   await openTop("Produce");
 
   /* ---- 10 THE PRODUCER'S ONE-OPTION SHEET, on the real page only ----
@@ -1804,11 +1858,25 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     const tops2 = await p2.evaluate(() =>
       window.__eightTabs ? window.__eightTabs() : []);
     let ph = [];
-    for (const t of tops2) {
-      await p2.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
-                                  window.__eightTab(tt); }, t);
-      await p2.waitForTimeout(t === "Score" ? 900 : 250);
-      ph = ph.concat(await p2.evaluate(() =>
+    /* THE WALK IS THE TABS AND THEN THE FOUR SPECIAL ROWS, 2026-09-08, for the
+       same measured reason the census above walks them: five of the controls
+       Paul named by hand are rows of the Band table's own sheet now, and a
+       phone pass that only opened tabs found none of them — measured, before
+       this line: "0 addressed controls across 6 tabs". */
+    /* AND EACH ROW REMEMBERS WHICH SURFACE IT WAS SEEN ON, 2026-09-08. The
+       drive below re-queries every control by its `[data-sel]` in whatever
+       state the page happens to be in when the loop reaches it — which was
+       true enough while the walk ended on a tab full of menus and is false
+       now that it ends inside a special row: measured, before this line, "0
+       menus driven". A menu that is not on the screen is not a menu that
+       failed to commit; it is a gate that walked away from it. `at` is the
+       index of the opener that put it there and the drive re-opens it. */
+    const opens = [];
+    const step2 = async (open, wait) => {
+      const at = opens.length; opens.push({ open, wait });
+      await open();
+      await p2.waitForTimeout(wait);
+      ph = ph.concat((await p2.evaluate(() =>
         [...document.querySelectorAll("[data-sel]")].map((n) => {
           const r = n.getBoundingClientRect();
           return { k: n.dataset.sel, tag: n.tagName,
@@ -1816,13 +1884,20 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
                    typed: n.tagName === "INPUT",
                    h: Math.round(r.height),
                    n: window.__combo.words(n).filter((o) => !o.ph).length };
-        })));
-    }
+        }))).map((r) => ({ ...r, at })));
+    };
+    for (const t of tops2)
+      await step2(() => p2.evaluate((tt) => {
+        if (window.__eightUp) window.__eightUp(); window.__eightTab(tt); }, t),
+        t === "Score" ? 900 : 250);
+    for (const r of ROWS)
+      await step2(() => p2.evaluate((x) => window.__eightRow(x, true), r), 700);
     const byKey = new Map();
     for (const r of ph) if (!byKey.has(r.k)) byKey.set(r.k, r);
     const rows = [...byKey.values()];
     check(rows.length > 20, "the phone pass found the menus (" + rows.length +
-      " addressed controls across " + tops2.length + " tabs)");
+      " addressed controls across " + tops2.length + " tabs and " +
+      ROWS.length + " special rows)");
     /* 1 · NO MENU IS A TYPED INPUT. See the paragraph above: this is the
            keyboard claim, said where it can be measured. */
     const typed = rows.filter((r) => r.typed).map((r) => r.k);
@@ -1848,8 +1923,14 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
            scrolled off by the pane under it — so it is driven at its address
            and the record is read back. */
     const drove = [];
+    let standing = -1;
     for (const r of rows.slice(0, 400)) {
       if (r.n < 2) continue;
+      if (r.at !== standing && opens[r.at]) {
+        standing = r.at;
+        await opens[r.at].open();
+        await p2.waitForTimeout(opens[r.at].wait);
+      }
       const done = await p2.evaluate(async (k) => {
         const q = '[data-sel="' + k.replace(/"/g, '\\"') + '"]';
         const n = document.querySelector(q);

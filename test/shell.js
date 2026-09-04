@@ -613,8 +613,16 @@ const LANE = async () => {
    plates can only be switched from a branch of a tab that no longer exists is
    four plates lost. The 2026-08-27 quotation stays whole; this is the third
    amendment under it. */
-const PAULS_TABS = ["Where", "Motifs", "Band",
-                    "Produce", "Score", "Video",
+/* ...AND THE FOURTH AND FIFTH AMENDMENTS, 2026-09-08 (TABLE.md §10b steps 4
+   and 5). `Motifs` and `Produce` leave this list the way `Time`, `Rules` and
+   `Mix` left it: each is a merged ROW of the Band table now — the bank with
+   its previews and provenance above the column heads (`tmotifs`), the
+   producer's deals and notes under the mix in the footer (`tproduce`) — and
+   `#pan-motif` and `#produce` are out of index.html with the two tabs. Paul's
+   2026-08-27 sentence is quoted whole above and is not edited; what these
+   amendments record is that five of its nine words are rows of one sheet now,
+   which is the sentence he replaced it with on 2026-09-05. */
+const PAULS_TABS = ["Where", "Band", "Score", "Video",
                     "Screensaver", "Export"];
 const NAV_ROWS = PAULS_TABS.filter((t) => t !== "Where");
 // how long a tab is given to settle after it is opened. The Score engraves a
@@ -791,11 +799,15 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        that expanded with `__eightExpand` would be proving the probe agrees
        with itself. */
     const walk = [];
-    /* THREE, NOT FOUR, SINCE 2026-09-07: `Mix` was the fourth and the Mix tab
-       is deleted (TABLE.md §10b step 3 — the board is the MIX row's master in
-       the Band table, and its five stage buttons are inside the board again).
-       The claim is about a tab WITH CHILDREN and the page has three of them. */
-    for (const word of ["Band", "Motifs", "Score"]) {
+    /* TWO, NOT THREE, SINCE 2026-09-08: `Mix` was the fourth until 2026-09-07
+       (the board is the MIX row's master and its five stage buttons are inside
+       the board again) and `Motifs` was the third until today — TABLE.md §10b
+       step 4 makes the bank the MOTIFS row's own sheet, so the ten
+       `motiftab-<name>` rows and the fourteen transforms under them are not
+       tray children any more. The claim is about a tab WITH CHILDREN and the
+       page has two of them; when it has one, this check is asking nothing and
+       whoever deletes that branch owes the tree a different claim. */
+    for (const word of ["Band", "Score"]) {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
       await page.click('[data-k="toptab-' + word + '"]');
@@ -838,17 +850,22 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        chain and not as a set. */
     await page.evaluate(() => window.__eightUp());
     await page.waitForTimeout(120);
-    /* ...AND THE PAIR IT DRIVES IS `Motifs` AND `Band` SINCE 2026-09-04,
-       because `Structure` is deleted (TABLE.md §6 ¶A) and its sections are
-       CHILDREN of Band now — "opening Structure folds Band" cannot be asked of
-       two branches that are one branch. The claim is unchanged and so is the
-       gesture: open one tab with children, open another, and the first must be
-       gone — one expanded ancestor, one <mark>, and the arriving tab's own
-       rows on the stripe. Band is the second of the two here so the assertion
-       can still name the rows it expects: the players AND the sections, which
-       is the whole of what the wave-2c stripe says the Band tab is. */
-    await page.click('[data-k="toptab-Motifs"]');
-    await page.waitForTimeout(TAB_SETTLE("Motifs"));
+    /* ...AND THE PAIR IT DRIVES IS `Score` AND `Band` SINCE 2026-09-08. It was
+       `Structure` and `Band` until 2026-09-04 (Structure is deleted, §6 ¶A,
+       and its sections are CHILDREN of Band), then `Motifs` and `Band` until
+       today — and the Motifs tab is deleted with its pane (§10b step 4), so
+       the two branches this tree still has are Band and Score. The claim is
+       unchanged and so is the gesture: open one tab with children, open
+       another, and the first must be gone — one expanded ancestor, one
+       <mark>, and the arriving tab's own rows on the stripe. Band is still the
+       SECOND of the two so the assertion can name the rows it expects: the
+       players AND the sections, which is the whole of what the stripe says the
+       Band tab is. What went with the Motifs branch is the `motifs` clause
+       below, which asked that no `motiftab-` row survived the fold; the score
+       branch's two view rows (`deck.view.not`, `deck.view.roll`) are what must
+       not survive it now, and that is what `folded` reads. */
+    await page.click('[data-k="toptab-Score"]');
+    await page.waitForTimeout(TAB_SETTLE("Score"));
     await page.click('[data-k="toptab-Band"]');
     await page.waitForTimeout(TAB_SETTLE("Band"));
     const both = await page.evaluate(() => {
@@ -857,14 +874,14 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         expandedRows: [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
           .map((b) => b.dataset.k || b.id).filter((k) => k !== "playops"),
         marks: document.querySelectorAll("#nu-tray mark").length,
-        motifs: T.rows.some((r) => r.depth === 1 && /^motiftab-/.test(r.key)),
+        folded: T.rows.some((r) => r.depth === 1 && /^deck\.view\./.test(r.key)),
         band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key)),
         secs: T.rows.some((r) => r.depth === 1 && /^secnav/.test(r.key)) };
     });
     is(both.expandedRows.length === 1 && both.marks === 1 &&
-       !both.motifs && both.band && both.secs &&
+       !both.folded && both.band && both.secs &&
        both.exp.length === 1 && both.exp[0] === "toptab-Band",
-      "A6k " + width + " · opening Band folds Motifs; one path — one "
+      "A6k " + width + " · opening Band folds Score; one path — one "
       + "expanded ancestor, its players AND its sections on the stripe, one "
       + "<mark> — " + JSON.stringify(both));
 
