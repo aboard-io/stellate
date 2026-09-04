@@ -154,8 +154,12 @@ const COUNTER = () => {
     "the address lands on San Francisco 1996 — " + basis);
 
   await top("Band");
+  /* `__eightTree()` WENT WITH THE GUTTER (2026-09-09). What this reading was
+     ever for is "what the page offered before the crate was opened", and the
+     table's own column heads are that list now. */
   const treeBefore = await p.evaluate(() =>
-    window.__eightTree().rows.map((r) => r.key));
+    [...document.querySelectorAll('#pan-band th.nu-colhead button[data-k^="tcol|"]')]
+      .map((n) => n.dataset.k));
   /* THE CRATE IS OPENED BY OPENING A PLAYER (2026-09-04). `nav("bandsamples")`
      stood here — the Band panel's record-wide crate state — and there is no
      panel state on a table. The rows below are read off `__nuSamples()` and

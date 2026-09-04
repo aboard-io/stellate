@@ -486,7 +486,7 @@ function standUpServer() {
     let base2 = 0; for (let i = 0; i < 8; i++) { base2 += (await eng2()).rms / 8; await p2.waitForTimeout(400); }
     await p2.evaluate(() => document.getElementById("playops").click());
     await p2.waitForTimeout(500);
-    const g = await p2.evaluate(() => { const t = document.querySelector(".nu-trayvol .nu-vs-track");
+    const g = await p2.evaluate(() => { const t = document.querySelector(".nu-baropts .nu-vs-track");
       if (!t) return null; const r = t.getBoundingClientRect();
       return { x: r.x + r.width / 2, top: r.y + 12, bot: r.y + r.height - 12 }; });
     const cdp2 = await ctx2.newCDPSession(p2);

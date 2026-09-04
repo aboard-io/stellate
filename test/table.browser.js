@@ -494,9 +494,52 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                  (c.floor ? " (floor " + c.floor + ")" : ""));
     if (c.open) await tap(subst(c.open));
   }
+  /* ...AND THE CHROME'S OWN, WHICH IS T7'S LAW ASKED OF THE GUTTER
+     (2026-09-09, TABLE.md §10b step 7). Every row above is a control the Band
+     or Structure pane offered and the TABLE now holds; `INV.chrome` is the
+     six the gutter held and the table never could — the transport, the seed,
+     the record's name, the log and the four viewers — filed under two homes
+     outside it, THE BAR and THE HAMBURGER. The walk is the same walk with two
+     differences that are facts about those homes rather than exceptions to the
+     law: the query is PAGE-WIDE (the bar is a `<nav>` beside `#app`, not
+     inside `#pan-band`), and a row marked `menu` is behind the ≡, so the ≡ is
+     pressed first — the same second tap the MIX row's master needed the day
+     its home became a tabbed surface. A row marked `when` needs a surface
+     open, and the walk opens it and comes back. */
+  for (const c of (INV.chrome ? INV.chrome.controls : [])) {
+    if (c.when && c.when !== "sheet") {
+      await p.evaluate((t) => window.__eightTab(t), c.when);
+      await p.waitForTimeout(c.when === "Score" ? 1800 : 700);
+    } else if (c.when === "sheet") {
+      await p.evaluate(() => window.__eightTab("Score"));
+      await p.waitForTimeout(1800);
+    }
+    if (c.menu) await p.evaluate(() => window.__eightMenuOpen(true));
+    if (c.open) { const o = await p.$('[data-k="' + c.open + '"]');
+                  if (o) await o.click(); await p.waitForTimeout(300); }
+    const box = await p.evaluate((k) => {
+      const el = document.querySelector('[data-k="' + k + '"]') ||
+                 document.getElementById(k);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { w: Math.round(r.width), h: Math.round(r.height) };
+    }, c.reach);
+    if (!box || (!box.w && !box.h)) missing.push(c.k + " -> " + c.reach);
+    else if (box.h < (c.floor || 44))
+      small.push(c.reach + " " + box.w + "x" + box.h +
+                 (c.floor ? " (floor " + c.floor + ")" : ""));
+    if (c.open) { const o = await p.$('[data-k="' + c.open + '"]');
+                  if (o) await o.click(); await p.waitForTimeout(200); }
+    if (c.menu) await p.evaluate(() => window.__eightMenuOpen(false));
+    if (c.when) { await p.evaluate(() => window.__eightTab("Band"));
+                  await p.waitForTimeout(700); }
+  }
   check(!missing.length, "T7 every control the two panes offered has a home on " +
     "the table, reachable by tap at 320px (" +
-    (INV.controls.length + INV.new.length) + " checked)" +
+    (INV.controls.length + INV.new.length +
+     (INV.chrome ? INV.chrome.controls.length : 0)) + " checked, of which " +
+    (INV.chrome ? INV.chrome.controls.length : 0) + " are the deleted " +
+    "gutter's, in the bar and the hamburger)" +
     (missing.length ? " — MISSING " + missing.join(", ") : ""));
   check(!small.length, "…and each is at least 44px tall" +
     (small.length ? " — SHORT " + small.join(", ") : ""));
@@ -2213,8 +2256,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           host: !!document.getElementById("deck"),
           tab: (window.__eightTabs() || []).indexOf("Mix"),
           tray: !!document.querySelector('[data-k="toptab-Mix"]'),
-          trayKids: document.querySelectorAll(
-            '#nu-tray [data-k^="boardtab|"]').length,
+          /* (IT READ `#nu-tray [data-k^="boardtab|"]` — the five stage rows
+             the Mix branch drew. The gutter is deleted on 2026-09-09, so the
+             query is page-wide MINUS the board's own row, which is where the
+             five went back to in the same edit that took the tab: what must be
+             zero is a stage button OUTSIDE `#boardtabs`.) */
+          trayKids: [...document.querySelectorAll('[data-k^="boardtab|"]')]
+            .filter((b) => !b.closest("#boardtabs")).length,
           footMaster: !!document.querySelector('[data-k="tfoot|master"]'),
         }));
         check(!gone.host && gone.tab < 0 && !gone.tray && !gone.trayKids &&
@@ -2503,8 +2551,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           axis: !!document.getElementById("ax-material"),
           tab: (window.__eightTabs() || []).indexOf("Motifs"),
           tray: !!document.querySelector('[data-k="toptab-Motifs"]'),
-          trayKids: document.querySelectorAll(
-            '#nu-tray [data-k^="motiftab-"], #nu-tray [data-k^="motifop-"]').length,
+          /* (IT READ `#nu-tray [data-k^="motiftab-"]` and `[data-k^=
+             "motifop-"]` — the bank as a level of the gutter and the fourteen
+             transforms under it. The gutter is deleted on 2026-09-09; what
+             must be zero is a `motiftab-` row ANYWHERE, and the fourteen
+             transforms are asserted PRESENT one check down, in the opened
+             motif's own sheet, so only the tab rows are counted here.) */
+          trayKids: document.querySelectorAll('[data-k^="motiftab-"]').length,
         }));
         check(!gone.host && !gone.axis && gone.tab < 0 && !gone.tray &&
               !gone.trayKids,
@@ -2625,6 +2678,96 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         "no tray row — " + JSON.stringify(goneP));
       await shutAll();
     }
+  }
+
+  /* ================= T10x · THE LAMPS ARE ON THE HEADERS ================
+     TABLE.md §10a: *"The lamps move onto the headers: the playing section's
+     row head and the sounding players' column heads light."* Paul, 2026-09-02:
+     *"I need you to light them up when playing them actively in the nav."*
+
+     THIS IS test/nav-tree.js N6, RETIRED INTO THIS FILE (2026-09-09). That
+     gate existed because a TREE could newly get a shape wrong — two branches
+     open at once, a child four rows below its parent, a mark stranded on an
+     ancestor — and every one of those needed a stripe driven into a state on
+     purpose. The stripe is deleted (TABLE.md §10b step 7), so seven of its
+     nine claims have no subject at all and are retired at their own file's
+     head; N6 is the one that was never about the tree. It read a CLASS on a
+     gutter button and it reads an `<i>` in a column head, because the gutter
+     was outside `#app` where the clock may write anything and a table head is
+     not: `window.__eightFrozen` parks a `[data-live]` element's CHILDREN and
+     keeps its ATTRIBUTES, so a class or an `aria-current` written on the live
+     span would land in the frozen snapshot and test/motif-frozen.js would have
+     it inside the hour. One channel, one writer (`setSounding`, which is now
+     the single owner of every lamp on this page), and it must GO OUT — a lamp
+     that cannot turn off is "declared but never arriving" from the other end.
+     THE MARK IS NOT THE LAMP, and that half is unchanged: `<mark>` means the
+     OPEN thing, and a record with six players sounding would be six marks and
+     a lie about where you are. */
+  {
+    await p.evaluate(() => window.__eightUp());
+    await p.waitForTimeout(150);
+    await p.evaluate(() => window.__eightTab("Band"));
+    await p.waitForTimeout(700);
+    const shape = await p.evaluate(() => {
+      const ths = [...document.querySelectorAll("#pan-band th.nu-colhead")]
+        .filter((th) => th.querySelector('button[data-k^="tcol|"]'));
+      return { heads: ths.length,
+               lamps: ths.filter((th) => th.querySelector("[data-live]")).length,
+               sibling: ths.every((th) => { const l = th.querySelector("[data-live]");
+                 const b = th.querySelector("button");
+                 return !l || (l.parentElement === th && !b.contains(l)); }),
+               inside: ths.some((th) => { const l = th.querySelector("[data-live]");
+                 return !!(l && l.querySelector("button")); }) };
+    });
+    check(shape.heads > 0 && shape.lamps === shape.heads &&
+          shape.sibling && !shape.inside,
+      "T10x every player's column head carries a [data-live] lamp as a " +
+      "SIBLING of its button, with no control inside it — " +
+      JSON.stringify(shape));
+    await p.click("#play");
+    const lit = await p.waitForFunction(
+      () => document.querySelectorAll("#pan-band th.nu-colhead [data-live] i").length > 0,
+      null, { timeout: 25000 }).then(() => true).catch(() => false);
+    await p.waitForTimeout(600);
+    const onNow = await p.evaluate(() => ({
+      lit: [...document.querySelectorAll("#pan-band th.nu-colhead")]
+        .filter((th) => th.querySelector("[data-live] i"))
+        .map((th) => (th.querySelector("button").dataset.k || "").slice(5)),
+      heads: document.querySelectorAll("#pan-band th.nu-colhead button[data-k^=\"tcol|\"]").length,
+      chromeMarks: document.querySelectorAll("#nu-chrome mark").length,
+      /* THE PAINT IS THE PLAYHEAD'S RED AND NOT THE METER'S GREEN, read off the
+         rendered box rather than off the class list: `--clock` means "this is
+         where the record is" and `--meter` means "a number came back from the
+         engine". A lamp lit green here would be the fake measurement
+         `METER_WHY` has refused since August. */
+      clock: getComputedStyle(document.documentElement)
+        .getPropertyValue("--clock").trim(),
+      paint: (() => { const i = document.querySelector(
+        "#pan-band th.nu-colhead [data-live] i");
+        return i ? getComputedStyle(i).backgroundColor : null; })(),
+      /* ...AND THE SOUNDING SECTION'S ROW HEAD IS `markForm`'S <mark>, which
+         has lit that head off the same `d.si` since wave 2b. §10a's "the
+         playing section's row head" is that function, one tier up, and a
+         second lamp there would be a second owner of one fact. */
+      row: document.querySelectorAll(
+        '#pan-band th.nu-srowh [data-live="count"] mark').length,
+    }));
+    await p.click("#play");
+    await p.waitForTimeout(1200);
+    const off = await p.evaluate(() => document.querySelectorAll(
+      "#pan-band th.nu-colhead [data-live] i").length);
+    check(lit && onNow.lit.length > 0 && onNow.lit.length <= onNow.heads,
+      "T10x a player's column head lights within 25 s of #play — " +
+      onNow.lit.length + " of " + onNow.heads + " lit (" +
+      JSON.stringify(onNow.lit) + ")");
+    check(onNow.chromeMarks === 0,
+      "T10x …and the lamp is a CHILD, not a mark: the chrome's own <mark> " +
+      "count is unmoved by it (" + onNow.chromeMarks + " on the table)");
+    check(onNow.row === 1,
+      "T10x …and the SOUNDING section's row head wears markForm's one <mark> " +
+      "— " + onNow.row + " lit row head");
+    check(off === 0,
+      "T10x …and every lamp goes out when the record stops (" + off + " left)");
   }
 
   /* ================= T0 · THE CONSOLE =================================== */

@@ -337,7 +337,42 @@
      `#motif-tabs`, the deck's notation/roll pair) were another 44.00px of band
      each, on the tab you happened to be on.
      -->
-<nav id="nu-tray" class="nu-tray" aria-label="where you are"></nav>
+<!-- ===== ...AND THE GUTTER IS DELETED, 2026-09-09 (TABLE.md §10b step 7) ====
+     Paul: *"…then have a hamburger menu for score, video, screensaver, and
+     have genre, dice, playstop along the bottom — a real mobile app now with
+     everything in the table and the nav space reclaimed."*
+
+     WHAT STOOD HERE was `<nav id="nu-tray" class="nu-tray" aria-label="where
+     you are">` — the fixed 96-to-176px column down the left edge, holding the
+     tab tree, the levels, the marks and the foot's transport. Everything it
+     offered is either on the TABLE (six rounds of §10b, each filed in
+     test/table-inventory.json) or in the two surfaces this element replaces:
+     the BAR at the foot of the page (genre · the die and its number · the play
+     options, the voicing and ▶) and the HAMBURGER at the top right (Score,
+     Video, Screensaver, Export, and the log). The 96px of width the gutter
+     took at every level comes back to the table; what the bar costs is 44px of
+     HEIGHT, once, and the page reserves it in `padding-block-end` so nothing
+     is ever under it.
+
+     `<nav>` AND ITS PLACE IN THE SOURCE ARE THE ROW'S OWN ARGUMENT, KEPT: with
+     the stylesheet off `position: fixed` is gone and this is an ordinary block
+     in flow, so the page's navigation has to READ before the panels it
+     navigates. DOM order is reading order is tab order. It is a CONTROL
+     SURFACE, so it is outside `#app` (draw() empties panels) and
+     `window.__eightFrozen` never sees it.
+
+     THE CLOCK'S TWO SQUARE INCHES ARE STILL DECLARED. The gutter's foot was
+     granted an exception for the countdown — *"the transport feed may only
+     write inside an element carrying `data-live`, OR OUTSIDE #app ENTIRELY"* —
+     and the bar inherits it twice over: it is outside `#app`, and both
+     countdowns (`.nu-count` and `.nu-seedwait`, both on the seed's own number)
+     carry `data-live="pending"` and hold no control.
+
+     THE NAMES ARE STILL NOT TYPED HERE. `TABS` in ui/eight.js is the one owner
+     of the words and the order; `chromeRow`/`paintChrome` fill this, and the
+     empty <nav> ships so the chrome has its place in the document before a
+     line of script runs. -->
+<nav id="nu-chrome" class="nu-chrome" aria-label="the box"></nav>
 
 <!-- THE NINE PANELS, IN PAUL'S ORDER. Each is a `.nu-pan`; ui/eight.js's
      `showTab` puts `data-off` + `inert` on the eight that are shut. The ids

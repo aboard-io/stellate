@@ -327,7 +327,11 @@ function standUpServer() {
       const r = v.getBoundingClientRect();
       return { says: v.textContent.trim(), seen: r.width > 2 || r.height > 2 };
     })(),
-    row: !!document.querySelector(".nu-trayfoot .nu-seedrow #reading") }));
+    /* THE ROW IS IN THE BAR SINCE 2026-09-09 (TABLE.md §10b step 6). It was
+       `.nu-trayfoot .nu-seedrow`, the gutter's foot; the gutter is deleted and
+       the die, the number, the field and the two countdowns are the middle of
+       `#nu-bar`. Not one id moved. */
+    row: !!document.querySelector("#nu-bar .nu-seedrow #reading") }));
   check(!gone.panel && !gone.slide && !gone.roll && !gone.next && !gone.num &&
         gone.exp === null,
     "S5 · …and the flyout is GONE — no panel, no slider, no roll, no next, " +

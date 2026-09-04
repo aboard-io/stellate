@@ -289,6 +289,26 @@ export const GLYPH = {
        in the next wave. */
     opts:    { g: "⚙", w: "opts",
                s: "play options — the mode, the take, the voices and the room" },
+    /* TWO MORE, 2026-09-09 (TABLE.md §10b step 6, the hamburger and the bar).
+       Paul: *"…then have a hamburger menu for score, video, screensaver, and
+       have genre, dice, playstop along the bottom."*
+       `menu` IS ≡ AND THIS FILE ALREADY SAID SO. The Rules row above rules ≡
+       out for a genre with the words *"it is not ≡ (that is a list)"* — and a
+       list is exactly what this is: the four things you can go and LOOK at.
+       U+2261 IDENTICAL TO is the three-bar mark every platform has spelled a
+       menu with for fifteen years, it is in the same maths block as the rest
+       of this table's furniture, and it is not ☰ — which is `tab.Band`'s, the
+       three rules being three players, and would be two pictures for two
+       different things a thumb's width apart.
+       `close` IS × AND NOT ✕ OR ✖: U+00D7 MULTIPLICATION SIGN is Latin-1, the
+       same argument `¶` won its row on ("the one glyph here that cannot be
+       tofu"), and it is the mark the word "close" has worn on every sheet
+       anybody has ever shut. */
+    menu:    { g: "≡", w: "menu",
+               s: "the score, the video, the screensaver, the export — and " +
+                  "the log" },
+    close:   { g: "\u00d7", w: "close",
+               s: "close this view and go back to the table" },
     /* ...AND THE WORD IS NO LONGER ON THE FACE, 2026-09-03. Paul: *"just get
        rid of the word seed and put the number."* The number stands where the
        word stood (`#seedval`, its own target, beside the die), so ui/eight.js
@@ -728,13 +748,38 @@ function place(el2) {
      Read off the element rather than off the token, for the reason it always
      was: a page with no tray — or a stylesheet that has been turned off — must
      still clamp to the viewport, which is what this does when it finds
-     nothing there. */
-  const tray = document.getElementById("nu-tray");
-  const tr = tray ? tray.getBoundingClientRect() : null;
-  let lo = 6, hi = vw - 6;
-  if (tr && tr.width && tr.left < vw && tr.right > 0) {
-    if (tr.left <= 1) lo = Math.max(lo, tr.right + 6);        // against the start
-    else if (tr.right >= vw - 1) hi = Math.min(hi, tr.left - 6);  // against the end
+     nothing there.
+
+     ===== ...AND THE EDGE IS HORIZONTAL NOW, 2026-09-09 ==================
+     The gutter is deleted (TABLE.md §10b step 7) and the chrome is a BAR at
+     the foot with a small strip at the top corner, so the two paragraphs above
+     are true of a rectangle that has turned ninety degrees. This function's
+     own promise — *"nothing here has to be edited if it moves again"* — is
+     kept by the same means it was made: the rectangle is MEASURED and the side
+     is read off it. What is added is that the clamp now has a BLOCK axis as
+     well as an inline one, because a popover explaining `#play` would
+     otherwise sit on top of the bar and cover the marks either side of the one
+     it is about — which is the identical failure, one axis over.
+     THE VERTICAL CLAMP IS APPLIED BELOW, at the `y` the box already computes:
+     "under the control if there is room, over it if there is not" becomes
+     "…and never into the bar's band", which is one more term in a `Math.min`
+     that was already there. */
+  const chrome = [document.getElementById("nu-bar"),
+                  document.querySelector(".nu-top"),
+                  document.getElementById("nu-tray")].filter(Boolean);
+  let lo = 6, hi = vw - 6, floor = vh - 6, ceil = 6;
+  for (const c of chrome) {
+    const tr = c.getBoundingClientRect();
+    if (!tr.width || !tr.height) continue;
+    if (tr.left < vw && tr.right > 0 && tr.height > vh * 0.5) {
+      // a full-height stripe down one edge: clamp the INLINE axis
+      if (tr.left <= 1) lo = Math.max(lo, tr.right + 6);
+      else if (tr.right >= vw - 1) hi = Math.min(hi, tr.left - 6);
+    } else if (tr.width > vw * 0.5) {
+      // a full-width band at one end: clamp the BLOCK axis
+      if (tr.top <= 1) ceil = Math.max(ceil, tr.bottom + 6);
+      else if (tr.bottom >= vh - 1) floor = Math.min(floor, tr.top - 6);
+    }
   }
   let x = Math.round(r.left + r.width / 2 - w / 2);
   x = Math.max(lo, Math.min(x, hi - w));
@@ -742,7 +787,8 @@ function place(el2) {
      first, because on a phone the thing being held is under a thumb and the
      thumb is below it. */
   let y = Math.round(r.bottom + 6);
-  if (y + h > vh - 6) y = Math.max(6, Math.round(r.top - h - 6));
+  if (y + h > floor) y = Math.round(r.top - h - 6);
+  y = Math.max(ceil, Math.min(y, Math.max(ceil, floor - h)));
   n.style.left = x + "px";
   n.style.top = y + "px";
 }

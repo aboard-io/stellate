@@ -760,9 +760,14 @@ const GATES = [
      is about something else. All three stand up their own COOP/COEP server
      (test/gutter.js's header documents the pattern) and also honour an
      injected `--page`, so they run under the runner and by hand. */
-  { name: "nav-tree",   wave: 3, kind: "browser", url: { flag: "--page" },
-    argv: ["test/nav-tree.js"], need: ["test/nav-tree.js"],
-    covers: ["test/nav-tree.js", "nukernel/ui/glyph.js"] },
+  /* (`nav-tree` STOOD HERE, 2026-09-02 to 2026-09-09. TABLE.md §10b step 7
+     deletes the gutter, so seven of its nine claims have no subject; the two
+     that were never about the tree moved — N6 to test/table.browser.js T10x,
+     N9 was already there as T10u — and test/nav-tree.js is kept as the
+     tombstone that says where each of the nine went. It is unregistered rather
+     than deleted: it asserts nothing, and a suite row that always passes is a
+     row nobody reads. `nukernel/ui/glyph.js` is still covered by `shell` and
+     by `gutter`, which is where its `covers` entry went.) */
   { name: "seed",       wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/seed.js"], need: ["test/seed.js"],
     covers: ["test/seed.js", "nukernel/ui/atlas.js"] },

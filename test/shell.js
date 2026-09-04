@@ -56,103 +56,113 @@
 //       genuinely spills takes the same pane A5 demands of every other table;
 //       what stays banned is a scroller around a grid that cannot scroll,
 //       which is the one Paul reported catching his gestures.)
-//   A6  THERE IS NO STICKY BAND LEFT, AND THE NAVIGATION IS A FIXED GUTTER
-//       (rewritten 2026-08-29). This check has been rewritten three times and
-//       every rewrite was forced by Paul moving the navigation, so all of them
-//       are kept.
+//   A6  THERE IS NO STICKY BAND LEFT, AND THE NAVIGATION IS A FIXED BAR
+//       (rewritten four times, and every rewrite was forced by Paul moving the
+//       navigation, so all of them are kept).
 //       IT FIRST READ: "at scrollY 600/1400/2400 the .nu-bar sits at 0 and
 //       EXACTLY ONE .nu-ax > h2 sits in 0 < top < 120 — and it is the heading
 //       of the axis the viewport is actually inside. Two bands, never three."
 //       IT THEN READ (2026-08-27, the tabs): "at every scroll position this
 //       page can reach, on every tab, `.nu-bar` sits at 0 and `#toptabs` sits
 //       at exactly `--bar-h`."
-//       Paul, 2026-08-28: *"Come up with a strategy for running the nav icons
-//       for a given modality down the right of the interface … There should be
-//       one vertical stripe max with an 'up' icon to get to the parent
-//       level"*, and then *"Make it a fixed gutter"* / *"Dont let anything go
-//       under it."* There is no second band left to pin: `#toptabs` is
-//       `#nu-tray`, `position: fixed` down the right edge, and it does not
-//       move with the scroll because it is not in the scroll.
-//       IT THEN READ (2026-08-28, the fixed gutter): "over the whole height of
-//       every tab, `.nu-bar` sits at 0 once it has pinned, the stripe sits at
-//       viewport top 0 and never moves, and no `.nu-ax > h2` is `position:
-//       sticky` anywhere — the half that proves the old bands went rather than
-//       being drawn twice."
-//       Paul, 2026-08-29: *"Get rid of the play buttons and the title of the
-//       song"* / *"Add a permanent play button to the top of the nav."* THE
-//       BAND IS DELETED — `.nu-bar` and `<h1 id="title">` with it, tombstoned
-//       in index.html and in nu.css at THE .nu-bar IS GONE — and the transport
-//       is a level of the gutter. So the first half of the sentence had no
-//       subject: measured against the shipped page, `document.querySelector(
-//       ".nu-bar")` was null and this gate did not fail, it THREW ("Cannot
-//       read properties of null (reading \'getBoundingClientRect\')") and
-//       stopped the run at the first tab.
-//       SO THE CLAIM IS WHAT SURVIVED THE DELETION, AND IT IS THE STRONGER
-//       HALF: over the whole height of every tab, at eleven stops from 0 to
-//       the bottom, the stripe sits at viewport top 0 and never moves — it is
-//       `position: fixed`, so there is no pin point to wait for and EVERY stop
-//       is asserted rather than only the ones past a pin — and no `.nu-ax >
-//       h2` is `position: sticky` anywhere, which is the half that proves both
-//       old bands went rather than being drawn twice.
-//   A6b THE STRIPE IS ONE COLUMN AND IT NEVER SCROLLS SIDEWAYS. (It read "the
-//       tab row NEVER SCROLLS SIDEWAYS … `.nu-row` wraps." A column that
-//       wrapped would be the second stripe Paul's "one vertical stripe max"
-//       forbids, so the check now counts DISTINCT BUTTON LEFTS as well: one
-//       column, `scrollWidth === clientWidth`, at every width.)
-//   A6c the marked mark is the open thing, AT A LEVEL OF SIBLINGS: exactly one
-//       `<mark>` in the stripe, and its button is the only one with
-//       `aria-pressed="true"`. At the root level that is `__eightTabNow()`; at
-//       a sub-level it is that level's own open item, which is what
-//       `__eightTray().on` reports. AT A LEVEL OF ACTIONS — the open motif's
-//       fourteen transforms, which the page declares with `acts` since
-//       2026-08-28 — nothing is marked, because none of fourteen writes is
-//       "open", and the HEAD is what says where you are: "up — out of psalm,
-//       back to the motifs".
-//   A6d NINE TABS, IN PAUL'S WORDS, IN PAUL'S ORDER — read off the rendered
-//       buttons of the ROOT level and compared to the literal list he wrote.
-//   A6i NOTHING GOES UNDER THE GUTTER, and it is a layout law rather than a
-//       z-index (Paul: *"Dont let anything go under it"*). On every tab, the
-//       right edge of every laid-out block is <= the gutter's left edge, and
-//       the document's own scrollWidth is unchanged. Boxes are not descended
-//       into past a clipper (an <svg> viewport, an `overflow: auto` pane):
-//       their contents run past on purpose and are not painted there, so what
-//       is asserted is that the CLIPPER is inside the gutter.
-//   A6j EVERY LEVEL IS REACHABLE AND `↑` CLIMBS ONE AT A TIME. Walk root ->
-//       band -> root, root -> motifops -> motif -> root, root -> score ->
-//       root through the stripe's own buttons, pressing `↑` until there is no
-//       `↑` left, and assert there is none at the root — it is ABSENT rather
-//       than refused, and ui/eight.js `THE STRIPE` carries the argument.
-//       (Three deep since 2026-08-28: the Motif tab lands you in the open
-//       motif's transforms and the bank is one `↑` above them.)
-//   A6e A TAB REMEMBERS ITS SCROLL. Scroll a tall tab, leave it, come back:
-//       the window is where you left it, and a tab never opened starts at 0.
-//   A7  ONE GUTTER, AND IT IS EXACTLY --tray-w WIDE (rewritten 2026-08-29).
-//       IT READ: "the .nu-bar is exactly --bar-h tall. `.nu-tabs { top:
-//       var(--bar-h) }` is a promise about a number, and a fifth control in
-//       the bar that wrapped would open a gap under the tab row that nothing
-//       else would catch." (And before that: "`.nu-ax > h2 { top: var(--bar-h)
-//       }` — the creditor of the promise moved on 2026-08-27; the promise did
-//       not.")
-//       THE BAND IS GONE ON PURPOSE (Paul, 2026-08-29 — see A6), so this line
-//       was measuring furniture that had been deleted: against the shipped
-//       page it failed thirty-six times with "exactly one .nu-bar (found 0)",
-//       which is a stale gate and not a regression.
-//       WHAT IT WAS EVER FOR: the page's chrome EXISTS, there is exactly ONE
-//       of it, and it is the size the stylesheet declares — because the rest
-//       of the layout is arithmetic on that number. All three are still
-//       promises and the number is `--tray-w` now: `body { padding-inline:
-//       calc(var(--gl) + var(--tray-w)) --gr }` is the whole of "nothing goes
-//       under the gutter" (nu.css), so a `.nu-tray` a pixel wider than its
-//       token is a stripe standing on the page, and a second `.nu-tray` is the
-//       second stripe A6b already forbids by geometry.
-//       SO: exactly one LAID-OUT `.nu-tray`, and its border box is `--tray-w`
-//       wide, on every tab at every width. The token is `calc(56px +
-//       env(safe-area-inset-left, 0px))` — a substitution, not a computed
-//       length, so `getPropertyValue` hands back the calc() text — and it is
-//       therefore RESOLVED BY THE PAGE off a probe element rather than parsed
-//       here or typed as 56.
-//       IT DOES NOT RE-TEST THE TRANSPORT. That `#play` is in `.nu-trayhead`
-//       at every level, and what pressing it does, is test/gutter.js T2/T3.
+//       IT THEN READ (2026-08-28, the fixed gutter — Paul: *"Come up with a
+//       strategy for running the nav icons … down the right of the interface"*
+//       / *"Make it a fixed gutter"* / *"Dont let anything go under it"*): the
+//       stripe sits at viewport top 0 and never moves, and no `.nu-ax > h2` is
+//       `position: sticky` anywhere — the half that proves the old bands went
+//       rather than being drawn twice. (2026-08-29 deleted `.nu-bar` and
+//       `<h1 id="title">` with the transport row, so the first half of the
+//       sentence had no subject and this gate THREW rather than failing.)
+//       AND NOW (2026-09-09, TABLE.md §10b steps 6 and 7) THE GUTTER IS
+//       DELETED TOO. Paul: *"…then have a hamburger menu for score, video,
+//       screensaver, and have genre, dice, playstop along the bottom — a real
+//       mobile app now with everything in the table and the nav space
+//       reclaimed."* The chrome is a `.nu-bar` again — at the FOOT this time,
+//       full width — so the claim turns ninety degrees with it and is
+//       otherwise word for word what it was: over the whole height of every
+//       surface, at eleven stops from 0 to the bottom, the bar's BOTTOM is the
+//       viewport's bottom, its LEFT is 0 and its WIDTH is the page's own
+//       width, none of the three moves, and no `.nu-ax > h2` is sticky
+//       anywhere. It is `position: fixed`, so there is no pin point to wait
+//       for and EVERY stop is asserted, scrollY 0 included.
+//   A6b THE BAR IS ONE ROW AND IT NEVER SCROLLS SIDEWAYS. (It read "the tab
+//       row NEVER SCROLLS SIDEWAYS", then "the stripe is ONE COLUMN and never
+//       scrolls sideways", counting distinct button LEFTS. A bar that wrapped
+//       would be a second row of chrome at the foot — the trade the gutter's
+//       deletion was made to avoid — so the count is distinct button TOPS.
+//       `.nu-seedrow`'s two targets are one mark and are counted at the row's
+//       own top, which is the 2026-09-03 amendment kept.)
+//   A6c AT MOST ONE `<mark>`, AND IT IS THE OPEN SHEET. It read "exactly one
+//       <mark> in the stripe, and its button is the only one with
+//       `aria-pressed="true"`", and EXACTLY was right while the chrome was a
+//       list of PLACES one of which you were always standing in. The table is
+//       not a place you opened: it is the page. So standing on it is the state
+//       in which nothing in the chrome is marked — a mark on the ≡ would say
+//       you were inside the menu, a mark on the genre plate would say the
+//       globe was open — and while a SHEET is open exactly one row wears both
+//       channels and both say the same word. `__eightTabNow()` decides which
+//       it should be, so this is a comparison of two readings of one fact.
+//   A6d THE HAMBURGER IS THE FOUR VIEWERS AND THE LOG, in `TABS`' own order,
+//       read off the RENDERED buttons — Paul's list minus `Where` (the bar's
+//       genre plate, a picker) and `Band` (the page). …AND THE GENRE IS A
+//       PLATE IN THE BAR wearing the RECORD's name, not a row in the menu.
+//   A6g …and every word is still IN the button as a `.nu-vh`, so the menu
+//       reads with the stylesheet off. A6h: no naked glyph, page-wide.
+//   A6i NOTHING GOES UNDER THE CHROME, and it is a layout law rather than a
+//       z-index (Paul: *"Dont let anything go under it."* — said about the
+//       gutter, and the same sentence about the bar). Both bands' room is
+//       taken OUT of the page (nu.css `body { padding-block-start }` and
+//       `{ padding-block-end }`), so this is a claim about FLOW. IT IS
+//       MEASURED AT TWO SCROLL POSITIONS and that is what the turn cost: a
+//       vertical gutter is beside the page at every scroll, but any page
+//       taller than the screen crosses a FOOT bar's band in viewport
+//       coordinates half way down it. What the law means about a foot bar is
+//       that the page reserves the room, so the sweep runs at scrollY = max
+//       for the bar and at scrollY = 0 for the top strip. Boxes are not
+//       descended into past a clipper, and a `[data-sheet]` panel is judged by
+//       its contents rather than by its own box, for the same reason.
+//   A6j THERE IS NO TRAY, AND A VIEWER IS A SHEET WITH A WAY OUT. It drove
+//       `[data-k="trayup"]` up a chain of levels (2026-08-28), then asserted
+//       the ↑'s ABSENCE at every depth of a tree (2026-09-02), and now asserts
+//       the absence of the whole apparatus — no ↑, no `#nu-tray` /
+//       `.nu-traylist` / `.nu-trayfoot` / `.nu-traycut`, nothing wearing
+//       `[data-depth]`. What replaced it is DRIVEN: each of the four viewers
+//       is opened from the hamburger's own button, asserted to be one
+//       full-width `[data-sheet]` panel with a close on the screen and the
+//       menu shut behind it, and the close is pressed and must land back on
+//       the table with the table drawn.
+//       (A6k IS RETIRED. It asserted ONE OPEN PATH in the tree — open Band,
+//       open Score, and the first branch is gone. There is no tree; what it
+//       protected, that you are never shown two navigations at once, is A6j's
+//       count of exactly one `[data-sheet]`.)
+//   A6l THE OPS ARE ON THE TABLE. TABLE.md §9a, Paul: *"Move all the nav into
+//       the table, I should be able to add players without using the nav and
+//       sections too."* It read off the stripe that a player row and a section
+//       row had NO CHILDREN and off the TABLE that every op those children
+//       carried is at its own address in the sheet the row opens. The first
+//       half is free now (there are no rows), so what is driven is the second,
+//       from the table's own heads — idempotently, because a head is a TOGGLE
+//       and `tablePanel` lands an arrival by CLICKING the head it wants open,
+//       so after a hire the new player's sheet is ALREADY open and a gate that
+//       presses it once has shut it (measured: `{"del":false}` at all four
+//       widths, with the sheet standing open in the frame before the tap).
+//   A6e A TAB REMEMBERS ITS SCROLL. Scroll a tall surface, leave it, come
+//       back: the window is where you left it, and one never opened starts at
+//       0. (This is why a sheet is IN FLOW and not `position: fixed` — nu.css
+//       carries the measurement at `.nu-pan[data-sheet]`.)
+//   A7  ONE BAR, AND IT IS EXACTLY --bar-h TALL. The name is back where it
+//       started: it was `--bar-h` for the sticky transport, `--tray-w` for the
+//       gutter, and it is `--bar-h` again for the foot bar. The claim never
+//       moved — the page's chrome EXISTS, there is exactly ONE of it, and it
+//       is the size the stylesheet declares — because the rest of the layout
+//       is arithmetic on that number: `body { padding-block-end: calc(var(
+//       --bar-h) + var(--s3)) }` is the whole of "nothing goes under the bar",
+//       so a `.nu-bar` a pixel taller than its token is a bar standing on the
+//       page and a second `.nu-bar` is the second row A6b forbids by geometry.
+//       The token carries an `env()` and is a substitution rather than a
+//       computed length, so it is RESOLVED BY THE PAGE off a probe element.
+//       IT DOES NOT RE-TEST THE TRANSPORT. That `#play` is in the bar in every
+//       state, and what pressing it does, is test/gutter.js T2/T3.
 //   A8  every `.nu-pane` that ACTUALLY SCROLLS and declares its first column
 //       sticky keeps that column pinned: after pane.scrollLeft = 200 it has
 //       moved <= 2px. (WAS: scoped to `.nu-pane` holding a `table.nu-grid`,
@@ -239,34 +249,38 @@ const SURVEY = () => {
     scrollHeight: de.scrollHeight,
     linked: !!document.querySelector('link[rel="stylesheet"]'),
     sheets: document.styleSheets.length,
-    /* A7 — THE GUTTER, WHICH IS WHAT `bars` / `barH` / `barVar` COUNTED
-       UNTIL 2026-08-29. They read `.nu-bar` and `--bar-h`; the band is
-       deleted and the chrome that carries the same promise is `.nu-tray` at
-       `--tray-w`. `trays` is filtered by `shown` like everything else here,
-       so a stripe that is on the page but not laid out is not one. */
-    trays: all(".nu-tray").length,
+    /* A7 — THE BAR, AND THE NAME IS BACK WHERE IT STARTED. `bars` / `barH` /
+       `barVar` read `.nu-bar` and `--bar-h` until 2026-08-29, then the band was
+       deleted and the chrome was `.nu-tray` at `--tray-w`; the gutter is
+       deleted in its turn (2026-09-09, TABLE.md §10b step 7) and the chrome is
+       a `.nu-bar` at `--bar-h` again — at the FOOT this time, and full width.
+       The claim never moved: the page's chrome exists, there is exactly one of
+       it, and it is the size the stylesheet declares, because the rest of the
+       layout is arithmetic on that number (`body { padding-block-end }`).
+       Filtered by `shown` like everything else here. */
+    bars: all(".nu-bar").length,
     axes: all(".nu-ax").length,
     panes: all(".nu-pane").length,
     grids: all(".nu-grid").length,
-    trayW: document.querySelector(".nu-tray")
-      ? +rect(document.querySelector(".nu-tray")).width.toFixed(2) : null,
-    /* THE TOKEN, RESOLVED BY THE PAGE. `--tray-w` is `calc(56px +
-       env(safe-area-inset-left, 0px))`, and an unregistered custom property
-       is a token stream: `getPropertyValue("--tray-w")` returns that calc()
-       text, which `parseFloat` reads as NaN. So the page is asked what the
-       declaration MEANS — one off-screen `box-sizing: border-box` div whose
-       inline-size IS `var(--tray-w)`, measured and removed — which keeps the
-       notch in the answer and keeps the number out of this file. (The old
-       `barVar` could be parsed because `--bar-h` was a bare length; that is
-       the only reason it worked, not a rule.) */
-    trayVar: (() => {
+    barH: document.querySelector(".nu-bar")
+      ? +rect(document.querySelector(".nu-bar")).height.toFixed(2) : null,
+    /* THE TOKEN, RESOLVED BY THE PAGE, and the probe is the one the gutter
+       taught this file to build. `--bar-h` is
+       `calc(var(--tap) + var(--s1) + var(--s1) + env(safe-area-inset-bottom))`
+       — an unregistered custom property is a token stream, so
+       `getPropertyValue("--bar-h")` hands back that calc() text and
+       `parseFloat` reads NaN. The page is asked what the declaration MEANS:
+       one off-screen `box-sizing: border-box` div whose BLOCK size is
+       `var(--bar-h)`, measured and removed, which keeps the home indicator in
+       the answer and keeps the number out of this file. */
+    barVar: (() => {
       const probe = document.createElement("div");
       probe.style.cssText = "position:absolute;left:-9999px;top:0;" +
-        "block-size:1px;inline-size:var(--tray-w);box-sizing:border-box";
+        "inline-size:1px;block-size:var(--bar-h);box-sizing:border-box";
       document.body.appendChild(probe);
-      const w = +rect(probe).width.toFixed(2);
+      const h = +rect(probe).height.toFixed(2);
       probe.remove();
-      return w;
+      return h;
     })(),
     // A2 — every button/select/number, EXCEPT the kit's step buttons: a
     // `.nu-kc` is kind 7 in nu.css's vocabulary (one of sixteen, dense-grid
@@ -369,118 +383,89 @@ const SURVEY = () => {
    is asserted, including scrollY 0, rather than only the stops past a pin. */
 const BANDS = async () => {
   const raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const row = document.getElementById("nu-tray");
+  const bar = document.getElementById("nu-bar");
+  const top = document.querySelector(".nu-top");
   const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
   window.scrollTo(0, 0);
   await raf();
-  const pinRow = 0;
   const out = [];
   for (let k = 0; k <= 10; k++) {
     window.scrollTo(0, Math.round(max * k / 10));
     await raf();
-    /* `rowLeft` joins `rowTop` on 2026-08-29: "fixed" is a claim about both
-       axes and the stripe changed edges once already (nu.css, THE GUTTER MOVED
-       TO THE LEFT). What is asserted is that it does not MOVE under the
-       scroll, so the left is compared against its own first reading rather
-       than against a side typed here. */
+    /* WHAT "FIXED AT THE FOOT" IS, AS TWO NUMBERS. The bar's BOTTOM is the
+       viewport's bottom and its LEFT is 0 — both compared against the viewport
+       rather than against a constant typed here, so a bar that moved edges
+       again would be caught by the same line. `position: fixed` means there is
+       no pin point to wait for: every stop is asserted, scrollY 0 included. */
+    const r = bar.getBoundingClientRect();
     out.push({ y: window.scrollY,
-      rowPinned: window.scrollY >= pinRow,
-      rowTop: +row.getBoundingClientRect().top.toFixed(1),
-      rowLeft: +row.getBoundingClientRect().left.toFixed(1),
-      want: 0 });
+      barBottom: +r.bottom.toFixed(1),
+      barLeft: +r.left.toFixed(1),
+      barWidth: +r.width.toFixed(1),
+      wantBottom: window.innerHeight,
+      wantWidth: document.documentElement.clientWidth });
   }
   window.scrollTo(0, 0);
   await raf();
   return {
-    stops: out, pinRow,
+    stops: out,
     // the half that proves the old bands GONE rather than drawn twice
     stickyHeads: [...document.querySelectorAll(".nu-ax > h2, #atlas > h2")]
       .filter((h) => getComputedStyle(h).position === "sticky")
       .map((h) => h.textContent.trim()),
-    // …and that the stripe itself never scrolls sideways, and is ONE column
-    // (A6b). The list is the scroller; the <nav> is the frame.
-    rowScroll: (() => { const l = document.querySelector(".nu-traylist");
-      return [l.scrollWidth, l.clientWidth]; })(),
-    /* ON THE PAGE, OR NOT COUNTED (2026-09-02) — this file's own `shown()`
-       rule, which every other measurement here already obeys and which this
-       one did not need until today. The play options are seated in the foot
-       permanently and FOLDED when the door is shut (Paul: *"Move the play/stop
-       button to the bottom, along with opts and where"*), so three buttons are
-       in the DOM at every moment and laid out only when a hand opens them — a
-       `display: none` button reports left 0, which is a second distinct left
-       and a "two column" stripe that no eye could ever see. The claim is
-       unchanged and is about what a reader meets: every mark that is ON the
-       page shares one left. */
-    /* ...AND ONE MARK MADE OF TWO TARGETS IS NOT A SECOND COLUMN
-       (2026-09-03). Paul: *"Instead of a popup for seed, just get rid of the
-       word seed and put the number. I tap the die and there's a new number. I
-       tap the number and I can enter a new number by hand."* The seed's word
-       stood in column 2 of the mark's own grid (`.nu-ic` is glyph + word) and
-       the number stands exactly where it stood — the difference is that it is
-       now pressable, which the DOM cannot express inside another button. What
-       A6b is FOR is Paul's "one vertical stripe max": a second COLUMN OF MARKS
-       is a second stripe. `.nu-seedrow`'s two targets are one mark and are
-       counted as one — the die's left, which is the stripe's — and the row is
-       asserted to stay inside the gutter by A6i like everything else. */
-    rowCols: (() => { const lefts = new Set();
-      for (const b of row.querySelectorAll("button")) {
+    /* A6b — THE BAR IS ONE ROW AND NEVER SCROLLS SIDEWAYS. It is the same
+       claim `.nu-traylist` answered as "one column that never scrolls
+       sideways", turned ninety degrees with the chrome: a bar that wrapped
+       would be a second row of chrome at the foot, which is the trade the
+       gutter's deletion was made to avoid. DISTINCT BUTTON TOPS, not lefts,
+       for the same reason the stripe counted lefts.
+       ONE MARK MADE OF TWO TARGETS IS NOT A SECOND ROW (2026-09-03, kept):
+       `.nu-seedrow` holds the die AND the number, which is two buttons and one
+       mark, so a button inside it is counted at the row's own top. */
+    barScroll: [bar.scrollWidth, bar.clientWidth],
+    barRows: (() => { const tops = new Set();
+      for (const b of bar.querySelectorAll("button")) {
         if (!b.getClientRects().length) continue;
         const box = b.closest(".nu-seedrow") || b;
-        lefts.add(Math.round(box.getBoundingClientRect().left));
+        tops.add(Math.round(box.getBoundingClientRect().top));
       }
-      return lefts.size; })(),
-    /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The ten tabs
-       are glyphs now (Paul: "Please make all the tabs and top buttons into
-       sensible icons to save space"), so `textContent` is "⊕Where" — the
-       mark, the `.nu-vh` word, and on the open one the printed word too. The
-       durable claim these three lines make is "the row names all nine places
-       and the open one is marked", and the ACCESSIBLE NAME is where that claim
-       lives now: it is what a screen reader is told, it is one string from one
-       table (ui/glyph.js), and it is exactly what `aria-label` is for. A gate
-       that drove by the visible face would have to be rewritten again the next
-       time somebody changes a picture. */
-    names: [...row.querySelectorAll("button")]
+      return tops.size; })(),
+    /* READ OFF `aria-label` AND NOT OFF THE TEXT (2026-08-28, kept whole). The
+       chrome is glyphs, so `textContent` is "≡menu"; the durable claim is
+       "every control in the chrome names itself", and the ACCESSIBLE NAME is
+       where that claim lives — one string from one table (ui/glyph.js). */
+    names: [...document.querySelectorAll("#nu-chrome button")]
+      .filter((b) => b.getClientRects().length)
       .map((b) => (b.getAttribute("aria-label") || "").trim()),
-    marks: [...row.querySelectorAll("mark")]
+    /* A6c — AT MOST ONE `<mark>`, AND IT IS THE OPEN SHEET.
+       THE LAW IS AMENDED BY ONE WORD AND THE AMENDMENT IS THE POINT
+       (2026-09-09). It read "exactly one <mark> in the stripe, and its button
+       is the only one with aria-pressed=true", and "exactly" was right while
+       the chrome was a list of PLACES one of which you were always standing
+       in. The table is not a place you opened: it is the page. So when no
+       sheet is open the honest reading is that NOTHING in the chrome is
+       marked — a mark on the ≡ would say you were inside the menu, and a mark
+       on the genre plate would say the globe was open — and when a sheet IS
+       open exactly one row wears both channels. `null` is the "no sheet" state
+       and the assertion below reads `__eightTabNow()` to know which it should
+       be, which keeps this a comparison of two readings of one fact. */
+    marks: [...document.querySelectorAll("#nu-chrome mark")]
       .map((m) => (m.closest("button").getAttribute("aria-label") || "").trim()),
-    pressed: [...row.querySelectorAll('button[aria-pressed="true"]')]
+    pressed: [...document.querySelectorAll('#nu-chrome button[aria-pressed="true"]')]
       .map((b) => (b.getAttribute("aria-label") || "").trim()),
-    /* WHAT THE MARKED MARK SHOULD SAY. At the root it is the open tab; at a
-       sub-level the stripe is showing that level's own siblings and the marked
-       one is the item that level has open, which `__eightTray` reports off the
-       same call the buttons make. `↑` is never marked. */
-    /* `if (T.level === "root") return window.__eightTabNow()` STOOD HERE and
-       it was exact while the root level was the tab row: the marked mark WAS
-       the open tab and its name WAS the tab's word. Neither is true now
-       (2026-09-02): the open tab may be `Where`, whose mark is the foot's name
-       plate and whose word is the RECORD's name; and with several branches
-       open the marked row is the deepest open thing inside the open tab, not
-       the tab row. `__eightTray().on` is the one answer to "which mark is the
-       marked one", it is what `paintTray` paints from, and reading it here is
-       what makes this a comparison of two readings of one fact rather than a
-       gate reciting the page back to itself. */
-    now: (() => { const T = window.__eightTray();
-      const b = T.on && document.querySelector('[data-k="' + T.on + '"]');
-      return b ? (b.getAttribute("aria-label") || "").trim() : null; })(),
-    level: window.__eightTray().level,
-    /* ...AND WHETHER THIS LEVEL HAS A "HERE" TO MARK AT ALL (2026-08-28). The
-       stripe's third depth is the open motif's fourteen transforms, and they
-       are ACTIONS rather than siblings: none of them is open, pressing one
-       writes the record, and marking one would be a lie about state. The page
-       DECLARES that (`trayNow`'s `acts`, read back through `__eightTray`) and
-       A6c below asks the declaration rather than guessing from an absence —
-       the same discipline motif-frozen's A1 uses on `[data-live]`. What says
-       where you are at such a level is the HEAD, so the head's own accessible
-       name is read here and asserted to name the thing you are inside. */
-    acts: window.__eightTray().acts,
-    /* (`headSays` STOOD HERE — the ↑'s own `data-say`, "up — out of psalm,
-       back to the motifs", which was A6c's answer to "what says where you are
-       on a level that marks nothing". There is no ↑ and there is no level; the
-       marked ancestor row is the answer now, and it is on the screen the whole
-       time, which is what the 2026-08-28 refusal of a disabled ↑ said the
-       marked mark would be.) */
-    rowH: +row.getBoundingClientRect().height.toFixed(1),
-    rowLines: 1,
+    /* WHAT THE MARKED MARK SHOULD SAY, if there is one. The open SHEET's own
+       row: `Score` / `Video` / `Screensaver` / `Export` in the hamburger, and
+       WHERE is the bar's genre plate, whose accessible name is the tab's word
+       (its visible word is the record's name — see A6d). */
+    open: window.__eightTabNow(),
+    want: (() => {
+      const t = window.__eightTabNow();
+      if (t === "Band") return null;
+      const b = document.querySelector('[data-k="toptab-' + t + '"]');
+      return b ? (b.getAttribute("aria-label") || "").trim() : null;
+    })(),
+    barH: +bar.getBoundingClientRect().height.toFixed(1),
+    topH: top ? +top.getBoundingClientRect().height.toFixed(1) : 0,
   };
 };
 
@@ -624,7 +609,13 @@ const LANE = async () => {
    which is the sentence he replaced it with on 2026-09-05. */
 const PAULS_TABS = ["Where", "Band", "Score", "Video",
                     "Screensaver", "Export"];
-const NAV_ROWS = PAULS_TABS.filter((t) => t !== "Where");
+/* ...AND THE SIXTH AMENDMENT, 2026-09-09 (TABLE.md §10b steps 6 and 7): the
+   TRAY is deleted, so there is no list of tabs on the screen at all. What the
+   chrome offers is the HAMBURGER's four — `TABS` minus `Where`, which is the
+   bar's genre plate, and minus `Band`, which is the page — and the log under a
+   rule. Paul's own sentence for it is *"a hamburger menu for score, video,
+   screensaver"*; Export rides with them for the reason Screensaver does. */
+const MENU_ROWS = PAULS_TABS.filter((t) => t !== "Where" && t !== "Band");
 // how long a tab is given to settle after it is opened. The Score engraves a
 // whole record on a promise the first time it is asked; everything else is
 // synchronous and the wait is only for layout.
@@ -650,62 +641,65 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       await page.close();
       continue;
     }
-    // A6d — nine names, Paul's words, Paul's order, read off the RENDERED
-    // buttons (not off the probe, which is the page agreeing with itself)
-    /* A6d — nine names, Paul's words, Paul's order, read off the RENDERED
-       buttons. THE READING MOVED FROM THE FACE TO THE NAME, 2026-08-28: the
-       tabs are glyphs and the word is the button's `aria-label`, so this asks
-       for the accessible name. It is a STRONGER check than the one it
-       replaces, not a weaker one — it now also proves that no tab is a naked
-       picture to a screen reader, which is the thing a row of icons can
-       actually get wrong. A6g is the other half: the word is in the DOM too,
-       so the page still reads as itself with the stylesheet off.
-       A6g / A6h AND NOT A6e / A6f: both of those labels were already spoken
-       for further down this file (the scroll-memory walk and the pane sweep),
-       and two checks answering to one name is a report nobody can read. */
-    /* OFF THE STRIPE'S ROOT LEVEL, 2026-08-28. This read `#toptabs button`,
-       which was the whole row because the row was the whole hierarchy, drawn
-       flat. The stripe draws ONE level, so the gate says which level it wants
-       — `__eightUp()` is the `↑` button pressed, the same call the button
-       makes — and then reads the nine off the list. It skips `↑` by construction
-       (there is none at the root) and skips nothing else. */
-    /* `__eightUp()` IS "FOLD EVERYTHING" NOW (2026-09-02). It was the ↑
-       pressed until there was no ↑ left; there is no ↑ (Paul: *"We should
-       never need the 'up' icon because we can expand multiple levels of
-       interface option"*), and what the nine callers of it have always meant
-       is "put the stripe back where the tabs are". On a tree that is folding
-       every open branch, which leaves exactly the twelve rows this reads. */
+    /* ===== A6d / A6g / A6h — WHAT THE CHROME OFFERS AND WHAT IT CALLS IT ===
+       REWRITTEN 2026-09-09 (TABLE.md §10b steps 6 and 7, the tray deleted).
+       Paul: *"…then have a hamburger menu for score, video, screensaver, and
+       have genre, dice, playstop along the bottom."*
+
+       WHAT A6d ASSERTED AND WHAT SURVIVES. It read the tab words off the
+       stripe's ROOT LEVEL and compared them to Paul's own list, in his order.
+       There is no root level; the list is the HAMBURGER's, and it is `TABS`
+       minus the two rows that are not viewers — `Where` (the bar's genre
+       plate, a picker) and `Band` (the table, which is the page). So the words
+       are the four Paul named plus Export, in the order the one owner keeps
+       them in, read off the RENDERED buttons and never off `__eightMenu()`,
+       which would be the page agreeing with itself.
+       A6g is the other half and did not change: the word is in the DOM as a
+       `.nu-vh`, so the page reads as itself with the stylesheet off.
+       AND `__eightUp()` STILL MEANS "PUT THE PAGE BACK WHERE THE TABS ARE",
+       which is now close the sheet and shut the menu — the same two taps a
+       hand makes, and the same shim its nine callers have always compared
+       against "root". */
     await page.evaluate(() => window.__eightUp());
+    await page.click("#burger");
+    await page.waitForTimeout(200);
     const rowNames = await page.evaluate(() =>
-      [...document.querySelectorAll(".nu-traylist button")]
-        .map((b) => (b.getAttribute("aria-label") || "").trim()));
-    is(JSON.stringify(rowNames) === JSON.stringify(NAV_ROWS),
-      "A6d " + width + " · twelve rows, Paul's words, Paul's order — "
-      + JSON.stringify(rowNames));
+      [...document.querySelectorAll("#nu-menu button")]
+        /* THE HEAD OF THE ACCESSIBLE NAME, because the log's carries its
+           count ("log — 3 lines" / "log — nothing yet") — one node, two names,
+           and the one this list is about is the SUBJECT's. */
+        .map((b) => (b.getAttribute("aria-label") || "").trim()
+                     .split(/ — |,/)[0]));
+    is(JSON.stringify(rowNames) === JSON.stringify(MENU_ROWS.concat(["log"])),
+      "A6d " + width + " · the hamburger is the four viewers and the log, in "
+      + "TABS' own order — " + JSON.stringify(rowNames));
     const rowWords = await page.evaluate(() =>
-      [...document.querySelectorAll(".nu-traylist button")]
+      [...document.querySelectorAll("#nu-menu button")]
         .map((b) => { const v = b.querySelector(".nu-vh, mark .nu-vh");
                       return v ? v.textContent.trim() : null; }));
-    is(JSON.stringify(rowWords) === JSON.stringify(NAV_ROWS),
-      "A6g " + width + " · and every word is still IN the button, so the row "
+    is(JSON.stringify(rowWords) === JSON.stringify(MENU_ROWS.concat(["log"])),
+      "A6g " + width + " · and every word is still IN the button, so the menu "
       + "reads with the stylesheet off — " + JSON.stringify(rowWords));
-    /* ...AND THE THIRTEENTH IS IN THE FOOT, WEARING THE RECORD'S NAME. Paul:
-       *"Move the play/stop button to the bottom, along with opts and where"*
-       and *"The name of the genre should be obvious."* The plate keeps the
-       tab's own address (`toptab-Where`) because an address does not move when
-       a row does, and its WORD is the record's human name rather than the word
-       "Where" — which is the whole point of moving it. */
+    /* ...AND THE GENRE IS A PLATE IN THE BAR, WEARING THE RECORD'S NAME. Paul:
+       *"have genre, dice, playstop along the bottom"* and *"The name of the
+       genre should be obvious."* The plate keeps the tab's own address
+       (`toptab-Where`) because an address does not move when a row does, and
+       its WORD is the record's human name rather than the word "Where" —
+       which is the whole point of it being there. It is in the BAR and in
+       neither the menu nor a list, which is what the third field reads. */
     const plate = await page.evaluate(() => {
-      const b = document.querySelector('.nu-trayfoot [data-k="toptab-Where"]');
+      const b = document.querySelector('#nu-bar [data-k="toptab-Where"]');
       if (!b) return null;
       const v = b.querySelector(".nu-vh"), s2 = b.querySelector(".nu-sub2");
       return { word: v ? v.textContent.trim() : null,
                sub: s2 ? s2.textContent.trim() : null,
-               inList: !!document.querySelector('.nu-traylist [data-k="toptab-Where"]') };
+               inMenu: !!document.querySelector('#nu-menu [data-k="toptab-Where"]') };
     });
-    is(!!plate && !plate.inList && !!plate.word,
-      "A6d " + width + " · …and Where is a name plate in the foot, not a row "
-      + "in the list — " + JSON.stringify(plate));
+    is(!!plate && !plate.inMenu && !!plate.word,
+      "A6d " + width + " · …and the genre is a name plate in the BAR, not a "
+      + "row in the hamburger — " + JSON.stringify(plate));
+    await page.evaluate(() => window.__eightUp());
+    await page.waitForTimeout(150);
     // A6h — every glyph on the page is decoration beside a name: a mark with
     // no `aria-label` on its button is the one failure an icon row can hide.
     const nakedGlyphs = await page.evaluate(() =>
@@ -718,254 +712,154 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       "A6h " + width + " · no naked glyph — every mark has a word and a name "
       + JSON.stringify(nakedGlyphs));
 
-    /* A6j — EVERY LEVEL IS REACHABLE, AND `↑` RETURNS (2026-08-28). Paul:
-       *"There should be one vertical stripe max with an 'up' icon to get to
-       the parent level."* Three of the nine tabs have a level inside them, and
-       the whole claim of the stripe is that you can get into one and back out
-       of it with the marks that are on the screen — so this drives the actual
-       buttons rather than the probe: `.click()` on the tab's mark, `.click()`
-       on `↑`, and the level is read after each.
-       AND THERE IS NO `↑` AT THE ROOT. It is ABSENT rather than disabled, and
-       that is a decision with a reason (ui/eight.js THE STRIPE: the refusal
-       idiom is for an option the RECORD made unreachable, and "there is no
-       level above the top" is a definition, not a fact that can change). A
-       dead 44px target at the head of a 56px column is what this asserts is
-       not there. */
-    /* THE WALK IS A CHAIN AND NOT A ROUND TRIP SINCE 2026-08-28, because the
-       gutter is three deep now. Paul: *"When I'm in a motif, the motif
-       operations should be the right nav elements on the view. The up arrow to
-       take me home should take me back to the motif picker."* So `Motif` lands
-       you INSIDE the open motif — its fourteen transforms — and `↑` from there
-       is the BANK, with a second `↑` for the nine. One press per level, the
-       button the thumb presses, until there is no `↑` left; the chain of
-       levels that walk produces is the assertion. (It read `["Motif",
-       "motif"]` and one `.click()` on `↑` expecting the root, which is the
-       shape of a two-deep stripe and would now fail for being right about
-       yesterday.) A drum pattern has no transforms, so a record whose open
-       cell is a beat lands on the bank instead — both are accepted below, and
-       which one you get is `trayNow`'s arithmetic, not a branch here. */
-    /* ===== A6j / A6k / A6l — THE WALK IS AN EXPAND/COLLAPSE NOW ==========
-       REWRITTEN 2026-09-02. Paul: *"we should really work hard on nesting
-       options inside the left nav … We should never need the 'up' icon because
-       we can expand multiple levels of interface option."*
+    /* ===== A6j — THERE IS NO TRAY, AND A VIEWER IS A SHEET WITH A WAY OUT ==
+       REWRITTEN 2026-09-09, AND IT IS THE THIRD REWRITE OF THIS LINE. It drove
+       `[data-k="trayup"]` up a chain of levels (2026-08-28), then asserted the
+       ↑'s ABSENCE at every depth of a tree (2026-09-02), and now asserts the
+       absence of the whole apparatus — no `↑`, no `#nu-tray`, no
+       `.nu-traylist`, no `.nu-trayfoot`, nothing at a `[data-depth]`. A
+       deletion that left one of the five behind would be a second navigation
+       standing beside the first, which is the failure every rewrite of this
+       check has been about.
+       AND WHAT REPLACED IT IS DRIVEN, not assumed: each of the four viewers is
+       opened from the hamburger's own button, asserted to be a `[data-sheet]`
+       panel over the table with a close that is on the screen, and the close
+       is pressed and must land back on the table with the table drawn. That is
+       the round trip the ↑ chain used to make, made by the marks a thumb has. */
+    const gone = await page.evaluate(() => ({
+      up: document.querySelectorAll('[data-k="trayup"]').length,
+      tray: document.querySelectorAll("#nu-tray, .nu-tray, .nu-traylist, "
+                                      + ".nu-trayfoot, .nu-traycut").length,
+      depth: document.querySelectorAll("[data-depth]").length,
+    }));
+    is(gone.up === 0 && gone.tray === 0 && gone.depth === 0,
+      "A6j " + width + " · there is no ↑, no gutter and no depth anywhere on "
+      + "the page — " + JSON.stringify(gone));
 
-       WHAT THE THREE OF THEM ASSERTED, and every one of these claims survives
-       in a form a tree can make:
-         · A6j drove `[data-k="toptab-<word>"]` and then `[data-k="trayup"]` up
-           to four times, asserting the exact chain of LEVELS a tab descends
-           into and climbs out of, plus "there is no ↑ at the root — it is
-           absent, not a dead button". The chain is gone with the levels; the
-           ABSENCE of ↑ is now a claim about the whole page rather than about
-           the root, and it is stronger for it.
-         · A6k drove a mark one level FURTHER in (`tabform` → a section →
-           `secup/secdown/secdrop`) and climbed back. Descending is expanding
-           and climbing is folding, and both are the SAME mark pressed twice —
-           which is the sentence Paul's instruction is made of.
-         · A6l (2026-09-01, and the newest of the three) opened a voice and
-           asserted the four facets arrived as `.nu-sub` rows at the band level,
-           the voice wearing `aria-expanded`, one <mark> still on the page. That
-           is exactly this wave's claim with `subs === 4` and `.nu-sub` swapped
-           for a DEPTH — which is what "the 'ghosted' sections are doubling UX
-           elements" replaced them with. */
-    const nowT = () => page.evaluate(() => window.__eightTree());
-    /* THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02, Paul: *"Add a
-       'silence' genre at the top of the genre list. This is a blank state."*)
-       and a blank state has NO PLAYERS — which is the point of it. The three
-       walks below are about what a MEMBER row does, so the gate hires one, the
-       way a reader would: the `+ line` mark in the Band branch. Said out loud
-       rather than done quietly, because "there is a voice to open" was an
-       assumption this file made for free until today. */
-    await page.evaluate(() => window.__eightUp());
-    await page.waitForTimeout(100);
-    await page.click('[data-k="toptab-Band"]');
-    await page.waitForTimeout(TAB_SETTLE("Band"));
-    /* ...AND THE HIRE IS ON THE TABLE SINCE 2026-09-05 (TABLE.md §9a). The
-       stripe's `addvoice` went with the rest of the Band branch's ops; the
-       offer it filed onto is the adder cell at the end of the player axis,
-       `tcol-add|line`, which is build-the-band's own address and is in the DOM
-       whenever the Band pane is drawn. */
-    if (!(await page.$('[data-k="tabvoice2"]')) &&
-        !(await nowT()).rows.some((r) => r.depth === 1 && /^tab/.test(r.key))) {
-      const add = await page.$('#pan-band [data-k="tcol-add|line"]');
-      if (add) { await add.click(); await page.waitForTimeout(900); }
-    }
-    const anyUp = await page.$('[data-k="trayup"]');
-    is(!anyUp, "A6j " + width + " · there is no ↑ anywhere on the page — it is "
-      + "absent, not a dead button, and not at any depth");
-
-    /* A6j — A TAB EXPANDS, AND PRESSING IT AGAIN FOLDS. Five tabs have
-       children and the arrival opens them; the sixth press folds them back.
-       Driven through the BUTTONS, exactly as the ↑ walk was, because a gate
-       that expanded with `__eightExpand` would be proving the probe agrees
-       with itself. */
-    const walk = [];
-    /* TWO, NOT THREE, SINCE 2026-09-08: `Mix` was the fourth until 2026-09-07
-       (the board is the MIX row's master and its five stage buttons are inside
-       the board again) and `Motifs` was the third until today — TABLE.md §10b
-       step 4 makes the bank the MOTIFS row's own sheet, so the ten
-       `motiftab-<name>` rows and the fourteen transforms under them are not
-       tray children any more. The claim is about a tab WITH CHILDREN and the
-       page has two of them; when it has one, this check is asking nothing and
-       whoever deletes that branch owes the tree a different claim. */
-    for (const word of ["Band", "Score"]) {
+    const sheets = [];
+    for (const word of MENU_ROWS) {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
+      await page.click("#burger");
+      await page.waitForTimeout(150);
       await page.click('[data-k="toptab-' + word + '"]');
       await page.waitForTimeout(TAB_SETTLE(word));
-      const open = await nowT();
-      await page.click('[data-k="toptab-' + word + '"]');
-      await page.waitForTimeout(300);
-      const shut = await nowT();
-      walk.push({ word,
-        kids: open.rows.filter((r) => r.depth === 1).length,
-        exp: open.expanded.indexOf("toptab-" + word) >= 0,
-        folded: shut.rows.filter((r) => r.depth > 0).length,
-        marks: open.rows.filter((r) => r.on).length });
+      const open = await page.evaluate(() => {
+        const c = document.getElementById("sheetclose");
+        const pan = document.querySelector(".nu-pan[data-sheet]");
+        const r = pan ? pan.getBoundingClientRect() : null;
+        /* FULL WIDTH IS THE PAGE'S COLUMN AND NOT THE VIEWPORT'S: a sheet is
+           in flow (nu.css carries why), so it is `clientWidth` less the page's
+           own two gutters, which is exactly what the table gets. */
+        return { tab: window.__eightTabNow(),
+                 sheets: document.querySelectorAll(".nu-pan[data-sheet]").length,
+                 full: !!r && r.width >= document.documentElement.clientWidth - 30,
+                 want: true,
+                 close: !!c && !c.hidden && !!c.getClientRects().length,
+                 menuShut: !window.__eightMenu().open };
+      });
+      await page.click("#sheetclose");
+      await page.waitForTimeout(600);
+      const back = await page.evaluate(() => ({
+        tab: window.__eightTabNow(),
+        sheets: document.querySelectorAll(".nu-pan[data-sheet]").length,
+        table: document.querySelectorAll("#pan-band table").length }));
+      sheets.push({ word, open, back });
     }
-    const badWalk = walk.filter((w) =>
-      !w.exp || w.kids < 1 || w.folded !== 0 || w.marks !== 1);
-    is(badWalk.length === 0,
-      "A6j " + width + " · every tab with children unfolds them on arrival and "
-      + "folds them on the next press, with one mark throughout — "
-      + walk.map((w) => w.word + ":" + w.kids).join(", ")
-      + (badWalk.length ? " — BAD " + JSON.stringify(badWalk) : ""));
+    const badSheet = sheets.filter((x) =>
+      x.open.tab !== x.word || x.open.sheets !== 1 || !x.open.close ||
+      !x.open.menuShut || x.open.full !== x.open.want ||
+      x.back.tab !== "Band" || x.back.sheets !== 0 || x.back.table !== 1);
+    is(badSheet.length === 0,
+      "A6j " + width + " · every viewer in the hamburger opens as ONE "
+      + "full-width sheet over the table with a close, and the close lands "
+      + "back on the table — " + sheets.map((x) => x.word).join(", ")
+      + (badSheet.length ? " — BAD " + JSON.stringify(badSheet) : ""));
 
-    /* A6k — OPENING STRUCTURE FOLDS BAND: ONE PATH.
-       REWRITTEN IN PLACE 2026-09-02 (wave 4). Paul: *"Only allow one expansion
-       (or nested expansion) of the left nav at one time."*
+    /* ===== A6l — THE OPS ARE ON THE TABLE, AND A6k IS RETIRED =============
+       A6k asserted ONE OPEN PATH in the tree — open Band, open Score, and the
+       first branch is gone. There is no tree and there are no branches: the
+       claim it protected (you can never be shown two navigations at once) is
+       A6j's `[data-sheet]` count of exactly one, above, which is the same
+       sentence about the surface that replaced it. It is retired with its
+       reason rather than rewritten into something it never said.
 
-       WHAT IT ASSERTED AND WHY IT IS THE OPPOSITE NOW. It read *"A6k — TWO
-       BRANCHES OPEN AT ONCE, WHICH IS THE WHOLE ASK. Open Band, open
-       Structure, and both stand: two rows wear `aria-expanded="true"`, the
-       rows of both are on the stripe at depth 1"* — Paul's 2026-08-28 sentence
-       (*"we can expand multiple levels of interface option"*) read as a
-       FOREST. He has withdrawn the plural and kept the depth: multiple LEVELS
-       still stand at once (root → child → grandchild, which is what A6l
-       measures and what the ↑ was deleted for), but only ONE CHAIN of them.
-       So the same gesture is driven and the assertion is inverted: after
-       opening Structure, Band's branch is gone, Structure's rows are on the
-       stripe, exactly one row wears `aria-expanded="true"`, and there is still
-       exactly ONE <mark> — shell A6c's law, unchanged, met by a path.
-       `__eightTree().expanded` IS THE PATH, root first, so it is asserted as a
-       chain and not as a set. */
-    await page.evaluate(() => window.__eightUp());
-    await page.waitForTimeout(120);
-    /* ...AND THE PAIR IT DRIVES IS `Score` AND `Band` SINCE 2026-09-08. It was
-       `Structure` and `Band` until 2026-09-04 (Structure is deleted, §6 ¶A,
-       and its sections are CHILDREN of Band), then `Motifs` and `Band` until
-       today — and the Motifs tab is deleted with its pane (§10b step 4), so
-       the two branches this tree still has are Band and Score. The claim is
-       unchanged and so is the gesture: open one tab with children, open
-       another, and the first must be gone — one expanded ancestor, one
-       <mark>, and the arriving tab's own rows on the stripe. Band is still the
-       SECOND of the two so the assertion can name the rows it expects: the
-       players AND the sections, which is the whole of what the stripe says the
-       Band tab is. What went with the Motifs branch is the `motifs` clause
-       below, which asked that no `motiftab-` row survived the fold; the score
-       branch's two view rows (`deck.view.not`, `deck.view.roll`) are what must
-       not survive it now, and that is what `folded` reads. */
-    await page.click('[data-k="toptab-Score"]');
-    await page.waitForTimeout(TAB_SETTLE("Score"));
-    await page.click('[data-k="toptab-Band"]');
-    await page.waitForTimeout(TAB_SETTLE("Band"));
-    const both = await page.evaluate(() => {
-      const T = window.__eightTree();
-      return { exp: T.expanded,
-        expandedRows: [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
-          .map((b) => b.dataset.k || b.id).filter((k) => k !== "playops"),
-        marks: document.querySelectorAll("#nu-tray mark").length,
-        folded: T.rows.some((r) => r.depth === 1 && /^deck\.view\./.test(r.key)),
-        band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key)),
-        secs: T.rows.some((r) => r.depth === 1 && /^secnav/.test(r.key)) };
-    });
-    is(both.expandedRows.length === 1 && both.marks === 1 &&
-       !both.folded && both.band && both.secs &&
-       both.exp.length === 1 && both.exp[0] === "toptab-Band",
-      "A6k " + width + " · opening Band folds Score; one path — one "
-      + "expanded ancestor, its players AND its sections on the stripe, one "
-      + "<mark> — " + JSON.stringify(both));
-
-    /* A6l — A BAND ROW IS A JUMP, AND THE OPS IT USED TO CARRY ARE ON THE
-       TABLE. THE THIRD REWRITE OF THIS CHECK AND THE ONLY ONE THAT IS ABOUT A
-       LAW RATHER THAN A COUNT. It read `r.subs === 4` off `.nu-traylist
-       .nu-sub` when the four were `inst · mix · plays · per-section`; wave 2c
-       made them one act (`remove`) and it read "at least one row at depth 2".
-       TABLE.md §9a (APPROVED 2026-09-05) settles it in the other direction —
-       Paul: *"Move all the nav into the table, I should be able to add players
-       without using the nav and sections too. I click band and all further
-       operations are buttons around the table."* — so the claim is now:
-
-         · a member row and a section row have NO CHILDREN AT ALL. Nothing at
-           depth 2 anywhere on the stripe while you stand on Band, which is
-           what "no op lives in the nav" looks like from the tree's side;
-         · the row still carries the state and the single <mark>, because the
-           jump IS the state — a childless row that stopped being markable
-           would have moved the mark up to the tab, which is the failure the
-           2026-09-01 discipline names;
-         · and every op that left is REACHABLE, at its own address, in the
-           sheet the jump just opened. A deletion nobody can undo by tapping is
-           a lost control, so this reads the table rather than trusting the
-           inventory: `tcol-del|<voice>` in the open column sheet, and
-           `trow-up|<id> · trow-down|<id> · trow-dup|<id> · trow-del|<id>` in
-           the open row sheet — the same four verbs, one surface over. */
+       A6l SURVIVES WHOLE, and it always was the durable one: TABLE.md §9a,
+       Paul — *"Move all the nav into the table, I should be able to add
+       players without using the nav and sections too."* What it read off the
+       stripe was that a player row and a section row had NO CHILDREN; what it
+       read off the TABLE was that every op those children used to carry is at
+       its own address in the sheet the row opens. The first half is now free
+       (there are no rows), so what is driven is the second half, from the
+       table's own heads — which is where a thumb has reached them since the
+       tray's Band branch became two jump links. A deletion nobody can undo by
+       tapping is a lost control, so this reads the rendered table. */
     {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
-      await page.click('[data-k="toptab-Band"]');
+      await page.evaluate(() => window.__eightTab("Band"));
       await page.waitForTimeout(TAB_SETTLE("Band"));
-      const L0 = await nowT();
-      const vk = (L0.rows.find((r) => r.depth === 1 && /^tab/.test(r.key)) || {}).key;
-      if (vk) {
-        await page.click('[data-k="' + vk + '"]');
+      /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02, Paul: *"Add a 'silence'
+         genre at the top of the genre list. This is a blank state."*) and a
+         blank state has NO PLAYERS, which is the point of it. So the gate
+         hires one the way a reader does: the adder cell at the end of the
+         player axis, `tcol-add|line`. */
+      const anyCol = await page.$('#pan-band th.nu-colhead button');
+      if (!anyCol) {
+        const add = await page.$('#pan-band [data-k="tcol-add|line"]');
+        if (add) { await add.click(); await page.waitForTimeout(900); }
+      }
+      const head = await page.$('#pan-band th.nu-colhead button[data-k^="tcol|"]');
+      if (head) {
+        /* THE NAME IS READ OFF THE HEAD BEFORE THE TAP, not off an
+           `aria-expanded` after it: the head is a TOGGLE and the sheet it
+           opens is a row of the `<tbody>`, so which button carries the open
+           state is the accordion's business and not this check's. What is
+           asserted is that the ops for THIS player are on the page once its
+           own head has been pressed. */
+        /* IT IS OPENED IDEMPOTENTLY, WHICH IS `__eightRow`'S OWN DISCIPLINE
+           AND WAS MEASURED HERE (2026-09-09). A head is a TOGGLE, and
+           `tablePanel` lands an arrival by CLICKING the head it wants open —
+           so after a hire the new player's sheet is ALREADY open and a gate
+           that presses it once has shut it. Measured: `{"name":"line 1",
+           "del":false}` at all four widths, with the sheet standing open in
+           the frame before the tap. */
+        const name = await page.evaluate((h) => h.dataset.k.slice(5), head);
+        if (await page.evaluate((h) => h.getAttribute("aria-expanded") !== "true",
+                                head)) await head.click();
         await page.waitForTimeout(500);
-        const r = await page.evaluate((key) => {
-          const T = window.__eightTree();
-          const b = document.querySelector('[data-k="' + key + '"]');
-          const name = key.replace(/^tab/, "");
-          return { deep: T.rows.filter((x) => x.depth === 2).map((x) => x.key),
-                   exp: b ? b.getAttribute("aria-expanded") : null,
-                   pressedOnParent: b ? b.getAttribute("aria-pressed") : null,
-                   marks: document.querySelectorAll("#nu-tray mark").length,
-                   depthAttr: [...document.querySelectorAll(".nu-traylist [data-depth]")]
-                     .length,
-                   /* THE OP, ON THE TABLE, IN THE SHEET THE JUMP OPENED. */
-                   del: !!document.querySelector(
-                     '#pan-band [data-k="' + CSS.escape("tcol-del|" + name) + '"]'),
-                   hire: ["line", "bass", "drums"].filter((k) =>
-                     document.querySelector(
-                       '#pan-band [data-k="' + CSS.escape("tcol-add|" + k) + '"]')).length };
-        }, vk);
-        is(r.deep.length === 0 && r.exp === null &&
-           r.pressedOnParent === "true" && r.marks === 1 && r.depthAttr > 0 &&
-           r.del && r.hire === 3,
-          "A6l " + width + " · a player row is a JUMP: no children, no "
-          + "aria-expanded, it wears the state and the one <mark>, and its "
-          + "`remove` and the three hires are on the table — " + JSON.stringify(r));
-        /* ...AND A SECTION IS THE OTHER HALF OF THE SAME BRANCH. Its four
-           operations were the depth-2 branch of ACTIONS here; they are the
-           first line of its ROW SHEET now, which the jump opens. */
-        const sk = (await nowT()).rows
-          .filter((x) => x.depth === 1 && /^secnav/.test(x.key))[0];
-        if (sk) {
-          await page.click('[data-k="' + sk.key + '"]');
+        const r = await page.evaluate((name) => {
+          const at = (k) => !!document.querySelector(
+            '#pan-band [data-k="' + CSS.escape(k) + '"]');
+          return { name,
+                   del: at("tcol-del|" + name),
+                   hire: ["line", "bass", "drums"]
+                     .filter((k) => at("tcol-add|" + k)).length };
+        }, name);
+        is(!!r.name && r.del && r.hire === 3,
+          "A6l " + width + " · a player's `remove` and the three hires are on "
+          + "the table, in the sheet its own column head opens — "
+          + JSON.stringify(r));
+        const rowHead = await page.$('#pan-band th.nu-srowh button[data-k^="trow|"]');
+        if (rowHead) {
+          const rowId = await page.evaluate((h) => h.dataset.k.slice(5), rowHead);
+          if (await page.evaluate((h) => h.getAttribute("aria-expanded") !== "true",
+                                  rowHead)) await rowHead.click();
           await page.waitForTimeout(600);
-          const rs = await page.evaluate((key) => {
-            const T = window.__eightTree();
-            const id = key.replace(/^secnav/, "");
+          const rs = await page.evaluate((id) => {
             const at = (k) => !!document.querySelector(
               '#pan-band [data-k="' + CSS.escape(k) + '"]');
-            return { deep: T.rows.filter((x) => x.depth === 2).map((x) => x.key),
-                     marks: document.querySelectorAll("#nu-tray mark").length,
+            return { id,
                      ops: ["trow-up|", "trow-down|", "trow-dup|", "trow-del|"]
                        .filter((k) => at(k + id)).length,
                      add: at("trow-add") };
-          }, sk.key);
-          is(rs.deep.length === 0 && rs.marks === 1 && rs.ops === 4 && rs.add,
-            "A6l " + width + " · …and a section row is a jump too: nothing at "
-            + "depth 2, one <mark>, and its four operations plus `+ section` "
-            + "are on the table at their own addresses — " + JSON.stringify(rs));
-        } else skip(width + " · no section row for A6l");
-      } else skip(width + " · no member row for A6l");
+          }, rowId);
+          is(!!rs.id && rs.ops === 4 && rs.add,
+            "A6l " + width + " · …and a section's four operations plus "
+            + "`+ section` are on the table at their own addresses — "
+            + JSON.stringify(rs));
+        } else skip(width + " · no section row head for A6l");
+      } else skip(width + " · no player column head for A6l");
     }
 
     // THE KIT GRID IS THE WIDEST THING THIS PAGE DRAWS and the default record
@@ -1016,15 +910,16 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         "A5b " + at + " · one table per pane, no nesting"
         + (s.crowdedPanes.length ? " — " + JSON.stringify(s.crowdedPanes) : "")
         + (s.nestedPanes ? " — " + s.nestedPanes + " nested" : ""));
-      /* A7 — the promise --tray-w makes to the whole page's flow.
-         (WAS "the promise --bar-h makes to the tab row": `if (s.bars !== 1)
-         fail("exactly one .nu-bar") else Math.abs(s.barH - parseFloat(s.barVar))
-         <= 0.5`. Same three claims — one piece of chrome, laid out, at the size
-         the sheet declares — asked of the chrome that exists. See A7 above.) */
-      if (s.trays !== 1) fail("A7 " + at + " · exactly one .nu-tray (found " + s.trays + ")");
-      else is(Math.abs(s.trayW - s.trayVar) <= 0.5,
-        "A7 " + at + " · the gutter is " + s.trayW + "px, --tray-w resolves to "
-        + s.trayVar + "px");
+      /* A7 — the promise `--bar-h` makes to the whole page's flow, which is
+         the promise `--tray-w` made and the promise the FIRST `--bar-h` made
+         before it. `body { padding-block-end: calc(var(--bar-h) + var(--s3)) }`
+         is the whole of "nothing goes under the bar" (nu.css), so a `.nu-bar`
+         a pixel taller than its token is a bar standing on the page, and a
+         second `.nu-bar` is the second row A6b already forbids by geometry. */
+      if (s.bars !== 1) fail("A7 " + at + " · exactly one .nu-bar (found " + s.bars + ")");
+      else is(Math.abs(s.barH - s.barVar) <= 0.5,
+        "A7 " + at + " · the bar is " + s.barH + "px, --bar-h resolves to "
+        + s.barVar + "px");
       is(s.overflowSins.length === 0,
         "A0 " + at + " · body and #app keep overflow-x: visible"
         + (s.overflowSins.length ? " — " + s.overflowSins.join(", ")
@@ -1038,121 +933,127 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
           "A8 " + at + " · " + lane.what + "'s sticky first column moved "
           + lane.moved + "px over a " + lane.scrolled + "px scroll");
 
-      /* A6 / A6b / A6c — the fixed stripe, swept down this tab's whole
-         height. `pinRow` is 0 since 2026-08-28 (the stripe is `position:
-         fixed` and is at the top of the viewport from the first frame), so
-         EVERY stop is a stop the stripe is asked about.
-         AND THERE IS NO SKIP LEFT (2026-08-29). This read `const pinB =
-         b.stops.filter((t) => t.barPinned)` and, when a tab was short enough
-         to fit on the screen, skipped with "this tab is too short to pin the
-         transport". That escape belonged to `position: sticky`: a band that
-         has not been scrolled to its pin is not late, it is not pinned yet.
-         Nothing here is sticky any more — the band is deleted (A6) — so a
-         short tab is not an excuse and the assertion is made at all eleven
-         stops on every tab, scrollY 0 included. */
+      /* A6 / A6b / A6c — THE BAR, SWEPT DOWN THIS SURFACE'S WHOLE HEIGHT.
+         It is `position: fixed`, so there is no pin point to wait for and
+         EVERY stop is a stop the bar is asked about, scrollY 0 included. The
+         claim turned ninety degrees with the chrome (2026-09-09): the gutter's
+         "top 0 and never moves" is the bar's "bottom is the viewport's bottom,
+         left is 0, width is the page's own width, and none of the three moves
+         over the whole scroll". */
       const b = await page.evaluate(BANDS);
-      const pinR = b.stops.filter((t) => t.rowPinned);
-      const x0 = b.stops[0].rowLeft;
-      const badRow = pinR.filter((t) => Math.abs(t.rowTop - t.want) > 0.5 ||
-        Math.abs(t.rowLeft - x0) > 0.5);
+      const x0 = b.stops[0].barLeft;
+      const badBar = b.stops.filter((t) =>
+        Math.abs(t.barBottom - t.wantBottom) > 0.5 ||
+        Math.abs(t.barLeft - x0) > 0.5 || x0 !== 0 ||
+        Math.abs(t.barWidth - t.wantWidth) > 0.5);
       const end = b.stops[b.stops.length - 1].y;
-      is(badRow.length === 0 && pinR.length === b.stops.length,
-        "A6 " + at + " · over " + pinR.length + " stops to y=" + end
-        + ": the stripe is fixed at top 0, x=" + x0 + " ("
-        + b.rowH + "px tall, level \"" + b.level + "\")"
-        + (badRow.length ? " — stripe off at " + JSON.stringify(badRow.slice(0, 3)) : ""));
+      is(badBar.length === 0,
+        "A6 " + at + " · over " + b.stops.length + " stops to y=" + end
+        + ": the bar is fixed at the foot, full width (" + b.barH
+        + "px tall, x=" + x0 + ")"
+        + (badBar.length ? " — bar off at " + JSON.stringify(badBar.slice(0, 3)) : ""));
       is(b.stickyHeads.length === 0,
         "A6 " + at + " · no axis heading is sticky any more — the navigation "
-        + "is a fixed gutter" + (b.stickyHeads.length ? " — " + b.stickyHeads.join(", ") : ""));
-      is(b.rowScroll[0] === b.rowScroll[1] && b.rowCols === 1,
-        "A6b " + at + " · the stripe is ONE column and never scrolls sideways ("
-        + b.rowScroll[0] + " vs " + b.rowScroll[1] + ", " + b.rowCols + " column)");
-      /* A6c, IN ITS TWO CASES SINCE 2026-08-28. The claim is unchanged where
-         it always applied — a level of SIBLINGS marks the open one, exactly
-         once, in both the picture and the ARIA — and it is stated for the one
-         level that has no siblings: the open motif's transforms, which the
-         page declares as `acts`. There, nothing may be marked (fourteen
-         `aria-pressed="false"` buttons would announce a state that does not
-         exist) and the HEAD carries "you are here" by naming the motif. Paul:
-         *"When I'm in a motif, the motif operations should be the right nav
-         elements on the view."* */
-      /* THE ACTS CASE IS REWRITTEN, 2026-09-02, AND ITS OLD FORM IS QUOTED
-         ABOVE. It read: `b.marks.length === 0 && b.pressed.length === 0 &&
-         /^up — out of \S/.test(b.headSays)` — nothing marked, and the HEAD's
-         ↑ sentence naming the thing you were inside. Two things reverse it,
-         both Paul's: *"We should never need the 'up' icon"* deletes the head
-         and its sentence, and *"we should really work hard on nesting options
-         inside the left nav"* means the stripe is never one level, so "this
-         level is a level of ACTIONS" is no longer a fact about the stripe at
-         all — it is a fact about a BRANCH, and the branch itself is the open
-         thing and wears the mark.
-         THE LAW IS UNCHANGED AND IS THE ONE BELOW: exactly one <mark> and one
-         `aria-pressed="true"` in the stripe, on the deepest open thing. What
-         the acts declaration still buys is that none of a branch's ACTION rows
-         may be marked — fourteen `aria-pressed="false"` transforms would tell a
-         screen reader there is a state to be in — and that is asserted on the
-         rendered page by test/nav-tree.js, where the branch can be opened on
-         purpose rather than caught wherever this sweep happens to land. */
-      is(b.marks.length === 1 && b.marks[0] === b.now &&
-         b.pressed.length === 1 && b.pressed[0] === b.now,
-        "A6c " + at + " · one <mark>, one aria-pressed, and both say \"" + b.now
-        + "\" (marks " + JSON.stringify(b.marks) + ", pressed "
+        + "is a fixed bar" + (b.stickyHeads.length ? " — " + b.stickyHeads.join(", ") : ""));
+      is(b.barScroll[0] === b.barScroll[1] && b.barRows === 1,
+        "A6b " + at + " · the bar is ONE row and never scrolls sideways ("
+        + b.barScroll[0] + " vs " + b.barScroll[1] + ", " + b.barRows + " row)");
+      /* A6c — AT MOST ONE MARK, AND IT IS THE OPEN SHEET. See the note in
+         BANDS: "exactly one" was a law about a chrome that was a list of
+         places; the table is the page and not one of them, so standing on it
+         is the state in which nothing is marked. Both channels still agree,
+         which is the half that has never moved. */
+      is(b.marks.length === b.pressed.length &&
+         b.marks.length === (b.want == null ? 0 : 1) &&
+         (b.want == null || (b.marks[0] === b.want && b.pressed[0] === b.want)),
+        "A6c " + at + " · on \"" + b.open + "\" the chrome wears "
+        + b.marks.length + " <mark> and " + b.pressed.length
+        + " aria-pressed, and they say " + JSON.stringify(b.want)
+        + " (marks " + JSON.stringify(b.marks) + ", pressed "
         + JSON.stringify(b.pressed) + ")");
-      /* A6i — NOTHING GOES UNDER THE GUTTER. Paul, 2026-08-28: *"Dont let
-         anything go under it."* The gutter's width is taken OUT of the page
-         (nu.css, `body { padding-inline }`), so this is a claim about flow and
-         not about z-index: no laid-out block overlaps the stripe's band.
+      /* A6i — NOTHING GOES UNDER THE BAR (or under the top strip). Paul,
+         2026-08-28: *"Dont let anything go under it."* The sentence is about
+         the gutter and it is the same sentence about the bar: the chrome's
+         height is taken OUT of the page (nu.css, `body { padding-block-end }`
+         and `padding-block-start`), so this is a claim about FLOW and not
+         about z-index — no laid-out block overlaps either band.
 
-         AND IT NO LONGER KNOWS WHICH EDGE THE STRIPE IS ON (rewritten
-         2026-08-28, hours after it was written). Paul: *"Move the right nav to
-         the left so it doesn't interfere with the scroll on the right."* This
-         read `const gl = tray.left` and failed anything whose `right` passed
-         it — one number, and it only ever meant "the gutter is on the right".
-         With the stripe at x=0 that number is 0 and EVERY block on the page is
-         past it: fifty failures at five widths, all of them saying the page
-         was under a gutter it is beside. The claim was never about a side; it
-         is that nothing OVERLAPS the stripe's band, so that is what is asked,
-         off the stripe's measured rectangle, and it holds on either edge with
-         nothing here to edit if it moves again. (ui/glyph.js `place()` and
-         nu.css `.nu-log` are the page's own two versions of the same lesson —
-         see the list at nu.css `.nu-tray`.) */
-      const G = await page.evaluate(() => {
-        const tray = document.getElementById("nu-tray");
-        const t = tray.getBoundingClientRect();
-        const bad = [];
+         IT NO LONGER KNOWS WHICH EDGE THE CHROME IS ON, and that generality is
+         what let this check survive the chrome moving twice: it was written
+         for a gutter on the right, kept working when the gutter went left, and
+         now reads two horizontal bands with nothing here to edit. Boxes are
+         not descended into past a clipper (an `<svg>` viewport, an `overflow:
+         auto` pane): their contents run past on purpose and are not painted
+         there, so what is asserted is that the CLIPPER is inside the page.
+         (ui/glyph.js `place()` and nu.css `.nu-strip-out` are the page's own
+         two versions of the same lesson.) */
+      /* IT IS MEASURED AT TWO SCROLL POSITIONS AND THAT IS WHAT THE TURN
+         COST (2026-09-09). A vertical gutter is beside the page at every
+         scroll, so one reading answered it; a horizontal bar is at the FOOT of
+         the viewport, and any page taller than the screen crosses that band in
+         viewport coordinates while you are half way down it — measured, the
+         first draft failed on `#app@55.2-1280.5`, which is a 1280px-tall
+         column doing exactly what a scrolling page does. What "nothing goes
+         under it" MEANS about a foot bar is that the page RESERVES the room:
+         at the END of the scroll the last block stops above the bar. So the
+         sweep runs at scrollY = max for the bar's band and at scrollY = 0 for
+         the top strip's, which is where each band's own claim is decidable. */
+      const G = await page.evaluate(async () => {
+        const raf = () => new Promise((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(r)));
+        const chrome = document.getElementById("nu-chrome");
         const clips = (cs, c) => c.tagName.toLowerCase() === "svg" ||
           ["hidden", "auto", "scroll", "clip"].includes(cs.overflowX);
-        const walk = (n) => { for (const c of n.children) {
-          if (c === tray || c.id === "nu-say") continue;
-          const cs = getComputedStyle(c);
-          if (cs.display === "none" || cs.visibility === "hidden") continue;
-          /* THE SCREEN-READER BOXES ARE NOT ON THE SCREEN (2026-08-30). When
-             the outer gutter went to zero (Paul: "Get rid of all margins and
-             padding on the outside of the views"), this sweep failed 36 times
-             on H2@55.0-56.0 — every one of them the sr-only recipe (.nu-ax >
-             h2 and its kin: 1x1px, margin -1px, clip-path inset(50%)), whose
-             negative margin parks an INVISIBLE box one pixel into the tray's
-             band now that content starts at the tray's own edge. Nothing is
-             painted there — clip-path clips the whole box — so "under the
-             gutter" was never true of them; with 12px of page gutter they
-             merely never got close enough for the stage to notice they exist.
-             A clipped-to-nothing box is skipped the way display:none is. */
-          if (cs.clipPath && cs.clipPath.indexOf("inset") === 0
-              && parseFloat(cs.width) <= 1 && parseFloat(cs.height) <= 1) continue;
-          const r = c.getBoundingClientRect();
-          if (!r.width && !r.height) continue;
-          if (r.right > t.left + 0.5 && r.left < t.right - 0.5)
-            bad.push((c.id || String(c.className) || c.tagName)
-                     + "@" + r.left.toFixed(1) + "-" + r.right.toFixed(1));
-          if (!clips(cs, c)) walk(c); } };
-        walk(document.body);
-        return { gl: +t.left.toFixed(2), gr: +t.right.toFixed(2),
-                 over: bad.slice(0, 5), overN: bad.length,
-                 w: +t.width.toFixed(2) };
+        const sweep = (t) => {
+          const bad = [];
+          const walk = (n) => { for (const c of n.children) {
+            if (c === chrome || c.id === "nu-say") continue;
+            const cs = getComputedStyle(c);
+            if (cs.display === "none" || cs.visibility === "hidden") continue;
+            /* THE SCREEN-READER BOXES ARE NOT ON THE SCREEN (2026-08-30,
+               kept): the sr-only recipe is 1x1px with `clip-path: inset(50%)`
+               and a negative margin, so nothing is painted there. Skipped the
+               way display:none is. */
+            if (cs.clipPath && cs.clipPath.indexOf("inset") === 0
+                && parseFloat(cs.width) <= 1 && parseFloat(cs.height) <= 1) continue;
+            const r = c.getBoundingClientRect();
+            if (!r.width && !r.height) continue;
+            /* ...AND A SHEET IS NOT UNDER THE CHROME, IT IS BEHIND IT. A
+               `.nu-pan[data-sheet]` is `position: fixed; inset: 0` — the whole
+               viewport by construction — and it reserves both bands INSIDE
+               itself with padding, exactly as <body> does. The walk descends
+               into it and judges its contents, which is the same rule one line
+               up makes about a clipper. Anything else `position: fixed` is
+               chrome by definition and is judged the same way. */
+            const own = cs.position === "fixed" ||
+                        (c.hasAttribute && c.hasAttribute("data-sheet"));
+            if (!own &&
+                r.bottom > t.top + 0.5 && r.top < t.bottom - 0.5 &&
+                r.right > t.left + 0.5 && r.left < t.right - 0.5)
+              bad.push((c.id || String(c.className) || c.tagName)
+                       + "@" + r.top.toFixed(1) + "-" + r.bottom.toFixed(1));
+            if (!clips(cs, c)) walk(c); } };
+          walk(document.body);
+          return bad;
+        };
+        const y0 = window.scrollY;
+        const max = Math.max(0, document.documentElement.scrollHeight
+                                - window.innerHeight);
+        window.scrollTo(0, 0); await raf();
+        const top = document.querySelector(".nu-top");
+        const badTop = top ? sweep(top.getBoundingClientRect()) : [];
+        window.scrollTo(0, max); await raf();
+        const barR = document.getElementById("nu-bar").getBoundingClientRect();
+        const badBar = sweep(barR);
+        window.scrollTo(0, y0); await raf();
+        const bad = badTop.concat(badBar);
+        return { bands: [top ? [0, +top.getBoundingClientRect().bottom.toFixed(1)] : null,
+                         [+barR.top.toFixed(1), +barR.bottom.toFixed(1)]],
+                 max, over: bad.slice(0, 5), overN: bad.length };
       });
       is(G.overN === 0,
-        "A6i " + at + " · nothing under the " + G.w + "px gutter — its band is "
-        + G.gl + "-" + G.gr + " and no block overlaps it"
+        "A6i " + at + " · nothing under the chrome — its two bands are "
+        + JSON.stringify(G.bands) + " and no block overlaps either"
         + (G.overN ? " — " + G.overN + " over: " + G.over.join(", ") : ""));
     }
 

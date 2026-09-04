@@ -124,7 +124,10 @@ function standUpServer() {
       window.__eightTab("Band");
       await new Promise((r) => setTimeout(r, 250));
       const v = window.__eightDoc().voices.find((x) => x.kind === "line");
-      const tab = document.querySelector('#nu-tray [data-k="tab' + v.name + '"]');
+      /* THE GUTTER IS DELETED (2026-09-09): the player's own COLUMN HEAD is
+         the mark that opens it, and the sheet check below already asks for it
+         by name, so this tap is the head's. */
+      const tab = document.querySelector('#pan-band [data-k="tcol|' + v.name + '"]');
       if (tab) { tab.click(); await new Promise((r) => setTimeout(r, 250)); }
       /* ...AND THE INSTRUMENT AND ITS LOOP POINTS ARE THE COLUMN SHEET'S
          SINCE 2026-09-04 (TABLE.md wave 2c): `facet-inst` is deleted with the

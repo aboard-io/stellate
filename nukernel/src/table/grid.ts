@@ -280,6 +280,17 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const pane2 = host.querySelector(".nu-pane") as HTMLElement | null;
     if (pane2) (t as HTMLElement).style.setProperty(
       "--panew", (pane2.clientWidth - 6) + "px");
+    /* THE STACK STARTS AT 0 AND THE CHROME IS NOT IN IT, and that is a
+       measurement (2026-09-09). The obvious reading of the new top strip is
+       that a head pinned at 0 pins under the ≡, so the stack should start at
+       the strip's height — built, driven, and wrong: `.nu-pane` is
+       `overflow-x: auto`, which computes `overflow-y` to `auto` as well, so
+       the pane IS the scrollport these heads stick inside and the offset is
+       measured from the PANE'S top edge, not the viewport's. Starting at 55.19
+       pushed every head 55px DOWN its own pane and left a white band above
+       TIME at 320 and 390. The strip is reserved by `body`'s
+       `padding-block-start: var(--top-h)` instead, which is where a fixed
+       plate's room has always been paid on this page. */
     let y = 0;
     for (const tr of Array.from(t.querySelectorAll<HTMLElement>("thead > tr"))) {
       for (const c of Array.from(tr.children))

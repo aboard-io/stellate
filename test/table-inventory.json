@@ -1064,7 +1064,9 @@
       "home": "produce-row",
       "field": "the first line of the row's sheet, unchanged",
       "reach": "prod.name",
-      "open": "tproduce"
+      "open": "tproduce",
+      "floor": 1,
+      "note": "IT IS A PLATE AND NOT A TAP TARGET, AND IT ONLY EVER MET THE 44px FLOOR BY ACCIDENT (measured 2026-09-09). `prod.name` is the producer's own `<h3 class=\"nu-namebar nu-prodplate\">` — a READOUT saying how many of the ten have been said — with a `data-k` so this inventory can find it. Nothing presses it. Until the gutter was deleted the content column at 320px was 320 − 96 = 224px, which WRAPPED the plate onto two lines: measured against HEAD's stylesheet, 185.2 x 48.5. With the column at its full 320 the same plate is one line, 264.6 x 27.8, and T7 reported it SHORT — a heading failing a TAP floor because it stopped being squeezed. The floor is 1 here and the reason is written down, which is the same discipline the BENCH's step row got when test/bench.test.js B3 was named as the owner of ITS geometry: a second 44px demand on a box no thumb reaches is a gate asserting the wrong thing about the right control."
     },
     {
       "k": "prod.cast",
@@ -1242,5 +1244,149 @@
   ],
   "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them.  ...AND THE MIX ROW, 2026-09-07 (§10b step 3). A third pane is DELETED: #deck (the Mix tab, ui/engineer.js `mount`) is the MIX row, which is the one special row that is NOT merged — §10a: *\"MIX is ALIGNED — one channel strip per voice column and the master in the corner.\"* The twelve rows appended below were MEASURED the way the others were: the rendered DOM of #deck was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion, in all six states the pane has (arrival plus the five plates), and it holds 10 control families plus the five tray children and the tab row. Every one of them is reachable through `tmix`, the master's own head, which is one tap at 320. TWO ROWS ALREADY IN THIS FILE CHANGED HOME rather than being added — `ins|<voice>|<n>` and `b|<voice>|<bus>`, the strip, from `column` to `mix-row` — because §10a gives the strip a row of its own and the column sheet's `seat` field is deleted with a pointer left in its place. ONE CONTROL IS DELETED AND NOT MOVED, with its measurement: the footer's seven `tmaster|<key>` cells wrote the same values through the same door as the main plate's own seven menus, and two controls for one fact is what the \"exactly ONE control page-wide\" law forbids.  T7 LEARNED A SECOND TAP IN THE SAME EDIT (`then`): the master's sheet is the BOARD, which has always been one panel holding one of five plates, so a walk that pressed only the row's head would report four plates' worth of controls missing and be right. `then` names the stage button — `boardtab|<kind>|<key>`, the same address nukernel/desk-gate.js presses. ONE THING THE PROBE FOUND IS NOT FILED AS A CONTROL: `board.legend`, the board's `dim is derived · bright is set · green is measured` line. It is a `<p class=\"nu-hint\">` and 185x34, and filing prose as a control is how a 44px floor becomes a lie; it travels with the board it captions.",
   "motifs": "2026-09-08 (TABLE.md §10b step 4): the Motifs PANE's own inventory, measured on the rendered `#pan-motif` at 390 across its ten states (the arrival plus one per cell in the bank) before the deletion — nine control families, the fourteen `motifOpsTrayItems` transforms, the ten `motiftab-<name>` rows of the stripe and the tab itself. Two homes: `motifs-row` is the BANK (the row shut is a face; the row open is one line per motif — ui/preview.js's picture, the name as the WRITE, the provenance word, the chairs that read it, and `open`), and `motif-sheet` is one motif OPENED from it (its rename field, clear, play/loop, the written staff, the bench, `+`/`- measure`, the forks and the fourteen transforms). The two are two states of one row, so every reach behind `motif-sheet` names `motifopen|<motif>` as its second tap and every reach behind `motifs-row` names `motifback` — each a no-op in the state that is already right, which is what makes the walk order-independent.",
-  "produce": "2026-09-08 (§10b step 5): the Produce PANE became the footer's last merged row and `ui/produce.js mount` did not change a line, so what is filed is what the panel draws at arrival and one tap in — the name plate with its count, the subject tree, its seventeen chips, and the adjective menus a chosen subject offers. The stack's own row controls (more / less / take it off / forget / undo) appear only once a note stands, which is `test/producer.browser.js`'s subject and not this walk's."
+  "produce": "2026-09-08 (§10b step 5): the Produce PANE became the footer's last merged row and `ui/produce.js mount` did not change a line, so what is filed is what the panel draws at arrival and one tap in — the name plate with its count, the subject tree, its seventeen chips, and the adjective menus a chosen subject offers. The stack's own row controls (more / less / take it off / forget / undo) appear only once a note stands, which is `test/producer.browser.js`'s subject and not this walk's.",
+  "chrome": {
+    "what": "THE GUTTER'S OWN CONTROLS, FILED THE DAY IT WAS DELETED (2026-09-09, TABLE.md §10b steps 6 and 7). Every other row in this file is a control the BAND or STRUCTURE pane offered and the TABLE now holds; these six are the ones that were never the table's at all — the transport, the seed, the record's name, the log, and the four viewers — and T7's law is the same one asked of them: nothing is lost, and a thumb can reach it at 320px. Two homes, both outside the table on purpose: THE BAR at the foot of the page (Paul: \"have genre, dice, playstop along the bottom\") and THE HAMBURGER at the top corner (\"a hamburger menu for score, video, screensaver\"). A row with `menu: true` is behind the ≡ and the walk presses it first, which is the same second tap the MIX row's master needed when its home became a tabbed surface. THE FOLD'S DOOR IS OPENED BY ITS `data-k` AND NOT BY ITS id: `#playops` wears `data-k=\"tp.opts\"` — one node, two names, the id for eleven gates and the key for the gutter's own painter — and the first draft of these rows asked for `playops`, found nothing, and reported the mode, the take and the room as 0x0. Measured on the rendered page before it was believed.",
+    "controls": [
+      {
+        "k": "toptab-Where",
+        "was": "the gutter foot's permanent genre name plate",
+        "home": "bar",
+        "field": "the genre, first in the bar; it opens WHERE (the globe and the when-slider) as a sheet — a picker, not a place you live",
+        "reach": "toptab-Where"
+      },
+      {
+        "k": "rewrite",
+        "was": "the die in the gutter foot's .nu-seedrow",
+        "home": "bar",
+        "field": "unmoved: the same node, the same id, the same #reading inside it — the row went from a 96px column to the middle of the bar",
+        "reach": "rewrite"
+      },
+      {
+        "k": "seedval",
+        "was": "the number beside the die",
+        "home": "bar",
+        "field": "unmoved, and the two countdowns stand with it: .nu-seedwait (the seed's own) and .nu-count (the general one, which moved here from the head of the tray's foot and still stands down while the seed's is up)",
+        "reach": "seedval"
+      },
+      {
+        "k": "play",
+        "was": "the last mark in the gutter's foot, under a thumb",
+        "home": "bar",
+        "field": "the last control in the bar, under a right thumb — the same id and the same one owner of the transport",
+        "reach": "play"
+      },
+      {
+        "k": "voicing",
+        "was": "the mark between #playops and #play in the foot",
+        "home": "bar",
+        "field": "beside play, exactly as v263 placed it (Paul: \"right above play/stop and out of opts\") — the column's \"above\" is the row's \"next to\"",
+        "reach": "voicing"
+      },
+      {
+        "k": "playops",
+        "was": "the fold above #play in the gutter's foot",
+        "home": "bar",
+        "field": "the options' door stays with the transport rather than joining the hamburger: its three children are a mode, a take and the room, and all three are facts about the next press of ▶. The hamburger holds things you look at",
+        "reach": "playops"
+      },
+      {
+        "k": "playmode",
+        "was": "the first row of the play fold",
+        "home": "bar",
+        "field": "inside the fold, unmoved",
+        "reach": "playmode",
+        "open": "tp.opts"
+      },
+      {
+        "k": "take",
+        "was": "the second row of the play fold",
+        "home": "bar",
+        "field": "inside the fold, unmoved",
+        "reach": "take",
+        "open": "tp.opts"
+      },
+      {
+        "k": "vol",
+        "was": "the vertical room fader at the foot of the play fold",
+        "home": "bar",
+        "field": "inside the fold, the same chassis and the same touch law",
+        "reach": "vol",
+        "open": "tp.opts",
+        "floor": 40
+      },
+      {
+        "k": "toptab-Score",
+        "was": "a row of the stripe's root level",
+        "home": "hamburger",
+        "field": "a viewer: it opens the score deck as a full-screen sheet with a close",
+        "reach": "toptab-Score",
+        "menu": true
+      },
+      {
+        "k": "toptab-Video",
+        "was": "a row of the stripe's root level",
+        "home": "hamburger",
+        "field": "a viewer",
+        "reach": "toptab-Video",
+        "menu": true
+      },
+      {
+        "k": "toptab-Screensaver",
+        "was": "a row of the stripe's root level",
+        "home": "hamburger",
+        "field": "a viewer",
+        "reach": "toptab-Screensaver",
+        "menu": true
+      },
+      {
+        "k": "toptab-Export",
+        "was": "a row of the stripe's root level",
+        "home": "hamburger",
+        "field": "a viewer — it rides with Screensaver for Screensaver's reason",
+        "reach": "toptab-Export",
+        "menu": true
+      },
+      {
+        "k": "logger",
+        "was": "the log mark in the gutter's foot, with its badge",
+        "home": "hamburger",
+        "field": "the fifth row of the menu, under a rule — a readout and not a control on the record, which is what the four above it are too. Its BADGE rides the ≡ itself, so the count is on the screen with the menu shut",
+        "reach": "logger",
+        "menu": true
+      },
+      {
+        "k": "menu",
+        "was": "(new) the door the four viewers and the log stand behind",
+        "home": "hamburger",
+        "field": "the ≡ at the top corner, on the screen in every state; it wears the log's count",
+        "reach": "menu"
+      },
+      {
+        "k": "sheet-close",
+        "was": "(new) the way out of a sheet",
+        "home": "hamburger",
+        "field": "the × beside the ≡, hidden on the table and shown while a sheet is open. It is a target of its own rather than the ≡ wearing a second meaning — which would make the menu unreachable from inside a sheet",
+        "reach": "sheet-close",
+        "when": "sheet"
+      },
+      {
+        "k": "deck.view.not",
+        "was": "a row of the stripe's `score` level",
+        "home": "score-sheet",
+        "field": "back inside the Score sheet's own row, at the address it wore on both surfaces",
+        "reach": "deck.view.not",
+        "when": "Score"
+      },
+      {
+        "k": "deck.view.roll",
+        "was": "a row of the stripe's `score` level",
+        "home": "score-sheet",
+        "field": "beside it",
+        "reach": "deck.view.roll",
+        "when": "Score"
+      }
+    ],
+    "retired": "TWO CONTROLS OF THE GUTTER ARE RETIRED RATHER THAN MOVED AND EACH SAYS WHY. `trayup` (the ↑) went on 2026-09-02 with the tree that made it unnecessary and its absence is asserted by test/shell.js A6j. The nine `toptab-` rows of the stripe's root level are not a control at all any more: `Where` is the bar's plate, `Band` is the page, and the other four are the hamburger's, which is every one of them accounted for."
+  }
 }

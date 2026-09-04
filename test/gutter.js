@@ -1,6 +1,23 @@
 #!/usr/bin/env node
-/* test/gutter.js — THE TRANSPORT IS A LEVEL OF THE GUTTER, READ OFF THE
- * RENDERED PAGE.
+/* test/gutter.js — THE TRANSPORT IS THE BAR AT THE FOOT AND THE HAMBURGER AT
+ * THE CORNER, READ OFF THE RENDERED PAGE.
+ *
+ * THE FILE IS STILL CALLED gutter.js AND THERE IS NO GUTTER (2026-09-09,
+ * nukernel/TABLE.md §10b steps 6 and 7). Paul, looking at the nav beside the
+ * v271 grid: *"…then have a hamburger menu for score, video, screensaver, and
+ * have genre, dice, playstop along the bottom — a real mobile app now with
+ * everything in the table and the nav space reclaimed."* `#nu-tray`, its list,
+ * its foot, its cut, its `--tray-w` column and the whole tree behind it — the
+ * levels, `TABKIDS`, `TABSUB`, `paintTray`, `trayRow`, `trayNow`, `tapNode`,
+ * `expanded`/`chain`, and the three probes `__eightTray` / `__eightTree` /
+ * `__eightExpand` — are deleted from ui/eight.js and nu.css. What replaced
+ * them is three fixed boxes: `.nu-top` (the × and the ≡ at the top corner),
+ * `#nu-menu` (four viewers and the log, hanging from the ≡), and `.nu-bar`
+ * (the foot, full width: the genre plate, the seed row, and the transport).
+ * The name of this file is kept for the reason its claims are kept — every
+ * check below is about the same SUBJECT, which is where a thumb finds the
+ * transport and what it does when it gets there, and renaming the file would
+ * lose eleven rounds of argument to a `git log --follow` nobody runs.
  *
  * Paul, 2026-08-29, four sentences in one breath:
  *   "Get rid of the play buttons and the title of the song"
@@ -26,13 +43,22 @@
  * is a bug no source reading finds, and a lit ring is an attribute written by
  * a paint pass three call frames away from the scroll that caused it.
  *
- *   T1  the <h1> and the .nu-bar are GONE, and the record still names the page
- *   T2  #play is in the tray's head at EVERY level, and it toggles the record
- *   T3  the play level draws the five transport controls and no sixth
+ *   T1  the <h1> is GONE and the record still names the page. (The other half
+ *       of this claim — "and the .nu-bar is gone" — is RETIRED 2026-09-09: the
+ *       bar is back, at the foot, and it is now the subject of T2 and T3. The
+ *       tombstone is at the block itself.)
+ *   T2  #play is the LAST child of .nu-bartp inside #nu-bar and is ON THE
+ *       SCREEN in EVERY state this page has — the table and each of the five
+ *       sheets — and it toggles the record
+ *   T3  the bar and its #playops fold draw exactly the inventory below and no
+ *       ninth thing, and the bar's box IS `--bar-h`
  *   T4  A REAL POINTER DRAG on the vertical room fader changes the value and
- *       leaves window.scrollY where it was — THE TOUCH LAW, on the artifact
+ *       leaves window.scrollY where it was — THE TOUCH LAW, on the artifact.
+ *       The fader is opened through #playops in the bar now; nothing else
+ *       about the law moved
  *   T5  the genre list is built and open at boot, every row a thumb, with a
- *       Wikipedia column whose every href is NuWiki.url(the row's own key)
+ *       Wikipedia column whose every href is NuWiki.url(the row's own key) —
+ *       in the WHERE SHEET, which the bar's genre plate opens
  *   T6  scrolling the list changes WHICH marks are lit, by count and by name
  *   T7  a tap on a place writes its record, STARTS it, and leaves the mark
  *       centred within a pixel and measurably larger — three numbers
@@ -58,16 +84,19 @@
  *       all-empty row; and the duplicated-fact probe that MEASURED the
  *       shipped panel's repetition now bounds it
  *   T9  Paul, 2026-08-30: "Move the die icon to right above the question mark
- *       so it's always there." #rewrite is in the FOOT, above the ? and the
- *       log, at every level, still carrying #reading and still reseeding —
- *       and the play level has LOST it (a mark cannot be in two places)
+ *       so it's always there." #rewrite is in `#nu-bar` inside `.nu-seedrow`,
+ *       ON THE SCREEN in every state, still carrying #reading and still
+ *       reseeding — and the play fold has LOST it (a mark cannot be in two
+ *       places). "Above the question mark and the log" is retired with the
+ *       column that had an above: the log is a row of the hamburger now, and
+ *       what the die stands beside is asserted as the bar's own ORDER
  *  T10  "Label all the icons with tiny short labels underneath." Every mark
- *       in the gutter wears its own `.nu-vh` word, the visible word IS the
- *       accessible name (an extraction, not a second dictionary), no label is
- *       clipped by its 47px mark, the 44px floor survives — and the COLUMN IS
- *       MEASURED at both phones and reported, because "every level fits at
- *       320x568" is not true, was not true before this round, and cannot be
- *       made true at a 44px tap floor (T10b carries the arithmetic)
+ *       in the chrome wears its own `.nu-vh` word and that word IS the head of
+ *       the accessible name (an extraction, not a second dictionary), with the
+ *       die's documented exemption; no label is drawn outside its mark's box;
+ *       the 44px floor is measured IN BOTH AXES — and the BAR'S ROW is
+ *       measured at both phones and reported, in place of the column
+ *       arithmetic that is tombstoned at T10b with the gutter it was about
  *  T11  "There are three play modes possible—loop, once, and album which keeps
  *       making new songs." The mark cycles fields.js PLAYMODES, and each
  *       position is DRIVEN TO THE END OF A FOUR-BAR RECORD made by hand:
@@ -135,13 +164,33 @@ function standUpServer() {
   await p.goto(PAGE, { waitUntil: "load" });
   await p.waitForTimeout(2500);
 
-  /* ---- T1 THE HEADING AND THE BAND ARE GONE --------------------------- */
-  /* AND THE FACT THEY CARRIED IS NOT. "Get rid of … the title of the song"
+  /* ---- T1 THE HEADING IS GONE ----------------------------------------- */
+  /* AND THE FACT IT CARRIED IS NOT. "Get rid of … the title of the song"
      deletes a heading; it does not delete the answer to "which record is on
      this page". ui/eight.js draw() writes that answer to `document.title`, so
      what is asserted is BOTH halves — the furniture is gone AND the fact
      survives — because a round that removed the name entirely would pass a
-     check that only looked for an absence. */
+     check that only looked for an absence.
+
+     ===== AND HALF OF THIS CLAIM IS RETIRED, 2026-09-09 ==================
+     IT READ: *"T1 · no #title heading and no .nu-bar on the page (h1 …, bars
+     …)"*, and the second half was true for eleven days and is now false BY
+     DESIGN. `.nu-bar` was deleted on 2026-08-29 when the gutter took the
+     transport ("Get rid of the play buttons and the title of the song" ->
+     nu.css THE .nu-bar IS GONE, forty-one rules); the gutter is deleted in
+     turn and Paul asked for the row back by name — *"have genre, dice,
+     playstop along the bottom — a real mobile app now"* — so `.nu-bar` is on
+     the page again, fixed at the FOOT rather than sticky at the head, holding
+     three things instead of five. A gate that still asserted `bars === 0`
+     would be asserting the absence of the thing this round shipped.
+     WHAT THE HALF WAS FOR IS NOT LOST, IT MOVED HOUSE: "there is exactly one
+     of these and it is the shape the page promises" is T3's `bars === 1` and
+     the `--bar-h` token check beside it, and "the transport is reachable from
+     everywhere" is T2's walk. Both are stronger there than a count of zero was
+     here, because both read what the bar HOLDS.
+     The `#title` half is untouched and is asserted below: no round since
+     2026-08-29 has proposed giving the song a heading again, and the page
+     still has to say which record it is. */
   const t1 = await p.evaluate(() => ({
     h1: !!document.getElementById("title"),
     bars: document.querySelectorAll(".nu-bar").length,
@@ -152,9 +201,10 @@ function standUpServer() {
          || window.__eightDoc().basis) : null,
     sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }));
-  check(!t1.h1 && t1.bars === 0,
-    "T1 · no #title heading and no .nu-bar on the page (h1 " + t1.h1 +
-    ", bars " + t1.bars + ")");
+  check(!t1.h1,
+    "T1 · no #title heading on the page (h1 " + t1.h1 + "). The .nu-bar half " +
+    "of this check is retired with the gutter — see the tombstone above; the " +
+    "page draws " + t1.bars + " of them and T3 is what holds that number");
   check(t1.title === t1.label && !!t1.label,
     "T1 · …and the record still names the page: document.title is " +
     JSON.stringify(t1.title) + " for basis " + JSON.stringify(t1.basis));
@@ -162,65 +212,96 @@ function standUpServer() {
     "T1 · …and nothing scrolls sideways at 390 (" + t1.sideways + " px)");
 
   /* ---- T2 THE PLAY MARK IS PERMANENT --------------------------------- */
-  /* AT EVERY LEVEL, WHICH IS THE WHOLE WORD "permanent". The stripe is walked
-     the way a thumb walks it — the nine tabs are pressed, which is what puts
-     the stripe on each of its sub-levels ("opening a tab IS going into it") —
-     and #play must be in `.nu-trayhead` at every stop. A check that only
-     looked at the root would pass on a button that vanished the moment you
-     opened the Band. */
+  /* IN EVERY STATE THE PAGE HAS, WHICH IS THE WHOLE WORD "permanent". The
+     states used to be the stripe's LEVELS and the walk pressed the tab rows to
+     reach them; there is no stripe and no level, so the states are the SIX
+     SURFACES `__eightTabs()` names — the table (`Band`, the resting state) and
+     the five sheets — and the walk opens each one with `__eightTab`, which is
+     the same `showTab` the buttons call ("a gate is a hand").
+
+     AND "PERMANENT" IS NOW A GEOMETRY CLAIM AND NOT ONLY A DOM ONE, which is
+     the one thing this round makes newly breakable. In the gutter the mark was
+     in a fixed column that was always laid out, so being IN `.nu-trayfoot` was
+     the whole of being on the screen. `.nu-bar` is fixed at the FOOT and the
+     five sheets are IN FLOW with `min-block-size: calc(100dvh - --top-h -
+     --bar-h - --s3)` (nu.css A PANEL AS A SHEET) — so a sheet that forgot to
+     reserve the bar's height, or a z-index that let a sheet paint over it,
+     would leave the button in the DOM and under the paper. Both are asserted:
+     the rect has height, its bottom is inside the viewport, and its top is not
+     above it.
+
+     AND #play IS THE LAST CHILD OF `.nu-bartp`. "At the right-hand end, under
+     a thumb" is a geometry claim and the geometry is DOM order — `.nu-bartp`
+     is a plain `flex-direction: row` with no `order` and no `margin: auto`, so
+     what is last is at the end. Asserted as a fact about the tree rather than
+     as a pixel, because a pixel would pass on a row that had been re-ordered
+     and re-positioned back. */
   const t2 = await p.evaluate(async () => {
-    const seen = [], missing = [];
-    const tabs = [...document.querySelectorAll('#nu-tray .nu-traylist button')]
-      .map((x) => x.dataset.k).filter((k) => k && k.indexOf("toptab-") === 0);
-    for (const k of tabs) {
-      const btn = document.querySelector('#nu-tray [data-k="' + k + '"]');
-      if (!btn) continue;
-      btn.click();
-      await new Promise((r) => setTimeout(r, 40));
-      const lvl = window.__eightTray().level;
-      /* `.nu-trayhead #play` STOOD HERE and there is no head (2026-09-02).
-         Paul: *"Move the play/stop button to the bottom, along with opts and
-         where."* The claim is unchanged and is the whole word "permanent": the
-         mark is in the ONE box `paintTray` never empties, at every state the
-         tabs reach. That box is `.nu-trayfoot` now. */
-      const head = document.querySelector(".nu-trayfoot #play");
-      seen.push(lvl);
-      if (!head) missing.push(lvl);
-      window.__eightUp();
-      await new Promise((r) => setTimeout(r, 20));
+    const seen = [], missing = [], offscreen = [], notLast = [];
+    for (const name of window.__eightTabs()) {
+      window.__eightTab(name);
+      await new Promise((r) => setTimeout(r, 120));
+      seen.push(name);
+      const b = document.querySelector("#nu-bar .nu-bartp #play");
+      if (!b) { missing.push(name); continue; }
+      const r = b.getBoundingClientRect();
+      if (!(r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight + 1))
+        offscreen.push([name, +r.top.toFixed(1), +r.bottom.toFixed(1)]);
+      const tp = document.querySelector("#nu-bar .nu-bartp");
+      if (!tp || tp.lastElementChild !== b) notLast.push(name);
     }
-    return { seen, missing, tabs: tabs.length,
-             /* AND #play IS THE LAST CHILD OF THE FOOT. "At the bottom" is a
-                geometry claim and the geometry is DOM order — the foot has no
-                `position` and no `margin: auto`, so what is last is at the
-                floor. Asserted as a fact about the tree rather than as a
-                pixel, because a pixel would pass on a foot that had been
-                re-ordered and re-positioned back. */
-             last: (() => { const f = document.querySelector(".nu-trayfoot");
+    window.__eightUp();
+    await new Promise((r) => setTimeout(r, 120));
+    return { seen, missing, offscreen, notLast,
+             last: (() => { const f = document.querySelector("#nu-bar .nu-bartp");
                return f && f.lastElementChild ? f.lastElementChild.id : null; })() };
   });
   /* `t2.tabs === 9` STOOD HERE AND HAD BEEN RED SINCE 2026-09-01 — it counted
      the root's `toptab-` buttons against a literal nine while `TABS` had grown
-     to eleven (Video, Screensaver) and now thirteen (Rules, Structure). A
+     to eleven (Video, Screensaver) and then thirteen (Rules, Structure). A
      literal was the wrong shape for it from the start: what the walk is about
-     is "#play survives every tab", not "there are N tabs", and the number of
-     tabs is `__eightTabs()`'s to say. The one number this file still asserts
-     about the list is that `Where` is NOT in it — Paul, 2026-09-02: *"Move the
-     play/stop button to the bottom, along with opts and where"* — which is the
-     one thing a count would have caught and a derivation would not. */
-  const t2n = await p.evaluate(() => ({
-    tabs: window.__eightTabs().length,
-    where: !!document.querySelector('.nu-traylist [data-k="toptab-Where"]'),
-    footWhere: !!document.querySelector('.nu-trayfoot [data-k="toptab-Where"]') }));
-  check(t2.tabs === t2n.tabs - 1 && !t2.missing.length,
-    "T2 · #play is in .nu-trayfoot at every state the tabs reach (" +
-    t2.tabs + " rows for " + t2n.tabs + " tabs, states " +
-    JSON.stringify([...new Set(t2.seen)]) +
-    ", missing " + JSON.stringify(t2.missing) + ")");
-  check(!t2n.where && t2n.footWhere && t2.last === "play",
-    "T2 · …Where left the list for the foot and #play is the last thing in it" +
-    " (in list " + t2n.where + ", in foot " + t2n.footWhere +
-    ", last " + JSON.stringify(t2.last) + ")");
+     is "#play survives every surface", not "there are N of them", and the
+     number is `__eightTabs()`'s to say. THE ONE ARRANGEMENT THIS FILE STILL
+     ASSERTS ABOUT THE LIST is the §10a division, and it is now two facts
+     rather than one: `Where` is the BAR's plate and not a menu row (Paul,
+     2026-09-02: *"Move the play/stop button to the bottom, along with opts and
+     where"*), and `Band` is in NEITHER, because the table is the page and not
+     a view you opened (nu.css A PANEL AS A SHEET). Everything else `TABS`
+     holds is a menu row, derived — `MENUROWS()` filters those same two names —
+     so the check is `menu rows === tabs - 2`, by name and not by count. */
+  const t2n = await p.evaluate(() => {
+    const m = window.__eightMenu();
+    return { tabs: window.__eightTabs(),
+             rows: m.rows.map((r) => r.key),
+             open: m.open,
+             barWhere: !!document.querySelector('#nu-bar [data-k="toptab-Where"]'),
+             menuWhere: !!document.querySelector('#nu-menu [data-k="toptab-Where"]'),
+             menuBand: !!document.querySelector('#nu-menu [data-k="toptab-Band"]'),
+             barBand: !!document.querySelector('#nu-bar [data-k="toptab-Band"]'),
+             tray: [typeof window.__eightTray, typeof window.__eightTree,
+                    typeof window.__eightExpand] };
+  });
+  const wantRows = t2n.tabs.filter((n) => n !== "Where" && n !== "Band")
+    .map((n) => "toptab-" + n);
+  check(!t2.missing.length && !t2.offscreen.length && !t2.notLast.length,
+    "T2 · #play is the last child of #nu-bar .nu-bartp AND on the screen in " +
+    "every state this page has (" + JSON.stringify(t2.seen) + " — missing " +
+    JSON.stringify(t2.missing) + ", off-screen " + JSON.stringify(t2.offscreen) +
+    ", not last " + JSON.stringify(t2.notLast) + ")");
+  check(t2n.barWhere && !t2n.menuWhere && !t2n.menuBand && !t2n.barBand &&
+        JSON.stringify(t2n.rows) === JSON.stringify(wantRows) &&
+        t2.last === "play",
+    "T2 · …Where is the BAR's plate, Band is nowhere (it is the page), and " +
+    "the hamburger is the rest of TABS: " + JSON.stringify(t2n.rows) +
+    " for tabs " + JSON.stringify(t2n.tabs) + ", last in the bar " +
+    JSON.stringify(t2.last));
+  /* AND THE STRIPE'S THREE PROBES ARE GONE, ASSERTED — because "we deleted it"
+     is a claim about the rendered page like any other, and a `__eightTray` that
+     came back as a shim over the bar would let every retired check in this
+     file quietly go green again against a shape nobody ships. */
+  check(t2n.tray.every((t) => t === "undefined"),
+    "T2 · …and __eightTray / __eightTree / __eightExpand no longer exist on " +
+    "the page " + JSON.stringify(t2n.tray));
   /* AND IT PLAYS AND STOPS. The word on it is the NEXT tap, so the accessible
      name is the readout: "play" -> press -> "stop" -> press -> "play". */
   const word = () => p.evaluate(() =>
@@ -236,7 +317,7 @@ function standUpServer() {
     "T2 · …and one mark plays and stops the record: " +
     JSON.stringify([w0, w1, w2]));
 
-  /* ---- T3 THE PLAY LEVEL ---------------------------------------------- */
+  /* ---- T3 THE BAR'S INVENTORY, COUNTED ------------------------------- */
   /* FIVE CONTROLS, AND WHERE EACH ONE STANDS IS PART OF THE CLAIM. #play is in
      the HEAD (that is what makes it permanent); the other four are the level's
      own items, in Paul's order.
@@ -265,35 +346,86 @@ function standUpServer() {
      THREE CONTROLS, NOT FOUR, SINCE 2026-09-03 (Paul: *"Move the 'sung/all
      analog' etc spinner button to the main area right above play/stop and out
      of opts."*). The voicing left the fold and stands under it; T3c holds
-     where, and holds that it is still the same five-position spinner. */
+     where, and holds that it is still the same five-position spinner.
+
+     ===== AND "FIVE CONTROLS AND NO SIXTH" IS RE-COUNTED, 2026-09-09 =======
+     It was a claim about a LEVEL of the stripe, then about a FOLD in the
+     gutter's foot, and it is now a claim about the WHOLE BAR, which holds four
+     things the level never did. THE RIGHT ANSWER IS TO REPORT THE REAL
+     INVENTORY AND ASSERT IT EXACTLY, rather than to keep a number that has
+     been wrong at every one of the four shapes this transport has had.
+     Measured on the rendered page at 390x844 the morning of 2026-09-09:
+
+       #nu-bar         > toptab-Where · .nu-seedrow · .nu-bartp
+       .nu-seedrow     > #rewrite · #seedval · #seedin · .nu-seedwait · .nu-count
+       .nu-bartp       > .nu-baropts · #playops · #voicing · #play
+       .nu-baropts     > #playmode · #take · .nu-vs (the room, #vol)
+
+     — eight controls and a name plate, where the level had five. The two
+     non-controls in the seed row are the countdowns (`.nu-seedwait`, the
+     seed's own; `.nu-count`, the general one, which moved here from the foot
+     of the gutter and still stands down while the seed's is up), and they are
+     the clock's one square inch of the bar: `data-live="pending"` on both.
+     WHAT THE OLD NUMBER WAS PROTECTING is a sixth control appearing in the
+     transport without anybody arguing for it, and an exact four-list is a
+     stronger form of that than a count: it catches an addition, a deletion,
+     AND a re-parenting, and it prints what it found. */
   await p.evaluate(() => document.getElementById("playops").click());
   await p.waitForTimeout(300);
   const t3 = await p.evaluate(() => {
-    const box = document.querySelector(".nu-trayopts");
+    const box = document.querySelector(".nu-baropts");
     const has = (id) => !!document.getElementById(id);
-    const tap = [...document.querySelectorAll(".nu-traylist button")]
+    const kids = (sel) => { const n = document.querySelector(sel);
+      return n ? [...n.children].map((c) => c.id || c.dataset.k || c.className ||
+                                            c.tagName.toLowerCase()) : null; };
+    const tap = [...document.querySelectorAll("#nu-bar button")]
+      .filter((n) => n.getClientRects().length)
       .map((n) => +n.getBoundingClientRect().height.toFixed(1));
     return { open: !!(box && !box.hidden),
              expanded: document.getElementById("playops").getAttribute("aria-expanded"),
-             inFoot: !!document.querySelector(".nu-trayfoot .nu-trayopts"),
+             inBar: !!document.querySelector("#nu-bar .nu-bartp .nu-baropts"),
              opts: [...(box ? box.children : [])]
                .map((n) => n.id || n.className).filter((x) => x),
-             foot: !!document.querySelector(".nu-trayfoot #play"),
+             tp: !!document.querySelector("#nu-bar .nu-bartp #play"),
              five: ["play", "rewrite", "take", "voicing", "vol"].filter(has),
              reading: (document.getElementById("reading") || {}).textContent,
              minTap: tap.length ? Math.min(...tap) : 0,
-             trayW: +document.querySelector(".nu-tray").getBoundingClientRect().width.toFixed(1),
-             trayVar: (() => { const d = document.createElement("div");
-               d.style.cssText = "position:absolute;left:-9999px;top:0;block-size:1px;" +
-                 "inline-size:var(--tray-w);box-sizing:border-box";
+             bars: document.querySelectorAll(".nu-bar").length,
+             /* THE INVENTORY, OFF THE RENDERED TREE. */
+             bar: kids("#nu-bar"), seed: kids("#nu-bar .nu-seedrow"),
+             bartp: kids("#nu-bar .nu-bartp"),
+             /* AND THE BAR'S BOX IS THE TOKEN. `--bar-h` is a PROMISE the
+                body's own `padding-block-end` is arithmetic on (nu.css: "a bar
+                that came out a pixel taller than its own token would be a
+                pixel of the page under the bar and nothing would say so"), so
+                the box and the token are read separately and compared. The
+                token is asked for the way shell A7 asks — an off-screen
+                `box-sizing: border-box` div — so the two files cannot drift on
+                how a custom property is measured. */
+             barH: +document.querySelector(".nu-bar")
+                     .getBoundingClientRect().height.toFixed(2),
+             barTok: (() => { const d = document.createElement("div");
+               d.style.cssText = "position:absolute;left:-9999px;top:0;" +
+                 "inline-size:1px;box-sizing:border-box;block-size:var(--bar-h)";
                document.body.appendChild(d);
-               const w = +d.getBoundingClientRect().width.toFixed(1);
-               d.remove(); return w; })() };
+               const h = +d.getBoundingClientRect().height.toFixed(2);
+               d.remove(); return h; })() };
   });
-  check(t3.open && t3.expanded === "true" && t3.inFoot,
-    "T3 · pressing #playops unfolds the play options inside the foot and the " +
+  check(t3.open && t3.expanded === "true" && t3.inBar,
+    "T3 · pressing #playops unfolds the play options inside the bar and the " +
     "door says so (" + JSON.stringify({ open: t3.open, expanded: t3.expanded,
-                                        inFoot: t3.inFoot }) + ")");
+                                        inBar: t3.inBar }) + ")");
+  /* THE INVENTORY, ASSERTED EXACTLY AND PRINTED EITHER WAY. */
+  check(JSON.stringify(t3.bar) ===
+          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp"]) &&
+        JSON.stringify(t3.seed) ===
+          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait",
+                          "nu-count"]) &&
+        JSON.stringify(t3.bartp) ===
+          JSON.stringify(["nu-baropts", "playops", "voicing", "play"]),
+    "T3 · …and the bar holds exactly what it holds and no ninth thing: " +
+    JSON.stringify({ bar: t3.bar, seed: t3.seed, bartp: t3.bartp,
+                     fold: t3.opts }));
   /* THREE IN THE FOLD SINCE 2026-09-03, AND THE FOURTH IS ASSERTED OUT OF IT.
      Paul: *"Move the 'sung/all analog' etc spinner button to the main area
      right above play/stop and out of opts."* — so the fold holds the mode, the
@@ -304,13 +436,28 @@ function standUpServer() {
         !t3.opts.includes("voicing"),
     "T3 · …and the three controls are IN the fold, the voicing OUT of it: " +
     JSON.stringify(t3.opts));
-  /* T3c — THE VOICING STANDS DIRECTLY ABOVE PLAY/STOP, on the artifact and in
+  /* T3c — THE VOICING STANDS DIRECTLY BESIDE PLAY/STOP, on the artifact and in
      two ways that cannot both be a coincidence: DOM order (it is #play's
-     immediately preceding sibling, in the same foot) and GEOMETRY (its bottom
-     edge is the play mark's top edge). Both, because the first is what a
-     screen reader walks and the second is what a thumb reaches — this gutter
-     has been rearranged five times and the thing that keeps breaking is one
-     of those two agreeing with the ask while the other does not.
+     immediately preceding sibling, in the same box) and GEOMETRY (its trailing
+     edge is at the play mark's leading edge, one row gap away). Both, because
+     the first is what a screen reader walks and the second is what a thumb
+     reaches — this transport has been rearranged six times and the thing that
+     keeps breaking is one of those two agreeing with the ask while the other
+     does not.
+
+     "ABOVE" WAS THE COLUMN'S WORD FOR "NEXT TO" (2026-09-09). Paul's sentence
+     is *"Move the 'sung/all analog' etc spinner button to the main area right
+     above play/stop and out of opts"*, said about a 96px vertical stripe where
+     the neighbour on the way to ▶ was the one overhead. `.nu-bartp` is a
+     `flex-direction: row`, so the same neighbour is now to the LEFT, and the
+     check reads `vr.right ≈ pr.left` where it read `vr.bottom ≈ pr.top`. The
+     ask is unchanged and the axis is the page's; asserting "above" here would
+     be asserting the gutter.
+     THE GAP IS THE ROW'S OWN AND IS MEASURED RATHER THAN ASSUMED. `.nu-bartp`
+     declares `gap: var(--s1)`, so the two rects do not touch the way a column's
+     stacked marks did; what is asserted is that nothing stands BETWEEN them
+     (the gap is the token's, not another control's width) and the number is
+     printed. Measured 2026-09-09 at 390x844: 4px.
      AND IT IS STILL THE SPINNER. Five positions cycled with a real pointer
      press at the mark's OWN RECT (never `page.click`, which scrolls its target
      into view and manufactures jumps — the harness law), reading the word the
@@ -318,24 +465,25 @@ function standUpServer() {
      a control that moved house and lost a mode would pass every check above. */
   const t3c = await p.evaluate(() => {
     const v = document.getElementById("voicing"), pl = document.getElementById("play");
-    const box = document.querySelector(".nu-trayopts");
+    const box = document.querySelector(".nu-baropts");
     if (!v || !pl) return { missing: true };
     const vr = v.getBoundingClientRect(), pr = pl.getBoundingClientRect();
-    return { inFoot: !!v.closest(".nu-trayfoot"),
+    return { inBar: !!v.closest("#nu-bar .nu-bartp"),
              inFold: !!(box && box.contains(v)),
              nextIsPlay: v.nextElementSibling === pl,
              sameParent: v.parentElement === pl.parentElement,
-             abuts: Math.abs(vr.bottom - pr.top) <= 1,
-             above: vr.bottom <= pr.top + 1,
+             gap: +(pr.left - vr.right).toFixed(1),
+             before: vr.right <= pr.left + 0.5,
+             sameRow: Math.abs(vr.top - pr.top) <= 1,
              tall: +vr.height.toFixed(1),
              word: (v.querySelector(".nu-vh") || {}).textContent,
              aria: v.getAttribute("aria-label") };
   });
-  check(t3c.inFoot && !t3c.inFold && t3c.nextIsPlay && t3c.sameParent &&
-        t3c.above && t3c.abuts,
-    "T3c · #voicing is out of the fold and stands directly above #play — the " +
-    "next sibling in the same foot, its bottom edge on the play mark's top " +
-    "(" + JSON.stringify(t3c) + ")");
+  check(t3c.inBar && !t3c.inFold && t3c.nextIsPlay && t3c.sameParent &&
+        t3c.before && t3c.sameRow && t3c.gap >= 0 && t3c.gap <= 16,
+    "T3c · #voicing is out of the fold and stands directly beside #play — the " +
+    "next sibling in the same .nu-bartp, on the same row, its trailing edge " +
+    "one row gap from the play mark (" + JSON.stringify(t3c) + ")");
   const t3cModes = await (async () => {
     const seen = [];
     for (let i = 0; i < 6; i++) {
@@ -361,15 +509,24 @@ function standUpServer() {
      again and every check above would still pass. */
   /* T3b — THE SPLIT ITSELF, WHICH IS THE THING PAUL ASKED FOR AND THE THING
      THAT COULD QUIETLY UN-HAPPEN: these two marks do ONE JOB EACH. A stop must
-     not move the stripe and the door must not touch the record. It read the
-     `play` LEVEL through `__eightTray().level`; the level is gone (see T3
-     above) and the fold is what carries the claim, so the reading is
-     `aria-expanded` and the shape of the tree, both of which are on the page.
-     STRONGER THAN IT WAS, in one way worth naming: it now also asserts that
-     pressing play does not change WHICH BRANCHES ARE OPEN, which is a thing a
-     tree can newly get wrong and a single level could not. */
+     not move the chrome and the door must not touch the record. It read the
+     `play` LEVEL through `__eightTray().level`, then the tree's `items` when
+     the level became a fold; there is no tray and no tree, so the SHAPE is
+     what the chrome has instead — which surface is open (`__eightTabNow`),
+     what the hamburger says (`__eightMenu`, rows and their lit marks and
+     whether it is open at all), and the fold's own children. All three are
+     read through the page's own probes, which are the same doors the buttons
+     use.
+     IT IS THE SAME CLAIM IT ALWAYS WAS AND IT IS BROADER NOW: pressing play
+     may not open a sheet, may not move the `<mark>` from one viewer to
+     another, may not open or shut the menu, and may not re-parent a control
+     of the fold. The stripe could get one of those wrong; the chrome can get
+     four. */
   const t3b = await p.evaluate(async () => {
-    const shape = () => JSON.stringify(window.__eightTray().items);
+    const shape = () => JSON.stringify([window.__eightTabNow(),
+      window.__eightMenu(),
+      [...document.querySelectorAll(".nu-baropts *")].map((n) => n.id)
+        .filter(Boolean)]);
     const word = () => (document.getElementById("play")
       .getAttribute("aria-label") || "").trim();
     const opened = () => document.getElementById("playops")
@@ -386,13 +543,14 @@ function standUpServer() {
     return { before, afterStart, afterStop,
              closedShape: shape(),
              expanded: opened(),
-             boxShut: !!document.querySelector(".nu-trayopts[hidden]") };
+             boxShut: !!document.querySelector(".nu-baropts[hidden]") };
   });
   check(t3b.afterStart.shape === t3b.before && t3b.afterStop.shape === t3b.before
         && t3b.afterStart.open === "true" && t3b.afterStop.open === "true"
         && t3b.afterStart.word === "stop" && t3b.afterStop.word === "play",
-    "T3 · …and the transport does not move the stripe: play then stop leave " +
-    "the tree and the door exactly as they were, while the mark reads " +
+    "T3 · …and the transport does not move the chrome: play then stop leave " +
+    "the open surface, the hamburger and the fold exactly as they were, " +
+    "while the mark reads " +
     JSON.stringify([t3b.afterStart.word, t3b.afterStop.word]));
   check(t3b.expanded === "false" && t3b.boxShut &&
         t3b.closedShape === t3b.before,
@@ -410,22 +568,35 @@ function standUpServer() {
      die icon to right above the question mark so it's always there."* So
      what is asserted here is that all six exist and #play is in the head;
      WHERE the die stands and what the level holds instead of it are T9's,
-     which is the check the move belongs to. */
-  check(t3.five.length === 5 && t3.foot === true,
+     which is the check the move belongs to.
+     (`t3.foot` IS `t3.tp`: the ONE box that never empties is `.nu-bartp` inside
+     `#nu-bar`. Nothing rebuilds the bar at all — `paintChrome` repaints faces
+     in place — which is the same structural guarantee `.nu-trayfoot` gave and
+     is the mechanical half of the word "permanent".) */
+  check(t3.five.length === 5 && t3.tp === true,
     "T3 · …and the transport's controls are on the page — #play in the " +
-    "FOOT: " + JSON.stringify(t3.five));
-  /* `t3.trayW === 56` STOOD HERE AND IT WAS THE LITERAL, NOT THE TOKEN. Paul,
-     2026-09-02: *"it should be bigger with bigger type"* — `--tray-w` is
-     `clamp(72px, 24vw, 136px)` now, so a number typed here would have to be
-     re-typed at every width this file measures at. What the check was ever
-     about is that the stripe IS the token, which is shell A7's own probe (an
-     off-screen `box-sizing: border-box` div whose inline-size is
-     `var(--tray-w)`), asked here so the two files cannot drift. The 44px tap
-     floor is untouched and is the half of this that a bigger column could
-     newly break by giving a mark a third line. */
-  check(t3.minTap >= 44 && Math.abs(t3.trayW - t3.trayVar) <= 0.5,
-    "T3 · …every mark in it is a thumb (" + t3.minTap + " CSS px) inside a " +
-    "gutter that IS --tray-w (" + t3.trayW + " / " + t3.trayVar + ")");
+    ".nu-bartp: " + JSON.stringify(t3.five));
+  /* `t3.trayW === 56`, THEN `t3.trayW === t3.trayVar`, STOOD HERE, AND THE
+     COLUMN IS DELETED. What that check was ever about is that the ONE BOX THE
+     TRANSPORT LIVES IN IS THE TOKEN THE REST OF THE PAGE BUDGETS AGAINST — for
+     the stripe that was `--tray-w` against its width; for the bar it is
+     `--bar-h` against its height, and it matters MORE here, because the body's
+     `padding-block-end: calc(var(--bar-h) + var(--s3))` is what keeps the last
+     row of the table off the floor. A bar a pixel taller than its token is a
+     pixel of the page underneath it and nothing would say so. Measured
+     2026-09-09 at 320, 390 and 430: the box is 50.39 and the token is 50.39 at
+     all three, while the row's tallest control renders 44 — the difference is
+     spent inside the bar's own padding, which is what nu.css says it is for.
+     EXACTLY ONE BAR, which is the live half of T1's retired `bars === 0`: two
+     `.nu-bar`s would be two transports and the second one would be a fixed box
+     over the first.
+     The 44px tap floor is asserted here in the BLOCK axis only. Both axes are
+     T10's, where the round's one red lives — see the tap-floor check there. */
+  check(t3.minTap >= 44 && Math.abs(t3.barH - t3.barTok) <= 0.5 &&
+        t3.bars === 1,
+    "T3 · …every mark in it is a thumb tall (" + t3.minTap + " CSS px) in the " +
+    "one bar on the page (" + t3.bars + ") whose box IS --bar-h (" + t3.barH +
+    " / " + t3.barTok + ")");
 
   /* ---- T4 THE TOUCH LAW ON THE VERTICAL FADER ------------------------- */
   /* THE ONE CHECK THIS ROUND MOST NEEDED. A vertical slider in a fixed gutter
@@ -439,12 +610,18 @@ function standUpServer() {
      opens a tab that is taller than the viewport and scrolls into it; if the
      page will not scroll at all the check says so rather than passing. */
   /* THE PAGE HAS TO BE SOMEWHERE IT COULD SCROLL FROM, and which tab that is
-     is a MEASUREMENT and not an assumption: the nine panels are different
+     is a MEASUREMENT and not an assumption: the six panels are different
      heights and the tallest one moves as the record does, so the gate asks
      each tab how much overflow it has and stands on the deepest one. (The
      first version picked `Band` by name; measured at 390x844 on the boot
      record it had 0 px of overflow, and the scroll half of the check would
-     have passed vacuously against a page that could not move.) */
+     have passed vacuously against a page that could not move.)
+     AND A SHEET STILL SCROLLS THE WINDOW, which is why this walk survives the
+     bar round unchanged. nu.css A PANEL AS A SHEET: the first draft made a
+     sheet a fixed box with its own scroll and `window.scrollY` stopped moving
+     on four of the six surfaces; what shipped is a panel IN FLOW with the
+     chrome's two bands reserved, so the document is the scroller everywhere
+     and `scrollY` means what this check needs it to mean. */
   const deepest = await p.evaluate(async () => {
     let best = null;
     /* `Time` LEFT THIS WALK WITH ITS TAB, 2026-09-06 (TABLE.md §10b): it is a
@@ -455,7 +632,9 @@ function standUpServer() {
        `Mix` a round after the Mix tab was deleted, and `__eightTab` on a word
        that is not a tab is a no-op, so the walk measured the same panel twice
        and called it two tabs). It is `window.__eightTabs()` since — the page's
-       own answer, in the page's own order, which cannot drift from `TABS`. */
+       own answer, in the page's own order, which cannot drift from `TABS`.
+       (Six names as of 2026-09-09: Where, Band, Score, Video, Screensaver,
+       Export. Five of them are SHEETS and Band is the page.) */
     for (const name of window.__eightTabs()) {
       window.__eightTab(name);
       await new Promise((r) => setTimeout(r, 120));
@@ -478,22 +657,31 @@ function standUpServer() {
   /* ...AND THE DOOR IS A TOGGLE, SO IT IS OPENED IDEMPOTENTLY (2026-09-02).
      The play options were a LEVEL, and `__eightTab` above reset the level on
      every step of the deepest-tab walk — so an unconditional click always
-     re-entered it. They are a FOLD in the foot now and a fold survives a tab
-     change, which is the point of it; an unconditional click would therefore
-     CLOSE the fold this check needs open. The gate asks the page whether it is
-     open, exactly as a hand would look. */
-  await p.evaluate(() => { const box = document.querySelector(".nu-trayopts");
+     re-entered it. They are a FOLD now and a fold survives a tab change, which
+     is the point of it; an unconditional click would therefore CLOSE the fold
+     this check needs open. The gate asks the page whether it is open, exactly
+     as a hand would look. */
+  await p.evaluate(() => { const box = document.querySelector(".nu-baropts");
     if (box && box.hidden) document.getElementById("playops").click(); });
   await p.waitForTimeout(300);
+  /* `.nu-trayvol .nu-vs-track` STOOD HERE. nu.css deleted the `.nu-trayvol`
+     rule with the other forty, and for an afternoon ui/eight.js still WORE the
+     class (`el("span", null, "nu-vs nu-vs-tall nu-trayvol")`) — a name that
+     styled nothing and pointed at a box that had moved house. It was reported
+     rather than fixed here, because this gate owns no app file, and the class
+     is off the span now. Either way the fader is addressed by the FOLD IT IS
+     IN, which is what a thumb reaches and what nu.css actually styles
+     (`.nu-baropts .nu-vs-tall`): a gate that asked for a dead class would be
+     asserting the gutter one more time. */
   const room = await p.evaluate(() => {
-    const t = document.querySelector(".nu-trayvol .nu-vs-track");
+    const t = document.querySelector(".nu-baropts .nu-vs-track");
     if (!t) return null;
     const r = t.getBoundingClientRect();
     return { x: r.x + r.width / 2, top: r.y + 8, bot: r.y + r.height - 8,
              scrollable: document.documentElement.scrollHeight - window.innerHeight,
              y: window.scrollY, v: +document.getElementById("vol").value };
   });
-  if (!room) check(false, "T4 · there is no .nu-trayvol fader on the play level");
+  if (!room) check(false, "T4 · there is no fader inside the .nu-baropts fold");
   else {
     const cdp = await p.context().newCDPSession(p);
     const touch = (type, y) => cdp.send("Input.dispatchTouchEvent", {
@@ -506,7 +694,7 @@ function standUpServer() {
     await p.waitForTimeout(300);
     const after = await p.evaluate(() => ({
       v: +document.getElementById("vol").value, y: window.scrollY,
-      out: (document.querySelector(".nu-trayvol .nu-vs-val") || {}).textContent }));
+      out: (document.querySelector(".nu-baropts .nu-vs-val") || {}).textContent }));
     check(room.scrollable > 0 && room.y > 0,
       "T4 · the page CAN scroll and is scrolled before the drag — the " +
       JSON.stringify(deepest.name) + " tab is the deepest at 390x844 (" +
@@ -555,104 +743,133 @@ function standUpServer() {
     return p.evaluate(() => window.__nuBounce().playing);
   };
 
-  /* ---- T9 THE DIE IS PERMANENT, IN THE FOOT, ABOVE THE ? -------------- */
+  /* ---- T9 THE DIE IS PERMANENT, IN THE BAR, BESIDE THE GENRE ---------- */
   /* Paul, 2026-08-30: *"Move the die icon to right above the question mark so
-     it's always there."*
+     it's always there."* …and 2026-09-09: *"have genre, dice, playstop along
+     the bottom."*
 
      THREE CLAIMS AND THEY ARE THREE DIFFERENT KINDS OF FACT, so they are
-     three checks: WHERE it stands (the foot's own order, read off the
-     rendered children), that it stands there AT EVERY LEVEL (the walk T2
-     makes for #play, made again for this mark — "permanent" is a claim about
-     every level and a check at the root would pass on a button that vanished
-     the moment you opened the Band), and that it STILL DOES ITS JOB (the
-     reading moves and the record starts, which is the whole gesture; a mark
-     that moved house and lost its listener is exactly the bug a geometry
+     three checks: WHERE it stands (the bar's own order, read off the rendered
+     children), that it stands there IN EVERY STATE (the walk T2 makes for
+     #play, made again for this mark — "permanent" is a claim about every
+     surface and a check on the table alone would pass on a button that
+     vanished the moment you opened a sheet), and that it STILL DOES ITS JOB
+     (the reading moves and the record starts, which is the whole gesture; a
+     mark that moved house and lost its listener is exactly the bug a geometry
      check cannot see).
-     AND THE PLAY LEVEL LOST IT, which is the other half of "a mark cannot be
-     in two places" — asserted as an ABSENCE from `__eightTray().items`
-     alongside the presence of the new mode mark, because two #rewrites would
-     be two owners of one gesture. */
+     AND THE PLAY FOLD LOST IT, which is the other half of "a mark cannot be
+     in two places" — asserted as an ABSENCE from the fold's own children
+     alongside the presence of the mode mark, because two #rewrites would be
+     two owners of one gesture.
+
+     ===== "ABOVE THE QUESTION MARK AND THE LOG" IS RETIRED, 2026-09-09 =====
+     It was true of a COLUMN and a column is the only shape that has an
+     "above". The ? went on 2026-09-02 (Paul: *"Get rid of explain"*, T8's
+     tombstone); the LOG went into the hamburger on 2026-09-09, because it is
+     the fifth thing on this page that is a readout and not a control, and its
+     count rides the ≡ itself so it is on the screen with the menu shut. What
+     the die stands beside now is the genre plate on one side and the
+     transport on the other, which is Paul's own sentence in his own order, and
+     that ORDER is what is asserted — three boxes in the bar, five children in
+     the seed row, four in the transport. An order and not an index
+     arithmetic, for the reason it always was: an arithmetic that grows with
+     the row is the thing that breaks silently. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
-  /* THE FOOT IS SIX MARKS NOW AND THE ORDER IS THE ARGUMENT (2026-09-02).
-     Paul: *"Move the play/stop button to the bottom, along with opts and
-     where."* It read "the die is in the FOOT, directly above the ? and the
-     log" — three marks, two of them readouts — and it still is; what joined
-     them is the record's NAME above it (*"The name of the genre should be
-     obvious"*) and the transport below it. Reading down: the countdown, the
-     name, the seed, the ?, the log, the play options when they are unfolded,
-     the door, and play at the floor. Asserted as an ORDER rather than as
-     three indices, because there are six of them and an index arithmetic that
-     grows with the row is the thing that breaks silently.
-     …AND FIVE, LATER THE SAME DAY: Paul, *"Get rid of explain — that's the
-     genre editor's work now."* The `explain` step comes out of the list and
-     nothing takes its place — the order is the argument and the argument did
-     not change, it got one clause shorter. Because this is an ORDER and not
-     an index arithmetic, that is a one-word edit, which is what the paragraph
-     above was promising. */
   const t9 = await p.evaluate(() => {
-    const foot = document.querySelector(".nu-trayfoot");
-    const kids = [...foot.children].map((n) =>
+    const bar = document.querySelector("#nu-bar");
+    const kids = [...bar.children].map((n) =>
       n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
-    const at = (k) => kids.indexOf(k);
-    /* THE SEED IS A ROW OF TWO SINCE 2026-09-03, so the foot's third child is
-       `.nu-seedrow` and the die is inside it. Paul: *"Instead of a popup for
-       seed, just get rid of the word seed and put the number. I tap the die
-       and there's a new number. I tap the number and I can enter a new number
-       by hand."* — two gestures on one subject are two targets, and a button
-       inside a button is not a thing the DOM has. The ORDER is unchanged: the
-       row stands exactly where the die stood. */
-    const order = ["toptab-Where", "nu-seedrow", "logger",
-                   "nu-trayopts", "playops", "play"].map(at);
-    return { kids, order, gone: kids.indexOf("explain"),
-             die: at("nu-seedrow"), log: at("logger"),
-             inList: !!document.querySelector(".nu-traylist #rewrite"),
+    /* THE SEED IS A ROW OF FIVE SINCE 2026-09-09, and the die is its first
+       child. Paul, 2026-09-03: *"Instead of a popup for seed, just get rid of
+       the word seed and put the number. I tap the die and there's a new
+       number. I tap the number and I can enter a new number by hand."* — two
+       gestures on one subject are two targets, and a button inside a button is
+       not a thing the DOM has. What joined the row this round is the GENERAL
+       COUNTDOWN (`.nu-count`), which was the head of the gutter's foot and is
+       on the number now "because that is where a hand looking at a number
+       wants to be told when it will be heard"; it stands down while the seed's
+       own wait is up, so exactly one of the two is ever drawn. */
+    const seed = [...bar.querySelector(".nu-seedrow").children].map((n) =>
+      n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
+    return { kids, seed,
+             gone: kids.indexOf("explain"),
+             barLog: !!document.querySelector("#nu-bar [data-k=\"logger\"]"),
+             menuLog: !!document.querySelector("#nu-menu [data-k=\"logger\"]"),
+             /* AND THE LOG IS THE LAST ROW OF THE MENU, AFTER THE RULE. The
+                `<hr class="nu-viewcut">` is the §10a division drawn: four
+                things you LOOK AT, then a readout. Read off the rendered
+                children rather than off `MENUROWS()`, which does not know the
+                rule exists. */
+             menuTail: (() => { const m = document.getElementById("nu-menu");
+               if (!m) return null;
+               return [...m.children].slice(-2).map((n) =>
+                 n.dataset.k || n.className || n.tagName.toLowerCase()); })(),
+             inFold: !!document.querySelector(".nu-baropts #rewrite"),
              tap: +document.getElementById("rewrite")
                     .getBoundingClientRect().height.toFixed(1),
              num: +document.getElementById("seedval")
                     .getBoundingClientRect().height.toFixed(1),
-             reading: !!document.querySelector(".nu-seedrow #seedval #reading") };
+             reading: !!document.querySelector("#nu-bar .nu-seedrow #seedval #reading") };
   });
-  check(t9.order.every((n, i) => n >= 0 && (i === 0 || n > t9.order[i - 1]))
-        && !t9.inList && t9.gone < 0,
-    "T9 · the foot reads where · seed · log · [opts] · opts · play, in " +
-    "that order, with no ? anywhere in it, and the die is not in the list — " +
-    JSON.stringify(t9.kids));
+  check(JSON.stringify(t9.kids) ===
+          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp"]) &&
+        JSON.stringify(t9.seed) ===
+          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait",
+                          "nu-count"]) &&
+        !t9.inFold && t9.gone < 0,
+    "T9 · the bar reads genre · seed · transport and the seed row reads die · " +
+    "number · field · wait · countdown, in that order, with no ? anywhere in " +
+    "it and the die nowhere else — " +
+    JSON.stringify({ bar: t9.kids, seed: t9.seed }));
+  check(!t9.barLog && t9.menuLog &&
+        JSON.stringify(t9.menuTail) === JSON.stringify(["nu-viewcut", "logger"]),
+    "T9 · …and the log left the transport for the hamburger, below the rule " +
+    "that divides the viewers from the readout (in the bar " + t9.barLog +
+    ", in the menu " + t9.menuLog + ", tail " + JSON.stringify(t9.menuTail) + ")");
   check(t9.tap >= 44 && t9.num >= 44 && t9.reading,
-    "T9 · …still a thumb (die " + t9.tap + " px, number " + t9.num +
+    "T9 · …still a thumb TALL (die " + t9.tap + " px, number " + t9.num +
     " px) and still carrying #reading, which is the number's own target now");
-  /* AT EVERY LEVEL. The same walk T2 makes for #play — the nine tabs pressed,
-     which is what puts the stripe on each of its sub-levels — plus the play
-     level, which no tab reaches. */
+  /* IN EVERY STATE. The same walk T2 makes for #play — the six surfaces
+     opened, the table and the five sheets — plus the fold, which no surface
+     reaches. AND IT IS THE SAME TWO READINGS T2 TAKES: the mark is in
+     `#nu-bar .nu-seedrow`, and its rect is on the screen. A die under a sheet
+     is a die that is not always there, and the DOM cannot tell you that. */
   const t9b = await p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const missing = [], seen = [];
+    const missing = [], offscreen = [], seen = [];
+    const look = (where) => {
+      const b = document.querySelector("#nu-bar .nu-seedrow #rewrite");
+      if (!b) { missing.push(where); return; }
+      const r = b.getBoundingClientRect();
+      if (!(r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight + 1))
+        offscreen.push([where, +r.top.toFixed(1), +r.bottom.toFixed(1)]);
+    };
     for (const name of window.__eightTabs()) {
-      window.__eightTab(name); await wait(60);
-      const lvl = window.__eightTray().level;
-      seen.push(lvl);
-      if (!document.querySelector(".nu-trayfoot #rewrite")) missing.push(lvl);
-      window.__eightUp(); await wait(30);
+      window.__eightTab(name); await wait(120);
+      seen.push(name);
+      look(name);
+      window.__eightUp(); await wait(60);
     }
-    document.getElementById("playops").click(); await wait(120);
-    const play = window.__eightTray();
-    if (!document.querySelector(".nu-trayfoot #rewrite")) missing.push("play");
-    const inFold = [...document.querySelectorAll(".nu-trayopts *")]
+    document.getElementById("playops").click(); await wait(150);
+    look("the fold");
+    const inFold = [...document.querySelectorAll(".nu-baropts *")]
       .map((n) => n.id).filter((x) => x);
     document.getElementById("playops").click(); await wait(80);
-    return { missing, seen: [...new Set(seen)], items: play.items, inFold };
+    return { missing, offscreen, seen, inFold };
   });
-  check(!t9b.missing.length,
-    "T9 · …in the foot at every state the tabs reach and with the play " +
+  check(!t9b.missing.length && !t9b.offscreen.length,
+    "T9 · …in the bar and on the screen in every state, and with the play " +
     "options unfolded (" + JSON.stringify(t9b.seen) + ", missing " +
-    JSON.stringify(t9b.missing) + ")");
+    JSON.stringify(t9b.missing) + ", off-screen " +
+    JSON.stringify(t9b.offscreen) + ")");
   /* `items.indexOf("tp.rewrite") < 0 && items.indexOf("tp.mode") === 0` STOOD
      HERE and both halves were about a LEVEL's item list. The play group is a
-     fold in the foot (T3), so the same two claims are read off the fold's own
-     children: the die is not in it — "a mark cannot be in two places", the
-     2026-08-30 law, unchanged — and the MODE is first, which is the 2026-08-30
-     argument for the order ("it is the only one of the four that says what
-     pressing ▶ will DO"). */
+     fold (T3), so the same two claims are read off the fold's own children:
+     the die is not in it — "a mark cannot be in two places", the 2026-08-30
+     law, unchanged — and the MODE is first, which is the 2026-08-30 argument
+     for the order ("it is the only one of the four that says what pressing ▶
+     will DO"). */
   check(t9b.inFold.indexOf("rewrite") < 0 && t9b.inFold[0] === "playmode",
     "T9 · …and the fold LOST the die — a mark cannot be in two places, and " +
     "the mode is still first: " + JSON.stringify(t9b.inFold));
@@ -688,267 +905,373 @@ function standUpServer() {
     t9c.was + " -> " + t9c.now + ", and the name says it too (" +
     JSON.stringify(t9c.name) + ")");
 
-  /* ---- T10 EVERY MARK WEARS ITS WORD, AND THE COLUMN IS MEASURED ------ */
+  /* ---- T10 EVERY MARK WEARS ITS WORD, AND THE BAR'S ROW IS MEASURED --- */
   /* Paul, 2026-08-30: *"Label all the icons with tiny short labels
      underneath."*
 
-     THE LABEL IS THE `.nu-vh` SPAN UNHIDDEN — one string, from the table that
-     owns the name, in the `aria-label` and on the screen (ui/glyph.js
-     `paintIcon` has put it in every mark since the marks landed). So the
-     check is not "there is some text": it is that the VISIBLE word is the
-     ACCESSIBLE name, mark by mark, which is what makes it an extraction and
-     not a second dictionary. Two marks are exempt by construction and named
-     rather than skipped: `#playops`, whose face IS its word ("opts", no
-     glyph, nothing to reveal), and the room fader, which is not a button —
-     its word is asserted separately, off the <input>'s own `aria-label`.
+     THE LABEL IS THE `.nu-vh` SPAN — one string, from the table that owns the
+     name, in the `aria-label` and in the DOM (ui/glyph.js `paintIcon` has put
+     it in every mark since the marks landed). So the check is not "there is
+     some text": it is that the WORD IS THE HEAD OF THE ACCESSIBLE NAME, mark
+     by mark, which is what makes it an extraction and not a second dictionary.
 
-     AND NOTHING IS CLIPPED. `.nu-traylist` is `overflow-x: hidden`, so a
-     label wider than its 47px mark would be trimmed in silence — which is the
-     bug this round measured and fixed (performance 62.4px, instrument 54.0,
-     backwards 52.5, all before `min-inline-size: 0`). Every label's box is
-     asserted INSIDE its button's box. */
+     ===== AND WHERE THE WORD IS *VISIBLE* IS NOW THREE ANSWERS, 2026-09-09 ==
+     In the gutter this was one answer: `#nu-tray .nu-vh` un-hid the span in an
+     87px column and ellipsised it, which is exactly what Paul asked for and
+     what the 47px clipping bug was about. The chrome has three boxes and they
+     spend their room differently, and the split is MEASURED here rather than
+     assumed:
+       · `#nu-menu` un-hides it whole — a 30ch plate holds "Screensaver" at
+         body size, "which is the one thing the gutter could never afford";
+       · the bar's GENRE PLATE un-hides it as the first of two lines (the wiki
+         name over the place and year), which is `nameRecord`'s whole job;
+       · every OTHER mark in the bar and both marks in `.nu-top` fall back to
+         `.nu-vh`'s original four declarations and are 1x1 and out of flow —
+         measured 2026-09-09 at 390x844: burger, playmode, take, playops,
+         voicing, play and the die are all 1x1, and toptab-Where is 142.9x19.
+     THAT IS A DESIGN FACT WITH A REASON — `.nu-bar { block-size: var(--bar-h) }`
+     is the tap floor plus two `--s1`s and has no second line to give — BUT IT
+     IS ALSO A HALF-RETREAT FROM A THING PAUL ASKED FOR BY NAME, so it is
+     PRINTED in the check below rather than passed over. The LAW this gate
+     holds is the one that survives every arrangement: the word exists, it is
+     the head of the name, and it reads as itself with the stylesheet off.
+
+     TWO MARKS ARE EXEMPT BY CONSTRUCTION and named rather than skipped: the
+     DIE, whose word Paul deleted (*"just get rid of the word seed and put the
+     number"* — nu.css keeps the span out of flow so the mark stays 44px and
+     the page still reads as itself with no stylesheet), and `#seedval`, the
+     number, which has no `.nu-vh` at all because the number IS the word. Both
+     are asked for the things every mark is asked for instead: an accessible
+     NAME, and the tap floor.
+
+     AND NOTHING IS CLIPPED. `#nu-menu` is `overflow-y: auto` and the bar is
+     `flex-wrap: nowrap`, so a label wider than its mark would be trimmed in
+     silence — which is the bug the gutter round measured and fixed
+     (performance 62.4px, instrument 54.0, backwards 52.5, all before
+     `min-inline-size: 0`). Every label's box is asserted INSIDE its button's
+     box, which is a claim about the un-hidden ones and a tautology about the
+     1x1 ones; it is applied to both because the day a bar mark gets its word
+     back is the day it needs to be true.
+
+     AND THE 44px FLOOR IS MEASURED IN BOTH AXES NOW, which is the one thing
+     this round newly breaks and the reason this check is red. In the gutter,
+     `#nu-tray button { min-inline-size: var(--tap) }` gave every mark its 44px
+     of width and the sweep only had to watch the BLOCK axis (where a
+     three-line label was being squeezed by `flex-shrink: 1`). That selector
+     was deleted with the stripe and `.nu-bar button` declares only
+     `min-block-size: var(--tap)` — so the bar's marks are as wide as their
+     glyph plus padding and no wider. See the check for the numbers. */
   const t10 = await p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const bad = [], wide = [], small = [];
+    const bad = [], wide = [], small = [], shown = [], hidden = [];
     const sweep = () => {
-      for (const b of document.querySelectorAll("#nu-tray button")) {
+      /* `#nu-tray button` STOOD HERE. The chrome is three boxes and they are
+         all inside `#nu-chrome`, which is the `<nav>` ui/eight.js `chromeRow`
+         fills — so one scope still reaches every mark, exactly as one scope
+         did when the mark was in a stripe. */
+      for (const b of document.querySelectorAll("#nu-chrome button")) {
         /* ON THE PAGE, OR NOT MEASURED (2026-09-02) — shell.js's own `shown()`
            rule, borrowed here for the reason it was written there: "that is not
-           a finding, it is the gate measuring furniture in another room". The
-           play options are seated in the foot permanently now and FOLDED away
-           when the door is shut (Paul: *"Move the play/stop button to the
-           bottom, along with opts and where"*), so three controls that are in
-           the DOM at every moment are laid out only when a hand has opened
-           them — and a `display: none` control is 0x0 and has no label box.
-           The sweep opens the fold below and measures them there, which is
-           where a thumb meets them. */
+           a finding, it is the gate measuring furniture in another room". Three
+           kinds of mark in this chrome are in the DOM at every moment and laid
+           out only when a hand has opened something: the fold's three controls,
+           the hamburger's five rows, and `#sheetclose`, which is `hidden` until
+           a sheet is up. A `display: none` control is 0x0 and has no label box.
+           The sweep opens each of the three below and measures them there,
+           which is where a thumb meets them. */
         if (!b.getClientRects().length) continue;
         const v = b.querySelector(".nu-vh");
         const k = b.id || b.dataset.k || "?";
-        /* `#playops` WAS EXEMPT BY ID BECAUSE ITS FACE WAS ITS WORD, and it is
-           not any more (2026-09-02): `GLYPH.act.opts` gave it the ⚙ nu.css had
-           been carrying the debt for, so it is spelled like every other mark
-           and is measured like one. The exemption is gone rather than kept. */
-        /* ...AND THE SEED ROW IS THE ONE MARK WITH NO WORD AT ALL
+        const br = b.getBoundingClientRect();
+        const name = (b.getAttribute("aria-label") || "").trim();
+        /* THE 44px FLOOR, IN BOTH AXES, FOR EVERY MARK IN THE CHROME. It was
+           two rules — height for the labelled marks, both axes for the seed
+           row's two — and they are one rule now, because the reason the seed
+           row got the stricter one (a mark with no word in flow is a mark
+           whose width is its glyph's) is true of seven marks in the bar. */
+        /* ONE ENTRY PER MARK AND NOT ONE PER SWEEP. This sweep runs eight
+           times (the resting table, the six surfaces, the hamburger, the
+           fold), so an undersized mark reported once a pass turns a four-mark
+           finding into thirty-two entries and the reader has to count them to
+           see it is four. The failure is a property of the MARK, so it is
+           filed against the mark's key. */
+        if ((br.height < 44 - 0.5 || br.width < 44 - 0.5) &&
+            !small.some((s) => s[0] === k))
+          small.push([k, +br.height.toFixed(1), +br.width.toFixed(1)]);
+        /* ...AND THE SEED ROW IS THE ONE PLACE WITH NO WORD AT ALL
            (2026-09-03), which is a named exemption and not a hole. Paul:
            *"Instead of a popup for seed, just get rid of the word seed and put
            the number."* The word under the die WAS "seed" and it is the word
            he named; what stands beside the picture now is `#seedval`, the
            number, which is its own target. So these two are measured for
-           everything else this sweep measures — the 44px floor in both axes,
-           an accessible NAME, and nothing clipped — and are not asked for a
-           `.nu-vh` they deliberately do not have. Every OTHER mark in the
-           gutter is still an extraction and is still checked as one. */
-        const br = b.getBoundingClientRect();
-        const name = (b.getAttribute("aria-label") || "").trim();
+           everything else this sweep measures — the 44px floor in both axes
+           and an accessible NAME — and are not asked for a `.nu-vh` they
+           deliberately do not have. Every OTHER mark in the chrome is still an
+           extraction and is still checked as one.
+           (`#rewrite` DOES still carry a hidden span reading "seed" — nu.css
+           `.nu-seedrow > #rewrite .nu-vh` puts `.nu-vh`'s original four
+           declarations back on it so the page reads as itself with the
+           stylesheet off. Its accessible name is `"rewrite " + n`, which is
+           what the press will DO and what eleven gates call this control by, so
+           the word is deliberately NOT the head of the name here and this
+           branch is why that is a decision and not a failure.) */
         if (b.closest(".nu-seedrow")) {
           if (!name) bad.push([k, "no accessible name"]);
-          if (br.height < 44 || br.width < 44)
-            small.push([k, +br.height.toFixed(1), +br.width.toFixed(1)]);
           continue;
         }
         if (!v) { bad.push([k, "no label"]); continue; }
         const r = v.getBoundingClientRect();
-        if (!r.width || !r.height) bad.push([k, "label not drawn"]);
-        /* `#rewrite` WAS THE ONE MARK WHOSE WORD WAS NOT ITS NAME (2026-09-02:
-           the word under the die said "seed" while its accessible name said
-           `"rewrite " + n`), and that exemption is RETIRED rather than kept:
-           the die has no word at all since 2026-09-03 and is answered by the
-           `.nu-seedrow` branch above, which asks it for the name and the tap
-           floor instead. The `b.id !== "rewrite"` clause stays here only
-           because a mark that grew a word back would want the old reason, and
-           the old reason is one line up. */
+        const laid = getComputedStyle(v).position !== "absolute";
+        (laid ? shown : hidden).push([k, v.textContent.trim(),
+                                      +r.width.toFixed(1), +r.height.toFixed(1)]);
+        if (!v.textContent.trim()) bad.push([k, "label has no text"]);
         // the name may carry a number or a refusal's reason; the WORD is its head
-        else if (b.id !== "rewrite" && name !== v.textContent.trim() &&
+        else if (name !== v.textContent.trim() &&
                  name.indexOf(v.textContent.trim()) !== 0)
           bad.push([k, v.textContent + " vs " + name]);
-        /* BOTH AXES. Sideways is where the gutter clips (`.nu-traylist` is
-           `overflow-x: hidden`); DOWNWARD is where a flex column clips, and
-           it did: a three-line label on an overflowing level was squeezed
-           into a 44px mark by the default `flex-shrink: 1` while the box
-           still reported the tap floor (nu.css `.nu-traylist > *`). A check
-           that only measured width would have passed on that. */
+        /* BOTH AXES. Sideways is where a fixed row clips (`.nu-bar` is
+           `flex-wrap: nowrap`); DOWNWARD is where a flex column clips, and it
+           did in the gutter: a three-line label was squeezed into a 44px mark
+           by the default `flex-shrink: 1` while the box still reported the tap
+           floor. A check that only measured width would have passed on that. */
         if (r.left < br.left - 0.5 || r.right > br.right + 0.5 ||
             r.top < br.top - 0.5 || r.bottom > br.bottom + 0.5)
           wide.push([k, v.textContent, +r.width.toFixed(1),
                      +br.width.toFixed(1), +r.height.toFixed(1),
                      +br.height.toFixed(1)]);
-        if (br.height < 44) small.push([k, +br.height.toFixed(1)]);
       }
     };
     sweep();
+    /* THE THREE THAT HAVE TO BE OPENED TO BE MEASURED, in the order a hand
+       opens them: a sheet (which is what raises `#sheetclose`), the hamburger,
+       and the play fold. */
     for (const name of window.__eightTabs()) {
-      window.__eightTab(name); await wait(60); sweep(); window.__eightUp();
-      await wait(30);
+      window.__eightTab(name); await wait(90); sweep(); window.__eightUp();
+      await wait(40);
     }
-    { const box = document.querySelector(".nu-trayopts");
+    window.__eightMenuOpen(true); await wait(150); sweep();
+    window.__eightMenuOpen(false); await wait(80);
+    { const box = document.querySelector(".nu-baropts");
       if (box && box.hidden) document.getElementById("playops").click(); }
-    await wait(120); sweep();
-    const room = document.querySelector(".nu-trayvol .nu-vh");
-    const out = { bad, wide, small,
+    await wait(150); sweep();
+    /* `.nu-trayvol .nu-vh` STOOD HERE and the naive re-point — `.nu-baropts
+       .nu-vh` — WAS RED IN ITS FIRST RUN, which is worth writing down because
+       it is the same class of mistake this whole file is about. The fold's
+       first `.nu-vh` is `#playmode`'s, so the check read *"the room fader is
+       labelled off its own control's aria-label ("loop" / "room")"* — a gate
+       measuring the wrong control and reporting it as the app's fault. The
+       fader is the one thing in the fold that is not a button, so it is scoped
+       by the chassis it IS (`.nu-vs`, ui/engineer.js `vchassis`) and not by the
+       box it sits in. */
+    const room = document.querySelector(".nu-baropts .nu-vs .nu-vh");
+    const out = { bad, wide, small, shown, hidden,
       room: room ? room.textContent : null,
       roomName: document.getElementById("vol").getAttribute("aria-label"),
+      /* AND THE ≡ WEARS THE LOG'S BADGE, which is the promise `.nu-trayfoot`
+         made about the log button ("always there, at a size that never
+         changes") kept on a page where the log is behind a door. The badge is
+         the `.nu-n` `paintBadge` writes, and the burger's accessible name is
+         its own word FIRST and the count after it — "menu, 3 lines" — so the
+         extraction law above passes on it for the same reason `#rewrite`'s
+         would if it still had a visible word. */
+      burgerBadge: !!document.querySelector("#burger .nu-n"),
+      logs: window.__nuLog().length,
+      burgerName: (document.getElementById("burger") ||
+        { getAttribute: () => null }).getAttribute("aria-label"),
       mode: (document.querySelector("#playmode .nu-vh") || {}).textContent };
-    { const box = document.querySelector(".nu-trayopts");
+    { const box = document.querySelector(".nu-baropts");
       if (box && !box.hidden) document.getElementById("playops").click(); }
     await wait(80);
     return out;
   });
   check(!t10.bad.length,
-    "T10 · every mark in the gutter — head, list and foot — wears its own " +
-    "word, and the word IS the accessible name " + JSON.stringify(t10.bad));
+    "T10 · every mark in the chrome — the top strip, the hamburger and the " +
+    "bar — wears its own word, and the word IS the head of the accessible " +
+    "name " + JSON.stringify(t10.bad) + ". Where the word is VISIBLE, " +
+    "measured: " + JSON.stringify(t10.shown) + "; where it is `.nu-vh` and " +
+    "1x1 (no second line in a --bar-h row): " +
+    JSON.stringify(t10.hidden.map((h) => h[0])));
   check(!t10.wide.length,
     "T10 · …and no label is clipped: every one is inside its mark's box " +
     JSON.stringify(t10.wide));
+  /* THE ONE RED THIS ROUND LEAVES STANDING, AND IT IS THE APP'S AND NOT THE
+     GATE'S. nu.css AND THE 44px FLOOR THE GUTTER'S OWN RULE USED TO CARRY says
+     of `#nu-tray button, #boardtabs button, .nu-decktabs > button`: *"the
+     first selector is deleted with the stripe. The other two are not … The
+     chrome's own three boxes each declare it above, on the buttons they
+     hold."* TWO OF THE THREE DO. `.nu-top > button` declares
+     `min-inline-size: var(--tap)` and `#nu-menu > button` declares
+     `inline-size: 100%`; `.nu-bar button` declares `min-block-size: var(--tap)`
+     ONLY, so four marks in the row Paul asked for by name come out narrower
+     than a thumb. Measured on the rendered page 2026-09-09 at 320, 390 and 430
+     — the same at all three, because the marks are `flex: 0 0 auto` and their
+     width is a glyph plus `--s3` of padding, which is exactly why the number
+     wobbles with the glyph (`#voicing` measures 33.7 wearing ⌁ and 29.3
+     wearing the mode this gate leaves it in):
+         #play    31.8 x 44        #voicing  29.3-33.7 x 44
+         #rewrite 33.7 x 44        #playops  34.2 x 44
+     — against a 44px floor this page has held since the marks landed and which
+     nu.css states, in that same block, is a floor because *"an <svg> brought
+     its own 40px of width; a glyph brings 10-30px, so `←` in a 2px-padded
+     button is a 20px target — under half the floor."* This is that sentence
+     happening. The fix is one declaration in nu.css (`.nu-bar button {
+     min-inline-size: var(--tap) }`, which the bar has the room for — measured
+     at 320 the row's six visible marks come to 299.3px of an available 304)
+     and this gate does not own that file, so it is REPORTED as a red rather
+     than softened into a green. A gate that lowered its own floor to match the
+     page would be the harness lying. */
   check(!t10.small.length,
-    "T10 · …and the 44px tap floor survived the labels " +
+    "T10 · …and the 44px tap floor holds IN BOTH AXES " +
     JSON.stringify(t10.small));
   check(t10.room === t10.roomName && t10.room === "room",
     "T10 · the room fader is labelled off its own control's aria-label (" +
     JSON.stringify(t10.room) + " / " + JSON.stringify(t10.roomName) + ")");
+  /* THE BADGE IS ASSERTED AGAINST THE LOG'S OWN LENGTH AND NOT AS A BARE
+     TRUTH. `paintBadge` writes `num: logs.length || null`, and `paintIcon`
+     draws no `.nu-n` for a null — so "there is a badge" is only a claim while
+     there is something to count, and a check that demanded one unconditionally
+     would go red on a page nobody had made a sound on. By the time this runs
+     the box has played, stopped and reseeded, so the honest form is the
+     BICONDITIONAL: a badge exactly when there are lines. */
+  check(t10.burgerBadge === (t10.logs > 0) &&
+        /^menu/.test(String(t10.burgerName || "")),
+    "T10 · …and the ≡ carries the log's badge, so the count is on the screen " +
+    "with the menu shut, while its NAME still begins with its own word (" +
+    JSON.stringify(t10.burgerName) + ", badge " + t10.burgerBadge + " for " +
+    t10.logs + " lines)");
 
-  /* T10b — THE ARITHMETIC, AT BOTH PHONES, AND IT IS REPORTED RATHER THAN
-     WISHED. The ask was "every level fits at 320x568 with no list scroll".
-     IT DOES NOT, IT DID NOT BEFORE THIS ROUND, AND NO TYPE SIZE CAN MAKE IT:
-     measured on the SHIPPED page the morning of 2026-08-30 at 320x568, the
-     root was 441px of marks against a 360px list (over by 81), the fourteen
-     motif operations 689 against 303 (over by 386), the tempo level 391 and
-     the band level 342 against the same 303. Nine 44px targets are 396px
-     before a single gap — the TAP FLOOR is the binding constraint, not the
-     words. What this round adds on top of that is 0 to 14px a level for the
-     labels and 44px of LIST for the die, which is a mark in the foot now:
-     after, at the same width, root 441/316, tempo 405/259, motifops 703/259.
-     nu.css THE MARKS WEAR THEIR WORDS carries the whole table and the three
-     things that could give if Paul wants the scroll back.
+  /* ===== T10b IS RETIRED WITH THE COLUMN IT WAS ARITHMETIC ABOUT ========
+     (2026-09-09, TABLE.md §10b steps 6 and 7.)
 
-     AND THE MOTIF OPERATIONS ARE NOT A LEVEL ANY MORE, 2026-09-08 (TABLE.md
-     §10b step 4). The fourteen are a line at the foot of the opened motif's
-     sheet, inside the Band table's MOTIFS row; the numbers above are kept
-     because they are the dated measurement this paragraph was written from and
-     the arithmetic they prove — nine 44px targets are 396px before a gap — is
-     what still binds. What replaced the longest level is measured below and
-     PRINTED, which is what the note under this one already said.
+     WHAT IT ASSERTED, so nobody mourns the wrong thing. The ask was *"every
+     level fits at 320x568 with no list scroll"*, and T10b's whole job was to
+     say IN NUMBERS that it never did and never could: measured on the SHIPPED
+     page the morning of 2026-08-30 at 320x568, the root was 441px of marks
+     against a 360px list (over by 81), the fourteen motif operations 689
+     against 303 (over by 386), the tempo level 391 and the band level 342
+     against that same 303. NINE 44px TARGETS ARE 396px BEFORE A SINGLE GAP —
+     the tap floor was the binding constraint, not the type size — and the
+     round that added the labels put 0-14px a level on top of it and 44px of
+     list back by moving the die into the foot: after, at the same width, root
+     441/316, tempo 405/259, motifops 703/259. What it therefore CHECKED, once
+     the exact claim was abandoned, was the honest pair: at 390x844 the tree's
+     longest state is reachable, and at 320x568 every mark is reachable because
+     `.nu-traylist` is a scroller and the last mark of the longest level is
+     inside the list's box after scrolling to the end. `levelsAt()` printed
+     every level's `want/have` at both phones so the next round could read the
+     cost without re-measuring it.
 
-     SO THIS CHECK ASSERTS THE TWO THINGS THAT CAN HONESTLY BE ASSERTED:
-       · at 390x844 — the phone this box is drawn for — the tree's longest
-         state is reachable (it read "every level fits except the fourteen
-         motif operations, which is the one level that has never fitted
-         anywhere"; overflow is the ORDINARY state of a tree, which is the
-         reversal the note directly below this block already carries);
-       · at 320x568 every mark is REACHABLE: the list is a scroller, and after
-         scrolling it to the end the last mark of the longest level is inside
-         the list's own box. Nothing is silently clipped, which is the law;
-         "nothing scrolls" was never a law and is not one now
-         (`.nu-traylist`'s standing promise: "it scrolls if a future level
-         does not fit").
-     The numbers are PRINTED either way, so the next round can see what the
-     gutter costs without re-measuring it. */
-  const levelsAt = async () => p.evaluate(async () => {
+     WHY IT GOES: there is no list, no level, no `.nu-traylist` to scroll and
+     no column to fit anything in. Paul: *"…a real mobile app now with
+     everything in the table and the nav space reclaimed."* The whole subject —
+     "how many 44px marks can a 96-to-176px vertical stripe stack before the
+     reader has to scroll it" — was reclaimed along with the space.
+     AND THE OUTSTANDING RED GOES WITH IT. `N8 390 · the indent is not what
+     clipped anything` (2026-09-08) held a 96px gutter word box against a 7px
+     `--nu-indent` and said the indent was innocent; both numbers are about
+     `[data-depth]` rules and a `.nu-traylist` that are deleted, so the finding
+     is retired rather than carried forward as a red nobody can act on.
+
+     WHAT REPLACES IT IS THE SAME KIND OF CLAIM ABOUT THE ROW: a bar cannot
+     scroll and must not wrap (`.nu-bar` is `flex-wrap: nowrap` and its
+     `block-size` is `--bar-h`, a token the body's own padding is arithmetic
+     on), so the failure mode is not "you have to scroll to reach it", it is
+     "it went sideways, or it grew, or a mark got squeezed under the floor".
+     Those three are measured at BOTH PHONES and PRINTED either way, which is
+     what the note this block replaces already promised: the next round can see
+     what the chrome costs without re-measuring it. */
+  const barAt = async () => p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const list = () => document.querySelector(".nu-traylist");
-    const out = [];
-    const take = () => { const L = window.__eightTray(), l = list();
-      out.push({ level: L.level, n: L.items.length,
-                 h: +l.clientHeight.toFixed(0), want: +l.scrollHeight.toFixed(0) }); };
-    take();
-    for (const name of window.__eightTabs()) {
-      window.__eightTab(name); await wait(60); take(); window.__eightUp();
-      await wait(30);
-    }
-    { const box = document.querySelector(".nu-trayopts");
-      if (box && box.hidden) document.getElementById("playops").click(); }
-    await wait(120); take();
-    { const box = document.querySelector(".nu-trayopts");
-      if (box && !box.hidden) document.getElementById("playops").click(); }
-    await wait(60);
-    const seen = {}; const uniq = [];
-    for (const r of out) if (!seen[r.level]) { seen[r.level] = 1; uniq.push(r); }
-    return uniq;
+    const bar = document.querySelector(".nu-bar");
+    const br = bar.getBoundingClientRect();
+    const tok = (v) => { const d = document.createElement("div");
+      d.style.cssText = "position:absolute;left:-9999px;top:0;inline-size:1px;" +
+        "box-sizing:border-box;block-size:" + v;
+      document.body.appendChild(d);
+      const h = +d.getBoundingClientRect().height.toFixed(2); d.remove(); return h; };
+    /* ONE LINE, READ AS ONE `top`. A wrapped bar is a bar whose children sit on
+       two rows, and the cheapest true reading of that is the number of distinct
+       rounded `top`s among them — cheaper and less brittle than comparing the
+       row's height to the sum of its parts, which a `gap` and a `padding` both
+       lie about. */
+    const tops = new Set([...bar.children]
+      .map((c) => Math.round(c.getBoundingClientRect().top)));
+    const marks = [...bar.querySelectorAll("button")]
+      .filter((n) => n.getClientRects().length)
+      .map((n) => [n.id || n.dataset.k, +n.getBoundingClientRect().width.toFixed(1),
+                   +n.getBoundingClientRect().height.toFixed(1)]);
+    /* AND THE MENU AND THE FOLD ARE OPENED AND MEASURED WHERE THEY LAND. Both
+       hang off a fixed box at a corner, so the thing that can go wrong at a
+       narrow phone is that one of them runs off the screen — which no amount
+       of DOM reading finds. */
+    window.__eightMenuOpen(true); await wait(180);
+    const m = document.getElementById("nu-menu").getBoundingClientRect();
+    const menu = { x: +m.x.toFixed(1), right: +m.right.toFixed(1),
+                   h: +m.height.toFixed(1), bottom: +m.bottom.toFixed(1),
+                   scrolls: document.getElementById("nu-menu").scrollHeight -
+                            document.getElementById("nu-menu").clientHeight,
+                   inside: m.x >= -0.5 && m.right <= window.innerWidth + 0.5 &&
+                           m.bottom <= window.innerHeight + 0.5 };
+    window.__eightMenuOpen(false); await wait(100);
+    document.getElementById("playops").click(); await wait(220);
+    const f = document.querySelector(".nu-baropts").getBoundingClientRect();
+    const fold = { x: +f.x.toFixed(1), right: +f.right.toFixed(1),
+                   top: +f.top.toFixed(1), h: +f.height.toFixed(1),
+                   inside: f.x >= -0.5 && f.right <= window.innerWidth + 0.5 &&
+                           f.top >= -0.5 };
+    document.getElementById("playops").click(); await wait(120);
+    return { w: window.innerWidth, h: window.innerHeight,
+             rows: tops.size,
+             box: +br.height.toFixed(2), tok: tok("var(--bar-h)"),
+             topTok: tok("var(--top-h)"),
+             marks, menu, fold,
+             sideways: document.documentElement.scrollWidth -
+                       document.documentElement.clientWidth };
   });
-  /* T10b — WHAT THE TREE COSTS, MEASURED AND REPORTED (2026-09-02).
-     It read `over.length === 1 && over[0].level === "motifops"`: at 390x844
-     exactly ONE level might overflow the list, and it had to be the fourteen
-     motif transforms. That was an exact claim about a stripe that drew ONE
-     level; a tree draws twelve tab rows plus every open branch, so overflow is
-     the ORDINARY state and "one level overflows" stopped being a fact about
-     the design the moment Paul asked for nesting.
-     WHAT REPLACES IT IS THE CLAIM THAT STILL MEANS SOMETHING, and it is the
-     one T10c has always made at the other width: the list is a SCROLLER and
-     nothing is clipped in silence. So this asserts the ROOT — the twelve tabs
-     with nothing expanded — still fits at the phone this box is drawn for,
-     which is the state a reader arrives in and the one number a bigger column
-     could newly have broken. Everything else is measured and PRINTED, so the
-     next round can see what the tree costs without re-measuring it. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(200);
-  const t10b = await levelsAt();
-  const reach390 = await p.evaluate(async () => {
-    const l = document.querySelector(".nu-traylist");
-    l.scrollTop = l.scrollHeight;
-    await new Promise((r) => setTimeout(r, 120));
-    const last = l.querySelector("button:last-of-type");
-    const lr = last.getBoundingClientRect(), br = l.getBoundingClientRect();
-    return { k: last.dataset.k, inside: lr.bottom <= br.bottom + 1,
-             sideways: document.documentElement.scrollWidth -
-                       document.documentElement.clientWidth };
-  });
-  check(reach390.inside && reach390.sideways === 0,
-    "T10 · at 390x844 the list SCROLLS and the last mark of the tree (" +
-    reach390.k + ") is reachable, and nothing goes sideways. What the tree " +
-    "costs, measured: " + JSON.stringify(t10b.map((r) =>
-      r.level + " " + r.want + "/" + r.h)));
+  const bar390 = await barAt();
+  check(bar390.rows === 1 && Math.abs(bar390.box - bar390.tok) <= 0.5 &&
+        bar390.sideways === 0 && bar390.menu.inside && bar390.fold.inside,
+    "T10 · at 390x844 the bar is ONE row that IS --bar-h (" + bar390.box + "/" +
+    bar390.tok + "), nothing goes sideways (" + bar390.sideways + "), and both " +
+    "doors land on the screen. The row, measured: " +
+    JSON.stringify(bar390.marks) + " · menu " + JSON.stringify(bar390.menu) +
+    " · fold " + JSON.stringify(bar390.fold));
   await p.setViewportSize({ width: 320, height: 568 });
   await p.waitForTimeout(400);
-  const t10c = await levelsAt();
-  const reach = await p.evaluate(async () => {
-    /* THE LONGEST STATE THE TREE HAS, MADE BY HAND, AND IT IS `Band` SINCE
-       2026-09-08 (TABLE.md §10b step 4). IT READ: *"the Motif tab, whose
-       arrival opens the bank AND the open cell's fourteen transforms. It was
-       `__eightTab("Motif")` alone while that was a LEVEL (the tab is `Motifs`
-       since 2026-09-04); on a tree the tab unfolds the bank and the cell has
-       to be opened for the transforms."* The Motifs tab is deleted with its
-       pane — the bank is a merged ROW of the Band table and the fourteen are a
-       line in the opened motif's sheet — so neither the tab nor the
-       `motiftab-` rows exist to be walked.
-       WHICH LEVEL IS LONGEST IS A MEASUREMENT AND NOT A NAME, and `levelsAt()`
-       above prints every one of them, so the next round can check this by
-       reading the report rather than the source. Measured on the boot record
-       2026-09-08 at 390x844: `toptab-Band` wants 1234px of a 560px list —
-       the players and the sections, one list said downwards — and every other
-       level, root included, wants exactly the list it has. */
-    window.__eightTab("Band");
-    await new Promise((r) => setTimeout(r, 200));
-    const l = document.querySelector(".nu-traylist");
-    l.scrollTop = l.scrollHeight;
-    await new Promise((r) => setTimeout(r, 120));
-    const last = l.querySelector("button:last-of-type");
-    const lr = last.getBoundingClientRect(), br = l.getBoundingClientRect();
-    return { level: window.__eightTray().level,
-             k: last.dataset.k, inside: lr.bottom <= br.bottom + 1,
-             scrolled: l.scrollTop > 0,
-             sideways: document.documentElement.scrollWidth -
-                       document.documentElement.clientWidth };
-  });
-  await p.evaluate(() => window.__eightUp());
-  check(reach.inside && reach.scrolled && reach.sideways === 0,
-    "T10 · at 320x568 the list SCROLLS and every mark is reachable — the " +
-    "last of the " + reach.level + " level (" + reach.k + ") is inside the " +
-    "list after scrolling, and nothing goes sideways. The column, measured: " +
-    JSON.stringify(t10c.map((r) => r.level + " " + r.want + "/" + r.h)));
+  const bar320 = await barAt();
+  check(bar320.rows === 1 && Math.abs(bar320.box - bar320.tok) <= 0.5 &&
+        bar320.sideways === 0 && bar320.menu.inside && bar320.fold.inside,
+    "T10 · …and at 320x568, the width this file has always reported rather " +
+    "than wished at: one row of " + bar320.box + "/" + bar320.tok + ", zero " +
+    "sideways, both doors inside the glass. The row, measured: " +
+    JSON.stringify(bar320.marks) + " · menu " + JSON.stringify(bar320.menu) +
+    " · fold " + JSON.stringify(bar320.fold));
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(400);
 
   /* ---- T5 THE LIST IS PERMANENT, AND IT HAS AN ARTICLE COLUMN --------- */
-  /* BACK TO THE ROOT FIRST, THEN THE TAB. The stripe is standing on the play
-     level after T4, and a level draws exactly one set of siblings — the nine
-     tabs are not among them, so a query for `[data-k="toptab-Where"]` finds
-     nothing and a click on nothing leaves the gate reading a `display: none`
-     panel and measuring zeros. `__eightUp()` is the `↑` pressed until there is
-     no `↑` left, which is the gesture a reader makes. */
+  /* BACK TO THE TABLE FIRST, THEN THE PLATE. It read: *"the stripe is standing
+     on the play level after T4, and a level draws exactly one set of siblings —
+     the nine tabs are not among them, so a query for `[data-k="toptab-Where"]`
+     finds nothing and a click on nothing leaves the gate reading a `display:
+     none` panel and measuring zeros."* THE HAZARD IS THE SAME AND ITS SHAPE
+     CHANGED: there are no levels, so the plate is always in the bar and always
+     findable — but WHERE is a SHEET now, and a sheet that is not open wears
+     `data-off` + `inert` and is `display: none`, so every measurement below
+     would read a globe of zeros. `__eightUp()` closes whatever sheet T4 left
+     open and shuts the menu (it is "close the sheet and shut the menu" since
+     2026-09-09); the plate in `#nu-bar` is then pressed, which is the gesture a
+     reader makes and the one the genre plate exists for — Paul, §10a: *"genre
+     … opens WHERE, the globe, as a sheet — it is a picker."*
+     IT IS THE BUTTON AND NOT `__eightTab("Where")`, deliberately: T7 below
+     uses the probe, and having ONE of the two arrivals go through the rendered
+     mark is what keeps the plate's own listener under test. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
   await p.evaluate(() => {
-    const b = document.querySelector('#nu-tray [data-k="toptab-Where"]');
+    const b = document.querySelector('#nu-bar [data-k="toptab-Where"]');
     if (b) b.click();
   });
   await p.waitForTimeout(600);
@@ -1146,8 +1469,17 @@ function standUpServer() {
          is the honest reading of "larger".
      AND THE TRANSPORT MUST BE RUNNING, read off #play's own accessible name,
      which is the word for the NEXT tap: "stop" means it is playing. */
-  await p.evaluate(() => window.__eightUp());
-  await p.waitForTimeout(150);
+  /* `window.__eightUp()` STOOD HERE AND IT WOULD NOW UNDO THE WHOLE CHECK
+     (2026-09-09). It meant "fold the stripe back to the root" and the open TAB
+     survived it, so the atlas T5 and T6 have been reading was still on the
+     page. `__eightUp` is CLOSE THE SHEET AND SHUT THE MENU now — the two taps
+     a hand makes to get back to the table — so calling it here would put
+     `data-off` + `inert` on `#atlas` and every rect measured below would be a
+     zero: a globe nobody was looking at, reported as a mark that did not grow.
+     What the line was ever for is "be somewhere the check can run from", and
+     that is now said forwards: make sure WHERE is the open sheet. */
+  await p.evaluate(() => window.__eightTab("Where"));
+  await p.waitForTimeout(400);
   await goTo(1969);
   const before7 = await p.evaluate(() => {
     const g = document.querySelector('#atlasMap .place[data-place="Kingston"]');
@@ -1230,8 +1562,13 @@ function standUpServer() {
      THE ABSENCE IS ASSERTED, ONCE, BELOW — because "we removed it" is a claim
      about the rendered page like any other, and a ? that came back in a foot
      nobody was looking at is exactly the drift a tombstone is for. */
+  /* AND THE SCOPE IS `#nu-chrome`, 2026-09-09 — `#nu-tray` is deleted, and a
+     query against a selector that matches nothing NO MATTER WHAT THE PAGE DOES
+     is the vacuous green this whole file legislates against. `#nu-chrome` is
+     the `<nav>` that replaced it and holds all three of the chrome's boxes, so
+     a ? that came back anywhere a thumb could reach it is caught. */
   const t8gone = await p.evaluate(() => ({
-    mark: !!document.querySelector('#nu-tray [data-k="explain"]'),
+    mark: !!document.querySelector('#nu-chrome [data-k="explain"]'),
     byId: !!document.getElementById("explain"),
     panel: !!document.getElementById("nu-explain"),
     /* THE GENRE EDITOR IS THE TABLE'S RULES ROW SINCE 2026-09-06 (TABLE.md
@@ -1239,14 +1576,17 @@ function standUpServer() {
        head and not a tray row — the claim ("the editor is reachable") is
        unchanged; only where it is reached moved. */
     rules: !!document.querySelector('#pan-band [data-k="trules"]'),
-    log: !!document.querySelector('#nu-tray .nu-trayfoot [data-k="logger"]') }));
+    /* ...AND THE LOG STANDS IN THE HAMBURGER SINCE 2026-09-09, which is the
+       same "the readout did not move house, only its wall did" claim one
+       surface out. It read `#nu-tray .nu-trayfoot [data-k="logger"]`. */
+    log: !!document.querySelector('#nu-menu [data-k="logger"]') }));
   check(!t8gone.mark && !t8gone.byId && !t8gone.panel,
     "T8 · the ? mark and its panel are GONE from the rendered page — " +
     JSON.stringify(t8gone));
   check(t8gone.rules && t8gone.log,
-    "T8 · …with the genre editor a root nav row in its place and the log " +
-    "still in the foot where it stood — the explainer moved house, the " +
-    "readout did not");
+    "T8 · …with the genre editor a row of the table in its place and the log " +
+    "a row of the hamburger — the explainer moved house, the readout only " +
+    "changed walls");
 
 
   /* ---- T11 THREE PLAY MODES, AND EACH ONE REACHES THE TRANSPORT ------- */
@@ -1296,13 +1636,19 @@ function standUpServer() {
        `secdrop` was a CHILD of the section row in the stripe and is gone with
        the whole branch of acts; the row op it filed onto — `trow-del|<id>`, in
        that section's own ROW SHEET — is where it has been since wave 2b, and
-       the gesture here is the same two taps it always was. The tray row is
-       still the first of them, and it is now a pure JUMP: tapping `secnav<id>`
-       runs `openSection`, which writes `formSec`, and `tablePanel` lands the
-       arrival by clicking `trow|<id>` — so the sheet with the delete in it is
-       open by the time the second tap goes out. Driving it this way keeps the
-       jump link itself under test, which is the only thing left on that branch
-       worth breaking. */
+       the gesture here is the same two taps it always was.
+       ...AND BOTH TAPS ARE THE TABLE'S SINCE 2026-09-09. The first of them was
+       the tray's `secnav<id>` JUMP — *"tapping `secnav<id>` runs `openSection`,
+       which writes `formSec`, and `tablePanel` lands the arrival by clicking
+       `trow|<id>` … driving it this way keeps the jump link itself under test,
+       which is the only thing left on that branch worth breaking"* — and there
+       is no tray to jump FROM. `trow|<id>` is the row head a thumb presses in
+       the table itself, which is where `openSection` was landing anyway, so
+       the gesture is unchanged and one indirection shorter. WHICH SECTIONS
+       THERE ARE IS THE DOCUMENT'S ANSWER (`__eightDoc().form.sections`) and
+       not a scrape of `[data-k^="trow|"]`, because the table draws `trow|` row
+       heads for PLAYERS as well as sections and a scrape would have deleted
+       whichever of the two the DOM happened to end with. */
     /* DOWN TO ONE SECTION, AND THE BOUND IS A SAFETY RAIL RATHER THAN A
        COUNT (2026-09-02). It read `i < 8`, which was the record this file was
        measured against — "5 sections / 36 bars / 149.1 s" in the paragraph
@@ -1317,14 +1663,32 @@ function standUpServer() {
       if (!b || b.disabled) return false;
       b.click(); await wait(150); return true;
     };
+    /* AND THE ROW HEAD IS OPENED IDEMPOTENTLY, which is `__eightRow`'s own law
+       said again for a row that has no probe: *"a gate that opened TIME twice
+       would have closed it with the second tap."* MEASURED, because the first
+       draft of this loop did not do it and the failure was exact and silent:
+       deleting a section leaves the table with the PREVIOUS section's row
+       already open, so the next iteration's unconditional click SHUT the sheet
+       it needed, `trow-del|s11` was not on the page, the loop broke on its own
+       guard, and the check under it read "10 section, 60 bars, 32.75 s" — a
+       red about a record that was never shortened rather than about anything
+       the transport does. The gate asks the row whether it is open, which is
+       what a hand does with an accordion. */
+    const openRow = async (id) => {
+      const at = () => document.querySelector(
+        '#pan-band [data-k="' + CSS.escape("trow|" + id) + '"]');
+      const b = at();
+      if (!b) return false;
+      if (b.getAttribute("aria-expanded") !== "true") { b.click(); await wait(250); }
+      const n = at();
+      return !!n && n.getAttribute("aria-expanded") === "true";
+    };
     for (let i = 0; i < 32; i++) {                   // down to one section
-      window.__eightTab("Band"); await wait(120);
-      const secs = [...document.querySelectorAll("#nu-tray .nu-traylist button")]
-        .filter((b) => /^secnav/.test(b.dataset.k || ""));
+      window.__eightTab("Band"); await wait(200);
+      const secs = window.__eightDoc().form.sections;
       if (secs.length <= 1) break;
-      const last = secs[secs.length - 1];
-      const id = (last.dataset.k || "").replace(/^secnav/, "");
-      last.click(); await wait(250);                 // the jump opens trow|<id>
+      const id = secs[secs.length - 1].id;
+      if (!await openRow(id)) break;                 // the row head opens the sheet
       if (!await tapTable("trow-del|" + id)) break;
     }
     /* AND THE EIGHT TEMPO OPERATIONS ARE IN THE PANEL (2026-09-02). Paul: *"The
@@ -1387,8 +1751,16 @@ function standUpServer() {
 
   /* THE MARK ITSELF FIRST: three states, in the table's order, each one drawn
      from fields.js PLAYMODES and each one saying its own word. */
+  /* AND THE DOOR IS OPENED IDEMPOTENTLY, T4's rule made here for T4's reason.
+     It was an unconditional click and that was safe while the play options
+     were a LEVEL, because the `__eightUp()` beside it reset the level first.
+     A fold survives `__eightUp` — which is the whole point of a fold — so an
+     unconditional click would CLOSE it on any run that reached here with it
+     already open, and `#playmode` would be a 0x0 box with no word. The gate
+     asks the page whether it is open, exactly as a hand would look. */
   await p.evaluate(() => { window.__eightUp();
-                           document.getElementById("playops").click(); });
+    const box = document.querySelector(".nu-baropts");
+    if (box && box.hidden) document.getElementById("playops").click(); });
   await p.waitForTimeout(250);
   const t11a = await p.evaluate(async () => {
     const seen = [];

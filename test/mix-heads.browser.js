@@ -360,7 +360,12 @@ function standUpServer() {
     if (!h) return { found: false };
     h.click();
     await wait(600);
-    const tray = window.__eightTray ? window.__eightTray() : null;
+    /* `__eightTray()` WENT WITH THE GUTTER, 2026-09-09 (TABLE.md §10b step
+       7). What X6 wants of it is "which mark is the marked one", and the
+       chrome's answer is the open SHEET — on the table that is nothing at all,
+       which is the state this walk is in. `__eightTabNow()` is the same fact
+       one field over and is already read on the next line. */
+    const tray = null;
     return { found: true, tab: window.__eightTabNow && window.__eightTabNow(),
              /* ...AND "ITS FACET IS OPEN" IS "ITS COLUMN SHEET IS OPEN"
                 SINCE 2026-09-04: a player is one vector and its head opens all

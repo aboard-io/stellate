@@ -179,8 +179,13 @@ function sayNew(v) {
     b.textContent = "reload";
     b.addEventListener("click", () => { location.reload(); });
     p.appendChild(b);
-    const tray = document.getElementById("nu-tray");
-    if (tray && tray.parentNode) tray.insertAdjacentElement("afterend", p);
+    /* AFTER THE CHROME, WHICH IS `#nu-chrome` SINCE 2026-09-09 (it was
+       `#nu-tray`, the gutter, and `.nu-bar` before that — this line has
+       followed the page's navigation through three shapes and asks for it by
+       id each time rather than remembering where it was). */
+    const nav = document.getElementById("nu-chrome") ||
+                document.getElementById("nu-tray");
+    if (nav && nav.parentNode) nav.insertAdjacentElement("afterend", p);
     else document.body.insertBefore(p, document.body.firstChild);
   } catch (e) { /* a page with no body yet: the next load is fresh anyway */ }
 }

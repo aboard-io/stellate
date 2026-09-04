@@ -364,16 +364,24 @@ const J = (x) => JSON.parse(JSON.stringify(x));
           await p.waitForTimeout(450);
           return;
         }
+        /* OFF THE TABLE'S OWN COLUMN HEADS SINCE 2026-09-09 (the gutter is
+           deleted). The head's accessible name is "<player> — <instrument> —
+           open this player's vector", so the match is on its HEAD rather than
+           on the whole string; the address itself carries the name and is what
+           is compared. */
         await band(); await p.evaluate((n) => {
-        const t = [...document.querySelectorAll('#nu-tray [data-k^="tab"]')]
-          .find((x) => (x.getAttribute("aria-label") || "").trim() === n);
-        if (t) t.click(); }, name);
+        const t = [...document.querySelectorAll(
+          '#pan-band th.nu-colhead button[data-k^="tcol|"]')]
+          .find((x) => x.dataset.k.slice(5) === n);
+        if (t && t.getAttribute("aria-expanded") !== "true") t.click(); }, name);
         await p.waitForTimeout(450); };
       const seat = async (dsp) => { await p.evaluate((d) => { const doc = window.__eightDoc();
           const v = doc.voices.find((x) => x.kind === "line");
           v.instrument = d; delete v.set; }, dsp);
         await band();
-        await p.evaluate(() => document.querySelector('#nu-tray [data-k^="tab"]').click());
+        await p.evaluate(() => { const h = document.querySelector(
+          '#pan-band th.nu-colhead button[data-k^="tcol|"]');
+          if (h && h.getAttribute("aria-expanded") !== "true") h.click(); });
         await p.waitForTimeout(250); await tab("cantor"); };
 
       /* ---- 4 NO CONTROL DRAWS FOR A VOICE THAT CANNOT USE IT ---------- */

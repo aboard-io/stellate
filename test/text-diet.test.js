@@ -148,7 +148,14 @@ const HARD = 1200;
 // these two panes did.
 const TABS = ["Where", "Band", "Score", "Video",
               "Screensaver", "Export"];
+/* ...AND ONE MORE, 2026-09-09 (§10b steps 6 and 7): the TRAY IS DELETED, so
+   there is no list of these words on the screen at all. `Where` is the bar's
+   genre plate (wearing the RECORD's name, not the word "Where") and `Band` is
+   the page; what the chrome LISTS is the hamburger's four viewers. T2's claim
+   is unchanged in substance — the page names its sections, in Paul's words, in
+   Paul's order — and the list it is asked of is the one that exists. */
 const NAV_ROWS = TABS.filter((t) => t !== "Where");
+const MENU_ROWS = TABS.filter((t) => t !== "Where" && t !== "Band");
 
 /* …AND THE VOCABULARY'S OWN NAMES, WHICH ARE STILL IN THE DOCUMENT AND ARE NO
    LONGER ON THE SCREEN. This was T2's whole fact and it read: "the §5 table's
@@ -272,8 +279,18 @@ const MEASURE = () => {
        same call the button makes). T2's claim is unchanged and unweakened:
        "the page names its sections, in Paul's words, in Paul's order". */
     tabNames: (() => { if (window.__eightUp) window.__eightUp();
-      return [...document.querySelectorAll(".nu-traylist button")]
-        .map((b) => (b.getAttribute("aria-label") || "").trim()); })(),
+      /* OFF THE HAMBURGER SINCE 2026-09-09, and it has to be OPENED to be
+         read: the menu is `hidden` when shut, which is the whole of its closed
+         state. `__eightMenuOpen` is the ≡ pressed, the same call the button
+         makes. The log's row is dropped here because T2's subject is the
+         page's SECTIONS and the log is a readout — its own naked-glyph check
+         is the `nakedTabs` sweep one field down, which is page-wide. */
+      if (window.__eightMenuOpen) window.__eightMenuOpen(true);
+      const out = [...document.querySelectorAll("#nu-menu button")]
+        .map((b) => (b.getAttribute("aria-label") || "").trim().split(" — ")[0])
+        .filter((w) => w !== "log");
+      if (window.__eightMenuOpen) window.__eightMenuOpen(false);
+      return out; })(),
     nakedTabs: [...document.querySelectorAll("button .nu-g")]
       .map((g) => g.closest("button"))
       .filter((b) => !(b.getAttribute("aria-label") || "").trim() ||
@@ -370,9 +387,10 @@ const MEASURE = () => {
     check(m.total < HARD,
       "T1 " + width + " · …and under the plan's own hard line " + HARD +
       " (FUTURE.md Phase 1)");
-    check(JSON.stringify(m.tabNames) === JSON.stringify(NAV_ROWS),
-      "T2 " + width + " · the ten rows are Paul's words in Paul's order, " +
-      "with Where in the foot — " + JSON.stringify(m.tabNames));
+    check(JSON.stringify(m.tabNames) === JSON.stringify(MENU_ROWS),
+      "T2 " + width + " · the hamburger's rows are Paul's words in Paul's " +
+      "order, with Where a plate in the bar and Band the page itself — " +
+      JSON.stringify(m.tabNames));
     /* T2 · …AND NO CONTROL IS NAKED, which is the half of this gate's claim
        that a row of pictures can newly get wrong (2026-08-28). A glyph button
        must carry its full word twice — as `aria-label`, so a screen reader

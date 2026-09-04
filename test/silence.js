@@ -196,7 +196,7 @@ function standUpServer() {
        one tap away — read at the address it now has. */
     rulesRow: !!document.querySelector('#pan-band [data-k="trules"]'),
     word: (document.getElementById("play").getAttribute("aria-label") || "").trim(),
-    plate: (() => { const b2 = document.querySelector('.nu-trayfoot [data-k="toptab-Where"] .nu-vh');
+    plate: (() => { const b2 = document.querySelector('#nu-bar [data-k="toptab-Where"] .nu-vh');
       return b2 ? b2.textContent.trim() : null; })() }));
   const want = await p.evaluate((s2) =>
     JSON.stringify(window.NuPrecompose.genreToDocument("dub", s2)), seedShown);

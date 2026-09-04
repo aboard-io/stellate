@@ -1391,6 +1391,210 @@ names — a player and a motif cannot share a name (one is `voices[].name`, the
 other a key of `material.cells`), so asking in order is unambiguous and a link
 somebody sent from inside `psalm` still opens standing in `psalm`.
 
+### 10f · What steps 6 and 7 landed, and the six things they measured
+
+**SHIPPED 2026-09-09 (uncommitted).** THE TRAY IS DELETED. `ui/eight.js` lost
+`expanded` / `chain` / `setChain` / `treePath` / `expand` (the one open path),
+`TABKIDS` and `TABSUB`, the five level builders (`rootTrayItems`,
+`bandTrayItems`, `sectionTrayItems`, `scoreTrayItems`, and `playTrayItems`,
+which came back as `playOptItems`), `trayNow`'s walk, `trayRow` / `paintTray` /
+`paintDepth` / `tapNode`, `trayList` / `trayFoot` / `traySig` / `trayBtn`,
+`lightSections`, `glyphOf`, and the three probes `__eightTray` / `__eightTree`
+/ `__eightExpand` — and gained `MENUROWS`, `setMenu`, `chromeRow`,
+`paintChrome`, `__eightMenu` and `__eightMenuOpen`. **15,380 lines → 14,554, a
+net 826 down on about 1,300 deleted**, because the chrome that replaced 1,300
+lines of tree is about 350. `nu.css` lost **41 rules and 640 lines** — `.nu-tray`,
+`.nu-traylist`, `.nu-trayfoot`, `.nu-traycut`, `.nu-trayopts`, `.nu-trayvol`,
+the four `[data-depth]` rules and their `--nu-indent`, the two `#nu-tray
+.nu-ic` grids, the `@media (min-width: 900px)` type step, `.nu-tray
+.is-sounding`, and `--tray-w` itself. `index.html` swapped one empty `<nav>`
+for another: `#nu-tray` → `#nu-chrome`.
+
+**THE BAR, IN THE MARKUP.** `#nu-bar` is fixed at the foot, `inset-inline: 0`,
+`block-size: var(--bar-h)`, an opaque `--panel` plate with one rule on top.
+Four things stand in it and Paul named three: the GENRE (`toptab-Where`, the
+name plate the gutter's foot carried, at the same address, opening WHERE as a
+sheet), the DIE AND ITS NUMBER (`.nu-seedrow`, unmoved, now carrying BOTH
+countdowns), and PLAY/STOP last under a right thumb — with the VOICING between
+the options' door and `#play`, which is the neighbour v263 gave it in the
+column. `.nu-top` is fixed at the top corner: `#sheetclose` (hidden on the
+table) then `#burger`. `#nu-menu` hangs from the ≡ with Score · Video ·
+Screensaver · Export, a rule, and the log.
+
+**THE PLAY OPTIONS ARE IN THE BAR AND NOT IN THE HAMBURGER**, which is the one
+fork §10b left open ("opts becomes part of the hamburger or the bar, say
+which"). `#playops` unfolds ABOVE its own door, which is what it did in the
+gutter; its three children are a mode, a take and the room, and all three are
+facts about THE NEXT PRESS OF ▶. The hamburger holds things you look at; the
+bar holds the transport.
+
+**SIX THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT.**
+
+- **`.nu-menu` WAS ALREADY SOMEBODY'S CLASS, AND ONE GATE SAID SO IN A
+  SENTENCE THAT NAMED NEITHER.** ui/menus.js has drawn its chip strips as
+  `nu-wchips nu-menu is-chips` since v272, so the hamburger's first draft —
+  `.nu-menu { position: fixed; inset-block-start: … }` — turned every chip
+  strip on the page into a plate at the top corner. What reported it was
+  `test/table.browser.js` T7, from four rounds away, as **`SHORT prod.name
+  265x28`**: one control in the PRODUCE row's sheet, measured 28px against the
+  44 floor. The menu is addressed `#nu-menu` now — it had an id already — and
+  the law is the file's own: one surface, one name.
+- **A FIXED SHEET IS A SHEET OVER THE GROUND.** "A full-screen sheet over the
+  table" reads like `position: fixed; inset: 0` with its own scroll, and it was
+  built that way and driven. Three things went with it: `window.scrollY`
+  stopped moving on four of the six surfaces, so `tabScroll` — the anchor law's
+  whole substance (*"Stop scrolling when I touch the page in any way!"*) —
+  remembered 0 for every one of them and `shell` A6e skipped at all four widths
+  with "fewer than two scrollable tabs"; `putPanes`'s sideways restore was
+  measuring a box that no longer scrolled; and NOTHING WAS BEHIND IT ANYWAY,
+  because `showTab` has put `data-off` on every panel but the open one since
+  2026-08-27. `data-sheet` stays — it is what the stylesheet and three gates
+  read to know a panel is a sheet rather than the page — and what it declares
+  is the one thing a sheet owes: it fills the screen it opened over.
+- **A FROZEN HEAD PINS INSIDE ITS PANE, NOT INSIDE THE VIEWPORT.** The obvious
+  reading of a 44px plate at the top corner is that `grid.ts stick()` should
+  start its stack under it. Built, driven, wrong: `.nu-pane` is `overflow-x:
+  auto`, which computes `overflow-y` to `auto` as well, so the PANE is the
+  scrollport those heads stick inside and the offset is measured from its own
+  top edge. Starting at 55.19 pushed every head 55px DOWN its pane and left a
+  white band above TIME at 320 and 390. The strip is reserved by `body`'s
+  `padding-block-start: var(--top-h)` instead, which is where a fixed plate's
+  room has always been paid on this page.
+- **"NOTHING GOES UNDER IT" IS A DIFFERENT SENTENCE ABOUT A HORIZONTAL BAND.**
+  shell A6i has swept every laid-out block against the gutter's rectangle since
+  2026-08-28 and survived the gutter changing edges; turned ninety degrees it
+  failed on `#app@55.2-1280.5` — a 1280px-tall column doing exactly what a
+  scrolling page does. A vertical gutter is beside the page at every scroll; a
+  foot bar is crossed by any page taller than the screen. What the law MEANS
+  about a foot bar is that the page RESERVES the room, so the sweep runs at
+  `scrollY = max` for the bar's band and at `scrollY = 0` for the top strip's,
+  which is where each band's claim is decidable.
+- **THE HEIGHT HAS TO BE THE TOKEN, NOT WHAT THE CONTENT COMES TO.** `body`'s
+  `padding-block-end` is arithmetic on `--bar-h`, so a bar a pixel taller than
+  its own token is a pixel of page under the bar that nothing would report.
+  Measured, the row's tallest control renders **45.18px** against the 44 floor
+  and the bar came to **51.38 against a token of 50.39**; `block-size` and not
+  `min-block-size`, and the difference is spent inside the padding where a
+  transparent button has nothing to clip.
+- **A PANEL THAT IS THE FRONT DOOR CANNOT BE HIDDEN AT BOOT WITHOUT LOSING ITS
+  YEAR.** WHERE is a sheet now, so for the first time the page can be standing
+  somewhere else when a hand asks for the globe. The genre list IS the time
+  instrument (Paul, 2026-08-29: *"Make the genre list permanent and always
+  expanded. As I slide it light up the map with places"*), so the year is read
+  off the list's own `scrollTop` — and a `display: none` scroller comes back at
+  0. `#atlasIndex`'s ResizeObserver fires the moment the panel acquires a size
+  and sweeps, BY DESIGN (ui/atlas.js says so at the observer); on a list at its
+  top it answered the first row. Driven on `#at=Kingston&y=1969`, the sentence
+  came back ***"600 · 1 record within ten years · Rome"*** over a record that is
+  Kingston 1969, with every mark outside that decade `display: none` —
+  including the one `test/seed.js` S6d then tried to tap. `showTab` tells the
+  atlas it is back on the page (`ATLAS.showing(DOC.basis)`), the Score deck's
+  own idiom — AND IT IS SAID AFTER THE OBSERVER, not before it: called inline
+  it was overwritten by the sweep that followed and answered "600 · Rome" a
+  second time, so it is two `requestAnimationFrame`s out, on the far side of
+  the frame the panel acquires its size in.
+
+**THE LAMPS ARE ON THE HEADERS, AND `setSounding` IS THE ONE WRITER.** §10a:
+*"the playing section's row head and the sounding players' column heads
+light"*. The column heads' lamp is `lampFor`'s `<i>` inside a `[data-live]`
+sibling of the button and always was (wave 2b); what changed is that
+`setSounding` — which wrote a CLASS and an `aria-current` on a gutter button —
+is now the one writer of every lamp on the page, and it writes CHILDREN only.
+That is a law and not a taste: `__eightFrozen` parks a live element's CHILDREN
+and keeps its ATTRIBUTES, so a class or an `aria-current` written on the live
+span would land in the frozen snapshot and test/motif-frozen.js would have it
+inside the hour. `lightSections` is DELETED — its only targets were the
+stripe's `secnav<id>` rows, and §10a's *"the playing section's row head"* is
+`markForm`, which has lit that head's own `[data-live="count"]` span with a
+`<mark>` off the same `d.si` since wave 2b. A second lamp there would be a
+second owner of one fact.
+
+**THE ADDRESSES DID NOT MOVE, AGAIN.** `toptab-Where` is the bar's plate,
+`toptab-Score` / `-Video` / `-Screensaver` / `-Export` are the hamburger's
+rows, `logger` is its last, and `deck.view.not` / `deck.view.roll` are back
+inside the Score sheet's own row — the third address on this page to travel
+without changing, after `boardtab|<kind>|<key>` and `motifop-<word>`.
+`__eightTabs()` still answers the six SURFACES (a gate walks them to visit a
+pane, and `test/table.browser.js` asks it four times whether a deleted tab is
+gone), and `__eightMenu()` is the new reading for what the hamburger LISTS —
+the two are different questions and it is the second that this round added.
+`__eightUp()` is a shim for the third time: it was the ↑ pressed to the root,
+then "fold everything", and it is "close the sheet and shut the menu" now,
+still answering `"root"` to its nine callers.
+
+**GATES.** `test/gutter.js` **51 of 51** — T1 keeps the `<h1>` half and hands
+the bar's shape to T3; T2 walks `#play` over all six surfaces and is STRONGER
+than it was (permanence is a geometry claim now, and `__eightTray`/`__eightTree`
+/`__eightExpand` are asserted `undefined` so no retired check can go green
+against a shim); T3 replaces "five controls and no sixth" with the bar's real
+inventory, asserted exactly, and reads `--bar-h` where it read `--tray-w`; T4's
+touch law is driven in `.nu-baropts`; T5/T6/T7 open WHERE by clicking the bar's
+own genre plate; T9 is the die in the bar with the fold having lost it; T10 asks
+the label law of `#nu-chrome` and the floor in BOTH axes; T10b is retired with a
+tombstone carrying the 96px column's arithmetic, and nav-tree's outstanding N8
+red with it; T11 unchanged, and `shorten()` deletes its section through
+`trow|<id>` instead of the stripe's jump. `test/shell.js` **PASS, 378 ok, 0 failed** at 320/375/430/820. A6 is the bar
+swept down every surface's whole height (fixed at the foot, full width, x=0, at
+eleven stops); A6b is "ONE ROW, never scrolls sideways", counted as distinct
+button TOPS the way the stripe counted lefts; A6c is amended by one word and
+the amendment is the point — **AT MOST one `<mark>`**, because the table is not
+a place you opened and standing on it is the state in which nothing is marked;
+A6d/A6g read the hamburger's four in `TABS`' own order and the genre plate in
+the BAR; A6i is the two-pass sweep above; A6j is the absence of the whole
+apparatus PLUS a driven round trip through each of the four viewers; A6k is
+RETIRED with its reason (it asserted one open PATH in a tree, and what it
+protected is A6j's count of exactly one `[data-sheet]`); A6l survives whole and
+is driven from the table's own heads. A7 is `--bar-h` again, which is the name
+it had before the gutter took it. `test/seed.js` **ALL PASS (36)**.
+`test/table.browser.js` **192 ok, 0 failed** and grew **T10x** — nav-tree's N6, moved: every column head
+carries a `[data-live]` lamp as a sibling of its button, a player's head lights
+within 25 s of `#play`, the chrome's `<mark>` count is unmoved by it, the
+sounding section's row head wears `markForm`'s one `<mark>`, and every lamp
+goes out on stop — and T7 grew **`INV.chrome`, eighteen rows** under two homes
+outside the table, `bar` and `hamburger`, which is T7's nothing-lost law asked
+of the gutter itself — **163 controls checked at 320px**, of which eighteen are
+the deleted gutter's. **`test/nav-tree.js` IS RETIRED INTO A TOMBSTONE** that
+says where each of its nine claims went and is unregistered in `test/all.js`;
+its one outstanding red — *"N8 390 · the indent is not what clipped anything"*,
+a 96px word box against a 7px `--nu-indent`, deferred on 2026-09-08 *"in a
+round that deletes the tray two steps later"* — is answered by the deletion.
+Eleven more gates were re-pointed in a line or two each (`selects`, `sheets`,
+`knobs`, `samples.browser`, `loopstrip.browser`, `mix-heads.browser`,
+`vol-reach.browser`, `silence`, `text-diet`, `gutter`, `table.browser`), every
+one of them because a stripe selector had no subject.
+
+**AND THREE MORE THINGS THE GATES MEASURED AFTER THE FACT, EACH A REAL
+DEFECT.** (1) `#nu-tray button, #boardtabs button, .nu-decktabs > button {
+min-inline-size: var(--tap) }` was ONE RULE FOR THREE SURFACES and its first
+selector went with the stripe — so the four marks Paul named ("genre, dice,
+playstop along the bottom") kept their 44px HEIGHT and lost their 44px WIDTH:
+measured **29.3 to 33.7 CSS px** at 320, 390 and 430, by `test/gutter.js` T10,
+which asks the floor in both axes. `.nu-bar button` declares it now, and the
+room was there — the six visible marks total 299.3px in a 304px row at 320.
+(2) `expand()` WAS CALLED FROM TWO PLACES THAT WERE NOT THE TREE and would have
+thrown `ReferenceError` on the reachable one: `panel-addcell` (the bank's "+
+motif") opened the stripe on the cell it had just made, and `openSection` opened
+it on the row. Both are one line of tombstone now; `motifTab` and `formSec` are
+what the two surfaces actually read. (3) `prod.name` — the producer's own `<h3
+class="nu-namebar">`, a READOUT with a `data-k` so T7 can find it — went SHORT
+the moment the gutter left, and the measurement is the joke: at 320px the
+content column was `320 − 96 = 224`, which WRAPPED the plate onto two lines
+(185.2 × 48.5 against HEAD's stylesheet); with the column at its full 320 the
+same plate is one line, **264.6 × 27.8**, and a heading failed a TAP floor by
+having stopped being squeezed. It carries a `floor` and its reason in the
+inventory, which is the discipline `test/bench.test.js` B3 got when it was named
+the owner of the bench row's geometry.
+
+**AND TWO FILES OUTSIDE THE TEST TREE FOLLOWED THE CHROME.** `ui/glyph.js`
+`place()` — the hold-and-hover explainer — clamped its popover to the gutter's
+inner rule and *"no longer knows which edge that is"*; it has a BLOCK axis now
+as well as an inline one, because a popover explaining `#play` would otherwise
+sit on the bar and cover the marks either side of the one it is about, which is
+the identical failure one axis over. `audio/offline.js` seats the "a new
+version is ready" line after the page's navigation and asks for it by id: this
+line has followed the chrome through three shapes (`.nu-bar`, `#nu-tray`,
+`#nu-chrome`) and remembers none of them.
+
 ## 11 · The design system: ours, less chunky, with an envelope editor (RULED 2026-09-05)
 
 Paul, after the AUX spike (GPL-3.0-or-later, 93 KB core + a fader at 171 KB,

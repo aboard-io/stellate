@@ -315,8 +315,15 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
        did — so nothing below this line changed. `#nu-tray` and not
        `.nu-traylist`: the ↑ button's key is `trayup`, which `^="tab"` does not
        match, and neither does a root level's `toptab-…`. */
+    /* ...AND OFF THE TABLE'S OWN COLUMN HEADS SINCE 2026-09-09. The gutter is
+       deleted (TABLE.md §10b step 7), so `#nu-tray [data-k^="tab"]` is a query
+       against nothing. A player's head is `tcol|<name>` and it opens the same
+       sheet the stripe's row jumped to, which is what every line below wants;
+       the keys are read off the rendered heads rather than typed, exactly as
+       they were read off the stripe. */
     const voices = await p.evaluate(() =>
-      [...document.querySelectorAll('#nu-tray [data-k^="tab"]')].map((n2) => n2.dataset.k));
+      [...document.querySelectorAll('#pan-band th.nu-colhead button[data-k^="tcol|"]')]
+        .map((n2) => n2.dataset.k));
     /* ...AND A VOICE IS THREE FACETS SINCE 2026-08-28. Paul: *"A voice has:
        Instrument voice with settings from the mixer / What it plays, register,
        material / Per-section settings."* The band panel draws exactly the facet
@@ -336,8 +343,12 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       // `tapK` would answer false for every voice after the first.
       await openTop(t);
       await tapK(k);
-      const facets = await p.evaluate(() =>
-        [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')].map((n2) => n2.dataset.k));
+      /* (THE FACETS WENT ON 2026-09-04 with the pane that switched between
+         them — a voice is ONE VECTOR and its column sheet asks all of it at
+         once — so this has answered `[]` since then and answers `[]` against a
+         deleted gutter for the same reason. Kept as the empty list it is, so
+         the loop below still reads as "every facet this voice has".) */
+      const facets = [];
       for (const f of facets) views.push({ top: t, k, f });
     }
   }
@@ -369,7 +380,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       if (v) {
         await openTop(v.top);
         if (v.sec) await p.evaluate(async () => {
-          const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
+          /* THE SECTION IS THE TABLE'S OWN ROW HEAD SINCE 2026-09-09. */
+          const s2 = document.querySelector(
+            '#pan-band th.nu-srowh button[data-k^="trow|"]');
           if (s2) { s2.click(); await new Promise((r) => setTimeout(r, 300)); }
         });
         if (v.sec) await p.waitForTimeout(350);

@@ -548,12 +548,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   });
   await p.waitForTimeout(300);
 
-  /* OFF THE STRIPE SINCE 2026-08-28 — see the same rewrite in test/sheets.js.
-     `#tabs` was the band's horizontal strip; it is the `band` level of
-     `#nu-tray`, `openTop("Band")` above has already descended into it, and
-     every `data-k` is byte-identical. */
+  /* OFF THE STRIPE 2026-08-28, OFF THE TABLE'S OWN COLUMN HEADS 2026-09-09.
+     `#tabs` was the band's horizontal strip; then it was the `band` level of
+     `#nu-tray`; the gutter is deleted (TABLE.md §10b step 7) and the players
+     are the table's COLUMN HEADS, which is where a thumb has opened them since
+     wave 2b. The keys are `tcol|<name>` rather than `tab<name>` and the census
+     below only needs the NAME, so it is taken off the head's own address. */
   const tabs = await p.evaluate(() =>
-    [...document.querySelectorAll('#nu-tray [data-k^="tab"]')].map((t) => t.dataset.k));
+    [...document.querySelectorAll('#pan-band th.nu-colhead button[data-k^="tcol|"]')]
+      .map((t) => "tab" + t.dataset.k.slice(5)));
   let sel = [], sheets = [], cells = [];
   const eat = (s) => { sel = sel.concat(s.sel); sheets = sheets.concat(s.sheets);
                        cells = cells.concat(s.cells || []); };
@@ -637,7 +640,10 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   await openTop("Band");
   eat(await survey());
   const openedSec = await p.evaluate(async () => {
-    const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
+    /* THE SECTION IS THE TABLE'S OWN ROW HEAD SINCE 2026-09-09: `secnav<id>`
+       was a row of the deleted gutter and `trow|<id>` is the head that opens
+       the same sheet. */
+    const s2 = document.querySelector('#pan-band th.nu-srowh button[data-k^="trow|"]');
     if (!s2) return false;
     s2.click();
     await new Promise((r) => setTimeout(r, 400));
