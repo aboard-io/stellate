@@ -694,7 +694,69 @@ const PAGE_TRIM = {
   synclead:    1.9,
   modeld:      2.8,
   casiocz:     3.2,
-  stk_guitar:  1.78,
+  /* ...AND CUT AGAIN x0.8 (-1.94 dB) 2026-09-04: 1.78 -> 1.424. Paul, on the
+     whole family at once: "Bring down all the synthesized guitars around 20%
+     -- they're just very hot in the mix all over." THE FOURTH GUITAR ROUND IN
+     SIX DAYS, and the first one aimed at the MODULE rather than at an
+     instrument — which is what "all ... everywhere" names. 0.8 is the twenty
+     per cent read as amplitude, exactly as the palm-chug row below reads its
+     own (2026-08-31), not as dB.
+
+     WHY THIS ROW AND NOT ID_ROUTE, said out loud because the alternative was
+     the last three rounds' answer: 08-30 cut ONE id (overdrive -12), 08-31 cut
+     ONE id (palm -20%), 09-01 cut FOUR (clean/crunch -6, distortion -12) — and
+     the ask this time carries no instrument in it. Ten ids resolve to this
+     module (clean, jazz, palm_muted, crunch, overdrive, distortion, nylon,
+     steel, di, harmonics — instruments.js PATCH_MODEL) and every guitar in the
+     catalogue is one of them since the 09-01 sweep, so ONE number here is the
+     only edit that reaches all of them and reaches nothing else. It also
+     PRESERVES the spread the three earlier rounds measured: a flat factor on
+     the module leaves clean/crunch 6 dB under overdrive/distortion and leaves
+     jazz/nylon/steel where they were fitted RELATIVE to those, which a fifth
+     column in ID_ROUTE would have re-argued from scratch. `erhu` is the one
+     sibling that historically COPIED this row (1.78, before it was corrected
+     to 9.63 by its own measurement) and it is a literal now, so it does not
+     ride along — checked, and pinned in test/od-route.test.js O6.
+
+     MEASURED BEFORE (test/_chairtap.cjs, mute-complement at the ring output,
+     upstream of the make-up rider; 16 bars, seed 1; vsBand = the guitar chairs
+     alone, active RMS, against the whole rest of their own band). The
+     08-30 header's yardstick for a balanced melodic chair is -11.8..-21.5:
+         rock        crunch+palm+overdrive   -5.39   contribution 0.52
+         garagerock  crunch+overdrive+palm  -10.80   0.21
+         bluesrock   overdrive               -0.65   2.20
+         funkrock    crunch+palm+overdrive   -9.89   0.08
+         countryrock clean+steel+palm       -15.45   0.07
+         swing       jazz_guitar            -18.28   0.01
+     bluesrock and rock are the two still sitting over the top of the balanced
+     range, which is the ear's complaint; countryrock and swing were already
+     inside it and take the cut anyway, because "all ... everywhere" is the ask
+     and a flat module factor is what "all" means.
+     THE SAMPLED GUITARS DID NOT MOVE, and there are none left to move: at seed
+     1 every guitar the catalogue seats resolves to this module (the 09-01
+     sweep took the last four sampled zones - nylon, steel, di, harmonics), the
+     only `guitar` token left in nukernel/genres is the GENRE key `mandeguitar`,
+     and the crate's `found:` lane (bbc_*, collage, rave_a, vox_a, vox_d) holds
+     no guitar at all. This row cannot reach a recording even in principle: it
+     is keyed by DSP MODULE and a sampled chair has none.
+     RE-MEASURED AFTER THE CUT, same probe, same 16 bars and seed. On the WIRE
+     the factor is exact: every guitar chair's route came back x0.800 to three
+     places (0.892->0.714, 0.447->0.358, 1.780->1.424). RENDERED, the guitar
+     solo's whole-record RMS moved
+         garagerock -1.92   bluesrock -1.89   countryrock -1.93   swing -1.94
+         rock       -1.56   funkrock  -1.58
+     — four of six land ON the asked -1.94 and the two dense three-guitar rows
+     hand ~0.36 dB back, which is the same channel-strip compressor hand-back
+     the 08-30 round measured at ~1 dB on its own riffs and the stk_piano round
+     at 0.1..0.35. If the ear still says hot, this row is still the owner.
+     CONTROLS HELD EXACTLY: every record's rest-of-band RMS (the complement,
+     guitars muted) moved 0.00 dB on all seven, and `jazz` — which seats no
+     guitar at seed 1 — has no target chair to move at all.
+     ONE RECORD ANSWERS NOTHING AND IT IS NOT THIS ROW'S DOING: bossa's
+     overdrive chair presses SILENT through bar 16 at seed 1 (duty 0.000, solo
+     -432 dB) both before and after, on a row whose own entry declares
+     nylon_string_guitar. Reported, not fixed here. */
+  stk_guitar:  1.424,
   /* stk_piano WAS 2.35, CUT ×0.766 (-2.32 dB) 2026-08-30. Paul: fix the
      +2.3 dB the ear round measured against its whole band. The row's own
      provenance above always confessed it ("NOT MEASURED ON THE PAGE, and the

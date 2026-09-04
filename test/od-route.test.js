@@ -277,6 +277,73 @@ console.log("\nO5 — the guitar census rows (2026-09-01): trims by measurement,
      "a row with no rel column moves nothing: overdrive keeps its genre's 0.3 s");
 }
 
+/* ---- O6 · the MODULE row itself, and the 2026-09-04 cut ------------------ */
+// Paul, 2026-09-04: "Bring down all the synthesized guitars around 20% --
+// they're just very hot in the mix all over." The three rounds above each cut
+// an INSTRUMENT in ID_ROUTE; this one cut the MODULE, because "all ...
+// everywhere" names no instrument and ten ids resolve to stk_guitar. Nothing
+// pinned PAGE_TRIM's guitar row before — O2 above reads it, but only
+// RELATIVELY, so the number could be edited to anything and every check here
+// would stay green. This block is the pin, and per TEST THE ARTIFACT it is
+// asserted through the same rendered mix loop O4 uses, not off the table.
+console.log("\nO6 — the module row (2026-09-04): -20% on stk_guitar, rendered");
+{
+  const NOW = 1.424, WAS = 1.78;            // the 08-30 row, and 0.8 of it
+  ok(near(MOD, NOW, 1e-9),
+     "PAGE_TRIM stk_guitar is " + NOW + " — 0.8 of the 08-30 row (" + WAS + "), " +
+     "Paul's twenty per cent read as amplitude: " + MOD);
+  ok(near(db(NOW / WAS), -1.94, 0.01),
+     "…which is -1.94 dB: " + db(NOW / WAS).toFixed(2) + " dB");
+  // TEST THE ARTIFACT: two chairs on this module, identical but for the row,
+  // rendered through the shipped mix loop. renderModelled and mkUnits are O4's.
+  const box = boxOf(record());
+  const at = (t) => renderModelled(
+    deskUnits({ v0: { lvl: 1, module: "stk_guitar", dry: t, pageTrim: t } },
+              ADDR, box, null, null).v0);
+  const now = at(NOW), was = at(WAS);
+  ok(near(db(now.dry / was.dry), -1.94, 0.05),
+     "RENDERED, the dry a stk_guitar chair puts on the bus is -1.94 dB under " +
+     "where the 08-30 row put it: " + db(now.dry / was.dry).toFixed(2) + " dB");
+  // ...and it reaches every one of the ten ids, because the product is
+  // MODULE x instrument and only the left factor moved.
+  const TEN = ["clean_guitar", "jazz_guitar", "palm_muted_guitar", "crunch_guitar",
+               "overdrive_guitar", "distortion_guitar", "nylon_string_guitar",
+               "steel_string_guitar", "di_guitar", "guitar_harmonics"];
+  const PM = window.NuInstruments.PATCHES.model;
+  ok(PM && TEN.every((id) => PM[id] && PM[id].dsp === "stk_guitar"),
+     "all ten guitar ids in PATCH_MODEL resolve to this one module, so the " +
+     "row reaches every guitar the catalogue can seat");
+  const rendered = TEN.map((id) => {
+    const R2 = TE.idRoute(id), t = R2 && R2.trim != null ? R2.trim : 1;
+    return db(at(NOW * t).dry / at(WAS * t).dry);
+  });
+  ok(rendered.every((d) => near(d, -1.94, 0.05)),
+     "…and rendered through each id's OWN route product, all ten move by the " +
+     "same -1.94 dB — a module cut, not a fifth column in ID_ROUTE: [" +
+     rendered.map((d) => d.toFixed(2)).join(" ") + "]");
+  // THE SPREAD THE THREE EARLIER ROUNDS MEASURED SURVIVES: a flat left factor
+  // cannot change a ratio between two ids.
+  const gap = (a, b) => {
+    const ra = TE.idRoute(a), rb = TE.idRoute(b);
+    return db(((ra && ra.trim != null ? ra.trim : 1)) / ((rb && rb.trim != null ? rb.trim : 1)));
+  };
+  ok(near(gap("overdrive_guitar", "clean_guitar"), -6, 0.05) &&
+     near(gap("clean_guitar", "jazz_guitar"), -6, 0.05),
+     "the 08-30/09-01 spread is untouched: overdrive still 6 dB under clean, " +
+     "clean still 6 dB under the un-trimmed jazz box");
+  // THE ONE SIBLING THAT COPIED THIS ROW does not ride along. erhu took 1.78
+  // verbatim on 2026-08-30 and was corrected to 9.63 by its own measurement
+  // hours later; it is a literal, and a module cut must not reach it.
+  ok(near(TE.pageTrim("erhu"), 9.63, 1e-9),
+     "erhu — which once copied this row verbatim — is its own literal and " +
+     "did not move: " + TE.pageTrim("erhu"));
+  // NO SAMPLED GUITAR MOVED, and the reason is structural rather than a list:
+  // PAGE_TRIM is keyed by DSP MODULE and a sampled chair has none.
+  ok(TE.pageTrim("") === 1,
+     "a chair with no module (every sampled chair, and the crate's found lane) " +
+     "answers 1 — this row cannot reach a recording even in principle");
+}
+
 console.log("\n" + (fails ? "FAILED " + fails + " of " + checks
                           : "ok — " + checks + " checks, 0 failures"));
 process.exit(fails ? 1 : 0);
