@@ -1,5 +1,5 @@
 {
-  "note": "DU FAY — Florence 1436. \"Nuper rosarum flores\", sung at the\nconsecration of Santa Maria del Fiore on the 25th of March 1436,\nBrunelleschi's dome overhead and the papal choir — Du Fay among\nthem — singing a motet whose two tenors move in the proportions\n6:4:2:3. It is the best-documented single performance of the\nfifteenth century and it fills a century this catalog simply\nskipped: nothing between Reims 1360 and Antwerp 1551.\nTHE AXES: DEVELOPMENT is the isorhythm — the same line re-said in\nshrinking proportions IS an operator schedule, which is why this\nrow fits the kernel better than most of its own century would.\nThe `word` below re-states the tenor at new lengths per section\n(excerpt and fill are the proportions), which is the piece's\nactual engineering, not a resemblance.\n\nLINEAGE: `arsnova` (Reims 1360) is the direct teacher — the\nisorhythmic motet is Machaut's machine, and Du Fay is its last\nand largest user; `organum` is the tenor-holding practice both\ndescend from. The missing third is the contenance angloise —\nDunstaple's thirds, which contemporaries said changed Du Fay's\nsound — named below, not invented.\nPAID 2026-08-30, the deep-time round's forward half: \"the\ncontenance angloise (contenanceangloise)\" is `contenanceangloise` (London 1420,\nthe Old Hall Manuscript) — the thirds contemporaries said\nchanged Du Fay's sound now stand upstream by name, and the\nisorhythm keeps the larger share because the machine is still\nMachaut's.\n\nWHO SINGS: the motet mouth — polychoral's own, a papal choir\nbeing the case it was written for.",
+  "note": "DU FAY — Florence 1436. \"Nuper rosarum flores\", sung at the\nconsecration of Santa Maria del Fiore on the 25th of March 1436,\nBrunelleschi's dome overhead and the papal choir — Du Fay among\nthem — singing a motet whose two tenors move in the proportions\n6:4:2:3. It is the best-documented single performance of the\nfifteenth century and it fills a century this catalog simply\nskipped: nothing between Reims 1360 and Antwerp 1551.\nTHE AXES: DEVELOPMENT is the isorhythm — the same line re-said in\nshrinking proportions IS an operator schedule, which is why this\nrow fits the kernel better than most of its own century would.\nThe `word` below re-states the tenor at new lengths per section\n(excerpt and fill are the proportions), which is the piece's\nactual engineering, not a resemblance.\n\nLINEAGE: `arsnova` (Reims 1360) is the direct teacher — the\nisorhythmic motet is Machaut's machine, and Du Fay is its last\nand largest user; `organum` is the tenor-holding practice both\ndescend from. The missing third is the contenance angloise —\nDunstaple's thirds, which contemporaries said changed Du Fay's\nsound — named below, not invented.\nPAID 2026-08-30, the deep-time round's forward half: \"the\ncontenance angloise (contenanceangloise)\" is `contenanceangloise` (London 1420,\nthe Old Hall Manuscript) — the thirds contemporaries said\nchanged Du Fay's sound now stand upstream by name, and the\nisorhythm keeps the larger share because the machine is still\nMachaut's.\n\nWHO SINGS: the motet mouth — polychoral's own, a papal choir\nbeing the case it was written for.\n\nFOUR PARTS, AND THE TWO TENORS ARE THE LOWER TWO (2026-09-04, the per-\nchair singer round). Nuper rosarum flores is triplum and motetus over\nthe two tenors whose proportions the comment above describes, and this\nrow wrote them `reg: v => 1 - v` — three octaves — with one\n`MOUTHS.motet` countertenor singing all four. The two upper voices\nkeep that countertenor (the papal choir's own throat, and the row's\nown mouth); the tenor sings tenor; and the fourth chair, written a\nfourth under it, is given the bass, which is the throat that can\nactually reach where this row puts it. A 1436 motet has no bassus part\nin the later sense — said out loud rather than smuggled — but it does\nhave a lowest voice, and this table's job is to name a throat for the\nline it WRITES.",
   "label": "Florence 1436",
   "voices": 4,
   "bars": 8,
@@ -29,6 +29,23 @@
   "realize": {
     "kind": "const",
     "n": "line"
+  },
+  "throat": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": [
+          0,
+          1
+        ],
+        "then": "countertenor"
+      },
+      {
+        "at": 2,
+        "then": "tenor"
+      }
+    ],
+    "else": "bass"
   },
   "kit": {},
   "nobass": true,

@@ -1449,6 +1449,46 @@
   // (a tenth address, `sing`, sat here for one day: the singer's own chair on
  // the desk. It went out with the singer on 2026-08-17 — kernel-daw.html
   // carries the tombstone — so the track list is the nine again.)
+  /* ---------- AND WHOSE THROAT A CHAIR IS (2026-09-04, the per-chair round)
+     A CHAIR MAY NAME ITS OWN SINGER. Until this round the throat was a fact
+     about the ROW — `genres.js MOUTHS` carries a `voice` word and every sung
+     chair on the record read the same one — and a four-part choir is the case
+     that breaks it: `chorale` spreads four voices over three octaves and all
+     four of them resolved to one alto, so the box was writing an SATB texture
+     for a single throat. SATB needs four throats and a row can say ONE, which
+     is why the answer is a COLUMN field (`document.js TIERS.voice`, stored at
+     `voices[vi].cast.voice`) with the row's mouth as its default.
+
+     THE WORDS ARE NOT TYPED HERE. `engine/faust/voices/state-engine.js
+     VOICE_TYPE` is the one owner of what a throat can reach and
+     `nukernel/knobs.js` is its EXTRACTION — knobs-extract.js probes the
+     parent's own `pitchedUnit` and writes the five words and their Hz
+     compasses beside them — so this reads that table and never restates it
+     (the attribute-grammar law: the conversion is done by extraction, never by
+     hand). Read LAZILY because index.html loads knobs.js at :518, after this
+     file at :486; nothing here asks before the page is up.
+
+     LOUDLY, OR NOT AT ALL. An empty table would mean this file silently
+     stopped knowing what a throat is — `normalize` would then drop every
+     `cast.voice` in the record at the door and every choir would go back to
+     one throat with nothing said, which is the failure mode band-kit.js:1313's
+     law exists for. So it throws by name instead. */
+  let THROATWORDS = null;
+  function THROATS() {
+    if (!THROATWORDS) {
+      const NK = (typeof module !== "undefined" && module.exports)
+        ? require("./knobs.js") : root.NuKnobs;
+      const rows = (((NK && NK.voices && NK.voices.voice_lead) || {}).rows) || [];
+      const row = rows.find((r) => r && r.key === "voice" && Array.isArray(r.values));
+      THROATWORDS = row ? row.values.filter((w) => typeof w === "string") : [];
+      if (!THROATWORDS.length)
+        throw new Error("fields.js: knobs.js publishes no voice types — load it " +
+                        "before this table is asked (index.html) or rebuild it");
+    }
+    return THROATWORDS;
+  }
+  const isThroat = (w) => typeof w === "string" && THROATS().includes(w);
+
   const PARTNAMES = { line: "line", lead: "lead", riff: "riff",
                       counter: "counter", pad: "pad", stab: "stab",
                       drone: "drone", bass: "bass", drums: "drums" };
@@ -3102,6 +3142,7 @@
                 PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                 BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
                 PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
+                THROATS, isThroat,
                 readPartKey, okPartKey, partChairLabel, chairKeys, resolvePartMix,
                 faderDb,
                 EQ_BANDS, BUS_EQ_BANDS, EQ_RANGE, eqDb, resolveEq, eqIsFlat,

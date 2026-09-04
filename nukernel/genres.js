@@ -383,6 +383,16 @@
     // was being folded UP two octaves, so he is now plainly written ABOVE the
     // lead (G#4 against G#4 at seed 1). That is a casting question for a round
     // that is allowed to move the sound; it is not a seating one.
+    //     ...AND THAT ROUND CAME THE SAME DAY (2026-09-04, the per-chair
+    // round). A throat is no longer only a fact about a ROW: a CHAIR may name
+    // its own (`document.js TIERS.voice`, written from the row's `throat`
+    // closure by chair index, GENRES.md §3), which is what a four-part choir
+    // needs and what this row needed for one chair. `doowop` states
+    // `v => (v === 1 ? "bass" : "countertenor")` — the riff sings bass, the
+    // stab and the lead keep this mouth — so the bass singer is written under
+    // the lead again (C#3/G#3/B4 against C#4/G#4/F#5 at seed 1) and THIS ROW
+    // IS UNTOUCHED, which is the same law that made it exist: the mouth is
+    // the room and the throat is who is standing in it.
     //   `barbershop` AND `glammetal` ALSO DECLARE doowopstack AND ARE LEFT ON
     // IT. Barbershop has the better claim of the two — its "tenor" part is by
     // definition the harmony above the lead — but Paul named doowop, and
@@ -1736,6 +1746,16 @@
     // before the room answers. A sweep that COMPLETES wants a per-SECTION entry
     // instead of a per-document one; that is precompose's fact and not this row's,
     // and it is written down here rather than papered over with a smaller number.
+    //
+    // AND EIGHT CHAIRS ARE TWO FOUR-PART GROUPS (2026-09-04, the per-chair
+    // singer round). `reg: v => (v % 4) - 1` is this row saying so already:
+    // the eight chairs run -1, 0, 1, 2 and then -1, 0, 1, 2 again, which is
+    // a four-part spread stated twice. Every one of them sang with the same
+    // `MOUTHS.motet` countertenor, so forty voices in eight choirs came out
+    // as one throat in eight octaves. The throat follows the row's own
+    // modulus, bottom to top — bass, tenor, alto, soprano — which is written
+    // as a formula for the same reason `reg` is: eight cases saying `v % 4`
+    // the long way round would obscure the one fact the line carries.
     polychoral: {
       label: "London 1570",
       rate: 0.5,
@@ -1749,6 +1769,7 @@
       entry: v => v,
       reg: v => (v % 4) - 1,
       realize: () => "line",
+      throat: v => ["bass", "tenor", "alto", "soprano"][v % 4],
       kit: {},
       nobass: true,
       harmony: "emergent",
@@ -4574,6 +4595,33 @@
     // the soloist and the choir behind her are the same church, and
     // the bridge reads `blend` only for the section and `vibRate`
     // only for the soloist, so the row says both without conflict
+    //
+    // THE SHUFFLE WAS DECLARED AND THE KIT PLAYED NONE OF IT (2026-09-04, the
+    // six-findings round). This row says `swing: 1/3` and its own first line
+    // says "Shuffled hard" — and the hat was straight eighths,
+    // `1010101010101010`. kernel.js's swing law is `swing(g,i) = (i%2) *
+    // g.swing`: it delays the ODD sixteenths and nothing else, so a lane whose
+    // every hit sits on an even step is a lane the shuffle cannot reach.
+    // MEASURED before the fix, by rendering the record twice — as written and
+    // with `swing` forced to 0 — and counting the events whose time differs:
+    // 61 of 575 drum hits moved at seed 1, 58 of 522 at seed 2, 24 of 435 at
+    // seed 3, and ZERO in the record's opening bars (s1 bar 0: 0 of 14, bar 1:
+    // 0 of 14; s2 bar 0: 0 of 14). Every hit that did move was manufactured
+    // downstream by a kit WORD (busy, tomroll, k.dens) rather than written
+    // here, so the shuffle you heard was the arranger's and never the
+    // drummer's. The melody was fine throughout — 115 of 506 line events moved
+    // at seed 1 — which is exactly why nobody heard the kit was straight.
+    // THE FIX IS THIS ROW'S GRID, NOT THE KERNEL'S LAW: the hat plays the beat
+    // and the swung "a" (`1001` per beat), which is character-for-character the
+    // ride the `swing` anchor has always played (`r: 1001100110011001`) and the
+    // same idea westernswing writes as `1011101110111011`. The hit COUNT does
+    // not move — eight a bar before, eight a bar after — only which steps they
+    // are on, so this is the feel changing and not the density. Catalogue
+    // census taken the same day: 90 rows declare a swing, 35 of them have kit
+    // grids with no odd-sixteenth hit at all (12 of those have no kit), and
+    // only two rows — politicalhiphop and northernsoul — have a declared swing
+    // that moves nothing whatever at seed 1. Those are reported, not touched:
+    // this round's fence is this row.
     gospel: {
       label: "Chicago 1932",
       voices: 3,
@@ -4603,7 +4651,7 @@
       kit: {
         k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        h: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]
       },
       fill: { s: [0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0] },
       tone: {
@@ -4915,6 +4963,29 @@
     //
     // the left foot on 2 and 4 under the brushes — a bossa drummer's
     // hat is a FOOT, and it is the quietest load-bearing thing here
+    //
+    // THE GUEST BROUGHT AN AMPLIFIER TO RIO 1958 (2026-09-04, the six-findings
+    // round). Measured at seed 1: this record's solo chair was seated on
+    // `overdrive_guitar` — a 1973 sound, and the loudest thing in a genre whose
+    // own entry is about brushes, understatement and a nylon top. It is not an
+    // era leak. compose.js `seatOK` waives its instrument-year floor after 1950
+    // "for an instrument the record ALREADY PLAYS", by head noun, and this row
+    // plays a `nylon_string_guitar`: the waiver reads "guitar", the guest walks
+    // in, and the law is behaving exactly as its own comment argues it should
+    // for Chess 1955. A nylon top is not evidence of an amplifier, so the fix
+    // is this row answering for its own room rather than a re-cut of a law that
+    // is right about Chuck Berry: `guests: "own"` — precompose.js DOOR 4, the
+    // acoustic mirror of the machine rows' `guests: "native"` — says that a
+    // guest of a kind this record already plays arrives on THIS record's
+    // instrument. The solo chair now seats `nylon_string_guitar`, which is a
+    // modelled voice (instruments.js PATCH_MODEL, dsp `stk_guitar`) and not a
+    // sampled zone.
+    // AND THE "SILENT CHAIR" WAS A SIXTEEN-BAR WINDOW, said plainly so nobody
+    // re-reports it: the guitar-trim round pressed 16 bars and read duty 0.000
+    // on this chair. Over the WHOLE record at seed 1 it plays 76 events at duty
+    // 0.088 — the layer is dealt into one section (s8 at seeds 1 and 3), and
+    // s8 begins well past bar 16. A guest that appears once is what a guest is;
+    // a probe that presses the first sixteen bars cannot see one.
     bossa: {
       label: "Rio de Janeiro 1958",
       near: "jazzrock",
@@ -4923,6 +4994,7 @@
       parents: { samba: 0.5, jazz: 0.3, choro: 0.2 },
       wants: [],
       instr: ["nylon_string_guitar", "flute"],
+      guests: "own",
       drumkit: "brush",
       entry: v => v,
       reg: v => v - 1,
@@ -6232,6 +6304,18 @@
     // direction for a doo-wop bass singer; it is paid because the lead is
     // what Paul named and there is no way to give one row two throats. If
     // the bottom of the stack ever reads wrong, this is the line to reverse.
+    //
+    // AND THE BASS SINGER SINGS BASS (2026-09-04, the per-chair singer
+    // round). `MOUTHS.doowoplead` was made for the LEAD two days ago — the
+    // high one, Frankie Lymon over the stack — and being the row's mouth it
+    // was cast on all three chairs, including `riff`, who is the BASS SINGER
+    // by this row's own description ("the BASS SINGER: low, short,
+    // insistent"). Measured at seed 1 after the seat round wrote the fold
+    // down: the riff was written C#4/G#4/B5 against the lead's C#4/G#4/F#5 —
+    // the bass singer plainly ABOVE the lead, which is not a doo-wop record.
+    // He takes the bass throat; the stab (the group singing the chord) and
+    // the lead keep the countertenor they have, stated here rather than left
+    // to the mouth so the row says its whole cast out loud.
     doowop: {
       label: "Harlem 1955",
       bars: 8,
@@ -6255,6 +6339,7 @@
       reg: () => 0,
       part: ["stab", "riff", "lead"],
       realize: v => (v === 0 ? "pad" : "line"),
+      throat: v => (v === 1 ? "bass" : "countertenor"),
       mode: MODES.ionian,
       scale: MODES.ionian,
       diatonic: true,
@@ -7172,6 +7257,17 @@
     // SAME tune, spaced by a fixed diatonic interval, because that is what
     // four amateurs in a pew can actually do. transpose() in degree-space
     // is a third/fifth/octave exactly because the scale is seven long.
+    //
+    // THE CONGREGATION IS NOT ONE THROAT (2026-09-04, the per-chair singer
+    // round). Three sung chairs and an organ, written `reg: [2, 0, -2, -4]`
+    // — six octaves of spread — and all three voices resolved to this row's
+    // own tenor mouth. A congregation singing a hymn in block chords is
+    // women on the tune and men under it: soprano on the melody, tenor in
+    // the middle, bass at the bottom, which is exactly the three registers
+    // the table above was already writing. THE FOURTH CHAIR IS THE ORGAN and
+    // gets no throat at all — precompose drops a throat named for a chair
+    // that is not a person, so the `else` here is a sentence about the bass
+    // and not about the pipes.
     hymn: {
       label: "Boston 1831",
       bars: 8,
@@ -7185,6 +7281,7 @@
       entry: () => 0,
       reg: v => [2, 0, -2, -4][v],
       realize: () => "line",
+      throat: v => (v === 0 ? "soprano" : v === 1 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       mode: MODES.ionian,
@@ -16217,6 +16314,17 @@
     // 1939, ragged on purpose (blend 0.75, looser than every mouth
     // here but the three American church-and-wash ones), because
     // they are a group and not a section
+    //
+    // A HIGH LEAD OVER A DEEP MALE CHORUS (2026-09-04, the per-chair singer
+    // round). That is what mbube IS — Solomon Linda's soaring line over the
+    // Evening Birds — and this row wrote it as `reg: [1, 0, -2, -3]`, four
+    // chairs across four octaves, with `MOUTHS.mbubestack`'s one bass
+    // singing every one of them. The lead's own `reg` of +1 was being sung
+    // by a voice whose compass stops at E4. So: the solo chair takes the
+    // countertenor (the high male voice over the group), the second chair
+    // the tenor, and the two lowest keep the bass the row is named for. ALL
+    // FOUR ARE MEN, which is why no soprano and no alto appear on a row
+    // whose whole texture is a male chorus.
     mbube: {
       label: "Johannesburg 1939",
       voices: 4,
@@ -16229,6 +16337,7 @@
       entry: () => 0,
       reg: v => [1, 0, -2, -3][v],
       realize: () => "line",
+      throat: v => (v === 0 ? "countertenor" : v === 1 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       roots: [0, 3, 0, 4],
@@ -19100,6 +19209,14 @@
     // anchors sat 0.268 apart in the genealogy's feature space — two very
     // fast four-bar I-V records, one in Nairobi and one in Santo Domingo,
     // reading as one point.
+    //
+    // WHOSE THROAT (2026-09-04, the per-chair singer round). No mouth of its
+    // own, so the throat was cast off the label — Nairobi, east Africa — and
+    // the solo rule handed D.O. Misiani `MOUTHS.zemachant`, the pressed bass
+    // of Ethiopian church chant. Benga's singers work in a light, high,
+    // close-harmony tenor; measured over seeds 1-3 this lead sang a median
+    // of A3, C#3 and C#3. The chair names its throat and the cast is left
+    // alone.
     benga: {
       label: "Nairobi 1972",
       voices: 3,
@@ -19113,6 +19230,7 @@
       entry: v => v,
       reg: v => (v === 0 ? 1 : v === 1 ? 1 : 0),
       realize: () => "line",
+      throat: () => "tenor",
       part: ["riff", "counter", "lead"],
       roots: [0, 0, 4, 4],
       mode: MODES.ionian,
@@ -19272,6 +19390,13 @@
     // is Tier 2 above because no dot for it can be proved on land. So this
     // anchor is honestly PARENTLESS on its Caribbean side and says so
     // rather than conscripting the nearest African anchor.
+    //
+    // WHOSE THROAT (2026-09-04, the per-chair singer round). Same cast and
+    // the same miss as `benga` one country away: no mouth of its own, Luanda
+    // reads as Africa, and the rule handed a 1995 slow-dance record
+    // `MOUTHS.mbubestack` — a 1939 Zulu male-chorus bass. Kizomba's lead is
+    // a smooth mid-range male voice over the drum machine, so the chair says
+    // tenor.
     kizomba: {
       label: "Luanda 1995",
       voices: 3,
@@ -19285,6 +19410,7 @@
       entry: v => v,
       reg: v => (v === 1 ? -1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
+      throat: () => "tenor",
       part: ["riff", "pad", "lead"],
       roots: [0, 5, 3, 4],
       mode: MODES.ionian,
@@ -21695,6 +21821,16 @@
     // past the gospel choir's — the loosest in the table — because
     // a Sacred Harp singing is a hundred untrained people at full
     // volume and the raggedness is the sound, not a defect in it.
+    //
+    // FOUR PARTS IN A SQUARE, AND NOW FOUR THROATS (2026-09-04). The row
+    // above says "four parts, everybody in a hollow square facing inward,
+    // the tune in the TENOR and not the top part" and then seated all four
+    // of them on one `MOUTHS.shapenote` alto. The order is the row's own
+    // `reg` table and not a guess: chair 1 sits highest (+1), then chair 0
+    // (0), chair 2 (-1) and chair 3 (-2), which is treble, alto, tenor, bass
+    // — the book's own four parts, top to bottom. THE TUNE STAYS IN THE
+    // TENOR, which is this row's whole point; what changes is that the bass
+    // is sung by a bass and the treble by a treble.
     sacredharp: {
       label: "Philadelphia 1844",
       voices: 4,
@@ -21708,6 +21844,7 @@
       entry: () => 0,
       reg: v => [0, 1, -1, -2][v],
       realize: () => "line",
+      throat: v => (v === 0 ? "alto" : v === 1 ? "soprano" : v === 2 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       roots: [0, 0, 4, 0, 3, 0, 4, 0],
@@ -22544,6 +22681,19 @@
     //
     // WHO SINGS: the hymnal row — a congregation, not a choir,
     // which is the whole social fact Osiander was arranging for
+    //
+    // FOUR VOICES, FOUR THROATS (2026-09-04, the per-chair singer round).
+    // Osiander's whole invention is the one this row is named for: the tune
+    // in the TOP voice, harmonised note against note underneath. The row
+    // wrote that as `reg: v => 1 - v` — four chairs spread over three
+    // octaves — and then every one of the four sang with the row's single
+    // `MOUTHS.hymnal` alto, because a throat was a fact about the ROW and a
+    // row can only say one. An SATB texture was being written for one
+    // singer, and the alto's F3-F5 compass is where all four of them landed.
+    // The four chairs are named here in the order the row already ranks
+    // them: soprano on the tune, then alto, tenor, bass. THE SOUND MOVES ON
+    // THIS ROW AND THAT IS THE CORRECTION — the bass part is sung by a bass
+    // instead of by an alto reaching an octave and a half under herself.
     chorale: {
       label: "Nuremberg 1586",
       voices: 4,
@@ -22565,6 +22715,7 @@
       entry: () => 0,
       reg: v => 1 - v,
       realize: () => "line",
+      throat: v => (v === 0 ? "soprano" : v === 1 ? "alto" : v === 2 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       harmony: "cycle",
@@ -24449,6 +24600,16 @@
     // its senior instead of ten. This row still declares no parent for the two
     // remaining wants (the been, and the qawwal bachche), because neither has a
     // row and neither is a thing the table can point at.
+    //
+    // WHOSE THROAT, AND WHY IT IS NOT DHRUPAD'S (2026-09-04, the per-chair
+    // singer round). The row takes `MOUTHS.zemachant` for the pressed,
+    // straight, drone-anchored tone, and inherited its BASS with it —
+    // measured over seeds 1-3 the lead's median came out C3, C4 and C#3. The
+    // mouth is right and the throat is not: Sadarang's khyal is the form
+    // that lightened dhrupad, and a khyal singer works in the octave ABOVE
+    // the tanpura where dhrupad's gambhir voice works below it. That
+    // difference is the reason `dhrupad` KEEPS its bass in the same round
+    // and this row does not.
     badakhyal: {
       label: "Delhi 1740",
       voices: 2,
@@ -24480,6 +24641,7 @@
       entry: v => (v === 1 ? 0 : 2),
       reg: v => (v === 1 ? -2 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
+      throat: () => "tenor",
       part: ["lead", "pad"],
       nobass: true,
       harmony: "modal",
@@ -25711,6 +25873,19 @@
     //
     // WHO SINGS: the motet mouth — polychoral's own, a papal choir
     // being the case it was written for.
+    //
+    // FOUR PARTS, AND THE TWO TENORS ARE THE LOWER TWO (2026-09-04, the per-
+    // chair singer round). Nuper rosarum flores is triplum and motetus over
+    // the two tenors whose proportions the comment above describes, and this
+    // row wrote them `reg: v => 1 - v` — three octaves — with one
+    // `MOUTHS.motet` countertenor singing all four. The two upper voices
+    // keep that countertenor (the papal choir's own throat, and the row's
+    // own mouth); the tenor sings tenor; and the fourth chair, written a
+    // fourth under it, is given the bass, which is the throat that can
+    // actually reach where this row puts it. A 1436 motet has no bassus part
+    // in the later sense — said out loud rather than smuggled — but it does
+    // have a lowest voice, and this table's job is to name a throat for the
+    // line it WRITES.
     isorhythm: {
       label: "Florence 1436",
       voices: 4,
@@ -25730,6 +25905,7 @@
       entry: v => (v < 2 ? v * 2 : 1 + v),
       reg: v => 1 - v,
       realize: () => "line",
+      throat: v => (v === 0 || v === 1 ? "countertenor" : v === 2 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       harmony: "emergent",
@@ -26235,6 +26411,13 @@
     // WHO SINGS: the hymnal mouth — the Fisk sound was a
     // trained concert blend, and that polish (not the praise
     // house's heterophony) is what the 1871 photograph shows.
+    //
+    // AND THE JUBILEE SINGERS WERE A MIXED CHOIR (2026-09-04, the per-chair
+    // singer round). Eleven students, women and men, singing four-part
+    // arrangements on a concert stage — that is what the 1871 tour was — and
+    // this row seated all four of its chairs on one `MOUTHS.hymnal` alto
+    // while spreading them three octaves apart with `reg: v => 1 - v`. SATB
+    // by chair, in the order the row already ranks them.
     spirituals: {
       label: "Nashville 1871",
       voices: 4,
@@ -26257,6 +26440,7 @@
       entry: v => (v === 0 ? 0 : 2),
       reg: v => 1 - v,
       realize: () => "line",
+      throat: v => (v === 0 ? "soprano" : v === 1 ? "alto" : v === 2 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       harmony: "cycle",
@@ -28442,6 +28626,18 @@
     //
     // POINTS OF IMITATION: every voice sings the same cell, staggered
     // — which is exactly what entry×2 plus these transpositions say.
+    //
+    // SUPERIUS, ALTUS, TENOR, BASSUS (2026-09-04, the per-chair singer
+    // round). Four voices in the Missa L'homme armé, and this row spread
+    // them over three octaves while seating every one of them on the same
+    // `MOUTHS.motet` countertenor. AND THERE IS NO SOPRANO HERE, which is
+    // the one decision in this line worth arguing: Petrucci's Venice sang
+    // this repertory with men and boys, the top two parts on the falsettist
+    // the row's own mouth already names, and putting a soprano on the
+    // superius would be printing a nineteenth-century choir on a 1502 mass.
+    // So the two upper parts KEEP the countertenor they had and the two
+    // lower ones stop borrowing it — tenor on the tenor, bass on the bassus,
+    // which is where this row's `reg` was already writing them.
     francoflemish: {
       label: "Venice 1502",
       voices: 4,
@@ -28459,6 +28655,7 @@
       entry: v => v * 2,
       reg: v => (v < 2 ? 1 - v : 1 - v),
       realize: () => "line",
+      throat: v => (v === 0 || v === 1 ? "countertenor" : v === 2 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       harmony: "emergent",
@@ -33705,6 +33902,18 @@
     // is a scene rather than the same writer carrying on. This is the one act
     // that is literally the parent continued, which is why the weight on that
     // edge is the heaviest here.
+    //
+    // WHOSE THROAT, AND THE CAST WAS READING THE STUDIO (2026-09-04, the
+    // per-chair singer round). This row is McCartney — Band on the Run,
+    // written above — and its label is "Lagos 1973" because that is where
+    // the record was cut. It states no mouth of its own, so `instruments.js
+    // throatOf` cast one from the label, the label's place is Lagos, and the
+    // region rule handed a Wings record `MOUTHS.mbubestack`: a Zulu male-
+    // chorus bass from 1939. Measured over seeds 1-3 the lead sang a median
+    // of A#2, B2 and A3. A tenor is the whole of the correction, and it is
+    // said on the CHAIR rather than by adding a rule to the cast, because
+    // the cast is not wrong in general — a Lagos record usually is a Lagos
+    // record, and this one is a London band on tour.
     softrock: {
       label: "Lagos 1973",
       voices: 3,
@@ -33719,6 +33928,7 @@
       entry: v => v,
       reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
       realize: v => (v === 2 ? "pad" : "line"),
+      throat: () => "tenor",
       part: ["lead", "riff", "pad"],
       roots: [0, 4, 5, 3],
       mode: MODES.ionian,
@@ -36920,6 +37130,16 @@
     //
     // WHO SINGS: the motet blend — straight-toned, chested,
     // three men at one table rather than a choir in a loft.
+    //
+    // THREE MEN, THREE THROATS (2026-09-04, the per-chair singer round). The
+    // line above already says it — "two upper voices twining over a bass
+    // that moves like ground shifting… three men at one table rather than a
+    // choir in a loft" — and the row then gave all three the same
+    // `MOUTHS.motet` countertenor while writing them at `reg` 1, 0 and -2.
+    // The Kakhetian table song's parts are mtkmeli, modzakhili and bani: the
+    // high lead keeps the countertenor, the second voice is a tenor, and the
+    // bani — the ground — is a bass, which is the part the octave spread was
+    // already describing and no throat was singing.
     georgian: {
       label: "Tbilisi 1966",
       voices: 3,
@@ -36939,6 +37159,7 @@
       entry: v => (v === 0 ? 0 : 1),
       reg: v => [1, 0, -2][v],
       realize: () => "line",
+      throat: v => (v === 0 ? "countertenor" : v === 1 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       harmony: "emergent",
@@ -38024,6 +38245,16 @@
     // (Paramount's lot; the show premiered September 1982, the full
     // single is 1983) — the writers cut the demo in New York, said
     // plainly, the Kinks rule's honest footnote.
+    //
+    // WHOSE THROAT (2026-09-04, the per-chair singer round). The row takes
+    // `MOUTHS.crooning` for the piano-bar warmth — the late vibrato, the
+    // round vowels, one syllable a beat — and inherited its BASS with it,
+    // which put "Where Everybody Knows Your Name" a fifth under where it was
+    // sung: measured over seeds 1-3 the lead's median came out D3, C#3 and
+    // D3. Portnoy sings it in the octave above that. The mouth is right and
+    // the throat was wrong, so the throat is named on the chair and
+    // `crooning` is left exactly as it is for the seven other rows that
+    // reach it.
     sitcom: {
       label: "Los Angeles 1983",
       voices: 3,
@@ -38042,6 +38273,7 @@
       entry: v => (v === 0 ? 1 : 0),
       reg: v => [0, 0, 0][v],
       realize: v => (v === 2 ? "pad" : "line"),
+      throat: () => "tenor",
       part: ["lead", "counter", "pad"],
       drumkit: "brush",
       kit: {

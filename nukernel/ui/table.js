@@ -233,6 +233,28 @@ export function bandTable(host, A) {
        the row's label is the block's own word for what it is editing. */
     const kn = A.voiceKnobs(v.name);
     if (kn) f.push({ kind: "node", label: kn.label, node: kn.node });
+    /* ...AND WHOSE THROAT IT IS (2026-09-04, the per-chair singer round).
+       A COLUMN FIELD, `document.js TIERS.voice`, and the case that asked for
+       it is a choir: `chorale` spreads four voices over three octaves and all
+       four of them resolved to the one alto the ROW names, because a throat
+       used to be a fact about the row and a row can say ONE. SATB needs four.
+       The five words are the ones the engine models (`fields.js THROATS`, the
+       extraction of state-engine's VOICE_TYPE) and they arrive from the door
+       rather than being listed here, which is this file's own law: the table
+       is not a second vocabulary.
+       DERIVED WHEN THE CHAIR HAS NOT SPOKEN, and the word it prints is then
+       the ROW's — the same reading `.is-derived` has everywhere on this
+       surface, and the reason the clear-back says "the record's" rather than
+       "—": clearing does not silence the singer, it hands the question back
+       to the genre. ABSENT on a chair nobody sings; `A.throat` decides, for
+       the same reason `hasCrate` decides whether the crate is drawn. */
+    const th = A.throat(vi);
+    if (th) f.push({ key: "throat|" + v.name, label: "sings as",
+      word: th.word, value: th.own, derived: !th.own,
+      options: [{ v: "", w: "the record's" },
+                ...th.words.map((w) => ({ v: w, w }))],
+      set: (x) => A.putCast(vi, "voice", x || null),
+      clear: th.own ? () => A.putCast(vi, "voice", null) : null });
     /* THE COLUMN DEFAULTS A CELL MAY OVERRIDE (§1: "the column DEFAULT; a cell
        may override"). Written here, they move every cell that says nothing. */
     f.push(numField(A, "reg|" + v.name, "register",

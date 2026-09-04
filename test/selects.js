@@ -192,8 +192,8 @@ const MENUS = {
    * ("Wherever we allow multiple selections use a standard multiselect form
    * element please."), and multiple is NOT allowed here — document.js:192
    * writes `drumkit` as a STRING, to-engine.js:1141 does
-   * `Object.assign(D, MACHINE_KIT[kit])`, and `drumVoice(kit, lane)` resolves
-   * every lane through that one kit. So it is a voice's INSTRUMENT (avail.js
+   * `Object.assign(D, MACHINE_KIT[plan.kit])`, and every lane's hit is sent
+   * with that one kit's models on it. So it is a voice's INSTRUMENT (avail.js
    * :551 gets and sets `V(doc, s).instrument`, exactly as `sound.instrument`
    * does) and it is on the evening list by name: "in voices -- plays,
    * material, instrument -- dropdowns/selects". */

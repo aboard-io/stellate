@@ -446,14 +446,29 @@
                            0.00 dB. The knob now multiplies into the declared
                            level, clamped at 1, absent-is-today by the same
                            null guard the sound block below already uses. */
-                        chairs: lines.map((c) => {
+                        /* ...AND WHOSE THROAT SINGS IT (2026-09-04, the
+                           per-chair singer round). `throat` is one of the five
+                           words `fields.js THROATS` publishes, resolved through
+                           §2's one owner like every other chair fact, and
+                           `audio/plan.js` writes it onto the seat's mouth via
+                           `instruments.js throatTone` — the one place that
+                           knows a chair outranks its row. It is on THIS seam
+                           and not beside the tone for the reason the seam
+                           exists: a cantor and a schola are two throats on one
+                           record, and `G.tone` is one block for the whole row.
+                           A chair that says nothing adds no key, so every
+                           record written before this line compiles byte for
+                           byte as it did. */
+                        chairs: lines.map((c, li) => {
                           const nat = nativeOf(c, NATIVE);
                           if (nat && doc.sound && doc.sound.level != null)
                             nat.level = +Math.min(1, nat.level * doc.sound.level).toFixed(3);
+                          const thr = resolve(doc, si, LIX[li], "voice", GENRES);
                           return { ...(nat ? { synth: nat }
                                      : c.instrument === "synth" ? {} : { instr: c.instrument }),
                                    ...(c.sound && Object.keys(c.sound).length
-                                     ? { vox: c.sound } : {}) };
+                                     ? { vox: c.sound } : {}),
+                                   ...(thr ? { throat: thr } : {}) };
                         }),
                         ...(on ? { drumkit: drums.instrument } : {}),
       /* SOUND, THE RECORD'S BALANCE — and, since 2026-08-31, ITS SURFACE.
@@ -989,6 +1004,44 @@
 
     /* VOICE (a column) — `doc.voices[vi]`. */
     part:       { tier: "column", at: "voices[vi].cast.part" },
+    /* ...AND WHOSE THROAT SINGS IT (2026-09-04, the per-chair singer round).
+       A COLUMN FIELD AND NOT A ROW ONE, and the case that decides it is a
+       choir: `chorale` seats four voices across three octaves and every one of
+       them resolved to the same `MOUTHS.hymnal` alto, because a throat was a
+       fact about the ROW and a row can say ONE. SATB needs four throats. So a
+       chair may name its own, out of the five the engine models
+       (`fields.js THROATS`, the extraction of state-engine's VOICE_TYPE), and
+       `instruments.js throatTone` is the one owner of the precedence: the
+       chair's word, then the row's `tone.mouth`, then the cast throat, then
+       the patch's default singer.
+
+       NO CELL TIER, said as a rule rather than an omission: a singer does not
+       change throat in the bridge. What moves per section is the REGISTER, and
+       `reg` two rows down is the field for it.
+       NO GENRE TIER EITHER, and this one is a fact about GUESTS. A row states
+       its chairs' throats as a `throat` closure by chair index (GENRES.md §3),
+       and precompose asks it AT SEAT TIME, where it knows which row owns each
+       chair — a guest sings with its own genre's throat, and the resolver's
+       genre tier can only ever see `doc.basis`. So the closure is spent onto
+       `cast.voice` once, by the one caller that knows the owner, and every
+       reader downstream asks the chair.
+
+       AND A HAND'S THROAT DOES NOT RE-SEAT THE WRITTEN LINE, said plainly
+       because it is a real edge and not an oversight: `precompose` §7d writes a
+       sung chair's octave into `cast.reg` as it COMPOSES the record, and a hand
+       changing this word later is not a recompose. So a chair moved from an
+       alto to a bass by hand keeps the register it was seated at, and the
+       octave fold in `kernel.js homeFor` — the net that has always been under
+       the seat — carries it to a reachable octave at the sound. The written
+       line is then an octave out again, which is exactly the state every
+       record was in before §7d and is why that fold still exists. Re-seating
+       on a hand edit would mean re-rendering the record from the table, which
+       is a recompile with a different name; the honest fix, when somebody
+       wants it, is to re-deal the chair. */
+    voice:      { tier: "column", at: "voices[vi].cast.voice",
+                  note: "the row's `throat` closure is spent onto the chair by " +
+                        "precompose (a guest sings with its own row); absent " +
+                        "means the row's mouth, which is every record before 2026-09-04" },
     instrument: { tier: "column", at: "voices[vi].instrument" },
     drumkit:    { tier: "column", at: "voices[drums].instrument" },
     seat:       { tier: "column", at: "voices[vi].desk" },
@@ -1224,6 +1277,20 @@
          lean — so the four tiers cannot disagree about what a 0 means. */
       genre:  (G, vi, part) => (G && typeof G.reg === "function")
         ? G.reg(vi) + K.partLean(part) : undefined,
+    },
+    /* THE CHAIR'S OWN THROAT (2026-09-04). One reader, at the column, and
+       four nulls: a cell may not say it (a singer does not change throat in
+       the bridge), a row and a record are not people, and the GENRE tier
+       cannot answer because the row that owns a chair may not be `doc.basis`
+       — a guest sings with its own row's throat, which only precompose knows
+       at seat time. Absent is the row's mouth, resolved where the seat is
+       built (`instruments.js throatTone`), which is every record written
+       before this field existed. */
+    voice: {
+      cell:   null,
+      column: (v) => v && v.cast && v.cast.voice,
+      row:    null, record: null,
+      genre:  () => undefined,
     },
     focus: {
       cell:   (c) => c && c.focus,
@@ -1648,6 +1715,19 @@
       delete doc.sound.fx;
     }
     for (const v of doc.voices) {
+      /* ---- AND THE CHAIR'S OWN THROAT, AT THE DOOR (2026-09-04) ----------
+         The same paranoid half every enum in this tree gets: "an unknown level
+         means the file is from a build this one cannot honestly play". A
+         `cast.voice` this build has no formant table for would be a singer
+         nobody can be — `voiceForInstr` would fall back to the patch's tenor
+         and the score would have been written for a throat that never sang —
+         so it is DROPPED and the chair falls back to its row's mouth, which is
+         a record that still plays. `fields.js THROATS` is the one owner of the
+         five words and it is the EXTRACTION of the engine's own table, so this
+         door and the bridge can never disagree about what a throat is.
+         Absent stays absent: a chair with no word writes no key. */
+      if (v.cast && v.cast.voice != null && !NF.isThroat(v.cast.voice))
+        delete v.cast.voice;
       const dflt = v.kind === "line" ? "as written" : "";
       v.development = v.development || {};
       for (const id of ids) if (v.development[id] == null) v.development[id] = dflt;

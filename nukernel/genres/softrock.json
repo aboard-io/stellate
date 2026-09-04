@@ -1,5 +1,5 @@
 {
-  "note": "WINGS — London 1973, Band on the Run. The row exists because `beatgroup`\n(Liverpool 1962) has no CHILD in this table: everything downstream of it\nis a scene rather than the same writer carrying on. This is the one act\nthat is literally the parent continued, which is why the weight on that\nedge is the heaviest here.",
+  "note": "WINGS — London 1973, Band on the Run. The row exists because `beatgroup`\n(Liverpool 1962) has no CHILD in this table: everything downstream of it\nis a scene rather than the same writer carrying on. This is the one act\nthat is literally the parent continued, which is why the weight on that\nedge is the heaviest here.\n\nWHOSE THROAT, AND THE CAST WAS READING THE STUDIO (2026-09-04, the\nper-chair singer round). This row is McCartney — Band on the Run,\nwritten above — and its label is \"Lagos 1973\" because that is where\nthe record was cut. It states no mouth of its own, so `instruments.js\nthroatOf` cast one from the label, the label's place is Lagos, and the\nregion rule handed a Wings record `MOUTHS.mbubestack`: a Zulu male-\nchorus bass from 1939. Measured over seeds 1-3 the lead sang a median\nof A#2, B2 and A3. A tenor is the whole of the correction, and it is\nsaid on the CHAIR rather than by adding a rule to the cast, because\nthe cast is not wrong in general — a Lagos record usually is a Lagos\nrecord, and this one is a London band on tour.",
   "label": "Lagos 1973",
   "voices": 3,
   "bars": 8,
@@ -44,6 +44,10 @@
       }
     ],
     "else": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "tenor"
   },
   "part": [
     "lead",

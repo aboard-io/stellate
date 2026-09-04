@@ -34,7 +34,7 @@
 // level, pan, sends and tone, and none of those are in the signature, so the
 // desk rides in on a glide (stream-renderer feedBar applies changed params to
 // the persistent procs and the DSP smooths them).
-import { GENRES, BASSSYNTH, BASS_INSTR, instrOf, throatOf, voicedAs,
+import { GENRES, BASSSYNTH, BASS_INSTR, instrOf, throatTone, voicedAs,
          VOICINGS, homeFor } from "../ui/deps.js";
 import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
 import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
@@ -291,8 +291,6 @@ function castOf(bars) {
         // replaced by different things — instruments.js `voicedAs` owns which.
         const vcd = voicedAs(VOICING, owner, over || instrOf(owner, vi), e.pad);
         const seatTone = (ch && ch.tone) || G.tone || null;
-        const throat = (seatTone && !seatTone.mouth)
-          ? throatOf(owner, over || instrOf(owner, vi)) : null;
         // `e.vox` is what ui/derive.js sectionEvents tagged this note's LAYER
         // with (voxAll — the layer's own chip, else the box's, knob by knob).
         // It is read here and nowhere downstream: by the time the words are on
@@ -333,7 +331,20 @@ function castOf(bars) {
         // outranks the record's signature for THIS chair. The four older
         // positions carry no `vcd.tone`, so this line is byte-identical for
         // vox / instr / analog / fm alike.
-        const baseTone = throat ? { ...seatTone, mouth: throat } : seatTone;
+        /* ...AND THE CHAIR MAY SAY WHOSE THROAT IT IS (2026-09-04, the
+           per-chair round). `ch.throat` is one of the five words
+           `document.js toGenre` puts on the chairs seam — `voices[vi].
+           cast.voice`, the table's column field — and `instruments.js
+           throatTone` is the ONE owner of what beats what: the chair's word,
+           then the row's own `tone.mouth`, then the cast throat above, then
+           the patch's default singer. That order is why the cast is no longer
+           computed here: a second expression of it in this file is a second
+           singer, and the case that asked for the field is a four-part choir
+           whose four chairs all resolved to one alto.
+           A chair that names nothing is byte-identical — `throatTone` with a
+           null word IS the two lines this replaced. */
+        const baseTone = throatTone(seatTone, owner, over || instrOf(owner, vi),
+                                    (ch && ch.throat) || null);
         e._seat = seatFor(chair, vcd ? vcd.instr : (over || instrOf(owner, vi)),
                           vcd ? (vcd.synth || null) : (useSyn ? gsyn : null),
                           (vcd && vcd.tone) ? { ...baseTone, ...vcd.tone } : baseTone,

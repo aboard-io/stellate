@@ -2059,16 +2059,33 @@
   const LIMBORDER = ["x", "k", "s", "t", "m", "l", "c", "p", "r", "o", "f", "h"];
 
   // A DRUM PHRASE is a phrase of a second KIND (kind:"drum"), not a variation
-  // of the melodic one: a hand-tapped lane grid rather than deg/oct/gate. It
-  // plays the seven voices a step sequencer actually offers — the LANES
+  // of the melodic one: a hand-tapped lane grid rather than deg/oct/gate.
+  // DROPPED INTO A SECTION'S SLOT, it OVERRIDES that section's genre kit for
+  // exactly its own bars — see drums() below, the one place that reads it —
+  // and taking it back out reverts the section to the genre's own kit, because
+  // nothing else in the render path ever learns the phrase was there.
+  //
+  // IT IS THE WHOLE KIT NOW (2026-09-04, the six-findings round). This list
+  // was SEVEN letters and its own comment argued for the number: "the LANES
   // subset a person reaches for, not the full twelve-lane alphabet a genre
   // author writes kits in code with (no ride, no crash, no pedal hat: those
-  // stay genre-authored colour). DROPPED INTO A SECTION'S SLOT, it OVERRIDES
-  // that section's genre kit for exactly its own bars — see drums() below,
-  // the one place that reads it — and taking it back out reverts the section
-  // to the genre's own kit, because nothing else in the render path ever
-  // learns the phrase was there.
-  const DRUM_LANES = ["k", "s", "h", "o", "c", "p", "t"];
+  // stay genre-authored colour)". That argument stopped being true the day the
+  // drum editor started OFFERING all twelve (ui/eight.js `laneAdd` over
+  // audio/to-engine.js LANE_ORDER, 2026-09-03, Paul: "give me some more
+  // appropriate options"): a hand could add a ride, see it on the grid, tap it
+  // — and this loop dropped `m l f r x` on the floor, silently, because
+  // `drumPattern` iterates THIS array and nothing else. Declared, drawn,
+  // costed, reaching no sound: the box's characteristic bug, in the one place
+  // a person can hear it fastest.
+  //
+  // THE ORDER IS THE OLD SEVEN, THEN THE FIVE. Not LANE_ORDER's kit order, on
+  // purpose: `drumPattern` pushes events lane by lane, so re-sorting the seven
+  // that were already here would re-order the event stream of every drum
+  // phrase ever tapped. Appending cannot. Widening the list makes
+  // `song.js okDrumPhrase` demand twelve vectors, which no save on disk has —
+  // hence song.js VERSION 3 -> 4 and the pad in `migrate()`.
+  const DRUM_LANES = ["k", "s", "h", "o", "c", "p", "t",
+                      "m", "l", "f", "r", "x"];
   // ONE VECTOR PER LANE (no chance/nudge/grace sidecars — a drum phrase is
   // played back exactly as it was tapped in, not diced per bar the way a
   // genre's own kit is), each step an integer 0..7: a small enum naming HOW

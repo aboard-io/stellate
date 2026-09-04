@@ -95,7 +95,15 @@
   // `document.js MOVEDKEYS` at the door below; a v:3 save does not, which is
   // what keeps the live key alive. Everything else about the shape is
   // untouched: every writer writes `NuSong.VERSION`, so nothing else moved.
-  const VERSION = 3;
+  // VERSION 3 -> 4 (2026-09-04, the six-findings round): kernel.js DRUM_LANES
+  // went from seven letters to twelve, so `okDrumPhrase` below now demands a
+  // vector for `m l f r x` that no save on disk carries. The migration is a
+  // PAD — the five absent lanes arrive as sixteen zeros, which is silence, so
+  // a migrated drum phrase renders event for event as it did — and it runs for
+  // every save older than 4. THE LAW THIS BUMP OBEYS, learnt the hard way at
+  // the 2 -> 3 bump: a VERSION bump must stamp EVERY prior version, and
+  // test/document.test.js G13's fixtures must carry a `v`.
+  const VERSION = 4;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
   // load, everything else is REJECTED. The operator and effect tables change
@@ -407,10 +415,32 @@
        VERSION at 3 a v:2 save came back from migrate still saying 2, and
        validate's `v` check refused every preset and every saved session on the
        box ("v: got 2, want 3 (run migrate first)"). The v:2 -> v:3 migration is
-       exactly the MOVEDKEYS fold that already ran above, so a v:2 save is
-       stamped here and returned; v:1 takes the shape rewrite below and the
-       same stamp; anything else still passes through for validate to refuse. */
-    if (r.v === 2) { r.v = VERSION; return r; }
+       exactly the MOVEDKEYS fold that already ran above.
+       (VERSION went 3 -> 4 on 2026-09-04 and the branch below carries both.) */
+    /* THE DRUM-LANE PAD, v:1..v:3 -> v:4 (2026-09-04). kernel.js DRUM_LANES
+       was seven letters until this version and is twelve now, and
+       `okDrumPhrase` reads that list — so every drum phrase ever saved is
+       five vectors short of what validate demands, and without this line the
+       widening would refuse every existing session, keep and share link on
+       the box. The pad is SILENCE (sixteen zeros per absent lane), so a
+       padded phrase renders exactly the events it rendered before: nothing
+       reads a lane of zeros. Applied off `raw.v` for the MOVEDKEYS reason
+       above — `r.v` is stamped at the foot of this function — and to the
+       phrase's own lane length rather than the constant, so a phrase that was
+       written at some other length keeps it. */
+    if (!(Number(raw.v) >= 4))
+      for (const p of Array.isArray(r.slots) ? r.slots : []) {
+        if (!p || p.kind !== "drum") continue;
+        const have = K.DRUM_LANES.map(d => p[d]).find(Array.isArray);
+        const n = have ? have.length : 16;
+        for (const d of K.DRUM_LANES) if (!Array.isArray(p[d])) p[d] = z(n);
+      }
+    /* AND EVERY PRIOR VERSION IS STAMPED. v:2 and v:3 differ from v:4 by
+       exactly the pad above (v:2 also by the MOVEDKEYS fold, which has already
+       run), so both are complete here; v:1 takes the shape rewrite below and
+       the same stamp. Anything else still passes through for validate to
+       refuse. */
+    if (r.v === 2 || r.v === 3) { r.v = VERSION; return r; }
     if (r.v !== 1) return r;             // junk fails validate
     // genre -> genres -> stack: they shared one slot list before layers
     // carried their own phrases

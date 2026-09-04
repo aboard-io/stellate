@@ -148,7 +148,13 @@ import { GENRES, MODES, KEYS, ROLES, DRUMNAME,
             the genre list already draws, read off the one table that owns it
             rather than typed here. */
          NuPrecompose, NuWiki,
-         NuSong } from "./deps.js";
+         NuSong,
+         /* WHOSE THROAT A CHAIR IS (2026-09-04, the per-chair round). The
+            column sheet asks it so a person can see whose voice sings a chair
+            before deciding to change it; `instruments.js throatVoiceOf` is the
+            same function audio/plan.js builds the seat with, so the sheet and
+            the sound cannot drift. */
+         throatVoiceOf } from "./deps.js";
 import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
          setMeter, setGroove, setMaster, setBuses, vol, setVol,
          // WHICH SECTION YOU ARE WRITING, adopted rather than reinvented.
@@ -7578,8 +7584,9 @@ function drumGrid(parent, cellName) {
    New York 1977 is four (`k c o h`), and a hand-made cell is `DRUMGRID`'s
    three. Meanwhile every kit in the box, sampled or synthesised, can play
    TWELVE — found/samples/drums/<kit>/ has shipped twelve one-shots per kit
-   since the day it was extracted and audio/to-engine.js `drumVoice` answers
-   all twelve for all ten kits. So the editor was not showing a small kit; it
+   since the day it was extracted and audio/to-engine.js `LANE` carries a
+   parent unit for all twelve, on all ten kits (`laneRefusal` names the one
+   exception, a machine's pedal hat). So the editor was not showing a small kit; it
    was showing a small SUBSET of a full one, with no way to say so.
 
    THE OFFER IS THE BAND PANE'S, DELIBERATELY (`.nu-memadd`, "+ line / + bass /
@@ -9894,6 +9901,34 @@ function tableAPI() {
     voiceCrate: (name) => { const box = el("div", null, "nu-seatcrate");
       try { crateBlock(box, name); } catch (e) {}
       return box; },
+    /* ...AND WHOSE THROAT IS SINGING IT (2026-09-04, the per-chair round).
+       A throat used to be a fact about the ROW — one `MOUTHS` row for every
+       sung chair on the record — and a four-part choir is the case that broke
+       it: `chorale` writes four voices over three octaves and all four
+       resolved to one alto. `document.js TIERS.voice` is the column field, and
+       this is the door the column sheet reads it through.
+       ONE OWNER FOR THE WORD: `instruments.js throatVoiceOf`, the same
+       function `audio/plan.js` builds the seat with and `precompose` §7d
+       decides the written register with, so what the sheet PRINTS and what
+       the box SINGS cannot drift.
+       WHICH ROW OWNS THE CHAIR is the same rule precompose seats by: the
+       record's basis for its own chairs, and a GUEST's own genre for the ones
+       after them (a guest sings with its own row's throat). The document does
+       not carry the owner — the guest's NAME is its genre key, which is what
+       `nameFor(lk)` writes and what the seat gate reads back.
+       NULL ON A CHAIR NOBODY SINGS, which is what keeps the row off a piano's
+       sheet without a refusal sentence: the question has no meaning there. */
+    throat: (vi) => {
+      const v = V()[vi];
+      if (!v || v.kind !== "line") return null;
+      const li = V().filter((x) => x.kind === "line").indexOf(v);
+      const nBase = (GENRES[DOC.basis] || {}).voices || 0;
+      const owner = (li >= nBase && GENRES[v.name]) ? v.name : DOC.basis;
+      const own = (v.cast && v.cast.voice) || "";
+      const word = throatVoiceOf((GENRES[owner] || {}).tone || null, owner,
+                                 v.instrument, own || null);
+      return word ? { word, own, words: NuFields.THROATS() } : null;
+    },
     devSheetFor: (kind) => NuAvail.devSheetFor(kind),
     secName: (i) => secName(i),
     roleWord: (r) => ROLES[r] || r,

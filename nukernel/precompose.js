@@ -2921,18 +2921,35 @@
     }
     return COMPASS[voice] || null;
   };
-  /** WHOSE THROAT THIS CHAIR IS, resolved exactly the way the seat resolves it
-   *  — `audio/plan.js castOf` then `audio/to-engine.js voiceForInstr`: the row's
-   *  own `tone`, a `mouth` on it winning; the CAST throat (instruments.js
-   *  `throatOf`) only where the row states a tone at all, which is plan.js's own
-   *  `seatTone && !seatTone.mouth`; and last the patch's default singer. Null
-   *  for a chair that is not a person. */
-  const throatVoiceOf = (row, gk, id) => {
-    const P = NI.PATCHES && NI.PATCHES.voice && NI.PATCHES.voice[id];
-    if (!P) return null;
-    const t = (row && row.tone) || null;
-    const M = (t && t.mouth) || (t ? NI.throatOf(gk, id) : null);
-    return (M && M.voice) || (t && t.voice) || P.voice || null;
+  /** WHOSE THROAT THIS CHAIR IS. The walk itself is `instruments.js
+   *  throatVoiceOf` — ONE owner for the precedence (the chair's own word, the
+   *  row's `tone.mouth`, the cast throat, the patch's default singer), shared
+   *  with the seat `audio/plan.js` builds and the bridge `voiceForInstr`
+   *  reads, because this pass exists to anticipate exactly that seat and a
+   *  second copy of the order is a second singer. Null for a chair that is not
+   *  a person. */
+  const throatVoiceOf = (row, gk, chair) =>
+    NI.throatVoiceOf((row && row.tone) || null, gk, chair.instrument,
+                     (chair.cast && chair.cast.voice) || null);
+
+  /* WHAT A ROW SAYS ABOUT ITS OWN CHAIRS' THROATS (2026-09-04, GENRES.md §3).
+     `throat` is the fifth per-voice closure — `v => "soprano"`, or the four
+     words of an SATB choir by chair index — and this is the ONE place it is
+     read. It is spent onto `cast.voice` at seat time rather than resolved
+     under the document (`document.js CELLFIELD.voice` has no genre tier and
+     says why) for one reason: a GUEST sings with its own row's throat, and the
+     resolver's genre tier can only ever see the record's basis. The caller
+     here knows which row owns which chair, so the closure is asked once, of
+     the right row, with the right index.
+       A WORD ON A CHAIR THAT IS NOT A PERSON IS DROPPED, and a word this build
+     has no formant table for with it: `hymn` states four throats and its
+     fourth chair is a church organ. Writing either would be a field declared,
+     costed and reaching no sound, which is the one bug this tree keeps. */
+  const seatThroat = (row, v, id) => {
+    if (!row || typeof row.throat !== "function") return null;
+    if (!(NI.PATCHES && NI.PATCHES.voice && NI.PATCHES.voice[id])) return null;
+    const w = row.throat(v);
+    return NF.isThroat(w) ? w : null;
   };
 
   /* AND IT IS REMEMBERED, because it is the only expensive thing in this file.
@@ -2962,7 +2979,7 @@
       const owner = i < nBase ? gk : layerKeys[i - nBase];
       const row = i < nBase ? G : GENRES[owner];
       if (!row) return null;
-      return compassOf(throatVoiceOf(row, owner, c.instrument));
+      return compassOf(throatVoiceOf(row, owner, c));
     });
     if (!wins.some(Boolean)) return doc;          // nobody sings: nothing to do
     // THE RECORD'S OWN NOTES, walked the way the record is PLAYED — the phrase
@@ -3381,6 +3398,37 @@
     const NATIVE_GUEST = { pad: "warm_pad", stab: "polysynth", lead: "saw_wave",
                            line: "saw_wave", riff: "square_lead", counter: "square_lead" };
     const nativeGuests = G.guests === "native";
+    /* DOOR 4 — AND ITS MIRROR: `guests: "own"` (2026-09-04, the six-findings
+       round). Door 3 is a MACHINE saying "my guests are played by the fleet".
+       This is an ACOUSTIC record saying the same sentence about its own room:
+       a guest whose instrument is the same KIND as one this record already
+       plays arrives on THIS record's instrument, not on its own row's.
+
+       THE CASE, MEASURED. `bossa` (Rio de Janeiro 1958) seats
+       `overdrive_guitar` on its solo chair, at seeds 1 and 3, on a record
+       whose own `instr` is `["nylon_string_guitar", "flute"]` and whose note
+       is about brushes and understatement. It is not an era leak — compose.js
+       `seatOK` lets it through on purpose, by the waiver its own comment
+       argues for ("a record whose cast already holds that KIND of instrument
+       can hire another one, whatever the catalog's floor says", which is what
+       keeps the guitar break on Chuck Berry) — and the waiver is right about
+       Chess 1955 and wrong here, because a nylon top is not evidence of an
+       amplifier. Rather than re-cut a law that holds for the rows it was
+       written for, the ROW answers for its own room, which is this file's
+       standing design ("THE ROW DECLARES IT… a guess is not allowed to change
+       what the box plays").
+
+       IT MOVES NOTHING IT IS NOT TOLD TO. A row that does not say `guests:
+       "own"` takes no branch; a guest of a kind the host does not play is
+       untouched (a flute guest on a guitar record stays a flute); a SINGER is
+       untouched, because no row seats a voice under the same head noun as a
+       guitar. `NC.kindOf` is compose.js's own head-noun rule — the same
+       function `seatOK` asks — read rather than re-spelled, so the door and
+       the law it narrows cannot disagree about what a "guitar" is. */
+    const ownGuests = G.guests === "own";
+    const ownKinds = ownGuests
+      ? Array.from({ length: G.voices || 1 }, (_, v) => ownInstr(v))
+      : [];
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
     const hostYear = NC.genreYear(gk);
     const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];
@@ -3834,6 +3882,9 @@
       });
       const part = basePart[v];
       const instrument = signed(part, ownInstr(v)) ? "synth" : ownInstr(v);
+      // WHOSE THROAT THIS CHAIR IS, where the row says (2026-09-04) — asked
+      // once, beside the instrument it depends on
+      const throat = seatThroat(G, v, instrument);
       voices.push({
         name: nameFor(captionOf(part, instrument)),   // the honest word — see captionOf
         kind: "line",
@@ -3853,7 +3904,13 @@
                 // ENTRY IS BARS INTO EVERY SECTION HERE, not into the record
                 // (ui/derive.js renders each box independently), so an
                 // unclamped entry of 3 SILENCES a voice in a two-bar intro.
-                entry: Math.max(0, Math.min(G.entry(v) | 0, minBars - 1)) },
+                entry: Math.max(0, Math.min(G.entry(v) | 0, minBars - 1)),
+                // ...AND WHO SINGS IT, WHERE THE ROW SAYS (2026-09-04).
+                // Absent on the 464 rows that state no `throat` closure, which
+                // is why every other record composes byte-identically;
+                // present-only, so the key is not there rather than there and
+                // null (the one spelling of "the row's" this tree keeps).
+                ...(throat ? { voice: throat } : {}) },
         material, development,
         instrument,             // computed once above, so the caption and the
       });                       // seat can never disagree about what is held
@@ -3901,6 +3958,12 @@
         const sub = NATIVE_GUEST[part] || "polysynth";
         instrument = signed(part, sub) ? "synth" : sub;
       }
+      // DOOR 4 (2026-09-04) — the acoustic mirror of door 3: a guest of a kind
+      // this record already plays takes the record's OWN instrument for it.
+      if (ownGuests) {
+        const mine = ownKinds.find((id) => NC.kindOf(id) === NC.kindOf(instrument));
+        if (mine && mine !== instrument) instrument = mine;
+      }
       if (isSection(instrument)) {
         // WHICH section it joins, where the record has more than one: the one
         // sitting in the same KIND of chair. `plan.js seatFor` keys a seat on
@@ -3915,11 +3978,18 @@
         const here = rooms.find((x) => !!PAD_PART[x.cast.part] === held) || rooms[0];
         if (here) instrument = here.instrument;
       }
+      const gThroat = seatThroat(L, 0, instrument);
       voices.push({
         name: nameFor(lk), kind: "line",
+        // A GUEST SINGS WITH ITS OWN ROW'S THROAT, which is the whole reason
+        // this closure is spent here and not resolved under the document: the
+        // resolver's genre tier sees `doc.basis` and this chair belongs to
+        // `lk`. Chair 0 of that row, because that is the chair `instrOf(lk, 0)`
+        // three lines up hired.
         cast: { part,
                 reg: seatRegAt(G, gk, part, rawReg[nBase + li], 0),
-                entry: 0 },
+                entry: 0,
+                ...(gThroat ? { voice: gThroat } : {}) },
         material, development,
         instrument,
       });

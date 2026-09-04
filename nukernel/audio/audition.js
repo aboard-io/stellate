@@ -122,8 +122,8 @@ export function auditionVoice(instrument) {
 // synthesises (audio/to-engine.js MACHINE_KIT), and there is nothing on disk
 // to fetch for them. So a machine kit auditions on the `electronic`
 // recordings and the page says so — the substitute is never quiet, which is
-// the same law drumVoice states from the other side ("NEVER a quiet
-// substitute").
+// the same law audio/to-engine.js `laneRefusal` states from the other side
+// ("never a quiet substitute").
 const KITDIRS = ["acoustic", "brush", "electronic", "jazz", "power", "room"];
 const KITFILE = { k: "kick.wav", s: "snare.wav", h: "hatClosed.wav",
                   o: "hatOpen.wav", c: "clap.wav", p: "rim.wav",

@@ -947,9 +947,9 @@ export function selectRow(parent, heading, specs) {
    And the parenthesis about the drum kit was wrong twice over. Paul's question
    there was “can i pick more than one options for the drum kit?” — a QUESTION,
    which this comment read as a request. The measured answer is no: document.js
-   :192 writes `drumkit` as a STRING, to-engine.js:1141 does
-   `Object.assign(D, MACHINE_KIT[kit])`, and `drumVoice(kit, lane)` resolves
-   every lane through that one kit. Multiple was never allowed there, so it is a
+   :192 writes `drumkit` as a STRING, to-engine.js `mapEvents` does
+   `Object.assign(D, MACHINE_KIT[plan.kit])`, and every lane's hit is sent with
+   that one kit's models on it. Multiple was never allowed there, so it is a
    plain single <select> now (ui/eight.js's `sound.drumkit` call site), and a
    multiselect offering one legal answer would have been a worse lie than the
    checkboxes were.

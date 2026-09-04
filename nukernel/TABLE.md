@@ -51,6 +51,7 @@ point at (§3).
 | instrument | `instrument` (+ signature `synth` / the sampler id / `found:` id) | and its parameters through the chair's sheet (knobs.js) |
 | kit | `drumkit` + the kit grid | the drums column; kit params through the same sheet |
 | seat | `desk` (PARTMIX) | where it sits in the mix: level, pan, sends, the three inserts |
+| sings as | `cast.voice` | ADDED 2026-09-04: whose throat sings this chair — one of the five `fields.js THROATS` publishes. A COLUMN field and no cell tier (a singer does not change throat in the bridge; the register is what moves). Absent means the row's `tone.mouth`, which is every record before that date; a genre states its chairs' throats as a `throat` closure by chair index (GENRES.md §3) and precompose spends it onto the chair. Drawn on chairs a person sings and absent everywhere else. |
 | register | `cast.reg` | the column DEFAULT; a cell may override (§2) |
 | enters at bar | `cast.entry` | the column DEFAULT; measured 2026-09-03: entry is applied PER SECTION (precompose ~3048), so the honest home is the cell with the column as its default |
 | reads / does | `material` `development` | the column DEFAULTS for every cell in it |

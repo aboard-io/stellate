@@ -170,10 +170,15 @@ function vocalChair(gk, seed) {
   });
   const sc = ND.scoreOf(doc, {});
   const ev = sc.events.filter((e) => e.kind === "line" && e.lv === lv);
-  const seatTone = G.tone || null;
-  const throat = (seatTone && !seatTone.mouth) ? NI.throatOf(gk, id) : null;
+  /* THE SEAT'S TONE, THROUGH ITS ONE OWNER (2026-09-04). This file used to
+     spell out plan.js's cast in two lines of its own; `instruments.js
+     throatTone` is that walk plus the tier above it — the CHAIR's own throat
+     word, `voices[vi].cast.voice` — and a third copy of the precedence is a
+     third singer. The chair is the one this function just found, so its word
+     is read off the document rather than assumed. */
+  const chairVoice = (lines[lv] && lines[lv].cast && lines[lv].cast.voice) || null;
   return { doc, lv, id, ev, bpm: G.bpm || 120,
-           tone: throat ? { ...seatTone, mouth: throat } : seatTone };
+           tone: NI.throatTone(G.tone || null, gk, id, chairVoice) };
 }
 // four bars of it, from the first bar the singer sings in
 function barsOf(chair, nbars) {
@@ -281,6 +286,54 @@ const MID_FLOOR = 0.07;     // 7% in 1-4 kHz on the singer (before 5.88%, after 
 (async () => {
 console.log("test/voice-smooth.test.js — the click, the overlap and the sibilance\n");
 const TE = await import(R("nukernel/audio/to-engine.js"));
+
+/* ============ V0 · A CHAIR'S OWN THROAT REACHES THE ENGINE ================
+   2026-09-04, the per-chair singer round. `document.js TIERS.voice` lets a
+   CHAIR name which of the five modelled throats sings it — a four-part choir
+   needs four and a row's `tone.mouth` can say one — and this is the
+   declared-but-never-arriving check for it, made at the only seam that
+   settles the question: what `voiceForInstr` HANDS THE ENGINE.
+
+   Three numbers, not one, because a throat is three things downstream: the
+   FORMANT TABLE (`set.voice`, which is what the singer sounds like), the
+   numeric voice the live player writes onto the param (`live.voice`) and the
+   COMPASS the per-note fold reads (`live.lo`/`live.hi`). A word that moved the
+   first and not the other two would be a singer with somebody else's range.
+   No render here on purpose: this is the handoff, and V1 below is what proves
+   the handoff makes a sound. */
+console.log("V0 — the chair's throat, at the bridge");
+{
+  const TT = (gk, id, chair) =>
+    TE.voiceForInstr(id, NI.throatTone(NG.GENRES[gk].tone || null, gk, id, chair));
+  const row = TT("chorale", "ahh_choir", null);
+  ok(!!row && row.set.voice === "alto",
+     "chorale's row seats its choir on one alto (the mouth, as it always did)",
+     row ? row.set.voice : "no singer");
+  const seen = [];
+  for (const w of ["soprano", "alto", "countertenor", "tenor", "bass"]) {
+    const r = TT("chorale", "ahh_choir", w);
+    seen.push(w + " " + r.set.voice + " #" + r.live.voice + " " +
+              Math.round(r.live.lo) + "-" + Math.round(r.live.hi));
+    ok(r.set.voice === w, "…and a chair asking for " + w + " is handed " + w,
+       "the formant table the singer runs on");
+    ok(r.live.voice !== row.live.voice || w === row.set.voice,
+       "…with the live player's own voice number moving with it (" + r.live.voice + ")");
+    ok(!(r.live.lo === row.live.lo && r.live.hi === row.live.hi) || w === row.set.voice,
+       "…and the compass the per-note fold reads moving with it");
+  }
+  console.log("      " + seen.join("   "));
+  // ...AND THE CHAIR OUTRANKS ITS ROW, which is the whole of the precedence:
+  // chorale STATES `MOUTHS.hymnal` (alto), and a chair that says bass sings
+  // bass. A row's mouth still decides everything else about the singer.
+  const b = TT("chorale", "ahh_choir", "bass");
+  ok(b.set.voice === "bass" && b.set.vowels === row.set.vowels &&
+     b.set.vibrato === row.set.vibrato,
+     "…and the chair takes the throat WITHOUT taking the mouth (same vowels, same wobble)",
+     b.set.vowels + " / vib " + b.set.vibrato);
+  // a word this build cannot model is not a singer nobody can be
+  ok(TT("chorale", "ahh_choir", "baritone").set.voice === "alto",
+     "…and a throat this build has no table for is dropped, not carried");
+}
 
 /* ============ V1 · the singer's envelope survives a retrigger ============= */
 console.log("V1 — voice_lead, three notes 8 ms apart at softfolk's seated params");

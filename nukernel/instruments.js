@@ -1404,6 +1404,61 @@
     return (k && NG.MOUTHS && NG.MOUTHS[k]) ? NG.MOUTHS[k] : null;
   };
 
+  /* ---------- AND A CHAIR MAY NAME ITS OWN THROAT (2026-09-04) ------------
+     ONE OWNER FOR THE PRECEDENCE, because three files were spelling it out
+     and a fourth answer would have been a fourth singer. It read, in
+     `audio/plan.js`, `audio/to-engine.js voiceForInstr` and `precompose.js`
+     §7d alike: the row's own `tone.mouth` first, then the CAST throat
+     (`throatOf` above, and only where the row states a tone at all), then the
+     patch's default singer. What this round adds is a tier ABOVE all three —
+     the CHAIR's own word, `document.js TIERS.voice` at `voices[vi].cast.voice`
+     — and the reason it must go on top is the case that asked for it: a
+     four-part choir. `chorale` writes four voices across three octaves and one
+     `MOUTHS.hymnal` alto answered for every one of them; SATB needs four
+     throats and a row can say one. The row still speaks for the chairs that do
+     not (absent is today, byte for byte); a chair that speaks is not overruled
+     by its own row.
+
+     TWO FUNCTIONS AND NOT TWO COPIES. `throatTone` is what a SEAT is built
+     with — the tone the bridge is handed, with the cast mouth merged and the
+     chair's word written onto it — and `throatVoiceOf` is the same walk asked
+     for the WORD, which is what a composer wants when it is deciding where to
+     write the line. The second calls the first, so there is exactly one place
+     that knows the order.
+
+     THE WORD IS WRITTEN ONTO THE MOUTH and not beside it, because
+     `voiceForInstr` reads `M.voice || t.voice || P.voice` — a `voice` set flat
+     on the tone sits UNDER the mouth's, which is the wrong way round for a
+     chair that has just been told who it is. A chair on a row with no mouth at
+     all gets a one-key mouth, which is what `t.voice` already meant. */
+  const throatTone = (tone, gk, id, chair) => {
+    // the cast, exactly as audio/plan.js asked for it: only where the row
+    // states a tone and has not named a mouth on it
+    const cast = (tone && !tone.mouth) ? throatOf(gk, id) : null;
+    const base = cast ? { ...tone, mouth: cast } : tone;
+    // ...and the chair's own word over the top of it, for a chair that is a
+    // PERSON. A throat on a piano is not a refusal to be drawn, it is a
+    // sentence with no meaning, and it is dropped here rather than carried to
+    // a bridge that would ignore it silently.
+    // (`NF.isThroat` is fields.js's — the ONE owner of what a throat word may
+    // be, read rather than mirrored here, the way this file already reads
+    // fields.js's own FX table rather than keeping a list of effects.)
+    if (!(chair && PATCH_VOICE[id] && NF.isThroat(chair))) return base;
+    return { ...(base || null),
+             mouth: { ...((base && base.mouth) || null), voice: chair } };
+  };
+  /** WHOSE THROAT THIS CHAIR IS, as one of the five words — or null for a
+   *  chair that is not a person. The same walk `voiceForInstr` makes, read
+   *  ahead of the bridge so the COMPOSER can write the line where the singer
+   *  is going to sing it (precompose §7d). */
+  const throatVoiceOf = (tone, gk, id, chair) => {
+    const P = PATCH_VOICE[id];
+    if (!P) return null;
+    const t = throatTone(tone, gk, id, chair);
+    const M = (t && t.mouth) || null;
+    return (M && M.voice) || (t && t.voice) || P.voice || null;
+  };
+
   // ---- AND THE MOUTH THAT TALKS (the table half; the chair law that decides
   // WHO gets one lives with the dispatch, audio/to-engine.js mouthForInstr) ---
   // THERE ARE NO VOICE TYPES ON A TRACT, which is the other half of why this is
@@ -1954,7 +2009,8 @@
   // and both are read the day they ship: sampledId by avail.js sampledVoice
   // (which ui/eight.js draws the loop strip against) and by the seam gate;
   // SAMPLED_VOICES by precompose.js door 1 and instrumentation L6.
-  const api = { instrOf, isSection, throatOf, throatKeyOf, voicedAs, BASS_INSTR, FONTS, BASSSYNTH, PATCHES, STRIPS,
+  const api = { instrOf, isSection, throatOf, throatKeyOf, throatTone, throatVoiceOf,
+                voicedAs, BASS_INSTR, FONTS, BASSSYNTH, PATCHES, STRIPS,
                 stripFor, familyOf, RANGES, SAMPLED_INSERTS, PEDAL, BOARDS, boardOf,
                 DRUMMIX, MACHINEMIX, mixFor, sampledId, SAMPLED_VOICES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

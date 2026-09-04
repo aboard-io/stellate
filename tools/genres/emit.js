@@ -11,7 +11,11 @@
 const { emit: emitTemplate } = require("./grammar.js");
 
 const WIDTH = 96;               // the column the emitter tries to stay inside
-const CLOSURES = ["entry", "reg", "realize", "word"];
+// `throat` joined the four 2026-09-04 (the per-chair singer round): WHOSE
+// THROAT each chair is, by chair index, in one of the five words
+// `fields.js THROATS` publishes. Same grammar, same round trip; see
+// GENRES.md §3.
+const CLOSURES = ["entry", "reg", "realize", "word", "throat"];
 
 const isSrc = (v) => v && typeof v === "object" && !Array.isArray(v) &&
                      typeof v.$src === "string" && Object.keys(v).length === 1;

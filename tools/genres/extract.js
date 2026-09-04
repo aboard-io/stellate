@@ -45,7 +45,11 @@ const SRC = process.env.GENRES_SRC || path.join(ROOT, "nukernel/genres.js");
 const ROWS = path.join(ROOT, "nukernel/genres");
 const TABLES = path.join(ROOT, "nukernel/genres-tables.js");
 
-const CLOSURES = ["entry", "reg", "realize", "word"];
+// `throat` joined the four 2026-09-04 (the per-chair singer round): WHOSE
+// THROAT each chair is, by chair index, in one of the five words
+// `fields.js THROATS` publishes. Same grammar, same round trip; see
+// GENRES.md §3.
+const CLOSURES = ["entry", "reg", "realize", "word", "throat"];
 
 /* ---- 1 · read ----------------------------------------------------------- */
 

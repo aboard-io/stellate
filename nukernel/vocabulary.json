@@ -95,7 +95,7 @@
    }
   },
   "heldOutModels": 20,
-  "seconds": 91.8
+  "seconds": 77.2
  },
  "exceptions": {
   "casts-a-record": {
@@ -6345,7 +6345,7 @@
    "seat": "arranger",
    "head": "the form",
    "ask": "how long is the solo?",
-   "declaredIn": "nukernel/ideas-kit.js",
+   "declaredIn": "nukernel/chair.js",
    "flags": [],
    "rank": 27,
    "exists": {
@@ -6445,7 +6445,7 @@
    "seat": "arranger",
    "head": "the form",
    "ask": "how long is the bridge?",
-   "declaredIn": "nukernel/ideas-kit.js",
+   "declaredIn": "nukernel/chair.js",
    "flags": [],
    "rank": 28,
    "exists": {
@@ -9352,7 +9352,7 @@
      "brush swing",
      "shuffle",
      "train beat",
-     "detroitsoul",
+     "detroit soul",
      "funk",
      "new orleans",
      "linear funk",
@@ -9432,8 +9432,8 @@
       "shuffle",
       "train beat"
      ],
-     "[\"four\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"detroitsoul\\\"]\"]": [
-      "detroitsoul",
+     "[\"four\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"detroit soul\\\"]\"]": [
+      "detroit soul",
       "funk",
       "new orleans",
       "linear funk"
@@ -9539,7 +9539,7 @@
      "[\"six\",\"[\\\"disco\\\",\\\"four on the floor\\\",\\\"two step\\\"]\"]": [
       "nobody on the kit"
      ],
-     "[\"three\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"detroitsoul\\\"]\"]": [
+     "[\"three\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"detroit soul\\\"]\"]": [
       "nobody on the kit"
      ]
     },
@@ -10886,7 +10886,7 @@
      "shapes": 2
     },
     {
-     "w": "detroitsoul",
+     "w": "detroit soul",
      "sets": {
       "drums.kit.c": [
        0,
@@ -20351,7 +20351,7 @@
      "hats",
      "open hats",
      "claps",
-     "percussion",
+     "rim",
      "toms",
      "mid tom",
      "floor tom",
@@ -20362,7 +20362,7 @@
      "no hats",
      "no open hats",
      "no claps",
-     "no percussion",
+     "no rim",
      "no toms",
      "no mid tom",
      "no floor tom",
@@ -20812,7 +20812,7 @@
      "sets": null
     },
     {
-     "w": "percussion",
+     "w": "rim",
      "key": "w:lane:perc",
      "lit": {
       "on": "dwords",
@@ -20944,7 +20944,7 @@
      "sets": null
     },
     {
-     "w": "no percussion",
+     "w": "no rim",
      "key": "w:drop:p",
      "lit": {
       "on": "dwords",

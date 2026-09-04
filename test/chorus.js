@@ -19,8 +19,9 @@
  *       instruments.js `voicedAs("chorus", …)` answers for the three vocal ids,
  *       null for a piano, null for the VP-330's `synth_voice`, and the four
  *       older positions answer exactly what they answered before
- *   C2  THE ROUTING, READ OFF THE COMPILED PLAN: doowop's three vocal seats
- *       resolve `voice_lead`/`voice_choir` in vox mode and `sampler` in chorus
+ *   C2  THE ROUTING, READ OFF THE COMPILED PLAN: doowop's vocal seats — every
+ *       one of them, however many the cast comes to — resolve
+ *       `voice_lead`/`voice_choir` in vox mode and `sampler` in chorus
  *   C3  THE SOUND: two 2-bar presses of doowop, vox and chorus, must not be the
  *       same PCM, and the band medians are printed so the difference has a
  *       shape and not just a hash
@@ -350,13 +351,27 @@ async function uiWalk(p) {
     /* THE ROUTING, POSITIVELY. Not "the tract is gone" — that is an absence a
        broken chair would also satisfy — but "these three seats are the
        SAMPLER", read off the unit the engine was handed. */
+    /* HOW MANY SEATS IS NOT THIS GATE'S FACT (2026-09-04, the per-chair round).
+       This read `=== 3`, which was doowop's cast the day it was written and is
+       four now: a chair may name its own throat, doowop's `riff` is the BASS
+       SINGER and says so, and a seat is keyed on its tone — so the bass singer
+       is his own voice unit instead of collapsing into the group's. That is the
+       round's whole point, and a number typed here would make the gate refuse
+       every future casting decision as a regression.
+         WHAT THE CLAIM ACTUALLY IS, kept whole: EVERY vocal seat is the tract
+       in vox and EVERY one is the sampler in chorus, it is the SAME seats both
+       times, and there is more than one of them (a record that lost its
+       singers would satisfy "all of nothing" twice). The counts are printed so
+       a move is visible rather than silent. */
     const seatsOf = (s) => (s.seats || "").split(" ").filter(Boolean);
     const vs = seatsOf(B.press.voxSolo), cs = seatsOf(B.press.chorusSolo);
-    check(vs.length === 3 && vs.every((x) => /voice_lead|voice_choir/.test(x)),
-      "C2 · …in vox the three vocal seats are the tract: " + JSON.stringify(vs));
-    check(cs.length === 3 && cs.every((x) => /=sampler$/.test(x)),
-      "C2 · …and in chorus they are the SAMPLER, with their own ids kept: " +
-      JSON.stringify(cs) + " — cast " + JSON.stringify(B.press.chorusSolo.cast));
+    check(vs.length >= 3 && vs.every((x) => /voice_lead|voice_choir/.test(x)),
+      "C2 · …in vox every one of the " + vs.length + " vocal seats is the tract: " +
+      JSON.stringify(vs));
+    check(cs.length === vs.length && cs.every((x) => /=sampler$/.test(x)),
+      "C2 · …and in chorus the same " + cs.length + " are the SAMPLER, with their " +
+      "own ids kept: " + JSON.stringify(cs) + " — cast " +
+      JSON.stringify(B.press.chorusSolo.cast));
 
     check(B.press.vox.hash !== B.press.chorus.hash,
       "C3 · THE SOUND CHANGES — " + RECORD + " at " + BARS + " bars, vox " +
@@ -366,7 +381,7 @@ async function uiWalk(p) {
        thing that makes a tract a tract — and they are on every modelled vocal
        unit and on no recording. This is read off the compiled UNIT, so it
        cannot pass on a chair that merely went quiet. */
-    check(B.press.voxSolo.vowelly === 3 && B.press.chorusSolo.vowelly === 0,
+    check(B.press.voxSolo.vowelly === vs.length && B.press.chorusSolo.vowelly === 0,
       "C3 · …and the tract's formant walk is GONE, not turned down: " +
       B.press.voxSolo.vowelly + " units carry `vowels`/`vowelEvery` in vox, " +
       B.press.chorusSolo.vowelly + " in chorus");

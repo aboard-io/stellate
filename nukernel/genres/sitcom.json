@@ -1,5 +1,5 @@
 {
-  "note": "THE SITCOM THEME — Los Angeles 1983. \"Where Everybody Knows Your\nName\" (Portnoy/Hart Angelo), the Cheers main title: sixty seconds\nof piano-bar warmth commissioned to brand a Thursday night —\nnewsfanfare's law at the other end of the broadcast day (the cue\nsays URGENT; this one says STAY). The dot is the commission\n(Paramount's lot; the show premiered September 1982, the full\nsingle is 1983) — the writers cut the demo in New York, said\nplainly, the Kinks rule's honest footnote.",
+  "note": "THE SITCOM THEME — Los Angeles 1983. \"Where Everybody Knows Your\nName\" (Portnoy/Hart Angelo), the Cheers main title: sixty seconds\nof piano-bar warmth commissioned to brand a Thursday night —\nnewsfanfare's law at the other end of the broadcast day (the cue\nsays URGENT; this one says STAY). The dot is the commission\n(Paramount's lot; the show premiered September 1982, the full\nsingle is 1983) — the writers cut the demo in New York, said\nplainly, the Kinks rule's honest footnote.\n\nWHOSE THROAT (2026-09-04, the per-chair singer round). The row takes\n`MOUTHS.crooning` for the piano-bar warmth — the late vibrato, the\nround vowels, one syllable a beat — and inherited its BASS with it,\nwhich put \"Where Everybody Knows Your Name\" a fifth under where it was\nsung: measured over seeds 1-3 the lead's median came out D3, C#3 and\nD3. Portnoy sings it in the octave above that. The mouth is right and\nthe throat was wrong, so the throat is named on the chair and\n`crooning` is left exactly as it is for the seven other rows that\nreach it.",
   "label": "Los Angeles 1983",
   "voices": 3,
   "bars": 8,
@@ -49,6 +49,10 @@
       }
     ],
     "else": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "tenor"
   },
   "part": [
     "lead",

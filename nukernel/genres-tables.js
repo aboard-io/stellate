@@ -396,6 +396,16 @@
     // was being folded UP two octaves, so he is now plainly written ABOVE the
     // lead (G#4 against G#4 at seed 1). That is a casting question for a round
     // that is allowed to move the sound; it is not a seating one.
+    //     ...AND THAT ROUND CAME THE SAME DAY (2026-09-04, the per-chair
+    // round). A throat is no longer only a fact about a ROW: a CHAIR may name
+    // its own (`document.js TIERS.voice`, written from the row's `throat`
+    // closure by chair index, GENRES.md §3), which is what a four-part choir
+    // needs and what this row needed for one chair. `doowop` states
+    // `v => (v === 1 ? "bass" : "countertenor")` — the riff sings bass, the
+    // stab and the lead keep this mouth — so the bass singer is written under
+    // the lead again (C#3/G#3/B4 against C#4/G#4/F#5 at seed 1) and THIS ROW
+    // IS UNTOUCHED, which is the same law that made it exist: the mouth is
+    // the room and the throat is who is standing in it.
     //   `barbershop` AND `glammetal` ALSO DECLARE doowopstack AND ARE LEFT ON
     // IT. Barbershop has the better claim of the two — its "tenor" part is by
     // definition the harmony above the lead — but Paul named doowop, and

@@ -65,6 +65,9 @@ const ROOT = path.resolve(__dirname, "..");
 const N = (p) => require(path.join(ROOT, "nukernel", p));
 const D = N("document.js"), P = N("precompose.js"), NG = N("genres.js");
 const NI = N("instruments.js"), K = N("kernel.js"), NK = N("knobs.js");
+// the ONE owner of what a THROAT word may be (T4o asks it), and of every other
+// vocabulary this gate's doors are held to
+const NF = N("fields.js");
 const NC = N("compose.js"), Songs = N("songs.js");
 const { GENRES } = NG;
 
@@ -154,6 +157,43 @@ const maskSungReg = (doc) => {
   for (const v of doc.voices) if (SUNG(v) && v.cast) v.cast.reg = "sung";
   return doc;
 };
+
+/* ...AND THE FIELD THE NEXT ROUND MOVES ON PURPOSE (2026-09-04, the per-CHAIR
+   singer round). A chair may now name its own throat — `cast.voice`,
+   `document.js TIERS.voice`, written from the row's `throat` closure — and
+   fifteen rows in the catalogue state one. On those rows the throat changes,
+   so `precompose` §7d seats the chair against a DIFFERENT compass, so
+   `cast.reg` moves and so does the written line. THE SOUND MOVES: a bass
+   singer sings bass now, which is the whole of what the round is for.
+
+   THE EXCLUSION IS DERIVED FROM THE BASE, NOT TYPED — the same rule
+   `stripSetFor` above keeps, and for the same reason. `voiceStrip` deletes
+   `cast.voice` from a head chair ONLY where the pinned base's own document has
+   none there, so a field the base never carried cannot fail an identity gate
+   for existing, and a field the base DID carry is still compared. Since no
+   base before this round carries one at all, the set it strips is exactly the
+   chairs this round writes — "changed rows only", asked rather than listed.
+
+   WHAT IS LEFT UNMASKED, said out loud so the hole is a shape and not a gap:
+   `cast.reg` on those chairs is already masked for every sung chair (above),
+   and T2c already CUTS the sung lanes out of the event comparison. So T2 says
+   nothing at all about where a singer is written — it never did after §7d —
+   and T4j and the new T4o are what hold it: T4j that no sung chair is written
+   outside its compass, T4o that each of the fifteen rows seats the throats and
+   the registers it says it does, chair by chair, at three seeds. */
+const voiceStrip = (mine, theirs) => {
+  for (let i = 0; i < mine.voices.length; i++) {
+    const a2 = mine.voices[i], b2 = theirs.voices[i];
+    if (a2 && a2.cast && a2.cast.voice != null &&
+        !(b2 && b2.cast && b2.cast.voice != null)) delete a2.cast.voice;
+  }
+  return mine;
+};
+/* WHICH ROWS THIS ROUND ACTUALLY MOVED, measured off the CATALOGUE and not off
+   a list in this file: a row whose `throat` closure answers for any chair it
+   seats. T2b uses it to mask the one thing a throat changes in a compiled
+   genre — the chairs seam and the chair's own register — and T4o pins it. */
+const VOICEROWS = ANCHORS.filter((gk) => typeof (GENRES[gk] || {}).throat === "function");
 const WT = path.join("/tmp", "nu-table-base-" + BASE_SHA);
 function baseTree() {
   if (!fs.existsSync(path.join(WT, "nukernel", "document.js"))) {
@@ -353,12 +393,19 @@ if (B) {
    terms-genre.freeze.js` solved for the extraction gate, solved the same way:
    CALL them, for every voice, and freeze the answers. `entry` and `reg` are
    exactly the two this wave rewrote, so they are the two that matter most. */
-const portrait = (g, nv, sung) => {
+const portrait = (g, nv, sung, voiced) => {
   const o = {};
   for (const k of Object.keys(g)) {
     if (k === "__v" || typeof g[k] === "function") continue;
     o[k] = g[k];
   }
+  /* THE CHAIRS SEAM CARRIES A THROAT NOW (2026-09-04) and on the fifteen rows
+     that name one it is the field this round adds on purpose. Masked WHOLE
+     rather than key by key, because a chair that gained a throat also gained
+     the register that throat implies, and half a mask would report the second
+     as an unexplained change. Only on those rows — `voiced` is the derived set
+     — so every other record's chairs are compared to the byte. */
+  if (voiced && Array.isArray(o.chairs)) o.chairs = "voiced";
   o.__closures = [];
   for (let v = 0; v < nv; v++) o.__closures.push({
     entry: g.entry ? g.entry(v) : null,
@@ -382,6 +429,7 @@ if (B) {
       // provenance is part of the identity this gate holds rather than a hole
       // in it — a wave that moved a fingerprint would be caught.
       const theirs = maskSungReg(B.D.normalize(B.P.genreToDocument(gk, s)));
+      voiceStrip(mine, theirs);
       if (JSON.stringify(mine) !== JSON.stringify(theirs)) bad.push(gk + "/" + s);
     }
     assert.deepStrictEqual(bad.slice(0, 8), [],
@@ -396,9 +444,10 @@ if (B) {
       const ml = mine.voices.filter((v) => v.kind === "line");
       const nv = ml.length;
       const sung = new Set(ml.map((v, i) => (SUNG(v) ? i : -1)).filter((i) => i >= 0));
+      const voiced = VOICEROWS.includes(gk);
       for (let i = 0; i < mine.form.sections.length; i++) {
-        const a = portrait(D.toGenre(mine, i, GENRES), nv, sung);
-        const b = portrait(B.D.toGenre(theirs, i, B.GENRES), nv, sung);
+        const a = portrait(D.toGenre(mine, i, GENRES), nv, sung, voiced);
+        const b = portrait(B.D.toGenre(theirs, i, B.GENRES), nv, sung, voiced);
         if (a !== b) { bad.push(gk + "/" + s + "#" + i); break; }
       }
     }
@@ -1072,12 +1121,22 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
     // whose throat a chair is, resolved as audio/plan.js castOf resolves it:
     // the owner's tone, a `mouth` on it winning, then the cast throat, then the
     // patch's default. A guest sings with its OWN row.
+    /* ...AND SINCE 2026-09-04 IT ASKS THE CHAIR FIRST, through the one owner
+       `instruments.js throatVoiceOf` — the per-chair round put a throat on
+       `cast.voice` and a helper that read only the ROW would be measuring
+       these records against a singer they are not seated for. The BASE has no
+       such function and no such field, so its side keeps the walk that build
+       performed; the two answers are identical everywhere the head writes no
+       word, which is every row but fifteen. */
     const throatOf = (mod, GEN, gk, doc, li, chair) => {
       const P = (mod.NI.PATCHES.voice || {})[chair.instrument];
       if (!P) return null;
       const nBase = (GEN[gk] || {}).voices || 0;
       const owner = (li < nBase) ? gk : (GEN[chair.name] ? chair.name : gk);
       const t = (GEN[owner] || {}).tone || null;
+      if (mod.NI.throatVoiceOf)
+        return COMPASS[mod.NI.throatVoiceOf(t, owner, chair.instrument,
+          (chair.cast && chair.cast.voice) || null) || ""] || null;
       const M = (t && t.mouth) || (t ? mod.NI.throatOf(owner, chair.instrument) : null);
       return COMPASS[(M && M.voice) || (t && t.voice) || P.voice] || null;
     };
@@ -1099,8 +1158,20 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
       return { lines, per };
     };
     const HEAD = { D, K, NI }, BASE = { D: B.D, K: B.K, NI: B.NI };
+    /* THE FIFTEEN VOICED ROWS ARE NOT THIS GATE'S (2026-09-04, the per-chair
+       round). T4j's three claims are the SEAT round's invariant — the sung line
+       did not move, the written one moved by exact octaves, and the fold is
+       gone — and that invariant is deliberately broken on the rows where a
+       chair now names its own throat: a bass singer sings bass, so the sung
+       line moves, and it moves because the COMPASS moved rather than because
+       anything was re-seated wrong. Excluded here and held by T4o instead,
+       which pins each of those chairs' throat and register outright. The set is
+       DERIVED from the catalogue (`VOICEROWS`), not typed, so a row that gains
+       a `throat` closure tomorrow leaves this gate and joins that one without
+       an edit here. */
     const stride = Math.max(1, Math.round(ANCHORS.length / 45));
-    const sample = FULL ? ANCHORS : ANCHORS.filter((_, i) => i % stride === 0);
+    const pool = ANCHORS.filter((gk) => !VOICEROWS.includes(gk));
+    const sample = FULL ? pool : pool.filter((_, i) => i % stride === 0);
     const moved = [], stillFolded = [], notOctave = [];
     let chairs = 0, rewritten = 0;
     for (const gk of sample) for (const s of SEEDS) {
@@ -1143,6 +1214,193 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
     assert.deepStrictEqual(stillFolded.slice(0, 8), [],
       stillFolded.length + " sung chairs are still written outside their compass");
     assert.ok(rewritten > 0, "no chair was re-seated — §7d reached nothing");
+  });
+
+  /* T4o — EACH CHANGED ROW'S PER-CHAIR THROAT AND REGISTER, PINNED
+     (2026-09-04, the per-chair singer round).
+
+     THE ROUND'S CLAIM, and it is the opposite of the seat round's the day
+     before: THE SOUND MOVES HERE, on purpose, on fifteen rows and nowhere
+     else. A throat used to be a fact about the ROW — one `MOUTHS` row per
+     record — and a four-part choir is the case that breaks it: `chorale`
+     spread four voices over three octaves and every one of them sang with the
+     same alto, `doowop`'s BASS SINGER was cast on the lead's countertenor and
+     was written ABOVE him, and nine rows held a lead part in a bass's throat.
+     A chair may name its own now (`document.js TIERS.voice`, written from the
+     row's `throat` closure, GENRES.md §3), so a bass singer sings bass.
+
+     T2 IS THEREFORE BLIND ON THESE ROWS and this is what replaces it. T2a
+     strips `cast.voice` where the base has none, T2b masks the chairs seam on
+     exactly these rows, and T2c has cut the sung lanes out of its event
+     comparison since §7d. This gate is the whole statement in their place, and
+     it is taken off the RESOLVED THROAT and the SEATED REGISTER rather than
+     off the field: `instruments.js throatVoiceOf` is the same function that
+     builds the seat `audio/plan.js` hands the engine, so what is pinned here
+     is what the box sings.
+
+     FOUR CLAIMS:
+       1  every sung chair on every one of the fifteen rows resolves to the
+          throat and sits at the register this table names, at seeds 1-3;
+       2  where the ROW names a throat for a chair, that word is the one that
+          wins — the chair outranks its own row's mouth;
+       3  every one of them is written INSIDE that throat's compass (fold 0),
+          which is §7d's law re-asked with the new throats;
+       4  and it MOVED: against the pinned base, every one of the fifteen rows
+          resolves at least one chair to a different throat than it did. A
+          change nobody can measure is a change that is not there. */
+const T4O_PIN = {
+  "badakhyal/1":       "lead:tenor:0 vocal:alto:0",
+  "badakhyal/2":       "lead:tenor:0 vocal:alto:1",
+  "badakhyal/3":       "lead:tenor:-1 vocal:alto:0",
+  "benga/1":           "lead:tenor:0 vocal:alto:1 backing:alto:0",
+  "benga/2":           "lead:tenor:0 vocal:alto:0",
+  "benga/3":           "lead:tenor:0 vocal:alto:0",
+  "chorale/1":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "chorale/2":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "chorale/3":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
+  "doowop/1":          "stab:countertenor:0 riff:bass:0 lead:countertenor:1 vocal:alto:0 backing:alto:1",
+  "doowop/2":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:1 vocal:alto:1 backing:alto:1",
+  "doowop/3":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:0 backing:alto:1 vocal:alto:0",
+  "francoflemish/1":   "voice:countertenor:1 voice2:countertenor:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "francoflemish/2":   "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
+  "francoflemish/3":   "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
+  "georgian/1":        "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 vocal:alto:1",
+  "georgian/2":        "voice:countertenor:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:1",
+  "georgian/3":        "voice:countertenor:1 voice2:tenor:0 voice3:bass:0 vocal:alto:1",
+  "hymn/1":            "voice:soprano:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:0",
+  "hymn/2":            "voice:soprano:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:0 gregorian:tenor:0",
+  "hymn/3":            "voice:soprano:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:0",
+  "isorhythm/1":       "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:0 voice4:bass:-1 vocal:alto:0",
+  "isorhythm/2":       "voice:countertenor:1 voice2:countertenor:1 voice3:tenor:1 voice4:bass:0 vocal:alto:1",
+  "isorhythm/3":       "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
+  "kizomba/1":         "lead:tenor:0 vocal:alto:0",
+  "kizomba/2":         "lead:tenor:0 vocal:alto:0",
+  "kizomba/3":         "lead:tenor:0 vocal:alto:0",
+  "mbube/1":           "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:1",
+  "mbube/2":           "voice:countertenor:1 voice2:tenor:0 voice3:bass:0 voice4:bass:-1 vocal:alto:0",
+  "mbube/3":           "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:0",
+  "polychoral/1":      "voice:bass:0 voice2:tenor:0 voice3:alto:1 voice4:soprano:1 voice5:bass:0 voice6:tenor:0 voice7:alto:1 voice8:soprano:1",
+  "polychoral/2":      "voice:bass:-1 voice2:tenor:0 voice3:alto:0 voice4:soprano:1 voice5:bass:-1 voice6:tenor:0 voice7:alto:0 voice8:soprano:1",
+  "polychoral/3":      "voice:bass:-1 voice2:tenor:-1 voice3:alto:0 voice4:soprano:1 voice5:bass:-1 voice6:tenor:-1 voice7:alto:0 voice8:soprano:1",
+  "sacredharp/1":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
+  "sacredharp/2":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "sacredharp/3":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:0",
+  "sitcom/1":          "lead:tenor:0 vocal:alto:0",
+  "sitcom/2":          "lead:tenor:0 vocal:alto:0",
+  "sitcom/3":          "lead:tenor:0 vocal:alto:0 backing:alto:0",
+  "softrock/1":        "lead:tenor:0 backing:alto:1",
+  "softrock/2":        "lead:tenor:0 vocal:alto:1",
+  "softrock/3":        "lead:tenor:0 vocal:alto:1",
+  "spirituals/1":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "spirituals/2":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "spirituals/3":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:0",
+};
+  ok("T4o the fifteen voiced rows seat the throats and registers they declare", () => {
+    const midiOfHz = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
+    const COMPASS = {};
+    for (const dsp of ["voice_lead", "voice_choir"]) {
+      const row = ((((NK.voices || {})[dsp] || {}).rows) || [])
+        .find((r) => r && r.key === "voice" && r.compass);
+      if (!row) continue;
+      for (const w of Object.keys(row.compass)) {
+        const [lo, hi] = row.compass[w] || [];
+        if (lo > 0 && hi > 0) COMPASS[w] = [midiOfHz(lo), midiOfHz(hi)];
+      }
+    }
+    // whose throat a chair is, through the ONE owner — the same call the seat
+    // makes. The owner row is the record's basis for its own chairs and the
+    // GUEST's own genre after them, which is how precompose seated them.
+    const throatsOf = (GEN, gk, doc) => {
+      const lines = doc.voices.filter((v) => v.kind === "line");
+      const nBase = (GEN[gk] || {}).voices || 0;
+      return lines.map((c, i) => {
+        const owner = i < nBase ? gk : (GEN[c.name] ? c.name : gk);
+        return NI.throatVoiceOf((GEN[owner] || {}).tone || null, owner,
+                                c.instrument, (c.cast && c.cast.voice) || null);
+      });
+    };
+    /* THE BASE IS ASKED IN ITS OWN WORDS. `instruments.js` at the pinned base
+       has no `throatVoiceOf` — this round is what added it — so the walk is
+       written out here exactly as that build performed it (the row's tone, a
+       `mouth` on it winning, then the cast throat, then the patch's default),
+       which is T4j's own helper. Asking the two sides different questions
+       would make claim 4 meaningless. */
+    const baseThroats = (gk, doc) => {
+      const lines = doc.voices.filter((v) => v.kind === "line");
+      const nBase = (B.GENRES[gk] || {}).voices || 0;
+      return lines.map((c, i) => {
+        const P2 = (B.NI.PATCHES.voice || {})[c.instrument];
+        if (!P2) return null;
+        const owner = i < nBase ? gk : (B.GENRES[c.name] ? c.name : gk);
+        const t = (B.GENRES[owner] || {}).tone || null;
+        const M = (t && t.mouth) || (t ? B.NI.throatOf(owner, c.instrument) : null);
+        return (M && M.voice) || (t && t.voice) || P2.voice || null;
+      });
+    };
+    // the chair's own notes, in the bars the BOX plays (T4j's own walk)
+    const notesOf = (doc, GEN) => {
+      const lines = doc.voices.filter((v) => v.kind === "line"), nP = lines.length;
+      const per = lines.map(() => []);
+      for (let i = 0; i < doc.form.sections.length; i++) {
+        const g = D.toGenre(doc, i, GEN), sec = doc.form.sections[i];
+        const total = Math.ceil(Math.max(1, sec.bars || g.bars) / g.bars) * g.bars;
+        lines.forEach((c, pi) => {
+          const evs = K.render(D.toPhrase(doc, D.materialAt(c, sec.id)), g, total);
+          for (let v = pi; v < g.voices; v += nP)
+            for (const e of evs) if (e.v === v && e.n != null) per[pi].push(e.n);
+        });
+      }
+      return per;
+    };
+    assert.ok(VOICEROWS.length >= 15,
+      "the catalogue lost its per-chair throats: " + VOICEROWS.length + " rows");
+    const wrong = [], folded = [], stood = [];
+    for (const gk of VOICEROWS) {
+      let movedHere = 0;
+      for (const s of SEEDS) {
+        const md = D.normalize(P.genreToDocument(gk, s));
+        const lines = md.voices.filter((v) => v.kind === "line");
+        const ws = throatsOf(GENRES, gk, md);
+        const per = notesOf(md, GENRES);
+        // 1 — the pin, chair by chair
+        const got = lines.map((c, i) => ws[i] ? c.name + ":" + ws[i] + ":" + c.cast.reg : null)
+                         .filter(Boolean).join(" ");
+        const want = T4O_PIN[gk + "/" + s];
+        if (got !== want) wrong.push(gk + "/" + s + "\n         got  " + got +
+                                     "\n         want " + want);
+        // 2 — the row's word is the one that won
+        lines.forEach((c, i) => {
+          if (i >= ((GENRES[gk] || {}).voices || 0)) return;   // a guest, not this row's
+          const said = GENRES[gk].throat(i);
+          if (!ws[i] || !NF.isThroat(said)) return;            // not a person, or not named
+          if (ws[i] !== said)
+            wrong.push(gk + "/" + s + " chair " + i + ": row says " + said +
+                       ", the seat sings " + ws[i]);
+        });
+        // 3 — and each one is written inside that throat's compass
+        lines.forEach((c, i) => {
+          if (!ws[i] || !per[i].length) return;
+          const h = K.homeFor(per[i], COMPASS[ws[i]]);
+          if (h !== 0) folded.push(gk + "/" + s + " " + c.name + " (" + h + ")");
+        });
+        // 4 — and it is DIFFERENT from the base
+        if (B) {
+          const td = B.D.normalize(B.P.genreToDocument(gk, s));
+          const was = baseThroats(gk, td);
+          movedHere += ws.filter((w, i) => w && w !== was[i]).length;
+        }
+      }
+      if (B && !movedHere) stood.push(gk);
+    }
+    assert.deepStrictEqual(wrong.slice(0, 6), [],
+      wrong.length + " chairs are not seated where this round says they are");
+    assert.deepStrictEqual(folded.slice(0, 6), [],
+      folded.length + " chairs are written outside the throat they now sing with");
+    assert.deepStrictEqual(stood, [],
+      stood.length + " of the fifteen rows resolve the throats they always did " +
+      "— a change nobody can measure is a change that is not there");
+    console.log("       (" + VOICEROWS.length + " rows x " + SEEDS.length +
+                " seeds: " + VOICEROWS.join(" ") + ")");
   });
 
   /* T4i — `focus` STILL REACHES NOTHING, and this wave did not invent a

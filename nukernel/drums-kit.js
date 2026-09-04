@@ -283,7 +283,16 @@
     claps:    { word: "claps", lane: "c", give: on(4, 12), more: on(4, 7, 12, 15),
                 g3: (b) => b.back(),
                 m3: (b) => b.on(...uniq(ixOf(b.back()), ixOf(b.back()).map((i) => i + b.pulse - 1))) },
-    perc:     { word: "percussion", lane: "p", give: on(2, 7, 10, 14), more: every(2, 1),
+    // THE WORD IS THE DRUM, NOT THE SECTION (2026-09-04). `p` said
+    // "percussion" here and in the two tables below, and lane `p` is a RIM —
+    // kernel.js LANES says `rim`, genres-tables.js DRUMNAME says `rim`, and
+    // audio/to-engine.js resolves it through `unit: "rim"` to `snare_crack`.
+    // "Percussion" is the PRODUCER's word for a group (producer.js `perc` =
+    // the clap AND the rim, `chan: ["unit:clap","unit:rim"]`), and borrowing a
+    // group's name for one of its members is how "add percussion" came back as
+    // a rim click and nothing else. The id stays `lane:perc` — it names the
+    // row, not the drum — so no saved sentence moves.
+    perc:     { word: "rim", lane: "p", give: on(2, 7, 10, 14), more: every(2, 1),
                 g3: (b) => b.on(...uniq(ixOf(b.ands()), [Math.min(b.n - 1, b.pulse + 3)])),
                 m3: (b) => b.every(2, 1) },
     toms:     { word: "toms", lane: "t", give: on(6, 14), more: on(2, 6, 10, 14),
@@ -307,7 +316,7 @@
   const laneVec = (m, L, which) =>
     lit(m, which === "more" ? L.more : L.give, which === "more" ? L.m3 : L.g3);
   const DROPWORD = { k: "no kick", s: "no snare", h: "no hats", o: "no open hats",
-                     c: "no claps", p: "no percussion", t: "no toms",
+                     c: "no claps", p: "no rim", t: "no toms",
                      m: "no mid tom", l: "no floor tom" };
 
   /* ---------- HOW A DRUMMER SAYS IT --------------------------------------
@@ -709,7 +718,7 @@
     return out;
   }
   const LANENAME = { k: "kick", s: "snare", h: "hats", o: "open hats",
-                     c: "claps", p: "percussion", t: "toms" };
+                     c: "claps", p: "rim", t: "toms" };
   const LANEOF = (l) => LANENAME[l] || l;
 
   /* ---------- WHAT A DRUMMER DECIDES, IN THE ORDER THEY DECIDE IT --------

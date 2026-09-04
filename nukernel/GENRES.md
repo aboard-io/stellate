@@ -240,8 +240,8 @@ portamento.
 
 ## 3 · The closure grammar
 
-`entry`, `reg`, `realize` and `word` are functions on every row, and a function
-does not survive JSON. The genre-QA closure census asked whether they *had* to
+`entry`, `reg`, `realize`, `word` and (since 2026-09-04) `throat` are functions
+on a row, and a function does not survive JSON. The genre-QA closure census asked whether they *had* to
 be functions and answered no: 421 rows carried **12 distinct shapes** of `entry`,
 19 of `reg`, 5 of `realize`. They are not programs. They are a handful of tiny
 arithmetic sentences said over and over.
@@ -281,6 +281,64 @@ which is how `v => (v === 2 ? 0 : v)` is said.
             "else": { "$src": "[]" } }
 ```
 
+### `throat` — whose voice each chair is
+
+**2026-09-04, the per-chair singer round.** The fifth closure, and the only one
+a row may leave out entirely: `throat(v)` names WHICH OF THE FIVE MODELLED
+THROATS sings chair `v`, out of the words `fields.js THROATS` publishes —
+`alto`, `bass`, `countertenor`, `soprano`, `tenor`, which is the extraction of
+the engine's own `state-engine.js VOICE_TYPE`.
+
+```json
+  "throat": { "kind": "cases",
+              "cases": [{ "at": 0, "then": "soprano" }, { "at": 1, "then": "alto" },
+                        { "at": 2, "then": "tenor" }],
+              "else": "bass" }
+```
+
+**Why it exists.** A throat used to be a fact about the ROW — `genres-tables.js
+MOUTHS` carries a `voice` word and every sung chair on the record read the same
+one — and a four-part choir is the case that breaks it. `chorale` spreads four
+voices over three octaves with `reg: v => 1 - v` and all four of them resolved
+to one `MOUTHS.hymnal` alto: an SATB texture written for a single singer. SATB
+needs four throats and a row can say one.
+
+**What happens to the word.** `precompose.genreToDocument` asks the closure once
+per chair as it seats the record and writes the answer onto the document at
+`voices[vi].cast.voice` — `document.js TIERS.voice`, a COLUMN field with the
+row's mouth as its default and no cell tier (a singer does not change throat in
+the bridge; what moves per section is `reg`). Everything downstream asks the
+CHAIR: `instruments.js throatTone` is the one owner of the precedence — the
+chair's word, then the row's `tone.mouth`, then the cast throat, then the
+patch's default singer — and it is what `audio/plan.js` builds the seat with and
+what `precompose` §7d reads to decide where to WRITE the line. A hand may change
+it in the table's column sheet, at the next bar, like any other column field.
+
+It is spent at seat time rather than resolved under the document because a
+**guest sings with its own row's throat**, and the resolver's genre tier can
+only ever see `doc.basis`. precompose knows which row owns which chair; the
+resolver does not.
+
+**Two things a `throat` cannot do,** both enforced in `precompose.seatThroat`
+and both silent by design: a word named for a chair that is **not a person**
+(`hymn` states four throats and its fourth chair is a church organ) and a word
+this build has **no formant table for** are dropped, and the chair falls back to
+its row's mouth. A row that states no `throat` at all is byte-identical to every
+record written before the field existed — which is 464 of the 479 rows.
+
+**The ten rows that state one, and why** (2026-09-04): `chorale` `sacredharp`
+`spirituals` (SATB, the tune in the top voice / in the tenor / on a concert
+stage), `francoflemish` `isorhythm` (superius and altus on the row's own
+countertenor, tenor, bass — no soprano on a repertory sung by men and boys),
+`georgian` (mtkmeli, modzakhili, bani), `polychoral` (two four-part groups, by
+the row's own `v % 4`), `mbube` (a high lead over a deep male chorus),
+`hymn` (soprano, tenor, bass, and an organ that gets nothing), `doowop` (the
+riff is the BASS SINGER). Plus five rows whose single singer was on a bass
+throat that was not his: `sitcom` `softrock` `benga` `kizomba` `badakhyal`.
+`crooner`, `schlager`, `iskelma` and `dhrupad` were measured in the same round
+and KEPT their bass — Crosby, Quinn, Virta and a dhrupad singer's gambhir
+low register are all honestly there.
+
 ### `formula` — the escape hatch, and it is not a failure
 
 198 of the 1,684 closures stay as source text, and 189 of those are `word` —
@@ -290,6 +348,9 @@ template kind would only obscure. The escape is there so the grammar never has
 to lie about a row to hold it.
 
 ### What each field actually is
+
+(`throat` is not in the census below: it is newer than the migration, and the
+fifteen rows that state one were written as templates by hand.)
 
 | field | templated | as `formula` | the shapes |
 |---|---:|---:|---|

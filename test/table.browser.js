@@ -216,6 +216,98 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     clabs.join(" · "));
   await tap("tcol|" + vName);
 
+  /* ...AND THE SINGER'S OWN THROAT IS ONE OF ITS ROWS (2026-09-04, the
+     per-chair singer round). `document.js TIERS.voice` is a COLUMN field — a
+     chair may name which of the five modelled throats sings it, because a
+     four-part choir needs four and a row can say ONE — and this is its
+     control. Driven on the RENDERED page and not counted in the source,
+     because ui/table.js draws this row directly (like the drummer's own two
+     words) and no avail.js sheet would prove it arrived.
+     FOUR CLAIMS: it is there on a chair a person sings and ABSENT on a chair
+     nobody sings (the question has no meaning on a guitar, and a refusal
+     sentence there would be the silent grey's talkative cousin); it prints the
+     ROW's word, derived, until a hand writes; it offers the five throats the
+     engine models and no sixth; and pressing one LANDS at `cast.voice`, which
+     is where the seat, the composer and the resolver all ask. */
+  const VOXIDS = ["solo_vox", "ahh_choir", "ohh_voices"];
+  const DV = await doc();
+  const singer = DV.voices.find((v) => v.kind === "line" &&
+    VOXIDS.includes(String(v.instrument)));
+  const player = DV.voices.find((v) => v.kind === "line" &&
+    !VOXIDS.includes(String(v.instrument)));
+  if (!singer || !player) {
+    check(false, "T5c2 this record seats no singer, or no player, to ask");
+  } else {
+    const chipsOfField = (k) => p.evaluate((key) => {
+      const f = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (!f) return [];
+      f.click();
+      return [...document.querySelectorAll("#pan-band .nu-wchip")]
+        .map((c) => c.dataset.k).filter((x) => x && x.indexOf(key + "|") === 0);
+    }, k);
+    const press = (k) => p.evaluate((key) => {
+      const c = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (c) c.click(); }, k);
+    const throatOn = (n) => p.evaluate((name) => {
+      const v = window.__eightDoc().voices.find((x) => x.name === name);
+      return (v && v.cast && v.cast.voice) || null; }, n);
+
+    await tap("tcol|" + singer.name);
+    const sr = await sheetRows();
+    const trow = (sr || []).find((r) => r.lab === "sings as");
+    check(!!trow, "T5c2 a chair a person sings is asked whose throat it is" +
+      (trow ? " (" + trow.k + ")" : " — NO ROW ON " + singer.name));
+    check(!!trow && !trow.clear,
+      "…and it is derived until a hand writes: the word is the record's own");
+    const chips = await chipsOfField("throat|" + singer.name);
+    const words = chips.map((k) => k.split("|").pop()).filter(Boolean);
+    check(words.length === 5,
+      "…offering the five throats the engine models: " + words.join(" "));
+    const want = chips.find((k) => k.endsWith("|bass")) || chips[chips.length - 1];
+    await press(want); await p.waitForTimeout(800);
+    check((await throatOn(singer.name)) === want.split("|").pop(),
+      "…and pressing one lands on the COLUMN tier at cast.voice (" +
+      JSON.stringify(await throatOn(singer.name)) + ")");
+    /* ...AND THE CLEAR-BACK HANDS THE QUESTION BACK TO THE GENRE, which is the
+       one spelling of "inherited" this surface keeps (§2) and is also what
+       leaves the record as the rest of this gate found it.
+       DRIVEN THROUGH THE CONTROL A PERSON USES — the row's own `.nu-clearback`,
+       which the sheet draws only once a hand has written — and not through the
+       empty chip, because a write re-renders the table and the accordion is not
+       promised to be standing afterwards. The sheet is re-opened first for the
+       same reason, and the press reports WHY when it cannot find its target
+       rather than failing as a silent false. */
+    const reopen = async () => {
+      const open = await p.evaluate(() => !!document.querySelector("#pan-band tr.nu-wopen"));
+      if (!open) await tap("tcol|" + singer.name);
+    };
+    await reopen();
+    const cleared = await p.evaluate(() => {
+      const o = document.querySelector("#pan-band tr.nu-wopen");
+      if (!o) return "the sheet did not reopen";
+      const r = [...o.querySelectorAll(".nu-sheetrow")].find((x) =>
+        ((x.querySelector(".nu-sheetlab") || {}).textContent || "").trim() === "sings as");
+      if (!r) return "no throat row in the reopened sheet";
+      const c = r.querySelector(".nu-clearback");
+      if (!c) return "the written row drew no clear-back";
+      c.click(); return "ok";
+    });
+    await p.waitForTimeout(800);
+    check(cleared === "ok" && (await throatOn(singer.name)) === null,
+      "…and the clear-back hands the question back to the genre (" + cleared + ", " +
+      JSON.stringify(await throatOn(singer.name)) + ")");
+    // shut it again, whichever way the write left it, so the next block opens
+    // its own sheet rather than a second one
+    if (await p.evaluate(() => !!document.querySelector("#pan-band tr.nu-wopen")))
+      await tap("tcol|" + singer.name);
+
+    await tap("tcol|" + player.name);
+    const pr = await sheetRows();
+    check(!(pr || []).some((r) => r.lab === "sings as"),
+      "…and a chair nobody sings is not asked at all (" + player.instrument + ")");
+    await tap("tcol|" + player.name);
+  }
+
   /* ...AND THE CELL SHEET IS OPENED ON A CHAIR THAT READS A SUBJECT (wave 4).
      `voices[0]` on this record is the skank, a `stab`, and a stab voices the
      bar's CHORD — `kernel.js render` sends it down the chord branch, which

@@ -964,8 +964,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   /* ---- 4b THE DRUM KIT IS NOT A MULTISELECT, AND THAT IS THE SAME RULE ----
      Paul asked, 2026-08-24: "can i pick more than one options for the drum
      kit?" The measured answer is no — document.js:192 writes `drumkit` as a
-     STRING, audio/to-engine.js:1141 does `Object.assign(D, MACHINE_KIT[kit])`,
-     and `drumVoice(kit, lane)` resolves every lane through that one kit. So
+     STRING, audio/to-engine.js `mapEvents` does `Object.assign(D,
+     MACHINE_KIT[plan.kit])`, and every lane's hit goes out with that one kit's
+     models on it. So
      the same sentence that made the fx chips a `<select multiple>` makes this
      one a plain single `<select>`: a multiselect offering one legal answer is a
      worse lie than the checkboxes were. The drummer hired above is still on the

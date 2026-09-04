@@ -1,5 +1,5 @@
 {
-  "note": "KIZOMBA — Luanda 1995. Angola's slow couple dance: semba's language at\nhalf the speed, with a drum machine and a Caribbean lilt in the bass.\nThe catalog has never held an Angolan record.\nTHE YEAR is the mid-nineties, when the name settles and the form is\ndistinct from semba on record rather than in a dance hall.\nLINEAGE: `worldfolk` IS NOT NAMED HERE, which is worth saying out loud\nin an entry that could easily have taken it: the parents are semba\n(Luanda, absent, on `wants`) and the Antillean zouk of Kassav', which\nis Tier 2 above because no dot for it can be proved on land. So this\nanchor is honestly PARENTLESS on its Caribbean side and says so\nrather than conscripting the nearest African anchor.",
+  "note": "KIZOMBA — Luanda 1995. Angola's slow couple dance: semba's language at\nhalf the speed, with a drum machine and a Caribbean lilt in the bass.\nThe catalog has never held an Angolan record.\nTHE YEAR is the mid-nineties, when the name settles and the form is\ndistinct from semba on record rather than in a dance hall.\nLINEAGE: `worldfolk` IS NOT NAMED HERE, which is worth saying out loud\nin an entry that could easily have taken it: the parents are semba\n(Luanda, absent, on `wants`) and the Antillean zouk of Kassav', which\nis Tier 2 above because no dot for it can be proved on land. So this\nanchor is honestly PARENTLESS on its Caribbean side and says so\nrather than conscripting the nearest African anchor.\n\nWHOSE THROAT (2026-09-04, the per-chair singer round). Same cast and\nthe same miss as `benga` one country away: no mouth of its own, Luanda\nreads as Africa, and the rule handed a 1995 slow-dance record\n`MOUTHS.mbubestack` — a 1939 Zulu male-chorus bass. Kizomba's lead is\na smooth mid-range male voice over the drum machine, so the chair says\ntenor.",
   "label": "Luanda 1995",
   "voices": 3,
   "near": "rai",
@@ -39,6 +39,10 @@
       }
     ],
     "else": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "tenor"
   },
   "part": [
     "riff",

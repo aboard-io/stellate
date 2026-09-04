@@ -407,6 +407,54 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
       assert.strictEqual(m.v, NuSong.VERSION, "a v:" + v + " save migrated to v " + m.v);
       assert.ok(NuSong.validateSong(m).ok, "a v:" + v + " save does not validate after migrate");
     }
+    /* ...AND A DRUM PHRASE AT EVERY PAST VERSION (2026-09-04, VERSION 3 -> 4).
+       The bump widened kernel.js DRUM_LANES from seven letters to twelve, so
+       `okDrumPhrase` now demands vectors for `m l f r x` that no save carries.
+       The loop above could not see it: not one shipped preset holds a drum
+       slot, so the padding it exercises is zero. This builds the SEVEN-LANE
+       phrase every past version wrote, puts it in slot 0 at each version, and
+       demands migrate+validate AND that the render does not move — the pad is
+       silence, so a padded phrase must produce byte-identical drum events. */
+    const K = require(R + "/nukernel/kernel.js");
+    const G7 = ["k", "s", "h", "o", "c", "p", "t"];
+    const seven = () => { const o = { kind: "drum", swing: 0 };
+      for (const d of G7) o[d] = new Array(16).fill(0);
+      o.k[0] = 1; o.k[8] = 1; o.s[4] = 1; o.s[12] = 1; o.h[2] = 1; return o; };
+    const GG = require(R + "/nukernel/genres.js").GENRES.rock;
+    const wasEv = JSON.stringify(K.drums(seven(), GG, 4));
+    for (let v = 1; v < NuSong.VERSION; v++) {
+      const d = JSON.parse(JSON.stringify(base)); d.v = v; d.slots[0] = seven();
+      const m = NuSong.migrate(d);
+      assert.strictEqual(m.v, NuSong.VERSION,
+        "a v:" + v + " save WITH A DRUM PHRASE migrated to v " + m.v);
+      const r = NuSong.validateSong(m);
+      assert.ok(r.ok, "a v:" + v + " drum save: " +
+        JSON.stringify(r.ok ? null : r.errors[0]));
+      const lanes = K.DRUM_LANES.filter((d2) => Array.isArray(r.song.slots[0][d2]));
+      assert.strictEqual(lanes.length, K.DRUM_LANES.length,
+        "a v:" + v + " drum phrase came back with " + lanes.length + " lanes");
+      assert.strictEqual(JSON.stringify(K.drums(r.song.slots[0], GG, 4)), wasEv,
+        "the pad moved a v:" + v + " drum phrase's events");
+    }
+    /* AND THE FIVE NEW LANES REACH THE KIT. A ride tapped into a slot phrase
+       was dropped on the floor by `drumPattern`'s own loop before this bump —
+       the editor offered twelve lanes (ui/eight.js laneAdd) and the render
+       read seven. This is the artifact test: save it, reload it through the
+       same two calls the page makes, and count the hits the KERNEL emits. */
+    { const ph = NuSong.blankDrum();
+      ph.k[0] = 1; ph.r[0] = 1; ph.r[4] = 1; ph.r[8] = 1; ph.r[12] = 1;
+      ph.x[0] = 1; ph.f[2] = 1; ph.m[6] = 1; ph.l[14] = 1;
+      const d = JSON.parse(JSON.stringify(base));
+      d.v = NuSong.VERSION; d.slots[0] = ph;
+      const r = NuSong.validateSong(NuSong.migrate(d));
+      assert.ok(r.ok, "a ride-carrying drum phrase does not reload");
+      const back = r.song.slots[0];
+      assert.deepStrictEqual(back.r, ph.r, "the ride lane did not survive the reload");
+      const by = {};
+      for (const e of K.drums(back, GG, 1)) by[e.d] = (by[e.d] || 0) + 1;
+      for (const [d2, n] of [["r", 4], ["x", 1], ["f", 1], ["m", 1], ["l", 1]])
+        assert.strictEqual(by[d2], n, "lane " + d2 + " rendered " + (by[d2] || 0) +
+          " hits, not " + n); }
   });
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);

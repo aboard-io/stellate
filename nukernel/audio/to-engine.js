@@ -180,9 +180,13 @@ export const LANE = {
 // three machines here for the tape while the page voiced four of its own out of
 // a bank of oscillators — so a tr909 song was one drum machine live and a
 // different one on the record, and tr606 (which nothing here named) was a real
-// 606 live and the default kit on the tape. There is one engine now and it resolves its
-// live hits from this same table through drumVoice() below: one row per box,
-// read twice.
+// 606 live and the default kit on the tape. There is one engine now and it
+// reads this table ONCE, in `mapEvents` below
+// (`Object.assign(D, MACHINE_KIT[plan.kit])`), where the box's three model
+// names go onto the drum recipe the parent is handed. (This paragraph said
+// "resolves its live hits from this same table through drumVoice() below: one
+// row per box, read twice" until 2026-09-04, and it was describing a function
+// nothing called — see the tombstone where drumVoice stood.)
 //
 // tr606 IS THE NEAREST-VOICE ROW, said out loud: the Drumatix kick is thin and
 // mid-forward with no boom in it, so it is `boom` tuned UP rather than the 808's
@@ -221,8 +225,9 @@ export const LANE_ORDER = ["k", "s", "h", "o", "f", "c", "p", "t", "m", "l", "r"
  * in LANE already states in prose: a drum MACHINE has no pedal hat, the `pedal`
  * flag is inert without a sampler to select the zone, and `f` on a 909 is that
  * machine's closed hat played twice — which is what a 909 is. Everything else
- * resolves: `drumVoice` answers every lane for every kit, sampled or
- * synthesised, and it is written never to answer with a quiet substitute.
+ * resolves: every lane in `LANE` carries a `unit`, `mapEvents` sends that unit
+ * with the hit, and the parent's `voiceUnits` has a voice for all nine of them
+ * — sampled or synthesised, and never a quiet substitute.
  */
 export function laneRefusal(kit, lane) {
   const L = LANE[lane];
@@ -251,45 +256,25 @@ export function laneCaveat(kit, lane) {
   return null;
 }
 
-// ---- a lane, as a parent MODULE --------------------------------------------
-// state-engine voiceUnits' own three model maps and its four fixed perc voices,
-// mirrored here and nowhere else, so the page and the tape name the same drum
-// for the same kit. UNIT_LVL is voiceUnits' own per-voice level (the hat rides
-// at 0.7, the cymbals at 0.9); the parent's mastering trims on top of it are the
-// tape's, the way nukernel's desk on top of it is the page's.
-const KICK_MODULE  = { boom: "kick_boom", "808": "kick_808", "909": "kick909" };
-const SNARE_MODULE = { noise: "snare_noise", crack: "snare_crack", clap: "snare_clap" };
-const HAT_MODULE   = { noise: "hat_noise", metal: "hat_metal" };
-const UNIT_MODULE  = { tom: "tom", clap: "snare_clap", rim: "snare_crack",
-                       ride: "hat_metal", crash: "hat_metal" };
-const UNIT_LVL = { hat: 0.7, ride: 0.9, crash: 0.9 };
+/* ---- A LANE AS A PARENT MODULE: THE TOMBSTONE (deleted 2026-09-04) ---------
+   `drumVoice(kit, lane)` stood here — exported, documented, and called by
+   NOTHING. Measured: zero call sites in nukernel/, engine/, test/ and tools/;
+   the five references left were four comments and this file's own header, which
+   said the live page resolves its hits through drumVoice(). It does not. There
+   is ONE drum path and it is `mapEvents` below, which reads `LANE[e.d]` for the
+   unit, the duration and the gain and sends `{ drum: L.unit, beat, dur, amp }`.
+   WHICH MODULE that unit is played by is the parent's answer — `state-engine
+   voiceUnits` picks it off the three model names `MACHINE_KIT` puts on the
+   recipe — so the KICK_MODULE / SNARE_MODULE / HAT_MODULE / UNIT_MODULE /
+   UNIT_LVL maps that lived here were a second copy of a table this file does
+   not own: kept in step by nobody, read by nobody.
 
-/**
- * Which parent voice a nukernel drum lane is, under a given kit.
- *
- * Returns { unit, module, durB, lvl, gain, pitch, open } or null for a lane no
- * parent voice covers — NEVER a quiet substitute. `durB` is in BEATS (the
- * parent's drum events are, and mapEvents multiplies by the seconds-per-beat to
- * get the module's `decay`), so a live caller must do the same multiplication or
- * the page rings for a different length than the record.
- *
- * A SAMPLED kit answers the same modules: they are the metadata the parent
- * keeps behind `u.sampler`, and they are what a lane falls back to when the
- * recording never decoded.
- */
-export function drumVoice(kit, lane) {
-  const L = LANE[lane];
-  if (!L) return null;
-  const M = MACHINE_KIT[kit] || {};
-  const module = L.unit === "kick" ? (KICK_MODULE[M.kickModel] || "kick_boom")
-    : L.unit === "snare" ? (SNARE_MODULE[M.snareModel] || "snare_noise")
-    : L.unit === "hat" ? (HAT_MODULE[M.hatModel] || "hat_noise")
-    : UNIT_MODULE[L.unit];
-  if (!module) return null;
-  return { unit: L.unit, module, durB: L.dur, lvl: UNIT_LVL[L.unit] || 1,
-    gain: L.gain || 1, pitch: L.pitch || 0, open: !!L.open,
-    tune: L.unit === "kick" ? (M.tune || 1) : 1 };
-}
+   MAKING IT THE OWNER WAS CONSIDERED AND REFUSED. It would mean sending a
+   module NAME over the wire, and the parent does not read one; the courier's
+   own rule further down ("the courier puts it on the recipe and the parent
+   decides what to do with it") is the arrangement that already works. This was
+   the same class of defect as the desk EQ and the reverb return: declared,
+   costed, documented, reaching nothing. */
 
 // ---- the chair, as a parent ROLE -------------------------------------------
 // nukernel seats seven chairs (kernel.js PARTS); the parent resolves four roles
@@ -1549,8 +1534,8 @@ export function modelForInstr(id, tone) {
  * Returns a spec in the genre `synth:{dsp, root, level, set}` shape ON PURPOSE:
  * that is the shape the old live player played and the shape
  * recipeFor already translates, so the page and the tape can read one table.
- * Exported for the same reason drumVoice is — the drum lanes learned the hard
- * way what two tables for one sound costs.
+ * Exported for the reason the drum lanes learned the hard way: two tables for
+ * one sound is two tables that will disagree.
  *
  * THE PAGE HEARS THIS TABLE NOW, and it took more than the import. The live
  * scheduler always called synthForInstr and handed the spec to playSynth — but

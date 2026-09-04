@@ -156,10 +156,20 @@ export const NuSong = window.NuSong;
 export const { blank, emptyBox } = window.NuSong;
 
 // ---- the sound sources as data (instruments.js) ----
-// `throatOf` joined the list 2026-08-28 (the singer-cast round): WHICH of
+// `throatOf` joined the list 2026-08-28 (the singer-cast round) — WHICH of
 // genres.js MOUTHS' thirty throats a record's vocal chair is cast with when the
-// genre states no mouth of its own. audio/plan.js is its only reader.
-export const { instrOf, familyOf, throatOf, voicedAs, BASS_INSTR, FONTS, BASSSYNTH,
+// genre states no mouth of its own — and came OFF it 2026-09-04, replaced by
+// `throatTone`: the same question with the CHAIR's own word on top of the row's
+// mouth. `document.js toGenre` puts a chair's throat on the `chairs` seam and
+// audio/plan.js (still the only reader) writes it onto the seat through this
+// one function, which is the sole owner of what beats what. Exporting the tier
+// UNDER it as well would be re-exporting a table to nobody, which is the bug
+// the paragraph below is about.
+// `throatVoiceOf` is the same walk asked for the WORD rather than for the tone
+// — ui/eight.js's table door prints it, so a person can see whose throat a
+// chair is before deciding to change it.
+export const { instrOf, familyOf, throatTone, throatVoiceOf, voicedAs,
+               BASS_INSTR, FONTS, BASSSYNTH,
                STRIPS, stripFor, RANGES } = window.NuInstruments;
 /* TWELVE NAMES CAME OFF THIS LINE, 2026-08-28, AND THEY WERE THE DECLARED-BUT-
    NEVER-ARRIVING BUG IN ITS QUIETEST FORM: a barrel that re-exports a table is

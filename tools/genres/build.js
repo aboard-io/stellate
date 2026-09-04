@@ -32,7 +32,11 @@ const ROOT = path.resolve(__dirname, "../..");
 const ROWS = path.join(ROOT, "nukernel/genres");
 const TABLES = path.join(ROOT, "nukernel/genres-tables.js");
 const OUT = path.join(ROOT, "nukernel/genres.js");
-const CLOSURES = ["entry", "reg", "realize", "word"];
+// `throat` joined the four 2026-09-04 (the per-chair singer round): WHOSE
+// THROAT each chair is, by chair index, in one of the five words
+// `fields.js THROATS` publishes. Same grammar, same round trip; see
+// GENRES.md §3.
+const CLOSURES = ["entry", "reg", "realize", "word", "throat"];
 
 /* ---- the three spliced regions ------------------------------------------ */
 

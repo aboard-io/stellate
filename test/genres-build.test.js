@@ -43,6 +43,9 @@ const { build, readRows } = require(R + "/tools/genres/build.js");
 const { emit, validate, KINDS } = require(R + "/tools/genres/grammar.js");
 const NG = require(R + "/nukernel/genres.js");
 const T = require(R + "/nukernel/genres-tables.js");
+// the one owner of what a THROAT word may be (the extraction of the engine's
+// own VOICE_TYPE) — G2 holds every row's `throat` closure to it
+const NF = require(R + "/nukernel/fields.js");
 
 const GENRES = NG.GENRES;
 let pass = 0, fail = 0;
@@ -167,6 +170,27 @@ ok("every closure is a template kind the grammar knows", () => {
       assert(r[f], k + " has no " + f + " — every row carries the four closures");
       validate(r[f], k + "." + f);
     }
+  /* ...AND THE FIFTH, WHICH IS OPTIONAL (2026-09-04). `throat` names whose
+     voice sings each chair and only fifteen rows state one, so the assertion
+     it can carry is the other half: whatever a row DOES say has to be a
+     template the grammar knows AND has to answer with a word the engine can
+     model, over every chair the row seats. A throat this build has no formant
+     table for is dropped at two doors already (precompose.seatThroat,
+     document.normalize) — this is where it is caught instead of swallowed. */
+  const said = [];
+  for (const [k, r] of rows) {
+    if (!r.throat) continue;
+    said.push(k);
+    validate(r.throat, k + ".throat");
+    const fn = eval("(" + emit(r.throat) + ")");
+    for (let v = 0; v < (r.voices || 1); v++) {
+      const w = fn(v);
+      assert(NF.isThroat(w), k + ".throat(" + v + ") = " + JSON.stringify(w) +
+        " — not one of " + NF.THROATS().join(", "));
+    }
+  }
+  console.log("       " + said.length + " rows name their chairs' throats: " +
+              said.join(" "));
 });
 
 ok("the note is prose, not markup", () => {
@@ -205,7 +229,11 @@ ok("479 rows x 4 closures x v 0..8 x s 0..7", () => {
         offbeats, breath, tuned];
   let calls = 0, kinds = {};
   for (const [k, r] of rows)
-    for (const f of ["entry", "reg", "realize", "word"]) {
+    // `throat` rides the same round trip where a row states one — the law is
+    // `emit(match(f))` must BEHAVE like f, and an optional closure is not
+    // exempt from it.
+    for (const f of ["entry", "reg", "realize", "word", "throat"]) {
+      if (!r[f]) continue;
       kinds[r[f].kind] = (kinds[r[f].kind] || 0) + 1;
       const fn = eval("(" + emit(r[f]) + ")");     // the template, made a function again
       const live = GENRES[k][f];
@@ -242,7 +270,8 @@ ok("it loads as a module and carries the stamp", () => {
 ok("the grammar's kinds are the ones the emitter writes", () => {
   for (const kind of KINDS) assert(typeof emit === "function" && kind, kind);
   const used = new Set(rows.flatMap(([, r]) =>
-    ["entry", "reg", "realize", "word"].map((f) => r[f].kind)));
+    ["entry", "reg", "realize", "word", "throat"]
+      .filter((f) => r[f]).map((f) => r[f].kind)));
   for (const kind of used) assert(KINDS.includes(kind), "unknown kind in use: " + kind);
 });
 
