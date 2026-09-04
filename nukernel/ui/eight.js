@@ -319,7 +319,13 @@ import { mount as mountBoard, paintBoard, voiceMix,
             without either file learning what the other's furniture is.
             `showPanel`/`markTabs` stay closures inside engineer.js's `mount`:
             these two are the whole of what leaves it. */
-         showBoard, boardTabNow,
+         /* AND WHAT A SEAT SAYS WHEN IT IS SHUT (2026-09-07, TABLE.md §10b
+            step 3). The MIX row draws one cell per voice column and the cell's
+            face is the seat's own word — the fader's dB in the strip's own
+            `faderDb`/`fmtDb`, the pan word, mute/solo, how many inserts are
+            seated — asked of the file that owns the arithmetic rather than
+            spelled a second time here. */
+         seatWord, seatWritten,
          paintVoiceMix } from "./engineer.js";
 // THE PRODUCER (D4) — "somebody with taste saying a few things about the record
 // the eight describe". It is not a ninth axis and it is not a second compiler:
@@ -10230,7 +10236,12 @@ function tableAPI() {
        than restarting, which is the wave-4 law and not a thing to re-derive). */
     fillFromGenre: () => { showTab("Where"); },
     reseed: () => { rewriteNow(); },
-    showBoard: () => { showTab("Mix"); },
+    /* "ON THE BOARD" IS THE MIX ROW'S CORNER NOW (2026-09-07). It read
+       `showTab("Mix")`; there is no Mix tab. The MASTER is `tmix`, one merged
+       row in the footer of the table the caller is already standing on, under
+       the row of seats, and pressing its head is what a hand does. */
+    showBoard: () => { openMixRow("master"); },
+    showSeat: (name) => { openMixRow(name); },
 
     /* THE CELL'S OWN LANE VOCABULARY (TABLE.md wave 3). A door and not a
        second table: fields.js CELLAUTO is the one owner of the four lane
@@ -10250,9 +10261,38 @@ function tableAPI() {
     rowOf: (i, f) => NuDocument.resolveRow(DOC, i, f, GENRES),
 
     /* ---- the record's own footer (§1 RECORD) ------------------------ */
+    /* THE MASTER'S SEVEN WORDS ARE A FACE HERE AND A CONTROL ON THE BOARD
+       (2026-09-07, §10b step 3). `setMaster` STOOD BESIDE THESE TWO and was
+       the `tfoot|master` row's writer: `NuDeskDoc.writeMaster(DOC, k, v)`,
+       which is byte for byte what ui/engineer.js's main plate has written
+       through its own seven menus since the board was built. MEASURED on the
+       rendered page before the deletion: `master|<key>` on the main plate and
+       `tmaster|<key>` in the table footer were TWO CONTROLS FOR ONE FACT, both
+       on the page at once, and the round that gave the master its own row and
+       the board for a sheet is the round that has to pick one. It picks the
+       board's, because
+       the board is where the bypass button that reads those same seven values
+       lives and because §9b's own word for this wave is "minimize".
+       WHAT STAYS IS THE READ: `MASTERROWS` and `masterOf` are how
+       `special.ts masterFace` says what the master row is standing on, and a
+       face is not a second control. */
     MASTERROWS: NuFields.MASTER,
     masterOf: (k) => (DOC.sound && DOC.sound.master && DOC.sound.master[k]) || null,
-    setMaster: (k, v) => { NuDeskDoc.writeMaster(DOC, k, v || ""); after(); },
+
+    /* ---- THE MIX ROW'S THREE DOORS (2026-09-07, §10b step 3) --------- */
+    mixWord: (name) => seatWord(DOC, name),
+    mixWritten: (name) => seatWritten(DOC, name),
+    /* THE BOARD, SEATED IN THE MASTER'S SHEET. `mountBoard` is ui/engineer.js's
+       `mount` and it is unchanged — the rack, its five plates and the row that
+       switches them, all inside its own `#boardpanel`, which is why every
+       `#boardpanel #rack .nu-plate` query nukernel/desk-gate.js makes reads the
+       same markup it read when this was a pane. What is deleted is the PANE:
+       the `Mix` tab, its `#deck` host, its `BUILD` entry, its `TABKIDS` branch
+       and `mixTrayItems`. `CTX.section` is passed through, so the board keeps
+       its `#board` section and its hidden `<h2>The board</h2>`. */
+    boardRack: () => { const box = el("div", null, "nu-seatboard");
+      try { mountBoard(box, CTX); } catch (e) {}
+      return box; },
     perfOf: (k) => (DOC.performance || {})[k],
     putPerf: (k, v) => { DOC.performance = DOC.performance || {};
       if (v == null) delete DOC.performance[k]; else DOC.performance[k] = v;
@@ -10677,13 +10717,16 @@ on("pos", (d) => {
   // nobody is laying out is the same waste `place()` refuses one block up. The
   // meters catch up on the next tick — 60ms, audio/live.js `tickPos` — which
   // is sooner than a thumb can reach the first fader.
-  if (openTab === "Mix") paintBoard();
-  // ...AND THE VOICE'S OWN STRIP, 2026-08-28, for exactly the reason the line
-  // above exists: the strip's model readout is written once a beat and it is
-  // on the BAND tab now, not the Mix tab. `paintVoiceMix` is a no-op unless a
-  // `mix` facet is actually on the page (it asks the node, `isConnected`), so
-  // this costs one call and no layout on the other eight tabs.
-  else if (openTab === "Band") paintVoiceMix();
+  /* ...AND BOTH OF THEM ARE ON THE BAND TAB SINCE 2026-09-07 (§10b step 3).
+     It read `if (openTab === "Mix") paintBoard(); else if (openTab === "Band")
+     paintVoiceMix();` — two tabs, one painter each. The board is the MIX row's
+     corner sheet now and a voice's strip is that voice's own mix cell, so both
+     are inside `#pan-band` and both are asked on the same tab. Neither painter
+     needs telling which is open: `paintBoard` returns at once when the rack is
+     not on the page and `paintVoiceMix` asks its node `isConnected`, which is
+     the same guard that made the second line cheap on eight tabs out of nine.
+     The accordion means at most one of them ever has anything to do. */
+  if (openTab === "Band") { paintBoard(); paintVoiceMix(); }
 });
 on("transport:state", () => {
   // PLAY AND STOP REPAINT THE UPPER STAVES AND TOUCH NOTHING ELSE. This was
@@ -10845,8 +10888,8 @@ function draw() {
   const release = holdHeight(box);
   try { buildTab(openTab); } finally { release(); }
   putPanes();
-  // `document` and not `box`: the board is mounted into #deck, the producer
-  // into #produce and the score into #scoredeck — all outside #app — and a
+  // `document` and not `box`: the producer is mounted into #produce and the
+  // score into #scoredeck — both outside #app — and a
   // thumb that was on a fader or a verb chip is still a thumb that must come
   // back.
   /* AND THE STRIPE IS REPAINTED FROM THE RECORD (2026-08-28). Hiring a voice
@@ -10958,7 +11001,20 @@ const TABS = [
      same way, one at a time, as each becomes a row or a sheet.") */
   ["Motifs",  "pan-motif"],
   ["Band",    "pan-band"],
-  ["Mix",     "deck"],
+  /* (`["Mix", "deck"]` STOOD HERE, 2026-08-27 to 2026-09-07. TABLE.md §10b
+     step 3: *"MIX row (engineer.js's strips per column, the master in the
+     corner, the genre bus's three slots in the master's sheet)."* §10a says
+     what shape it takes and it is the one special row that is not merged:
+     *"MIX is ALIGNED — one channel strip per voice column and the master in
+     the corner."* So a player's seat is the cell under that player's own
+     column, opening ui/engineer.js's `voiceMix`; and the MASTER is a merged row
+     directly under them (measured into that shape — `src/table/grid.ts
+     mixRow` carries the two readings of "the corner" that were built and
+     driven first), opening `mountBoard`, which builds the same `#boardpanel`
+     this tab used to hold.
+     `#deck` is out of index.html with the tab. §10a: "Rules, Time, Motifs,
+     Mix, Produce, Where as PANES are deleted the same way, one at a time, as
+     each becomes a row or a sheet.") */
   ["Produce", "produce"],
   ["Score",   "scoredeck"],
   ["Video",   "videodeck"],
@@ -11020,7 +11076,9 @@ const BUILD = {
      names each one and T7 reads the rendered page to prove it is reachable by
      tap at 320px. */
   Band: (host) => tablePanel(axis(host, "ax-band", "The band")),
-  Mix: (host) => mountBoard(host, CTX),
+  /* (`Mix: (host) => mountBoard(host, CTX)` STOOD HERE. `mountBoard` is
+     unchanged and is called from one place now — the table's `boardRack()`
+     door, which is the MIX row's corner sheet. See the tombstone in `TABS`.) */
   Produce: (host) => mountProduce(host, CTX),
   Score: (host) => deckBlock(host),
   /* THE VIDEO DECK (2026-09-01). It returns a stop(), which nothing else here
@@ -11872,7 +11930,11 @@ const TABKIDS = {
      2026-09-04 and the sections are inside `bandTrayItems` now, appended after
      the band; the tab that hosted them is deleted (TABLE.md §6 ¶A). */
   Band: () => bandTrayItems(),
-  Mix: () => mixTrayItems(),
+  /* (`Mix: () => mixTrayItems()` STOOD HERE — the five plate rows. They are
+     buttons INSIDE the board again (ui/engineer.js's `#boardtabs`, restored in
+     the same edit at the same `boardtab|<kind>|<key>` addresses), because a
+     board whose plates could only be switched from a branch of a tab that no
+     longer exists is four plates lost.) */
   Score: () => scoreTrayItems(),
 };
 /* OPEN THIS NODE'S PATH, OR CUT THE PATH AT IT (2026-09-02, "only allow one
@@ -12224,51 +12286,26 @@ function openVoice(name) {
 }
 
 
-/* ===== MIX'S FIVE CHILDREN, 2026-09-02 =================================
-   Paul: *"Instead of having four icons on top and section automation that
-   should have been five subicons under the 'Mix' icon. One of them is section
-   automation."*
-
-   THE KEYS ARE ui/engineer.js's OWN — `boardtab|bus|<key>` and
-   `boardtab|auto|auto` — because nukernel/desk-gate.js has driven that row by
-   that selector since the buses became tabs, and an address does not move
-   because a row did. What the nav does is call the board's two new exports:
-   `showBoard(kind, key)` opens a plate without rebuilding the deck, and
-   `boardTabNow()` says which is open. eight.js does not learn what a plate is
-   and engineer.js does not learn what the gutter is.
-
-   THE IN-PANEL `#boardtabs` ROW IS DELETED, 2026-09-02 (slice 2e). It stood
-   for one wave as a fenced MIRROR of this level — both surfaces called
-   `showBoard`, so they could not disagree — and the fence said what would end
-   it: "it comes out in wave 2e together with the desk-gate checks that drive
-   it (G11/G12/G13)." They moved in the same commit; these five rows are the
-   only place the gesture lives, and `boardtab|…` is still the address, on
-   these buttons.
-
-   THE WORDS ARE THE REGISTRY'S, not this function's. `NuFields.BUSES` carries
-   each bus's own label — "a renamed row is renamed on the tab by existing",
-   ui/engineer.js's law for the row this replaces — so the two words spelled
-   here are the two the registry does not hold: `main`, which is where the
-   series ENDS rather than a BUSROWS row, and `automation`, which is a grid and
-   not a bus at all. Those are the same two exceptions engineer.js names. */
-function mixTrayItems() {
-  const at = boardTabNow() || {};
-  const rows = [["bus", "genre"], ["bus", "echo"], ["bus", "rev"],
-                ["bus", "main"], ["auto", "auto"]];
-  const busWord = (k) => ((NuFields.BUSES || []).find((b) => b.bus === k) || {}).label || k;
-  const WORD = { genre: busWord("genre"), echo: busWord("echo"),
-                 rev: busWord("rev"), main: "main", auto: "automation" };
-  return rows.map(([kind, key]) => {
-    const g = kind === "auto" ? GLYPH.sec.one : (GLYPH.bus[key] || {});
-    return { key: "boardtab|" + kind + "|" + key,
-             glyph: g.g || "•", word: WORD[key],
-             say: kind === "auto"
-               ? "section automation — a trim on every fader, section by section"
-               : (g.s || WORD[key]),
-             on: at.kind === kind && at.key === key,
-             act: () => { showTab("Mix"); showBoard(kind, key); } };
-  });
-}
+/* ===== MIX'S FIVE CHILDREN ARE BUTTONS ON THE BOARD AGAIN (2026-09-07) ==
+   `mixTrayItems` STOOD HERE — five tray rows, `boardtab|bus|genre` …
+   `boardtab|auto|auto`, each calling `showTab("Mix"); showBoard(kind, key)`.
+   Paul's own sentence for them (2026-09-02, *"that should have been five
+   subicons under the 'Mix' icon"*) is not withdrawn and could not be honoured:
+   TABLE.md §10b step 3 deletes the Mix TAB, so there is no icon for five
+   subicons to sit under.
+   WHERE THE GESTURE WENT, AND WHY IT IS NOT LOST. The row of five is inside
+   ui/engineer.js's `mount` again (`#boardtabs`), at THE SAME FIVE ADDRESSES —
+   an address does not move when a row does, which is what let this branch
+   inherit them from that row in the first place and what lets that row inherit
+   them back. nukernel/desk-gate.js's `openBus` presses `[data-k="boardtab|bus|
+   <k>"]` and does not know which surface drew it; what changed for it is one
+   line, the tap that opens the board.
+   `showBoard` AND `boardTabNow` LEFT THIS FILE'S IMPORT LIST with it, because
+   this branch was their only caller here. Both are still exported and both are
+   still used — by ui/engineer.js's own restored row, which calls `showBoardHere`
+   directly, and by nukernel/desk-gate.js, which presses the buttons. What
+   `tableAPI().showBoard` means now is "open the MIX row's corner", which is
+   `openMixRow("master")` and not a plate at all. */
 
 /* ===== THE TEMPO LEVEL IS GONE, AND IT WENT BACK WHERE IT CAME FROM =====
    2026-09-02. Paul: *"Tap tempo, the tempo editor appears, same for key. The
@@ -13312,7 +13349,7 @@ function boardNode() {
   a.href = "#board"; a.textContent = "record gain — on the board's main strip";
   a.className = "nu-routelink";
   a.dataset.k = "goto.board";
-  a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
+  a.addEventListener("click", (e) => { e.preventDefault(); openMixRow("master"); });
   pt.append(a);
   return pt;
 }
@@ -14674,6 +14711,32 @@ window.__eightTabMs = () => tabMs;
    PRESSES the row's own head, which is a hand's two taps and not a second
    owner of the accordion. It answers whether the row is open, so a caller can
    toggle honestly rather than guessing. */
+/* THE MIX ROW'S OWN DOOR, WHICH IS `__eightRow` WITH A CELL ON THE END
+   (2026-09-07, §10b step 3). The row is ALIGNED, so it has a head AND a cell
+   per player, and a caller wants one of the two: `openMixRow("master")` opens
+   the corner (the board), `openMixRow("bass")` opens that player's seat. It is
+   a HAND — `showTab` then a `click` on the button a thumb would press — and it
+   is idempotent for the reason `__eightRow` is: a gate that opened the same
+   seat twice would have closed it with the second tap. */
+function openMixRow(which) {
+  showTab("Band");
+  const k = which && which !== "master" ? "tmix|" + which : "tmix";
+  const at = () => document.querySelector(
+    '#pan-band [data-k="' + k.replace(/"/g, '\\"') + '"]');
+  const b = at();
+  if (b && b.getAttribute("aria-expanded") !== "true") b.click();
+  const n = at();
+  return !!n && n.getAttribute("aria-expanded") === "true";
+}
+window.__eightMix = (which, want) => {
+  if (want === false) {
+    const k = which && which !== "master" ? "tmix|" + which : "tmix";
+    const b = document.querySelector('#pan-band [data-k="' + k + '"]');
+    if (b && b.getAttribute("aria-expanded") === "true") b.click();
+    return false;
+  }
+  return openMixRow(which);
+};
 window.__eightRow = (id, want) => {
   showTab("Band");
   const at = () => document.querySelector('#pan-band [data-k="t' + id + '"]');

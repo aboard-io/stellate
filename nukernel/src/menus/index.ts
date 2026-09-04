@@ -94,7 +94,7 @@
 // re-rendering a field that has focus and a caret in it is how a filter loses
 // both — measured on the widget this replaces and kept.
 
-import { html, render } from "lit/html.js";
+import { html, render, nothing } from "lit/html.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import type { MenuSpec, Word, Picker } from "./api.js";
@@ -263,10 +263,29 @@ function chips(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
       if (typeof spec.onWrite === "function") spec.onWrite(cur);
     }
   };
+  /* ...AND THE CHIP PRINTS ITS OWN REASON, WHICH IS THE THIRD WIDGET LEARNING
+     A LAW THE OTHER TWO ALREADY KNEW (2026-09-07). The native picker joins the
+     reason to the option's words (`optionText`) and so does the combo's `<li>`;
+     the chip carried it in `data-why`, `title` and its accessible name and
+     printed NOTHING, so a greyed word on a phone was a silent grey with a
+     tooltip nobody on a phone can open. `test/rules-view.browser.js` R5a said
+     so the hour the chips landed: two refused offers, `said: false`.
+     THE REASON IS A LINE INSIDE THE CHIP, and that shape is not invented here:
+     `.nu-chipprov` is already a `flex: 0 0 100%` second line inside this exact
+     button (a motif's provenance), and nu.css:2692 states the sheet's own
+     ruling on where a reason may live — *"it costs its OWN chip's height and
+     nothing else's"*, with positioning and hoisting both rejected in writing.
+     So the chip grows a line, its neighbours do not, and the strip's own
+     `flex-wrap` does the rest.
+     `title` STAYS ONLY WHERE THE REASON IS NOT PRINTED — the whole-strip
+     refusal, whose sentence `menu()` prints once under the control. A tooltip
+     repeating a sentence already on the glass is the noise the refused-control
+     law is against. */
   const draw = () => render(html`${rows.map((r) => {
     const hard = !!off;
     const refused = hard || (!!r.o.disabled && r.value !== cur);
-    const why = hard ? off : (r.o.why ? String(r.o.why) : null);
+    const own = r.o.why ? String(r.o.why).trim() : "";
+    const why = hard ? off : (own || null);
     const w = r.o.label == null ? r.value : String(r.o.label);
     return html`<button type="button"
       class=${classMap({ "nu-wchip": true, "is-quiet": !!r.o.quiet })}
@@ -277,9 +296,10 @@ function chips(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
       ?disabled=${refused}
       aria-disabled=${ifDefined(refused ? "true" : undefined)}
       data-why=${ifDefined(why == null ? undefined : why)}
-      title=${ifDefined(why ? why : undefined)}
+      title=${ifDefined(hard && off ? off : undefined)}
       aria-label=${why ? w + ", " + why : w}
-      @click=${() => write(r.value)}>${w}</button> `;
+      @click=${() => write(r.value)}><span class="nu-chipword">${w}</span
+      >${own ? html`<small class="nu-why">${own}</small>` : nothing}</button> `;
   })}`, strip);
   draw();
   paintDetent(box, strip, cur, detent);

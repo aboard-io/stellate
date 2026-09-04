@@ -776,13 +776,18 @@ function colSheet(A2, vi) {
     true,
     "bar one"
   ));
-  f2.push({ kind: "node", label: "seat", node: A2.voiceStrip(v3.name) });
-  f2.push({ kind: "ops", label: "the buses", ops: [
+  f2.push({ kind: "ops", label: "the desk", ops: [
     {
       k: "tseat|" + v3.name,
-      word: "on the board",
+      word: "its seat on the mix row",
+      aria: v3.name + " — its fader, pan, sends, EQ and inserts, in the mix row",
+      act: () => A2.showSeat(v3.name)
+    },
+    {
+      k: "tbuses|" + v3.name,
+      word: "the buses",
       aria: v3.name + " — the buses its sends feed, on the board",
-      act: () => A2.showBoard(v3.name)
+      act: () => A2.showBoard()
     }
   ] });
   return f2;
@@ -868,24 +873,6 @@ function cellSheet(A2, i5, vi) {
   });
   return f2;
 }
-function masterCells(A2) {
-  return A2.MASTERROWS.map((m3) => {
-    const cur = A2.masterOf(m3.key);
-    return {
-      key: "tmaster|" + m3.key,
-      value: cur == null ? "" : String(cur),
-      label: m3.key + " " + (cur == null ? "—" : m3.labels[cur] || cur),
-      word: cur == null ? "—" : m3.labels[cur] || cur,
-      derived: cur == null,
-      sub: "the master's " + m3.label,
-      options: [
-        { v: "", w: "none" },
-        ...Object.keys(m3.table).map((k2) => ({ v: k2, w: m3.labels[k2] || k2 }))
-      ],
-      set: (v3) => A2.setMaster(m3.key, v3 || null)
-    };
-  });
-}
 function perfCells(A2) {
   return A2.PERFROWS.map((p3) => {
     const sp = A2.sh(p3.key, {}, p3.label);
@@ -942,17 +929,6 @@ function perfSheet(A2) {
       set: (v3) => A2.putPerf("ontime", v3 ? true : null),
       clear: A2.perfOf("ontime") ? () => A2.putPerf("ontime", null) : null
     }
-  ];
-}
-function masterSheet(A2) {
-  return [
-    {
-      kind: "say",
-      label: "the master",
-      word: "drive · glue · tape · space · width · tilt · ceiling",
-      sub: "the seven words are the cells across this row"
-    },
-    ...masterCells(A2)
   ];
 }
 function rowOps(A2, i5, s3) {
@@ -1439,6 +1415,20 @@ var SPECIALS = [
     sheet: rulesSheet
   }
 ];
+function mixSheet(A2, name) {
+  return [{ kind: "node", node: A2.voiceStrip(name) }];
+}
+function masterFace(A2) {
+  const said = [];
+  for (const m3 of A2.MASTERROWS) {
+    const cur = A2.masterOf(m3.key);
+    if (cur != null && cur !== "") said.push(m3.labels[cur] || String(cur));
+  }
+  return said.length ? said.join(" · ") : "the genre's own chain, nothing written";
+}
+function masterMixSheet(A2) {
+  return [{ kind: "node", label: "the buses", node: A2.boardRack() }];
+}
 
 // nukernel/src/table/undo.ts
 var DEPTH = 25;
@@ -1575,9 +1565,10 @@ function shapeOf(A2) {
     }
   };
 }
+var STICKY = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0);
 function bandTable(host, A2) {
   const U = undoStack(A2);
-  if (!OPEN || OPEN.indexOf("sp|") !== 0) {
+  if (!STICKY(OPEN)) {
     OPEN = null;
     OPENFIELD = null;
   }
@@ -1608,6 +1599,15 @@ function bandTable(host, A2) {
     if (!n3) {
       n3 = A2.lampFor(name);
       LAMPS.set(name, n3);
+    }
+    return n3;
+  };
+  const MIXLAMPS = /* @__PURE__ */ new Map();
+  const mixLamp = (name) => {
+    let n3 = MIXLAMPS.get(name);
+    if (!n3) {
+      n3 = A2.lampFor(name);
+      MIXLAMPS.set(name, n3);
     }
     return n3;
   };
@@ -1973,15 +1973,7 @@ function bandTable(host, A2) {
     </td>`;
   };
   const tfoot = (S2, cols) => b`<tfoot>
-    ${footRow(
-    S2,
-    "master",
-    "tfoot|master",
-    "master",
-    "the master chain — the record's own last stage",
-    masterCells(A2),
-    () => masterSheet(A2)
-  )}
+    ${mixRow(S2, cols)}
     ${footRow(
     S2,
     "perf",
@@ -1992,6 +1984,53 @@ function bandTable(host, A2) {
     () => perfSheet(A2)
   )}
   </tfoot>`;
+  const mixRow = (S2, cols) => {
+    const master = "mix|master";
+    const face = masterFace(A2);
+    return b`<tr class="nu-footrow nu-mixrow" data-row="mix">
+      <th class="nu-srowh" scope="row"><span class="nu-srowname">mix</span></th>
+      ${c2(cols, (c3) => c3, (c3) => mixCell(c3))}
+      <td class="nu-addcell"></td>
+    </tr>
+    <tr class="nu-footrow nu-masterrow" data-row="master">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <button type="button" class="nu-sphead" data-k="tmix"
+          aria-expanded=${String(OPEN === master)}
+          aria-label=${"the master — " + face + " — and the buses every strip feeds"}
+          @click=${() => toggle(master)}
+          @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle(master, true);
+    }}
+          ><b class="nu-spword">master</b
+          ><span class="nu-spface">${face}</span></button>
+      </th>
+    </tr>
+    ${OPEN === master ? openRow(S2, sheetFor(master, () => wrapOps(masterMixSheet(A2))), "master") : A}
+    ${cols.map((c3) => OPEN === "mix|" + c3 ? openRow(S2, sheetFor(OPEN, () => wrapOps(mixSheet(A2, c3))), c3) : A)}`;
+  };
+  const mixCell = (name) => {
+    const openKey = "mix|" + name;
+    const word = A2.mixWord(name);
+    return b`<td class="nu-mixcell">
+      <button type="button"
+        class=${e3({
+      "nu-wcell": true,
+      "nu-trimbtn": true,
+      "is-derived": !A2.mixWritten(name)
+    })}
+        data-k=${"tmix|" + name}
+        aria-expanded=${String(OPEN === openKey)}
+        aria-label=${name + " — its seat on the desk: " + word}
+        @click=${() => toggle(openKey)}
+        @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle(openKey, true);
+    }}
+        >${word}</button>
+      ${mixLamp(name)}
+    </td>`;
+  };
   const footRow = (S2, id, k2, word, aria, cells, sheet) => {
     const openKey = "foot|" + id;
     return b`<tr class="nu-footrow" data-row=${id}>
@@ -2020,7 +2059,7 @@ function bandTable(host, A2) {
       data-k=${f2.key}
       aria-label=${(f2.label || f2.key) + ": " + (f2.word ?? "—")}
       @click=${() => {
-      const row = String(f2.key).indexOf("tmaster|") === 0 ? "foot|master" : "foot|perf";
+      const row = "foot|perf";
       if (SHEETKEY !== row) {
         SHEETKEY = null;
         SHEETFIELDS = null;
@@ -2097,7 +2136,7 @@ function bandTable(host, A2) {
     return fields;
   }
   function toggle(key, keepOpen = false) {
-    if (key.indexOf("sp|") === 0 && (OPEN !== key || keepOpen)) {
+    if (STICKY(key) && (OPEN !== key || keepOpen)) {
       try {
         A2.leaveLanding();
       } catch (e4) {
@@ -2189,7 +2228,7 @@ function bandTable(host, A2) {
     const tg = e4.target;
     const tag = tg?.tagName;
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
-    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!OPEN && OPEN.indexOf("sp|") === 0 && !!tg.closest(".nu-wopen"));
+    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || STICKY(OPEN) && !!tg.closest(".nu-wopen"));
     if (inSpecial && e4.key !== "Escape") return;
     if (meta && (e4.key === "z" || e4.key === "Z")) {
       e4.preventDefault();

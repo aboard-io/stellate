@@ -54,11 +54,11 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { TableAPI, Field, Op } from "./api.js";
-import { rowSheet, colSheet, cellSheet, masterSheet, perfSheet,
-         masterCells, perfCells, tableOps, playerOffers, sectionOffer,
+import { rowSheet, colSheet, cellSheet, perfSheet,
+         perfCells, tableOps, playerOffers, sectionOffer,
          rowOps, colOps, cellOps } from "./model.js";
 import { sheetBody, onRedraw } from "./sheet.js";
-import { SPECIALS } from "./special.js";
+import { SPECIALS, mixSheet, masterFace, masterMixSheet } from "./special.js";
 import { undoStack } from "./undo.js";
 import type { DocUndo } from "./undo.js";
 
@@ -121,6 +121,20 @@ export interface Grid {
   openCorner(fields?: Field[], btn?: HTMLElement | null): void;
 }
 
+/** WHICH OPEN DOORS SURVIVE A REBUILD, and the test is the same sentence for
+ *  both of them: a door whose OWN CONTROLS RECOMPILE would shut under the thumb
+ *  that was using it. `sp|` is TIME and RULES (a tempo, a meter word, a rule);
+ *  `mix|` is the mix row (a fader, a send, an insert — every one of them a
+ *  `ctx.changed()`). None of the three reasons a column sheet must close is
+ *  true of either — `tablePanel` lands an arrival by clicking a COLUMN or a ROW
+ *  head, the transpose is reached through the corner, and no gate opens one by
+ *  toggling. The open BODY is rebuilt like any other; only WHICH door is open
+ *  is kept. (§10b step 5's PRODUCE row will be the third and is not written
+ *  here until it exists: a prefix nothing can produce is the declared-and-never-
+ *  arriving shape this repo has a memory note about.) */
+const STICKY = (k: string | null): boolean => !!k &&
+  (k.indexOf("sp|") === 0 || k.indexOf("mix|") === 0);
+
 export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const U = undoStack(A);
   /* ---- A REBUILD CLOSES THE SHEET; THE SELECTION SURVIVES IT ----------
@@ -148,7 +162,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      panel away and builds it again, so a row that closed on a rebuild would
      shut under the thumb that was using it. The open BODY is rebuilt like any
      other; only which row is open is kept. */
-  if (!OPEN || OPEN.indexOf("sp|") !== 0) { OPEN = null; OPENFIELD = null; }
+  if (!STICKY(OPEN)) { OPEN = null; OPENFIELD = null; }
   /* THE SELECTION IS PRUNED AGAINST THE RECORD ON EVERY DRAW. A delete, a
      deal-again or a whole new document can take the selected cell away, and a
      selection pointing at a section that is gone is a formula bar showing a
@@ -179,6 +193,16 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const lamp = (name: string): HTMLElement => {
     let n = LAMPS.get(name);
     if (!n) { n = A.lampFor(name); LAMPS.set(name, n); }
+    return n;
+  };
+  /* ...AND THE MIX ROW'S OWN, IN ITS OWN MAP. Same builder, same join, a
+     different node: one element cannot stand in the head and in the footer at
+     once, and sharing the head's would move it into the footer on the first
+     draw. */
+  const MIXLAMPS = new Map<string, HTMLElement>();
+  const mixLamp = (name: string): HTMLElement => {
+    let n = MIXLAMPS.get(name);
+    if (!n) { n = A.lampFor(name); MIXLAMPS.set(name, n); }
     return n;
   };
 
@@ -572,14 +596,105 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   };
 
   /* ---- THE FOOTER: THE RECORD (1 RECORD) ------------------------------ */
+  /* ---- THE FOOTER: THE MIX ROW, ITS MASTER, THEN PERFORMANCE ---------
+     THE `master` FOOT ROW IS THE MIX ROW'S MASTER SINCE 2026-09-07 (§10b step
+     3). It read `footRow(S, "master", "tfoot|master", …, masterCells(A))` —
+     the seven master words as CELLS of a merged row, each writing through
+     `A.setMaster` — and both the row and those seven cells are deleted, not
+     moved: ui/engineer.js's main plate draws `master|<key>` for every one of
+     them through the same `NuDeskDoc.writeMaster`, so the footer's copy was
+     the SECOND control for one fact and the round that put the board in the
+     master's own sheet is the round that had to pick one. What is left is the
+     READ — `masterFace` says what the record is standing on — and the board,
+     which is what the row opens. `masterCells` and `masterSheet` went with the
+     row; `model.ts` carries the tombstone. */
   const tfoot = (S: Shape, cols: string[]): TemplateResult => html`<tfoot>
-    ${footRow(S, "master", "tfoot|master", "master",
-              "the master chain — the record's own last stage",
-              masterCells(A) as Field[], () => masterSheet(A))}
+    ${mixRow(S, cols)}
     ${footRow(S, "perf", "tfoot|perf", "performance",
               "how the band plays it — the record's own performance",
               perfCells(A), () => perfSheet(A))}
   </tfoot>`;
+
+  /* ---- THE MIX ROW (§10a: "MIX is ALIGNED") --------------------------
+     One cell per voice column, each carrying that seat's own level word and
+     its own lamp, and a MASTER row directly under them. It is the `<tfoot>`'s
+     first pair of rows and it exists only in the sections-down facing, because
+     a row aligned to the voice COLUMNS has nothing to align to when the
+     transpose puts sections there (`pane()` draws no footer at all across, and
+     has not since wave 2b).
+
+     THE MASTER IS A MERGED ROW UNDER IT, AND THAT IS TWO MEASUREMENTS AND
+     NOT A PREFERENCE. §10a drew it inside the mix row — `│ MIX │ strip │
+     strip │ strip │ master │` — and it was built that way twice before it was
+     drawn on a phone:
+       IN THE ROW HEAD it is unreadable. The head column of this table is
+       NARROW by construction: MEASURED at all three widths, the `<th>` is 36px
+       at 320 and 390 and 45px at 1280, the button inside it 26 and 35, and the
+       face `soft · worn · room · warm · open` rendered at SEVENTEEN PIXELS. No
+       stylesheet widens that column without narrowing the players.
+       IN THE ADDER COLUMN it is off the screen. Measured: the button is 547px
+       wide and reads perfectly — at an x that is seven player columns to the
+       right of a 255px pane. The mix row's cells are inside the pane's own
+       horizontal scroll, which is exactly right for a fact that belongs to a
+       COLUMN and exactly wrong for one that belongs to the record.
+     AND A RECORD-LEVEL FACT IN THIS TABLE IS A MERGED ROW — §10a's own first
+     sentence, the shape TIME and RULES already have. So the master is one
+     `<th colspan>` under the strips, its line pinned to the pane's left edge
+     by `.nu-sphead`'s `--panew` like every other merged row's, reading whole at
+     320. The address did not move: `tmix` is on the master's button wherever
+     the button stands, and `openMixRow("master")` presses it by that name. */
+  const mixRow = (S: Shape, cols: string[]): TemplateResult => {
+    const master = "mix|master";
+    const face = masterFace(A);
+    return html`<tr class="nu-footrow nu-mixrow" data-row="mix">
+      <th class="nu-srowh" scope="row"><span class="nu-srowname">mix</span></th>
+      ${repeat(cols, (c) => c, (c) => mixCell(c))}
+      <td class="nu-addcell"></td>
+    </tr>
+    <tr class="nu-footrow nu-masterrow" data-row="master">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
+        <button type="button" class="nu-sphead" data-k="tmix"
+          aria-expanded=${String(OPEN === master)}
+          aria-label=${"the master — " + face +
+            " — and the buses every strip feeds"}
+          @click=${() => toggle(master)}
+          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(master, true); }}
+          ><b class="nu-spword">master</b
+          ><span class="nu-spface">${face}</span></button>
+      </th>
+    </tr>
+    ${OPEN === master
+      ? openRow(S, sheetFor(master, () => wrapOps(masterMixSheet(A))), "master")
+      : nothing}
+    ${cols.map((c) => OPEN === "mix|" + c
+      ? openRow(S, sheetFor(OPEN!, () => wrapOps(mixSheet(A, c))), c)
+      : nothing)}`;
+  };
+
+  /** ONE SEAT, COLLAPSED. The word is the strip's own reading of the fader and
+   *  the lamp is the column head's own lamp built a second time — `lampFor`
+   *  registers each node it makes with the page's paint list, so two lamps for
+   *  one player are two nodes lit by one join and never one node moved between
+   *  two cells (a DOM node has one parent, and a shared one would vanish from
+   *  the head the moment the footer drew). It is the SIBLING of the button and
+   *  never its child: `[data-live]` is a surface the clock writes, and a
+   *  control inside one is the shape test/motif-frozen A1 forbids. */
+  const mixCell = (name: string): TemplateResult => {
+    const openKey = "mix|" + name;
+    const word = A.mixWord(name);
+    return html`<td class="nu-mixcell">
+      <button type="button"
+        class=${classMap({ "nu-wcell": true, "nu-trimbtn": true,
+                           "is-derived": !A.mixWritten(name) })}
+        data-k=${"tmix|" + name}
+        aria-expanded=${String(OPEN === openKey)}
+        aria-label=${name + " — its seat on the desk: " + word}
+        @click=${() => toggle(openKey)}
+        @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
+        >${word}</button>
+      ${mixLamp(name)}
+    </td>`;
+  };
 
   const footRow = (S: Shape, id: string, k: string, word: string, aria: string,
                    cells: Field[], sheet: () => Field[]): TemplateResult => {
@@ -612,8 +727,11 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
                          "is-derived": !!f.derived })}
       data-k=${f.key}
       aria-label=${(f.label || f.key) + ": " + (f.word ?? "—")}
-      @click=${() => { const row = String(f.key).indexOf("tmaster|") === 0
-        ? "foot|master" : "foot|perf";
+      @click=${() => { /* (`String(f.key).indexOf("tmaster|") === 0 ? "foot|
+           master" : …` STOOD HERE. The footer had two rows of cells and this
+           told them apart; it has one, because the master's seven cells are
+           the MIX row's corner sheet since 2026-09-07.) */
+        const row = "foot|perf";
         if (SHEETKEY !== row) { SHEETKEY = null; SHEETFIELDS = null; }
         OPEN = row; OPENFIELD = f.key!; draw(); }}
       >${f.label ?? f.word ?? "—"}</button>`;
@@ -687,7 +805,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     /* OPENING A SPECIAL ROW LETS THE PAGE'S LANDING GO — see `leaveLanding`
        in api.ts for the measurement. Only on the way OPEN: shutting TIME is
        not a claim about where you are standing. */
-    if (key.indexOf("sp|") === 0 && (OPEN !== key || keepOpen)) {
+    if (STICKY(key) && (OPEN !== key || keepOpen)) {
       try { A.leaveLanding(); } catch (e) { /* an older host */ }
     }
     if (key.indexOf("cell|") === 0) {
@@ -804,7 +922,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        Escape is the exception, because it is how the row closes, and it is
        handled by the switch below either way. */
     const inSpecial = !!tg && (!!tg.closest(".nu-sprow") ||
-      (!!OPEN && OPEN.indexOf("sp|") === 0 && !!tg.closest(".nu-wopen")));
+      !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") ||
+      (STICKY(OPEN) && !!tg.closest(".nu-wopen")));
     if (inSpecial && e.key !== "Escape") return;
     if (meta && (e.key === "z" || e.key === "Z")) {
       e.preventDefault(); if (e.shiftKey) U.redo(); else U.undo(); return; }

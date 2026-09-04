@@ -396,15 +396,26 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
     en == null ? "" : (en as number),
     [0, 1, 2, 4, 8], (x) => A.putCast(vi, "entry", x === "" ? null : +x), true,
     "bar one"));
-  /* WHERE IT SITS IN THE MIX, AND THE STRIP ITSELF. The board has bus strips
-     and the automation grid and NO per-voice channel — Paul took the voices off
-     it on 2026-08-28 — so the fader, the pan, the three sends and the three
-     insert slots had exactly one home and it comes here WHOLE. */
-  f.push({ kind: "node", label: "seat", node: A.voiceStrip(v.name) });
-  f.push({ kind: "ops", label: "the buses", ops: [
-    { k: "tseat|" + v.name, word: "on the board",
+  /* WHERE IT SITS IN THE MIX IS THE MIX ROW NOW (2026-09-07, §10b step 3).
+     `f.push({ kind: "node", label: "seat", node: A.voiceStrip(v.name) })`
+     STOOD HERE and was right for one round: the board had bus strips and the
+     automation grid and NO per-voice channel (Paul took the voices off it on
+     2026-08-28), so the fader, the pan, the sends and the three insert slots
+     had exactly one home and the column sheet was it. §10a gives them their
+     own: *"MIX is ALIGNED — one channel strip per voice column"*, which is the
+     cell directly under this column in the footer. The strip did not move —
+     it is `voiceMix` in both cases, one drawing — but it is drawn in ONE place
+     now, and this row is the pointer that says where.
+     THE POINTER IS THE `tseat|<voice>` OP IT ALWAYS WAS, one word wider: it
+     used to open the Mix TAB (which is deleted) and it opens the seat's own
+     cell instead. */
+  f.push({ kind: "ops", label: "the desk", ops: [
+    { k: "tseat|" + v.name, word: "its seat on the mix row",
+      aria: v.name + " — its fader, pan, sends, EQ and inserts, in the mix row",
+      act: () => A.showSeat(v.name) },
+    { k: "tbuses|" + v.name, word: "the buses",
       aria: v.name + " — the buses its sends feed, on the board",
-      act: () => A.showBoard(v.name) } ] });
+      act: () => A.showBoard() } ] });
   return f;
 }
 
@@ -499,19 +510,16 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
 
 /* ---- the record's own footer (1 RECORD) ------------------------------ */
 
-export function masterCells(A: TableAPI): StripField[] {
-  return A.MASTERROWS.map((m) => {
-    const cur = A.masterOf(m.key);
-    return { key: "tmaster|" + m.key, value: cur == null ? "" : String(cur),
-             label: m.key + " " + (cur == null ? "—" : (m.labels[cur] || cur)),
-             word: cur == null ? "—" : (m.labels[cur] || cur),
-             derived: cur == null,
-             sub: "the master's " + m.label,
-             options: [{ v: "", w: "none" } as Choice,
-                       ...Object.keys(m.table).map((k) => ({ v: k, w: m.labels[k] || k } as Choice))],
-             set: (v: string) => A.setMaster(m.key, v || null) };
-  });
-}
+/* (`masterCells(A)` STOOD HERE — seven `tmaster|<key>` strip fields off
+   `A.MASTERROWS`, written through `A.setMaster`. They were the `tfoot|master`
+   row's cells, and MEASURED on the rendered page they were the SECOND control
+   for each of the seven: ui/engineer.js's main plate draws `master|<key>` for
+   every one of them and writes through the same `NuDeskDoc.writeMaster`. The
+   MIX row's corner opens that plate now (§10b step 3, 2026-09-07), so the fact
+   has one control again and the seven strip fields are gone with the row that
+   held them. `A.MASTERROWS` and `A.masterOf` survive as the corner's FACE —
+   `special.ts masterFace` — because saying what the master is standing on is
+   not offering to change it.) */
 
 /** THE PERFORMANCE CELLS KEEP THE SHEET'S OWN ADDRESS, and that is a fix with a
  *  date on it (2026-09-04): re-keying them `tperf|<short>` MOVED THREE
@@ -553,12 +561,14 @@ export function perfSheet(A: TableAPI): Field[] {
   ];
 }
 
-export function masterSheet(A: TableAPI): Field[] {
-  return [{ kind: "say", label: "the master",
-            word: "drive · glue · tape · space · width · tilt · ceiling",
-            sub: "the seven words are the cells across this row" },
-          ...masterCells(A)];
-}
+/* (`masterSheet` STOOD HERE — a `say` line naming the seven words followed by
+   `...masterCells(A)` — and it was the `tfoot|master` row's sheet. The MIX row
+   is the master's cell now (§10b step 3, 2026-09-07) and `special.ts
+   masterMixSheet` is what opens: the same seven `masterCells`, then the board.
+   The `say` line came off with the row it captioned — the seven words are no
+   longer "the cells across this row", they are the sheet itself, and a caption
+   that describes furniture that is gone is the prose test/text-diet.test.js
+   takes off.) */
 
 /* ===================================================================== */
 /* ---- the op grammar (5), every one of them one existing door --------- */

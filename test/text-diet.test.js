@@ -132,8 +132,14 @@ const HARD = 1200;
 // `Time` and `Rules` are MERGED ROWS of the Band table (`ttime`, `trules`) and
 // their two panels are out of index.html; every control either of them drew is
 // inside the row, which is what test/table.browser.js T10 measures.
+// …AND ONE MORE, 2026-09-07 (§10b step 3): `Mix` is the MIX row of the Band
+// table — one cell per voice column holding that player's channel strip, and
+// the MASTER as a merged row under them whose sheet is the whole board. `#deck`
+// is out of index.html with the tab. The prose the board carries is counted
+// where it now stands: inside `Band`, behind a head a hand has to press, which
+// is why the number below did not move when this pane did.
 const TABS = ["Where", "Motifs", "Band",
-              "Mix", "Produce", "Score", "Video",
+              "Produce", "Score", "Video",
               "Screensaver", "Export"];
 const NAV_ROWS = TABS.filter((t) => t !== "Where");
 
@@ -166,9 +172,14 @@ const NAV_ROWS = TABS.filter((t) => t !== "Where");
 // panel's RULES row, which is why it may not stand in a list read as "the open
 // panel's own heading in tab order". It is still a heading and the diet still
 // skips it; what it stopped being is a PANEL's name.
+// …AND "The board" LEAVES IT THE SAME WAY, 2026-09-07 (§10b step 3). The
+// board is still drawn, by `ui/engineer.js mount`, INSIDE the Band panel's MIX
+// row — its `<h2>The board</h2>` is the section `ctx.section` gives it and is
+// still announced, still printed with the stylesheet off, still skipped by the
+// diet. What it stopped being is a PANEL's name, which is what this list reads.
 const HEADINGS = ["Where & when", "Motifs",
                   "The band",
-                  "The board", "The producer", "The score",
+                  "The producer", "The score",
                   // the two decks (2026-09-01): the film and the sky —
                   // vocabulary words, not the tab glyph names
                   //

@@ -46,7 +46,9 @@
  *   R9  ONE SENTENCE PER ROW, AND THE CONTROL IS IN IT. Every rule row is one
  *       `<label class="nu-said">`, no row is under the 44px tap floor, and a
  *       single-answer row (number / enum / flag) is at most a sentence line
- *       plus a control line. Measured before wave 4 §4 on the same record:
+ *       plus THE LINES ITS CONTROL OCCUPIES (2026-09-07: a chip strip wraps,
+ *       so the ceiling counts the strip's rendered lines at 44px each instead
+ *       of assuming one). Measured before wave 4 §4 on the same record:
  *       heights of 33 · 46 · 76 · 103 · 228 · 322 · 478.
  *   R9b …AND THE ROW IS TWO LINES (2026-09-03). Paul: *"Arrange things so the
  *       slider and function descriptions are on a line with the slider after
@@ -243,6 +245,21 @@ function standUpServer() {
         said: d.querySelectorAll(":scope > label.nu-said").length,
         stacked: d.querySelectorAll(":scope > h4, :scope > p:not(.nu-why), " +
           ":scope > small").length,
+        /* HOW MANY LINES THE CONTROL ITSELF OCCUPIES, off the glass. A chip
+           strip wraps — `.nu-wchips` is `flex-wrap: wrap` — so three long
+           words at 390 are three tap rows and the row is honestly that tall.
+           Counted as DISTINCT ROUNDED TOPS of the chips, which is what a line
+           is; every other widget answers 1 because it has no chips. */
+        lines: (() => {
+          const c = [...d.querySelectorAll(".nu-wchip")];
+          if (!c.length) return 1;
+          return new Set(c.map((x) =>
+            Math.round(x.getBoundingClientRect().top))).size;
+        })(),
+        /* ...AND WHETHER ANY OF THEM IS PRINTING A REASON, which is a second
+           line INSIDE one chip (`.nu-wchip > .nu-why`) and so a second row of
+           height the strip's own line count cannot see. */
+        whys: d.querySelectorAll(".nu-wchip > .nu-why").length,
       })),
       motifs: q(".nu-rule[data-rule='motifs']").map((d) =>
         ({ text: d.textContent.trim(), say: (d.dataset.say || "").length })),
@@ -338,8 +355,32 @@ function standUpServer() {
      one row whose sentence wraps to two lines — `stress`, "the band leans on
      the beat 0.42 — a little" — is 93. 96 is that, and it still catches the
      regression the 88 was written for: a row that grows a THIRD block. */
+  /* AND THE CEILING IS THE ROW'S OWN ARITHMETIC SINCE 2026-09-07, because a
+     WRAPPING CONTROL IS THE ROW'S HEIGHT AND NOT A REGRESSION. The 96 was
+     measured on a page whose every single-answer control was one line — a
+     `<select>`, a slider, a two-word flag. `src/menus/pick.ts` hands every
+     vocabulary of eight words or fewer a CHIP STRIP now (v272), and a strip of
+     three long words at 390 is three tap rows, not one: MEASURED on this
+     record, `rate` 129px and `plan` 129px are two lines of chips, `harmony`
+     176px is three. Holding those to 96 is asking a chip strip to be a
+     `<select>`, which is the widget Paul took off the phone.
+     So the ceiling counts the lines the control actually occupies and the row
+     is allowed 44px — one tap target — for each of them, plus the 52 that is
+     the sentence line and the row's own padding (74px measured for the
+     one-line rows, which is 52 + one 44px control minus the 22px the sentence
+     and the control share by sitting in one bordered box; the arithmetic is
+     read off the glass, not declared). A REFUSED CHIP'S REASON is a further
+     line inside one chip — the round that made a grey chip say why, in
+     `src/menus/index.ts` — and it costs that chip's own height, so a strip
+     carrying one is allowed one more 20px line of type.
+     WHAT THE CHECK STILL CATCHES is exactly what the 96 was written for: a row
+     that grows a THIRD BLOCK — a second control, a stacked paragraph, a
+     heading — because none of those is a wrapped chip line and none of them is
+     in this sum. */
   const SIMPLE = ["number", "enum", "flag", "said"];
-  const tall = geom.filter((g) => SIMPLE.indexOf(g.shape) >= 0 && g.h > 96);
+  const ceil = (g) => 52 + 44 * Math.max(1, g.lines || 1) + (g.whys ? 20 : 0);
+  const tall = geom.filter((g) => SIMPLE.indexOf(g.shape) >= 0 && g.h > ceil(g))
+    .map((g) => ({ ...g, ceiling: ceil(g) }));
   check(!noLabel.length, "R9 every editable row is ONE sentence label " +
     JSON.stringify(noLabel.slice(0, 3)));
   check(!stacked.length, "…with nothing stacked beside it — no heading, no " +
@@ -347,7 +388,12 @@ function standUpServer() {
   check(!under.length, "…and no row under the 44px tap floor " +
     JSON.stringify(under.slice(0, 3)));
   check(!tall.length, "…and every single-answer row inside a sentence line " +
-    "plus a control line " + JSON.stringify(tall.slice(0, 3)));
+    "plus the lines its control actually occupies " +
+    JSON.stringify(tall.slice(0, 3)));
+  console.log("       single-answer rows, height vs their own ceiling: " +
+    JSON.stringify(geom.filter((g) => SIMPLE.indexOf(g.shape) >= 0)
+      .map((g) => g.f + " " + g.h + "/" + ceil(g) +
+        " (" + g.lines + (g.whys ? "+why" : "") + ")")));
   /* R9b · THE TWO LINES, READ OFF THE GLASS. Paul's own sentence, asserted as
      geometry and not as markup: the words are ABOVE the control, they do not
      share a line with it, and the control is the width of the row. */

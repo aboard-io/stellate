@@ -354,6 +354,15 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      line measures. `pane` is a tap INSIDE the panel rather than on the
      stripe, which is what a column head is. */
   if (REAL) views.push({ top: "Band", pane: "thead .nu-colbtn" });
+  /* ...AND THE MIX ROW'S CELL, WHICH IS WHERE A SEAT LIVES SINCE 2026-09-07
+     (TABLE.md §10b step 3). The paragraph above is kept because every word of
+     its argument still holds — the seat is NOT the board's, and this file is
+     what proved it — but §10a gives the strip a row of its own: *"MIX is
+     ALIGNED — one channel strip per voice column"*, so the head that opens it
+     is `tmix|<voice>` in the footer and the column sheet draws no strip at
+     all. Same `voiceMix`, same three `ins|<voice>|<n>` seats; a different
+     `<td>`. */
+  if (REAL) views.push({ top: "Band", pane: 'tfoot .nu-mixrow [data-k^="tmix|"]' });
   const eachView = async (fn) => {
     const out = [];
     for (const v of views) {
@@ -523,6 +532,18 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      found by desk-gate's "every <select> outside #app" sweep and are not out
      there any more; that file carries the same note at its `sweepSelects`.) */
   const SEAT = /^\(no data-sel: ins\|[^|]+\|\d+ IN A STRIP\)$/;
+  /* ...AND THE SEAT HAS AN ADDRESS NOW, WHICH IS WHY THE COUNT BELOW WAS
+     ZERO (fixed 2026-09-07; red since v272's menus round). `seatSelect` passes
+     `ins|<voice>|<n>` as BOTH `key` and `k` since it went through
+     `src/menus/`, so the seat wears `data-sel="ins|<voice>|<n>"` and the
+     "(no data-sel: …)" spelling `SEAT` was written for stopped being produced
+     — the filter matched nothing and "the strip that carries them is on the
+     page at all" failed on an empty list, saying a strip was missing that was
+     standing right there. Both spellings are read now, for the reason
+     test/lib-combo.js reads three: a gate that knows one spelling of a control
+     is a gate that reports the next widget as a loss. The `rogue` line is
+     untouched — an ANONYMOUS menu is still what it refuses. */
+  const SEATSEL = /^ins\|[^|]+\|\d+$/;
   const rogue = menus.filter((k) => /^\(no data-sel/.test(k) && !SEAT.test(k));
   const devMenu = menus.filter((k) => /^dev\./.test(k));
   const devSheet = sheetKeys.filter((k) => /^dev\./.test(k));
@@ -548,7 +569,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     sheetKeys.includes(k) && !multiKeys.includes(k))
     .concat(menus.filter((k) => cellKeys.includes(k)))
     .concat(sheetKeys.filter((k) => cellKeys.includes(k) && !multiKeys.includes(k)));
-  const seats = menus.filter((k) => SEAT.test(k));
+  const seats = menus.filter((k) => SEAT.test(k) || SEATSEL.test(k));
   check(!rogue.length, "every <select> in #app came from ui/selects.js, or is " +
     "an insert SEAT on a channel strip (" + seats.length + " of those — " +
     "ui/engineer.js `seatSelect`, named and driven by desk-gate G11/G14/G15) " +
@@ -567,8 +588,8 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      caused this; measured red on HEAD before the slice, at 29 of 30.) */
   if (REAL)
     check(seats.length > 0, "…and the strip that carries them is on the page at " +
-      "all: a COLUMN'S OWN SHEET is one of the views this survey walks (the " +
-      "seat's home since the Band pane became the table), so a strip that " +
+      "all: the MIX ROW'S OWN CELL is one of the views this survey walks (the " +
+      "seat's home since 2026-09-07, §10b step 3), so a strip that " +
       "stopped being drawn fails here rather than passing quietly " +
       JSON.stringify(seats.slice(0, 3)));
   else notes.push("     (no channel strips here — the engineer is not in this " +

@@ -191,7 +191,7 @@ function standUpServer() {
   }, { s: sel, val: v });
   const openBus = async (k) => { await p.evaluate(async (key) => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    window.__eightTab("Mix"); await wait(400);
+    window.__eightMix("master"); await wait(400);
     const t = document.querySelector('[data-k="boardtab|bus|' + key + '"]'); if (t) t.click();
   }, k); await p.waitForTimeout(500); };
   const openVoice = async (n) => { await p.evaluate(async (name) => {
@@ -213,10 +213,12 @@ function standUpServer() {
     if (!btn) { if (window.__eightUp) { window.__eightUp(); await wait(250); }
       btn = document.querySelector('[data-k="tab' + name + '"]'); }
     if (btn) btn.click(); await wait(300);
-    /* THE STRIP IS THE COLUMN SHEET'S SINCE 2026-09-04 (TABLE.md wave 2c) —
-       `facet-mix` is deleted with the pane; the head the mark opens carries
-       `voiceMix` in its own sheet, opened on arrival. */
-    const h = document.querySelector('#pan-band [data-k="tcol|' + name + '"]');
+    /* THE STRIP IS THE MIX ROW'S CELL SINCE 2026-09-07 (TABLE.md §10b step 3).
+       It was the COLUMN sheet from wave 2c; §10a gives the strip a row of its
+       own — one cell per voice column in the footer, under that player's own
+       column — so the tap is on `tmix|<voice>`. Same `voiceMix`, same
+       `b|fader|<voice>`, same `#voicemix`; only the head that opens it moved. */
+    const h = document.querySelector('#pan-band [data-k="tmix|' + name + '"]');
     if (h && h.getAttribute("aria-expanded") !== "true") h.click();
   }, n); await p.waitForTimeout(700); };
   /* THE DESK CHANNEL KEY IS NOT THE UNIT KEY. channelVoicesOf answers "line",
@@ -391,7 +393,7 @@ function standUpServer() {
        `PLATES.auto`, the fifth plate, so the plate has to be OPENED, which is
        one press of its own mark in the gutter (the nav drives the board through
        `showBoard`, and `#boardtabs` mirrors it until wave 2e). */
-    await p.evaluate(() => window.__eightTab("Mix"));
+    await p.evaluate(() => window.__eightMix("master"));
     await p.waitForTimeout(500);
     await p.evaluate(() => { const a =
       document.querySelector('[data-k="boardtab|auto|auto"]'); if (a) a.click(); });

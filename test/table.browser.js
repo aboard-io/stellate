@@ -199,8 +199,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     shape.cols + " voice columns (" + shape.secs + " x " + shape.voices + ")");
   check(shape.cells === shape.secs * shape.voices,
     "…and every crossing is a cell (" + shape.cells + ")");
-  check(shape.foot === 2, "…with the record under it: master + performance (" +
-    shape.foot + " footer rows)");
+  /* THREE FOOTER ROWS SINCE 2026-09-07 (§10b step 3): the MIX row (a seat per
+     voice column), the MASTER under it (merged, its sheet the board), then
+     performance. It was two — master + performance — and the master's own row
+     is where the mix row's master went, at the same seven `master|` words on
+     the board's main plate rather than at a second set of cells. */
+  check(shape.foot === 3, "…with the record under it: the mix row, the " +
+    "master, and performance (" + shape.foot + " footer rows)");
   check(shape.corner, "…and the corner is the whole record");
 
   /* ================= T5b · THE THREE SHEETS, IN §1's ORDER ============== */
@@ -220,8 +225,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await tap("tcol|" + vName);
   const cs = await sheetRows();
   const clabs = (cs || []).map((r) => r.lab);
+  /* `"seat"` STOOD IN THIS LIST until 2026-09-07 (TABLE.md §10b step 3). The
+     voice's channel strip was seated in the column sheet from wave 2c, which
+     was right while the board had no per-voice channel; §10a gives it a row —
+     *"MIX is ALIGNED — one channel strip per voice column"* — so the strip is
+     the MIX row's cell under this player's column and the column sheet carries
+     the POINTER to it (`the desk`, `tseat|<voice>`). T10n asserts both halves:
+     the cell draws the whole strip, and the column sheet draws none of it. */
   check(clabs.includes("instrument") && clabs.includes("register") &&
-        clabs.includes("enters at bar") && clabs.includes("seat"),
+        clabs.includes("enters at bar") && clabs.includes("the desk"),
     "T5c the column sheet is §1's VOICE vector (" + clabs.length + " rows): " +
     clabs.join(" · "));
   await tap("tcol|" + vName);
@@ -420,6 +432,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       continue;
     }
     if (c.open) { const o = subst(c.open); await tap(o); }
+    /* ...AND A SECOND TAP WHERE THE HOME IS A TABBED SURFACE (2026-09-07).
+       The MIX row's master opens the BOARD, and the board has always been one
+       panel holding one of five plates: `master|drive` is on the main plate,
+       the trim grid is on the automation plate, and a walk that only pressed
+       the row's head would report four plates' worth of controls missing and
+       be right. `then` is the stage button the inventory names — a hand's
+       second tap, at the same `boardtab|<kind>|<key>` address desk-gate uses. */
+    if (c.then) await tap(subst(c.then));
     /* `data-k` OR `data-sel` — the four vocabularies that stayed MENUS wear
        ui/selects.js's own address (test/selects.js MENUS is the one owner of
        which; ui/table.js COMBOKEYS says why), and an inventory that only knew
@@ -1991,6 +2011,204 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       check(twice.plates === 1 && twice.bpmRows <= 1,
         "T10k …and the editor is drawn exactly once — " + JSON.stringify(twice));
       await shutAll();
+    }
+
+    /* ================= T10l–T10p · THE MIX ROW (§10b step 3) ============
+       §10a: *"MIX is ALIGNED — one channel strip per voice column and the
+       master in the corner."* It is the only special row that is not merged,
+       so what this group asks that T10a cannot is: is it ALIGNED — one cell
+       per column, under the right column — does a cell open that player's own
+       strip whole, does the master open the board, and is the Mix pane gone
+       with every one of its controls reachable through one head.
+       nukernel/desk-gate.js (167 checks) and test/mix-heads.browser.js are
+       RE-POINTED, not retired: between them they make every claim about what
+       these controls DO, and all of it is about the control rather than the
+       pane. */
+    {
+      const mixInfo = () => p.evaluate(() => {
+        const t = document.querySelector("#pan-band table.nu-sheetgrid");
+        if (!t) return { missing: true };
+        const row = t.querySelector("tfoot tr.nu-mixrow");
+        const mr = t.querySelector("tfoot tr.nu-masterrow");
+        if (!row || !mr) return { missing: true };
+        const heads = [...t.querySelectorAll("thead th.nu-colhead")]
+          .map((th) => Math.round(th.getBoundingClientRect().left));
+        const cells = [...row.querySelectorAll("td.nu-mixcell")];
+        const pane = t.closest(".nu-pane");
+        const mb = mr.querySelector("button");
+        return {
+          rows: [...t.querySelectorAll("tfoot > tr")].map((r) => r.dataset.row),
+          heads,
+          cells: cells.map((td) => {
+            const b = td.querySelector("button");
+            return { k: b.dataset.k, w: b.textContent.trim(),
+                     left: Math.round(td.getBoundingClientRect().left),
+                     h: Math.round(b.getBoundingClientRect().height),
+                     lamp: td.querySelectorAll(":scope > .nu-scollamp").length,
+                     inBtn: b.querySelectorAll(".nu-scollamp").length };
+          }),
+          master: { k: mb.dataset.k, colspan: mr.querySelector("th").colSpan,
+                    word: (mr.querySelector(".nu-spword") || {}).textContent,
+                    face: (mr.querySelector(".nu-spface") || {}).textContent,
+                    w: Math.round(mb.getBoundingClientRect().width),
+                    paneW: pane ? pane.clientWidth : 0 },
+          cols: t.querySelectorAll("thead th.nu-colhead, thead th.nu-cornerh," +
+                                   " thead th.nu-addhead").length };
+      });
+
+      /* T10l · ALIGNED: one cell per voice column, each under its own head. */
+      await shutAll();
+      for (const w of [320, 390, 1280]) {
+        await wide(w);
+        const m = await mixInfo();
+        const aligned = !m.missing && m.cells.length === m.heads.length &&
+          m.cells.every((c, i) => Math.abs(c.left - m.heads[i]) <= 1) &&
+          m.cells.every((c) => c.h >= 44) &&
+          /* THE LAMP IS A SIBLING OF THE BUTTON AND NEVER ITS CHILD —
+             `[data-live]` is a surface the clock writes and a control inside
+             one is the shape test/motif-frozen A1 forbids. */
+          m.cells.every((c) => c.lamp === 1 && c.inBtn === 0);
+        check(aligned, "T10l " + w + " · the MIX row is ALIGNED — one cell " +
+          "per voice column, each at its own column head's left edge, 44px, " +
+          "with its own lamp beside the button — " +
+          JSON.stringify({ cells: m.cells, heads: m.heads }));
+        /* T10m · the master is a MERGED row under it, the pane's own width. */
+        const mm = !m.missing && m.master.k === "tmix" &&
+          m.master.colspan === m.cols && m.master.word === "master" &&
+          !!m.master.face &&
+          m.master.w >= m.master.paneW - 12 && m.master.w <= m.master.paneW + 2;
+        check(mm, "T10m " + w + " · the master is a merged row under the " +
+          "seats, its line the pane's own width, wearing the record's master " +
+          "words — " + JSON.stringify(m.master));
+      }
+      await wide(390);
+
+      /* T10n · A CELL OPENS THAT PLAYER'S OWN STRIP, WHOLE. */
+      await shutAll();
+      {
+        const name = await p.evaluate(() => {
+          const b = document.querySelector('#pan-band [data-k^="tmix|"]');
+          return b ? b.dataset.k.slice(5) : null; });
+        await tap("tmix|" + name);
+        const strip = await p.evaluate((n) => ({
+          named: (document.querySelector("#voicemix .nu-sname") || {}).textContent,
+          seats: document.querySelectorAll('[data-k^="ins|' + n + '|"]').length,
+          fader: document.querySelectorAll('[data-k="b|fader|' + n + '"]').length,
+          pan: document.querySelectorAll('[data-k^="b|pan|' + n + '"]').length,
+          sends: document.querySelectorAll('[data-k="b|genre|' + n + '"]').length,
+          board: document.querySelectorAll("#boardpanel").length,
+        }), name);
+        check(strip.named === name && strip.seats === 3 && strip.fader === 1 &&
+              strip.sends === 1 && strip.board === 0,
+          "T10n a seat's cell opens ui/engineer.js's own strip for THAT " +
+          "player — level, pan, sends and the three insert slots — and the " +
+          "board is not on the page beside it (one accordion) — " +
+          JSON.stringify(strip));
+        /* ...AND THE COLUMN SHEET NO LONGER DRAWS IT. One strip, one home. */
+        await tap("tmix|" + name);
+        await tap("tcol|" + name);
+        const col = await p.evaluate((n) => ({
+          strip: document.querySelectorAll("#voicemix .nu-strip").length,
+          seats: document.querySelectorAll('[data-k^="ins|' + n + '|"]').length,
+          pointer: !!document.querySelector('[data-k="tseat|' + n + '"]'),
+        }), name);
+        check(col.strip === 0 && col.seats === 0 && col.pointer,
+          "T10n …and the column sheet draws no strip at all now — it carries " +
+          "the pointer to the seat instead (one control, one home) — " +
+          JSON.stringify(col));
+        await tap("tcol|" + name);
+      }
+
+      /* T10o · THE MASTER OPENS THE BOARD, WITH ITS FIVE STAGES. */
+      await shutAll();
+      {
+        await tap("tmix");
+        /* WHICH PLATE IS OPEN IS A PAGE FACT THAT SURVIVES EVERYTHING, and
+           this check learned it the hard way: `BOARDTAB` is a module `let` in
+           ui/engineer.js — "which plate you are looking at is not a fact about
+           the record" — so it survives a rebuild, a tab, and the sheet being
+           shut and opened again. T7's own walk presses `boardtab|bus|main` on
+           its way past, and this block then read the MAIN plate and reported
+           the genre bus's three seats missing. A check that wants a plate says
+           which, the way a hand does. */
+        await tap("boardtab|bus|genre");
+        const board = await p.evaluate(() => ({
+          panel: document.querySelectorAll("#boardpanel").length,
+          rack: document.querySelectorAll("#boardpanel #rack .nu-plate").length,
+          stages: [...document.querySelectorAll('#boardtabs [data-k^="boardtab|"]')]
+            .map((b) => b.dataset.k),
+          slots: document.querySelectorAll('[data-k^="bus|genre|fx"]').length,
+          master: document.querySelectorAll('[data-k^="master|"]').length,
+          twice: document.querySelectorAll('[data-k^="tmaster|"]').length,
+        }));
+        check(board.panel === 1 && board.rack === 1 && board.slots === 3 &&
+              board.stages.length === 5 && board.twice === 0,
+          "T10o the master opens the board — one #boardpanel, one plate at a " +
+          "time, the five stages at their own addresses, the genre bus's " +
+          "three insert slots, and NO second copy of the master's words " +
+          "(`tmaster|` is deleted, not moved) — " + JSON.stringify(board));
+        /* the four other stages are one tap each, in the same panel. */
+        await p.evaluate(() => { const b = document.querySelector(
+          '[data-k="boardtab|bus|main"]'); if (b) b.click(); });
+        await p.waitForTimeout(500);
+        const main = await p.evaluate(() => ({
+          bus: (document.querySelector("#boardpanel #rack .nu-plate") || {})
+            .dataset ? document.querySelector("#boardpanel #rack .nu-plate")
+              .dataset.bus : null,
+          master: document.querySelectorAll('[data-k^="master|"]').length,
+          gain: document.querySelectorAll('[data-k="level"]').length,
+        }));
+        check(main.bus === "main" && main.master >= 7 && main.gain === 1,
+          "T10o …and the main stage carries the master's seven words and the " +
+          "record gain, which is where the table's old footer row's cells " +
+          "went — " + JSON.stringify(main));
+        await shutAll();
+      }
+
+      /* T10p · THE MIX PANE IS GONE, and the row survives a recompile. */
+      {
+        const gone = await p.evaluate(() => ({
+          host: !!document.getElementById("deck"),
+          tab: (window.__eightTabs() || []).indexOf("Mix"),
+          tray: !!document.querySelector('[data-k="toptab-Mix"]'),
+          trayKids: document.querySelectorAll(
+            '#nu-tray [data-k^="boardtab|"]').length,
+          footMaster: !!document.querySelector('[data-k="tfoot|master"]'),
+        }));
+        check(!gone.host && gone.tab < 0 && !gone.tray && !gone.trayKids &&
+              !gone.footMaster,
+          "T10p the Mix PANE is deleted — no #deck, no Mix tab, no tray row " +
+          "and no five tray children, and the old `tfoot|master` row is gone " +
+          "with it — " + JSON.stringify(gone));
+        /* THE ROW STAYS OPEN ACROSS THE RECOMPILE ITS OWN CONTROLS CAUSE.
+           Every control in a strip ends in `ctx.changed()`, which throws this
+           panel away; a seat that shut on the first fader move would shut
+           under the thumb using it. Same law as TIME and RULES (§10c). */
+        const name = await p.evaluate(() => {
+          const b = document.querySelector('#pan-band [data-k^="tmix|"]');
+          return b ? b.dataset.k.slice(5) : null; });
+        await tap("tmix|" + name);
+        const stayed = await p.evaluate(async (n) => {
+          const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+          const m = document.querySelector('[data-k="b|mute|' + n + '"]');
+          if (!m) return { drove: false };
+          m.click();
+          await wait(700);
+          const head = document.querySelector(
+            '#pan-band [data-k="tmix|' + n + '"]');
+          const open = head && head.getAttribute("aria-expanded") === "true";
+          const back = document.querySelector('[data-k="b|mute|' + n + '"]');
+          if (back) back.click();
+          await wait(500);
+          return { drove: true, open,
+                   strip: !!document.querySelector("#voicemix .nu-strip") };
+        }, name);
+        check(stayed.drove && stayed.open && stayed.strip,
+          "T10p …and the seat stays open across the recompile its own " +
+          "controls cause (a mute is a `changed()`) — " +
+          JSON.stringify(stayed));
+        await shutAll();
+      }
     }
     await wide(390);
   }

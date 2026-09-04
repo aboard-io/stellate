@@ -169,13 +169,20 @@ export interface TableAPI {
   fillFromGenre(): void;
   reseed(): void;
   showBoard(name?: string): void;
+  /** open one player's seat — the MIX row's cell under that column. */
+  showSeat(name: string): void;
 
   CELLAUTO?: LaneSpec[];
   CELLVEC?: LaneSpec[];
   MASTERROWS: MasterRow[];
   PERFROWS: PerfRow[];
   masterOf(k: string): string | null;
-  setMaster(k: string, v: string | null): void;
+  /* (`setMaster(k, v)` STOOD HERE — the `tfoot|master` row's writer. The
+     master's seven words are the MIX row's MASTER now and the CONTROL for
+     each of them is ui/engineer.js's main plate, which writes through the
+     same `NuDeskDoc.writeMaster`; two controls for one fact was what the
+     page measured before this round, so the door with no drawing came off
+     with the row. `masterOf` above stays: the master row's FACE reads it.) */
   perfOf(k: string): unknown;
   putPerf(k: string, v: unknown): void;
 
@@ -237,6 +244,24 @@ export interface TableAPI {
   setRubato(on: boolean): void;
   diatonicOn(): boolean;
   setDiatonic(on: boolean): void;
+
+  /* ---- THE MIX ROW'S OWN DOORS (2026-09-07, TABLE.md 10b step 3) ------
+     10a: *"MIX is ALIGNED — one channel strip per voice column and the master
+     in the corner."* `voiceStrip` above is already the strip and does not
+     move; these two are what the ROW needs that a column sheet never did — a
+     word for the collapsed cell, and the rack the MASTER opens (which is a
+     merged row under the seats and not a corner cell: `src/table/grid.ts
+     mixRow` carries the two measurements that put it there). The Mix PANE
+     is deleted, so `boardRack()` is the ONE place `ui/engineer.js mount` is
+     called and `#boardpanel` is built. */
+  /** what this seat is doing on the desk, in the strip's own arithmetic
+   *  (`faderDb` then `fmtDb`, plus mute / solo / no-channel). */
+  mixWord(name: string): string;
+  /** has a hand written anything on this seat? — the dim-is-derived reading
+   *  every other cell on this surface makes, asked of the desk. */
+  mixWritten(name: string): boolean;
+  /** the board: the rack, its five plates and the row that switches them. */
+  boardRack(): HTMLElement;
 
   /** the RULES row: ui/rules.js's whole sheet, built into a box of its own,
    *  through the same `apply()` -> `ctx.evolve` door it has used since

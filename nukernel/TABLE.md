@@ -1062,6 +1062,128 @@ drawn — `ui/rules.js` is not edited by this round at all — so both belong to
 menus round's own queue: either the chip appends its reason like its two
 siblings, or R5a's `said` clause learns the third widget.
 
+### 10d · What step 3 landed, and the four things it measured
+
+**SHIPPED 2026-09-07 (uncommitted).** `nukernel/src/table/special.ts` grew the
+MIX row's three builders (`mixFace`, `mixSheet`, `masterMixSheet` — 60 lines);
+`grid.ts` gained `mixRow`, `mixCell` and a second lamp map and LOST the
+`tfoot|master` row; `model.ts` lost `masterCells` and `masterSheet` and the
+column sheet's `seat` field; `api.ts` gained `mixWord`, `mixWritten`,
+`boardRack` and `showSeat` and lost `setMaster`; `ui/eight.js` lost the `Mix`
+tab, its `BUILD` entry, its `TABKIDS` branch and `mixTrayItems` (35 lines) and
+gained `openMixRow` + `window.__eightMix`; `ui/engineer.js` gained `seatWord`,
+`seatWritten` and its own plate row back; `index.html` lost `#deck`.
+
+**THE ROW, IN THE MARKUP.** Two `<tr>`s at the top of the `<tfoot>`. The first
+is `nu-mixrow`: a `<th>` holding the word `mix`, then one `<td class=
+"nu-mixcell">` per voice column carrying that seat's own word — `—`, `−3.0 dB`,
+`left-ish`, `2 fx` — with that player's own lamp beside the button, and the
+cell opens `ui/engineer.js voiceMix` for that player. The second is
+`nu-masterrow`: one `<th colspan>` whose button is `tmix`, reading `MASTER
+soft · worn · room · warm · open`, and it opens the whole board.
+
+**FOUR THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT.**
+
+- **THE MASTER HAS NO CORNER TO SIT IN, AND IT TOOK TWO MEASUREMENTS TO SAY
+  SO.** §10a draws it inside the mix row — `│ MIX │ strip │ strip │ master │` —
+  and both readings of "the corner" were built and driven before either was
+  believed. IN THE ROW HEAD it is unreadable: the head column of this table is
+  narrow by construction, and with the master's button in it the `<th>` is 36px
+  at 320 and 390 and 45px at 1280, the button 26 and 35, and the face `soft ·
+  worn · room · warm · open` rendered at **seventeen pixels**. IN THE ADDER
+  CELL it is off the screen: 547px wide and perfectly legible, at an x seven
+  player columns to the right of a 255px pane, because the mix row's cells are
+  inside the pane's own horizontal scroll — which is exactly right for a fact
+  that belongs to a COLUMN and exactly wrong for one that belongs to the
+  record. A record-level fact in this table is a MERGED ROW (§10a's own first
+  sentence), so the master is one under the seats, its line pinned to the pane's
+  left edge like TIME's and RULES', reading whole at 320.
+- **TWO CONTROLS FOR THE MASTER'S SEVEN WORDS, AND THE ROUND THAT FOUND THEM
+  HAD TO PICK ONE.** `tmaster|<key>` in the table's footer (wave 2b) and
+  `master|<key>` on the board's main plate wrote the same seven values through
+  the same `NuDeskDoc.writeMaster`; they were on two different tabs and the page
+  never showed them together, so nothing had ever complained. Putting the board
+  in the master's own sheet would have put them side by side. The board's is
+  kept — it is where the one-touch bypass that reads those same seven values
+  back lives — and `masterCells`, `masterSheet` and the `setMaster` door are
+  DELETED rather than moved. That is §9b's "minimize things where possible"
+  spending a control, and T10o asserts the absence (`tmaster|` is 0 page-wide).
+- **A BOARD WHOSE PLATES CAN ONLY BE SWITCHED FROM A DELETED TAB IS FOUR
+  PLATES LOST.** `#boardtabs` — the row of five stage buttons — was deleted on
+  2026-09-02 as a dated MIRROR of the gutter's five rows, and its own fence
+  named the condition. The gutter's five hung off the `Mix` tab, and this round
+  deletes that tab. So the row is back inside `ui/engineer.js mount`, at the
+  SAME five `boardtab|<kind>|<key>` addresses it has worn on both surfaces —
+  an address that has now moved twice without moving — and it is the only
+  owner again, which is what it was not in 2026-09-02.
+- **ONE ACCORDION MEANS THE BOARD AND A STRIP ARE NEVER BOTH ON THE PAGE.**
+  While the board was a pane its DOM survived any other tab being looked at, so
+  a gate could read `#board` whenever it liked. `nukernel/desk-gate.js`'s
+  BOARD-ROUTING pointer check answered `null` the hour the pane went, because
+  the check before it had left a voice's strip open. That is not a regression
+  in the page — it is the accordion doing what §9d says an accordion does — and
+  it is a claim about every gate that reads two surfaces: each opener now says
+  which surface it wants (`openMaster()`, `openVoice()`), rather than relying
+  on where the check before it left the page.
+
+**WHAT `ui/engineer.js` BECOMES: THE MIX ROW'S TWO SHEET BUILDERS.** Not a pane
+builder, and not deleted. `voiceMix` is a seat's cell sheet and `mount` is the
+master's, both seated through node doors, both drawing exactly what they drew
+inside the pane — the same `#voicemix`, the same `#boardpanel`, the same
+`#rack`, the same `b|…` / `ins|…` / `bus|…` / `master|…` / `t|…` addresses.
+That is why 167 desk-gate checks followed the deletion through **five** edited
+lines (the arrival, the two openers, the row's selector, and the mark's).
+`voiceMix`'s other home is DELETED in the same edit: the column sheet's `seat`
+field is gone and `tseat|<voice>` is the pointer that opens the cell.
+
+**GATES.** `test/table.browser.js` **T10l–T10p** (the row is ALIGNED — one cell
+per voice column at its own head's left edge, 44px, its lamp a SIBLING of the
+button; the master is a merged row at the pane's width wearing the record's
+master words; a cell opens that player's strip whole and the board is not on the
+page beside it; the column sheet draws no strip at all and carries the pointer;
+the master opens one `#boardpanel` with the five stages and the genre bus's
+three slots; the main stage carries the seven master words and the record gain;
+the Mix pane, its tab, its tray branch and the old `tfoot|master` row are gone;
+and the seat stays OPEN across the recompile a mute causes). T7 learned a
+SECOND TAP (`then`) in the same edit, because the master's sheet is a tabbed
+surface and a walk that pressed only the row's head would report four plates'
+worth of controls missing and be right. `test/table-inventory.json` grew twelve
+rows measured off `#deck` BEFORE the deletion (10 control families over the
+pane's six states, the five tray children, the tab row) and MOVED two — the
+strip's `ins|<voice>|<n>` and `b|<voice>|<bus>` — from `column` to `mix-row`.
+`nukernel/desk-gate.js` **167 checks, the same 2 pre-existing reds** (the genre
+bus's three `fx` seats, red since v272's menus round). Also re-pointed, each in
+one line, and each still making every claim it made: `test/mix-heads.browser.js`
+(**9 ok, 0 failed** — the mute is driven through `tmix|<voice>`, the automation
+plate is opened from the board's own stage row), `test/vol-reach.browser.js`
+(**V3 green** — a fader is dragged in the mix cell and the sounding bar's unit
+carries the offset), `test/sheets.js` (the seat census walks the MIX ROW's cell;
+and the seat's own address is read BOTH WAYS, which repairs a red that has stood
+since v272 — `seatSelect` went through `src/menus/` and started wearing
+`data-sel="ins|<voice>|<n>"`, so the "(no data-sel: …)" spelling the count was
+written for stopped being produced and the check failed on an empty list, saying
+a strip was missing that was standing there). `test/shell.js` **PASS** and
+`test/text-diet.test.js` lose one tab row each, with the amendment dated under
+Paul's own sentence. `test/table.browser.js` **171 ok, 0 failed**. `test/text-diet.test.js`: "The
+board" leaves the panel-headings list the way "The rules" and "Time" left it a
+round ago — the `<h2>` is still drawn, still announced, still skipped by the
+diet; what it stopped being is a PANEL's name.
+
+**THE ROUND'S FIRST EDIT WAS SOMEBODY ELSE'S QUEUE, AND IT IS ONE LINE OF
+`src/menus/`.** §10c left two `rules-view` reds with their diagnosis: a refused
+CHIP put its reason in `data-why`, `title` and its accessible name and printed
+nothing, unlike the two widgets beside it. It prints it now — a `<small
+class="nu-why">` inside the chip, which is the `flex: 0 0 100%` second line
+`.nu-chipprov` already is on that exact button, and nu.css's own ruling on where
+a reason may live ("it costs its OWN chip's height and nothing else's") applied
+to a flex row. `title` stays only where the reason is NOT on the glass. R9's
+ceiling is honest about the same widget rather than raised: it counts the lines
+the control ACTUALLY occupies (chips wrap) at 44px each plus the 52 that is the
+sentence line and the row's padding, so `rate` is 129 against 140, `harmony`
+176 against 184, `stress` 93 against 96 — and what the 96 was written for, a row
+that grows a THIRD block, is still exactly what it catches. `rules-view`
+**42 ok, 0 failed**.
+
 ## 11 · The design system: ours, less chunky, with an envelope editor (RULED 2026-09-05)
 
 Paul, after the AUX spike (GPL-3.0-or-later, 93 KB core + a fader at 171 KB,

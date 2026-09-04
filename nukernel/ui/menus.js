@@ -447,7 +447,8 @@ function chips(spec, key, box) {
   const draw = () => D(b`${rows.map((r2) => {
     const hard = !!off;
     const refused = hard || !!r2.o.disabled && r2.value !== cur;
-    const why = hard ? off : r2.o.why ? String(r2.o.why) : null;
+    const own = r2.o.why ? String(r2.o.why).trim() : "";
+    const why = hard ? off : own || null;
     const w2 = r2.o.label == null ? r2.value : String(r2.o.label);
     return b`<button type="button"
       class=${e3({ "nu-wchip": true, "is-quiet": !!r2.o.quiet })}
@@ -458,9 +459,10 @@ function chips(spec, key, box) {
       ?disabled=${refused}
       aria-disabled=${o2(refused ? "true" : void 0)}
       data-why=${o2(why == null ? void 0 : why)}
-      title=${o2(why ? why : void 0)}
+      title=${o2(hard && off ? off : void 0)}
       aria-label=${why ? w2 + ", " + why : w2}
-      @click=${() => write(r2.value)}>${w2}</button> `;
+      @click=${() => write(r2.value)}><span class="nu-chipword">${w2}</span
+      >${own ? b`<small class="nu-why">${own}</small>` : A}</button> `;
   })}`, strip);
   draw();
   paintDetent(box, strip, cur, detent);

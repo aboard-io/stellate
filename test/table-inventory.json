@@ -192,20 +192,21 @@
       "k": "ins|<voice>|<n>",
       "pane": "Band / mix facet",
       "was": "the three insert slots",
-      "home": "column",
-      "field": "seat — the voice's own channel strip (ui/engineer.js voiceMix), drawn in its column sheet",
+      "home": "mix-row",
+      "field": "the MIX row's cell under this player's own column — ui/engineer.js `voiceMix`, the same one drawing, seated through a node door (the three insert slots, `slotEl`/`voiceSlotOwner`)",
       "reach": "ins|<voice>|1",
-      "open": "tcol|<voice>",
-      "note": "MEASURED 2026-09-04: the board has NO per-voice channel (Paul took the voices off it 2026-08-28), so the strip's only home was the Band pane's mix facet and it moves into the column sheet whole."
+      "open": "tmix|<voice>",
+      "note": "MOVED 2026-09-07 (TABLE.md §10b step 3). It was the COLUMN sheet from 2026-09-04, which was right while the board had no per-voice channel; §10a gives the strip its own row — *\"MIX is ALIGNED — one channel strip per voice column\"* — so the column sheet's `seat` field is deleted and its `tseat|<voice>` op is the pointer to here. The strip did not change: same `voiceMix`, same `#voicemix`, same `b|…` and `ins|…` addresses, which is why nukernel/desk-gate.js followed it in one line."
     },
     {
       "k": "b|<voice>|<bus>",
       "pane": "Band / mix facet",
       "was": "the three bus sends",
-      "home": "column",
-      "field": "seat — the sends on the same strip; the BUSES they feed stay the board's, one tap away",
+      "home": "mix-row",
+      "field": "the MIX row's cell under this player's own column — ui/engineer.js `voiceMix`, the same one drawing, seated through a node door (the sends; the BUSES they feed are the master's, one row down)",
       "reach": "ins|<voice>|1",
-      "open": "tcol|<voice>"
+      "open": "tmix|<voice>",
+      "note": "MOVED 2026-09-07 (TABLE.md §10b step 3). It was the COLUMN sheet from 2026-09-04, which was right while the board had no per-voice channel; §10a gives the strip its own row — *\"MIX is ALIGNED — one channel strip per voice column\"* — so the column sheet's `seat` field is deleted and its `tseat|<voice>` op is the pointer to here. The strip did not change: same `voiceMix`, same `#voicemix`, same `b|…` and `ins|…` addresses, which is why nukernel/desk-gate.js followed it in one line."
     },
     {
       "k": "material.cell|<voice>|<section>",
@@ -627,7 +628,7 @@
       "pane": "Time (#pan-tempo)",
       "was": "record gain — the pointer to the board's main strip",
       "home": "time-row",
-      "field": "record gain — the same .nu-routelink, last in the sheet, still opening Mix",
+      "field": "record gain — the same .nu-routelink, last in the sheet; it opened the Mix tab and opens the MIX row's master (`openMixRow(\"master\")`) since 2026-09-07, the tab being deleted",
       "reach": "goto.board",
       "open": "ttime"
     },
@@ -765,6 +766,114 @@
       "field": "the eight axis blocks are inside the one row, one tap from the top of the sheet; a jump into a row you have already opened is the scroll you are already doing",
       "reach": "trules",
       "open": null
+    },
+    {
+      "k": "bus|<bus>|<field>",
+      "pane": "Mix / the genre, delay and reverb plates",
+      "was": "every knob and menu the three bus plates draw — the genre bus's three insert seats (bus|genre|fx1..3) with their wet and setting pots, each bus's own level, colour and time",
+      "home": "mix-master",
+      "field": "the plates are unchanged and are drawn where the pane drew them — inside #boardpanel, which ui/engineer.js `mount` still builds; what changed is that `mount` is called from the MIX row's master sheet and not from a tab",
+      "reach": "bus|genre|fx1",
+      "open": "tmix",
+      "then": "boardtab|bus|genre"
+    },
+    {
+      "k": "sel|bus|<bus>|<field>",
+      "pane": "Mix / the bus plates",
+      "was": "a bus's `called` and `colour` menus",
+      "home": "mix-master",
+      "field": "the same menus on the same plates",
+      "reach": "sel|bus|genre|name",
+      "open": "tmix",
+      "then": "boardtab|bus|genre"
+    },
+    {
+      "k": "master|<key>",
+      "pane": "Mix / the main plate",
+      "was": "the master chain — drive, glue, tape, space, width, tilt, ceiling, and the one-touch bypass that reads all seven back",
+      "home": "mix-master",
+      "field": "the main plate, in the master row's sheet. THIS IS ALSO WHERE `tmaster|<key>` WENT: the table's old footer row wrote the same seven values through the same NuDeskDoc.writeMaster, so the second control is deleted rather than moved (TABLE.md §10b step 3, \"exactly ONE control page-wide\")",
+      "reach": "master|drive",
+      "open": "tmix",
+      "then": "boardtab|bus|main"
+    },
+    {
+      "k": "level",
+      "pane": "Mix / the main plate",
+      "was": "record gain (`sound.level`)",
+      "home": "mix-master",
+      "field": "the main plate, unchanged; the TIME row's `goto.board` pointer opens it",
+      "reach": "level",
+      "open": "tmix",
+      "then": "boardtab|bus|main"
+    },
+    {
+      "k": "grain",
+      "pane": "Mix / the main plate",
+      "was": "surface noise",
+      "home": "mix-master",
+      "field": "the main plate, unchanged",
+      "reach": "grain",
+      "open": "tmix",
+      "then": "boardtab|bus|main"
+    },
+    {
+      "k": "m|listening",
+      "pane": "Mix / the main plate",
+      "was": "the listening level — a device setting, not the record's",
+      "home": "mix-master",
+      "field": "the main plate, unchanged",
+      "reach": "m|listening",
+      "open": "tmix",
+      "then": "boardtab|bus|main"
+    },
+    {
+      "k": "t|<voice>|<section>",
+      "pane": "Mix / the section-automation plate",
+      "was": "the trim word for one voice in one section (the word grid, 91 cells on this record)",
+      "home": "mix-master",
+      "field": "the automation plate, the fifth stage of the board's own row",
+      "reach": "t|<voice>|<section>",
+      "open": "tmix",
+      "then": "boardtab|auto|auto"
+    },
+    {
+      "k": "col|<voice>",
+      "pane": "Mix / the section-automation plate",
+      "was": "the grid's column head — opens that player's instrument",
+      "home": "mix-master",
+      "field": "the automation plate, unchanged",
+      "reach": "col|<voice>",
+      "open": "tmix",
+      "then": "boardtab|auto|auto"
+    },
+    {
+      "k": "row|<section>",
+      "pane": "Mix / the section-automation plate",
+      "was": "the grid's row head — puts the ear at that section",
+      "home": "mix-master",
+      "field": "the automation plate, unchanged",
+      "reach": "row|<section>",
+      "open": "tmix",
+      "then": "boardtab|auto|auto"
+    },
+    {
+      "k": "boardtab|<kind>|<key>",
+      "pane": "Mix / nav tree (the five children)",
+      "was": "the five stages — genre fx, delay, reverb, main, automation — as rows of the gutter under the Mix tab",
+      "home": "mix-master",
+      "field": "the board's OWN row again (`#boardtabs`, restored in ui/engineer.js `mount`), at the same five addresses. It was an in-panel row until 2026-09-02 and a tray branch until 2026-09-07; the tab it hung under is deleted, and a board whose plates can only be switched from a branch that does not exist is four plates lost",
+      "reach": "boardtab|bus|genre",
+      "open": "tmix"
+    },
+    {
+      "k": "toptab-Mix",
+      "pane": "Mix / the tab",
+      "was": "the Mix tab, on the stripe",
+      "home": "mix-master",
+      "field": "the MIX row's master, `tmix` — one merged row in the table's footer, under the row of seats",
+      "reach": "tmix",
+      "open": null
     }
   ],
   "new": [
@@ -814,9 +923,10 @@
       "open": "tcell|<voice>|<section>"
     },
     {
-      "reach": "tmaster|drive",
-      "why": "§1: the master is the table's footer row",
-      "open": null
+      "reach": "master|drive",
+      "why": "§1: the master is the table's footer row — and since 2026-09-07 it is the MIX row's MASTER, whose sheet is the board. The seven `tmaster|<key>` cells are DELETED rather than moved: ui/engineer.js's main plate draws `master|<key>` for every one of them through the same NuDeskDoc.writeMaster, so the table's footer copy was the second control for one fact and this round picked the board's.",
+      "open": "tmix",
+      "then": "boardtab|bus|main"
     },
     {
       "reach": "ttab-fill",
@@ -899,5 +1009,5 @@
       "why": "§9a: the `+` at the end of the PLAYER axis, in a head cell after the last player. Same three addresses build-the-band already had, which is what keeps the nine nav ops' T7 homes"
     }
   ],
-  "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them."
+  "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them.  ...AND THE MIX ROW, 2026-09-07 (§10b step 3). A third pane is DELETED: #deck (the Mix tab, ui/engineer.js `mount`) is the MIX row, which is the one special row that is NOT merged — §10a: *\"MIX is ALIGNED — one channel strip per voice column and the master in the corner.\"* The twelve rows appended below were MEASURED the way the others were: the rendered DOM of #deck was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion, in all six states the pane has (arrival plus the five plates), and it holds 10 control families plus the five tray children and the tab row. Every one of them is reachable through `tmix`, the master's own head, which is one tap at 320. TWO ROWS ALREADY IN THIS FILE CHANGED HOME rather than being added — `ins|<voice>|<n>` and `b|<voice>|<bus>`, the strip, from `column` to `mix-row` — because §10a gives the strip a row of its own and the column sheet's `seat` field is deleted with a pointer left in its place. ONE CONTROL IS DELETED AND NOT MOVED, with its measurement: the footer's seven `tmaster|<key>` cells wrote the same values through the same door as the main plate's own seven menus, and two controls for one fact is what the \"exactly ONE control page-wide\" law forbids.  T7 LEARNED A SECOND TAP IN THE SAME EDIT (`then`): the master's sheet is the BOARD, which has always been one panel holding one of five plates, so a walk that pressed only the row's head would report four plates' worth of controls missing and be right. `then` names the stage button — `boardtab|<kind>|<key>`, the same address nukernel/desk-gate.js presses. ONE THING THE PROBE FOUND IS NOT FILED AS A CONTROL: `board.legend`, the board's `dim is derived · bright is set · green is measured` line. It is a `<p class=\"nu-hint\">` and 185x34, and filing prose as a control is how a 44px floor becomes a lie; it travels with the board it captions."
 }

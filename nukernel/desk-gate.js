@@ -922,8 +922,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      is worked on; which channel strip is open is a fact about the Mix panel.
      Everything below — `openTab`, `openBus`, the whole G11 walk — is
      unchanged and still walks the INNER strip. */
-  await page.evaluate(() => window.__eightTab && window.__eightTab("Mix"));
-  await page.waitForTimeout(400);
+  /* ...AND THE Mix TAB IS DELETED SINCE 2026-09-07 (nukernel/TABLE.md §10b
+     step 3). The board is the MIX row's MASTER — one merged row in the footer
+     of the Band table — so the arrival is `__eightMix("master")`, which is
+     ui/eight.js's own door for a gate: it opens Band and PRESSES the master's
+     head, exactly the two taps a thumb makes, and it is idempotent so a second
+     caller does not close it. NOTHING BELOW MOVED: `mount` builds the same
+     `#boardpanel` with the same `#rack` and the same five plates, seated in a
+     sheet instead of in a pane, so every `#boardpanel …` query in this file
+     reads the markup it always read. */
+  await page.evaluate(() => window.__eightMix && window.__eightMix("master"));
+  await page.waitForTimeout(600);
   /* ONE PANEL, AND WHAT IS IN IT CHANGED AGAIN, 2026-08-28. This line waited
      on `#boardtbl` and `#racktbl` while the board was two tables
      (2026-08-25→27); then on `#strips` AND `#rack` while the strips were
@@ -978,20 +987,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      Paul, B11: *"Instead of having four icons on top and section automation
      that should have been five subicons under the 'Mix' icon."* So the scope
      moves with the thing, and the ADDRESS does not move at all: the five
-     buttons are `#nu-tray [data-k="boardtab|<kind>|<key>"]`, which is the same
-     key the deleted row wore and the same key `openBus` has always clicked.
-     Read off `#nu-tray` and not off the document, so a stray `boardtab|…`
-     anywhere else would be a miss rather than a silent pass. */
+     buttons are `#boardtabs [data-k="boardtab|<kind>|<key>"]`, which is the
+     same key they wore in the gutter and the same key `openBus` has always
+     clicked. Read off `#boardtabs` and not off the document, so a stray
+     `boardtab|…` anywhere else would be a miss rather than a silent pass. */
   const allTabs = async () => {
-    /* THE FIVE ARE CHILDREN OF A BRANCH, SO THE BRANCH IS OPENED FIRST. The
-       gutter is a tree (2026-09-02): `showTab("Mix")` expands `toptab-Mix` and
-       the five rows appear under it, and `__eightUp()` — which `openVoice`
-       below calls to get back to the tabs — folds every branch on the page.
-       A read taken after that would find no rows and report an empty row,
-       which is this block's own named hazard rather than a finding. */
-    await topTab("Mix");
+    /* THE FIVE ARE INSIDE THE BOARD AGAIN, SO THE BOARD IS OPENED FIRST
+       (2026-09-07). They were tray rows under a `Mix` tab for one wave and the
+       tab is deleted (TABLE.md §10b step 3), so the row of five is back where
+       it began — `#boardtabs`, inside ui/engineer.js's own `mount`, at the
+       SAME five `boardtab|<kind>|<key>` addresses. A read taken before the
+       master's sheet is open would find no rows and report an empty row, which
+       is this block's own named hazard rather than a finding. */
+    await openMaster();
     return page.evaluate(() =>
-    [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')].map((b) => {
+    [...document.querySelectorAll('#boardtabs [data-k^="boardtab|"]')].map((b) => {
       const m = /^boardtab\|([^|]+)\|(.+)$/.exec(b.dataset.k || "");
       return m ? { kind: m[1], key: m[2] } : { kind: "?", key: b.dataset.k };
     }));
@@ -1010,6 +1020,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   const topTab = async (t) => {
     await page.evaluate((x) => window.__eightTab(x), t);
     await page.waitForTimeout(250);
+  };
+  /* THE BOARD, OPENED — the same gesture `topTab("Mix")` was, one level in
+     (2026-09-07). `__eightMix("master")` opens Band and presses the master's
+     head; the plate row and every plate are inside that sheet. */
+  const openMaster = async () => {
+    await page.evaluate(() => window.__eightMix("master"));
+    await page.waitForTimeout(350);
   };
   /* ONE GESTURE, THREE TAPS, AND IT IS THE PERSON'S OWN (Paul, 2026-08-28:
      *"add it in a new nav element called mix that is per voice"*): go to the
@@ -1037,12 +1054,16 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       }
       if (b) b.click();
       await wait(250);
-      /* ...AND A VOICE'S STRIP IS ITS COLUMN SHEET SINCE 2026-09-04
-         (nukernel/TABLE.md wave 2c): `facet-mix` is deleted with the pane it
-         switched, and `voiceMix` is seated in the column sheet the head opens
-         — which `openVoice` already opens on arrival. The tap below is the
-         belt: it opens the head if the arrival did not. */
-      const h = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+      /* ...AND A VOICE'S STRIP IS ITS MIX CELL SINCE 2026-09-07 (TABLE.md
+         §10b step 3). It was the COLUMN sheet from 2026-09-04 — `facet-mix`
+         was deleted with the pane it switched and `voiceMix` was seated in the
+         column sheet the head opens — and the MIX row is where §10a puts it:
+         one cell per voice column, under that player's own column, in the
+         footer. So the tap is on `tmix|<voice>` and not on `tcol|<voice>`; the
+         strip inside it is the same `voiceMix` with the same `#voicemix` id
+         and the same `b|…` / `ins|…` addresses, which is why every check below
+         is word for word what it was. */
+      const h = document.querySelector('#pan-band [data-k="tmix|' + n + '"]');
       if (h && h.getAttribute("aria-expanded") !== "true") h.click();
     }, name);
     await page.waitForFunction((n) => {
@@ -1069,7 +1090,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      `draw()` as well as ui/engineer.js's `showBoard`, which is why the wait is
      still on the PLATE rather than on the button's mark. */
   const openBus = async (key) => {
-    await topTab("Mix");
+    await openMaster();
     await page.evaluate((k) => {
       const b = document.querySelector('[data-k="boardtab|bus|' + k + '"]');
       if (b) b.click();
@@ -1087,7 +1108,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      this opener exists so the checks that are about the FIVE can reach the one
      that is not a bus. */
   const openAuto = async () => {
-    await topTab("Mix");
+    await openMaster();
     await page.evaluate(() => {
       const b = document.querySelector('[data-k="boardtab|auto|auto"]');
       if (b) b.click();
@@ -1203,17 +1224,18 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       strips: document.querySelectorAll("#boardpanel .nu-strip").length,
       anyStripsId: document.querySelectorAll("#strips").length,
       plates: document.querySelectorAll("#boardpanel #rack .nu-plate").length,
-      oldRow: document.querySelectorAll("#boardtabs").length,
-      marked: [...document.querySelectorAll('#nu-tray [aria-pressed="true"]')]
+      row: document.querySelectorAll("#boardtabs").length,
+      marked: [...document.querySelectorAll('#boardtabs [aria-pressed="true"]')]
         .map((b) => b.dataset.k),
       shown: (document.querySelector("#boardpanel .nu-busname") || {}).textContent }));
     ok(one.panels === 1 && one.plates === 1 && one.strips === 0 &&
-       one.anyStripsId === 0 && one.oldRow === 0 &&
+       one.anyStripsId === 0 && one.row === 1 &&
        one.marked.length === 1 && one.marked[0] === "boardtab|bus|genre",
-       "…and ONE PANEL HOLDS EXACTLY ONE PLATE at a time — the marked row's " +
-       "(" + one.shown + "), with no strip on the board beside it, no " +
-       "`#strips` node anywhere on the page, and no in-panel tab row left " +
-       "(Paul, B11: \"five subicons under the 'Mix' icon\")", JSON.stringify(one));
+       "…and ONE PANEL HOLDS EXACTLY ONE PLATE at a time — the marked " +
+       "stage's (" + one.shown + "), with no strip on the board beside it, no " +
+       "`#strips` node anywhere on the page, and exactly ONE row of stage " +
+       "buttons (`#boardtabs`, back inside the board on 2026-09-07 because " +
+       "the Mix tab it hung under is deleted)", JSON.stringify(one));
     /* ...AND IT IS FIVE NOW, NOT FOUR. Paul, B11: *"Instead of having four
        icons on top and section automation that should have been five subicons
        under the 'Mix' icon. One of them is section automation."* The walk was
@@ -1228,7 +1250,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       plates: [...document.querySelectorAll("#boardpanel #rack .nu-plate")]
         .map((p) => p.dataset.bus),
       strips: document.querySelectorAll("#boardpanel .nu-strip").length,
-      marked: [...document.querySelectorAll('#nu-tray [aria-pressed="true"]')]
+      marked: [...document.querySelectorAll('#boardtabs [aria-pressed="true"]')]
         .map((b) => b.dataset.k) }));
     const openedPlates = [];
     for (const t of await allTabs()) {
@@ -1359,9 +1381,19 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // below passed on an empty list — a vacuous pass, which is the one result a
   // gate must never give. Both spellings are swept, and the tag is no longer
   // what makes something a menu: `[data-sel]` is.
+  /* THE SCOPE IS THE BOARD AND THE PRODUCER, NAMED (2026-09-07). It read
+     `.filter((s) => !s.closest("#app"))` — "outside #app" — which was the
+     board's own address for as long as the board was a PANE. TABLE.md §10b
+     step 3 seats it in the MIX row's master sheet, which is inside `#pan-band`,
+     which is inside `#app`: the filter answered ZERO menus and the claim under
+     it (`sel.length > 0`) went red saying so, which is the right way for a
+     scope to break. The surfaces this gate is about are named now instead of
+     described by where they are not — a scope that names its subject cannot
+     empty itself when the subject moves. */
   const sweepSelects = () => page.evaluate(() =>
     [...document.querySelectorAll("select, [role=combobox][data-sel]")]
-      .filter((s) => !s.closest("#app"))
+      .filter((s) => s.closest("#boardpanel") || s.closest("#produce") ||
+                     s.closest(".nu-strip"))
       .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
                      sel: s.dataset.sel || null,
                      /* A SEAT, EITHER SPELLING (2026-09-03). `ins|<voice>|<n>`
@@ -1424,9 +1456,9 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     !/^(master[|.]|bus\|)/.test(s.sel || "") &&
     !(s.produce && /^prod\./.test(s.sel || "")));
   ok(notRack.length === 0 && sel.length > 0,
-     "…and every other menu outside #app (" + sel.length + " swept, either " +
-     "spelling) is one of the rack's own or the producer's own inside " +
-     "#produce (the 2026-08-27 reorder), drawn by ui/selects.js",
+     "…and every other menu on the board or in the producer (" + sel.length +
+     " swept, either spelling) is one of the rack's own or the producer's own " +
+     "inside #produce (the 2026-08-27 reorder), drawn by ui/selects.js",
      JSON.stringify(notRack.map((s) => s.k)));
 
   /* ---- 2 · every word the board used to offer is still reachable ----
@@ -1973,24 +2005,26 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        `in ←` header names who feeds it and its footer names what it feeds,
        which is the second half of this same check, immediately below. */
     const seriesRow = await page.evaluate(() => {
-      const rows = [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')];
+      const rows = [...document.querySelectorAll('#boardtabs [data-k^="boardtab|"]')];
       return { keys: rows.map((b) => b.dataset.k),
                chain: rows.map((b) => (b.getAttribute("aria-label") || "").trim())
                  .join(" \u2192 "),
                words: rows.map((b) => ((b.querySelector(".nu-vh") || {}).textContent || "").trim()),
-               oldRow: document.querySelectorAll("#boardtabs").length,
+               row: document.querySelectorAll("#boardtabs").length,
                openKind: (document.querySelector("#boardpanel > *") || {}).id };
     });
-    ok(seriesRow && seriesRow.oldRow === 0 &&
+    ok(seriesRow && seriesRow.row === 1 &&
        eq(seriesRow.keys, ["boardtab|bus|genre", "boardtab|bus|echo",
                            "boardtab|bus|rev", "boardtab|bus|main",
                            "boardtab|auto|auto"]) &&
        seriesRow.chain === "genre fx \u2192 delay \u2192 reverb \u2192 main \u2192 automation" &&
        seriesRow.openKind === "rack",
-       "THE SERIES IS DRAWN IN THE GUTTER, in signal order, as the five " +
-       "children of the Mix icon — genre fx \u2192 delay \u2192 reverb \u2192 main, " +
+       "THE SERIES IS DRAWN ON THE BOARD, in signal order, as the five stage " +
+       "buttons of `#boardtabs` — genre fx \u2192 delay \u2192 reverb \u2192 main, " +
        "then the automation grid that trims them (Paul, B11: \"five subicons " +
-       "under the 'Mix' icon\"): " + JSON.stringify(seriesRow && seriesRow.chain),
+       "under the 'Mix' icon\" \u2014 there is no Mix icon since 2026-09-07, so " +
+       "the five are the board's own row again): " +
+       JSON.stringify(seriesRow && seriesRow.chain),
        JSON.stringify(seriesRow));
     const saysWhereItGoes = await perBus(() => page.evaluate(() => {
       const p = document.querySelector("#boardpanel #rack .nu-plate");
@@ -2551,6 +2585,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // must carry the pointer (a real link to the doc), and the DOC must carry
     // each edge's own words verbatim — audio/desk.js stays the one owner and
     // this diff is what keeps the quotes from drifting.
+    /* THE BOARD HAS TO BE OPEN TO BE READ, 2026-09-07 — and that is new, not
+       an oversight in what stood here. While the board was a PANE its DOM
+       survived every other tab being looked at, so a check could read `#board`
+       whenever it liked. It is a SHEET now (the MIX row's master), and this
+       surface has one accordion: opening a voice's seat closes the master.
+       Measured the hour the pane went: this read answered `null` because the
+       check before it had left a strip open. */
+    await openMaster();
     const said = await page.evaluate(() => document.body.innerText);
     const routePtr = await page.evaluate(() => {
       const a = [...document.querySelectorAll("#board a")]
@@ -2984,19 +3026,20 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         });
       }
       await openBus(busKeys[0]);
-      /* THE ROW'S GEOMETRY IS THE STRIPE'S GEOMETRY NOW. It read `tabs`,
-         `tabLines`, `voiceLines`, `seriesLines` and `seamFirst` off
-         `#boardtabs`; what is asked instead is the claim those five were
-         serving — the five children of the Mix icon are a COLUMN in the
-         stripe, one row each, in one order, at both widths — plus the panel's
-         width, which the wide-check below still uses. */
+      /* THE ROW'S GEOMETRY IS THE ROW'S AGAIN (2026-09-07), and the question
+         is the one it always was: are all five stages REACHABLE at both
+         widths without the surface growing sideways. `.nu-row` wraps
+         (`flex-wrap: wrap`, nu.css), so the answer is a count of lines that
+         may be more than one and must never be a horizontal scroll — the
+         `wide` sweep above is what asserts the second half, on the document
+         and on the panel, for every one of the five. */
       const m = await page.evaluate(() => {
-        const rows = [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')];
+        const rows = [...document.querySelectorAll('#boardtabs [data-k^="boardtab|"]')];
         const lineOf = (n) => Math.round(n.getBoundingClientRect().top);
         return { tabs: rows.length,
                  tabLines: [...new Set(rows.map(lineOf))].length,
                  keys: rows.map((b) => b.dataset.k),
-                 oldRow: document.querySelectorAll("#boardtabs").length,
+                 row: document.querySelectorAll("#boardtabs").length,
                  panelW: Math.round(document.getElementById("boardpanel")
                    .getBoundingClientRect().width) };
       });
@@ -3058,19 +3101,19 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        widths: a column of five rows is the shape the gutter promises, and a
        row that wrapped or a child that vanished at 390 would be the same
        defect the old line was watching for one screen over. */
-    ok(shape[390].oldRow === 0 && shape[1280].oldRow === 0 &&
+    ok(shape[390].row === 1 && shape[1280].row === 1 &&
        shape[390].tabs === 5 && shape[1280].tabs === 5 &&
-       shape[390].tabLines === 5 && shape[1280].tabLines === 5 &&
+       shape[1280].tabLines === 1 && shape[390].tabLines <= 3 &&
        eq(shape[390].keys, shape[1280].keys),
-       "THE SERIES IS A COLUMN IN THE STRIPE AT BOTH WIDTHS — five children, " +
-       "one per line, same order at 390 and at 1280, and no in-panel tab row " +
-       "left on the page (390: " + shape[390].tabs + " on " +
+       "THE SERIES IS ONE WRAPPING ROW ON THE BOARD AT BOTH WIDTHS — five " +
+       "stages, in one order, one line at 1280 and no more than three at 390, " +
+       "in exactly one `#boardtabs` (390: " + shape[390].tabs + " on " +
        shape[390].tabLines + " line(s); 1280: " + shape[1280].tabs + " on " +
        shape[1280].tabLines + ")",
        JSON.stringify({ 390: { tabs: shape[390].tabs, lines: shape[390].tabLines,
-                               keys: shape[390].keys, oldRow: shape[390].oldRow },
+                               keys: shape[390].keys, row: shape[390].row },
                         1280: { tabs: shape[1280].tabs, lines: shape[1280].tabLines,
-                                keys: shape[1280].keys, oldRow: shape[1280].oldRow } }));
+                                keys: shape[1280].keys, row: shape[1280].row } }));
     /* THE SENTENCE, REWRITTEN 2026-08-28 — NOT THE PROPERTY. It read
        "…and a strip and a plate take THE SAME width at 1280 (Npx against
        Npx) RATHER THAN THE WHOLE WINDOW", and the last clause named a cap
@@ -3085,24 +3128,25 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        stands unchanged and the sentence now says what the equality means.
        (`stripW > 400` stays: it is the check that neither body collapsed and
        made the equality vacuous — two zeroes are also equal.) */
-    /* RE-POINTED 2026-09-04 (TABLE.md wave 2c) — THE SUBJECT MOVED, THE CLAIM
-       DID NOT. `facet-mix` is deleted and the strip is seated in the table's
-       COLUMN SHEET, a `<td>` inside a `<tr class=nu-wopen>` inside the Band
-       pane's grid; the plate still sits straight in `#boardpanel`. So the two
-       CANNOT be one number any more and never will be again: MEASURED at 1280
-       after the footer fix, the surfaces are 1078 and 1078 and the strip is
-       1055 — twenty-three pixels of the table's own border-spacing, the cell's
-       padding and the sheet row's inset, none of which is a cap on the strip.
-       Reading those 23px as "inconsistent" would be reading furniture.
-       WHAT THE ONE NUMBER WAS EVER FOR is in the paragraph above: nu.css
-       capped `.nu-strips` at 780px while the plates ran to 100%, and the strip
-       came up short of the column it was in. That defect is exactly two
-       equalities now, both exact, and together they are the old one:
-         * THE STRIP FILLS ITS SEAT — `.nu-strip` is the full width of the
-           `.nu-seatstrip` the column sheet gives it. A cap of any kind, in any
-           file, shows up here as a strip narrower than its own box.
-         * THE TWO SURFACES ARE ONE WIDTH — the table the strip is seated on
-           and `#boardpanel`, where the plates are, are the same column.
+    /* RE-POINTED 2026-09-04 (wave 2c) AND AGAIN 2026-09-07 (§10b step 3) —
+       THE SUBJECT MOVED TWICE, THE CLAIM DID NOT. What the one number was
+       ever for is in the paragraph above: nu.css capped `.nu-strips` at 780px
+       while the plates ran to 100%, and the strip came up short of the column
+       it was in.
+       WAVE 2c put the strip in the table's COLUMN SHEET while the plates sat
+       straight in a pane, so the claim became two equalities — the strip fills
+       its seat, and the table equals the pane — with 23px of table furniture
+       (border-spacing, the cell's padding, the sheet row's inset) between the
+       two surfaces and read as furniture rather than as a cap.
+       THIS ROUND PUTS BOTH IN THE SAME TABLE. The strip is the MIX row's cell
+       sheet and the board is the MIX row's master sheet, so `surfW` (the pane,
+       1078) against `panelW` (`#boardpanel` inside a sheet, 1055) is now that
+       same 23px of furniture measured against ITSELF, and asking them to be
+       equal is asking a sheet to be as wide as the table it is a row of. The
+       honest equality is the one the move makes EXACT: the strip and the board
+       are seated in sheets of the same row, so they are the SAME WIDTH —
+       1055 against 1055 — which is "the strip and the buses it sends into are
+       one object" said about the two objects rather than about their frames.
        (`stripW > 400` stays for the reason it was written: two zeroes are also
        equal.) */
     const vm = shape[1280].per["voice|" + voices[0]];
@@ -3110,13 +3154,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const plateW = shape[1280].per["bus|main"].bw;
     const panelW = shape[1280].panelW;
     ok(stripW > 400 && Math.abs(stripW - seatW) <= 1 &&
-       Math.abs(surfW - panelW) <= 1 && plateW > 400,
-       "…and a strip FILLS ITS SEAT in the column sheet (" + stripW +
-       "px in " + seatW + "px) while the surface it is seated on and the " +
-       "board the plates sit on take THE SAME width at 1280 (" + surfW +
-       "px against " + panelW + "px) — whatever the column is, they are both " +
-       "it; the strip and the buses it sends into are one object, which is " +
-       "the whole of \"consistent\"",
+       Math.abs(stripW - panelW) <= 1 && plateW > 400,
+       "…and a strip FILLS ITS SEAT in the mix row's cell (" + stripW +
+       "px in " + seatW + "px) and takes THE SAME WIDTH as the board seated " +
+       "in the same row's master (" + stripW + "px against " + panelW +
+       "px at 1280) — the strip and the buses it sends into are one object, " +
+       "which is the whole of \"consistent\" (the pane around them both is " +
+       surfW + "px, which is the table's own furniture and not a cap)",
        JSON.stringify({ stripW, seatW, surfW, panelW, plateW }));
 
     /* EVERY CONTROL REACHABLE — the half a tabbed surface puts at risk, over
@@ -3279,10 +3323,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: w === 390 ? 844 : 900 });
       await page.waitForTimeout(150);
-      await topTab("Mix");
+      await openMaster();
       const moved = await page.evaluate(async () => {
         const panel = document.getElementById("boardpanel");
-        const rows = [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')];
+        const rows = [...document.querySelectorAll('#boardtabs [data-k^="boardtab|"]')];
         scrollTo(0, Math.max(0, panel.getBoundingClientRect().top + scrollY - 120));
         await new Promise((r) => setTimeout(r, 200));
         const out = [];

@@ -925,6 +925,54 @@ export function channelStrip(ctx, c, env) {
    empty console: `channelVoicesOf` is the desk's own roster walk (G2's law)
    and it drops a kit nobody has hired, so the refusal carries the measured
    reason exactly as a greyed knob does. */
+/* ===== WHAT A SEAT IS DOING, IN ONE LINE (2026-09-07, TABLE.md §10b step 3)
+   The MIX row of the Band table draws one cell per voice column and the cell's
+   collapsed face is that seat's own word. It is asked HERE and not computed in
+   ui/eight.js for the reason every other reading on this surface is: the
+   arithmetic is the strip's — `faderDb` is the one clamp every fader on this
+   machine takes and `fmtDb` is how this file prints a decibel — and a second
+   spelling of "−3.0 dB" would be a second owner of the number the strip under
+   the cell is showing. A CHANNEL THE DESK DOES NOT SEAT SAYS SO rather than
+   printing a silent zero: `channelVoicesOf` is the audio tier's own answer to
+   which voices have a strip at all, and "0 is a claim of silence about a voice
+   nobody measured" is this file's oldest law. */
+export function seatWord(doc, name) {
+  const v = ((doc && doc.voices) || []).find((x) => x.name === name);
+  if (!v) return "\u2014";
+  let seated = true;
+  try { seated = DD().channelVoicesOf(doc, GENRES)
+    .some((c) => c.voice.name === name); } catch (e) { seated = true; }
+  if (!seated) return "no channel";
+  /* NOTHING WRITTEN IS AN EM DASH, WHICH IS THIS TABLE'S OWN SPELLING FOR IT
+     and not a shrug: the cell is `is-derived` (dim) beside it, and the words
+     it would otherwise carry — "as mixed" — MEASURED at 56px, the width of a
+     player's column at 390, as "as mi". A cell says what a hand has done to
+     this seat; a seat nobody has touched has nothing to say and the strip
+     under it says what the genre dealt. */
+  const d = deskOf(v);
+  const out = [];
+  const db = faderDb(d.fader);
+  if (db) out.push(fmtDb(db));
+  if (d.pan) out.push(PANLABEL[d.pan] || d.pan);
+  if (d.mute) out.push("muted");
+  if (d.solo) out.push("solo");
+  const n = slotsOf(v).length;
+  if (n) out.push(n + " fx");
+  return out.length ? out.join(" \u00b7 ") : "\u2014";
+}
+/** ...and whether a HAND put any of it there, which is the dim-is-derived
+ *  reading every cell in this table makes. Every key below is one a strip
+ *  writes; absent is the only spelling of a default on this desk. */
+export function seatWritten(doc, name) {
+  const v = ((doc && doc.voices) || []).find((x) => x.name === name);
+  if (!v) return false;
+  const d = deskOf(v);
+  if (d.fader || d.pan || d.mute || d.solo || d.genre || d.echo || d.rev)
+    return true;
+  if (d.eq && Object.keys(d.eq).some((k) => d.eq[k])) return true;
+  return slotsOf(v).length > 0;
+}
+
 export function voiceMix(parent, ctx, voiceName) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
@@ -1698,12 +1746,63 @@ export function mount(parent, ctx) {
     BOARDTAB = CHILDREN[0] ? { kind: CHILDREN[0].kind, key: CHILDREN[0].key }
                            : { kind: "bus", key: null };
 
-  /* (`const tabsBar = el("p", null, "nu-row"); tabsBar.id = "boardtabs";` AND
-     ITS WHOLE ROW STOOD HERE — the `markTabs` repainter, the `tabBtn` factory
-     that minted `boardtab|<kind>|<key>`, the `.nu-busgroup` with its
-     `.nu-seamlab` and its `→` arrows. Deleted 2026-09-02; the argument and the
-     inventory are in THE TAB ROW IS DELETED above, and the five buttons that
-     carry those keys are ui/eight.js `mixTrayItems`.) */
+  /* ===== THE PLATE ROW IS BACK, AND THIS TIME IT IS THE ONLY OWNER =======
+     (2026-09-07, TABLE.md §10b step 3.) It stood here until 2026-09-02, was
+     deleted as a dated MIRROR of the gutter's five rows, and its own fence said
+     what would end it. What ends it now is the other half: the MIX PANE IS
+     DELETED, the gutter has no `Mix` branch to hang `mixTrayItems` on, and a
+     board whose five plates could only be switched from a tray that no longer
+     exists is four plates lost — the loss T7 refuses.
+     SO THE ROW COMES BACK WITH THE SAME ADDRESSES IT ALWAYS HAD:
+     `boardtab|bus|<key>` and `boardtab|auto|auto`, which is what
+     nukernel/desk-gate.js's `openBus` has driven since the buses became tabs.
+     An address does not move when a row does, and this one has now moved
+     twice without moving.
+     WHAT IS NOT RE-DRAWN: the `.nu-busgroup`, the `.nu-seamlab` ("the voices
+     feed") and the three `→` glyphs. The seam sentence was refused by the text
+     diet when it was proposed as a caption and it is refused again; the arrows
+     drew a series that each plate's own `in ←` header and footer connector
+     already draw. This is five buttons and a `<mark>`, which is the idiom every
+     row of marks on this page wears. */
+  const tabsBar = el("p", null, "nu-row");
+  tabsBar.id = "boardtabs";
+  tabsBar.setAttribute("role", "group");
+  tabsBar.setAttribute("aria-label", "the stages of the board");
+  const tabBtn = new Map();
+  const markTabs = () => {
+    for (const [k, b] of tabBtn) {
+      const on = k === BOARDTAB.kind + "|" + BOARDTAB.key;
+      b.setAttribute("aria-pressed", String(on));
+      const m = b.querySelector("mark");
+      if (m) m.replaceWith(...m.childNodes);
+      if (on) { const mk = el("mark"); mk.append(...b.childNodes); b.append(mk); }
+    }
+  };
+  for (const t of CHILDREN) {
+    /* THE WORD IS THE REGISTRY'S FOR THE FOUR BUSES AND `automation` FOR THE
+       FIFTH. `CHILDREN` spells the grid "section automation" because that is
+       what the RACK is labelled when it is open; on a button in a row of five
+       it is the only word that is a sentence, and `automation` is the word the
+       gutter's five rows wore for a wave and the word nukernel/desk-gate.js
+       joins into the chain it asserts. The full sentence rides `title`. */
+    const word = t.kind === "auto" ? "automation" : t.label;
+    const b = el("button", word);
+    b.type = "button";
+    b.dataset.k = "boardtab|" + t.kind + "|" + t.key;
+    /* THE ACCESSIBLE NAME IS THE STAGE'S OWN WORD AND NOTHING ELSE, because
+       nukernel/desk-gate.js joins these five `aria-label`s into the chain it
+       asserts — `genre fx → delay → reverb → main → automation` — and a name
+       carrying a sentence would read as a chain of sentences. What the
+       sentence is FOR rides `title`. */
+    b.setAttribute("aria-label", word);
+    b.title = t.kind === "auto"
+      ? "section automation — a trim on every fader, section by section"
+      : "this stage of the board";
+    b.addEventListener("click", () => { showBoardHere(t.kind, t.key); });
+    tabBtn.set(t.kind + "|" + t.key, b);
+    tabsBar.append(b);
+  }
+  host.append(tabsBar);
   const showPanel = () => {
     busSays = []; masterMeter = null; headMeters = []; autoGrid = null;
     panel.textContent = "";
@@ -1738,6 +1837,7 @@ export function mount(parent, ctx) {
     if (!PLATES[key]) return false;
     BOARDTAB = { kind: kind || "bus", key };
     showPanel();
+    markTabs();
     paint();
     return true;
   };
@@ -2080,6 +2180,7 @@ export function mount(parent, ctx) {
      the panel, then the routing pointer.) */
   host.append(panel);
   showPanel();
+  markTabs();                 // the mark on the plate that is open, first draw
 
   /* ---- the routing pointer, once, under the rack ------------------------ */
   // A GROUP HAS NO PLATE ANY MORE, and the sentence saying so is the reversal
@@ -2240,13 +2341,24 @@ export function mount(parent, ctx) {
     }
   };
   paint();
-  const handle = { paint, show: showBoardHere };
+  const handle = { paint, show: showBoardHere, host };
   CURRENT = handle;
   return handle;
 }
 
-// the free function the page's on("pos") handler calls.
-export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
+/* the free function the page's on("pos") handler calls.
+   ...AND IT ASKS THE DOM WHETHER THE BOARD IS STILL ON IT (2026-09-07), which
+   is `paintVoiceMix`'s own guard for `paintVoiceMix`'s own reason, arriving
+   here because the board became a SHEET. While it was a pane its DOM survived
+   every other tab; it is the MIX row's master now, one accordion with every
+   other sheet on that surface, so shutting the row — or opening a seat — takes
+   the whole board off the page while `CURRENT` still points at it. A handle
+   left over from a closed sheet is a beat's worth of writes into detached
+   nodes, which is the hazard this file has named at three other handles. */
+export const paintBoard = () => {
+  if (!CURRENT || (CURRENT.host && !CURRENT.host.isConnected)) return;
+  CURRENT.paint();
+};
 /* ...AND THE TWO THE GUTTER CALLS (2026-09-02). Same shape and same reason as
    `paintBoard`: the mount stores its closures in `CURRENT` and these are the
    whole of what the rest of the page may reach. `boardTabNow()` answers with a

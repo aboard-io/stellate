@@ -122,23 +122,34 @@ function standUpServer() {
   await p.goto(PAGE + KINGSTON, { waitUntil: "domcontentloaded" });
   await p.waitForTimeout(3500);
 
-  /* ---- X1 · the plate opens from the NAV ------------------------------ */
+  /* ---- X1 · the plate opens from the BOARD'S OWN ROW ------------------
+     RE-POINTED 2026-09-07 (nukernel/TABLE.md §10b step 3). It read "the plate
+     opens from the NAV" and asserted `inTray` — the automation child was a row
+     of the gutter under a `Mix` tab. The Mix tab is deleted: the board is the
+     MIX row's MASTER in the Band table, and the row of five stage buttons is
+     back inside the board at the same five `boardtab|<kind>|<key>` addresses.
+     THE CLAIM DID NOT MOVE, only where the button is: the automation grid is a
+     PLATE, opened by pressing its own stage button, one at a time in the one
+     panel. `inBoard` is what `inTray` was — the button is where this round
+     says it is, so a button that drifted somewhere else would fail here rather
+     than be found by a bare document query. */
   const opened = await p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    if (window.__eightTab) window.__eightTab("Mix");
+    if (window.__eightMix) window.__eightMix("master");
     await wait(350);
     const a = document.querySelector('[data-k="boardtab|auto|auto"]');
-    const inTray = !!(a && a.closest("#nu-tray"));
+    const inBoard = !!(a && a.closest("#boardtabs"));
     if (a) a.click();
     await wait(500);
     const plate = document.querySelector("#boardpanel #rack .nu-plate");
-    return { inTray, bus: plate && plate.dataset.bus,
-             oldRow: document.querySelectorAll("#boardtabs").length,
+    return { inBoard, bus: plate && plate.dataset.bus,
+             row: document.querySelectorAll("#boardtabs").length,
              grid: !!document.querySelector("#trimgrid") };
   });
-  check(opened.inTray && opened.bus === "auto" && opened.grid && !opened.oldRow,
-    "X1 Mix > section automation opens from the NAV's own child row, and the " +
-    "grid is the plate on the board (no in-panel tab row left)",
+  check(opened.inBoard && opened.bus === "auto" && opened.grid &&
+    opened.row === 1,
+    "X1 section automation opens from the board's own stage row, inside the " +
+    "MIX row's master sheet, and the grid is the plate on the board",
     JSON.stringify(opened));
 
   /* ---- X2/X3 · what a column head is ---------------------------------- */
@@ -235,16 +246,19 @@ function standUpServer() {
                                    b2 = document.querySelector('[data-k="tab' + n + '"]'); }
     if (!b2) return { found: false };
     b2.click(); await wait(350);
-    /* THE MUTE IS IN THE PLAYER'S COLUMN SHEET SINCE 2026-09-04 (TABLE.md wave
-       2c): `facet-mix` is deleted and `voiceMix` is seated in the sheet the
-       column head opens, which the mark's own `openVoice` opens on arrival. */
-    const h2 = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+    /* THE MUTE IS IN THE PLAYER'S MIX CELL SINCE 2026-09-07 (TABLE.md §10b
+       step 3). It was the COLUMN sheet from 2026-09-04 — `facet-mix` deleted,
+       `voiceMix` seated in the sheet the column head opens — and §10a gives
+       the strip a row of its own: the MIX row, one cell per voice column, in
+       the footer under that player's column. The strip is the same drawing at
+       the same `b|mute|<voice>` address; what moved is which head opens it. */
+    const h2 = document.querySelector('#pan-band [data-k="tmix|' + n + '"]');
     if (h2 && h2.getAttribute("aria-expanded") !== "true") h2.click();
     await wait(500);
     const m = document.querySelector('[data-k="b|mute|' + n + '"]');
     if (!m) return { found: false, facet: true };
     m.click(); await wait(400);
-    if (window.__eightTab) window.__eightTab("Mix");
+    if (window.__eightMix) window.__eightMix("master");
     await wait(350);
     const a = document.querySelector('[data-k="boardtab|auto|auto"]');
     if (a) a.click();
@@ -268,12 +282,12 @@ function standUpServer() {
   // the next check plays from a section, which must not audition a hole.
   if (victim && muteTrip.found) await p.evaluate(async (n) => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    if (window.__eightTab) window.__eightTab("Band");
-    await wait(350);
+    if (window.__eightMix) window.__eightMix(n);
+    await wait(500);
     const m = document.querySelector('[data-k="b|mute|' + n + '"]');
     if (m) m.click();
     await wait(400);
-    if (window.__eightTab) window.__eightTab("Mix");
+    if (window.__eightMix) window.__eightMix("master");
     await wait(300);
     const a = document.querySelector('[data-k="boardtab|auto|auto"]');
     if (a) a.click();
@@ -337,7 +351,7 @@ function standUpServer() {
   const who = chairs[0].name;
   const landedOn = await p.evaluate(async (n) => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    if (window.__eightTab) window.__eightTab("Mix");
+    if (window.__eightMix) window.__eightMix("master");
     await wait(300);
     const a = document.querySelector('[data-k="boardtab|auto|auto"]');
     if (a) a.click();

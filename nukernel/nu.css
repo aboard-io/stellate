@@ -7163,6 +7163,21 @@ table.nu-trims{ color: var(--ink); }
 .nu-wchip[hidden]{ display: none; }
 .nu-chipword{ flex: 0 0 auto; }
 .nu-chipprov{ flex: 0 0 100%; font-size: .8rem; opacity: .8; }
+/* A REFUSED CHIP PRINTS ITS REASON UNDER ITS WORD (2026-09-07). The same
+   `flex: 0 0 100%` second line the provenance above uses, for the same button,
+   because it is the same problem: a fact about this word that is not this
+   word. The sheet's own ruling on where a reason may live is two thousand
+   lines up (`grid-auto-rows` / `align-items: start`, "it costs its OWN chip's
+   height and nothing else's") and this is that ruling in a flex row —
+   `.nu-wchips` already wraps, so a taller chip pushes nothing sideways and
+   leaves its neighbours at 44px.
+   THE CAP IS SO A SENTENCE WRAPS INSTEAD OF STRETCHING THE CHIP. A flex item
+   is as wide as its content, and "the row caps its holds at 6 steps, and that
+   cap wins (capOf)" on one line is a chip wider than a phone; 18ch is the
+   width `.nu-circ .nu-opt .nu-why`'s own 9em cap was written for, doubled for
+   a strip that has the whole row rather than a wedge of a circle. */
+.nu-wchip > .nu-why{ flex: 0 0 100%; max-inline-size: 18ch;
+  text-align: center; white-space: normal; font-weight: 400; }
 /* THE CORNER IS A CONTROL NOW — the whole record, where every table has a
    blank square. It wears the row head's own plate because it IS a head. */
 .nu-corner{ font: 700 .62rem/1.3 var(--mono, monospace); text-transform: uppercase;
@@ -7180,6 +7195,32 @@ table.nu-trims{ color: var(--ink); }
    grow/shrink do the rest: MEASURED, the seven master words are 111x44 two to
    a line at 320 and 390, and 139x44 on one line at 1280. `.nu-trimbtn`
    already carries the 100% inline-size and the 44px floor. */
+/* ===== THE MIX ROW (TABLE.md §10a, 2026-09-07) =========================
+   §10a: *"MIX is ALIGNED — one channel strip per voice column and the master
+   in the corner."* It is the one special row that is NOT merged, and every
+   rule below follows from that one word: a cell per column, so it needs no
+   `--panew` line and no sticky button, and the row head is a LABEL rather than
+   a control — the column this table freezes at the pane's left edge is 36px
+   wide and has no room for a face.
+
+   THE MASTER IS A MERGED ROW UNDER THE STRIPS, wearing the same
+   `.nu-spheadcell` / `.nu-sphead` furniture TIME and RULES wear, for the same
+   reason they wear it: it is a fact about the RECORD, so it has no column, and
+   its line is pinned to the pane's left edge at `--panew` so it reads whole at
+   320 while the strips scroll under it. Two other homes were built and
+   measured first — in the mix row's HEAD (36px, the face rendered at 17px) and
+   in its ADDER cell (547px and legible, at an x seven columns right of a 255px
+   pane) — and both are written up at `grid.ts mixRow`. It does NOT freeze
+   vertically: `stick()` walks `thead > tr` and this is in the `<tfoot>`, which
+   is where a master strip belongs on a desk. */
+.nu-masterrow > th.nu-spheadcell{ border-block-end: 0; }
+/* A SEAT'S CELL IS A BODY CELL WITH A LAMP UNDER IT. The lamp is the column
+   head's own `.nu-scollamp`, built a second time (one node has one parent), so
+   a player that is sounding lights at BOTH ends of its column — which is what
+   an aligned row is for. */
+.nu-mixcell{ position: relative; }
+.nu-mixcell > .nu-scollamp{ inline-size: 100%; margin-block-start: 2px; }
+
 /* ===== THE TWO ADDERS: THE TABLE'S OWN EDGES (2026-09-05) ==============
    Paul, looking at the table on staging: *"Move all the nav into the table, I
    should be able to add players without using the nav and sections too. I
@@ -7311,7 +7352,7 @@ table.nu-trims{ color: var(--ink); }
    height depends on the genre's key name is a header row that jumps as you
    move around the catalogue. The whole line is in the button's accessible
    name, so nothing is lost to a reader; the hold explainer is the row itself. */
-.nu-sheetgrid tr.nu-sprow > th.nu-spheadcell{ padding: 0; text-align: start;
+.nu-sheetgrid th.nu-spheadcell{ padding: 0; text-align: start;
   z-index: 5; border-block-end: var(--bw) solid var(--rule); }
 /* AND THE LINE ITSELF IS PINNED TO THE PANE'S LEFT EDGE. The `<th>` cannot be:
    it spans every column, so its width IS its containing block's and a sticky

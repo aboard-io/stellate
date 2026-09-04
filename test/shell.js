@@ -599,8 +599,22 @@ const LANE = async () => {
    link into a row you have already opened is a control that does what the
    scroll you are already doing does. The 2026-08-27 quotation stays whole;
    this is the second amendment under it, made the way the first one was. */
+/* ...AND A THIRD AMENDMENT, 2026-09-07 (nukernel/TABLE.md §10b step 3, the
+   same approval). The list loses one more row and it is the same sentence
+   again — *"then do the same with the mix and produce"*:
+     · `Mix`  -> the MIX row: one cell per voice column carrying that player's
+                 own channel strip (`tmix|<voice>`), and the MASTER as a merged
+                 row under them (`tmix`) whose sheet is the board — the rack,
+                 its five stages and the section-automation grid, all inside
+                 the `#boardpanel` ui/engineer.js has always built.
+   `#deck` is out of index.html with the tab, and the Mix branch of the stripe
+   (the five stage rows) goes with it: the five are BUTTONS INSIDE THE BOARD
+   again, at the same `boardtab|<kind>|<key>` addresses, because a board whose
+   plates can only be switched from a branch of a tab that no longer exists is
+   four plates lost. The 2026-08-27 quotation stays whole; this is the third
+   amendment under it. */
 const PAULS_TABS = ["Where", "Motifs", "Band",
-                    "Mix", "Produce", "Score", "Video",
+                    "Produce", "Score", "Video",
                     "Screensaver", "Export"];
 const NAV_ROWS = PAULS_TABS.filter((t) => t !== "Where");
 // how long a tab is given to settle after it is opened. The Score engraves a
@@ -777,7 +791,11 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        that expanded with `__eightExpand` would be proving the probe agrees
        with itself. */
     const walk = [];
-    for (const word of ["Band", "Motifs", "Score", "Mix"]) {
+    /* THREE, NOT FOUR, SINCE 2026-09-07: `Mix` was the fourth and the Mix tab
+       is deleted (TABLE.md §10b step 3 — the board is the MIX row's master in
+       the Band table, and its five stage buttons are inside the board again).
+       The claim is about a tab WITH CHILDREN and the page has three of them. */
+    for (const word of ["Band", "Motifs", "Score"]) {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
       await page.click('[data-k="toptab-' + word + '"]');
