@@ -1061,3 +1061,27 @@ combo. MEASURED: with `CHIPMAX` temporarily set to 0 and nothing else changed,
 drawn — `ui/rules.js` is not edited by this round at all — so both belong to the
 menus round's own queue: either the chip appends its reason like its two
 siblings, or R5a's `said` clause learns the third widget.
+
+## 11 · The design system: AUX widgets, and cells that are cells (QUEUED 2026-09-05, after §10)
+
+Paul: *"reskin to use https://github.com/DeutscheSoft/aux-widgets — think
+about adsrs and faders and so forth. It's all web components. Make that the
+core of our design system. Then make the table even more like a normal
+spreadsheet table with less boxes inside the cells and more of the cells
+just being cells."*
+
+- AUX (web components: faders, knobs, ADSR/envelope and EQ graphs, meters,
+  buttons, selects, toggles) bundled through the committed build (§9b), our
+  tokens as its theme; every hand-drawn control on the page becomes one of
+  its components — the board's faders and sends, the chair sheets' knobs,
+  attack/release as an ADSR, the sounding lamps as meters, the master's tilt
+  as an EQ graph. The cell-row language becomes a theme, not boxes.
+- LICENSE FIRST: AUX is GPL; bundling it puts the page's client code under
+  the GPL's terms. The spike reports the exact license and Paul rules before
+  a reskin ships.
+- A CELL IS A CELL: its value as text, bold = written, quiet = inherited, no
+  controls or chips inside the grid; the formula bar and the sheets hold the
+  controls; special rows' faces are plain text.
+- Order: the spike (install, bundle size, the component map, touch on a
+  phone, the license) → the board (faders, sends, meters) → the sheets'
+  knobs and the ADSR → the grid's cells as cells → the theme over the rest.
