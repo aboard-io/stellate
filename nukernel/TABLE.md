@@ -717,10 +717,11 @@ words) · header menus on right-click and long-press · `+ player` and
 `+ section` at the end of each axis · frozen headers · resizable columns ·
 100% pane width · a control that is its word plus half a character ·
 document-level undo/redo on Cmd/Ctrl-Z, Shift-Z and two buttons. NOT IN, and
-named rather than left to be found: the ops still have their tray branch (§9c
-step 1's "no op in the nav" is a change to `ui/eight.js`'s tray that
-`test/shell.js` A6l and `test/gutter.js shorten()` both drive by name, and both
-have to move in the same edit); and formulas, which §9a itself defers.
+named rather than left to be found: ~~the ops still have their tray branch~~
+(**DONE 2026-09-05, §9e** — §9c step 1's "no op in the nav" was a change to
+`ui/eight.js`'s tray that `test/shell.js` A6l and `test/gutter.js shorten()`
+both drove by name, and all three moved in the same edit); and formulas, which
+§9a itself defers.
 
 **THE UNDO IS A STACK OF DOCUMENTS AND IT ADDS NO WRITE PATH.** `snapshot()` is
 a read and putting one back is `CTX.evolve` — the door the seed strip and the
@@ -790,3 +791,153 @@ offers, a right-click menu, the grip, the freeze, and all of it at 320/390/1280)
 `+ section` row is not a section, exactly as a `<tfoot>` row is not one. Also
 green: `shell` (A8 asserting instead of skipping), `selects`, `sheets`,
 `nav-tree`, `knobs`, `gutter`, `text-diet`.
+
+### 9e · Step 1's three loose ends, closed (2026-09-05)
+
+§9d named three things it left behind and said both gates that would have to
+move with them. All three are done, and each measured something the plan did
+not know.
+
+**THE NAV REDUCTION — the tray's Band branch is two lists of JUMPS and nothing
+else.** §9a's law is *"NO OP LIVES IN THE NAV: the tray keeps the Band tab and,
+at most, jump links"*, and until today the branch still drew nine ops beside
+the table that already offered every one of them: `addvoice`/`addbass`/
+`adddrums` (the three hires), `addsec`, `secup`/`secdown`/`secdup`/`secdrop`
+under whichever section was open, and `dropvoice` under whichever player was.
+Deleted from `ui/eight.js` — `bandTrayItems`'s offer loop, `sectionTrayItems`'s
+`addsec` row and its `kids`, and the two builders `secOpsTrayItems` and
+`voiceTrayItems` whole, with a tombstone in their place. **NOT ONE `reach` IN
+`test/table-inventory.json` MOVED**, which is the measurement that makes this a
+deletion rather than a loss: T7 has filed all nine on the table since wave 2b
+(`tcol-add|line|bass|drums`, `trow-add`, `trow-up|<id>`, `trow-down|<id>`,
+`trow-dup|<id>`, `trow-del|<id>`, `tcol-del|<voice>`), so what went is a second
+copy of nine controls. What the rows keep is the jump, and the jump is what
+puts the ops under the thumb: tapping `tab<name>` runs `openVoice` and
+tapping `secnav<id>` runs `openSection`, and `tablePanel` lands each arrival by
+clicking `tcol|<name>` / `trow|<id>` — so the sheet holding the ops is open
+before the second tap goes out. **`test/shell.js` A6l is now a claim about the
+LAW instead of a count**: at all four widths, zero rows at depth 2, no
+`aria-expanded` on a childless row, the row still wearing the state and the one
+`<mark>`, AND the ops present on the table at their own addresses (`tcol-del`
++ three hires under a player; the four verbs + `trow-add` under a section) —
+because a deletion nobody can undo by tapping is a lost control, so the gate
+reads the table rather than trusting the inventory. `test/gutter.js shorten()`
+shrinks the record through `trow-del|<id>` in the row sheet the jump opened,
+which keeps the jump link itself under test — the only thing left on that
+branch worth breaking. Four more gates hired their drummer through the stripe
+and now hire through `tcol-add|drums`: `nudges`, `sheets`, `selects`, and
+`shell`'s own kit-grid measurement (and `shell`'s "hire a line if the blank
+state has none" through `tcol-add|line`).
+
+**A HAND-CHANGED THROAT RE-SEATS THE WRITTEN REGISTER.** `precompose.js` §7d
+writes every sung chair at the octave its throat actually sings, so the staff,
+the piano roll and the notated `.mid` say what the box sounds instead of
+leaving `audio/plan.js`'s fold to correct it behind them — and the page had one
+door that undid it in a tap. The column sheet's `sings as` strip
+(`ui/eight.js` `A.throat` → `putCast(vi, "voice", …)`) wrote the new throat and
+left `cast.reg` where the OLD throat had put it. MEASURED on Kingston 1969 at
+reading 1: the `vocal` chair is seated at reg 0 for its throat and folds by 0;
+asking it to sing soprano wanted a fold of **+1** and bass wanted **−1**, and
+neither reached the document. The fix is one owner and it is `precompose.js`:
+the pass's walk and its arithmetic are `chairNotes` and `applySeat` now, one of
+each, and **`reseatVoice(doc, vi)`** is the pass asked about one chair — it
+needs the compass table, `throatVoiceOf`'s precedence and the played-bar walk,
+all three of which live there and none of which `document.js` or the door has
+any use for. `putCast` calls it when `f === "voice"` and lands at the next bar
+through the same `after()` every write on that surface ends in. **IT IS
+IDEMPOTENT AND THE TWO OWNER RULES AGREE, and that is one measurement**: the
+pass reads which ROW owns a chair off `genreToDocument`'s own `nBase` /
+`layerKeys`, the door has neither and reads it off the finished record — so
+calling the door on every line chair of a freshly composed record must write
+nothing. Over the whole catalogue: **1,437 records, 7,448 line chairs, 0
+re-seated** (`test/table.test.js` T4p, sampled in FAST and complete on
+`--full`), and the 1,437 composed records are byte-identical to the ones the
+un-refactored file wrote. On the page, `table.browser` **T9u–T9x**: the write
+moves `cast.reg` by exactly the fold the new throat asked for, the fold
+`audio/plan.js` would then apply is **0** over 267 rendered notes, the SUNG
+line (`pitch + 12 × fold`) is the same either way — the seat moves the notation
+and never the sound — and a second write of the same word moves nothing.
+
+**A ROW `clamp` MOVES NOTHING, AND THE ROW SAYS SO.** The row tier of §1's five
+landed as five strips and four of them reach the sound. The fifth wrote
+`section.clamp`, resolved through `document.js toGenre` onto the compiled
+genre's `incClamp`, reached `kernel.js rampOf` — and moved no note, because
+**`document.js` toPhrase writes `inc: z(), stk: z()` unconditionally
+(document.js:581)**, so `rampOf`'s raw ramp is `(0 + 0) × loop` and a limit has
+nothing to limit. Re-measured over the whole catalogue this round: **0 of
+18,793 motif phrases across 479 anchors at three readings carries a ramp
+column** — and `nukernel/gates.json`'s own census had already said it from the
+other end, `form.clamp`, 165 rows, **0 alive, `blind: true`**. So `avail.js`
+mints no `form.clamp` sheet at all (a sheet nothing draws is the dead half of
+the same problem) and `src/table/model.ts rowSheet` draws `rowVecSay` — the
+cell's own treatment one tier up, with `RAMPWHY` as the ONE spelling of the
+sentence the two tiers print. The refused-control law rather than a silent
+grey. `table.browser` **T9y/T9z**: the row's `ramp limit` is a sentence
+carrying its measurement and no `.nu-wcell`, nothing on the page can write the
+field (no `form.clamp` control, no chips, no sheet in `NuAvail.SHEETS`), and no
+section of the record carries a `clamp` after the sheet has been opened. The
+day a ramp column lands in the hook editor, `test/table.test.js` T4m goes red,
+the `continue` in avail.js comes out, and the strip is back with its vocabulary
+unchanged.
+
+## 10 · One sheet: the whole box in the table (APPROVED 2026-09-05)
+
+Paul, looking at the nav beside the v271 grid: *"we could integrate rules
+into a special row, time + key into a special row, then do the same with
+motifs, have the current table, and then do the same with the mix and
+produce -- then have a hamburger menu for score, video, screensaver, and have
+genre, dice, playstop along the bottom — a real mobile app now with
+everything in the table and the nav space reclaimed."*
+
+### 10a · The layout (phone first; the desktop is the phone given room)
+
+    ┌────────────────────────────────────────────────┐  ≡ (score · video ·
+    │ TIME      bpm · tempo map · key · meter        │     screensaver · export)
+    │ RULES     the rule chips, expandable           │
+    │ MOTIFS    the bank across, previews+provenance │
+    ├──────────┬───────┬───────┬───────┬─────────────┤
+    │          │ drums │ bass  │ lead  │ … + player  │  ← voice columns
+    │ 1 intro  │  cell │  cell │  cell │             │  ← section rows
+    │ 2 verse  │  …    │       │       │             │
+    │ + section│       │       │       │             │
+    ├──────────┼───────┼───────┼───────┼─────────────┤
+    │ MIX      │ strip │ strip │ strip │  master     │  ← one strip per column
+    │ PRODUCE  │ the producer's deals and notes      │  (merged, expandable)
+    └────────────────────────────────────────────────┘
+    [ genre ]            [ 🎲 47101 ]          [ ▶ / ■ ]   ← the bottom bar
+
+- **Special rows** are rows of the same sheet: TIME, RULES, PRODUCE are
+  record-level and MERGED across the columns, expandable, chips inside; MIX
+  is ALIGNED — one channel strip per voice column and the master in the
+  corner; MOTIFS is the bank across the top with previews and provenance,
+  and tapping a motif points the SELECTED cell at it (the formula bar's own
+  write). Sections keep their row overrides (key, swing, chain) as today.
+- **The lamps move onto the headers**: the playing section's row head and
+  the sounding players' column heads light (the score deck's join, v263's
+  source of truth). The nav tree's levels, indent and colours are retired
+  with the tray.
+- **The bottom bar**: genre (opens WHERE, the globe, as a sheet — it is a
+  picker), the die with its number (v263's seed control unchanged), play /
+  stop. Nothing else.
+- **The hamburger** (≡): Score, Video, Screensaver, Export — the viewers.
+- **The tray is deleted** (T7's law: every control it offered lands
+  somewhere above, proven on the rendered page at 320px). Rules, Time,
+  Motifs, Mix, Produce, Where as PANES are deleted the same way, one at a
+  time, as each becomes a row or a sheet.
+
+### 10b · The order (steps 3–4 of §9c, restated)
+
+1. TIME row (Tempo + Key's controls; pace stays on the section row).
+2. RULES row (ui/rules.js's sheet as chips; a change evolves, as now).
+3. MIX row (engineer.js's strips per column, the master in the corner, the
+   genre bus's three slots in the master's sheet).
+4. MOTIFS row (the bank, ui/preview.js previews, provenance words; the
+   bench opens from a motif as its sheet).
+5. PRODUCE row.
+6. The hamburger and the bottom bar; WHERE as a sheet from the genre button.
+7. The tray deleted; the lamps on the headers; shell/nav-tree/gutter gates
+   rewritten to the sheet's laws; eight.js loses the tab/tray machinery.
+
+Each step a Lit source directory (or a module under src/table), a committed
+build, one gate per claim, shipped and deployed before the next (Paul,
+2026-09-05: "Don't overtest for now. Just move stuff along.").
