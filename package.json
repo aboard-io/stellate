@@ -1,0 +1,17 @@
+{
+  "name": "stellate-nukernel",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The nukernel UI build. The SERVED TREE STAYS PLAIN FILES: this package exists only to turn nukernel/src/**/*.ts into the committed nukernel/ui/*.js the page loads with a <script type=module>. See nukernel/TABLE.md 9b and nukernel/GENRES.md 1 (the served-tree law).",
+  "scripts": {
+    "build": "node tools/ui/build.js",
+    "check": "node tools/ui/build.js --check && tsc --noEmit"
+  },
+  "dependencies": {
+    "lit": "3.3.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}

@@ -218,6 +218,30 @@ const GATES = [
              "tools/genres/emit.js", "tools/genres/grammar.js",
              "nukernel/genres-tables.js", "nukernel/genres.js",
              "nukernel/GENRES.md"] },
+  /* THE COMMITTED UI BUILD (2026-09-05, TABLE.md 9b). Paul: "Do the committed
+     build. Minimize things where possible." nukernel/src/<name>/ is TypeScript
+     + Lit; `tools/ui/build.js` bundles each entry into the COMMITTED
+     nukernel/ui/<name>.js the page loads with a plain `<script type=module>`.
+     Same arrangement as `genres-build` and `wiki` above and for the same two
+     reasons: the browser needs no toolchain, and a gate holds the committed
+     artifact honest so a hand patch cannot stick.
+     TWO STEPS, because the build and the types are two different questions:
+     `--check` says the shipped bytes are what the source says, `tsc --noEmit`
+     says the source is honest. Both are seconds. Wave 1 and `kind: "node"`
+     because neither opens a browser and neither reads a document.
+     `skipExit: 2` is the same door `wiki` has: build.js exits 2 when
+     node_modules is absent (a fresh clone, a deploy worktree), which is a skip
+     and not a failure — the OUTPUT is committed, so a tree with no toolchain
+     still plays. */
+  { name: "ui-build",   wave: 1, kind: "node", skipExit: 2, steps: [
+      ["tools/ui/build.js", "--check"],
+      ["node_modules/typescript/bin/tsc", "--noEmit"]],
+    need: ["tools/ui/build.js", "tsconfig.json", "package.json"],
+    covers: ["tools/ui/build.js", "tsconfig.json", "package.json",
+             "nukernel/src/table/index.ts", "nukernel/src/table/grid.ts",
+             "nukernel/src/table/model.ts", "nukernel/src/table/sheet.ts",
+             "nukernel/src/table/undo.ts", "nukernel/src/table/style.ts",
+             "nukernel/TABLE.md"] },
   /* THE TABLE'S MODEL (2026-09-03, TABLE.md wave 1). Paul: "a song can be
      understood as a grid with sections as rows and instruments as columns …
      Each cell can be understood as a vector." T1 shape (the tier table read

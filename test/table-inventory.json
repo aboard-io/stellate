@@ -3,7 +3,7 @@
   "how": "MEASURED, not read off the source: test/table-inventory.probe.js walked the rendered DOM of #pan-band and #pan-structure through all 36 states the two panes have (the roster, the crate, each voice x each of its four facets, the section list, each section's own questions, performance) at 390x844 and collected every button/select/input/[data-k]/[data-sel] in each. 72 control families, plus the two panes' own nav-tree children, which are controls too.",
   "law": "A home is (tier, where) — tier is row | column | cell | footer | table | elsewhere, and `reach` is the data-k the gate must find on the rendered table at 320px, tappable, at least 44px. `open` is what has to be tapped first to reach it (the sheet it lives in). A control with no home fails T7; so does a home that is not tap-reachable at 320.",
   "unmoved": "2026-09-04 (wave 2c): the three performance sheets keep the address they had — `performance.stress|phrase|orn` — because an address does not move when a row does and three gates drive them by name. Wave 2b's first draft re-keyed them `tperf|<short>` for uniqueness inside the table; `tperf|` is gone from the page with that draft; the footer's other three fields (take, humanize, on time) already carried their own names.",
-  "renamed": "2026-09-04 (wave 2c): the Motif tab is `Motifs` (TABLE.md §8), so `tray-new`'s reach is `toptab-Motifs`. The HOME did not move — the bank still owns a motif's own editor — only the door's word; an inventory row is edited when its address is renamed and never when a control is lost.",
+  "renamed": "2026-09-04 (wave 2c): the Motif tab is `Motifs` (TABLE.md §8), so `tray-new`'s reach is `toptab-Motifs`. The HOME did not move — the bank still owns a motif's own editor — only the door's word; an inventory row is edited when its address is renamed and never when a control is lost.  ...AND TEN CONTROLS ARRIVED WITH THE SONIC SPREADSHEET (2026-09-05, TABLE.md §9a): the formula bar's head (taddr · tundo · tredo · tcopy · tpaste), the two clipboard verbs on the cell's own op bar, the column grip, and the two axis offers — which keep build-the-band's own addresses (tcol-add|line and trow-add), so the nine nav ops filed above still land on the controls they were filed onto.",
   "elsewhere": "Two homes are outside the table on purpose and each says why: the Motifs bank owns a motif's own editor, and Where owns starting a record. Each is reached by ONE tap from the table, and the reach names that door. The SEAT is not one of them: it was filed as the board's in the first draft and test/sheets.js measured that wrong within the hour (zero insert seats on the whole page), so the voice's channel strip is drawn in its column sheet.",
   "controls": [
     {
@@ -640,6 +640,56 @@
       "reach": "form.pace|<section>",
       "why": "TABLE.md: pace MOVES to the row, out of Time",
       "open": "trow|<section>"
+    },
+    {
+      "reach": "taddr",
+      "open": null,
+      "why": "§9a: one selection with its address — the formula bar's head names the cell a hand is on"
+    },
+    {
+      "reach": "tundo",
+      "open": null,
+      "why": "§9a: UNDO at the document level, Cmd/Ctrl-Z, for every op — mandatory"
+    },
+    {
+      "reach": "tredo",
+      "open": null,
+      "why": "§9a: …and REDO beside it"
+    },
+    {
+      "reach": "tcopy",
+      "open": null,
+      "why": "§9a: copy a cell's vector"
+    },
+    {
+      "reach": "tpaste",
+      "open": null,
+      "why": "§9a: …and paste it, which is fill with one target"
+    },
+    {
+      "reach": "tcell-copy|<voice>|<section>",
+      "open": "tcell|<voice>|<section>",
+      "why": "§9a: copy, on the cell's own op bar, so the verb is reachable by tap and not only by Ctrl-C"
+    },
+    {
+      "reach": "tcell-paste|<voice>|<section>",
+      "open": "tcell|<voice>|<section>",
+      "why": "§9a: paste, the same way; refused with its reason until something is copied"
+    },
+    {
+      "reach": "tgrip|tcol|<voice>",
+      "open": null,
+      "why": "§9a: resizable columns — a button and not a drag handle, because §6 ¶A refuses a pointer-only control; it steps 12px on the arrow keys"
+    },
+    {
+      "reach": "trow-add",
+      "open": null,
+      "why": "§9a: the `+` at the end of the SECTION axis, in a row under the last one — Paul: \"I should be able to add players without using the nav and sections too\". Same address the row sheet's own offer has, because an address does not move when a control does"
+    },
+    {
+      "reach": "tcol-add|line",
+      "open": null,
+      "why": "§9a: the `+` at the end of the PLAYER axis, in a head cell after the last player. Same three addresses build-the-band already had, which is what keeps the nine nav ops' T7 homes"
     }
   ]
 }

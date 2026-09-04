@@ -6965,12 +6965,23 @@ table.nu-trims{ color: var(--ink); }
    is the one scroller and it already was. `position: sticky` on the cell would
    have been the popup by another name and is refused for the same reason. */
 .nu-wopen > td{ padding: var(--s2) 0; }
-.nu-wchips{ display: flex; flex-wrap: wrap; gap: var(--s2);
-  padding: var(--s2); background: var(--well); border-radius: var(--r2);
+/* 3px OF GAP AND OF PADDING (2026-09-05) — the same 3px `.nu-trims` spends
+   between its own cells (`border-spacing: 3px`), which is the minimum the
+   cell-row language allows: a strip of words and the grid above it are the
+   same surface and had two different rhythms (5.6px here, 3px there).
+   MEASURED before: a strip of eight registers was 8 x 63px in a 250px row and
+   wrapped to three lines; the chips carry their own word plus .5ch now. */
+.nu-wchips{ display: flex; flex-wrap: wrap; gap: 3px;
+  padding: 3px; background: var(--well); border-radius: var(--r2);
   border: var(--bw) solid var(--rule); }
-.nu-wchip{ min-block-size: var(--tap); min-inline-size: var(--tap);
-  padding-inline: var(--s3);
-  font: var(--btn-fw) var(--t2)/1.2 var(--sans, inherit); }
+/* A CHIP IS ITS WORD PLUS A HAIR. `min-inline-size: var(--tap)` made a 6.9px
+   digit into a 44px plate — Paul, 2026-09-05: *"the dropdowns and cells and so
+   forth have tons of padding … make the buttons a tiny bit bigger than the
+   words themselves."* The 44px BLOCK size stays: a target's HEIGHT is what
+   test/shell.js and T5g measure and what a thumb misses. */
+.nu-wchip{ min-block-size: var(--tap); min-inline-size: 0;
+  padding-inline: .5ch;
+  font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
 /* the word you are on, in the hand's own paint — the same cobalt the gutter's
    mark and every `aria-pressed` control on this page wears */
 .nu-wchip[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
@@ -7009,7 +7020,35 @@ table.nu-trims{ color: var(--ink); }
    name and test/selects.js immediately reported thirty-two lit sheets with no
    key — a collision found by the gate whose whole job is that vocabulary. The
    V is for the VECTOR, which is what this one holds. */
-.nu-vsheet{ display: flex; flex-direction: column; gap: var(--s2);
+/* ---- IT SPENDS THE WHOLE WIDTH, AND THE FIELDS FLOW ACROSS IT --------
+   Paul, 2026-09-05, looking at the table on staging: *"Clicking '1 head'
+   results in an enormous blank space and a tiny vertical area and nothing is
+   readable. You should spread things out to 100% of the screen width and make
+   the buttons a tiny bit bigger than the words themselves."*
+
+   MEASURED on the rendered page before this rule, Kingston 1969 at reading 1,
+   the first section's row sheet:
+     · at 1280 the sheet was 1068px wide and its CONTENT was one column
+       268px across — an 88px label plus a 180px plate — so 75% of the sheet
+       was blank and the twenty-four fields ran 1,267px DOWN. That is the
+       "enormous blank space beside a tiny vertical area", exactly.
+     · every plate was the same 180px whatever word was in it: the `bars`
+       plate held a 6.9px glyph ("2") in a 180px box — 3.8% ink — because
+       `flex: 1 1 12ch; max-inline-size: 26ch` sizes a control by the LAYOUT
+       and not by its word. That is the "tons of padding".
+     · every word on the sheet was 11.52px (`--t1`), which is what "nothing
+       is readable" is measuring.
+   AFTER: the sheet is a GRID of `min(100%, 20rem)` columns, so 1,068px holds
+   three of them and 263px holds one; a plate is `flex: 0 1 auto` with .5ch of
+   padding, so it is its own word plus a hair; and every word on a sheet is
+   1rem. The 44px tap floor is untouched — it is a BLOCK size, and none of
+   this is about height.
+   WHAT SPANS THE WHOLE WIDTH: an ops bar, a seated widget, and a field's own
+   open strip of words. All three are answers to one question and a column
+   three-fifths of the way across would be a second reading order. */
+.nu-vsheet{ display: grid; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--s2) var(--s3);
   padding: var(--s2); background: var(--well); border-radius: var(--r2);
   border: var(--bw) solid var(--rule);
   /* ---- AND IT STAYS WHERE THE THUMB IS ------------------------------
@@ -7024,17 +7063,36 @@ table.nu-trims{ color: var(--ink); }
      real `<tr>` (the accordion's whole argument), the sheet rides the scroll
      to the pane's left edge, and it is never wider than the screen minus the
      stripe. §6 ¶A — "every op in §5 … reachable by tap at 320px" — is a claim
-     about where a control IS, not only about whether it exists. */
+     about where a control IS, not only about whether it exists.
+     THE ARITHMETIC IS THE PANE'S OWN, EXACTLY (2026-09-05). It read
+     `2 * var(--s3)` for the air around the pane, which is 17.6px against the
+     25.6px `.nu-pan` actually pays (`padding: var(--s4)` on each side, .8em),
+     so the sheet stood 8px past the right edge of the pane at every width — a
+     sideways scroll of its own on a box whose whole argument is that it has
+     none. Measured: sheet 263.2 in a 255.2 pane at 390; 1068.4 in a 1078.4
+     pane at 1280. The panel's own padding is named now, so the sheet IS the
+     pane's width and the gate can say `>= 95%` of it. */
   position: sticky; inset-inline-start: 0;
-  inline-size: min(100%, calc(100vw - var(--tray-w) - 2 * var(--s3))); }
+  inline-size: min(100%, calc(100vw - var(--tray-w) - var(--gl) - var(--gr)
+                              - 2 * var(--s4))); }
 .nu-wopen > td{ position: relative; }
+/* AN OPS BAR, A SEATED WIDGET AND AN OPEN STRIP TAKE THE WHOLE SHEET. */
+.nu-vsheet > .nu-sheetops,
+.nu-vsheet > .nu-noderow,
+.nu-vsheet > .nu-wchips,
+.nu-vsheet > .nu-wgroups{ grid-column: 1 / -1; }
 .nu-sheetrow{ display: flex; flex-wrap: wrap; align-items: center;
-  gap: var(--s2); }
-.nu-sheetlab{ flex: 0 0 auto; min-inline-size: 11ch;
-  font: 700 var(--t1)/1.25 var(--sans, inherit); color: var(--dim); }
-.nu-sheetrow > .nu-wcell{ flex: 1 1 12ch; max-inline-size: 26ch;
-  text-align: start; }
-.nu-sheetsub{ flex: 0 0 auto; color: var(--dim); font-size: var(--t0); }
+  gap: var(--s2); min-inline-size: 0; }
+.nu-sheetlab{ flex: 0 0 auto; min-inline-size: 9ch;
+  font: 700 1rem/1.25 var(--sans, inherit); color: var(--dim); }
+/* A PLATE IS ITS OWN WORD PLUS A HAIR — `0 1 auto`, never a share of the row.
+   `.nu-trimbtn` carries `inline-size: 100%` and a 56px floor for the TABLE,
+   where a fixed column has to be filled; inside a sheet there is no column to
+   fill and a 180px box around "2" is what Paul is pointing at. */
+.nu-vsheet .nu-sheetrow > .nu-wcell{ flex: 0 1 auto; inline-size: auto;
+  min-inline-size: 0; max-inline-size: 100%; padding-inline: .5ch;
+  font: var(--btn-fw) 1rem/1.2 var(--mono, monospace); text-align: start; }
+.nu-sheetsub{ flex: 0 0 auto; color: var(--dim); font-size: .8rem; }
 /* A ROW WITH A WIDGET IN IT IS A BLOCK, not a label-beside-a-control. The
    channel strip is the one user and it is 207px wide at its narrowest; the
    label stands above it and it takes the sheet's whole width, which is the
@@ -7055,26 +7113,31 @@ table.nu-trims{ color: var(--ink); }
    dash, and carries `data-why` where a gate and a long-press both read it. */
 .nu-sheetsay{ flex: 1 1 auto; min-block-size: var(--tap);
   display: flex; align-items: center;
-  font: var(--fw-body) var(--t1)/1.25 var(--sans, inherit); color: var(--ink); }
+  font: var(--fw-body) 1rem/1.3 var(--sans, inherit); color: var(--ink); }
 .nu-sheetsay.is-refused{ opacity: .6; border-block-end: var(--bw) dashed var(--rule);
   cursor: help; }
 /* THE CLEAR-BACK (TABLE.md §2), and it is drawn only where there is something
    to clear — so its presence is itself the reading "a hand wrote here". */
 .nu-clearback{ flex: 0 0 auto; min-block-size: var(--tap);
-  padding-inline: var(--s3);
-  font: var(--btn-fw) var(--t0)/1.2 var(--sans, inherit); color: var(--dim); }
+  padding-inline: .5ch;
+  font: var(--btn-fw) .8rem/1.2 var(--sans, inherit); color: var(--dim); }
 /* THE OPS (§5's grammar). Chunky, wrapping, 44px, never a menu: an op is a
-   decision and decisions are chips on this page. */
+   decision and decisions are chips on this page.
+   .5ch OF PADDING AND NOT `--s3` (2026-09-05, Paul: *"make the buttons a tiny
+   bit bigger than the words themselves"*). `--s3` is .55em, which is 8.8px a
+   side at this size; half a character is 4.6px, which is a hair and reads as
+   one. The 44px BLOCK size is untouched — the shell gate's law is about the
+   height of a target and this is the width of a word. */
 .nu-opbar{ display: flex; flex-wrap: wrap; gap: var(--s2); flex: 1 1 100%; }
-.nu-opbtn{ min-block-size: var(--tap); padding-inline: var(--s3);
-  font: var(--btn-fw) var(--t1)/1.2 var(--sans, inherit); }
+.nu-opbtn{ min-block-size: var(--tap); padding-inline: .5ch;
+  font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
 .nu-opbtn[disabled]{ opacity: .5; cursor: not-allowed; }
 /* THE DRUMMER'S SIX GROUPS, one open at a time, the standing answer pinned
    above them so you can always see the word you are on. */
 .nu-wgroups{ display: flex; flex-direction: column; gap: var(--s2); }
 .nu-groupbar{ display: flex; flex-wrap: wrap; gap: var(--s2); }
-.nu-groupbtn{ min-block-size: var(--tap); padding-inline: var(--s3);
-  font: var(--btn-fw) var(--t1)/1.2 var(--sans, inherit); }
+.nu-groupbtn{ min-block-size: var(--tap); padding-inline: .5ch;
+  font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
 .nu-groupbtn[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
   border-color: var(--hand); }
 .nu-wchips.nu-pinned{ background: transparent; border-style: dashed; }
@@ -7094,7 +7157,7 @@ table.nu-trims{ color: var(--ink); }
    the measurement true. */
 .nu-wchip[hidden]{ display: none; }
 .nu-chipword{ flex: 0 0 auto; }
-.nu-chipprov{ flex: 0 0 100%; font-size: var(--t0); opacity: .8; }
+.nu-chipprov{ flex: 0 0 100%; font-size: .8rem; opacity: .8; }
 /* THE CORNER IS A CONTROL NOW — the whole record, where every table has a
    blank square. It wears the row head's own plate because it IS a head. */
 .nu-corner{ font: 700 .62rem/1.3 var(--mono, monospace); text-transform: uppercase;
@@ -7112,9 +7175,149 @@ table.nu-trims{ color: var(--ink); }
    grow/shrink do the rest: MEASURED, the seven master words are 111x44 two to
    a line at 320 and 390, and 139x44 on one line at 1280. `.nu-trimbtn`
    already carries the 100% inline-size and the 44px floor. */
+/* ===== THE TWO ADDERS: THE TABLE'S OWN EDGES (2026-09-05) ==============
+   Paul, looking at the table on staging: *"Move all the nav into the table, I
+   should be able to add players without using the nav and sections too. I
+   click band and all further operations are buttons around the table."*
+   `+ line · + bass · + drums` stand in a head cell AFTER the last player and
+   `+ section` in a row head UNDER the last section — the two places a
+   spreadsheet has always put "one more". They wear the op button's own plate
+   (44px block, half a character of side padding, the word and a hair) because
+   they ARE ops; what makes them read as the edge rather than as a column is
+   the dashed rule they hang off and the fact that their cell holds nothing
+   else. MEASURED before this rule: adding a player cost 2 taps and both of
+   them were on the nav stripe. */
+.nu-addbar{ display: flex; flex-wrap: wrap; gap: 3px; align-items: stretch; }
+/* THE HEADS ALIGN TO THE TOP, ALL OF THEM. The adder cell is three 44px
+   offers stacked (a 9ch column holds one word to a line), so it is the tallest
+   thing in the header row and a `middle`-aligned player head floated down the
+   middle of it. Measured: the head row is 138px with the adder in it and the
+   player plates were sitting 44px below their own rule. */
+.nu-wordgrid thead th{ vertical-align: top; }
+.nu-wordgrid thead th.nu-addhead{ padding: 0; }
+.nu-wordgrid tbody th.nu-addhead{ padding-inline: 0; }
+.nu-addbtn{ flex: 1 1 auto; min-block-size: var(--tap); padding-inline: .5ch;
+  border: var(--bw) dashed var(--ink); border-radius: 3px;
+  font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
+.nu-addbtn[disabled]{ opacity: .5; cursor: not-allowed; }
+.nu-addcell{ padding: 0; }
+.nu-wordgrid tbody tr.nu-addrow > th{ border-block-start: var(--bw) dashed var(--rule); }
 .nu-footcells{ display: flex; flex-wrap: wrap; gap: 3px; align-items: stretch; }
 .nu-footcell{ flex: 1 1 9ch; min-inline-size: 56px; display: flex; }
 .nu-footcell.nu-sgsay{ align-items: center; justify-content: center; }
+
+/* ===== THE SONIC SPREADSHEET (2026-09-05, TABLE.md §9a) ================
+   Paul: *"I want the table to just re-use spreadsheet dynamics since users
+   know them. Think of song composition as 'sonic spreadsheet'."*
+
+   THE FORMULA BAR IS TWO PARTS AND ONE CONTROL. Its BODY is the vector, in the
+   accordion, under the row the cell is in — because a cell here is eighteen
+   fields and this page's two standing laws (menus never scroll inside
+   themselves; cell menus insert BELOW the row) decide where that many words
+   may go. Its HEAD is this strip: the ADDRESS of the selection, undo/redo and
+   the two clipboard verbs. Nothing is drawn twice.
+   ON A PHONE THE HEAD IS THE BOTTOM SHEET (§9a's own words). It sticks to the
+   bottom of the viewport at ≤ 480px, which is where the thumb already is;
+   above that it sits over the grid, which is where a formula bar has always
+   been. Sticky and not fixed: it stays inside the pane's own stacking and
+   cannot cover a control it was opened from (the flyout law). */
+.nu-sheetwrap{ display: flex; flex-direction: column; min-inline-size: 0; }
+.nu-formula{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); padding: var(--s2) 0; position: sticky; inset-block-start: 0;
+  z-index: 3; background: var(--paper); order: 0; }
+/* THE ADDER COLUMN IS AN EDGE, NOT A PLAYER. Under `table-layout: fixed` a
+   `<col>` with no width takes an equal share, so the empty cell after the last
+   player was as wide as a player — measured 1,280: a 100px column of nothing.
+   The three offers stack in a 9ch head; the body cells under them hold air. */
+.nu-sheetgrid col.nu-addcol{ inline-size: 9ch; }
+/* THE ADDRESS IS A 44px LINE like everything else in this pane, and that is
+   not decoration: T7 measures every control the inventory files by its rendered
+   height at 320, and an address a thumb cannot land on is an address a thumb
+   cannot read either. */
+.nu-fadr{ flex: 1 1 12ch; min-inline-size: 0; min-block-size: var(--tap);
+  display: flex; align-items: center;
+  font: var(--fw-label) 1rem/1.25 var(--sans, inherit); color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-fops{ display: flex; flex-wrap: wrap; gap: 3px; flex: 0 1 auto; }
+@media (max-width: 480px){
+  /* THE BOTTOM SHEET. It leaves the flow at the foot of the pane rather than
+     covering it: `bottom: 0` on a sticky box inside a scrolling page holds it
+     at the last line of the viewport while the grid scrolls behind, which is
+     what a bottom sheet is and what a `position: fixed` bar would only fake
+     (a fixed bar would also sit over the gutter's transport, which owns that
+     edge of the screen). */
+  .nu-formula{ inset-block-start: auto; inset-block-end: 0; order: 2;
+    border-block-start: var(--bw) solid var(--rule);
+    padding-block: var(--s2); }
+  .nu-fadr{ flex: 1 1 100%; } }
+
+/* FROZEN HEADERS (§9a). The head row and the head column stay while the rest
+   scrolls — a spreadsheet's oldest affordance and the one that makes a wide
+   band readable at 320. `.nu-pane` is the scroller and it always has been; the
+   sticky heads ride it. The `<th>`s carry the paper behind them, or the cells
+   would show through as they pass under.
+
+   `.nu-sheetgrid` AND NOT `.nu-wordgrid`, which is the class four surfaces
+   share: the board's trim grid is drawn by the same component and freezing its
+   heads is a decision about the board, taken on the board. The sonic
+   spreadsheet says which table it is.
+
+   THE CORNER IS FROZEN IN BOTH DIRECTIONS, and that is not symmetry for its own
+   sake: test/shell.js A8 takes the pane's FIRST `<th>` — which is the corner —
+   asks whether it declares itself sticky, and then scrolls the pane 200px and
+   measures how far it moved. A corner pinned only to the top declares
+   stickiness and then slides the full scroll under it, which is exactly what
+   A8 exists to catch, and did, within the minute. A spreadsheet's corner cell
+   has never scrolled in either direction. */
+.nu-sheetgrid thead th{ position: sticky; inset-block-start: 0; z-index: 2;
+  background: var(--paper); }
+/* 3px AND NOT 0, AND THE 3px IS `border-spacing`. `.nu-trims` is
+   `border-collapse: separate; border-spacing: 3px`, so the head column's
+   natural left edge is 3px inside the pane's content box — and a cell pinned
+   at 0 SNAPS those 3px the moment it sticks. Measured by test/shell.js A8,
+   which scrolls the pane 200px and allows 2: "moved 4px over a 200px scroll",
+   three times, at three widths. Pinning it where it already stands makes the
+   freeze invisible, which is the only way a freeze is right. */
+.nu-sheetgrid tbody th.nu-srowh, .nu-sheetgrid tfoot th.nu-srowh,
+.nu-sheetgrid tbody th.nu-addhead{ position: sticky; inset-inline-start: 3px;
+  z-index: 1; background: var(--paper); }
+.nu-sheetgrid thead th:first-child{ inset-inline-start: 3px; z-index: 4; }
+
+/* THE SELECTION, AND THE RANGE. One cell is selected; a shift-arrow or a
+   shift-tap makes a rectangle of them. The selected cell wears the hand's own
+   cobalt ring — the paint this page has used for "where your hand is" since
+   2026-08-27 — and the rest of the rectangle wears its tint, so the anchor is
+   never lost inside its own range. */
+.nu-wcell.is-sel{ outline: var(--bw-hard) solid var(--hand);
+  outline-offset: -2px; }
+.nu-wordgrid td.is-inrange{ background: var(--hand-tint); border-radius: 3px; }
+
+/* THE COLUMN GRIP (§9a: resizable columns). A DRAG-ONLY CONTROL IS A REFUSED
+   CONTROL (§6 ¶A), so it is a button: it drags with a pointer and steps 12px
+   with the arrow keys. It is the head's full height, which is what keeps it
+   over the 44px floor test/shell.js and T5g measure on every visible button in
+   this pane, and it is the width of a rule, which is what keeps it out of the
+   way of the word beside it. */
+/* (`.nu-sheetgrid .nu-colhead{ position: relative }` stood here, to anchor the
+   grip. It came AFTER the freeze rule and quietly beat it: T9s read the head's
+   computed position back as `relative` and the column heads stopped sticking
+   the same minute they were told to. A `sticky` box is a containing block for
+   an absolutely positioned child exactly as a `relative` one is, so the grip
+   needs no rule of its own and the freeze keeps the position it declares.) */
+.nu-colgrip{ position: absolute; inset-block: 0; inset-inline-end: -2px;
+  inline-size: 8px; min-block-size: var(--tap); padding: 0; cursor: col-resize;
+  background: transparent; border: 0;
+  border-inline-end: var(--bw) solid var(--rule); border-radius: 0; }
+.nu-colgrip:hover, .nu-colgrip:focus-visible{
+  border-inline-end-color: var(--hand); border-inline-end-width: var(--bw-hard); }
+
+/* THE NATIVE PICKER, for a vocabulary over eight words on a coarse pointer
+   (§9b: "the native picker on touch, the typed combo on desktop with a
+   keyboard, chips for a vocabulary of ≤ 8 words"). It wears the cell plate so a
+   sheet reads as one list whichever widget a row holds, and it keeps the
+   FIELD's own `data-k`, because an address does not move when a widget does. */
+.nu-nativepick{ inline-size: auto; max-inline-size: 100%; padding-inline: .5ch;
+  font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
 
 /* ---- THE BOARD'S LEGEND RESERVES ITS TALLEST STATE ---------------------
    nukernel/desk-gate.js, on the run of 2026-09-02: *"at 390: tapping each of

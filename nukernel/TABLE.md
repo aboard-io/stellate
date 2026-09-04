@@ -653,6 +653,40 @@ devDependencies (esbuild, typescript), no bundler config beyond the script,
 no framework beyond Lit. Dropdowns: the native picker on touch, the typed
 combo on desktop with a keyboard, chips for a vocabulary of ≤ 8 words.
 
+**SHIPPED 2026-09-05, and the four numbers a reader wants.** `package.json`
+(esbuild 0.28.2 + typescript 5.9.3 as devDependencies, `lit` 3.3.3 as the one
+runtime dependency, bundled in), `tsconfig.json` (strict, ES2022, DOM,
+`noEmit`), `tools/ui/build.js`. An ENTRY IS A DIRECTORY —
+`nukernel/src/<name>/index.ts` becomes `nukernel/ui/<name>.js` — so adding a
+component is a directory and not an edit to the build script.
+
+| | measured |
+|---|---|
+| `npm install` | 9 packages, 40 MB, 5 s. `/node_modules/` stays gitignored and the deploy already excludes it; the OUTPUT is what ships |
+| `node tools/ui/build.js` | 1 entry in **120–150 ms** |
+| `node tools/ui/build.js --check` | **168 ms** (rebuild to a temp dir, diff, exit 1 on the first differing line) |
+| `npx tsc --noEmit` | **3.15 s** |
+| `nukernel/ui/table.js` | **2,152 lines / 73,435 bytes** from 2,023 lines of TypeScript — of which **417 lines are lit-html and its four directives** (class-map, if-defined, repeat, style-map). The hand-written file it replaced was 52,644 bytes |
+
+Registered in `test/all.js` as **`ui-build`**, a wave-1 `node` gate of two
+steps (`--check`, then `tsc --noEmit`), beside `genres-build` and `wiki` and
+for their reason. `skipExit: 2` is `wiki`'s own door: build.js exits 2 when
+`node_modules` is absent — a fresh clone or a deploy worktree — which is a SKIP
+and not a failure, because the committed output means a tree with no toolchain
+still plays.
+
+**MINIFY IS OFF AND THAT IS THE POINT.** A committed artifact nobody can read
+is a committed artifact nobody reviews; the diff is the review. Bundling Lit
+costs 417 lines once, and buys the two laws whole — no CDN, no vendored second
+copy of somebody else's file, no `import` the browser has to resolve.
+
+**IMPORT `lit/html.js`, NOT `lit`.** Measured: the package's own entry re-exports
+LitElement and `@lit/reactive-element` came along with it — 83,336 bytes for a
+file that renders into light DOM and defines no custom element. `lit/html.js` is
+lit-html alone and is 72,450. (Light DOM is not a preference either: every gate
+on this page queries from the document root through `#pan-band`, so a shadow
+root would make the whole table invisible to all of them.)
+
 ### 9c · The strangler order
 
 1. The grid: `nukernel/src/table/*.ts` → `nukernel/ui/table.js` replaced by
@@ -664,3 +698,95 @@ combo on desktop with a keyboard, chips for a vocabulary of ≤ 8 words.
 3. Rules, Time, Motifs, Mix, Produce, Score panes, one at a time.
 4. The shell and the tray last. eight.js shrinks with each step; nothing is
    hidden, nothing dead (T7's law for every pane).
+
+### 9d · What step 1 landed, and the six things it measured
+
+**SHIPPED 2026-09-05 (uncommitted).** `nukernel/ui/table.js` is GENERATED now,
+from `nukernel/src/table/` — `api.ts` (the seam, typed), `model.ts` (the three
+vectors and the op grammar, ported field for field), `sheet.ts` (the formula
+bar's body and the one owner of which widget a vocabulary gets), `undo.ts` (the
+document stack) and `grid.ts` (the spreadsheet). 2,023 lines of TypeScript;
+`ui/eight.js` gained THREE doors and nothing else (`copyCellTo`, `snapshot`,
+`evolve`) and lost none.
+
+**WHAT OF §9a IS IN.** One selection with its address · the formula bar
+(head + body) · edit in place, Escape, Delete = clear to inherit · arrows and
+Tab and Shift-Tab · Shift-range, counted in the bar · copy and paste of a vector
+· fill right and fill down (§5's copy-to-row and -column, in a spreadsheet's
+words) · header menus on right-click and long-press · `+ player` and
+`+ section` at the end of each axis · frozen headers · resizable columns ·
+100% pane width · a control that is its word plus half a character ·
+document-level undo/redo on Cmd/Ctrl-Z, Shift-Z and two buttons. NOT IN, and
+named rather than left to be found: the ops still have their tray branch (§9c
+step 1's "no op in the nav" is a change to `ui/eight.js`'s tray that
+`test/shell.js` A6l and `test/gutter.js shorten()` both drive by name, and both
+have to move in the same edit); and formulas, which §9a itself defers.
+
+**THE UNDO IS A STACK OF DOCUMENTS AND IT ADDS NO WRITE PATH.** `snapshot()` is
+a read and putting one back is `CTX.evolve` — the door the seed strip and the
+atlas have handed this page a whole new document through since the composer
+round, which normalises, recompiles and lands at the next bar like every other
+op. Snapshots and not inverses, because an inverse per op is a second
+implementation of every op and this table has fourteen of them, half of which
+end in a `normalize()` that prunes. Twenty-five deep. THE PRODUCER'S OWN UNDO
+STAYS EXACTLY AS IT IS: it takes back one producer NOTE, wherever you are; this
+one takes back the last thing the table did. A note taken back while the table
+is open is simply the next document the table snapshots against.
+
+**ONE OWNER FOR A DROPDOWN** (`sheet.ts pickerFor`), asked once per field:
+the caller's own typed combo for the five MENUS keys and anything over
+twenty-four words; CHIPS up to eight words; the NATIVE picker above eight on a
+`(pointer: coarse)` screen; chips otherwise. The address never moves — T7 finds
+`data-k` on whatever is drawn.
+
+Six things the rendered page said that the plan did not:
+
+- **A REBUILD MUST CLOSE THE SHEET, AND THE SELECTION MUST SURVIVE ONE.** The
+  accordion has always come back closed because the component owned it, and
+  three things are built on that: `tablePanel` lands an arrival by CLICKING the
+  head it wants open, every door is a TOGGLE, and the transpose is reached by
+  opening the corner. Keeping `OPEN` across a rebuild put fifteen checks red at
+  once, all of them downstream of one un-restored transpose — the restoring tap
+  closed a corner that had never shut. The selection is the other way round and
+  that is §9a's own ask: a spreadsheet does not forget which cell you are on
+  because you typed in it.
+- **A SHEET IS BUILT ONCE PER OPEN, NOT ONCE PER DRAW.** Its rows carry the
+  CALLER'S widgets — selects.js's combo, engineer.js's channel strip, VOICE.md's
+  knobs, the samples crate — and each registers itself on the page when it is
+  built. An arrow key is a draw; a second combo is a second control on one
+  address, and test/selects.js's own guard said so within the minute.
+- **THE COLUMN GRIP WROTE `WIDTH["tcol|stab"]` AND THE `<colgroup>` READ
+  `WIDTH["stab"]`.** A control that writes and does not arrive, in the wave
+  whose own gate was written to find it. T9r caught it because it measures the
+  `<th>`'s rendered width and not the map.
+- **A CORNER FROZEN ONLY TO THE TOP DECLARES STICKINESS AND SLIDES.**
+  test/shell.js A8 takes the pane's FIRST `<th>`, asks whether it says `sticky`,
+  then scrolls 200px and measures. A spreadsheet's corner has never scrolled in
+  either direction. And the pin is at 3px, not 0: `.nu-trims` is
+  `border-spacing: 3px`, so a head pinned at 0 SNAPS three pixels the moment it
+  sticks (measured: "moved 4px over a 200px scroll", three widths). Before this
+  wave A8 skipped at every width on every tab — a check that always skips is not
+  being made; it reads the Band pane now.
+- **A RULE THAT READS RIGHT AND MOVES NOTHING, TWICE.**
+  `.nu-sheetgrid .nu-colhead{ position: relative }` (for the grip's anchor) came
+  AFTER the freeze rule and beat it — T9s read the head back as `relative` the
+  same minute it was told to stick, and a `sticky` box anchors an absolute child
+  anyway. And `order: 2` on a child of a host that is not a flex container did
+  nothing at all, so the phone's "bottom sheet" stayed at the top until the bar
+  and the pane became the two children of one column flex.
+- **A GREY UNDO BUTTON OWES A REASON LIKE ANY OTHER CONTROL.**
+  `test/text-diet.test.js` T3 reads every disabled control on the page and
+  demands a non-empty one; it named all four of the bar's the hour they landed
+  ("naked: tundo, tredo, tcopy, tpaste"). The refused-control law is not only
+  about the engine.
+
+**GATES.** `test/table.browser.js` T4–T8 stayed green through the swap without
+one address moving; **T9** is the sheet-dynamics gate (twenty checks: select,
+address, the bar, the arrows, Tab, the range, a chip write on the CELL tier,
+Delete, undo/redo by button and by Ctrl-Z, copy/paste, fill, the two axis
+offers, a right-click menu, the grip, the freeze, and all of it at 320/390/1280)
+— **132 ok, 0 failed**. Two structural counts in T5a and T4's transpose read
+`tbody tr:not(.nu-addrow)` now, and that is the only edit either needed: the
+`+ section` row is not a section, exactly as a `<tfoot>` row is not one. Also
+green: `shell` (A8 asserting instead of skipping), `selects`, `sheets`,
+`nav-tree`, `knobs`, `gutter`, `text-diet`.

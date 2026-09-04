@@ -31,8 +31,10 @@
  *       names — or the gate fails with the control's own name.
  *   T4  THE OPS. Each op in §5 is ONE document write (diffed), leaves the
  *       transport and the seed alone, and changes only what it owns.
- *   T6  THE SOUND. A cell's motif and a cell's register reach the RENDERED
- *       EVENTS, a column's seat reaches the mix the engine was handed, and
+ *   T6  THE SOUND. A cell's motif and a register at BOTH tiers (the cell's
+ *       and the column's `cast.reg` — §1b's "derive is blind" corrected by
+ *       measurement 2026-09-05, once the probe carried a pitch) reach the
+ *       RENDERED EVENTS, a column's seat reaches the mix the engine was handed, and
  *       (T6e, wave 3) a cell's MIX LANE is a strip a thumb can reach whose tap
  *       lands on the cell tier and on the box the desk reads.
  *   T0  zero pageerror, zero console error, across all of it.
@@ -177,7 +179,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const t = host && host.querySelector("table.nu-wordgrid");
     const D = window.__eightDoc();
     return { table: !!t,
-      rows: t ? t.querySelectorAll("tbody tr").length : 0,
+      /* `:not(.nu-addrow)` (2026-09-05, TABLE.md §9a). The grid grew a `+` at
+         the end of each axis — Paul: *"I should be able to add players without
+         using the nav and sections too"* — and the section axis's end is a row
+         UNDER the last section, which is where a spreadsheet has always put
+         "one more". It is not a section, exactly as a `<tfoot>` row is not one,
+         so it is excluded here rather than counted as a record the document
+         does not have. The player axis's `+` is a `<th class="nu-addhead">` and
+         needs no exclusion: this count reads `th.nu-colhead`. */
+      rows: t ? t.querySelectorAll("tbody tr:not(.nu-addrow)").length : 0,
       cols: t ? t.querySelectorAll("thead th.nu-colhead").length : 0,
       foot: t ? t.querySelectorAll("tfoot tr").length : 0,
       secs: D.form.sections.length, voices: D.voices.length,
@@ -555,7 +565,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   const shape2 = await p.evaluate(() => {
     const t = document.querySelector("#pan-band table.nu-wordgrid");
     const D = window.__eightDoc();
-    return { rows: t ? t.querySelectorAll("tbody tr").length : 0,
+    return { rows: t ? t.querySelectorAll("tbody tr:not(.nu-addrow)").length : 0,
       corner: (document.querySelector('#pan-band [data-k="tcorner"]') || {}).textContent,
       voices: D.voices.length, secs: D.form.sections.length };
   });
@@ -636,31 +646,38 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   }, [line.name, sid3]);
   check(mat6 != null, "…and the CELL tier carries it (" + JSON.stringify(mat6) + ")");
 
-  /* THE REGISTER IS READ OFF THE SCORE, AND THE REASON IS A MEASUREMENT.
-     MEASURED 2026-09-04 on the rendered page: NEITHER a cell's `reg` NOR the
-     COLUMN's own `cast.reg` moves `__eightEvents` by one byte — ui/derive.js's
-     `sectionRender` renders a SLOT against the box, and the register is not in
-     that path at either tier. That is a parent gap and not this wave's: it
-     predates the table, it is the same for the control the Band pane shipped,
-     and the fix is ui/derive.js's. What answers for a register is
-     `document.scoreOf` — the compiler wave 1 measured the tier on, and a
-     rendered artifact rather than a plan (it is notes, not a field) — so that
-     is what T6 reads, and the gap is named here rather than left as a green
-     check over a silent control. */
-  const scoreLen = () => p.evaluate(() => {
-    try { return JSON.stringify(window.NuDocument.scoreOf(
-      window.__eightDoc(), window.NuGenres.GENRES)).length; } catch (e) { return -1; } });
+  /* THE REGISTER IS READ OFF `__eightEvents`, AND THE REVERSAL IS A
+     MEASUREMENT (2026-09-05). This block read `document.scoreOf` under a
+     paragraph that said ui/derive.js was BLIND to a register at both tiers —
+     "a parent gap, named not fixed" — and the paragraph was wrong. What was
+     blind was the PROBE: until wave 4, `window.__eightEvents` carried a
+     hit's lane, an event's time and its level and NOT its PITCH, so a control
+     whose whole job is to move a note by an octave could not show up in it and
+     read as dead. `n` and `dur` ride on the probe now (ui/eight.js says why,
+     in the same words), and re-asked with them:
+
+       Kingston 1969, reading 1, section 3, the stab — a COLUMN `cast.reg` of
+       −2 moves that chair's rendered pitches 62 -> 38, exactly two octaves,
+       and a CELL `reg` of −2 on that section alone moves the same stream by
+       the same 24 semitones while every other section stands. `toGenre`
+       hands `boxesOf` a `reg(v)` closure that IS the resolver (TABLE.md §2's
+       one owner), `ui/derive.js sectionRender` renders against that box, and
+       the kernel's `ctr = 60 + 12 * g.reg(v)` is the arithmetic. Nothing had
+       to be fixed; §1b is corrected instead.
+
+     THE OLDEST LESSON IN THIS REPO, from the other end: a gate that reads the
+     wrong object reports a working control as a gap, and the gap then gets
+     written into the spec. Both tiers are asserted below, on the RENDERED
+     stream, because a claim about the sound is only worth what the artifact
+     says. */
   const reg = await walk("tcell|" + line.name + "|" + sid3,
-    "tcellnum|reg|" + vix + "|" + si, scoreLen);
-  check(!!reg.moved, "T6 a register written IN THE CELL reaches the rendered " +
-    "score (" + (reg.moved || "NONE OF " + reg.n + " MOVED IT") + ")");
-  const derBlind = await p.evaluate((args) => {
-    const [n, i] = args;
-    const before = JSON.stringify(window.__eightEvents(i));
-    return { before: before.length };
-  }, [line.name, si]);
-  check(true, "…and ui/derive.js's own stream is blind to a register at BOTH " +
-    "tiers (measured; a parent gap, named not fixed — " + derBlind.before + " bytes either way)");
+    "tcellnum|reg|" + vix + "|" + si, () => evOf(si));
+  check(!!reg.moved, "T6 a register written IN THE CELL reaches the RENDERED " +
+    "events of that section (" + (reg.moved || "NONE OF " + reg.n + " MOVED IT") + ")");
+  check(!!reg.moved && (await p.evaluate(() => {
+    try { return JSON.stringify(window.NuDocument.scoreOf(
+      window.__eightDoc(), window.NuGenres.GENRES)).length > 0; } catch (e) { return false; } })),
+    "…and the written score answers for it too (scoreOf, wave 1's compiler)");
   const cellStored = await p.evaluate((args) => {
     const [n, sid] = args;
     const v = window.__eightDoc().voices.find((x) => x.name === n);
@@ -669,6 +686,60 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   check(cellStored && cellStored.reg != null,
     "…stored on the CELL tier (voices[vi].cells[secId]), not on the column: " +
     JSON.stringify(cellStored));
+  /* ...AND THE COLUMN'S OWN `cast.reg` REACHES THE SAME STREAM, which is the
+     other half of the sentence §1b had wrong. Driven through the column
+     sheet's own strip and PUT BACK afterwards: a column register moves every
+     section of the record, and the checks below this one are about other
+     things. The restore re-opens the strip if the write closed the accordion,
+     and it is asserted rather than assumed — a gate that leaves the record
+     somewhere it did not mean to is a gate reporting on its own mess. */
+  const colWas = await p.evaluate((n) => {
+    const v = window.__eightDoc().voices.find((x) => x.name === n);
+    return v && v.cast && v.cast.reg != null ? String(v.cast.reg) : "";
+  }, line.name);
+  /* ...AND IT IS READ ON ANOTHER SECTION, WHICH IS §2'S LADDER AND NOT A
+     DODGE. The walk above has just written `reg` into this chair's cell for
+     section `si`, and a cell OUTRANKS its column — so a column register read
+     back on that section is correctly, deliberately inert, and the first cut
+     of this check reported "NONE OF 8 MOVED IT" on a page behaving exactly as
+     the spec says. The honest reading is a section where this chair plays and
+     nothing has been written in its cell; the page is asked which one that is
+     rather than told. */
+  const lineIx = DD.voices.filter((v) => v.kind === "line").indexOf(line);
+  const siCol = await p.evaluate((args) => {
+    const [ix, skip] = args;
+    const n = window.__eightDoc().form.sections.length;
+    for (let i = 0; i < n; i++) {
+      if (i === skip) continue;
+      const ev = window.__eightEvents(i);
+      if (ev.some((e) => e.kind === "line" && e.lv === ix && e.n != null)) return i;
+    }
+    return -1;
+  }, [lineIx, si]);
+  check(siCol >= 0, "…and there is a section this chair plays with no cell " +
+    "override on it to read the column tier against (#" + siCol + ")");
+  const colReg = siCol < 0 ? { moved: null, n: 0 }
+    : await walk("tcol|" + line.name, "reg|" + line.name, () => evOf(siCol));
+  check(!!colReg.moved, "…and the COLUMN's own cast.reg reaches the rendered " +
+    "events of section " + siCol + " too — ui/derive.js is blind at NEITHER " +
+    "tier (" + (colReg.moved || "NONE OF " + colReg.n + " MOVED IT") + ")");
+  let put = false;
+  for (let k = 0; k < 3 && !put; k++) {
+    put = await p.evaluate((args) => {
+      const [n, was] = args;
+      const c = document.querySelector('#pan-band [data-k="reg|' + n + '|' + was + '"]');
+      if (!c || c.disabled) return false; c.click(); return true;
+    }, [line.name, colWas]);
+    if (!put) { await chipsOf("tcol|" + line.name, "reg|" + line.name);
+                await p.waitForTimeout(200); }
+  }
+  await p.waitForTimeout(600);
+  const colNow = await p.evaluate((n) => {
+    const v = window.__eightDoc().voices.find((x) => x.name === n);
+    return v && v.cast && v.cast.reg != null ? String(v.cast.reg) : "";
+  }, line.name);
+  check(colNow === colWas, "…and the column is put back where it was (" +
+    JSON.stringify(colWas) + " -> " + JSON.stringify(colNow) + ")");
   /* AND THE COLUMN'S SEAT REACHES THE MIX THE ENGINE WAS HANDED. `__nuMix()`
      is audio/live.js's own window onto barPlan — "the numbers the desk wrote
      onto the strips" — which is the artifact, not the model. */
@@ -1137,6 +1208,287 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   check(jump.there && jump.tall >= 44,
     "T8g the row sheet carries `put the ear here` at 44px — " + JSON.stringify(jump));
   await tap("trow|" + secId);
+
+  /* ================= T9 · THE SHEET DYNAMICS ===========================
+     TABLE.md §9a (APPROVED 2026-09-05). Paul: *"I want the table to just re-use
+     spreadsheet dynamics since users know them. Think of song composition as
+     'sonic spreadsheet'."* T5-T8 above read the table as a VECTOR EDITOR — the
+     right fields at the right addresses, reaching the right sound. This one
+     reads it as a SPREADSHEET: one selection with an address, a formula bar
+     that follows it, arrows and Tab, a shift-range, copy/paste, fill, the two
+     axis offers, the header menu, and undo/redo — at three widths, by tap AND
+     by keyboard, because §6 ¶A's "a control that only works with a pointer is a
+     refused control" has a mirror image and this wave adds the keyboard half.
+
+     IT DRIVES THE PAGE AND NOT THE MODEL, which is this repo's oldest gate law:
+     every assertion below is either a rendered rect, a `data-k` the hand can
+     reach, or `window.__eightDoc()` read back after a real click or a real
+     `KeyboardEvent`. */
+  {
+    const D9 = await doc();
+    const s9a = D9.form.sections[0].id, s9b = D9.form.sections[1].id;
+    const v9a = D9.voices[0].name, v9b = D9.voices[1] ? D9.voices[1].name : v9a;
+    const cell = (v, sid) => "tcell|" + v + "|" + sid;
+    const addr = () => p.evaluate(() => { const a =
+      document.querySelector('#pan-band [data-k="taddr"]');
+      return a ? a.textContent.trim() : null; });
+    const sel = () => p.evaluate(() => { const c =
+      document.querySelector("#pan-band .nu-wcell.is-sel");
+      return c ? c.dataset.k : null; });
+    /* THE KEYBOARD IS PRESSED ON THE PANE, which is the scroller and the
+       tabIndex the grid gives a hand. `p.keyboard` needs focus somewhere real,
+       so the pane is focused first — the same thing a Tab into the table does. */
+    const key = async (k, mods) => {
+      await p.evaluate(() => { const pane =
+        document.querySelector("#pan-band .nu-pane");
+        if (pane) pane.focus(); });
+      await p.keyboard.press((mods ? mods + "+" : "") + k);
+      await p.waitForTimeout(320);
+    };
+
+    /* 9a · A TAP SELECTS, AND THE ADDRESS SAYS WHICH CELL. */
+    await tap(cell(v9a, s9a));
+    const a1 = await addr(), sel1 = await sel();
+    check(sel1 === cell(v9a, s9a) && !!a1 && a1 !== "no cell selected",
+      "T9a a tap selects one cell and the formula bar names it — " +
+      JSON.stringify({ sel: sel1, addr: a1 }));
+
+    /* 9b · ...AND ITS VECTOR IS THE OPEN SHEET. One selection, one sheet. */
+    const body = await p.evaluate(() => ({
+      sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
+      rows: document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow").length,
+      sel: document.querySelectorAll("#pan-band .nu-wcell.is-sel").length }));
+    check(body.sheets === 1 && body.rows > 4 && body.sel === 1,
+      "T9b …and its vector is the one open sheet — " + JSON.stringify(body));
+
+    /* 9c · THE ARROWS MOVE THE SELECTION AND THE BAR FOLLOWS IT. */
+    await key("ArrowDown");
+    const sel2 = await sel(), a2 = await addr();
+    check(sel2 === cell(v9a, s9b) && a2 !== a1,
+      "T9c an arrow key moves the selection and the bar follows — " +
+      JSON.stringify({ sel: sel2, addr: a2 }));
+    await key("ArrowRight");
+    const sel3 = await sel();
+    check(sel3 === cell(v9b, s9b),
+      "T9d …and Tab and the sideways arrows move across the band — " + sel3);
+    await key("Tab", "Shift");
+    check((await sel()) === cell(v9a, s9b), "T9e …and Shift-Tab comes back");
+
+    /* 9f · SHIFT EXTENDS A RANGE, AND A RANGE IS A RECTANGLE. */
+    await key("ArrowRight", "Shift");
+    const rng = await p.evaluate(() => ({
+      n: document.querySelectorAll("#pan-band td.is-inrange").length,
+      addr: (document.querySelector('#pan-band [data-k="taddr"]') || {}).textContent }));
+    check(rng.n >= 2 && /2 cells/.test(String(rng.addr)),
+      "T9f Shift+arrow extends a range and the bar counts it — " +
+      JSON.stringify(rng));
+    await key("Escape");
+
+    /* 9g · A CHIP IN THE BAR WRITES THE CELL, AND THE CELL TIER IS WHERE IT
+       LANDS. The reading is `voices[].cells[<section>]` — wave 1's own sparse
+       tier, which exists ONLY where a hand wrote — and not `development`,
+       because `development` is a FULL map most of whose entries are the sheet's
+       own ABSENT word ("as written"). The first cut of this check read that map
+       and could not tell a written word from a dealt one; §1b's law, on the
+       gate side. `tcellvec|rate` is the strip used because T6h has already
+       measured it moving the rendered events. */
+    const cellTier = () => p.evaluate((args) => { const [n, sid] = args;
+      const v = window.__eightDoc().voices.find((x) => x.name === n);
+      const c = v && v.cells ? v.cells[sid] : null;
+      return c && Object.keys(c).length ? JSON.stringify(c) : null; }, [v9a, s9a]);
+    const l9 = D9.voices.find((v) => v.kind === "line") || D9.voices[0];
+    const vi9 = D9.voices.indexOf(l9);
+    const fk9 = "tcellvec|rate|" + vi9 + "|0";
+    await tap(cell(l9.name, s9a));
+    const wrote = await p.evaluate((k) => {
+      const f = document.querySelector('#pan-band [data-k="' + k + '"]');
+      if (!f) return null;
+      f.click();
+      const c = [...document.querySelectorAll("#pan-band .nu-wchip")]
+        .filter((x) => !x.disabled && (x.dataset.k || "").indexOf(k + "|") === 0 &&
+                       (x.dataset.k || "").split("|").pop() !== "");
+      if (!c.length) return null;
+      c[0].click(); return c[0].dataset.k; }, fk9);
+    await p.waitForTimeout(800);
+    const written = () => p.evaluate((args) => { const [n, sid] = args;
+      const v = window.__eightDoc().voices.find((x) => x.name === n);
+      const c = v && v.cells ? v.cells[sid] : null;
+      return c && Object.keys(c).length ? JSON.stringify(c) : null; }, [l9.name, s9a]);
+    void cellTier;
+    const w1 = await written();
+    check(!!wrote && w1 != null,
+      "T9g a chip in the formula bar writes the cell, on the CELL tier — " +
+      JSON.stringify({ chip: wrote, cells: w1 }));
+
+    /* 9h · DELETE IS CLEAR-TO-INHERIT — §2's own sentence, on the key every
+       spreadsheet user reaches for. */
+    await tap(cell(l9.name, s9a));
+    await key("Delete");
+    const w2 = await written();
+    check(w1 != null && w2 == null,
+      "T9h …Delete clears it back to what it inherits (" + JSON.stringify(w1) +
+      " -> " + JSON.stringify(w2) + ")");
+
+    /* 9i · UNDO AND REDO, AT THE DOCUMENT LEVEL, FOR EVERY OP. §9a: "mandatory:
+       spreadsheet users expect it and the page has only the producer's undo." */
+    const undoTall = await p.evaluate(() => { const b =
+      document.querySelector('#pan-band [data-k="tundo"]');
+      return b ? Math.round(b.getBoundingClientRect().height) : 0; });
+    await tap("tundo");
+    const w3 = await written();
+    check(w3 === w1 && undoTall >= 44,
+      "T9i undo takes the clear back, at 44px — " + JSON.stringify(w3) +
+      " (" + undoTall + "px)");
+    await tap("tredo");
+    const w4 = await written();
+    check(w4 === w2, "T9j …and redo puts it forward again — " + JSON.stringify(w4));
+
+    /* 9k · UNDO IS ALSO A KEY, AND IT IS THE ONE EVERYBODY PRESSES. */
+    await key("z", "Control");
+    const w6 = await written();
+    check(w6 === w1, "T9k Ctrl-Z is the same door as the button (" +
+      JSON.stringify(w4) + " -> " + JSON.stringify(w6) + ")");
+
+    /* 9l · COPY AND PASTE MOVE A VECTOR (§9a), through the one write path —
+       ui/eight.js `copyCellTo`, which is `copyCell`'s own body with the
+       destination handed in. The source is the cell 9g wrote, so what moves is
+       a fact and not a coincidence. */
+    await tap(cell(l9.name, s9a));
+    await tap("tcopy");
+    await tap(cell(l9.name, s9b));
+    const tgt = () => p.evaluate((args) => { const [n, sid] = args;
+      const v = window.__eightDoc().voices.find((x) => x.name === n);
+      const c = v && v.cells ? v.cells[sid] : null;
+      return c && Object.keys(c).length ? JSON.stringify(c) : null; }, [l9.name, s9b]);
+    const t0 = await tgt();
+    await tap("tpaste");
+    const t1 = await tgt();
+    check(t0 !== t1 && t1 != null,
+      "T9l copy and paste move a cell's vector — " + JSON.stringify(t0) +
+      " -> " + JSON.stringify(t1));
+    await tap("tundo");
+    await tap("tundo");
+
+    /* 9m · FILL RIGHT AND FILL DOWN ARE §5's COPY-TO-ROW AND -COLUMN, said in a
+       spreadsheet's words and reachable by tap. */
+    await tap(cell(v9a, s9a));
+    const fills = await p.evaluate((args) => { const [n, sid] = args;
+      const r = document.querySelector('#pan-band [data-k="tcell-copyrow|' + n + "|" + sid + '"]');
+      const c = document.querySelector('#pan-band [data-k="tcell-copycol|' + n + "|" + sid + '"]');
+      const h = (x) => x ? Math.round(x.getBoundingClientRect().height) : 0;
+      return { row: !!r, col: !!c, rh: h(r), ch: h(c) }; }, [v9a, s9a]);
+    check(fills.row && fills.col && fills.rh >= 44 && fills.ch >= 44,
+      "T9m fill across the row and down the column are on the cell, at 44px — " +
+      JSON.stringify(fills));
+    await tap(cell(v9a, s9a));
+
+    /* 9n · THE TWO AXIS OFFERS. Paul: *"I should be able to add players without
+       using the nav and sections too."* They are at the END OF EACH AXIS and
+       they are the SAME ADDRESSES build-the-band already had, so the T7
+       inventory's nine nav ops keep their homes. */
+    const offers = await p.evaluate(() => {
+      const g = (k) => { const b = document.querySelector(
+        '#pan-band [data-k="' + k + '"]');
+        return b ? Math.round(b.getBoundingClientRect().height) : 0; };
+      return { line: g("tcol-add|line"), bass: g("tcol-add|bass"),
+               drums: g("tcol-add|drums"), sec: g("trow-add"),
+               head: !!document.querySelector("#pan-band thead th.nu-addhead"),
+               row: !!document.querySelector("#pan-band tbody tr.nu-addrow") }; });
+    check(offers.line >= 44 && offers.sec >= 44 && offers.head && offers.row,
+      "T9n `+ player` and `+ section` stand at the end of each axis, with no " +
+      "nav in it — " + JSON.stringify(offers));
+    const nBefore = (await doc()).voices.length;
+    await tap("tcol-add|line");
+    const nAfter = (await doc()).voices.length;
+    check(nAfter === nBefore + 1,
+      "T9o …and the offer hires (" + nBefore + " -> " + nAfter + ")");
+    await tap("tundo");
+    check((await doc()).voices.length === nBefore,
+      "T9p …and undo un-hires — a structural op is undoable like any other");
+
+    /* 9q · THE HEADER MENU. §9a: "Insert, delete, duplicate, move a row or
+       column from the header's menu (right-click / long-press) or its buttons."
+       ONE OWNER: the menu IS the head's own sheet, whose first line is the op
+       bar — a second list would be two places to delete a section from. */
+    await p.evaluate((sid) => { const b = document.querySelector(
+      '#pan-band [data-k="trow|' + sid + '"]');
+      if (b) b.dispatchEvent(new MouseEvent("contextmenu",
+        { bubbles: true, cancelable: true })); }, s9a);
+    await p.waitForTimeout(420);
+    const menu = await p.evaluate((sid) => {
+      const ops = [...document.querySelectorAll("#pan-band tr.nu-wopen .nu-opbtn")]
+        .map((x) => x.dataset.k);
+      return { ops, want: ["trow-up|" + sid, "trow-down|" + sid,
+                           "trow-dup|" + sid, "trow-del|" + sid, "trow-add"]
+        .filter((k) => ops.indexOf(k) >= 0).length }; }, s9a);
+    check(menu.want === 5,
+      "T9q a right-click on a header opens its menu: insert · delete · " +
+      "duplicate · move (" + menu.want + " of 5)");
+    await tap("trow|" + s9a);
+
+    /* 9r · THE COLUMNS RESIZE, AND THE HANDLE IS NOT A DRAG-ONLY CONTROL. */
+    const grip = await p.evaluate((n) => { const g = document.querySelector(
+      '#pan-band [data-k="tgrip|tcol|' + n + '"]');
+      if (!g) return null;
+      const th = g.closest("th");
+      const w0 = Math.round(th.getBoundingClientRect().width);
+      g.focus();
+      g.dispatchEvent(new KeyboardEvent("keydown",
+        { key: "ArrowRight", bubbles: true, cancelable: true }));
+      return { w0, tall: Math.round(g.getBoundingClientRect().height) }; }, v9a);
+    await p.waitForTimeout(300);
+    const grew = grip ? await p.evaluate((n) => { const g = document.querySelector(
+      '#pan-band [data-k="tgrip|tcol|' + n + '"]');
+      return g ? Math.round(g.closest("th").getBoundingClientRect().width) : 0; }, v9a)
+      : 0;
+    check(!!grip && grip.tall >= 44 && grew > grip.w0,
+      "T9r a column resizes, and its handle answers the arrow keys as well as " +
+      "a drag — " + JSON.stringify({ grip, grew }));
+
+    /* 9s · FROZEN HEADS, AND THE PANE IS THE ONLY SCROLLER. */
+    const frozen = await p.evaluate(() => {
+      const th = document.querySelector("#pan-band thead th.nu-colhead");
+      const rh = document.querySelector("#pan-band tbody th.nu-srowh");
+      const cs = (x) => x ? getComputedStyle(x).position : null;
+      return { head: cs(th), row: cs(rh) }; });
+    check(frozen.head === "sticky" && frozen.row === "sticky",
+      "T9s the header row and the header column are frozen — " +
+      JSON.stringify(frozen));
+
+    /* 9t · ...AT THE THREE WIDTHS, AND NOTHING UNDER 44px OR OFF THE SCREEN.
+       The phone is the first layout (§6 ¶A) and the formula bar is the bottom
+       sheet there, so this measures where the bar IS as well as that it is. */
+    for (const w of [320, 390, 1280]) {
+      await ctx.pages()[0].setViewportSize({ width: w, height: 900 });
+      await p.waitForTimeout(420);
+      await tap(cell(v9a, s9a));
+      const m = await p.evaluate(() => {
+        const host = document.getElementById("pan-band");
+        const bar = host.querySelector(".nu-formula");
+        const r = bar ? bar.getBoundingClientRect() : null;
+        const shorts = [...host.querySelectorAll("button:not([hidden])")]
+          .filter((b) => { const q = b.getBoundingClientRect();
+            return q.width > 0 && q.height > 0 && q.height < 43.5; }).length;
+        const offs = [...host.querySelectorAll(".nu-vsheet button")]
+          .filter((b) => { const q = b.getBoundingClientRect();
+            return q.width > 0 && (q.left < 0 || q.right > window.innerWidth + 1); }).length;
+        return { bar: !!bar, pos: bar ? getComputedStyle(bar).position : null,
+                 wide: r ? Math.round(r.width) : 0,
+                 pane: Math.round(host.querySelector(".nu-pane")
+                   .getBoundingClientRect().width),
+                 page: document.documentElement.scrollWidth -
+                       document.documentElement.clientWidth,
+                 shorts, offs }; });
+      check(m.bar && m.pos === "sticky" && m.shorts === 0 && m.offs === 0 &&
+            m.page <= 1 && m.wide >= m.pane * 0.95,
+        "T9t at " + w + " the formula bar is sticky and full width, nothing is " +
+        "under 44px and nothing is off the screen — " + JSON.stringify(m));
+      await shot("spreadsheet-" + w);
+      await tap(cell(v9a, s9a));
+    }
+    await ctx.pages()[0].setViewportSize({ width: 390, height: 900 });
+    await p.waitForTimeout(420);
+  }
 
   /* ================= T0 · THE CONSOLE =================================== */
   check(errs.length === 0, "T0 no page or console error across all of it" +

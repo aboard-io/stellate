@@ -1,0 +1,22 @@
+{
+  // THE TYPE GATE, AND NOTHING ELSE. `noEmit` is the point: esbuild makes the
+  // committed nukernel/ui/*.js (tools/ui/build.js), tsc only says whether the
+  // source is honest. TABLE.md 9b: "two devDependencies (esbuild, typescript),
+  // no bundler config beyond the script".
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "useDefineForClassFields": false,
+    "experimentalDecorators": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["nukernel/src/**/*.ts"]
+}

@@ -1259,7 +1259,7 @@ const CTX = {
                                                played Kingston 1969.
                                                `showing` never composes, so
                                                this cannot loop back here. */
-                                            if (ATLAS) ATLAS.showing(DOC.basis);
+                                            if (ATLAS) ATLAS.showing(DOC.basis, true);
                                             seedAnnounce();
                                             return; } }
                            stop(); auditionOff(); DOC = next; normalize(); push(true);
@@ -1268,7 +1268,7 @@ const CTX = {
                            staffBox.clear();        // …and so are its staves
                            try { draw(); } finally { anchorOff = false; }
                            anchorWant = null;
-                           if (ATLAS) ATLAS.showing(DOC.basis);
+                           if (ATLAS) ATLAS.showing(DOC.basis, true);
                            /* AND THE OPEN EXPLAINER FOLLOWS THE RECORD
                               (2026-08-30). A document swap is a GESTURE —
                               this function is reached from taps and links,
@@ -10046,6 +10046,45 @@ function tableAPI() {
       if (way === "row") for (const w of V()) { if (w.kind === v.kind) put(w, s2.id); }
       else for (const t of SEC()) put(v, t.id);
       normalize(); after(); },
+    /* ...AND THE SAME THREE MAPS INTO ONE NAMED CELL (2026-09-05, TABLE.md
+       §9a: *"Copy / paste move a cell's vector"*). PASTE IS FILL WITH ONE
+       TARGET, so it is `copyCell`'s own body with the destination handed in
+       rather than derived from a direction — the same `material` / `development`
+       / `cells` write, the same `normalize(); after()`, and therefore the same
+       "one document write, landing at the next bar" T4 diffs. A second write
+       path for a paste would have been a second place the cell tier is spelled
+       out, which is exactly what §5's law is against. */
+    copyCellTo: (i, vi, i2, vi2) => {
+      const v = V()[vi], s2 = SEC()[i], w = V()[vi2], t2 = SEC()[i2];
+      if (!v || !s2 || !w || !t2) return;
+      const m = v.material, word = (m && typeof m === "object" && !Array.isArray(m))
+        ? m[s2.id] : null;
+      const dev = (v.development || {})[s2.id];
+      const cell = (v.cells || {})[s2.id];
+      if (word != null) { w.material = (w.material && typeof w.material === "object"
+        && !Array.isArray(w.material)) ? w.material : {}; w.material[t2.id] = word; }
+      if (dev != null) { w.development = w.development || {};
+        w.development[t2.id] = dev; }
+      if (cell) { w.cells = w.cells || {};
+        w.cells[t2.id] = JSON.parse(JSON.stringify(cell)); }
+      normalize(); after(); },
+    /* ---- THE TWO DOORS DOCUMENT-LEVEL UNDO IS BUILT OUT OF -------------
+       TABLE.md §9a: *"UNDO / REDO at the document level, Cmd/Ctrl-Z, for every
+       op — mandatory: spreadsheet users expect it and the page has only the
+       producer's undo."* NEITHER IS A NEW WRITE PATH. `snapshot` is a read;
+       putting one back is `CTX.evolve`, which is the door the seed strip and
+       the atlas have handed this page a whole new document through since the
+       composer round — it normalises, recompiles and lands at the next bar
+       exactly like every other op. The stack itself is the table's
+       (src/table/undo.ts): it holds DOCUMENTS and not inverses, because an
+       inverse per op is a second implementation of every op and half of them
+       end in a `normalize()` that prunes.
+       THE PRODUCER'S OWN UNDO IS UNTOUCHED (ui/produce.js `undoable`/`undo`,
+       which takes back one producer NOTE). The two are different gestures on
+       different scopes; a note taken back while the table is open is simply
+       the next document the table snapshots against. */
+    snapshot: () => JSON.parse(JSON.stringify(DOC)),
+    evolve: (next) => { CTX.evolve(next); },
     /* "MAKE X Y" AS A COLUMN OP (§5). The verb, the qualities and the note are
        ui/produce.js's — `targets` says which qualities this subject can
        honestly take and WHY the rest cannot, and `say` writes the note into
@@ -15177,6 +15216,14 @@ if (ATLAS) {
      sender was listening to and not the anchor as written. */
   const why = LINK && LINK.at ? ATLAS.open(LINK, undefined, LINK.rules) : false;
   if (why !== true) {
+    /* NO `asked` HERE, AND THAT IS THE WHOLE OF THE SECOND ARGUMENT'S JOB
+       (2026-09-05). The two callers above are document SWAPS — a hand chose a
+       record — so a basis with no place gets the refusal that names it. This
+       one is the box arriving on whatever it opens on, which is the blank
+       state, and a refusal printed at a boot nobody asked for is a page
+       answering a question that was never put: #atlasSay carried "“silence”
+       has no place on the map" above a globe standing at a real year. Unasked,
+       ui/atlas.js prints the year's own sentence instead. */
     ATLAS.showing(DOC.basis);
     // …AND THE REASON IS PRINTED AFTER THE FALLBACK, NOT BEFORE IT. `showing()`
     // ends in `sentence()`, which owns #atlasSay and would overwrite a refusal

@@ -1029,6 +1029,46 @@
         x[key] = v || null; } };
   }
 
+  /* ===== ...AND THE FIVE THE CELL ALREADY ASKS, ASKED OF THE ROW =========
+     (2026-09-05, TABLE.md §1 SECTION: *"artic / oct / rate / scale / clamp —
+     the section's own word for the five, and the DEFAULT a cell overrides."*)
+
+     Wave 4 gave `artic`/`oct`/`rate`/`scale`/`clamp` a CELL control and a ROW
+     tier in the resolver (`document.js CELLFIELD`, `row: (s) => s && s.artic`
+     and its four siblings) and drew nothing at the row: the default a cell was
+     offered "the row's" as a fallback for could not be SET. A tier a hand can
+     inherit from and cannot write is half a control, and TABLE.md wave 4's own
+     T4n has been gating the model half of it since the day it landed ("a row
+     word reaches every chair of its section, and a cell outranks it").
+
+     MINTED OFF `fields.js CELLVEC`, WHICH IS THE ONE OWNER of the five
+     vocabularies — the same table the cell strip reads, so the row and the
+     cell can only ever offer the same words, in the same spelling, with the
+     same neutral dropped at the door. Typing a second list of articulations
+     here is what this file's own header refuses.
+     THE NEUTRAL WORD IS NOT OFFERED, for the reason ui/table.js gives three
+     times over: `oct: "0"` is an octave shift of no octaves, `cellVecClean`
+     drops it, and a chip that writes and vanishes on the next recompile is
+     §1b's register bug shipped again.
+     WRITTEN THROUGH `document.js putRow`, which is the row's one writer and
+     the door T4n diffs — never `x[key] = v`, because these five have a
+     vocabulary and a value outside it must be refused at the door rather than
+     carried as a lie the kernel would play. */
+  for (const f of (NF.CELLVEC || [])) {
+    SHEETS["form." + f.key] = { label: f.ask, scope: "section", rowvec: f.key,
+      values: () => [{ value: "", label: "as the genre asks" },
+                     ...Object.keys(f.table)
+                       .filter((k) => k !== f.neutral)
+                       .map((k) => ({ value: k,
+                                      label: String((f.labels || {})[k] || k) }))],
+      get: (doc, s) => { const x = SEC(doc, s);
+        return x[f.key] == null ? "" : String(x[f.key]); },
+      set: (doc, s, v) => { const x = SEC(doc, s); if (!x.id) return;
+        const si = ((doc.form || {}).sections || []).indexOf(x);
+        if (si < 0) return;
+        ND.putRow(doc, si, f.key, NF.cellVecClean(f.key, v)); } };
+  }
+
   for (const r of NF.nudgesFor("performance")) {
     const key = r.key;
     SHEETS["performance." + key] = { label: r.ask, scope: "song",
