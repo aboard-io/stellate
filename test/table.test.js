@@ -1299,6 +1299,171 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
       " dB — one application each");
   });
 
+  /* T4m — THE FIVE §1 MOVED FROM THE BOX TO THE CELL (TABLE.md wave 4).
+     One claim per field and all of them at once: a cell word moves ONE key in
+     the document, moves THAT chair in THAT section on the RENDERED path and
+     nothing else on the record, and clearing it restores the bars byte for
+     byte. The claim per field is named separately because "it moved" is not
+     the claim — `artic` shortens the notes, `oct` moves the pitch by exactly
+     twelve semitones, `scale` changes the pitch CLASSES, `rate` doubles or
+     halves the chair's note count in that section, and `clamp` moves nothing
+     at all, which is measured and said rather than hoped.
+
+     THE PATH IS ui/derive.js, not `scoreOf`. Four of the five are read inside
+     `kernel.js render` and reach both, but the gate reads the one the EAR is
+     on, which is the recipe the whole T4 block exists for. */
+  ok("T4m each of the five cell words moves that chair in that section and nothing else", () => {
+    const base = D.normalize(P.genreToDocument("acid", 1));
+    const si = 1, vi = base.voices.findIndex((v) => v.kind === "line");
+    const sid = base.form.sections[si].id;
+    const before = barsOf(base);
+    const linesOfSec = (bars, s, v) => bars[s].filter(
+      (e) => e.kind === "line" && e.lv === v)
+      .map((e) => [+e.t.toFixed(6), e.n, +e.dur.toFixed(6)].join("/"));
+    const wholeRecord = (bars) => JSON.stringify(bars.map((ev) => ev.map(
+      (e) => [e.kind, e.lv, +e.t.toFixed(6), e.n,
+       e.dur == null ? "" : +e.dur.toFixed(6)].join("/"))));
+    const B = wholeRecord(before);
+    const rows = [];
+    for (const [field, word] of [["artic", "staccato"], ["oct", "1"],
+                                 ["rate", "dbl"], ["scale", "whole"],
+                                 ["clamp", "0"]]) {
+      const doc = clone(base);
+      assert.strictEqual(D.putCell(doc, si, vi, field, word), true,
+        field + ": the door refused the word");
+      // ...ONE KEY IN THE DOCUMENT, which is §5's "every op is one document
+      // write" read as a diff rather than as a call count.
+      const moved = [];
+      /* THE DEEPEST PATH THAT MOVED, and it recurses through ARRAYS too — a
+         cell override lives at `voices[vi].cells[secId]`, and a walk that
+         stopped at the first array would report `.voices` and call the claim
+         proven. */
+      const isObj = (x) => !!x && typeof x === "object";
+      const walk = (a, b2, at) => {
+        if (JSON.stringify(a) === JSON.stringify(b2)) return;
+        if (!isObj(a) && !isObj(b2)) { moved.push(at); return; }
+        if (isObj(a) && isObj(b2) && Array.isArray(a) !== Array.isArray(b2)) {
+          moved.push(at); return;
+        }
+        const A = isObj(a) ? a : {}, B2 = isObj(b2) ? b2 : {};
+        for (const k of new Set([...Object.keys(A), ...Object.keys(B2)]))
+          walk(A[k], B2[k], at + "." + k);
+      };
+      walk(base, doc, "");
+      assert.deepStrictEqual(moved, [".voices." + vi + ".cells." + sid + "." + field],
+        field + ": the write moved " + moved.length + " keys — " + moved.join(" "));
+      const after = barsOf(doc);
+      // ...AND ONLY THAT CHAIR IN THAT SECTION on the rendered path.
+      const elsewhere = [];
+      for (let s = 0; s < after.length; s++)
+        for (const v of new Set(after[s].filter((e) => e.kind === "line")
+                                        .map((e) => e.lv)))
+          if ((s !== si || v !== vi) &&
+              linesOfSec(after, s, v).join(",") !== linesOfSec(before, s, v).join(","))
+            elsewhere.push("s" + s + "/v" + v);
+      assert.deepStrictEqual(elsewhere.slice(0, 6), [],
+        field + ": " + elsewhere.length + " other cells moved");
+      const mine = linesOfSec(after, si, vi), was = linesOfSec(before, si, vi);
+      const nA = after[si].filter((e) => e.kind === "line" && e.lv === vi);
+      const nB = before[si].filter((e) => e.kind === "line" && e.lv === vi);
+      if (field === "clamp") {
+        /* THE ONE THAT MOVES NOTHING, AND IT IS MEASURED HERE RATHER THAN
+           ASSUMED: `document.js toPhrase` writes `inc` and `stk` all-zero for
+           every motif in every bank, so `kernel.js rampOf`'s raw ramp is zero
+           and a limit has nothing to limit. Stored, resolved, drawn as a
+           sentence in the cell sheet — `focus`'s treatment, for the same
+           reason and with the same promise: the day a ramp column lands in the
+           hook editor this assertion fails and the gate names it. */
+        assert.strictEqual(mine.join(","), was.join(","),
+          "clamp moved a note — the ramp columns have landed, light the control");
+        const ramped = Object.keys(base.material.cells).filter((n) => {
+          const ph = D.toPhrase(base, n);
+          return (ph.inc || []).some(Boolean) || (ph.stk || []).some(Boolean);
+        });
+        assert.deepStrictEqual(ramped, [], "a document phrase carries a ramp now");
+        rows.push("clamp    no note moved (0 of " +
+          Object.keys(base.material.cells).length + " phrases carry a ramp)");
+      } else assert.notStrictEqual(mine.join(","), was.join(","),
+        field + ": the word reached no note — declared and never arriving");
+      if (field === "artic") {
+        const dA = nA.reduce((a, e) => a + e.dur, 0), dB = nB.reduce((a, e) => a + e.dur, 0);
+        assert.ok(dA < dB * 0.7, "staccato did not shorten the notes: " +
+          dB.toFixed(2) + " -> " + dA.toFixed(2));
+        rows.push("artic    staccato: " + nA.length + " notes, " +
+          dB.toFixed(2) + " -> " + dA.toFixed(2) + " steps of sound");
+      }
+      if (field === "oct") {
+        assert.strictEqual(nA.length, nB.length, "an octave changed the note COUNT");
+        const off = new Set(nA.map((e, k) => e.n - nB[k].n));
+        assert.deepStrictEqual([...off], [12], "+1 moved the line by " + [...off].join(","));
+        rows.push("oct      +1: every one of " + nA.length +
+                  " notes exactly +12 semitones");
+      }
+      if (field === "scale") {
+        assert.strictEqual(nA.length, nB.length, "an alphabet changed the note COUNT");
+        const pcs = (l) => new Set(l.map((e) => ((e.n % 12) + 12) % 12));
+        const a = [...pcs(nA)].sort((x, y) => x - y), b2 = [...pcs(nB)].sort((x, y) => x - y);
+        assert.notDeepStrictEqual(a, b2, "the pitch classes did not move");
+        rows.push("scale    whole tone: pitch classes {" + b2.join(" ") +
+                  "} -> {" + a.join(" ") + "}");
+      }
+      if (field === "rate") {
+        assert.strictEqual(nA.length, nB.length * 2,
+          "dbl gave " + nA.length + " notes, not twice " + nB.length);
+        const dA = nA.reduce((a, e) => a + e.dur, 0), dB = nB.reduce((a, e) => a + e.dur, 0);
+        assert.ok(Math.abs(dA - dB) < 1e-6,
+          "double time changed the total sounding length: " + dB + " -> " + dA);
+        rows.push("rate     dbl: " + nB.length + " -> " + nA.length +
+                  " notes, each half as long, same bar");
+      }
+      // ...AND CLEARING RESTORES THE RECORD BYTE FOR BYTE.
+      assert.strictEqual(D.putCell(doc, si, vi, field, null), true,
+        field + ": the clear-back did not move the document");
+      assert.strictEqual(wholeRecord(barsOf(doc)), B,
+        field + ": clearing did not restore the rendered bars");
+    }
+    for (const r of rows) console.log("       " + r);
+  });
+
+  /* T4n — ...AND THE ROW IS THEIR DEFAULT (§1 CELL: "become per cell with the
+     row as default"). A word on the ROW reaches EVERY chair of that section
+     and no other section, and a cell word on top of it outranks it for that
+     chair alone — which is §2's ladder read from the other end. */
+  ok("T4n a row word reaches every chair of its section, and a cell outranks it", () => {
+    const base = D.normalize(P.genreToDocument("acid", 1));
+    const si = 1, vi = base.voices.findIndex((v) => v.kind === "line");
+    const before = barsOf(base);
+    const pitches = (bars, s, v) => bars[s].filter(
+      (e) => e.kind === "line" && e.lv === v).map((e) => e.n).join(",");
+    const doc = clone(base);
+    assert.strictEqual(D.putRow(doc, si, "oct", "1"), true);
+    const rowed = barsOf(doc);
+    const voices = [...new Set(before[si].filter((e) => e.kind === "line")
+                                         .map((e) => e.lv))];
+    assert.ok(voices.length > 1, "acid seats one line; this claim needs two");
+    for (const v of voices)
+      assert.notStrictEqual(pitches(rowed, si, v), pitches(before, si, v),
+        "the row's octave missed chair " + v);
+    for (let s = 0; s < before.length; s++) if (s !== si)
+      for (const v of voices)
+        assert.strictEqual(pitches(rowed, s, v), pitches(before, s, v),
+          "the row's octave reached section " + s);
+    // ...and the CELL outranks it, for that chair only, and is not ADDED to it
+    assert.strictEqual(D.putCell(doc, si, vi, "oct", "-1"), true);
+    const both = barsOf(doc);
+    const mine = both[si].filter((e) => e.kind === "line" && e.lv === vi);
+    const was = before[si].filter((e) => e.kind === "line" && e.lv === vi);
+    const off = new Set(mine.map((e, k) => e.n - was[k].n));
+    assert.deepStrictEqual([...off], [-12],
+      "the cell did not outrank the row: the chair moved by " + [...off].join(","));
+    for (const v of voices) if (v !== vi)
+      assert.strictEqual(pitches(both, si, v), pitches(rowed, si, v),
+        "the cell reached chair " + v);
+    console.log("       row oct +1 moved all " + voices.length +
+      " chairs of section " + si + " and no other section; a cell −1 on chair " +
+      vi + " outranks it (−12, not 0 and not −24)");
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => {

@@ -351,11 +351,54 @@ export function bandTable(host, A) {
        absolute — the absent detent is "rides the section", which is ¶A's own
        sentence for a cell that says nothing. */
     for (const spec of (A.CELLAUTO || [])) f.push(cellLane(A, i, vi, spec));
-    /* 6 · AND THE WAVE THAT IS STILL NOT HERE, GREYED WITH ITS REASON (§4's
-       "no silent grey"). */
-    f.push({ kind: "say", label: "artic · oct · rate · scale · clamp",
-      word: "the row's", why: "wave 4: these are per box today and moving " +
-            "them to the cell needs a song.js VERSION migration" });
+    /* 6 · THE FIVE THAT WERE PER BOX (wave 4, 2026-09-04). This row was GREYED
+       with its reason until today ("these are per box today and moving them to
+       the cell needs a song.js VERSION migration") and both halves of that
+       sentence have been answered: `document.js TIERS` addresses all five at
+       the row AND the cell, `toGenre` is their one owner, and no version moved
+       because no shape did — the box already carried a key for each and
+       `boxesOf` still writes none of them (writing one would apply the row's
+       word twice, once here and once in `ui/derive.js genreOf`).
+         FOUR STRIPS AND ONE SENTENCE. `clamp` is drawn as a measurement rather
+       than a control, for the reason `focus` is: it is stored, it resolves,
+       and on the DOCUMENT path it moves no note, because `document.js
+       toPhrase` writes `inc` and `stk` all-zero — a document phrase carries no
+       ramp for a limit to limit. It is a live control on the BOX path (the
+       tracker's own ramp columns), which is why the field exists at all. An
+       honest sentence beats a dead control (T8f's law, wave 2c). */
+    /* ...AND THEY ARE THE PITCHED CHAIRS' ALONE, WHICH IS SAID RATHER THAN
+       drawn dead. All five are read inside `kernel.js render`, and `render` is
+       what a LINE plays: the kit is `K.drums` and the bass is `K.bass`, two
+       functions that never see `g.cell` and have their own words for the same
+       ideas (KITOPS `halftime`/`doubletime` for a kit's rate, `bassArtic` and
+       `bassReg` for the bass's articulation and octave — kernel.js says so at
+       both sites). Offering an articulation strip on the drummer would be a
+       control that writes to the document and moves no hit. */
+    if (v.kind === "line") {
+      /* ...AND TWO OF THE FIVE ARE NOT READ FOR A CHAIR THAT VOICES CHORDS.
+         MEASURED 2026-09-04 on reggae seed 1: a `stab` with 201 rendered notes
+         in a section answers an octave and a rate and does NOT answer an
+         articulation or an alphabet — `kernel.js render` sends a `pad` and any
+         part with `chordLock` (PARTS.stab) down the chord branch, which voices
+         the bar's chord and `continue`s BEFORE the articulation is read and
+         takes its pitches from the chord's own tones rather than from the
+         subject alphabet. A `lead` on the same record answers both. So those
+         two rows are sentences on those two chairs and strips everywhere else;
+         the octave and the time stay live for everybody, because both are
+         applied to the finished stream. */
+      const chordChair = CHORDCHAIRS.has(String(A.castOf(vi, "part") || ""));
+      for (const spec of (A.CELLVEC || []))
+        f.push((spec.key === "clamp" ||
+                (chordChair && (spec.key === "artic" || spec.key === "scale")))
+          ? cellVecSay(A, i, vi, spec, chordChair && spec.key !== "clamp")
+          : cellVecField(A, i, vi, spec));
+    }
+    else f.push({ kind: "say", label: "artic · oct · rate · scale · clamp",
+      word: "the pitched chairs'",
+      why: "measured 2026-09-04: all five are read inside kernel.js render, " +
+           "which is what a LINE plays — the kit is K.drums and the bass is " +
+           "K.bass, and each has its own words for the same ideas (the kit's " +
+           "halftime/doubletime, the bass's own artic and register)" });
     f.push({ kind: "ops", label: "this cell", ops: cellOps(A, i, vi) });
     return f;
   };
@@ -641,6 +684,91 @@ function cellLane(A, i, vi, spec) {
               ...words.map((k) => ({ v: k, w: spec.labels[k] || k }))],
     set: (v) => put(v || ""),
     clear: has ? () => put("") : null };
+}
+
+/** THE TWO CHAIRS THAT VOICE THE BAR'S CHORD RATHER THAN READING A SUBJECT.
+ *  `kernel.js render` takes the chord branch for `part === "pad"` and for any
+ *  part whose PARTS row sets `chordLock` — which today is `stab` and nothing
+ *  else — and that branch `continue`s before the articulation is read and
+ *  builds its pitches out of the chord's own tones. Named here rather than
+ *  imported because ui/table.js sits above the kernel and this is the only
+ *  question it asks of it; kernel.js PARTS is the owner, and the day a third
+ *  part locks to the chord this list is one word longer. */
+const CHORDCHAIRS = new Set(["pad", "stab"]);
+
+/** ONE OF THE FIVE §1 MOVED FROM THE BOX TO THE CELL (TABLE.md wave 4:
+ *  *"artic / oct / rate / scale / clamp — today per box, applied to every
+ *  voice; become per cell with the row as default"*).
+ *
+ *  THE DEFAULT IS THE ROW'S, NOT THE COLUMN'S, and that is the difference
+ *  between this strip and `cellNum` above it. An articulation is not a fact
+ *  about a chair for the whole record — a register is — so the quiet word here
+ *  is what the SECTION says, and the sub-line says so in the same two words
+ *  `cellNum` uses for its own tier.
+ *
+ *  WHAT IT PRINTS WHEN NOBODY HAS SAID ANYTHING is the row's own answer if
+ *  there is one and the genre's word otherwise, which for these five is "as
+ *  the genre asks" — the registry's own phrase for a null default (fields.js
+ *  FIELDS: *"default what emptyBox()/skeleton() seed (null = 'as the genre
+ *  asks')"*). Printing a fabricated value would be worse than printing none:
+ *  the kernel's floor for each of the five lives in the kernel, in the
+ *  kernel's units, and this sheet is not entitled to restate it.
+ *
+ *  THE NEUTRAL WORD IS NOT OFFERED, for the third time in this file and the
+ *  same reason: `oct` 0 is an octave shift of no octaves, `fields.js
+ *  cellVecClean` drops it at the door, and a chip that writes and vanishes on
+ *  the next recompile is §1b's register bug shipped twice. The clear-back is
+ *  how a hand says "the row's". */
+function cellVecField(A, i, vi, spec) {
+  const own = A.cellOf(i, vi, spec.key);
+  const row = A.rowOf ? A.rowOf(i, spec.key) : null;
+  const has = own != null && own !== "";
+  const wordOf = (k) => (k == null || k === "" ? null
+    : String(spec.labels[String(k)] || k));
+  const words = Object.keys(spec.table).filter((k) => k !== spec.neutral);
+  return { key: "tcellvec|" + spec.key + "|" + vi + "|" + i,
+    label: spec.label,
+    word: has ? wordOf(own) : (wordOf(row) || "as the genre asks"),
+    value: has ? String(own) : "",
+    derived: !has,
+    sub: has ? null : (spec.none || "the row's"),
+    /* NO `why` ON A LIVE STRIP. ui/wordgrid.js reads `why` as the REFUSAL
+       reason — it sets `aria-disabled`, adds `is-refused` and rewrites the
+       label — so passing the field's question here would draw four working
+       controls as four dead ones. The question lives in the strip's own
+       legend, which `chipStrip` takes from the label. */
+    options: [{ v: "", w: spec.none || "the row's" },
+              ...words.map((k) => ({ v: k, w: String(spec.labels[k] || k) }))],
+    set: (v) => A.putCell(i, vi, spec.key, v === "" ? null : v),
+    clear: has ? () => A.putCell(i, vi, spec.key, null) : null };
+}
+
+/** ...AND THE ONE OF THE FIVE THAT IS TOLD RATHER THAN ASKED, with the
+ *  measurement that makes it a sentence (the refused-control law, §4's "no
+ *  silent grey", and the shape wave 2c restored for the bass's `reads`).
+ *  MEASURED 2026-09-04: `document.js toPhrase` returns `inc: z(n), stk: z(n)`
+ *  for every motif in every bank, so `kernel.js rampOf` computes a raw ramp of
+ *  zero on the document path and there is nothing for a limit to limit — 0 of
+ *  6 phrases on acid seed 1 carry a ramp, and none can, by construction. The
+ *  field is stored and resolved all the same (the gate names it the day a
+ *  ramp column lands in the hook editor), which is exactly how `focus` is
+ *  carried three rows up. */
+function cellVecSay(A, i, vi, spec, chordChair) {
+  const own = A.cellOf(i, vi, spec.key);
+  const row = A.rowOf ? A.rowOf(i, spec.key) : null;
+  const said = own != null ? own : row;
+  return { kind: "say", label: spec.label,
+    word: said == null ? "as the genre asks"
+                       : String(spec.labels[String(said)] || said),
+    why: chordChair
+      ? "measured 2026-09-04: this chair voices the bar's CHORD (kernel.js " +
+        "render sends a pad and any chordLock part down the chord branch), " +
+        "so it never reads an articulation or a subject alphabet — its " +
+        "octave and its time still answer. Give it a line part to say this."
+      : "measured 2026-09-04: a document's motifs carry no ramp " +
+        "(document.js toPhrase writes inc and stk all-zero), so a ramp " +
+        "limit moves no note here — it is the tracker's control, and this " +
+        "cell keeps the address for the day a ramp lands" };
 }
 
 /** THE DRUMMER'S GROUPS, built from the options the sheet actually offers so a

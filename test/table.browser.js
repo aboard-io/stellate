@@ -107,7 +107,12 @@ const CELL_ORDER = ["motifs", "does", "enters at bar", "register", "focus",
                        one line while it was a promise; it is four strips now,
                        one per lane kind, in fields.js CELLAUTO's own order. */
                     "mix · level", "mix · place", "mix · send", "mix · tone",
-                    "artic · oct · rate · scale · clamp"];
+                    /* ...AND THE FIVE THAT REPLACED THE LAST GREY ROW (TABLE.md
+                       wave 4, 2026-09-04). §1's "artic / oct / rate / scale /
+                       clamp" was one line while it was a promise; it is four
+                       strips and one measurement now, in fields.js CELLVEC's
+                       own order, drawn under their working names. */
+                    "articulation", "octave", "time", "alphabet", "ramp limit"];
 const ROW_ORDER  = ["type", "bars", "level", "shape", "intro", "outro",
                     "motion", "pace", "period", "breath", "pipe",
                     "key", "mode", "changes", "swing", "groove",
@@ -211,7 +216,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     clabs.join(" · "));
   await tap("tcol|" + vName);
 
-  await tap("tcell|" + vName + "|" + secId);
+  /* ...AND THE CELL SHEET IS OPENED ON A CHAIR THAT READS A SUBJECT (wave 4).
+     `voices[0]` on this record is the skank, a `stab`, and a stab voices the
+     bar's CHORD — `kernel.js render` sends it down the chord branch, which
+     never reads an articulation or a subject alphabet — so those two rows are
+     drawn there as measurements and not as strips. That is the honest drawing
+     and it is T6k's own claim; this row is about the ORDER and about the four
+     that are live, so it asks the chair they are live on. */
+  const subjV = ((await doc()).voices.find((v) => v.kind === "line" &&
+    !["pad", "stab"].includes(String((v.cast || {}).part || ""))) ||
+    { name: vName }).name;
+  await tap("tcell|" + subjV + "|" + secId);
   const cc = await sheetRows();
   const cellLabs = (cc || []).map((r) => r.lab).filter((x) => CELL_ORDER.includes(x));
   check(JSON.stringify(cellLabs) === JSON.stringify(CELL_ORDER.filter((x) => cellLabs.includes(x))),
@@ -225,10 +240,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   check(!greyed.some((r) => /^mix/.test(r.lab)),
     "…the cell's mix lanes are LIVE, not greyed (wave 3 arrived; the strips " +
     "are drawn and refuse nothing)");
-  check(greyed.some((r) => /artic/.test(r.lab) && /wave 4/.test(r.why)),
-    "…and so are the five that need a VERSION migration");
+  /* ...AND THE SAME INVERSION FOR WAVE 4 (2026-09-04). This read "and so are
+     the five that need a VERSION migration" and demanded the words "wave 4" in
+     the refusal. The wave arrived and there was no migration to make (TABLE.md
+     §1d), so the assertion is inverted the way wave 3's above was: four of the
+     five are live strips that refuse nothing, and the FIFTH — the ramp limit —
+     keeps a refusal, because it is measured to move no note on the document
+     path and an honest sentence beats a dead control. */
+  check(!greyed.some((r) => ["articulation", "octave", "time", "alphabet"]
+          .includes(r.lab)),
+    "…artic, oct, rate and scale are LIVE strips, not greyed (wave 4 arrived)");
+  check(greyed.some((r) => r.lab === "ramp limit" && /no ramp/.test(r.why)),
+    "…and the ramp limit alone keeps its refusal, with the measurement in it");
   await shot("cell-sheet-390");
-  await tap("tcell|" + vName + "|" + secId);
+  await tap("tcell|" + subjV + "|" + secId);
 
   /* ================= T5e · QUIET IS INHERITED, BOLD IS WRITTEN ========== */
   const paint = await p.evaluate(() => {
@@ -686,6 +711,159 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       }, [l6.name, sid6]);
       check(gone == null, "…and clearing it returns the cell to riding the " +
         "section, with nothing left behind (" + JSON.stringify(gone) + ")");
+    }
+  }
+
+  /* T6f–j · THE FIVE §1 MOVED FROM THE BOX TO THE CELL (TABLE.md wave 4).
+     The row above them in the sheet was GREYED with its reason until today
+     ("wave 4: these are per box today and moving them to the cell needs a
+     song.js VERSION migration"); four of the five are strips now and the fifth
+     is a measured sentence.
+
+     WHAT THIS GATE OWNS. `test/table.test.js` T4m measures the CLAIM per field
+     — staccato shortens, +1 is exactly twelve semitones, whole tone moves the
+     pitch classes, dbl doubles the notes — in node, on the same ui/derive.js
+     path, where the numbers can be read exactly. What only the rendered page
+     can say is that a thumb reaches it: the chips are drawn, the neutral word
+     is not offered, the tap lands on the CELL tier through `putCell`, the
+     RENDERED events of that section move and another section's do not, and the
+     clear-back leaves nothing behind.
+
+     IT WALKS THE VOCABULARY RATHER THAN NAMING A WORD, which is §1b's own law
+     ("two motifs can render the identical bar … so T6 walks the vocabulary and
+     asks whether SOME word moves the render, which is the honest form of 'this
+     control can reach the sound'"). It has teeth here twice over: a phrase
+     whose notes all carry a written `hold` is exempt from the articulation's
+     gap by design (kernel.js: "a written length is the whole length"), so
+     `staccato` can be inert on a record where `tie` is not — measured on
+     reggae seed 1, where `tie` is the word that moves the lead.
+
+     AND IT DRIVES A CHAIR THAT READS A SUBJECT. Measured on the same record: a
+     `stab` with 201 rendered notes in this section answers an octave and a
+     rate and answers NEITHER an articulation nor an alphabet, because
+     `kernel.js render` sends a pad and any `chordLock` part down the chord
+     branch. The cell sheet says so on those chairs (a sentence, not a dead
+     strip); this gate drives the first chair that is neither. */
+  await top("Band");
+  {
+    const D7 = await doc();
+    const CHORD = ["pad", "stab"];
+    const l7 = D7.voices.find((v) => v.kind === "line" &&
+                 !CHORD.includes(String((v.cast || {}).part || ""))) ||
+               D7.voices.find((v) => v.kind === "line");
+    const vi7 = D7.voices.indexOf(l7);
+    const si7 = 3, sid7 = D7.form.sections[si7].id;
+    const other = si7 === 0 ? 1 : 0;
+    const cellKey = "tcell|" + l7.name + "|" + sid7;
+    const cellOf = () => p.evaluate((args) => { const [n, sid] = args;
+      const v = window.__eightDoc().voices.find((x) => x.name === n);
+      return (v && v.cells && v.cells[sid]) || null; }, [l7.name, sid7]);
+    // IDEMPOTENT, both ways: `tap` toggles, and every helper below wants to
+    // start from a known state rather than from whatever the last write's
+    // redraw left behind.
+    const shut = async () => { await p.evaluate((k) => {
+      const el = document.querySelector('#pan-band [data-k="' + k + '"]');
+      if (el && el.getAttribute("aria-expanded") === "true") el.click();
+    }, cellKey); await p.waitForTimeout(300); };
+    const SPECS = [
+      { t: "T6f", key: "artic", say: "articulation" },
+      { t: "T6g", key: "oct",   say: "octave" },
+      { t: "T6h", key: "rate",  say: "double time" },
+      { t: "T6i", key: "scale", say: "alphabet" },
+    ];
+    for (const sp of SPECS) {
+      const fkey = "tcellvec|" + sp.key + "|" + vi7 + "|" + si7;
+      const chips = await chipsOf(cellKey, fkey);
+      check(chips.length >= 2, sp.t + " the cell sheet draws a " + sp.say +
+        " strip on " + l7.name + " (" +
+        (chips.map((k) => k.split("|").pop()).join(" ") || "NONE") + ")");
+      if (sp.key === "oct")
+        /* THE NEUTRAL WORD IS NOT OFFERED, third time in this wave and the
+           same law: an octave shift of no octaves IS absent, `fields.js
+           cellVecClean` drops it, and a chip that wrote and then vanished on
+           the next recompile is §1b's register bug shipped twice. */
+        check(!chips.some((k) => k.split("|").pop() === "0"),
+          "…and it offers no zero chip: the clear-back is how a hand says " +
+          "\"the row's\"");
+      if (!chips.length) continue;
+      /* SHUT IT BEFORE WALKING. `chipsOf` opens the sheet by TAPPING the cell,
+         and a tap toggles — so calling it twice in a row (once to look at the
+         chips, once inside `walk`) closes the sheet and walks an empty strip.
+         Measured: "NONE OF 0 MOVED IT" on four working controls, which is the
+         gate lying about the page rather than the page lying about the
+         record. Every entry into `walk` starts from shut. */
+      await shut();
+      const evOther = await evOf(other);
+      const w = await walk(cellKey, fkey, () => evOf(si7));
+      check(!!w.moved, "…and SOME word of it moves THAT SECTION'S RENDERED " +
+        "EVENTS (" + (w.moved || "NONE OF " + w.n + " MOVED IT") + ")");
+      const stored = await cellOf();
+      check(!!stored && stored[sp.key] != null,
+        "…and the tap landed on the CELL tier through putCell: " +
+        JSON.stringify(stored));
+      check(await evOf(other) === evOther,
+        "…and section " + other + "'s events did not move");
+      await shut();
+      await chipsOf(cellKey, fkey);
+      await p.evaluate((k) => { const c =
+        document.querySelector('#pan-band [data-k="' + k + '"]'); if (c) c.click(); },
+        fkey + "|");
+      await p.waitForTimeout(800);
+      const gone = await cellOf();
+      check(!gone || gone[sp.key] == null,
+        "…and the clear-back returns the cell to the row's, with nothing left " +
+        "behind (" + JSON.stringify(gone) + ")");
+    }
+    /* T6j · AND THE FIFTH IS TOLD RATHER THAN ASKED. `clamp` is stored and
+       resolved like the other four and moves NO note on the document path:
+       `document.js toPhrase` writes `inc` and `stk` all-zero for every motif
+       in every bank, so `kernel.js rampOf`'s raw ramp is zero and a limit has
+       nothing to limit (measured in test/table.test.js T4m, which fails the
+       day a ramp column lands). So the sheet draws a sentence with the
+       measurement and NOT a live strip — an honest sentence beats a dead
+       control, which is the law wave 2c restored for the bass's `reads`. */
+    await shut();
+    await tap(cellKey);
+    const clampRow = await p.evaluate((args) => { const [vi, si] = args;
+      const strip = document.querySelector(
+        '#pan-band [data-k="tcellvec|clamp|' + vi + "|" + si + '"]');
+      const txt = [...document.querySelectorAll("#pan-band .nu-vsheet *")]
+        .map((n) => n.textContent || "").join(" ");
+      return { strip: !!strip, ramp: /ramp limit/.test(txt) };
+    }, [vi7, si7]);
+    check(!clampRow.strip && clampRow.ramp,
+      "T6j the ramp limit is drawn as a measurement and not as a live strip " +
+      "(strip " + clampRow.strip + ", named " + clampRow.ramp + ")");
+    /* ...AND THE CHAIR THAT VOICES THE CHORD IS TOLD THE OTHER TWO, for the
+       same reason and with the measurement in it (a stab answers an octave and
+       a rate and neither an articulation nor an alphabet). Skipped honestly on
+       a record that seats no such chair. */
+    const stab = D7.voices.find((v) => v.kind === "line" &&
+      CHORD.includes(String((v.cast || {}).part || "")));
+    if (stab) {
+      await shut();
+      await tap("tcell|" + stab.name + "|" + sid7);
+      /* READ THE SHEET'S OWN ROWS. A refusal is an ATTRIBUTE (`data-why`,
+         `title`, the aria label) and not text on the page — ui/wordgrid.js
+         puts it there so a reason is available to a thumb and to a gate
+         without becoming a paragraph in the middle of a strip — so a check
+         that grepped `textContent` for it would fail on a page that is
+         drawing it correctly. `sheetRows` is this file's own reader for
+         exactly that, and T5d uses it for the same question. */
+      const sr = await sheetRows();
+      const row = (l) => (sr || []).find((r) => r.lab === l) || null;
+      const told = (l) => { const r = row(l);
+        return !!(r && r.why && /voices the bar's CHORD/.test(r.why)); };
+      const live = (l) => { const r = row(l); return !!(r && !r.why); };
+      check(told("articulation") && told("alphabet") &&
+            live("octave") && live("time"),
+        "T6k a chord-voicing chair (" + stab.name + ", " +
+        (stab.cast || {}).part + ") is TOLD its articulation and its alphabet " +
+        "with the measurement, and keeps its octave and its time as strips");
+      await tap("tcell|" + stab.name + "|" + sid7);
+    } else {
+      check(true, "T6k this record seats no pad or stab chair — the chord " +
+        "branch's refusal is unmeasurable here and is named rather than faked");
     }
   }
 

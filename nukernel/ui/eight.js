@@ -10043,6 +10043,16 @@ function tableAPI() {
        one writer — the table draws whatever the registry offers, which is why
        it never has to be told a new word. */
     CELLAUTO: NuFields.CELLAUTO,
+    /* ...AND THE FIVE §1 MOVED TO THE CELL IN WAVE 4, by the same rule:
+       fields.js CELLVEC is the one owner of the five vocabularies (it points
+       at the tables the box chips of the same name already use, so the cell
+       sheet and the palette can never offer different words) and `putCell` is
+       the one writer. `rowOf` is the second read this sheet needs and the
+       first one wave 3 did not: these five have a ROW default, so the strip
+       has to be able to say what the SECTION said as distinct from what the
+       cell resolved to. `NuDocument.resolveRow` is that question. */
+    CELLVEC: NuFields.CELLVEC,
+    rowOf: (i, f) => NuDocument.resolveRow(DOC, i, f, GENRES),
 
     /* ---- the record's own footer (§1 RECORD) ------------------------ */
     MASTERROWS: NuFields.MASTER,
@@ -15065,8 +15075,19 @@ window.__eightEvents = (si) => {
      here is this repo's characteristic bug — declared and never arriving —
      and without the letter no gate could tell. Undefined on every other kind,
      so nothing that reads this probe today sees a changed object. */
+  /* ...AND `n` AND `dur` SINCE 2026-09-04 (TABLE.md wave 4), for the same
+     reason `d` was added and after the same failure. This probe carried the
+     TIME of every event and its LEVEL and not its PITCH or its LENGTH — so a
+     control that moves a note by an octave, or shortens every note in a bar,
+     was invisible to it and read as dead. Wave 4's own T6f/T6g/T6i failed
+     against it three times over on controls test/table.test.js T4m had already
+     measured moving, in node, on the same ui/derive.js call: the gate was
+     reading the wrong object, which is the oldest lesson this repo has.
+     Undefined on a hit (drums carry no pitch), so nothing that read this probe
+     before sees a changed object. */
   return sectionRender(b, SLOTS, GROOVE, SWING).ev
-    .map((e) => ({ t: e.t, vel: e.vel, kind: e.kind, lv: e.lv, d: e.d }));
+    .map((e) => ({ t: e.t, vel: e.vel, kind: e.kind, lv: e.lv, d: e.d,
+                   n: e.n, dur: e.dur }));
 };
 // WHAT THE PRODUCER DID, for the artifact gate (test/producer.browser.js) — the
 // same probe ui/band.js:2642 had. The notes, the tempo and the desk offsets it

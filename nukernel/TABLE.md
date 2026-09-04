@@ -6,7 +6,7 @@ columns and rows using a table building interface … Each cell can be
 understood as a vector … The producer becomes basically a vector manipulator
 across the table … It's a next generation futuristic gig sheet for robots."*
 
-Status: APPROVED 2026-09-03 (Paul: "When done, build the table according to the spec") with three amendments, marked ¶A below. Waves 1, 2a, 2b and 2c SHIPPED (2026-09-04); the Band tab is the table and Band and Structure are deleted. Replaces the Band and Structure panes with one Band
+Status: APPROVED 2026-09-03 (Paul: "When done, build the table according to the spec") with three amendments, marked ¶A below. ALL FOUR WAVES SHIPPED (2026-09-04); the Band tab is the table and Band and Structure are deleted. Replaces the Band and Structure panes with one Band
 table. Rules stays. Tempo and Key fold into one Time structure. Motif becomes
 Motifs and stays. Pace leaves Time and joins the section vector. Nothing else
 moves. This document is the contract the waves are built and gated against;
@@ -64,7 +64,7 @@ point at (§3).
 | does | `development` (voice × section) | an ARRAY: for drums the 68 KITOPS are "things a drummer does" and a cell may do several; for pitched voices a `word` is already an operator list |
 | enters at bar | override of the column default | |
 | register | override of the column default | |
-| artic / oct / rate / scale / clamp | today per box, applied to every voice | become per cell with the row as default |
+| artic / oct / rate / scale / clamp | `voices[v].cells[sec].{artic,oct,rate,scale,clamp}` (wave 4) | per cell with the ROW as the default; `document.js toGenre` is their one owner and `boxesOf` writes none of them (§1d) |
 | focus | `focus` (today a section index) | a cell flag: this section features this voice |
 | mix automation | `cells[secId].mixauto` (wave 3) | a level / pan / send / cutoff OFFSET for this voice in this section, RELATIVE to the section's own lane (§4, ¶A). Words in `fields.js CELLAUTO`; a cell-only field with no column and no row default, because an offset whose absent state was anything but zero would be a second curve |
 | provenance | NEW | of each motif: own genre · a named guest genre · hand (§3) |
@@ -242,6 +242,124 @@ bar now and asserts the SHAPE the artifact can answer: some bars move, by the
 dB the chip says, on exactly one unit, and the rest of the record does not
 move at all (measured: 24 of 200, one unit, +6.00 dB).
 
+### 1d · What wave 4 measured, and the migration that was not needed
+
+Per-cell `artic` / `oct` / `rate` / `scale` / `clamp` shipped 2026-09-04. Eight
+things worth writing down:
+
+- **THE SAVE DID NOT MOVE, AND THAT IS A MEASUREMENT.** §4 said this wave was
+  "a document change with a migration (song.js VERSION bump)". It is not, and
+  the reason is that §4 was reasoning about the BOX. Measured before the wave:
+  `song.js skeleton` already seeds a key for all five on every box (it walks
+  `fields.js FIELDS`, which carries a chip of each name), `validateSong`
+  already checks all five against those tables, and `boxesOf` writes NOT ONE of
+  them. So there was no shape to move: the row's and the cell's answers reach
+  the sound through the per-section GENRE (`toGenre`), which is where wave 1
+  put `entry` and `reg` for the same reason and with the same "no VERSION bump"
+  note. VERSION stays 3; `test/document.test.js` G13 is green unchanged, which
+  is the honest form of the promise — a bump nobody needed would have made
+  every v:3 save unreadable to buy nothing.
+- **AND THE BOX STILL CARRIES NONE OF THEM, ON PURPOSE.** `ui/derive.js
+  genreOf` reads `sec.artic`, `sec.scale`, `sec.clamp`, `sec.oct` and
+  `sec.rate` off a box; writing the row's resolved word there as well as onto
+  the section genre would apply it TWICE — ¶A's "no curve applied twice", in
+  the one shape it can take for a pitch and a duration. This is exactly the
+  ruling wave 2a made for `key`/`mode`/`prog`. The palette's own box chips are
+  untouched and reach the DAW's boxes as they always did.
+- **A CELL'S `rate` IS A DENSITY, BECAUSE A CHAIR CANNOT MOVE THE BAR LINE.**
+  At the record and the row a `rate` word is a CLOCK: it changes how long the
+  box lasts and every player changes with it. One chair cannot change how long
+  the box lasts — a band that disagreed about the bar line would not be a band
+  — so at the cell the same multiplier lands on that chair's own READ.
+  `dbl` compresses each of its bars into half the bar and plays it twice
+  (bar-local on purpose, so both copies sound against the chord the bar
+  actually has and the doubling cannot walk the harmony forward); `half`
+  stretches the whole line by two and cuts whatever runs past the last bar.
+  Measured on acid seed 1, one cell: 64 notes → 128, each half as long, the
+  same 58.88 steps of total sounding length, in that section on that chair
+  alone.
+- **`clamp` REACHES NOTHING ON THE DOCUMENT PATH, and it is drawn as a
+  sentence.** `document.js toPhrase` returns `inc: z(n), stk: z(n)` for every
+  motif in every bank, so `kernel.js rampOf`'s raw ramp is zero and a limit has
+  nothing to limit — 0 of the 6 phrases on acid seed 1 carry a ramp, and none
+  can, by construction. It is a live control on the BOX path (the tracker's own
+  ramp columns), which is why the field exists at all. So the cell sheet draws
+  four strips and one MEASUREMENT, `focus`'s treatment and the bass's: the
+  address is stored and resolved, T4m asserts the zero, and the day a ramp
+  column lands in the hook editor that assertion fails and the gate names it.
+- **THE FIRST CUT OF `oct` ADDED THE CELL TO THE ROW, AND T4n CAUGHT IT.**
+  `chairShape` computed `12 * (rowOct + cellOct)`, so a chair told −1 in a
+  section the row had put up an octave came back to where it started — a cell
+  that "outranks" by cancelling. §2 says the first value found WINS, so the
+  cell REPLACES the row's answer for that chair (`12 * (cell ?? row)`) and the
+  chairs that said nothing keep the row's. Wave 3's own gate caught the
+  double-applied pan the same way; this is the same law from the other side,
+  and it is why T4n asserts −12 rather than merely "it moved".
+- **A CHAIR THAT VOICES THE BAR'S CHORD READS NEITHER AN ARTICULATION NOR AN
+  ALPHABET, and the sheet says so on that chair.** `kernel.js render` sends a
+  `pad`, and any part whose PARTS row sets `chordLock` (today `stab` and
+  nothing else), down the chord branch — which `continue`s BEFORE the
+  articulation is read and builds its pitches out of the chord's own tones
+  rather than out of the subject alphabet. Measured on reggae seed 1, section
+  3: the `stab` has 201 rendered notes and answers an octave and a rate and
+  answers NEITHER of the other two, while a `lead` on the same record answers
+  all four. So those two rows are SENTENCES on those two chairs and strips
+  everywhere else, and the octave and the time stay live for everybody because
+  both are applied to the finished stream. (The related fact, which is why the
+  gate walks the vocabulary instead of naming a word: a note carrying a written
+  `hold` is exempt from the articulation's gap by design — "a written length is
+  the whole length" — so `staccato` is inert on a sparse phrase where `tie` is
+  not.)
+- **THE PAGE'S OWN EVENT PROBE COULD NOT SEE A PITCH OR A LENGTH.**
+  `window.__eightEvents` carried `{t, vel, kind, lv, d}` — the TIME of every
+  event and its LEVEL and not its NOTE or its DURATION — so the browser gate
+  read `artic`, `oct` and `scale` as dead on controls `test/table.test.js` T4m
+  had already measured moving, in node, through the same `ui/derive.js` call.
+  Three red checks over four working controls, and the gate was reading the
+  wrong object, which is the oldest lesson in this repo. `n` and `dur` ride
+  along now, on the `d` precedent (added 2026-09-03 so the drum editor's gate
+  could ask which drum sounded) and for the same reason. **This also puts §1b's
+  "ui/derive.js is blind to a register" back in question**: that finding was
+  taken with this probe, and a register moves a PITCH — it is not re-measured
+  by this wave, and it should be.
+- **`scoreOf` WAS PLACING SECTIONS BY BAR COUNT, WHICH ONLY A ROW `rate` COULD
+  EXPOSE.** It read `t0 = bar * barSteps` with THIS section's bar length —
+  exact for as long as every section counts its bar the same way, which was
+  true while `rate` was the record's alone. It accumulates the time each
+  section actually takes now; identical to the bit on a record whose rows say
+  nothing, and right on one whose rows do not.
+
+The reach, measured on acid seed 1 with one cell written (T4m, on the
+`ui/derive.js` path the ear is on — all four also reach `scoreOf`, because
+four of the five are read inside `kernel.js render`):
+
+| field | word | what moved |
+|---|---|---|
+| artic | staccato | 64 notes, 58.88 → 32.00 steps of sound |
+| oct | +1 | every one of 64 notes exactly +12 semitones |
+| rate | dbl | 64 → 128 notes, each half as long, the same 58.88 steps of sound |
+| scale | whole tone | pitch classes {1 6 9} → {0 2 6 8 10} |
+| clamp | off | nothing, and the gate says so |
+
+In every case: that chair, that section, no other cell of the record, one key
+in the document diff, and clearing restores the rendered bars byte for byte.
+
+Two things this wave DID NOT do, named rather than left to be discovered:
+
+- **The ROW has the address and the resolver and no control yet.** `putRow`
+  writes all five, `toGenre` reads them, and T4n gates that a row word reaches
+  every chair of its section and no other section — but `avail.js ROWFACTS`
+  (the eleven `form.*` sheets wave 2b minted) does not name them, so the row
+  sheet draws no strip. It is five lines there when somebody wants it; the
+  reason it is not in this wave is that the five sheets are counted by
+  `test/selects.js` and this wave's claim is about the CELL.
+- **They are the pitched chairs' alone.** All five are read inside `kernel.js
+  render`, which is what a LINE plays; the kit is `K.drums` and the bass is
+  `K.bass`, and each has its own words for the same ideas (KITOPS
+  `halftime`/`doubletime`, `bassArtic`, `bassReg`). The cell sheet says so on a
+  drums or bass column rather than drawing five controls that write to the
+  document and move no hit.
+
 ## 2 · The inherit law
 
 A cell's vector starts EMPTY. Every field resolves in this order and the first
@@ -306,9 +424,9 @@ reading a cell lane and the walk applying it at the bar line. This is wave 3
 and the table draws the field greyed with its reason until then (the refused
 control law: no silent grey).
 
-Per-cell artic / oct / rate / scale / clamp are per box today. Moving them to
-the cell is a document change with a migration (song.js VERSION bump — and
-G13's law: every past version must migrate and validate).
+Per-cell artic / oct / rate / scale / clamp were per box. SHIPPED 2026-09-04
+as wave 4 — and the migration this paragraph promised was NOT needed, which is
+a measurement and not a shortcut: see §1d.
 
 ## 5 · The op grammar (the producer as a vector manipulator)
 
@@ -384,6 +502,25 @@ children (indented and coloured by level, 2026-09-03).
 - **T6 the sound**: a cell edit reaches the mix (the declared-but-never-
   arriving law): change a cell's motif, register and level and read each off
   the rendered output.
+- **Wave 4's own two** (2026-09-04). `test/table.test.js` **T4m**: each of the
+  five cell words moves ONE key in the document, moves that chair in that
+  section on the RENDERED `ui/derive.js` path and no other cell of the record,
+  makes the CLAIM its word names (staccato shortens; +1 is exactly twelve
+  semitones on every note; whole tone moves the pitch classes; dbl is exactly
+  twice the notes at half the length and the same total sounding time; the ramp
+  limit moves nothing, with the zero-ramp census beside it), and clears back to
+  the record byte for byte. **T4n**: a ROW word reaches every chair of its
+  section and no other section, and a cell word outranks it for one chair —
+  −12 and not 0 and not −24, which is §2's ladder read from both ends.
+  `test/table.browser.js` **T6f–k**: on a chair that reads a subject, each of
+  the four strips is drawn with no neutral chip, SOME word of it moves that
+  section's rendered events (the vocabulary is walked, §1b's law — `tie` is the
+  word that moves a lead whose notes carry written holds), the tap lands on the
+  cell tier through `putCell`, another section does not move, and the
+  clear-back leaves nothing behind; the ramp limit is a measurement rather than
+  a live strip (T6j); and a chord-voicing chair is TOLD its articulation and
+  its alphabet with the measurement while keeping its octave and its time as
+  strips (T6k).
 - **Wave 3's own three** (2026-09-04). `test/table.test.js` **T4k**: a cell's
   four offsets move that voice's numbers in `deskUnits`' RENDERED unit table by
   exactly what they say, in that section only, on that voice only, and clearing
@@ -448,7 +585,9 @@ children (indented and coloured by level, 2026-09-03).
 3. **Per-cell mix automation, relative to the row's** (¶A): desk + walk read
    row lane + cell offset; the Live export writes the sum per track once; the
    greyed field lights. **SHIPPED 2026-09-04** — see §1c.
-4. **Per-cell artic/oct/rate/scale/clamp** with the VERSION migration.
+4. **Per-cell artic/oct/rate/scale/clamp**, with the VERSION migration if the
+   save moved. **SHIPPED 2026-09-04** — see §1d. It did not move, and the
+   reason is the wave's own finding.
 
 Each wave one agent at a time on the shared files, the parent rebuilds, gates,
 commits, deploys to staging.

@@ -85,6 +85,19 @@
 // each of the five sections, 0 other changes — applied by exactly the edit
 // the source took (the same derived-not-retyped procedure as 2026-08-25,
 // since the CLI half still cannot be re-run).
+// AND A FOURTH TIME (2026-09-04, TABLE.md wave 4), for one added key and
+// nothing else — the `part` precedent above, repeated exactly. `document.js
+// toGenre` now hands the kernel `cell: (v) => ...`, the table's CELL tier for
+// the five fields §1 moved off the box (artic · oct · rate · scale · clamp):
+// one closure, answering `null` for a chair with nothing written in it, which
+// is every chair of the shipped chant and of every record until a hand writes.
+// A new function on the genre is a new row in the portrait, so `calls.cell`
+// appears. THE CHANT DID NOT MOVE: every one of its five sections answers
+// `[null, null]`, `fields` gains no key (all five reach the genre through
+// present-only spreads and the chant's rows say none of them), and every other
+// row of all five sections is character for character what it was. The proof
+// is the diff — 20 inserted lines, 5 sections x 4 lines of one new key, 0
+// deletions, 0 changes — and G1 passing on everything that was left.
 "use strict";
 const fs = require("fs");
 const path = require("path");

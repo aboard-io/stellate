@@ -1533,6 +1533,78 @@
     return true;
   };
 
+  /* ---- THE CHAIR'S OWN OCTAVE AND ITS OWN TIME (TABLE.md wave 4) --------
+     Two of the five §1 moved to the cell cannot be read where the note is
+     DECIDED, and this is where they are applied instead — on the finished
+     stream, per voice, after the ornaments and the pipes have had it. Which is
+     exactly where `ui/derive.js sectionEvents` has always applied the BOX's
+     own `oct` (`n: e.n + aOct`), so the row's word and the cell's word are the
+     same arithmetic on the same object; the difference is that this site is
+     inside `render`, so `document.js scoreOf` — the staff, the piano roll and
+     the exported .mid — sees it too, and the box path does not have to be
+     taught the fact twice.
+
+     THE OCTAVE IS TWELVE SEMITONES, not `per`. A phrase's own `oct` vector
+     moves by the subject alphabet's period (degPitch's law, three screens up)
+     because it is written INSIDE that alphabet; the box's octave chip is a
+     transposition OF THE FINISHED LINE and has always been a plain 12 —
+     `ui/derive.js octOf` × 12, since the chip existed. Two facts, two units,
+     and this is the second one.
+
+     THE RATE IS A DENSITY, AND IT SAYS SO. A `rate` word at the RECORD or the
+     ROW is a clock: it changes how long the box lasts, and every chair in the
+     band changes with it. One chair cannot change how long the box lasts — a
+     band that disagreed about the bar line would not be a band — so at the
+     cell the same multiplier lands on the CHAIR'S OWN READ, which is what "at
+     double time" means for one player in an ensemble that is not:
+
+       · `dbl` — every bar this chair plays is compressed into HALF the bar and
+         played twice. Bar-local on purpose, so both copies sound against the
+         chord the bar actually has (`chordsOf` is per bar) and the doubling
+         cannot walk the harmony forward. Exactly twice the notes, each half as
+         long.
+       · `half` — the chair's whole line is stretched by two and whatever runs
+         past the section's last bar is cut, which is what a part played at
+         half speed does. Half the notes, each twice as long.
+
+     A voice with neither says nothing and takes the identity branch: the same
+     array object, the same events, no allocation (`chairShape` returns `evs`). */
+  const CELLRATE = { half: 0.5, dbl: 2 };
+  function chairShape(evs, g, bars, N, cv) {
+    const gOct = +g.oct || 0;
+    if (!gOct && !cv) return evs;
+    // ...AND RETURN THE STREAM UNTOUCHED when no chair has anything to say —
+    // which is every record until a hand writes a cell, and is what makes this
+    // pass byte-identical rather than merely equal.
+    let any = !!gOct;
+    if (cv) for (const c of cv) if (c && (c.oct || CELLRATE[c.rate])) any = true;
+    if (!any) return evs;
+    const barLen = N / g.rate, end = bars * barLen, out = [];
+    for (const e of evs) {
+      const c = (cv && cv[e.v]) || null;
+      /* THE CELL OUTRANKS THE ROW; IT DOES NOT ADD TO IT. §2's law is "the
+         first value found wins", so a chair told −1 in a section the row put
+         up an octave sits an octave DOWN and not back where it started —
+         which is what the first cut of this line computed (`gOct + c.oct`),
+         and T4n caught within the hour. `g.oct` is the ROW's answer for every
+         chair that did not speak. */
+      const sh = 12 * ((c && c.oct != null) ? c.oct : gOct);
+      const R = c ? CELLRATE[c.rate] : 0;
+      const n = sh ? e.n + sh : e.n;
+      if (!R) { out.push(sh ? { ...e, n } : e); continue; }
+      if (R > 1) {
+        const b = Math.floor(e.t / barLen + 1e-9), u = e.t - b * barLen;
+        out.push({ ...e, n, t: b * barLen + u / 2, dur: e.dur / 2 });
+        out.push({ ...e, n, t: b * barLen + barLen / 2 + u / 2, dur: e.dur / 2 });
+      } else {
+        const t = e.t * 2;
+        if (t >= end - 1e-9) continue;            // past the last bar: cut
+        out.push({ ...e, n, t, dur: e.dur * 2 });
+      }
+    }
+    return out.sort((a, b) => a.t - b.t);
+  }
+
   function render(subj, g, bars) {
     // A DRUM PHRASE has no pitches — drums() plays it, this never does.
     if (subj && subj.kind === "drum") return [];
@@ -1541,14 +1613,31 @@
     // ORNAMENTS above — under a chord cycle the notes available move with the
     // root, so this cannot be one set for the whole render)
     const ornAt = ornAlphabet(subj, g, key);
+    /* THE TABLE'S CELL TIER, ASKED ONCE PER RENDER (TABLE.md wave 4). Built
+       here rather than inside the voice loop because `chairShape` at the foot
+       needs the same answers: one array, two readers, and a genre that
+       declares no `cell` builds nothing at all. */
+    const CV = typeof g.cell === "function"
+      ? Array.from({ length: g.voices }, (_, i) => g.cell(i)) : null;
     for (let v = 0; v < g.voices; v++) {
       // the part's register lean sits ON TOP of g.reg, and only when the genre
       // actually declares parts — the shim keeps every partless genre exact.
       // regOf() is that sum and the ONLY place it is taken (see above), so
       // what a caller prints for this chair cannot differ from what it plays.
       const part = partOf(g, v), pol = g.part ? PARTS[part] || {} : {};
+      /* WHAT THIS CHAIR SAYS ABOUT ITSELF IN THIS SECTION (TABLE.md wave 4).
+         `g.cell(v)` is the table's cell tier reaching the kernel, beside
+         `g.entry(v)` and `g.reg(v)` and built the same way: nukernel/document.js
+         `toGenre` resolves cell -> row -> record through §2's one owner, hands
+         back ONLY what the cell itself said (a row's word is already on the
+         genre's own fields), and answers `null` for a chair nobody has written
+         — which is every chair of every record and of the whole catalogue, so
+         the three reads below fall through to exactly the expressions that
+         were here. A genre with no `cell` at all — every anchor, every band
+         page, every node caller — never calls it. */
+      const cv = (CV && CV[v]) || null;
       const ctr = 60 + 12 * regOf(g, v), pad = part === "pad",
-            sc = g.scale || PENT, md = g.mode || MODE,
+            sc = (cv && cv.scale) || g.scale || PENT, md = g.mode || MODE,
             // the subject alphabet's own repeat interval (degPitch's law):
             // the register fold and the octave word both move the line by
             // WHOLE PERIODS of the scale it is written in, or a period scale
@@ -1637,7 +1726,10 @@
           }
           return n;
         };
-        const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
+        // ...AND THIS CHAIR MAY SET ITS OWN LIMIT HERE (wave 4). `0` is a
+        // legal answer and means "let it run", so the test is `!= null`.
+        const clamp = (cv && cv.clamp != null) ? cv.clamp
+                    : (g.incClamp == null ? 7 : g.incClamp);   // 0 = let it run
         const cmode = g.incMode || "hold";
         // THE LONG NOTE IS THE ONE THE EAR ARGUES WITH. Every follow mechanism
         // above keeps the line in the KEY; none of them keeps it on the CHORD,
@@ -1823,7 +1915,9 @@
           continue;
         }
         const ART = { staccato: 0.5, normal: 0.92, legato: 1, tie: 1 };
-        const artic = g.artic || pol.artic || "normal";
+        // the chair's own word first (wave 4), then the genre's, then the
+        // part policy's — one more tier on a ladder that already had three
+        const artic = (cv && cv.artic) || g.artic || pol.artic || "normal";
         // THE REST. A gap in the gate vector used to LENGTHEN the previous note
         // — spans() reads to the next gate, so a six-step hole was a six-step
         // note and nothing here could stop sounding. maxHold caps the hold so
@@ -1921,10 +2015,13 @@
     const keyChords = cs => (key ? cs.map(c => ({ ...c,
       pcs: c.pcs.map(n => n + key),
       pcSet: new Set(c.pcs.map(n => pcw(n + key))) })) : cs);
-    return g.pipes && g.pipes.length
+    // ...AND LAST, THE CHAIR'S OWN OCTAVE AND ITS OWN TIME (wave 4): after
+    // everything that decided what the notes are, on the finished stream, and
+    // an identity for every voice that says nothing.
+    return chairShape(g.pipes && g.pipes.length
       ? pipes(out, g.pipes, { chords: b2 => keyChords(chordsOf(subj, g, b2)),
                               stepsPerBar: N, rate: g.rate })
-      : out;
+      : out, g, bars, N, CV);
   }
 
   // ---- THE KIT: TWELVE LANES, FOUR VECTORS ---------------------------------

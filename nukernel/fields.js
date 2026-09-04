@@ -1150,6 +1150,55 @@
   const CLAMPS = { "0": 0, "2": 2, "4": 4, "8": 8 };
   const CLAMPLABEL = { "0": "off", "2": "2", "4": "4", "8": "8" };
 
+  /* ---------- THE FIVE THE CELL TOOK FROM THE BOX (TABLE.md wave 4) --------
+     §1 CELL: *"artic / oct / rate / scale / clamp — today per box, applied to
+     every voice; become per cell with the row as default."* The vocabularies
+     are NOT retyped here — each row points at the table `FIELDS` already
+     declares for the box chip of the same name, so the strip a cell draws and
+     the strip the palette draws offer the same words by construction, and a
+     word added to `ARTICS` reaches both by existing. This list is the ORDER
+     and the LABELS, which is all the cell sheet needs on top.
+
+     `neutral` IS THE ONE FIELD-BY-FIELD JUDGEMENT, and it is the CELLAUTO law
+     applied a second time: a word worth nothing must have exactly one
+     spelling in the record, and that spelling is ABSENT. `oct: "0"` is that
+     word — an octave shift of no octaves is what a cell that says nothing
+     already does — so it is dropped at the door and never drawn as a chip
+     (§1b's register bug, which wrote and was silently pruned, written down in
+     advance rather than shipped twice). `clamp: "0"` is NOT neutral and is
+     offered: the kernel's own floor is SEVEN (kernel.js render, `g.incClamp ==
+     null ? 7`), so "off" is a real statement that the ramp may run, and a cell
+     that says nothing means seven. */
+  const CELLVEC = [
+    { key: "artic", label: "articulation", ask: "how are the notes played?",
+      table: ARTICS,  labels: ARTICS,      none: "the row's" },
+    { key: "oct",    label: "octave",      ask: "where does this chair sit?",
+      table: OCTAVES, labels: OCTAVES,     none: "the row's", neutral: "0" },
+    { key: "rate",   label: "time",        ask: "does this chair double or halve?",
+      table: RATES,   labels: RATELABEL,   none: "the row's" },
+    { key: "scale",  label: "alphabet",    ask: "what alphabet is it written in?",
+      table: SCALES,  labels: SCALELABEL,  none: "the row's" },
+    { key: "clamp",  label: "ramp limit",  ask: "how far may a ramp climb?",
+      table: CLAMPS,  labels: CLAMPLABEL,  none: "the row's" },
+  ];
+  const CELLVECBY = {};
+  for (const f of CELLVEC) CELLVECBY[f.key] = f;
+  /* ONE WORD OF ONE OF THE FIVE, KEPT OR REFUSED — the shared reader for the
+     three doors that have to ask (document.js `putCell` when a hand writes,
+     `normalize` when a file arrives from another build, and the resolver's own
+     row reader). Values are stored as the TABLE'S OWN KEY, a string, so a
+     document has one spelling of `oct: -1` and not two; the kernel is handed
+     the number by `document.js toGenre`, which is the one place the word
+     becomes a value. Returns the key kept, or null. */
+  const cellVecClean = (key, w) => {
+    const f = CELLVECBY[key];
+    if (!f || w == null || w === "") return null;
+    const k = String(w);
+    if (!Object.prototype.hasOwnProperty.call(f.table, k)) return null;
+    return k === f.neutral ? null : k;         // the neutral word IS absent
+  };
+
+
   /* ---------- the composition-depth surface ---------- */
   // The P2b round put progression/period/rest/pipes/parts/key in the ALGEBRA;
   // these tables give them to the FINGERS. Every one follows the house law:
@@ -3041,6 +3090,7 @@
                 fxHasMix, fxChainFor, busFxChain,
                 TRIMS, TRIMLABEL, trimApply,
                 CELLAUTO, CELLAUTOBY, cellAutoOffset, cellAutoClean,
+                CELLVEC, CELLVECBY, cellVecClean,
                 SENDS, SENDLABEL,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,

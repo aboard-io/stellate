@@ -37,6 +37,16 @@
 
   const { MODES, SCALES } = NG;
   const { KEYS, SWINGS } = NF;
+  /* A STORED WORD -> THE NUMBER IT NAMES, or null (TABLE.md wave 4). The two
+     numeric cell vocabularies — `OCTAVES` and `CLAMPS` — are keyed on the
+     number written as a string, which is how every enum in `fields.js` is
+     keyed and is what makes "-1" and -1 one spelling in a record rather than
+     two. Checked against the table first, so a number this build has no chip
+     for never reaches the kernel; `0` is a legal answer and is why every
+     caller tests `!= null` rather than truthiness. */
+  const numWord = (w, table) =>
+    (w != null && Object.prototype.hasOwnProperty.call(table, String(w)))
+      ? +w : null;
   // THE CATALOGUE, for the resolver's LAST tier (§2: cell -> column -> row ->
   // record -> the genre's row). `toGenre` still takes its table as an argument
   // — the page registers `lab.eight.N` rows into it and a node caller must not
@@ -202,6 +212,35 @@
        (swing, groove) byte-identical on all 479 anchors. */
     const rrow = (f) => resolveRow(doc, si, f, GENRES);
     const mode = MODES[rrow("mode")] || MODES.aeolian;
+    /* THE FIVE §1 MOVED TO THE CELL (TABLE.md wave 4, 2026-09-04), AND THIS IS
+       THEIR ONE OWNER. Two questions, deliberately asked separately:
+
+         · `rrow` — what the SECTION says (row -> record). It lands on the
+           compiled genre's own fields, where the kernel already has a reader
+           for four of the five, so a row's word reaches every voice of the box
+           the way `time.rate` and `alphabet.scale` always have.
+         · `rcell` — what THIS CHAIR says, and ONLY this chair: `resolveFrom`'s
+           `from` is the tier that answered, so a value inherited from the row
+           is not handed back here. That is what stops a row word being applied
+           twice — once on the genre and once again per voice — which is ¶A's
+           law in the one shape it can take for a pitch and a duration.
+
+       The kernel reads the per-voice half through ONE closure, `g.cell(v)`,
+       beside `entry(v)` and `reg(v)` and for the same reason: a cell override
+       reaches the sound by construction rather than by somebody remembering to
+       wire it. It answers `null` for a chair with nothing written, which is
+       every chair of every record until a hand writes — so `render` takes the
+       identical branch it took before this existed (T2). */
+    const rcell = (vi, f) => {
+      const r = resolveFrom(doc, si, vi, f, GENRES);
+      return r.from === "cell" ? r.v : undefined;
+    };
+    const R_artic = NF.ARTICS[rrow("artic")] ? rrow("artic") : null;
+    const R_oct = numWord(rrow("oct"), NF.OCTAVES);
+    const R_clamp = numWord(rrow("clamp"), NF.CLAMPS);
+    const R_scale = rrow("scale");
+    const R_rate = NF.RATES[rrow("rate")] || null;
+    const CELLMEMO = new Map();
     const prog = rrow("prog") || A.prog;
     const swing = rrow("swing");
     const lines = LINES(doc), drums = DRUMV(doc), bass = BASSV(doc);
@@ -229,7 +268,18 @@
       ...BASIS,
       label: (BASIS || {}).label || doc.basis,
       /* TIME */        bpm: T.bpm, swing: swing == null ? 0 : SWINGS[swing],
-                        ...(T.rate ? { rate: T.rate } : {}),
+                        /* ...AND THE ROW MAY HALVE OR DOUBLE IT (wave 4). The
+                           record's `time.rate` is ABSOLUTE and the row's word
+                           is a MULTIPLIER on whatever rate the record and the
+                           basis settled on — `ui/derive.js genreOf`'s own
+                           arithmetic (`g.rate * RATES[sec.rate]`), moved to
+                           the tier that owns the fact so it reaches the score
+                           as well as the walk. With no row word this is
+                           `T.rate * 1` and with neither there is no key at
+                           all, so every record renders the bytes it did. */
+                        ...(T.rate || R_rate
+                          ? { rate: (T.rate || (BASIS || {}).rate || 1) *
+                                    (R_rate || 1) } : {}),
                         ...(T.meter && METERS[T.meter] ? { meter: METERS[T.meter] } : {}),
       // THE SUBJECT'S ALPHABET IS ITS OWN. This said `scale: mode`, which meant
       // a document could not be pentatonic, blues, whole-tone or quartal — 99
@@ -237,7 +287,13 @@
       // overwritten with the chord alphabet. Absent still means the mode, so
       // the shipped chant is byte-identical (it states no scale).
       /* ALPHABET */    key: KEYS[rrow("key")] || 0, mode,
-                        scale: (A.scale && (SCALES[A.scale] || MODES[A.scale])) || mode,
+                        /* ...AND THE ROW MAY NAME ANOTHER ALPHABET (wave 4),
+                           resolved row -> record by §2's one owner. `A.scale`
+                           was read directly here; the resolver's record reader
+                           IS that read, so a record whose rows say nothing
+                           resolves the identical name and the identical
+                           array. */
+                        scale: (R_scale && (SCALES[R_scale] || MODES[R_scale])) || mode,
                         diatonic: !!A.diatonic, harmony: A.harmony,
                         prog, roots: prog.map((c) => c.d),
       /* MATERIAL */    kit, ...(on ? {} : noKit),
@@ -299,6 +355,47 @@
                         ...(bass && bass.instrument
                           ? { bassInstr: bass.instrument } : {}),
       /* DEVELOPMENT */ word: (v) => opsOf(wordAt(doc, lines[v], si)),
+      /* ...AND THE SECTION'S OWN ARTICULATION, RAMP LIMIT AND OCTAVE (wave 4).
+         Present-only spreads, every one of them, so a row that says nothing
+         hands the kernel the object it handed it yesterday: `artic` falls
+         through to the anchor's own and then to the part policy, `incClamp` to
+         the kernel's floor of seven, and `oct` is a field the kernel reads
+         only when it is there. */
+                        ...(R_artic ? { artic: R_artic } : {}),
+                        ...(R_clamp != null ? { incClamp: R_clamp } : {}),
+                        ...(R_oct ? { oct: R_oct } : {}),
+      /* ...AND WHAT EACH CHAIR SAYS ON TOP OF IT, PER SECTION (TABLE.md §1
+         CELL, wave 4). One closure, `null` for a chair with nothing written —
+         which is every chair until a hand writes, and is what makes `render`
+         take its old branch to the byte. The words become the kernel's own
+         units HERE and nowhere else: an ARTICS name, whole semitones, a SCALES
+         array, a ramp integer, a RATES multiplier. */
+                        cell: (v) => {
+                          if (CELLMEMO.has(v)) return CELLMEMO.get(v);
+                          const ci = LIX[v];
+                          const ar = rcell(ci, "artic"), oc = rcell(ci, "oct");
+                          const rt = rcell(ci, "rate"), sk = rcell(ci, "scale");
+                          const cl = rcell(ci, "clamp");
+                          const o = {};
+                          if (NF.ARTICS[ar]) o.artic = ar;
+                          const on = numWord(oc, NF.OCTAVES); if (on) o.oct = on;
+                          if (NF.RATES[rt]) o.rate = rt;
+                          const sc = sk && (SCALES[sk] || MODES[sk]);
+                          if (sc) o.scale = sc;
+                          const cn = numWord(cl, NF.CLAMPS);
+                          if (cn != null) o.clamp = cn;
+                          const out = Object.keys(o).length ? o : null;
+                          /* MEMOIZED PER GENRE, because `kernel.js render`
+                             asks twice per voice (once where the note is
+                             decided and once in `chairShape`) and the answer
+                             is five resolver walks. A genre object is rebuilt
+                             on every compile — `ui/eight.js push()` and every
+                             gate call `toGenre` fresh — so there is no stale
+                             answer to have: the cache lives exactly as long as
+                             the compile that made it. */
+                          CELLMEMO.set(v, out);
+                          return out;
+                        },
       /* SOUND */       ...(synth ? { synth } : {}),
                         instr: lines.map((c) => c.instrument === "synth"
                           ? ((BASIS || {}).instr || ["polysynth"])[0]
@@ -932,11 +1029,49 @@
     mixauto:{ tier: "cell", at: "voices[vi].cells[secId].mixauto",
               note: "¶A: a cell lane is an OFFSET on the row's (§4); " +
                     "words in fields.js CELLAUTO, resolved by cellAutoOffset" },
-    artic:  { tier: "row", wave: 4, note: "per box today (§4)" },
-    oct:    { tier: "row", wave: 4, note: "per box today (§4)" },
-    rate:   { tier: "record", at: "time.rate", note: "§1 files this per box" },
-    scale:  { tier: "record", at: "alphabet.scale", note: "§1 files this per box" },
-    clamp:  { tier: "row", wave: 4, note: "per box today (§4)" },
+    /* THE FIVE §1 MOVED IN WAVE 4 (2026-09-04). §1 CELL: *"artic / oct / rate
+       / scale / clamp — today per box, applied to every voice; become per cell
+       with the row as default."* Measured before the wave: all five were BOX
+       fields (`song.js skeleton` seeds one per `fields.js FIELDS` row and
+       `ui/derive.js optOf` reads `sec[k]`) and `boxesOf` wrote NOT ONE of them
+       — so on the document path a section could not say any of the five and a
+       CHAIR could not say them at all. Both tiers are addressed now: the row
+       at `form.sections[si].<field>`, the cell at
+       `voices[vi].cells[secId].<field>`, resolved cell -> row -> record by the
+       one resolver and applied by ONE owner, `toGenre`.
+
+       AND THE BOX STILL CARRIES NONE OF THEM, for the reason wave 2a gives for
+       key/mode/prog: `ui/derive.js genreOf` reads `sec.artic`/`sec.scale`/
+       `sec.clamp`/`sec.oct`/`sec.rate` off a box and would apply the row's
+       word a SECOND time on top of the per-section genre this file already
+       resolved it onto (¶A's "no curve applied twice", which is a pitch and a
+       duration here rather than a fader). The palette's own box chips are
+       untouched and reach the DAW's boxes exactly as they did.
+
+       THE ONE FIELD WHOSE TIERS ANSWER IN DIFFERENT DIALECTS is `rate`, and it
+       is said out loud rather than papered over. `time.rate` is the RECORD's
+       ABSOLUTE step rate (songs.js: the chant sets 1 over gregorian's 0.5); a
+       row's and a cell's `rate` is a `fields.js RATES` WORD — a multiplier, as
+       every box chip of that name has always been. So the record is NOT a tier
+       under this field (the resolver would hand back a number where the two
+       upper tiers hand back a word), and `toGenre` multiplies the row's word
+       into whatever absolute rate the record and the basis settled on. The
+       same distinction `gain` and `level` already carry: two facts, two tiers,
+       two names. */
+    artic:  { tier: "row", at: "form.sections[si].artic", over: "cell",
+              note: "wave 4: the row's word, a cell may override it per chair" },
+    oct:    { tier: "row", at: "form.sections[si].oct", over: "cell",
+              note: "wave 4: whole octaves, applied to the rendered note like " +
+                    "ui/derive.js's own box `oct` (12 semitones, not `per`)" },
+    rate:   { tier: "row", at: "form.sections[si].rate", over: "cell",
+              note: "wave 4: a RATES word. `time.rate` is the RECORD's " +
+                    "ABSOLUTE rate and is a different fact in different units" },
+    scale:  { tier: "record", at: "alphabet.scale", over: "cell",
+              note: "wave 4: the row and the cell may name another alphabet; " +
+                    "all three tiers answer with a SCALES key" },
+    clamp:  { tier: "row", at: "form.sections[si].clamp", over: "cell",
+              note: "wave 4: the ramp limit. The kernel's floor is 7, so " +
+                    "`0` (off) is a statement and not a neutral word" },
 
     /* RECORD (the table itself). */
     bpm:    { tier: "record", at: "time.bpm" },
@@ -1031,6 +1166,22 @@
       v.cells[id][field] = clean;
       return true;
     }
+    /* ...AND THE FIVE WITH A VOCABULARY ARE CLEANED AT THE SAME DOOR (wave 4).
+       `artic`/`oct`/`rate`/`scale`/`clamp` are stored as the TABLE'S OWN KEY —
+       a string — so `-1` and `"-1"` are not two spellings of one octave, a
+       word this build cannot play never lands, and the NEUTRAL word (`oct` 0:
+       an octave shift of no octaves) is dropped for the same reason a neutral
+       mix lane is. `fields.js cellVecClean` is the one reader, shared with
+       `normalize` — never a second copy of the five tables. */
+    if (NF.CELLVECBY && NF.CELLVECBY[field]) {
+      const w = NF.cellVecClean(field, value);
+      if (w == null) return putCell(doc, si, vi, field, null);
+      if (had === w) return false;
+      v.cells = v.cells || {};
+      v.cells[id] = v.cells[id] || {};
+      v.cells[id][field] = w;
+      return true;
+    }
     if (had === value) return false;
     v.cells = v.cells || {};
     v.cells[id] = v.cells[id] || {};
@@ -1089,6 +1240,48 @@
       column: null, row: null, record: null,
       genre:  () => undefined,       // no anchor rides a cell
     },
+    /* ---- THE FIVE THAT WERE PER BOX (wave 4, 2026-09-04) ---------------
+       §1 CELL, and §2's law with the COLUMN tier empty: an articulation is not
+       a fact about a chair for the whole record — it is a fact about what that
+       chair does HERE — so a cell answers first and the SECTION is the
+       default, which is what "with the row as default" means. `fields.js
+       CELLVEC` is the one owner of the five vocabularies and of what a legal
+       word is (`cellVecClean`), shared with `putCell` and `normalize`, so the
+       resolver and the two doors cannot disagree.
+
+       EVERY TIER ANSWERS IN THE TABLE'S OWN KEY — a STRING — and `toGenre` is
+       the one place a word becomes a value (an ARTICS name, a semitone count,
+       a SCALES array, a ramp integer, a rate multiplier). That is the `prog`
+       rule from wave 2a read the other way round: there, both tiers answered
+       in chord arrays because the kernel wanted an array; here both tiers
+       answer in words because the CELL SHEET wants a word, and exactly one
+       function turns them into what the kernel wants.
+
+       NO GENRE TIER on any of the five, and it is the same argument `key`
+       makes: the kernel already has a floor for each (`g.artic || pol.artic ||
+       "normal"`, `g.scale || PENT`, `g.incClamp == null ? 7`, no octave shift,
+       the genre's own rate), those floors are in the KERNEL'S units, and
+       answering here with the anchor's raw field would put a second, differently
+       spelled default under a control whose absent state already sounds. */
+    artic: { cell: (c) => c && c.artic, column: null,
+             row: (s) => s && s.artic, record: null, genre: () => undefined },
+    oct:   { cell: (c) => c && c.oct, column: null,
+             row: (s) => s && s.oct, record: null, genre: () => undefined },
+    /* ...AND `rate` HAS NO RECORD TIER, which the TIERS note above argues in
+       full: `time.rate` is an ABSOLUTE rate and these two tiers speak in
+       multipliers. A row that says nothing means the record's own clock. */
+    rate:  { cell: (c) => c && c.rate, column: null,
+             row: (s) => s && s.rate, record: null, genre: () => undefined },
+    /* ...AND `scale` HAS ONE, because `alphabet.scale` is already a SCALES key
+       — the same unit the row and the cell store — and `toGenre` has read it
+       off the record since the extraction. Resolving it here is what makes the
+       record's own alphabet the floor the row overrides. */
+    scale: { cell: (c) => c && c.scale, column: null,
+             row: (s) => s && s.scale,
+             record: (d) => d.alphabet && d.alphabet.scale,
+             genre: () => undefined },
+    clamp: { cell: (c) => c && c.clamp, column: null,
+             row: (s) => s && s.clamp, record: null, genre: () => undefined },
     /* ---- THE ROW'S OWN FIELDS (wave 2a, 2026-09-04) --------------------
        Every field below answers from the SECTION first and the RECORD (or
        nothing) second, which is §2's law with the two upper tiers empty: a
@@ -1222,16 +1415,31 @@
     sec[field] = value;
     return true;
   }
-  // A ROW FIELD, RESOLVED — the same walk, asked without a chair. `toGenre`
-  // and `boxesOf` are its two callers and neither has a voice in hand.
+  /* A ROW FIELD, RESOLVED — the same walk, asked without a chair. `toGenre`
+     and `boxesOf` are its two callers and neither has a voice in hand.
+
+     ...AND IT STARTS AT THE ROW, WHICH IS A FIX WITH A DATE ON IT (wave 4,
+     2026-09-04). This asked at voice 0 and relied on the cell and column
+     readers being null for every field it was ever handed — true of wave 2a's
+     eleven, and FALSE the moment `artic`/`oct`/`rate`/`scale`/`clamp` grew a
+     cell reader: the row's answer would then have been voice 0's cell
+     override, and a chair's private articulation would have been printed as
+     the section's and compiled onto the whole box. `from` is the first tier to
+     consult, so the caller says which question it is asking rather than
+     depending on which readers happen to be null. */
   const resolveRow = (doc, si, field, GENRES) =>
-    resolveFrom(doc, si, 0, field, GENRES).v;
-  function resolveFrom(doc, si, vi, field, GENRES) {
+    resolveFrom(doc, si, 0, field, GENRES, "row").v;
+  function resolveFrom(doc, si, vi, field, GENRES, from) {
     const R = CELLFIELD[field];
     if (!R) return { v: undefined, from: null };
     const v = doc.voices && doc.voices[vi];
-    for (const tier of TIERORDER) {
-      const rd = R[tier];
+    // an INDEX and not a `slice`: `resolve` is called per voice per section on
+    // every compile, and a fresh five-element array per call is a cost this
+    // walk has never had
+    let start = from ? TIERORDER.indexOf(from) : 0;
+    if (start < 0) start = 0;
+    for (let ti = start; ti < TIERORDER.length; ti++) {
+      const tier = TIERORDER[ti], rd = R[tier];
       if (!rd) continue;
       const got = tier === "cell"   ? rd(cellVec(doc, si, vi))
                 : tier === "column" ? rd(v)
@@ -1488,6 +1696,17 @@
                 if (clean) c[f] = clean; else delete c[f];
                 continue;
               }
+              /* ...AND THE FIVE §1 MOVED HERE IN WAVE 4 are filtered against
+                 their own tables by the same one reader `putCell` uses: a word
+                 this build cannot play, a neutral word, or a number where a key
+                 belongs is dropped rather than carried as a lie the kernel
+                 would play (a `scale` this catalogue does not hold would seat
+                 the chair on PENT and nothing would say so). */
+              if (NF.CELLVECBY && NF.CELLVECBY[f]) {
+                const w = NF.cellVecClean(f, c[f]);
+                if (w == null) delete c[f]; else c[f] = w;
+                continue;
+              }
               const bad = !CELLWRITE(f) ||
                 (f === "entry" && !(Number.isInteger(c[f]) && c[f] >= 0)) ||
                 (f === "reg" && !(Number.isInteger(c[f]) && c[f] >= -4 && c[f] <= 3)) ||
@@ -1550,12 +1769,20 @@
      kernel emits, so a caller multiplies by seconds-per-step once. */
   function scoreOf(doc, GENRES, fleet) {
     const secs = doc.form.sections, lines = LINES(doc), out = [];
-    let bar = 0;
+    /* THE OFFSET IS A TIME, NOT A BAR COUNT (TABLE.md wave 4, 2026-09-04).
+       This read `t0 = bar * barSteps` with THIS section's `barSteps` — which is
+       exact for as long as every section counts its bar the same way, and that
+       was true while `rate` was the RECORD's alone. A row may halve or double
+       its own section now, so the sections after it would have been placed with
+       the wrong bar length. Accumulating the time each section actually takes
+       is the same number for a record whose rows say nothing (uniform
+       `barSteps` makes the sum `bar * barSteps` again, to the bit) and the
+       right one for a record whose rows do. */
+    let bar = 0, t0 = 0;
     secs.forEach((s2, i) => {
       const g = toGenre(doc, i, GENRES, fleet);
       const barSteps = stepsIn(g) / g.rate;
       const total = Math.max(1, s2.bars || g.bars);
-      const t0 = bar * barSteps;
       const phrases = lines.map((c) => toPhrase(doc, materialAt(c, SECID(doc, i))));
       const nP = phrases.length;
       phrases.forEach((ph, pi) => {
@@ -1573,7 +1800,7 @@
           out.push({ ...e, kind: "hit", t: e.t + r * loopSteps + t0, sec: i });
       for (const e of K.bass(lead, g, total))
         out.push({ ...e, kind: "bass", t: e.t + t0, sec: i });
-      bar += total;
+      bar += total; t0 += total * barSteps;
     });
     out.sort((a, b) => a.t - b.t);
     return { bars: bar, events: out };
