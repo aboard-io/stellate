@@ -1635,6 +1635,14 @@ things up to be tappable is good"*.
   as a stereo field; the kit's velocity lanes stay a grid. Each replaces its
   number rows only where the drawing is the honest control (a shelf is a
   curve; a bar count is a number), and prints the numbers beside the curve.
+- ICONS (Paul, 2026-09-05: *"No labels right now. When you redesign use
+  more icons. Ideally the table is a large set of icons."*): the bar's marks
+  stay icons with hidden labels and their explainers; a cell at rest shows
+  its GLYPH first (ui/glyph.js, extended per vocabulary: parts, instrument
+  families, kits, provenance, levels, the special rows' faces), the word
+  only where no honest glyph exists, a number small beside its glyph;
+  written/inherited as the glyph's weight or ink; every glyph keeps its
+  `.nu-vh` word and `data-say`. The sheet at 390 reads as a grid of marks.
 - Order after §10: cells as cells at rest (~10 lines) → the envelope editor
   and its wiring (samples first) → the EQ curve and the XY pad → the in-cell
   typed editor + synonyms → the restyle pass over the rest.
