@@ -1695,3 +1695,32 @@ filtered for me in a smart semantic way."*
   sheets: the menus module (§9c step 2) grows it; chips, the native picker
   and the typed combo remain what a control shows when it is not the
   selected cell.
+
+## 12 · The composer's asks (2026-09-05) — the music before the chrome
+
+Paul: *"Don't we need the chord editor to handle duration of chords? It
+must."* · *"The number of tempos is very low and quite confusing I should
+be able to set any tempo at all like 21/17 you should let me choose
+anything."* · *"I want to be able to do multiple operations in a motif at
+once. Raise it a fifth and widen it. Now I can do but one."* · *"The number
+of chords is very low where are my maj7 and my min11 and so forth?"* ·
+*"Same with scales we have all kinds of tonalities in this system aren't we
+missing a lot."* · *"Before you do the design pass review this as a genius
+musicologist and beat the crap out of it. How can I compose with it?"* ·
+*"How would Bach use it to write a fugue or someone write a new gamelan
+piece or how would Schoenberg use it."*
+
+In flight, two rounds: (a) chord DURATIONS (`prog: [{d, q, len}]`, len in
+beats, absent = the bar), a full QUALITY vocabulary (triads, sixths,
+sevenths, extensions to 13, added, altered, slash bass — one table in
+genres-tables.js, the words derived), the SCALES the rows reach for (the
+melodic- and harmonic-minor modes, pentatonics East and West, hexatonics,
+octatonics, bebop, the maqam/dastgah families with their cents, the thaats);
+(b) ANY TEMPO (a slider and a typed number, 20–400) and ANY METER
+(numerator/denominator, 7/8, 21/17 — the kernel's step law for a
+denominator that is not a power of two, the exports writing the signature),
+and CHAINED motif operations (a chain of ops as one write, undone in one).
+And the REVIEW: a musicologist drives the page through seven attempts (an
+AABA standard, a house track, a string quartet, a piece of their own, a
+Bach fugue, a new gamelan piece, a Schoenberg row) and names every wall;
+its ten ranked items reorder what comes next, before the design pass.
