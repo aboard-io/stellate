@@ -1696,6 +1696,145 @@ filtered for me in a smart semantic way."*
   and the typed combo remain what a control shows when it is not the
   selected cell.
 
+
+### 11b · What the cells-as-cells round and the envelope editor landed, and the eight things they measured (2026-09-05)
+
+**SHIPPED (uncommitted).** Two rounds and five rulings taken during them:
+cells as cells at rest, the envelope editor and its wiring, the marks, the
+sliders, the tap-outside law, the sticky heads, and DESIGN.md's own vocabulary
+applied to every one of them. `nukernel/src/envelope/` →
+`nukernel/ui/envelope.js` is the fourth committed-build entry
+(`api.ts · plate.ts · adsr.ts · curve.ts · editor.ts · index.ts`).
+
+**A CELL IS A CELL, AND THE NUMBERS.** Measured on Kingston 1969 at reading 1,
+at 390 and at 1280, before and after (`scratchpad/cells/measure.cjs`, kept):
+
+| | before | after |
+|---|---|---|
+| rule drawn by the 91 body cells | **18,200 px²** (200 px² a cell, around 580 px² of average ink) | **0** |
+| a cell's own ground | `#FFFFFF` on every one | transparent on every one |
+| WRITTEN | weight 500 | **700 = `--fw-label`** |
+| inherited | weight 400, opacity .78 | unchanged — the quiet was already right |
+| rows on screen at 390 | 9 of 13, mean row 64.7px | **unchanged** |
+| taps to change one value | 1 (which also unfolded a 15-row accordion) | **1 to stand on it, 2 to edit** |
+| cells / heads / seats wearing a MARK | 0 / 0 / 0 | **91 of 91 · 20 of 20 · 7 of 7**, each with its `.nu-vh` word and its `data-say` (91 of 91) |
+
+The row height did not move and that is the point: the round buys INK, not
+rows. `--tap` is the one thing a restyle may not spend, so 44 stays 44 and what
+the frame carried is carried by weight instead.
+
+**THE FIRST TAP OPENS NOTHING BUT THE RING.** Before it, one tap selected AND
+unfolded the whole eighteen-field accordion — 15 sheet rows for a hand that
+only wanted to see where it was standing. Now: tap once for the ring and the
+formula bar's address; tap the SAME cell again, or press Enter, F2 or any
+printable key, to edit; Escape restores and keeps the ring; Enter again commits
+and stays; Tab and the arrows commit and MOVE, closing the editor rather than
+dragging it along. (T9b · T9b2 · T9b3 · T9b4.)
+
+**THE ENVELOPE EDITOR, AND WHAT A SAMPLED NOTE'S ENVELOPE WAS.** The sampled
+lane was **A-H-R**: a note came in over `atk` (default 12 ms, floored at 3),
+sat at full gain for its whole duration, and let go over `rel` (default 90 ms,
+floored at 20) — `engine/faust/voices/sampler.js`, both play paths. Half of
+what an envelope editor draws had nowhere to land, so the lane gained a DECAY
+and a SUSTAIN: `envAt(i, hold)` in `mixPCM` (one envelope, called by all three
+of its read loops — mellotron, granular, plain) and its AudioParam twin in
+`SamplerLive.note`. Absent is today bit for bit: `shaped` is false unless a
+decay AND a sustain under 1 are both present, and with it false `envAt` returns
+exactly what the two lines it replaced returned. `state-engine.js samplerUnit`
+stamps `dcy`/`sus` only where the recipe carries them; `live.js` and
+`stream-renderer.js` carry them to both renderers; `audio/to-engine.js` grew
+`toneRecipe.decay`/`.sustain` and taught `samplerVox` to read **a number as
+well as a word** for `atk`/`rel` — the door the loop points have taken since
+the sampling round, and no longer the only one.
+
+**WHAT IT REPLACED.** `avail.js sound.attack` and `sound.release` — four words
+each, on the same `voice.sound.atk`/`.rel` the handles now write in seconds —
+are gone from the chair's sheet, and the four amp-envelope rows of
+`nukernel/knobs.js` (`attack · decay · sustain · release`) are skipped in
+`knobsBlock` on any chair whose curve took them. Two controls on one address is
+the shape `test/selects.js`'s own guard fails a page for. Nothing is lost: the
+number prints beside its handle in the field's own units, and
+`test/table-inventory.json` re-points both rows to `env|<voice>|attack` and
+`env|<voice>|release` so T7 walks them at 320px.
+
+**ONE COMPONENT, FOUR MODES** (DESIGN.md component 9): `curveEditor(host,
+spec)` with `mode` = `adsr` · `lane` · `eq` · `xy`. Only ADSR is wired this
+round; the lane is built and gated on a fixture; `eq` and `xy` are declared and
+draw the lane until something writes through them. The shared half is
+`plate.ts`: the plate's arithmetic, the 44px handle clamped inside it in BOTH
+axes, the pointer capture, the keyboard (arrows · Home · End · Backspace), the
+600 ms long-press reset, and `say()` — the printed value in the field's own
+unit.
+
+**THE MARKS** (Paul: *"Ideally the table is a large set of icons"*).
+`ui/glyph.js` grew `GLYPH.cell` — `part` (nine), `prov` (three), `level` (six)
+and `none` — and one resolver, `cellMark(kind, value)`, which answers NULL
+where there is no honest glyph so the caller prints the word. `ui/eight.js`
+holds the four doors that know which question a box of the table is asking
+(`cellMark` · `colMark` · `rowMark` · `mixMark`); `src/table/grid.ts` draws
+`ui/glyph.js`'s own three-part face by hand (the glyph `aria-hidden`, the
+number, the `.nu-vh` word) with `data-say` on the button, because this table is
+drawn by lit and `paintIcon` builds DOM. A motif keeps its NAME — it is a
+proper noun and no picture says it — and wears its provenance as the mark.
+
+**AND SEVEN THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT:**
+
+- **`.nu-vh` IS ABSOLUTELY POSITIONED, AND IN A SCROLLING PANE IT TOOK THE
+  WHOLE PAGE SIDEWAYS.** The hidden word is `position: absolute` with no
+  offsets, so it lands at its static position inside the nearest POSITIONED
+  ancestor — and an absolutely positioned box is not clipped by an ancestor
+  that is merely `overflow: auto`. Everywhere this face was used before, that
+  ancestor was near and nothing scrolled; put one in a cell nine columns to the
+  right of a 294px pane and the hidden word sits at x≈900 against the initial
+  containing block. MEASURED: `document.documentElement.scrollWidth` 320 → 547
+  at a 320px viewport, on a table whose pane was clipping perfectly, with every
+  visible thing inside it. Four gates went red at once and every one of them
+  reported "the page scrolls sideways", which was true and said nothing about
+  where. The fix is one word: `.nu-ic { position: relative }`.
+- **A HANDLE INSET BY 0.6 OF ITS RADIUS OVERHANGS ITS PLATE.** The plate was
+  inset by a full radius sideways and by 0.6 up and down, so the attack handle
+  — which rides the peak — sat 8.8px above the plate's own box. The AUX spike
+  measured exactly this on somebody else's chart; the gate reads every handle's
+  rect against the plate's and said `false` on all four. A handle's centre
+  lives in `[R, W−R] × [R, H−R]`.
+- **A DRAG THAT RE-RENDERS DESTROYS THE ELEMENT IT IS DRAGGING.** lit builds a
+  new `<button>` for every handle on every render, so the first `pointermove`
+  replaced the very node holding the pointer capture, the browser released the
+  capture with it, and the `pointerup` that ends the drag — the ONE document
+  write in the whole gesture — landed on nothing. Measured: the handle followed
+  the thumb to 1.95 s and the document still said nothing. The frames of a drag
+  PATCH the DOM that is already there (`paintLive`: three attributes and one
+  `d`); `draw()` is kept for the events that END one.
+- **THE PRESS READS THE SONG, NOT THE DOCUMENT.** A gate that assigned
+  `voice.sound.rel` and pressed got the same bytes twice — `ui/state.js`'s SONG
+  is what `audio/plan.js compile()` reads, and the document becomes the song at
+  `push()`. Written that way the measurement would have reported the engine
+  dead on a wire that works. Every value the tail measurement uses now travels
+  the way a thumb sends it: focus the chair's own release handle and press Home
+  or End, which is one write through `spec.set` → `changed()` → `push()`.
+- **A RESOLVER THAT ANSWERS NULL IS RIGHT; A CALLER THAT ASKS THE WRONG
+  QUESTION IS THE BUG.** `cellMark(kind, value)` looks a value up inside a
+  NAMED TABLE, and the empty cell's mark was written as a row rather than a
+  table — so `cellMark("cell", "none")` asked for `GLYPH.cell.cell`, got
+  undefined, and four cells rendered EMPTY: the em dash had been replaced by a
+  glyph that resolved to null and a word the caller had already suppressed.
+  One table per kind.
+- **PROVENANCE IS A RECORD, NOT A WORD.** `material.prov[<motif>]` is
+  `{ p, fp }` — the fingerprint is what makes `hand` derivable rather than
+  stamped — and read whole it stringified to `[object Object]`, matched
+  nothing, and left all 65 line cells with no mark while the 26 bass and drum
+  cells drew theirs. The measurement said 26 of 91 and that is how it was
+  found; it says 91 of 91 now.
+- **A GATE THAT SCROLLS AND MEASURES IN ONE `evaluate` MEASURES A RECT IT HAS
+  INVALIDATED** — and under the new tap-outside law that reads as a dead
+  control. `scrollTo(0, 120)` left the release handle at y = 1427 on a 900px
+  page (a chair's sheet is a long way down a record with a band in it), the CDP
+  touch was dispatched a thousand pixels below the viewport, landed on nothing,
+  and the sheet closed exactly as it is supposed to. The handle is scrolled
+  into view in its own round trip now, and the page still has 2,186px of scroll
+  under it so "it did not move under the finger" is still a claim about a page
+  that could have moved.
+
 ## 12 · The composer's asks (2026-09-05) — the music before the chrome
 
 Paul: *"Don't we need the chord editor to handle duration of chords? It
@@ -1767,3 +1906,36 @@ phrase · word operator → transformation · chair → part · "the atlas dealt
 it" → the generator picked it · period → phrase structure · pace → feel ·
 shape → dynamics · motion → automation · breath → note-length limit ·
 alphabet → scale · harmony: emergent → a sentence.
+
+### 12b · Every item of the review, and copy that can be translated (2026-09-05)
+
+Paul: *"Address every suggestion by the musicologist. Also look for ways to
+simplify copy strings assuming they will eventually be translated."*
+
+The review's ten and its bugs are all scheduled, in this order after the
+in-flight rounds: (4) entries in BEATS — `cast.entry` and the cell's entry
+take a beat fraction, precompose clamps by section length in beats, the
+pickup and the stretto exist; (6) ACCENT and ARTICULATION per note — the
+bench writes the `acc` step vector (a chip per step, or a long-press) and
+an `orn`/articulation mark (staccato · tenuto · accent · slide) the kernel
+already reads; (7) a CHROMATIC channel — a ±1 semitone flag per step on the
+bench, printed as an accidental in the score; (8) INDEPENDENT phrase
+lengths per voice (document.js:110–117); (9) a FORM grammar — repeat with
+count, a second ending, a coda, an upbeat, said on the section row and
+honoured by the walk, the score and the exports; (10) DRAWABLE lanes — the
+curve editor's breakpoint mode on the cell's four mix lanes; the kotekan
+complement taken against the OTHER chair's phrase (a `complementOf(chair)`
+operator); `harmony: emergent` given a meaning or retired.
+
+COPY THAT CAN BE TRANSLATED (the text pass grows one law): every string the
+page prints lives in ONE catalogue, `nukernel/src/copy/strings.ts` → the
+committed `nukernel/ui/copy.js`, keyed (`cell.default`, `op.transposeUp`,
+`refuse.noArticle`…), read by `t(key, {n, unit, name})`; no sentence is
+assembled from fragments in code (the produce.js refusal builder is the
+case); placeholders for names, numbers and units, never concatenation;
+plurals as separate keys; numbers and units formatted by one function;
+no idiom, no puns, no possessives of the box; a chip ≤ 6 words, a
+sentence ≤ 12; the glyph's `data-say` from the same catalogue. The gate
+(`test/copy.test.js`) reads the rendered page and fails on any printed
+string not in the catalogue, on the banned patterns, and on the budgets. A
+second language is then a second file, nothing else.
