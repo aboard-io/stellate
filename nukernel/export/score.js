@@ -177,11 +177,16 @@ function fitMidi(lane) {
   let moved = 0;
   const hi = () => Math.max(...lane.notes.map((n) => n.midi));
   const lo = () => Math.min(...lane.notes.map((n) => n.midi));
-  while (hi() > 127 && lo() - 12 >= 0) { for (const n of lane.notes) n.midi -= 12; moved++; }
-  while (lo() < 0 && hi() + 12 <= 127) { for (const n of lane.notes) n.midi += 12; moved++; }
+  // A NOTE'S `from` TRAVELS WITH IT (2026-09-05). The slide's source pitch is
+  // a fact about the same note in the same units, so an octave this function
+  // moves the note by is an octave it moves the source by — otherwise a fitted
+  // lane would say "slide down an octave into a note that never moved".
+  const oct = (n, d) => { n.midi += d; if (n.from != null) n.from += d; };
+  while (hi() > 127 && lo() - 12 >= 0) { for (const n of lane.notes) oct(n, -12); moved++; }
+  while (lo() < 0 && hi() + 12 <= 127) { for (const n of lane.notes) oct(n, 12); moved++; }
   for (const n of lane.notes) {
-    while (n.midi > 127) { n.midi -= 12; moved++; }
-    while (n.midi < 0) { n.midi += 12; moved++; }
+    while (n.midi > 127) { oct(n, -12); moved++; }
+    while (n.midi < 0) { oct(n, 12); moved++; }
   }
   return moved;
 }
@@ -331,9 +336,27 @@ export function scoreOf({ timeline, cast = [], seats = null, sections = null,
         } else if (e.n != null) {
           const key = e._seat != null ? "v" + e._seat
                     : e.kind === "bass" ? "bass" : "v" + (e.v == null ? 0 : e.v);
+          /* ...AND THE SLIDE INTO IT (2026-09-05, the portamento-to-MIDI
+             round). `sld` is one of the kernel's eleven vectors and it has
+             ridden every timeline event since the kernel was written; no
+             line in export/ ever read the key, so the .mid — the file a
+             303 line is most often carried in — said nothing about the one
+             gesture the row is named after. This repo's name for that shape
+             of defect is "declared but never arriving", and it is the eighth.
+
+             `from` is the pitch the slide LEAVES, which the compile already
+             knows (`e.prev`, the voice's previous note in the same units as
+             `e.n`, so the register home goes on both). MIDI has a control
+             for exactly that — CC84, portamento control, "the next note-on
+             glides from this key" — and export/smf.js writes it where the
+             number is there to write. PRESENT-ONLY: an unslid note writes
+             neither key, so every Score folded before today is the same
+             object, to the key. */
           put(key, e.kind === "bass" ? "bass" : (e.part || "line"),
               { midi: e.n + (e.home || 0), beat: at(e),
-                dur: Math.max(0.03125, (e.dur || 1) / 4), vel: velOfWritten(e.vel, e.acc) });
+                dur: Math.max(0.03125, (e.dur || 1) / 4), vel: velOfWritten(e.vel, e.acc),
+                ...(e.sld ? { sld: 1 } : {}),
+                ...(e.sld && e.prev != null ? { from: e.prev + (e.home || 0) } : {}) });
         } else skipped++;
       }
     }

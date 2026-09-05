@@ -229,7 +229,8 @@ import { startAt, stop, playing, warmup, getPosition, passAt,
 import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 // ...AND THE SAME COMPILER ASSEMBLING A WHOLE SYSTEM. `toScore` is the score
 // block's half of ui/abc.js: several parts under one head, barred together.
-import { toEngraving, toScore, toNotes, ottavaFor, noteNameOf } from "./abc.js";
+import { toEngraving, toScore, toNotes, ottavaFor, noteNameOf,
+         metsOf } from "./abc.js";
 import { mountVideo } from "./video.js";
 let videoStop = null;
 // THE SCREENSAVER (2026-09-01). Paul: "Bring back the screensaver from
@@ -906,9 +907,22 @@ function restoreFocus(root, wasKey, wasPicker) {
   near.focus({ preventScroll: true });
 }
 
-/* ---------- A PANE KEEPS ITS SIDEWAYS SCROLL ACROSS A REBUILD ----------
+/* ---------- A PANE KEEPS ITS SCROLL ACROSS A REBUILD -------------------
    Paul, 2026-08-25: *"When I scroll right to edit motifs and tap something it
    snaps left even though I'm not done editing."*
+
+   ...AND THE SAME SENTENCE IN THE OTHER AXIS, 2026-09-05: *"When I tap a mode
+   you snap to the top of the screen it shouldn't move at all."* This kept
+   `scrollLeft` and only `scrollLeft`, which was the whole truth while every
+   pane on the page was a wide table in a short box. The band table's pane is
+   the page's VERTICAL scrollport now (`src/table/grid.ts` draws it, and
+   `overflow-x: auto` computes `overflow-y` to `auto` with it), so a tap on a
+   lozenge two thirds of the way down a forty-two word field rebuilt the panel
+   and put the pane back at 0 — measured under iPhone emulation at 390,
+   `.nu-pane` scrollTop 1898 before the tap and 0 after, with the pill that was
+   under the thumb 1898px below the fold. The memory holds BOTH numbers now;
+   everything the paragraphs below say about the key, about zero being a
+   position and about a shut pane is unchanged and is true of both.
 
    The motif edit itself no longer rebuilds anything (see `edited` below), so
    for THAT gesture this is not the answer — nothing is destroyed, so nothing
@@ -961,7 +975,7 @@ function keepPanes() {
        whatever it had when its tab was last on the screen, and that is what
        stays in the map until `showTab` puts it back. */
     if (!d.getClientRects().length) continue;
-    if (d.dataset.pane) paneScroll.set(d.dataset.pane, d.scrollLeft);
+    if (d.dataset.pane) paneScroll.set(d.dataset.pane, [d.scrollLeft, d.scrollTop]);
   }
 }
 function putPanes() {
@@ -971,7 +985,9 @@ function putPanes() {
     // this can be done after the rebuild and before restoreAnchor(); and a
     // pane that came back NARROWER clamps its own value, so a grid that lost a
     // measure lands at its new end rather than out of bounds.
-    d.scrollLeft = paneScroll.get(d.dataset.pane);
+    const was = paneScroll.get(d.dataset.pane);
+    d.scrollLeft = Array.isArray(was) ? was[0] : was;
+    if (Array.isArray(was)) d.scrollTop = was[1];
   }
 }
 // A CORRECTION IS SMALL BY DEFINITION, AND THIS IS THE CLAMP THAT SAYS SO.
@@ -3285,6 +3301,66 @@ function scoreChords(bars) {
   }
   return out;
 }
+/* ---------- THE METRONOME MARKS (2026-09-05) -----------------------------
+   Paul: the band page has no metronome marks. It had none anywhere: `toScore`
+   refused a `Q:` outright (its own paragraph in ui/abc.js carries the argument
+   it was refused with and why that argument was wrong), so a printed part left
+   this page with a key, a signature, a set of dynamics, chord symbols, repeat
+   marks — and no tempo at all.
+
+   WHAT IS PRINTED, PER SECTION, WHERE IT CHANGES:
+     · the METRONOME MARK in the beat the signature's denominator names, and
+       the number is what PLAYS — `ui/abc.js metMark` is the one owner and the
+       `Q:` header of every other staff on this page is the same function's
+       answer, so the two can never disagree;
+     · the TEMPO RULES in force, said in the reader's own language out of the
+       copy catalogue (`mark.halfTime` / `mark.doubleTime` / `field.swing`),
+       ABBREVIATED the way DESIGN.md abbreviates a crescendo — the words a
+       score prints beside a mark, not a sentence about them;
+     · the SIGNATURE, where a section counts differently from the one above.
+
+   THE EFFECTIVE TEMPO, NOT THE DECLARED ONE, and that is the whole reason
+   this is a function rather than one line in the header. `DOC.time.bpm` is
+   the record's written quarter tempo; what a section SOUNDS at is that times
+   the reading speed the row and the section settled on (`g.rate` —
+   ui/derive.js `secsOf` divides the bar by it), so the shipped chant's
+   written 76 in half time is a sounding ♩ = 38 and the paper says 38. Read
+   off `sectionRender`, which is the same memoised fold `scoreParts` reads and
+   the same one the engine plays — never off `DOC.time` alone.
+
+   AND `rate` IS A ROW FIELD (document.js FIELDS: tier "row", `at:
+   form.sections[si].rate`), which is why the walk is per section at all.
+   MEASURED 2026-09-05: 0 of the 479 catalogue anchors deal a per-section
+   rate, so on every shipped record this walk finds ONE mark and prints it
+   once, in the header — a hand is what makes the second one. */
+/** the reading speed and the signature this section actually plays. */
+function secTimeOf(si) {
+  const box = SONG[si];
+  if (!box) return null;
+  let R;
+  try { R = sectionRender(box, SLOTS, GROOVE, SWING); } catch (err) { return null; }
+  if (!R || !R.g) return null;
+  const m = K.metOf(R.g);
+  return { rate: R.g.rate > 0 ? R.g.rate : 1, sig: m.num + "/" + m.den };
+}
+/* The marks this record prints, off `ui/abc.js metsOf` — the change law, the
+   words and the arithmetic are all one function there, and this end supplies
+   only the two things a browser has that a gate does not: what each section
+   ACTUALLY plays (`sectionRender`, the memoised fold the engine reads) and
+   the copy catalogue. Empty on a record whose tempo and signature never move,
+   which is every record in the catalogue — so the ABC of one is one header
+   line longer than it was, and not thirteen inline fields longer. */
+function scoreMets(secBar) {
+  const NS = DOC.form.sections.length;
+  const secs = [];
+  for (let si = 0; si < NS; si++) {
+    const T = secTimeOf(si);
+    if (T) secs.push({ rate: T.rate, sig: T.sig, bar: secBar[si] });
+  }
+  return metsOf({ bpm: +DOC.time.bpm, swing: +SWING > 0, sections: secs,
+                  say: (k, p) => _t(k, p) });
+}
+
 /* ...and inked ABOVE THE TOP STAFF ONLY, which is where a chord symbol goes
    in every score ever printed — repeating it on ten staves is not ten times
    as informative, it is noise. Only where the chord CHANGES, for the same
@@ -3368,6 +3444,10 @@ function inkOneStaff(line, dyn, secBar, totalBars) {
 // the record without its marks — kept so the gate can strip the ink and
 // demand the bare string back, byte for byte (window.__eightAbcBare)
 let scoreBare = "";
+// ...and the metronome marks this picture was engraved with, kept for the
+// same reason: a browser gate reads what the paper was DRAWN FROM rather than
+// folding the record a second time (window.__eightMets)
+let scoreMetMarks = null;
 
 /* WHAT THE PAGE WOULD ENGRAVE IF IT ENGRAVED NOW, as a string. This is the
    CHANGE DETECTOR and it is the whole reason a full render can be afforded at
@@ -3391,11 +3471,25 @@ function buildScore() {
   // ABC string of an unmetered record must stay byte-identical (2026-09-05:
   // `metOf` in place of `METERS[word]`, so a signature engraves too)
   const met = DOC.time.meter ? (K.metOf(DOC.time) === K.MET4 ? null : K.metOf(DOC.time)) : null;
+  /* THE MARKS RIDE toScore'S OWN HEAD AND BARS, not a strip of surgery after
+     it (2026-09-05). The dynamics and the chord symbols are prefixed onto the
+     finished string because they are INK — a claim about equivalence of notes
+     with marks added, which `scoreBare` is the other half of. A metronome
+     mark is not ink: it is a header field and an inline field, part of what
+     the paper SAYS, and putting it through toScore keeps `scoreBare` the
+     identical record it has always been (test/dynamics.test.js R1/C1 strip
+     the ink and demand the bare string back, and this is not ink to strip). */
+  const MM = scoreMetMarks = scoreMets(R.secAt.map((s) => s / scoreSPB()));
   try { sc = toScore(R.parts, { key: KEYS[DOC.alphabet.key] || 0,
                                 mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
                                 stepsPerBar: scoreSPB(),
                                 ...(met ? { abc: met.abc, beam: met.beam } : {}),
                                 divide: R.divide, close: "|]",
+                                // THE METRONOME MARKS, present-only for the
+                                // same reason the form's are: a record with
+                                // no tempo to state engraves what it did.
+                                ...(MM && MM.q ? { q: MM.q } : {}),
+                                ...(MM && MM.mets.size ? { mets: MM.mets } : {}),
                                 // THE FORM'S OWN MARKS (2026-09-05, item 9),
                                 // present-only: a record that repeats nothing
                                 // hands `null` and the ABC is byte-identical.
@@ -15669,6 +15763,18 @@ window.__eightAbc = () => scoreAbc;
 // from __eightAbc() and THIS must come back, and on a record that deals no
 // lvl/env word the two are already equal.
 window.__eightAbcBare = () => scoreBare;
+/* …AND THE METRONOME MARKS THE PAPER WAS ENGRAVED WITH (2026-09-05). The
+   header `Q:` field, the inline fields a section that changes speed opens
+   with, and one entry per section saying whether it printed and what it says.
+   A gate reads THIS rather than folding the record a second time, because the
+   claim is about the picture on the page — the arithmetic itself is asked of
+   `ui/abc.js metsOf` in node (test/mets.test.js). */
+window.__eightMets = () => (scoreMetMarks ? {
+  q: scoreMetMarks.q,
+  mets: [...scoreMetMarks.mets.entries()],
+  marks: scoreMetMarks.marks.map((m) => ({ si: m.si, printed: m.printed,
+                                           q: m.mark.q, text: m.mark.text })) }
+  : null);
 // …AND WHAT THEY COST, in milliseconds of main thread, last twenty first-hand.
 // The claim this round makes is that a whole-record render is affordable if
 // you say so out loud (`SCORE_LOADER_MS`); this is the artifact that says what

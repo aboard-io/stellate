@@ -446,12 +446,11 @@ function lozengeField(spec) {
       data-v=${v2}
       tabindex=${tabbable && !refused ? "0" : "-1"}
       aria-pressed=${String(hot)}
-      ?disabled=${refused}
       aria-disabled=${o2(refused ? "true" : void 0)}
       data-why=${o2(why ? why : void 0)}
       aria-label=${why ? t3("menu.withWhy", { name: o3.label, why }) : o3.label}
-      ><span class="nu-lzword">${o3.label}</span
-      >${n2 ? b`<small class="nu-lzn">${n2}</small>` : A}${own ? b`<small class="nu-lzwhy">${own}</small>` : A}</button> `;
+      ><span class="nu-lzword" data-w=${o3.label}>${o3.label}</span
+      >${n2 ? b`<small class="nu-lzn">${n2}</small>` : A}</button> `;
   };
   const stopOf = (b2) => {
     const live = b2.opts.filter((o3) => !off && !o3.disabled);
@@ -475,7 +474,8 @@ function lozengeField(spec) {
           ><small class="nu-lzcount">${b2.opts.length}</small></button>` : A}<div class="nu-lzwrap" ?hidden=${shut}
         >${b2.opts.map((o3) => lozenge(o3, stop === String(o3.value)))}</div
       ></section>`;
-  })}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite">${said}</p>`, host);
+  })}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite"
+      ?data-said=${!!said}>${said}</p>`, host);
   const write = (v2) => {
     if (off) return;
     const o3 = plan.flatMap((b2) => b2.opts).find((x2) => String(x2.value) === v2);
@@ -561,12 +561,16 @@ function lozengeField(spec) {
       swallow = false;
       return;
     }
+    if (el.getAttribute("aria-disabled") === "true") {
+      speak(el);
+      return;
+    }
     write(String(el.dataset.v || ""));
   });
   const walk = () => Array.from(host.querySelectorAll("section.nu-lzcluster")).map((sec) => {
     const w2 = sec.querySelector(".nu-lzwrap");
     if (!w2 || w2.hidden) return [];
-    return Array.from(w2.querySelectorAll("button.nu-lz")).filter((b2) => !b2.disabled);
+    return Array.from(w2.querySelectorAll("button.nu-lz")).filter((b2) => !b2.disabled && b2.getAttribute("aria-disabled") !== "true");
   });
   const land = (b2) => {
     if (!b2) return;

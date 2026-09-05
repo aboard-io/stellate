@@ -385,13 +385,16 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     const optionEls = (s) => {
       const kind = widgetOf(s);
       if (kind === "lozenge") return [...s.querySelectorAll(".nu-lz")].map((o) => ({
-        /* THE WHOLE BUTTON'S TEXT, NOT ONLY ITS WORD — a refused lozenge
-           PRINTS its reason as a second line inside itself (`.nu-lzwhy`,
-           `chips()`'s own precedent), and check 5's law is that the reason is
-           in the words the option says. Reading `.nu-lzword` alone reported
-           two greyed modes as silent greys that were saying their reason on
-           the glass. */
+        /* A LOZENGE'S TEXT IS ITS WORD, AND ONLY ITS WORD (2026-09-05). This
+           read the whole button on purpose, because a refused lozenge PRINTED
+           its reason as a second line inside itself (`.nu-lzwhy`). Paul, with
+           the phone: *"you added sentences of text to some of them"* — so the
+           sentence left the pill and the field kept one place for it. What
+           carries the reason now is the option's ACCESSIBLE NAME (`aria-label`,
+           `menu.withWhy`'s own join) plus `.nu-lzsay` on a tap or a long press,
+           and `n` below is what check 5 reads for this widget. */
         t: o.textContent,
+        n: o.getAttribute("aria-label") || o.textContent,
         v: o.dataset.v == null ? "" : o.dataset.v,
         off: o.disabled || o.getAttribute("aria-disabled") === "true",
         why: o.dataset.why || "", ph: o.hasAttribute("data-placeholder") }));
@@ -939,16 +942,23 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
        every `s.why` back out of the visible text of the panel it was collected
        from. MEASURED on the shipped chant: `rule-add|Form` is one chip,
        refused whole, "every rule this axis has is already on the record". */
-    /* A LOZENGE IS A CHIP FOR THIS PURPOSE (2026-09-05, DESIGN.md component
-       16). The fork above is about SPELLING and not about the law: a one-line
-       control joins the reason to the word with a comma (`optionText`), and a
-       two-line control prints it as a `<small>` second line inside the same
-       button. `.nu-lzwhy` is `.nu-why` one widget along — the same shape, for
-       the same argument — so demanding the comma of it would be demanding it
-       be a one-line control, which is the widget question and not the
-       silent-grey one. */
-    const twoLine = s.widget === "chips" || s.widget === "lozenge";
-    const said = twoLine
+    /* A LOZENGE IS THE THIRD SPELLING (2026-09-05, DESIGN.md component 16).
+       It was read as a chip while it printed a `<small class="nu-lzwhy">`
+       second line inside the button; Paul photographed forty-two pills with
+       sentences in two of them (*"you added sentences of text to some of
+       them"*) and that line is gone. A field of forty-two words is a SHAPE and
+       a sentence inside one word destroys it — which is the widget question,
+       and this check is the silent-grey one. So the law is asked where the
+       reason now IS for this widget: the option's own accessible NAME, which
+       is what a screen reader says on it and what `.nu-lzsay` prints under it
+       when a thumb taps or holds it. Still never a `title` and never nowhere:
+       `.nu-lz` is `aria-disabled` and not `disabled` precisely so that a tap
+       on a refused word can answer it (src/lozenge/field.ts law 6), and T12n
+       in test/table.browser.js drives that tap on the rendered phone. */
+    const twoLine = s.widget === "chips";
+    const said = s.widget === "lozenge"
+      ? ((o.n || "").indexOf(o.why) >= 0 || o.why === s.why)
+      : twoLine
       ? (o.t.indexOf(o.why) >= 0 || o.why === s.why)
       : o.t.endsWith(", " + o.why);
     if (!said) greyNotSaid.push(s.key + " / " + o.v + " [" + s.widget + "]");

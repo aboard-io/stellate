@@ -39,6 +39,13 @@
 //   G6  THE TWELVE ROWS EDITED THIS ROUND ACTUALLY GLIDE — each one resolved
 //       through its own chair to a unit carrying the time it asked for.
 //   G7  THE SAMPLED LANE BENDS, and only where a `sld` is marked.
+//   G8  THE .MID SAYS IT TOO (2026-09-05). The slide reached the air and not
+//       the FILE: `thumri` exported 12,938 bytes with zero control changes
+//       while 188 of its 1,556 events carried `sld`. Now CC65 says which
+//       notes, CC5 says how long (linear over the row's own 0..500 ms, and
+//       that fence is imported from to-engine.js, not retyped), CC84 says
+//       what the note slides from — asserted off the emitted bytes, with a
+//       record that declares neither key still byte-identical.
 //
 // RUN:  node test/portamento.test.js
 "use strict";
@@ -411,6 +418,118 @@ console.log("G7 — a sampled chair bends, and only on a marked `sld`");
   ok(always.every((p) => !("bend" in p)),
      "`tone.glide`'s always-on reading does NOT reach a sample — a module slews, a sample restarts",
      "0 bends on " + always.length + " events");
+}
+
+/* ================= G8 · the .mid says the slide ============================
+   (2026-09-05.) Everything above this line is about the AIR. This is about
+   the FILE, and it is the other half of the same sentence: a record whose
+   line slides exports a .mid that says so, in the three controls MIDI already
+   has for it. MEASURED before the round: `thumri` (glide 20 ms, slide 160 ms,
+   188 slid events of 1556) wrote 12,938 bytes and ZERO control changes —
+   "declared but never arriving", the eighth of them.
+
+   Everything here is read off the BYTES (parseSmf over the emitted file, and
+   one raw scan for the one thing a parse cannot say — the ORDER two events at
+   the same tick came in). TEST THE ARTIFACT. */
+console.log("G8 — the .mid carries the portamento: CC65 which, CC5 how long, CC84 from where");
+{
+  const SMF = await import(R("nukernel/export/smf.js"));
+  const TE = await import(R("nukernel/audio/to-engine.js"));
+  const { smfFromScore, parseSmf, ccOfSeconds, PORTA_SAY } = SMF;
+
+  /** One box, one lane, three notes; the middle one may be marked. */
+  const mkScore = (tone, mark) => ({
+    title: "g8", bpm: 120, grid: true, engine: true, cast: [], skipped: 0, folded: 0,
+    meterAbc: null, meterWord: null,
+    boxes: [{ si: 0, name: "A", role: "verse", beat0: 0, beats: 4, k: 1, lanes: [{
+      name: "v0", chair: "line", instr: "bass_lead",
+      ...(tone ? { tone } : {}),
+      notes: [
+        { midi: 60, beat: 0, dur: 1, vel: 96 },
+        { midi: 67, beat: 1, dur: 1, vel: 96, ...(mark ? { sld: 1, from: 60 } : {}) },
+        { midi: 62, beat: 2, dur: 1, vel: 96 }] }] }],
+  });
+  const midOf = (tone, mark) => smfFromScore(mkScore(tone, mark), { beatsPerBar: 4 });
+  const ccsOf = (b) => parseSmf(b).tracks[1].ccs;
+  const TPQ = 480;                       // export/smf.js's own division
+
+  // --- G8a · a chair with a glide AND a slide -------------------------------
+  {
+    const cc = ccsOf(midOf({ glide: 0.02, slide: 0.16 }, true));
+    const at = (t, n) => cc.filter((c) => c.tick === t && c.cc === n).map((c) => c.val);
+    ok(at(0, 65)[0] === 127 && at(0, 5)[0] === ccOfSeconds(0.02),
+       "G8a · the chair's own knob stands at tick 0 — CC65 on, CC5 = the row's 20 ms",
+       "CC65 " + at(0, 65) + " CC5 " + at(0, 5) + " (ccOfSeconds(0.02) = " + ccOfSeconds(0.02) + ")");
+    ok(at(TPQ, 5)[0] === ccOfSeconds(0.16),
+       "G8a · the slid note takes the row's `slide`, 160 ms, at its own tick",
+       "CC5 " + at(TPQ, 5) + " want " + ccOfSeconds(0.16));
+    ok(at(TPQ, 84)[0] === 60,
+       "G8a · CC84 names the key it slides FROM — the note before it", "CC84 " + at(TPQ, 84));
+    ok(at(2 * TPQ, 5)[0] === ccOfSeconds(0.02),
+       "G8a · and the chair's own time comes back when the slid note ends",
+       "CC5 " + at(2 * TPQ, 5));
+    ok(cc.filter((c) => c.cc === 65).length === 1,
+       "G8a · CC65 is a STATE and is written once — a glide that never switches off " +
+       "costs one event, not one a note", cc.filter((c) => c.cc === 65).length + " CC65 events");
+  }
+
+  // --- G8b · a chair that names only the slide — the 303's reading ----------
+  {
+    const cc = ccsOf(midOf({ slide: 0.16 }, true));
+    const at = (t, n) => cc.filter((c) => c.tick === t && c.cc === n).map((c) => c.val);
+    ok(at(0, 65)[0] === 0 && at(0, 5)[0] === 0,
+       "G8b · no `glide` on the row means portamento OFF at the top of the track",
+       "CC65 " + at(0, 65) + " CC5 " + at(0, 5));
+    ok(at(TPQ, 65)[0] === 127 && at(TPQ, 5)[0] === ccOfSeconds(0.16) &&
+       at(2 * TPQ, 65)[0] === 0,
+       "G8b · it switches on INTO the marked note and off again at its end — the 303",
+       "on " + at(TPQ, 65) + " time " + at(TPQ, 5) + " off " + at(2 * TPQ, 65));
+  }
+
+  // --- G8c · a mark with no row behind it writes nothing --------------------
+  {
+    const marked = midOf(null, true), plain = midOf(null, false);
+    ok(ccsOf(marked).length === 0 && ccsOf(plain).length === 0,
+       "G8c · a record whose row declares neither `glide` nor `slide` writes NO " +
+       "control change, marked notes and all", ccsOf(marked).length + " ccs");
+    ok(Buffer.compare(Buffer.from(marked), Buffer.from(plain)) === 0,
+       "G8c · ...and its bytes are byte for byte the bytes it had before this round " +
+       "(the `sld` mark alone changes nothing)", marked.length + " vs " + plain.length + " bytes");
+    ok(parseSmf(plain).tracks[0].texts.length === 0 &&
+       parseSmf(midOf({ glide: 0.02 }, false)).tracks[0].texts.some((t) => t === PORTA_SAY),
+       "G8c · and only a file that HAS portamento in it states CC5's unit in a 0x01 meta");
+  }
+
+  // --- G8d · the seconds are the ENGINE's, not this file's ------------------
+  {
+    const src = fs.readFileSync(R("engine/faust/voices/state-engine.js"), "utf8");
+    const gs = /const GL_S\s*=\s*\["glide",\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\]/.exec(src);
+    const gms = /const GL_MS\s*=\s*\["glide",\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\]/.exec(src);
+    ok(gs && gms && +gs[2] === TE.GLIDE_MAX && +gms[2] / +gms[3] === TE.GLIDE_MAX,
+       "G8d · to-engine's GLIDE_MAX is state-engine GLIDE_MAP's own ceiling, in both " +
+       "units — the .mid quotes the parent rather than keeping a number of its own",
+       "GL_S hi " + (gs && gs[2]) + " s · GL_MS hi " + (gms && gms[2]) + "/" +
+       (gms && gms[3]) + " s · GLIDE_MAX " + TE.GLIDE_MAX);
+    ok(TE.glideSeconds({ glide: 0.02 }).slide === 0.02 &&
+       TE.glideSeconds({ slide: 0.16 }).glide === 0 &&
+       TE.glideSeconds({}).any === false && TE.glideSeconds({ glide: 9 }).glide === TE.GLIDE_MAX,
+       "G8d · and the fallback is state-engine applyGlide's own line: a slid note takes " +
+       "`slide` where the row says one and the chair's `glide` where it does not");
+  }
+
+  // --- G8e · the switch is STANDING before the note it is about -------------
+  {
+    const b = Buffer.from(midOf({ slide: 0.16 }, true));
+    const on = b.indexOf(Buffer.from([0xb0, 65, 127]));
+    const time = b.indexOf(Buffer.from([0xb0, 5, ccOfSeconds(0.16)]));
+    const from = b.indexOf(Buffer.from([0xb0, 84, 60]));
+    const noteOn = b.indexOf(Buffer.from([0x90, 67]));
+    ok(on > 0 && time > 0 && from > 0 && noteOn > 0 &&
+       on < noteOn && time < noteOn && from < noteOn,
+       "G8e · in the BYTES, CC65/CC5/CC84 all stand before the note-on they are about — " +
+       "a portamento switch read after its note is a switch that did nothing",
+       "on@" + on + " time@" + time + " from@" + from + " note-on@" + noteOn);
+  }
 }
 
 console.log("\n" + (fails ? "FAIL  " : "PASS  ") + checks + " checks, " + fails + " failed");

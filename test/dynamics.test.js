@@ -99,6 +99,17 @@ async function readScore(pg) {
                 a system. Both read off the drawn SVG, never off the string. */
              ann: svg ? [...svg.querySelectorAll(".abcjs-annotation")]
                           .map((t) => t.textContent) : [],
+             /* THE METRONOME MARKS (2026-09-05). The `Q:` fields the page
+                wrote, and the marks abcjs actually DREW from them — a tempo
+                is a `g.abcjs-tempo` holding the engraved notehead and the
+                number, so a mark that never reached the paper is caught the
+                way an unsupported decoration is. */
+             qLine: (/^Q:(.+)$/m.exec(abc) || [])[1] || null,
+             qInline: abc.match(/\[Q:[^\]]*\]/g) || [],
+             tempo: svg ? [...svg.querySelectorAll("g.abcjs-tempo")]
+                            .map((g) => g.textContent.replace(/\s+/g, " ").trim()) : [],
+             time: window.__eightTime(),
+             mets: window.__eightMets(),
              widestDeco: svg ? [...svg.querySelectorAll("g.abcjs-decoration")]
                  .reduce((w, g) => Math.max(w, Math.round(g.getBBox().width)), 0) : -1 };
   });
@@ -460,6 +471,54 @@ function v1Bars(abc, steps, secAt) {
     });
     is(mid && mid.every((n) => n === 0),
        "C2 · the wordless record's .mid writes zero CCs — the bytes are the old bytes");
+    /* ===== M · THE METRONOME MARK, ON THE PAPER (2026-09-05) =============
+       Paul: the band page has no metronome marks. It had none — `toScore`
+       refused a `Q:` in writing — so a printed part left this page with a
+       key, a signature, dynamics, chord symbols, repeat marks and no tempo.
+       The arithmetic and the change law are `test/mets.test.js`; what is
+       asked HERE is the half only a browser can answer: the mark is in the
+       string the page hands abcjs, and abcjs DREW it.
+
+       THE SHIPPED CHANT IS THE HARD CASE, which is why it is asked here: it
+       reads at HALF SPEED (its row's own `rate`), so the mark must be the
+       sounding tempo and not the written one — the tempo control one axis up
+       says 80 and the paper must say 40. */
+    const MM = r.mets;
+    is(!!MM && !!MM.q, "M1 · the paper carries a metronome mark at all — Q:" +
+       (r.qLine || "(none)"));
+    is(MM && r.qLine === MM.q,
+       "M1 · …and the `Q:` field IS the mark the one owner computed (" +
+       r.qLine + ")");
+    /* THE NUMBER IS WHAT PLAYS. The tempo control one axis up says the record's
+       WRITTEN quarter tempo; the paper must say the SOUNDING one, which is that
+       times the reading speed. Where the two differ, they must differ. */
+    const said = MM ? +/=([\d.]+)/.exec(MM.q)[1] : 0;
+    const rate = r.time.bpm ? said / r.time.bpm : 0;
+    is(said > 0 && (rate === 1 || rate === 0.5 || rate === 2 || rate === 0.25),
+       "M1 · …and the number is the written " + r.time.bpm +
+       " times this record's reading speed = " + said);
+    is(MM && MM.marks.length > 1 &&
+       MM.marks.filter((m) => m.printed).length === 1 && MM.mets.length === 0,
+       "M2 · one mark over " + (MM ? MM.marks.length : 0) +
+       " sections and nothing inline — the tempo never moves on this record");
+    is(r.qInline.length === 0, "M2 · …which the string agrees with");
+    /* AND abcjs DREW IT. A tempo is a `g.abcjs-tempo` holding an engraved
+       notehead and the number; the vendored build drops what it cannot draw
+       silently, which is why this is read off the SVG and not off the string
+       (ui/abc.js's own 8va measurement is the precedent). */
+    is(r.tempo.length === 1,
+       "M3 · abcjs engraved exactly one tempo mark: " + JSON.stringify(r.tempo));
+    is(r.tempo[0] != null &&
+       r.tempo[0].replace(/\s+/g, "").includes(String(Math.trunc(said))),
+       "M3 · …and the number on the paper is " + Math.trunc(said));
+    /* THE RULE WORDS, WHERE THE RECORD DEALS ONE. They come out of the copy
+       catalogue, so this asks only that a mark carrying words in the STRING
+       carries them on the PAPER too — never that this particular record has a
+       rule to name. */
+    const wq = MM && /"([^"]*)"/.exec(MM.q);
+    is(!wq || (r.tempo[0] && r.tempo[0].includes(wq[1])),
+       "M3 · …with the tempo rules named beside it" +
+       (wq ? " (" + wq[1] + ")" : " (this record deals none)"));
     is(errs.length === 0, "C3 · zero pageerrors on the wordless record");
     await pg.close();
   }

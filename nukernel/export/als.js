@@ -68,7 +68,7 @@
 // in ES modules because every binding either side uses is a HOISTED function
 // declaration or is read at call time, never during evaluation. Said out loud
 // because a cycle that is fine is still a cycle somebody will worry about.
-import { deviceLibrary, deviceOf, instrumentTagOf, setInstrument, buildFx,
+import { deviceLibrary, deviceOf, instrumentTagOf, setInstrument, portamentoNote, buildFx,
          chipParams, kitTakes, wetPathOf, targetIdOf, getParam, automationEnvelope,
          stitchEnvelope, putEnvelopes, setParam, paramRange, FILTER_OPEN,
          AF_HIGHPASS, masterDevices, delaySixteenthsAt } from "./live-devices.js";
@@ -530,6 +530,18 @@ export const pow2Near = (d) => Math.pow(2, Math.max(0, Math.round(Math.log2(Math
    `fader` writes 1 and a missing `pan` writes 0 — the donor's own values. */
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const SEND_FLOOR = 0.0003162277571;      // Live's -inf, the donor's own spelling
+/* LIVE'S FADER CEILING, AND IT IS THE DONOR'S OWN NUMBER (named 2026-09-05).
+   The mixer prints its range in the file —
+     <Volume><MidiControllerRange><Min 0.0003162277571/><Max 1.99526238/>
+   — which is +6.00 dB over unity, exactly as the fader draws it. It stood as
+   a literal in three places and als-gate.js gate X did not know about it at
+   all: the gate asserted that a cell's +6 dB offset multiplies the row's own
+   gain, which is true until the row is already loud (`lvl: fwd` is x1.35, so
+   1.35 x 1.995 = 2.694 and the file has to stop at 1.995). The waltz's box 1
+   is fwd and techno's is norm, which is why one was red and the other green.
+   Named and exported so the gate reads the exporter's number instead of
+   keeping a fourth copy of it. */
+export const VOL_MAX = 1.99526238;
 export function setStrip(track, strip, vol) {
   strip = strip || {};
   if (vol == null && !Object.keys(strip).length) return track;
@@ -553,7 +565,7 @@ export function setStrip(track, strip, vol) {
     const k = body.indexOf("/>", j) + 2;
     body = body.slice(0, j) + '<Manual Value="' + value + '" />' + body.slice(k);
   };
-  if (vol != null) put("Volume", clamp(vol, SEND_FLOOR, 1.99526238));
+  if (vol != null) put("Volume", clamp(vol, SEND_FLOOR, VOL_MAX));
   if (strip.pan != null) put("Pan", clamp(strip.pan, -1, 1));
   // A-Reverb is send 0 and B-Delay is send 1 — the donor's own order, and the
   // two returns this splice has always shipped.
@@ -1069,6 +1081,11 @@ export function alsFromScore(donorXml, score, opts = {}) {
           sound.params += r.set;
           sound.notes.push(colName[laneName] + ": " + r.set + " " + tag + " params");
         }
+        // ...and what this chair's PORTAMENTO did and did not reach. The .mid
+        // carries all of it; live-devices.js portamentoNote says which half a
+        // Live device can hold and names the refusal where it cannot.
+        const pn = portamentoNote(tag, info.tone, info.syn);
+        if (pn) sound.notes.push(colName[laneName] + ": " + pn);
       }
     }
 
@@ -1321,12 +1338,23 @@ export function alsFromScore(donorXml, score, opts = {}) {
     if (!isDrums && anyLevel)
       ride(mixTarget("Volume"), "level", () => 1, (box, beats) => {
         const co = cellOf(box);
-        const g = vol * (LEVEL_GAIN[box.lvl] == null ? 1 : LEVEL_GAIN[box.lvl]) *
-          (co && co.fader ? Math.pow(10, co.fader / 20) : 1);
+        const row = vol * (LEVEL_GAIN[box.lvl] == null ? 1 : LEVEL_GAIN[box.lvl]);
+        const g = row * (co && co.fader ? Math.pow(10, co.fader / 20) : 1);
+        /* ...AND WHERE LIVE'S FADER RUNS OUT, THE RUN SAYS SO (2026-09-05).
+           `VOL_MAX` is +6.00 dB and it is the donor's own printed ceiling, so
+           a `fwd` section (x1.35, +2.61 dB) has 3.39 dB of headroom and a cell
+           that asks for +6 gets 3.39. That is not a bug to fix — there is no
+           number above the ceiling to write — but it IS a cell declared and
+           only half arriving, which is the shape of defect this repo names,
+           so it is printed rather than swallowed. */
+        if (co && co.fader > 0 && g > VOL_MAX && row > 0)
+          sound.notes.push(colName[laneName] + ": the cell asks +" + co.fader.toFixed(2) +
+            " dB in box " + (box.si + 1) + " and Live's fader stops at +6.00 dB over " +
+            "unity, so the file carries +" + (20 * Math.log10(VOL_MAX / row)).toFixed(2) + " dB");
         const dr = drawnOf(box, "fader", beats);
         if (dr) return (x, t) => clamp(g * Math.pow(10, dr(t) / 20) * x,
-                                       SEND_FLOOR, 1.99526238);
-        return (x) => clamp(g * x, SEND_FLOOR, 1.99526238);
+                                       SEND_FLOOR, VOL_MAX);
+        return (x) => clamp(g * x, SEND_FLOOR, VOL_MAX);
       });
     /* THE OTHER THREE LANES A BOX CAN DRAW, and they land on Live's own mixer
        because that is where they land in the engine too: audio/desk.js routes

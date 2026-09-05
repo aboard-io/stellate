@@ -95,7 +95,10 @@ import { balancedAt, elementAfter, pointeeIds, paceView, addDevice,
          // gate X re-runs the whole writer twice with one cell offset between
          // the runs, which is the only way to read a per-cell envelope OUT OF
          // THE FILE rather than out of the plan (TABLE.md wave 3)
-         alsFromScore } from "../../nukernel/export/als.js";
+         // ...and VOL_MAX is Live's own fader ceiling, IMPORTED and not typed
+         // again here, because the whole of gate X's 2026-09-05 red was this
+         // gate not knowing the exporter had a ceiling to stop at
+         alsFromScore, VOL_MAX } from "../../nukernel/export/als.js";
 import { instrumentTagOf, deviceOf, instrumentParams, paramRange, getParam,
          // gate X finds a knob's envelope the way Live does — by the
          // AutomationTarget id the Mixer prints beside it
@@ -757,6 +760,28 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
        · its PAN is the base's PLUS the offset, on the same span;
        · EVERY OTHER TRACK is byte-identical — a cell is one cell.
 
+     ...AND EACH OF THOSE STOPS WHERE THE KNOB STOPS (2026-09-05). This gate
+     was red on `waltz` and green on `techno` and the difference was not the
+     meter: the FADER HAS A CEILING. Live's mixer prints its own range in
+     every donor —
+         <Volume><MidiControllerRange><Min 0.000316…/><Max 1.99526238/>
+         <Pan>   <MidiControllerRange><Min -1/><Max 1/>
+     — and export/als.js has clamped to both since setStrip was written, which
+     is right and is the only thing it CAN write. waltz's box 1 is `lvl: fwd`,
+     x1.35, so the row's own gain is already +2.61 dB and a +6 dB cell asks
+     for 2.694 where the file stops at 1.995; techno's box 1 is `norm`, x1.0,
+     and 1.0 x 1.995 IS the ceiling to the last digit, so the same expectation
+     passed there by arithmetic coincidence. THE EXPORTER WAS RIGHT AND THIS
+     GATE WAS WRONG, so the expectation gained the exporter's own ceiling —
+     `VOL_MAX`, imported — rather than the exporter losing its clamp.
+
+     AND THE TEETH ARE KEPT BY A SECOND ASSERTION, because "want == got ==
+     the ceiling" would otherwise be a gate that passes on an offset which
+     moved nothing: the offset box must also DIFFER from the record without
+     it. That is always askable — the loudest a row can be is chairGain 1.35
+     x LEVEL_GAIN 1.35 = 1.8225, which is 0.79 dB under the ceiling — so
+     there is headroom to measure on every record the box can deal.
+
      WHY THE PROBE INJECTS AT THE SCORE AND NOT AT THE DOCUMENT. `box.cellauto`
      is keyed by UNIT KEY, which is what a Live track IS; the walk that gets a
      document's per-CHAIR cell lanes onto those keys is export/score.js's, and
@@ -882,18 +907,32 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
         const got = at(eB, mid[si]), want = apply(base);
         if (Math.abs(got - want) > 1e-5 * Math.max(1, Math.abs(want))) {
           bad = "the " + name + " of box " + si + " reads " + got + ", and the row's own " +
-                base + " plus this cell's offset is " + want;
+                base + " plus this cell's offset, stopped at the knob's own ceiling, is " +
+                want;
+          return;
+        }
+        // ...AND IT MOVED. See the paragraph above: without this, a base that
+        // is already at the ceiling would satisfy the line above by standing
+        // still, and the gate would be reading nothing.
+        if (Math.abs(got - base) <= 1e-9) {
+          bad = "the " + name + " of box " + si + " reads " + got + ", which is exactly " +
+                "what the record says WITHOUT the cell — the offset moved nothing";
           return;
         }
         moved.push(fmt(base, got));
       };
       if (!bad) {
-        check("volume", envOf(A, "Volume"), envOf(B, "Volume"), (b) => b * g,
+        const cap = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+        check("volume", envOf(A, "Volume"), envOf(B, "Volume"),
+              (b) => Math.min(b * g, VOL_MAX),
               (b, x) => "volume " + b.toFixed(4) + " -> " + x.toFixed(4) +
-                        " (+" + (20 * Math.log10(x / b)).toFixed(2) + " dB, asked +" + DB + ")");
-        check("pan", envOf(A, "Pan"), envOf(B, "Pan"), (b) => b + PAN,
+                        " (+" + (20 * Math.log10(x / b)).toFixed(2) + " dB, asked +" + DB +
+                        (b * g > VOL_MAX ? "; Live's fader stops at +6.00 dB over unity " +
+                          "and the row is already at " + (20 * Math.log10(b)).toFixed(2) +
+                          " dB" : "") + ")");
+        check("pan", envOf(A, "Pan"), envOf(B, "Pan"), (b) => cap(b + PAN, -1, 1),
               (b, x) => "pan " + b.toFixed(3) + " -> " + x.toFixed(3) +
-                        " (+" + PAN + ")");
+                        " (+" + PAN + (b + PAN > 1 ? ", capped at the donor's own +1" : "") + ")");
       }
       if (bad) ok = fail("gate X", bad);
       else pass("gate X", 'a cell offset on "' + col + '" in box ' + si + " of " +

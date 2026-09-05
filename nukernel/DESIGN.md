@@ -45,8 +45,14 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     they present… visibility into all of the options"*) — for any
     vocabulary past the chip limit (the 68 drum ops, 42 chord qualities, 63
     scales, 14+ transformations, the instruments): EVERY option visible at
-    once as a tight lozenge (`--r-pill`, hairline, `--t2` type, ~28px tall
-    visually with a 44px hit area through its margins), the field wrapping
+    once as a tight lozenge (`--r-pill`, hairline, `--t2` type, AS TALL AS ITS
+    WORD with `--tap` as the floor — a pill wraps to a second line only when
+    its word cannot fit, and the row pitch is that height plus a gap: the 44px
+    is a padding and a minimum and NEVER an overlap. It read *"~28px tall
+    visually with a 44px hit area through its margins"* until 2026-09-05, when
+    Paul photographed what that is on a phone — the border is on the button, so
+    the drawn pill was the whole 44px inside a 34px pitch and every row crossed
+    the outlines of the row above it), the field wrapping
     to the pane's width, the options CLUSTERED semantically with a small
     heading per cluster (drums: kick · snare · hats · toms & fills ·
     dynamics · feel; qualities: triads · sixths · sevenths · ninths ·
@@ -58,9 +64,15 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     cluster's ink, the rest outlined; single-select fields toggle one, multi-
     select fields toggle any number and keep an ordered chain where order
     matters (the transformations); a cluster folds by its heading but starts
-    open; a long-press on a lozenge prints its sentence; the whole field is
+    open; a long-press on a lozenge prints its sentence, and so does a tap on a
+    REFUSED one — a pill carries a word and never a sentence, at every width
+    (Paul, 2026-09-05: *"you added sentences of text to some of them"*), so a
+    refused lozenge is dashed and quiet with its word alone and the reason goes
+    to the field's ONE say line; the whole field is
     scannable in one pass at 390 and never scrolls sideways. It replaces the
-    native picker for these vocabularies on every pointer; the native picker
+    native picker for these vocabularies on every pointer AND IS THE ONLY
+    CONTROL ON ITS FACT — no native picker drawn beside it and none of the
+    picker's ▾ over it; the native picker
     stays only where a vocabulary is long AND flat (a genre list).
 
 ## 3 · Interaction laws

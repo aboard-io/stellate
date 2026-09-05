@@ -1164,10 +1164,43 @@ const LIVE_SLIDE = { stk_guitar: 0.06, erhu: 0.09 };
  * (seven rows write one). `applyGlide` runs after the recipe is resolved, so a
  * row that says both gets its `tone.glide`, which is the more specific claim.
  */
+/** The row's own fence, in SECONDS, and the ONE place the number lives.
+ *  500 ms is the modules' ceiling (state-engine.js GLIDE_MAP: `GL_S` is
+ *  [0, 0.5] seconds and `GL_MS` is [0, 500] ms at 1000 units a second — the
+ *  same half-second said in two units), and rules.js `tone.glide` /
+ *  `tone.slide` wear it as their editor's `max`. */
+export const GLIDE_MAX = 0.5;
 const glideKeys = (t) => ({
-  ...(t && t.glide != null ? { glideSec: clamp(+t.glide || 0, 0, 0.5) } : {}),
-  ...(t && t.slide != null ? { slideSec: clamp(+t.slide || 0, 0, 0.5) } : {}),
+  ...(t && t.glide != null ? { glideSec: clamp(+t.glide || 0, 0, GLIDE_MAX) } : {}),
+  ...(t && t.slide != null ? { slideSec: clamp(+t.slide || 0, 0, GLIDE_MAX) } : {}),
 });
+
+/* THE CHAIR'S PORTAMENTO, RESOLVED — ONE OWNER, AND THE EXPORTS IMPORT IT
+   (2026-09-05, the portamento-to-MIDI round). `glideKeys` above is
+   present-only because the parent's `applyGlide` needs to know which of the
+   two the row actually said; a WRITER needs the two numbers the parent ends
+   up with, and those come out of exactly one line of state-engine.js:
+
+       u.slideSec = m.slideSec != null ? cl(m.slideSec) : base;
+
+   — a slid note takes the row's `slide` where it says one and the chair's own
+   `glide` where it does not. That fallback and this fence are the whole of
+   the arithmetic, and export/smf.js imports them rather than keeping a second
+   copy (the gate-Q law: a copied table is proved, an imported one cannot
+   drift). `any` is false for a row that declares NEITHER, which is the
+   absent-law: such a record writes no portamento bytes at all.
+
+   WHAT THIS DOES NOT ANSWER, deliberately: a module's OWN default slide (the
+   waveguides' 0.06 s, the throats' 0.09 s, state-engine's `slideSec` on the
+   recipe). That is the parent's knowledge of an instrument, not the record's
+   words, and a file that claimed it would be inventing a number the document
+   never said. */
+export const glideSeconds = (tone) => {
+  const k = glideKeys(tone);
+  const glide = k.glideSec != null ? k.glideSec : 0;
+  return { glide, slide: k.slideSec != null ? k.slideSec : glide,
+           any: k.glideSec != null || k.slideSec != null };
+};
 const liveModel = (dsp) => LIVE_SLIDE[dsp] != null
   ? { dyn: LIVE_DYN[dsp], slideParam: "glide", slideSec: LIVE_SLIDE[dsp], amp: LIVE_AMP }
   : { dyn: LIVE_DYN[dsp], amp: LIVE_AMP };

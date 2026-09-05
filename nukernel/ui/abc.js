@@ -360,6 +360,151 @@ const timeHead = (sig, spb) => {
   return out;
 };
 
+/* ---- THE METRONOME MARK, AND ITS ONE OWNER (2026-09-05) ------------------
+   Paul: the band page has no metronome marks. It had none because `toScore`
+   REFUSED one — the paragraph below its head still carries the argument it
+   was refused with — and because the only `Q:` in this file was the
+   engraving's, which no surface on the page passes a tempo to. Two staves,
+   two answers, and the second answer was silence.
+
+   SO THE MARK IS COMPUTED IN EXACTLY ONE PLACE and both staves read it: the
+   `Q:` header of an engraving, the `Q:` header and the inline `[Q:…]` fields
+   of a score. A gate can then demand they are the same string rather than
+   the same idea (test/mets.test.js M6).
+
+   WHY IT LIVES HERE AND NOT IN export/score.js. This file is the STAFF and it
+   is a leaf: no DOM, no imports, no window — which is what lets the pure
+   gates and node require it. `export/score.js` imports `export/als.js`, so
+   putting the mark there and importing it back would hang the Ableton donor
+   off every motif staff on the page. The mark is a fact about what the paper
+   says, and the paper is this file.
+
+   WHAT THE NUMBER IS. The beat is the one the DENOMINATOR names — 1/d of a
+   whole note — and the mark counts those beats in a minute:
+
+     beats per minute = bpm × rate × d / 4
+
+   `bpm` is the record's QUARTER-note tempo and `rate` is the reading speed
+   the row and the section settled on (ui/derive.js `secsOf`: a bar lasts
+   `units / rate` clock sixteenths), so `bpm × rate` is the quarter tempo that
+   ACTUALLY PLAYS — which is the whole point of the mark and the reason a
+   half-time record may not print the tempo on its own Time row. A record at
+   76 in half time is ♩ = 38 and sounds like ♩ = 38.
+
+   THE GLYPH IS THE DENOMINATOR'S OWN NOTE VALUE, and where Unicode has no
+   single note for it — every denominator that is not a power of two — the
+   beat is written as the fraction the `L:` line above already writes it as
+   ("1/17 = 76"), which is the same refusal `timeHead` makes one function up
+   and for the same reason: say the true value rather than draw a near one.
+   The `Q:` field takes the fraction in every case, because that is ABC's own
+   spelling of a metronome mark and abcjs parses `1/17` as happily as `1/4`. */
+export const BEAT_GLYPH = { 1: "𝅝", 2: "𝅗𝅥", 4: "♩",
+                            8: "♪", 16: "𝅘𝅥𝅯", 32: "𝅘𝅥𝅰" };
+/** The tenth is v286's law: a tenth is what a hand may set (fields.js
+ *  BPM_STEP) and `Math.round` turned 33.3 into 33 on the page's own staff.
+ *  WHAT THE TENTH COSTS ON THE DRAWN PAGE, measured against the vendored
+ *  abcjs (2026-09-05): its tempo field is read with `parseInt`, so a mark of
+ *  39.5 is ENGRAVED 39. The string still says 39.5 — anything reading the ABC
+ *  back gets the true number — and the notehead is the nearest the renderer
+ *  has, which is the identical refusal `timeHead` makes for a seventeenth one
+ *  function up. test/mets.test.js M7d holds both halves, so an abcjs that one
+ *  day keeps the tenth fails here rather than changing the paper quietly. */
+const tenth = (x) => Math.round(x * 10) / 10;
+/**
+ * The metronome mark for one section.
+ *   o.bpm    the record's quarter-note tempo                     [required]
+ *   o.rate   the reading speed in force here (derive.js secsOf)  [1]
+ *   o.meter  the signature as written, "6/8" / "21/17"           ["4/4"]
+ *   o.words  the tempo rules in force, already said in the reader's own
+ *            language by the caller (t()/tn() — never a literal here)  [""]
+ * -> { den, unit, glyph, perMin, q, text }
+ *      q     the `Q:` field's VALUE, header and inline alike
+ *      text  the same mark for anything that is not ABC
+ */
+export function metMark(o = {}) {
+  const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(String(o.meter == null ? "" : o.meter));
+  const den = m && +m[2] > 0 ? +m[2] : 4;
+  const rate = +o.rate > 0 ? +o.rate : 1;
+  const perMin = tenth(Math.max(0, +o.bpm || 0) * rate * den / 4);
+  const unit = "1/" + den;
+  const glyph = BEAT_GLYPH[den] || null;
+  // a quote inside the words would end the ABC string early, and the words
+  // come from a catalogue a translator writes
+  const words = String(o.words == null ? "" : o.words).replace(/["\r\n]+/g, " ").trim();
+  return { den, unit, glyph, perMin,
+           q: unit + "=" + perMin + (words ? ' "' + words + '"' : ""),
+           text: (glyph || unit) + " = " + perMin + (words ? " " + words : "") };
+}
+
+/* ---- ONE MARK PER SECTION, WHERE IT CHANGES -----------------------------
+   The other half of the one owner, and it is here rather than in ui/eight.js
+   for the reason every arithmetic in this file is: a gate must be able to ask
+   for the marks of a record without standing a browser up.
+
+   THE WORDS ARE THE CALLER'S. `say(key, params)` is `t()` — the copy
+   catalogue, so the marks are translatable — passed IN, because this file has
+   no imports and is not going to grow one. It is called only for the rules
+   actually in force, so a caller with no catalogue (a gate measuring the
+   numbers) may hand a function that returns the key.
+
+     o.bpm       the record's written quarter-note tempo
+     o.swing     does the record swing at all (a boolean, not a fraction: a
+                 chart prints "swing", not "swing 0.22")
+     o.sections  [{ rate, sig, bar }] in played order — the reading speed and
+                 the signature each section ACTUALLY plays, and the bar it
+                 starts on
+     o.say       (key, params) -> string
+   -> { q, mets, marks }
+        q      the header `Q:` value: the first section's mark
+        mets   Map bar -> the inline fields a later section opens with
+        marks  one entry per section, printed or not — what a gate reads
+
+   THE CHANGE LAW. A mark is printed at the first section and after that only
+   where the tempo it states, or the signature, is not the one before it — the
+   same law the dynamics keep one file over ("a mark restated every bar is the
+   repetition disease on paper"). The comparison is made on the mark WITHOUT
+   its words, so a rule named once above does not read as a tempo change.
+   A rule word is said once and not again: `swing` is a fact about the record
+   and belongs over the first bar of it. */
+export function metsOf(o = {}) {
+  const say = typeof o.say === "function" ? o.say : (k) => k;
+  const bpm = +o.bpm;
+  const secs = Array.isArray(o.sections) ? o.sections : [];
+  if (!secs.length || !(bpm > 0)) return null;
+  const mets = new Map(), marks = [];
+  let head = null, prevQ = null, prevSig = null, saidSwing = false;
+  for (let si = 0; si < secs.length; si++) {
+    const s = secs[si] || {};
+    const rate = +s.rate > 0 ? +s.rate : 1;
+    const sig = String(s.sig || "4/4");
+    const bare = metMark({ bpm, rate, meter: sig });
+    const newQ = si === 0 || bare.q !== prevQ;
+    const newSig = si > 0 && sig !== prevSig;
+    prevQ = bare.q; prevSig = sig;
+    if (!newQ && !newSig) { marks.push({ si, printed: false, mark: bare }); continue; }
+    const words = [];
+    const rk = RATE_WORD[rate];
+    if (rk) words.push(say(rk));
+    if (o.swing && !saidSwing) { words.push(say("field.swing")); saidSwing = true; }
+    const w = words.length > 1 ? say("mark.pair", { a: words[0], b: words[1] })
+            : (words[0] || "");
+    const mark = metMark({ bpm, rate, meter: sig, words: w });
+    marks.push({ si, printed: true, mark, meter: newSig ? sig : null });
+    if (si === 0) { head = mark.q; continue; }
+    const b = s.bar;
+    if (!(b >= 0)) continue;
+    mets.set(b, (newSig ? "[M:" + sig + "]" : "") + (newQ ? "[Q:" + mark.q + "]" : ""));
+  }
+  return head == null && !mets.size ? null : { q: head, mets, marks };
+}
+/* THE TWO RULE WORDS THE TIME ROW DEALS, as catalogue KEYS — the words
+   themselves are in nukernel/src/copy/sheets.ts, which is what makes them
+   translatable. `fields.js RATES` is the owning table and it has exactly two
+   entries; a reading speed that is neither (the drone's 0.25) gets NO word,
+   because the vocabulary has none for it and the number in the mark is
+   already the honest answer. */
+const RATE_WORD = { 0.5: "mark.halfTime", 2: "mark.doubleTime" };
+
 // ...AND WHY A SIGNATURE CAN BE DECLARED. Twelve steps reduce to 3/4 and
 // only ever to 3/4 — a 6/8 bar is the SAME twelve sixteenths heard in two
 // dotted-quarter beats, and no arithmetic on the step count can tell the two
@@ -431,7 +576,10 @@ const BARS_PER_LINE = 2;
 //             abc, beam, barsPerLine }
 //     key         signed semitone offset from C (band-kit B.KEYS)   [0]
 //     mode        interval array (genres.js MODES / kernel MODE)    [minor]
-//     bpm         quarter-note tempo for Q:                         [omitted]
+//     bpm         quarter-note tempo for Q: (metMark below turns it
+//                 into the beat the signature's denominator names)   [omitted]
+//     rate        the reading speed in force — bpm x rate is what plays  [1]
+//     words       the tempo rules in force, from the copy catalogue [omitted]
 //     label       T: title                                          [omitted]
 //     maxHold     cap a note's steps; the remainder becomes REST —
 //                 the kernel's own "maxHold makes rests real" law   [none]
@@ -711,10 +859,15 @@ function engrave(phrase, opts = {}) {
 
   const head = ["X:1"];
   if (opts.label) head.push("T:" + String(opts.label).replace(/[\r\n]+/g, " "));
-  head.push(...timeHead(opts.abc || meterOf(spb), spb));
-  // THE TEMPO TO A TENTH, because a tenth is what a hand may set (fields.js
-  // BPM_STEP) and `Math.round` turned 33.3 into 33 on the page's own staff.
-  if (opts.bpm) head.push("Q:1/4=" + (Math.round(opts.bpm * 10) / 10));
+  const sig = opts.abc || meterOf(spb);
+  head.push(...timeHead(sig, spb));
+  // THE MARK IS `metMark`'s AND NOBODY ELSE'S (2026-09-05). It kept its own
+  // `"Q:1/4=" + tenth(bpm)` here, which was right about the tenth and wrong
+  // about the beat: in 6/8 the beat is the eighth, and a mark that says 1/4
+  // in a bar the reader counts in eighths is a second opinion about the
+  // signature three lines above it. One function, both staves.
+  if (opts.bpm) head.push("Q:" + metMark({ bpm: opts.bpm, rate: opts.rate,
+                                           meter: sig, words: opts.words }).q);
   // the signature, and — when the staff moved — the octave clef that puts it
   // back: `clef=treble+8` is the little 8 above the G, "sounds an octave
   // higher than written" (verified rendering above)
@@ -790,11 +943,26 @@ export function toScore(parts, opts = {}) {
   const head = ["X:1"];
   if (opts.label) head.push("T:" + String(opts.label).replace(/[\r\n]+/g, " "));
   head.push(...timeHead(opts.abc || meterOf(spb), spb));
-  // NO `Q:` — the tempo mark costs a line of height above the first staff
-  // (~25px, measured) and the record's tempo is already a control on the page,
-  // one axis up. A score that repeats it buys nothing and pushes the music
-  // down. `opts.bpm` is accepted and ignored on purpose, so a caller sharing
-  // one options object with toEngraving does not have to strip it.
+  /* THE METRONOME MARK, WHICH THIS FILE REFUSED FOR TEN DAYS (2026-09-05).
+     What stood here: *"NO `Q:` — the tempo mark costs a line of height above
+     the first staff (~25px, measured) and the record's tempo is already a
+     control on the page, one axis up. A score that repeats it buys nothing
+     and pushes the music down."*
+
+     THE SECOND SENTENCE IS THE ONE THAT WAS WRONG, and it is wrong in exactly
+     the way this repo has a name for. The control one axis up says the
+     record's WRITTEN tempo; what the paper is a picture of is what PLAYS, and
+     between the two sits the reading speed — a half-time record's bar lasts
+     twice as long and its written 76 is a sounding 38. A score is also the
+     one artifact of this record that leaves the page (it is printed, it is
+     read by a player who has no axis to look at), and a part with no tempo on
+     it is a part nobody can play. The height is real and is paid once, at the
+     top, for the whole system.
+
+     `opts.q` is `metMark(...).q` — the caller's, so the header and the inline
+     marks below cannot disagree — and absent it this line does not run and the
+     string is byte for byte the one that came before. */
+  if (opts.q) head.push("Q:" + opts.q);
   head.push("%%score [" + parts.map((p, i) => "V" + (i + 1)).join("|") + "]");
   head.push("K:" + sigInfo.k);
 
@@ -866,6 +1034,21 @@ export function toScore(parts, opts = {}) {
        byte for byte the `join` it replaced. */
     const F = opts.form || null;
     const has = (k, i) => !!(F && F[k] && F[k].has && F[k].has(i));
+    /* ---- AND THE MARKS THAT CHANGE MID-RECORD (2026-09-05) --------------
+       `opts.mets` is a Map from BAR INDEX to the ABC inline fields that bar
+       opens with — `[Q:1/4=38 "half time"]`, `[M:7/8]` — one entry per
+       section whose EFFECTIVE tempo or signature is not the one before it.
+       The caller counts the record's sections; this file draws them.
+
+       ON THE TOP STAFF ONLY, which is where a metronome mark goes in every
+       score ever printed and the same law `inkChords` keeps one surface up: a
+       tempo restated on ten staves is not ten times as informative. (A `[M:]`
+       is the one that tempts a second opinion — abcjs bars the system
+       through, so the signature drawn over V1 is the signature of the bar in
+       every voice under it.) Absent, every line below is byte for byte the
+       one that came before. */
+    const MET = i === 0 && opts.mets && opts.mets.get ? opts.mets : null;
+    const met = (b) => (MET && MET.get(b)) || "";
     const bs = eng.bars;
     const seam = (i) => {
       if (i === bs.length - 1) return "";
@@ -886,7 +1069,7 @@ export function toScore(parts, opts = {}) {
                ? '"^x' + F.times.get(i) + '"' : "");
     };
     const line = bs.length
-      ? bs.map((b, i) => pre(i) + b + seam(i)).join("")
+      ? bs.map((b, i) => met(i) + pre(i) + b + seam(i)).join("")
       : "z" + spb;
     body.push(line + " " +
       (has("close", bs.length - 1) ? ":|" : (opts.close || "|]")));

@@ -397,6 +397,60 @@ export function instrumentParams(deviceTag, tone, syn) {
   }
 }
 
+/* ================== THE PORTAMENTO A LIVE DEVICE CANNOT TAKE =============
+   (2026-09-05, the portamento-to-MIDI round.) The .mid now carries the whole
+   of the box's portamento — CC65 which notes, CC5 how long, CC84 what from
+   (export/smf.js). The .als carries HALF of it, and this says which half and
+   why, per chair, rather than letting a record that asks for a slide export a
+   file that is silent about it.
+
+   WHAT ARRIVES, measured on `trance` (tone.glide 0.05): Drift's
+   `Global_Glide` reads 0.05 and Operator's `Globals/PortamentoTime` reads 50
+   with `PortamentoOn` true — the table above has written both since P3a.
+
+   WHAT DOES NOT, and each for a printed reason:
+     · `tone.slide` — the time a note MARKED `sld` takes, and only those
+       notes. Live's four instruments have ONE portamento time each; there is
+       no per-note portamento parameter in any of them, and writing the slide
+       time as the always-on knob would slide every note the record plays
+       square. The .mid says it; this file says it cannot.
+     · InstrumentMeld — it HAS a glide (`MeldVoice_Engine{A,B}_GlideTime`,
+       MidiControllerRange 0..20, beside the seconds every other Meld time
+       parameter is in). What it also has is `MeldVoice_Engine{A,B}_GlideMode`,
+       range 0..1, an enum whose two names are printed NOWHERE in any of the
+       four donors and whose value is 0 in the only Meld any of them holds. A
+       time written under a mode that might mean "off" is this box's
+       characteristic bug — declared, costed, and never arriving — so it waits
+       for a donor that has moved the knob. Same refusal as Drift's
+       `Oscillator1_Type`, and for the same reason.
+     · StringStudio — `PortamentoTime` is 0..1 with no units anywhere in the
+       file, which the P3a note above already refuses.
+   CONFIRM IN LIVE: a Meld with Glide turned up, in a donor, closes the second
+   one. */
+export function portamentoNote(deviceTag, tone, syn) {
+  const t = tone || {};
+  const s = (syn && syn.set) || {};
+  const glide = s.glide != null ? s.glide : t.glide;
+  const slide = t.slide;
+  if (glide == null && slide == null) return null;
+  const ms = (v) => Math.round(v * 1000) + " ms";
+  const took = deviceTag === "Drift" ? "Global_Glide"
+             : deviceTag === "Operator" ? "Globals/PortamentoTime + PortamentoOn"
+             : null;
+  const out = [];
+  if (glide != null && glide > 0)
+    out.push(took ? "glide " + ms(glide) + " -> " + took
+                  : "glide " + ms(glide) + " reaches no " + deviceTag + " parameter" +
+                    (deviceTag === "InstrumentMeld"
+                       ? " (GlideTime waits on the unprinted GlideMode enum)"
+                       : deviceTag === "StringStudio"
+                       ? " (PortamentoTime is 0..1 with no units)" : ""));
+  if (slide != null && slide > 0)
+    out.push("slide " + ms(slide) + " is PER NOTE and no Live instrument has a " +
+             "per-note portamento — it is in the .mid as CC65/CC5/CC84");
+  return out.length ? out.join(" · ") : null;
+}
+
 /** Booleans that only make sense once a value is being written beside them. */
 export function instrumentFlags(deviceTag, tone, syn) {
   const t = tone || {};

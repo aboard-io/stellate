@@ -2094,14 +2094,24 @@ the cell, at the address T7 walks.
 **§11d · THE LOZENGE FIELD.** `nukernel/src/lozenge/` → `nukernel/ui/
 lozenge.js` is the fifth committed-build entry (`api.ts · clusters.ts ·
 field.ts · index.ts`). Every option visible at once as a `--r-pill` lozenge,
-~28px of glass in 44px of thumb (padding out, negative margin back, so the row
-PITCH is 34 and a wall of sixty-eight is a field rather than a page), wrapping
-to the pane, clustered semantically under a heading with a count, ONE hue per
+AS TALL AS ITS WORD WITH 44px AS THE FLOOR — padding and a minimum, and no
+negative margin anywhere: it read *"~28px of glass in 44px of thumb (padding
+out, negative margin back, so the row PITCH is 34)"* until Paul photographed
+that on a phone (2026-09-05, *"the lozenges all overlap"*), where a 44px drawn
+pill in a 34px pitch is ten pixels of every row crossing the row above it —
+wrapping to the pane, clustered semantically under a heading with a count, ONE hue per
 cluster from an eight-step palette that is its own (`--lz-h0..7`, and neither
 the semantic four nor the voice six, because a cluster hue that collided with
 either would say something it does not mean), the hot ones filled, multi-select
-keeping an ordered chain, a 600 ms press printing the sentence, a cluster
-folding by its heading and the fold surviving the rebuild.
+keeping an ordered chain, a 600 ms press printing the sentence — and a TAP on a
+refused word printing it too, in the field's one say line, because a pill
+carries a word and never a sentence (2026-09-05: *"you added sentences of text
+to some of them"*) — a cluster
+folding by its heading and the fold surviving the rebuild. It is the only
+control on its fact: no native picker beside it and none of the combo chassis's
+▾ over it. T12n in test/table.browser.js drives all four surfaces under iPhone
+emulation at 390 and 320, which is where every one of those defects was: the
+same field at 390 in a desktop page drew none of them.
 
 **IT IS CHOSEN BY THE DATA AND NOT BY A LIST.** `src/menus/pick.ts` grew one
 clause — a vocabulary whose words declare a `group` gets the field that draws

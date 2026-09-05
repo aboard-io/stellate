@@ -1,5 +1,15 @@
 // nukernel/export/smf.js — the record's score, written out as a Standard MIDI
-// File. Dependency-free: SMF type 1, one track per voice.
+// File. SMF type 1, one track per voice.
+//
+// ITS ONE IMPORT IS A NUMBER AND A FALLBACK, NOT A LIBRARY (2026-09-05, the
+// portamento-to-MIDI round). This file said "dependency-free" and that was a
+// claim about bytes rather than about arithmetic: writing the chair's
+// portamento means knowing the row's own fence (0..500 ms) and the one line
+// that resolves `tone.slide` against `tone.glide`, and both of those already
+// have an owner in audio/to-engine.js. A second copy here would be the drift
+// this repo has a law against, so `glideSeconds` is imported. ui/eight.js
+// already imports both modules statically, so the page pays nothing, and
+// to-engine.js itself imports nothing at all.
 //
 // THE .MID IS THE PLAYED RECORD NOW — A REVERSAL, DATED 2026-08-30. This
 // header read: *"over the page's OWN score note list (ui/eight.js
@@ -42,6 +52,103 @@
 // share the x-head) the score itself has already merged them, and the first
 // lane in the score's own table order wins — the file says what the staff
 // says, which is the contract.
+
+import { glideSeconds, GLIDE_MAX } from "../audio/to-engine.js";
+
+/* ---------- THE PORTAMENTO CONTROLLERS (2026-09-05) -----------------------
+   Paul, of the round that put the slide in the box: "We are missing a big
+   thing: Portamento. Everywhere, voices, synths, and so forth… Think TB 303!"
+   The box got it — `sld` on the phrase, `tone.glide`/`tone.slide` on the row,
+   twenty modules that slew, a knob on the sheet — and the .mid, which is the
+   file a 303 line actually travels in, said nothing. MEASURED before this:
+   thumri (glide 20 ms, slide 160 ms, 188 slid events of 1556) exported 12,938
+   bytes carrying ZERO control changes.
+
+   MIDI HAS THE THREE WORDS ALREADY, and they are the three the box says:
+
+     CC65  portamento ON/OFF     — >= 64 is on. WHICH notes slide.
+     CC5   portamento TIME       — HOW LONG.
+     CC84  portamento CONTROL    — WHERE FROM: the value is the source key,
+                                   and the next note-on glides from it. This
+                                   is `e.prev` and nothing else.
+
+   CC5 HAS NO UNIT IN THE SPEC — every synth reads its own curve off 0..127 —
+   so this file states the one it writes rather than leaving a reader to
+   guess: CC5 is LINEAR over the ROW'S OWN FENCE, 0 = instant and 127 =
+   `GLIDE_MAX` (500 ms, audio/to-engine.js, which is state-engine GLIDE_MAP's
+   own ceiling said in seconds). A record that writes any portamento byte also
+   writes that sentence into a 0x01 text meta, the way the any-meter round
+   states a signature the format cannot spell.
+
+   WHY A STATE AND NOT A FLAG PER NOTE. CC65 is a channel state, so the file
+   says it the way the tempo map and the level lane already do — at tick 0,
+   and again only where it CHANGES. A chair whose `slide` equals its `glide`
+   (which is what a row that names only `glide` resolves to) therefore writes
+   two bytes at the top and nothing else, and a 303 line writes one pair per
+   slid run. */
+export const PORTA_CC = { on: 65, time: 5, from: 84 };
+
+/** Seconds -> CC5. Linear over the row's own 0..GLIDE_MAX fence; see above. */
+export const ccOfSeconds = (sec) => Math.max(0, Math.min(127,
+  Math.round((127 * Math.max(0, +sec || 0)) / GLIDE_MAX)));
+
+/**
+ * A voice's portamento control changes, from its notes and its chair's tone.
+ *
+ * `notes` are writeSmf's own — `{at, len, midi, sld?, from?}`, in score steps.
+ * `tone` is the genre's tone block (export/score.js puts it on the lane).
+ * Returns `[]` for a chair whose row declares NEITHER `glide` nor `slide`,
+ * which is the absent-law: such a record's bytes are the bytes it had
+ * yesterday, and every row in the catalogue but the 24 the portamento round
+ * wrote is in that case.
+ */
+export function portamentoCCs(notes, tone) {
+  const G = glideSeconds(tone);
+  if (!G.any) return [];
+  const base = { on: G.glide > 0 ? 127 : 0, time: ccOfSeconds(G.glide) };
+  const slid = { on: 127, time: ccOfSeconds(G.slide) };
+  // THE SLID RUNS, MERGED. Two slid notes back to back are one state, not two
+  // — a restore between them would be a byte that turns the gesture off inside
+  // itself. Adjacency is measured on the notes' own spans.
+  const runs = [];
+  // SORTED HERE RATHER THAN ASSUMED. The fold hands these over in time order
+  // today, and an upbeat is a negative time riding in the previous box
+  // (document.js formWalk), so "in order" is a property of the caller and not
+  // of the shape. A merge over an unsorted list would leave a state switched
+  // the wrong way round once writeSmf sorts the events by tick.
+  const marked = (notes || []).filter((n) => n.sld).sort((x, y) => x.at - y.at);
+  for (const n of marked) {
+    const a = n.at, b = n.at + Math.max(1 / 32, n.len);
+    const last = runs[runs.length - 1];
+    if (last && a <= last[1] + 1e-9) last[1] = Math.max(last[1], b);
+    else runs.push([a, b]);
+  }
+  // the chair's own knob, said outright at the top of the track
+  const out = [{ at: 0, cc: PORTA_CC.on, val: base.on },
+               { at: 0, cc: PORTA_CC.time, val: base.time }];
+  let cur = base;
+  const state = (at, want) => {
+    if (want.on !== cur.on) out.push({ at, cc: PORTA_CC.on, val: want.on });
+    if (want.time !== cur.time) out.push({ at, cc: PORTA_CC.time, val: want.time });
+    cur = want;
+  };
+  for (const [a, b] of runs) { state(a, slid); state(b, base); }
+  // ...AND WHERE THE RECORD KNOWS WHAT THE NOTE SLID FROM, IT SAYS SO. CC84 is
+  // a one-shot addressed to the note-on after it, so it is written at the slid
+  // note's own tick and never coalesced. `ord` puts it last of the three, so a
+  // reader has the time and the switch before it is told the source key.
+  for (const n of marked) {
+    if (n.from == null) continue;
+    const from = Math.round(n.from);
+    if (!isFinite(from) || from < 0 || from > 127 || from === Math.round(n.midi)) continue;
+    out.push({ at: n.at, cc: PORTA_CC.from, val: from, ord: 1.7 });
+  }
+  return out;
+}
+
+/** The sentence a file with portamento in it carries, so CC5 has a unit. */
+export const PORTA_SAY = "portamento: CC65 on/off, CC5 time 0..127 linear over " +
+  "0.." + Math.round(GLIDE_MAX * 1000) + " ms, CC84 the key the note slides from";
 
 /* ---------- the export layer's drum map (GM percussion key numbers) ------- */
 export const LANE_GM = {
@@ -124,6 +231,15 @@ function keysOf(midi, perc, drumMap, dropped) {
  *            Absent = no bytes, byte for byte (2026-08-30, the dynamics
  *            round: velocities carry `env`, this lane carries `lvl` — the
  *            half the file never spoke).
+ *          + texts: [string]        — extra 0x01 text metas at tick 0, after
+ *            the signature and before the tempo. The portamento sentence
+ *            (PORTA_SAY) rides one, because CC5 has no unit in the spec.
+ *            Absent = no bytes, byte for byte.
+ *          + voices[].ccs: [{ at, cc, val, ord? }] — control changes on THAT
+ *            voice's own channel, `at` in score steps. `ord` defaults to 1.6,
+ *            which is after the note-offs (1) and the section level (1.5) and
+ *            before the note-ons (2): a portamento switch has to be standing
+ *            before the note it is about arrives. Absent = no bytes.
  *   opts:  { drumMap }  — head string → GM key (see headGM)
  */
 export function writeSmf(score, opts = {}) {
@@ -234,18 +350,22 @@ export function writeSmf(score, opts = {}) {
   // drawn at all: the notes still land at the second the record puts them, and
   // the file says that rather than claiming a bar it did not keep.
   const kept = Math.abs((4 * drawN) / sigD - trueQ * scale) < 1e-9;
+  const textMeta = (txt) => { const b = txt.split("")
+      .filter((c) => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127)
+      .map((c) => c.charCodeAt(0));
+    return [0xff, 0x01, ...vlq(b.length), ...b]; };
   const sayBytes = () => { const txt = ("meter " + (trueSig || bpbInt + "/4") +
       " at " + (Math.round(bpm * 1000) / 1000) + " BPM - written " + drawN + "/" + sigD +
       " at " + (Math.round(bpm * scale * 1000) / 1000) + " BPM" +
       (kept ? " so the bar keeps its length"
             : "; the numerator does not fit one byte, so the bar lines are short " +
-              "and only the note times are the record's"))
-      .split("").filter((c) => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127);
-    const b = txt.map((c) => c.charCodeAt(0));
-    return [0xff, 0x01, ...vlq(b.length), ...b]; };
+              "and only the note times are the record's"));
+    return textMeta(txt); };
   const t0 = track([
     { tick: 0, ord: 0, bytes: [0xff, 0x58, 0x04, ...sig] },
     ...(said ? [{ tick: 0, ord: 0.5, bytes: sayBytes() }] : []),
+    ...(score.texts || []).map((t, i) => (
+      { tick: 0, ord: 0.6 + i * 1e-3, bytes: textMeta(String(t)) })),
     { tick: 0, ord: 1, bytes: tempoBytes(bpm * scale) },
     ...(score.tempos || []).map((t, i) => (
       { tick: t.at * tickPerStep, ord: 2 + i, bytes: tempoBytes(t.bpm * scale) })),
@@ -266,6 +386,10 @@ export function writeSmf(score, opts = {}) {
     for (const x of score.exprs || [])
       evs.push({ tick: x.at * tickPerStep, ord: 1.5,
                  bytes: [0xb0 | ch, 11, Math.max(0, Math.min(127, x.val | 0))] });
+    // ...and this voice's own control changes (the portamento lane, above)
+    for (const c of v.ccs || [])
+      evs.push({ tick: c.at * tickPerStep, ord: c.ord == null ? 1.6 : c.ord,
+                 bytes: [0xb0 | ch, c.cc & 0x7f, Math.max(0, Math.min(127, c.val | 0))] });
     for (const n of v.notes || []) {
       const on = n.at * tickPerStep;
       // THE FLOOR MOVED WITH THE PLAYED RECORD (2026-08-30): it was
@@ -369,10 +493,17 @@ export function smfFromScore(score, { beatsPerBar = 4, timesig = null, levels = 
         name: l.name + (l.instr ? " " + l.instr : ""),
         clef: l.name === "drums" ? "perc" : "",
         notes: [] });
+      // THE CHAIR'S TONE IS THE CHAIR'S, NOT THE BOX'S (2026-09-05). A lane is
+      // one seat for the whole record — that is why a lane is a TRACK — so the
+      // first box that carries a tone answers for the portamento, and an
+      // unwarmed export (no cast, no tone anywhere) writes nothing.
+      if (v.tone == null && l.tone) v.tone = l.tone;
       for (const n of l.notes)
         v.notes.push(paced
-          ? { at: tb + n.beat / k, len: n.dur / k, midi: n.midi, vel: n.vel }
-          : { at: off + n.beat, len: n.dur, midi: n.midi, vel: n.vel });
+          ? { at: tb + n.beat / k, len: n.dur / k, midi: n.midi, vel: n.vel,
+              ...(n.sld ? { sld: 1 } : {}), ...(n.from != null ? { from: n.from } : {}) }
+          : { at: off + n.beat, len: n.dur, midi: n.midi, vel: n.vel,
+              ...(n.sld ? { sld: 1 } : {}), ...(n.from != null ? { from: n.from } : {}) });
     }
     tb += (box.beats || 0) / k;
   }
@@ -381,6 +512,17 @@ export function smfFromScore(score, { beatsPerBar = 4, timesig = null, levels = 
   const rank = (n) => (n === "drums" ? 2 : n === "bass" ? 1 : 0);
   const voices = [...lanes.values()]
     .sort((a, b) => rank(a.key) - rank(b.key) || a.key.localeCompare(b.key));
+  /* THE PORTAMENTO LANE, PER VOICE (2026-09-05). The notes are already in
+     time order — export/score.js sorts each box's lane and the boxes are
+     walked in order — which is what `portamentoCCs` merges the slid runs
+     against. A voice whose row declares neither `glide` nor `slide` comes
+     back with nothing and writes no key at all, so every .mid this box has
+     ever exported is byte-identical. */
+  let porta = 0;
+  for (const v of voices) {
+    const cc = portamentoCCs(v.notes, v.tone);
+    if (cc.length) { v.ccs = cc; porta += cc.length; }
+  }
   // …and the declared signature rides the Score itself (export/score.js
   // stamps `meterAbc` off the timeline's own genre — one owner); a caller may
   // still say `timesig: [nn, dd]` outright. Absent both, nothing is added and
@@ -389,6 +531,7 @@ export function smfFromScore(score, { beatsPerBar = 4, timesig = null, levels = 
   const sig = timesig || (sigM ? [+sigM[1], +sigM[2]] : null);
   return writeSmf({ bpm: score.bpm, beatsPerBar,
                     stepsPerBar: beatsPerBar,
+                    ...(porta ? { texts: [PORTA_SAY] } : {}),
                     ...(tempos.length ? { tempos } : {}),
                     ...(sig ? { timesig: sig } : {}),
                     ...(exprs.length ? { exprs } : {}),

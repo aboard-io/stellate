@@ -42,7 +42,7 @@
  * RUN: NODE_PATH=/home/ford/ftrain-2025/node_modules node test/table.browser.js
  */
 "use strict";
-const { chromium } = require("playwright");
+const { chromium, devices } = require("playwright");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -862,8 +862,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          said "none of 0 moved it" about a `does` vocabulary whose words were
          all on the glass — a gate that queried the old class and found
          nothing, which is not the same claim as a control that does nothing. */
+      /* ...AND A REFUSED LOZENGE IS `aria-disabled` AND NOT `disabled` SINCE
+         2026-09-05 (src/lozenge/field.ts law 6): a `disabled` button takes no
+         click, so its reason was reachable only through a screen reader. It is
+         still a word this walk may not press — pressing one writes nothing and
+         would be counted here as a word that does not move the sound. */
       return [...document.querySelectorAll("#pan-band .nu-wchip, #pan-band .nu-lz")]
-        .filter((c) => !c.disabled && (c.dataset.k || "").split("|").pop() !== "")
+        .filter((c) => !c.disabled && c.getAttribute("aria-disabled") !== "true" &&
+                       (c.dataset.k || "").split("|").pop() !== "")
         .map((c) => c.dataset.k);
     }, fieldKey);
   };
@@ -3870,6 +3876,254 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     await ctx.pages()[0].setViewportSize({ width: 390, height: 844 });
     await p.waitForTimeout(400);
     await top("Band");
+  }
+
+  /* ================= T12n · THE LOZENGE FIELD ON A PHONE ================
+     Paul, 2026-09-05, with the v286 TIME row on his iPhone: *"The lozenges all
+     overlap and you added sentences of text to some of them"* — and, on the
+     same field: *"When I tap a mode you snap to the top of the screen it
+     shouldn't move at all."*
+
+     WHY THIS RUNS IN ITS OWN CONTEXT AND NOT AT 390 IN THIS ONE. Every check
+     above drives a 390px DESKTOP page: a fine pointer, no touch, no device
+     scale. The design pass's own 390 screenshots (scratchpad/design/after/
+     scale-picker-390.png) looked right in exactly that page while the phone
+     was drawing the picture Paul photographed, because three of the four
+     defects only exist where a thumb is: the chassis ▾ is drawn at every
+     width, but the pane is only a VERTICAL scrollport when the table is taller
+     than the glass, and the field is only reached through `pointer: coarse` at
+     all. So this opens `devices["iPhone 14"]` — coarse, touch, DPR 3 — at both
+     phone widths, and reads the rendered boxes off it ([[test-the-artifact]]).
+
+     WHAT IT ASSERTS, on the four surfaces §11d names (the mode picker, the
+     scale picker, the instrument picker's 147 words in 13 clusters, and the
+     drummer's does-sheet):
+       · NO TWO PILLS' BOXES INTERSECT. Before: 35 intersecting pairs on the
+         mode picker at 390 and 161 on the instrument picker, 10px each, from
+         `margin-block: -5px` under a 44px drawn pill.
+       · A PILL HOLDS ITS WORD AND NOTHING ELSE. Before: "ukrainian dorian"
+         drawn 54px tall around "the record is straight, and modal harmony has
+         no changes" (`.nu-lzwhy`, now gone; the sentence is the say line's).
+       · ONE CONTROL, ONE OWNER: no ▾ over the field and no `<select>` on the
+         same address beside it. Before: `content: "▾"` on the chassis.
+       · EVERY PILL IS 44px OF THUMB, and the page does not scroll sideways.
+       · AND A TAP MOVES NOTHING: the scrollport's own `scrollTop` and the
+         tapped pill's box are the same before and after the write. Before:
+         1898 -> 0 with the pill 1898px below the fold, and 42.6 -> 48.7px wide
+         because bold is wider than the word it replaced. */
+  {
+    const phones = [390, 320];
+    for (const W of phones) {
+      const pctx = await b.newContext(Object.assign({}, devices["iPhone 14"], {
+        viewport: { width: W, height: 844 }, deviceScaleFactor: 3,
+        isMobile: true, hasTouch: true }));
+      const q = pctx.pages()[0] || await pctx.newPage();
+      q.on("pageerror", (e) => errs.push("pageerror(phone " + W + "): " + e.message));
+      q.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
+        errs.push("console(phone " + W + "): " + m.text()); });
+      await q.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+      await q.goto(PAGE + REGGAE, { waitUntil: "domcontentloaded" });
+      await q.waitForTimeout(2600);
+
+      /* the same three gestures the desktop half uses, on the phone page */
+      const ptap = async (k) => { const r = await q.evaluate((key) => {
+          const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+          if (!el) return "missing"; el.click(); return "ok"; }, k);
+        await q.waitForTimeout(450); return r; };
+      const pcell = async (k) => { await q.evaluate((key) => {
+          const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+          if (!el) return;
+          if (!el.classList.contains("is-sel")) el.click();
+          const e2 = document.querySelector('#pan-band [data-k="' + key + '"]');
+          if (e2 && e2.getAttribute("aria-expanded") !== "true") e2.click(); }, k);
+        await q.waitForTimeout(500); };
+      const pfield = async (k) => { await q.evaluate((key) => {
+          const f = document.querySelector('#pan-band [data-k="' + key + '"]');
+          if (f && f.getAttribute("aria-expanded") !== "true") f.click(); }, k);
+        await q.waitForTimeout(500); };
+      /* EVERY NUMBER OFF THE RENDERED BOX: the pairwise intersection of the
+         drawn pills, what each pill's own text is against its own word, the
+         chassis's ▾, a `<select>` on this field's address, and the page's
+         sideways overflow. */
+      const pmeasure = (sel) => q.evaluate((sel) => {
+        const f = document.querySelector('#pan-band .nu-lzfield[data-sel="' + sel + '"]');
+        if (!f) return { missing: true };
+        const all = [...f.querySelectorAll("button.nu-lz")];
+        const box = all.map((x) => { const r = x.getBoundingClientRect();
+          return { v: x.dataset.v, x: r.x, y: r.y, w: r.width, h: r.height }; });
+        let hits = 0, worst = null;
+        for (let i = 0; i < box.length; i++) for (let j = i + 1; j < box.length; j++) {
+          const a = box[i], c = box[j];
+          const ox = Math.min(a.x + a.w, c.x + c.w) - Math.max(a.x, c.x);
+          const oy = Math.min(a.y + a.h, c.y + c.h) - Math.max(a.y, c.y);
+          if (ox > 0.5 && oy > 0.5) { hits++; if (!worst) worst = [a.v, c.v, +oy.toFixed(1)]; }
+        }
+        const sentences = all.filter((x) => {
+          const w = ((x.querySelector(".nu-lzword") || {}).textContent || "").trim();
+          const n = ((x.querySelector(".nu-lzn") || {}).textContent || "").trim();
+          return (x.textContent || "").replace(/\s+/g, " ").trim().replace(n, "").trim() !== w;
+        }).map((x) => (x.textContent || "").trim().slice(0, 40));
+        const chassis = f.closest(".nu-combo");
+        const own = chassis || f.closest(".nu-sheetrow") || f.parentElement;
+        const head = f.querySelector(".nu-lzhead");
+        const wrap = f.querySelector(".nu-lzwrap:not([hidden])");
+        const first = wrap ? wrap.querySelector("button.nu-lz") : null;
+        return { n: all.length, hits, worst,
+          clusters: f.querySelectorAll(".nu-lzcluster").length,
+          short: box.filter((x) => x.h < 43.5).length,
+          sentences: sentences.length, saidInside: sentences.slice(0, 1),
+          whys: f.querySelectorAll(".nu-lzwhy").length,
+          arrow: chassis ? getComputedStyle(chassis, "::after").content : "none",
+          twins: own ? [...own.querySelectorAll("select")]
+            .map((x) => String(x.dataset.k || x.name || "?"))
+            .filter((k) => k === sel || k.indexOf(sel + "|") === 0 ||
+                           k.indexOf("sel|" + sel) === 0).length : 0,
+          rule: head && first
+            ? +(first.getBoundingClientRect().top -
+                head.getBoundingClientRect().bottom).toFixed(1) : null,
+          say: !!f.querySelector(".nu-lzsay"),
+          side: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+      }, sel);
+      /* THE TAP THAT MUST MOVE NOTHING. The scrollport is found by asking the
+         page which element scrolls, not by naming one: `.nu-pane` is the band
+         table's, and a gate that hard-coded it would go quiet the day it moved. */
+      const pjump = async (sel) => {
+        const before = await q.evaluate((sel) => {
+          const f = document.querySelector('#pan-band .nu-lzfield[data-sel="' + sel + '"]');
+          if (!f) return null;
+          const sc = [...document.querySelectorAll("*")].filter((e) =>
+            e.scrollHeight - e.clientHeight > 4 &&
+            /auto|scroll/.test(getComputedStyle(e).overflowY));
+          sc.push(document.scrollingElement);
+          const cold = [...f.querySelectorAll("button.nu-lz")].filter((x) =>
+            !x.disabled && x.getAttribute("aria-disabled") !== "true" &&
+            x.getAttribute("aria-pressed") !== "true");
+          const t = cold[Math.min(cold.length - 1, Math.floor(cold.length * 0.7))];
+          if (!t) return null;
+          t.scrollIntoView({ block: "center" });
+          const r = t.getBoundingClientRect();
+          const was = { tops: sc.map((e) => e.scrollTop), k: t.dataset.k, v: t.dataset.v,
+            box: [+r.x.toFixed(1), +r.y.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)] };
+          t.click();
+          return was; }, sel);
+        if (!before) return null;
+        await q.waitForTimeout(700);
+        return await q.evaluate((was) => {
+          const sc = [...document.querySelectorAll("*")].filter((e) =>
+            e.scrollHeight - e.clientHeight > 4 &&
+            /auto|scroll/.test(getComputedStyle(e).overflowY));
+          sc.push(document.scrollingElement);
+          const again = document.querySelector('#pan-band [data-k="' + was.k + '"]');
+          const r = again ? again.getBoundingClientRect() : null;
+          return { v: was.v, tops: was.tops, now: sc.map((e) => e.scrollTop),
+            box: was.box,
+            after: r ? [+r.x.toFixed(1), +r.y.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)] : null,
+            open: !!again, hot: again ? again.getAttribute("aria-pressed") : null };
+        }, before);
+      };
+
+      /* ---- the TIME row's two: the mode picker (Paul's own screen) and the
+         scale picker, with the refusals showing. Kingston 1969 swings and is
+         not modal, so the two facts that grey a mode are written first through
+         the controls on this very sheet — the greyed pill is the subject. */
+      await q.evaluate(() => window.__eightRow("time", true));
+      await q.waitForTimeout(700);
+      await q.evaluate(() => { const hit = (k) => {
+          const e = document.querySelector('#pan-band [data-k="' + k + '"]');
+          if (e) e.click(); };
+        hit("time.swing|"); hit("alphabet.harmony|modal"); });
+      await q.waitForTimeout(900);
+      const surfaces = [];
+      surfaces.push(["the mode picker", await pmeasure("alphabet.mode")]);
+      surfaces.push(["the scale picker", await pmeasure("alphabet.scale")]);
+      /* A REFUSED WORD SAYS WHY WITHOUT WEARING IT: the pill keeps its word,
+         the sentence lands in the field's one say line, and nothing is
+         written. This is the half `.nu-lzwhy` used to do inside the button. */
+      const refusal = await q.evaluate(() => {
+        const f = document.querySelector('#pan-band .nu-lzfield[data-sel="alphabet.mode"]');
+        const off = f && f.querySelector('.nu-lz[aria-disabled="true"], .nu-lz[disabled]');
+        if (!off) return null;
+        const say = f.querySelector(".nu-lzsay");
+        const was = (window.__eightDoc().alphabet || {}).mode;
+        off.click();
+        return { word: ((off.querySelector(".nu-lzword") || {}).textContent || "").trim(),
+          pill: (off.textContent || "").replace(/\s+/g, " ").trim(),
+          why: off.dataset.why || "", said: (say.textContent || "").trim(),
+          was, now: (window.__eightDoc().alphabet || {}).mode }; });
+      const jmode = await pjump("alphabet.mode");
+      await q.evaluate(() => window.__eightRow("time", false));
+      await q.waitForTimeout(400);
+
+      /* ---- the instrument picker, in a chair's sheet (147 words, 13 clusters) */
+      const PD = await q.evaluate(() => window.__eightDoc());
+      const pv = ((PD.voices || []).find((v) => v.kind !== "drums") || (PD.voices || [])[0] || {}).name;
+      let jinstr = null;
+      if (pv) {
+        await ptap("tcol|" + pv);
+        const irow = await q.evaluate(() => {
+          const o = document.querySelector("#pan-band tr.nu-wopen");
+          if (!o) return null;
+          const r = [...o.querySelectorAll(".nu-sheetrow")].find((x) =>
+            ((x.querySelector(".nu-sheetlab") || {}).textContent || "").trim() === "instrument");
+          const c = r && r.querySelector(".nu-wcell");
+          return c ? c.dataset.k : null; });
+        if (irow) { await pfield(irow);
+          surfaces.push(["the instrument picker", await pmeasure(irow)]);
+          jinstr = await pjump(irow); }
+        await ptap("tcol|" + pv);
+      }
+
+      /* ---- and the drummer's does-sheet, which is §11d's first surface */
+      const pdr = ((PD.voices || []).find((v) => v.kind === "drums") || {}).name;
+      const psec = (((PD.form || {}).sections || [])[0] || {}).id;
+      if (pdr && psec) {
+        await pcell("tcell|" + pdr + "|" + psec);
+        await pfield("dev.kit|" + pdr + "|" + psec);
+        surfaces.push(["the does sheet", await pmeasure("dev.kit|" + pdr + "|" + psec)]);
+      }
+
+      const found = surfaces.filter(([, m]) => m && !m.missing);
+      check(found.length === 4, "T12n at " + W + " on an iPhone: all four of " +
+        "§11d's surfaces open — " + surfaces.map(([n, m]) =>
+          n + (m && !m.missing ? " (" + m.n + ")" : " MISSING")).join(" · "));
+      const over = found.filter(([, m]) => m.hits > 0);
+      check(over.length === 0, "T12n …NO TWO PILLS' BOXES INTERSECT (" +
+        (over.length ? over.map(([n, m]) => n + ": " + m.hits + " pairs, worst " +
+          JSON.stringify(m.worst)).join(" · ") : "0 pairs across " +
+          found.reduce((a, [, m]) => a + m.n, 0) + " pills") + ")");
+      const wordy = found.filter(([, m]) => m.sentences > 0 || m.whys > 0);
+      check(wordy.length === 0, "T12n …and a PILL CARRIES A WORD, never a " +
+        "sentence (" + (wordy.length ? wordy.map(([n, m]) =>
+          n + ": " + JSON.stringify(m.saidInside)).join(" · ") : "0 of " +
+          found.reduce((a, [, m]) => a + m.n, 0) + ")"));
+      const twinned = found.filter(([, m]) => m.twins > 0 || /▾|25BE/.test(String(m.arrow)));
+      check(twinned.length === 0, "T12n …ONE CONTROL, ONE OWNER: no native " +
+        "picker and no ▾ over a lozenge field (" + (twinned.length
+          ? twinned.map(([n, m]) => n + ": " + m.arrow + " / " + m.twins +
+              " selects").join(" · ") : "clean") + ")");
+      const shortOf = found.filter(([, m]) => m.short > 0);
+      check(shortOf.length === 0, "T12n …every pill 44px of thumb (" +
+        (shortOf.length ? shortOf.map(([n, m]) => n + ": " + m.short).join(" · ")
+         : "0 short") + ")");
+      const through = found.filter(([, m]) => m.rule == null || m.rule < 0);
+      check(through.length === 0, "T12n …the cluster's rule ABOVE its pills, " +
+        "not through them (" + found.map(([, m]) => m.rule).join(" · ") + "px)");
+      check(found.every(([, m]) => m.side <= 1), "T12n …and the page does not " +
+        "scroll sideways (" + found.map(([, m]) => m.side).join(" · ") + "px)");
+      check(!!refusal && refusal.pill === refusal.word && !!refusal.why &&
+            refusal.said === refusal.why && refusal.now === refusal.was,
+        "T12n …a refused word SAYS why in the say line and writes nothing — " +
+        JSON.stringify(refusal));
+      for (const [name, j] of [["the mode picker", jmode],
+                               ["the instrument picker", jinstr]]) {
+        check(!!j && JSON.stringify(j.tops) === JSON.stringify(j.now) &&
+              JSON.stringify(j.box) === JSON.stringify(j.after) &&
+              j.open && j.hot === "true",
+          "T12n …and a tap on " + name + " at " + W + " WRITES AND MOVES " +
+          "NOTHING — " + JSON.stringify(j));
+      }
+      await pctx.close();
+    }
   }
 
   /* ================= T0 · THE CONSOLE =================================== */

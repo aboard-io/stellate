@@ -812,6 +812,18 @@ const GATES = [
     argv: ["test/meter.test.js"], need: ["test/meter.test.js"],
     covers: ["test/meter.test.js", "nukernel/ui/abc.js",
              "nukernel/export/smf.js", "nukernel/export/als.js"] },
+  /* THE METRONOME MARKS ON THE BAND PAGE (2026-09-05). The band page printed
+     a key, a signature, dynamics, chord symbols and repeat marks and no tempo
+     at all, because `toScore` refused a `Q:` in writing. One owner now
+     (`ui/abc.js metMark`/`metsOf`) for the header field of every staff on the
+     page and the inline field a section that changes speed opens with: the
+     beat the DENOMINATOR names, the number that actually PLAYS (bpm × the
+     reading speed), the rule words out of the copy catalogue, and a mark
+     printed only where it changes. Read off the emitted ABC and off abcjs's
+     parse of it. ~2 s. */
+  { name: "mets", wave: 2, kind: "node",
+    argv: ["test/mets.test.js"], need: ["test/mets.test.js"],
+    covers: ["test/mets.test.js", "nukernel/ui/abc.js"] },
   /* ...AND THE FIFTEENTH, REGISTERED 2026-09-02. The block above names
      `grain-reach` in its own list of the fourteen and then does not carry a
      row for it — so the one gate that proves vinyl crackle reaches the sound

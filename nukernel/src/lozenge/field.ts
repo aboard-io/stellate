@@ -30,11 +30,18 @@
 //      hang it off `.is-folded` — a bare `.nu-lzwrap{display:flex}` outranks
 //      the UA's `[hidden]` and would un-fold every fold on the page.)
 //
-//  2 · THE BUTTON IS THE HIT TARGET. `.nu-lz` is on the `<button>` itself and
-//      the visible pill is its child `<span class="nu-lzword">`, so the 44px
-//      minimum lives on the thing a thumb actually presses while the drawn
-//      lozenge stays ~28px (DESIGN.md §1: *"every control 44px tall"*, §2/16:
-//      *"~28px tall visually with a 44px hit area through its margins"*).
+//  2 · THE BUTTON IS THE PILL IS THE HIT TARGET, AND NOTHING OVERLAPS.
+//      `.nu-lz` is the `<button>`; it is what a thumb presses AND what a
+//      reader sees. §2/16's *"~28px tall visually with a 44px hit area through
+//      its margins"* was drawn as `padding: 8px` and `margin-block: -5px`, and
+//      Paul photographed what that is on a phone (2026-09-05: *"The lozenges
+//      all overlap"*): the border is on the button, so the DRAWN pill was 44px
+//      inside a 34px row pitch and every row crossed the outlines of the row
+//      above it — measured 10px of overlap on 35 of the mode picker's 42
+//      pills. The 44px comes from `min-block-size` and padding ONLY; the row
+//      pitch is the pill's own rendered height plus a gap; there is no
+//      negative margin anywhere in the field. A pill is as tall as its word
+//      needs and wraps to a second line only when the word cannot fit.
 //      NOT ONE HEIGHT IS SET IN THIS FILE, and no colour: nu.css owns both.
 //
 //  3 · A LONG PRESS SAYS, A SHORT PRESS WRITES. 600 ms and 8px, and the shape
@@ -64,17 +71,30 @@
 //      transpose" and a chain whose order is invisible is a chain you cannot
 //      edit.
 //
-//  6 · NO SILENT GREY. The same throw, in the same words, as
-//      `src/menus/index.ts refuseSilentGrey` — a `disabled` or `quiet` word
-//      with no `why` is a page error and not a console warning. A refused
-//      lozenge is `disabled`, `aria-disabled`, carries `data-why`, has the
-//      reason in its accessible name, AND PRINTS IT inside the lozenge as
-//      `<small class="nu-lzwhy">`. That last is the precedent `chips()` set on
-//      2026-09-07: a greyed word carrying its reason only in a `title` is a
-//      silent grey with a tooltip nobody on a phone can open.
+//  6 · NO SILENT GREY — AND A PILL CARRIES A WORD, NEVER A SENTENCE. The same
+//      throw, in the same words, as `src/menus/index.ts refuseSilentGrey` — a
+//      `disabled` or `quiet` word with no `why` is a page error and not a
+//      console warning. A refused lozenge is `aria-disabled`, carries
+//      `data-why`, and has the reason in its accessible name.
+//      IT DOES NOT PRINT THE REASON INSIDE ITSELF. It did (`<small
+//      class="nu-lzwhy">`, `chips()`'s two-line precedent) and Paul
+//      photographed it on 2026-09-05: *"you added sentences of text to some of
+//      them"* — "ukrainian dorian" drawn as a pill holding "the record is
+//      straight, and modal harmony has no changes", 54px tall in a field of
+//      44px words, crossing three of its neighbours. A chip strip is one line
+//      of a few words and can afford a second line; a field of forty-two is a
+//      SHAPE, and a sentence inside one word destroys the shape that is the
+//      whole reason this component exists.
+//      SO THE SENTENCE HAS ONE PLACE — `.nu-lzsay`, the field's own say line,
+//      which reserves its room at creation and never moves anything. A long
+//      press prints it there (law 3), and so does a plain TAP on a refused
+//      word, which is why a refused lozenge is `aria-disabled` and NOT
+//      `disabled`: a `disabled` button gets no click, so its reason would be
+//      reachable only through a screen reader — which is the silent grey this
+//      law is named after, wearing an accessible name.
 //
 //  7 · A WHOLE-FIELD REFUSAL IS THE SAME LAW ONE TIER UP. `.is-off`,
-//      `aria-disabled`, `data-why`, every lozenge disabled, and the sentence
+//      `aria-disabled`, `data-why`, every lozenge refused with it, and the sentence
 //      printed ONCE as `<small class="nu-why">` — the class `menuField()`
 //      already uses for exactly this sentence, so there is one refusal line in
 //      the stylesheet and not two.
@@ -89,9 +109,11 @@
 //      selected word, else the first sayable one), so Tab walks heading ·
 //      cluster · heading · cluster rather than through sixty-eight stops, and
 //      the headings are real buttons so Tab reaches every fold.
-//      A REFUSED LOZENGE IS SKIPPED, because a `disabled` button cannot take
-//      focus — which is exactly why its sentence is PRINTED (law 6) instead of
-//      waiting behind a focus a keyboard cannot give it.
+//      A REFUSED LOZENGE IS SKIPPED — by the arrows and by the roving stop
+//      (`tabindex="-1"`), because a word you may not choose is not a stop on
+//      the way to one. It is still `aria-disabled` rather than `disabled`
+//      (law 6), so a THUMB may land on it and be told why; a keyboard reads
+//      the same sentence out of its accessible name.
 //
 //  9 · NOTHING SCROLLS SIDEWAYS. No width, no `white-space`, no `overflow` is
 //      set here; the field is a stack of sections and each section's wrap is a
@@ -213,6 +235,14 @@ export function lozengeField(spec: LozSpec): HTMLElement {
   paintV();
 
   /* ---- the drawing ---------------------------------------------------- */
+  /* `data-w` IS THE SAME WORD AGAIN, AND IT IS GEOMETRY AND NOT COPY. A hot
+     lozenge is FILLED and its word goes to `--fw-label` (DESIGN.md §2/16: hue
+     for the kind, weight for the state) — and bold is WIDER, so on the old
+     drawing the pill a thumb had just pressed grew under it and every pill
+     after it moved, which is Paul's *"it shouldn't move at all"* said in
+     typography. nu.css reserves the bold width in every state off this
+     attribute (`.nu-lzword::after`), so pressing a word changes its colour and
+     its weight and NOT ONE BOX ON THE FIELD. */
   const lozenge = (o: LozOption, tabbable: boolean) => {
     const v = String(o.value);
     const hot = stands(v);
@@ -226,13 +256,11 @@ export function lozengeField(spec: LozSpec): HTMLElement {
       data-v=${v}
       tabindex=${tabbable && !refused ? "0" : "-1"}
       aria-pressed=${String(hot)}
-      ?disabled=${refused}
       aria-disabled=${ifDefined(refused ? "true" : undefined)}
       data-why=${ifDefined(why ? why : undefined)}
       aria-label=${why ? t("menu.withWhy", { name: o.label, why }) : o.label}
-      ><span class="nu-lzword">${o.label}</span
+      ><span class="nu-lzword" data-w=${o.label}>${o.label}</span
       >${n ? html`<small class="nu-lzn">${n}</small>` : nothing
-      }${own ? html`<small class="nu-lzwhy">${own}</small>` : nothing
       }</button> `;
   };
 
@@ -264,7 +292,8 @@ export function lozengeField(spec: LozSpec): HTMLElement {
         >${b.opts.map((o) => lozenge(o, stop === String(o.value)))}</div
       ></section>`;
   })}${off ? html`<small class="nu-why">${off}</small>` : nothing
-  }<p class="nu-lzsay" role="status" aria-live="polite">${said}</p>`, host);
+  }<p class="nu-lzsay" role="status" aria-live="polite"
+      ?data-said=${!!said}>${said}</p>`, host);
 
   /* ---- the writes ----------------------------------------------------- */
   const write = (v: string) => {
@@ -345,6 +374,10 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     const el = tgt?.closest?.(".nu-lz") as HTMLElement | null;
     if (!el || !host.contains(el)) return;
     if (swallow) { swallow = false; return; }
+    // A TAP ON A REFUSED WORD SAYS WHY AND WRITES NOTHING (law 6). This is the
+    // half `disabled` used to swallow: the button took no click, so the only
+    // reader that ever got the sentence was a screen reader.
+    if (el.getAttribute("aria-disabled") === "true") { speak(el); return; }
     write(String(el.dataset.v || ""));
   });
 
@@ -357,7 +390,7 @@ export function lozengeField(spec: LozSpec): HTMLElement {
       const w = sec.querySelector(".nu-lzwrap") as HTMLElement | null;
       if (!w || w.hidden) return [];
       return Array.from(w.querySelectorAll<HTMLButtonElement>("button.nu-lz"))
-        .filter((b) => !b.disabled);
+        .filter((b) => !b.disabled && b.getAttribute("aria-disabled") !== "true");
     });
 
   const land = (b: HTMLButtonElement | undefined) => {

@@ -200,6 +200,18 @@ export const SHEETS: Table = {
   "deck.playing": "{value} · playing",
   "deck.playingElsewhere": "{value} · playing · editing {name}",
   "deck.roll.aria": "Piano roll — pitch across, time down",
+  /* THE WORDS BESIDE A METRONOME MARK. A score abbreviates — DESIGN.md's own
+     `cresc.` law — so these are the two or three words a player reads over a
+     bar and never a sentence about them. The MARK itself (♩ = 76) is a glyph
+     and a number and is built by `ui/abc.js metMark`; only the rules in force
+     are words, and only these are printed, because these are the only tempo
+     rules the Time row deals. `swing` is `field.swing`: the Time row's own
+     field name is the word a chart prints, and one meaning gets one key. */
+  "mark.halfTime": "half time",
+  "mark.doubleTime": "double time",
+  /* two rules in force at one mark. A readout, not a sentence — the `·` join
+     ui/video.js's caption already uses — so a translator orders the pair. */
+  "mark.pair": "{a} · {b}",
 
   /* ===== THE EXPORT TAB ================================================= */
   "exportTab.link.sub": "Place, year, seed and current view",

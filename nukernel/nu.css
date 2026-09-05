@@ -2401,6 +2401,13 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    documentElement.scrollWidth == innerWidth at both. */
 .nu-sel > label > .nu-combo{ flex: 0 1 auto; min-inline-size: 0;
   max-inline-size: min(100%, 30ch); }
+/* ...EXCEPT A LOZENGE FIELD, WHICH IS NOT A CLOSED CONTROL. The cap above
+   ellipsises a one-line widget holding one word; a field of forty-two words
+   capped at 30ch is a column of pills three-fifths of the way across the pane,
+   which is the same argument `#pan-band .nu-vsheet > .nu-lzfield`'s
+   `grid-column: 1 / -1` makes at the other end of this file. */
+.nu-sel > label > .nu-combo[data-widget="lozenge"]{ flex: 1 1 100%;
+  max-inline-size: 100%; }
 /* (`.nu-sel > label > select` HELD THESE THREE DECLARATIONS until 2026-09-02.
    The `<select>` is inside a `<span class="nu-combo">` now, so the cap has to
    be on the box that is actually the flex item; the select fills it, which is
@@ -2473,6 +2480,16 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
 .nu-combo.is-said > select{ color: var(--hand); font-weight: var(--fw-label); }
 .nu-combo.is-said::after{ color: var(--hand); }
 .nu-combo:has(> select:disabled)::after{ color: var(--faint); }
+/* ...AND NO ARROW AT ALL OVER A LOZENGE FIELD (2026-09-05). `menu()` puts
+   every widget in this same chassis on purpose — "a menu may not read as a
+   different species for being drawn a different way" — but the ▾ is the
+   chassis saying "there is a list behind me, tap to open it", and a lozenge
+   field has no behind: every word is already on the glass. Paul photographed
+   the result on the TIME row's mode picker (2026-09-05): a stray picker arrow
+   floating over a field of pills, which reads as a second control on one fact.
+   ONE CONTROL, ONE OWNER — and the arrow is the half that goes. */
+.nu-combo[data-widget="lozenge"]::after{ content: none; }
+.nu-combo[data-widget="lozenge"]{ display: block; }
 /* THE FILTER FIELD. 44px like everything else a thumb touches, 16px like
    everything else that takes focus on iOS (`font: inherit` from the top of
    this file gives it that and the type scale may not take it away — see the
@@ -8091,8 +8108,19 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    of it — the same shape `.nu-grouphead` takes for a sheet's groups, one tier
    in and one hue over. It is a BUTTON (it folds) and so it is 44px, which is
    the one height on this page that is never spent. */
-.nu-lzhead{ display: flex; align-items: baseline; gap: var(--s2);
+/* THE WORD SITS ON ITS OWN RULE. `align-items: baseline` in a 44px box puts
+   both children at the TOP of it and left the hairline floating 25px below the
+   heading — which is what Paul read as *"a hairline rule above each cluster"*,
+   a rule belonging to nothing. `end` spends the same 44px of thumb and draws
+   the heading and its rule as one mark. */
+.nu-lzhead{ display: flex; align-items: end; gap: var(--s2);
   inline-size: 100%; min-block-size: var(--tap); padding: 0 0 var(--s1);
+  /* THE RULE IS ABOVE THE PILLS AND NOT THROUGH THEM. Measured on the phone,
+     2026-09-05: the first pill's top stood 5px ABOVE the heading's own border
+     (the lozenge's `margin-block-start: -5px`), so the cluster's hairline was
+     drawn across the first row of words. The margin is gone; this is the air
+     DESIGN.md §1 spends between a question and what answers it. */
+  margin-block-end: var(--s2);
   background: transparent; border: 0;
   border-block-end: var(--bw) solid var(--lz, var(--rule));
   border-radius: var(--r0); box-shadow: none;
@@ -8106,42 +8134,71 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    own note): a bare `.nu-lzwrap{ display: flex }` is a UA-rule-beating
    `display` and would un-fold every fold on the page — the same trap
    `.nu-wchip[hidden]` two thousand lines up was written for. */
-.nu-lzwrap:not([hidden]){ display: flex; flex-wrap: wrap; }
+/* AND THE FIELD'S SPACING IS A GAP, WHICH IS THE ONE KIND THAT CANNOT
+   OVERLAP (2026-09-05). The pills used to carry `margin: -5px … -5px 0` and
+   the rows crossed each other's outlines by 10px on a phone; a `gap` is the
+   same air, said on the container, and it is never negative. */
+.nu-lzwrap:not([hidden]){ display: flex; flex-wrap: wrap; gap: var(--s2); }
 .nu-lzcluster.is-folded > .nu-lzhead{ opacity: .75; }
 
-/* ---- ONE LOZENGE: 28px OF GLASS, 44px OF THUMB -----------------------
-   DESIGN.md §2/16: *"~28px tall visually with a 44px hit area through its
-   margins"*, and the two halves of that are a padding and a negative margin.
-   The BUTTON is the target and is `--tap` tall; the visible pill is the button
-   minus 8px of padding top and bottom; and `margin-block: -5px` pulls the row
-   PITCH back down so a wall of sixty-eight words is a field a thumb can see
-   rather than a page it has to travel.
-   THE ARITHMETIC, MEASURED: 68 lozenges at 390 were 1,293px tall with a plain
-   44px pitch (the component's own probe, scratchpad/design/loz-probe) — a
-   screen and a half. At a 34px pitch they are ~1,000px, and folding a cluster
-   takes another 200 off. The hit areas OVERLAP by 5px top and bottom, which is
-   what "through its margins" means and is why the negative margin is half the
-   padding and not all of it: a thumb landing in the overlap gets the later
-   lozenge in document order, which is the one below — the direction a finger
-   is travelling when it misses. */
+/* ---- ONE LOZENGE: THE PILL IS THE THUMB, AND NOTHING OVERLAPS --------
+   WHAT STOOD HERE, AND WHAT PAUL PHOTOGRAPHED. DESIGN.md §2/16 says *"~28px
+   tall visually with a 44px hit area through its margins"* and this block drew
+   it as `padding: 8px` with `margin-block: -5px` — "the visible pill is the
+   button minus 8px of padding". IT IS NOT: the border is on the BUTTON, so the
+   drawn pill was the whole 44px and the negative margin pulled the row pitch
+   to 34px, which is 10px of every row's outline crossing the row above it.
+   MEASURED under iPhone emulation at 390 (scratchpad/design/loz-phone), the
+   mode picker before this edit: 42 pills, 35 intersecting pairs, 10px of
+   overlap on each, the cluster's own hairline 5px INSIDE the first row.
+   *"The lozenges all overlap"* — Paul, 2026-09-05, with the screenshot.
+
+   SO THE 44px IS A MINIMUM AND A PADDING AND NEVER AN OVERLAP. The pill's
+   height is its CONTENT's (`min-block-size` floors it at `--tap`, which is the
+   one number a restyle may not spend), the row pitch is that height plus
+   `.nu-lzwrap`'s gap, and a word wraps to a second line only when it cannot
+   fit — `flex: 0 0 auto` so a tight line moves a pill to the next row instead
+   of squeezing its word onto two, and `max-inline-size: 100%` so the one word
+   wider than the field wraps rather than scrolling the page sideways.
+   WHAT IT COSTS: the mode picker's 42 words are 10 rows at 390 instead of 8.
+   A cluster folds (law 1) and that is what folding is for; a field a thumb
+   cannot hit the right word on is not shorter, it is wrong. */
 .nu-lz{ display: inline-flex; align-items: center; justify-content: center;
-  flex-wrap: wrap; gap: var(--s1);
+  flex: 0 0 auto; max-inline-size: 100%; gap: var(--s1);
   min-block-size: var(--tap);
-  padding: 8px .7ch; margin: -5px var(--s1) -5px 0;
+  padding: var(--s2) .7ch; margin: 0;
   background: transparent; box-shadow: none;
   border: var(--bw) solid var(--lz, var(--rule));
   border-radius: var(--r-pill);
   color: var(--lz, var(--ink));
   font: var(--fw-body) var(--t2)/1.2 var(--sans, inherit);
   cursor: pointer; touch-action: manipulation; }
+/* THE WORD RESERVES ITS OWN BOLD WIDTH, IN EVERY STATE. A hot lozenge is
+   filled AND `--fw-label`, and bold is wider — so pressing a word grew its
+   pill under the thumb that pressed it and shoved every pill after it onto a
+   new line (Paul, 2026-09-05: *"it shouldn't move at all"*). The same word,
+   bold, in a zero-height clipped line, is what the box is measured against; it
+   is `attr(data-w)` and not `attr(aria-label)` because the label carries the
+   refusal's sentence too. */
 .nu-lzword{ display: block; }
+.nu-lzword::after{ content: attr(data-w); display: block;
+  block-size: 0; overflow: hidden; visibility: hidden; pointer-events: none;
+  font-weight: var(--fw-label); }
 .nu-lz:hover{ background: var(--panel); }
 /* HOT IS FILLED, and that is the state DESIGN.md §2 draws: the cluster's own
    ink, white on it, and the label weight — hue for the kind, weight for the
    state, said in one control. */
 .nu-lz.is-hot, .nu-lz[aria-pressed="true"]{
   background: var(--lz, var(--hand)); border-color: var(--lz, var(--hand));
-  color: #FFFFFF; font-weight: var(--fw-label); }
+  color: #FFFFFF; }
+/* ...AND THE WEIGHT IS ON THE WORD, NOT ON THE BUTTON. The pill's side padding
+   is `.7ch` (DESIGN.md §1: *"a control is a hair wider than its word"*) and a
+   `ch` is the width of the "0" IN THE CURRENT WEIGHT — so bolding the button
+   widened its padding as well as its word, and the pill still grew 1.1px under
+   the thumb that pressed it after `.nu-lzword::after` had reserved the text.
+   Bolding the WORD leaves the button at `--fw-body` and the padding still. */
+.nu-lz.is-hot > .nu-lzword, .nu-lz[aria-pressed="true"] > .nu-lzword{
+  font-weight: var(--fw-label); }
 .nu-lz.is-hot:hover, .nu-lz[aria-pressed="true"]:hover{
   background: var(--lz, var(--hand)); }
 /* A CHAIN PRINTS ITS ORDER, because "transpose then invert" is not "invert
@@ -8151,23 +8208,44 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   min-inline-size: 1.4em; text-align: center;
   padding: 1px .3ch; border-radius: var(--r-pill);
   background: rgba(255, 255, 255, .28); }
-/* REFUSED: dashed, dim, AND ITS SENTENCE PRINTED — the no-silent-grey law, in
-   the shape `.nu-wchip > .nu-why` already takes (a `flex: 0 0 100%` second
-   line inside the same button, capped so it wraps instead of stretching the
-   pill and pushing its neighbours sideways). */
+/* REFUSED: DASHED, DIM, AND ITS WORD ONLY. `.nu-lzwhy` stood here — a
+   `flex: 0 0 100%` second line printing the reason inside the button, which is
+   `.nu-wchip > .nu-why`'s shape one widget along. Paul, 2026-09-05, with the
+   phone in his hand: *"you added sentences of text to some of them"*. A chip
+   strip is a few words on one line and can afford a second; a field of
+   forty-two is a SHAPE, and "ukrainian dorian" drawn 54px tall holding "the
+   record is straight, and modal harmony has no changes" is not a pill, it is a
+   paragraph with a border. The sentence has one place — `.nu-lzsay`, below,
+   on a long press or a tap — and the pill carries a word at every width. */
 .nu-lz[disabled], .nu-lz[aria-disabled="true"]{
   background: transparent; border-style: dashed;
   color: var(--dim); opacity: .7; cursor: not-allowed; box-shadow: none; }
 .nu-lz.is-quiet{ opacity: .8; }
-.nu-lzwhy{ flex: 0 0 100%; max-inline-size: 18ch; text-align: center;
-  white-space: normal; font-weight: 400; font-size: var(--t0);
-  line-height: 1.25; }
 /* THE SENTENCE A LONG PRESS SAYS. It reserves its own line whether or not
    there is one to say, for the reason `[data-k="board.legend"]` reserves two:
    GEOMETRY IS RESERVED AT CREATION, or a sentence arriving under a thumb moves
    the thing the thumb is on. */
-.nu-lzsay{ margin: var(--s2) 0 0; min-block-size: 1.4em;
-  font: var(--fw-body) var(--t1)/1.35 var(--sans, inherit); color: var(--dim); }
+/* 1.35em of line plus the .2em of padding above and below it: the box a
+   one-line sentence needs, reserved before there is one to print — 1.4em
+   measured 4px short of it once the padding was inside the border box, and a
+   say line that grows when it speaks moves the field's own foot. */
+.nu-lzsay{ margin: var(--s2) 0 0; min-block-size: 1.75em;
+  padding: var(--s1) var(--s2);
+  font: var(--fw-body) var(--t1)/1.35 var(--sans, inherit); color: var(--dim);
+  /* ...AND IT IS READ WHERE THE THUMB IS. A field of forty-two words is
+     taller than a phone, so a sentence printed at the foot of it is a sentence
+     nobody scrolled to. It sticks to the bottom edge of whatever part of the
+     field is on the glass — the room is still reserved at creation, so
+     nothing moves when a sentence arrives; only where it is drawn changes. */
+  position: sticky; inset-block-end: 0; z-index: 1; }
+/* ...AND IT ONLY PAINTS WHEN IT IS SAYING SOMETHING. A sticky line needs an
+   opaque ground to hold still over the pills passing under it, and a ground on
+   an EMPTY line is a white band across the foot of every field on the page
+   (measured, first drawing: `--paper` is `--panel` inside a sheet). The
+   attribute is the widget's own (`?data-said`), the padding and the room are
+   the same in both states, and what changes when a sentence arrives is a
+   COLOUR AND NOT A BOX — measured: the say line's top moves 0px. */
+.nu-lzsay[data-said]{ background: var(--well); color: var(--ink); }
 /* THE WHOLE FIELD REFUSED: dashed and dim, with `menuField`'s own `.nu-why`
    line under it — one refusal line in this file, not two. */
 .nu-lzfield.is-off .nu-lz{ cursor: not-allowed; }
