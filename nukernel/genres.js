@@ -36338,13 +36338,47 @@
     // against `swing` forced to 0: 0 of 0 hits and 870 of 3,872 line events moved
     // at seed 1 (1,426 of 4,862 at seed 2, 676 of 4,324 at seed 3), so the 0.25 is
     // arriving — on the bass, the brushed loop's melodic parts and the muted
-    // trumpet. FOUND AND NOT FIXED, because it is a question about the KIT and not
-    // about the swing: this row declares `drumkit: "electronic"` and writes no
-    // `kit` grid, and the compiler seats it NO kit — 0 drum events at seeds 1, 2
-    // and 3 — where `bolero`, which also writes no grid, is dealt an acoustic one.
-    // A Kruder & Dorfmeister row with no beat under it is worth a look; the
-    // census's fence is the swing field, so it is reported here rather than
-    // changed.
+    // trumpet.
+    //
+    // FOUND, THEN FIXED THE NEXT DAY (2026-09-05, the kit census). It was never a
+    // question about the swing: this row declared `drumkit: "electronic"` and wrote
+    // no `kit` grid, and `precompose.js` seats a DRUMMER only where a grid exists
+    // (`hasKit`, precompose.js:3708 — `cells.beat` and the drums voice are both
+    // behind it), so the declared kit reached no chair at all. MEASURED on the
+    // rendered score, the same path the swing census used: 0 drum events and 0
+    // drums voices at seeds 1, 2 and 3. (The census's aside about `bolero` was
+    // wrong and is corrected here: bolero WRITES a grid — rim and hat — and simply
+    // names no kit, which is the opposite case and correctly takes the acoustic
+    // default. The catalogue held exactly two rows with this missing byte, this one
+    // and `versailles`; both were fixed in the same pass.)
+    //
+    // THE GRID IS THE ROW'S INVENTION, NOT TRIPHOP'S. `triphop`, `downtempo` and
+    // `chillout` all write the same full backbeat — snare on 2 and on 4 over a
+    // doubled kick — and copying it here would make this row Bristol with a Vienna
+    // label. G-Stoned is HALF-TIME: one snare a bar, on beat 3, and the kick pushed
+    // dub-late onto the and-of-2 and the and-of-3. The bpm stays 82, inside the
+    // family (triphop 84, downtempo 84, chillout 80): the weight is in the grid and
+    // not in the tempo.
+    //
+    // AND THE HAT IS WRITTEN SO THE ROW'S OWN SWING CAN REACH IT, which is the
+    // straight-hat law the same day's shift wrote into `chillout`, `soundsystem`,
+    // `spyscore`, `crimejazz` and `gospel`. kernel.js's swing law is `swing(g, i) =
+    // (i % 2) * g.swing`: it delays the ODD sixteenths and nothing else, so the
+    // straight eighths `1010101010101010` that this row's siblings write are a lane
+    // the shuffle cannot touch. A row that declares `swing: 0.25` and hands its
+    // drummer a lane the swing cannot move would have shipped the same bug twice in
+    // one file. So the hat plays the beat and the swung "a" (`h:
+    // 1001100110011001`) and the rim ghosts the "e" after 2 and after 4 — both odd
+    // lanes, both swung, brushed rather than machined, which is what a K&D loop is.
+    //
+    // MEASURED AT THE SCORE after the fix, on the same render the swing census
+    // used: one drums voice seated per record, carrying the row's own `electronic`
+    // word, and 1,792 / 2,016 / 1,680 drum events at seeds 1 / 2 / 3 where there
+    // were 0 — at seed 1 that is k 384, h 1,024, p 256, s 128, one snare a bar
+    // across 128 bars. The declared swing now reaches the kit as well as the line:
+    // 768 of 1,792 hits move when `swing` is forced to 0 (864 of 2,016; 720 of
+    // 1,680), which is the hat's odd half plus every rim, where before the fix it
+    // was 0 of 0.
     viennadownbeat: {
       label: "Vienna 1993",
       voices: 2,
@@ -36367,6 +36401,12 @@
       maxHold: 4,
       swing: 0.25,
       bassStyle: "pedal",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        h: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+        p: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+      },
       fx: ["echo"],
       tone: { wave: "triangle", cut: 1500, q: 0.9, atk: 0.025, rel: 1.4, gain: 0.24, verb: 0.5 },
       words: ["the trumpet, muted, in no hurry, in smoke", "the pad, the room after midnight"],
@@ -36987,6 +37027,21 @@
     // song underneath; `roboticpop` (Düsseldorf 1978) the vocoder
     // folded into a verse-chorus; `ambient` (London 1978) the
     // patience and the air.
+    //
+    // THE CR-78 REACHED NOTHING (2026-09-05, the kit census). This row declared
+    // `drumkit: "cr78"` and wrote no `kit` grid, and `precompose.js` seats a
+    // drummer only where a grid exists (`hasKit`, precompose.js:3708), so Moon
+    // Safari rendered with no beat under it at all — MEASURED on the rendered
+    // score: 0 drum events and 0 drums voices at seeds 1, 2 and 3. It was one of
+    // exactly two rows in the catalogue with that missing byte (`viennadownbeat`
+    // is the other, found by the swing census the day before) and both were fixed
+    // in the same pass. The grid is the preset the other eight `cr78` rows already
+    // write, taken at this row's own downtempo pace: the soft kick on 1 and on 3
+    // with a pickup into the next bar, the backbeat on 2 and 4, the offbeat eighth
+    // hat `analogsynthpop` and `synthsoul` use rather than the straight one, and
+    // the rim that is half of what a CR-78 actually sounds like. MEASURED AT THE SCORE after
+    // the fix: one drums voice per record carrying the `cr78` word, and 880 / 836 /
+    // 726 drum events at seeds 1 / 2 / 3 where there were 0.
     versailles: {
       label: "Versailles 1998",
       voices: 3,
@@ -37009,6 +37064,12 @@
       artic: "legato",
       maxHold: 4,
       bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        p: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+      },
       fx: ["chorus"],
       tone: { wave: "triangle", cut: 1600, q: 0.8, atk: 0.03, rel: 1.4, gain: 0.24, verb: 0.4 },
       words: [
