@@ -1724,3 +1724,46 @@ And the REVIEW: a musicologist drives the page through seven attempts (an
 AABA standard, a house track, a string quartet, a piece of their own, a
 Bach fugue, a new gamelan piece, a Schoenberg row) and names every wall;
 its ten ranked items reorder what comes next, before the design pass.
+
+### 12a · The review's verdict and the queue it sets (scratchpad/REVIEW.md, 2026-09-05)
+
+*"It is the best arranger I have driven and it is not yet a composing
+instrument — and the gap is almost entirely vocabulary, not engine."*
+Note entry already exists and is good (16 steps a measure, note/hold/rest,
+degree, velocity, any length); per-note dynamics exist. The ten, ranked:
+
+1. A chord that is not a bar long — `beats` is dealt and dropped on purpose
+   at precompose.js:1556; carry it; "split this bar". (in flight)
+2. A chart as long as the form and per section — the 8-bar cap
+   (eight.js:2038) → 32; a row's changes open the same grid. (in flight)
+3. Chained development words — `does` holds one of 26 phrases; make it an
+   ordered list; the kernel already folds lists. (in flight)
+4. Sub-bar entry — `enters at bar` is Number.isInteger (document.js:1791):
+   no pickup, no stretto, no answer on beat 3. NEXT.
+5. Any tempo, any meter — 137.5 became 138; meter is three words; `metOf`
+   already takes {steps, pulse}. (in flight)
+6. Accent and articulation per note — the `acc` and `orn` step vectors
+   exist and nobody writes them. NEXT.
+7. A chromatic channel — the accidentals toggle was deleted, not built
+   (eight.js:6995); a ±1 semitone flag per step. NEXT.
+8. Independent phrase lengths per voice — document.js:110–117 forces one
+   length on every line cell.
+9. A form grammar — repeat, second ending, coda, upbeat.
+10. A lane you can draw — a start and an end, not one offset (the curve
+    editor's breakpoint mode).
+
+Bugs found: "at the fifth" is transpose(4 degrees) — a tritone on the
+diatonic, a minor seventh on the fugue row's pentatonic (in flight);
+"inverted" truncates to eight notes (in flight); the gamelan kotekan's
+complement is taken against the phrase as written, not against the other
+chair; `harmony: emergent` renders byte-identically to modal (in flight).
+
+Protect: the table as an address space; the record arriving full; the
+seed; the genealogy; slendro as a real 1208-cent octave; the refusal
+sentences ("the most honest interface I have reviewed").
+
+The words (for the text pass): reads → plays · does → variation · motif →
+phrase · word operator → transformation · chair → part · "the atlas dealt
+it" → the generator picked it · period → phrase structure · pace → feel ·
+shape → dynamics · motion → automation · breath → note-length limit ·
+alphabet → scale · harmony: emergent → a sentence.
