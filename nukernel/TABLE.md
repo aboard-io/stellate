@@ -1643,6 +1643,29 @@ things up to be tappable is good"*.
   only where no honest glyph exists, a number small beside its glyph;
   written/inherited as the glyph's weight or ink; every glyph keeps its
   `.nu-vh` word and `data-say`. The sheet at 390 reads as a grid of marks.
+- DATA ENTRY (Paul, 2026-09-05: *"think sliders and other UI for data
+  entry"*): a continuous number pops up as a SLIDER or the envelope's
+  handles with the number printed and typeable beside it; chips stay for
+  words; the typed editor (§11a) for long vocabularies.
+- DISMISSAL (Paul: *"Don't dismiss things when I tap them to change values;
+  dismiss them when I tap outside of them"*): every popped-up control — the
+  in-cell picker, a chip strip, a slider, the envelope editor, a sheet —
+  stays open across value taps and closes only on a tap outside it, Escape,
+  or its own close; Enter commits without closing unless the control is
+  single-valued and the spreadsheet law moves on. Gated.
+- THINK LIKE A COMPOSER (Paul): the redesign's order of controls, its
+  defaults and its words are a composer's — what a hand reaches for first
+  at a desk, not what the data model lists first.
+- THE FUNCTIONAL TEXT PASS (Paul: *"There's all this copy like 'the
+  sections own' and so forth. Just call things 'default.' Rewrite it all to
+  be familiar and app like. It's very random and claudeish right now."*):
+  its own round after the envelope editor — every UI string (faces, chips,
+  explainers, refusal sentences, sheet labels, the formula bar, the log)
+  audited and rewritten in plain app language: "default" for an inherited
+  or dealt value, verbs for actions, nouns for things, no narrative, no
+  "the record's own", no "as the atlas dealt it"; a `test/copy.test.js`
+  that reads every string the page prints and fails on the banned phrases
+  and on any string over a length budget.
 - Order after §10: cells as cells at rest (~10 lines) → the envelope editor
   and its wiring (samples first) → the EQ curve and the XY pad → the in-cell
   typed editor + synonyms → the restyle pass over the rest.
