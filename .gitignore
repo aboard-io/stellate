@@ -45,3 +45,6 @@ scratch/
 /feed-archive.xml
 /feed-archive.json
 __pycache__/
+
+# scratchpad/ — session working files (screenshots, probes); never tracked
+scratchpad/
