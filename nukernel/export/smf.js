@@ -128,7 +128,14 @@ function keysOf(midi, perc, drumMap, dropped) {
  */
 export function writeSmf(score, opts = {}) {
   const bpm = Math.max(1, +score.bpm || 120);
-  const bpb = Math.max(1, Math.round(+score.beatsPerBar || 4));
+  /* THE BEATS ARE NOT ROUNDED (2026-09-05, the any-meter round). This read
+     `Math.round(+score.beatsPerBar)`, which is the identity on 4, 3 and every
+     signature whose bar is a whole number of quarters — and a 7/8 bar is 3.5
+     quarters and a 21/17 bar is 4.941, so rounding put every tick in the file
+     1.2% to 14% out. `tickPerStep` takes the true number; the SIGNATURE
+     fallback below still needs a whole one and takes its own. */
+  const bpb = Math.max(0.0625, +score.beatsPerBar || 4);
+  const bpbInt = Math.max(1, Math.round(bpb));
   const spb = Math.max(1, Math.round(+score.stepsPerBar || 16));
   // a bar is `spb` steps AND `bpb` quarters, so one step is this many ticks:
   const tickPerStep = (TPQ * bpb) / spb;
@@ -164,8 +171,19 @@ export function writeSmf(score, opts = {}) {
     return [0xff, 0x51, 0x03, (u >> 16) & 255, (u >> 8) & 255, u & 255]; };
   const ts = Array.isArray(score.timesig) && score.timesig.length === 2 &&
              score.timesig[0] > 0 && score.timesig[1] > 0 ? score.timesig : null;
-  const sig = ts ? [ts[0] & 255, Math.round(Math.log2(ts[1])) & 255, 24, 8]
-                 : [bpb, 2, 24, 8];
+  /* A DENOMINATOR THAT IS NOT A POWER OF TWO (2026-09-05). 0x58 stores the
+     denominator as its LOG — one byte, `dd`, meaning 2^dd — so 17 is not a
+     number this file format has. It is not a number to refuse over either:
+     every note in the file carries an ABSOLUTE tick off `tickPerStep`, which
+     already knows the bar's true length in quarters, so the record PLAYS
+     right whatever the meta says. What the signature decides is only how a
+     DAW draws its bar lines, so we write the numerator as it is and the
+     nearest power of two at or below the denominator (17 -> 16), which puts
+     the drawn bar within one step of the played one. Every representable
+     signature — 4/4, 3/4, 6/8, 7/8, 5/4, 15/16 — is written exactly. */
+  const pow2At = (d) => { let p = 1; while (p * 2 <= d) p *= 2; return p; };
+  const sig = ts ? [Math.min(255, ts[0]), Math.round(Math.log2(pow2At(ts[1]))) & 255, 24, 8]
+                 : [bpbInt, 2, 24, 8];
   const t0 = track([
     { tick: 0, ord: 0, bytes: [0xff, 0x58, 0x04, ...sig] },
     { tick: 0, ord: 1, bytes: tempoBytes(bpm) },

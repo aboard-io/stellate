@@ -508,6 +508,15 @@ function toneRecipe(tone) {
   if (tone.q != null) out.res = clamp((tone.q - 0.7) / 12, 0, 0.9);
   if (tone.atk != null) out.attack = clamp(tone.atk, 0.001, 5);
   if (tone.rel != null) out.release = clamp(tone.rel, 0.01, 3);
+  /* ...AND THE MIDDLE (2026-09-05, nukernel/TABLE.md §11). The sampled lane
+     was A-H-R and had no decay and no sustain — half of what an envelope
+     editor draws had nowhere to land. `dcy`/`sus` on a genre's tone block
+     become the recipe's `decay`/`sustain`, which state-engine samplerUnit
+     stamps onto the unit and sampler.js applies per note on BOTH play paths.
+     No genre writes them today, so every record is byte-identical: this is
+     the port, and the page's envelope editor is what fills it. */
+  if (tone.dcy != null) out.decay = clamp(tone.dcy, 0, 8);
+  if (tone.sus != null) out.sustain = clamp(tone.sus, 0, 1);
   { const lv = levelOf(tone, "sampled"); if (lv != null) out.level = lv; }
   if (tone.verb != null) out.send = clamp(tone.verb * 1.4, 0, 1.2);
   return out;
@@ -1837,12 +1846,32 @@ function relFloored(r, seat) {
 export function samplerVox(vox) {
   if (!vox || !NF || !NF.VOX) return null;
   const V = NF.VOX, out = {};
+  /* A WORD **OR** A NUMBER (2026-09-05, TABLE.md §11). Until this round these
+     two were words only — fields.js VOX.atk's four and VOX.rel's four — and
+     the page's new ENVELOPE EDITOR draws a curve whose handles are seconds.
+     A worded value still resolves through the table exactly as before; a
+     NUMBER passes straight through, which is the same door the loop points
+     have taken since the sampling round (`lv` below, and its own paragraph:
+     "a loop point is the one control here that is EDITABLE rather than
+     worded"). Now it is not the only one. */
   const secs = (k) => { const w = vox[k], t = V[k] && V[k].t;
+    if (typeof w === "number" && isFinite(w)) return w;
     return (w != null && t && t[w] != null) ? t[w] : null; };
   const a = secs("atk");
   // the x² crescendo is the WORD's, not a second chip: "swelling" is a shape
   if (a != null) { out.attack = a; if (vox.atk === "swell") out.swell = 1; }
   const r = secs("rel"); if (r != null) out.release = r;
+  /* AND THE TWO THE SAMPLER GAINED WITH THEM. `dcy` (seconds) and `sus`
+     (0..1) are NUMBERS ONLY and have no word table: an envelope's middle is
+     what the curve is FOR, and four words for "where it rests" would be a
+     vocabulary invented so that a control could exist twice. They reach
+     engine/faust/voices/sampler.js's `envAt` (offline) and its AudioParam
+     twin (live) through state-engine samplerUnit's `dcy`/`sus`. */
+  const dv = (k, lo, hi) => { const w = vox[k];
+    return (typeof w === "number" && isFinite(w))
+      ? Math.min(hi, Math.max(lo, w)) : null; };
+  const dc = dv("dcy", 0, 8);  if (dc != null) out.decay = dc;
+  const su = dv("sus", 0, 1);  if (su != null) out.sustain = su;
   const d = NF.VOXDOUBLE && NF.VOXDOUBLE[vox.dbl];
   if (d) out.inserts = [{ type: "chorus", ...d }];
   /* THE LOOP WORDS (2026-08-30, the sampling round — the pinned contract).

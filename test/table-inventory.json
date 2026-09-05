@@ -129,8 +129,8 @@
       "pane": "Band / instrument facet",
       "was": "the chair's attack",
       "home": "column",
-      "field": "attack — the chair's own knobs, in its sheet",
-      "reach": "sound.attack|<voice>",
+      "field": "attack — the ENVELOPE EDITOR's handle, on the curve in the chair's sheet (TABLE.md §11, 2026-09-05: the four worded steps became one plate, and the number prints beside the handle)",
+      "reach": "env|<voice>|attack",
       "open": "tcol|<voice>"
     },
     {
@@ -138,8 +138,8 @@
       "pane": "Band / instrument facet",
       "was": "the chair's release",
       "home": "column",
-      "field": "release",
-      "reach": "sound.release|<voice>",
+      "field": "release — the ENVELOPE EDITOR's handle, beside the curve, in seconds",
+      "reach": "env|<voice>|release",
       "open": "tcol|<voice>"
     },
     {

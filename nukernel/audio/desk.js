@@ -109,7 +109,7 @@ import { GENRES, FX, MAX_FX, fxChain, SENDS, LEVELS, PANS, RATES, instrOf, BASSS
          // four. Under `three` a bar is 3 beats (kernel.js METERS, steps/4) and
          // the same word has to come out 0.5625 or the delay is in a different
          // metre from the band.
-         METERS, stepsIn } from "../ui/deps.js";
+         METERS, stepsIn, quartersIn } from "../ui/deps.js";
 import { NuFields } from "../ui/deps.js";
 // bpm rides along for insertsFor: the parent resolves a chip's `rateBars` to Hz
 // off the state's tempo, so a chip that asks for a bar-locked wobble has to be
@@ -1462,7 +1462,10 @@ const trimFor = (tbl, x, eff) =>
  * same word has to come out 0.5625 or the delay is in a different metre from
  * the band.
  */
-const barBeatsNominal = () => stepsIn({ meter: METERS[METER] }) / 4;
+// (…READ AS QUARTERS SINCE 2026-09-05: `stepsIn(...)/4` and `quartersIn` are
+// one number for every power-of-two denominator and part company at 21/17,
+// where the bar grids at twenty-one steps and lasts 4.94 quarters.)
+const barBeatsNominal = () => quartersIn({ meter: METER });
 /**
  * ONE ECHO WORD -> THE PARENT'S OWN `dtime`, IN SECONDS (2026-08-28).
  *

@@ -1532,13 +1532,20 @@
   // 672-677) and harm returns at(g.roots, bar), so roots.map(d => ({d, q:
   // "triad"})) is the same progression written down.
   //
-  // THE ONE LOSS, NAMED: three anchors (bossa, and two neighbours) write a bar
-  // as a LIST of chords — a ii-V inside one bar. The document's `prog` is one
-  // chord per bar (PROGRAM.md §2.1) and `toGenre` reads `A.prog.map(c => c.d)`
-  // for the roots, which an array entry cannot answer. So a listed bar is
-  // flattened to its FIRST chord: the bar count and the roots survive, the
-  // mid-bar change does not. It is written here rather than dropped silently
-  // because the fix is a document shape, not a compiler.
+  // THE ONE LOSS, REPAIRED 2026-09-05. It said: *"three anchors (bossa, and
+  // two neighbours) write a bar as a LIST of chords — a ii-V inside one bar.
+  // The document's `prog` is one chord per bar (PROGRAM.md §2.1) and `toGenre`
+  // reads `A.prog.map(c => c.d)` for the roots, which an array entry cannot
+  // answer. So a listed bar is flattened to its FIRST chord … the fix is a
+  // document shape, not a compiler."* The document shape landed with the
+  // chord editor's duration round: a bar of `alphabet.prog` may be a LIST,
+  // `document.js toGenre` takes the bar's FIRST chord for the roots, and
+  // `avail.js CHORD` reads either spelling. So the list travels whole — and
+  // with it `beats`, which is what makes the mid-bar change AUDIBLE rather
+  // than merely stored (kernel.js chordsOf gives each chord its own step
+  // window; the pad, the stab, the line's shift and the bass all read the
+  // chord per step). Three anchors — bossa, gospel, doowop — play a change
+  // they have declared since the progression landed and never once sounded.
   //
   // AND THE CHORD TRAVELS WITH EVERY FIELD THE KERNEL READS, which it did not
   // until 2026-08-25. This read `{ d: c.d || 0, q: c.q || "triad" }` and threw
@@ -1549,25 +1556,27 @@
   // "an inversion puts the third under the band"). `mbube` inherits the same
   // field and the same fix.
   //
-  // WHICH FIELDS, AND WHY THESE. kernel.js chordsOf (:683-688) reads exactly
-  // four things off a chord — `d`, `q`, `inv`, `borrow` — plus `beats`, which
-  // only ever divides a bar between the chords of a LIST. So `inv` and
-  // `borrow` are carried whenever the anchor states them (0 anchors state a
-  // borrow today, and the day one does it arrives rather than vanishing), and
-  // `beats` is deliberately NOT carried: the list it divides is flattened to
-  // its first chord one line up, and a lone chord's window is `N - cursor` by
-  // construction, so a carried `beats` would be a number in the document that
-  // reaches nothing — the same lie this fix exists to end. An absent field
-  // stays absent: `inv: 0` on every chord in the catalog would be 137 anchors
-  // newly claiming a decision nobody made.
+  // WHICH FIELDS, AND WHY THESE. kernel.js chordsOf reads exactly seven things
+  // off a chord — `d`, `q`, `inv`, `borrow`, `beats`, `bass` and `held` — and
+  // all seven are carried when the anchor states them. `beats` divides a bar
+  // between the chords of a LIST and is written only there, because a lone
+  // chord's window is `N - cursor` by construction and a carried `beats` on
+  // one would be a number in the document that reaches nothing. An absent
+  // field stays absent: `inv: 0` on every chord in the catalog would be 137
+  // anchors newly claiming a decision nobody made.
   function progOf(G) {
-    if (G.prog) return G.prog.map((slot) => {
-      const c = Array.isArray(slot) ? slot[0] : slot;
+    const chord = (c, inList) => {
       const out = { d: c.d || 0, q: c.q || "triad" };
       if (c.inv) out.inv = c.inv;
       if (c.borrow) out.borrow = c.borrow;
+      if (c.bass != null) out.bass = c.bass;
+      if (c.held) out.held = true;
+      if (inList && c.beats) out.beats = c.beats;
       return out;
-    });
+    };
+    if (G.prog) return G.prog.map((slot) => (Array.isArray(slot)
+      ? slot.map((c) => chord(c, true))
+      : chord(slot, false)));
     if (G.roots) return G.roots.map((d) => ({ d, q: "triad" }));
     return [{ d: 0, q: "triad" }];
   }
@@ -3180,9 +3189,14 @@
     // and is byte-identical, which the determinism sweep holds.
     const met = (() => {
       if (G.meter == null) return null;
-      const m = K.METERS[G.meter];
-      if (!m) throw new Error(`precompose: anchor "${gk}" declares a meter ` +
-        `no METERS key names (meter: "three"|"six" on its GENRES row)`);
+      // A WORD OR A SIGNATURE (2026-09-05, the any-meter round): `metOf` reads
+      // both, and it answers the four-four home for anything it cannot read at
+      // all — which is exactly the case this throw exists to catch, so the
+      // test is "did it fall home" rather than "is it in the two-word table".
+      const m = K.metOf({ meter: G.meter });
+      if (!m || m === K.MET4) throw new Error(
+        `precompose: anchor "${gk}" declares a meter this box cannot read ` +
+        `(meter: "three" | "six" | a signature like "7/8" on its GENRES row)`);
       return m;
     })();
     const row = met ? { ...row0, met } : row0;     // the theme counts with the record

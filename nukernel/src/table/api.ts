@@ -45,6 +45,21 @@ export interface StripField {
   groups?: { word: string; vals: string[] }[];
   /** a caller-built control — the typed combo, for the five MENUS keys. */
   node?: HTMLElement | null;
+  /** A CONTINUOUS NUMBER, AND IT GETS A SLIDER (2026-09-05). Paul: *"When you
+   *  redesign think sliders and other UI for data entry."* A field that
+   *  declares this is a NUMBER on a range — a register, a bar count, an entry
+   *  bar — and `sheet.ts` draws it as a range slider with the value printed
+   *  and TYPEABLE beside it, not as a row of chips. Words keep the chips:
+   *  chips are a set of decisions, a slider is a quantity, and a quantity laid
+   *  out as fourteen buttons is a ruler somebody has cut up.
+   *  `options` STAYS on the field either way, because the address and the
+   *  vocabulary are what T7 and the inventory read; the slider is a second
+   *  widget on the same seam, not a second field. */
+  num?: { min: number; max: number; step: number;
+          /** what the number is in — "bars", "octaves", "" */
+          unit?: string;
+          /** the number that stands when nothing is written. */
+          derivedNum?: number | null } | null;
 }
 export interface SayField {
   kind: "say";
@@ -108,6 +123,13 @@ export interface PerfRow { key: string; short: string; label: string }
 
 /* ---- the doors ------------------------------------------------------- */
 
+/** ONE MARK: the glyph, the word it stands for, and one clause of what it
+ *  means. The three columns of ui/glyph.js's own table, unchanged — the word
+ *  becomes the cell's hidden `.nu-vh` text and its accessible name, and the
+ *  clause becomes `data-say`, which the page's ONE explainer (long-press or
+ *  hover) speaks. A mark with no word would be a control with no name. */
+export interface Mark { g: string; w: string; s?: string }
+
 export interface TableAPI {
   doc(): Doc;
   facing(): "sections" | "voices";
@@ -120,6 +142,12 @@ export interface TableAPI {
 
   voiceStrip(name: string): HTMLElement;
   voiceKnobs(name: string): { label: string; node: HTMLElement } | null;
+  /** THE CHAIR'S OWN ENVELOPE (2026-09-05, TABLE.md §11) — ui/eight.js's
+   *  `voiceEnv`, which builds the ADSR editor (`nukernel/ui/envelope.js`) for
+   *  a sampled chair off `voice.sound` and for a modelled one off the
+   *  measured knobs.js rows. NULL where the instrument has no envelope to
+   *  draw, so no chair gets a plate it cannot move. */
+  voiceEnv(name: string): { label: string; node: HTMLElement } | null;
   hasCrate(name: string): boolean;
   voiceCrate(name: string): HTMLElement;
   throat(vi: number): { word: string; own: string; words: string[] } | null;
@@ -138,6 +166,16 @@ export interface TableAPI {
   provWord(name: string): string | null;
 
   cellWord(i: number, vi: number): string;
+  /** THE TABLE'S MARKS (2026-09-05). Paul: *"When you redesign use more icons.
+   *  Ideally the table is a large set of icons."* ui/glyph.js is the one table
+   *  of marks on this page and ui/eight.js is what knows which question a box
+   *  of this table is asking; the component only draws what comes back.
+   *  NULL means "no honest glyph for this value" and the cell prints its word,
+   *  which is the boundary the ruling itself draws. */
+  cellMark(i: number, vi: number): Mark | null;
+  colMark(vi: number): Mark | null;
+  rowMark(i: number): Mark | null;
+  mixMark(name: string): Mark | null;
   written(i: number, vi: number): boolean;
   cellOf(i: number, vi: number, f: string): unknown;
   resolve(i: number, vi: number, f: string): unknown;
@@ -233,9 +271,17 @@ export interface TableAPI {
    *  go, which is the true state of things. */
   leaveLanding(): void;
   bpmNode(): HTMLElement;
+  /** the signature as two numbers — numerator over denominator, each a slider
+   *  with the number typeable beside it (DESIGN.md component 8). The chips
+   *  beside it are `time.meter`'s own vocabulary; these are the way to say a
+   *  meter no chip names (2026-09-05: "like 21/17"). */
+  meterNode(): HTMLElement;
   tempoNode(): HTMLElement;
   keyNode(): HTMLElement;
-  changesNode(): HTMLElement;
+  /** the chord chart. With no argument it edits the RECORD's changes; with a
+   *  section id it edits that ROW's own chart (the wave-2a `prog` override),
+   *  drawn from the record's until the first write forks it. */
+  changesNode(sid?: string): HTMLElement;
   boardNode(): HTMLElement;
   /** the caption under the mode, on the three rows whose octave is not twelve
    *  equal semitones — null on the other nine (ui/eight.js `tuningSay`). */

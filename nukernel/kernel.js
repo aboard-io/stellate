@@ -308,6 +308,46 @@
   // The subject's alphabet is a GENRE fact, not a constant: blues needs the
   // flat five, and the blue note is a passing tone the pentatonic cannot say.
   const pitch = (d, sc = PENT) => degPitch(d, sc);
+  /* ---- AN INTERVAL IS SEMITONES; A TRANSPOSE IS DEGREES ------------------
+     (2026-09-05, the musicologist's review.) `"at the fifth"` was
+     `transpose(4)` — four DEGREES — and four degrees is a fifth only in a
+     seven-note scale, and only from six of its seven degrees: on the natural
+     minor's leading tone it is a TRITONE, and on the `fugue` row's five-note
+     pentatonic it measures a minor seventh. A word that names an interval has
+     to mean that interval whatever alphabet the chair is reading.
+
+     WHAT IS COMPUTABLE AND WHAT IS NOT. In an UNEQUAL scale no fixed degree
+     count is a fixed interval — that is what unequal means, and it is why a
+     real answer at the fifth in a fugue is TONAL (it bends a step so the
+     answer stays in the key). What this box can honestly do is pick the ONE
+     degree count whose mean pitch distance across the alphabet is nearest the
+     interval asked for, which is the answer a musician would give if asked
+     "how many steps is a fifth in this scale": four in the diatonic, three in
+     the pentatonic, five in a hexatonic, and exactly `n` for the octave
+     whatever the scale's period is (slendro included — the mean over a whole
+     cycle IS the period, so the error is zero and nothing else can win).
+     The MEAN and not the distance from degree 0: an answer is transposed
+     wherever it happens to start, so the count has to be right on average
+     rather than right at one place and a tritone at another.
+
+     `k` is searched over one full cycle plus one, so a compound interval
+     (a ninth, a twelfth) is reachable and a scale of three notes can still
+     answer an octave. */
+  const degreesFor = (a, semis) => {
+    const sc = (a && a.length) ? a : PENT;
+    const n = sc.length, sgn = semis < 0 ? -1 : 1, want = Math.abs(semis);
+    let best = 1, bestErr = Infinity;
+    for (let k = 1; k <= 2 * n; k++) {
+      let sum = 0;
+      for (let i = 0; i < n; i++) sum += degPitch(i + k, sc) - degPitch(i, sc);
+      const err = Math.abs(sum / n - want);
+      if (err < bestErr - 1e-9) { bestErr = err; best = k; }
+    }
+    return sgn * best;
+  };
+  // ...and the one interval that is never a search: an octave is the
+  // alphabet's PERIOD, which is its own length in degrees by construction.
+  const octaveDegrees = (a) => ((a && a.length) || PENT.length);
   // MODE is overridable per genre or per section, the same way `scale` is: the
   // subject's alphabet and the chords' alphabet are separate decisions.
   const mp = (d, md = MODE) => degPitch(d, md);
@@ -477,17 +517,113 @@
   // Absent-is-today is a law, not an aspiration: every reader below is
   // `g.meter ? … : the old literal`, so a genre that says nothing about meter
   // renders byte for byte what it always did. The sweep is the tripwire.
-  const MET4 = { steps: 16, pulse: 4 };
+  const MET4 = { steps: 16, pulse: 4, num: 4, den: 4, quarters: 4, units: 16 };
   const METERS = {
-    three: { w: "in three",     steps: 12, pulse: 4, abc: "3/4", beam: 4 },
-    six:   { w: "in six-eight", steps: 12, pulse: 6, abc: "6/8", beam: 6 },
+    three: { w: "in three",     steps: 12, pulse: 4, abc: "3/4", beam: 4,
+             num: 3, den: 4, quarters: 3, units: 12 },
+    six:   { w: "in six-eight", steps: 12, pulse: 6, abc: "6/8", beam: 6,
+             num: 6, den: 8, quarters: 3, units: 12 },
   };
+  /* ---- ANY METER: NUMERATOR OVER DENOMINATOR (2026-09-05) -----------------
+     Paul: *"I should be able to set any tempo at all like 21/17 you should
+     let me choose anything."* Two words were the whole vocabulary; a
+     signature is two NUMBERS, and the two words above are two of them
+     (`three` is 3/4, `six` is 6/8) kept as words because they are what every
+     save and every anchor row already says. A meter may now also arrive
+     spelled `"7/8"`, `"15/16"`, `"21/17"`, and `meterRow` is the one place
+     that turns those two numbers into the four this file counts by.
+
+     THE STEP LAW, AND WHAT A DENOMINATOR THAT IS NOT A POWER OF TWO MEANS.
+     The denominator names the beat: in n/d the beat is 1/d of a whole note,
+     so 1/17 is a real note value even though no notehead has ever been drawn
+     for it. What the GRID needs is a step, and a step is a SUBDIVISION of
+     that beat — which is a halving, always, because that is what subdividing
+     a beat is. So:
+
+       sub       steps per notated beat: the largest power of two that fits
+                 inside 16/d (how many sixteenths one beat is worth), never
+                 less than one. d=4 -> 4 · d=8 -> 2 · d=16 -> 1 · d=2 -> 8 ·
+                 d=17 -> 1 (a seventeenth is SHORTER than a sixteenth, so the
+                 beat itself is the finest honest grid and the box does not
+                 pretend to draw inside it).
+       steps     num x sub — the bar's own grid, what every vector is long.
+       quarters  num x 4/d — the bar's TRUE length in quarter notes, which is
+                 what the clock counts. 21/17 is 4.941 quarters, not 5.
+       units     quarters x 4 — the bar in CLOCK sixteenths, the unit
+                 audio/plan.js and ui/derive.js schedule in.
+
+     `units === steps` EXACTLY whenever d is a power of two up to 16 — which
+     is 4/4, 3/4, 6/8, 7/8, 5/4, 15/16 and every meter this box has ever
+     counted — so a step is a sixteenth there and nothing downstream moves by
+     a float. It is only the exotic denominators (17, 5, 3, 12, 24) where a
+     step is not a sixteenth, and there `audio/plan.js meterTL` scales the
+     bar's clock by units/steps so the bar lasts what the signature says.
+
+       pulse     the FELT beat, in steps. `sub` normally; 3 x sub for a
+                 COMPOUND signature (a numerator divisible by three, over 8 or
+                 16, above three) so 6/8 and 9/8 and 12/8 keep their two,
+                 three and four dotted beats, which is exactly what the `six`
+                 row has always said. 7/8 is not compound and its felt
+                 grouping (2+2+3) is not derivable from two numbers, so its
+                 pulse is the eighth and the box does not guess. */
+  const pow2Fit = (x) => { let p = 1; while (p * 2 <= x) p *= 2; return p; };
+  const METCACHE = new Map();
+  function meterRow(num, den) {
+    const n = Math.max(1, Math.min(99, Math.round(num)));
+    const d = Math.max(1, Math.min(99, Math.round(den)));
+    const key = n + "/" + d;
+    // FOUR-FOUR IS THE ABSENCE OF A METER AND HAS EXACTLY ONE SPELLING. A
+    // hand that types 4 over 4 has said what every record already says, so it
+    // gets the home row itself — which is what makes `okMeter` below answer
+    // no to it and every writer store `null` rather than a second spelling.
+    if (n === 4 && d === 4) return MET4;
+    if (METCACHE.has(key)) return METCACHE.get(key);
+    const sub = pow2Fit(Math.max(1, 16 / d));
+    const compound = n % 3 === 0 && n > 3 && (d === 8 || d === 16);
+    const pulse = compound ? 3 * sub : sub;
+    const row = { w: key, steps: n * sub, pulse, abc: key, beam: pulse,
+                  num: n, den: d, quarters: (n * 4) / d, units: (n * 16) / d };
+    METCACHE.set(key, row);
+    return row;
+  }
   // the bar's own arithmetic, off a genre. Total: anything without a meter is
   // sixteen steps of four, which is every genre that has ever shipped.
+  // A WORD FIRST, THEN A FRACTION, THEN HOME: `METERS` owns the two spellings
+  // a save may already carry, `n/d` is the general one, and anything else at
+  // all is the four-four an absent meter has always meant.
+  const FRACMET = /^(\d{1,2})\/(\d{1,2})$/;
   const metOf = (g) => { const m = g && g.meter;
-    return (m && m.steps) ? m : (typeof m === "string" && METERS[m]) || MET4; };
+    if (m && m.steps) return m;
+    if (typeof m === "string") {
+      if (METERS[m]) return METERS[m];
+      const f = FRACMET.exec(m);
+      if (f && +f[1] > 0 && +f[2] > 0) return meterRow(+f[1], +f[2]);
+    }
+    return MET4; };
   const stepsIn = (g) => metOf(g).steps;
   const pulseIn = (g) => metOf(g).pulse;
+  // THE BAR IN QUARTERS, and the bar in CLOCK SIXTEENTHS. Every reader that
+  // said `stepsIn(g) / 4` meant the first and every reader that said
+  // `stepsIn(g)` as a DURATION meant the second; the two are the same number
+  // as the grid for every power-of-two denominator, and are not for 21/17.
+  const quartersIn = (g) => metOf(g).quarters;
+  const unitsIn = (g) => metOf(g).units;
+  // WHAT A SIGNATURE SPELLS AS, canonically: the WORD where a word exists
+  // (so `3/4` typed by a hand and `"three"` dealt by an anchor are one fact
+  // with one spelling), the fraction otherwise, and null for four-four.
+  // IS THIS A METER THIS BOX CAN COUNT? — the one predicate a save, a device
+  // setting and a rule all ask, so a word and a signature are validated in
+  // one place and cannot drift apart. Four-four answers NO, because it is the
+  // absence of a meter and every caller spells that `null`.
+  const okMeter = (v) => v != null && metOf({ meter: v }) !== MET4;
+  const meterWordOf = (num, den) => {
+    const n = Math.round(num), d = Math.round(den);
+    if (!(n > 0) || !(d > 0)) return null;
+    if (n === 4 && d === 4) return null;
+    for (const k of Object.keys(METERS))
+      if (METERS[k].num === n && METERS[k].den === d) return k;
+    return n + "/" + d;
+  };
 
   const swing = (g, i) => (i % 2) * (g.swing || 0);
   // WHERE STEP i OF BAR b LANDS, swing included — the one spelling of the
@@ -790,14 +926,109 @@
   // root, because they are requests for a specific colour the mode may not
   // contain: dom7 is the one deliberate exit, the V7 that natural minor cannot
   // spell and every cadence wants.
-  const QSTEPS = { triad: [0, 2, 4], "7": [0, 2, 4, 6], nine: [0, 2, 4, 6, 8],
-                   sus4: [0, 3, 4], six: [0, 2, 4, 5] };
-  const QFIX = { maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], dom7: [0, 4, 7, 10] };
+  //
+  // ...AND THE VOCABULARY WAS EIGHT WORDS (Paul, 2026-09-05: *"The number of
+  // chords is very low where are my maj7 and my min11 and so forth?"*). It is
+  // forty-two now, and the thing that made eight possible in the first place
+  // is what makes forty-two safe: `pcs` is built by mapping a list of
+  // offsets, so a quality is nothing but its spelling and a longer list is a
+  // bigger chord with no other consequence. Every one of the original eight
+  // keeps its exact key and its exact intervals, so every anchor, every PROGS
+  // entry and every saved record renders the bytes it did.
+  //
+  // ONE OWNER, ORDERED BY FAMILY. `QUALFAM` is the whole table and the two
+  // names the rest of the tree already reads are DERIVED from it: `QSTEPS` is
+  // the one step-spelled family, `QFIX` the union of the rest. The family is
+  // not decoration — it is the order and the grouping the picker draws
+  // (avail.js `QUALITIES`), and a second list of these words anywhere is a
+  // second list that can be wrong about them. The families are in the order a
+  // musician learns them: the mode's own stacks, then triads, sixths,
+  // sevenths, ninths, elevenths, thirteenths, altered dominants.
+  //
+  // TWO CONVENTIONS INSIDE THE SPELLINGS, both of them what an arranger
+  // writes rather than what a stack-of-thirds generator would emit:
+  //   · `dom11` HAS NO THIRD ([0,7,10,14,17]). A natural eleventh a semitone
+  //     above the major third is the one interval every chart omits, and a
+  //     dominant eleventh voiced with both is a mistake with a name.
+  //   · `dom13` HAS NO ELEVENTH ([0,4,7,10,14,21]) for the same reason, and
+  //     `alt` is the altered dominant's working shell — root, third, flat
+  //     seventh, sharp ninth, flat thirteenth — not all seven degrees of the
+  //     altered scale piled up.
+  // `six9` and `add9` carry the ninth at 14 rather than 2 on purpose: the
+  // number IS the interval, and the pad's per-note fold is what decides where
+  // it sits in the register.
+  const QUALFAM = {
+    "out of the scale": {                            // QSTEPS — walks the mode
+      triad: [0, 2, 4], "7": [0, 2, 4, 6], nine: [0, 2, 4, 6, 8],
+      eleven: [0, 2, 4, 6, 8, 10], thirteen: [0, 2, 4, 6, 8, 10, 12],
+      sus4: [0, 3, 4], six: [0, 2, 4, 5],
+    },
+    triads: { maj: [0, 4, 7], min: [0, 3, 7], dim: [0, 3, 6], aug: [0, 4, 8],
+              sus2: [0, 2, 7], five: [0, 7] },
+    sixths: { maj6: [0, 4, 7, 9], m6: [0, 3, 7, 9], six9: [0, 4, 7, 9, 14] },
+    sevenths: { maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], dom7: [0, 4, 7, 10],
+                mmaj7: [0, 3, 7, 11], dim7: [0, 3, 6, 9], m7b5: [0, 3, 6, 10],
+                aug7: [0, 4, 8, 10], maj7s5: [0, 4, 8, 11],
+                dom7sus4: [0, 5, 7, 10] },
+    ninths: { maj9: [0, 4, 7, 11, 14], m9: [0, 3, 7, 10, 14],
+              dom9: [0, 4, 7, 10, 14], add9: [0, 4, 7, 14],
+              madd9: [0, 3, 7, 14] },
+    elevenths: { maj7s11: [0, 4, 7, 11, 18], m11: [0, 3, 7, 10, 14, 17],
+                 dom11: [0, 7, 10, 14, 17] },
+    thirteenths: { maj13: [0, 4, 7, 11, 14, 21],
+                   m13: [0, 3, 7, 10, 14, 17, 21],
+                   dom13: [0, 4, 7, 10, 14, 21] },
+    "altered dominants": { dom7b5: [0, 4, 6, 10], dom7b9: [0, 4, 7, 10, 13],
+                           dom7s9: [0, 4, 7, 10, 15], dom7s11: [0, 4, 7, 10, 18],
+                           dom7b13: [0, 4, 7, 10, 20], alt: [0, 4, 10, 15, 20] },
+  };
+  const QSTEPFAM = "out of the scale";
+  const QSTEPS = QUALFAM[QSTEPFAM];
+  const QFIX = Object.assign({}, ...Object.keys(QUALFAM)
+    .filter(f => f !== QSTEPFAM).map(f => QUALFAM[f]));
+  // WHAT A QUALITY IS CALLED ON PAPER, and the two spellings print by two
+  // different rules because they ARE two different claims. A QSTEPS word is a
+  // stack ON the mode's own triad, so the page names the triad off the mode
+  // (`romanOf`'s case, `chordName`'s measured third and fifth) and appends
+  // this suffix: `7` over a minor degree prints i7 and over a major one I7,
+  // which is the point of the family. A QFIX word is an ABSOLUTE stack, so
+  // this string is the WHOLE suffix — the third is the chord's, not the
+  // mode's, and a page that named it off the mode would print C7 over a Cm7.
+  // One owner for both, here, beside the intervals it describes.
+  const QMARK = {
+    triad: "", "7": "7", nine: "9", eleven: "11", thirteen: "13",
+    sus4: "sus4", six: "6",
+    maj: "", min: "m", dim: "dim", aug: "+", sus2: "sus2", five: "5",
+    maj6: "6", m6: "m6", six9: "6/9",
+    maj7: "maj7", m7: "m7", dom7: "7", mmaj7: "m(maj7)", dim7: "dim7",
+    m7b5: "m7b5", aug7: "7#5", maj7s5: "maj7#5", dom7sus4: "7sus4",
+    maj9: "maj9", m9: "m9", dom9: "9", add9: "add9", madd9: "m(add9)",
+    maj7s11: "maj7#11", m11: "m11", dom11: "11",
+    maj13: "maj13", m13: "m13", dom13: "13",
+    dom7b5: "7b5", dom7b9: "7b9", dom7s9: "7#9", dom7s11: "7#11",
+    dom7b13: "7b13", alt: "7alt",
+  };
 
-  // chordsOf(subj, g, bar) -> [{start, len, deg, q, inv, borrow, rootPc,
-  // bassPc, pcs[], pcSet}] — the bar's chords with their step windows. beats
-  // are steps of the pattern; unstated chords split the bar evenly and the
-  // last chord absorbs the remainder, so the bar is always exactly covered.
+  // chordsOf(subj, g, bar) -> [{start, len, deg, q, inv, borrow, bass, held,
+  // rootPc, bassPc, pcs[], pcSet}] — the bar's chords with their step windows.
+  // beats are steps of the pattern; unstated chords split the bar evenly and
+  // the last chord absorbs the remainder, so the bar is always exactly covered.
+  //
+  // TWO MORE THINGS A CHORD MAY SAY, both 2026-09-05 and both answers to
+  // *"Don't we need the chord editor to handle duration of chords? It must."*
+  //   `bass`  A SLASH BASS — a degree of the mode under the chord, which is
+  //           what `/E` on a chart means and which `inv` cannot say: an
+  //           inversion can only put a note the chord already owns underneath
+  //           it, and a pedal bass (IV/I, V/I) is a note it does not.
+  //           Absent, the bass is the inversion's own note exactly as before.
+  //   `held`  THIS BAR IS STILL THE PREVIOUS BAR'S CHORD. Everything that
+  //           reads the harmony (the line's shift, the stab, the bass, the
+  //           master harmonization) goes on reading a chord here, which is
+  //           right — the chord is sounding. What changes is that a PAD does
+  //           not re-attack it (see the pad branch), so a chord written over
+  //           two bars is one sound two bars long instead of two sounds. It
+  //           is a duration written the way a tie is written: on the note
+  //           that is being tied INTO.
   function chordsOf(subj, g, bar) {
     const md = g.mode || MODE, N = subj.deg.length;
     const one = c => ({ ...c, pcSet: new Set(c.pcs.map(n => pcw(n))) });
@@ -818,7 +1049,14 @@
         : (QSTEPS[c.q] || QSTEPS.triad).map(s => mp((c.d || 0) + s, md) + (c.borrow || 0));
       out.push(one({ start: cursor, len, deg: c.d || 0, q: c.q || "triad",
                      inv: c.inv || 0, borrow: c.borrow || 0, rootPc: root,
-                     bassPc: pcs[(c.inv || 0) % pcs.length], pcs }));
+                     held: !!c.held,
+                     // the slash bass outranks the inversion, because it is
+                     // the more specific statement: a hand that wrote /IV
+                     // wrote a bass note, and one that wrote "1st" asked for
+                     // whatever the third happens to be.
+                     bassPc: c.bass == null ? pcs[(c.inv || 0) % pcs.length]
+                                            : mp(c.bass, md),
+                     pcs }));
       cursor += len;
     });
     return out;
@@ -1821,7 +2059,33 @@
             } else {
               // a real progression: voice-led, and a bar may hold TWO chords —
               // beats < N is the half-bar turnaround/ii-V that was inexpressible
+              /* ...AND ONE CHORD MAY HOLD SEVERAL BARS (2026-09-05, Paul:
+                 *"Don't we need the chord editor to handle duration of
+                 chords?"*). The other direction of the same field. `held` on
+                 a FOLLOWING bar's chord says "this is still the chord that is
+                 sounding", so the pad does not strike it again and this
+                 chord's duration runs on through it. It is the only chair
+                 that changes: a stab, a line and a bass all go on reading a
+                 chord in that bar, which is right — a chord IS sounding
+                 there, and the harmony they follow is the same harmony.
+                 A held bar the pad ENTERS on is attacked anyway (there is
+                 nothing to tie into), and the run is bounded by the section,
+                 so a prog whose every bar says `held` cannot walk off the
+                 end. No `held` anywhere is `run === 0` and the identical
+                 event, byte for byte. */
+              const heldRun = () => {
+                let k = 0;
+                while (b + 1 + k < bars) {
+                  const sl = at(g.prog, b + 1 + k);
+                  const one1 = Array.isArray(sl) ? (sl.length === 1 && sl[0]) : sl;
+                  if (!one1 || !one1.held) break;
+                  k++;
+                }
+                return k * N;
+              };
               for (const c of chords) {
+                if (c.held && c.start === 0 && b > g.entry(v)) continue;
+                const run = c === chords[chords.length - 1] ? heldRun() : 0;
                 voicing = voiceLead(voicing, c.pcs, ctr);
                 // A VOICE-LED PAD MAY NOT WALK OUT OF THE ROOM — for a genre
                 // that asks. Leading from the last voicing is what makes
@@ -1834,7 +2098,8 @@
                 // chair, one octave of ceiling above it)
                 if (g.padRoom) voicing = voicing.map(n => foldInto(n, ctr - 24, ctr + 12));
                 for (const n of voicing)
-                  ev.push({ t: (b * N + c.start) / g.rate, dur: c.len / g.rate, v, part,
+                  ev.push({ t: (b * N + c.start) / g.rate,
+                            dur: (c.len + run) / g.rate, v, part,
                             n: n + key, acc: 0, sld: 0, vel: vel(p, first) });
               }
             }
@@ -2163,6 +2428,50 @@
   // one drum idea you reach for that no rearrangement of the existing lanes can
   // express. Both write a lane the genre may not have had.)
   const K16 = v => v.slice(0, 16).concat(new Array(Math.max(0, 16 - v.length)).fill(0));
+  /* ---- A KITOP IS WRITTEN IN SIXTEEN PLACES; A BAR MAY NOT HAVE SIXTEEN ----
+     (2026-09-05, the any-meter round.) Sixty-eight operators say things like
+     "the snare on 4 and 12" and "the last quarter", and every one of them is
+     authored on the 4/4 grid — `vec16`, `K16`, the literal `[1,0,0,0,…]`
+     arrays. Threading a bar length through sixty-eight kit->kit functions
+     would make each of them ask a question none of them is about; the
+     operators are TIMELESS by design (the argument beside KITOPS says so).
+
+     So the re-seating happens ONCE, where a kit is READ — `drums()` below —
+     and it is chair.js `regrid`'s law restated here for the same reason
+     `seat16` is: the kernel sits below chair.js and cannot import it. A mark
+     is read as (which beat, how far into it) and put down in the bar being
+     counted, which in three is the identity on the first three beats with the
+     fourth folded home, and in six-eight turns four beats into the two big
+     ones. Anything already the bar's own length is handed back untouched, so
+     a hand-drawn cell and an operator that happened to write the right length
+     are both left alone — and a 16-step bar never reaches this at all, which
+     is every record that has ever shipped.
+
+     ONLY THE LANES, NOT THE SIDECARS. `?chance`, `~nudge` and `!grace` are
+     read through `at()` beside their lane and a regrid would zero the places
+     it did not fill — on a chance vector zero means NEVER, so re-seating one
+     would silence hits rather than move them. Kits in genres.js carry no
+     sidecars at all (K16's own note), so this is the whole of the exposure. */
+  const seatVec = (vec, N, pulse) => {
+    if (!vec || !N || vec.length === N) return vec;
+    const out = new Array(N).fill(0);
+    for (let i = 0; i < vec.length; i++) {
+      if (!vec[i]) continue;
+      const j = seat16(i, N, pulse);
+      if (j < N && Math.abs(vec[i]) > Math.abs(out[j])) out[j] = vec[i];
+    }
+    return out;
+  };
+  const seatKit = (kit, N, pulse) => {
+    if (!kit || N === 16) return kit;
+    let out = null;
+    for (const [d, v] of Object.entries(kit)) {
+      if (!LANES[d] || !Array.isArray(v) || v.length === N) continue;
+      if (!out) out = { ...kit };
+      out[d] = seatVec(v, N, pulse);
+    }
+    return out || kit;
+  };
   // the small change of vocabulary the new operators are written in: copy a
   // kit, drop lanes WITH their sidecars, merge one lane's hits into another,
   // and write a sixteen-slot vector from a predicate
@@ -2569,6 +2878,10 @@
   function drums(subj, g, bars) {
     if (subj && subj.kind === "drum") return drumPattern(subj, g, bars);
     const ev = [], N = subj.deg.length;
+    // the BAR's own two numbers, read once beside them: `N` is the PHRASE
+    // (which may span several bars on purpose) and this is the bar the kit is
+    // written for. Sixteen unless the record declares a meter.
+    const BARN = stepsIn(g), BARP = pulseIn(g);
     // the two seeded facts, read once: a hand that is not the grid, and the
     // salt that makes this genre's dice its own
     const handed = HAND_KITS[g.drumkit] === 1 && g.hand !== "exact";
@@ -2595,7 +2908,14 @@
       // a KITOP because a KITOP is kit->kit and TIMELESS (the argument beside
       // KITOPS); a schedule is position-dependent data. Absent = g.kit, exact.
       const base = g.kits ? at(g.kits, b) : (g.kit || {});
-      const kit = (g.fill && b === bars - 1) ? { ...base, ...g.fill } : base;
+      // ...AND RE-SEATED INTO THE BAR BEING COUNTED (2026-09-05, seatKit's own
+      // note). Every kit in genres.js and every one of the sixty-eight KITOPS
+      // is written in sixteen places; a 7/8 bar has fourteen and a 21/17 bar
+      // has twenty-one, and `at()` reading a sixteen-slot vector across them
+      // would play the first fourteen of a sixteen-step pattern rather than
+      // the pattern. A 16-step bar is handed the identical object.
+      const kit = seatKit((g.fill && b === bars - 1)
+        ? { ...base, ...g.fill } : base, BARN, BARP);
       for (const [d, vec] of Object.entries(kit)) {
         // a key that is not a lane letter is a SIDECAR (?chance ~nudge !grace)
         // and is read here WITH its lane, never as one of its own
@@ -3309,10 +3629,12 @@
     outro(intro(ev, i, span, bs, met), o, span, bs, met);
 
   const api = { METERS, MET4, metOf, stepsIn, pulseIn,
+                meterRow, quartersIn, unitsIn, meterWordOf, okMeter,
+                degreesFor, octaveDegrees,
                 at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, keep,
                 crossmap, excerpt, only, word, slide,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, homeFor, near,
-                QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
+                QSTEPS, QFIX, QUALFAM, QSTEPFAM, QMARK, chordsOf, chordAt, withCadence, harmonizeStage,
                 seatNote, tempoWarp, prng,
                 PARTS, partOf, partLean, regOf, periodOps, OPKEYS, pipes, PIPES,
                 ORN, ORNNAME, ORNPARTS, ornament,

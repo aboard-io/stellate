@@ -122,7 +122,18 @@ export function timeSheet(A: TableAPI): Field[] {
      is the literal test/knobs.js gate 8 counts). */
   f.push({ kind: "node", label: "tempo", node: A.bpmNode() });
   f.push({ kind: "node", label: "by hand", node: A.tempoNode() });
+  /* THE METER, TWICE OVER, AND THAT IS ONE COMPONENT AND NOT TWO (2026-09-05,
+     the any-meter round). Paul: *"I should be able to set any tempo at all
+     like 21/17 you should let me choose anything."* The CHIPS are the seven
+     signatures a hand reaches for without counting — `time.meter`'s own
+     vocabulary, seated through the caller's menu at the address it has always
+     had — and the two NUMBERS under them are how to say the eighth. Both
+     write `doc.time.meter` through `K.meterWordOf`, which spells 3-over-4 as
+     the WORD every save already carries, so a chip and a slider can never
+     leave one meter with two names. Reading order is the composer's
+     (DESIGN.md 5): the common answer first, the general one under it. */
   f.push(seated(A, "time.meter", "meter"));
+  f.push({ kind: "node", label: "signature", node: A.meterNode() });
   f.push(seated(A, "time.swing", "swing"));
   f.push(seated(A, "time.groove", "groove"));
   /* RUBATO IS A DEVICE SETTING AND SAYS SO BY BEING STICKY: `setRubato` writes

@@ -299,9 +299,18 @@ export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangemen
   // set-wide signature stays the donor's until a metered donor lands; the ask
   // is in tools/ableton/donor/README.md. The clips and their loop lengths
   // carry the bar truth regardless.)
+  /* A DENOMINATOR LIVE CANNOT DRAW (2026-09-05, the any-meter round). Live's
+     signature denominator is a power of two, the same constraint the .mid's
+     0x58 has, so 21/17 goes in as 21/16 — the nearest power of two at or
+     below — and the CLIP's own loop length still carries the bar truth (it is
+     `beatsPerBar` quarters, computed off the TRUE signature below and not off
+     this). What the two numbers decide here is where Live draws its bar
+     lines; what the clip length decides is where the music actually is.
+     Every representable signature is written exactly. */
   if (sig) {
+    let dd = 1; while (dd * 2 <= (sig[1] | 0)) dd *= 2;
     x = x.replace(/<Numerator Value="[^"]*" \/>/, '<Numerator Value="' + (sig[0] | 0) + '" />');
-    x = x.replace(/<Denominator Value="[^"]*" \/>/, '<Denominator Value="' + (sig[1] | 0) + '" />');
+    x = x.replace(/<Denominator Value="[^"]*" \/>/, '<Denominator Value="' + dd + '" />');
   }
   // strip the donor's notes and put ours in their place
   const old = elementAfter(x, "Notes");

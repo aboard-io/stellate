@@ -760,6 +760,38 @@
       const atkN = Math.max(8, Math.floor((n.atk || 0.01) * sr));
       const relN = Math.max(32, Math.floor((n.rel || 0.09) * sr));
       const holdN = Math.max(atkN, Math.floor(n.durSec * sr));
+      // ---- THE PER-NOTE ADSR (2026-09-05, nukernel/TABLE.md §11) ----------
+      // Paul: *"Make an Adsr and envelope editor though and use that for
+      // samples etc."* This lane had A-H-R and no middle: a note came in over
+      // `atk`, sat at full gain for its whole duration, and let go over `rel`.
+      // A sampled chair could not be told to fall back to a sustain level, so
+      // half of what an envelope editor draws had nowhere to land — the
+      // declared-and-never-arriving shape, before it was declared.
+      //
+      // TWO NEW PER-NOTE FIELDS, and they ride the same wire atk/rel do
+      // (state-engine samplerUnit -> n.dcy / n.sus, from the document's
+      // `voice.sound` through audio/to-engine.js samplerVox):
+      //   dcy   how long the fall from the peak takes, in seconds
+      //   sus   where it rests, 0..1 of the note's own gain
+      //
+      // ABSENT IS TODAY, BIT FOR BIT. `shaped` is false unless a decay AND a
+      // sustain under 1 are both present, and with it false `envAt` returns
+      // exactly what the two lines it replaced returned: the attack ramp
+      // below atkN, 1 through the hold, the release ramp past it. The three
+      // read loops (mellotron, granular, plain) all called those two lines and
+      // all three call this instead, so there is ONE envelope on this lane.
+      const dcyN = Math.max(0, Math.floor((n.dcy || 0) * sr));
+      const susL = (n.sus != null && n.sus >= 0 && n.sus < 1) ? n.sus : 1;
+      const shaped = dcyN > 0 && susL < 1;
+      const envAt = (i, hold) => {
+        if (i < atkN) { const a = i / atkN; return n.swell ? a * a : a; }
+        const lv = !shaped ? 1
+          : (i >= atkN + dcyN ? susL : 1 + (susL - 1) * ((i - atkN) / dcyN));
+        // a note let go mid-fall keeps falling AND releases, which is what the
+        // level at that instant already is — one arithmetic, no second case.
+        if (i > hold) return lv * Math.max(0, 1 - (i - hold) / relN);
+        return lv;
+      };
       const outN = Math.min(total - s0, holdN + relN);
       if (outN <= 0) continue;
       // LOOP-END CLAMP (the "Turtle Beach" off-by-one). A soundfont-importer
@@ -872,8 +904,7 @@
           const i0 = pos | 0, fr = pos - i0;
           let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
           if (aLp) { lp += aLp * (v - lp); v = lp; }
-          if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
-          if (i > effHold) v *= Math.max(0, 1 - (i - effHold) / relN);   // tape-runout release
+          v *= envAt(i, effHold);   // attack · decay · sustain · tape-runout release
           if (S) v = stripStep(S, v, (s0 + i) / sr);
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
         }
@@ -905,8 +936,7 @@
             vv += (src[i0] + fr * (src[i0 + 1] - src[i0])) * han[gi];
           }
           let v = vv * g;
-          if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
-          if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN);
+          v *= envAt(i, holdN);
           if (S) v = stripStep(S, v, (s0 + i) / sr);
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; } }
         if (!pastWin) ringOut(iEnd);
@@ -929,9 +959,9 @@
         let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
         // attack: linear declick ramp; SWELL mode (n.swell — strings pads)
         // shapes it x² for a real crescendo. Non-swell notes keep the exact
-        // original ramp (bit-identical regression path).
-        if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
-        if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN); // release ramp
+        // original ramp (bit-identical regression path). DECAY and SUSTAIN
+        // joined it 2026-09-05 (§11) and are inert when absent — see `envAt`.
+        v *= envAt(i, holdN);
         if (S) v = stripStep(S, v, (s0 + i) / sr);
         if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
       }
@@ -1409,7 +1439,7 @@
       return ent;
     };
     // buffer: AudioBuffer (raw-decoded); f: {rate, when, durSec, amp(gain),
-    // atk, rel, rsend, dsend, loop, loopStartSec, loopEndSec,
+    // atk, dcy, sus, rel, rsend, dsend, loop, loopStartSec, loopEndSec,
     // offsetSec (decoder lead-in — see zoneLeadIn; absent/0 = start at the head),
     // bendFrom (semitones, negative = start under pitch), bendMs}
     live.note = function (buffer, when, f) {
@@ -1459,7 +1489,23 @@
         try { g.setValueCurveAtTime(curve, when, atk); }
         catch (e) { g.linearRampToValueAtTime(gain, when + atk); }
       } else g.linearRampToValueAtTime(gain, when + atk);
-      g.setValueAtTime(gain, when + hold);
+      /* ---- DECAY AND SUSTAIN, THE LIVE TWIN (2026-09-05, TABLE.md §11) ----
+         The offline path's `envAt` in mixPCM above is the same envelope said
+         in samples; this is it said in AudioParam ramps. Absent is today —
+         `shaped` false leaves exactly the two lines that stood here (hold at
+         full gain, then the release ramp) — and when a decay and a sustain
+         under 1 are both set, the gate closing BEFORE the fall has finished
+         releases from wherever the fall had got to, which is what the sample
+         loop does too. */
+      const dcy = Math.max(0, f.dcy || 0);
+      const sus = (f.sus != null && f.sus >= 0 && f.sus < 1) ? f.sus : 1;
+      if (dcy > 0 && sus < 1) {
+        const susG = gain * sus;
+        if (atk + dcy < hold) { g.linearRampToValueAtTime(susG, when + atk + dcy);
+                                g.setValueAtTime(susG, when + hold); }
+        else g.linearRampToValueAtTime(
+          gain + (susG - gain) * ((hold - atk) / dcy), when + hold);
+      } else g.setValueAtTime(gain, when + hold);
       g.linearRampToValueAtTime(0, when + hold + rel);
       srcOut.connect(env);
       // THE SHARED CHANNEL STRIP (F4 hoist, 2026-08-27 — was: "per-note channel

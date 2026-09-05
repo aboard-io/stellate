@@ -501,6 +501,84 @@ export const GLYPH = {
                   "and a way to put another in its place" },
   },
 
+  /* ===== THE TABLE'S OWN MARKS (2026-09-05) ==============================
+     Paul, on the redesign: *"When you redesign use more icons. Ideally the
+     table is a large set of icons."* The Band table is eighty-odd cells of
+     words at 56px a column; every one of them is a value out of a CLOSED
+     vocabulary, which is exactly the condition under which a mark is honest.
+
+     THE RULE FOR WHAT GETS ONE, and it is the same rule §11 states for the
+     graphical editors: a mark where the vocabulary is closed and the picture
+     is the fact (a part, a level, where a motif came from); the WORD where the
+     value is a proper noun (a motif is CALLED `counter`, and no picture says
+     that); a mark plus a small NUMBER where the value is a count.
+
+     EVERY MARK STILL CARRIES ITS WORD. `paintIcon` writes a `.nu-vh` span and
+     an `aria-label`, and this table's own header states why: "with the
+     stylesheet off this page still reads as the same document it always did,
+     and a screen reader hears 'Where', never 'circled plus'." The table's
+     cells are drawn by lit rather than by `paintIcon`, so `src/table/grid.ts`
+     writes the same three parts by hand — the glyph `aria-hidden`, the number,
+     and the hidden word — and hangs `data-say` off the button so the ONE
+     explainer this page has (long-press or hover) speaks the clause below.
+
+     NO GLYPH IS INVENTED HERE THAT COLLIDES WITH ONE ABOVE. The marks already
+     spent are ▦ ▣ ▤ ▥ ■ ▶ ◈ ◎ ◍ ⊕ ⇅ ⇩ ↑ ↻ ≡ ≋ ⋯ ⏱ ⚄ ⚙ ✦ ✳ ✷ § ¶ ? × + ∿ ♩ ♪ ♫
+     ♬ 𝄞 ▼ ◉, and not one of them is reused below for a different fact. */
+  cell: {
+    /* WHAT A PLAYER IS — kernel.js PARTS, which is the vocabulary the column
+       head already prints as a word. `line`, `bass` and `drums` keep the marks
+       `kind` above already gives them: the same fact wears the same mark. */
+    part: {
+      line:    { g: "♪", w: "Line",    s: "A melodic part." },
+      lead:    { g: "★", w: "Lead",    s: "The tune, out in front." },
+      riff:    { g: "◆", w: "Riff",    s: "A repeating figure under the tune." },
+      counter: { g: "⇄", w: "Counter", s: "A line running against the tune." },
+      pad:     { g: "▬", w: "Pad",     s: "Held chords underneath." },
+      stab:    { g: "▪", w: "Stab",    s: "Short chord hits on the changes." },
+      drone:   { g: "═", w: "Drone",   s: "One note held through the section." },
+      bass:    { g: "▼", w: "Bass",    s: "The bass part." },
+      drums:   { g: "◉", w: "Drums",   s: "The kit." },
+    },
+    /* WHERE A MOTIF CAME FROM — TABLE.md §1's `material.prov`, the one fact a
+       cell carries that a picture says better than a word (it is a PROPERTY of
+       the name beside it, not a second name). `hand` is DERIVED from the
+       fingerprint and never stamped, which is why it is worth marking: it is
+       the only one a reader cannot work out from the record. */
+    prov: {
+      own:   { g: "●", w: "From this genre",  s: "Phrase from the genre of this record." },
+      guest: { g: "○", w: "From a guest",     s: "Phrase from a guest genre." },
+      hand:  { g: "✎", w: "Edited",           s: "Phrase edited by hand." },
+    },
+    /* WHERE A SEAT SITS — fields.js TRIMS, the mix row's own five words plus
+       the place a seat nobody has touched sits. Arrows, because a level is a
+       direction and every one of these words is one. */
+    level: {
+      out:  { g: "✕",  w: "Out",     s: "Out of the mix." },
+      hush: { g: "⇊",  w: "Hushed",  s: "6 dB down." },
+      back: { g: "↓",  w: "Back",    s: "2.5 dB down." },
+      norm: { g: "◇",  w: "Default", s: "Level as dealt." },
+      fwd:  { g: "↑",  w: "Forward", s: "2.5 dB up." },
+      lift: { g: "⇈",  w: "Lifted",  s: "5 dB up." },
+    },
+    /* AND THE ONE CELL THAT SAYS NOTHING. An em dash is this table's own
+       spelling for absent (`seatWord`'s note says so at length); as a mark it
+       is the empty detent — the hole the design language has always drawn for
+       absence rather than a blank. */
+    /* AND THE ONE CELL THAT SAYS NOTHING — a TABLE with one row, not a row,
+       because `cellMark(kind, value)` looks a value up inside a named table
+       and `cellMark("cell", "none")` asked for `GLYPH.cell.cell` and got
+       undefined. MEASURED before it was noticed: 22 of 91 cells wore a mark
+       and FOUR rendered empty — the em dash had been replaced by a glyph that
+       resolved to null and a word the caller had already suppressed. A
+       resolver that answers null is right; a caller that asks the wrong
+       question is the bug, and the shape that prevents it is one table per
+       kind. */
+    state: {
+      none: { g: "–", w: "Default", s: "Nothing set here; plays the default." },
+    },
+  },
+
   /* THE DECK'S TWO VIEWS, DELIBERATELY A PAIR: one box of rules laid the way
      each view lays its time. ▤ is ruled paper — the staff, which runs across.
      ▥ is the roll — blocks standing up the pitch axis. Turn one and you have
@@ -517,6 +595,19 @@ export const GLYPH = {
    legally be CALLED "form" (see SONGTABS). A kind this table does not know
    draws the fallback dot, which is what `KINDGLYPH[...] || "•"` did. */
 export const kindGlyph = (kind) => GLYPH.kind[kind] || "•";
+
+/* THE TABLE'S RESOLVER, AND IT ANSWERS NULL RATHER THAN GUESSING (2026-09-05).
+   `cellMark("part", "lead")` is the row; a value this table has no mark for
+   comes back NULL and the caller prints the WORD, which is Paul's own rule for
+   where a mark stops ("the word printed only where no honest glyph exists").
+   A fallback dot would be the opposite: a picture that says nothing, in the
+   round whose whole point is that a picture should say something. */
+export const cellMark = (kind, value) => {
+  const t = GLYPH.cell[kind];
+  if (!t) return null;
+  const row = t[String(value == null ? "" : value)];
+  return row && row.g ? row : null;
+};
 
 /* WHAT A VOICE TAB SAYS WHEN YOU HOLD IT. The number on the tab is the voice's
    place in the RECORD's roster (`doc.voices`), and it is that in both rows

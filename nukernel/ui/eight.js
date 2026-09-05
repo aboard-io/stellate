@@ -101,7 +101,7 @@
 // three performance questions, kernel.js for the chord qualities. The page can
 // only put the document into states the tables already name, so the record it
 // describes is reproducible from the document alone, by anybody, forever.
-import { GENRES, MODES, KEYS, ROLES, DRUMNAME,
+import { GENRES, MODES, KEYS, ROLES, DRUMNAME, PROGS,
          // WHAT CAN BE SAID HERE, AND WHAT SAYING IT WOULD DO. Sixteen option
          // tables left this file with the sixteen <select>s that read them —
          // KEYLABEL, MODELABEL, METERLABEL, SWINGLABEL, RATES, RATELABEL,
@@ -342,7 +342,18 @@ import { produced as producedDoc, revise as reviseProd,
    The module draws; this file hands it `tableAPI()`, which is a list of
    DOORS — every one of them a function that already existed and already had
    one owner (§5: "No op adds a second write path"). */
-import { bandTable } from "./table.js";
+import { bandTable, undoStack } from "./table.js";
+/* THE ENVELOPE EDITOR (TABLE.md §11, RULED 2026-09-05). Paul, after the AUX
+   spike: *"keep our stuff but make it less chunky and more stylish. Make an
+   Adsr and envelope editor though and use that for samples etc."* One owner
+   for every envelope on this page — the sampled chairs' per-note ADSR, the
+   modelled chairs' amp envelope, and (built, not yet wired) the automation
+   lanes as breakpoint curves. `nukernel/src/envelope/` -> `ui/envelope.js`. */
+/* ONE COMPONENT, FOUR MODES (DESIGN.md component 9): ADSR · breakpoint lane ·
+   EQ bands · XY pad. The chair sheets ask for the ADSR mode; the lane is built
+   and waits for the automation round, and the two after it are the same
+   drawing with named handles. */
+import { curveEditor } from "./envelope.js";
 // THE ATLAS (D6), above #app: a time slider and a world map. It composes
 // nothing itself — it picks a genre key, calls precompose.js and hands the
 // whole record to CTX.setDocument.
@@ -375,7 +386,7 @@ import { songDurSec, voicing, setVoicing } from "../audio/plan.js";
 // by refusing the glyphs and drawing its tabs as words. Paul asked for marks
 // on every strip on the page, in four files, so the table is EXTRACTED to
 // ui/glyph.js and imported here; nothing about the three characters changed.
-import { GLYPH, kindGlyph, sayLog, icon, paintIcon,
+import { GLYPH, kindGlyph, cellMark, sayLog, icon, paintIcon,
          wireSay } from "./glyph.js";
 // THE ? MARK AND THE PAGE IT OPENS (2026-08-30, Paul: "add a ? Icon above the
 // log icon that fully explains every aspect of a genre"). The whole explainer
@@ -1564,8 +1575,15 @@ const CTX = {
    chair a hand actually hired (`env.pool.bass`), and without the pool here it
    could only name the engine's own default. */
 const ENV = { fleet: NATIVE, get pool() { return POOL; } };
+/* ...AND WHICH CHORD OF THE BAR, where a bar holds more than one (2026-09-05).
+   `scope.chord` is falsy for the bar's first, which is every chord on every
+   record that has not been split, so every address already written stays
+   BYTE-IDENTICAL and only a split bar's second and later chords take a
+   suffix. Without it a split bar would draw two controls at one `data-k`,
+   which is the duplicate-address bug this file legislates against. */
 const shKey = (key, scope) => [key, scope.voice, scope.section,
-    scope.bar == null ? null : "bar" + scope.bar]
+    scope.bar == null ? null : "bar" + scope.bar,
+    scope.chord ? "ch" + scope.chord : null]
   .filter((x) => x != null).join("|");
 // ONE SPEC, EITHER WIDGET, resolved but not appended. `sheetRow` and
 // `selectRow` each take a list of these and `selectEl` takes one bare, for a
@@ -1868,37 +1886,221 @@ function stepGrid(parent, table) {
 
 
 /* ---------- THE CHANGES AS A GRID --------------------------------------
-   A chord chart: one column per bar of the loop, the degree over its
-   quality, and the bar that is sounding is marked. The loop is read
-   cyclically by the kernel (`at(g.prog, bar)`), so four columns is four bars
-   and then round again — which is what the header says. */
+   A chord chart: ONE ROW PER CHORD — where it starts, its numeral, its
+   quality, what is in the bass, and HOW LONG IT LASTS. The loop is read
+   cyclically by the kernel (`at(g.prog, bar)`), so four bars is four bars and
+   then round again.
+
+   IT WAS ONE ROW PER BAR until 2026-09-05, and one row per bar is a chart
+   that cannot say a duration at all. Paul: *"Don't we need the chord editor
+   to handle duration of chords? It must."*
+
+   THE KERNEL COULD ALREADY SAY HALF OF IT. `chordsOf` has taken a LIST of
+   chords per bar with a `beats` window each since the progression landed —
+   the half-bar ii-V is in `bossa`, `gospel` and `doowop` today — and the pad,
+   the stab, the line's own shift and the bass all read the chord PER STEP.
+   What no surface could do was write one. The other half (a chord that lasts
+   longer than a bar) is `held`, new the same day: the pad does not strike a
+   held chord again, so two bars of one chord is one sound rather than two.
+
+   SO THE ROW IS THE CHORD AND THE BARS ARE ARITHMETIC. `readChanges` turns
+   `alphabet.prog` into a flat list of chords with a length in beats;
+   `writeChanges` turns that list back into bars. A record whose every bar
+   holds one chord round-trips to the identical array — same keys, same order
+   — which is what makes this an editor over the existing grammar rather than
+   a second grammar.
+
+   THE LAW THE TWO SHARE, and it is the reason there are no ragged cases: A
+   CHORD FITS INSIDE ITS BAR, OR IT FILLS WHOLE BARS. A length that would
+   cross a bar line without starting on one takes the room left in the bar
+   instead; a length past a bar line from a bar line is rounded to whole bars.
+   Nothing else can arrive, so `held` never lands on half a bar and the pad's
+   run-on cannot start in the middle of one. */
 const INVNAME = (n) => ["root", "1st", "2nd", "3rd"][n] || String(n);
-// THE QUALITY, AS A MUSICIAN WRITES IT. The numeral says the degree and the
-// diatonic triad's own colour; these say what was built on top of it.
-const QMARK = { triad: "", 7: "7", maj7: "maj7", m7: "m7", dom7: "7",
-                nine: "9", sus4: "sus4", six: "6" };
 // AN INVERSION IS FIGURED BASS, in this notation — not "/1st". A first
 // inversion is a 6, a second is a 6/4, a third is a 4/2, and that is what
 // somebody reading numerals expects to see. The SLIDER still says root / 1st
 // / 2nd / 3rd, because a control should name what it does in words.
 const INVFIG = ["", "6", "6/4", "4/2"];
 const INVFIG7 = ["", "6/5", "4/3", "4/2"];
-const SEVENTH = { 7: 1, maj7: 1, m7: 1, dom7: 1, nine: 1 };
-function chordGrid(parent) {
-  const P2 = DOC.alphabet.prog;
+// WHETHER A CHORD HAS A SEVENTH IS ITS SPELLING'S BUSINESS, not a list beside
+// it. This was `{ 7: 1, maj7: 1, m7: 1, dom7: 1, nine: 1 }` — five of the
+// eight qualities that existed — and the vocabulary is forty-two now, so a
+// hand-kept list would be wrong about thirty-four of them the day it landed.
+// Four notes or more takes the seventh's figures.
+const SEVENTHQ = (q) =>
+  ((K.QFIX[q] || K.QSTEPS[q] || K.QSTEPS.triad).length >= 4);
+/* THE NUMERAL, AND WHOSE THIRD DECIDES ITS CASE. `K.romanOf` reads each
+   degree's own third and fifth out of the MODE, which is right for a quality
+   spelled in scale steps: `7` over a minor degree is i7 and over a major one
+   I7, and that IS the family. It is wrong for a FIXED one — `min` on the
+   first degree of a major key is a minor chord, and a numeral cased off the
+   mode would print I for it. So an absolute stack is read for its own third
+   and fifth, exactly as `romanOf` reads the mode's. */
+const numeralOf = (NUM, d, q) => {
+  const base = NUM[((d % NUM.length) + NUM.length) % NUM.length];
+  const iv = K.QFIX[q];
+  if (!iv) return base;
+  const bare = base.replace(/[°+]/g, "");
+  const has = (x) => iv.indexOf(x) >= 0;
+  return (has(3) && !has(4) ? bare.toLowerCase() : bare.toUpperCase()) +
+         (has(6) && !has(7) ? "°" : has(8) && !has(7) ? "+" : "");
+};
+/* WHAT GOES AFTER THE NUMERAL. `K.QMARK` is the one owner of what a quality
+   is called on paper (this file kept its own eight-word `QMARK` until
+   2026-09-05, which is exactly the second list the kernel's table now
+   prevents). The numeral in front of it has already said the triad's colour,
+   so a lowercase numeral must not be followed by another "m" and a "°" must
+   not be followed by "dim" — strip what the numeral said and print the rest.
+   i°7, not i°dim7. */
+const romanTail = (q, num) => {
+  let m = K.QMARK[q] == null ? String(q || "") : K.QMARK[q];
+  if (num && num[0] === num[0].toLowerCase() && m[0] === "m" &&
+      m.slice(0, 3) !== "maj") m = m.slice(1);
+  if (num.indexOf("°") >= 0 && m.slice(0, 3) === "dim") m = m.slice(3);
+  if (num.indexOf("+") >= 0 && m[0] === "+") m = m.slice(1);
+  return m;
+};
+/* HOW A LENGTH IS SAID. Units after the number (DESIGN §4), and the bar is
+   named as a bar rather than as four beats, because that is what a musician
+   would say about it. */
+const lenWord = (beats, BB) => {
+  if (beats % BB === 0) {
+    const bars = beats / BB;
+    return bars === 1 ? "1 bar" : bars + " bars";
+  }
+  return beats === 1 ? "1 beat" : beats + " beats";
+};
+/* THE BAR AS A LIST OF CHORDS, WHICHEVER SHAPE IT IS IN. kernel.js chordsOf's
+   own first line, and the one place this file knows both spellings. */
+const barList = (slot) => (Array.isArray(slot) ? slot : [slot]).filter(Boolean);
+/* `alphabet.prog` -> a flat list of chords with a length in BEATS.
+   `{ c, bar, ix, beats }`: the chord object ITSELF (so degree, quality and
+   bass are written in place and no recompile is needed for them), the bar it
+   starts in, its index inside that bar's list, and how long it lasts. The
+   windows are computed exactly as `chordsOf` computes them — unstated chords
+   split the bar evenly, the last absorbs the remainder — so what the chart
+   prints is what the kernel plays. */
+function readChanges(prog, BB, SP) {
+  const out = [];
+  (prog || []).forEach((slot, bar) => {
+    const list = barList(slot);
+    let cursor = 0;
+    list.forEach((c, j) => {
+      const left = list.length - 1 - j;
+      const len = j === list.length - 1 ? SP - cursor
+        : Math.max(1, Math.min(c.beats || Math.round(SP / list.length),
+                               SP - cursor - left));
+      cursor += len;
+      // A HELD BAR IS NOT A NEW CHORD, it is the last one still sounding, so
+      // it adds to that chord's length instead of taking a row of its own.
+      if (j === 0 && list.length === 1 && c.held && out.length) {
+        out[out.length - 1].beats += BB;
+        out[out.length - 1].bars.push(bar);
+        return;
+      }
+      out.push({ c, bar, ix: j, bars: [bar], beats: (len * BB) / SP });
+    });
+  });
+  return out;
+}
+/* ...and back. Fill bars in order; a chord that does not fit in the room left
+   takes the room, a chord longer than a bar from a bar line fills whole bars
+   as `held` copies, and the last bar is completed by its last chord. Every
+   key the chord carried survives the copy; `beats` and `held` are rewritten
+   from the arithmetic rather than trusted, which is what keeps a round trip
+   with nothing edited byte-identical. */
+function writeChanges(rows, BB, SP) {
+  const prog = [], bar = [];
+  let acc = 0;
+  const flush = () => {
+    if (!bar.length) return;
+    if (bar.length === 1) {
+      const o = { ...bar[0].c };
+      delete o.beats;
+      if (bar[0].held) o.held = true; else delete o.held;
+      prog.push(o);
+    } else {
+      prog.push(bar.map((e, j) => {
+        const o = { ...e.c };
+        if (e.held) o.held = true; else delete o.held;
+        if (j < bar.length - 1) o.beats = Math.max(1, Math.round((e.beats * SP) / BB));
+        else delete o.beats;
+        return o;
+      }));
+    }
+    bar.length = 0; acc = 0;
+  };
+  for (const r of rows) {
+    let want = Math.max(1, Math.round(r.beats));
+    if (acc === 0 && want > BB) want = Math.floor(want / BB) * BB;   // whole bars
+    let first = true;
+    while (want > 0) {
+      const take = Math.min(want, BB - acc);
+      bar.push({ c: r.c, beats: take, held: !first });
+      acc += take; want -= take; first = false;
+      if (acc >= BB) flush();
+    }
+  }
+  if (bar.length) { bar[bar.length - 1].beats += BB - acc; flush(); }
+  return prog.length ? prog : [{ d: 0, q: "triad" }];
+}
+/* THE SAME GRID, SCOPED (2026-09-05). `sid` is a SECTION id or nothing.
+   Nothing is the record's own changes — `alphabet.prog`, which is what this
+   function has always edited. A section id is the ROW's changes, the wave-2a
+   `prog` override, and the row's field offered eleven named genre charts and
+   nothing a hand could type: *"the bridge cannot have its own changes"*.
+   `document.js` resolves a row's `prog` row-before-record and now takes an
+   ARRAY there as well as a name, so the row can carry a chart of its own.
+
+   BLANK IS THE DEFAULT AND THE FIRST EDIT FORKS IT (DESIGN §3). A row that
+   says nothing is drawn with the RECORD's changes in it, because that is what
+   that section plays; the first write copies them onto the row and edits the
+   copy, so reading the record's chart is never accidentally rewriting it. */
+function chordGrid(parent, sid) {
+  const sec = sid == null ? null
+    : (DOC.form.sections.find((x) => x.id === sid) || null);
+  // WHAT THIS GRID IS LOOKING AT, resolved the way the document resolves it:
+  // the row's own array, else the row's named chart, else the record's.
+  const progOf = () => {
+    if (!sec) return DOC.alphabet.prog;
+    if (Array.isArray(sec.prog)) return sec.prog;
+    const named = sec.prog && sec.prog !== "off" && PROGS[sec.prog];
+    return named || DOC.alphabet.prog;
+  };
+  // ...and the fork. A slot may be a LIST, so the copy is two deep.
+  const fork = () => {
+    if (!sec || Array.isArray(sec.prog)) return;
+    sec.prog = progOf().map((slot) => (Array.isArray(slot)
+      ? slot.map((c) => ({ ...c })) : { ...slot }));
+  };
+  const putProg = (p) => { if (sec) sec.prog = p; else DOC.alphabet.prog = p; };
   // ROMAN NUMERALS, DERIVED FROM THE MODE — not a table of minor-key names.
   // kernel.js romanOf reads each degree's own third and fifth, so the case
   // and the °/+ marks are honest in whatever alphabet the record is in:
   // switch Alphabet from natural minor to major and i becomes I, VI becomes
   // vi, and nothing here had to know.
-  const NUM = K.romanOf(MODES[DOC.alphabet.mode] || MODES.aeolian);
+  const NUM = K.romanOf(MODES[(sec && sec.mode) || DOC.alphabet.mode] ||
+                       MODES.aeolian);
   const numeral = (d) => NUM[((d % NUM.length) + NUM.length) % NUM.length];
+  // THE BAR, IN BEATS AND IN THE KERNEL'S OWN STEPS. One owner for both:
+  // `K.metOf` is what the kernel asks when it wants to know what a bar is, so
+  // a record in seven-eight gets a seven-beat bar here without this function
+  // knowing anything about meter.
+  const M = K.metOf({ meter: (DOC.time || {}).meter });
+  const BB = Math.max(1, M.num || 4), SP = Math.max(1, M.steps || 16);
   // THE FIGURE REPLACES THE QUALITY MARK when the chord is inverted, which is
   // how figured bass has always worked: a root-position seventh is V7, its
-  // first inversion is V6/5 — you do not write V7 6/5.
-  const chordName = (c) => numeral(c.d) + (c.inv
-    ? (SEVENTH[c.q] ? INVFIG7 : INVFIG)[c.inv] || ""
-    : (QMARK[c.q] == null ? c.q : QMARK[c.q]));
+  // first inversion is V6/5 — you do not write V7 6/5. A SLASH BASS is
+  // neither: it is a note that is not in the chord, so it is written the way
+  // a chart writes it, after the whole symbol.
+  const chordName = (c) => {
+    const num = numeralOf(NUM, c.d || 0, c.q);
+    if (c.bass != null) return num + romanTail(c.q, num) + "/" + numeral(c.bass);
+    return num + (c.inv
+      ? (SEVENTHQ(c.q) ? INVFIG7 : INVFIG)[c.inv] || ""
+      : romanTail(c.q, num));
+  };
   /* ===== EDITING THE CHANGES MAKES THE HARMONY A CYCLE (2026-09-02) =====
      Paul, on the deployed composer: *"I can't change chord quality, it's
      grayed."*
@@ -1915,11 +2117,11 @@ function chordGrid(parent) {
 
      SO THE GRID SETS THE HARMONY ITSELF — one write, with the side effect
      STATED. Every writer in this table goes through `asCycle()` first: the
-     quality menus, both sliders, and `+ bar` / `− bar`. It is one gesture that
-     does two things, which is the shape this page normally refuses; what earns
-     it here is that the second thing is what makes the first thing audible,
-     and it is said in words under the table while it is still going to happen
-     (`nu-why`, below), not announced after the fact.
+     quality menus, all three sliders, and `+ bar` / `− bar`. It is one gesture
+     that does two things, which is the shape this page normally refuses; what
+     earns it here is that the second thing is what makes the first thing
+     audible, and it is said in words under the table while it is still going
+     to happen (`nu-why`, below), not announced after the fact.
 
      IT IS WRITTEN THROUGH THE SHEET AND NOT ONTO THE DOCUMENT.
      `SHEETS["alphabet.harmony"].set` is the one owner of what that word does
@@ -1937,19 +2139,75 @@ function chordGrid(parent) {
   const cycle = DOC.alphabet.harmony === "cycle";
   const asCycle = () => { if (DOC.alphabet.harmony === "cycle") return;
     NuAvail.SHEETS["alphabet.harmony"].set(DOC, {}, "cycle", ENV); };
+  // ONE DOOR FOR EVERY WRITE IN THIS TABLE: make the harmony a cycle (so the
+  // kernel reads the chart at all), then fork the record's chart onto the row
+  // if this grid belongs to a row and the row has not spoken yet.
+  const own = () => { asCycle(); fork(); };
+  /* ...AND EVERY IN-PLACE WRITE RE-FETCHES THE CHORD IT IS ABOUT TO EDIT.
+     `own()` may have just COPIED the record's chart onto the row, and the
+     object a row of this table is holding is the one it was drawn from — the
+     record's. Writing through the stale reference would edit the record while
+     the row sat there looking edited, which is the fork not happening at all.
+     Address by (bar, chord) and read it back after the fork; on a
+     record-scoped grid the answer is the same object it always was. */
+  const liveChord = (row) => {
+    const slot = progOf()[row.bar];
+    return (Array.isArray(slot) ? slot[row.ix] : slot) || row.c;
+  };
+  const rows = readChanges(progOf(), BB, SP);
+  // ...AND A LENGTH IS THE ONE EDIT THAT MOVES THE BARS, so it is the one
+  // that recompiles the whole progression instead of writing a field in
+  // place. Every other control below writes the chord object the row is
+  // holding, which is the object still sitting in the document.
+  const relen = (row, beats) => { own(); row.beats = beats;
+    putProg(writeChanges(rows, BB, SP)); changed(); };
+  /* SPLIT AND JOIN — the two gestures a chart wants and a length slider says
+     awkwardly. SPLIT halves this chord and puts a copy of it in the other
+     half, which is `| Cm7 F7 |` in one tap once the copy's degree is moved;
+     JOIN gives this chord the next one's beats and deletes it. Both go
+     through `writeChanges`, so the bar arithmetic has exactly one owner. */
+  const split = (i) => { const row = rows[i];
+    if (row.beats < 2) return;
+    own();
+    const half = Math.floor(row.beats / 2);
+    row.beats -= half;
+    rows.splice(i + 1, 0, { c: { ...row.c }, beats: half, bar: row.bar,
+                            ix: row.ix + 1, bars: [row.bar] });
+    putProg(writeChanges(rows, BB, SP)); changed(); };
+  const join = (i) => { if (i + 1 >= rows.length) return;
+    own();
+    rows[i].beats += rows[i + 1].beats;
+    rows.splice(i + 1, 1);
+    putProg(writeChanges(rows, BB, SP)); changed(); };
   const t = el("table");
   const head = el("tr");
-  for (const h of ["bar", "degree", "", "quality", "inversion", ""])
+  for (const h of ["bar", "chord", "", "quality", "bass", "", "for", "", ""])
     head.append(el("th", h));
   t.append(head);
-  chordCell = [];
+  chordCell = []; chordRow = []; chordLabel = [];
   // the song-level reason the quality menus are refused, if they are; collected
   // in the row loop and printed ONCE below the table (see the note there)
   let qWhy = null;
-  P2.forEach((c, i) => {
-    const tr = el("tr");
-    const th = countCell(String(i + 1));
-    chordCell[i] = th; tr.append(th);
+  rows.forEach((row, i) => {
+    const c = row.c, tr = el("tr");
+    /* THE ADDRESS IS THE BAR, AND THE BEAT WHERE A BAR HOLDS MORE THAN ONE
+       CHORD. `3` is the whole of bar three; `3.3` is bar three, beat three —
+       which is how a musician says where a change falls. The playhead marks
+       the row, and every bar the chord SOUNDS THROUGH points at that same
+       row, so a two-bar chord stays lit for two bars instead of going dark
+       halfway. */
+    const beat = rows.slice(0, i).reduce((a, r) =>
+      (r.bar === row.bar ? a + r.beats : a), 0);
+    const word = String(row.bar + 1) + (row.ix ? "." + (beat + 1) : "");
+    const th = countCell(word);
+    // THE PLAYHEAD IS THE RECORD'S GRID'S, NOT A ROW'S. Two grids writing one
+    // registry is the bug `hookCells` was rebuilt to fix — the last one drawn
+    // keeps the cells and every earlier one's mark vanishes. A row-scoped
+    // chart is a chart of a section, and which bar of the SONG is sounding is
+    // not a fact about it.
+    if (sid == null) { chordCell[i] = th; chordLabel[i] = word;
+      for (const b of row.bars) chordRow[b] = i; }
+    tr.append(th);
     // THE DEGREE IS A SLIDER because it is a NUMBER on a line — I, II, III…
     // up the scale — and dragging it walks the changes up and down. The
     // quality stays a menu: a triad and a maj7 are not two ends of anything.
@@ -1961,7 +2219,7 @@ function chordGrid(parent) {
        dragging past the end of the alphabet silently wrapped to its start.
        `NUM.length - 1` is the same arithmetic `numeral` already does, said
        once at the control instead of after it. */
-    const d = range("prog" + i + "d", c.d, (v) => { asCycle(); c.d = v; },
+    const d = range("prog" + i + "d", c.d || 0, (v) => { own(); liveChord(row).d = v; },
       0, NUM.length - 1, 1,
       "chord " + (i + 1) + " degree", false, numeral, "84px");
     const td = el("td"); td.append(d.r); tr.append(td);
@@ -1977,8 +2235,13 @@ function chordGrid(parent) {
     // say it is beside bar 3. The column no longer has to choose between
     // reading the chord and editing it — a closed <select> shows the quality,
     // which is what the read-only cell was for.
-    const qs = shSpec("alphabet.quality", { bar: i },
-                      "bar " + (i + 1) + " quality");
+    // ...AND IT IS FORTY-TWO WORDS IN EIGHT FAMILIES SINCE 2026-09-05, which
+    // this call site did not have to learn: `selectEl` routes through
+    // `src/menus pickerFor`, which answers a long vocabulary with the phone's
+    // own wheel on a thumb and the typed combo with a keyboard.
+    const qs = shSpec("alphabet.quality",
+                      { bar: row.bar, chord: row.ix, section: sid },
+                      "chord " + (i + 1) + " quality");
     /* THE SHEET-LEVEL REFUSAL IS CLEARED HERE AND NOWHERE ELSE (2026-09-02).
        `avail.js` is untouched: its measurement is right about a record as it
        STANDS, and the thing that makes it wrong is a write this grid is about
@@ -1987,23 +2250,74 @@ function chordGrid(parent) {
        the write that drops it, which keeps the two halves of the claim in one
        expression. `qWhy` is only collected while the record IS a cycle, so the
        sentence under the table is never two reasons at once. */
-    if (!cycle) { qs.why = null;
-      const put = qs.set; qs.set = (v) => { asCycle(); put(v); }; }
+    if (!cycle) qs.why = null;
     else qWhy = qs.why || qWhy;
-    const tq = el("td"); tq.append(selectEl(qs)); tr.append(tq);
-    // INVERSION: which note of the chord is in the bass. The kernel has
-    // carried it all along — chordsOf reads `inv` and takes the bass pitch as
-    // pcs[inv % pcs.length] — so this is another field that only needed
-    // somewhere to be said. A slider because the inversions are a LADDER
-    // through the chord, and it names its rungs rather than counting them.
-    const iv = range("prog" + i + "i", c.inv || 0,
-      (v) => { asCycle(); c.inv = v; }, 0, 3, 1,
-      "chord " + (i + 1) + " inversion", false, INVNAME, "84px");
+    // ...and the write goes through the same door every other control here
+    // uses: cycle the harmony, fork the row, THEN say the word.
+    { const put = qs.set; qs.set = (v) => { own(); put(v); }; }
+    /* ...AND IT IS WIDE ENOUGH TO READ, said inline at the one call site the
+       way the sliders' 84px is. A `<select>` in a table cell takes whatever
+       the layout leaves it, and with a ninth column in the row the layout
+       left it three characters: measured at 390, `triad` drew as "t..".
+       7em is the widest word in the vocabulary (`altered dominants` is a
+       GROUP, not an option) with a hair either side. */
+    const qel = selectEl(qs);
+    if (qel && qel.style) qel.style.minWidth = "7em";
+    const tq = el("td"); tq.append(qel); tr.append(tq);
+    /* WHAT IS IN THE BASS — ONE CONTROL FOR TWO FIELDS, because they are one
+       question. The kernel has carried `inv` all along (chordsOf takes the
+       bass pitch as pcs[inv % pcs.length]) and gained `bass` on 2026-09-05:
+       an inversion can only put a note the chord ALREADY OWNS underneath it,
+       and a slash bass is a note it does not — IV/I and V/I are pedals, not
+       inversions. A slider because both are a LADDER under the chord: the
+       first four rungs are its own notes bottom-up, and past them are the
+       degrees of the key, named with the slash a chart would use. */
+    const bassRung = c.bass != null ? 4 + (c.bass % NUM.length) : (c.inv || 0);
+    const bassWord = (v) => (v < 4 ? INVNAME(v) : "/" + numeral(v - 4));
+    const iv = range("prog" + i + "i", bassRung, (v) => { own();
+      const lc = liveChord(row);
+      if (v < 4) { lc.inv = v; delete lc.bass; }
+      else { lc.inv = 0; lc.bass = v - 4; } },
+      0, 3 + NUM.length, 1,
+      "chord " + (i + 1) + " bass", false, bassWord, "84px");
     const ti = el("td"); ti.append(iv.r); tr.append(ti);
     const tn = el("td"); tn.append(iv.out); tr.append(tn);
+    /* HOW LONG IT LASTS (2026-09-05) — the control this chart did not have.
+       Beats, because that is the unit a musician counts a change in, and a
+       slider with the value printed beside it because a duration is a number
+       (DESIGN §8). One beat to four bars: under one beat is not a change
+       anybody writes on a chart, and four bars is the longest hold that fits
+       inside the eight-bar cycle this grid draws. The value SETTLES after the
+       write — the law at the head of this file rounds a length that would
+       cross a bar line without starting on one — which is why the whole page
+       redraws rather than the readout being trusted. */
+    const ln = range("prog" + i + "len", Math.max(1, Math.round(row.beats)),
+      (v) => relen(row, v), 1, BB * 4, 1,
+      "chord " + (i + 1) + " length in beats", false,
+      (v) => lenWord(v, BB), "84px");
+    const tl = el("td"); tl.append(ln.r); tr.append(tl);
+    const tw = el("td"); tw.append(ln.out); tr.append(tw);
+    /* SPLIT AND JOIN, ONE MARK EACH, at the end of the chord they act on —
+     the gesture the review named: *"put a split button on each row of the
+     chord grid that turns one bar into two half-bar chords."* Both refuse in
+     writing rather than going quietly grey: a one-beat chord has no halves,
+     and the last chord of the chart has nothing after it to take. */
+    const noSplit = Math.round(row.beats) < 2
+      ? "a one-beat chord has no halves" : null;
+    const noJoin = i >= rows.length - 1
+      ? "nothing after the last chord to take" : null;
+    const bSp = icon({ k: "prog" + i + "-split", glyph: "\u00f7",
+      word: "split", say: noSplit || "split this chord in two", why: noSplit });
+    const bJn = icon({ k: "prog" + i + "-join", glyph: "\u2194",
+      word: "join", say: noJoin || "take in the chord after this one",
+      why: noJoin });
+    bSp.addEventListener("click", () => { if (!noSplit) split(i); });
+    bJn.addEventListener("click", () => { if (!noJoin) join(i); });
+    const tb = el("td"); tb.append(bSp, document.createTextNode(" "), bJn);
+    tr.append(tb);
     t.append(tr);
   });
-  pane(parent, t);                  // six columns, not sixteen: not a .nu-grid
+  pane(parent, t);                  // nine columns, not sixteen: not a .nu-grid
   /* ===== HOW LONG THE CYCLE IS (2026-09-02) ============================
      Paul, B7: *"Tap tempo, the tempo editor appears, same for key. … Key may
      not either"* — the key editor does not reflect the richness of the
@@ -2014,11 +2328,13 @@ function chordGrid(parent) {
      composer changes first, "make it four bars instead of two", could only be
      done by editing JSON. `at(g.prog, bar)` in the kernel wraps whatever it is
      given, so the cycle length is a real musical fact and it was unsayable.
-     THE NEW BAR IS A COPY OF THE LAST ONE, not a `{d:0}` root. A cycle grown
+     THE NEW BAR IS A COPY OF THE LAST CHORD, not a `{d:0}` root. A cycle grown
      by a bar of tonic is a different cycle; a cycle grown by repeating its
-     last bar is the same music one bar longer, which is what "+ bar" means to
+     last chord is the same music one bar longer, which is what "+ bar" means to
      anyone who has done it on paper. Change the copy and you have said the
-     new thing.
+     new thing. (It copies the last CHORD and not the last SLOT, because a slot
+     may be a LIST since the bar learned to split, and a copied list would add
+     two chords for one tap.)
      THE FENCE IS 1..8 AND BOTH ENDS SAY WHY. One bar is a cycle — a modal
      record's `prog` is exactly that, `[{d:0,q:"triad"}]` — and zero bars is
      not a record; eight is as long a chart as this grid draws inside a phone
@@ -2028,10 +2344,20 @@ function chordGrid(parent) {
      compiled genre carries (`__eightGenres().prog`), the playhead marks bars
      off it (`chordCell`), and the score reads it — so this is the whole-page
      rebuild, which rebuilds `chordCell` from the new table on the way. */
+  /* ...AND THE CAP IS THIRTY-TWO SINCE 2026-09-05, which is a reversal with a
+     measurement under it. It read *"eight is as long a chart as this grid
+     draws inside a phone without the pane scrolling"* — a layout budget
+     standing in for a musical fact — and the musicologist's review measured
+     what it costs: *"A 32-bar AABA chart is not a long chart; it is the
+     standard length of the form … a score editor gives you as many bars as
+     the piece has."* The pane scrolls; a form does not fit in a pane's width
+     either way, and the thirty-two-bar song is the commonest form there is. */
+  const BARCAP = 32;
   {
+    const P2 = progOf();
     const row = el("p", null, "nu-row nu-progops");
-    const add = P2.length >= 8
-      ? "eight bars is as long as this chart draws" : null;
+    const add = P2.length >= BARCAP
+      ? BARCAP + " bars is as long as this chart draws" : null;
     const cut = P2.length <= 1 ? "a cycle is at least one bar" : null;
     /* TWO MARKS, TWO NAMES. The glyphs are `+` and `−` and the WORD under each
        is the whole gesture — not "bar" twice, which is what a screen reader
@@ -2043,17 +2369,24 @@ function chordGrid(parent) {
       why: add });
     const bCut = icon({ k: "prog-cut", glyph: "−", word: "take a bar off",
       say: cut || "take the last bar off the cycle", why: cut });
-    bAdd.addEventListener("click", () => { const P3 = DOC.alphabet.prog;
-      if (P3.length >= 8) return;
-      asCycle(); P3.push({ ...P3[P3.length - 1] }); changed(); });
-    bCut.addEventListener("click", () => { const P3 = DOC.alphabet.prog;
-      if (P3.length <= 1) return;
-      asCycle(); P3.pop(); changed(); });
+    bAdd.addEventListener("click", () => {
+      if (progOf().length >= BARCAP) return;
+      own(); const P3 = progOf();
+      const last = barList(P3[P3.length - 1]);
+      const copy = { ...last[last.length - 1] };
+      delete copy.beats; delete copy.held;
+      P3.push(copy); putProg(P3); changed(); });
+    bCut.addEventListener("click", () => {
+      if (progOf().length <= 1) return;
+      own(); const P3 = progOf();
+      P3.pop(); putProg(P3); changed(); });
     row.append(bAdd, document.createTextNode(" "), bCut);
     parent.append(row);
   }
   // ...and the whole loop on one line, which is how anybody would say it
-  parent.append(el("p", P2.map(chordName).join("  –  ")));
+  parent.append(el("p", rows.map((r) => chordName(r.c) +
+    (r.beats === BB ? "" : " (" + lenWord(Math.round(r.beats), BB) + ")"))
+    .join("  –  ")));
   /* ONE SENTENCE UNDER THE TABLE, NOT EIGHT DOWN A COLUMN — and since
      2026-09-02 it is a WARNING and not a refusal on a non-cycle record.
 
@@ -2146,7 +2479,10 @@ const SCOREHEAD = { k: "F", s: "c", p: "c", c: "c",
 // (the "pos" handler) counts the same steps-per-bar this returns. A record
 // with no meter reads MET4's sixteen, so every 4/4 record's ABC string and
 // paper are byte-identical to the constant's.
-const scoreSPB = () => K.stepsIn({ meter: K.METERS[DOC.time.meter] });
+// (…AND THE WORD IS RESOLVED BY THE KERNEL, 2026-09-05: `K.METERS[word]`
+// knew two words, `metOf` reads a signature — "7/8" — as well, and answers
+// the sixteen an absent meter has always answered for anything else.)
+const scoreSPB = () => K.stepsIn(DOC.time);
 // HOW MANY BARS THE SENTENCES SPEAK FOR, and it is no longer how much is
 // DRAWN. The caption and the syllable line say "bars 2-3" — the bar that is
 // sounding and the one after it, which is the ask of 2026-08-25 morning ("I
@@ -2826,9 +3162,18 @@ function scoreDyn() {
    the name comes from ui/abc.js `noteNameOf`, which is `spellPitch`'s own
    letter-choosing rule (extracted for exactly this) run against `keySig`. One
    speller, one paper. */
-// the sevenths a `q` can ask for, on top of the triad the mode decides
-const QTAIL = { 7: "7", dom7: "7", m7: "7", maj7: "maj7", six: "6", nine: "9",
-                sus4: "sus4", triad: "" };
+/* THE SUFFIX IS `K.QMARK`, AND THE TWO SPELLINGS PRINT BY TWO RULES. This
+   file kept its own `QTAIL` — eight of the eight qualities that existed — and
+   the vocabulary is forty-two since 2026-09-05, so a list here would be wrong
+   about thirty-four of them the day it landed. The kernel's table is the one
+   owner of what a chord is called on paper.
+   A `QSTEPS` quality is a stack ON the mode's own triad, so the triad is
+   measured off the mode (the third and fifth below) and the suffix goes after
+   it: `7` over a minor degree prints Dm7 and over a major one G7.
+   A `QFIX` quality is an ABSOLUTE stack and names itself outright, because
+   the third is the CHORD's and not the mode's — measured on `countryrockT`,
+   whose II7 in ionian was printed `Dm7` by the mode-derived rule while the
+   pad sounded D F# A C. The staff was naming a chord nobody played. */
 function chordName(d, q, key, mode) {
   const md = mode && mode.length ? mode : K.MODE;
   const at = (i) => md[((i % md.length) + md.length) % md.length] +
@@ -2836,13 +3181,14 @@ function chordName(d, q, key, mode) {
   const root = at(d), third = at(d + 2), fifth = at(d + 4);
   const t = ((third - root) % 12 + 12) % 12, f = ((fifth - root) % 12 + 12) % 12;
   const name = noteNameOf(root + key, key, md);
+  const mark = K.QMARK[q] == null ? String(q || "") : K.QMARK[q];
+  if (K.QFIX[q]) return name + mark;
   let qual = "";
   if (q === "sus4") qual = "sus4";
   else if (t === 3 && f === 6) qual = "dim";
   else if (t === 4 && f === 8) qual = "aug";
   else if (t === 3) qual = "m";
-  const tail = q === "sus4" ? "" : (QTAIL[q] || "");
-  // a minor seventh is "m7", not "m" + "maj7"
+  const tail = q === "sus4" ? "" : mark;
   return name + qual + (qual === "dim" || qual === "aug" ? "" : tail);
 }
 /** One chord name per bar, or null when the record declares no changes. */
@@ -2853,7 +3199,13 @@ function scoreChords(bars) {
   const key = A.key | 0, mode = MODES[A.mode] || MODES.aeolian;
   const out = [];
   for (let b = 0; b < bars; b++) {
-    const c = prog[b % prog.length];
+    // THE BAR'S FIRST CHORD NAMES THE BAR. A bar may hold a LIST since the
+    // chart learned duration (2026-09-05) and the staff carries one symbol
+    // per bar, which is where a chart puts one; `inkChords` below already
+    // prints a name only where it CHANGES, so a bar held over from the last
+    // one is silent on the staff exactly as it should be.
+    const slot = prog[b % prog.length];
+    const c = Array.isArray(slot) ? slot[0] : slot;
     out.push(c ? chordName(c.d || 0, c.q || "triad", key, mode) : null);
   }
   return out;
@@ -2960,7 +3312,10 @@ function buildScore() {
   // grouping come off the kernel's own METERS row — the same table
   // scoreSPB() reads, one owner. A record with no meter passes neither key
   // and the ABC string is byte-identical to what the constant grid drew.
-  const met = K.METERS[DOC.time.meter] || null;
+  // the ROW where the record declares a meter, null where it does not — the
+  // ABC string of an unmetered record must stay byte-identical (2026-09-05:
+  // `metOf` in place of `METERS[word]`, so a signature engraves too)
+  const met = DOC.time.meter ? (K.metOf(DOC.time) === K.MET4 ? null : K.metOf(DOC.time)) : null;
   try { sc = toScore(R.parts, { key: KEYS[DOC.alphabet.key] || 0,
                                 mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
                                 stepsPerBar: scoreSPB(),
@@ -4770,7 +5125,10 @@ let atSec = 0, atStep = -1;
 // bring a shorter form than the one the tab strip was built against.
 const editSec = () => Math.max(0, Math.min(viewSec, DOC.form.sections.length - 1));
 const engOpts = (chair) => ({
-  barsPerLine: 1, stepsPerBar: 16, maxHold: 4,
+  // THE BAR'S OWN COUNT, not a constant (2026-09-05, the any-meter round):
+  // a 7/8 record's staff is fourteen steps to the measure, not sixteen, and
+  // an engraver told sixteen draws its bar lines in the wrong places.
+  barsPerLine: 1, stepsPerBar: scoreSPB(), maxHold: 4,
   key: KEYS[DOC.alphabet.key] || 0,
   mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
   reg: (chair || {}).reg | 0,
@@ -4806,15 +5164,18 @@ function loadStaffLib() {
 //  a cell has neither. The written staff is drawn once per CELL now and asks
 //  `phrase(name)` for it — see motifs(). Deleted rather than left unused, so
 //  nothing can route round a voice again by accident.)
-// ONE MEASURE OF A VOICE: the sixteen steps of bar `m`, taken off the phrase
-// AFTER its word has been applied, so what is engraved is what will sound.
+// ONE MEASURE OF A VOICE: the steps of bar `m`, taken off the phrase AFTER
+// its word has been applied, so what is engraved is what will sound. THE BAR
+// IS THE RECORD'S OWN since 2026-09-05 (`scoreSPB`) — sixteen unless a meter
+// says otherwise, which is every record written before that date.
 const barSlice = (ph, m) => {
-  const from = m * 16, cut = (v) => (v ? v.slice(from, from + 16) : undefined);
+  const SPB = scoreSPB();
+  const from = m * SPB, cut = (v) => (v ? v.slice(from, from + SPB) : undefined);
   const out = { deg: cut(ph.deg), oct: cut(ph.oct), vel: cut(ph.vel),
                 inc: cut(ph.inc), stk: cut(ph.stk), gate: cut(ph.gate),
                 acc: cut(ph.acc), sld: cut(ph.sld) };
-  if (ph.hold) out.hold = ph.hold.slice(from, from + 16)
-    .map((h, i) => (h ? Math.min(h, 16 - i) : 0));   // a tie stops at the barline
+  if (ph.hold) out.hold = ph.hold.slice(from, from + SPB)
+    .map((h, i) => (h ? Math.min(h, SPB - i) : 0));  // a tie stops at the barline
   return out;
 };
 // (`REST16` and `barOrRest(ph, m)` stood here — "a measure of the composed
@@ -5104,31 +5465,218 @@ function motifBank(box) {
    address that has moved twice without moving is the cheapest kind of move
    (`boardtab|<kind>|<key>` made the same journey a round ago). A DRUM cell
    draws none of them: a kit has no degrees to move. */
+/* ---------- THE CHAIN: SEVERAL OPERATIONS AS ONE WRITE ------------------
+   Paul, 2026-09-05: *"I want to be able to do multiple operations in a motif
+   at once. Raise it a fifth and widen it. Now I can do but one."*
+
+   THE GRAMMAR ALREADY CHAINED AND THE SURFACE DID NOT. kernel.js `word(p, ws)`
+   is `ws.reduce((q, op) => op(q), p)` — a LIST of operators applied left to
+   right — and it is what a composer's `does` word has always been (songs.js
+   WORDS: every entry is a list, and half of them are two ops long). What the
+   motif sheet offered was fourteen buttons, each its own write, each its own
+   undo step, with no way to say "these three, in this order, as one thing".
+
+   HOW IT WORKS, AND WHY IT IS NOT A STAGING AREA. A tap still APPLIES, at
+   once, because hearing the change is the whole point of the surface; what it
+   also does is JOIN A CHAIN. The chain remembers the cell as it stood before
+   the first tap, and every later gesture — another op, a chip removed, a chip
+   moved — restores that base and replays the whole list. So the chain is
+   always exactly one write against one base, which is what makes:
+     * the DOCUMENT DIFF one field (transpose and spread touch `deg` and
+       nothing else, whatever the length of the chain),
+     * REMOVE and REORDER possible at all (an applied op cannot be inverted;
+       a replayed list can simply be a different list),
+     * and UNDO one step (the snapshot is taken once, when the chain starts).
+
+   THE CHAIN ENDS BY ITSELF. It is keyed to the cell AND to a fingerprint of
+   what it last left there, so a bench edit, a section change or a different
+   motif starts a fresh chain rather than replaying over somebody else's work.
+
+   COLLAPSED, AND NAMED IN INTERVALS. Four taps of "up a step" is ONE chip
+   reading `Transpose up a fifth` — a run of one op is said as the thing it
+   adds up to, measured in the record's own alphabet (kernel `degreesFor`'s
+   law read backwards), which is how Paul's own sentence gets said with the
+   fourteen words the row already has instead of a fifteenth. */
+let opChain = null;
+const chainFP = (C) => (C ? JSON.stringify([C.deg, C.vel, C.acc, C.play]) : "");
+// ABSENCE IS PART OF THE BASE. A cell may carry no `vel` and no `acc` at all
+// (the operators default them), and a restore that put an empty array back
+// where there had been nothing would be a vector of length zero standing
+// where the compiler expects the cell's own length.
+const CHAINVEC = ["deg", "vel", "acc", "play"];
+const chainBase = (C) => { const o = {};
+  for (const k of CHAINVEC) o[k] = C[k] ? C[k].slice() : null;
+  return o; };
+const chainPut = (C, base) => { for (const k of CHAINVEC) {
+  if (base[k]) C[k] = base[k].slice(); else delete C[k]; } };
+// HOW FAR k DEGREES IS, IN THIS RECORD'S OWN ALPHABET — the mean over the
+// alphabet, which is the same measurement `degreesFor` minimises. The scale
+// is asked of `genreFor`, the one resolver, rather than read off a second
+// copy of the table: a chip that named an interval the engine would not play
+// would be the picture disagreeing with the button again.
+const INTERVALW = ["", "a semitone", "a second", "a third", "a third",
+                   "a fourth", "a tritone", "a fifth", "a sixth", "a sixth",
+                   "a seventh", "a seventh", "an octave"];
+function stepsSay(k) {
+  let sc = null;
+  try { sc = genreFor(editSec()).scale; } catch (e) { sc = null; }
+  if (!sc || !sc.length) sc = MODES.aeolian;
+  const n = sc.length;
+  let sum = 0;
+  for (let i = 0; i < n; i++)
+    sum += (sc[((i + k) % n + n) % n] + (sc.period || 12) * Math.floor((i + k) / n))
+         - sc[i];
+  const semis = Math.round(Math.abs(sum / n));
+  return INTERVALW[Math.min(semis, 12)] || (semis + " semitones");
+}
+/** what one run of a chain is called, in DESIGN.md 4's voice: a verb, a
+ *  musician's noun, no narration. */
+function chainWord(run) {
+  const d = run.d, n = run.n;
+  if (d.w === "up a step" || d.w === "down a step")
+    return "Transpose " + (d.w === "up a step" ? "up " : "down ") + stepsSay(n);
+  const W = { "wider": "Widen", "backwards": "Reverse",
+              "upside down": "Invert", "shift left": "Rotate left",
+              "shift right": "Rotate right" };
+  const w = W[d.w] || (d.w.charAt(0).toUpperCase() + d.w.slice(1));
+  return w + (n > 1 ? " \u00d7" + n : "");
+}
+/** the chain, as runs: consecutive taps of one op collapse into one chip. */
+function chainRuns() {
+  const out = [];
+  for (const e of (opChain ? opChain.ops : [])) {
+    const last = out[out.length - 1];
+    if (last && last.e.d === e.d) { last.n++; last.upto++; continue; }
+    out.push({ e, d: e.d, n: 1, from: out.length ? out[out.length - 1].upto : 0,
+               upto: (out.length ? out[out.length - 1].upto : 0) + 1 });
+  }
+  return out;
+}
+/** restore the base and replay the list — the ONE write the chain ever makes. */
+function runChain() {
+  const C = DOC.material.cells[opChain.cell];
+  if (!C || C.kind === "drum") { opChain = null; return; }
+  chainPut(C, opChain.base);
+  for (const e of opChain.ops)
+    (e.t === "time" ? designTime : design)(C, e.d);
+  opChain.fp = chainFP(C);
+}
+
 function motifOpsLine(box, name) {
   const H = DOC.material.cells[name];
   if (!H || H.kind === "drum") return;
   const face2 = (d) => (d.g0 || "") + d.g;
   const line = el("p", null, "nu-tf-row");
-  const put = (d, key, say, run) => {
+  // A TAP JOINS THE CHAIN. The first one takes the snapshot (through the
+  // table's own document stack, so Ctrl-Z takes the WHOLE chain back in one
+  // step) and remembers the cell as it stood; every later one is a replay.
+  const join = (t, d) => {
+    const C = DOC.material.cells[motifTab];
+    if (!C || C.kind === "drum") return;
+    const fresh = !opChain || opChain.cell !== motifTab ||
+                  opChain.fp !== chainFP(C);
+    const add = () => {
+      if (fresh) opChain = { cell: motifTab, base: chainBase(C), ops: [], fp: "" };
+      opChain.ops.push({ t, d });
+      runChain();
+    };
+    // THE STACK IS FETCHED BEFORE THE OP, NEVER AROUND IT: a `try` that
+    // wrapped `add` as well would run the chain twice on the one failure it
+    // is there to survive.
+    let U = null;
+    if (fresh) { try { U = undoStack(tableAPI()); } catch (e) { U = null; } }
+    if (U) U.run("the motif chain", add); else add();
+    push(); draw();
+  };
+  const put = (d, key, say, t) => {
     const b = document.createElement("button");
     b.type = "button";
     b.dataset.k = key;
     b.append(el("i", face2(d), "nu-tfface"), el("span", d.w, "nu-tfword"));
     b.setAttribute("aria-label", say);
-    b.addEventListener("click", () => { const C = DOC.material.cells[motifTab];
-      if (!C || C.kind === "drum") return; run(C); push(); draw(); });
+    b.addEventListener("click", () => join(t, d));
     line.append(b, document.createTextNode(" "));
   };
   for (const d of DESIGNS)
     put(d, "motifop-" + d.w, d.w + " — rewrites " + name + " itself: " +
         (d.moves ? "the steps change places and their kinds travel with them"
                  : "the degrees move and the rhythm stays where it is"),
-        (C) => design(C, d));
+        "design");
   for (const d of TIMES)
     put(d, "motiftime-" + d.w, d.w + " — rewrites " + name + "'s rhythm: " +
         "which steps sound and when, with the degrees left where they are",
-        (C) => designTime(C, d));
+        "time");
   box.append(line);
+  chainStrip(box, name);
+}
+
+/* THE CHAIN, AS CHIPS (DESIGN.md component 7). One chip per RUN, in order,
+   each carrying its own three marks: move it earlier, move it later, take it
+   out. Every one of them replays the whole list against the base, so a chip
+   moved is a different piece of music and not an undo of an undo. The strip
+   is absent when there is no chain — a control with nothing to say is not
+   drawn disabled, it is a strip that has not started. */
+function chainStrip(box, name) {
+  if (!opChain || opChain.cell !== name || !opChain.ops.length) return;
+  const C = DOC.material.cells[name];
+  if (!C || opChain.fp !== chainFP(C)) { opChain = null; return; }
+  const wrap = el("div", null, "nu-opchain");
+  wrap.append(el("span", "Chain", "nu-vh"));
+  const runs = chainRuns();
+  const redo = () => { runChain(); push(); draw(); };
+  runs.forEach((r, ri) => {
+    const chip = el("span", null, "nu-opchip");
+    chip.dataset.k = "motifchain|" + ri;
+    chip.append(el("span", chainWord(r), "nu-opchipword"));
+    const mark = (k, glyph, say, on, act) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.k = "motifchain-" + k + "|" + ri;
+      b.append(el("i", glyph, "nu-tfface"), el("span", say, "nu-vh"));
+      b.setAttribute("aria-label", say);
+      if (!on) { b.disabled = true; b.dataset.why = "it is already there"; }
+      else b.addEventListener("click", act);
+      chip.append(b);
+    };
+    // MOVING A RUN MOVES ITS WHOLE SPAN, because a run IS one chip: taking
+    // three of four "up a step" past a widen would be a chip that lied.
+    const span = () => opChain.ops.slice(r.from, r.upto);
+    mark("up", "\u2039", "move " + chainWord(r) + " earlier", ri > 0, () => {
+      const prev = runs[ri - 1], mine = span();
+      opChain.ops.splice(r.from, r.n);
+      opChain.ops.splice(prev.from, 0, ...mine);
+      redo();
+    });
+    mark("down", "\u203a", "move " + chainWord(r) + " later", ri < runs.length - 1,
+      () => { const next = runs[ri + 1], mine = span();
+        // taken out, the run AFTER this one starts where this one did, so
+        // "later" is one whole next-run past that point
+        opChain.ops.splice(r.from, r.n);
+        opChain.ops.splice(r.from + next.n, 0, ...mine);
+        redo(); });
+    mark("out", "\u00d7", "take " + chainWord(r) + " out of the chain", true,
+      () => { opChain.ops.splice(r.from, r.n);
+        if (!opChain.ops.length) { const base = opChain.base, cell = opChain.cell;
+          chainPut(DOC.material.cells[cell], base);
+          opChain = null; push(); draw(); return; }
+        redo(); });
+    wrap.append(chip, document.createTextNode(" "));
+  });
+  // ...AND THE WHOLE CHAIN, IN ONE STEP. Ctrl-Z does this too (the snapshot
+  // is taken once, when the chain starts); this is the same act said on the
+  // surface it happened on, which is where a thumb is.
+  const back = document.createElement("button");
+  back.type = "button";
+  back.dataset.k = "motifchain-clear";
+  back.append(el("span", "Take it all back"));
+  back.setAttribute("aria-label",
+    "take the whole chain back — " + name + " as it was before the first change");
+  back.addEventListener("click", () => {
+    chainPut(DOC.material.cells[opChain.cell], opChain.base);
+    opChain = null; push(); draw();
+  });
+  wrap.append(back);
+  box.append(wrap);
 }
 
 /* ---------- THE SHEET ITSELF -------------------------------------------
@@ -5393,7 +5941,7 @@ function reEngraveWritten(name) {
   const W = name && written.get(name);
   if (!W) return;
   const ph = phrase(name);
-  const bars = Math.max(1, Math.round(ph.deg.length / 16));
+  const bars = Math.max(1, Math.round(ph.deg.length / scoreSPB()));
   /* ...AND THE FALLBACK IS `draw()` SINCE 2026-09-08, because there is no
      axis left to rebuild narrowly (the tombstone over `motifsNode` carries
      why). It is reached only when a cell's LENGTH moved under a re-engrave,
@@ -6174,7 +6722,7 @@ function motifs(parent, deck, si) {
     }
 
     const ph = phrase(name);
-    const bars = Math.max(1, Math.round(ph.deg.length / 16));
+    const bars = Math.max(1, Math.round(ph.deg.length / scoreSPB()));
     // THE REGISTER THE STAFF IS ENGRAVED IN, and it is the only thing left in
     // this block that knows what a voice is. A staff needs a clef and a cell
     // does not have one, so it takes the register of whoever is reading this
@@ -7058,7 +7606,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
   const H = cellOf(cellName);
   if (!H || H.kind === "drum") return;
   if (!H.play) H.play = H.deg.map(() => "n");
-  const n = H.deg.length, bars = Math.max(1, Math.round(n / 16));
+  const n = H.deg.length, bars = Math.max(1, Math.round(n / scoreSPB()));
   const only = barOnly == null ? null : barOnly;   // one measure, or all of them
   if (hostCells && !mine) { mine = { cells: [], len: n }; hostCells.push(mine);
                             hostCells.__grid = mine; }
@@ -7279,8 +7827,12 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
        on the body row's own cells now — `.nu-bench th:first-child` (the count,
        unchanged, it was always the row's own <th>), `td.nu-kindTd` and
        `td.nu-velTd` — and the measured geometry is identical.) */
-    for (let j = 0; j < 16; j++) {
-      const i = bar * 16 + j;
+    // SIXTEEN WAS THE BAR AND NOW THE BAR IS (2026-09-05, the any-meter
+    // round): a 7/8 cell draws fourteen rows, a 21/17 cell twenty-one, and
+    // the heavier rule falls on the felt beat rather than on every fourth.
+    const SPB = scoreSPB(), PUL = K.pulseIn(DOC.time);
+    for (let j = 0; j < SPB; j++) {
+      const i = bar * SPB + j;
       const tr = el("tr");
       // WHERE THE BEAT FALLS, AS A RULE AND NOT AS A TINT. Sixteen rows read as
       // one block without it; `1 e & a` says where you are but only if you are
@@ -7289,8 +7841,8 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
       // ("use more grid lines in tables, it will help", 2026-08-24). A zebra was
       // the other candidate and it is refused for the reason nu.css already
       // gives: a tint in a step grid fights the playhead.
-      if (j % 4 === 0) tr.className = "nu-beat";
-      const th = countCell(COUNT[j]);
+      if (j % PUL === 0) tr.className = "nu-beat";
+      const th = countCell(COUNT[j % COUNT.length]);
       if (mine) mine.cells[i] = th;
       tr.append(th);
       const ref = steps[i] = { row: tr, seg: {}, pit: null, vel: null };
@@ -7440,10 +7992,10 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
   grow.addEventListener("click", () => {
     // a new measure starts as a copy of the last one — a second bar is
     // written against the first, not from nothing
-    const from = (bars - 1) * 16;
+    const SPB = scoreSPB(), from = (bars - 1) * SPB;
     for (const k of ["deg", "vel", "acc"])
-      if (H[k]) H[k] = H[k].concat(H[k].slice(from, from + 16));
-    H.play = H.play.concat(H.play.slice(from, from + 16));
+      if (H[k]) H[k] = H[k].concat(H[k].slice(from, from + SPB));
+    H.play = H.play.concat(H.play.slice(from, from + SPB));
     push(); draw();
   });
   p3.append(grow, document.createTextNode(" "));
@@ -7452,8 +8004,9 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
     cut.type = "button"; cut.dataset.k = seq + cellName + "-cutbar";
     cut.append(el("span", "− measure"));
     cut.addEventListener("click", () => {
-      for (const k of ["deg", "vel", "acc"]) if (H[k]) H[k].length = (bars - 1) * 16;
-      H.play.length = (bars - 1) * 16;
+      const SPB = scoreSPB();
+      for (const k of ["deg", "vel", "acc"]) if (H[k]) H[k].length = (bars - 1) * SPB;
+      H.play.length = (bars - 1) * SPB;
       push(); draw();
     });
     p3.append(cut, document.createTextNode(" "));
@@ -7621,12 +8174,19 @@ function drumGrid(parent, cellName) {
     head.append(lh);
   }
   t.append(head);
-  for (let i = 0; i < 16; i++) {
+  /* THE LANES ARE THE COLUMNS AND THE STEPS ARE THE ROWS, AND THE STEP AXIS
+     IS THE BAR (2026-09-05, the any-meter round). The drum round made the lane
+     axis data-driven — twelve letters off `laneKeys` — and left this one a
+     literal sixteen, so a 7/8 record drew sixteen rows over a fourteen-place
+     kit and the last two were the empty cells the guard below draws. It reads
+     the record's own bar now, and the heavy rule falls on the felt beat. */
+  const DSPB = scoreSPB(), DPUL = K.pulseIn(DOC.time);
+  for (let i = 0; i < DSPB; i++) {
     const tr = el("tr");
-    // WHERE THE BEAT FALLS, AS A RULE AND NOT AS A TINT — the same four-row
+    // WHERE THE BEAT FALLS, AS A RULE AND NOT AS A TINT — the same beat-wide
     // rule the motif grid draws, for the same reason and out of the same class.
-    if (i % 4 === 0) tr.className = "nu-beat";
-    const th = countCell(COUNT[i]);
+    if (i % DPUL === 0) tr.className = "nu-beat";
+    const th = countCell(COUNT[i % COUNT.length]);
     stepCell.push(th);
     tr.append(th);
     for (const lane of laneKeys) {
@@ -8366,9 +8926,26 @@ function openSection(id) {
 const MM = [40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 63, 66, 69, 72, 76, 80,
             84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 126, 132, 138, 144,
             152, 160, 168, 176, 184, 192, 200, 208, 220];
-const BPM_LO = 40, BPM_HI = 220;
-const mmUp = (b) => MM.find((x) => x > b + 0.001);
-const mmDown = (b) => [...MM].reverse().find((x) => x < b - 0.001);
+/* THE FENCE IS fields.js's, AND THIS FILE HAD A SECOND COPY OF IT UNTIL
+   2026-09-05. `const BPM_LO = 40, BPM_HI = 220` stood here beside the exact
+   pair fields.js owns — the two-copies-of-one-fact shape the 2026-09-02 round
+   removed everywhere else and missed here — and the any-tempo round moved the
+   number, which is precisely when a second copy is found. Read from the
+   registry now, so the slider, the tap, the save door and the throw are one
+   fence. It is 20..400 (fields.js says why); the LADDER below is still the
+   music's own 40..220. */
+const { BPM_LO, BPM_HI, BPM_STEP, bpmSay } = NuFields;
+/* A NUDGE PAST THE LADDER'S ENDS (2026-09-05). The detents stop at 40 and 220
+   and the tempo does not any more, so beyond them "a little faster" steps by
+   the ratio the ladder itself uses at its top (208 -> 220 is 1.058) rather
+   than refusing. Inside the ladder nothing moved: `MM.find` answers first and
+   every press from 40 to 220 lands on the identical detent it always did.
+   NULL still means the fence, which is the one honest refusal left. */
+const MMK = 1.06;
+const mmUp = (b) => MM.find((x) => x > b + 0.001) ??
+  (b >= BPM_HI - 0.0001 ? undefined : Math.min(BPM_HI, Math.round(b * MMK * 10) / 10));
+const mmDown = (b) => [...MM].reverse().find((x) => x < b - 0.001) ??
+  (b <= BPM_LO + 0.0001 ? undefined : Math.max(BPM_LO, Math.round(b / MMK * 10) / 10));
 // WHAT A TEMPO OPERATION IS: a function from the record's two time facts to the
 // same two facts. Nothing else — a tempo may not touch a note, and none of
 // these does. `null` back means "this cannot be done from here", which is what
@@ -8382,20 +8959,25 @@ const mmDown = (b) => [...MM].reverse().find((x) => x < b - 0.001);
    twice as long) and →← is the bar closing up (double time). Paul's own
    sentence, on the axis where this row's meaning is horizontal: time. */
 const TEMPOS = [
-  { w: "a little slower", why: (t) => "40 is as slow as this box counts",
+  { w: "a little slower", why: () => BPM_LO + " is as slow as this box counts",
     g0: "\u266a", g: "\u2193",
     mk: (t) => (mmDown(t.bpm) == null ? null : { ...t, bpm: mmDown(t.bpm) }) },
-  { w: "a little faster", why: (t) => "220 is as fast as this box counts",
+  { w: "a little faster", why: () => BPM_HI + " is as fast as this box counts",
     g0: "\u266a", g: "\u2191",
     mk: (t) => (mmUp(t.bpm) == null ? null : { ...t, bpm: mmUp(t.bpm) }) },
-  { w: "half the tempo", why: (t) => "half of " + t.bpm + " is " +
-      Math.round(t.bpm / 2) + ", and 40 is as slow as this box counts",
+  { w: "half the tempo", why: (t) => "half of " + bpmSay(t.bpm) + " is " +
+      bpmSay(t.bpm / 2) + ", and " + BPM_LO + " is as slow as this box counts",
     g0: "\u266a", g: "\u2193\u2193",
-    mk: (t) => (t.bpm / 2 < BPM_LO ? null : { ...t, bpm: Math.round(t.bpm / 2) }) },
-  { w: "twice the tempo", why: (t) => "twice " + t.bpm + " is " + (t.bpm * 2) +
-      ", and 220 is as fast as this box counts",
+    // HALVING A TYPED TEMPO KEEPS ITS TENTH (2026-09-05): half of 143.5 is
+    // 71.75, and rounding that to a whole number would make the mark a
+    // different operation from the one its word says.
+    mk: (t) => (t.bpm / 2 < BPM_LO ? null
+                : { ...t, bpm: Math.round(t.bpm * 5) / 10 }) },
+  { w: "twice the tempo", why: (t) => "twice " + bpmSay(t.bpm) + " is " +
+      bpmSay(t.bpm * 2) + ", and " + BPM_HI + " is as fast as this box counts",
     g0: "\u266a", g: "\u2191\u2191",
-    mk: (t) => (t.bpm * 2 > BPM_HI ? null : { ...t, bpm: Math.round(t.bpm * 2) }) },
+    mk: (t) => (t.bpm * 2 > BPM_HI ? null
+                : { ...t, bpm: Math.round(t.bpm * 20) / 10 }) },
   // …AND THE OTHER FAMILY: the same beat, read at a different speed. `rate` is
   // what `ui/derive.js` divides `stepsIn(g)` by to get a bar, so rate 2 is a
   // bar half as long — the pattern comes round twice as often over a clock that
@@ -8518,7 +9100,11 @@ const TEMPOS = [
 // beats and pulseIn said 4, so the syllable window and the .mid's
 // time-signature both counted a beat that is not in the bar. 4/4 is 16/4 = 4
 // either way, which is how it shipped unseen.
-const beatsPerBar = () => K.stepsIn({ meter: K.METERS[DOC.time.meter] }) / 4;
+// QUARTERS AND NOT STEPS/4 (2026-09-05, the any-meter round): the two are
+// the same number for every power-of-two denominator — a waltz bar is 12/4 =
+// 3 either way — and a 21/17 bar grids at twenty-one steps while lasting
+// 4.94 quarters, which is what a .mid's tick arithmetic has to be told.
+const beatsPerBar = () => K.quartersIn(DOC.time);
 const knobSet = (voice) => (voice && voice.set) || null;
 function writeKnob(voice, key, v) {
   if (!voice.set) voice.set = {};
@@ -8592,6 +9178,154 @@ function knobNow(voice, row) {
   if (S && S[row.key] != null) return S[row.key];
   const d = knobDerived(voice, row);
   return d == null ? (row.kind === "number" ? row.min : row.words && row.words[0]) : d;
+}
+
+/* ================ THE CHAIR'S ENVELOPE, AS ONE SPEC ====================
+   TABLE.md §11 (RULED 2026-09-05). `nukernel/src/envelope/` draws a plate, a
+   curve and four 44px handles from a list of FIELDS; this is the one place
+   that says what those fields ARE for a chair on this record, and the one
+   place a handle's write lands. Everything below is a door that already
+   existed — `writeKnob`/`clearKnob` for a modelled chair, `voice.sound` for a
+   sampled one — so §5's "no op adds a second write path" holds.
+
+   THE FOUR SEGMENT NAMES ARE THE ENGINE'S, NOT THIS FILE'S: `attack`,
+   `decay`, `sustain`, `release` are what engine/faust/voices/state-engine.js
+   reads off a recipe and what nukernel/knobs.js measured moving. */
+const ENVSEGS = ["attack", "decay", "sustain", "release"];
+
+/* WHAT A SAMPLED CHAIR'S ENVELOPE IS WORTH WHEN NOBODY HAS SAID (the ghost
+   curve, and the number the clear-back returns to). Read off the seam rather
+   than typed twice: `atk` and `rel` fall back to the values
+   state-engine.js samplerUnit's own `mp()` defaults use, and a genre that
+   writes `tone.atk`/`tone.rel` overrides them — the same precedence
+   audio/to-engine.js `toneRecipe` applies. `dcy`/`sus` are new and no genre
+   writes them, so their default is "no fall, rests at full", which is exactly
+   what the lane did before it had them. */
+function sampledEnvDerived(v) {
+  let tone = null;
+  try { const g = genreFor(0); const ch = (g && g.chairs) || null;
+        const c = ch && (ch[v.name] || null);
+        tone = (c && c.tone) || (g && g.tone) || null; } catch (e) { tone = null; }
+  const num = (x) => (typeof x === "number" && isFinite(x)) ? x : null;
+  return {
+    attack:  num(tone && tone.atk) != null ? num(tone.atk) : 0.012,
+    decay:   num(tone && tone.dcy) != null ? num(tone.dcy) : 0,
+    sustain: num(tone && tone.sus) != null ? num(tone.sus) : 1,
+    release: num(tone && tone.rel) != null ? num(tone.rel) : 0.09,
+  };
+}
+
+/* A WORD OR A NUMBER, READ AS SECONDS. A record saved before this round holds
+   `sound.atk: "soft"`; the editor's handle is a number. fields.js VOX is the
+   one owner of what a word is worth, so the word is resolved through it and
+   never re-tabulated here — and a number passes through, which is what
+   audio/to-engine.js `samplerVox` does at the other end of the same wire. */
+function voxSeconds(key, w) {
+  if (typeof w === "number" && isFinite(w)) return w;
+  const t = NuFields.VOX && NuFields.VOX[key] && NuFields.VOX[key].t;
+  return (w != null && t && t[w] != null) ? t[w] : null;
+}
+
+/* THE BRACKETS ARE THE ENGINE'S OWN CLAMPS, said once. sampler.js floors the
+   attack at 3 ms and the release at 20 ms (a declick ramp shorter than that is
+   a click); state-engine samplerUnit clamps them at 5 s and 6 s; the decay and
+   the sustain are clamped where to-engine.js `samplerVox` clamps them. A
+   handle that could be dragged past its clamp would be a control that writes
+   a number the engine then quietly changes. */
+const SAMPENV = {
+  attack:  { min: 0.003, max: 5,  step: 0.001, unit: "s", label: "attack" },
+  decay:   { min: 0,     max: 8,  step: 0.005, unit: "s", label: "decay" },
+  sustain: { min: 0,     max: 1,  step: 0.01,  unit: "",  label: "where it rests" },
+  release: { min: 0.02,  max: 6,  step: 0.005, unit: "s", label: "release" },
+};
+const SAMPKEY = { attack: "atk", decay: "dcy", sustain: "sus", release: "rel" };
+
+function envSpecFor(v) {
+  const sampled = (() => { try {
+    return !!NuAvail.sampledVoice(DOC, { voice: v.name }, ENV); }
+    catch (e) { return false; } })();
+
+  /* THE MODELLED CHAIR IS ASKED FIRST, because nukernel/knobs.js is a
+     MEASUREMENT of what that instrument's own params actually move and
+     `voice.set` is the more precise door for it. A chair with fewer than two
+     of the four keeps its knob sliders (a plate round one number is the box of
+     air §9a took off this page) and falls through to the sound door below. */
+  const K = NuKnobs;
+  const KV = (K && typeof v.instrument === "string" && K.voices[v.instrument]) || null;
+  const modelled = knobsEnvSpec(v, KV);
+  if (modelled) return modelled;
+
+  /* ...AND EVERY OTHER LINE CHAIR WRITES `voice.sound`, WHICH IS THE DOOR THE
+     TWO WORDED ROWS USED (avail.js `sound.attack` / `sound.release`, chair
+     "line"). Those rows are gone from the sheet, so this must reach every
+     chair they reached or the round has DELETED a control — T7's own law, and
+     the reason this branch is not `if (sampled)`.
+     HOW MANY HANDLES, AND IT IS THE ENGINE THAT DECIDES: a SAMPLED chair gets
+     all four, because engine/faust/voices/sampler.js grew a decay and a
+     sustain today; anything else gets ATTACK and RELEASE only, because those
+     two are recipe keys every pitched unit reads (fields.js VOX's own
+     sentence, state-engine 1234/1240) and a decay handle on a chair whose
+     engine has no port for one is the declared-and-never-arriving bug drawn as
+     a picture. */
+  if (v.kind === "line") {
+    const D = sampledEnvDerived(v);
+    const sound = v.sound || {};
+    const segs = sampled ? ENVSEGS : ["attack", "release"];
+    const fields = segs.map((seg) => {
+      const B = SAMPENV[seg], k = SAMPKEY[seg];
+      const raw = sound[k];
+      const val = raw == null ? null : voxSeconds(k, raw);
+      return { seg, k: "env|" + v.name + "|" + seg, label: B.label, unit: B.unit,
+               min: B.min, max: B.max, step: B.step,
+               value: val, derived: D[seg] };
+    });
+    return {
+      k: "env|" + v.name, label: "how it sounds each note", fields,
+      set: (seg, n) => { const o = { ...(v.sound || {}) };
+        o[SAMPKEY[seg]] = n;
+        v.sound = o; changed(); },
+      clear: (seg) => { const o = { ...(v.sound || {}) };
+        if (seg) delete o[SAMPKEY[seg]];
+        else for (const x of ENVSEGS) delete o[SAMPKEY[x]];
+        if (Object.keys(o).length) v.sound = o; else delete v.sound;
+        changed(); },
+    };
+  }
+  return null;
+}
+
+/* A MODELLED CHAIR'S OWN ENVELOPE. Its rows are nukernel/knobs.js's —
+   measured, with their own min/max/step/unit/label — and only the segments
+   this instrument HAS are drawn: a `bell` declares two controls in the whole
+   census and neither of them is a sustain. */
+function knobsEnvSpec(v, V) {
+  if (!V) return null;
+  const byKey = {};
+  for (const r of V.rows) byKey[r.key] = r;
+  const fields = [];
+  for (const seg of ENVSEGS) {
+    const row = byKey[seg];
+    if (!row || row.kind !== "number") continue;
+    const S = knobSet(v);
+    const d = knobDerived(v, row);
+    fields.push({ seg, k: "env|" + v.name + "|" + seg,
+      label: row.label, unit: row.unit || "",
+      min: row.min, max: row.max, step: row.step,
+      value: (S && S[row.key] != null) ? +S[row.key] : null,
+      derived: typeof d === "number" ? d : row.derived,
+      why: knobShut(v, row, byKey) || null });
+  }
+  /* AN INSTRUMENT WITH ONE SEGMENT IS A ROW, NOT A CURVE. A plate drawn round
+     a single number is the "box of air" §9a took off this page; the knob table
+     keeps that one and this returns nothing. */
+  if (fields.length < 2) return null;
+  return {
+    k: "env|" + v.name, label: "how it sounds each note", fields,
+    set: (seg, n) => { writeKnob(v, seg, n); changed(); },
+    clear: (seg) => { if (seg) clearKnob(v, seg);
+                      else for (const x of ENVSEGS) clearKnob(v, x);
+                      changed(); },
+  };
 }
 
 /* ---------- WHAT THE READOUT SAYS, AND IT SAYS THE MUSICAL THING --------
@@ -9319,7 +10053,25 @@ function knobsBlock(parent, voice, named) {
     return box;
   };
 
+  /* ---- WHAT THE ENVELOPE EDITOR TOOK (2026-09-05, TABLE.md §11) ---------
+     The four amp-envelope rows are drawn as a CURVE now, above this table, by
+     `voiceEnv` — a plate with 44px handles and the numbers printed beside
+     them in the field's own units. §11's own sentence: *"The knob rows it
+     replaces are removed from the knob table for those params (T7: nothing
+     lost — the numbers print beside the handles)"*. Two controls on one
+     address is the shape test/selects.js's guard fails a page for, and a
+     slider and a handle writing the same `voice.set.attack` would be exactly
+     that.
+     ONLY WHERE THE EDITOR IS ACTUALLY DRAWN. `envSpecFor` returns null on an
+     instrument with fewer than two envelope segments (a plate round one
+     number is a box of air), and on that chair these rows stay sliders — so
+     the census never loses a control, it moves it. */
+  const drawnAsCurve = (() => { try {
+    const sp = envSpecFor(voice);
+    return sp ? new Set(sp.fields.map((x) => x.seg)) : null;
+  } catch (e) { return null; } })();
   for (const row of V.rows) {
+    if (drawnAsCurve && drawnAsCurve.has(row.key)) continue;
     const shut = knobShut(voice, row, byRow);
     // A GATE FIRST, THEN THE TWO DEPARTURES THIS PAGE MAKES FROM A MODULE'S
     // OWN RANGE — `floorWhy` (a silence the module allows and the page will
@@ -10038,6 +10790,43 @@ function tableAPI() {
     voiceStrip: (name) => { const box = el("div", null, "nu-seatstrip");
       try { voiceMix(box, CTX, name); } catch (e) {}
       return box; },
+    /* ---- THE CHAIR'S OWN ENVELOPE (2026-09-05, TABLE.md §11) ------------
+       Paul, after the AUX spike: *"Make an Adsr and envelope editor though and
+       use that for samples etc."* ONE OWNER for every envelope on this page,
+       and this is the door the column sheet reads it through. Two kinds of
+       chair, one editor, one shape:
+
+         A SAMPLED CHAIR writes `voice.sound` — the same `vox` block atk/rel
+         have ridden since the sampler-control round (fields.js VOX, avail.js
+         `sound.attack`, document.js's chairs seam, audio/to-engine.js
+         `samplerVox`). What changed today is that the values may be NUMBERS as
+         well as words (samplerVox's own `secs`), and that `dcy` and `sus`
+         exist at all: engine/faust/voices/sampler.js was A-H-R on both play
+         paths and gained a decay and a sustain that are inert when absent.
+         THE TWO WORDED ROWS THIS REPLACES ARE GONE FROM THE SHEET — §11's
+         "the knob rows it replaces are removed … nothing lost, the numbers
+         print beside the handles" — and a word already saved still reads,
+         because the derived value is resolved through VOX's own table.
+
+         A MODELLED CHAIR writes `voice.set`, the same key `knobsBlock`'s
+         sliders write, through `writeKnob`/`clearKnob`. Its rows come from
+         nukernel/knobs.js, which is a MEASUREMENT and not a list: the
+         extractor probed the parent's own `pitchedUnit` at both ends of every
+         candidate key and kept what moved. So the editor is drawn only for the
+         segments this instrument actually HAS, with that row's own measured
+         min/max/step and its own derived value — and `knobsBlock` below skips
+         exactly those rows, so there is one control per address.
+
+       NULL WHERE THERE IS NO ENVELOPE TO DRAW, which keeps a plate off a chair
+       whose instrument has no amp envelope rather than drawing a dead one. */
+    voiceEnv: (name) => { const v = VOICE(name);
+      if (!v) return null;
+      const spec = envSpecFor(v);
+      if (!spec) return null;
+      const box = el("div", null, "nu-seatenv");
+      try { curveEditor(box, spec); } catch (e) { return null; }
+      if (!box.firstChild) return null;
+      return { label: spec.label, node: box }; },
     /* THE THROAT'S OWN KNOBS, IN THE COLUMN SHEET (2026-09-04, wave 2c).
        `knobsBlock` is VOICE.md's editor for a MODELLED chair — the tract pad,
        the mouth's rows, each with the derived value it is overriding and a
@@ -10143,6 +10932,53 @@ function tableAPI() {
 
     /* ---- the three tiers, read and written through wave 1's owner ---- */
     cellWord: (i, vi) => tableCellWord(i, vi),
+    /* ---- THE TABLE'S MARKS (2026-09-05) ---------------------------------
+       Paul: *"When you redesign use more icons. Ideally the table is a large
+       set of icons."* ui/glyph.js is the ONE table of marks on this page and
+       `cellMark` is its resolver; these four doors are the only thing that
+       knows WHICH question a given box of the table is asking. They live here
+       and not in the component for the reason every other door does: the
+       component draws, this file knows what the record says.
+
+       NULL IS AN ANSWER. A value with no honest mark comes back null and the
+       cell prints its word — Paul's own boundary ("the word printed only where
+       no honest glyph exists"). A motif is CALLED `counter`; no picture says
+       that, so the picture beside it says where the motif came from instead,
+       which is the one fact about it a reader cannot work out. */
+    cellMark: (i, vi) => {
+      const v = DOC.voices[vi], s2 = DOC.form.sections[i];
+      if (!v || !s2) return null;
+      const w = tableCellWord(i, vi);
+      if (w === "\u2014" || w === "" || w == null) return cellMark("state", "none");
+      if (v.kind !== "line") return cellMark("part", v.kind);
+      /* WHERE THIS MOTIF CAME FROM — TABLE.md §1's `material.prov`, keyed by
+         the motif's NAME, which is what the cell is pointed at. `hand` is
+         derived from the fingerprint at wave 1 and is the mark worth drawing:
+         it is the only provenance a reader cannot infer. */
+      /* PROVENANCE IS A RECORD, NOT A WORD. `material.prov[<motif>]` is
+         `{ p: "own"|"guest"|"hand", fp: <fingerprint> }` — the fingerprint is
+         what makes `hand` DERIVABLE rather than stamped (TABLE.md wave 1) —
+         so the word is `.p`. Read as the whole object it stringified to
+         `[object Object]`, matched nothing, and every one of the 65 line cells
+         drew no mark at all while the 26 bass and drum cells drew theirs; the
+         measurement said 26 of 91 and that is how it was found. */
+      const pv = ((DOC.material || {}).prov || {})[w];
+      const word = pv && typeof pv === "object" ? pv.p : pv;
+      return cellMark("prov", word || "own"); },
+    colMark: (vi) => { const v = DOC.voices[vi];
+      if (!v) return null;
+      if (v.kind !== "line") return cellMark("part", v.kind);
+      return cellMark("part", String((v.cast || {}).part || "line")) ||
+             cellMark("part", "line"); },
+    /* A SECTION WEARS THE MARK THIS PAGE HAS ALWAYS GIVEN A SECTION — ▦,
+       `GLYPH.sec.one`, the same block the deleted Structure tab and the
+       `per-section` facet wear. The same fact wears the same mark. */
+    rowMark: () => ({ g: GLYPH.sec.one.g, w: "Section",
+                      s: "A section: its bars and what each player does." }),
+    mixMark: (name) => { const v = VOICE(name);
+      if (!v) return null;
+      const t = (v.desk && v.desk.fader) || null;
+      return cellMark("level", t || "norm"); },
     written: (i, vi) => tableWritten(i, vi),
     cellOf: (i, vi, f) => { const v = V()[vi], s2 = SEC()[i];
       const c = v && s2 && v.cells && v.cells[s2.id];
@@ -10327,9 +11163,10 @@ function tableAPI() {
        the two page facts are cleared and the stripe's mark goes with them. */
     leaveLanding: () => { tab = null; formSec = null; },
     bpmNode: () => bpmNode(),
+    meterNode: () => meterNode(),
     tempoNode: () => tempoNode(),
     keyNode: () => keyNode(),
-    changesNode: () => changesNode(),
+    changesNode: (sid) => changesNode(sid),
     boardNode: () => boardNode(),
     /* THE CAPTION IS DRAWN ONLY WHERE THERE IS SOMETHING TO SAY — `tuningSay`
        answers null on nine of the twelve modes, so a record in dorian prints
@@ -10540,7 +11377,24 @@ function tablePanel(host) {
   const land = tab ? "tcol|" + tab : formSec ? "trow|" + formSec : null;
   if (land) {
     const b = host.querySelector('[data-k="' + CSS.escape(land) + '"]');
-    if (b) b.click();
+    /* ...AND A LANDING ONLY LANDS. Every door on this table is a TOGGLE, and
+       since 2026-09-05 a sheet SURVIVES the rebuild its own write causes
+       (Paul: *"Don't dismiss things when I tap them to change values"*) — so
+       this click, which used to arrive at a table where nothing was open,
+       now arrives at one where the thing it wants may already be. Fired
+       unconditionally it CLOSED it, once per write. Measured: the cell sheet
+       stayed open and its strip of words did not, because `toggle` clears the
+       open field on its way past. §9d says the same sentence about the
+       corner, which is the one door that must still forget. */
+    /* THROUGH `g.land`, NOT A CLICK. A click is a TOGGLE, and since a sheet
+       survives the rebuild its own write causes it would CLOSE the door it was
+       meant to land on, once per write — the strip of words the thumb was
+       using, gone. `land` is `toggle(key, keepOpen)`: it opens and it never
+       closes, which is what an arrival means. */
+    if (b) { const key = land.indexOf("tcol|") === 0
+               ? (tab ? "col|" + tab : null)
+               : (formSec ? "row|" + formSec : null);
+             if (key) tableGrid.land(key); else b.click(); }
   }
   return g;
 }
@@ -10611,7 +11465,15 @@ let hookCells = [];                      // [{ cells, len }] — one per maker
 // `mark(devCell, ...)` calls in the transport handlers below had been
 // marking an empty list ever since. Deleted 2026-08-24: the form column IS the
 // development column, and lighting it once is the whole of what was wanted.
-let chordCell = [], formCell = [];   // the bar of the loop, and the section
+/* THE CHANGES CHART IS A ROW PER CHORD SINCE 2026-09-05, so the playhead
+   needs a MAP from the bar it is in to the row that chord is drawn on:
+   `chordRow[bar]` is the row index, and every bar a two-bar chord sounds
+   through points at the same row, so the mark stays lit for as long as the
+   chord does instead of going dark halfway. `chordLabel` is what that row is
+   called, built where it is drawn rather than re-derived from `prog` at every
+   tick by a second reader that would have to know the same arithmetic. */
+let chordCell = [], chordRow = [], chordLabel = [];
+let formCell = [];                   // the bar of the loop, and the section
 /* WHICH SECTION IS SOUNDING, ON EVERY SURFACE THAT COUNTS SECTIONS (2026-09-02).
    The form column has been `formCell` since the table got numbers; the Structure
    grids each carry a column of the same cells (`structCells`, one array per
@@ -10886,8 +11748,8 @@ on("pos", (d) => {
   // what the kernel indexes `prog` by (at(g.prog, bar)), not the running bar
   let inBox = 0;
   try { inBox = Math.max(0, (passAt(getPosition().now).bar || 1) - 1); } catch (e) {}
-  mark(chordCell, inBox % Math.max(1, DOC.alphabet.prog.length),
-       DOC.alphabet.prog.map((c, i) => String(i + 1)));
+  mark(chordCell, chordRow.length
+         ? chordRow[inBox % chordRow.length] : -1, chordLabel);
   markForm(d.si == null ? -1 : d.si);
   // (`lightSections(d.si)` STOOD HERE, 2026-09-02 to 2026-09-09 — the same
   //  fact on the stripe's own `secnav<id>` row. There is no stripe; the
@@ -11003,7 +11865,7 @@ on("transport:state", () => {
   }
   clearStepTimers();
   lightStep(-1);
-  mark(chordCell, -1, DOC.alphabet.prog.map((c, i) => String(i + 1)));
+  mark(chordCell, -1, chordLabel);
   markForm(-1);
 });
 
@@ -12547,24 +13409,139 @@ const tapLive = () => !!tapAt.length &&
    ONE OWNER, STILL. Nothing on this page draws any of these twice: the panel
    that used to is gone, and `#pan-tempo` is out of index.html with it. */
 
-/** the big number and its slider. `<output aria-hidden>` because the SLIDER is
- *  the control — it carries the `data-k`, it is what a reader is told, and its
- *  own `<output>` is already the accessible readout; this is the same number
- *  drawn large for an eye and must not be announced twice. It is NOT
- *  `[data-live]`: the clock may only write inside one, and this moves when a
- *  HAND moves the tempo, never with the transport. */
+/** the big number and its slider. It WAS an `<output aria-hidden>` ("the
+ *  SLIDER is the control … this is the same number drawn large for an eye and
+ *  must not be announced twice") and it is a typed `<input type=number>` since
+ *  2026-09-05 — two controls for one continuous number is what DESIGN.md
+ *  component 8 IS, and a number you can only drag to is a number you cannot
+ *  say. It names itself now instead of hiding, because it can be focused.
+ *  Still NOT `[data-live]`: the clock may only write inside one, and this
+ *  moves when a HAND moves the tempo, never with the transport. */
 let bpmBig = null, bpmRange = null;
+/* THE BIG NUMBER IS TYPED NOW (2026-09-05, the any-tempo round). Paul: *"The
+   number of tempos is very low and quite confusing. I should be able to set
+   any tempo at all … you should let me choose anything."* It was an
+   `<output aria-hidden>` over a slider that stepped whole numbers between 40
+   and 220, and the only OTHER way to move the tempo was a ladder of nine
+   marks — so 143.5 was unsayable and 21 was outside the box.
+
+   DESIGN.md component 8, exactly: a slider for the continuous number, with
+   the number printed and TYPEABLE beside it, one fence (fields.js
+   BPM_LO..BPM_HI, 20..400) and one step (BPM_STEP, a tenth). The two
+   controls are one component and write one fact through one door — `putBpm`
+   below — so neither can be the copy that drifts, and the marks, the tap and
+   a share link all land on the same number.
+
+   THE ADDRESSES: the SLIDER keeps `data-k="bpm"`, because an address does not
+   move when a widget grows a sibling and every gate that presses the tempo
+   presses that one. The typed field is `bpm.typed`, a new address for a new
+   control, and it is the one a hand reaches for when it knows the number.
+
+   IT COMMITS ON `change`, NOT ON EVERY KEYSTROKE. A recompile rebuilds this
+   sheet, and a rebuild under a typing thumb is the dismissal DESIGN.md 3
+   forbids ("nothing dismisses under a finger that is changing a value"). So
+   `input` moves the SIBLING and nothing else; `change` (blur, Enter, a
+   released slider) is the write. */
 function bpmNode() {
   const box = el("div", null, "nu-timebpm");
-  const big = el("output", String(DOC.time.bpm), "nu-bpmbig");
-  big.setAttribute("aria-hidden", "true");
+  const big = document.createElement("input");
+  big.type = "number";
+  big.className = "nu-bpmbig";
+  big.inputMode = "decimal";
+  big.dataset.k = "bpm.typed";
+  big.min = String(BPM_LO); big.max = String(BPM_HI); big.step = String(BPM_STEP);
+  big.value = bpmSay(DOC.time.bpm);
+  big.setAttribute("aria-label",
+    "tempo, beats a minute — " + BPM_LO + " to " + BPM_HI);
   box.append(big);
+  // ONE DOOR. Clamped to the fence and rounded to the step, so nothing this
+  // page can produce is a tempo no control can restate (song.js rounds the
+  // same way on the way in).
+  const putBpm = (v) => {
+    const n = Math.max(BPM_LO, Math.min(BPM_HI,
+      Math.round((Number.isFinite(+v) ? +v : DOC.time.bpm) * 10) / 10));
+    DOC.time.bpm = n;
+    return n;
+  };
+  const r = number("bpm", "tempo", DOC.time.bpm, (v) => putBpm(v),
+                   box, BPM_LO, BPM_HI, BPM_STEP);
   // `input` and not `change`: the big number follows the finger, exactly as the
   // slider's own small readout does, and the recompile still waits for `change`.
-  const r = number("bpm", "tempo", DOC.time.bpm, (v) => DOC.time.bpm = v,
-                   box, BPM_LO, BPM_HI);
-  r.addEventListener("input", () => { big.textContent = r.value; });
+  r.addEventListener("input", () => { big.value = r.value; });
+  big.addEventListener("change", () => {
+    const n = putBpm(big.value);
+    big.value = bpmSay(n); r.value = String(n);
+    changed();
+  });
   bpmBig = big; bpmRange = r;
+  return box;
+}
+
+/* ---------- THE METER, AS TWO NUMBERS ------------------------------------
+   Paul, 2026-09-05: *"I should be able to set any tempo at all like 21/17 you
+   should let me choose anything."* A signature IS two numbers and this box
+   knew two WORDS; the chips above are still the shortcut a hand reaches for
+   (avail.js `time.meter`, seven of them, DESIGN.md component 7's ceiling),
+   and this is how to say the eighth.
+
+   ONE FACT, ONE SPELLING. Both numbers write through `K.meterWordOf`, which
+   answers the WORD where a word exists — 3 over 4 is `"three"`, the spelling
+   three catalogue anchors and every save already use — the fraction where it
+   does not, and NULL for four-four, which is the one spelling of "counts in
+   four" this box has ever stored. So the chips and the sliders cannot
+   disagree, and a record that has always counted in four still writes no
+   `meter` key at all.
+
+   THE DENOMINATOR IS NOT A LADDER OF POWERS OF TWO. 17 is the ask, and
+   kernel.js `meterRow` says what a seventeenth means (the beat is 1/17 of a
+   whole note and the grid stops at the beat, because a subdivision is a
+   halving and there is no honest half of a seventeenth to draw). */
+function meterNode() {
+  const box = el("div", null, "nu-timemeter");
+  const now = () => K.metOf(DOC.time);
+  // THE WRITE ONLY — the recompile is the CONTROL's, once. `number()`'s own
+  // slider calls `changed()` after its setter, so a `put` that also called it
+  // would rebuild the sheet twice on one drag; the typed field has no such
+  // owner and calls it itself.
+  const put = (n, d) => { DOC.time.meter = K.meterWordOf(n, d); };
+  /* ONE NUMBER, TWO CONTROLS, ONE LINE (DESIGN.md component 8). It is
+     `range()` directly and not `number()`, because `number()` hangs an
+     `<output>` off the slider and the typed field IS that readout — a slider
+     with a printed number AND a typed number beside it would be one fact said
+     three times. The question is on its own line over the pair, which is
+     2026-08-25's law for every field on this page. */
+  const pair = (key, label, get, set, lo, hi) => {
+    const wrap = el("div", null, "nu-timesigpart");
+    const lab = el("label");
+    lab.append(el("span", label, "nu-w"));
+    const { r } = range(key, get(), (v) => set(v), lo, hi, 1, label);
+    const typed = document.createElement("input");
+    typed.type = "number";
+    typed.className = "nu-signum";
+    typed.inputMode = "numeric";
+    typed.dataset.k = key + ".typed";
+    typed.min = String(lo); typed.max = String(hi); typed.step = "1";
+    typed.value = String(get());
+    typed.setAttribute("aria-label", label + " \u2014 " + lo + " to " + hi);
+    r.addEventListener("input", () => { typed.value = r.value; });
+    typed.addEventListener("change", () => {
+      const v = Math.max(lo, Math.min(hi, Math.round(+typed.value) || lo));
+      typed.value = String(v); r.value = String(v); set(v); changed();
+    });
+    lab.append(r, typed);
+    wrap.append(lab);
+    box.append(wrap);
+  };
+  pair("meter.num", "beats a bar", () => now().num,
+       (v) => put(v, now().den), 1, 32);
+  pair("meter.den", "beat note", () => now().den,
+       (v) => put(now().num, v), 1, 32);
+  // WHAT IT SAYS IT IS, in a composer's own two-number spelling — the one
+  // reading that is true whichever of the four controls last moved.
+  const say = el("p", now().num + "/" + now().den + " \u00b7 " +
+    K.stepsIn(DOC.time) + " steps a bar", "nu-hint");
+  say.dataset.k = "meter.say";
+  box.append(say);
   return box;
 }
 
@@ -12592,7 +13569,7 @@ function tempoNode() {
          null-guarded because a caller may seat the marks without the readout
          (nothing does today; a control that assumed it would be a control that
          throws the day something does). */
-      if (bpmBig) bpmBig.textContent = String(t.bpm);
+      if (bpmBig) bpmBig.value = bpmSay(t.bpm);
       if (bpmRange) bpmRange.value = String(t.bpm);
       DOC.time.bpm = t.bpm;
       changed();
@@ -12609,7 +13586,7 @@ function tempoNode() {
     const t = now(), next = d.mk(t);
     const b = icon({ k: "tempo-" + d.w, glyph: (d.g0 || "") + d.g, word: d.w,
       say: d.w + " — " + (next
-        ? "the record counts " + next.bpm + " a minute" +
+        ? "the record counts " + bpmSay(next.bpm) + " a minute" +
           (next.rate === t.rate ? ""
             : ", read at " + (next.rate == null ? "the anchor's own speed"
                                                 : next.rate + "×"))
@@ -12638,9 +13615,9 @@ function keyNode() {
  *  registers `chordCell`, the playhead's own bar cells. It is not a vector and
  *  has no cell, so it comes into the row as one node, which is exactly what
  *  the voice's channel strip does in a column sheet. */
-function changesNode() {
+function changesNode(sid) {
   const box = el("div", null, "nu-timechanges");
-  chordGrid(box);
+  chordGrid(box, sid);
   return box;
 }
 
@@ -14388,8 +15365,13 @@ window.__eightGenres = () => { const out = {};
                   chordsOf` reads `c.q` only under `harmony === "cycle"`, so a
                   gate that read `DOC.alphabet.prog[0].q` would prove the page
                   can store a word the engine throws away. */
+               // ...AND A BAR MAY BE A LIST OF CHORDS SINCE 2026-09-05, so
+               // the gate reads every chord of every bar and not the bar's
+               // first: a split bar whose second chord the compile dropped
+               // would look exactly like a split bar that works.
                progQ: Array.isArray(g.prog)
-                 ? g.prog.map((c) => (c && c.q) || "triad") : null,
+                 ? g.prog.map((slot) => (Array.isArray(slot) ? slot : [slot])
+                     .map((c) => (c && c.q) || "triad").join("+")) : null,
                harmony: g.harmony,
                pipes: g.pipes ? g.pipes.map((o) => o.seed) : null };
   }

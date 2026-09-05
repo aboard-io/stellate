@@ -53,7 +53,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
-import type { TableAPI, Field, Op } from "./api.js";
+import type { TableAPI, Field, Op, Mark } from "./api.js";
 import { rowSheet, colSheet, cellSheet, perfSheet,
          perfCells, tableOps, playerOffers, sectionOffer,
          rowOps, colOps, cellOps } from "./model.js";
@@ -90,6 +90,8 @@ const WIDTH = new Map<string, number>();
 let CLIP: { sec: string; voice: string } | null = null;
 /** the ONE resize observer and the CURRENT grid's `stick` — see `armResize`. */
 let RO: ResizeObserver | null = null;
+/** the ONE tap-outside closer — see `armOutside`. */
+let OUT: ((e: Event) => void) | null = null;
 let STICK: (() => void) | null = null;
 
 /* ---- what a cell is, in the two directions the table can face -------- */
@@ -127,6 +129,9 @@ export interface Grid {
   paint(nowRowId: string | null, soundingColIds?: string[]): void;
   close(): void;
   openCorner(fields?: Field[], btn?: HTMLElement | null): void;
+  /** open a door and never close it — an arrival's own gesture, which a
+   *  toggle is not. See `land` below for the measurement. */
+  land(key: string): void;
   /* ---- THE MOTIFS ROW'S TWO DOORS BACK OUT (2026-09-08, §10b step 4) ---
      The bank is drawn by `ui/eight.js` (it holds the previews, the provenance
      and the editors), and the SELECTION is the grid's — so the one thing the
@@ -155,7 +160,34 @@ export interface Grid {
  *  produce prefix was "not written until it exists", which is the
  *  declared-and-never-arriving shape this repo has a memory note about; it
  *  exists. */
-const STICKY = (k: string | null): boolean => !!k &&
+/* ...AND SINCE 2026-09-05 THAT IS EVERY DOOR BUT THE CORNER. Paul, on the
+   shipped table: *"Don't dismiss things when I tap them to change values;
+   dismiss them when I tap outside of them."* Every write on this page ends in
+   `changed()` -> `push(); draw()`, which throws this panel away and builds it
+   again — so a cell sheet that did not survive a rebuild SHUT UNDER THE THUMB
+   THAT WAS USING IT, once per chip. A row of chips could be tapped exactly
+   once. That is the complaint, in the mechanism.
+
+   THE CORNER IS THE ONE EXCEPTION AND IT IS A MEASUREMENT, NOT A TASTE (§9d):
+   the transpose is reached by OPENING THE CORNER, `tablePanel` lands an
+   arrival by CLICKING the head it wants open, and every door is a TOGGLE — so
+   a corner that stayed open across a rebuild would be CLOSED by the tap meant
+   to restore it, and fifteen of T4/T6/T8's checks went red at once, all of
+   them downstream of that one un-restored transpose. The corner is the only
+   door on this surface whose own act rebuilds the whole table underneath it,
+   which is why it is the only one that must forget.
+
+   WHAT CLOSES A SHEET, THEN, and all three are in `armOutside` and `onKey`:
+   a tap OUTSIDE it, Escape, or its own head pressed again. */
+const STICKY = (k: string | null): boolean => !!k && k !== "corner";
+/** ...AND `SPECIAL` IS WHAT `STICKY` USED TO MEAN — a MERGED ROW (TIME, RULES,
+ *  MOTIFS, PRODUCE, the mix row's board). Two of `STICKY`'s three callers were
+ *  never asking about survival at all: one lets the page's landing go when a
+ *  merged row opens, and one hands the keyboard to a merged row's chips
+ *  instead of to the spreadsheet. Both still mean a merged row and neither
+ *  means "any open door", which is what `STICKY` means since the tap-outside
+ *  ruling. Splitting them is the whole of that change's blast radius. */
+const SPECIAL = (k: string | null): boolean => !!k &&
   (k.indexOf("sp|") === 0 || k.indexOf("mix|") === 0);
 
 export function bandTable(host: HTMLElement, A: TableAPI): Grid {
@@ -448,15 +480,19 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const v = A.doc().voices.find((x) => x.name === name)!;
     const vi = A.doc().voices.indexOf(v);
     const sub = A.playsWhat(v) || "";
+    const cm = A.colMark(vi);
     return html`<th class="nu-colhead" data-vi=${String(A.vpaintOf(vi) ?? "")}
         scope="col">
       <button type="button" class="nu-colbtn nu-vpaint" data-k=${"tcol|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
         aria-label=${name + " — " + (sub || "no instrument") + " — open this player's vector"}
         title=${name + (sub ? " — " + sub : "")}
+        data-say=${ifDefined(cm && cm.s ? cm.s : undefined)}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("col|" + name, true); }}
-        ><b class="nu-colname">${name}</b>${
+        >${cm ? html`<span class="nu-g" aria-hidden="true">${cm.g}</span>` : nothing
+        }<b class="nu-colname">${name}</b>${
+        cm ? html`<span class="nu-vh">${cm.w}</span>` : nothing}${
         sub ? html`<span class="nu-colinstr">${sub}</span>` : nothing}</button>
       ${lamp(name)}
       ${grip(name, "tcol|" + name, name)}
@@ -466,13 +502,16 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const secHead = (S: Shape, sid: string): TemplateResult => {
     const i = A.doc().form.sections.findIndex((s) => s.id === sid);
     const s = A.doc().form.sections[i]!;
+    const sm = A.rowMark(i);
     return html`<th class="nu-colhead" scope="col">
       <button type="button" class="nu-colbtn" data-k=${"tcol|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
         aria-label=${A.secName(i) + " — open this section's vector"}
         @click=${() => toggle("row|" + sid)}
+        data-say=${ifDefined(sm && sm.s ? sm.s : undefined)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
-        ><b class="nu-colname">${A.roleWord(s.role)}</b
+        >${sm ? html`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : nothing
+        }<b class="nu-colname">${A.roleWord(s.role)}</b
         ><span class="nu-colinstr">${s.bars} bars</span></button>
       ${grip(sid, "tcol|" + sid, A.secName(i))}
     </th>`;
@@ -583,12 +622,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const secRowHead = (sid: string) => {
     const i = A.doc().form.sections.findIndex((s) => s.id === sid);
     const s = A.doc().form.sections[i]!;
+    const rm = A.rowMark(i);
     return html`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
         aria-label=${A.secName(i) + ", " + s.bars + " bars — open this section's vector"}
         @click=${() => toggle("row|" + sid)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
+        data-say=${ifDefined(rm && rm.s ? rm.s : undefined)}
+        ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i + 1}</span></span
         ><span class="nu-srowname"> ${A.roleWord(s.role)}</span></button>
       <small> ${s.bars} bars</small>
@@ -598,20 +640,67 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const voiceRowHead = (name: string) => {
     const doc = A.doc();
     const v = doc.voices.find((x) => x.name === name)!;
+    const vm = A.colMark(doc.voices.indexOf(v));
     return html`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
         aria-label=${name + " — open this player's vector"}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("col|" + name, true); }}
+        data-say=${ifDefined(vm && vm.s ? vm.s : undefined)}
+        ><span class="nu-g" aria-hidden="true">${vm ? vm.g : ""}</span
         ><span class="nu-srowname">${name}</span></button>
       <small> ${A.playsWhat(v) || ""}</small>
     </th>`;
   };
 
-  /** ONE CELL. What it prints without being opened is what this voice PLAYS
-   *  here; DIM means nothing has been written in this cell — 2's "the table
-   *  draws only deviations", which is what makes eighty cells readable. */
+  /* ---- A FACE: A MARK, A NUMBER, AND THE WORD ------------------------
+     Paul, 2026-09-05: *"When you redesign use more icons. Ideally the table
+     is a large set of icons."*
+
+     THREE PARTS, WHICH ARE ui/glyph.js's OWN THREE and are written here by
+     hand only because this table is drawn by lit and `paintIcon` builds DOM:
+       `.nu-g`   the glyph, `aria-hidden` — it is a picture, and a screen
+                 reader that read "black star" would be reading the ink
+       `.nu-n`   a number, where the value IS one (a bar count) — Paul's own
+                 sentence from the icon round: *"Voice 2 for example could be
+                 more symbol plus the number 2"*
+       `.nu-vh`  the WORD, visually hidden and in the accessible name. This is
+                 the a11y law of the 2026-08-28 icon round, stated in
+                 ui/glyph.js's header: *"with the stylesheet off this page
+                 still reads as the same document it always did, and a screen
+                 reader hears 'Where', never 'circled plus'."*
+     ...and `data-say` on the BUTTON, so the one explainer this page has —
+     long-press for a thumb, hover for a mouse — speaks the mark's clause.
+
+     THE WORD IS VISIBLE WHERE THERE IS NO HONEST MARK, which is the ruling's
+     own boundary: a motif is CALLED `counter` and no picture says that, so the
+     mark beside it says where the motif came from and the name is printed. */
+  const face = (mark: Mark | null, word: string | null,
+                num?: string | number | null): TemplateResult =>
+    html`<span class="nu-ic"
+      >${mark ? html`<span class="nu-g" aria-hidden="true">${mark.g}</span>` : nothing
+      }${num != null && num !== "" ? html`<span class="nu-n">${num}</span>` : nothing
+      }${word != null && word !== "" ? html`<span class="nu-w">${word}</span>` : nothing
+      }${mark ? html`<span class="nu-vh">${mark.w}</span>` : nothing}</span>`;
+
+  /** ONE CELL, AND AT REST IT IS A CELL AND NOT A BOX (TABLE.md 11, RULED
+   *  2026-09-05). Paul: *"less boxes inside the cells and more of the cells
+   *  just being cells"*. What it prints without being opened is what this voice
+   *  PLAYS here, as PLAIN TEXT: no plate, no rule, no radius — the border that
+   *  used to be "the box" is gone and the typography carries what it carried.
+   *  BOLD is written (`--fw-label`), quiet is inherited (2's "the table draws
+   *  only deviations", which is what makes eighty cells readable), the ring is
+   *  the selection and dashed is still a refusal.
+   *
+   *  AND THE FIRST TAP OPENS NOTHING BUT THE RING. A spreadsheet's first tap
+   *  SELECTS; the second one edits. Before this round one tap did both — it
+   *  selected the cell AND unfolded the whole eighteen-field accordion under
+   *  the row, measured at 15 sheet rows for a hand that only wanted to see
+   *  where it was standing. Now: tap once to stand on it (the formula bar
+   *  names it), tap the SAME cell again — or press Enter, F2, or any printable
+   *  key — to edit. `is-sel` is the state the second tap reads, so the two taps
+   *  are the same button and neither is a mode. */
   const bodyCell = (S: Shape, rid: string, cid: string): TemplateResult => {
     const sid = S.across ? cid : rid;
     const name = S.across ? rid : cid;
@@ -622,17 +711,21 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const key = "tcell|" + name + "|" + sid;
     const openKey = "cell|" + sid + "|" + name;
     const word = A.cellWord(i, vi);
+    const mark = A.cellMark(i, vi);
     const hand = A.written(i, vi);
     const sel = !!SEL && SEL.sec === sid && SEL.voice === name;
     const inRange = rangeHas(S, sid, name);
     return html`<td class=${classMap({ "is-inrange": inRange })}>
       <button type="button"
-        class=${classMap({ "nu-wcell": true, "nu-trimbtn": true,
+        class=${classMap({ "nu-wcell": true, "nu-cellword": true,
                            "is-derived": !hand, "is-sel": sel })}
         data-k=${key}
         aria-expanded=${String(OPEN === openKey)}
         aria-selected=${String(sel)}
-        aria-label=${name + " · " + A.secName(i) + ": " + word}
+        aria-label=${name + " · " + A.secName(i) + ": " + word +
+          (mark ? " (" + mark.w + ")" : "") +
+          (sel ? " — selected; tap again to edit" : " — tap to select")}
+        data-say=${ifDefined(mark && mark.s ? mark.s : undefined)}
         @click=${(e: MouseEvent) => {
           if (e.shiftKey && SEL) { ANCHOR = { sec: sid, voice: name }; draw(); return; }
           /* AN ARMED BANK SPENDS ITSELF ON THE NEXT CELL (§10b step 4). The
@@ -642,9 +735,12 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
           if (ARM) { const m = ARM; ARM = null;
                      SEL = { sec: sid, voice: name }; ANCHOR = null;
                      A.pointCell(i, vi, m); return; }
-          ANCHOR = null; toggle(openKey); }}
+          ANCHOR = null;
+          /* FIRST TAP SELECTS ONLY; THE SECOND EDITS (§11). */
+          if (!sel) { select(sid, name); return; }
+          toggle(openKey); }}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
-        >${word}</button>
+        >${face(mark, word === "\u2014" ? null : word)}</button>
     </td>`;
   };
 
@@ -764,16 +860,19 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const mixCell = (name: string): TemplateResult => {
     const openKey = "mix|" + name;
     const word = A.mixWord(name);
+    const mk = A.mixMark(name);
     return html`<td class="nu-mixcell">
       <button type="button"
-        class=${classMap({ "nu-wcell": true, "nu-trimbtn": true,
+        class=${classMap({ "nu-wcell": true, "nu-cellword": true,
                            "is-derived": !A.mixWritten(name) })}
         data-k=${"tmix|" + name}
         aria-expanded=${String(OPEN === openKey)}
-        aria-label=${name + " — its seat on the desk: " + word}
+        aria-label=${name + " — its seat on the desk: " + word +
+                     (mk ? " (" + mk.w + ")" : "")}
+        data-say=${ifDefined(mk && mk.s ? mk.s : undefined)}
         @click=${() => toggle(openKey)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
-        >${word}</button>
+        >${face(mk, word === "\u2014" ? null : word)}</button>
       ${mixLamp(name)}
     </td>`;
   };
@@ -796,8 +895,9 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     ${OPEN === openKey ? openRow(S, sheetFor(openKey, sheet), openKey) : nothing}`;
   };
 
-  /** A FOOTER CELL IS THE SAME RECORD A BODY CELL IS — the same plate, the same
-   *  dim-is-derived reading — but it asks a question of the RECORD, and the
+  /** A FOOTER CELL IS THE SAME RECORD A BODY CELL IS — the same plain word, the
+   *  same dim-is-derived reading (§11: no plate, at rest) — but it asks a
+   *  question of the RECORD, and the
    *  record has no voices, so it is not one of the columns overhead. It opens
    *  its strip in the row's own sheet rather than a second accordion. */
   const footCell = (c: Field): TemplateResult => {
@@ -805,7 +905,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
                      derived?: boolean };
     if (!f.key) return html`<span class="nu-sgsay">${f.word ?? "—"}</span>`;
     return html`<button type="button"
-      class=${classMap({ "nu-wcell": true, "nu-trimbtn": true,
+      class=${classMap({ "nu-wcell": true, "nu-cellword": true,
                          "is-derived": !!f.derived })}
       data-k=${f.key}
       aria-label=${(f.label || f.key) + ": " + (f.word ?? "—")}
@@ -883,11 +983,55 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
 
   /* ---- selection, ranges, fills and the keyboard ---------------------- */
 
+  /** SELECT, AND ONLY SELECT (§11's first law). A tap on a cell that is not
+   *  already the selection puts the ring on it, points the formula bar's head
+   *  at it, and SHUTS whatever editor was open on the cell you just left — the
+   *  spreadsheet gesture exactly. Nothing is written and no vocabulary is
+   *  drawn: the cost of looking at a cell is now one ring. */
+  function select(sid: string, name: string): void {
+    SEL = { sec: sid, voice: name };
+    ANCHOR = null;
+    if (OPEN && OPEN.indexOf("cell|") === 0) {
+      OPEN = null; SHEETKEY = null; SHEETFIELDS = null;
+    }
+    OPENFIELD = null;
+    draw();
+    const b = host.querySelector('[data-k="tcell|' + name + "|" + sid + '"]');
+    if (b instanceof HTMLElement) b.focus({ preventScroll: true });
+  }
+
+  /** EDIT THE SELECTED CELL — the second tap, Enter, F2 and any printable key
+   *  all arrive here. The control pops up IN the cell's own row: `sheet.ts
+   *  pickerFor` is still the one owner of WHICH widget a vocabulary gets
+   *  (chips ≤ 8, the native picker on a coarse pointer, the typed combo on a
+   *  fine one), and the accordion under the row is where it is drawn, which is
+   *  this page's standing law about menus (they insert below and never scroll
+   *  inside themselves). §11a's typed editor is a LATER round; this one only
+   *  changes WHAT the first tap opens. */
+  function editSel(): void {
+    if (!SEL) return;
+    OPEN = "cell|" + SEL.sec + "|" + SEL.voice;
+    OPENFIELD = null; SHEETKEY = null; SHEETFIELDS = null;
+    draw();
+    const first = host.querySelector(".nu-vsheet .nu-wcell");
+    if (first instanceof HTMLElement) first.focus({ preventScroll: true });
+  }
+
+  /** ESCAPE RESTORES: the editor closes, nothing is written, and the ring —
+   *  and the focus — go back to the cell you were standing on. */
+  function closeEdit(): void {
+    OPEN = null; OPENFIELD = null; SHEETKEY = null; SHEETFIELDS = null;
+    draw();
+    if (!SEL) return;
+    const b = host.querySelector('[data-k="tcell|' + SEL.voice + "|" + SEL.sec + '"]');
+    if (b instanceof HTMLElement) b.focus({ preventScroll: true });
+  }
+
   function toggle(key: string, keepOpen = false): void {
     /* OPENING A SPECIAL ROW LETS THE PAGE'S LANDING GO — see `leaveLanding`
        in api.ts for the measurement. Only on the way OPEN: shutting TIME is
        not a claim about where you are standing. */
-    if (STICKY(key) && (OPEN !== key || keepOpen)) {
+    if (SPECIAL(key) && (OPEN !== key || keepOpen)) {
       try { A.leaveLanding(); } catch (e) { /* an older host */ }
     }
     if (key.indexOf("cell|") === 0) {
@@ -964,11 +1108,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     if (extend) { if (!ANCHOR) ANCHOR = { ...SEL! }; }
     else ANCHOR = null;
     SEL = next;
-    /* THE BAR FOLLOWS THE SELECTION. That is what a formula bar is: the sheet
-       moves with the cell rather than a hand having to re-open it. */
+    /* AN ARROW AND A TAB COMMIT AND MOVE (§11). The bar's HEAD follows the
+       selection — that is what a formula bar is — but the EDITOR does not:
+       moving off a cell closes the control that was open on it, exactly as
+       leaving a cell in a spreadsheet ends the edit. (It used to re-point the
+       open sheet at the new cell, which meant an eighteen-field accordion
+       unfolding under every arrow press; §11's first law is that looking at a
+       cell costs a ring and nothing else.) */
     if (OPEN && OPEN.indexOf("cell|") === 0) {
-      OPEN = "cell|" + SEL.sec + "|" + SEL.voice;
-      SHEETKEY = null; SHEETFIELDS = null;
+      OPEN = null; SHEETKEY = null; SHEETFIELDS = null;
     }
     OPENFIELD = null;
     draw();
@@ -1006,7 +1154,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const inSpecial = !!tg && (!!tg.closest(".nu-sprow") ||
       !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") ||
       !!tg.closest(".nu-prodrow") ||
-      (STICKY(OPEN) && !!tg.closest(".nu-wopen")));
+      (SPECIAL(OPEN) && !!tg.closest(".nu-wopen")));
     if (inSpecial && e.key !== "Escape") return;
     if (meta && (e.key === "z" || e.key === "Z")) {
       e.preventDefault(); if (e.shiftKey) U.redo(); else U.undo(); return; }
@@ -1028,16 +1176,21 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       case "Tab":
         if (!SEL) return;
         e.preventDefault(); moveSel(S, 0, e.shiftKey ? -1 : 1, false); return;
+      /* ENTER AND F2 EDIT; ENTER AGAIN COMMITS AND STAYS. Every write on this
+         page lands the moment a chip is tapped — there is no pending buffer to
+         commit — so "commit and stay" is: the editor shuts, the ring does not
+         move, and the focus goes back to the cell. */
       case "Enter": case "F2": {
         if (!SEL) return;
         e.preventDefault();
-        OPEN = "cell|" + SEL.sec + "|" + SEL.voice; OPENFIELD = null;
-        SHEETKEY = null; SHEETFIELDS = null; draw();
-        const first = host.querySelector(".nu-vsheet .nu-wcell");
-        if (first instanceof HTMLElement) first.focus({ preventScroll: true });
+        if (OPEN === "cell|" + SEL.sec + "|" + SEL.voice) { closeEdit(); return; }
+        editSel();
         return; }
       case "Escape":
         if (OPENFIELD) { OPENFIELD = null; draw(); e.stopPropagation(); return; }
+        /* ESCAPE RESTORES — the editor closes and the selection survives it. */
+        if (OPEN && OPEN.indexOf("cell|") === 0) {
+          closeEdit(); e.stopPropagation(); return; }
         if (OPEN) { OPEN = null; SHEETKEY = null; SHEETFIELDS = null;
                     draw(); e.stopPropagation(); return; }
         if (ANCHOR) { ANCHOR = null; draw(); e.stopPropagation(); return; }
@@ -1057,8 +1210,52 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
              const vi = A.doc().voices.findIndex((v) => v.name === c.name);
              if (i >= 0 && vi >= 0) A.clearCell(i, vi); } });
         return; }
-      default: return;
+      /* A PRINTABLE KEY EDITS, which is the gesture every spreadsheet user
+         already has in their hands: you do not reach for a menu, you start
+         typing. What it opens today is the cell's own control (§11a's typed
+         editor, where the letters would go on to FILTER the vocabulary, is a
+         later round and this is the door it will be built behind). */
+      default:
+        if (!SEL) return;
+        if (e.altKey || e.key.length !== 1) return;
+        if (OPEN === "cell|" + SEL.sec + "|" + SEL.voice) return;
+        e.preventDefault(); editSel(); return;
     }
+  }
+
+  /* ---- A TAP OUTSIDE CLOSES IT, AND ONLY A TAP OUTSIDE -----------------
+     Paul, 2026-09-05: *"Don't dismiss things when I tap them to change values;
+     dismiss them when I tap outside of them."* The first half is `STICKY`
+     above (a sheet now survives the rebuild its own write causes); this is the
+     second, and it is deliberately NARROW.
+
+     WHAT COUNTS AS OUTSIDE: a press that lands on nothing you could press.
+     Not another BUTTON, not a menu, not an input — because every control in
+     this table already decides for itself what happens to the open sheet (a
+     cell tap selects, which closes; a head tap toggles; a chip writes and
+     stays), and a document-level closer racing them would shut the sheet on
+     the way DOWN and reopen it on the way UP, which is a flicker and a lost
+     tap. So this fires on the page's own chrome and background only, which is
+     exactly the gesture the sentence describes.
+
+     ONE LISTENER FOR THE LIFE OF THE PAGE. `bandTable` runs again on every
+     write; the old handler is removed before the new one is added, so the
+     count is one whatever the panel does (`OUT` is module-level for `RO`'s own
+     reason). */
+  function armOutside(): void {
+    if (OUT) document.removeEventListener("pointerdown", OUT, true);
+    OUT = (e: Event) => {
+      if (!OPEN) return;
+      const t = e.target as HTMLElement | null;
+      if (!t || !t.closest) return;
+      if (t.closest(".nu-wopen")) return;              // inside the sheet
+      if (t.closest("button, a, input, select, textarea, [role=slider], label"))
+        return;                                        // a control decides for itself
+      if (!host.isConnected) return;
+      OPEN = null; OPENFIELD = null; SHEETKEY = null; SHEETFIELDS = null;
+      draw();
+    };
+    document.addEventListener("pointerdown", OUT, true);
   }
 
   /* ---- draw, then hand the host what it has always been handed -------- */
@@ -1090,6 +1287,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   };
   reindex();
   armResize(paneEl);
+  armOutside();
 
   /* WHO IS SOUNDING, DRIVEN BY THE CALLER FROM ITS EXISTING "pos" PATH. This
      component installs no clock and subscribes to nothing — "a view never
@@ -1113,6 +1311,18 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     close: () => { OPEN = null; OPENFIELD = null;
                    SHEETKEY = null; SHEETFIELDS = null; draw(); },
     openCorner: () => { toggle("corner"); },
+    /* A LANDING ONLY LANDS (2026-09-05). `tablePanel` ends every rebuild by
+       opening the head an arrival asked for — the gutter's, the atlas's, a
+       link's — and it did it by CLICKING, which is a TOGGLE. That was safe
+       while a rebuild closed everything; the moment a sheet survives its own
+       write (Paul: *"Don't dismiss things when I tap them to change values"*)
+       the landing click began CLOSING the sheet it was meant to land on, once
+       per write, and `toggle` clears the open field on its way past — measured
+       as "the sheet is open and its strip of words is not". This is the same
+       door with the other half of `toggle`'s own signature: `keepOpen`, which
+       opens and never closes. §9d says the same sentence about the corner,
+       which is the one door that must still forget. */
+    land: (key: string) => { toggle(key, true); },
     /* THE WRITE IS `A.pointCell`, WHICH IS avail.js's OWN `material.cell`
        SHEET — not `putCell`. That sheet is the one owner of which cells a
        voice of this kind may read (a drum cell is lanes, a line cell is

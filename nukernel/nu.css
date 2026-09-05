@@ -499,6 +499,13 @@
   --sl-trough: 20px;  /* the well, ACROSS the axis */
   --sl-cap:    38px;  /* the cap,  ACROSS the axis — 9px proud of the well each side */
   --sl-grab:   22px;  /* the cap,  ALONG the axis — what a thumb is */
+  /* THE CURVE EDITOR'S PLATE (DESIGN.md component 9, 2026-09-05). Three
+     `--tap`s tall: enough that an envelope is a SHAPE and not a line, short
+     enough that a chair's sheet still fits a phone with the plate open. The
+     DOT is the mark inside the 44px handle — a quarter of the target, so the
+     picture is small and the thumb is not. */
+  --env-h:   132px;
+  --env-dot: 11px;
   --sl-line:   40px;  /* a laid-down slider's line: the bench row's bar height */
   /* --ctl WAS READ AND NEVER DECLARED (declared 2026-09-02). The second
      `input[type=range]` block, written 2026-08-27, said `block-size: var(--ctl,
@@ -4726,8 +4733,19 @@ table.nu-trims{ color: var(--ink); }
    beside a sans ↑. `pointer-events: none` so the picture can never eat the
    press, which is the half-hour the globe round lost to a decorative stroke
    swallowing every tap. */
+/* ...AND IT IS A CONTAINING BLOCK, WHICH IS A MEASUREMENT (2026-09-05).
+   `.nu-vh` is `position: absolute` with no offsets, so it lands at its static
+   position inside whatever the nearest POSITIONED ancestor is. Everywhere this
+   face was used before today that ancestor was near and the page was not
+   scrolled; the table's cells put one inside a `.nu-pane` that is 294px wide
+   and 957px of table across, and an absolutely positioned box is NOT clipped
+   by an ancestor that is merely `overflow: auto` — so the hidden word of a
+   cell nine columns to the right sat at x=900 against the initial containing
+   block and the WHOLE PAGE scrolled sideways: measured 320 -> 547 at a 320px
+   viewport, on a table whose pane was clipping correctly. One `relative` puts
+   the word back inside the cell that owns it. */
 .nu-ic{ display: inline-flex; align-items: center; gap: .06em;
-  pointer-events: none; }
+  position: relative; pointer-events: none; }
 .nu-g{ font-size: 1.2rem; line-height: 1; letter-spacing: -.02em;
   font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
 /* THE NUMBER, AND IT IS THE ONLY TEXT THAT SHOWS. Paul: "more symbol plus the
@@ -5132,10 +5150,26 @@ table.nu-trims{ color: var(--ink); }
    188 — the same reason the countdown and the clock use it. It sits tight
    under the heading and tight over its own slider: the readout and the control
    are one object, so the air goes round the pair and not between them. */
+/* ...AND IT IS AN <input type=number> SINCE 2026-09-05 (DESIGN.md 8: "the
+   number printed and typeable beside it"). Everything above still holds — the
+   size, the weight, the tabular figures, the air round the pair — and what is
+   added is the four rules a number input needs to stop looking like a form
+   field: no chrome of its own, the page's own ink and ground, the hairline
+   only when it has focus (a control is a hair wider than its word), and no
+   spinner, which at --t5 is a 30px pair of arrows over the tempo. The field
+   is `--tap` tall like every other control on this page. */
 .nu-bpmbig{ display: block; margin: 0 0 calc(var(--s1) * -1);
   font-size: var(--t5); font-weight: var(--fw-display);
   line-height: 1; font-variant-numeric: tabular-nums;
-  letter-spacing: -.02em; }
+  letter-spacing: -.02em;
+  inline-size: 100%; min-inline-size: 0; box-sizing: border-box;
+  min-block-size: var(--tap); padding: 0 var(--s1);
+  color: var(--ink); background: transparent;
+  border: var(--bw) solid transparent; border-radius: var(--r1);
+  font-family: inherit; -moz-appearance: textfield; appearance: textfield; }
+.nu-bpmbig::-webkit-outer-spin-button,
+.nu-bpmbig::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+.nu-bpmbig:focus-visible{ border-color: var(--hand); outline: none; }
 
 /* THE EIGHT OPERATIONS, AS A PANEL ROW — the geometry the 2026-08-29 audit
    deleted when the row was a gutter level, re-measured for the column it is in
@@ -5153,6 +5187,28 @@ table.nu-trims{ color: var(--ink); }
    eight, because it is a gesture and they are operations. It shares the plate
    rule below because it is the same object.) */
 .nu-tf-row{ margin-block: var(--s3); }
+/* ---- THE MOTIF OP CHAIN (2026-09-05) --------------------------------------
+   Paul: *"I want to be able to do multiple operations in a motif at once."*
+   The chain is a strip of CHIPS (DESIGN.md component 7): each is one run of
+   the chain with its word and three 44px marks — earlier, later, out. It
+   WRAPS rather than scrolls, because nothing on this page scrolls sideways,
+   and it is a hairline-separated block under the fourteen marks so the row
+   that WRITES and the row that RECORDS read as two things. */
+.nu-opchain{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); margin-block: var(--s3);
+  padding-block-start: var(--s3);
+  border-block-start: var(--bw) solid var(--rule); }
+.nu-opchip{ display: inline-flex; align-items: center; gap: var(--s1);
+  min-block-size: var(--tap); padding-inline: var(--s2);
+  border: var(--bw) solid var(--rule); border-radius: var(--r2);
+  background: var(--panel); }
+/* WRITTEN, NOT INHERITED: a chip in the chain is a thing a hand did, so it
+   takes the weight this page gives to a written value everywhere else. */
+.nu-opchipword{ font-weight: var(--fw-label); white-space: nowrap; }
+.nu-opchip button{ min-inline-size: var(--tap); min-block-size: var(--tap);
+  border: 0; background: transparent; color: var(--dim); }
+.nu-opchip button:disabled{ opacity: .4; }
+.nu-opchain > button{ min-block-size: var(--tap); }
 .nu-tf-row button, .nu-taprow button{
   min-inline-size: var(--ctl); min-block-size: var(--ctl); }
 
@@ -6036,7 +6092,14 @@ table.nu-trims{ color: var(--ink); }
    `data-live="trimrow"`), and both spellings land on the same tint. */
 .nu-wordgrid tbody tr:has(mark) > th{ background: var(--clock-tint);
   border-radius: var(--r2); }
-.nu-wordgrid tbody tr:has(mark) > td > .nu-wcell{ border-color: var(--clock); }
+/* ...AND THE SOUNDING ROW TINTS THE ROW, NOT THE CELL'S BORDER. That rule
+   (`> td > .nu-wcell{ border-color: var(--clock) }`) was the clock's only mark
+   on the cells and it stopped meaning anything the minute a resting cell lost
+   its border (§11); a rule that reads right and moves nothing is a shape this
+   file has a paragraph about. The tint goes on the `<td>` instead, which is
+   the same paint the row head already wears and is visible without a frame. */
+.nu-wordgrid tbody tr:has(mark) > td{ background: var(--clock-tint); }
+.nu-wordgrid tbody tr:has(mark) > td > .nu-trimbtn{ border-color: var(--clock); }
 
 /* ---- a cell: the trim plate, and it may not widen the column -----------
    `.nu-trimbtn` is the whole plate (44px, the word colours, the dim derived
@@ -6053,6 +6116,46 @@ table.nu-trims{ color: var(--ink); }
    reads as a refusal and not as an unset cell. */
 .nu-wcell.is-refused{ opacity: .55; border-style: dashed; cursor: not-allowed; }
 .nu-wcell[disabled]{ opacity: .55; border-style: dashed; cursor: not-allowed; }
+
+/* ---- A CELL IS A CELL, AT REST (TABLE.md §11, RULED 2026-09-05) --------
+   Paul: *"less boxes inside the cells and more of the cells just being cells"*
+   and *"keep our stuff but make it less chunky and more stylish"*.
+
+   `.nu-trimbtn` — the plate, with its hairline on all four sides and its 3px
+   radius — was the whole visual grammar of a table cell, and MEASURED on the
+   reggae record at 390 it was 91 boxes drawing 18,200px² of rule around
+   580px² of average ink: an ink-to-box ratio of 0.236. A grid is not
+   ninety-one buttons. So the body, mix and footer cells wear THIS instead: no
+   border, no radius, no ground. The tap target does not move — the button is
+   still a button and still 44px tall, which is the one thing the restyle may
+   not spend — and what the frame used to carry, TYPE carries:
+
+     WRITTEN is `--fw-label` (700), the page's own weight for a fact a hand
+       put there. It was 500, one step off the 400 beside it.
+     INHERITED keeps the quiet it already had — 400, tabular figures, .78 —
+       so a column of dealt readings still lines up and still recedes.
+     SELECTED is the ring (`.nu-wcell.is-sel`, below), and now that the ring
+       is the ONLY box on the surface it reads as a position rather than as
+       one more border among ninety.
+     REFUSED is still dashed, and because there is no border left to make
+       dashed it draws its own — a refusal has always been a visible edge and
+       this is the one cell that keeps one.
+     OPEN (the editor is out) is the hand's tint plus an inset ring: the cell
+       being edited is a state, not a plate.
+
+   The word colours (`.w-out` … `.w-lift`) are untouched and still paint the
+   cells that carry them; they are a GROUND with a meaning, which is exactly
+   the kind of box §11 keeps. */
+.nu-cellword{ inline-size: 100%; min-block-size: var(--tap); min-inline-size: 56px;
+  border: 0; border-radius: var(--r2); background: transparent; color: var(--ink);
+  padding: 0 var(--s1); cursor: pointer;
+  font: var(--fw-label) var(--t1)/1.25 var(--mono, monospace); }
+.nu-cellword.is-derived{ font-weight: 400; font-variant-numeric: tabular-nums;
+  letter-spacing: 0; opacity: .78; }
+.nu-cellword.is-refused, .nu-cellword[disabled]{
+  border: var(--bw) dashed currentColor; }
+.nu-cellword[aria-expanded="true"]{ background: var(--hand-tint);
+  box-shadow: inset 0 0 0 var(--bw-hard) var(--hand); }
 
 /* ---- THE STRIP OF WORDS: an accordion row, never a popup ---------------
    Paul: *"tappable grids that change options."* The row you tapped grows one
@@ -6567,8 +6670,37 @@ table.nu-trims{ color: var(--ink); }
 .nu-timebpm{ display: flex; flex-direction: column; inline-size: 100%;
   min-inline-size: 0; }
 .nu-timebpm .nu-field{ margin: 0; }
-.nu-timekey, .nu-timechanges, .nu-rulesheet{ inline-size: 100%;
+.nu-timekey, .nu-timechanges, .nu-rulesheet, .nu-timemeter{ inline-size: 100%;
   min-inline-size: 0; }
+/* THE SIGNATURE'S TWO NUMBERS (2026-09-05, the any-meter round). One
+   component per number — the typed field over its slider, DESIGN.md 8 — and
+   the two stacked rather than side by side, because at 320px two sliders on
+   one line are 90px each and a slider narrower than a thumb is a control you
+   cannot land on. The numbers are `--t4` and not `--t5`: the TEMPO is the
+   number this row is about, and two displays of equal weight would be two
+   headlines. */
+.nu-timesigpart{ display: flex; flex-direction: column; min-inline-size: 0; }
+/* the question over the pair, the slider and its typed number side by side —
+   the slider takes the room and the number takes what a two-digit figure
+   needs plus the .5ch either side a control gets over its word. */
+.nu-timesigpart label{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); }
+.nu-timesigpart .nu-w{ flex: 1 0 100%; }
+.nu-timesigpart input[type=range]{ flex: 1 1 8em; min-inline-size: 0; }
+.nu-timemeter{ display: flex; flex-direction: column; gap: var(--s3); }
+.nu-timemeter .nu-field{ margin: 0; }
+.nu-timemeter .nu-hint{ margin: 0; font-variant-numeric: tabular-nums; }
+.nu-signum{ inline-size: 4ch; min-inline-size: 4ch; box-sizing: border-box;
+  text-align: center;
+  min-block-size: var(--tap); padding: 0 var(--s1);
+  font-size: var(--t4); font-weight: var(--fw-block); line-height: 1;
+  font-variant-numeric: tabular-nums; font-family: inherit;
+  color: var(--ink); background: transparent;
+  border: var(--bw) solid transparent; border-radius: var(--r1);
+  -moz-appearance: textfield; appearance: textfield; }
+.nu-signum::-webkit-outer-spin-button,
+.nu-signum::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+.nu-signum:focus-visible{ border-color: var(--hand); outline: none; }
 .nu-vsheet .nu-taprow{ display: flex; flex-wrap: wrap; align-items: center;
   gap: var(--s2); margin: 0; }
 /* THE RULES ROW'S SHEET IS `ui/rules.js`'s OWN PANEL, seated. It kept its
@@ -6597,6 +6729,138 @@ table.nu-trims{ color: var(--ink); }
 .nu-wcell.is-sel{ outline: var(--bw-hard) solid var(--hand);
   outline-offset: -2px; }
 .nu-wordgrid td.is-inrange{ background: var(--hand-tint); border-radius: 3px; }
+
+/* ---- THE TABLE IS A SET OF MARKS (TABLE.md §11, 2026-09-05) -----------
+   Paul: *"When you redesign use more icons. Ideally the table is a large set
+   of icons."* Every cell, every head and every seat draws ui/glyph.js's own
+   three-part face — the glyph, an optional number, and the WORD, which is
+   `.nu-vh` (hidden, in the accessible name) where the mark carries it and
+   `.nu-w` (visible) where the value is a proper noun no picture can say.
+
+   THE MARK IS THE SIZE OF THE ROW, NOT OF THE TYPE. 1.15rem against the
+   cell's .72rem word: a picture has to be READ at arm's length across eighty
+   cells, and a glyph set at the word's own size is a smudge. It stays inside
+   the 44px the cell already spends.
+
+   BOLD AND QUIET REACH THE MARK TOO, which is §11's own law and the reason
+   this is a rule and not a default: written is the ink at full strength,
+   inherited is the same .78 the word wears — so a column of dealt cells
+   recedes as a picture exactly as it did as a word. */
+.nu-cellword .nu-ic{ inline-size: 100%; min-inline-size: 0; gap: var(--s1);
+  justify-content: center; }
+.nu-cellword .nu-g{ font-size: 1.15rem; flex: 0 0 auto; }
+.nu-cellword .nu-w{ overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; min-inline-size: 0; }
+.nu-cellword.is-derived .nu-g{ opacity: .78; }
+/* ...AND ON THE HEADS, WHERE THE NAME IS THE WORD. A player is called `stab`
+   and a section is called `verse`; the mark says WHAT KIND of thing that name
+   is, and the name stays visible beside it. Smaller here than in a cell — a
+   head already carries two lines of type and the mark is the second voice in
+   it, not the first. */
+.nu-colbtn .nu-g, .nu-rowjump .nu-g{ font-size: 1rem; margin-inline-end: .18em;
+  opacity: .8; }
+.nu-rowjump .nu-g{ display: inline; }
+
+/* ---- A NUMBER IS A SLIDER AND A BOX (TABLE.md §11, 2026-09-05) --------
+   Paul: *"When you redesign think sliders and other UI for data entry."* One
+   address, two doors: the RANGE for a thumb and the BOX for a keyboard or an
+   exact value, and the unit printed after them. Both are 44px, which is the
+   floor this page does not spend.
+   THE BOX IS DIM WHILE NOTHING IS WRITTEN — the same dim-is-derived reading
+   the cells make: what the slider shows before you touch it is what the record
+   deals, not what you said. */
+.nu-numrow{ display: flex; align-items: center; flex-wrap: wrap;
+  gap: var(--s3); }
+/* THE TROUGH, THE LINE AND THE CAP ARE THE PAGE'S OWN (`input[type=range]`
+   near the top of this file: `--sl-trough`, `--sl-grab`, `--sl-cap`, the
+   hand's fill, the ink's grip). Nothing is restated here — this row only says
+   how much of the line the slider takes and that a thumb owns the gesture.
+   (`accent-color` stood here for one edit and is gone: it repaints the native
+   widget the page has already drawn by hand, which is two answers to one
+   question.) */
+.nu-numslide{ flex: 1 1 8rem; min-inline-size: 6rem; block-size: var(--tap);
+  touch-action: none; }
+.nu-numbox{ flex: 0 0 auto; inline-size: 5.5ch; min-block-size: var(--tap);
+  font: var(--fw-label) var(--t3)/1.2 var(--mono, monospace); text-align: end;
+  border: var(--bw) solid var(--rule); border-radius: var(--r2);
+  background: var(--panel); color: var(--ink); padding-inline: var(--s1); }
+/* DEFAULT IS QUIET (DESIGN.md §2's `derived` state, and its §4 word). */
+.nu-numbox.is-derived{ font-weight: var(--fw-body); color: var(--dim); }
+.nu-numunit{ flex: 0 0 auto; color: var(--dim); }
+
+/* ================== THE ENVELOPE EDITOR (TABLE.md §11) =================
+   Paul, after the AUX spike (2026-09-05): *"Don't do aux. keep our stuff but
+   make it less chunky and more stylish. Make an Adsr and envelope editor
+   though and use that for samples etc."*
+
+   `nukernel/src/envelope/` -> `nukernel/ui/envelope.js` draws it; this is
+   everything it looks like. It is the FIRST of the plate-handles-curve family
+   (§11: the EQ curve, the XY pad, the tempo map, the automation lanes, the
+   stereo field), so every rule below is written to be the family's and not one
+   widget's — the plate, the curve, the handle and the printed value.
+
+   THREE THINGS THE SPIKE MEASURED THAT ARE LOAD-BEARING HERE:
+     · `touch-action: none` on the plate AND on the handle. Without it the
+       browser claims the drag for a scroll and hands the widget a
+       non-cancelable touchstart; measured on AUX, the page scrolled 400 -> 246
+       under a fader drag that should have moved a fader.
+     · A HANDLE IS 44px AND ITS CENTRE IS CLAMPED INSIDE THE PLATE. A 44px
+       handle sitting at the plate's edge overhangs by 22 and the page scrolls
+       sideways — measured. The component's own arithmetic keeps the centre in
+       [22, w-22]; this stylesheet must not add a margin that undoes it.
+     · THE MARK IS NOT THE TARGET. A 44px transparent button with an 11px dot
+       drawn in the middle of it: `--tap` for the thumb, a dot for the eye. */
+.nu-env{ display: block; inline-size: 100%; min-inline-size: 0; }
+.nu-envplate{ position: relative; display: block; inline-size: 100%;
+  block-size: var(--env-h); touch-action: none; overflow: hidden;
+  border-radius: var(--r0); background: var(--well); }
+.nu-envsvg{ display: block; inline-size: 100%; block-size: var(--env-h); }
+/* THE ZERO LINE, so a release that lands short of silence is visible as
+   landing short of it. */
+.nu-envbase{ stroke: var(--rule); stroke-width: var(--bw); opacity: .45; }
+/* THE CURVE IS THE CONTROL. Two pixels of the hand's own cobalt — the paint
+   this page has meant "where your hand is" by since 2026-08-27 — because what
+   is drawn here IS the thing being set, unlike every other line on the page. */
+.nu-envcurve{ fill: none; stroke: var(--hand); stroke-width: var(--bw-hard);
+  stroke-linejoin: round; stroke-linecap: round; }
+/* ...AND THE GHOST IS WHAT IT INHERITS. §2's dim-is-derived law, in a curve:
+   drawn only where a hand has written something, so "what I changed it from"
+   is on the plate and not in a memory. */
+.nu-envghost{ fill: none; stroke: var(--dim); stroke-width: var(--bw);
+  stroke-dasharray: 3 3; opacity: .6; }
+.nu-envh{ position: absolute; inline-size: var(--tap); block-size: var(--tap);
+  padding: 0; border: 0; border-radius: 50%; background: transparent;
+  touch-action: none; cursor: grab; display: flex;
+  align-items: center; justify-content: center; }
+.nu-envh:active{ cursor: grabbing; }
+.nu-envh:hover{ background: transparent; }
+.nu-envdot{ display: block; inline-size: var(--env-dot);
+  block-size: var(--env-dot); border-radius: 50%; background: var(--hand);
+  box-shadow: 0 0 0 var(--bw-hard) var(--panel); pointer-events: none; }
+.nu-envh:hover .nu-envdot, .nu-envh:focus-visible .nu-envdot{
+  inline-size: calc(var(--env-dot) + var(--s2));
+  block-size: calc(var(--env-dot) + var(--s2)); }
+/* THE FOCUS RING IS ON THE DOT'S SIZE, NOT ON A 44px CIRCLE OF AIR — a ring
+   drawn round the whole tap target reads as a hole in the plate. */
+.nu-envh:focus-visible{ outline: none; }
+.nu-envh:focus-visible .nu-envdot{
+  box-shadow: 0 0 0 var(--bw-hard) var(--panel),
+              0 0 0 calc(2 * var(--bw-hard)) var(--hand); }
+/* A REFUSED HANDLE IS DIM AND CARRIES ITS SENTENCE (`data-why`) — the
+   no-silent-grey law, which is not only about the engine. */
+.nu-envh.is-refused{ cursor: not-allowed; }
+.nu-envh.is-refused .nu-envdot{ background: var(--dim); opacity: .55; }
+/* THE NUMBERS, BESIDE THE HANDLES AND IN THE FIELD'S OWN UNITS. §11: *"prints
+   the numbers beside the curve"* — this is the half of the ruling that makes
+   removing the knob rows a move and not a loss. Bold is a value a hand set
+   (the cells' own law, §11 again), quiet is what the chair inherits. */
+.nu-envsays{ display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3);
+  padding-block-start: var(--s2); }
+.nu-envsay{ display: inline-flex; align-items: center; gap: var(--s1);
+  font: var(--fw-body) var(--t3)/1.3 var(--mono, monospace); color: var(--dim); }
+.nu-envsay b{ font-weight: var(--fw-body); color: var(--ink); }
+.nu-envsay.is-said{ color: var(--ink); }
+.nu-envsay.is-said > span{ font-weight: var(--fw-label); }
 
 /* THE COLUMN GRIP (§9a: resizable columns). A DRAG-ONLY CONTROL IS A REFUSED
    CONTROL (§6 ¶A), so it is a button: it drags with a pointer and steps 12px

@@ -12,7 +12,7 @@
 // channel build), which also made the loader untestable in node.
 import { NuSong, GENRES, blank, emptyBox, DEFAULT, masterIsDefault,
          busesIsDefault, GROOVELABEL, SWINGLABEL, METERLABEL, INSTRCHOICES,
-         POOLCHAIRS, BASSCHOICES, poolTakes, PARTNAMES } from "./deps.js";
+         POOLCHAIRS, BASSCHOICES, poolTakes, PARTNAMES, okMeter } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -221,8 +221,10 @@ export function setSwing(v) {
 // ...and one for the song's meter, the same normalizer against its own table:
 // anything METERLABEL does not name is "count in four", spelled null
 export function setMeter(v) {
-  METER = v != null &&
-    Object.prototype.hasOwnProperty.call(METERLABEL, String(v)) ? v : null;
+  // A WORD OR A SIGNATURE (2026-09-05): `okMeter` is the kernel's own
+  // predicate and reads "three", "six" and "7/8" alike; four-four and
+  // anything unreadable are the same null this has always stored.
+  METER = okMeter(v) ? String(v) : null;
 }
 // ...and one writer per CHAIR for the song's instrument pool, the same
 // normalizer against its own two tables: a seat POOLCHAIRS does not name is

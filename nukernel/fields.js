@@ -72,8 +72,34 @@
      IT LIVES HERE because fields.js is the registry BOTH sides can see:
      compose.js requires this file, and song.js sits below compose in the
      layer graph and may not require it (the header's own ordering, "kernel
-     -> genres -> fields -> song -> instruments -> compose"). */
-  const BPM_LO = 40, BPM_HI = 220;
+     -> genres -> fields -> song -> instruments -> compose").
+
+     2026-09-05 — WIDER AGAIN, AND FOR A DIFFERENT REASON. Paul: *"The number
+     of tempos is very low and quite confusing. I should be able to set any
+     tempo at all … you should let me choose anything."* The complaint is not
+     about the fence, it is about the LADDER — nine marks that stepped a
+     Maelzel scale were the only way to move the tempo, and a hand that wants
+     143.5 could not say it. So the number is typed or slid to a tenth
+     (ui/eight.js `bpmNode`) and the fence is the honest outside of what a
+     tempo is: 20 is slower than a heartbeat and 400 is faster than anything
+     with a downbeat. The 40..220 pair was the MUSIC's range, and it survives
+     as the detent ladder the eight nudge marks still walk. NOTHING WRITTEN
+     BEFORE MOVES: every shipped bpm is inside 40..220, which is inside this.
+     A CATALOGUE ANCHOR IS STILL AN INTEGER (compose.js says so and throws by
+     name); the tenth is the HAND's, on the record it is holding. */
+  const BPM_LO = 20, BPM_HI = 400;
+  // ...and the number of decimal places a tempo is said to. One place: 143.5
+  // is a tempo a hand means and 143.47 is a number it did not choose.
+  const BPM_STEP = 0.1;
+  /* ...AND THE RANGE A CATALOGUE ROW MAY DECLARE, which is NOT the same fence
+     and did not move: 40 is a funeral march and 220 is a gabber kick, and
+     that is the argument above, unchanged. What widened is what a HAND may
+     set on the record in front of it; what an ANCHOR may be dealt, and what
+     the tempo jitter may clamp to, is still the music's own range. Two
+     fences, two owners, and every catalogue row is inside both. */
+  const BPM_ROW_LO = 40, BPM_ROW_HI = 220;
+  const bpmSay = (b) => (Math.round(b * 10) % 10 === 0
+    ? String(Math.round(b)) : (Math.round(b * 10) / 10).toFixed(1));
 
   /* ---------- pattern operators ---------- */
   // FOUR LIST FAMILIES, 1..4 each. repeat and delete change the SEQUENCE —
@@ -3119,6 +3145,7 @@
   }
 
   const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX, BPM_LO, BPM_HI,
+                BPM_STEP, bpmSay, BPM_ROW_LO, BPM_ROW_HI,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
                 // the pace ladder, moved down from compose.js's closure so the UI

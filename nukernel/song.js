@@ -1014,9 +1014,14 @@
     // and loads unchanged. The two NUMBERS a meter means (kernel.js METERS:
     // steps and pulse) are never stored — a saved word and a live table
     // cannot drift apart if only the word is saved.
-    s.meter = s.meter != null &&
-      Object.prototype.hasOwnProperty.call(METERLABEL, String(s.meter))
-      ? s.meter : null;
+    // ...AND A SIGNATURE IS A METER TOO (2026-09-05, the any-meter round).
+    // The table this asked was `METERLABEL`, which names the two WORDS; a
+    // meter may now be spelled `"7/8"` or `"21/17"` as well, and `K.okMeter`
+    // is the one predicate that reads both (kernel.js) so a save and the live
+    // table still cannot drift. Four-four answers no there and lands here as
+    // null, which is the one spelling of "counts in four" this file has ever
+    // stored — so every song written before today loads byte-identical.
+    s.meter = K.okMeter(s.meter) ? String(s.meter) : null;
 
     // ---- THE INSTRUMENT POOL, the third song fact in this family ("the band
     // is hired for the record"): a map of chair -> instrument id, one pick per
@@ -1059,8 +1064,14 @@
        then reopen its own share link at 160. `NF.BPM_LO`/`NF.BPM_HI` is the
        one owner and it is 40..220; the POLICY on this line is untouched —
        out of range still means "keep what you had". */
+    /* 2026-09-05 — AND IT IS 20..400 NOW, TO A TENTH. Paul asked to be able
+       to set any tempo at all; the fence still refuses what is not a tempo,
+       and the value is rounded to the one decimal place the control offers
+       so a share link cannot carry a number no control can restate. A whole
+       number rounds to itself, so every song saved before today is
+       byte-identical. */
     s.bpm = Number.isFinite(s.bpm) && s.bpm >= NF.BPM_LO && s.bpm <= NF.BPM_HI
-      ? s.bpm : null;
+      ? Math.round(s.bpm * 10) / 10 : null;
     s.vol = Number.isFinite(s.vol) && s.vol >= 0 && s.vol <= 100 ? s.vol : null;
 
     return { ok: !errors.length, song: errors.length ? null : s, errors, notes };

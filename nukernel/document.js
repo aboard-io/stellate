@@ -53,7 +53,16 @@
   // collide with them — so every entry point below takes the same optional
   // argument and falls back to the catalogue this file already imports.
   const CATALOG = NG.GENRES;
-  const { METERS, stepsIn } = K;
+  const { stepsIn } = K;
+  /* THE RECORD'S DECLARED METER, RESOLVED (2026-09-05, the any-meter round).
+     Three readers below said `METERS[doc.time.meter]`, which knew exactly two
+     words. A signature is two numbers now — "7/8", "21/17" — and `metOf` is
+     the one resolver for a word and a fraction alike (kernel.js meterRow).
+     NULL WHERE NOTHING IS DECLARED, and null for a word nobody knows, because
+     every reader below is present-only: an absent meter must stamp no key at
+     all, which is what keeps every record written before today byte-identical. */
+  const metRow = (t) => { const m = t && t.meter; if (!m) return null;
+    const r = K.metOf({ meter: m }); return r === K.MET4 ? null : r; };
   const { WORDS } = NuSongs;
 
   /* ---------- reading the document ----------------------------------------
@@ -127,7 +136,7 @@
       if (c.deg.length > n) n = c.deg.length;
     }
     if (!n) return 1;
-    const steps = stepsIn({ meter: METERS[(doc.time || {}).meter] });
+    const steps = stepsIn({ meter: metRow(doc.time) });
     return Math.max(1, Math.round(n / steps));
   }
 
@@ -143,8 +152,22 @@
   // the same keys fields.js OPS and the palette speak, so a word cannot drift
   // away from the chip that means the same thing. Before this line existed the
   // destructure read `["gat4"]` as op `"g"` with args `"a","t","4"`.
-  const opsOf = (name) => (WORDS[name] || []).map(
-    (w) => (typeof w === "string" ? K.OPKEYS[w] : K[w[0]](...w.slice(1))));
+  /* ...AND TWO SPELLINGS THIS VOCABULARY OWNS THAT ARE NOT KERNEL OP NAMES
+     (2026-09-05, the musicologist's review). `["interval", n]` is n SEMITONES
+     and `["octaves", n]` is n periods of the alphabet; both become a
+     `transpose` in DEGREES here, because here is the one place a word becomes
+     operators AND the section's scale is known. songs.js says why an interval
+     spelled as a degree count is a tritone on the wrong degree and a minor
+     seventh on a pentatonic. They are answered BEFORE `K[...]`, so neither
+     name can be mistaken for an operator, and a scale-less caller falls to
+     the kernel's own default alphabet rather than throwing. */
+  const opsOf = (name, sc) => (WORDS[name] || []).map((w) => {
+    if (typeof w === "string") return K.OPKEYS[w];
+    if (w[0] === "interval") return K.transpose(K.degreesFor(sc, w[1]));
+    if (w[0] === "octaves")
+      return K.transpose(K.octaveDegrees(sc) * (w[1] | 0));
+    return K[w[0]](...w.slice(1));
+  });
   let ver = 0;
   /* WHAT A TAKE IS, in the two places it can be spent: the kernel's own dice
      (`kitSeed`) and the seeds the pipe operators carry (kernel.js:608 —
@@ -239,6 +262,12 @@
     const R_oct = numWord(rrow("oct"), NF.OCTAVES);
     const R_clamp = numWord(rrow("clamp"), NF.CLAMPS);
     const R_scale = rrow("scale");
+    /* THE SECTION'S ALPHABET, NAMED ONCE (2026-09-05). It was computed inline
+       on the `scale:` line below and is READ TWICE now — once as the genre's
+       alphabet, once by `opsOf` so `"at the fifth"` can be a fifth IN IT
+       (songs.js says why a degree count cannot be). Same expression, same
+       array, one name. */
+    const scArr = (R_scale && (SCALES[R_scale] || MODES[R_scale])) || mode;
     const R_rate = NF.RATES[rrow("rate")] || null;
     const CELLMEMO = new Map();
     const prog = rrow("prog") || A.prog;
@@ -280,7 +309,7 @@
                         ...(T.rate || R_rate
                           ? { rate: (T.rate || (BASIS || {}).rate || 1) *
                                     (R_rate || 1) } : {}),
-                        ...(T.meter && METERS[T.meter] ? { meter: METERS[T.meter] } : {}),
+                        ...(metRow(T) ? { meter: metRow(T) } : {}),
       // THE SUBJECT'S ALPHABET IS ITS OWN. This said `scale: mode`, which meant
       // a document could not be pentatonic, blues, whole-tone or quartal — 99
       // of the 122 anchors declare a `scale` and every one of them was being
@@ -293,9 +322,20 @@
                            IS that read, so a record whose rows say nothing
                            resolves the identical name and the identical
                            array. */
-                        scale: (R_scale && (SCALES[R_scale] || MODES[R_scale])) || mode,
+                        scale: scArr,
                         diatonic: !!A.diatonic, harmony: A.harmony,
-                        prog, roots: prog.map((c) => c.d),
+                        /* THE BAR'S FIRST CHORD IS ITS ROOT (2026-09-05).
+                           A bar of `prog` may be a LIST of chords since the
+                           kernel learned `beats` — a half-bar ii–V is two
+                           chords in one bar — and `roots` is the bar-for-bar
+                           skeleton the layers and the emergent machinery
+                           read, one degree per bar. genres-tables.js states
+                           the law it has to keep ("the prog's first-chord
+                           degrees must equal the roots bar for bar"), so the
+                           list answers with its first. A single-chord bar is
+                           `c.d` exactly as before. */
+                        prog, roots: prog.map((c) =>
+                          (Array.isArray(c) ? c[0] : c).d),
       /* MATERIAL */    kit, ...(on ? {} : noKit),
       /* CAST */        voices: lines.length,
                         // ...AND IT IS RESOLVED PER SECTION, WHICH IS WHERE IT
@@ -354,7 +394,7 @@
                            unchanged (precompose writes no bass instrument). */
                         ...(bass && bass.instrument
                           ? { bassInstr: bass.instrument } : {}),
-      /* DEVELOPMENT */ word: (v) => opsOf(wordAt(doc, lines[v], si)),
+      /* DEVELOPMENT */ word: (v) => opsOf(wordAt(doc, lines[v], si), scArr),
       /* ...AND THE SECTION'S OWN ARTICULATION, RAMP LIMIT AND OCTAVE (wave 4).
          Present-only spreads, every one of them, so a row that says nothing
          hands the kernel the object it handed it yesterday: `artic` falls
@@ -576,7 +616,7 @@
     // re-seat them (`bar`/`pulse`, kernel.js seat16). Present-only: a
     // document with no meter stamps nothing and every phrase ever compiled
     // is byte-identical.
-    const met = METERS[((doc.time || {}).meter)] || null;
+    const met = metRow(doc.time);
     return { deg: H.deg.slice(), oct: z(), vel: (H.vel || z()).slice(),
              inc: z(), stk: z(), gate, acc: (H.acc || z()).slice(), sld: z(),
              ...(written ? { hold } : {}),
@@ -1392,7 +1432,12 @@
       // `prog` chip offers) and genres.js PROGS is what each one IS; the
       // record stores the resolved array already, so this reader resolves the
       // name and both tiers hand back the same shape.
-      row:    (s) => (s && s.prog && s.prog !== "off") ? NG.PROGS[s.prog] : undefined,
+      // ...OR CARRIES ONE OUTRIGHT (2026-09-05). The section's changes grid
+      // writes an ARRAY of chord objects on the row — a chart the row owns,
+      // not a name it borrows — and both tiers still hand back the same shape,
+      // which is the whole rule this field is written to.
+      row:    (s) => (s && s.prog && s.prog !== "off")
+                ? (Array.isArray(s.prog) ? s.prog : NG.PROGS[s.prog]) : undefined,
       record: (d) => d.alphabet && d.alphabet.prog,
       genre:  () => undefined,       // as key: `toGenre` reads A.prog and no lower
     },
@@ -1676,6 +1721,19 @@
         // that wants none; the word stays a box control and is dropped here
         // rather than kept as a value the resolver would read as silence.
         if (f === "prog" && s2.prog === "off") { delete s2.prog; continue; }
+        /* ...AND A ROW'S OWN CHART IS NOT A WORD (2026-09-05), so the word
+           table has no opinion about it. What IS checked is the shape: a list
+           of chord objects, one to eight-and-twenty bars, each bar an object
+           or a list of them — anything else is a file this build cannot
+           honestly play and is dropped back to the record's changes, which is
+           the FILTER rule this loop already applies to every enum. */
+        if (f === "prog" && Array.isArray(s2.prog)) {
+          const chord = (c) => c && typeof c === "object" && !Array.isArray(c);
+          const okBar = (b) => (Array.isArray(b) ? b.length && b.every(chord)
+                                                 : chord(b));
+          if (!s2.prog.length || !s2.prog.every(okBar)) delete s2.prog;
+          continue;
+        }
         const t = ROWTABLE(f);
         if (t && !Object.prototype.hasOwnProperty.call(t, String(s2[f])))
           delete s2[f];

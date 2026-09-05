@@ -99,7 +99,12 @@ function build() {
   out += "  };\n";
   out += region(tables, "FOOT") + "\n\n";
   out += "  const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,\n";
-  out += "                HARMONYLABEL, tuned,\n";
+  // SCALEFAMILY/MODEFAMILY/FAMILYLABEL joined 2026-09-05 with the tonalities
+  // round: the vocabulary went to 63 words and avail.js groups the two pickers
+  // by family, reading the maps the HEAD region declares rather than owning a
+  // list. They are spliced like every other table; only this line has to say
+  // they leave the module.
+  out += "                HARMONYLABEL, tuned, SCALEFAMILY, MODEFAMILY, FAMILYLABEL,\n";
   out += "                MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };\n";
   out += "  if (typeof module !== \"undefined\" && module.exports) module.exports = api;\n";
   out += "  else root.NuGenres = api;\n";

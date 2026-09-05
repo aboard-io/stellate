@@ -534,6 +534,22 @@ function numField(A2, key, label, cur, steps, set, clearable, noneWord) {
       ...clearable ? [{ v: "", w: noneWord || "none" }] : [],
       ...list.map((n3) => ({ v: String(n3), w: String(n3) }))
     ],
+    /* ...AND IT IS A SLIDER (2026-09-05). Paul: *"When you redesign think
+       sliders and other UI for data entry."* Every caller of this function
+       hands it a QUANTITY on a run — a register from −4 to 3, a bar to come in
+       at, a bar count — and the strip drew each one as a row of chips, which is
+       a ruler cut into buttons. `options` stays, because the address and the
+       vocabulary are what the inventory and T7 read; `num` is what
+       `sheet.ts pickerFor` now answers "slider" to. The RANGE is the whole run
+       and not just the offered steps, so the thumb can reach a number the
+       chips never offered — which is what a slider is FOR. */
+    num: {
+      min: list.length ? list[0] : 0,
+      max: list.length ? list[list.length - 1] : 1,
+      step: 1,
+      unit: "",
+      derivedNum: has ? +cur : null
+    },
     set,
     clear: clearable && has ? () => set("") : null
   };
@@ -556,6 +572,16 @@ function cellNum(A2, i5, vi, field, label, steps) {
       { v: "", w: "the column's" },
       ...list.map((n3) => ({ v: String(n3), w: String(n3) }))
     ],
+    /* THE CELL'S OVERRIDE IS A QUANTITY TOO, and the slider's ghost value is
+       what the column deals — so pushing the thumb off the inherited number is
+       visibly a departure from it. */
+    num: {
+      min: list.length ? list[0] : 0,
+      max: list.length ? list[list.length - 1] : 1,
+      step: 1,
+      unit: "",
+      derivedNum: inh == null ? null : +inh
+    },
     set: (v3) => A2.putCell(i5, vi, field, v3 === "" ? null : +v3),
     clear: has ? () => A2.putCell(i5, vi, field, null) : null
   };
@@ -676,8 +702,15 @@ function rowSheet(A2, i5) {
     ["form.prog", "changes"],
     ["form.swing", "swing"],
     ["form.groove", "groove"]
-  ])
+  ]) {
     f2.push(shField(A2, key, { section: sid }, lab));
+    if (key === "form.prog")
+      f2.push({
+        kind: "node",
+        label: "this section's chart",
+        node: A2.changesNode(sid)
+      });
+  }
   for (const [key, lab] of [
     ["form.fx", "chain"],
     ["form.rev", "reverb"],
@@ -736,7 +769,9 @@ function colSheet(A2, vi) {
     f2.push({ kind: "node", label: "its files", node: A2.voiceCrate(v3.name) });
   if (v3.kind === "line") f2.push(shField(A2, "cast.material", { voice: v3.name }, "reads by default"));
   if (v3.kind === "bass") f2.push(shField(A2, "cast.bassStyle", { voice: v3.name }, "does by default"));
-  for (const k2 of ["sound.attack", "sound.release", "sound.double", "sound.looping"])
+  const env = A2.voiceEnv(v3.name);
+  if (env) f2.push({ kind: "node", label: env.label, node: env.node });
+  for (const k2 of env ? ["sound.double", "sound.looping"] : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
     if (A2.hasSheet(k2, { voice: v3.name })) f2.push(shField(A2, k2, { voice: v3.name }, null));
   const kn = A2.voiceKnobs(v3.name);
   if (kn) f2.push({ kind: "node", label: kn.label, node: kn.node });
@@ -1145,6 +1180,7 @@ function sectionOffer(A2) {
 // nukernel/src/table/sheet.ts
 function pickerFor2(f2) {
   if (f2.node) return "combo";
+  if (f2.num) return "slider";
   return pickerFor((f2.options || []).length, { strip: true });
 }
 var wordOf = (f2) => f2.word == null || f2.word === "" ? "—" : String(f2.word);
@@ -1259,7 +1295,6 @@ function fieldRow(f2, openField, setOpenField, after) {
   const pick = pickerFor2(sf);
   const open = openField === sf.key;
   const write = (v3) => {
-    setOpenField(null);
     try {
       if (sf.set) sf.set(v3);
     } catch (e4) {
@@ -1280,6 +1315,40 @@ function fieldRow(f2, openField, setOpenField, after) {
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
       ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
     </div>`;
+  if (pick === "slider") {
+    const N2 = sf.num;
+    const cur = sf.value === "" || sf.value == null ? null : +sf.value;
+    const shown = cur != null ? cur : N2.derivedNum != null ? N2.derivedNum : N2.min;
+    const slide = (v3) => {
+      try {
+        if (sf.set) sf.set(v3);
+      } catch (e4) {
+      }
+      after();
+    };
+    return b`<div class="nu-sheetrow nu-numrow">
+      <b class="nu-sheetlab">${sf.label}</b>
+      <input class="nu-numslide" type="range" data-k=${sf.key}
+        min=${String(N2.min)} max=${String(N2.max)} step=${String(N2.step)}
+        .value=${String(shown)}
+        aria-label=${sf.label + (N2.unit ? ", in " + N2.unit : "")}
+        aria-valuetext=${String(shown) + (N2.unit ? " " + N2.unit : "") + (cur == null ? ", inherited" : "")}
+        @input=${(e4) => {
+      const box = e4.target.parentElement?.querySelector(".nu-numbox");
+      if (box) box.value = e4.target.value;
+    }}
+        @change=${(e4) => slide(e4.target.value)} />
+      <input class=${e3({ "nu-numbox": true, "is-derived": cur == null })}
+        type="number" data-k=${"num|" + sf.key}
+        min=${String(N2.min)} max=${String(N2.max)} step=${String(N2.step)}
+        .value=${String(shown)}
+        aria-label=${sf.label + " — type a number"}
+        @change=${(e4) => slide(e4.target.value)} />
+      ${N2.unit ? b`<small class="nu-numunit">${N2.unit}</small>` : A}
+      ${clearBack}
+      ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
+    </div>`;
+  }
   if (pick === "native")
     return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>
@@ -1361,6 +1430,7 @@ function timeSheet(A2) {
   f2.push({ kind: "node", label: "tempo", node: A2.bpmNode() });
   f2.push({ kind: "node", label: "by hand", node: A2.tempoNode() });
   f2.push(seated(A2, "time.meter", "meter"));
+  f2.push({ kind: "node", label: "signature", node: A2.meterNode() });
   f2.push(seated(A2, "time.swing", "swing"));
   f2.push(seated(A2, "time.groove", "groove"));
   f2.push(flagField(
@@ -1578,6 +1648,7 @@ var ARM = null;
 var WIDTH = /* @__PURE__ */ new Map();
 var CLIP = null;
 var RO = null;
+var OUT = null;
 var STICK = null;
 function shapeOf(A2) {
   const doc = A2.doc();
@@ -1595,7 +1666,8 @@ function shapeOf(A2) {
     }
   };
 }
-var STICKY = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0);
+var STICKY = (k2) => !!k2 && k2 !== "corner";
+var SPECIAL = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0);
 function bandTable(host, A2) {
   const U = undoStack(A2);
   if (!STICKY(OPEN)) {
@@ -1768,11 +1840,11 @@ function bandTable(host, A2) {
   const specialRows = (S2) => SPECIALS.map((sp) => {
     const openKey = "sp|" + sp.id;
     const open = OPEN === openKey;
-    let face = "";
+    let face2 = "";
     try {
-      face = sp.face(A2);
+      face2 = sp.face(A2);
     } catch (e4) {
-      face = "";
+      face2 = "";
     }
     return b`<tr class="nu-sprow" data-special=${sp.id}>
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
@@ -1785,7 +1857,7 @@ function bandTable(host, A2) {
       toggle(openKey, true);
     }}
           ><b class="nu-spword">${sp.word}</b
-          ><span class="nu-spface">${face}</span></button>${spLamp(sp)}
+          ><span class="nu-spface">${face2}</span></button>${spLamp(sp)}
       </th>
     </tr>`;
   });
@@ -1813,18 +1885,20 @@ function bandTable(host, A2) {
     const v3 = A2.doc().voices.find((x2) => x2.name === name);
     const vi = A2.doc().voices.indexOf(v3);
     const sub = A2.playsWhat(v3) || "";
+    const cm = A2.colMark(vi);
     return b`<th class="nu-colhead" data-vi=${String(A2.vpaintOf(vi) ?? "")}
         scope="col">
       <button type="button" class="nu-colbtn nu-vpaint" data-k=${"tcol|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
         aria-label=${name + " — " + (sub || "no instrument") + " — open this player's vector"}
         title=${name + (sub ? " — " + sub : "")}
+        data-say=${o2(cm && cm.s ? cm.s : void 0)}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e4) => {
       e4.preventDefault();
       toggle("col|" + name, true);
     }}
-        ><b class="nu-colname">${name}</b>${sub ? b`<span class="nu-colinstr">${sub}</span>` : A}</button>
+        >${cm ? b`<span class="nu-g" aria-hidden="true">${cm.g}</span>` : A}<b class="nu-colname">${name}</b>${cm ? b`<span class="nu-vh">${cm.w}</span>` : A}${sub ? b`<span class="nu-colinstr">${sub}</span>` : A}</button>
       ${lamp(name)}
       ${grip(name, "tcol|" + name, name)}
     </th>`;
@@ -1832,16 +1906,18 @@ function bandTable(host, A2) {
   const secHead = (S2, sid) => {
     const i5 = A2.doc().form.sections.findIndex((s4) => s4.id === sid);
     const s3 = A2.doc().form.sections[i5];
+    const sm = A2.rowMark(i5);
     return b`<th class="nu-colhead" scope="col">
       <button type="button" class="nu-colbtn" data-k=${"tcol|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
         aria-label=${A2.secName(i5) + " — open this section's vector"}
         @click=${() => toggle("row|" + sid)}
+        data-say=${o2(sm && sm.s ? sm.s : void 0)}
         @contextmenu=${(e4) => {
       e4.preventDefault();
       toggle("row|" + sid, true);
     }}
-        ><b class="nu-colname">${A2.roleWord(s3.role)}</b
+        >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}<b class="nu-colname">${A2.roleWord(s3.role)}</b
         ><span class="nu-colinstr">${s3.bars} bars</span></button>
       ${grip(sid, "tcol|" + sid, A2.secName(i5))}
     </th>`;
@@ -1937,6 +2013,7 @@ function bandTable(host, A2) {
   const secRowHead = (sid) => {
     const i5 = A2.doc().form.sections.findIndex((s4) => s4.id === sid);
     const s3 = A2.doc().form.sections[i5];
+    const rm = A2.rowMark(i5);
     return b`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
@@ -1946,6 +2023,8 @@ function bandTable(host, A2) {
       e4.preventDefault();
       toggle("row|" + sid, true);
     }}
+        data-say=${o2(rm && rm.s ? rm.s : void 0)}
+        ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i5 + 1}</span></span
         ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span></button>
       <small> ${s3.bars} bars</small>
@@ -1954,6 +2033,7 @@ function bandTable(host, A2) {
   const voiceRowHead = (name) => {
     const doc = A2.doc();
     const v3 = doc.voices.find((x2) => x2.name === name);
+    const vm = A2.colMark(doc.voices.indexOf(v3));
     return b`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
@@ -1963,10 +2043,14 @@ function bandTable(host, A2) {
       e4.preventDefault();
       toggle("col|" + name, true);
     }}
+        data-say=${o2(vm && vm.s ? vm.s : void 0)}
+        ><span class="nu-g" aria-hidden="true">${vm ? vm.g : ""}</span
         ><span class="nu-srowname">${name}</span></button>
       <small> ${A2.playsWhat(v3) || ""}</small>
     </th>`;
   };
+  const face = (mark, word, num) => b`<span class="nu-ic"
+      >${mark ? b`<span class="nu-g" aria-hidden="true">${mark.g}</span>` : A}${num != null && num !== "" ? b`<span class="nu-n">${num}</span>` : A}${word != null && word !== "" ? b`<span class="nu-w">${word}</span>` : A}${mark ? b`<span class="nu-vh">${mark.w}</span>` : A}</span>`;
   const bodyCell = (S2, rid, cid) => {
     const sid = S2.across ? cid : rid;
     const name = S2.across ? rid : cid;
@@ -1977,6 +2061,7 @@ function bandTable(host, A2) {
     const key = "tcell|" + name + "|" + sid;
     const openKey = "cell|" + sid + "|" + name;
     const word = A2.cellWord(i5, vi);
+    const mark = A2.cellMark(i5, vi);
     const hand = A2.written(i5, vi);
     const sel = !!SEL && SEL.sec === sid && SEL.voice === name;
     const inRange = rangeHas(S2, sid, name);
@@ -1984,14 +2069,15 @@ function bandTable(host, A2) {
       <button type="button"
         class=${e3({
       "nu-wcell": true,
-      "nu-trimbtn": true,
+      "nu-cellword": true,
       "is-derived": !hand,
       "is-sel": sel
     })}
         data-k=${key}
         aria-expanded=${String(OPEN === openKey)}
         aria-selected=${String(sel)}
-        aria-label=${name + " · " + A2.secName(i5) + ": " + word}
+        aria-label=${name + " · " + A2.secName(i5) + ": " + word + (mark ? " (" + mark.w + ")" : "") + (sel ? " — selected; tap again to edit" : " — tap to select")}
+        data-say=${o2(mark && mark.s ? mark.s : void 0)}
         @click=${(e4) => {
       if (e4.shiftKey && SEL) {
         ANCHOR = { sec: sid, voice: name };
@@ -2007,13 +2093,17 @@ function bandTable(host, A2) {
         return;
       }
       ANCHOR = null;
+      if (!sel) {
+        select(sid, name);
+        return;
+      }
       toggle(openKey);
     }}
         @contextmenu=${(e4) => {
       e4.preventDefault();
       toggle(openKey, true);
     }}
-        >${word}</button>
+        >${face(mark, word === "—" ? null : word)}</button>
     </td>`;
   };
   const tfoot = (S2, cols) => b`<tfoot>
@@ -2031,7 +2121,7 @@ function bandTable(host, A2) {
   </tfoot>`;
   const mixRow = (S2, cols) => {
     const master = "mix|master";
-    const face = masterFace(A2);
+    const face2 = masterFace(A2);
     return b`<tr class="nu-footrow nu-mixrow" data-row="mix">
       <th class="nu-srowh" scope="row"><span class="nu-srowname">mix</span></th>
       ${c2(cols, (c3) => c3, (c3) => mixCell(c3))}
@@ -2041,14 +2131,14 @@ function bandTable(host, A2) {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
         <button type="button" class="nu-sphead" data-k="tmix"
           aria-expanded=${String(OPEN === master)}
-          aria-label=${"the master — " + face + " — and the buses every strip feeds"}
+          aria-label=${"the master — " + face2 + " — and the buses every strip feeds"}
           @click=${() => toggle(master)}
           @contextmenu=${(e4) => {
       e4.preventDefault();
       toggle(master, true);
     }}
           ><b class="nu-spword">master</b
-          ><span class="nu-spface">${face}</span></button>
+          ><span class="nu-spface">${face2}</span></button>
       </th>
     </tr>
     ${OPEN === master ? openRow(S2, sheetFor(master, () => wrapOps(masterMixSheet(A2))), "master") : A}
@@ -2056,11 +2146,11 @@ function bandTable(host, A2) {
   };
   const produceRow = (S2) => {
     const openKey = "sp|" + PRODUCE.id;
-    let face = "";
+    let face2 = "";
     try {
-      face = PRODUCE.face(A2);
+      face2 = PRODUCE.face(A2);
     } catch (e4) {
-      face = "";
+      face2 = "";
     }
     return b`<tr class="nu-footrow nu-prodrow" data-row="produce">
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
@@ -2073,7 +2163,7 @@ function bandTable(host, A2) {
       toggle(openKey, true);
     }}
           ><b class="nu-spword">${PRODUCE.word}</b
-          ><span class="nu-spface">${face}</span></button>
+          ><span class="nu-spface">${face2}</span></button>
       </th>
     </tr>
     ${OPEN === openKey ? openRow(S2, sheetFor(openKey, () => wrapOps(PRODUCE.sheet(A2))), PRODUCE.word) : A}`;
@@ -2081,22 +2171,24 @@ function bandTable(host, A2) {
   const mixCell = (name) => {
     const openKey = "mix|" + name;
     const word = A2.mixWord(name);
+    const mk = A2.mixMark(name);
     return b`<td class="nu-mixcell">
       <button type="button"
         class=${e3({
       "nu-wcell": true,
-      "nu-trimbtn": true,
+      "nu-cellword": true,
       "is-derived": !A2.mixWritten(name)
     })}
         data-k=${"tmix|" + name}
         aria-expanded=${String(OPEN === openKey)}
-        aria-label=${name + " — its seat on the desk: " + word}
+        aria-label=${name + " — its seat on the desk: " + word + (mk ? " (" + mk.w + ")" : "")}
+        data-say=${o2(mk && mk.s ? mk.s : void 0)}
         @click=${() => toggle(openKey)}
         @contextmenu=${(e4) => {
       e4.preventDefault();
       toggle(openKey, true);
     }}
-        >${word}</button>
+        >${face(mk, word === "—" ? null : word)}</button>
       ${mixLamp(name)}
     </td>`;
   };
@@ -2122,7 +2214,7 @@ function bandTable(host, A2) {
     return b`<button type="button"
       class=${e3({
       "nu-wcell": true,
-      "nu-trimbtn": true,
+      "nu-cellword": true,
       "is-derived": !!f2.derived
     })}
       data-k=${f2.key}
@@ -2204,8 +2296,41 @@ function bandTable(host, A2) {
     }
     return fields;
   }
+  function select(sid, name) {
+    SEL = { sec: sid, voice: name };
+    ANCHOR = null;
+    if (OPEN && OPEN.indexOf("cell|") === 0) {
+      OPEN = null;
+      SHEETKEY = null;
+      SHEETFIELDS = null;
+    }
+    OPENFIELD = null;
+    draw();
+    const b2 = host.querySelector('[data-k="tcell|' + name + "|" + sid + '"]');
+    if (b2 instanceof HTMLElement) b2.focus({ preventScroll: true });
+  }
+  function editSel() {
+    if (!SEL) return;
+    OPEN = "cell|" + SEL.sec + "|" + SEL.voice;
+    OPENFIELD = null;
+    SHEETKEY = null;
+    SHEETFIELDS = null;
+    draw();
+    const first = host.querySelector(".nu-vsheet .nu-wcell");
+    if (first instanceof HTMLElement) first.focus({ preventScroll: true });
+  }
+  function closeEdit() {
+    OPEN = null;
+    OPENFIELD = null;
+    SHEETKEY = null;
+    SHEETFIELDS = null;
+    draw();
+    if (!SEL) return;
+    const b2 = host.querySelector('[data-k="tcell|' + SEL.voice + "|" + SEL.sec + '"]');
+    if (b2 instanceof HTMLElement) b2.focus({ preventScroll: true });
+  }
   function toggle(key, keepOpen = false) {
-    if (STICKY(key) && (OPEN !== key || keepOpen)) {
+    if (SPECIAL(key) && (OPEN !== key || keepOpen)) {
       try {
         A2.leaveLanding();
       } catch (e4) {
@@ -2275,7 +2400,7 @@ function bandTable(host, A2) {
     } else ANCHOR = null;
     SEL = next;
     if (OPEN && OPEN.indexOf("cell|") === 0) {
-      OPEN = "cell|" + SEL.sec + "|" + SEL.voice;
+      OPEN = null;
       SHEETKEY = null;
       SHEETFIELDS = null;
     }
@@ -2297,7 +2422,7 @@ function bandTable(host, A2) {
     const tg = e4.target;
     const tag = tg?.tagName;
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
-    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || !!tg.closest(".nu-prodrow") || STICKY(OPEN) && !!tg.closest(".nu-wopen"));
+    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || !!tg.closest(".nu-prodrow") || SPECIAL(OPEN) && !!tg.closest(".nu-wopen"));
     if (inSpecial && e4.key !== "Escape") return;
     if (meta && (e4.key === "z" || e4.key === "Z")) {
       e4.preventDefault();
@@ -2355,23 +2480,30 @@ function bandTable(host, A2) {
         e4.preventDefault();
         moveSel(S2, 0, e4.shiftKey ? -1 : 1, false);
         return;
+      /* ENTER AND F2 EDIT; ENTER AGAIN COMMITS AND STAYS. Every write on this
+         page lands the moment a chip is tapped — there is no pending buffer to
+         commit — so "commit and stay" is: the editor shuts, the ring does not
+         move, and the focus goes back to the cell. */
       case "Enter":
       case "F2": {
         if (!SEL) return;
         e4.preventDefault();
-        OPEN = "cell|" + SEL.sec + "|" + SEL.voice;
-        OPENFIELD = null;
-        SHEETKEY = null;
-        SHEETFIELDS = null;
-        draw();
-        const first = host.querySelector(".nu-vsheet .nu-wcell");
-        if (first instanceof HTMLElement) first.focus({ preventScroll: true });
+        if (OPEN === "cell|" + SEL.sec + "|" + SEL.voice) {
+          closeEdit();
+          return;
+        }
+        editSel();
         return;
       }
       case "Escape":
         if (OPENFIELD) {
           OPENFIELD = null;
           draw();
+          e4.stopPropagation();
+          return;
+        }
+        if (OPEN && OPEN.indexOf("cell|") === 0) {
+          closeEdit();
           e4.stopPropagation();
           return;
         }
@@ -2408,9 +2540,37 @@ function bandTable(host, A2) {
         );
         return;
       }
+      /* A PRINTABLE KEY EDITS, which is the gesture every spreadsheet user
+         already has in their hands: you do not reach for a menu, you start
+         typing. What it opens today is the cell's own control (§11a's typed
+         editor, where the letters would go on to FILTER the vocabulary, is a
+         later round and this is the door it will be built behind). */
       default:
+        if (!SEL) return;
+        if (e4.altKey || e4.key.length !== 1) return;
+        if (OPEN === "cell|" + SEL.sec + "|" + SEL.voice) return;
+        e4.preventDefault();
+        editSel();
         return;
     }
+  }
+  function armOutside() {
+    if (OUT) document.removeEventListener("pointerdown", OUT, true);
+    OUT = (e4) => {
+      if (!OPEN) return;
+      const t4 = e4.target;
+      if (!t4 || !t4.closest) return;
+      if (t4.closest(".nu-wopen")) return;
+      if (t4.closest("button, a, input, select, textarea, [role=slider], label"))
+        return;
+      if (!host.isConnected) return;
+      OPEN = null;
+      OPENFIELD = null;
+      SHEETKEY = null;
+      SHEETFIELDS = null;
+      draw();
+    };
+    document.addEventListener("pointerdown", OUT, true);
   }
   draw();
   const table = host.querySelector("table.nu-wordgrid");
@@ -2446,6 +2606,7 @@ function bandTable(host, A2) {
   };
   reindex();
   armResize(paneEl);
+  armOutside();
   let litRow = null, litCols = "";
   const paint = (nowRowId, soundingColIds) => {
     if (nowRowId !== litRow) {
@@ -2475,6 +2636,20 @@ function bandTable(host, A2) {
     openCorner: () => {
       toggle("corner");
     },
+    /* A LANDING ONLY LANDS (2026-09-05). `tablePanel` ends every rebuild by
+       opening the head an arrival asked for — the gutter's, the atlas's, a
+       link's — and it did it by CLICKING, which is a TOGGLE. That was safe
+       while a rebuild closed everything; the moment a sheet survives its own
+       write (Paul: *"Don't dismiss things when I tap them to change values"*)
+       the landing click began CLOSING the sheet it was meant to land on, once
+       per write, and `toggle` clears the open field on its way past — measured
+       as "the sheet is open and its strip of words is not". This is the same
+       door with the other half of `toggle`'s own signature: `keepOpen`, which
+       opens and never closes. §9d says the same sentence about the corner,
+       which is the one door that must still forget. */
+    land: (key) => {
+      toggle(key, true);
+    },
     /* THE WRITE IS `A.pointCell`, WHICH IS avail.js's OWN `material.cell`
        SHEET — not `putCell`. That sheet is the one owner of which cells a
        voice of this kind may read (a drum cell is lanes, a line cell is
@@ -2499,5 +2674,6 @@ function bandTable(host, A2) {
   };
 }
 export {
-  bandTable
+  bandTable,
+  undoStack
 };

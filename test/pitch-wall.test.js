@@ -39,6 +39,14 @@
 //       render an interval of 1180 cents ±3 — the octave lands where the row
 //       says, NOT where 12 says (>15c away from 1200) — and slendro's first
 //       step renders 240c ±3.
+//   W5  EVERY WORD IN BOTH ALPHABET TABLES (2026-09-05, the tonalities round,
+//       when MODES went 12 -> 42 and SCALES 9 -> 21): each of the 63 keys is
+//       spelled independently in the gate and read back through degPitch —
+//       degrees, octave closure at the row's own period, negative wrap — plus
+//       a label, a family and a place in both of avail.js's pickers, the
+//       one-owner-per-set law (equal content = the same array), centsOf on
+//       every degree of both tables, and saba's half-flat second measured at
+//       150.1 cents in the rendered air.
 //
 // The probe voice is hammond with its insert chain stripped: chorus and
 // leslie MODULATE pitch by design (pad_saw is three saws detuned ±10c under a
@@ -207,6 +215,187 @@ console.log("W4 — the octave lands where the ROW says, not where 12 says");
   const r0 = peakHz(L2, a0, a1, 200, 330), r1 = peakHz(L2, b0, b1, 240, 380);
   ok(Math.abs(cents(r1, r0) - 240) <= TOL, "slendro's first step renders 240c",
      r0.toFixed(1) + " → " + r1.toFixed(1) + " Hz = " + cents(r1, r0).toFixed(1) + "c");
+}
+
+/* ================= W5 · EVERY WORD IN BOTH ALPHABET TABLES ================
+   2026-09-05, the tonalities round. Paul: *"Same with scales we have all
+   kinds of tonalities in this system aren't we missing a lot."* MODES went
+   12 -> 42 and SCALES 9 -> 21, and a table of 63 alphabets that nobody
+   measures is 63 chances to mistype a semitone in silence.
+
+   THE EXPECTATION IS TYPED HERE, NOT READ FROM THE TABLE. A gate that reads
+   `MODES[k]` and asserts `MODES[k]` proves only that JavaScript works. EXPECT
+   below is an independent spelling of every alphabet — degrees in float
+   semitones, the same units the table uses — and the assertion runs it
+   through the kernel's own `NK.pitch` (degPitch, the one owner every
+   rendered note goes through), degree by degree, including the octave
+   closure at degree n and the negative wrap at degree -1, which is where a
+   `period` row and a 12 row differ.
+
+   Five claims, in one sweep:
+     · every key of both tables is spelled here and nothing here is a ghost —
+       so a scale added tomorrow FAILS this gate until it is measured;
+     · degPitch renders each key's declared pitch classes, and closes at the
+       row's own period (slendro's 12.08, everything else's 12);
+     · every key carries a LABEL and a FAMILY, and both of avail.js's pickers
+       offer it — a word in the table that no menu can say is the declared-
+       but-never-arriving bug (nukernel/genres-tables.js FAMILYLABEL);
+     · two keys of equal content are the SAME OBJECT, never a lookalike
+       literal — the law the alias blocks are written to;
+     · the quarter-tones survive the transport (`centsOf`) and the AIR (one
+       render): saba's half-flat second is 150 cents, not 100 or 200.
+   ======================================================================== */
+console.log("W5 — all " + (Object.keys(NG.MODES).length + Object.keys(NG.SCALES).length) +
+            " alphabets, spelled independently and read through degPitch");
+{
+  const EXPECT_MODES = {
+    // the seven diatonic rotations
+    ionian: "0 2 4 5 7 9 11",   dorian: "0 2 3 5 7 9 10",  phrygian: "0 1 3 5 7 8 10",
+    lydian: "0 2 4 6 7 9 11",   mixo:   "0 2 4 5 7 9 10",  aeolian:  "0 2 3 5 7 8 10",
+    locrian: "0 1 3 5 6 8 10",
+    // melodic minor and its six other rotations
+    melodic: "0 2 3 5 7 9 11",  dorianb2: "0 1 3 5 7 9 10", lydianaug: "0 2 4 6 8 9 11",
+    lydiandom: "0 2 4 6 7 9 10", mixob6: "0 2 4 5 7 8 10",  locrian2: "0 2 3 5 6 8 10",
+    altered: "0 1 3 4 6 8 10",
+    // harmonic minor's, and the two double-augmented-second scales
+    harmonic: "0 2 3 5 7 8 11", phrygiandom: "0 1 4 5 7 8 10", ukrainian: "0 2 3 6 7 9 10",
+    lydian2: "0 3 4 6 7 9 11",  ultraloc: "0 1 3 4 6 8 9",   doubleharm: "0 1 4 5 7 8 11",
+    hungarian: "0 2 3 6 7 8 11",
+    // maqam and dastgah — the half-flats are the point
+    rast: "0 2 3.5 5 7 9 10.5", shur: "0 1.5 3 5 7 8 10",   hijaz: "0 1 4 5 7 8 10",
+    bayati: "0 1.5 3 5 7 8 10", saba: "0 1.5 3 4 7 8 10",
+    segah: "0 1.5 3.5 5.5 7 8.5 10.5", chahargah: "0 1.5 4 5 7 8.5 11",
+    hijazkar: "0 1 4 5 7 8 11", nahawand: "0 2 3 5 7 8 10", kurd: "0 1 3 5 7 8 10",
+    // Bhatkhande's ten thaats
+    bilawal: "0 2 4 5 7 9 11",  khamaj: "0 2 4 5 7 9 10",   kafi: "0 2 3 5 7 9 10",
+    asavari: "0 2 3 5 7 8 10",  bhairav: "0 1 4 5 7 8 11",  bhairavi: "0 1 3 5 7 8 10",
+    kalyan: "0 2 4 6 7 9 11",   marva: "0 1 4 6 7 9 11",    purvi: "0 1 4 6 7 8 11",
+    todi: "0 1 3 6 7 8 11",
+    // the one row with its own octave (Surjodiningrat et al., Yogyakarta 1972)
+    slendro: "0 2.31 4.74 7.17 9.55 / 12.08",
+  };
+  const EXPECT_SCALES = {
+    chromatic: "0 1 2 3 4 5 6 7 8 9 10 11", whole: "0 2 4 6 8 10",
+    augmented: "0 4 8", quartal: "0 5", major: "0 2 4 5 7 9 11",
+    blues: "0 3 5 6 7 10", bluesx: "0 1 3 5 6 8 10",
+    // the pentatonic wheel: gong, shang, jue, zhi, yu — and the Japanese five
+    majpent: "0 2 4 7 9", gong: "0 2 4 7 9", shang: "0 2 5 7 10",
+    jue: "0 3 5 8 10", zhi: "0 2 5 7 9", yo: "0 2 5 7 9", yupent: "0 3 5 7 10",
+    in: "0 1 5 7 8", hirajoshi: "0 2 3 7 8", kumoi: "0 2 3 7 9",
+    // eight notes each
+    dimhw: "0 1 3 4 6 7 9 10", dimwh: "0 2 3 5 6 8 9 11",
+    bebopdom: "0 2 4 5 7 9 10 11", bebopmaj: "0 2 4 5 7 8 9 11",
+  };
+
+  const both = [["MODES", NG.MODES, EXPECT_MODES, NG.MODELABEL, NG.MODEFAMILY],
+                ["SCALES", NG.SCALES, EXPECT_SCALES, NG.SCALELABEL, NG.SCALEFAMILY]];
+
+  /* --- the vocabulary is exactly what is spelled here --------------------- */
+  for (const [nm, table, expect] of both) {
+    const have = Object.keys(table).sort(), want = Object.keys(expect).sort();
+    const untested = have.filter((k) => !(k in expect));
+    const ghosts = want.filter((k) => !(k in table));
+    ok(!untested.length && !ghosts.length,
+       nm + ": every one of the " + have.length + " keys is spelled in this gate",
+       untested.length ? "unmeasured: " + untested.join(" ")
+         : ghosts.length ? "spelled here and not in the table: " + ghosts.join(" ")
+         : have.length + " keys");
+  }
+
+  /* --- degPitch renders each spelling, and closes at the row's period ----- */
+  for (const [nm, table, expect] of both) {
+    const wrong = [];
+    for (const k of Object.keys(expect)) {
+      const arr = table[k]; if (!arr) continue;
+      const parts = expect[k].split("/");
+      const want = parts[0].trim().split(/\s+/).map(Number);
+      const per = parts[1] ? Number(parts[1]) : 12;
+      const got = want.map((_, d) => NK.pitch(d, arr));
+      const bad = got.some((v, i) => Math.abs(v - want[i]) > 1e-9) ||
+                  got.length !== arr.length ||
+                  Math.abs(NK.pitch(want.length, arr) - per) > 1e-9 ||
+                  Math.abs(NK.pitch(-1, arr) - (want[want.length - 1] - per)) > 1e-9;
+      if (bad) wrong.push(k + " read " + got.join(" ") + " +oct " +
+                          NK.pitch(want.length, arr) + ", wanted " + expect[k]);
+    }
+    ok(!wrong.length, nm + ": degPitch reads every key's declared degrees, its octave " +
+       "closure and its negative wrap", wrong.length ? wrong.join("; ")
+       : Object.keys(expect).length + " alphabets, degrees -1.." + "n");
+  }
+
+  /* --- a label, a family, and a place in BOTH pickers --------------------- */
+  {
+    const Avail = require(R("nukernel/avail.js"));
+    const menu = (key) => Avail.SHEETS[key].values();
+    const modeMenu = menu("alphabet.mode"), scaleMenu = menu("alphabet.scale");
+    const groupsOf = (m) => new Set(m.map((o) => o.group));
+    const missing = [];
+    for (const [nm, table, , labels, fam] of both)
+      for (const k of Object.keys(table)) {
+        if (labels[k] == null) missing.push(nm + "." + k + " has no label");
+        if (!NG.FAMILYLABEL[fam[k]]) missing.push(nm + "." + k + " has no family");
+        const inScale = scaleMenu.some((o) => o.value === k);
+        if (!inScale) missing.push(nm + "." + k + " is in no scale menu");
+        if (nm === "MODES" && !modeMenu.some((o) => o.value === k))
+          missing.push("MODES." + k + " is in no mode menu");
+      }
+    ok(!missing.length, "every alphabet carries a label and a family and reaches BOTH pickers",
+       missing.length ? missing.join("; ")
+         : modeMenu.length + " mode options in " + groupsOf(modeMenu).size + " families · " +
+           scaleMenu.length + " scale options in " + (groupsOf(scaleMenu).size - 1) + " families");
+    // the sweep-up group is avail.js's safety net for a key with no family;
+    // it firing at all means the family map fell behind the table
+    const loose = [...modeMenu, ...scaleMenu].filter((o) => o.group === "modes" || o.group === "alphabets");
+    ok(!loose.length, "no key fell into avail.js's unfamilied sweep-up group",
+       loose.map((o) => o.value).join(" ") || "none");
+  }
+
+  /* --- one owner per SET: equal content means the same object ------------- */
+  for (const [nm, table] of both) {
+    const byVal = new Map(), lookalikes = [];
+    for (const k of Object.keys(table)) {
+      const sig = table[k].join(",") + "|" + (table[k].period || 12);
+      if (!byVal.has(sig)) byVal.set(sig, []);
+      byVal.get(sig).push(k);
+    }
+    let shared = 0;
+    for (const ks of byVal.values()) {
+      if (ks.length < 2) continue;
+      shared++;
+      if (!ks.every((k) => table[k] === table[ks[0]])) lookalikes.push(ks.join(" = "));
+    }
+    ok(!lookalikes.length, nm + ": two keys of equal content are the SAME ARRAY, " +
+       "never a lookalike literal (precompose nameIn takes the first match)",
+       lookalikes.length ? lookalikes.join("; ") : shared + " shared sets");
+  }
+
+  /* --- the quarter-tones survive the transport --------------------------- */
+  {
+    const bad = [];
+    for (const [nm, table] of both)
+      for (const k of Object.keys(table))
+        for (const d of table[k]) {
+          const m = 60 + d, r = Math.round(m);
+          if (TE.centsOf(m) !== Math.round((m - r) * 100)) bad.push(nm + "." + k + " @" + d);
+        }
+    ok(!bad.length, "centsOf carries the exact remainder of every degree in both tables",
+       bad.length ? bad.join(" ") : "saba 1.5 -> " + TE.centsOf(61.5) + "c, segah 8.5 -> " +
+       TE.centsOf(68.5) + "c, rast 3.5 -> " + TE.centsOf(63.5) + "c");
+  }
+
+  /* --- and the air: saba's half-flat second, rendered --------------------- */
+  {
+    const saba = NG.MODES.saba;
+    const L = await render([60 + NK.pitch(0, saba), 60 + NK.pitch(1, saba)]);   // 60, 61.5
+    const [a0, a1] = win(0), [b0, b1] = win(1);
+    const p0 = peakHz(L, a0, a1, 200, 330), p1 = peakHz(L, b0, b1, 220, 360);
+    const iv = cents(p1, p0);
+    ok(Math.abs(iv - 150) <= TOL, "saba's half-flat second renders 150 cents above the tonic",
+       p0.toFixed(1) + " -> " + p1.toFixed(1) + " Hz = " + iv.toFixed(1) + "c");
+    ok(Math.abs(iv - 100) > 15 && Math.abs(iv - 200) > 15,
+       "…and it is neither the flat second nor the major second (>15c from both)",
+       (iv - 100).toFixed(1) + "c above a semitone, " + (200 - iv).toFixed(1) + "c below a tone");
+  }
 }
 
 console.log("\n" + (fails ? "FAIL " + fails + "/" + checks : "ok — all " + checks + " checks"));

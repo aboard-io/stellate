@@ -657,7 +657,9 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     if (!v || !s2) return false;
     const c = document.querySelector('#pan-band [data-k="tcell|' + v.name + '|' + s2.id + '"]');
     if (!c) return false;
-    if (c.getAttribute("aria-expanded") !== "true") c.click();
+    /* A CELL TAKES TWO TAPS SINCE TABLE.md §11 (2026-09-05): the first
+       selects (the ring, the formula bar), the second edits. */
+    for (let i = 0; i < 2 && c.getAttribute("aria-expanded") !== "true"; i++) c.click();
     await new Promise((r) => setTimeout(r, 400));
     return true;
   });

@@ -249,7 +249,8 @@ const spread = (ev) => {
     return p.evaluate(([v, sid]) => {
       const c = document.querySelector('#pan-band [data-k="tcell|' + v + '|' + sid + '"]');
       if (!c) return false;
-      if (c.getAttribute("aria-expanded") !== "true") c.click();
+      /* TWO TAPS SINCE §11: the first selects, the second edits. */
+      for (let i = 0; i < 2 && c.getAttribute("aria-expanded") !== "true"; i++) c.click();
       return true;
     }, [voice, id]);
   };

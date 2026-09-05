@@ -397,7 +397,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
           const vv = D.voices[0], s2 = D.form.sections[0];
           if (!vv || !s2) return;
           const c = document.querySelector('#pan-band [data-k="tcell|' + vv.name + '|' + s2.id + '"]');
-          if (c && c.getAttribute("aria-expanded") !== "true") c.click();
+          /* TWO TAPS SINCE §11: the first selects, the second edits. */
+          if (c) for (let i = 0; i < 2 &&
+            c.getAttribute("aria-expanded") !== "true"; i++) c.click();
           await new Promise((r) => setTimeout(r, 300));
         }); await p.waitForTimeout(350); }
         if (v.pane) await p.evaluate(async (sel) => {
@@ -897,7 +899,8 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       if (!v || !s2) return false;
       const c = document.querySelector('#pan-band [data-k="tcell|' + v.name + '|' + s2.id + '"]');
       if (!c) return false;
-      if (c.getAttribute("aria-expanded") !== "true") c.click();
+      /* TWO TAPS SINCE §11: the first selects, the second edits. */
+      for (let i = 0; i < 2 && c.getAttribute("aria-expanded") !== "true"; i++) c.click();
       return true;
     }, vname || null);
     await p.waitForTimeout(450);

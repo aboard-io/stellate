@@ -42,7 +42,7 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import type { Field, StripField, Choice } from "./api.js";
 import { pickerFor as pick } from "../menus/pick.js";
 
-export type Picker = "combo" | "chips" | "native";
+export type Picker = "combo" | "chips" | "native" | "slider";
 
 /* THE RULE IS NOT THIS FILE'S ANY MORE, 2026-09-06. It was written here first
    and it was right here first — chips <= 8, the native picker on a coarse
@@ -61,6 +61,13 @@ export function pickerFor(f: StripField): Picker {
   //     coarse pointer that control is ALREADY the native picker, and this
   //     branch is "seat it", not "draw a combo").
   if (f.node) return "combo";
+  /* 2 · A CONTINUOUS NUMBER IS A SLIDER (2026-09-05). Paul: *"When you
+   *     redesign think sliders and other UI for data entry."* Before the field
+   *     carries `num` this asked how many WORDS it had, and a register — eight
+   *     integers from −4 to 3 — earned eight chips: eight buttons for one
+   *     quantity, and the shape of the answer (a line you slide along) thrown
+   *     away. Words keep the chips. */
+  if (f.num) return "slider";
   //     `strip: true` — a cell sheet's row is inside a spreadsheet; see
   //     `PickOpts.strip` for the measurement that keeps it chips to 24.
   return pick((f.options || []).length, { strip: true });
@@ -212,7 +219,14 @@ function fieldRow(f: Field, openField: string | null,
   const sf = f as StripField;
   const pick = pickerFor(sf);
   const open = openField === sf.key;
-  const write = (v: string) => { setOpenField(null);
+  /* A VALUE TAP DOES NOT DISMISS THE CONTROL (DESIGN.md component 6, and
+     Paul's own sentence: *"Don't dismiss things when I tap them to change
+     values; dismiss them when I tap outside of them."*). This read
+     `setOpenField(null)` first — the close-then-write order lifted from
+     ui/wordgrid.js — so a strip of words could be tapped exactly once and then
+     had to be re-opened for the second try. The strip stays out; the tap
+     outside, Escape, or the field's own head is what closes it. */
+  const write = (v: string) => {
     try { if (sf.set) sf.set(v); } catch (e) {} after(); };
   const clearBack = (sf.clear && !sf.derived)
     ? html`<button type="button" class="nu-clearback" data-k=${"clear|" + sf.key}
@@ -231,6 +245,53 @@ function fieldRow(f: Field, openField: string | null,
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
       ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
     </div>`;
+  /* ---- A SLIDER, AND A NUMBER YOU CAN TYPE (2026-09-05) ----------------
+     Paul: *"When you redesign think sliders and other UI for data entry."*
+     Two controls on ONE address and that is deliberate, in the way the loop
+     strip already is: the RANGE is the thumb's door and the NUMBER BOX is the
+     keyboard's and the exact one's, and both call the same `write`. The
+     field's own `data-k` stays on the range — T7 and the inventory read an
+     address, and an address does not move when a widget does.
+
+     IT WRITES ON `change`, NOT ON `input`. Every write on this page is a
+     document write that normalises, recompiles and lands at the next bar;
+     sixty a second under a dragging thumb is not an editor. The number beside
+     it follows the thumb live (`input`), so the reading is never behind the
+     hand — the same split the envelope editor's handles make.
+
+     ...AND IT DOES NOT CLOSE THE SHEET. `write` here is the plain one: it
+     leaves `openField` alone, because Paul's other ruling the same day is
+     *"Don't dismiss things when I tap them to change values"* and a slider is
+     the control you most obviously use twice. */
+  if (pick === "slider") {
+    const N = sf.num!;
+    const cur = sf.value === "" || sf.value == null ? null : +sf.value;
+    const shown = cur != null ? cur
+      : (N.derivedNum != null ? N.derivedNum : N.min);
+    const slide = (v: string) => { try { if (sf.set) sf.set(v); } catch (e) {} after(); };
+    return html`<div class="nu-sheetrow nu-numrow">
+      <b class="nu-sheetlab">${sf.label}</b>
+      <input class="nu-numslide" type="range" data-k=${sf.key}
+        min=${String(N.min)} max=${String(N.max)} step=${String(N.step)}
+        .value=${String(shown)}
+        aria-label=${sf.label + (N.unit ? ", in " + N.unit : "")}
+        aria-valuetext=${String(shown) + (N.unit ? " " + N.unit : "") +
+                         (cur == null ? ", inherited" : "")}
+        @input=${(e: Event) => { const box = (e.target as HTMLElement)
+            .parentElement?.querySelector(".nu-numbox") as HTMLInputElement | null;
+          if (box) box.value = (e.target as HTMLInputElement).value; }}
+        @change=${(e: Event) => slide((e.target as HTMLInputElement).value)} />
+      <input class=${classMap({ "nu-numbox": true, "is-derived": cur == null })}
+        type="number" data-k=${"num|" + sf.key}
+        min=${String(N.min)} max=${String(N.max)} step=${String(N.step)}
+        .value=${String(shown)}
+        aria-label=${sf.label + " — type a number"}
+        @change=${(e: Event) => slide((e.target as HTMLInputElement).value)} />
+      ${N.unit ? html`<small class="nu-numunit">${N.unit}</small>` : nothing}
+      ${clearBack}
+      ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
+    </div>`;
+  }
   if (pick === "native")
     /* THE NATIVE PICKER KEEPS THE FIELD'S OWN ADDRESS, because an address does
        not move when a widget does — T7 finds `data-k` on whatever is drawn. */

@@ -57,7 +57,11 @@
 
   // SCALES/SCALELABEL joined this line 2026-09-02 with the `alphabet.scale`
   // sheet below — the subject's alphabet, which the document has always carried
-  const { GENRES, MODES, MODELABEL, SCALES, SCALELABEL } = NG;
+  // SCALEFAMILY/MODEFAMILY/FAMILYLABEL joined it 2026-09-05, when the scale
+  // and mode vocabulary went from 21 words to 63: the family rides on the
+  // TABLE (genres-tables.js, beside the label maps) and this file groups by it.
+  const { GENRES, MODES, MODELABEL, SCALES, SCALELABEL,
+          SCALEFAMILY, MODEFAMILY, FAMILYLABEL } = NG;
   const { KEYS, KEYLABEL, METERLABEL, RATES, RATELABEL, SWINGLABEL, GROOVELABEL,
           ROLES, BASSOPS, KITLABEL, DRUMKITS, INSTRCHOICES,
           // BASSCHOICES joined this line 2026-09-02 with `sound.bassinstrument`
@@ -140,6 +144,10 @@
     "voice.on":         { no: "this voice is switched off" },
     "material.hasDrumCell": { no: "no drum grid to operate on" },
     "time.swing":       { no: "the record is straight" },
+    // (a SIGNATURE the sliders wrote — "7/8" — is not in this table and falls
+    // to the bare sentence, which is the designed way a missing row shows
+    // itself; the three fitted rule columns avail `spread`s are still the two
+    // words and four, so no fitted rule reads a custom meter at all)
     "time.meter":       { eq: { four: "the record counts in four",
                                 three: "the record counts in three",
                                 six: "the record counts in six-eight" } },
@@ -365,7 +373,7 @@
       spread(f, "section.role", s.role || null, Object.keys(ROLES));
     }
     if (S.bar != null) {
-      const c = (A.prog || [])[S.bar] || {};
+      const c = CHORD(A.prog, S) || {};
       f["bar.ix"]      = S.bar;
       f["bar.degree"]  = c.d;
       f["bar.quality"] = c.q;
@@ -416,6 +424,29 @@
     label: labels ? (labels[v] == null ? v : labels[v]) : v,
     ...(group ? { group } : {}) }));
 
+  /* THE SAME LIST, IN FAMILIES (2026-09-05, the tonalities round). Paul:
+     *"Same with scales we have all kinds of tonalities in this system aren't
+     we missing a lot."* We were; the two alphabet tables grew from 21 keys to
+     63, and 63 options in one flat list is a wall rather than a menu.
+     ONE DECLARATION, AND IT IS NOT HERE. `fam` is the table's own key ->
+     family map and `FAMILYLABEL` is the ordered family -> word map, both from
+     genres-tables.js. This function contributes no list of scales, no list of
+     families and no order — the same law that already stops this file from
+     retyping MODELABEL. Called on several tables in a row, the families come
+     out in FAMILYLABEL's order across all of them (scale families, then mode
+     families), which is the order document.js:296 resolves a scale name in.
+     AND NOTHING FALLS OUT. A key the family map does not place still reaches
+     the menu, under the table's own name at the end: a word that exists in the
+     vocabulary and cannot be chosen is the declared-but-never-arriving bug,
+     and this makes adding a scale a change that cannot half-land. */
+  const famOpts = (table, fam, labels, tail) => {
+    const keys = Object.keys(table);
+    const out = Object.keys(FAMILYLABEL).flatMap((f) =>
+      opts(keys.filter((k) => fam[k] === f), labels, FAMILYLABEL[f]));
+    const loose = keys.filter((k) => !FAMILYLABEL[fam[k]]);
+    return loose.length ? [...out, ...opts(loose, labels, tail)] : out;
+  };
+
   // THE SEVEN CHAIRS COME FROM THE KERNEL, not from a list in a view.
   // ui/eight.js:39 kept its own `PARTS` array — the same seven words in a
   // different order — and a second list of the parts is a second list that can
@@ -435,13 +466,64 @@
                         emergent: "the changes come from the voices" };
   const harmonyLabel = (h) => (NG.HARMONYLABEL && NG.HARMONYLABEL[h]) ||
     h + " — " + (HARMONYWORD[h] || h);
-  // THE QUALITIES, GROUPED BY WHICH TABLE THEY COME FROM. kernel.js keeps two:
-  // QSTEPS builds the chord out of scale steps (so it bends with the mode) and
-  // QFIX pins the intervals in semitones. That is a real distinction a composer
-  // can hear, and it is the grouping the sheet uses.
-  const QUALITIES = () => [
-    ...opts(Object.keys(K.QSTEPS), null, "out of the scale"),
-    ...opts(Object.keys(K.QFIX), null, "fixed intervals")];
+  // THE QUALITIES, GROUPED BY FAMILY — and the grouping is the KERNEL'S, not
+  // this file's. kernel.js `QUALFAM` is one ordered table of eight families
+  // (the mode's own stacks, triads, sixths, sevenths, ninths, elevenths,
+  // thirteenths, altered dominants) and `QSTEPS`/`QFIX` are derived from it,
+  // so the picker's groups and their order are the same declaration the sound
+  // is built from. It was two groups of eight words until 2026-09-05 (Paul:
+  // *"The number of chords is very low where are my maj7 and my min11 and so
+  // forth?"*); it is forty-two words in eight groups now, and `src/menus/
+  // pick.ts` already answers a vocabulary this long with the phone's own
+  // wheel on a thumb and the typed combo with a keyboard — nothing here has
+  // to know that.
+  //
+  // THE WORD IS THE CHORD SYMBOL, not the key. `K.QMARK` is what a musician
+  // writes on a chart (`m7b5`, `7#9`, `m(maj7)`) and the key is storage; the
+  // one place they are the same is the plain triad, whose symbol is the empty
+  // string and whose word therefore stays its key.
+  // ...and where the symbol is ONE character it is the KEY that is the word,
+  // because a list holding `7`, `9`, `m`, `+` and `5` is five options a hand
+  // cannot tell apart at a glance, and two of them (`7` the diatonic seventh
+  // and `7` the dominant) would be the same word twice. `dom7`, `min` and
+  // `aug` say which one they are; `m7b5` and `7#9` say it better than their
+  // keys do.
+  /* ONE READER FOR "THE CHORD AT (bar, chord)". `alphabet.prog` is indexed by
+     BAR, and a bar is either one chord object or a LIST of them (kernel.js
+     `chordsOf`: `Array.isArray(slot) ? slot : [slot]`), so every surface that
+     addresses a chord has to know both shapes — and exactly one of them
+     should. Absent `chord` is the bar's first, which IS the whole bar
+     wherever the bar was never split. */
+  /* WHOSE CHANGES A CHORD ADDRESS IS IN. With a `section` in the scope and an
+     ARRAY written on that row, the row's own chart; the record's otherwise —
+     which is every address written before 2026-09-05 and every address the
+     record's own grid writes. Named charts are deliberately NOT resolved here:
+     `PROGS.blues12` is a shared table and editing a chord of it would edit it
+     for every record that names it, so the grid FORKS before it writes and
+     what this reads is always something the row owns. */
+  const PROGIN = (doc, s) => {
+    if (s && s.section != null) {
+      const x = SEC(doc, s);
+      if (x && Array.isArray(x.prog)) return x.prog;
+    }
+    return doc.alphabet.prog;
+  };
+  const CHORD = (prog, s) => {
+    const slot = (prog || [])[s && s.bar];
+    if (slot == null) return null;
+    return Array.isArray(slot) ? (slot[(s && s.chord) | 0] || null) : slot;
+  };
+  const qWord = (k) => {
+    const m = K.QMARK[k];
+    return m && m.length > 1 ? m : k;
+  };
+  const QUALITIES = () => {
+    const out = [];
+    for (const fam of Object.keys(K.QUALFAM))
+      for (const k of Object.keys(K.QUALFAM[fam]))
+        out.push({ value: k, label: qWord(k), group: fam });
+    return out;
+  };
   /* WHO IS IN THE BASS CHAIR, SAID IN ONE PLACE (2026-09-02). `ui/derive.js
      bassInstrOf` is the one owner of the ANSWER — `(pool && pool.bass) ||
      BASS_INSTR` — and it is an ES module this UMD file cannot require, so the
@@ -549,8 +631,24 @@
      tidy-up — that is a judgement about the vocabulary and not about the code. */
   const SHEETS = {
     /* ---- 1 TIME (song) ---- */
+    /* ---- THE METER: THE COMMON SIGNATURES AS CHIPS (2026-09-05) --------
+       Paul: *"I should be able to set any tempo at all like 21/17 you should
+       let me choose anything."* ANY signature is two numbers and the TIME row
+       asks for those with two sliders (ui/eight.js `meterNode`); this strip
+       is the shortcut — the seven a hand reaches for without counting, which
+       is DESIGN.md component 7's own ceiling of eight words.
+
+       THE TWO WORDS ARE STILL THE TWO WORDS. `three` and `six` are 3/4 and
+       6/8, and they keep their VALUES because every save and three catalogue
+       anchors already say them; what moved is the LABEL, from "in three" to
+       the signature a composer reads (DESIGN.md 4: "what a composer calls it
+       wins"). A hand that writes 3 over 4 on the sliders gets the WORD back
+       out of `K.meterWordOf`, so one meter never has two spellings. */
     "time.meter": { label: "meter", scope: "song",
-      values: () => [{ value: "", label: "four" }, ...opts(Object.keys(METERLABEL), METERLABEL)],
+      values: () => [{ value: "", label: "4/4" },
+                     { value: "three", label: "3/4" },
+                     { value: "six", label: "6/8" },
+                     ...["2/4", "5/4", "7/8", "12/8"].map((v) => ({ value: v, label: v }))],
       get: (doc) => doc.time.meter || "",
       set: (doc, s, v) => { doc.time.meter = v || null; } },
     "time.rate": { label: "reading speed", scope: "song",
@@ -586,7 +684,7 @@
       get: (doc) => doc.alphabet.key,
       set: (doc, s, v) => { doc.alphabet.key = +v; } },
     "alphabet.mode": { label: "mode", scope: "song",
-      values: () => opts(Object.keys(MODES), MODELABEL),
+      values: () => famOpts(MODES, MODEFAMILY, MODELABEL, "modes"),
       get: (doc) => doc.alphabet.mode,
       set: (doc, s, v) => { doc.alphabet.mode = v; } },
     /* THE SUBJECT'S OWN ALPHABET (2026-09-02). `alphabet.scale` has been in
@@ -614,8 +712,8 @@
        calls it. */
     "alphabet.scale": { label: "scale", scope: "song",
       values: () => [{ value: "", label: "the mode" },
-                     ...opts(Object.keys(SCALES), SCALELABEL, "alphabets"),
-                     ...opts(Object.keys(MODES), MODELABEL, "modes")],
+                     ...famOpts(SCALES, SCALEFAMILY, SCALELABEL, "alphabets"),
+                     ...famOpts(MODES, MODEFAMILY, MODELABEL, "modes")],
       get: (doc) => doc.alphabet.scale || "",
       set: (doc, s, v) => { doc.alphabet.scale = v || null; } },
     // "harmony", 2026-08-27 — FUTURE.md §5: "the changes" headed TWO controls
@@ -631,10 +729,18 @@
     // under `cycle` (kernel.js:671) — so "nothing you can say here does
     // anything" is, for once, a fact a composer can act on, and the way out is
     // named in the reason. See the sheetGate note above the table.
+    /* ...AND THE ADDRESS IS A BAR AND A CHORD IN IT (2026-09-05). A bar of
+       `alphabet.prog` may be a LIST since the kernel learned `beats` — the
+       half-bar ii-V is two chords in one bar — so `s.chord` says which of
+       them, and it defaults to 0, which is what every caller written before
+       today (gates-extract's probe, the changes grid's own `{ bar: i }`) asks
+       for and is the whole bar on every record that has not been split. One
+       reader for both shapes (`CHORD`, above), so the scope's name can go on
+       meaning what it says. */
     "alphabet.quality": { label: "quality", scope: "song.bar", sheetGate: true,
       values: () => QUALITIES(),
-      get: (doc, s) => ((doc.alphabet.prog || [])[s.bar] || {}).q,
-      set: (doc, s, v) => { const c = (doc.alphabet.prog || [])[s.bar]; if (c) c.q = v; } },
+      get: (doc, s) => (CHORD(PROGIN(doc, s), s) || {}).q,
+      set: (doc, s, v) => { const c = CHORD(PROGIN(doc, s), s); if (c) c.q = v; } },
 
     /* ---- 4 FORM (one section) ---- */
     "form.role": { label: "role", scope: "section",
@@ -1019,8 +1125,19 @@
       get: (doc, s) => { const x = SEC(doc, s);
         const v = x[key];
         if (key === "fx") return Array.isArray(v) ? (v.length === 1 ? v[0] : "") : (v || "");
+        /* A ROW MAY CARRY A CHART OF ITS OWN (2026-09-05). `prog` was eleven
+           named charts and nothing a hand could write; the section's changes
+           grid writes an ARRAY of chords there now, and an array is not one of
+           the words — `String(v)` on it would put "[object Object]" in a menu.
+           It reads back as no named chart, and the `say` under the control is
+           what it actually is. */
+        if (key === "prog" && Array.isArray(v)) return "";
         return v == null ? "" : String(v); },
       say: (doc, s) => { const x = SEC(doc, s);
+        if (key === "prog") { const v = x.prog;
+          return Array.isArray(v)
+            ? "its own — " + v.length + (v.length === 1 ? " bar" : " bars")
+            : null; }
         if (key !== "fx") return null;
         const v = x.fx;
         return Array.isArray(v) && v.length > 1 ? v.join(" + ") : null; },
@@ -1193,5 +1310,5 @@
 
   return { docFeatures, evalRule, whyOf, reasonFor, WHY, SHEETS, optionsFor,
            devSheetFor, HARMONIES, PARTS, lineCells, drumCells, cellsFor,
-           sampledVoice };
+           sampledVoice, CHORD };
 });

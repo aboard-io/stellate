@@ -1586,17 +1586,23 @@
      Quality is applied BY FUNCTION rather than flat, because that is what
      the words mean: "sevenths" on a major-key tune is Imaj7 / ii m7 / V7,
      not four dominant sevenths in a row. The kernel's own tables are the
-     vocabulary (QSTEPS triad/7/nine/sus4/six, QFIX maj7/m7/dom7). */
+     vocabulary — `QUALFAM`, forty-two words in eight families since
+     2026-09-05, of which this curated surface calls six. */
   const CHORDKIND = {
     plain:  { w: "plain triads", q: null },
     // "where they belong": I and IV are the MAJOR sevenths of the key —
     // giving only I the special case handed IV a chromatic m7 (measured in
     // F: Bb-C#-F-Ab, a Bbm7 in the middle of a major tune) where Bbmaj7
-    // (Bb-D-F-A) is what the words mean. vii would be m7b5, but the
-    // kernel's QFIX carries maj7/m7/dom7 only, so it stays m7 — close
-    // enough that nobody has called it, and honest here rather than silent.
+    // (Bb-D-F-A) is what the words mean.
+    // ...AND vii IS THE HALF-DIMINISHED IT ALWAYS WAS (2026-09-05). This line
+    // read `it stays m7 — close enough that nobody has called it, and honest
+    // here rather than silent`, because the kernel's fixed table carried
+    // maj7/m7/dom7 and nothing else. It carries `m7b5` now, so the seventh
+    // degree of a major key gets the chord the words mean instead of the
+    // nearest one the box could say.
     sevens: { w: "sevenths where they belong",
-              q: (d) => (d === 0 || d === 3 ? "maj7" : d === 4 ? "dom7" : "m7") },
+              q: (d) => (d === 0 || d === 3 ? "maj7" : d === 4 ? "dom7"
+                         : d === 6 ? "m7b5" : "m7") },
     all7:   { w: "sevenths on everything", q: () => "7" },
     nines:  { w: "ninths", q: () => "nine" },
     sus:    { w: "suspended", q: () => "sus4" },

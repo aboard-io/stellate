@@ -281,9 +281,14 @@
          tempo", read at CALL time so this row cannot be the copy that drifts.
          It read 70..160, the number compose.js threw on, while the page's own
          tempo slider and tap tempo allowed 40..220; both are 40..220 now. */
-      edit: { kind: "number", min: NF.BPM_LO, max: NF.BPM_HI, step: 1 },
+      /* ...AND SINCE 2026-09-05 IT IS THE CATALOGUE'S FENCE AND NOT THE
+         HAND'S. A rule writes a GENRE row — compose.js throws on anything
+         outside 40..220 and this is the surface that writes it, so it must
+         not offer 400. The hand's own tempo (20..400, to a tenth) is the
+         TIME row's slider, on the record rather than on the genre. */
+      edit: { kind: "number", min: NF.BPM_ROW_LO, max: NF.BPM_ROW_HI, step: 1 },
       write: (r, v) => writeAt(r, "bpm",
-        Math.max(NF.BPM_LO, Math.min(NF.BPM_HI, Math.round(v)))) },
+        Math.max(NF.BPM_ROW_LO, Math.min(NF.BPM_ROW_HI, Math.round(v)))) },
 
     /* THE THRESHOLD ROW (2026-09-01). `scratch/maps-2026-09-01/rules.md` §255
        — "THE RANGE PROBLEM" — says the truth: a row states ONE tempo and
@@ -327,13 +332,18 @@
       write: (r, v) => writeAt(r, "rate", v == null ? null : +v) },
 
     { field: "meter", axis: "Time", head: "count", rederive: "compose",
-      say: (g) => [w("it counts "), val(g.meter ? NF.METERLABEL[g.meter] : "in four", g.meter || null)],
+      say: (g) => [w("it counts "), val(g.meter
+        ? (NF.METERLABEL[g.meter] || g.meter) : "in four", g.meter || null)],
       read: (g) => g.meter,
       edit: { kind: "enum", values: () => [{ value: null, label: "in four" },
-        ...opts(NF.METERLABEL, NF.METERLABEL)] },
-      // THE WORD, NEVER THE NUMBERS — precompose.js:2172's own law, validated
-      // by name against K.METERS one line later.
-      write: (r, v) => writeAt(r, "meter", v && K.METERS[v] ? v : null) },
+        ...opts(NF.METERLABEL, NF.METERLABEL),
+        // ...AND THE SIGNATURES (2026-09-05, the any-meter round): the same
+        // four avail.js offers beside the two words, so a rule can say 7/8.
+        ...["2/4", "5/4", "7/8", "12/8"].map((v) => ({ value: v, label: v }))] },
+      // THE WORD OR THE SIGNATURE, NEVER THE NUMBERS — precompose.js:2172's
+      // own law, validated by `K.okMeter`, which reads both and answers no to
+      // four-four (the one spelling of that is null).
+      write: (r, v) => writeAt(r, "meter", K.okMeter(v) ? String(v) : null) },
 
     { field: "swing", axis: "Time", head: "swing", rederive: "compose",
       say: (g) => { const k = g.swing == null ? null

@@ -362,6 +362,15 @@ const GATES = [
   { name: "pitch-wall", wave: 2, kind: "node",
     argv: ["test/pitch-wall.test.js"],
     need: ["test/pitch-wall.test.js"], covers: ["test/pitch-wall.test.js"] },
+  /* THE CHORD WALL (2026-09-05, "where are my maj7 and my min11" and "the
+     chord editor must handle duration of chords"): the forty-two-word quality
+     vocabulary voiced note for note off the render, and the two durations a
+     chord can have — a bar split at beat 3, and one chord held across two
+     bars struck once. Reads the events, never the tables. */
+  { name: "chords", wave: 2, kind: "node",
+    argv: ["test/chords.test.js"],
+    need: ["test/chords.test.js", "nukernel/kernel.js", "nukernel/genres.js"],
+    covers: ["test/chords.test.js"] },
   /* THE EXPORTED TEMPO MAP (2026-08-30, the five-walls follow-up): a paced
      record's .mid carries set-tempo metas at the section doors and a metered
      record says 3/4 or 6/8 outright; the .als writes the same map into the
@@ -673,6 +682,22 @@ const GATES = [
   { name: "loopstrip",  wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/loopstrip.browser.js"], need: ["test/loopstrip.browser.js"],
     covers: ["test/loopstrip.browser.js"] },
+  /* THE ENVELOPE EDITOR (2026-09-05, nukernel/TABLE.md §11). Paul: *"Make an
+     Adsr and envelope editor though and use that for samples etc."* It is a
+     browser gate because three of its seven claims cannot be answered anywhere
+     else — a 44px handle's rendered rect, a real touch drag that must not steal
+     the page's scroll, and the RENDERED TAIL off the page's own float press.
+     `covers` names the component's source, the two engine files the tail
+     measurement is about, and the doors between them, so an edit to any of
+     them selects this gate in an impacted run. */
+  { name: "envelope",   wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/envelope.browser.js"], need: ["test/envelope.browser.js"],
+    covers: ["test/envelope.browser.js", "nukernel/ui/envelope.js",
+             "nukernel/src/envelope/adsr.ts", "nukernel/src/envelope/plate.ts",
+             "nukernel/src/envelope/curve.ts", "nukernel/src/envelope/api.ts",
+             "engine/faust/voices/sampler.js",
+             "engine/faust/voices/state-engine.js",
+             "nukernel/audio/to-engine.js"] },
   { name: "erhu",       wave: 2, kind: "node",
     argv: ["test/erhu.test.js"], need: ["test/erhu.test.js"],
     covers: ["test/erhu.test.js", "engine/faust/dsp/erhu.dsp"] },

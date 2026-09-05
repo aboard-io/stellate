@@ -117,7 +117,15 @@ somebody renamed a button.
 
   "alphabet": {
     "key": 2, "mode": "dorian", "diatonic": true, "harmony": "modal",
-    "prog": [{ "d": 0, "q": "triad" }],
+    "prog": [{ "d": 0, "q": "triad" }],   // ONE ENTRY PER BAR — and an entry
+    //   may be a LIST of chords (2026-09-05, the chord editor's duration
+    //   round): `[{d:1,q:"m7",beats:8},{d:4,q:"dom7"}]` is a half-bar ii-V,
+    //   `beats` in the kernel's own steps, the last chord absorbing the rest
+    //   of the bar. `"held": true` on a bar's chord is the other direction —
+    //   the same chord still sounding, so the pad does not strike it again
+    //   and one chord lasts two bars. `"bass"` is a slash bass, a degree of
+    //   the mode under the chord, which an inversion cannot say. Every field
+    //   is optional and absent is what it always was.
     "scale": null    // NEW (D5) — a SCALES key, or null = the mode. 99 of 122
   },                 //   anchors declare one; ui/eight.js:98 overwrites it today.
 

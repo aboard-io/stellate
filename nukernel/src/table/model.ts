@@ -127,6 +127,19 @@ export function numField(A: TableAPI, key: string, label: string,
     derived: !has,
     options: [...(clearable ? [{ v: "", w: noneWord || "none" } as Choice] : []),
               ...list.map((n) => ({ v: String(n), w: String(n) } as Choice))],
+    /* ...AND IT IS A SLIDER (2026-09-05). Paul: *"When you redesign think
+       sliders and other UI for data entry."* Every caller of this function
+       hands it a QUANTITY on a run — a register from −4 to 3, a bar to come in
+       at, a bar count — and the strip drew each one as a row of chips, which is
+       a ruler cut into buttons. `options` stays, because the address and the
+       vocabulary are what the inventory and T7 read; `num` is what
+       `sheet.ts pickerFor` now answers "slider" to. The RANGE is the whole run
+       and not just the offered steps, so the thumb can reach a number the
+       chips never offered — which is what a slider is FOR. */
+    num: { min: list.length ? list[0]! : 0,
+           max: list.length ? list[list.length - 1]! : 1,
+           step: 1, unit: "",
+           derivedNum: has ? +cur : null },
     set,
     clear: (clearable && has) ? () => set("") : null };
 }
@@ -149,6 +162,12 @@ function cellNum(A: TableAPI, i: number, vi: number, field: string,
     sub: has ? null : "the column's",
     options: [{ v: "", w: "the column's" },
               ...list.map((n) => ({ v: String(n), w: String(n) } as Choice))],
+    /* THE CELL'S OVERRIDE IS A QUANTITY TOO, and the slider's ghost value is
+       what the column deals — so pushing the thumb off the inherited number is
+       visibly a departure from it. */
+    num: { min: list.length ? list[0]! : 0,
+           max: list.length ? list[list.length - 1]! : 1,
+           step: 1, unit: "", derivedNum: inh == null ? null : +inh },
     set: (v: string) => A.putCell(i, vi, field, v === "" ? null : +v),
     clear: has ? () => A.putCell(i, vi, field, null) : null };
 }
@@ -303,8 +322,20 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
      RECORD's word and the row is drawn quiet — which is 2 exactly. */
   for (const [key, lab] of [["form.key", "key"], ["form.mode", "mode"],
                             ["form.prog", "changes"], ["form.swing", "swing"],
-                            ["form.groove", "groove"]] as [string, string][])
+                            ["form.groove", "groove"]] as [string, string][]) {
     f.push(shField(A, key, { section: sid }, lab));
+    /* ...AND THE CHANGES OPEN THE CHART ITSELF, right under the menu that
+       names one (2026-09-05). The row's `changes` offered eleven named genre
+       charts and nothing a hand could write — *"the bridge cannot have its
+       own changes"* — while the resolver has taken a row-level `prog` since
+       wave 2a. This is `timeSheet`'s own changes grid, scoped to this
+       section: it draws the record's chart until the first write, and that
+       write forks it onto the row. One editor, two scopes, no second
+       drawing of a chord chart anywhere on the page. */
+    if (key === "form.prog")
+      f.push({ kind: "node", label: "this section's chart",
+               node: A.changesNode(sid) });
+  }
   /* ...AND ITS CHAIN AND ITS ROOM (wave 2a's six). */
   for (const [key, lab] of [["form.fx", "chain"], ["form.rev", "reverb"],
                             ["form.echo", "echo"], ["form.dtime", "echo time"],
@@ -367,7 +398,28 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
     f.push({ kind: "node", label: "its files", node: A.voiceCrate(v.name) });
   if (v.kind === "line") f.push(shField(A, "cast.material", { voice: v.name }, "reads by default"));
   if (v.kind === "bass") f.push(shField(A, "cast.bassStyle", { voice: v.name }, "does by default"));
-  for (const k of ["sound.attack", "sound.release", "sound.double", "sound.looping"])
+  /* ---- THE ENVELOPE, DRAWN (2026-09-05, TABLE.md §11) ------------------
+     Paul, after the AUX spike: *"Make an Adsr and envelope editor though and
+     use that for samples etc."* The plate goes ABOVE the two words that are
+     left, because it is the thing this part of the sheet is about.
+
+     AND `sound.attack` AND `sound.release` GO WITH IT. Those two rows were
+     four words each (fields.js VOX.atk / VOX.rel — "straight in · soft · slow
+     · swelling", "cut off · natural · ringing · long tail") writing the same
+     `voice.sound.atk` / `.rel` the editor's handles write, in seconds, from
+     the same clamps. Keeping both would be two controls on one address, which
+     is the shape test/selects.js's own guard fails a page for. §11 said which
+     one goes: *"The knob rows it replaces are removed from the knob table for
+     those params (T7: nothing lost — the numbers print beside the handles)"* —
+     and they do, in the field's own units, under the curve. `swelling` is the
+     one thing a word said that a number cannot, and it is not lost either: it
+     is a 1.2 s attack, and audio/to-engine.js `samplerVox` still reads the
+     word wherever a saved record carries one.
+     `sound.double` and `sound.looping` are NOT envelope facts and stay. */
+  const env = A.voiceEnv(v.name);
+  if (env) f.push({ kind: "node", label: env.label, node: env.node });
+  for (const k of env ? ["sound.double", "sound.looping"]
+                      : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
     if (A.hasSheet(k, { voice: v.name })) f.push(shField(A, k, { voice: v.name }, null));
   /* THE MODELLED CHAIR'S OWN THROAT — VOICE.md's knob table and its tract pad.
      Null on a chair that has nothing to turn (a recording has one breath). */

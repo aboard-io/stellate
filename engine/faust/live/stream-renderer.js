@@ -671,7 +671,9 @@
             tSec: e.beat * spb, durSec: e.durB * spb, freq: e.sets.freq,
             gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
             vel: SP.selVelOf(e),   // velocity layer off the MUSICAL amp (press parity)
-            atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
+            atk: u.sampler.atk, rel: u.sampler.rel,
+            dcy: u.sampler.dcy, sus: u.sampler.sus,   // §11's decay+sustain; absent = today
+            zones: u.sampler.zones,
             swell: !!u.sampler.swell, mello: u.sampler.mello || null,
             bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
             pan: SE.notePan(u, e.sets.freq),  // MASTERING (press parity)
@@ -954,7 +956,9 @@
             const n = { tSec: base / SR + (e.beat - lo) * spb, durSec: e.durB * spb, freq: e.sets.freq,
               gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
               vel: SP.selVelOf(e),   // velocity layer off the MUSICAL amp (press parity)
-              atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
+              atk: u.sampler.atk, rel: u.sampler.rel,
+            dcy: u.sampler.dcy, sus: u.sampler.sus,   // §11's decay+sustain; absent = today
+            zones: u.sampler.zones,
               swell: !!u.sampler.swell, mello: u.sampler.mello || null,
               bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
               pan: SE.notePan(u, e.sets.freq) };  // MASTERING (press parity)

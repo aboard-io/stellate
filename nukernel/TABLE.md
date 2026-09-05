@@ -1697,7 +1697,7 @@ filtered for me in a smart semantic way."*
   selected cell.
 
 
-### 11b · What the cells-as-cells round and the envelope editor landed, and the eight things they measured (2026-09-05)
+### 11b · What the cells-as-cells round and the envelope editor landed, and the nine things they measured (2026-09-05)
 
 **SHIPPED (uncommitted).** Two rounds and five rulings taken during them:
 cells as cells at rest, the envelope editor and its wiring, the marks, the
@@ -1777,7 +1777,73 @@ number, the `.nu-vh` word) with `data-say` on the button, because this table is
 drawn by lit and `paintIcon` builds DOM. A motif keeps its NAME — it is a
 proper noun and no picture says it — and wears its provenance as the mark.
 
-**AND SEVEN THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT:**
+**THE TAP-OUTSIDE LAW, AND WHAT IT COST TO GET WRONG.** Paul: *"Don't dismiss
+things when I tap them to change values; dismiss them when I tap outside of
+them."* The mechanism was the page's own: every write ends in `changed()` →
+`push(); draw()`, which throws the table's panel away and builds it again, and
+only the merged rows survived that — so a cell sheet SHUT UNDER THE THUMB, once
+per chip, and a strip of words could be tapped exactly once. `STICKY` is now
+every door but the CORNER (which must forget, because the transpose is reached
+by opening it and a restoring tap would close it — §9d's fifteen red checks),
+`sheet.ts`'s `write()` no longer closes the strip it was tapped in, and
+`armOutside` closes on a press that lands on nothing pressable: not a button,
+not a menu, not the sheet. Escape and the door's own head still close it.
+(T9b5 · T9b6.)
+
+**A NUMBER IS A SLIDER.** Paul: *"When you redesign think sliders and other UI
+for data entry."* `numField` and `cellNum` — every quantity on this surface: a
+register, a bar count, the bar a player comes in at, the take, the humanising —
+declare `num { min, max, step, unit }`, and `sheet.ts pickerFor` answers
+`slider`: the page's own `input[type=range]` (`--sl-trough`, `--sl-grab`, the
+hand's fill) with a TYPEABLE number box beside it, both 44px, the box quiet
+while nothing is written. Measured on the register: range 44px + box 44px,
+`-4..3`, **0 chips** where there were eight. Words keep the chips. (T9b7 · T9b8.)
+
+**THE STICKY HEADS, MEASURED (Paul: *"we should have sticky headers for
+instruments and sections"*).** At 320, 390 and 1280, with the pane scrolled:
+
+| | measured |
+|---|---|
+| SECTION heads (the row heads), 220px of horizontal pane scroll | **moved 1px** — sticky, and the 1 is `border-spacing` |
+| the CORNER, same scroll | **moved 1px** once it was asked by name. `thead th:first-child` is TIME's merged row, not the corner, and reported "the corner slid 217px" about a `<th colspan>` that had not moved at all |
+| the special rows' stack | **72 · 121 · 170**, column heads at **235** at 320/390 (127 · 176 · 225 / 290 at 1280) — three pinned lines, none sharing one |
+| INSTRUMENT heads (the column heads), vertical | declared `sticky` and **the pane has 0px of vertical scroll to give** |
+
+THE VERTICAL AXIS IS A DECISION, NOT A BUG, AND IT IS OPEN. `.nu-pane` sizes to
+its content and THE PAGE is the vertical scrollport, so the column heads' own
+`position: sticky` has nothing to stick against going down: scroll the page and
+the instruments leave with it. Making them stick means making the pane the
+vertical scrollport too — a height cap — and that puts an OPEN SHEET inside a
+box that scrolls, which this page has a standing law against (*"menus never
+scroll inside themselves … vertical space is cheap and abundant"*). One of the
+two laws has to give and it is not a choice this round should make quietly.
+
+**A LANDING ONLY LANDS.** `tablePanel` ends every rebuild by CLICKING the head
+it wants open — the arrival door for the gutter, the atlas and a link — and
+every door on this table is a TOGGLE. That was safe while a rebuild closed
+everything; the moment a sheet survives its own write, the landing click CLOSED
+it, once per write. Measured as "the sheet is open and its strip of words is
+not", because `toggle` clears the open field on its way past. It only clicks
+now when the door is not already open, which is §9d's sentence about the corner
+said one scope wider.
+
+**GATES.** `test/envelope.browser.js` is new and registered in `test/all.js`
+as **`envelope`**, a wave-3 browser gate beside `loopstrip`, covering the
+component's source, the two engine files the tail measurement is about, and the
+bridge between them — **28 ok, 0 failed** at 390 and 320: the plate and its four
+named handles, a real curve, every handle 44px and `role=slider` and INSIDE the
+plate, the value printed in its own unit, a real CDP touch drag that writes a
+number and does not move the page under the finger, the keyboard, both resets,
+the modelled chair and the knob rows it took, no sideways scroll, the rendered
+tail, and zero page errors. `test/table.browser.js` carries the round's other
+claims — T5e (a resting cell has no box; written is `--fw-label`), T9b/T9b2
+(the first tap opens nothing but the ring; the second edits), T9b3/T9b4
+(Escape · Enter · a printable key · Tab), T9b5/T9b6 (a value tap does not
+dismiss; a tap outside does), T9b7/T9b8 (a number is a slider that writes), and
+T9s2–T9s4 (the sticky heads, measured on a scrolled pane at three widths) —
+and `node tools/ui/build.js --check` and `npx tsc --noEmit` are green.
+
+**AND EIGHT THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT:**
 
 - **`.nu-vh` IS ABSOLUTELY POSITIONED, AND IN A SCROLLING PANE IT TOOK THE
   WHOLE PAGE SIDEWAYS.** The hidden word is `position: absolute` with no

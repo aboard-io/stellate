@@ -153,6 +153,32 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (el.disabled) return "disabled";
       el.click(); return "ok"; }, k);
     await p.waitForTimeout(420); return r; };
+  /* ...AND A CELL TAKES TWO OF THEM SINCE TABLE.md §11 (2026-09-05). The first
+     tap SELECTS (the ring, the formula bar's head) and the second EDITS — the
+     spreadsheet gesture — so a gate that wants a cell's vector open asks for
+     both, idempotently: it selects only if the ring is not already there and it
+     opens only if the sheet is not already out. Written this way rather than as
+     `tap(); tap()` because the second tap on an OPEN cell shuts it, and half of
+     the checks below arrive with one already open. */
+  const selectCell = async (k) => {
+    const r = await p.evaluate((key) => {
+      const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (!el) return "missing";
+      if (!el.classList.contains("is-sel")) { el.click(); return "ok"; }
+      /* ALREADY STANDING ON IT — and a second tap would EDIT it, so shut the
+         editor instead of opening one the check did not ask for. */
+      if (el.getAttribute("aria-expanded") === "true") el.click();
+      return "ok"; }, k);
+    await p.waitForTimeout(420); return r; };
+  const openCell = async (k) => {
+    const r = await p.evaluate((key) => {
+      const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (!el) return "missing";
+      if (!el.classList.contains("is-sel")) el.click();
+      const el2 = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (el2 && el2.getAttribute("aria-expanded") !== "true") el2.click();
+      return "ok"; }, k);
+    await p.waitForTimeout(420); return r; };
   const sheetRows = () => p.evaluate(() => {
     const o = document.querySelector("#pan-band tr.nu-wopen");
     if (!o) return null;
@@ -342,7 +368,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   const subjV = ((await doc()).voices.find((v) => v.kind === "line" &&
     !["pad", "stab"].includes(String((v.cast || {}).part || ""))) ||
     { name: vName }).name;
-  await tap("tcell|" + subjV + "|" + secId);
+  await openCell("tcell|" + subjV + "|" + secId);
   const cc = await sheetRows();
   const cellLabs = (cc || []).map((r) => r.lab).filter((x) => CELL_ORDER.includes(x));
   check(JSON.stringify(cellLabs) === JSON.stringify(CELL_ORDER.filter((x) => cellLabs.includes(x))),
@@ -371,29 +397,60 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await shot("cell-sheet-390");
   await tap("tcell|" + subjV + "|" + secId);
 
-  /* ================= T5e · QUIET IS INHERITED, BOLD IS WRITTEN ========== */
+  /* ================= T5e · QUIET IS INHERITED, BOLD IS WRITTEN ==========
+     ...AND A RESTING CELL IS A CELL AND NOT A BOX (TABLE.md §11, RULED
+     2026-09-05). Paul: *"less boxes inside the cells and more of the cells just
+     being cells"*. Three claims, all read off the RENDERED computed style
+     because a class name is not a border:
+       · every resting body cell draws ZERO pixels of rule on all four sides,
+         and no ground of its own;
+       · WRITTEN is `--fw-label` (700) and inherited is quieter than it — the
+         typography is what carries what the frame carried;
+       · the 44px tap height is untouched, which is the one thing the restyle
+         may not spend. */
   const paint = await p.evaluate(() => {
     const cells = [...document.querySelectorAll('#pan-band [data-k^="tcell|"]')];
     const dim = cells.filter((c) => c.classList.contains("is-derived"));
     const rs = dim.length ? getComputedStyle(dim[0]) : null;
     const br = cells.find((c) => !c.classList.contains("is-derived"));
     const bs = br ? getComputedStyle(br) : null;
+    const rule = (c) => { const q = getComputedStyle(c);
+      return ["Top", "Right", "Bottom", "Left"]
+        .reduce((a, side) => a + (parseFloat(q["border" + side + "Width"]) || 0), 0); };
+    const label = getComputedStyle(document.documentElement)
+      .getPropertyValue("--fw-label").trim();
+    const boxed = cells.filter((c) => c.getAttribute("aria-expanded") !== "true" &&
+      c.getBoundingClientRect().width > 0 && rule(c) > 0);
+    const grounds = [...new Set(cells.map((c) => getComputedStyle(c).backgroundColor))];
+    const short = cells.filter((c) => { const q = c.getBoundingClientRect();
+      return q.width > 0 && q.height < 43.5; }).length;
     return { n: cells.length, dim: dim.length,
       dimWeight: rs ? rs.fontWeight : null, boldWeight: bs ? bs.fontWeight : null,
-      dimOpacity: rs ? rs.opacity : null };
+      dimOpacity: rs ? rs.opacity : null,
+      label, boxed: boxed.length, grounds, short,
+      rulePx: cells.reduce((a, c) => { const q = c.getBoundingClientRect();
+        return a + rule(c) / 4 * 2 * (q.width + q.height); }, 0) };
   });
   check(paint.dim > 0 && paint.dim < paint.n,
     "T5e the table draws only DEVIATIONS: " + paint.dim + " of " + paint.n +
     " cells are inherited (§2)");
-  check(paint.dimWeight !== paint.boldWeight || paint.dimOpacity !== "1",
-    "…and inherited is drawn differently from written (weight " +
-    paint.dimWeight + " vs " + paint.boldWeight + ", opacity " + paint.dimOpacity + ")");
+  check(paint.boldWeight === paint.label &&
+        (+paint.dimWeight < +paint.boldWeight),
+    "…and WRITTEN is --fw-label with inherited quieter than it (weight " +
+    paint.dimWeight + " vs " + paint.boldWeight + " = --fw-label " + paint.label +
+    ", opacity " + paint.dimOpacity + ")");
+  check(paint.boxed === 0 && paint.rulePx === 0 && paint.short === 0 &&
+        paint.grounds.every((g) => /rgba\(0, 0, 0, 0\)|transparent/.test(g)),
+    "…and a RESTING CELL HAS NO BOX (§11): " + paint.boxed + " of " + paint.n +
+    " draw a border, " + Math.round(paint.rulePx) + "px\u00b2 of rule in the " +
+    "whole grid, grounds " + JSON.stringify(paint.grounds) + ", " + paint.short +
+    " under 44px");
 
   /* ================= T5f · THE DRUMMER'S SIXTY-EIGHT, GROUPED =========== */
   const D0 = await doc();
   const drums = (D0.voices.find((v) => v.kind === "drums") || {}).name;
   if (drums) {
-    await tap("tcell|" + drums + "|" + secId);
+    await openCell("tcell|" + drums + "|" + secId);
     await tap("dev.kit|" + drums + "|" + secId);
     const gr = await p.evaluate(() => {
       const bar = document.querySelector("#pan-band .nu-groupbar");
@@ -454,7 +511,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (!there) missing.push((c.k || c.reach) + " -> " + reach);
       continue;
     }
-    if (c.open) { const o = subst(c.open); await tap(o); }
+    /* AND A CELL TAKES TWO TAPS SINCE §11 (2026-09-05). The inventory names
+       the door (`open`), and for a grid cell the door is now the SECOND tap:
+       the first stands on it. Four homes were reported missing the hour the
+       law landed — `material.cell`, `dev.bass`, `dev.kit` and the tray's motif
+       — all of them behind one `tcell|…` that had been opened with one tap
+       since wave 2b. */
+    if (c.open) { const o = subst(c.open);
+                  if (o.indexOf("tcell|") === 0) await openCell(o); else await tap(o); }
     /* ...AND A SECOND TAP WHERE THE HOME IS A TABBED SURFACE (2026-09-07).
        The MIX row's master opens the BOARD, and the board has always been one
        panel holding one of five plates: `master|drive` is on the main plate,
@@ -570,7 +634,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        control is: "every op in §5 and every field of §1 is reachable by tap at
        320px". MEASURED before the sticky rule was written: at 390 the cell
        sheet's third op sat at x=590 on a 390px screen. */
-    await tap("tcell|" + vName + "|" + secId);
+    await openCell("tcell|" + vName + "|" + secId);
     const off = await p.evaluate(() =>
       [...document.querySelectorAll("#pan-band .nu-vsheet button")]
         .map((x) => x.getBoundingClientRect())
@@ -586,7 +650,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await shot("table-1280");
   await tap("trow|" + secId); await shot("row-sheet-1280"); await tap("trow|" + secId);
   await tap("tcol|" + vName); await shot("col-sheet-1280"); await tap("tcol|" + vName);
-  await tap("tcell|" + vName + "|" + secId); await shot("cell-sheet-1280");
+  await openCell("tcell|" + vName + "|" + secId); await shot("cell-sheet-1280");
   await tap("tcell|" + vName + "|" + secId);
   await ctx.pages()[0].setViewportSize({ width: 390, height: 900 });
   await p.waitForTimeout(400);
@@ -708,9 +772,22 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   const si = 3, sid3 = DD.form.sections[si].id;
   const vix = DD.voices.indexOf(line);
   const evOf = (i) => p.evaluate((x) => JSON.stringify(window.__eightEvents(x)), i);
+  /* ...AND A CONTINUOUS NUMBER IS A SLIDER SINCE 2026-09-05 (TABLE.md §11).
+     Paul: *"When you redesign think sliders and other UI for data entry."*
+     A register was eight chips and is one `input[type=range]`, so a walk that
+     only knew about chips read "NONE OF 0 MOVED IT" on a control that is
+     standing there and working — a gate testing the widget instead of the
+     claim. `chipsOf` answers with the offered VALUES either way, and `walk`
+     drives whichever control the field actually got. */
   const chipsOf = async (cellKey, fieldKey) => {
-    await tap(cellKey);
+    await openCell(cellKey);
     return p.evaluate((k) => {
+      const sl = document.querySelector(
+        '#pan-band input.nu-numslide[data-k="' + k + '"]');
+      if (sl) { const out = [];
+        for (let v = +sl.min; v <= +sl.max; v += (+sl.step || 1))
+          out.push(k + "|" + v);
+        return out; }
       const f = document.querySelector('#pan-band [data-k="' + k + '"]');
       if (!f) return [];
       f.click();
@@ -725,6 +802,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     let tapped = 0, moved = null;
     for (const k of list) {
       const got = await p.evaluate((key) => {
+        /* A SLIDER'S "chip" IS `<field>|<value>` and the drive is a `change`
+           event on the range, which is the door the widget itself uses. */
+        const cut = key.lastIndexOf("|");
+        const base = key.slice(0, cut), val = key.slice(cut + 1);
+        const sl = document.querySelector(
+          '#pan-band input.nu-numslide[data-k="' + base + '"]');
+        if (sl) { if (String(sl.value) === val) return false;
+                  sl.value = val;
+                  sl.dispatchEvent(new Event("change", { bubbles: true }));
+                  return true; }
         const c = document.querySelector('#pan-band [data-k="' + key + '"]');
         if (!c || c.disabled) return false; c.click(); return true; }, k);
       if (!got) { await chipsOf(cellKey, fieldKey); continue; }
@@ -825,10 +912,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   check(!!colReg.moved, "…and the COLUMN's own cast.reg reaches the rendered " +
     "events of section " + siCol + " too — ui/derive.js is blind at NEITHER " +
     "tier (" + (colReg.moved || "NONE OF " + colReg.n + " MOVED IT") + ")");
+  /* PUTTING IT BACK GOES THROUGH WHATEVER THE FIELD IS DRAWN AS. The register
+     is a SLIDER since 2026-09-05 (§11: *"think sliders and other UI for data
+     entry"*), so the chip `reg|<voice>|<value>` this looked for is not there
+     and the walk left the column two octaves down — measured as `"0" -> "-4"`,
+     which is a true reading of a gate that had not followed its own control. */
   let put = false;
   for (let k = 0; k < 3 && !put; k++) {
     put = await p.evaluate((args) => {
       const [n, was] = args;
+      const sl = document.querySelector(
+        '#pan-band input.nu-numslide[data-k="reg|' + n + '"]');
+      if (sl) { sl.value = String(was === "" ? sl.min : was);
+                sl.dispatchEvent(new Event("change", { bubbles: true }));
+                return true; }
       const c = document.querySelector('#pan-band [data-k="reg|' + n + '|' + was + '"]');
       if (!c || c.disabled) return false; c.click(); return true;
     }, [line.name, colWas]);
@@ -1107,7 +1204,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       CHORD.includes(String((v.cast || {}).part || "")));
     if (stab) {
       await shut();
-      await tap("tcell|" + stab.name + "|" + sid7);
+      await openCell("tcell|" + stab.name + "|" + sid7);
       /* READ THE SHEET'S OWN ROWS. A refusal is an ATTRIBUTE (`data-why`,
          `title`, the aria label) and not text on the page — ui/wordgrid.js
          puts it there so a reason is available to a thumb and to a gate
@@ -1291,7 +1388,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
      it — the no-silent-grey law, at the tier that now owns the question. */
   const bassV2 = (await doc()).voices.find((v) => v.kind === "bass");
   if (bassV2) {
-    await tap("tcell|" + bassV2.name + "|" + secId);
+    await openCell("tcell|" + bassV2.name + "|" + secId);
     const bw = await p.evaluate((args) => { const [n, sid] = args;
       const row = document.querySelector('#pan-band [data-k="material.cell|' + n + '|' + sid + '"]');
       const why = document.querySelector("#pan-band .nu-vsheet .nu-why");
@@ -1365,19 +1462,172 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (el) el.click(); }); await p.waitForTimeout(320); };
 
     /* 9a · A TAP SELECTS, AND THE ADDRESS SAYS WHICH CELL. */
+    /* THE GATE ARRIVES STANDING SOMEWHERE ELSE, so that the tap it measures is
+       genuinely a FIRST tap on this cell: since §11 the second tap on a cell
+       already carrying the ring is the one that edits, and a check that landed
+       here with the ring already on `s9a` would be measuring the wrong gesture
+       (and would read the editor it opened as a bug). Selecting the neighbour
+       also shuts whatever sheet the checks above left open. */
+    await selectCell(cell(v9a, s9b));
     await tap(cell(v9a, s9a));
     const a1 = await addr(), sel1 = await sel();
     check(sel1 === cell(v9a, s9a) && !!a1 && a1 !== "no cell selected",
       "T9a a tap selects one cell and the formula bar names it — " +
       JSON.stringify({ sel: sel1, addr: a1 }));
 
-    /* 9b · ...AND ITS VECTOR IS THE OPEN SHEET. One selection, one sheet. */
+    /* 9b · ...AND IT OPENS NOTHING ELSE (TABLE.md §11, 2026-09-05). THE FIRST
+       TAP SELECTS ONLY. It used to select AND unfold the whole eighteen-field
+       accordion under the row — measured at 15 sheet rows for a hand that only
+       wanted to see where it was standing — and §11's first law is that
+       looking at a cell costs a ring and nothing else. */
     const body = await p.evaluate(() => ({
       sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
       rows: document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow").length,
+      sel: document.querySelectorAll("#pan-band .nu-wcell.is-sel").length,
+      ring: (() => { const c = document.querySelector("#pan-band .nu-wcell.is-sel");
+        return c ? getComputedStyle(c).outlineWidth : null; })() }));
+    check(body.sheets === 0 && body.rows === 0 && body.sel === 1 &&
+          parseFloat(body.ring) > 0,
+      "T9b …and the first tap opens NOTHING but the ring (§11) — " +
+      JSON.stringify(body));
+
+    /* 9b2 · THE SECOND TAP EDITS: the control pops up in the cell's own row. */
+    await tap(cell(v9a, s9a));
+    const body2 = await p.evaluate(() => ({
+      sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
+      rows: document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow").length,
       sel: document.querySelectorAll("#pan-band .nu-wcell.is-sel").length }));
-    check(body.sheets === 1 && body.rows > 4 && body.sel === 1,
-      "T9b …and its vector is the one open sheet — " + JSON.stringify(body));
+    check(body2.sheets === 1 && body2.rows > 4 && body2.sel === 1,
+      "T9b2 …and the SECOND tap on the same cell edits it — its vector is the " +
+      "one open sheet, the selection has not moved — " + JSON.stringify(body2));
+
+    /* 9b3 · ESCAPE RESTORES, ENTER COMMITS AND STAYS, AND A PRINTABLE KEY
+       EDITS. Every write on this page lands the moment a chip is tapped, so
+       "commit" is: the editor shuts and the ring does not move. Four presses,
+       read off the page between each. */
+    const editing = () => p.evaluate(() => ({
+      sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
+      sel: (document.querySelector("#pan-band .nu-wcell.is-sel") || {}).dataset }))
+      .then((x) => ({ sheets: x.sheets, sel: x.sel ? x.sel.k : null }));
+    await key("Escape");
+    const eEsc = await editing();
+    await key("Enter");
+    const eEnter = await editing();
+    await key("Enter");
+    const eStay = await editing();
+    await key("k");
+    const eType = await editing();
+    check(eEsc.sheets === 0 && eEsc.sel === cell(v9a, s9a) &&
+          eEnter.sheets === 1 && eEnter.sel === cell(v9a, s9a) &&
+          eStay.sheets === 0 && eStay.sel === cell(v9a, s9a) &&
+          eType.sheets === 1 && eType.sel === cell(v9a, s9a),
+      "T9b3 Escape restores · Enter and F2 edit · Enter again commits and " +
+      "STAYS on the cell · a printable key edits (§11) — " +
+      JSON.stringify({ esc: eEsc, enter: eEnter, again: eStay, typed: eType }));
+
+    /* 9b4 · ...AND TAB COMMITS AND MOVES: the editor does not ride along. */
+    await key("Tab");
+    const eTab = await editing();
+    check(eTab.sheets === 0 && eTab.sel !== null && eTab.sel !== cell(v9a, s9a),
+      "T9b4 …and Tab commits and MOVES — the editor shuts rather than " +
+      "following the selection — " + JSON.stringify(eTab));
+    await tap(cell(v9a, s9a));
+
+    /* 9b5 · A TAP ON A VALUE DOES NOT DISMISS THE CONTROL; A TAP OUTSIDE IT
+       DOES. Paul, 2026-09-05: *"Don't dismiss things when I tap them to change
+       values; dismiss them when I tap outside of them."* The mechanism this
+       fails on is the page's own: every write ends in `changed()` -> `push();
+       draw()`, which throws the whole panel away and builds it again, and
+       before this round only the merged rows survived that — so a cell sheet
+       SHUT UNDER THE THUMB, once per chip, and a strip of words could be
+       tapped exactly once. Three presses:
+         · a chip write leaves the sheet open and the strip out;
+         · a press on the pane's own chrome (not a control) closes it;
+         · Escape closes it too, and the ring stays. */
+    {
+      await openCell(cell(v9a, s9a));
+      const fk = await p.evaluate(() => { const r =
+        [...document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow")]
+          .find((x) => x.querySelector(".nu-wcell[aria-expanded]"));
+        return r ? r.querySelector(".nu-wcell").dataset.k : null; });
+      const chipped = fk ? await p.evaluate((k) => {
+        const f2 = document.querySelector('#pan-band [data-k="' + k + '"]');
+        if (!f2) return null;
+        f2.click();
+        const c = [...document.querySelectorAll("#pan-band .nu-wchip")]
+          .filter((x) => !x.disabled && (x.dataset.k || "").indexOf(k + "|") === 0);
+        if (!c.length) return null;
+        c[c.length - 1].click();
+        return c[c.length - 1].dataset.k; }, fk) : null;
+      await p.waitForTimeout(700);
+      const still = await p.evaluate(() => ({
+        sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
+        strips: document.querySelectorAll("#pan-band .nu-wchip").length }));
+      check(!!chipped && still.sheets === 1 && still.strips > 0,
+        "T9b5 a chip write does NOT dismiss the sheet it was tapped in — the " +
+        "sheet and its strip are still open after the write (" +
+        JSON.stringify({ chip: chipped, ...still }) + ")");
+      /* A PRESS ON THE PANE'S OWN CHROME — not a button, not the sheet. */
+      await p.evaluate(() => { const pane =
+        document.querySelector("#pan-band .nu-pane");
+        const r = pane.getBoundingClientRect();
+        pane.dispatchEvent(new PointerEvent("pointerdown",
+          { bubbles: true, clientX: r.x + 2, clientY: r.y + 2 })); });
+      await p.waitForTimeout(400);
+      const shut = await p.evaluate(() => ({
+        sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
+        sel: document.querySelectorAll("#pan-band .nu-wcell.is-sel").length }));
+      check(shut.sheets === 0 && shut.sel === 1,
+        "T9b6 …and a press OUTSIDE it dismisses it, with the selection left " +
+        "standing — " + JSON.stringify(shut));
+    }
+
+    /* 9b7 · A CONTINUOUS NUMBER IS A SLIDER, NOT A ROW OF CHIPS. Paul,
+       2026-09-05: *"When you redesign think sliders and other UI for data
+       entry."* A register is eight integers on a run and was eight buttons.
+       The claim is measured on the RENDERED control: the register row in a
+       column's sheet draws an `input[type=range]` at the field's own address,
+       with a typeable number box beside it, both at 44px — and moving the
+       range writes the document. */
+    {
+      await shutAll();
+      await tap("tcol|" + v9a);
+      const sl = await p.evaluate((n) => {
+        const r = document.querySelector(
+          '#pan-band input.nu-numslide[data-k="reg|' + n + '"]');
+        if (!r) return null;
+        const box = document.querySelector(
+          '#pan-band input.nu-numbox[data-k="num|reg|' + n + '"]');
+        const h = (x) => x ? Math.round(x.getBoundingClientRect().height) : 0;
+        const chips = document.querySelectorAll(
+          '#pan-band [data-k^="reg|' + n + '|"]').length;
+        return { range: true, box: !!box, rh: h(r), bh: h(box), chips,
+                 type: r.type, min: r.min, max: r.max }; }, v9a);
+      check(!!sl && sl.box && sl.rh >= 44 && sl.bh >= 44 && sl.type === "range",
+        "T9b7 a continuous number draws a SLIDER with a typeable box beside " +
+        "it, both at 44px — " + JSON.stringify(sl));
+      const wrote = await p.evaluate((n) => {
+        const r = document.querySelector(
+          '#pan-band input.nu-numslide[data-k="reg|' + n + '"]');
+        if (!r) return null;
+        const was = window.__eightDoc().voices.find((x) => x.name === n).cast || {};
+        /* MOVE IT SOMEWHERE ELSE, whichever end it is standing on — a check
+           that set a slider to the value it already had would pass on a
+           control that writes nothing. */
+        const now = +r.value || 0;
+        r.value = String(now < +r.max ? now + 1 : now - 1);
+        r.dispatchEvent(new Event("change", { bubbles: true }));
+        return { was: was.reg == null ? null : was.reg, to: +r.value }; }, v9a);
+      await p.waitForTimeout(700);
+      const got = await p.evaluate((n) => { const c =
+        window.__eightDoc().voices.find((x) => x.name === n).cast || {};
+        return c.reg == null ? null : c.reg; }, v9a);
+      check(!!wrote && got === wrote.to,
+        "T9b8 …and moving the slider writes the document (" +
+        JSON.stringify(wrote) + " -> " + got + ")");
+      await shutAll();
+      await selectCell(cell(v9a, s9a));
+    }
 
     /* 9c · THE ARROWS MOVE THE SELECTION AND THE BAR FOLLOWS IT. */
     await key("ArrowDown");
@@ -1417,7 +1667,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const l9 = D9.voices.find((v) => v.kind === "line") || D9.voices[0];
     const vi9 = D9.voices.indexOf(l9);
     const fk9 = "tcellvec|rate|" + vi9 + "|0";
-    await tap(cell(l9.name, s9a));
+    await openCell(cell(l9.name, s9a));
     const wrote = await p.evaluate((k) => {
       const f = document.querySelector('#pan-band [data-k="' + k + '"]');
       if (!f) return null;
@@ -1440,7 +1690,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
     /* 9h · DELETE IS CLEAR-TO-INHERIT — §2's own sentence, on the key every
        spreadsheet user reaches for. */
-    await tap(cell(l9.name, s9a));
+    await selectCell(cell(l9.name, s9a));
     await key("Delete");
     const w2 = await written();
     check(w1 != null && w2 == null,
@@ -1471,9 +1721,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        ui/eight.js `copyCellTo`, which is `copyCell`'s own body with the
        destination handed in. The source is the cell 9g wrote, so what moves is
        a fact and not a coincidence. */
-    await tap(cell(l9.name, s9a));
+    await selectCell(cell(l9.name, s9a));
     await tap("tcopy");
-    await tap(cell(l9.name, s9b));
+    await selectCell(cell(l9.name, s9b));
     const tgt = () => p.evaluate((args) => { const [n, sid] = args;
       const v = window.__eightDoc().voices.find((x) => x.name === n);
       const c = v && v.cells ? v.cells[sid] : null;
@@ -1489,7 +1739,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
     /* 9m · FILL RIGHT AND FILL DOWN ARE §5's COPY-TO-ROW AND -COLUMN, said in a
        spreadsheet's words and reachable by tap. */
-    await tap(cell(v9a, s9a));
+    await openCell(cell(v9a, s9a));
     const fills = await p.evaluate((args) => { const [n, sid] = args;
       const r = document.querySelector('#pan-band [data-k="tcell-copyrow|' + n + "|" + sid + '"]');
       const c = document.querySelector('#pan-band [data-k="tcell-copycol|' + n + "|" + sid + '"]');
@@ -1573,13 +1823,108 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       "T9s the header row and the header column are frozen — " +
       JSON.stringify(frozen));
 
+    /* 9s2 · ...AND THEY ACTUALLY STAY, IN BOTH DIRECTIONS, AT EVERY WIDTH.
+       Paul, 2026-09-05, using the table: *"I really like the way this table is
+       working — we should have sticky headers for instruments and sections."*
+       §9a promised frozen headers and T9s asked the DECLARATION; a declaration
+       is exactly what §9d caught sliding twice ("a corner frozen only to the
+       top declares stickiness and slides"). So this scrolls the pane — DOWN,
+       then ACROSS — and measures where the heads ended up:
+
+         · the INSTRUMENT heads (the column heads) must not move up when the
+           pane scrolls down;
+         · the SECTION heads (the row heads) must not move left when it scrolls
+           across;
+         · the CORNER must hold both ways at once;
+         · the SPECIAL rows keep the measured offsets `stick()` gives them —
+           TIME above RULES above the column heads, no two at the same line;
+         · and nothing frozen paints over an open sheet's own contents. */
+    for (const w of [320, 390, 1280]) {
+      await ctx.pages()[0].setViewportSize({ width: w, height: 700 });
+      await p.waitForTimeout(420);
+      const st = await p.evaluate(() => {
+        const pane = document.querySelector("#pan-band .nu-pane");
+        const rectOf = (sel) => { const e = document.querySelector(sel);
+          if (!e) return null; const q = e.getBoundingClientRect();
+          return { x: Math.round(q.x), y: Math.round(q.y) }; };
+        const COL = "#pan-band thead th.nu-colhead";
+        const ROW = "#pan-band tbody th.nu-srowh";
+        /* THE CORNER IS `.nu-cornerh`, NOT `thead th:first-child`. Written the
+           obvious way this selector returns the FIRST `<th>` in document order,
+           which is TIME's merged row — a `<th colspan>` as wide as the table,
+           with nowhere to travel — and it measured "the corner slid 217px" on a
+           corner that had not moved at all. nu.css says the same thing from the
+           other side, about the same element. */
+        const CORNER = "#pan-band thead th.nu-cornerh";
+        const SP = "#pan-band thead tr.nu-sprow th";
+        pane.scrollTop = 0; pane.scrollLeft = 0;
+        return new Promise((res) => setTimeout(() => {
+          const a = { col: rectOf(COL), row: rectOf(ROW), corner: rectOf(CORNER),
+                      canY: pane.scrollHeight - pane.clientHeight,
+                      canX: pane.scrollWidth - pane.clientWidth };
+          pane.scrollTop = Math.min(220, a.canY);
+          pane.scrollLeft = Math.min(220, a.canX);
+          setTimeout(() => {
+            const b = { col: rectOf(COL), row: rectOf(ROW), corner: rectOf(CORNER),
+                        top: pane.scrollTop, left: pane.scrollLeft };
+            /* THE STACK: every special row's own pinned line, and the column
+               heads under all of them. Read as `y`s that are strictly
+               increasing, which is what "no two at the same line" means. */
+            const ys = [...document.querySelectorAll(SP)]
+              .map((e) => Math.round(e.getBoundingClientRect().y));
+            const colY = b.col ? b.col.y : null;
+            pane.scrollTop = 0; pane.scrollLeft = 0;
+            res({ a, b, ys, colY });
+          }, 220);
+        }, 120));
+      });
+      /* WHAT THE PANE CAN ACTUALLY SCROLL, and it is the honest half of this
+         claim. MEASURED at all three widths: the pane's vertical scroll is
+         ZERO, because `.nu-pane` sizes to its content and THE PAGE is the
+         vertical scrollport — so the column heads' `position: sticky` is a
+         true declaration with nothing to stick against on that axis, and a
+         hand scrolling DOWN the page does lose them. Making them stick
+         vertically means making the pane the vertical scrollport too (a height
+         cap), and that would put an open sheet inside a box that scrolls —
+         which this page has a standing law against ("menus never scroll inside
+         themselves"). It is a decision, not a bug, and it is named here rather
+         than asserted away. The HORIZONTAL axis — the section heads and the
+         corner, which is what a wide band actually needs — is asserted. */
+      const dY = (st.a.col && st.b.col) ? Math.abs(st.b.col.y - st.a.col.y) : 999;
+      const dX = (st.a.row && st.b.row) ? Math.abs(st.b.row.x - st.a.row.x) : 999;
+      const cY = (st.a.corner && st.b.corner)
+        ? Math.abs(st.b.corner.y - st.a.corner.y) : 999;
+      const cX = (st.a.corner && st.b.corner)
+        ? Math.abs(st.b.corner.x - st.a.corner.x) : 999;
+      /* 4px OF SLACK, WHICH IS `.nu-trims`' OWN border-spacing, twice — the
+         same allowance test/shell.js A8 makes and for the same measured
+         reason. */
+      check(dY <= 4 && cY <= 4 && st.a.canY === 0,
+        "T9s2 at " + w + " the INSTRUMENT heads stay put over the pane's " +
+        st.b.top + "px of vertical scroll (moved " + dY + "px; the corner " +
+        cY + ") — and the pane has " + st.a.canY + "px to give, because THE " +
+        "PAGE is the vertical scrollport here");
+      check(dX <= 4 && cX <= 4,
+        "T9s3 at " + w + " …and the SECTION heads stay put over a " + st.b.left +
+        "px scroll across (moved " + dX + "px; the corner " + cX + ")");
+      const stacked = st.ys.length === 0 ||
+        (st.ys.every((y, i) => i === 0 || y > st.ys[i - 1]) &&
+         (st.colY == null || st.colY > st.ys[st.ys.length - 1]));
+      check(stacked,
+        "T9s4 at " + w + " …and the special rows keep their measured offsets, " +
+        "with the column heads under all of them — " +
+        JSON.stringify({ special: st.ys, colhead: st.colY }));
+    }
+    await ctx.pages()[0].setViewportSize({ width: 390, height: 900 });
+    await p.waitForTimeout(420);
+
     /* 9t · ...AT THE THREE WIDTHS, AND NOTHING UNDER 44px OR OFF THE SCREEN.
        The phone is the first layout (§6 ¶A) and the formula bar is the bottom
        sheet there, so this measures where the bar IS as well as that it is. */
     for (const w of [320, 390, 1280]) {
       await ctx.pages()[0].setViewportSize({ width: w, height: 900 });
       await p.waitForTimeout(420);
-      await tap(cell(v9a, s9a));
+      await openCell(cell(v9a, s9a));
       const m = await p.evaluate(() => {
         const host = document.getElementById("pan-band");
         const bar = host.querySelector(".nu-formula");
@@ -1590,7 +1935,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const offs = [...host.querySelectorAll(".nu-vsheet button")]
           .filter((b) => { const q = b.getBoundingClientRect();
             return q.width > 0 && (q.left < 0 || q.right > window.innerWidth + 1); }).length;
-        return { bar: !!bar, pos: bar ? getComputedStyle(bar).position : null,
+        const over = [...document.querySelectorAll("body *")]
+          .map((e) => { const q = e.getBoundingClientRect();
+            return { t: e.tagName, c: String(e.className || "").slice(0, 40),
+                     k: (e.dataset && e.dataset.k) || null,
+                     x: Math.round(q.x), w: Math.round(q.width),
+                     r: Math.round(q.right) }; })
+          .filter((e) => e.w > 0 && e.r > window.innerWidth + 1)
+          .slice(0, 10);
+        return { over,
+                 bar: !!bar, pos: bar ? getComputedStyle(bar).position : null,
                  wide: r ? Math.round(r.width) : 0,
                  pane: Math.round(host.querySelector(".nu-pane")
                    .getBoundingClientRect().width),

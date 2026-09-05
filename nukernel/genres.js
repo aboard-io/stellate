@@ -132,6 +132,84 @@
     // record.
     shur:     [0, 1.5, 3, 5, 7, 8, 10],
     rast:     [0, 2, 3.5, 5, 7, 9, 10.5],
+    // ...AND THE PARALLEL FAMILIES (2026-09-05). Paul: *"Same with scales we
+    // have all kinds of tonalities in this system aren't we missing a lot."*
+    // We were. Twelve keys covered SIX of the seven diatonic rotations, one
+    // maqam, one dastgah and a gamelan, and every other tonality this
+    // catalogue's rows name in prose had to be spelled as the nearest thing
+    // the box could SAY. What follows is the vocabulary, ONE OWNER PER SET:
+    // no two keys below hold a lookalike literal, and where a tradition's own
+    // name lands on a set that is already here, the name is bound to the SAME
+    // ARRAY under the table (the alias block beneath MODES.slendro) the way
+    // `aeolian: DIATONIC` has been since the day it was written.
+    //
+    // THE SEVENTH DIATONIC MODE, which simply was not here. locrian is the
+    // rotation from the leading note, and the only one of the seven with a
+    // diminished fifth over the tonic — no tonic triad, which is why it is
+    // rare in practice rather than absent on purpose.
+    locrian:    [0, 1, 3, 5, 6, 8, 10],
+    // MELODIC MINOR'S OTHER SIX ROTATIONS. `melodic` above is mode 1; these
+    // are modes 2-7 of the same seven notes and they are the alphabet of
+    // post-bop harmony. The names and the spellings are the standard modern
+    // ones (George Russell's Lydian Chromatic Concept, New York 1953, is the
+    // book that put lydian at the centre of the jazz teaching literature).
+    // `altered` is the one this catalogue's dominant chords keep reaching
+    // for: it is melodic minor a semitone ABOVE the chord root, which is why
+    // it carries every alteration of the dominant at once.
+    dorianb2:   [0, 1, 3, 5, 7, 9, 10],
+    lydianaug:  [0, 2, 4, 6, 8, 9, 11],
+    lydiandom:  [0, 2, 4, 6, 7, 9, 10],
+    mixob6:     [0, 2, 4, 5, 7, 8, 10],
+    locrian2:   [0, 2, 3, 5, 6, 8, 10],
+    altered:    [0, 1, 3, 4, 6, 8, 10],
+    // HARMONIC MINOR'S ROTATIONS, and the two double-augmented-second scales
+    // that live beside them. `harmonic` above is mode 1 and `hijaz` above is
+    // mode 5 under its Arab name; these are modes 4, 6 and 7. Then the two
+    // seven-note scales with TWO augmented seconds instead of one: DOUBLE
+    // HARMONIC is the same set Western theory calls byzantine, Arab theory
+    // calls hijaz-kar and Bhatkhande calls the bhairav thaat — one set, four
+    // names, and the alias block binds the other three to THIS array rather
+    // than repeating it. HUNGARIAN MINOR is harmonic minor with the raised
+    // fourth, the "gypsy minor" of nineteenth-century Hungarian verbunkos.
+    ukrainian:  [0, 2, 3, 6, 7, 9, 10],
+    lydian2:    [0, 3, 4, 6, 7, 9, 11],
+    ultraloc:   [0, 1, 3, 4, 6, 8, 9],
+    doubleharm: [0, 1, 4, 5, 7, 8, 11],
+    hungarian:  [0, 2, 3, 6, 7, 8, 11],
+    // THREE MORE ALPHABETS OFF THE SEMITONE GRID, on shur and rast's own
+    // terms: these are SPELLINGS FROM NAMED THEORY, not measurements of any
+    // throat, and the half-flats are float semitones exactly the way the two
+    // rows above write them. WORLD.md §2's measured table is the whole
+    // argument — Arab rast, bayati and saba sit up to 50 cents off the
+    // nearest semitone ON THE DEGREE THAT NAMES THEM, against a 10-20 cent
+    // JND — so a 12-TET stand-in for one of these is not a near miss, it is
+    // a different maqam. (test/pitch-wall.test.js W5 measures the half-flats
+    // of these three in the RENDERED AIR, not in the array.)
+    //   saba — jins saba (tonic, half-flat second, minor third and the
+    //   DIMINISHED FOURTH at 4) with jins hijaz above it. The flat fourth is
+    //   the interval that names the maqam and no other maqam here has it.
+    //   segah — the maqam that begins ON a half-flat: jins sikah from E
+    //   half-flat, jins rast from the fifth, so every degree but the fifth
+    //   sits a quarter-tone off the keyboard.
+    //   chahargah — the Persian dastgah, in the same Vaziri 24-TET notation
+    //   (Tehran, 1922) the `shur` row above cites: korons on the second and
+    //   the sixth, over a major third and a leading note. Played, both korons
+    //   move by performer and by gusheh; this is the NOTATION, and a row that
+    //   ships it owns that in its own `cannot` the way `dastgah` does.
+    saba:       [0, 1.5, 3, 4, 7, 8, 10],
+    segah:      [0, 1.5, 3.5, 5.5, 7, 8.5, 10.5],
+    chahargah:  [0, 1.5, 4, 5, 7, 8.5, 11],
+    // THE THREE THAATS WITH NO OTHER NAME IN THIS TABLE. V. N. Bhatkhande's
+    // ten thaats (Hindusthani Sangeet Paddhati, Bombay, 1909-1932) are SCALE
+    // MATERIAL and nothing more — a raga is that material plus its ascent,
+    // its descent, its resting notes and its hour, none of which is a scale —
+    // so what lands here is ten alphabets and no claim about any raga. Seven
+    // of the ten are sets this table already holds under a Western or an Arab
+    // name and are bound to those arrays below; these three are the ones that
+    // had no name here at all.
+    marva:      [0, 1, 4, 6, 7, 9, 11],
+    purvi:      [0, 1, 4, 6, 7, 8, 11],
+    todi:       [0, 1, 3, 6, 7, 8, 11],
   };
   // "harmonic minor", 2026-08-27 (FUTURE.md §5, the musicologist's row): its
   // sibling already read "melodic minor", and bare "harmonic" is a different
@@ -140,7 +218,27 @@
                       harmonic: "harmonic minor", mixo: "mixolydian",
                       ionian: "major", lydian: "lydian", melodic: "melodic minor",
                       aeolian: "natural minor", hijaz: "hijaz",
-                      shur: "shur", rast: "rast", slendro: "slendro" };
+                      shur: "shur", rast: "rast", slendro: "slendro",
+                      // 2026-09-05, the tonalities round. A label is the word
+                      // a picker says, so a set with two traditions' names
+                      // gets the name of the FAMILY it is filed under (below)
+                      // and never both — `hijaz` is the maqam, `phrygiandom`
+                      // is the same seven notes filed under harmonic minor,
+                      // and the two entries are one array (see the aliases).
+                      locrian: "locrian",
+                      dorianb2: "dorian b2", lydianaug: "lydian augmented",
+                      lydiandom: "lydian dominant", mixob6: "mixolydian b6",
+                      locrian2: "locrian nat.2", altered: "altered",
+                      phrygiandom: "phrygian dominant", ukrainian: "ukrainian dorian",
+                      lydian2: "lydian #2", ultraloc: "altered dominant",
+                      doubleharm: "double harmonic", hungarian: "hungarian minor",
+                      bayati: "bayati", saba: "saba", segah: "segah",
+                      chahargah: "chahargah", hijazkar: "hijaz-kar",
+                      nahawand: "nahawand", kurd: "kurd",
+                      bilawal: "bilawal", khamaj: "khamaj", kafi: "kafi",
+                      asavari: "asavari", bhairav: "bhairav", bhairavi: "bhairavi",
+                      kalyan: "kalyan (yaman)", marva: "marva", purvi: "purvi",
+                      todi: "todi" };
 
   // A MODE MUST BE SOUNDABLE, OR IT IS DECORATION (2026-09-02, the catalogue
   // round, shift 2). `mode` is read in exactly three places — kernel.js
@@ -192,6 +290,54 @@
   // rather than in the MODES literal because `tuned` is defined below the
   // table; the key resolves by nameIn like every other mode.
   MODES.slendro = tuned([0, 2.31, 4.74, 7.17, 9.55], 12.08);
+
+  // THE SAME SET UNDER ANOTHER TRADITION'S NAME (2026-09-05). Every key in
+  // this block is an ALIAS — bound to an array already in the table, never to
+  // a lookalike literal — which is the `aeolian: DIATONIC` arrangement above
+  // and is load-bearing twice over.
+  //   IT KEEPS EVERY EXISTING ROW'S NAME. precompose.js `nameIn` (:1514)
+  // reverse-looks-up a declared array BY VALUE and takes the FIRST key that
+  // matches. A lookalike literal would therefore be an invisible coin toss
+  // over which word a record gets written down under; bound this way, and
+  // declared AFTER the canonical key, the canonical key always wins and no
+  // record in the catalogue changes the word it is stored as.
+  //   AND THE NAME IS THE WHOLE GAIN. A record is IN kafi, or in nahawand, or
+  // in bhairav — and the picker groups by family (MODEFAMILY below), so the
+  // ten thaats read as ten and the maqamat as ten, which is the choice a
+  // composer is actually making. The sound is identical by construction: no
+  // row moves, and test/pitch-wall.test.js W5 is the standing measurement
+  // that any two keys of equal content are the SAME OBJECT.
+  //
+  // harmonic minor's fifth mode is the Arab hijaz, note for note — the row is
+  // already argued above and this is its Western name, filed under the family
+  // that generates it.
+  MODES.phrygiandom = MODES.hijaz;
+  // MAQAM AND DASTGAH. bayati and the dastgah-e shur are one spelling: the
+  // half-flat second over a minor third, which is why `shur` above could
+  // already say what `mahraganat` and its neighbours reach for in prose.
+  // hijaz-kar is the double-harmonic set (hijaz below, hijaz above); nahawand
+  // is the minor scale under its Arab name — this file's own DIATONIC — and
+  // kurd is phrygian under its Arab name. All four are standard modern Arab
+  // theory, and none of them is a quarter-tone maqam: those are `rast`,
+  // `saba`, `segah` and `chahargah`, spelled with their half-flats.
+  MODES.bayati   = MODES.shur;
+  MODES.hijazkar = MODES.doubleharm;
+  MODES.nahawand = DIATONIC;
+  MODES.kurd     = MODES.phrygian;
+  // THE THAATS. Seven of Bhatkhande's ten are sets this table already holds:
+  // bilawal is the major scale, khamaj is mixolydian, kafi is dorian, asavari
+  // is natural minor (this file's DIATONIC, the same array `aeolian` names),
+  // bhairav is the double-harmonic set and bhairavi is phrygian, and kalyan —
+  // which the ragas call yaman — is lydian. Named here rather than spelled
+  // again, because the identity IS the fact worth recording: they are one
+  // alphabet each, and what makes a raga is everything a scale is not.
+  MODES.bilawal  = MODES.ionian;
+  MODES.khamaj   = MODES.mixo;
+  MODES.kafi     = MODES.dorian;
+  MODES.asavari  = DIATONIC;
+  MODES.bhairav  = MODES.doubleharm;
+  MODES.bhairavi = MODES.phrygian;
+  MODES.kalyan   = MODES.lydian;
 
   // SCALES — the SUBJECT's alphabet, offered per section. Swapping it changes
   // the chromatic width of a phrase without moving a single degree: the contour
@@ -250,12 +396,137 @@
     // alphabet does not merely colour a five-note style, it re-points every
     // degree the phrase asks for.
     yupent:    [0, 3, 5, 7, 10],                          // the yu mode
+    // ...AND THE REST OF THE PENTATONIC WHEEL, PLUS THE EIGHT-NOTE
+    // ALPHABETS (2026-09-05, the tonalities round; the MODES literal above
+    // carries the argument for the whole round). What lands here rather than
+    // in MODES is everything that is NOT seven notes, because `mode` is read
+    // by kernel.js harm()/chordsOf()/bass() as a ladder of CHORD ROOTS and
+    // romanOf numbers it I..VII: an eight-note alphabet in that table would
+    // print two chords with the same numeral. A scale is the SUBJECT'S
+    // alphabet and has no such obligation.
+    //
+    // THE CHINESE ROTATIONS. `majpent` above is the gong mode and `yupent`
+    // is the yu mode; these are the other three of the five, and the wheel
+    // is now complete: gong 0 2 4 7 9, shang 0 2 5 7 10, jue 0 3 5 8 10,
+    // zhi 0 2 5 7 9, yu 0 3 5 7 10 — one set of five notes read from each of
+    // its own degrees. The names are the shi-er-lü tradition's own and are
+    // the words the China rows (`qinqiang`, `huiju` and their neighbours)
+    // already use in prose.
+    shang:     [0, 2, 5, 7, 10],
+    jue:       [0, 3, 5, 8, 10],
+    zhi:       [0, 2, 5, 7, 9],
+    // THE JAPANESE FIVE. `in` (the in-sen, or miyako-bushi) is the hemitonic
+    // one — the flat second is what makes a shamisen sound like a shamisen —
+    // and hirajoshi and kumoi are the two standard koto tunings, differing
+    // only in the last degree. `yo` (the anhemitonic one, the scale of folk
+    // song and of the ritsu family) is the zhi rotation note for note and is
+    // bound to it below rather than spelled twice. These are the standard
+    // modern spellings; the koto tunings in particular vary by school and by
+    // piece, and a row that plays one should say which in its own prose.
+    in:        [0, 1, 5, 7, 8],
+    hirajoshi: [0, 2, 3, 7, 8],
+    kumoi:     [0, 2, 3, 7, 9],
+    // THE TWO OCTATONICS AND THE TWO BEBOP SCALES — eight notes each, and
+    // the reason the eight-note door had to open at all. The diminished
+    // scales alternate half and whole steps (half-whole over a dominant,
+    // whole-half over a diminished chord) and are the alphabet of every
+    // symmetrical run in this catalogue; the bebop scales are the seven-note
+    // major and mixolydian with ONE passing tone added so that the chord
+    // tones land on the beat when the line runs in eighths, which is the
+    // whole of what the name means (the term is Barry Harris's teaching, and
+    // the practice is Parker's).
+    dimhw:     [0, 1, 3, 4, 6, 7, 9, 10],
+    dimwh:     [0, 2, 3, 5, 6, 8, 9, 11],
+    bebopdom:  [0, 2, 4, 5, 7, 9, 10, 11],
+    bebopmaj:  [0, 2, 4, 5, 7, 8, 9, 11],
   };
+  // THE TWO SCALE ALIASES, on the MODES alias block's own terms (see there
+  // for why a shared reference and not a lookalike literal): `gong` is the
+  // Chinese name for the set `majpent` already holds, and `yo` is the
+  // Japanese name for the set `zhi` holds. Declared after their canonical
+  // keys so precompose's `nameIn` keeps writing the older word.
+  SCALES.gong = SCALES.majpent;
+  SCALES.yo   = SCALES.zhi;
   const SCALELABEL = { chromatic: "chromatic", whole: "whole tone",
                        augmented: "augmented", quartal: "quartal",
                        major: "major", majpent: "major pent.",
                        blues: "blues", bluesx: "blues, flattened",
-                       yupent: "minor pent. (yu)" };
+                       yupent: "minor pent. (yu)",
+                       // 2026-09-05: `yupent` already says both of its names,
+                       // which is why no `minpent` key joined this round —
+                       // the minor pentatonic and the yu mode are one set and
+                       // one owner, and a second key for it would be a second
+                       // owner. (kernel.js PENT is the same five notes.)
+                       gong: "gong (major pent.)", shang: "shang", jue: "jue",
+                       zhi: "zhi", yo: "yo", in: "in (miyako-bushi)",
+                       hirajoshi: "hirajoshi", kumoi: "kumoi",
+                       dimhw: "diminished, half-whole",
+                       dimwh: "diminished, whole-half",
+                       bebopdom: "bebop dominant", bebopmaj: "bebop major" };
+
+  // WHICH FAMILY EACH ALPHABET BELONGS TO (2026-09-05). The scale and mode
+  // vocabulary went from 21 words to 63 in one round, and a flat list of 63
+  // is not a menu, it is a wall. So the family rides HERE, on the table, in
+  // ONE declaration each — avail.js's two sheets read these maps and own no
+  // list of their own, exactly the way they already read MODELABEL and
+  // SCALELABEL rather than retyping the words.
+  //
+  // FAMILYLABEL IS BOTH THE WORD AND THE ORDER. Its keys are the families in
+  // the order a picker offers them, and its values are what the <optgroup>
+  // says, so there is no second array anywhere stating an order. Scale
+  // families come first and mode families after, which is the order
+  // document.js:296 resolves an `alphabet.scale` in (`SCALES[k] || MODES[k]`)
+  // and therefore the order the combined scale menu has always been in.
+  //
+  // A KEY WITH NO FAMILY STILL APPEARS. avail.js sweeps up anything these
+  // maps do not place into a trailing group rather than dropping it — a word
+  // in the table and missing from the menu is exactly the declared-but-never-
+  // arriving bug, and the sweep makes adding a scale a one-line change that
+  // cannot silently half-land. test/pitch-wall.test.js W5 asserts every key
+  // of both tables carries a label AND a family, so the sweep stays empty.
+  const FAMILYLABEL = {
+    width:      "widths",             // SCALES: the four chromatic widths
+    seven:      "seven notes",
+    blues:      "blues",
+    pentatonic: "pentatonic",
+    octatonic:  "octatonic",
+    bebop:      "bebop",
+    diatonic:   "diatonic modes",     // MODES from here down
+    melodic:    "melodic minor",
+    harmonic:   "harmonic minor",
+    maqam:      "maqam & dastgah",
+    thaat:      "thaat",
+    gamelan:    "gamelan",
+  };
+  const SCALEFAMILY = {
+    chromatic: "width", whole: "width", augmented: "width", quartal: "width",
+    major: "seven",
+    blues: "blues", bluesx: "blues",
+    majpent: "pentatonic", yupent: "pentatonic", gong: "pentatonic",
+    shang: "pentatonic", jue: "pentatonic", zhi: "pentatonic",
+    in: "pentatonic", yo: "pentatonic", hirajoshi: "pentatonic",
+    kumoi: "pentatonic",
+    dimhw: "octatonic", dimwh: "octatonic",
+    bebopdom: "bebop", bebopmaj: "bebop",
+  };
+  const MODEFAMILY = {
+    ionian: "diatonic", dorian: "diatonic", phrygian: "diatonic",
+    lydian: "diatonic", mixo: "diatonic", aeolian: "diatonic",
+    locrian: "diatonic",
+    melodic: "melodic", dorianb2: "melodic", lydianaug: "melodic",
+    lydiandom: "melodic", mixob6: "melodic", locrian2: "melodic",
+    altered: "melodic",
+    harmonic: "harmonic", phrygiandom: "harmonic", ukrainian: "harmonic",
+    lydian2: "harmonic", ultraloc: "harmonic", doubleharm: "harmonic",
+    hungarian: "harmonic",
+    rast: "maqam", shur: "maqam", hijaz: "maqam", bayati: "maqam",
+    saba: "maqam", segah: "maqam", chahargah: "maqam", hijazkar: "maqam",
+    nahawand: "maqam", kurd: "maqam",
+    bilawal: "thaat", khamaj: "thaat", kafi: "thaat", asavari: "thaat",
+    bhairav: "thaat", bhairavi: "thaat", kalyan: "thaat", marva: "thaat",
+    purvi: "thaat", todi: "thaat",
+    slendro: "gamelan",
+  };
 
   // ---- THE MOUTHS ----------------------------------------------------------
   // WHO IS SINGING. A genre that casts a vocal instrument used to get one held
@@ -45725,7 +45996,7 @@
   };
 
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
-                HARMONYLABEL, tuned,
+                HARMONYLABEL, tuned, SCALEFAMILY, MODEFAMILY, FAMILYLABEL,
                 MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;

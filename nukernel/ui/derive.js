@@ -11,7 +11,7 @@ import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          instrOf, partOf, PARTNAMES, BASS_INSTR, INSTRCHOICES,
          chordsOf, MODE, harmonizeStage,
          tempoWarp, seatNote, prng, TOMS,
-         METERS, metOf, stepsIn, pulseIn } from "./deps.js";
+         METERS, metOf, stepsIn, pulseIn, quartersIn, unitsIn } from "./deps.js";
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -264,8 +264,10 @@ export const secsOf = (b, bpm) => {
   const g = genreOf(b);
   // ...and in the bar this genre actually counts: a twelve-step bar is three
   // quarters long, not four, and a duration readout that says otherwise is
-  // wrong by a third
-  return boxBars(b) * (stepsIn(g) / g.rate) * (60 / bpm / 4);
+  // wrong by a third. `unitsIn` and not `stepsIn` since 2026-09-05: the two
+  // are the same number for every power-of-two denominator and a 21/17 bar
+  // lasts 4.94 quarters on a twenty-one step grid (songBars says why).
+  return boxBars(b) * (unitsIn(g) / g.rate) * (60 / bpm / 4);
 };
 export const mmss = t => Math.floor(t / 60) + ":" + String(Math.round(t % 60)).padStart(2, "0");
 // NAMES THE KEY IT CANNOT FIND rather than throwing on it. Every other reader
@@ -350,7 +352,14 @@ export const genreOf = (sec, ent) => {
   // composer's prechorus borrows the dominant's door on a triad genre.
   // (§31/§33 of the unit gate run this function for real.)
   if (sec.prog || sec.cadence) {
-    const named = (sec.prog && sec.prog !== "off" && PROGS[sec.prog]) || null;
+    /* ...OR THE ROW'S OWN CHART (2026-09-05). `sec.prog` was a NAME out of
+       `PROGS` or the word "off"; the section's own changes grid writes an
+       ARRAY of chord objects there, which is a chart this row owns rather
+       than one it borrows. It is `named`'s equal in every way that follows —
+       it makes the harmony a cycle and it is what the section voices. */
+    const own = Array.isArray(sec.prog) && sec.prog.length ? sec.prog : null;
+    const named = own ||
+      (sec.prog && sec.prog !== "off" && PROGS[sec.prog]) || null;
     const prog = named ||
       (sec.prog === "off" ? null
         : out.prog || (out.harmony === "cycle" && out.roots
@@ -360,6 +369,13 @@ export const genreOf = (sec, ent) => {
     // changed nothing on every modal genre. Safe because the prog path never
     // reads g.roots, and harm() only runs on the no-prog branch.
     if (named && out.harmony !== "cycle") out.harmony = "cycle";
+    // ...and the ROOTS travel with it, because everything that is not the
+    // prog path reads them (harm(), the layer law, the emergent machinery)
+    // and a row that changed the chords while the roots stayed the record's
+    // would be two answers to one question. A bar that is a LIST answers
+    // with its first chord, which is the law genres-tables.js states.
+    if (own) out.roots = own.map((slot) =>
+      (Array.isArray(slot) ? slot[0] : slot).d || 0);
     const end = Math.max(0, sec.nudge | 0) + Math.max(1, sec.len || out.bars);
     out.prog = sec.cadence && prog ? withCadence(prog, end, sec.cadence) : prog;
   }
@@ -1117,7 +1133,26 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
        "nothing to play — click a genre to fill a box first", and the one
        record the box opens on is the one record it cannot play. */
     if (!ev.length && !(g && g.silent)) continue;
-    const barSteps = stepsIn(g) / g.rate;
+    /* THE GRID AND THE CLOCK PART COMPANY HERE (2026-09-05, the any-meter
+       round). Until today they were one number: a step was a sixteenth, so a
+       bar of `stepsIn(g)` steps lasted `stepsIn(g)` sixteenths and nobody had
+       to say which of the two `barSteps` meant. A signature whose denominator
+       is not a power of two breaks that: 21/17 grids at twenty-one steps (the
+       beat is a seventeenth and the box does not pretend to draw inside it)
+       and LASTS 19.76 sixteenths, because twenty-one seventeenths of a whole
+       note is 4.94 quarters and not 5.25.
+
+         gridSteps   what the events count in — the kernel's own step
+         barSteps    what the bar lasts, in clock sixteenths (kernel unitsIn)
+         mu          one grid step, in clock units
+
+       `mu` is EXACTLY 1 for every denominator that is a power of two up to
+       sixteen — 4/4, 3/4, 6/8, 7/8, 5/4, 15/16, every meter this box has ever
+       counted — so no multiplication happens at all on any shipped record and
+       the bucket boundaries are the identical floats. Only the exotic
+       denominators pay, and what they buy is a bar that lasts what it says. */
+    const gridSteps = stepsIn(g), barSteps = unitsIn(g) / g.rate;
+    const mu = unitsIn(g) / gridSteps;
     // ONE PASS into per-bar buckets. The old per-bar filter over the whole event
     // list was O(bars × events) per box — ~6M comparisons per compile on a
     // twenty-box song, and compile runs on every editor scrub while playing.
@@ -1129,8 +1164,14 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
     // moment instead of dropping it on the floor.
     const buckets = Array.from({ length: bars }, () => []);
     for (const e of ev) {
-      const b = Math.min(bars - 1, Math.floor(e.t / barSteps));
-      buckets[b].push({ ...e, off: e.t - b * barSteps });
+      // the event arrives on the GRID and is filed on the CLOCK — the same
+      // object, untouched, wherever mu is 1 (see above)
+      const t = mu === 1 ? e.t : e.t * mu;
+      const b = Math.min(bars - 1, Math.floor(t / barSteps));
+      buckets[b].push(mu === 1
+        ? { ...e, off: t - b * barSteps }
+        : { ...e, off: t - b * barSteps,
+            ...(e.dur > 0 ? { dur: e.dur * mu } : {}) });
     }
     for (let b = 0; b < bars; b++)
       // …AND THE SECTION'S DEALT LEVEL RIDES ITS BARS (2026-08-30, the score

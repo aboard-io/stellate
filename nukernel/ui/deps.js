@@ -29,7 +29,8 @@ export const { harm, render, drums, bass, ROMAN, word, KITOPS,
                // HOW A BAR COUNTS: the two-number meter and its readers.
                // Absent from a genre = the sixteen steps of four this box
                // counted in for its whole life (kernel.js METERS).
-               METERS, MET4, metOf, stepsIn, pulseIn,
+               METERS, MET4, metOf, stepsIn, pulseIn, quartersIn, unitsIn,
+               meterRow, meterWordOf, okMeter,
                // THE WHOLE-CHAIR REGISTER FOLD (2026-09-04). It lived in
                // audio/plan.js until precompose.js became a second caller;
                // kernel.js owns it now, beside the per-note `fold`.

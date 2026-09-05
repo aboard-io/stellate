@@ -2111,7 +2111,12 @@
         }
         ent.player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
           gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
-          atk: u.sampler.atk, rel: u.sampler.rel, swell: !!u.sampler.swell, mello: u.sampler.mello || null,
+          atk: u.sampler.atk, rel: u.sampler.rel,
+          // the middle of the envelope (2026-09-05, TABLE.md §11) — absent on
+          // every unit that did not ask, so `f.dcy`/`f.sus` are undefined and
+          // sampler.js's live path takes its old two lines exactly
+          dcy: u.sampler.dcy, sus: u.sampler.sus,
+          swell: !!u.sampler.swell, mello: u.sampler.mello || null,
           strip: u.sampler.strip || null,   // per-voice band EQ/comp/saturation/air (SamplerLive builds the node twin)
           songT: beatAbs(e.beat) * spb,
           dry: chained ? 1 : (u.dry != null ? u.dry : 1),

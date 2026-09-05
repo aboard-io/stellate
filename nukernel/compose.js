@@ -661,6 +661,12 @@
      this file in the layer graph and cannot require it; it is re-exported
      below so a caller holding compose can still ask. */
   const { BPM_LO, BPM_HI } = NF;
+  /* ...AND THE CATALOGUE'S OWN, WHICH IS NARROWER SINCE 2026-09-05. The pair
+     above is the fence a HAND may set (20..400 since the any-tempo round);
+     what an ANCHOR may declare, and what the jitter may clamp to, is still
+     the 40..220 the argument in fields.js makes. This file deals records; it
+     is not the surface Paul asked to be able to type 21 into. */
+  const { BPM_ROW_LO, BPM_ROW_HI } = NF;
 
   const PLAN_OF = {};
   for (const k of Object.keys(GENRES)) PLAN_OF[k] = GENRES[k].plan;
@@ -2570,9 +2576,9 @@
       throw new Error(`compose: genre "${gk}" declares no plan ` +
                       `(plan: "dance"|"song"|"arc" on its GENRES row)`);
     const bpm0 = G.bpm;
-    if (!Number.isInteger(bpm0) || bpm0 < BPM_LO || bpm0 > BPM_HI)
+    if (!Number.isInteger(bpm0) || bpm0 < BPM_ROW_LO || bpm0 > BPM_ROW_HI)
       throw new Error(`compose: genre "${gk}" declares no bpm ` +
-                      `(bpm: an integer ${BPM_LO}..${BPM_HI} on its GENRES row)`);
+                      `(bpm: an integer ${BPM_ROW_LO}..${BPM_ROW_HI} on its GENRES row)`);
     // ...and how far it is allowed to wander. UNLIKE `bpm` this one IS
     // defaulted, and deliberately: 4 is what every record has always done, so
     // absence is not an omission here, it is the standing answer. Clamped the
@@ -2764,7 +2770,7 @@
                 Every one of the 395 standing anchors composes the identical
                 byte (G6a/G6g hold it); a row that states a jitter of 0 gets
                 the tempo it asked for, exactly, every reading. */
-             bpm: Math.max(BPM_LO, Math.min(BPM_HI,
+             bpm: Math.max(BPM_ROW_LO, Math.min(BPM_ROW_HI,
                bpm0 + Math.floor(r() * (2 * jitter0 + 1)) - jitter0)),
              vol: 80 };
   }
@@ -2772,7 +2778,7 @@
   const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, dynOf, rng, phrase,
                 // the tempo fence, RE-exported (fields.js owns it) so a
                 // caller already holding compose need not reach past it
-                BPM_LO, BPM_HI,
+                BPM_LO, BPM_HI, BPM_ROW_LO, BPM_ROW_HI,
                 // THE FORM DEAL and its table, exported on the same law every
                 // other ballot in this file is: a policy the suite cannot read
                 // is a policy the suite can only measure indirectly.

@@ -29,7 +29,17 @@
     "recitation":       [["excerpt", 8, 4], ["drop", 2]],
     "up a degree":      [["excerpt", 4, 8], ["transpose", 1]],
     "down a degree":    [["transpose", -1]],
-    "inverted":         [["invert", 4], ["excerpt", 0, 8]],
+    /* INVERT IS INVERT (2026-09-05, the musicologist's review). This read
+       `[["invert", 4], ["excerpt", 0, 8]]` — an inversion AND a truncation to
+       eight notes, welded together — so a twelve-tone row asked to be
+       inverted came back four notes short and a sixteen-step subject lost its
+       second half. Two operations wearing one word is a word that cannot be
+       undone or reasoned about; the excerpt is its own word below and a hand
+       may chain the two when it wants both. */
+    "inverted":         [["invert", 4]],
+    // ...and the excerpt it used to carry, said out loud so nothing is lost
+    // from the vocabulary by separating them.
+    "the first half":   [["excerpt", 0, 8]],
     "backwards":        [["reverse"]],
     "thinned":          [["drop", 2]],
     "the tail, turned": [["excerpt", 4, 4], ["reverse"]],
@@ -46,16 +56,30 @@
     //
     // So counterpoint needs no new machinery — it needs the words a second
     // line is answered with. These are those words.
-    "at the fifth":      [["transpose", 4]],
-    "at the fourth":     [["transpose", 3]],
-    "at the octave":     [["transpose", 7]],
-    "below, at the fifth": [["transpose", -4]],
+    /* AN INTERVAL IS SEMITONES AND NOT A DEGREE COUNT (2026-09-05, the
+       musicologist's review). These read `[["transpose", 4]]` — four DEGREES
+       — which is a fifth in a seven-note scale from six of its seven degrees
+       and a TRITONE from the seventh, and on the shipped `fugue` row's
+       five-note pentatonic it measures a MINOR SEVENTH. A word that says
+       "at the fifth" has to be a fifth in whatever alphabet the chair reads.
+
+       `["interval", n]` is n SEMITONES, resolved against the section's own
+       scale by kernel.js `degreesFor` at the one place a word becomes
+       operators (document.js `opsOf`, which is where the scale is known);
+       `["octaves", n]` is n periods of that alphabet, which is its length in
+       degrees whatever its period is. Neither is a kernel op name — they are
+       spellings this vocabulary owns, and `opsOf` answers them before it
+       reaches for `K[...]` at all. */
+    "at the fifth":      [["interval", 7]],
+    "at the fourth":     [["interval", 5]],
+    "at the octave":     [["octaves", 1]],
+    "below, at the fifth": [["interval", -7]],
     "in contrary motion": [["invert", 4]],
     "in retrograde":     [["reverse"]],
     "a beat later":      [["rotate", -4]],
     "half a bar later":  [["rotate", -8]],
     "in wider steps":    [["spread", 2]],
-    "at the fifth, a beat later": [["transpose", 4], ["rotate", -4]],
+    "at the fifth, a beat later": [["interval", 7], ["rotate", -4]],
     // OUT. `drop(1)` kills every gate — (i+1) % 1 is always 0 — so a voice
     // can be silent for a section without leaving the record. It is how you
     // solo a line to hear what it is doing, and how a verse drops to two
@@ -129,6 +153,7 @@
     "up a degree":           "moved in pitch",
     "down a degree":         "moved in pitch",
     "inverted":              "moved in pitch",
+    "the first half":        "a piece of it",
     "in wider steps":        "moved in pitch",
     "backwards":             "turned around",
     "at the fifth":          "counterpoint",

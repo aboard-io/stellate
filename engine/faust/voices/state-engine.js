@@ -1517,6 +1517,15 @@
                           stretchMinHz: 440 * Math.pow(2, (botRoot - SAMPLER_FLOOR_ST - 69) / 12) } : {}),
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),
           rel: mp("release", role === "bass" ? 0.07 : 0.09, 0.02, 6),
+          // ...AND THE MIDDLE OF THE ENVELOPE (2026-09-05, nukernel/TABLE.md
+          // §11). This lane was A-H-R: a note came in over `atk`, sat at full
+          // gain, and let go over `rel`. `dcy`/`sus` are sampler.js's two new
+          // per-note fields on BOTH play paths, and they are stamped only
+          // where the recipe carries them — an absent key is no key and every
+          // existing record renders bit for bit as before (the absent-law,
+          // the same one the loop params above are written under).
+          ...(m.decay != null ? { dcy: clamp(m.decay, 0, 8) } : {}),
+          ...(m.sustain != null ? { sus: clamp(m.sustain, 0, 1) } : {}),
           swell: (m.swell || 0) >= 0.5,
           // GRANULAR REPITCH (A.2): recipe `granular` opts a sampled voice into
           // formant/length-preserving playback when a note stretches far from a
