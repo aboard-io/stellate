@@ -41,6 +41,22 @@ export const SHEETS: Table = {
   "group.tempo": "Tempo",
   "group.meter": "Meter",
   "group.chords": "Chords",
+  /* ...AND ONE MORE FOR THE ADD SHEET (2026-09-05, TABLE.md §13a.5): the head
+     row's `+` and the grid's foot `+` open one sheet, and its two lists — the
+     player offers and the section offer — stand under their own headings, in
+     the same shape every other sheet on this page is grouped in. The sections'
+     heading is `group.form` above, unedited: a record's sections ARE its form,
+     which is what §11c already calls them in a section's own sheet. */
+  "group.band": "The players",
+
+  /* ===== THE ADD SHEET (2026-09-05, TABLE.md §13a.5) =====================
+     Paul, on the Silence record at 390: *"three adders took more width than
+     the three players they were offering to join."* The three buttons in the
+     head and the one under the last section are one `+` at each edge now, and
+     these are the two questions its sheet asks. (Its NAME is `act.add` and the
+     `+`'s own clause is `glyph.act.add.say`; neither is spelled again here.) */
+  "add.players": "Who else plays",
+  "add.sections": "What comes next",
 
   /* ===== THE FOLLOW-UP SWEEP (2026-09-05) ================================
      What the copy BROWSER gate found still assembled in ui/eight.js after the

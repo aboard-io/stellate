@@ -73,6 +73,11 @@ export const GLYPHS: Table = {
   "glyph.act.menu.say": "Score, video, screensaver, export and log",
   "glyph.act.close": "close",
   "glyph.act.close.say": "Back to the song",
+  /* ...AND ONE MORE, 2026-09-05 (TABLE.md §13a.5): the `+` at each edge of the
+     grid. The three adder buttons in the head row and the one under the last
+     section are one mark now, and the mark opens the ADD sheet. */
+  "glyph.act.add": "add",
+  "glyph.act.add.say": "Add a player or a section",
   /* the WORD is core's `noun.seed`, and the die's two names share one
      explainer — `glyph.act.rewrite.say` — because they are one button. */
   "glyph.act.tap": "tap",

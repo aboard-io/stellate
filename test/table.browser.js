@@ -240,7 +240,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          UNDER the last section, which is where a spreadsheet has always put
          "one more". It is not a section, exactly as a `<tfoot>` row is not one,
          so it is excluded here rather than counted as a record the document
-         does not have. The player axis's `+` is a `<th class="nu-addhead">` and
+         does not have. The player axis's `+` is a `<th class="nu-plushead">` and
          needs no exclusion: this count reads `th.nu-colhead`. */
       rows: t ? t.querySelectorAll("tbody tr:not(.nu-addrow)").length : 0,
       cols: t ? t.querySelectorAll("thead th.nu-colhead").length : 0,
@@ -776,8 +776,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     ["voices"], "tcell|" + cellV + "|" + cellS);
   await opCase("cell · clear to inherit", "tcell-clear|" + cellV + "|" + cellS,
     ["voices"], "tcell|" + cellV + "|" + cellS);
+  /* THE OFFERS ARE IN THE ADD SHEET SINCE 2026-09-05 (TABLE.md §13a.5): the
+     head row's `+` and the grid's foot `+` open it, and `tcol-add|line` is the
+     lozenge inside — the SAME address, one door further in. The opener is the
+     foot's `+`, which is in the frozen section column and reachable at 320
+     without scrolling the pane sideways. */
   await opCase("column · hire a line", "tcol-add|line", ["voices"],
-    "tcol|" + vName);
+    "tadd|foot");
   const D5 = await doc();
   await opCase("column · remove", "tcol-del|" + D5.voices[D5.voices.length - 1].name,
     ["voices"], "tcol|" + D5.voices[D5.voices.length - 1].name);
@@ -1331,6 +1336,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await top("Band");
   await tap("tcol|" + vName);
   const nBefore = (await doc()).voices.length;
+  await tap("tadd|foot");
   await tap("tcol-add|line");
   await p.waitForTimeout(700);
   const landed = await p.evaluate(() => {
@@ -1519,9 +1525,42 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const s9a = D9.form.sections[0].id, s9b = D9.form.sections[1].id;
     const v9a = D9.voices[0].name, v9b = D9.voices[1] ? D9.voices[1].name : v9a;
     const cell = (v, sid) => "tcell|" + v + "|" + sid;
-    const addr = () => p.evaluate(() => { const a =
-      document.querySelector('#pan-band [data-k="taddr"]');
-      return a ? a.textContent.trim() : null; });
+    /* THE ADDRESS IS THE CELL SHEET'S FIRST LINE SINCE 2026-09-05 (§13a.6).
+       `.nu-formula` is deleted — it stood at rest whether or not a cell was
+       selected, 105.8px of a 844px phone, measured — and its head is the first
+       line of the open cell sheet, where undo and redo stand at the place the
+       change was made. So a gate that wants the address OPENS the cell it is
+       standing on (Enter, which is the second half of the spreadsheet gesture
+       this file already drives) and reads it there. */
+    /* ...AND IT PUTS THE PAGE BACK, which is what makes it a READER and not a
+       gesture: T9b's very next claim is that the first tap opens NOTHING but
+       the ring, and a reader that left an editor standing would be the harness
+       manufacturing the defect it is about to report. Enter opens, Escape
+       closes and the selection survives it (`closeEdit`). */
+    const addr = async () => {
+      const shut = await p.evaluate(() =>
+        !document.querySelector("#pan-band tr.nu-cellopen"));
+      if (shut) { await key("Enter"); await p.waitForTimeout(300); }
+      const out = await p.evaluate(() => { const a =
+        document.querySelector('#pan-band [data-k="taddr"]');
+        return a ? a.textContent.trim() : null; });
+      if (shut) { await key("Escape"); await p.waitForTimeout(250); }
+      return out; };
+    /* ONE OF THE FOUR VERBS, PRESSED WHERE IT LIVES (2026-09-05, §13a.6). They
+       were on `.nu-formula` and stood at rest; they are the first line of the
+       OPEN cell sheet, so a gate that wants one opens the cell it is standing
+       on first — the second tap, which is the spreadsheet gesture this file
+       already drives — and presses the verb there. It leaves the sheet open,
+       because that is where the hand that pressed undo is. */
+    const barTap = async (k) => {
+      const opened = await p.evaluate(() => {
+        if (document.querySelector("#pan-band tr.nu-cellopen")) return true;
+        const c = document.querySelector("#pan-band .nu-wcell.is-sel");
+        if (!c) return false;
+        c.click(); return true; });
+      if (!opened) return "missing";
+      await p.waitForTimeout(420);
+      return tap(k); };
     const sel = () => p.evaluate(() => { const c =
       document.querySelector("#pan-band .nu-wcell.is-sel");
       return c ? c.dataset.k : null; });
@@ -1804,9 +1843,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
     /* 9f · SHIFT EXTENDS A RANGE, AND A RANGE IS A RECTANGLE. */
     await key("ArrowRight", "Shift");
-    const rng = await p.evaluate(() => ({
+    const rngAddr = await addr();
+    const rng = await p.evaluate((a) => ({
       n: document.querySelectorAll("#pan-band td.is-inrange").length,
-      addr: (document.querySelector('#pan-band [data-k="taddr"]') || {}).textContent }));
+      addr: a }), rngAddr);
     check(rng.n >= 2 && /2 cells/.test(String(rng.addr)),
       "T9f Shift+arrow extends a range and the bar counts it — " +
       JSON.stringify(rng));
@@ -1859,15 +1899,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
     /* 9i · UNDO AND REDO, AT THE DOCUMENT LEVEL, FOR EVERY OP. §9a: "mandatory:
        spreadsheet users expect it and the page has only the producer's undo." */
+    await barTap("tundo");
     const undoTall = await p.evaluate(() => { const b =
       document.querySelector('#pan-band [data-k="tundo"]');
       return b ? Math.round(b.getBoundingClientRect().height) : 0; });
-    await tap("tundo");
     const w3 = await written();
     check(w3 === w1 && undoTall >= 44,
       "T9i undo takes the clear back, at 44px — " + JSON.stringify(w3) +
       " (" + undoTall + "px)");
-    await tap("tredo");
+    await barTap("tredo");
     const w4 = await written();
     check(w4 === w2, "T9j …and redo puts it forward again — " + JSON.stringify(w4));
 
@@ -1882,20 +1922,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        destination handed in. The source is the cell 9g wrote, so what moves is
        a fact and not a coincidence. */
     await selectCell(cell(l9.name, s9a));
-    await tap("tcopy");
+    await barTap("tcopy");
     await selectCell(cell(l9.name, s9b));
     const tgt = () => p.evaluate((args) => { const [n, sid] = args;
       const v = window.__eightDoc().voices.find((x) => x.name === n);
       const c = v && v.cells ? v.cells[sid] : null;
       return c && Object.keys(c).length ? JSON.stringify(c) : null; }, [l9.name, s9b]);
     const t0 = await tgt();
-    await tap("tpaste");
+    await barTap("tpaste");
     const t1 = await tgt();
     check(t0 !== t1 && t1 != null,
       "T9l copy and paste move a cell's vector — " + JSON.stringify(t0) +
       " -> " + JSON.stringify(t1));
-    await tap("tundo");
-    await tap("tundo");
+    await barTap("tundo");
+    await barTap("tundo");
 
     /* 9m · FILL RIGHT AND FILL DOWN ARE §5's COPY-TO-ROW AND -COLUMN, said in a
        spreadsheet's words and reachable by tap. */
@@ -1914,23 +1954,40 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        using the nav and sections too."* They are at the END OF EACH AXIS and
        they are the SAME ADDRESSES build-the-band already had, so the T7
        inventory's nine nav ops keep their homes. */
+    /* ...AND SINCE 2026-09-05 THEY ARE A SHEET AND NOT COLUMNS (§13a.5). The
+       head row ends in ONE `+` cell and the grid in ONE `+` row, both `--tap`,
+       and either opens the ADD sheet whose body is these same four addresses.
+       MEASURED on v287: the three offers took a 22ch column — 224px of a
+       364.4px pane at 390 — which is what pushed the first player's head to
+       "…he ntl". */
+    await tap("tadd|foot");
     const offers = await p.evaluate(() => {
       const g = (k) => { const b = document.querySelector(
         '#pan-band [data-k="' + k + '"]');
         return b ? Math.round(b.getBoundingClientRect().height) : 0; };
+      const px = (el) => el ? Math.round(el.getBoundingClientRect().width) : 0;
       return { line: g("tcol-add|line"), bass: g("tcol-add|bass"),
                drums: g("tcol-add|drums"), sec: g("trow-add"),
-               head: !!document.querySelector("#pan-band thead th.nu-addhead"),
-               row: !!document.querySelector("#pan-band tbody tr.nu-addrow") }; });
-    check(offers.line >= 44 && offers.sec >= 44 && offers.head && offers.row,
-      "T9n `+ player` and `+ section` stand at the end of each axis, with no " +
-      "nav in it — " + JSON.stringify(offers));
+               head: px(document.querySelector("#pan-band thead th.nu-plushead")),
+               row: px(document.querySelector(
+                 "#pan-band tbody tr.nu-addrow th .nu-plusbtn")),
+               olds: document.querySelectorAll("#pan-band .nu-addbar," +
+                 " #pan-band .nu-addbtn, #pan-band .nu-addhead").length }; });
+    check(offers.line >= 44 && offers.sec >= 44 && offers.head <= 48 &&
+          offers.row <= 48 && offers.olds === 0,
+      "T9n the two `+`s are one `--tap` cell each and the four offers are the " +
+      "sheet they open, at the addresses they always had — " +
+      JSON.stringify(offers));
     const nBefore = (await doc()).voices.length;
     await tap("tcol-add|line");
     const nAfter = (await doc()).voices.length;
     check(nAfter === nBefore + 1,
       "T9o …and the offer hires (" + nBefore + " -> " + nAfter + ")");
-    await tap("tundo");
+    /* UNDO IS PRESSED WITH THE KEYBOARD HERE, and that is not a dodge: the
+       four verbs live on the open CELL sheet's first line since §13a.6, a hire
+       leaves the new player's COLUMN sheet open and not a cell's, and Ctrl-Z is
+       the same door (T9k measures that they are). */
+    await key("z", "Control");
     check((await doc()).voices.length === nBefore,
       "T9p …and undo un-hires — a structural op is undoable like any other");
 
@@ -2030,6 +2087,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           pane.scrollLeft = Math.min(220, a.canX);
           setTimeout(() => {
             const b = { col: rectOf(COL), row: rectOf(ROW), corner: rectOf(CORNER),
+                        paneTop: Math.round(pane.getBoundingClientRect().top),
                         top: pane.scrollTop, left: pane.scrollLeft };
             /* THE STACK: every special row's own pinned line, and the column
                heads under all of them. Read as `y`s that are strictly
@@ -2074,10 +2132,25 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       /* 4px OF SLACK, WHICH IS `.nu-trims`' OWN border-spacing, twice — the
          same allowance test/shell.js A8 makes and for the same measured
          reason. */
-      check(dY <= 4 && cY <= 4 && st.a.canY > 0,
-        "T9s2 at " + w + " the INSTRUMENT heads stay put over the pane's " +
-        st.b.top + "px of vertical scroll (moved " + dY + "px; the corner " +
-        cY + ") — and the pane has " + st.a.canY + "px to give, because THE " +
+      /* ...AND SINCE 2026-09-05 THE HEADS TRAVEL BEFORE THEY HOLD (TABLE.md
+         §13a.1 and §13a.4: *"The column heads pin only within the grid"*, and
+         the special rows above them scroll out of the way rather than holding
+         the top of the screen). So the claim is not "moved 0" any more — it is
+         "arrived and STAYED": over 400px of scroll the heads travel at most the
+         height of the rows above them and end at the pane's own top edge, which
+         is what a spreadsheet's frozen head does when it is not the first thing
+         in the sheet. Measured at 390 on Kingston 1969: the head row stands at
+         147px in the content and is at the pane's top edge (0 ± 4) after the
+         scroll. The corner is the same cell and makes the same journey. */
+      const paneTop = st.b.paneTop;
+      const atTop = (r) => r ? Math.abs(r.y - paneTop) <= 4 : false;
+      check(atTop(st.b.col) && atTop(st.b.corner) && st.a.canY > 0,
+        "T9s2 at " + w + " the INSTRUMENT heads arrive at the pane's top edge " +
+        "and STAY there over " + st.b.top + "px of vertical scroll (they " +
+        "travelled " + dY + "px, the height of the special rows above them, " +
+        "and stand at " + (st.b.col ? st.b.col.y : "?") + " against a pane top " +
+        "of " + paneTop + "; the corner " + cY + ") — and the pane has " +
+        st.a.canY + "px to give, because THE " +
         "PANE is the vertical scrollport here");
       check(dX <= 4 && cX <= 4,
         "T9s3 at " + w + " …and the SECTION heads stay put over a " + st.b.left +
@@ -2104,15 +2177,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     await p.waitForTimeout(420);
 
     /* 9t · ...AT THE THREE WIDTHS, AND NOTHING UNDER 44px OR OFF THE SCREEN.
-       The phone is the first layout (§6 ¶A) and the formula bar is the bottom
-       sheet there, so this measures where the bar IS as well as that it is. */
+       ...AND SINCE 2026-09-05 THE BAR IS THE CELL SHEET'S FIRST LINE (§13a.6).
+       `.nu-formula` stood at rest, sticky at the foot of the pane on a phone —
+       105.8px of a 844px screen whether or not a cell was selected — and this
+       check read where it WAS. It reads where the address, the two arrows and
+       the two clipboard verbs are now: inside the sheet the cell opened, in
+       flow at its top, full width, with nothing under 44px and nothing off the
+       screen. Same five addresses, same measurement, one place in. */
     for (const w of [320, 390, 1280]) {
       await ctx.pages()[0].setViewportSize({ width: w, height: 900 });
       await p.waitForTimeout(420);
       await openCell(cell(v9a, s9a));
       const m = await p.evaluate(() => {
         const host = document.getElementById("pan-band");
-        const bar = host.querySelector(".nu-formula");
+        const bar = host.querySelector("tr.nu-cellopen .nu-cellhead");
         const r = bar ? bar.getBoundingClientRect() : null;
         const shorts = [...host.querySelectorAll("button:not([hidden])")]
           .filter((b) => { const q = b.getBoundingClientRect();
@@ -2129,17 +2207,22 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           .filter((e) => e.w > 0 && e.r > window.innerWidth + 1)
           .slice(0, 10);
         return { over,
-                 bar: !!bar, pos: bar ? getComputedStyle(bar).position : null,
+                 bar: !!bar, fixed: host.querySelectorAll(".nu-formula").length,
+                 keys: bar ? [...bar.querySelectorAll("[data-k]")]
+                   .map((x) => x.dataset.k) : [],
                  wide: r ? Math.round(r.width) : 0,
                  pane: Math.round(host.querySelector(".nu-pane")
                    .getBoundingClientRect().width),
                  page: document.documentElement.scrollWidth -
                        document.documentElement.clientWidth,
                  shorts, offs }; });
-      check(m.bar && m.pos === "sticky" && m.shorts === 0 && m.offs === 0 &&
-            m.page <= 1 && m.wide >= m.pane * 0.95,
-        "T9t at " + w + " the formula bar is sticky and full width, nothing is " +
-        "under 44px and nothing is off the screen — " + JSON.stringify(m));
+      const want5 = ["taddr", "tundo", "tredo", "tcopy", "tpaste"];
+      check(m.bar && m.fixed === 0 && m.shorts === 0 && m.offs === 0 &&
+            m.page <= 1 && m.wide >= m.pane * 0.8 &&
+            want5.every((k) => m.keys.indexOf(k) >= 0),
+        "T9t at " + w + " the address and its four verbs are the open cell " +
+        "sheet's first line, `.nu-formula` is gone, nothing is under 44px and " +
+        "nothing is off the screen — " + JSON.stringify(m));
       await shot("spreadsheet-" + w);
       await tap(cell(v9a, s9a));
     }
@@ -2347,7 +2430,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (!t) return { missing: true };
       const heads = [...t.querySelectorAll("thead > tr")];
       const cols = t.querySelectorAll("thead th.nu-colhead, thead th.nu-cornerh," +
-                                      " thead th.nu-addhead").length;
+                                      " thead th.nu-plushead").length;
       const rows = heads.filter((r) => r.classList.contains("nu-sprow"));
       const pane = document.querySelector("#pan-band .nu-pane");
       return {
@@ -2357,11 +2440,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const th = r.querySelector("th");
           const b = r.querySelector("button");
           const cs = getComputedStyle(th);
+          /* THE LINE IS THE PANE'S WIDTH, AND THE BUTTON IS WHAT IS LEFT OF
+             IT (2026-09-05, §13a.2). `.nu-sphead` carried the `--panew` pin
+             until the MOTIF lamp moved INTO the row's own line; the pin and
+             the width are `.nu-spline`'s now and the button takes the give
+             beside the lamp. Measured at 390: the line 358, the PHRASES button
+             347 with an empty lamp beside it. */
+          const line = r.querySelector(".nu-spline") || b;
           return { id: r.dataset.special, k: b && b.dataset.k,
             colspan: th.colSpan, pos: cs.position,
             top: Math.round(parseFloat(cs.insetBlockStart || "0")),
-            h: Math.round(b.getBoundingClientRect().height),
-            w: Math.round(b.getBoundingClientRect().width),
+            h: Math.round(r.getBoundingClientRect().height),
+            w: Math.round(line.getBoundingClientRect().width),
             paneW: pane ? pane.clientWidth : 0,
             word: (r.querySelector(".nu-spword") || {}).textContent,
             face: (r.querySelector(".nu-spface") || {}).textContent,
@@ -2397,23 +2487,36 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       check(ok, "T10a " + w + " · TIME, RULES and MOTIFS are merged rows of the sheet, " +
         "above the column heads, colspan = the whole table, 44px, the pane's " +
         "own width — " + JSON.stringify(r));
-      /* T10b · FROZEN WITH THE HEADS, AND STACKED. Three head rows pinned at
-         one offset would paint over each other; `grid.ts stick()` measures. */
+      /* T10b · ONE PIN, AND IT IS THE COLUMN HEADS (rewritten 2026-09-05,
+         TABLE.md §13a.1). It read "the whole head freezes as a STACK — each row
+         pinned under the one above it", which was right while the head was
+         allowed to hold the top of the screen, and MEASURED at 390 x 844 on
+         v287 that is four bands at 3 · 51 · 99 · 163.1: the grid began 163px
+         down a 611px pane. Paul: *"things don't scroll out of the way for me to
+         focus."* The law is one band at a time — the column heads at rest, the
+         owner row of an open sheet while one is open — so what is asserted here
+         is that EXACTLY ONE row of the head is pinned, that it is the LAST one
+         (the column heads), and that the special rows above it declare their
+         stickiness with nothing to hold (`auto`), which is what a row that
+         scrolls out of the way honestly is. */
       const st = await p.evaluate(() => [...document.querySelectorAll(
         "#pan-band table.nu-sheetgrid thead > tr")].map((tr) => {
-          const c = tr.querySelector("th");
+          const c = tr.firstElementChild;
+          if (!c) return { pos: "none", top: null, h: 0 };
           const cs = getComputedStyle(c);
+          const held = cs.insetBlockStart !== "auto";
           return { pos: cs.position,
-                   top: Math.round(parseFloat(cs.insetBlockStart || "0")),
+                   top: held ? Math.round(parseFloat(cs.insetBlockStart)) : null,
                    h: Math.round(tr.getBoundingClientRect().height) }; }));
       /* ...AND THE STACK IS FOUR ROWS DEEP SINCE 2026-09-08. It is asserted as
          a WALK and not as three named indices, because the next special row
          above the grid must not need this line edited to be measured. */
-      const stacked = st.every((x) => x.pos === "sticky") &&
-        st.every((x, i) => i === 0 ||
-                 x.top >= st[i - 1].top + st[i - 1].h - 2);
-      check(stacked, "T10b " + w + " · the whole head freezes as a STACK — " +
-        "each row pinned under the one above it, measured — " + JSON.stringify(st));
+      const held = st.filter((x) => x.pos === "sticky" && x.top != null);
+      const onePin = held.length === 1 && held[0] === st[st.length - 1] &&
+        held[0].top === 0;
+      check(onePin, "T10b " + w + " · ONE band pins at rest and it is the " +
+        "column heads, at 0; the special rows above it scroll out of the way — " +
+        JSON.stringify(st));
     }
     await wide(390);
 
@@ -2677,7 +2780,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                     w: Math.round(mb.getBoundingClientRect().width),
                     paneW: pane ? pane.clientWidth : 0 },
           cols: t.querySelectorAll("thead th.nu-colhead, thead th.nu-cornerh," +
-                                   " thead th.nu-addhead").length };
+                                   " thead th.nu-plushead").length };
       });
 
       /* T10l · ALIGNED: one cell per voice column, each under its own head. */
@@ -3064,9 +3167,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const b = document.querySelector('#pan-band [data-k="tmotifs"]');
           const th = b && b.closest("th");
           const lamp = th && th.querySelector('.nu-motlamp[data-live]');
+          /* ITS PARENT IS THE ROW'S OWN LINE SINCE 2026-09-05 (§13a.2): the
+             lamp was a BLOCK under the button and made PHRASES a two-line row
+             (61.1px against TIME's 45, measured at 390); it stands beside the
+             button inside `.nu-spline` now. It is still a SIBLING of the
+             button and still outside it, which is the claim. */
+          const line = b && b.parentElement;
+          const row = th && th.closest("tr");
           return { lamp: !!lamp, inside: !!(lamp && lamp.querySelector("button")),
-                   sibling: !!(lamp && lamp.parentElement === th &&
-                               !b.contains(lamp)) };
+                   sibling: !!(lamp && lamp.parentElement === line &&
+                               !b.contains(lamp)),
+                   rowH: row ? Math.round(row.getBoundingClientRect().height) : 0 };
         });
         check(shape.lamp && shape.sibling && !shape.inside,
           "T10u the MOTIFS row's lamp is a [data-live] SIBLING of its head's " +
@@ -3162,7 +3273,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         return { there: !!tr, k: b && b.dataset.k,
                  colspan: th ? th.colSpan : 0,
                  cols: t ? t.querySelectorAll("thead th.nu-colhead," +
-                   " thead th.nu-cornerh, thead th.nu-addhead").length : 0,
+                   " thead th.nu-cornerh, thead th.nu-plushead").length : 0,
                  h: b ? Math.round(b.getBoundingClientRect().height) : 0,
                  w: b ? Math.round(b.getBoundingClientRect().width) : 0,
                  paneW: pane ? pane.clientWidth : 0,
@@ -3712,11 +3823,21 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       check(st.sheet && st.under === 0,
         "T12k …and every one of them is ABOVE the sheet that scrolls under it " +
         "(sheet z " + st.sz + ", " + st.under + " heads at or below it)");
-      /* THE STACK IS FOUR ROWS DEEP AND THEREFORE THREE SEAMS DEEP, asserted
-         so the count below cannot pass by having nothing to measure. */
-      check(st.open === 0 && st.pinned >= 4 && st.seams.length >= 3,
-        "T12k …and NOTHING renders through the seams between them — " +
-        st.open + " of " + st.seams.length + " uncovered " +
+      /* ...AND SINCE 2026-09-05 THERE IS NO SEAM TO LEAK THROUGH (TABLE.md
+         §13a.1). It read "the stack is FOUR rows deep and therefore three
+         seams deep, asserted so the count below cannot pass by having nothing
+         to measure" — which was the right way to write it while four bands
+         pinned at once, and four bands pinning at once is the disease §13
+         names. One band pins now, and with a CELL sheet open (which is the
+         state this check is taken in) none does: the sheet's own first line is
+         in flow at its top and a pinned head over it would be the second band.
+         So the claim turns into its own opposite and keeps its teeth: there is
+         nothing to leak BETWEEN, because there is at most one frozen row, and
+         the check still fails if a second one appears. */
+      check(st.open === 0 && st.pinned <= 1 && st.seams.length === 0,
+        "T12k …and there is NO SEAM to render through: at most one band is " +
+        "frozen (" + st.pinned + " pinned of " + st.n + " sticky, " +
+        st.seams.length + " seams, " + st.open + " uncovered) " +
         JSON.stringify(st.seams));
       await tap("tcell|" + vn12 + "|" + sid12);
       await p.evaluate(() => {
@@ -4123,6 +4244,379 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           "NOTHING — " + JSON.stringify(j));
       }
       await pctx.close();
+    }
+  }
+
+  /* ================= T13 · ONE SCROLL, ONE PIN ==========================
+     (2026-09-05, TABLE.md §13.) THE COMPLAINT, VERBATIM, with the iPhone
+     screenshot of the Silence record beside it: *"Please look at this mess and
+     I can't really get to anything — things don't scroll out of the way for me
+     to focus it's all jammed up. Propose an elegant redesign that keeps the
+     verticality and the scrolling interface."*
+
+     WHY THIS RUNS IN ITS OWN CONTEXTS. Every check above T12n drives a 390px
+     DESKTOP page — a fine pointer, no touch, no device scale — and the budget
+     §13b sets is a PHONE's: 844 points of glass, a safe area, and a thumb.
+     `devices["iPhone 14"]` at 390 and at 320, on the two records §13b names
+     (Kingston 1969 and the blank state), and 1280 for *"the desktop is the
+     phone given room"*.
+
+     WHAT IT ASSERTS, row by row from §13b's own table:
+       a  fixed chrome at rest is THE BAR ALONE, ≤ 72pt + the safe area
+       b  ONE band pins inside the pane at rest, it is the column heads, and it
+          is ≤ `--tap` + 3px
+       c  with a special row's sheet open, the OWNER ROW pins and nothing else
+       d  with a CELL sheet open, nothing in the head pins at all, and the
+          sheet's own first line is in flow at its top
+       e  the pane at rest is ≥ 844 − bar − safe area − 8
+       f  zero overlapping cell pairs in a section row, on a record with a band
+       g  zero heads cut mid-word
+       h  the pane's `scrollTop` is IDENTICAL across open and close of TIME, of
+          RULES and of a cell (v287's T12n law, now for the row)
+       i  the head row ends in ONE `+` of `--tap`, and so does the grid's foot
+       j  nothing in `<tfoot>` is pinned in the block direction
+       k  every special row is ONE LINE at rest
+       l  T7's law re-proved at 320: the formula bar's five and the addbars'
+          four are each reachable in ≤ 2 taps from rest */
+  {
+    const REST = 8;
+    const beds = [["Kingston 1969", REGGAE], ["the Silence record", ""]];
+    for (const [recName, hash] of beds) {
+      for (const W of [390, 320, 1280]) {
+        const phone = W !== 1280;
+        const c13 = await b.newContext(phone
+          ? Object.assign({}, devices["iPhone 14"],
+              { viewport: { width: W, height: 844 }, deviceScaleFactor: 3,
+                isMobile: true, hasTouch: true })
+          : { viewport: { width: 1280, height: 844 } });
+        const z = c13.pages()[0] || await c13.newPage();
+        z.on("pageerror", (e) => errs.push("pageerror(T13 " + W + "): " + e.message));
+        z.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
+          errs.push("console(T13 " + W + "): " + m.text()); });
+        await z.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+        await z.goto(PAGE + hash, { waitUntil: "domcontentloaded" });
+        await z.waitForTimeout(2600);
+        await z.evaluate(() => window.__eightTab("Band"));
+        await z.waitForTimeout(700);
+        const at = recName + " @ " + W;
+        /* THE GESTURES, AND THEY ARE A HAND'S: `el.click()` on the button a
+           thumb would press, never `page.click()` (which scrolls its target
+           into view first and has manufactured "jumps" on this box before). */
+        const ztap = async (k) => { const r = await z.evaluate((key) => {
+            const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+            if (!el) return "missing"; el.click(); return "ok"; }, k);
+          await z.waitForTimeout(450); return r; };
+
+        /* ---- a · THE FIXED CHROME ------------------------------------- */
+        const chrome = await z.evaluate(() => {
+          const out = [];
+          /* `#nu-chrome` IS `display: contents` AND HAS NO RECT (measured
+             2026-09-05, on the first run of this check: it reported zero fixed
+             boxes on a page with a fixed bar in it). A box with no client rect
+             is not a box a thing can be under — but its CHILDREN may be, and
+             the chrome's three are exactly the ones this counts. So a rectless
+             element is descended INTO rather than skipped. */
+          const walk = (n) => { for (const c of n.children) {
+            const cs = getComputedStyle(c);
+            if (cs.display === "none") continue;
+            if (!c.getClientRects().length) { walk(c); continue; }
+            if (cs.position === "fixed") {
+              const r = c.getBoundingClientRect();
+              out.push({ id: c.id || String(c.className).slice(0, 20),
+                         h: +r.height.toFixed(1) });
+            } else walk(c); } };
+          walk(document.body);
+          return { boxes: out,
+                   tops: document.querySelectorAll(".nu-top").length,
+                   bars: document.querySelectorAll("#nu-bar").length,
+                   burger: !!document.querySelector("#nu-bar #burger"),
+                   last: (() => { const bar = document.getElementById("nu-bar");
+                     return bar && bar.lastElementChild
+                       ? bar.lastElementChild.id : null; })(),
+                   forms: document.querySelectorAll(".nu-formula").length };
+        });
+        const chromeH = chrome.boxes.reduce((a, x) => a + x.h, 0);
+        check(chrome.boxes.length === 1 && chrome.boxes[0].id === "nu-bar" &&
+              chromeH <= 72 && chrome.tops === 0 && chrome.forms === 0 &&
+              chrome.burger && chrome.last === "burger",
+          "T13a " + at + " · the bar is the ONLY fixed chrome (" + chromeH +
+          "pt), `.nu-top` and `.nu-formula` are gone, and the ≡ is the bar's " +
+          "last button — " + JSON.stringify(chrome));
+
+        /* ---- b · ONE PINNED BAND, AND IT IS THE HEADS ----------------- */
+        const pins = () => z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          if (!t) return { missing: true };
+          const rows = [...t.querySelectorAll("thead > tr")];
+          const held = [];
+          rows.forEach((tr, i) => {
+            /* THE ROW'S OWN FIRST CELL, AND NOT A DESCENDANT (measured
+               2026-09-05). `tr.querySelector("th")` is a DESCENDANT query and
+               a special row's SHEET is a row of this head now — the TIME
+               sheet seats the chord chart, whose own `<th>` was read as this
+               row's pinned line, and the RULES sheet has no `<th>` at all, so
+               the same query answered null and threw. */
+            const c = tr.firstElementChild;
+            if (!c) return;
+            const cs = getComputedStyle(c);
+            if (cs.position === "sticky" && cs.insetBlockStart !== "auto")
+              held.push({ i, sp: tr.dataset.special || null,
+                          heads: !tr.dataset.special &&
+                                 !tr.classList.contains("nu-wopen"),
+                          top: Math.round(parseFloat(cs.insetBlockStart)),
+                          h: +tr.getBoundingClientRect().height.toFixed(1) }); });
+          const foot = [...t.querySelectorAll("tfoot th, tfoot td, tfoot button")]
+            .filter((e) => { const cs = getComputedStyle(e);
+              return cs.position === "sticky" && cs.insetBlockStart !== "auto"; })
+            .map((e) => String(e.className).slice(0, 24));
+          return { held, n: rows.length, foot };
+        });
+        const rest = await pins();
+        /* `--tap` + 3px IS §13b'S NUMBER AND IT IS A PHONE'S. At 390 and 320
+           a player column is narrower than 9ch, so the head is a MARK and the
+           band is one line of thumb; at 1280 the columns have room and the
+           head is its two lines (name over instrument), which is §13b's own
+           *"the desktop is the phone given room"* and not a plate coming back.
+           Both are asserted, each against its own budget. */
+        const band = phone ? 47 : 72;
+        check(!rest.missing && rest.held.length === 1 && rest.held[0].heads &&
+              rest.held[0].top === 0 && rest.held[0].h <= band,
+          "T13b " + at + " · at rest exactly ONE band pins inside the pane and " +
+          "it is the column heads, at 0, " +
+          (rest.held[0] ? rest.held[0].h : "?") + "px (≤ " + band + ") — " +
+          JSON.stringify(rest.held));
+
+        /* ---- j · NOTHING IN `<tfoot>` IS PINNED DOWN THE PAGE ---------- */
+        check(rest.foot && rest.foot.length === 0,
+          "T13j " + at + " · no `<tfoot>` row is pinned in the block " +
+          "direction — a master strip belongs at the bottom of a desk, not " +
+          "over it (" + JSON.stringify(rest.foot) + ")");
+
+        /* ---- k · EVERY SPECIAL ROW IS ONE LINE AT REST ----------------- */
+        const lines = await z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const rows = t ? [...t.querySelectorAll("tr.nu-sprow, tr.nu-masterrow," +
+            " tr.nu-prodrow, tr.nu-perfrow, tr.nu-mixrow")] : [];
+          return rows.map((r) => ({
+            id: r.dataset.special || r.dataset.row,
+            h: +r.getBoundingClientRect().height.toFixed(1),
+            plate: getComputedStyle(r.querySelector("th")).backgroundColor,
+            lamps: r.querySelectorAll(".nu-motlamp").length })); });
+        const tall = lines.filter((x) => x.h > 52);
+        check(lines.length >= 6 && tall.length === 0,
+          "T13k " + at + " · every special row is ONE LINE at rest — " +
+          JSON.stringify(lines.map((x) => x.id + ":" + x.h)) +
+          (tall.length ? " OVER: " + JSON.stringify(tall) : ""));
+
+        /* ---- e · THE PANE GETS THE SCREEN ----------------------------- */
+        const geo = await z.evaluate(() => {
+          const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]");
+          const bar = document.getElementById("nu-bar");
+          return { pane: pane ? +pane.getBoundingClientRect().height.toFixed(1) : 0,
+                   bar: bar ? +bar.getBoundingClientRect().height.toFixed(1) : 0,
+                   vh: window.innerHeight,
+                   page: document.documentElement.scrollHeight -
+                         document.documentElement.clientHeight,
+                   side: document.documentElement.scrollWidth -
+                         document.documentElement.clientWidth }; });
+        const floor = geo.vh - geo.bar - REST;
+        check(geo.pane >= floor && geo.side <= 1,
+          "T13e " + at + " · the pane at rest is " + geo.pane + "px against a " +
+          "floor of " + floor.toFixed(1) + " (screen − bar − safe area − 8), " +
+          "and the page does not scroll sideways — " + JSON.stringify(geo));
+
+        /* ---- i · ONE `+` AT EACH EDGE, `--tap` WIDE -------------------- */
+        const plus = await z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const hd = t && t.querySelector("thead th.nu-plushead .nu-plusbtn");
+          const ft = t && t.querySelector("tbody tr.nu-addrow th .nu-plusbtn");
+          const box = (e) => e ? { w: +e.getBoundingClientRect().width.toFixed(1),
+                                   h: +e.getBoundingClientRect().height.toFixed(1),
+                                   n: e.closest("th").querySelectorAll("button").length } : null;
+          return { head: box(hd), foot: box(ft),
+                   old: document.querySelectorAll("#pan-band .nu-addbar," +
+                     " #pan-band .nu-addbtn, #pan-band .nu-addhead").length }; });
+        check(plus.head && plus.foot && plus.head.n === 1 && plus.foot.n === 1 &&
+              plus.head.w <= 48 && plus.foot.w <= 48 && plus.old === 0,
+          "T13i " + at + " · one `+` cell at the end of the head row and one " +
+          "`+` row at the grid's foot, one button each, `--tap` wide — " +
+          JSON.stringify(plus));
+
+        /* ---- f/g · THE CELLS AND THE HEADS ---------------------------- */
+        /* THE BLANK STATE HAS NO PLAYERS, WHICH IS THE POINT OF IT — so the
+           record §13b names for the overlap count is BUILT here, through the
+           ADD sheet's own three offers, which is the gesture a reader makes
+           and the one this round moved. */
+        const nvoices = await z.evaluate(() => window.__eightDoc().voices.length);
+        if (nvoices === 0) {
+          await ztap("tadd|foot");
+          for (const k of ["line", "bass", "drums"]) await ztap("tcol-add|" + k);
+          await ztap("tadd|foot");
+          await z.waitForTimeout(400);
+        }
+        const grid = await z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const tr = t && t.querySelector("tbody tr[data-row]");
+          const box = (e) => { const r = e.getBoundingClientRect();
+            return { x: r.x, y: r.y, w: r.width, h: r.height }; };
+          const cells = tr ? [...tr.querySelectorAll("td .nu-wcell")].map(box) : [];
+          let pairs = 0, worst = null;
+          for (let i = 0; i < cells.length; i++)
+            for (let j = i + 1; j < cells.length; j++) {
+              const a = cells[i], c = cells[j];
+              const ox = Math.min(a.x + a.w, c.x + c.w) - Math.max(a.x, c.x);
+              const oy = Math.min(a.y + a.h, c.y + c.h) - Math.max(a.y, c.y);
+              if (ox > 0.5 && oy > 0.5) { pairs++; if (!worst) worst = +ox.toFixed(1); }
+            }
+          /* A HEAD IS NEVER CUT MID-WORD: what is DRAWN is measured against
+             what it would take to draw it whole, on the visible word only. */
+          const cut = [];
+          const heads = t ? [...t.querySelectorAll("thead th.nu-colhead .nu-colbtn")] : [];
+          let hp = 0;
+          const hb = heads.map(box);
+          for (let i = 0; i < hb.length; i++)
+            for (let j = i + 1; j < hb.length; j++) {
+              const a = hb[i], c = hb[j];
+              const ox = Math.min(a.x + a.w, c.x + c.w) - Math.max(a.x, c.x);
+              const oy = Math.min(a.y + a.h, c.y + c.h) - Math.max(a.y, c.y);
+              if (ox > 0.5 && oy > 0.5) hp++;
+            }
+          for (const h of heads) {
+            for (const n of h.querySelectorAll(".nu-colname, .nu-colinstr")) {
+              const vis = getComputedStyle(n).display !== "none" &&
+                          n.getClientRects().length;
+              if (vis && n.scrollWidth > n.clientWidth + 1)
+                cut.push((n.textContent || "").trim() + " " +
+                         Math.round(n.clientWidth) + "/" + n.scrollWidth); } }
+          return { n: cells.length, pairs, worst, cut, heads: heads.length, hp };
+        });
+        check(grid.n > 0 && grid.pairs === 0 && grid.hp === 0,
+          "T13f " + at + " · zero overlapping pairs among the " + grid.n +
+          " cells of a section row and the " + grid.heads + " column heads — " +
+          JSON.stringify({ pairs: grid.pairs, heads: grid.hp, worst: grid.worst }));
+        check(grid.cut.length === 0,
+          "T13g " + at + " · no head is cut mid-word (" +
+          (grid.cut.length ? JSON.stringify(grid.cut) : "0 of " + grid.heads) + ")");
+
+        /* ---- c/d/h · THE PIN FOLLOWS WHAT IS OPEN, AND THE SCROLL DOES
+           NOT MOVE. v287's T12n law — *"a tap moves nothing"* — asked of the
+           ROW: opening and closing TIME, RULES or a cell leaves the pane's own
+           `scrollTop` byte for byte where it was. */
+        const setTop = async (y) => { await z.evaluate((v) => {
+            const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]");
+            if (pane) pane.scrollTop = v; }, y);
+          await z.waitForTimeout(200); };
+        const topOf = () => z.evaluate(() => {
+          const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]");
+          return pane ? Math.round(pane.scrollTop) : null; });
+        const cellK = await z.evaluate(() => {
+          const c = document.querySelector("#pan-band tbody tr[data-row] td .nu-wcell");
+          return c ? c.dataset.k : null; });
+        const moves = [];
+        for (const [name, k, twice] of [["TIME", "ttime", false],
+                                        ["RULES", "trules", false],
+                                        ["a cell", cellK, true]]) {
+          if (!k) continue;
+          await setTop(120);
+          const y0 = await topOf();
+          await ztap(k); if (twice) await ztap(k);
+          const y1 = await topOf();
+          const open = await pins();
+          await ztap(k);
+          const y2 = await topOf();
+          moves.push({ name, y0, y1, y2, held: open.held });
+          if (name === "a cell")
+            check(open.held.length === 0,
+              "T13d " + at + " · with a CELL sheet open NOTHING in the head " +
+              "pins — its own first line is in flow at its top — " +
+              JSON.stringify(open.held));
+          else
+            check(open.held.length === 1 && open.held[0].sp ===
+                    (name === "TIME" ? "time" : "rules") &&
+                  open.held[0].top === 0,
+              "T13c " + at + " · with " + name + " open its OWN ROW is the " +
+              "only pin, at the pane's top edge, as its sheet's header — " +
+              JSON.stringify(open.held));
+        }
+        const kept = moves.filter((m) => m.y0 === m.y1 && m.y1 === m.y2);
+        check(kept.length === moves.length,
+          "T13h " + at + " · the pane's scrollTop is IDENTICAL across open and " +
+          "close of " + moves.map((m) => m.name).join(", ") + " — " +
+          JSON.stringify(moves.map((m) => [m.name, m.y0, m.y1, m.y2])));
+
+        /* ---- l · T7's LAW RE-PROVED, IN TAPS -------------------------- */
+        /* Every control the formula bar, the addbars and `.nu-top` offered,
+           reachable in ≤ 2 taps FROM REST. It is counted in taps and not in
+           `data-k`s because that is the claim: a control behind three doors is
+           not lost, it is unreachable, and the two are the same thing to a
+           thumb. */
+        if (W === 320) {
+          await z.evaluate(() => window.__eightTab("Band"));
+          await z.waitForTimeout(500);
+          const reach = { };
+          const seen = (k) => z.evaluate((key) => {
+            const el = document.querySelector('#pan-band [data-k="' + key + '"]') ||
+                       document.querySelector('[data-k="' + key + '"]');
+            if (!el) return 0;
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height >= 43.5 ? 1 : -1; }, k);
+          /* the addbars' four: `+` (one tap), then the offer */
+          await ztap("tadd|foot");
+          for (const k of ["tcol-add|line", "tcol-add|bass", "tcol-add|drums",
+                           "trow-add"]) reach[k] = await seen(k);
+          await ztap("tadd|foot");
+          /* the formula bar's five: the cell (two taps — select, then edit) */
+          if (cellK) {
+            /* IDEMPOTENTLY, WHICH IS THE SAME DISCIPLINE `openCell` KEEPS: a
+               cell takes two taps only when nothing is standing on it, and the
+               loop above left the ring exactly there. Two blind taps on a
+               selected cell open the sheet and shut it again — measured, and
+               it reported all five verbs LOST on a page that was drawing
+               them. */
+            await z.evaluate((key) => {
+              const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+              if (!el) return;
+              if (!el.classList.contains("is-sel")) el.click(); }, cellK);
+            await z.waitForTimeout(450);
+            await z.evaluate((key) => {
+              const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+              if (el && el.getAttribute("aria-expanded") !== "true") el.click(); },
+              cellK);
+            await z.waitForTimeout(450);
+            for (const k of ["taddr", "tundo", "tredo", "tcopy", "tpaste"])
+              reach[k] = await seen(k);
+            await ztap(cellK);
+          }
+          /* `.nu-top`'s two: the ≡ is in the bar (0 taps) and the × is the
+             open sheet's own header (one tap on a viewer, from the ≡). */
+          reach["menu"] = await seen("menu");
+          await z.evaluate(() => window.__eightTab("Score"));
+          await z.waitForTimeout(600);
+          const closeAt = await z.evaluate(() => {
+            const c = document.getElementById("sheetclose");
+            const head = c && c.closest(".nu-sheethead");
+            const host = head && head.parentElement;
+            const r = c ? c.getBoundingClientRect() : null;
+            return { there: !!c, inSheet: !!(host && host.dataset &&
+                       host.dataset.sheet != null),
+                     first: !!(host && host.firstElementChild === head),
+                     h: r ? Math.round(r.height) : 0,
+                     w: r ? Math.round(r.width) : 0 }; });
+          await z.evaluate(() => window.__eightTab("Band"));
+          await z.waitForTimeout(500);
+          const lost = Object.keys(reach).filter((k) => reach[k] !== 1);
+          check(lost.length === 0 && closeAt.there && closeAt.inSheet &&
+                closeAt.first && closeAt.h >= 44 && closeAt.w >= 44,
+            "T13l " + at + " · T7's law re-proved: every control the formula " +
+            "bar, the addbars and `.nu-top` offered is reachable in ≤ 2 taps " +
+            "from rest — the offers behind one `+`, the address and its four " +
+            "verbs on the open cell's first line, the ≡ in the bar and the × " +
+            "at the head of the sheet it closes " +
+            (lost.length ? "— LOST " + JSON.stringify(lost) : "") + " " +
+            JSON.stringify(closeAt));
+        }
+        await c13.close();
+      }
     }
   }
 

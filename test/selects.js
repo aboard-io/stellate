@@ -562,6 +562,10 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     // `tcol-add|drums` SINCE 2026-09-05 (TABLE.md §9a, "no op lives in the
     // nav") — the same rewrite as test/sheets.js's, for the same reason: the
     // stripe's `adddrums` row is the table's own adder cell now.
+    /* ...AND IT IS INSIDE THE ADD SHEET SINCE 2026-09-05 (TABLE.md §13a.5):
+       the grid's foot `+` opens it, the address is unchanged. */
+    const plus = document.querySelector('#pan-band [data-k="tadd|foot"]');
+    if (plus && plus.getAttribute("aria-expanded") !== "true") plus.click();
     const add = document.querySelector('#pan-band [data-k="tcol-add|drums"]');
     if (add) { add.click(); return; }
     if (window.__addDrums) window.__addDrums(true);

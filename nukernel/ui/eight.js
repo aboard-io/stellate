@@ -13410,6 +13410,9 @@ const MENUROWS = () => TABS
 
 let menuOpen = false;
 let menuBox = null, menuBtn = null, closeBtn = null, barEl = null;
+/* THE OPEN SHEET'S HEADER AND THE `<b>` THAT NAMES IT (2026-09-05, §13a.1).
+   One node, moved between panels by `showTab`; `.nu-top` is deleted. */
+let sheetHead = null, sheetName = null;
 let menuBtnMap = new Map();
 
 /* THE MENU IS A DOOR AND WEARS `aria-expanded` — the #playops discipline, made
@@ -13517,10 +13520,16 @@ function chromeRow() {
   const nav = $("nu-chrome");
   if (!nav) return;
   nav.textContent = "";
-  /* THE TOP STRIP: the close and the hamburger, in that order, so the ≡ is at
-     the corner and the × arrives beside it rather than under it. A sheet's way
-     out is a target of its own and not the ≡ wearing a second meaning. */
-  const top = el("div", null, "nu-top");
+  /* THE TOP STRIP IS DELETED (2026-09-05, TABLE.md §13a.1: *"Nothing is fixed
+     but the bottom bar. A thing pins only while you are inside it."*). It held
+     the × and the ≡ as two fixed plates at the top corner — measured 55.8 x
+     55.2 at 390 x 844, plus the 55.2px of <body> padding reserved under them —
+     and Paul's sentence about the page they stood over is *"it's all jammed
+     up."* The two marks are built here still, and they are the same two nodes
+     with the same ids, the same addresses and the same listeners; what changed
+     is where they are appended. The ≡ goes to the END of the bar (below), and
+     the × goes into the header of whichever sheet is open (`sheetHead`), which
+     is what closes a sheet everywhere else software is written. */
   closeBtn = icon({ k: "sheet-close", glyph: GLYPH.act.close.g,
                     word: GLYPH.act.close.w, say: GLYPH.act.close.s });
   closeBtn.id = "sheetclose";
@@ -13532,8 +13541,13 @@ function chromeRow() {
   menuBtn.setAttribute("aria-expanded", "false");
   menuBtn.setAttribute("aria-controls", "nu-menu");
   menuBtn.addEventListener("click", () => { setMenu(); paintChrome(); });
-  top.append(closeBtn, menuBtn);
-  nav.append(top);
+  /* THE SHEET'S OWN HEADER: its name at the start, its close at the end. ONE
+     node for the life of the page, moved into whichever panel is a sheet —
+     `showTab` puts it there and takes it away — because a header built per
+     panel would be five headers and a × with five listeners. */
+  sheetHead = el("div", null, "nu-sheethead");
+  sheetName = el("b");
+  sheetHead.append(sheetName, closeBtn);
 
   /* THE MENU. Four viewers and the log, built once; `paintChrome` moves the
      one `<mark>` and never rebuilds a row. */
@@ -13590,6 +13604,13 @@ function chromeRow() {
   const tp = el("div", null, "nu-bartp");
   tp.append(playOpsBox, playOpsBtn, voicingBtn, playBtn);
   barEl.append(tp);
+  /* ...AND THE ≡ IS THE BAR'S LAST BUTTON (2026-09-05, §13a.1). It is the one
+     control that is on the screen in every state of this page, so it may not
+     shift under a reach — the end of a row that never wraps is the one place
+     on a phone where that is true. The menu plate hangs directly above it
+     (nu.css `#nu-menu`, `inset-block-end`), which is where a door opens from
+     the mark that is its handle. */
+  barEl.append(menuBtn);
   nav.append(barEl);
 
   logPanel = $("nu-log");
@@ -13829,6 +13850,20 @@ function showTab(name) {
   if (leaving === "Band") { tabStale.add(leaving); buildTab(leaving); }
   if (name === "Band") tabStale.add(name);
   const built = buildTab(name);
+  /* AND THE × (after the build, which empties the host) — IS THE SHEET'S OWN (2026-09-05, §13a.1). The header goes to the
+     TOP of whichever panel is a sheet and comes away when the table is the
+     page again — one node with one parent, so there is never a second × and
+     never one over a table that has nothing to close. */
+  if (sheetHead) {
+    const h = name === "Band" ? null : hostOf(name);
+    if (!h) { if (sheetHead.parentNode) sheetHead.remove(); }
+    else {
+      if (sheetName) sheetName.textContent =
+        (GLYPH.tab[name] && GLYPH.tab[name].w) || name;
+      if (h.firstChild !== sheetHead) h.insertBefore(sheetHead, h.firstChild);
+    }
+  }
+
   /* AND ITS PANES GET THEIR SIDEWAYS SCROLL BACK. A `display: none` scroll
      container comes back at 0 whether it was rebuilt or not, so this is not a
      rebuild-repair — it is the same promise `keepPanes` makes across an edit,

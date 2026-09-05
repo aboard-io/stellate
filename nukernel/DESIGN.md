@@ -25,10 +25,10 @@ musician uses.
 States every component may wear: **rest · derived (quiet, inherited/default) · written (bold, a hand set it) · selected (ring in --hand) · editing (the control popped up) · refused (dashed, with its sentence) · sounding (lamp in --clock) · measured (--meter)**. A state is a class the gates can read; a live state writes CHILDREN only.
 
 1. **Cell** — a plain value at rest: its GLYPH first, the word only where no honest glyph exists, a number small beside its glyph, tabular. No border, no plate. First tap selects; second tap / Enter / F2 / a printable key edits; Delete clears to default; Escape restores; Tab commits and moves. Range by Shift or drag.
-2. **Head** — a row or column header: name + glyph, sticky on its axis at every width, the corner pinned both ways; carries its lamp; its menu on long-press / right-click; its `+` at the end of the axis.
-3. **Special row** — TIME · RULES · MOTIFS above, MIX · PRODUCE below: a merged row, collapsed face = plain text/glyphs on one line, expanded = its sheet; keeps its open state across a recompile; pins under the rows above it at its measured offset.
-4. **Sheet** — a vector as rows (label · value · clear-back), full pane width, wrapping, in flow (never a modal), sticky within the pane; the formula bar mirrors the selected cell's sheet.
-5. **Formula bar** — address · the selected cell's vector as chips/values · undo · redo · copy · paste; the typed editor's candidates dock here (§11a), ranked, top match highlighted.
+2. **Head** — a row or column header: glyph first and its word where the column has room for it whole (≥ 9ch; a head is never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that opens the ADD sheet (TABLE.md §13a.5), never a row of offers.
+3. **Special row** — TIME · RULES · MOTIFS above, MIX · PRODUCE · PERFORM below: a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
+4. **Sheet** — a vector as rows (label · value · clear-back), full pane width, wrapping, in flow (never a modal), opened as the next `<tr>` under the row that owns it; its owner row is its header and is the pane's ONE pin while it is open (a cell sheet pins nothing at all — its header is component 5, in flow at its top).
+5. **Cell sheet header** — the first line of the OPEN cell sheet: the address of the selection, then undo · redo · copy · paste. Present only while a cell sheet is open, in flow at its top, never fixed and never sticky. (It was the **formula bar**, a strip above the pane that became a bottom sheet on a phone — 105.8px of a 844px screen at rest, measured — until TABLE.md §13a.6 moved its head into the sheet and found its readout was the sheet's own first group all along. Undo and redo therefore live where the change was made.)
 6. **Pop-up** — what a tap on a cell/field opens: a chip strip (≤ 8 words), a slider (a number), the envelope/curve editor (an envelope, an EQ, a lane), the native picker on a coarse pointer (> 8 words), the typed combo on a fine one. **Dismiss only on tap outside, Escape, or its own close — never on a value tap.** Sits where a keyboard cannot cover it.
 7. **Chip** — a word: `--r2`, hairline, .5ch padding, 44px tall; pressed = written; a refused chip prints its reason under its word.
 8. **Slider** — for every continuous number: a trough (`--sl-trough`), a line, a cap; the number printed and typeable beside it; `touch-action: none`; arrows/Home/End; a long-press or the clear-back resets (double-tap is not a gesture on touch).
@@ -36,7 +36,7 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 10. **Menu / picker** — one owner (`src/menus pickerFor`): chips ≤ 8 · native `<select>` on coarse > 8 · typed combo on fine; every address byte-identical across widgets.
 11. **Lamp** — a child `<i>` painted `--clock` (scheduled) or `--meter` (measured); never both meanings in one colour.
 12. **Bar** — fixed at the foot, `--bar-h`: genre plate · die + number (+ countdown) · opts fold · voicing · play. Icons with hidden labels and `data-say`; no visible words except the genre plate (Paul, 2026-09-05).
-13. **Hamburger** — `#burger` top-right with the log's badge; a full-height in-flow sheet per viewer (Score · Video · Screensaver · Export) with a close.
+13. **Hamburger** — `#burger`, the LAST button of the bar, with the log's badge; its menu plate opens directly above it. A full-height in-flow sheet per viewer (Score · Video · Screensaver · Export), and the close is the **sheet header**'s: one line at the top of the open sheet, its name at the start and the × at the end. (It was a fixed plate at the top corner with the × beside it; TABLE.md §13a.1 deleted that strip — nothing is fixed but the bar.)
 14. **Refusal** — never a missing control: the control drawn disabled with its sentence beside it (no silent grey).
 15. **Glyph** — every icon from `ui/glyph.js`, each with its `.nu-vh` word and `data-say`; the sheet at 390 reads as a grid of marks.
 16. **Lozenge field** (Paul, 2026-09-05: *"a novel interface for when there
@@ -82,7 +82,8 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 - A change lands at the next bar while playing (evolve); undo/redo at the document level, every op.
 - Blank = default (inherited); bold = written; delete = back to default.
 - Nothing dismisses under a finger that is changing a value.
-- Nothing scrolls sideways at the page level; the pane is the scrollport; heads stick.
+- Nothing scrolls sideways at the page level; the pane is the scrollport.
+- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are a sheet, not columns. A cell is its glyph first and its word where the column has room. Opening or closing a sheet leaves the pane's `scrollTop` identical.
 
 ## 4 · Copy (the voice)
 

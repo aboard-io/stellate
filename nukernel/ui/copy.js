@@ -404,6 +404,21 @@ var SHEETS = {
   "group.tempo": "Tempo",
   "group.meter": "Meter",
   "group.chords": "Chords",
+  /* ...AND ONE MORE FOR THE ADD SHEET (2026-09-05, TABLE.md §13a.5): the head
+     row's `+` and the grid's foot `+` open one sheet, and its two lists — the
+     player offers and the section offer — stand under their own headings, in
+     the same shape every other sheet on this page is grouped in. The sections'
+     heading is `group.form` above, unedited: a record's sections ARE its form,
+     which is what §11c already calls them in a section's own sheet. */
+  "group.band": "The players",
+  /* ===== THE ADD SHEET (2026-09-05, TABLE.md §13a.5) =====================
+     Paul, on the Silence record at 390: *"three adders took more width than
+     the three players they were offering to join."* The three buttons in the
+     head and the one under the last section are one `+` at each edge now, and
+     these are the two questions its sheet asks. (Its NAME is `act.add` and the
+     `+`'s own clause is `glyph.act.add.say`; neither is spelled again here.) */
+  "add.players": "Who else plays",
+  "add.sections": "What comes next",
   /* ===== THE FOLLOW-UP SWEEP (2026-09-05) ================================
      What the copy BROWSER gate found still assembled in ui/eight.js after the
      surface pass: the time row's two sliders and its readout, the chord
@@ -863,6 +878,11 @@ var GLYPHS = {
   "glyph.act.menu.say": "Score, video, screensaver, export and log",
   "glyph.act.close": "close",
   "glyph.act.close.say": "Back to the song",
+  /* ...AND ONE MORE, 2026-09-05 (TABLE.md §13a.5): the `+` at each edge of the
+     grid. The three adder buttons in the head row and the one under the last
+     section are one mark now, and the mark opens the ADD sheet. */
+  "glyph.act.add": "add",
+  "glyph.act.add.say": "Add a player or a section",
   /* the WORD is core's `noun.seed`, and the die's two names share one
      explainer — `glyph.act.rewrite.say` — because they are one button. */
   "glyph.act.tap": "tap",

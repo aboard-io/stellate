@@ -403,7 +403,11 @@ const SURVEY = () => {
 const BANDS = async () => {
   const raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   const bar = document.getElementById("nu-bar");
-  const top = document.querySelector(".nu-top");
+  /* (`const top = document.querySelector(".nu-top")` STOOD HERE and was read by
+     nothing. `.nu-top` is deleted — TABLE.md §13a.1, *"Nothing is fixed but the
+     bottom bar"* — and the sweep below has one band to assert, which is what
+     this check has said since the heading and the old `.nu-bar` went in
+     2026-08-29.) */
   const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
   window.scrollTo(0, 0);
   await raf();
@@ -484,7 +488,12 @@ const BANDS = async () => {
       return b ? (b.getAttribute("aria-label") || "").trim() : null;
     })(),
     barH: +bar.getBoundingClientRect().height.toFixed(1),
-    topH: top ? +top.getBoundingClientRect().height.toFixed(1) : 0,
+    /* THE TOP STRIP'S HEIGHT IS ZERO BY CONSTRUCTION SINCE 2026-09-05
+       (TABLE.md §13a.1). `.nu-top` is deleted and <body> reserves nothing at
+       the head of the page: the ≡ is the bar's last button and the × is the
+       open sheet's own header. It is reported rather than dropped, because
+       "the second fixed band is 0" is the claim this round makes. */
+    topH: 0,
   };
 };
 
@@ -826,10 +835,21 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02, Paul: *"Add a 'silence'
          genre at the top of the genre list. This is a blank state."*) and a
          blank state has NO PLAYERS, which is the point of it. So the gate
-         hires one the way a reader does: the adder cell at the end of the
-         player axis, `tcol-add|line`. */
+         hires one the way a reader does — and since 2026-09-05 (TABLE.md
+         §13a.5) that is TWO taps and not one: the `+` at the grid's foot
+         opens the ADD sheet and `tcol-add|line` is the lozenge inside it, at
+         the address it has always had. The three adder buttons that stood in
+         the head row took 22ch of a phone; the `+` takes `--tap`. */
+      const openAdd = async () => {
+        const plus = await page.$('#pan-band [data-k="tadd|foot"]');
+        if (!plus) return false;
+        if (await page.evaluate((b) => b.getAttribute("aria-expanded") !== "true",
+                                plus)) { await plus.click();
+                                         await page.waitForTimeout(500); }
+        return true; };
       const anyCol = await page.$('#pan-band th.nu-colhead button');
       if (!anyCol) {
+        await openAdd();
         const add = await page.$('#pan-band [data-k="tcol-add|line"]');
         if (add) { await add.click(); await page.waitForTimeout(900); }
       }
@@ -852,17 +872,25 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         if (await page.evaluate((h) => h.getAttribute("aria-expanded") !== "true",
                                 head)) await head.click();
         await page.waitForTimeout(500);
-        const r = await page.evaluate((name) => {
+        const rdel = await page.evaluate((name) => ({ name,
+          del: !!document.querySelector(
+            '#pan-band [data-k="' + CSS.escape("tcol-del|" + name) + '"]') }),
+          name);
+        /* ...AND THE THREE HIRES ARE ONE DOOR FURTHER IN (2026-09-05, §13a.5):
+           the `+` at the grid's foot, then the ADD sheet's three lozenges. Two
+           taps from rest, which is what §13b asks of every control the addbars
+           used to stand around holding. The player's own `remove` is where it
+           always was, in the sheet its column head opens. */
+        await openAdd();
+        const r = Object.assign({}, rdel, await page.evaluate(() => {
           const at = (k) => !!document.querySelector(
             '#pan-band [data-k="' + CSS.escape(k) + '"]');
-          return { name,
-                   del: at("tcol-del|" + name),
-                   hire: ["line", "bass", "drums"]
-                     .filter((k) => at("tcol-add|" + k)).length };
-        }, name);
+          return { hire: ["line", "bass", "drums"]
+                     .filter((k) => at("tcol-add|" + k)).length }; }));
         is(!!r.name && r.del && r.hire === 3,
-          "A6l " + width + " · a player's `remove` and the three hires are on "
-          + "the table, in the sheet its own column head opens — "
+          "A6l " + width + " · a player's `remove` is in the sheet its own "
+          + "column head opens and the three hires are in the ADD sheet the "
+          + "`+` opens, two taps from rest — "
           + JSON.stringify(r));
         const rowHead = await page.$('#pan-band th.nu-srowh button[data-k^="trow|"]');
         if (rowHead) {
@@ -870,14 +898,16 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
           if (await page.evaluate((h) => h.getAttribute("aria-expanded") !== "true",
                                   rowHead)) await rowHead.click();
           await page.waitForTimeout(600);
-          const rs = await page.evaluate((id) => {
+          const rs0 = await page.evaluate((id) => {
             const at = (k) => !!document.querySelector(
               '#pan-band [data-k="' + CSS.escape(k) + '"]');
             return { id,
                      ops: ["trow-up|", "trow-down|", "trow-dup|", "trow-del|"]
-                       .filter((k) => at(k + id)).length,
-                     add: at("trow-add") };
+                       .filter((k) => at(k + id)).length };
           }, rowId);
+          await openAdd();
+          const rs = Object.assign({}, rs0, await page.evaluate(() => ({
+            add: !!document.querySelector('#pan-band [data-k="trow-add"]') })));
           is(!!rs.id && rs.ops === 4 && rs.add,
             "A6l " + width + " · …and a section's four operations plus "
             + "`+ section` are on the table at their own addresses — "
@@ -893,10 +923,13 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     // button on the tabbed page and skipped at all four widths.
     // ...AND IT IS THE TABLE'S OFFER SINCE 2026-09-05 (TABLE.md §9a, "no op
     // lives in the nav"): `adddrums` was a row in the Band branch of the
-    // stripe and is `tcol-add|drums` on the player axis's adder cell, which is
-    // the address the T7 inventory filed it onto the day the ops left the tray.
+    // stripe and is `tcol-add|drums`, which is the address the T7 inventory
+    // filed it onto the day the ops left the tray. It is inside the ADD sheet
+    // since TABLE.md §13a.5 — same address, opened by the grid's foot `+`.
     await page.evaluate(() => window.__eightTab("Band"));
     await page.waitForTimeout(TAB_SETTLE("Band"));
+    await page.evaluate(() => window.__eightRow("add|foot", true));
+    await page.waitForTimeout(500);
     const add = await page.$('#pan-band [data-k="tcol-add|drums"]');
     if (add) { await add.click(); await page.waitForTimeout(1200); }
     else skip(width + " · no [data-k=tcol-add|drums] button — the kit grid was not measured");
@@ -1064,6 +1097,11 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         const max = Math.max(0, document.documentElement.scrollHeight
                                 - window.innerHeight);
         window.scrollTo(0, 0); await raf();
+        /* ONE BAND SINCE 2026-09-05 (TABLE.md §13a.1). `.nu-top` was a fixed
+           plate at the top corner and <body> reserved `--top-h` under it; both
+           are deleted, so the only chrome anything can be under is the bar. The
+           query is kept as a null so the claim reads as "there was a second
+           band and there is not", and it is asserted at zero below. */
         const top = document.querySelector(".nu-top");
         const badTop = top ? sweep(top.getBoundingClientRect()) : [];
         window.scrollTo(0, max); await raf();

@@ -1428,6 +1428,17 @@ function sectionOffer(A2) {
 
 // nukernel/src/table/sheet.ts
 var LOZ = () => globalThis.NuLozenge || null;
+function offerLozenge(key, label, options, onPick) {
+  const door = LOZ();
+  if (!door) return null;
+  return door.lozengeField({
+    key,
+    label,
+    options,
+    value: "",
+    onWrite: (v3) => onPick(v3)
+  });
+}
 function clustersOf(f2) {
   if (f2.groups && f2.groups.length > 1) return f2.groups;
   const by = /* @__PURE__ */ new Map();
@@ -2030,6 +2041,12 @@ function shapeOf(A2) {
 }
 var STICKY = (k2) => !!k2 && k2 !== "corner";
 var SPECIAL = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0);
+var ADDHEAD = "sp|add-head";
+var ADDFOOT = "sp|add-foot";
+var actMark = (k2) => {
+  const d2 = globalThis.NuGlyph;
+  return d2 && d2.GLYPH && d2.GLYPH.act && d2.GLYPH.act[k2] || null;
+};
 function bandTable(host, A2) {
   const U = undoStack(A2);
   if (!STICKY(OPEN)) {
@@ -2108,21 +2125,47 @@ function bandTable(host, A2) {
     const tRect = t5.getBoundingClientRect();
     const base = pane2 ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
     const tops = rows.map((tr) => base + (tr.getBoundingClientRect().top - tRect.top));
-    const cut = rows.findIndex((r2) => r2.classList.contains("nu-spopen"));
+    const spOpen = rows.findIndex((r2) => r2.classList.contains("nu-spopen"));
+    const cellOpen = !!t5.querySelector("tbody > tr.nu-cellopen");
+    const owner = spOpen > 0 ? spOpen - 1 : -1;
+    const last = rows.length - 1;
+    const pinned = cellOpen ? -1 : owner >= 0 ? owner : last;
     rows.forEach((_tr, i5) => {
-      const free = cut >= 0 && i5 >= cut;
       for (const c3 of cells[i5])
-        c3.style.insetBlockStart = free ? "auto" : tops[i5] + "px";
+        c3.style.insetBlockStart = i5 === pinned ? "0px" : "auto";
     });
+    void tops;
+    const th0 = t5.querySelector("thead th.nu-colhead");
+    if (th0) {
+      const probe = document.createElement("span");
+      probe.style.cssText = "position:absolute;visibility:hidden;inline-size:9ch";
+      th0.appendChild(probe);
+      const nine = probe.getBoundingClientRect().width;
+      probe.remove();
+      const wide = th0.getBoundingClientRect().width >= nine;
+      t5.classList.toggle("has-words", wide);
+      const over = (e4) => !!e4 && e4.scrollWidth > e4.clientWidth + 1;
+      for (const b2 of Array.from(
+        t5.querySelectorAll("thead th.nu-colhead .nu-colbtn")
+      )) {
+        b2.classList.remove("is-first", "is-glyphonly", "is-noinstr");
+        if (!wide) continue;
+        const n3 = b2.querySelector(".nu-colname");
+        if (over(n3)) b2.classList.add("is-first");
+        if (over(n3)) b2.classList.add("is-glyphonly");
+        if (!b2.classList.contains("is-glyphonly") && over(b2.querySelector(".nu-colinstr")))
+          b2.classList.add("is-noinstr");
+      }
+    }
   }
   onRedraw(draw);
   const op = (name, fn) => U.run(name, fn);
   const wrap = (name, fn) => () => op(name, fn);
   const view = () => {
     const S2 = shapeOf(A2);
-    return b`<div class="nu-sheetwrap">${formulaHead(S2)}${pane(S2)}</div>`;
+    return b`<div class="nu-sheetwrap">${pane(S2)}</div>`;
   };
-  const formulaHead = (S2) => {
+  const cellHead = (S2) => {
     const at = S2.at();
     const doc = A2.doc();
     const addr = at ? t4("bar.address", {
@@ -2131,10 +2174,9 @@ function bandTable(host, A2) {
     }) : t4("bar.noCell");
     const rangeN = rangeCells(S2).length;
     const shown = rangeN > 1 ? tn("bar.addrRange", rangeN, { addr }) : addr;
-    return b`<div class="nu-formula" role="group"
+    return b`<div class="nu-cellhead" role="group"
         aria-label=${t4("bar.selection")}>
       <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
-      ${firstGroup(S2)}
       <div class="nu-fops">
         ${barBtn(
       "tundo",
@@ -2177,41 +2219,6 @@ function bandTable(host, A2) {
       () => pasteHere(S2)
     )}
       </div>
-    </div>`;
-  };
-  const firstGroup = (S2) => {
-    const at = S2.at();
-    if (!at) return A;
-    let fields = [];
-    try {
-      fields = cellSheet(A2, at.i, at.vi);
-    } catch (e4) {
-      return A;
-    }
-    const groupOf2 = (f2) => f2.group || null;
-    const first = fields.find((f2) => !!groupOf2(f2));
-    const head = first ? groupOf2(first) : null;
-    if (!head) return A;
-    const mine = fields.filter((f2) => groupOf2(f2) === head && f2.kind !== "ops" && f2.kind !== "node");
-    if (!mine.length) return A;
-    return b`<div class="nu-fvec" data-k="tvec" role="group"
-        aria-label=${t4("group." + head)}>
-      <b class="nu-fvechead">${t4("group." + head)}</b>
-      ${mine.map((f2) => {
-      const w2 = f2.word;
-      const word = w2 == null || w2 === "" ? "—" : String(w2);
-      const derived = !!f2.derived;
-      return b`<span class=${e3({
-        "nu-fvecpair": true,
-        "is-derived": derived
-      })}
-          aria-label=${t4("sheet.field", {
-        name: f2.label,
-        value: word
-      })}
-          ><small>${f2.label}</small
-          ><b>${word}</b></span>`;
-    })}
     </div>`;
   };
   const barBtn = (k2, word, aria, on, why, act) => b`<button type="button" class="nu-opbtn" data-k=${k2}
@@ -2258,6 +2265,7 @@ function bandTable(host, A2) {
       }
       out.push(b`<tr class="nu-sprow" data-special=${sp.id}>
         <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+          <div class="nu-spline">
           <button type="button" class="nu-sphead" data-k=${sp.k}
             aria-expanded=${String(open)}
             aria-label=${sp.aria}
@@ -2267,7 +2275,8 @@ function bandTable(host, A2) {
         toggle(openKey, true);
       }}
             ><b class="nu-spword">${sp.word}</b
-            ><span class="nu-spface">${face2}</span></button>${spLamp(sp)}
+            ><span class="nu-spface">${face2}</span></button>${spLamp(sp)}${spClose(openKey, open, sp.word)}
+          </div>
         </th>
       </tr>`);
       if (open)
@@ -2285,11 +2294,31 @@ function bandTable(host, A2) {
     <tr>
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
       ${c2(cols, (c3) => c3, (c3) => S2.across ? secHead(S2, c3) : voiceHead(S2, c3))}
-      <th class="nu-addhead" scope="col">
-        <div class="nu-addbar">${(S2.across ? sectionOffer(A2) : playerOffers(A2)).map((o4) => addBtn(o4))}</div>
-      </th>
+      <th class="nu-plushead" scope="col">${plusBtn("head")}</th>
     </tr>
+    ${OPEN === ADDHEAD ? openRow(
+    S2,
+    sheetFor(ADDHEAD, () => addSheet(S2)),
+    t4("act.add"),
+    "nu-spopen nu-addopen"
+  ) : A}
   </thead>`;
+  const spClose = (openKey, open, name) => {
+    if (!open) return A;
+    const mk = actMark("close");
+    return b`<button type="button" class="nu-spclose"
+      data-k=${"tclose|" + openKey}
+      aria-label=${t4("act.closeTab.aria", { name })}
+      @click=${() => toggle(openKey)}
+      ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "×"}</span
+      ><span class="nu-vh">${mk ? mk.w : t4("act.close")}</span></button>`;
+  };
+  const headWord = (name) => {
+    const first = String(name).split(/\s+/)[0] || String(name);
+    return b`<b class="nu-colname"
+      ><span class="nu-cnfull">${name}</span
+      ><span class="nu-cnfirst">${first}</span></b>`;
+  };
   const cornerBtn = (S2) => b`<button type="button"
     class="nu-rowjump nu-corner" data-k="tcorner"
     aria-expanded=${String(OPEN === "corner")}
@@ -2320,7 +2349,7 @@ function bandTable(host, A2) {
       e4.preventDefault();
       toggle("col|" + name, true);
     }}
-        >${cm ? b`<span class="nu-g" aria-hidden="true">${cm.g}</span>` : A}<b class="nu-colname">${name}</b>${cm ? b`<span class="nu-vh">${cm.w}</span>` : A}${sub ? b`<span class="nu-colinstr">${sub}</span>` : A}</button>
+        >${cm ? b`<span class="nu-g" aria-hidden="true">${cm.g}</span>` : A}${headWord(name)}${cm ? b`<span class="nu-vh">${cm.w}</span>` : A}${sub ? b`<span class="nu-colinstr">${sub}</span>` : A}</button>
       ${lamp(name)}
       ${grip(name, "tcol|" + name, name)}
     </th>`;
@@ -2339,8 +2368,7 @@ function bandTable(host, A2) {
       e4.preventDefault();
       toggle("row|" + sid, true);
     }}
-        >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}<b class="nu-colname">${A2.roleWord(s3.role)}</b
-        ><span class="nu-colinstr">${tn("count.bar", s3.bars)}</span>${sm ? b`<span class="nu-vh">${sm.w}</span>` : A}</button>
+        >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}${headWord(A2.roleWord(s3.role))}<span class="nu-colinstr">${tn("count.bar", s3.bars)}</span>${sm ? b`<span class="nu-vh">${sm.w}</span>` : A}</button>
       ${grip(sid, "tcol|" + sid, A2.secName(i5))}
     </th>`;
   };
@@ -2374,29 +2402,76 @@ function bandTable(host, A2) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   }}></button>`;
-  const addBtn = (o4) => b`<button type="button" class="nu-addbtn"
-    data-k=${o4.k} ?disabled=${!!o4.why}
-    aria-disabled=${o2(o4.why ? "true" : void 0)}
-    data-why=${o2(o4.why || void 0)}
-    title=${o2(o4.why || void 0)}
-    aria-label=${o4.why ? t4(
-    "sheet.refused",
-    { name: o4.aria || o4.word, why: o4.why }
-  ) : o4.aria || o4.word}
-    @click=${() => {
-    if (o4.why || !o4.act) return;
-    op(o4.word, o4.act);
-  }}
-    >${o4.word}</button>`;
+  const plusBtn = (where) => {
+    const k2 = where === "head" ? ADDHEAD : ADDFOOT;
+    const mk = actMark("add");
+    return b`<button type="button" class="nu-plusbtn"
+      data-k=${"tadd|" + where}
+      aria-expanded=${String(OPEN === k2)}
+      aria-label=${t4("glyph.act.add.say")}
+      data-say=${o2(mk && mk.s ? mk.s : void 0)}
+      @click=${() => toggle(k2)}
+      @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle(k2, true);
+    }}
+      ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "+"}</span
+      ><span class="nu-vh">${mk ? mk.w : t4("glyph.act.add")}</span></button>`;
+  };
+  const addSheet = (S2) => {
+    const players = S2.across ? sectionOffer(A2) : playerOffers(A2);
+    const sections = S2.across ? playerOffers(A2) : sectionOffer(A2);
+    const out = [];
+    const lz = offerField(players);
+    if (lz) out.push({
+      kind: "node",
+      group: "band",
+      label: t4("add.players"),
+      node: lz
+    });
+    else out.push({
+      kind: "ops",
+      group: "band",
+      label: t4("add.players"),
+      ops: runOps(players)
+    });
+    out.push({
+      kind: "ops",
+      group: "form",
+      label: t4("add.sections"),
+      ops: runOps(sections)
+    });
+    return out;
+  };
+  const runOps = (ops) => ops.map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2);
+  const offerField = (ops) => {
+    const parts = ops.map((o4) => o4.k.split("|"));
+    if (parts.length < 2 || parts.some((p3) => p3.length !== 2)) return null;
+    const stem = parts[0][0];
+    if (parts.some((p3) => p3[0] !== stem)) return null;
+    return offerLozenge(stem, t4("add.players"), ops.map((o4, i5) => ({
+      value: parts[i5][1],
+      label: o4.word,
+      why: o4.why || null,
+      disabled: !!o4.why
+    })), (v3) => {
+      const o4 = ops.find((x2) => x2.k === stem + "|" + v3);
+      if (o4 && !o4.why && o4.act) op(o4.word, o4.act);
+    });
+  };
   const tbody = (S2, rows, cols) => b`<tbody>
       ${orphanSheet(S2)}
       ${c2(rows, (r2) => r2, (r2) => bodyRow(S2, r2, cols))}
       <tr class="nu-addrow">
-        <th class="nu-addhead" scope="row">
-          <div class="nu-addbar">${(S2.across ? playerOffers(A2) : sectionOffer(A2)).map((o4) => addBtn(o4))}</div>
-        </th>
+        <th class="nu-plusrowh" scope="row">${plusBtn("foot")}</th>
         <td colspan=${nCols(S2) - 1}></td>
       </tr>
+      ${OPEN === ADDFOOT ? openRow(
+    S2,
+    sheetFor(ADDFOOT, () => addSheet(S2)),
+    t4("act.add"),
+    "nu-addopen"
+  ) : A}
     </tbody>`;
   const orphanSheet = (S2) => {
     if (!OPEN) return A;
@@ -2438,7 +2513,9 @@ function bandTable(host, A2) {
             name: S2.across ? rid : c3,
             section: S2.across ? c3 : rid
           }
-        )
+        ),
+        "nu-cellopen",
+        cellHead(S2)
       ) : A;
     })}`;
   };
@@ -2546,16 +2623,37 @@ function bandTable(host, A2) {
   const tfoot = (S2, cols) => b`<tfoot>
     ${mixRow(S2, cols)}
     ${produceRow(S2)}
-    ${footRow(
-    S2,
-    "perf",
-    "tfoot|perf",
-    t4("special.perf.word"),
-    t4("axis.performance"),
-    perfCells(A2),
-    () => perfSheet(A2)
-  )}
+    ${perfRow(S2)}
   </tfoot>`;
+  const perfRow = (S2) => {
+    const openKey = "foot|perf";
+    const cells = perfCells(A2);
+    const face2 = cells.map((c3) => c3.word).filter((w2) => w2 != null && w2 !== "").join(" · ");
+    return b`<tr class="nu-footrow nu-perfrow" data-row="perf">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <div class="nu-spline">
+        <button type="button" class="nu-sphead" data-k="tfoot|perf"
+          aria-expanded=${String(OPEN === openKey)}
+          aria-label=${t4("axis.performance")}
+          @click=${() => toggle(openKey)}
+          @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle(openKey, true);
+    }}
+          ><b class="nu-spword">${t4("special.perf.word")}</b
+          ><span class="nu-spface">${face2}</span></button>${spClose(openKey, OPEN === openKey, t4("special.perf.word"))}
+        </div>
+      </th>
+    </tr>
+    ${OPEN === openKey ? openRow(
+      S2,
+      sheetFor(
+        openKey,
+        () => wrapOps([...perfCells(A2), ...perfSheet(A2)])
+      ),
+      t4("special.perf.word")
+    ) : A}`;
+  };
   const mixRow = (S2, cols) => {
     const master = "mix|master";
     const face2 = masterFace(A2);
@@ -2566,6 +2664,7 @@ function bandTable(host, A2) {
     </tr>
     <tr class="nu-footrow nu-masterrow" data-row="master">
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <div class="nu-spline">
         <button type="button" class="nu-sphead" data-k="tmix"
           aria-expanded=${String(OPEN === master)}
           aria-label=${t4("special.master.aria", { face: face2 })}
@@ -2575,7 +2674,8 @@ function bandTable(host, A2) {
       toggle(master, true);
     }}
           ><b class="nu-spword">${t4("special.master.word")}</b
-          ><span class="nu-spface">${face2}</span></button>
+          ><span class="nu-spface">${face2}</span></button>${spClose(master, OPEN === master, t4("special.master.word"))}
+        </div>
       </th>
     </tr>
     ${OPEN === master ? openRow(
@@ -2595,6 +2695,7 @@ function bandTable(host, A2) {
     }
     return b`<tr class="nu-footrow nu-prodrow" data-row="produce">
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <div class="nu-spline">
         <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
           aria-expanded=${String(OPEN === openKey)}
           aria-label=${PRODUCE.aria}
@@ -2604,7 +2705,8 @@ function bandTable(host, A2) {
       toggle(openKey, true);
     }}
           ><b class="nu-spword">${PRODUCE.word}</b
-          ><span class="nu-spface">${face2}</span></button>
+          ><span class="nu-spface">${face2}</span></button>${spClose(openKey, OPEN === openKey, PRODUCE.word)}
+        </div>
       </th>
     </tr>
     ${OPEN === openKey ? openRow(S2, sheetFor(openKey, () => wrapOps(PRODUCE.sheet(A2))), PRODUCE.word) : A}`;
@@ -2633,50 +2735,8 @@ function bandTable(host, A2) {
       ${mixLamp(name)}
     </td>`;
   };
-  const footRow = (S2, id, k2, word, aria, cells, sheet) => {
-    const openKey = "foot|" + id;
-    return b`<tr class="nu-footrow" data-row=${id}>
-      <th class="nu-srowh" scope="row">
-        <button type="button" class="nu-rowjump" data-k=${k2}
-          aria-expanded=${String(OPEN === openKey)} aria-label=${aria}
-          @click=${() => toggle(openKey)}
-          ><span class="nu-srowname">${word}</span></button>
-      </th>
-      <td colspan=${nCols(S2) - 1}>
-        <div class="nu-footcells">${cells.map((c3) => b`<div
-          class="nu-footcell">${footCell(c3)}</div>`)}</div>
-      </td>
-    </tr>
-    ${OPEN === openKey ? openRow(S2, sheetFor(openKey, sheet), openKey) : A}`;
-  };
-  const footCell = (c3) => {
-    const f2 = c3;
-    if (!f2.key) return b`<span class="nu-sgsay">${f2.word ?? "—"}</span>`;
-    return b`<button type="button"
-      class=${e3({
-      "nu-wcell": true,
-      "nu-cellword": true,
-      "is-derived": !!f2.derived
-    })}
-      data-k=${f2.key}
-      aria-label=${t4("sheet.field", {
-      name: f2.label || f2.key,
-      value: f2.word ?? "—"
-    })}
-      @click=${() => {
-      const row = "foot|perf";
-      if (SHEETKEY !== row) {
-        SHEETKEY = null;
-        SHEETFIELDS = null;
-      }
-      OPEN = row;
-      OPENFIELD = f2.key;
-      draw();
-    }}
-      >${f2.label ?? f2.word ?? "—"}</button>`;
-  };
-  const openRow = (S2, fields, name, cls) => b`<tr class=${cls ? "nu-wopen " + cls : "nu-wopen"}
-      ><td colspan=${nCols(S2)}>${sheetBody(
+  const openRow = (S2, fields, name, cls, head) => b`<tr class=${cls ? "nu-wopen " + cls : "nu-wopen"}
+      ><td colspan=${nCols(S2)}>${head ?? A}${sheetBody(
     fields,
     name,
     OPENFIELD,

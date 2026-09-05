@@ -734,17 +734,26 @@ body{ margin: 0; background: var(--paper); color: var(--ink);
      gutter with `margin-inline-end: calc(-1 * var(--gr))` and re-pay it as
      padding, so their right edge is `100vw` — the viewport's own edge, because
      there is nothing standing at it any more. */
-  padding-block-end: calc(var(--bar-h) + var(--s3));
-  /* ...AND THE TOP STRIP IS RESERVED THE SAME WAY, for the same sentence.
-     `.nu-top` holds the ≡ (and, inside a sheet, the ×) at the top corner, and
-     a 44px plate floating over the first row of the table would be the same
-     defect the gutter's own law was written against — *"Dont let anything go
-     under it"*. `--top-h` is the tap floor plus the strip's air plus the
-     notch, once, and `src/table/grid.ts stick()` measures the SAME element to
-     decide where a frozen head pins, so the reservation and the freeze cannot
-     disagree about a number. Measured at 390: 60px against the 103.39px the
-     nine tabs cost as a wrapping row before any of this. */
-  padding-block-start: var(--top-h); }
+  /* ...AND THE GAP ABOVE THE BAR IS `--s2` SINCE 2026-09-05 (TABLE.md §13a.6
+     and its budget: the pane at rest must be at least `844 - bar - safe - 8`
+     at 390 x 844). MEASURED with `--s3`: the wrap came to 772px against a
+     785.6px floor, and the 13.6 it was short is exactly this gap plus the
+     `.nu-pan` padding above the table. Both are spent here: the panel's own
+     top padding goes to 0 on the band (`#pan-band` below), and the strip
+     under the wrap is one step tighter. Nothing else on the page moves by
+     more than 3.2px. */
+  padding-block-end: calc(var(--bar-h) + var(--s2));
+  /* ...AND THERE IS NO TOP STRIP TO RESERVE SINCE 2026-09-05 (TABLE.md §13a.1:
+     *"Nothing is fixed but the bottom bar."*). `--top-h` reserved 55.2px at the
+     head of every panel for `.nu-top` — the ≡ and the ×, two fixed plates at
+     the corner — and MEASURED at 390 x 844 that was 55.2px of a 844px phone
+     spent on chrome that never moves, on a page whose grid had 611. The ≡ is
+     the last button of `.nu-bar` now and the × belongs to the sheet it closes,
+     so the reservation is 0 and the token survives only as the notch's own
+     arithmetic for anything that still wants it.
+     THE SAFE AREA STILL HAS TO BE PAID, and it is paid where it always was for
+     the top of the page: `env(safe-area-inset-top)` on <body>, once. */
+  padding-block-start: env(safe-area-inset-top, 0px); }
 /* the display weights. (The h1 rule — "the record's name is the h1 and gets
    the 900; font-weight: 900; letter-spacing: -.01em; line-height: 1.05" —
    went on 2026-08-29 with the heading it dressed: Paul, "Get rid of the play
@@ -6457,7 +6466,20 @@ table.nu-trims{ color: var(--ink); }
    a player that is sounding lights at BOTH ends of its column — which is what
    an aligned row is for. */
 .nu-mixcell{ position: relative; }
-.nu-mixcell > .nu-scollamp{ inline-size: 100%; margin-block-start: 2px; }
+/* ...AND SINCE 2026-09-05 THE LAMP RIDES THE CELL'S EDGE (§13a.2: every
+   special row is ONE LINE, `var(--tap)` tall). It was a 4px block under the
+   fader's word with 2px of margin, and MEASURED at 390 that made the MIX row
+   51px where every other row of this table is 44 plus its hairline. Laid on
+   the cell's own bottom edge it says the same thing and takes no line — the
+   same repair the column head's lamp took, for the same reason. */
+.nu-mixcell > .nu-scollamp{ position: absolute; inset-block-end: 0;
+  inset-inline: 0; inline-size: 100%; }
+/* ...AND THE ROW'S OWN WORD IS A LINE OF THUMB, on a record with no players
+   to draw cells for: measured 25.8px on the Silence record, which is the one
+   row of this table a hand could not aim at. */
+.nu-mixrow > th.nu-srowh{ min-block-size: var(--tap); }
+.nu-mixrow > th.nu-srowh > .nu-srowname{ display: flex; align-items: center;
+  min-block-size: var(--tap); padding-inline: var(--s3); }
 
 /* ===== THE TWO ADDERS: THE TABLE'S OWN EDGES (2026-09-05) ==============
    Paul, looking at the table on staging: *"Move all the nav into the table, I
@@ -6471,24 +6493,45 @@ table.nu-trims{ color: var(--ink); }
    the dashed rule they hang off and the fact that their cell holds nothing
    else. MEASURED before this rule: adding a player cost 2 taps and both of
    them were on the nav stripe. */
-.nu-addbar{ display: flex; flex-wrap: wrap; gap: 3px; align-items: stretch; }
-/* THE HEADS ALIGN TO THE TOP, ALL OF THEM. The adder cell is three 44px
-   offers stacked (a 9ch column holds one word to a line), so it is the tallest
-   thing in the header row and a `middle`-aligned player head floated down the
-   middle of it. Measured: the head row is 138px with the adder in it and the
-   player plates were sitting 44px below their own rule. */
+/* ...AND SINCE 2026-09-05 THERE IS ONE OF THEM AT EACH EDGE (TABLE.md §13a.5).
+   Paul, on the Silence record at 390: *"three adders (`+ line · + bass · +
+   drums`) took more width than the three players they were offering to join,
+   so the first player's head was cut to '…he ntl'."* MEASURED on v287 at 390:
+   the adder column is 224px (`--addw: 22ch`) of a 364.4px pane and its head
+   cell is 57.3px tall — a permanent shop window over a table you are trying to
+   read. The offers are a SHEET now: one `+` cell at the end of the head row
+   and one `+` row at the grid's foot, each `--tap`, each opening the same list
+   (`src/table/grid.ts addSheet`, which IS `playerOffers`/`sectionOffer` —
+   moved, not copied), and the three column widths go back to the players.
+   WHAT STOOD HERE: `.nu-addbar` (the wrapping flex row), `.nu-addbtn` (the
+   dashed 44px word plate and its `[disabled]`), the two `.nu-addhead` padding
+   rules and `.nu-addrow`'s dashed top rule. */
+/* THE HEADS ALIGN TO THE TOP, ALL OF THEM — kept, because a `+` cell and a
+   two-line player head are still two different heights and a `middle`-aligned
+   head would float down the middle of the taller one. */
 .nu-wordgrid thead th{ vertical-align: top; }
-.nu-wordgrid thead th.nu-addhead{ padding: 0; }
-.nu-wordgrid tbody th.nu-addhead{ padding-inline: 0; }
-.nu-addbtn{ flex: 1 1 auto; min-block-size: var(--tap); padding-inline: .5ch;
-  border: var(--bw) dashed var(--ink); border-radius: 3px;
-  font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
-.nu-addbtn[disabled]{ opacity: .5; cursor: not-allowed; }
+.nu-wordgrid thead th.nu-plushead{ padding: 0; }
+.nu-wordgrid tbody th.nu-plusrowh{ padding-inline: 0; }
+/* THE `+` IS A MARK AND NOT A WORD PLATE, which is what makes it `--tap` wide
+   instead of 22ch: DESIGN.md §2.15, every icon from ui/glyph.js with its
+   `.nu-vh` word and its `data-say`. It is dashed because it is an EDGE — the
+   one thing on this surface that is an invitation rather than a value. */
+.nu-plusbtn{ display: flex; align-items: center; justify-content: center;
+  inline-size: var(--tap); min-inline-size: var(--tap);
+  min-block-size: var(--tap);
+  border: var(--bw) dashed var(--rule); border-radius: var(--r1);
+  background: transparent; box-shadow: none;
+  font: var(--fw-body) 1.15rem/1 var(--sans, inherit); }
+.nu-plusbtn:hover{ background: var(--hand-tint); }
+.nu-plusbtn[aria-expanded="true"]{ background: var(--hand-tint); }
 .nu-addcell{ padding: 0; }
-.nu-wordgrid tbody tr.nu-addrow > th{ border-block-start: var(--bw) dashed var(--rule); }
-.nu-footcells{ display: flex; flex-wrap: wrap; gap: 3px; align-items: stretch; }
-.nu-footcell{ flex: 1 1 9ch; min-inline-size: 56px; display: flex; }
-.nu-footcell.nu-sgsay{ align-items: center; justify-content: center; }
+/* (`.nu-footcells` / `.nu-footcell` STOOD HERE, to 2026-09-05. They were the
+   wrapping row of 9ch word plates a `<tfoot>` row put in its spanning cell —
+   the shape PERFORM wore, measured 92px and three lines deep at 390 on the
+   Silence record. §13a.2 makes every special row ONE LINE, so PERFORM is a
+   merged row with the same `.nu-spline` furniture MASTER and PRODUCE wear and
+   its three words are its FACE; `grid.ts footRow`/`footCell` went with them.) */
+.nu-perfrow > th.nu-spheadcell{ border-block-start: var(--bw) solid var(--rule); }
 
 /* ===== THE SONIC SPREADSHEET (2026-09-05, TABLE.md §9a) ================
    Paul: *"I want the table to just re-use spreadsheet dynamics since users
@@ -6549,19 +6592,34 @@ table.nu-trims{ color: var(--ink); }
    `min-height: auto` is its content, so a table 3,000px tall would refuse to
    shrink and the cap would do nothing at all — the one line that turns a
    height cap into a scroller. */
+/* ...AND SINCE 2026-09-05 THE WRAP HOLDS ONE CHILD (TABLE.md §13a.6). The
+   arithmetic above was `100dvh - --top-h - --bar-h - --s3 - --s4`, and three
+   of those four are gone: there is no top strip, the band's own panel pays no
+   top padding, and the formula bar that made the wrap necessary is deleted.
+   What is left is the screen minus the bar minus one step of air.
+   MEASURED at 390 x 844 on Kingston 1969: the pane was 611px and is 788,
+   against §13b's floor of `844 - 50.4 - 0 - 8` = 785.6. */
 .nu-sheetwrap{ display: flex; flex-direction: column; min-inline-size: 0;
-  block-size: calc(100dvh - var(--top-h) - var(--bar-h)
-                   - var(--s3) - var(--s4)); }
+  block-size: calc(100dvh - var(--bar-h) - var(--s2)); }
 .nu-sheetwrap > .nu-pane[data-pane="table"]{ flex: 1 1 auto; min-block-size: 0;
   overflow: auto; overscroll-behavior: contain; }
-.nu-formula{ display: flex; flex-wrap: wrap; align-items: center;
-  gap: var(--s2); padding: var(--s2) 0; position: sticky; inset-block-start: 0;
-  z-index: 3; background: var(--paper); order: 0; }
+/* THE CELL SHEET'S FIRST LINE, WHICH IS WHAT `.nu-formula` BECAME. The address
+   of the selection at the start, undo · redo · copy · paste at the end, drawn
+   once, inside the sheet the selection opened — so the four verbs stand where
+   the change was made and nothing holds the foot of the screen when there is
+   no cell to spend them on. (`.nu-formula` was: a wrapping flex strip, sticky
+   at the top of the wrap, `order: 2` and `inset-block-end: 0` at ≤480px — the
+   "bottom sheet". Its two children, `.nu-fadr` and `.nu-fops`, are unchanged
+   and are read by the same gates.) */
+.nu-cellhead{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); padding-block: var(--s2);
+  border-block-end: var(--bw) solid var(--rule);
+  margin-block-end: var(--s2); }
 /* THE ADDER COLUMN IS AN EDGE, NOT A PLAYER. Under `table-layout: fixed` a
    `<col>` with no width takes an equal share, so the empty cell after the last
    player was as wide as a player — measured 1,280: a 100px column of nothing.
-   The three offers stack in a 9ch head; the body cells under them hold air. */
-.nu-sheetgrid col.nu-addcol{ inline-size: 9ch; }
+   It holds ONE mark since 2026-09-05 (§13a.5), so it is one thumb wide. */
+.nu-sheetgrid col.nu-addcol{ inline-size: var(--tap); }
 /* THE ADDRESS IS A 44px LINE like everything else in this pane, and that is
    not decoration: T7 measures every control the inventory files by its rendered
    height at 320, and an address a thumb cannot land on is an address a thumb
@@ -6572,15 +6630,12 @@ table.nu-trims{ color: var(--ink); }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nu-fops{ display: flex; flex-wrap: wrap; gap: 3px; flex: 0 1 auto; }
 @media (max-width: 480px){
-  /* THE BOTTOM SHEET. It leaves the flow at the foot of the pane rather than
-     covering it: `bottom: 0` on a sticky box inside a scrolling page holds it
-     at the last line of the viewport while the grid scrolls behind, which is
-     what a bottom sheet is and what a `position: fixed` bar would only fake
-     (a fixed bar would also sit over the gutter's transport, which owns that
-     edge of the screen). */
-  .nu-formula{ inset-block-start: auto; inset-block-end: 0; order: 2;
-    border-block-start: var(--bw) solid var(--rule);
-    padding-block: var(--s2); }
+  /* (THE BOTTOM SHEET STOOD HERE. `.nu-formula` took `order: 2` and
+     `inset-block-end: 0` at ≤480px and rode the foot of the pane, which is
+     §9a's "the formula bar is the bottom sheet" — 105.8px of a 844px phone,
+     measured, standing at rest whether or not a cell was selected. §13a.6
+     deletes the bar; the address goes inside the cell sheet, where the phone
+     pays for it only while a cell is open.) */
   .nu-fadr{ flex: 1 1 100%; } }
 
 /* FROZEN HEADERS (§9a). The head row and the head column stay while the rest
@@ -6611,7 +6666,7 @@ table.nu-trims{ color: var(--ink); }
    three times, at three widths. Pinning it where it already stands makes the
    freeze invisible, which is the only way a freeze is right. */
 .nu-sheetgrid tbody th.nu-srowh, .nu-sheetgrid tfoot th.nu-srowh,
-.nu-sheetgrid tbody th.nu-addhead{ position: sticky; inset-inline-start: 3px;
+.nu-sheetgrid tbody th.nu-plusrowh{ position: sticky; inset-inline-start: 3px;
   z-index: 1; background: var(--paper); }
 .nu-sheetgrid thead th:first-child{ inset-inline-start: 3px; z-index: 4; }
 
@@ -6647,18 +6702,47 @@ table.nu-trims{ color: var(--ink); }
    BUTTON is `--panew` wide inside a cell that is the whole table, so its sticky
    range is exactly the pane's horizontal scroll, and the face stays where a
    hand can read it while the grid moves under it. */
-.nu-sphead{ display: flex; inline-size: var(--panew, 100%);
-  max-inline-size: 100%; position: sticky; inset-inline-start: 0;
+/* ...AND IT IS THE LINE THAT IS PINNED, NOT THE BUTTON (2026-09-05, §13a.2).
+   The `<th>` cannot be pinned sideways — it spans every column, so its width
+   IS its containing block's and a sticky box has nowhere to travel (measured
+   by test/shell.js A8, which scrolled the Band pane 200px and watched the
+   merged cell slide 88 of them). The BUTTON carried the pin until this round;
+   it carries a LAMP beside it on the PHRASES row, and a lamp under the button
+   made that row two lines tall — 61.1px against TIME's 45, measured at 390 on
+   v287, which is exactly the *"jammed up"* Paul photographed. So the pin and
+   the `--panew` width belong to the LINE, the button takes the give inside it,
+   and the lamp stands at its end on the same 44px. */
+.nu-spline{ display: flex; flex-direction: row; align-items: center;
+  inline-size: var(--panew, 100%); max-inline-size: 100%;
+  position: sticky; inset-inline-start: 0;
+  min-block-size: var(--tap); background: var(--paper); }
+.nu-sphead{ display: flex; flex: 1 1 auto; min-inline-size: 0;
   align-items: center;
   gap: var(--s3); min-block-size: var(--tap);
   padding: var(--s2) var(--s3); text-align: start;
-  background: var(--paper); color: var(--ink);
+  background: transparent; color: var(--ink);
   border: 0; border-radius: var(--r0); box-shadow: none; }
-.nu-sphead[aria-expanded="true"]{ background: var(--hand-tint); }
+/* NO PLATE, NO TINT, AT REST OR OPEN (§13a.2: *"a hairline under, no plate
+   tint"*). The open state is the row's `aria-expanded` and the sheet standing
+   under it, which is a fact a hand can see without a wash of colour behind
+   forty characters of type. */
 .nu-spword{ flex: 0 0 auto;
   font: var(--fw-block) var(--t3)/1.2 var(--sans, inherit);
   text-transform: uppercase; letter-spacing: .06em; }
-.nu-spface{ flex: 1 1 auto; min-inline-size: 0;
+/* THE WORD LEFT, THE SENTENCE RIGHT (§13a.2), truncated with an ellipsis and
+   never wrapped — a header row whose height depends on the genre's key name is
+   a header row that jumps as you move around the catalogue. */
+/* THE × AT THE LINE'S RIGHT END, WHILE THE ROW IS OPEN (§13a.3: *"the header
+   carries the × at its right end"*). It is a target of its own and not the
+   head wearing a second meaning — the same argument `.nu-top` made for its own
+   pair, kept when that strip was deleted and the × went to the header of the
+   thing it closes. */
+.nu-spclose{ flex: 0 0 auto; min-inline-size: var(--tap);
+  min-block-size: var(--tap); display: flex; align-items: center;
+  justify-content: center; padding: 0;
+  background: transparent; border-color: transparent; box-shadow: none; }
+.nu-spclose:hover{ background: var(--flag-tint); }
+.nu-spface{ flex: 1 1 auto; min-inline-size: 0; text-align: end;
   font: var(--num-fw) var(--t3)/1.2 var(--sans, inherit); color: var(--dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -6695,10 +6779,20 @@ table.nu-trims{ color: var(--ink); }
    against 154.109px at the column heads — an empty inline box has no strut of
    its own), so the reservation has to be exact. `content-box` keeps the
    padding out of the arithmetic. */
-.nu-motlamp{ display: block; position: sticky; inset-inline-start: 0;
-  inline-size: var(--panew, 100%); max-inline-size: 100%;
+/* ...AND SINCE 2026-09-05 IT IS INSIDE THE ROW'S OWN LINE (§13a.2: *"no lamp
+   on a second line — the MOTIF lamp draws inside the PHRASES row's own line or
+   not at all"*). It was a sticky BLOCK under the button, `--panew` wide, with
+   its own reserved 1.2em: correct about the sideways pin, and it made the one
+   row carrying a lamp 16.1px taller than its two siblings. `.nu-spline` owns
+   the pin now, so the lamp is a flex item at the end of the line and its
+   reservation costs nothing — the line is 44px of thumb whether the clock has
+   written in it or not, which is a stronger form of the law the block above
+   was protecting (test/bench.test.js B6: a lamp that appears may not move a
+   frozen head). It is still a SIBLING of the button and never a child. */
+.nu-motlamp{ display: block; flex: 0 1 auto; min-inline-size: 0;
+  max-inline-size: 45%;
   block-size: 1.2em; box-sizing: content-box;
-  padding-inline: var(--s3); padding-block-end: var(--s1);
+  padding-inline: var(--s3);
   font: var(--num-fw) var(--t1)/1.2 var(--sans, inherit);
   color: var(--clock); overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; }
@@ -7494,34 +7588,42 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    the stripe's, they were the marks', and the marks moved with their rules. */
 #nu-chrome{ display: contents; }
 
-/* ---- THE TOP STRIP: the way out, then the way in ----------------------
-   THE CLOSE IS FIRST AND THE ≡ IS AT THE CORNER, which is the order a thumb
-   wants: the ≡ never moves (it is the one control that is on the screen in
-   every state of this page, so it may not shift under a reach), and the ×
-   arrives beside it when there is something to close. The alternative — the ≡
-   BECOMING the × while a sheet is open — was refused for the reason this page
-   refuses every two-meanings-one-button: it makes the menu unreachable from
-   inside a sheet, and `test/shell.js` would have to ask which meaning it had.
-   THEY ARE PLATES AND NOT BARE MARKS. A button floating over the score's own
-   paper with no ground is a button you cannot see; `--panel` + `--bw` of ink +
-   the hard shadow is this page's own plate, the same one `.nu-strip-out`
-   wears. */
-.nu-top{ position: fixed; z-index: 60;
-  inset-block-start: 0; inset-inline-end: 0;
-  display: flex; flex-direction: row; align-items: flex-start;
-  gap: var(--s2);
-  padding: calc(var(--s2) + env(safe-area-inset-top, 0px))
-           calc(var(--s2) + env(safe-area-inset-right, 0px))
-           var(--s2) var(--s2); }
-.nu-top > button{ min-inline-size: var(--tap); min-block-size: var(--tap);
-  background: var(--panel); color: var(--ink);
-  border: var(--bw) solid var(--ink); border-radius: var(--r1);
-  box-shadow: var(--shadow); }
-.nu-top > button:hover{ background: var(--flag-tint); }
-.nu-top > button[hidden]{ display: none; }
-/* the ≡ and the × keep their words for a stylesheet-off reading and hide them
-   here, exactly as every other mark on this page does */
-.nu-top .nu-ic{ display: flex; flex-direction: row; align-items: center;
+/* ---- THE TOP STRIP IS DELETED (2026-09-05, TABLE.md §13a.1) -----------
+   Paul, with the Silence record on his iPhone: *"Please look at this mess and
+   I can't really get to anything — things don't scroll out of the way for me
+   to focus it's all jammed up."* MEASURED at 390 x 844 on v287: two fixed
+   boxes, `.nu-top` 55.8 x 55.2 at the top corner and `.nu-bar` 390 x 50.4 at
+   the foot, plus a 105.8px formula bar that never scrolled either.
+   §13a.1: *"Nothing is fixed but the bottom bar. A thing pins only while you
+   are inside it."* So `.nu-top` goes and its two marks go to the two places
+   they belong: the ≡ is the LAST button of `.nu-bar` (it is the one control on
+   the screen in every state of this page, so it may not shift under a reach —
+   the end of the bar is where it does not), and the × is the open sheet's own
+   header, which is what closes a sheet everywhere else software is written.
+   WHAT STOOD HERE: `.nu-top` (fixed, z 60, at the inline end, a `--s2` pad and
+   the notch), `.nu-top > button` (the tap floor and this page's plate — panel
+   ground, ink border, hard shadow), its hover, its `[hidden]`, and
+   `.nu-top .nu-ic`. Five rules. The plate they wore is `.nu-sheethead`'s now,
+   below, at the one place a × still needs one. */
+
+/* ---- A SHEET'S OWN HEADER, AND THE × IS ITS (§13a.1) ------------------
+   One line at the top of whichever panel is open: the sheet's NAME at the
+   start, its close at the end. It is IN FLOW and not sticky, because §13a's
+   whole sentence is that one band pins at a time and a sheet that pinned its
+   own header would be a second fixed box on a page that just deleted one. */
+.nu-sheethead{ display: flex; flex-direction: row; align-items: center;
+  justify-content: space-between; gap: var(--s3);
+  min-block-size: var(--tap); margin-block-end: var(--s3);
+  border-block-end: var(--bw) solid var(--rule); }
+.nu-sheethead > b{ font: var(--fw-block) var(--t3)/1.2 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .06em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-sheethead > button{ flex: 0 0 auto;
+  min-inline-size: var(--tap); min-block-size: var(--tap);
+  background: transparent; border-color: transparent; box-shadow: none; }
+.nu-sheethead > button:hover{ background: var(--flag-tint); }
+.nu-sheethead > button[hidden]{ display: none; }
+.nu-sheethead .nu-ic{ display: flex; flex-direction: row; align-items: center;
   justify-content: center; gap: var(--s1); }
 
 /* ---- THE MENU: FOUR VIEWERS AND THE LOG ------------------------------
@@ -7540,8 +7642,13 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    chip strip on the page into a fixed plate at the top corner —
    test/table.browser.js had it inside the hour, as `SHORT prod.name 265x28`.
    One surface, one name; this one has an id already, so it uses it. */
+/* ...AND IT HANGS OFF THE BAR SINCE 2026-09-05 (TABLE.md §13a.1). It hung
+   from `--top-h`, which was the top strip's height; the ≡ is the last button
+   of `.nu-bar` now, so the plate stands directly above the mark that opens it
+   and at the same edge. A menu that opened at the far corner from its own
+   button is the one arrangement a thumb cannot follow. */
 #nu-menu{ position: fixed; z-index: 59;
-  inset-block-start: var(--top-h);
+  inset-block-end: calc(var(--bar-h) + var(--s1));
   inset-inline-end: calc(var(--s2) + env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; align-items: stretch;
   inline-size: min(30ch, calc(100vw - 2 * var(--s2)));
@@ -7631,6 +7738,28 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-bar .nu-count{ padding-block: 0; }
 .nu-bar > .nu-bartp{ flex: 0 0 auto; display: flex; flex-direction: row;
   align-items: center; gap: var(--s1); }
+/* ---- AND AT 320 THE ROW SPENDS ITS AIR RATHER THAN A MARK (2026-09-05) --
+   The ≡ joined the bar as its last button (TABLE.md §13a.1) and MEASURED at
+   320 x 844 the row wanted 334.4px of a 320px screen: seven marks at the 44px
+   floor is 308, and the six gaps between them were 26.4 of the 12 that were
+   left. A bar that overflows is a mark off the side of the phone, and the ≡ is
+   the one control that is on the screen in every state of this page.
+   THE FLOOR IS NOT NEGOTIABLE AND THE GAP IS. Every mark keeps its 44px in
+   both axes — that is the rule this page has held since the marks landed, and
+   the gutter's own gate reads it — so what gives at the narrow end is the air
+   between them: 1px, which is a seam and not a gap, and only below 380 where
+   there is nothing else to spend. Measured after: 314px in a 320px row. */
+@media (max-width: 379px){
+  .nu-bar{ gap: 1px; }
+  .nu-bar > .nu-seedrow{ gap: 1px; }
+  .nu-bar > .nu-bartp{ gap: 1px; }
+  /* ...AND THE NUMBER KEEPS ITS DIGITS AND GIVES UP ITS SIDES. Measured at
+     320 on the BLANK STATE, whose seed is five digits where Kingston's is one:
+     the seed row came to 98.2px against Kingston's 89 and the bar overflowed
+     its own box by 3 (test/shell.js A6b, "323 vs 320"). The 44px floor holds —
+     `.nu-bar button` still declares it — so what is spent is the padding
+     either side of a number that is already as wide as a thumb. */
+  .nu-bar #seedval{ padding-inline: 0; } }
 /* THE 44px FLOOR IS BOTH AXES HERE, AND THE OTHER ONE WAS LOST IN THE MOVE.
    `#nu-tray button, #boardtabs button, .nu-decktabs > button { min-inline-size:
    var(--tap) }` was one rule for three surfaces and the stripe's selector went
@@ -7733,8 +7862,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    panel is a SHEET rather than the page — and what it declares is the one
    thing a sheet owes: it fills the screen it opened over, with the chrome's
    two bands reserved by <body> exactly as they are for the table. */
-.nu-pan[data-sheet]{ min-block-size: calc(100dvh - var(--top-h)
-                                          - var(--bar-h) - var(--s3)); }
+.nu-pan[data-sheet]{ min-block-size: calc(100dvh - var(--bar-h) - var(--s2)); }
 
 /* ======================================================================
    THE DESIGN PASS (2026-09-05) — DESIGN.md §1–§2, TABLE.md §11's restyle
@@ -7778,13 +7906,18 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    `background`/`border` (line ~1782) is the 29th. The structure is the
    spacing and the type; the only rules left are the two a spreadsheet needs —
    one under the heads, one over the footer. */
+/* THE BAND PANEL PAYS NO TOP PADDING (2026-09-05, §13a.6's budget). `.nu-pan`
+   gives every panel `--s4` of air above its content, which is right for a
+   panel of prose and is 12.8px of a phone for a panel that is one full-bleed
+   instrument. The table's own first row is its heading. */
+#pan-band{ padding-block-start: 0; }
 #pan-band table.nu-wordgrid{ background: none; border: 0; }
 #pan-band .nu-wordgrid th,
 #pan-band .nu-wordgrid td{ border: 0; background: none; }
 #pan-band .nu-wordgrid tbody > tr:nth-child(even) > td{ background: none; }
 #pan-band .nu-wordgrid thead th.nu-colhead,
 #pan-band .nu-wordgrid thead th.nu-cornerh,
-#pan-band .nu-wordgrid thead th.nu-addhead{
+#pan-band .nu-wordgrid thead th.nu-plushead{
   border-block-end: var(--bw) solid var(--rule); }
 #pan-band .nu-sheetgrid th.nu-spheadcell{
   border-block-end: var(--bw) solid var(--rule); }
@@ -7804,7 +7937,6 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-wcell,
 #pan-band .nu-rowjump,
 #pan-band .nu-opbtn,
-#pan-band .nu-addbtn,
 #pan-band .nu-groupbtn,
 #pan-band .nu-clearback,
 #pan-band .nu-colbtn{
@@ -7812,11 +7944,9 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 /* AN OP IS A VERB AND KEEPS ITS EDGE — a hairline, and no ground, so it is a
    control you can see and not a plate you have to read past. */
 #pan-band .nu-opbtn,
-#pan-band .nu-addbtn,
 #pan-band .nu-groupbtn{
   border: var(--bw) solid var(--rule); border-radius: var(--r1); }
 #pan-band .nu-opbtn:hover,
-#pan-band .nu-addbtn:hover,
 #pan-band .nu-groupbtn:hover{ background: var(--hand-tint); }
 /* ...AND THE THREE SEMANTIC FILLS ARE SAID AGAIN AT THIS SPECIFICITY,
    because `#pan-band .nu-opbtn` (1-1-0) outranks `button[aria-pressed]`
@@ -7930,12 +8060,130 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    the same table with room.
    THE `<col>`'s INLINE STYLE STILL WINS: `WIDTH` writes a resized player's
    width onto its own `<col>` and no rule here can outrank an attribute. */
-#pan-band .nu-wordgrid{ --headw: 8ch; --colw: 3.5ch; --addw: 22ch;
-  inline-size: max(100%, calc(var(--headw) + (var(--cols, 2) - 1) * var(--colw)
-                              + var(--addw))); }
+/* ...AND THE PLAYERS SHARE THE PANE SINCE 2026-09-05 (TABLE.md §13a.7). The
+   widths were `--headw: 8ch · --colw: 3.5ch · --addw: 22ch`, and MEASURED at
+   390 on Kingston 1969 that is seven player columns of 35.6px each holding a
+   `.nu-cellword` whose own `min-inline-size` was 56px — SIX overlapping cell
+   pairs in the first section row, which is the pile in Paul's screenshot. Two
+   numbers were wrong at once: the column was narrower than the thing inside
+   it, and 224px of the pane was parked in an adder that is a `--tap` mark now.
+   §13a.7: *"A player column is never narrower than its glyph plus `--s2` each
+   side, and never wider than the pane divided among the players present."*
+   Both ends are stated here and the `max()` is the whole rule: the SHARE is
+   the pane (`--panew`, written by `src/table/grid.ts stick()`, because only
+   the DOM knows it) less the head column and the `+`, divided by the players
+   present (`--cols` is the column count plus one, so the players are
+   `--cols - 1`); the FLOOR is the glyph and its two `--s2`s. Where the share
+   is the bigger number the columns fill the pane and nothing scrolls sideways;
+   where it is not, every column stands at the floor and the pane scrolls, and
+   in neither case does a cell overlap its neighbour. */
+#pan-band .nu-wordgrid{ --headbase: 8ch;
+  --cellmin: calc(1.15rem + 2 * var(--s2));
+  /* THE GAPS ARE PART OF THE WIDTH AND THEY ARE NOT SMALL. `.nu-trims` is
+     `border-collapse: separate; border-spacing: 3px`, so a table of nine
+     columns carries TEN 3px gaps — 30px, measured, which is 8% of a 390px
+     phone and exactly what pushed the `+` off the right edge on the first
+     drawing of this rule. `--cols` is the column count plus one, so the
+     columns are `--cols + 1` and the gaps `--cols + 2`. */
+  --gaps: calc(3px * (var(--cols, 2) + 2));
+  /* ...AND THE DIVISOR IS NEVER ZERO. The blank state (`silence`) is a record
+     with NO players, so `--cols - 1` is 0 and `calc(x / 0)` is invalid at
+     computed-value time — which takes `--colw`, `--headw` and the table's own
+     `inline-size` down with it. MEASURED before this guard, on Silence at 390:
+     the head column collapsed to its content and the `+` stood at x = 18.8,
+     six pixels from the left edge of a 364px pane. A record you have not built
+     a band into yet is exactly the record this table has to be readable on. */
+  --nplay: max(1, calc(var(--cols, 2) - 1));
+  --colshare: calc((var(--panew, 100%) - var(--headbase) - var(--tap) - var(--gaps))
+                   / var(--nplay));
+  --colw: max(var(--cellmin), var(--colshare));
+  /* THE HEAD COLUMN TAKES THE SLACK, AND THAT IS WHAT KEEPS THE `+` A THUMB.
+     Under `table-layout: fixed` a table WIDER than the sum of its columns hands
+     the surplus out IN PROPORTION — measured on the Silence record at 390,
+     where a record with no players left 320px of slack and the `+` drew 124.7px
+     of it, and on Kingston at 390, where it drew 57.4 against a 44px token. So
+     the table is EXACTLY the sum and there is no surplus to hand out: the head
+     column is told to be everything the others are not, which is where a
+     section name that ellipsised wanted the room anyway. Its 8ch is the floor,
+     and `--headbase` (that same 8ch, a constant) is what the players' share is
+     worked out against, so the two do not chase each other. */
+  --headw: max(var(--headbase),
+               calc(var(--panew, 100%) - (var(--cols, 2) - 1) * var(--colw)
+                    - var(--tap) - var(--gaps)));
+  inline-size: calc(var(--headw) + (var(--cols, 2) - 1) * var(--colw)
+                    + var(--tap) + var(--gaps)); }
 #pan-band .nu-wordgrid > colgroup > col{ inline-size: var(--colw); }
+/* THE HEAD COLUMN TAKES THE SLACK, AND THAT IS WHAT KEEPS THE `+` A THUMB.
+   Under `table-layout: fixed` a table wider than the sum of its columns hands
+   the surplus out IN PROPORTION — measured on the Silence record at 390, where
+   a record with no players left 320px of slack and the `+` column drew 124.7px
+   of it. A percentage on a `<col>` resolves against the TABLE's own width, so
+   the head column is told to be everything the others are not: the section
+   names get the room (which is where a name that ellipsised wanted it), the
+   players keep their share, and the `+` is `--tap` on every record at every
+   width. Its own 8ch is the floor. */
 #pan-band .nu-wordgrid > colgroup > col:first-child{ inline-size: var(--headw); }
-#pan-band .nu-wordgrid > colgroup > col.nu-addcol{ inline-size: var(--addw); }
+#pan-band .nu-wordgrid > colgroup > col.nu-addcol{ inline-size: var(--tap); }
+/* ...AND A CELL FILLS ITS COLUMN AND NEVER MORE. `.nu-cellword`'s 56px floor
+   is right for a sheet row and wrong for a grid cell — a floor wider than the
+   column it stands in is the overlap itself. In the grid the column carries
+   the floor (`--cellmin` above) and the button takes exactly what it is given. */
+#pan-band .nu-sheetgrid tbody > tr > td > .nu-cellword,
+#pan-band .nu-sheetgrid tfoot td.nu-mixcell > .nu-cellword{ min-inline-size: 0; }
+/* ---- THE WORD SHOWS WHERE THERE IS ROOM (§13a.7) --------------------
+   *"Cells are glyphs first, words when there is room … the word shows when
+   the column measures ≥ 9ch and hides otherwise."* The measurement is
+   `stick()`'s — a 9ch probe in the head's own type against the width a player
+   column actually came out — and it writes ONE class on the table, because
+   every player column is the same width. `.nu-vh` and the accessible name
+   carry the word when the glyph stands alone, which is the icon round's law.
+   AND A HEAD IS NEVER CUT MID-WORD. Inside the wide state, `stick()` asks each
+   head whether its NAME fits: one that does not falls back to its first word
+   (`.is-first`), and a first word that does not fit either falls back to the
+   glyph (`.is-glyphonly`). Two spans, one name, no second spelling. */
+/* ...AND A HEAD FILLS ITS COLUMN AND NEVER MORE, which is `.nu-cellword`'s
+   own repair said about the row above the cells: `.nu-colbtn` carries
+   `min-inline-size: 56px` and a 56px button in a 33px column is the overlap
+   again, one row higher. MEASURED at 390 on Kingston 1969: seven heads 33.2px
+   wide holding seven 56px buttons. */
+#pan-band .nu-sheetgrid thead th.nu-colhead > .nu-colbtn{ min-inline-size: 0; }
+/* ---- THE PINNED BAND IS ONE ROW OF THUMB (§13b) ---------------------
+   *"pinned bands inside the pane, at rest: the heads alone (≤ 1 × `--tap` +
+   3px)"*, and the 3 is `border-spacing`. MEASURED before this rule: 57px —
+   `--ctl` (48) inside a button with `--s1` of block padding inside a `<th>`
+   with 2px of its own, which is three paddings for a row whose whole content
+   is one mark. Where the words are hidden the head is a MARK and a mark is
+   44px of thumb and nothing else; where they are shown (1280, and any record
+   whose columns are 9ch) the head is two lines and keeps its air. */
+#pan-band .nu-sheetgrid thead th.nu-cornerh,
+#pan-band .nu-sheetgrid thead th.nu-plushead{ padding-block: 0; }
+/* ...AND THE PLAYER'S LAMP RIDES THE HEAD'S OWN EDGE RATHER THAN ADDING A
+   LINE UNDER IT. `.nu-scollamp` is a 4px block and it made the band 49px
+   where the budget is 47. The `<th>` is `position: sticky`, which is a
+   containing block, so the lamp is laid on the head's bottom edge — the same
+   place `.is-sounding`'s own edge bar is drawn — and takes no height at all.
+   It is still a SIBLING of the button and still the clock's own surface. */
+#pan-band .nu-sheetgrid thead th.nu-colhead{ position: sticky; }
+#pan-band .nu-sheetgrid thead th.nu-colhead > .nu-scollamp{
+  position: absolute; inset-block-end: 1px; inset-inline: 0;
+  inline-size: 100%; }
+#pan-band .nu-sheetgrid thead th.nu-cornerh > .nu-corner{
+  padding-block: 0; min-block-size: var(--tap); }
+#pan-band .nu-sheetgrid:not(.has-words) thead th.nu-colhead{ padding-block: 0; }
+#pan-band .nu-sheetgrid:not(.has-words) thead th.nu-colhead > .nu-colbtn{
+  padding-block: 0; gap: 0; min-block-size: var(--tap);
+  align-items: center; justify-content: center; }
+#pan-band .nu-sheetgrid .nu-cnfirst{ display: none; }
+#pan-band .nu-sheetgrid .nu-colbtn.is-first .nu-cnfull{ display: none; }
+#pan-band .nu-sheetgrid .nu-colbtn.is-first .nu-cnfirst{ display: block; }
+#pan-band .nu-sheetgrid:not(.has-words) thead th.nu-colhead .nu-colname,
+#pan-band .nu-sheetgrid:not(.has-words) thead th.nu-colhead .nu-colinstr,
+#pan-band .nu-sheetgrid .nu-colbtn.is-glyphonly .nu-colname,
+#pan-band .nu-sheetgrid .nu-colbtn.is-glyphonly .nu-colinstr,
+#pan-band .nu-sheetgrid .nu-colbtn.is-noinstr .nu-colinstr,
+#pan-band .nu-sheetgrid:not(.has-words) tbody > tr > td > .nu-cellword .nu-w,
+#pan-band .nu-sheetgrid:not(.has-words) tfoot td.nu-mixcell .nu-w{
+  display: none; }
 #pan-band .nu-rowjump{ font: var(--fw-label) var(--t2)/1.2 var(--sans, inherit);
   overflow: hidden; text-overflow: ellipsis; }
 /* AND THE NAME GETS THE LINE. The mark and the section's number are inline
@@ -8368,7 +8616,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-wordgrid thead th,
 #pan-band .nu-wordgrid tbody th.nu-srowh,
 #pan-band .nu-wordgrid thead th.nu-cornerh,
-#pan-band .nu-wordgrid tbody th.nu-addhead{ background: var(--ground); }
+#pan-band .nu-wordgrid tbody th.nu-plusrowh{ background: var(--ground); }
 
 /* ...AND THE GROUND HAS TO COVER THE BORDER-SPACING, WHICH IS NOT THE CELL
    (repaired 2026-09-05). A ground on a `<th>` paints the CELL. This table is
@@ -8396,7 +8644,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-wordgrid thead th,
 #pan-band .nu-wordgrid tbody th.nu-srowh,
 #pan-band .nu-wordgrid thead th.nu-cornerh,
-#pan-band .nu-wordgrid tbody th.nu-addhead{
+#pan-band .nu-wordgrid tbody th.nu-plusrowh{
   box-shadow: 0 0 0 3px var(--ground); }
 /* ...AND THE PLAYHEAD SURVIVES IT. `.nu-colhead.is-sounding` spends its own
    `box-shadow` on the clock's edge bar under a sounding player; the rule above

@@ -328,6 +328,12 @@ export const GLYPH = {
                s: t("glyph.act.menu.say") },
     close:   { g: "\u00d7", w: t("glyph.act.close"),
                s: t("glyph.act.close.say") },
+    /* ...AND THE `+` AT THE TABLE'S TWO EDGES, 2026-09-05 (TABLE.md §13a.5).
+       U+FF0B is the FULLWIDTH plus and U+002B is a typed one; this is the
+       typed one, because it is the mark a spreadsheet has always put at the
+       end of an axis and a wider box would read as a different sign. */
+    add:     { g: "+", w: t("glyph.act.add"),
+               s: t("glyph.act.add.say") },
     /* ...AND THE WORD IS NO LONGER ON THE FACE, 2026-09-03. Paul: *"just get
        rid of the word seed and put the number."* The number stands where the
        word stood (`#seedval`, its own target, beside the die), so ui/eight.js

@@ -11,9 +11,13 @@
  * levels, `TABKIDS`, `TABSUB`, `paintTray`, `trayRow`, `trayNow`, `tapNode`,
  * `expanded`/`chain`, and the three probes `__eightTray` / `__eightTree` /
  * `__eightExpand` — are deleted from ui/eight.js and nu.css. What replaced
- * them is three fixed boxes: `.nu-top` (the × and the ≡ at the top corner),
- * `#nu-menu` (four viewers and the log, hanging from the ≡), and `.nu-bar`
- * (the foot, full width: the genre plate, the seed row, and the transport).
+ * them is ONE fixed box and two plates that hang off it (TABLE.md §13a.1,
+ * 2026-09-05): `.nu-bar` (the foot, full width: the genre plate, the seed row,
+ * the transport, and the ≡ as its last button), `#nu-menu` (four viewers and
+ * the log, opening directly above the ≡), and `.nu-sheethead` (the open
+ * viewer's own first line, its name and its ×). `.nu-top` — a fixed plate at
+ * the top corner holding the × and the ≡, with 55.2px of <body> padding
+ * reserved under it — is deleted: *"Nothing is fixed but the bottom bar."*
  * The name of this file is kept for the reason its claims are kept — every
  * check below is about the same SUBJECT, which is where a thumb finds the
  * transport and what it does when it gets there, and renaming the file would
@@ -416,8 +420,18 @@ function standUpServer() {
     "door says so (" + JSON.stringify({ open: t3.open, expanded: t3.expanded,
                                         inBar: t3.inBar }) + ")");
   /* THE INVENTORY, ASSERTED EXACTLY AND PRINTED EITHER WAY. */
+  /* ...AND THE ≡ IS THE FOURTH THING SINCE 2026-09-05 (TABLE.md §13a.1:
+     *"Nothing is fixed but the bottom bar … the ≡ plate joins it as its last
+     button"*). `.nu-top` held it at the top corner with the ×, over 55.2px of
+     <body> padding reserved for the pair; the strip is deleted, the × belongs
+     to the header of the sheet it closes, and the ≡ is at the END of this row
+     because it is the one control on the screen in every state of this page
+     and the end of a row that never wraps is where it cannot shift under a
+     reach. LAST, and asserted as last, which is the same kind of claim T2
+     makes about `#play` being the last child of `.nu-bartp`. */
   check(JSON.stringify(t3.bar) ===
-          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp"]) &&
+          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp",
+                          "burger"]) &&
         JSON.stringify(t3.seed) ===
           JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait",
                           "nu-count"]) &&
@@ -812,8 +826,14 @@ function standUpServer() {
                     .getBoundingClientRect().height.toFixed(1),
              reading: !!document.querySelector("#nu-bar .nu-seedrow #seedval #reading") };
   });
+  /* ...WITH THE ≡ AT THE END SINCE 2026-09-05 (TABLE.md §13a.1). The row's
+     reading order is unchanged — genre · seed · transport — and the hamburger
+     is the fourth and last thing in it, which is where `.nu-top` used to stand
+     it (at the corner) and where a control that never moves belongs on a row
+     that never wraps. */
   check(JSON.stringify(t9.kids) ===
-          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp"]) &&
+          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp",
+                          "burger"]) &&
         JSON.stringify(t9.seed) ===
           JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait",
                           "nu-count"]) &&
@@ -925,7 +945,8 @@ function standUpServer() {
          body size, "which is the one thing the gutter could never afford";
        · the bar's GENRE PLATE un-hides it as the first of two lines (the wiki
          name over the place and year), which is `nameRecord`'s whole job;
-       · every OTHER mark in the bar and both marks in `.nu-top` fall back to
+       · every OTHER mark in the bar, and the × in the sheet's own header
+         (`.nu-top` until 2026-09-05), fall back to
          `.nu-vh`'s original four declarations and are 1x1 and out of flow —
          measured 2026-09-09 at 390x844: burger, playmode, take, playops,
          voicing, play and the die are all 1x1, and toptab-Where is 142.9x19.
@@ -969,7 +990,12 @@ function standUpServer() {
          all inside `#nu-chrome`, which is the `<nav>` ui/eight.js `chromeRow`
          fills — so one scope still reaches every mark, exactly as one scope
          did when the mark was in a stripe. */
-      for (const b of document.querySelectorAll("#nu-chrome button")) {
+      /* ...AND `.nu-sheethead button` SINCE 2026-09-05 (TABLE.md §13a.1). The
+         × left `#nu-chrome` when `.nu-top` was deleted — a sheet's way out is
+         the sheet's own header now — and a sweep scoped to the `<nav>` alone
+         would have stopped measuring `#sheetclose` without saying so. */
+      for (const b of document.querySelectorAll("#nu-chrome button," +
+                                                " .nu-sheethead button")) {
         /* ON THE PAGE, OR NOT MEASURED (2026-09-02) — shell.js's own `shown()`
            rule, borrowed here for the reason it was written there: "that is not
            a finding, it is the gate measuring furniture in another room". Three
@@ -1111,11 +1137,13 @@ function standUpServer() {
      of `#nu-tray button, #boardtabs button, .nu-decktabs > button`: *"the
      first selector is deleted with the stripe. The other two are not … The
      chrome's own three boxes each declare it above, on the buttons they
-     hold."* TWO OF THE THREE DO. `.nu-top > button` declares
-     `min-inline-size: var(--tap)` and `#nu-menu > button` declares
-     `inline-size: 100%`; `.nu-bar button` declares `min-block-size: var(--tap)`
-     ONLY, so four marks in the row Paul asked for by name come out narrower
-     than a thumb. Measured on the rendered page 2026-09-09 at 320, 390 and 430
+     hold."* ALL THREE DO SINCE 2026-09-05: `.nu-sheethead > button` (which is
+     where `.nu-top > button` went) declares `min-inline-size: var(--tap)`,
+     `#nu-menu > button` declares `inline-size: 100%`, and `.nu-bar button`
+     declares BOTH. What follows is the finding as it stood when `.nu-bar
+     button` declared `min-block-size` only, kept because it is the argument
+     for the rule: four marks in the row Paul asked for by name came out
+     narrower than a thumb. Measured on the rendered page 2026-09-09 at 320, 390 and 430
      — the same at all three, because the marks are `flex: 0 0 auto` and their
      width is a glyph plus `--s3` of padding, which is exactly why the number
      wobbles with the glyph (`#voicing` measures 33.7 wearing ⌁ and 29.3

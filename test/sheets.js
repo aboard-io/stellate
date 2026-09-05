@@ -808,6 +808,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     // the adder cell at the end of the table's player axis now, at the address
     // the T7 inventory filed it onto. The tab still has to be open, for the
     // same reason as before — the Band PANE is where the table is drawn.
+    /* ...AND IT IS INSIDE THE ADD SHEET SINCE 2026-09-05 (TABLE.md §13a.5):
+       the grid's foot `+` opens it, the address is unchanged. */
+    const plus = document.querySelector('#pan-band [data-k="tadd|foot"]');
+    if (plus && plus.getAttribute("aria-expanded") !== "true") plus.click();
     const add = document.querySelector('#pan-band [data-k="tcol-add|drums"]');
     if (add) { add.click(); return; }
     if (window.__addDrums) window.__addDrums(true);

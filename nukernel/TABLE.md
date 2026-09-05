@@ -2604,3 +2604,276 @@ left alone. And a .mid numerator past 255 that cannot be halved into the byte
 (999/1) draws short bar lines: the notes still land at the second the record
 puts them, and the text meta says which of the two it kept rather than
 claiming both.
+
+## 13 · ONE SCROLL, ONE PIN (APPROVED 2026-09-05: *"The proposal is fine for now"*)
+
+**THE COMPLAINT, VERBATIM**, with the iPhone screenshot of the Silence record
+beside it: *"Please look at this mess and I can't really get to anything —
+things don't scroll out of the way for me to focus it's all jammed up.
+Propose an elegant redesign that keeps the verticality and the scrolling
+interface."*
+
+**WHAT THE SCREENSHOT MEASURED.** Not one bug: a budget. On an 844pt phone the
+things that did not move were TIME, RULES and PHRASES as plates, a stray
+MOTIF lamp under them, the column heads, the mix row, MASTER, PRODUCE, the
+perform strip, the formula bar with its readout, four undo/redo/copy/paste
+buttons, the floating ≡ and the bottom bar. The grid got what was left, about
+200pt, and the section row inside it was three overlapping cells. Sideways,
+three adders (`+ line · + bass · + drums`) took more width than the three
+players they were offering to join, so the first player's head was cut to
+"…he ntl" and every cell in the row piled onto the next. §11c made the pane
+the scrollport and was right to; it then let everything around the pane stay
+pinned, and pinning is the disease.
+
+### 13a · The law
+
+**Nothing is fixed but the bottom bar. A thing pins only while you are inside
+it.** In full:
+
+1. **One pin at a time.** The `.nu-bar` is the only `position: fixed` chrome
+   on the sheet (the ≡ plate joins it as its last button; `.nu-top` goes, the
+   × that closes a sheet is the sheet header's own). Inside the pane exactly
+   one band may be stuck at any moment: the grid's column heads while a
+   section row is under them and no sheet is open, OR the owner row of the
+   open sheet. Never both. `stick()` already releases rows at and after
+   `.nu-spopen`; it now releases the column heads for a CELL sheet too, and
+   pins nothing in `<tfoot>` ever.
+2. **Every special row is ONE LINE at rest** — TIME, RULES, PHRASES, MIX,
+   MASTER, PRODUCE, PERFORM: `var(--tap)` tall, the word left, the sentence or
+   the count right, a hairline under. No plate, no tint, no chips or lozenges
+   inline, no lamp on a second line (the MOTIF lamp draws inside the PHRASES
+   row's own line or not at all). The sentence is the one the row already
+   says (`TIME  79 BPM · 4/4 · D natural minor`; `PHRASES  3 motifs`;
+   `PERFORM  push · phrasing · ornament`); it is truncated with an ellipsis,
+   never wrapped.
+3. **Tap a row and it pins as the HEADER of its own sheet.** The row sticks to
+   the pane's top edge, the sheet opens in the next `<tr>` (§10c's placement,
+   unchanged) and scrolls under it; the header carries the × at its right
+   end. Tap the header, the ×, or outside the sheet to close (DESIGN §3: never
+   under a finger that is changing a value), and the row drops back into the
+   flow at its own place — the pane's scrollTop does not change on open or
+   close (v287's T12n law, now for the row).
+4. **The column heads pin only within the grid.** They stick while the grid
+   is under the thumb and no sheet is open. The section column sticks left
+   while players scroll sideways, as now (§11c's horizontal law stands:
+   nothing scrolls sideways at the page level).
+5. **Adders are a sheet, not columns.** The head row ends in ONE `+` cell,
+   `var(--tap)` wide, and the grid ends in ONE `+` row, one line tall. Either
+   opens the ADD sheet, whose body is the same `playerOffers`/`sectionOffer`
+   lists the addbars render today (one owner, moved, not copied), as lozenges
+   in the Cast's clusters (instruments.js `familyOf`). The three column widths
+   the adders took go back to the players.
+6. **The formula bar goes.** `.nu-formula` is deleted from `.nu-sheetwrap`.
+   Its head — the ADDRESS of the selection, undo, redo, copy, paste — becomes
+   the first line of the open CELL sheet (present only while a sheet is
+   open); its READOUT was the sheet's own body all along. Undo and redo
+   therefore live where the change was made. The `undoStack` and every write
+   door are untouched: this moves a header, not a path. A long press on a cell
+   offers copy/paste the way iOS does, through the same two ops.
+7. **Cells are glyphs first, words when there is room.** A player column is
+   never narrower than its glyph plus `--s2` each side, and never wider than
+   the pane divided among the players present; the word (`.nu-cellword`)
+   shows when the column measures ≥ 9ch and hides otherwise. Cells therefore
+   never overlap at any width and the head is never cut mid-word: a head too
+   long for its column shows the glyph and its first word.
+
+### 13b · The budget this buys (the gate's own numbers)
+
+At 390 × 844 under iPhone emulation (test-the-artifact law: `devices['iPhone
+14']`, DPR 3, `isMobile`, `hasTouch`), on Kingston 1969 and on the Silence
+record, T13 measures:
+
+| | before (v287) | after (must hold) |
+|---|---|---|
+| fixed chrome, at rest | ≡ plate + formula bar + bar | **the bar alone**, ≤ 72pt + safe area |
+| pinned bands inside the pane, at rest, grid under the thumb | 3 special rows + heads | **the heads alone** (≤ 1 × `--tap` + 3px) |
+| pinned bands, a special sheet open | the whole stack | **the owner row alone** |
+| pinned bands, a cell sheet open | the stack + formula bar | **none** (the sheet's own header line is in flow at its top) |
+| pane height at rest | ~200pt | **≥ 844 − bar − safe area − 8** |
+| overlapping cell pairs, Silence, section row | 3 of 3 | **0** |
+| head text cut mid-word | "…he ntl" | **0 heads** |
+| `scrollTop` across open/close of TIME, RULES, a cell | moved | **identical** |
+| adders in the head row | 3 buttons, 22ch | **1 cell, `--tap`** |
+| `<tfoot>` rows sticky | yes | **none** |
+
+Plus T7's law re-proved on the rendered page: every control the formula bar,
+the addbars and `.nu-top` offered is reachable in ≤ 2 taps from rest at 320
+(`test/shell.js` is told where each moved; nothing is lost). The desktop is
+the phone given room: at 1280 the same laws hold, the heads pin the same way,
+and nothing that was one line at 390 becomes a plate again.
+
+### 13c · What is kept, and what is not
+
+KEPT: the vertical table; the row order (§10a); the special rows as rows;
+one sheet at a time and §10c's placement; dismiss-outside; the pane as the
+scrollport and the sticky section column; every write door, the undo stack,
+the lozenge field and its clusters; the bottom bar's genre · die · play.
+
+GONE: `.nu-top` (the ≡ moves into the bar), `.nu-formula`, the plates and
+inline chips on special rows, the three addbars, every `<tfoot>` pin. NOT
+DONE HERE: §12's music items, the phase-0 tape, the lozenge's remaining
+residue (the say line growing at 320).
+
+### 13d · What landed, and what it measured
+
+**SHIPPED (uncommitted), 2026-09-05.** Six files carry it: `src/table/grid.ts`
+(the pin law, the `+`s, the ADD sheet, the cell sheet's first line, the PERFORM
+row), `src/table/sheet.ts` (`offerLozenge`, the one door to the lozenge
+component), `src/copy/sheets.ts` and `src/copy/glyph.ts` (the ADD sheet's five
+words and the `+`'s), `ui/glyph.js` (`GLYPH.act.add`), `ui/eight.js` (the ≡ into
+the bar, the × into the sheet's own header) and `nu.css`. `node tools/ui/build.js
+--check` says **ui-build ok 5 entries** and `npx tsc --noEmit` is clean.
+
+**§13b'S TABLE, MEASURED** — `devices["iPhone 14"]`, DPR 3, `isMobile`,
+`hasTouch`, 390 x 844 on Kingston 1969 at reading 1, before off a `git archive`
+of v287 served beside the working tree (`scratchpad/design/onepin/probe.cjs`,
+kept, with its four screenshots):
+
+| | before (v287) | after |
+|---|---|---|
+| fixed chrome, at rest | `.nu-top` 55.8 x **55.2** + `.nu-bar` 390 x **50.4**, and a sticky `.nu-formula` 364.4 x **105.8** that never scrolled either | **the bar alone, 50.4pt** (≤ 72 + safe area); `.nu-top` and `.nu-formula` are deleted |
+| pinned bands inside the pane, at rest | **4** — TIME at 3, RULES at 51, PHRASES at 99, the heads at 163.1 | **1**, the column heads, at **0**, **45px** (≤ `--tap` + 3) |
+| pinned bands, a special sheet open | the stack above the tapped row | **the owner row alone**, at 0 |
+| pinned bands, a cell sheet open | the whole stack (4) + the formula bar | **none** — the sheet's own first line is in flow at its top |
+| pane height at rest | **611px** | **788px**, against a floor of 785.6 (844 − 50.4 − 0 − 8) |
+| overlapping cell pairs, first section row | **6 of 7 cells** at 390 (and 6 at 320) | **0**, and **0** overlapping column-head pairs |
+| head text cut mid-word | the heads drew at 35.6px around a 56px button | **0 of 7** heads clipped |
+| `scrollTop` across open/close of TIME, RULES, a cell | 120 · 120 · 120 (already held) | **120 · 120 · 120** — unmoved, now for the row as well as the cell |
+| adders in the head row | **3 buttons in a 22ch (224px) column**, the head cell 57.3px tall | **one `+` cell, 44.1 x 45**, and one `+` row at the grid's foot |
+| `<tfoot>` rows pinned down the page | none, and the walk had no rule about it | **none, by law** — `stick()` writes `thead > tr` only and T13j reads `<tfoot>` |
+| the special rows, at rest | TIME 45 · RULES 45 · **PHRASES 61.1** · MIX 51 · MASTER 46 · PRODUCE 46 · **PERFORM 53 (92 on Silence)** | **45 · 45 · 45 · 49 · 46 · 46 · 46** |
+
+**SIX THINGS THE RENDERED PAGE SAID THAT THE PROPOSAL DID NOT.**
+
+- **THE OVERLAP WAS A COLUMN NARROWER THAN THE THING INSIDE IT, AND IT HAD TWO
+  AUTHORS.** `--colw: 3.5ch` gave a player 35.6px at 390 and `.nu-cellword`
+  declared `min-inline-size: 56px`, so every cell was 20px wider than its own
+  column and the row piled onto itself — six pairs, measured. `.nu-colbtn`
+  carried the same 56px one row higher. §13a.7's two ends are stated in the
+  stylesheet now (`--cellmin` is the glyph and two `--s2`s; `--colshare` is the
+  pane less the head column, the `+` and the border-spacing, divided by the
+  players) and the button takes exactly what its column gives it.
+- **THE BORDER-SPACING IS 30px AND IT IS NOT IN `inline-size`.** `.nu-trims` is
+  `border-spacing: 3px`, so a table of nine columns carries ten gaps. The first
+  drawing of the share left them out and pushed the `+` off the right edge of a
+  390px phone by exactly that much. `--gaps` is `3px * (--cols + 2)`.
+- **`table-layout: fixed` HANDS SURPLUS OUT IN PROPORTION, WHICH IS NOT WHERE
+  IT WAS WANTED.** With the table declared `max(100%, sum)` the `+` column drew
+  **124.7px** on the Silence record at 390 and **57.4** on Kingston, against a
+  44px token — a `--tap` cell that is only `--tap` when the sum happens to fill
+  the pane. The table is EXACTLY the sum now and the head column is told to be
+  everything the others are not, which is where a section name that ellipsised
+  wanted the room anyway.
+- **`calc(x / 0)` IS INVALID, AND THE BLANK STATE IS A RECORD WITH NO PLAYERS.**
+  `--cols - 1` is 0 on Silence, which took `--colw`, `--headw` and the table's
+  own width down with it: measured, the head column collapsed to its content
+  and the `+` stood at x = 18.8 in a 364px pane. The divisor is
+  `max(1, --cols - 1)`. A record you have not built a band into yet is exactly
+  the record this table has to be readable on.
+- **THE LAMP WAS THE SECOND LINE.** PHRASES measured 61.1px against TIME's 45
+  and the extra 16.1 was `.nu-motlamp`, a sticky BLOCK under the button. The
+  `--panew` pin belongs to the row's LINE (`.nu-spline`), not to the button, so
+  the lamp is a flex item at the end of that line — still a `[data-live]`
+  SIBLING of the button, still outside it (T10u), and its reserved line now
+  costs nothing, which is a stronger form of B6's law than the one it replaces.
+  The column head's `.nu-scollamp` and the mix cell's took the same repair for
+  the same 4px: both ride their own box's bottom edge and the band came from
+  49 to 45.
+- **SEVEN 44px MARKS AND SIX GAPS DO NOT FIT IN 320.** The ≡ joining the bar
+  made the row want 334.4px of a 320px screen. The tap floor is not negotiable
+  and the air is: below 380 the three gaps are 1px, measured at **314 in a 320
+  row**, and every mark keeps its 44 in both axes.
+
+**WHAT WAS REFUSED, AND WHY.**
+
+- **THE PLAYER OFFERS ARE NOT CLUSTERED BY `familyOf`.** §13a.5 asks for the
+  ADD sheet's body *"as lozenges in the Cast's clusters (instruments.js
+  `familyOf`)"*. `NuInstruments.familyOf` matches INSTRUMENT ids against
+  eleven regexes (`/guitar|banjo|sitar/` → guitar, `/organ/` → organ …) and the
+  three offers are voice KINDS: `familyOf("line")`, `familyOf("bass")` and
+  `familyOf("drums")` all fall through to `"lead"`, so clustering by it would
+  draw one heading over three words and call it semantic. The clusters the
+  sheet HAS are the two §11c gives every sheet — **Players** and **Sections**,
+  one group heading each — and the three offers are one lozenge field at
+  `tcol-add`, whose own `data-k` law (`<field>|<value>`) is what keeps
+  `tcol-add|line`, `tcol-add|bass` and `tcol-add|drums` the addresses eleven
+  gates already drive. The section offer keeps `trow-add` in the sheet's op row.
+- **THE `<tfoot>`'S FOUR SIDEWAYS PINS STAY.** §13b's table says
+  "`<tfoot>` rows sticky: yes → none". Measured, no `<tfoot>` cell was EVER
+  pinned in the block direction — `stick()` walks `thead > tr` and nothing
+  else — and the four that report `position: sticky` there are pinned on the
+  INLINE axis: the mix row's section-column head, and the master's and
+  produce's `--panew` lines. §13a.4 keeps that axis by name (*"The section
+  column sticks left while players scroll sideways, as now"*), and §10a's own
+  measurement is what put the master's line there (in the row head it rendered
+  at 17px; in the adder cell it stood seven columns right of a 255px pane). So
+  T13j asserts the block direction, which is what "a pinned band" means, and
+  the horizontal law is untouched.
+- **A CELL AT 390 IS A GLYPH AND NOT A WORD, ON A RECORD WITH SEVEN PLAYERS.**
+  §13a.7 is doing exactly what it says — the share is 30.4px and the word shows
+  at 9ch — so Kingston 1969 at 390 draws a grid of marks with no words in it,
+  which is §11e's own *"ideally the table is a large set of icons"* and is also
+  a real loss of what each cell SAYS. It is recorded here rather than softened:
+  the accessible name and the `.nu-vh` word carry it, the cell's own sheet
+  prints it, and a record with three players at 390 (the Silence record with a
+  band built into it) is over 9ch and draws its words.
+
+**WHAT MOVED, IN ADDRESSES** (`test/shell.js` is told each, and
+`test/table-inventory.json` files them):
+
+| control | was | is |
+|---|---|---|
+| `taddr` `tundo` `tredo` `tcopy` `tpaste` | `.nu-formula`, above the pane / a bottom sheet at ≤480 | the OPEN cell sheet's first line (`.nu-cellhead`) — two taps: select, then edit |
+| `tcol-add|line` `|bass` `|drums` | three `.nu-addbtn`s in a 22ch head cell | the ADD sheet's lozenge field at `tcol-add` — one tap on either `+` |
+| `trow-add` | a `.nu-addbtn` under the last section | the ADD sheet's op row |
+| `tadd|head` `tadd|foot` | — | NEW: the two `+`s, one `--tap` cell each |
+| `menu` (the ≡) | `.nu-top`, fixed at the top corner | the LAST button of `.nu-bar`; `#nu-menu` opens above it |
+| `sheet-close` (the ×) | `.nu-top`, beside the ≡ | `.nu-sheethead`, the first line of the open viewer sheet, with the sheet's name |
+| `tfoot|perf` | a row head beside a three-line strip of word plates | a merged one-line row; its sheet is `perfCells` + `perfSheet`, which is more than the row held (`footCell` set `OPENFIELD` to an address the sheet it opened did not contain) |
+
+**WHAT IS DELETED.** `.nu-top` and its five rules; `.nu-formula`, `.nu-fvec`
+and `firstGroup` (the readout was the sheet's own first group);
+`.nu-addbar`/`.nu-addbtn`/`.nu-addhead` and `addBtn`; `--addw`;
+`.nu-footcells`/`.nu-footcell` with `footRow` and `footCell`; the ≤480 bottom
+sheet; `body`'s `--top-h` reservation.
+
+**GATES.** `test/table.browser.js` grew **T13** — thirteen claims (a…l, §13b's
+own table row by row) run in SIX fresh contexts: `devices["iPhone 14"]` at 390
+and at 320 with DPR 3, `isMobile` and `hasTouch`, plus 1280 for *"the desktop is
+the phone given room"*, on Kingston 1969 and on the Silence record (which the
+gate BUILDS a band into through the ADD sheet's own three offers, because the
+blank state has no players and the overlap claim is about a record with a band).
+**379 ok, 0 failed** — T4–T12n unmoved. `test/shell.js` **PASS** (24 skipped),
+`test/gutter.js` **ALL PASS (51)**, `node test/copy.test.js` **10 ok, 0 failed**,
+`test/selects.js` **ALL PASS**, `test/sheets.js` **ALL PASS (31)**.
+`test/nudges.js` **21 of 24**, and its three reds are v287's own: measured
+against a `git archive HEAD` of v287 served beside the working tree, the same
+three fail there (`songs.js WORDS carries the five new rows`, `the development
+sheet offers "the rhythm, moved"`, `an op-KEY word re-times the rendered
+stream`) — none of them about the chrome, and the hire this round re-pointed
+(`+` then `tcol-add|drums`) passes on both.
+
+**AND SEVEN GATES WERE TOLD WHERE A CONTROL WENT**, which is the other half of
+T7's law: `test/shell.js` A6l (the three hires are behind the `+`, two taps from
+rest), `test/gutter.js` T3/T9 (the bar's fourth child is the ≡, and its sweep
+reaches `.nu-sheethead button` so the × is still measured), `test/selects.js`,
+`test/sheets.js` and `test/nudges.js` (the drummer is hired through the `+`),
+and `test/table-inventory.json`, where the five formula-bar addresses take
+`"open": "tcell|<voice>|<section>"`, the four offers take `"open": "tadd|foot"`,
+the three PERFORM controls take `"open": "tfoot|perf"`, and the two `+`s are
+filed as new. Six of T13's own claims failed on their first run and every one of
+them was the GATE and not the page — a descendant `querySelector("th")` that
+found the chord chart's head inside an open sheet, a `display: contents` `<nav>`
+skipped by a walk that wanted a rect, a `<th>` measured where a button was
+meant, two blind taps on a cell that was already selected, and a 47px budget
+asked of a 1280px head that is allowed its two lines.
+
+**AND THREE THINGS THE SWEEP FOUND WHILE MOVING THEM.** `test/shell.js` BANDS
+read `top.getBoundingClientRect()` off a `.nu-top` that is gone (it reported
+`topH` and nothing read it); the bar at 320 on the BLANK STATE overflowed its
+own box by 3px, because a five-digit seed is 9px wider than Kingston's one (the
+number keeps its 44px floor and gives up its side padding below 380); and a
+column head's SECOND line — `.nu-colinstr`, what the player is playing — had no
+first-word fallback and printed "acoustic ba…" on the Silence record at 390 with
+a band in it. A head that cannot show its instrument whole drops it now
+(`is-noinstr`); the accessible name and the title still carry it.
