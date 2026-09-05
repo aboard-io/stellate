@@ -1,5 +1,5 @@
 {
-  "note": "THE SOUND SYSTEM — Kingston 1950. Tom the Great Sebastian, \"the\nall-time giant of sound systems\" (the ZIM's own quote), started\nby Tom Wong in 1950: American rhythm and blues on exclusive\nshellac, played to downtown Kingston over speaker stacks built\nfor bass, Count Matchuki talking over the intros as the first\ndeejay. TWO rows want \"jamaican sound system\" by name — boombap,\nwhose comment has carried \"the sound-system culture that taught\nthem to loop is still owed\" since its lineage was written, and\nblockparty, whose own Kool Herc brought exactly this practice to\nthe Bronx. The `blockparty` precedent is the whole argument that\na playback culture can anchor: the music IS the records plus the\nsystem — the bass stack, the exclusive, the voice over the top.\n\nLINEAGE: the records on the decks were jump blues and R&B\nexclusives — retitled, label scratched off, so no rival could\nbuy the tune out from under you.",
+  "note": "THE SOUND SYSTEM — Kingston 1950. Tom the Great Sebastian, \"the\nall-time giant of sound systems\" (the ZIM's own quote), started\nby Tom Wong in 1950: American rhythm and blues on exclusive\nshellac, played to downtown Kingston over speaker stacks built\nfor bass, Count Matchuki talking over the intros as the first\ndeejay. TWO rows want \"jamaican sound system\" by name — boombap,\nwhose comment has carried \"the sound-system culture that taught\nthem to loop is still owed\" since its lineage was written, and\nblockparty, whose own Kool Herc brought exactly this practice to\nthe Bronx. The `blockparty` precedent is the whole argument that\na playback culture can anchor: the music IS the records plus the\nsystem — the bass stack, the exclusive, the voice over the top.\n\nLINEAGE: the records on the decks were jump blues and R&B\nexclusives — retitled, label scratched off, so no rival could\nbuy the tune out from under you.\n\nTHE HAT WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the\nswing census; `gospel`'s precedent). The row declares `swing: 0.2` and its\nown lineage says what was on the decks: \"jump blues and R&B exclusives\" —\n1950 American shuffle sides, which is the one thing a Kingston sound system\nin 1950 was playing. Its hat lane was straight eighths, `1010101010101010`.\nkernel.js's swing law is `swing(g, i) = (i % 2) * g.swing`: it delays the\nODD sixteenths and nothing else, so a lane whose every hit sits on an even\nstep is a lane the shuffle cannot reach. MEASURED by rendering the WHOLE\nrecord twice — as written and with `swing` forced to 0 — and counting the\nevents whose time differs: 0 of 2,688 drum hits moved at seed 1, 0 of 2,016\nat seed 2, 0 of 2,240 at seed 3, against 1,656 of 7,451 line events at seed\n1 — the bass stack leaned and the record on the turntable did not. FIXED in\nthe grid: the hat plays the beat and the swung \"a\" (`h: 1001100110011001`),\neight hits a bar before and eight after. This is a 1950 row and the fix is\ndated: the straight hat that the island's own music later made famous\narrives with `ska` (Kingston 1962) and `rocksteady` (Kingston 1966), both of\nwhich write straight eighths and declare NO swing at all — which is the\ndistinction this edit protects rather than erases.",
   "label": "Kingston 1950",
   "voices": 2,
   "bars": 8,
@@ -84,20 +84,20 @@
     "h": [
       1,
       0,
-      1,
       0,
       1,
-      0,
       1,
       0,
-      1,
       0,
       1,
-      0,
       1,
       0,
+      0,
       1,
-      0
+      1,
+      0,
+      0,
+      1
     ]
   },
   "kitVel": {

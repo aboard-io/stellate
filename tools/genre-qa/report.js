@@ -11,8 +11,11 @@
  *
  *   named           the key is a genre term — no band, no person, no record —
  *                   and the label is 'Place Year' with the place on the atlas
- *   linked          the wiki row resolves, and the article's own stated decade
- *                   agrees with the year we put on the record
+ *   linked          the wiki row resolves — an article exists, it is about this
+ *                   music, and the name a reader sees is a genre. THE DATE
+ *                   HALF MOVED OUT 2026-09-05: whether our year agrees with
+ *                   the article's origin clause is `earliest`'s question and
+ *                   was being asked in both columns at once (see the clause)
  *   earliest        the record is not later than the article says, and not
  *                   older than a genre it declares as a parent
  *   closest         the declared parents are the nearest older neighbours by a
@@ -291,28 +294,81 @@ function main() {
     /* ---------- linked ---------- */
     if (role) c.linked = { s: null, v: "role", d: "a role has a job, not a history" };
     else {
-      let s = 1; const w = [];
+      /* `w` is what is SCORED and flags the row; `note` is what is RECORDED
+         beside it and does not. The two lists exist because this column now
+         carries a fact it deliberately refuses to score — see the date clause. */
+      let s = 1; const w = [], note = [];
       if (!g.wiki_title) {
         if (g.wiki_miss_why) { s = 0.6; w.push("no article, with a written reason (a documented miss)"); }
         else { s = 0; w.push("NO article and NO reason — neither a link nor a miss"); }
       } else {
         if (g.wiki_kind === "broader") { s -= 0.3; w.push("the article is wider than the row (" + g.wiki_title + ")"); }
-        if (g.wiki_kind === "artist" || g.wiki_kind === "work") { s -= 0.35; w.push("the article is an " + g.wiki_kind); }
-        if (D.up) {
-          /* NO DATE IS NOT A FAULT. 103 leads name no origin clause; docking
-             them a tenth put a quarter of the catalogue on the flagged list
-             for something the ARTICLE did not say. It is recorded, not
-             scored. */
-          if (dec != null && g.year != null && Math.abs(g.year - dec) > 25) {
+        /* THE PLATES LAW, AND THIS COLUMN WAS SCORING AGAINST IT (2026-09-05).
+           `wiki-extract.js` ASK, 2026-09-03, in Paul's own round: "an article
+           may be an act or a work when it is the honest evidence for the row,
+           but the NAME a reader sees is the GENRE." The two facts were
+           separated that day — `title` is where the reader is SENT, `as` is
+           what the reader is SHOWN, and `NuWiki.name()` reads `as` first — and
+           31 rows carry the plate.
+           This clause docked all 31 of them 0.35 anyway, which is 31 of the
+           79 rows the column called bad, and every one of those docks was the
+           column disagreeing with a decision the table had already made and
+           written down. A row whose whole evidence is one album, one tablet
+           or one composer HAS no genre article; that is a fact about the
+           encyclopaedia, and each of the 31 `why` sentences names the
+           alternatives it probed and refused. Re-probed 2026-09-05 against the
+           same ZIM, exactly two of them were wrong — `honkytonk` and `seannos`
+           were refused their genre articles by a DISAMBIGUATION guard reading
+           past the first sentence — and both are repointed at the source
+           rather than argued away here.
+           SO THE DOCK MOVES TO WHERE THE LAW CAN ACTUALLY BE BROKEN: an act
+           or a work article with NO plate, which is the state Paul was
+           reading off the genre list when he said "you still have people and
+           bands in there". 0 rows are there today, and the clause is what
+           keeps it that way. */
+        if (g.wiki_kind === "artist" || g.wiki_kind === "work") {
+          if (!g.wiki_as) {
             s -= 0.35;
-            w.push("the article's " + kv.how + " dates it " + dec + " and the row says " + g.year_word +
-                   " (" + (g.year > dec ? "we are " + (g.year - dec) + " years late" : "we are " + (dec - g.year) + " years early") + ")");
+            w.push("the article is an " + g.wiki_kind + " (" + g.wiki_title +
+                   ") and the row carries NO `as` plate — the genre list would show a band or a record where a genre belongs");
           }
         }
+        /* THE DATE IS `earliest`'S QUESTION, ASKED TWICE (2026-09-05).
+           This clause and `earliest`'s own two date clauses read the same
+           number out of the same lead and printed nearly the same sentence
+           about it — "the article's origin clause dates it 1850 and the row
+           says 1899" here, "later than the article's origin clause by 49
+           years — a genre placed at a famous record rather than at its first"
+           one column over. That is one fault scored twice, and this is the
+           column with no business asking: the article was CORRECTLY chosen
+           whatever its lead's first date says. It is the argument `named`
+           already makes about act/work articles — "that is a naming RISK, not
+           a naming error; the same fact is scored properly one column over".
+           20 rows were bad on this alone, every one of them holding the right
+           genre article: `punk` on Punk rock, `rock` on Rock music, `ragtime`
+           on Ragtime, `samba` on Samba. It is RECORDED below and not scored,
+           the same treatment this column already gives a lead with no date at
+           all.
+           WHAT THE MOVE LEAVES UNSCORED, said plainly: `earliest` docks a row
+           more than 25 years LATE and more than 40 years EARLY, so a row 26
+           to 40 years earlier than its article's origin clause is now checked
+           nowhere. Measured the day this landed: two rows, `drone` (36) and
+           `rebetiko` (35), and the asymmetry is deliberate where it lives —
+           a row EARLIER than the article's lead is usually this catalogue
+           being right about a first instance. */
+        if (D.up && dec != null && g.year != null && Math.abs(g.year - dec) > 25)
+          note.push("the article's " + kv.how + " dates it " + dec + " and the row says " + g.year_word +
+                    " (" + (g.year > dec ? (g.year - dec) + " years later" : (dec - g.year) + " years earlier") +
+                    ") — recorded here, scored in `earliest`");
       }
+      /* NO DATE IS NOT A FAULT. 103 leads name no origin clause; docking them
+         a tenth put a quarter of the catalogue on the flagged list for
+         something the ARTICLE did not say. It is recorded, not scored. */
       const nodate = g.wiki_title && D.up && dec == null ? " (the lead names no origin date)" : "";
       c.linked = { s: clamp(s), v: w.length ? "check" : "ok",
-                   d: (w.join("; ") || (g.wiki_title + (dec != null ? " · its origin clause dates it " + dec : ""))) + (w.length ? nodate : "") };
+                   d: (w.concat(note).join("; ") ||
+                       (g.wiki_title + (dec != null ? " · its origin clause dates it " + dec : ""))) +
+                      (w.length ? nodate : "") };
     }
 
     /* ---------- earliest ---------- */
@@ -743,7 +799,7 @@ function render(x) {
   L.push("");
   L.push("`" + rows.length + "` rows. " + (D.up
     ? "Wikipedia decades read from the local kiwix ZIM at " + (process.env.KIWIX_HOST || "localhost") + ":" + (process.env.KIWIX_PORT || 8888) + "."
-    : "**Wikipedia decades were NOT read** — " + D.why + " — so the `linked` and `earliest` columns are missing their date half and say so."));
+    : "**Wikipedia decades were NOT read** — " + D.why + " — so `earliest` is missing its date half and `linked` its recorded date line, and both say so."));
   L.push("");
 
   L.push("## Column totals");

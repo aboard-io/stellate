@@ -147,7 +147,36 @@ const ROLES = ["simple", "solo", "vocal", "backing", "riff", "pad"];
 /* "may refer to" is not the only wording a disambiguation page uses — `Forro`
  * says "could refer to" and would otherwise have shipped, pointing a Recife
  * 1950 anchor at an ethnic group in Sao Tome. */
-const DISAMB = /\b(may|might|can|could)\s+(also\s+)?refer to\b|\bis a (disambiguation|list of)\b/i;
+/* SCOPED TO THE LEAD'S FIRST SENTENCE, 2026-09-05 (the linked-column round).
+ * A DISAMBIGUATION PAGE SAYS SO IN ITS FIRST SENTENCE. A real article that
+ * mentions a second sense LATER in the same paragraph is not one, and the
+ * unscoped test had TWO false positives written down in this file as
+ * "the guard errs closed on purpose":
+ *   · `Honky-tonk` — "A honky-tonk … is either a bar that provides country
+ *     music … or the style of music played in such establishments. It CAN
+ *     ALSO REFER TO the type of piano" — a genre article, refused on its
+ *     second sentence, which is why `honkytonk` linked Ernest Tubb.
+ *   · `Sean-nós singing` — a 127 KB article whose lead paragraph ENDS "the
+ *     term can also refer to sean-nós dance", which is why `seannos` linked
+ *     Joe Heaney.
+ * Both are repointed below. `is a disambiguation`/`is a list of` stays tested
+ * against the WHOLE lead, because that wording is unambiguous wherever it
+ * sits. The change cannot silently move any other row: a title that already
+ * resolves cannot be un-refused by loosening a refusal, and the run was
+ * re-derived whole to prove it — two rows moved, 477 byte-identical.
+ * THE SECOND GUARD IS STILL THERE and it is the stronger one: a real
+ * disambiguation page is short, so kiwix's own footer lands inside the first
+ * 900 characters and the test below catches it — which is what actually
+ * stopped `Forro`. */
+const DISAMB = /\b(may|might|can|could)\s+(also\s+)?refer to\b/i;
+const DISAMB_ANY = /\bis a (disambiguation|list of)\b/i;
+/* The first sentence, ended by a full stop followed by whitespace and a
+ * capital or an opening bracket — so "P.Oxy. XV 1786" and "c. 1934" do not
+ * end one. */
+function firstSentence(lead) {
+  const m = /\.\s+(?=[A-Z(\u00C0-\u00DE])/.exec(lead);
+  return m ? lead.slice(0, m.index + 1) : lead;
+}
 
 /* `trip.hop` joined 2026-08-30, the downtempo round, for the same reason
  * `hip.hop` was always here: Massive Attack's lead is "an English trip hop
@@ -604,7 +633,22 @@ const ASK = {
   // `Honky-tonk music` is a meta-refresh stub onto Honky-tonk#Music — a
   // section, not an article. The named performer is the newjackswing2/aor
   // precedent and the honest remainder.
-  honkytonk:  { q: "Ernest Tubb", as: "Honky-tonk", why: "Fort Worth 1941 is Walking the Floor Over You and the article is the man who cut it — the Texas Troubadour whose electric barroom band is this row's whole cast; the genre's own titles resolve to a disambiguation and a section stub in this ZIM, and a wrong link is worse than a narrower true one. PLATE 2026-09-03 — the list said \"Ernest Tubb\". Paul, 2026-09-03: \"look for names in genre list, you still have people and bands in there.\" The genre's own word is what this row is called everywhere, and the ZIM's failure to file it as an article (a disambiguation and a section stub, above) refuses it a LINK, not a NAME.", kind: "artist" },
+  // REPOINTED 2026-09-05 (the linked-column round), AND HALF OF THAT
+  // PARAGRAPH WAS WRONG. `Honky-tonk music` really is a meta-refresh stub
+  // (measured: 214 bytes, `0;URL='./Honky-tonk#Music'`). `Honky-tonk` is NOT
+  // a disambiguation page: it is a 127 KB article whose lead reads "A
+  // honky-tonk … is either a bar that provides country music for the
+  // entertainment of its patrons or the STYLE OF MUSIC played in such
+  // establishments", and Wikipedia files the genre there — that is where
+  // `Honky-tonk music` points. What refused it was this file's DISAMB guard
+  // firing on the lead's SECOND sentence, "It can also refer to the type of
+  // piano (tack piano)". The guard is scoped to the first sentence now (see
+  // its own note above) and the row takes the genre article it always wanted.
+  // `as` is dropped with the repoint, by the plates law's first shape: the
+  // genre article is free, so the title IS the plate. Ernest Tubb stays where
+  // he always was — in the anchor's own comment, as the record the row is
+  // written from.
+  honkytonk:  { q: "Honky-tonk", why: "Fort Worth 1941 is Walking the Floor Over You, and the article is the music: 'A honky-tonk … is either a bar that provides country music for the entertainment of its patrons or the style of music played in such establishments', with a Music section that Wikipedia's own `Honky-tonk music` redirects into and a History section that runs Jimmie Rodgers, Ernest Tubb, Lefty Frizzell, Hank Williams. REPOINTED 2026-09-05 off `Ernest Tubb`: from 2026-08-30 this row linked the man because both of the genre's own titles were recorded as refused, and only one of them was — `Honky-tonk music` is a section stub, but `Honky-tonk` is a full article that this file's DISAMBIGUATION guard was refusing on its lead's SECOND sentence ('It can also refer to the type of piano'). The guard now reads the first sentence only, so the refusal is gone and with it the reason for the artist link. No `as`: the article is the genre, so it is also the plate."},
   westernswing: { q: "Western swing", why: "Tulsa 1940 is New San Antonio Rose from the Cain's Ballroom band; the article is the genre by name, Wills its own centerpiece." },
   dreampop:   { q: "Dream pop", why: "London 1984 is Treasure; the article is the genre by name and the Cocteau Twins are in its first lines. Not Shoegaze, the table's own child row." },
   doom:       { q: "Doom metal", why: "Stockholm 1986 is Epicus Doomicus Metallicus, the record whose title names the article's subject. Not Doom (the game); not Candlemass alone, who are the row's named performers." },
@@ -666,7 +710,14 @@ const ASK = {
   // lead paragraph ends "the term can also refer to sean-nós dance", which
   // trips DISAMB — a false positive, but the guard errs closed on purpose
   // and the singer is the honest subject anyway (the Kinks precedent).
-  seannos:    { q: "Joe Heaney", as: "Sean-nós song", why: "Carna 1957 is Seosamh Ó hÉanaí's first Gael-Linn sides and the article is that singer — 'an Irish traditional (sean nós) singer from Connemara', its own first line. `Sean-nós singing` trips the disambiguation guard on its own lead's closing sentence, and a guard that errs closed stays closed. PLATE 2026-09-03 — the list said \"Joe Heaney\". Paul, 2026-09-03: \"look for names in genre list, you still have people and bands in there.\" The guard that errs closed still keeps the link off Sean-nós singing; the plate says the form's own name, which is also this row's key.", kind: "artist" },
+  // REPOINTED 2026-09-05 (the linked-column round). The false positive was
+  // named here the day it happened and left standing because the guard "errs
+  // closed on purpose" — but a guard that errs closed on a 127 KB genre
+  // article, on a clause in its LAST sentence, is not erring, it is wrong.
+  // DISAMB reads the first sentence now, so the article this row was always
+  // about is reachable, and `as` goes with the repoint: the genre article is
+  // free and the title is the plate. Joe Heaney stays in the anchor's comment.
+  seannos:    { q: "Sean-nós singing", why: "Carna 1957 is Seosamh Ó hÉanaí's first Gael-Linn sides, and the article is the FORM he sang — the unaccompanied, highly ornamented Irish solo song, which is every field this row sets. REPOINTED 2026-09-05 off `Joe Heaney`: the article was refused from 2026-08-30 because this file's DISAMBIGUATION guard fired on the closing clause of its lead paragraph, 'the term can also refer to sean-nós dance'. That was recorded as a false positive on the day and left standing; the guard reads the first sentence only now, and a 127 KB article about a song tradition is not a disambiguation page. No `as`: the article is the genre, so it is also the plate."},
   barbershop: { q: "Barbershop music", why: "New York 1910 is the American Quartet's Play That Barber Shop Chord (Victor); the genre article, not Barbershop quartet (the ensemble format) and not A cappella (the wider texture)." },
   // Photoplay music was TRIED and rejected by the music guard: its one-line
   // lead is under the 140-character floor, so the derivation reads the next
@@ -1044,7 +1095,8 @@ async function resolve(q) {
        is the sentence a human would check. */
     const lead = firstPara(r.body);
     if (!lead) return { bad: "no lead paragraph (a list or a stub): " + title };
-    if (DISAMB.test(lead) || /\(disambiguation\)$/.test(title))
+    if (DISAMB.test(firstSentence(lead)) || DISAMB_ANY.test(lead) ||
+        /\(disambiguation\)$/.test(title))
       return { bad: "DISAMBIGUATION page: " + title };
     /* kiwix appends "This article is issued from Wikipedia…" to every page. On
        a real article it is thousands of characters down; when it turns up in

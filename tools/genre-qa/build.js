@@ -400,6 +400,14 @@ async function main() {
       year_word: when ? NA.yearWord(when.year) : null,
       era: when ? NA.eraOf(when.year) : null, region,
       wiki_title: wiki ? wiki.title : null, wiki_kind: wiki ? wiki.kind : null,
+      /* `as` — THE PLATE, mirrored 2026-09-05 (the linked-column round).
+         wiki-extract.js's plates law (2026-09-03) says an article may be an
+         act or a work when it is the honest evidence for the row, PROVIDED
+         the name a reader sees is the genre — which is what `as` carries.
+         The mirror could not see that field, so report.js's `linked` scorer
+         was docking every act/work link 0.35 with no way to tell a row that
+         obeys the law from one that breaks it. */
+      wiki_as: wiki ? (wiki.as || null) : null,
       wiki_why: wiki ? wiki.why : null, wiki_url: wiki ? NW.url(gk) : null,
       wiki_miss_why: miss ? miss.why : null,
       doc_err: docErr,

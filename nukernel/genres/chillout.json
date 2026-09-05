@@ -1,5 +1,5 @@
 {
-  "note": "MORCHEEBA — London 1996. Who Can You Trust? (Indochina, 1 April\n1996): the Godfrey brothers' beats and psychedelia under Skye\nEdwards's balm — and the one thing no other row in this wing\nhas, a SLIDE GUITAR, country blues laid over the loop as if\nBeck's Odelay and Dummy shared a porch. The ear files it beside\nnoirhop; the guitar is why it is not a copy.\n\nLINEAGE: `triphop` (Bristol 1991) is the licence the press\nfiled them under; `blues` (Chicago 1952) the slide and the\nporch; `psychpop` (London 1968) Ross Godfrey's record shelf.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nLondon 1996 — this row's own place and year. Modal over SCALES.blues, which\nhas no sixth. Full ruling at `holler`.\n\nWHO SINGS: Edwards is the wing's warmest mouth — the\npop lead's breath without its belt.",
+  "note": "MORCHEEBA — London 1996. Who Can You Trust? (Indochina, 1 April\n1996): the Godfrey brothers' beats and psychedelia under Skye\nEdwards's balm — and the one thing no other row in this wing\nhas, a SLIDE GUITAR, country blues laid over the loop as if\nBeck's Odelay and Dummy shared a porch. The ear files it beside\nnoirhop; the guitar is why it is not a copy.\n\nLINEAGE: `triphop` (Bristol 1991) is the licence the press\nfiled them under; `blues` (Chicago 1952) the slide and the\nporch; `psychpop` (London 1968) Ross Godfrey's record shelf.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nLondon 1996 — this row's own place and year. Modal over SCALES.blues, which\nhas no sixth. Full ruling at `holler`.\n\nWHO SINGS: Edwards is the wing's warmest mouth — the\npop lead's breath without its belt.\n\nTHE HAT WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the\nswing census; `gospel`'s precedent). This row declares `swing: 0.2` — at or\nabove `precompose.js REALSWING` (0.17), the boundary where this box stops\ncalling a record light and starts calling it laidback — and its hat lane was\nstraight eighths, `1010101010101010`. kernel.js's swing law is `swing(g, i)\n= (i % 2) * g.swing`: it delays the ODD sixteenths and nothing else, so a\nlane whose every hit sits on an even step is a lane the shuffle cannot\nreach. MEASURED by rendering the WHOLE record twice — as written and with\n`swing` forced to 0 — and counting the events whose time differs: 0 of 2,288\ndrum hits moved at seed 1, 0 of 1,872 at seed 2, 0 of 2,288 at seed 3,\nagainst 3,370 of 18,129 line events at seed 1. A downtempo loop is the one\nplace in this wing where the shuffle IS the drums: the Godfreys' beats lope,\nand a straight machine under a slide guitar is not the porch this row's own\nlineage argues for. FIXED in the grid: the hat plays the beat and the swung\n\"a\" (`h: 1001100110011001`), eight hits a bar before and eight after.",
   "label": "London 1996",
   "voices": 3,
   "bars": 8,
@@ -112,20 +112,20 @@
     "h": [
       1,
       0,
-      1,
       0,
       1,
-      0,
       1,
       0,
-      1,
       0,
       1,
-      0,
       1,
       0,
+      0,
       1,
-      0
+      1,
+      0,
+      0,
+      1
     ]
   },
   "fx": [

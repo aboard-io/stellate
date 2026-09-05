@@ -95,7 +95,7 @@
    }
   },
   "heldOutModels": 20,
-  "seconds": 77.2
+  "seconds": 76
  },
  "exceptions": {
   "casts-a-record": {
@@ -7149,7 +7149,7 @@
      "pedals the octave between chord tones",
      "leaps around the chord",
      "shimmers inside the chord",
-     "turns through the chord to the ninth"
+     "turns up to the ninth"
     ],
     "on": [
      "genre.when",
@@ -7171,7 +7171,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the eighties\\\",\\\"the nineties\\\",\\\"now\\\"]\",\"techno\"]": [
       "rises",
@@ -7188,7 +7188,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"disco\"]": [
       "rises",
@@ -7220,7 +7220,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the nineties\\\",\\\"the two-thousands\\\"]\",\"amen break\"]": [
       "rises",
@@ -7237,7 +7237,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the sixties\\\",\\\"the seventies\\\",\\\"the eighties\\\",\\\"the nineties\\\"]\",\"straight rock\"]": [
       "rises",
@@ -7279,7 +7279,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifties\\\",\\\"the sixties\\\",\\\"now\\\"]\",\"jazz ride\"]": [
       "rises",
@@ -7296,7 +7296,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifties\\\",\\\"the sixties\\\"]\",\"shuffle\"]": [
       "rises",
@@ -7313,7 +7313,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"funk\"]": [
       "rises",
@@ -7330,7 +7330,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"one drop\"]": [
       "rises",
@@ -7377,7 +7377,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the sixties\\\",\\\"the seventies\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7409,7 +7409,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the twelve-hundreds\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7426,7 +7426,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the twelve-hundreds\\\",\\\"the thirteen-hundreds\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7443,7 +7443,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the thirteen-hundreds\\\"]\",\"the tabor\"]": [
       "rises",
@@ -7460,7 +7460,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"a processional\"]": [
       "rises",
@@ -7477,7 +7477,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7494,7 +7494,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the sixteen-hundreds\\\",\\\"the seventeen-hundreds\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7511,7 +7511,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the seventeen-hundreds\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7543,7 +7543,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the eighteen-hundreds\\\"]\",\"a processional\"]": [
       "rises",
@@ -7560,7 +7560,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the eighteen-hundreds\\\",\\\"now\\\"]\",\"a waltz\"]": [
       "rises",
@@ -7592,7 +7592,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the seventies\\\",\\\"now\\\"]\",\"a rock waltz\"]": [
       "rises",
@@ -7624,7 +7624,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the eighties\\\",\\\"the nineties\\\",\\\"now\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7641,7 +7641,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"a march in six\"]": [
       "rises",
@@ -7658,7 +7658,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the sixteen-hundreds\\\",\\\"the seventeen-hundreds\\\"]\",\"a tarantella\"]": [
       "rises",
@@ -7675,7 +7675,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifties\\\",\\\"the sixties\\\",\\\"now\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7707,7 +7707,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the sixteen-hundreds\\\",\\\"the seventeen-hundreds\\\"]\",\"a slow three\"]": [
       "rises",
@@ -7724,7 +7724,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the nineties\\\",\\\"the two-thousands\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7741,7 +7741,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifties\\\",\\\"the sixties\\\"]\",\"nobody on the kit\"]": [
       "rises",
@@ -7773,7 +7773,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[\"[\\\"the fifties\\\",\\\"the sixties\\\"]\",\"a rock waltz\"]": [
       "rises",
@@ -7805,7 +7805,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ]
     },
     "fit": {
@@ -7939,7 +7939,7 @@
      "shapes": 1
     },
     {
-     "w": "turns through the chord to the ninth",
+     "w": "turns up to the ninth",
      "sets": {
       "idea.contour": "arpturn"
      },
@@ -7955,11 +7955,11 @@
    "regenerateWhy": "the box offers it and the rules do not",
    "regenerateExample": {
     "on": "unseen #1 (pianobar)",
-    "box": "idea:contour(rises·arches over·falls awaya*·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chord·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth)",
+    "box": "idea:contour(rises·arches over·falls awaya*·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chord·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns up to the ninth)",
     "mine": "(not produced)"
    },
    "kind": "opaque",
-   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers idea:contour(rises·arches over·falls awaya*·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chord·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth) and the rules offer (not produced). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
+   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers idea:contour(rises·arches over·falls awaya*·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chord·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns up to the ninth) and the rules offer (not produced). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
    "whyCode": "prune-by-sound"
   },
   {
@@ -8057,7 +8057,7 @@
    "seat": "arranger",
    "head": "the tune",
    "ask": "where does it sit?",
-   "declaredIn": "nukernel/chair.js",
+   "declaredIn": "nukernel/ideas-kit.js",
    "flags": [],
    "rank": 34,
    "exists": {
@@ -8685,7 +8685,7 @@
      "pedals the octave between chord tones",
      "leaps around the chord",
      "shimmers inside the chord",
-     "turns through the chord to the ninth"
+     "turns up to the ninth"
     ],
     "on": [
      "role.bridge",
@@ -8707,7 +8707,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[false,\"on the grid\"]": [
       "rises",
@@ -8735,7 +8735,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[true,\"a human hand\"]": [
       "rises",
@@ -8777,7 +8777,7 @@
       "pedals the octave between chord tones",
       "leaps around the chord",
       "shimmers inside the chord",
-      "turns through the chord to the ninth"
+      "turns up to the ninth"
      ],
      "[true,\"on the grid\"]": [
       "rises",
@@ -8922,7 +8922,7 @@
      "shapes": 1
     },
     {
-     "w": "turns through the chord to the ninth",
+     "w": "turns up to the ninth",
      "sets": {
       "ideaB.contour": "arpturn"
      },
@@ -8939,10 +8939,10 @@
    "regenerateExample": {
     "on": "unseen #1 (pianobar)",
     "box": "ideaB:contour(rises·falls away·drops, then climbs·says one note, then moves·climbs the chord and comes back·falls down the chorda*·pedals the octave between chord tones·leaps around the chord)",
-    "mine": "ideaB:contour(rises·arches over·falls away·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chorda*·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth)"
+    "mine": "ideaB:contour(rises·arches over·falls away·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chorda*·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns up to the ninth)"
    },
    "kind": "opaque",
-   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers ideaB:contour(rises·falls away·drops, then climbs·says one note, then moves·climbs the chord and comes back·falls down the chorda*·pedals the octave between chord tones·leaps around the chord) and the rules offer ideaB:contour(rises·arches over·falls away·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chorda*·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
+   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers ideaB:contour(rises·falls away·drops, then climbs·says one note, then moves·climbs the chord and comes back·falls down the chorda*·pedals the octave between chord tones·leaps around the chord) and the rules offer ideaB:contour(rises·arches over·falls away·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chorda*·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns up to the ninth). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
    "whyCode": "prune-by-sound"
   },
   {

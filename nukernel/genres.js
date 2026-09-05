@@ -3611,6 +3611,28 @@
     // fragments are triggered from.
     //
     // THE SIREN IS IN THE `cannot` and it is the row's one real loss.
+    //
+    // THE SWING WAS DECLARED BELOW THE VOCABULARY'S FLOOR AND NEVER ARRIVED, SO IT
+    // IS RETIRED (2026-09-05, the swing census). This row said `swing: 0.05`, and
+    // 0.05 is nearer to `straight` (0) than to `light` (0.12) on `fields.js
+    // SWINGS` — the five words that ARE this box's swing vocabulary.
+    // `precompose`'s `swingOf` quantises a row's ratio onto that table
+    // (`nearestKey(NF.SWINGS, G.swing)`), so what the document has always carried
+    // for this record is `straight`, and the 0.05 reached no note and no hit.
+    // MEASURED over the whole record, as written against `swing` forced to 0: 0 of
+    // 7,440 drum hits and 0 of 38,592 line events moved at seed 1, and the same
+    // nothing at seed 3. (Seed 2 moves 2,740 hits — because compose rolls its OWN
+    // swing word onto a record about three times in ten, which is the
+    // arrangement's die and not this row's claim.) RETIRED RATHER THAN RAISED, and
+    // the choice is the honest one twice over. Musically: the Bomb Squad's beat is
+    // thirty fragments a bar stacked into a texture, and its hat lane is all
+    // sixteen sixteenths — a collage played EXACTLY, with the swing in the
+    // samples' own tape and not in the grid the box draws over them. Mechanically:
+    // deleting the field is provably free — the whole record renders
+    // BYTE-IDENTICAL at seeds 1, 2 and 3 with the key gone, because `straight` is
+    // what it already said. The row now says what it plays. Only two rows in the
+    // catalogue were under the floor; `northernsoul` is the other and is retired
+    // the same day.
     politicalhiphop: {
       label: "Long Island 1988",
       voices: 3,
@@ -3638,7 +3660,6 @@
       harmony: "modal",
       mode: MODES.aeolian,
       scale: SCALES.chromatic,
-      swing: 0.05,
       artic: "staccato",
       maxHold: 2,
       bassStyle: "eighths",
@@ -4520,6 +4541,23 @@
     //
     // WHO SINGS: a belt, cut to carry across a hall — the northern 45's lead
     // shouts where Motown's polishes.
+    //
+    // THE SWING WAS DECLARED BELOW THE VOCABULARY'S FLOOR AND NEVER ARRIVED, SO IT
+    // IS RETIRED (2026-09-05, the swing census; `politicalhiphop` is the only
+    // other row under the floor and is retired the same day). This row said
+    // `swing: 0.06`, which `precompose`'s `swingOf` quantises onto `fields.js
+    // SWINGS` — `straight` 0, `light` 0.12, `swing` 0.22, `shuffle` 1/3, `hard`
+    // 0.42 — and 0.06 is the midpoint that falls to `straight`. MEASURED over the
+    // whole record: 0 of 6,240 drum hits and 0 of 12,056 line events moved at seed
+    // 1, and nothing at seed 3 (seed 2's 1,560 moved hits are compose's own rolled
+    // swing word, not this row's number). RETIRED RATHER THAN RAISED, and here the
+    // music settles it outright: northern soul is a STOMP. This row's kit is four
+    // on the kick, a snare on ALL FOUR beats, straight eighths on the hat and a
+    // tambourine on every sixteenth — the squarest grid in the soul wing, and the
+    // reason a Wigan floor could dance to it all night. A shuffle would be the
+    // wrong record. Deleting the key renders the whole record byte-identical at
+    // seeds 1, 2 and 3, so this costs nothing and stops the row claiming a lean it
+    // never had.
     northernsoul: {
       label: "Manchester 1970",
       voices: 3,
@@ -4543,7 +4581,6 @@
       scale: SCALES.major,
       diatonic: true,
       harmony: "cycle",
-      swing: 0.06,
       artic: "staccato",
       maxHold: 2,
       bassStyle: "eighths",
@@ -7624,6 +7661,19 @@
     //                     dance-band singer's, not the church's.
     //
     // WHO SINGS: low and slow, and the vibrato arrives LATE in the note — the whole trick
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. This row's hat lane
+    // is four hits a bar on the QUARTER, and a quarter has no sixteenth of its own
+    // to lean on: a 1931 dance band behind a ballad singer plays brushes on the
+    // beat. MEASURED over the whole record, as written against `swing` forced to
+    // 0: 0 of 1,298 drum hits move at seed 1 (0 of 1,298 at seed 2, 0 of 1,180 at
+    // seed 3) and 1,819 of 9,656 line events do (5,046 of 13,298; 1,400 of 7,737).
+    // The 0.15 is arriving exactly where this row's own first paragraph puts it —
+    // on the singer, at half the band's rate, phrasing across the bar the way a
+    // horn section never would. Kept as declared; the kit is honest.
     crooner: {
       label: "Los Angeles 1931",
       rate: 0.5,
@@ -12626,6 +12676,15 @@
     // metric with the floor at 0.030; the density arc and the articulation
     // put them at 0.057, and both of those are the difference a listener
     // would name first.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 477 of 2,206 line events moved
+    // at seed 1 (2,992 of 6,714 at seed 2, 476 of 2,429 at seed 3). A ROLE HAS NO
+    // KIT — `solo` is stacked on a host and the host's drummer is the one playing;
+    // what this row owns is the soloist, and 0.16 is the soloist's own lilt. Kept
+    // as declared.
     solo: {
       label: "Solo",
       bars: 8,
@@ -12997,6 +13056,15 @@
     // the machine apart by tempo alone.
     //
     // WHO SINGS: one man, a hall, no polish
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 1,048 of 8,112 line events
+    // moved at seed 1 (1,952 of 7,256 at seed 2, 2,976 of 8,560 at seed 3). One
+    // trained voice and a lute in a Provençal hall: there was no drummer in the
+    // room and none is seated here. The triplet lilt is the singer's, on a canso
+    // strophe long enough to need one. Kept as declared.
     troubadour: {
       label: "Provence 1210",
       bars: 8,
@@ -15448,6 +15516,18 @@
     //
     // WHO SINGS: the monody mouth, three centuries on — the salon
     // soprano is Caccini's daughter by direct descent
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 2,722 of 17,126 line events
+    // moved at seed 1 (5,098 of 18,571 at seed 2, 5,447 of 15,632 at seed 3). THE
+    // SWING HERE IS A METER AND THE ROW ALREADY SAYS SO: "Swing 1/3 is the triplet
+    // shuffle standing in for the compound bar", written against the day this
+    // file's sixteen-place cells can be rewritten in twelve. A meter stand-in
+    // belongs to the LINE by construction — a salon trio has no kit to carry it.
+    // Kept as declared, and it is the one row whose swing must survive the census
+    // unexamined.
     barcarolle: {
       label: "Paris 1881",
       voices: 3,
@@ -22847,6 +22927,14 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 3 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: parlor .60→.50, ragtime .40→.35, operetta .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 2,327 of 17,653 line events
+    // moved at seed 1 (12,342 of 27,452 at seed 2, 3,209 of 11,407 at seed 3). A
+    // cubicle on West 28th Street held a plugger and an upright piano and nothing
+    // else; the row seats what the business had. The 0.15 is the song's — a
+    // thirty-two bar chorus sung and played with a lift. Kept as declared.
     tinpanalley: {
       label: "New York 1924",
       voices: 2,
@@ -27074,6 +27162,16 @@
     // eight-to-the-bar left hand walks a major-key twelve bars; the roots above
     // are degrees 0, 3 and 4 and never 6. See `zydeco` for the full ruling; the
     // blue seventh stays where it lives, in SCALES.blues on this line.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 2,749 of 10,097 line events
+    // moved at seed 1 (2,101 of 7,717 at seed 2, 2,161 of 10,552 at seed 3). THE
+    // LEFT HAND IS THE RHYTHM SECTION: eight to the bar under a right hand that
+    // answers it, which is exactly why three rows want this one by name. A boogie
+    // pianist is his own drummer, so the shuffle has to live in the line, and the
+    // measurement finds it there. Kept as declared.
     boogiewoogie: {
       instrumental: true,
       label: "Chicago 1928",
@@ -27176,6 +27274,15 @@
     // `modinha` (1775) was offered before the age filter; it is a Portuguese parlour
     // song and shares nothing but a mode.
     //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 2,045 of 19,569 line events
+    // moved at seed 1 (4,554 of 14,997 at seed 2, 3,730 of 10,443 at seed 3). One
+    // man and one guitar at Gennett in June 1929: the thumb is the bass drum and
+    // the slide is the horn section, and Patton had no band to swing. `hard`
+    // (0.42) is the deepest lean in the table and it belongs entirely to the hand
+    // and the voice. Kept as declared.
     deltablues: {
       label: "Clarksdale 1929",
       voices: 2,
@@ -27471,6 +27578,19 @@
     // Corpus silent. `SCALES.blues` is untouched — the tune's flat third
     // and flat fifth are this row's actual colour and they come from the
     // SCALE, not from the mode.
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. This row's hat is
+    // straight eighths and its snare and crash sit together on 2 and 4, which is
+    // the squarest kit in the wing AND THE POINT OF THE RECORD: the strut is a
+    // boot on the boards and a handclap backbeat, played four-square so a
+    // television audience can clap along. MEASURED over the whole record: 0 of
+    // 2,464 drum hits move at seed 1 (0 of 2,240 at seeds 2 and 3) and 3,874 of
+    // 20,551 line events do (2,814 of 10,194; 2,892 of 15,125). The 0.15 is
+    // Bolan's own lurch over the top of a stomp that must not lurch, and that is
+    // where the measurement finds it. Kept as declared; the kit is honest.
     glam: {
       label: "London 1971",
       voices: 3,
@@ -27680,6 +27800,20 @@
     //
     // WHO SINGS: falsetto — the Stylistics' register; the
     // Philly lead floats where Motown's punched.
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. MEASURED over the
+    // whole record: 0 of 2,912 drum hits move at seed 1 (0 of 2,240 at seed 2, 0
+    // of 2,464 at seed 3) and 4,960 of 33,368 line events do (24,376 of 50,648;
+    // 9,768 of 24,656). THE STRAIGHTNESS IS THE INVENTION, and this row's own
+    // paragraph already says so: Earl Young moved the eighths onto the OPEN hat,
+    // the `o` lane is the signature, and that straight eighth is the floor `disco`
+    // stands on. Swinging it would undo the reason the row exists. The 0.1 —
+    // `light`, the shallowest word `fields.js SWINGS` has — is the strings' and
+    // the lead group's, and it is where the measurement finds it. Kept as
+    // declared.
     phillysoul: {
       label: "Philadelphia 1972",
       voices: 3,
@@ -27747,6 +27881,18 @@
     //
     // WHO SINGS: falsetto — Smokey's own register, the
     // format's defining instrument.
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. MEASURED over the
+    // whole record: 0 of 2,112 drum hits move at seed 1 (0 of 1,920 at seed 2, 0
+    // of 2,112 at seed 3) and 2,161 of 16,510 line events do (4,117 of 11,351;
+    // 6,439 of 18,683). A Hitsville West ballad at a whisper keeps its hat on the
+    // straight eighth — seven minutes of it, which is the format — and the give is
+    // Smokey's, a falsetto sitting behind the beat. The 0.1 resolves to `light`,
+    // the shallowest word this box has, which is the correct size for a lean that
+    // belongs to a singer. Kept as declared; the kit is honest.
     quietstorm: {
       label: "Los Angeles 1975",
       voices: 3,
@@ -28318,6 +28464,18 @@
     // poly mode does — and at a held pad's note rate it is inaudible. The
     // Rhodes is sampled and takes nothing, because the sampled lane bends
     // only on a marked `sld` (audio/to-engine.js says why).
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. MEASURED over the
+    // whole record: 0 of 2,288 drum hits move at seed 1 (0 of 2,912 at seed 2, 0
+    // of 2,080 at seed 3) and 4,017 of 21,456 line events do (12,477 of 33,533;
+    // 3,014 of 14,515). The lope this row is named for is in the BASS and in the
+    // portamento Moog whine, not in the hat: Dre replays Leon Haywood with session
+    // players over a machine programmed to be exact, and the exactness is half the
+    // sound. The 0.15 is the whine's and the vocal's, and that is where the
+    // measurement finds it. Kept as declared; the kit is honest.
     gfunk: {
       label: "Los Angeles 1992",
       voices: 3,
@@ -29304,6 +29462,14 @@
     // London's light theatre and London's song-and-supper rooms grew beside each other,
     // and this table has already refused to make one the parent of the other.
     //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 1,389 of 14,075 line events
+    // moved at seed 1 (12,884 of 28,299 at seed 2, 10,131 of 21,311 at seed 3). A
+    // chairman, a house pianist and a room that already knows the chorus — the
+    // halls kept no kit and this row seats none. The 0.12 is Marie Lloyd's, in the
+    // timing of a wink. Kept as declared.
     musichall: {
       label: "London 1892",
       voices: 2,
@@ -32725,6 +32891,16 @@
     // two-and-a-half centuries downstream — the notation IS the edge.
     // The residue is the genre gulf: a drinking-song-sized epitaph for
     // one voice is not a processional paean for a trained choir.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 318 of 1,159 line events moved
+    // at seed 1 (980 of 1,879 at seed 2, 204 of 845 at seed 3). A marble stele
+    // carries a voice, a tune and its RHYTHM SIGNS, and nothing else: the epitaph
+    // names no percussion and this row seats none. The 0.2 is the singer's reading
+    // of those signs — which is the only performer the evidence has. Kept as
+    // declared.
     skolion: {
       label: "Tralles 100",
       voices: 1,
@@ -35422,6 +35598,16 @@
     // "the lautari 78s" PAID 2026-08-30 (`lautari`, Bucharest 1906):
     // Django's people came through exactly this guild's repertory,
     // and the Quintette's violin chair is its direct line.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 5,172 of 17,138 line events
+    // moved at seed 1 (8,582 of 27,525 at seed 2, 11,211 of 26,064 at seed 3). THE
+    // ROW ALREADY SAID IT: "no drums at all, the rhythm guitars' la pompe doing
+    // the kit's whole job" — and la pompe is a LINE in this box, so the 0.3
+    // reaches it as it should. The Quintette is the cleanest case in the census of
+    // a swing that is honestly nobody's but the players'. Kept as declared.
     gypsyjazz: {
       instrumental: true,
       label: "Paris 1934",
@@ -36145,6 +36331,20 @@
     // a tonic pedal with a muted trumpet over it: `harmony: "modal"`, no cycle, so
     // the mode never reached a root and the natural sixth never sounded. The field
     // now names the alphabet the row plays.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 870 of 3,872 line events moved
+    // at seed 1 (1,426 of 4,862 at seed 2, 676 of 4,324 at seed 3), so the 0.25 is
+    // arriving — on the bass, the brushed loop's melodic parts and the muted
+    // trumpet. FOUND AND NOT FIXED, because it is a question about the KIT and not
+    // about the swing: this row declares `drumkit: "electronic"` and writes no
+    // `kit` grid, and the compiler seats it NO kit — 0 drum events at seeds 1, 2
+    // and 3 — where `bolero`, which also writes no grid, is dealt an acoustic one.
+    // A Kruder & Dorfmeister row with no beat under it is worth a look; the
+    // census's fence is the swing field, so it is reported here rather than
+    // changed.
     viennadownbeat: {
       label: "Vienna 1993",
       voices: 2,
@@ -36263,6 +36463,18 @@
     //
     // WHO SINGS: close, plain, full of breath — Gibbons is
     // the confessional mouth's defining case in this table.
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. MEASURED over the
+    // whole record: 0 of 1,920 drum hits move at seed 1 (0 of 1,760 at seed 2, 0
+    // of 1,600 at seed 3) and 2,817 of 12,299 line events do (5,666 of 14,027;
+    // 3,114 of 9,494). The hat lane here is the BREAK's own six hits — beat, beat
+    // and the "and", beat, beat and the "and" — a figure with no sixteenth in it
+    // to lean, which is what a beat cut to lacquer and scratched back sounds like:
+    // the hiss moves and the grid does not. The 0.15 is Gibbons's, a foot from the
+    // mic, and Utley's guitar behind her. Kept as declared; the kit is honest.
     noirhop: {
       label: "Bristol 1994",
       voices: 3,
@@ -36429,6 +36641,22 @@
     //
     // WHO SINGS: Edwards is the wing's warmest mouth — the
     // pop lead's breath without its belt.
+    //
+    // THE HAT WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the
+    // swing census; `gospel`'s precedent). This row declares `swing: 0.2` — at or
+    // above `precompose.js REALSWING` (0.17), the boundary where this box stops
+    // calling a record light and starts calling it laidback — and its hat lane was
+    // straight eighths, `1010101010101010`. kernel.js's swing law is `swing(g, i)
+    // = (i % 2) * g.swing`: it delays the ODD sixteenths and nothing else, so a
+    // lane whose every hit sits on an even step is a lane the shuffle cannot
+    // reach. MEASURED by rendering the WHOLE record twice — as written and with
+    // `swing` forced to 0 — and counting the events whose time differs: 0 of 2,288
+    // drum hits moved at seed 1, 0 of 1,872 at seed 2, 0 of 2,288 at seed 3,
+    // against 3,370 of 18,129 line events at seed 1. A downtempo loop is the one
+    // place in this wing where the shuffle IS the drums: the Godfreys' beats lope,
+    // and a straight machine under a slide guitar is not the porch this row's own
+    // lineage argues for. FIXED in the grid: the hat plays the beat and the swung
+    // "a" (`h: 1001100110011001`), eight hits a bar before and eight after.
     chillout: {
       label: "London 1996",
       voices: 3,
@@ -36454,7 +36682,7 @@
       kit: {
         k: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        h: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]
       },
       fx: ["echo"],
       tone: {
@@ -36914,6 +37142,18 @@
     // shift 2; test/precompose.test.js G14b).
     // Paris 2000 — this row's own place and year. Modal over SCALES.blues, which
     // has no sixth of any kind. Full ruling at `holler`.
+    //
+    // THE SWING IS THE LINE'S, AND THAT IS CORRECT HERE (2026-09-05, the swing
+    // census). kernel.js delays the ODD sixteenths and nothing else (`swing(g, i)
+    // = (i % 2) * g.swing`), so a grid written entirely on even steps is a grid
+    // the shuffle cannot reach — the fault `gospel`'s hat had. MEASURED over the
+    // whole record: 0 of 1,760 drum hits move at seed 1 (0 of 1,760 at seed 2, 0
+    // of 1,600 at seed 3) and 1,132 of 5,624 line events do (2,565 of 7,959; 988
+    // of 6,674). THE STRAIGHT FLOOR IS THE DEAL: this row's own lineage says
+    // `house` "kept honest" — four on the kick and the hat on the offbeat eighth,
+    // the one thing Navarre would not slow down — and the 0.1 belongs to the live
+    // horns and the guitar soloing over it, which is the whole trick of a jazz
+    // label signing a house producer. Kept as declared; the kit is honest.
     nujazz: {
       instrumental: true,
       label: "Paris 2000",
@@ -37273,6 +37513,16 @@
     // fiddle style described as a variant of this one. The crossing is
     // still a migration and not a music; what crossed was a repertory,
     // and Edinburgh 1796 is where that repertory got printed.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 3,071 of 13,844 line events
+    // moved at seed 1 (9,300 of 21,241 at seed 2, 3,280 of 9,773 at seed 3). THE
+    // ROW ALREADY SAID IT: "the guitar is the drummer (boom-chick on the keep()
+    // mask)" — a string band's rhythm section is three of its strings, so the 0.12
+    // has to be a line's and the measurement finds it on every one of them. Kept
+    // as declared.
     oldtime: {
       instrumental: true,
       label: "Galax 1935",
@@ -37595,6 +37845,16 @@
     // BOTH WANTS PAID 2026-08-30: `lautari` (Bucharest 1906) is the
     // guild this village band is the country cousin of, and `doina`
     // (Maramureș 1912) the unmetred line its slow sets open with.
+    //
+    // THE SWING IS THE LINE'S; THERE IS NO DRUMMER TO SWING (2026-09-05, the swing
+    // census). This row renders NO drum event at all, so its declared swing can
+    // only ever be the players'. MEASURED over the whole record, as written
+    // against `swing` forced to 0: 0 of 0 hits and 5,922 of 27,304 line events
+    // moved at seed 1 (12,893 of 34,690 at seed 2, 15,274 of 36,658 at seed 3).
+    // Fiddle over cimbalom over bass in a Clejani front room: the cimbalom is the
+    // closest thing to percussion the band owns and it is played as a PITCHED
+    // instrument, which is why it is a line here. The 0.1 is the push that keeps
+    // the tempo climbing all night. Kept as declared.
     taraf: {
       label: "Clejani 1986",
       voices: 3,
@@ -38346,6 +38606,24 @@
     // offered as nearer and it is nearer IN SOUND, because both are studio orchestras
     // written to frighten; kinship is not a shared mood.
     //
+    // THE RIDE WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the
+    // swing census; `crimejazz` and `gospel` take the same fix the same day). A
+    // Barry big band is a SWING band — Vic Flick's guitar is the famous half, but
+    // under it are the section players who cut dance sides all week — and this row
+    // declares `swing: 0.15` while its ride lane was straight eighths,
+    // `1010101010101010`. kernel.js's swing law is `swing(g, i) = (i % 2) *
+    // g.swing`: it delays the ODD sixteenths and nothing else, so a lane whose
+    // every hit sits on an even step is a lane the shuffle cannot reach. MEASURED
+    // by rendering the WHOLE record twice — as written and with `swing` forced to
+    // 0 — and counting the events whose time differs: 0 of 1,664 drum hits moved
+    // at seed 1, 0 of 1,872 at seed 2, 0 of 1,456 at seed 3; 4,903 of 15,931 line
+    // events moved at seed 1, so the horns leaned and the drummer did not. FIXED
+    // as `crimejazz` is fixed, and deliberately with the SAME figure rather than a
+    // shallower one: the ride writes the beat and the swung "a" (`r:
+    // 1001100110011001`). The DEPTH stays this row's own 0.15 — a lighter lean
+    // than crime jazz's 0.2, which is the difference between a title theme and a
+    // narcotics picture — but the PATTERN belongs to the ride and not to the row.
+    // Eight hits a bar before and eight after.
     spyscore: {
       instrumental: true,
       label: "London 1962",
@@ -38366,7 +38644,7 @@
       kit: {
         k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        r: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        r: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]
       },
       harmony: "modal",
       mode: MODES.melodic,
@@ -39018,6 +39296,23 @@
     // arc plan and a low kit density against three dance musics — the departure IS the
     // picture, and the picture has no column.
     //
+    // THE RIDE WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the
+    // swing census; `gospel`'s precedent, 2026-09-04). This row says `swing: 0.2`
+    // and its own line above says "ride, not hats — spyscore's jazz-kit idiom" —
+    // and the ride lane was straight eighths, `1010101010101010`. kernel.js's
+    // swing law is `swing(g, i) = (i % 2) * g.swing`: it delays the ODD sixteenths
+    // and nothing else, so a lane whose every hit sits on an even step is a lane
+    // the shuffle cannot reach. MEASURED by rendering the WHOLE record twice — as
+    // written and with `swing` forced to 0 — and counting the events whose time
+    // differs: 0 of 1,664 drum hits moved at seed 1, 0 of 1,664 at seed 2 and 0 of
+    // 2,080 at seed 3, while 4,457 of 16,523 line events moved at seed 1. A jazz
+    // orchestra whose brass swings and whose drummer does not is the one band Los
+    // Angeles could not have hired in 1955. THE FIX IS THIS ROW'S GRID, NOT THE
+    // KERNEL'S LAW: the ride plays the beat and the swung "a" (`1001` a beat),
+    // which is character for character the ride the `swing` anchor has played
+    // since it was written (`r: 1001100110011001`) and the same figure `gospel`'s
+    // hat took last year. Eight hits a bar before, eight after — the FEEL moves
+    // and the density does not.
     crimejazz: {
       instrumental: true,
       label: "Los Angeles 1955",
@@ -39038,7 +39333,7 @@
       kit: {
         k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        r: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        r: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]
       },
       harmony: "modal",
       mode: MODES.aeolian,
@@ -40967,6 +41262,25 @@
     // LINEAGE: the records on the decks were jump blues and R&B
     // exclusives — retitled, label scratched off, so no rival could
     // buy the tune out from under you.
+    //
+    // THE HAT WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the
+    // swing census; `gospel`'s precedent). The row declares `swing: 0.2` and its
+    // own lineage says what was on the decks: "jump blues and R&B exclusives" —
+    // 1950 American shuffle sides, which is the one thing a Kingston sound system
+    // in 1950 was playing. Its hat lane was straight eighths, `1010101010101010`.
+    // kernel.js's swing law is `swing(g, i) = (i % 2) * g.swing`: it delays the
+    // ODD sixteenths and nothing else, so a lane whose every hit sits on an even
+    // step is a lane the shuffle cannot reach. MEASURED by rendering the WHOLE
+    // record twice — as written and with `swing` forced to 0 — and counting the
+    // events whose time differs: 0 of 2,688 drum hits moved at seed 1, 0 of 2,016
+    // at seed 2, 0 of 2,240 at seed 3, against 1,656 of 7,451 line events at seed
+    // 1 — the bass stack leaned and the record on the turntable did not. FIXED in
+    // the grid: the hat plays the beat and the swung "a" (`h: 1001100110011001`),
+    // eight hits a bar before and eight after. This is a 1950 row and the fix is
+    // dated: the straight hat that the island's own music later made famous
+    // arrives with `ska` (Kingston 1962) and `rocksteady` (Kingston 1966), both of
+    // which write straight eighths and declare NO swing at all — which is the
+    // distinction this edit protects rather than erases.
     soundsystem: {
       label: "Kingston 1950",
       voices: 2,
@@ -40993,7 +41307,7 @@
       kit: {
         k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        h: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]
       },
       kitVel: { s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0] },
       harmony: "cycle",

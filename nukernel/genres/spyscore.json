@@ -1,5 +1,5 @@
 {
-  "note": "THE BARRY SPY SCORE — London 1962. THE JAMES BOND THEME, CTS\nStudios, 21 June 1962: Monty Norman's tune in John Barry's\narrangement, Vic Flick's guitar through an amp on the edge of\nbreakup, big-band brass punched over it. The commission is the\ngenre (the news pair's law): music written to BRAND a franchise.\nPAYS noirhop's want by name — the Bristol records were sampling\nexactly this shelf, and the edge now says so.\n\na title theme — the picture's name is the lyric\n\nCLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's\n`closest` column ranks each declared parent against every older row by a FEATURE\nVECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,\ninstrumental, family — and calls a parent sitting in the further half of that\nranking suspect. The vector has no term for the thing a child actually TAKES\nfrom a parent, so an ancestor the record deliberately departs from ranks far by\nconstruction, and the catalogue's trunk rows — funk, jazz, swing, ballad,\nambient, punk, drone, gregorian — rank far from nearly every leaf they grew.\nTHE PARENTS ON THIS ROW STAND. What the vector cannot see: `swing` and `jazz` are the BAND — a big band with a rhythm section, which is what\nBarry's Bond sound is under the twang — and the vector reads a score's arc plan\nand low kit density as distance from a dance music. `horrorscore` (1958) is\noffered as nearer and it is nearer IN SOUND, because both are studio orchestras\nwritten to frighten; kinship is not a shared mood.\n",
+  "note": "THE BARRY SPY SCORE — London 1962. THE JAMES BOND THEME, CTS\nStudios, 21 June 1962: Monty Norman's tune in John Barry's\narrangement, Vic Flick's guitar through an amp on the edge of\nbreakup, big-band brass punched over it. The commission is the\ngenre (the news pair's law): music written to BRAND a franchise.\nPAYS noirhop's want by name — the Bristol records were sampling\nexactly this shelf, and the edge now says so.\n\na title theme — the picture's name is the lyric\n\nCLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's\n`closest` column ranks each declared parent against every older row by a FEATURE\nVECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,\ninstrumental, family — and calls a parent sitting in the further half of that\nranking suspect. The vector has no term for the thing a child actually TAKES\nfrom a parent, so an ancestor the record deliberately departs from ranks far by\nconstruction, and the catalogue's trunk rows — funk, jazz, swing, ballad,\nambient, punk, drone, gregorian — rank far from nearly every leaf they grew.\nTHE PARENTS ON THIS ROW STAND. What the vector cannot see: `swing` and `jazz` are the BAND — a big band with a rhythm section, which is what\nBarry's Bond sound is under the twang — and the vector reads a score's arc plan\nand low kit density as distance from a dance music. `horrorscore` (1958) is\noffered as nearer and it is nearer IN SOUND, because both are studio orchestras\nwritten to frighten; kinship is not a shared mood.\n\nTHE RIDE WAS STRAIGHT AND THE SHUFFLE PLAYED NONE OF IT (2026-09-05, the\nswing census; `crimejazz` and `gospel` take the same fix the same day). A\nBarry big band is a SWING band — Vic Flick's guitar is the famous half, but\nunder it are the section players who cut dance sides all week — and this row\ndeclares `swing: 0.15` while its ride lane was straight eighths,\n`1010101010101010`. kernel.js's swing law is `swing(g, i) = (i % 2) *\ng.swing`: it delays the ODD sixteenths and nothing else, so a lane whose\nevery hit sits on an even step is a lane the shuffle cannot reach. MEASURED\nby rendering the WHOLE record twice — as written and with `swing` forced to\n0 — and counting the events whose time differs: 0 of 1,664 drum hits moved\nat seed 1, 0 of 1,872 at seed 2, 0 of 1,456 at seed 3; 4,903 of 15,931 line\nevents moved at seed 1, so the horns leaned and the drummer did not. FIXED\nas `crimejazz` is fixed, and deliberately with the SAME figure rather than a\nshallower one: the ride writes the beat and the swung \"a\" (`r:\n1001100110011001`). The DEPTH stays this row's own 0.15 — a lighter lean\nthan crime jazz's 0.2, which is the difference between a title theme and a\nnarcotics picture — but the PATTERN belongs to the ride and not to the row.\nEight hits a bar before and eight after.",
   "instrumental": true,
   "label": "London 1962",
   "voices": 3,
@@ -89,20 +89,20 @@
     "r": [
       1,
       0,
-      1,
       0,
       1,
-      0,
       1,
       0,
-      1,
       0,
       1,
-      0,
       1,
       0,
+      0,
       1,
-      0
+      1,
+      0,
+      0,
+      1
     ]
   },
   "harmony": "modal",
