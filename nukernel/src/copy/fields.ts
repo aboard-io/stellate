@@ -87,6 +87,10 @@ export const FIELDS: Table = {
   "value.harmonyModal": "Modal — one mode, no chords",
   "value.harmonyCycle": "Cycle — repeating chords",
   "value.harmonyEmergent": "Emergent — chords from the parts",
+  /* …and what it is worth when no part voices a chord (2026-09-05, measured:
+     11 of the 13 rows that declare it render exactly as Modal, because every
+     chair on them plays a line). */
+  "harmony.emergent.why": "No part voices chords, so this sounds like Modal. Add a pad.",
 
   /* ===== HOW THE RECORD IS PLAYED, AND WHO SINGS (fields.js) ============ */
   "play.loop": "Repeats at the end",

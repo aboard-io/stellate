@@ -396,8 +396,19 @@ function v1Bars(abc, steps, secAt) {
       const skip = new Set();
       let n = 0;
       for (let guard = 0; guard < 400; guard++) {
+        /* THE CELL, AND NOT ITS OWN CHIPS (2026-09-05). `data-k^="form.env|"`
+           matched two different controls: the row-sheet CELL (`form.env|s5`)
+           and every chip in the strip it opens (`form.env|s5|big`), because a
+           chip's address is its cell's plus its word. So the walk clicked the
+           chips as though they were cells — and a chip click WRITES — and the
+           record came out of this loop with `env: "big"` on all eight
+           sections, which is the exact opposite of what C0 is arranging.
+           MEASURED before the fix: 8 "stripped", every section ending on the
+           last word in the strip. A cell's key has ONE pipe; a chip's has
+           two, and that is the whole of the distinction. */
         const cell = [...document.querySelectorAll(
             'button[data-k^="form.lvl|"], button[data-k^="form.env|"]')]
+          .filter((b) => /^form\.(lvl|env)\|[^|]+$/.test(b.dataset.k || ""))
           .find((b) => !b.disabled && !skip.has(b.dataset.k) &&
                        !b.classList.contains("is-derived"));
         /* NOTHING LEFT IN THIS ROW: open the next one. The loop ends when the

@@ -221,11 +221,15 @@ const shape = (r) => JSON.stringify(Array.isArray(r) ? r.map(applied) : applied(
 // already owns.
 ok("479 rows x 4 closures x v 0..8 x s 0..7", () => {
   const K = require(R + "/nukernel/kernel.js");
-  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del,
-          split, spread, keep } = K;
+  /* the same names `genres-tables.js` destructures for the rows, and it has
+     to be the same LIST: a row that says a word this scope has not got fails
+     here as `ERR: … is not defined`, which is how `complementOf` announced
+     itself the day it was added (2026-09-05, the review's kotekan). */
+  const { rotate, reverse, transpose, invert, complement, complementOf, excerpt,
+          only, drop, fill, del, split, spread, keep } = K;
   const { MODES, SCALES, PROGS, MOUTHS, BLUES, DIATONIC, SUNG, offbeats, breath, tuned } = T;
-  void [rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del,
-        split, spread, keep, MODES, SCALES, PROGS, MOUTHS, BLUES, DIATONIC, SUNG,
+  void [rotate, reverse, transpose, invert, complement, complementOf, excerpt,
+        only, drop, fill, del, split, spread, keep, MODES, SCALES, PROGS, MOUTHS, BLUES, DIATONIC, SUNG,
         offbeats, breath, tuned];
   let calls = 0, kinds = {};
   for (const [k, r] of rows)

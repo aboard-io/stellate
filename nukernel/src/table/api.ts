@@ -148,6 +148,14 @@ export interface TableAPI {
    *  measured knobs.js rows. NULL where the instrument has no envelope to
    *  draw, so no chair gets a plate it cannot move. */
   voiceEnv(name: string): { label: string; node: HTMLElement } | null;
+  /** A LANE A HAND DRAWS (2026-09-05, the review's item 10) — the same curve
+   *  editor in its `lane` mode, ruled in the section's own bars, writing the
+   *  whole point list through `putCell` / `putRow` on one settled gesture.
+   *  NULL where the lane cannot be drawn, so no plate is offered on nothing. */
+  cellLaneNode(si: number, vi: number, key: string): HTMLElement | null;
+  rowLaneNode(si: number, param: string): HTMLElement | null;
+  AUTOPARAMS?: Record<string, { lo: number; hi: number; curve: string }>;
+  AUTOPARAMLABEL?: Record<string, string>;
   hasCrate(name: string): boolean;
   voiceCrate(name: string): HTMLElement;
   throat(vi: number): { word: string; own: string; words: string[] } | null;

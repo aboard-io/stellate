@@ -138,7 +138,17 @@
       const cells = c.voice && c.voice.cells;
       const cell = cells && cells[secId];
       const off = cell ? F.cellAutoOffset(cell.mixauto) : null;
-      if (off) out[c.key] = off;
+      /* ...AND THE LANES A HAND DREW (2026-09-05, the review's item 10). A
+         cell lane is a WORD (one offset for the section) or a CURVE (points in
+         BARS, fields.js `cellAutoLanes`); the two travel together on one
+         object because they land on the same four wires — audio/desk.js reads
+         `lanes` through its own `laneAt` and adds the answer to the static
+         number, which is the ¶A sum with a curve in one of its terms. A cell
+         that draws nothing carries no `lanes` key and the box is the object it
+         always was. */
+      const drawn = cell ? F.cellAutoLanes(cell.mixauto) : null;
+      if (off || drawn) out[c.key] = { ...(off || {}),
+                                       ...(drawn ? { lanes: drawn } : {}) };
     }
     return Object.keys(out).length ? out : null;
   }

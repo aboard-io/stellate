@@ -3033,12 +3033,25 @@ function recordParts() {
     phrase: { deg: [], oct: [], vel: [], gate: [], midi: [], hold: [],
               acc: [], art: [], sld: [] } }));
   const secAt = [], divide = new Set();
+  /* ---- WHERE THE FORM'S MARKS GO, IN BAR NUMBERS (2026-09-05, the review's
+     item 9). `NuDocument.formWalk` is the one owner of what the record plays;
+     this is that answer turned into places on the paper, which is the only
+     thing the engraver needs to know. The score stays AS WRITTEN — one
+     statement per section — so a repeat is a sign and not eight bars, and
+     every reader of `SONG[si].len` keeps the written form. */
+  const WALK = (() => { try { return NuDocument.formWalk(DOC); }
+                        catch (e) { return null; } })();
+  const form = { open: new Set(), close: new Set(), times: new Map(),
+                 volta: new Map(), coda: new Set(), tocoda: new Set() };
+  let anyForm = false;
+  const secAtBar = [];
   let step = 0, bars = 0;
   for (let si = 0; si < NS; si++) {
     const M = scoreLen(si);
     const got = scoreParts(si, 0, M);
     if (!got) return null;
     secAt[si] = step;
+    secAtBar[si] = bars;
     got.forEach((p, i) => {
       const a = parts[i].phrase, b = p.phrase;
       for (const k of ["deg", "oct", "vel", "gate", "midi", "hold",
@@ -3049,7 +3062,27 @@ function recordParts() {
     bars += M;
     if (si < NS - 1) divide.add(bars - 1);
   }
-  return { parts, secAt, divide, bars, steps: step };
+  /* …and the marks, once the bar numbers exist. A section that repeats opens
+     on its first bar and closes on its last; a section marked `ending` is the
+     second volta and the bars it replaces are the first. */
+  if (WALK) for (const w of WALK) {
+    const si = w.si, s2 = DOC.form.sections[si], from = secAtBar[si];
+    if (from == null) continue;
+    const M = scoreLen(si);
+    if (w.plays > 1) {
+      form.open.add(from); form.close.add(from + M - 1); anyForm = true;
+      if (w.plays > 2) form.times.set(from, w.plays);
+      if (w.cut) for (let k = 0; k < w.cut; k++)
+        form.volta.set(from + M - w.cut + k, 1);
+    }
+    if (s2 && s2.ending && secAtBar[si] != null) {
+      form.volta.set(from, 2); anyForm = true;
+    }
+    if (w.coda) { form.coda.add(from); anyForm = true; }
+    if (s2 && s2.tocoda) { form.tocoda.add(from + M - 1); anyForm = true; }
+  }
+  return { parts, secAt, divide, bars, steps: step,
+           ...(anyForm ? { form } : {}) };
 }
 
 /* ---------- THE DYNAMICS, ON THE PAPER (2026-08-30) -----------------------
@@ -3356,7 +3389,11 @@ function buildScore() {
                                 mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
                                 stepsPerBar: scoreSPB(),
                                 ...(met ? { abc: met.abc, beam: met.beam } : {}),
-                                divide: R.divide, close: "|]" }); }
+                                divide: R.divide, close: "|]",
+                                // THE FORM'S OWN MARKS (2026-09-05, item 9),
+                                // present-only: a record that repeats nothing
+                                // hands `null` and the ABC is byte-identical.
+                                ...(R.form ? { form: R.form } : {}) }); }
   catch (err) { return null; }
   if (!sc) return null;
   // THE DYNAMICS RIDE THE STRING, LAST (the block above buildScore). toScore's
@@ -11046,6 +11083,86 @@ function tableAPI() {
       try { curveEditor(box, spec); } catch (e) { return null; }
       if (!box.firstChild) return null;
       return { label: spec.label, node: box }; },
+    /* ---- A LANE YOU CAN DRAW (2026-09-05, the review's item 10) ----------
+       *"The cell's four mix lanes offer four fixed offsets each. There is no
+       breakpoint, no start value, no end value, no curve … A DAW gives you a
+       line you drag."* Two doors, one component: the same `curveEditor` in its
+       `lane` mode that draws every envelope on this page, handed a span in
+       BARS and a range in the lane's own unit.
+
+       THE WRITE IS THE ONE WRITE. A settled gesture calls `set(points)` once
+       with the whole list and it goes through `putCell` / `putRow` — the
+       doors the whole table writes through — so a drawn lane is undone by the
+       same undo as a chip and refused by the same validator (`fields.js
+       cellAutoClean` for a cell, `document.js normalize` for a row).
+
+       THE PLATE IS RULED IN THE SECTION'S OWN BARS, which is what the hand is
+       looking at; `audio/desk.js` converts to beats where the beat count is
+       known, and nothing stores the same number twice. */
+    cellLaneNode: (si, vi, key) => {
+      const spec = NuFields.CELLAUTOBY[key];
+      if (!spec) return null;
+      const sec = DOC.form.sections[si];
+      if (!sec) return null;
+      const v = DOC.voices[vi];
+      if (!v) return null;
+      const bars = Math.max(1, sec.bars | 0);
+      const ns = Object.values(spec.table).map(Number).filter(isFinite);
+      const lo = Math.min(...ns), hi = Math.max(...ns);
+      const read = () => ((v.cells || {})[sec.id] || {}).mixauto || {};
+      const cur = read()[key];
+      const pts = (cur && Array.isArray(cur.points) ? cur.points : [[0, lo], [bars, hi]])
+        .map(([x, y]) => ({ x, y }));
+      const put = (val) => {
+        const next = { ...read() };
+        if (val == null) delete next[key]; else next[key] = val;
+        NuDocument.putCell(DOC, si, vi, "mixauto",
+          Object.keys(next).length ? next : null);
+        changed();
+      };
+      const box = el("div", null, "nu-celllane");
+      try {
+        curveEditor(box, { mode: "lane", k: "tlane|" + key + "|" + vi + "|" + si,
+          label: spec.label, xUnit: "bars", span: bars,
+          lo, hi, yUnit: key === "level" ? "dB" : "",
+          points: pts, max: NuFields.LANE_MAXPTS,
+          set: (P) => put({ points: P.map((p) => [p.x, p.y]) }),
+          clear: () => put(null) });
+      } catch (e) { return null; }
+      return box.firstChild ? box : null;
+    },
+    /* ...AND THE SECTION'S OWN (the row half of item 10). The row's lanes were
+       READ-ONLY — *"compiled from the motion above"* — and `audio/desk.js
+       compileAuto` has always appended `sec.auto` after the `mot` shapes with
+       nobody able to write one. `in: "bars"` travels with the points because
+       compose deals its lanes in BEATS and a hand draws in bars. */
+    rowLaneNode: (si, param) => {
+      const R = NuFields.AUTOPARAMS[param];
+      const sec = DOC.form.sections[si];
+      if (!R || !sec) return null;
+      const bars = Math.max(1, sec.bars | 0);
+      const read = () => (Array.isArray(sec.auto) ? sec.auto : []);
+      const mine = read().find((a) => a && a.param === param);
+      const pts = (mine && Array.isArray(mine.points) ? mine.points
+                    : [[0, R.lo], [bars, R.hi]]).map(([x, y]) => ({ x, y }));
+      const put = (val) => {
+        const rest = read().filter((a) => !a || a.param !== param);
+        const next = val ? [...rest, val] : rest;
+        NuDocument.putRow(DOC, si, "auto", next.length ? next : null);
+        changed();
+      };
+      const box = el("div", null, "nu-rowlane");
+      try {
+        curveEditor(box, { mode: "lane", k: "trowlane|" + param + "|" + si,
+          label: NuFields.AUTOPARAMLABEL[param] || param, xUnit: "bars",
+          span: bars, lo: R.lo, hi: R.hi, yUnit: "",
+          points: pts, max: NuFields.LANE_MAXPTS,
+          set: (P) => put({ param, curve: R.curve === "exp" ? "exp" : "lin",
+                            in: "bars", points: P.map((p) => [p.x, p.y]) }),
+          clear: () => put(null) });
+      } catch (e) { return null; }
+      return box.firstChild ? box : null;
+    },
     /* THE THROAT'S OWN KNOBS, IN THE COLUMN SHEET (2026-09-04, wave 2c).
        `knobsBlock` is VOICE.md's editor for a MODELLED chair — the tract pad,
        the mouth's rows, each with the derived value it is overriding and a
@@ -11393,9 +11510,9 @@ function tableAPI() {
        always meant: `kernel.js render` counts its loop in PHRASE LENGTHS and
        `sections[].bars` counts CELL bars, so `entry: 1` on a two-bar cell has
        always been two bars later. `NuDocument.barsOf` is the one owner of
-       "how many bars a cell is" (the invariant that every line cell in one
-       document is the same length is what makes that ONE number), and it is
-       1 for nearly every record. The STEP does not move with it — the finest
+       "how many bars a cell is" — the REFERENCE length, the longest cell in
+       the document, since a hand may give each chair its own phrase length
+       (2026-09-05, the review's item 8) — and it is 1 for nearly every record. The STEP does not move with it — the finest
        grid inside a cell is still one sixteenth, which is `1 / pulse` beats
        whatever the cell's length. */
     barBeats: () => { const m = K.metOf(DOC.time);
@@ -11485,6 +11602,11 @@ function tableAPI() {
        one writer — the table draws whatever the registry offers, which is why
        it never has to be told a new word. */
     CELLAUTO: NuFields.CELLAUTO,
+    // …and the params a ROW's own lane may name, from the same registry
+    // (fields.js AUTOPARAMS is what `audio/desk.js` and `song.js` both read),
+    // so the sheet cannot offer a lane the desk would not play.
+    AUTOPARAMS: NuFields.AUTOPARAMS,
+    AUTOPARAMLABEL: NuFields.AUTOPARAMLABEL,
     /* ...AND THE FIVE §1 MOVED TO THE CELL IN WAVE 4, by the same rule:
        fields.js CELLVEC is the one owner of the five vocabularies (it points
        at the tables the box chips of the same name already use, so the cell

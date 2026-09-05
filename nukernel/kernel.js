@@ -143,6 +143,28 @@
   const transpose  = k => p => ({ ...p, deg: p.deg.map(d => d + k) });
   const invert     = c => p => ({ ...p, deg: p.deg.map(d => c - d) });
   const complement = k => p => ({ ...p, [k]: p[k].map(b => (b ? 0 : 1)) });
+  /* ...AND THE COMPLEMENT OF WHAT THE OTHER CHAIR IS PLAYING (2026-09-05, the
+     musicologist's review). `complement("gate")` takes the complement of THIS
+     phrase's own gate — the phrase AS WRITTEN — and the review measured what
+     that is worth on the shipped gamelan row: *"the interlock is exact in ONE
+     BAR IN FOUR … the complement is taken against the phrase as written, and
+     the other voice's rotate(2) and fill(2) move out from under it"* (shared
+     onsets by bar: [], [1,7,10], [1,5,7,13,15], [1,5,7,10,13,15]). Kotekan is
+     not "the opposite of the tune", it is "wherever HE is not", and no operator
+     could say that because the algebra is per-voice and blind to the ensemble.
+
+     THIS IS THAT ONE WORD. It is not a function like the others — it cannot be,
+     because a timeless operator has no way to reach another chair's bar — it is
+     a MARKER the render loop resolves: `render` builds the other chair's phrase
+     for the same bar (its own `word` and its own `period`, so a rotate and a
+     fill move the complement with them) and replaces the marker with a real
+     operator that sets this phrase's gate to the inverse of that one's.
+     THE ARGUMENT IS A CHAIR, and a negative one counts back from this chair:
+     `complementOf()` is "the chair before me", which is what an interlocking
+     PAIR means and what every row in the catalogue that interlocks is. */
+  const complementOf = (u) => ["complementOf", u == null ? -1 : u];
+  const againstGate = (gate) => p => ({ ...p,
+    gate: p.gate.map((_, i) => (gate[i % gate.length] ? 0 : 1)) });
   const crossmap   = (a, b) => p => ({ ...p, [b]: p[a].slice() });  // binary vectors only
 
   // The one LOSSY operator — take n steps from a and cycle them. Everything
@@ -319,7 +341,13 @@
   // is lanes, not a line — so a word passes over it exactly as an empty word
   // would: the phrase, unchanged. (This is the same choke point ops already
   // run through; it needs no second one in the callers.)
-  const word = (p, ws) => (p && p.kind === "drum") ? p : ws.reduce((q, op) => op(q), p);
+  // A CHAIR-AWARE MARKER IS NOT AN OPERATOR AND MUST NOT REACH `word` — it is
+  // an array (`["complementOf", u]`), which `word` would call as a function.
+  // `render` resolves every one of them before it folds; this is the one
+  // predicate both sides ask, so a marker can never be mistaken for an op.
+  const isChairOp = (o) => Array.isArray(o) && o[0] === "complementOf";
+  const word = (p, ws) => (p && p.kind === "drum") ? p
+    : ws.reduce((q, op) => (isChairOp(op) ? q : op(q)), p);
 
   // ---- pitch ---------------------------------------------------------------
   // Two alphabets on purpose. The SUBJECT is pentatonic, which buys consonant
@@ -705,8 +733,22 @@
      between two steps is rounded to the nearer one rather than refused,
      because the control that writes it is a slider and a slider's business is
      to land on the grid. */
-  const entryBar = (e) => Math.max(0, Math.floor(+e || 0));
-  const entryStep = (e, N) => { const x = Math.max(0, +e || 0);
+  /* ...AND IT MAY BE NEGATIVE, WHICH IS THE UPBEAT (2026-09-05, the review's
+     item 9). The last round wrote the refusal down rather than faking it — *"a
+     pickup cannot be honoured yet: the section window drops any event before
+     its own start"* — and item 9's lead-in channel is what removes it:
+     `ui/derive.js sectionEvents` hands the events before a section's own zero
+     back as `lead`, and `songBars` puts them in the previous box's last bar,
+     or in a lead-in bar of its own when there is no previous box. So the
+     kernel simply lets the loop start one statement early: `entry: -0.25` in
+     four-four puts the phrase's first note a beat before the bar and every
+     statement after it a beat early too, which is what an anacrusis IS.
+     ONE BAR IS THE CEILING. A chair entering more than a bar early is not a
+     pickup, it is a chair in the previous section — the borrow `leadIns` makes
+     for its own derived pickups is the same bar, for the same reason. */
+  const ENTRY_LEAD = 1;
+  const entryBar = (e) => Math.max(-ENTRY_LEAD, Math.floor(+e || 0));
+  const entryStep = (e, N) => { const x = Math.max(-ENTRY_LEAD, +e || 0);
     return Math.round((x - Math.floor(x)) * N); };
 
   // ---- GROOVE: the part of a performance that is not in the notes -----------
@@ -1926,6 +1968,23 @@
     // A DRUM PHRASE has no pitches — drums() plays it, this never does.
     if (subj && subj.kind === "drum") return [];
     const N = subj.deg.length, ev = [], key = g.key | 0;
+    /* ---- THE HARMONIC BAR, WHEN THE CHAIRS' PHRASES ARE DIFFERENT LENGTHS
+       (2026-09-05, the review's item 8: *"All four lines must be the same
+       length … a three-bar ostinato under a four-bar tune is not writable."*)
+       A phrase's own length IS its bar here — the loop below counts `b * N` —
+       so two chairs reading a 2-bar and a 4-bar phrase already play their own
+       periods and always could. What they did NOT share is the chord: the
+       schedule is indexed by this loop counter, so the 2-bar chair took a new
+       chord twice as often as the 4-bar one and the band was in two keys.
+       `g.cellBars` is the document's REFERENCE length in bars (document.js
+       `barsOf`, stamped by `toGenre` only where the cells disagree), so the
+       chord index is the ABSOLUTE bar `b * nb` counted in reference lengths.
+       Absent — every genre closure ever written, every record whose cells
+       agree — is `hb = b`, the identical expression this replaced. */
+    const nbars = Math.max(1, Math.round(N / stepsIn(g)));
+    const refBars = Math.max(0, g.cellBars | 0);
+    const hbOf = (refBars && refBars !== nbars)
+      ? (b) => Math.floor((b * nbars) / refBars) : (b) => b;
     // the alphabet an ornament leans through, per bar and memoized (see
     // ORNAMENTS above — under a chord cycle the notes available move with the
     // root, so this cannot be one set for the whole render)
@@ -1971,15 +2030,45 @@
          genre closure that has ever been written, and the whole offset pass
          at the foot of this loop is then skipped. */
       const eBar = entryBar(g.entry(v)), eStep = entryStep(g.entry(v), N);
+      /* THE WORDS THIS CHAIR SAYS IN THIS BAR, with any chair-aware marker
+         resolved against the chair it names (see `complementOf` above). A list
+         with no marker is returned as it stands, which is every word in the
+         catalogue but the interlocking ones, so nothing else pays for this. */
+      const chairWords = (s2, b2) => {
+        const raw = g.word(v, s2).concat(periodOps(g, v, s2));
+        if (!raw.some(isChairOp)) return raw;
+        return raw.map((o) => {
+          if (!isChairOp(o)) return o;
+          const nv = Math.max(1, g.voices), k = Math.round(+o[1] || 0);
+          const u = (((k < 0 ? v + k : k) % nv) + nv) % nv;
+          /* THE OTHER CHAIR'S OWN BAR, AND IT IS NOT MINE. A chair's `s` is
+             counted from ITS OWN entry (`s = b - eBar`), so two chairs that
+             come in at different bars are on different words in the same bar —
+             which is exactly the gamelan row (the panerusan enters at bar 2).
+             Asking chair 0 for its word at MY `s` would complement the bar it
+             played two bars ago, which is the same class of mistake as
+             complementing the phrase as written. The BAR is the shared clock;
+             each chair's word index is read off it.
+             ITS MARKER IS STRIPPED: a complement of a complement is not a
+             thing, and two chairs naming each other would recur for ever. */
+          const su = Math.max(0, b2 - entryBar(g.entry(u)));
+          const his = word(subj, g.word(u, su).concat(periodOps(g, u, su))
+                                 .filter((x) => !isChairOp(x)));
+          return againstGate(his.gate);
+        });
+      };
       const evFrom = ev.length;
       for (let b = eBar; b < bars; b++) {
         const s = b - eBar;
+        // WHICH BAR OF THE CHART THIS LOOP SOUNDS IN (see `hbOf` above) —
+        // `b` for every record whose chairs agree on a length.
+        const hb = hbOf(b);
         // the genre's word plus the bar schedule's word for THIS bar — the
         // sixth type joins the pipeline exactly where the timeless one runs
-        const p = word(subj, g.word(v, s).concat(periodOps(g, v, s)));
+        const p = word(subj, chairWords(s, b));
         // a phrase with no mark on it costs one `some` per bar and nothing else
         const marked = !!p.orn && p.orn.some(Boolean);
-        const chords = chordsOf(subj, g, b), c0 = chords[0];
+        const chords = chordsOf(subj, g, hb), c0 = chords[0];
         const chordFor = i => chordIn(chords, i);
         const sp = spans(p.gate);
         // FOLLOW THE CHORD. A melody sitting on the same pitches while the roots
@@ -2136,7 +2225,7 @@
             // A PAD BREATHES BAR TO BAR (chordFeel, above) — but it never
             // MOVES: it holds to the next chord, so a pushed pad is a hole in
             // the harmony rather than a lean.
-            const cf = chordFeel(g, b, first, String.fromCharCode(97 + (v % 26)), N);
+            const cf = chordFeel(g, hb, first, String.fromCharCode(97 + (v % 26)), N);
             const from = ev.length;
             if (!g.prog) {
               // the degenerate progression: the mode triad, per-note fold —
@@ -2164,7 +2253,7 @@
               const heldRun = () => {
                 let k = 0;
                 while (b + 1 + k < bars) {
-                  const sl = at(g.prog, b + 1 + k);
+                  const sl = at(g.prog, hb + 1 + k);
                   const one1 = Array.isArray(sl) ? (sl.length === 1 && sl[0]) : sl;
                   if (!one1 || !one1.held) break;
                   k++;
@@ -2219,12 +2308,12 @@
             // chord — chordFor caps at the bar line and would answer with
             // the chord being left, which is the one thing a push is not.
             const c = chair.antic && i >= N - 2
-              ? chordsOf(subj, g, b + 1)[0] : chordFor(i);
+              ? chordsOf(subj, g, hb + 1)[0] : chordFor(i);
             const hold = Math.min(sp[i], chair.maxHold || pol.maxHold || 1);
             // the stab is the one chord that DOES move: a skank that lands
             // dead on the grid every time is the drum machine playing a
             // guitar. It moves as one, though — see chordFeel.
-            const cf = chordFeel(g, b, i, lane, N);
+            const cf = chordFeel(g, hb, i, lane, N);
             const t = Math.min(t1 - 1e-9, Math.max(t0,
               timeOf(g, b, N, i) + (cf ? cf.push : 0)));
             if (chair.fifths) {
@@ -2387,7 +2476,7 @@
         // step each note was written on. After the performance so an ornament
         // inherits the level the player just leaned into, before the tie fold
         // so a rolled note is still several events when the fold looks at it.
-        if (marked) markBar(barEv, barAt, p.orn, g, N, b, ornAt(b));
+        if (marked) markBar(barEv, barAt, p.orn, g, N, b, ornAt(hb));
         // TIE. repeat(n) duplicates notes, and duplicated notes re-attack — a
         // machine-gun rather than a longer note. Under `tie`, consecutive events
         // at the same pitch that meet end-to-end become ONE held note, which is
@@ -3802,7 +3891,7 @@
   const api = { METERS, MET4, metOf, stepsIn, pulseIn,
                 meterRow, quartersIn, unitsIn, meterWordOf, okMeter,
                 degreesFor, octaveDegrees,
-                at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, keep,
+                at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, complementOf, keep,
                 crossmap, excerpt, only, word, slide,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, homeFor, near,
                 QSTEPS, QFIX, QUALFAM, QSTEPFAM, QMARK, chordsOf, chordAt, withCadence, harmonizeStage,

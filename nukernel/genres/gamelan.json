@@ -93,6 +93,6 @@
   ],
   "word": {
     "kind": "formula",
-    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(2), fill(2)]][s % 4]\n                    : v === 1 ? [only(\"gate\", complement(\"gate\")), transpose(12)]\n                    : v === 2 ? [keep(0, 4, 8, 12), transpose(-12)]\n                    : [keep(0), drop(12)])"
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(2), fill(2)]][s % 4]\n                    : v === 1 ? [complementOf(0), transpose(12)]\n                    : v === 2 ? [keep(0, 4, 8, 12), transpose(-12)]\n                    : [keep(0), drop(12)])"
   }
 }

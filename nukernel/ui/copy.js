@@ -232,6 +232,27 @@ var TABLE = {
   "row.lanes.one": "{n} lane",
   "row.lanes.other": "{n} lanes",
   "row.lanes.why": "Set by the automation above; a cell's lane offsets it",
+  /* THE FORM (2026-09-05, the review's item 9). A composer's words: a section
+     is played a number of TIMES, a second ENDING replaces the last bars of the
+     last one, a CODA ends the piece and a jump leaves for it. */
+  "row.repeat": "repeat",
+  "row.repeat.once": "once",
+  "row.repeat.times.one": "{n} time",
+  "row.repeat.times.other": "{n} times",
+  "row.ending": "second ending",
+  "row.ending.on": "yes",
+  "row.ending.off": "no",
+  "row.ending.why": "The section above must repeat first",
+  "row.coda": "coda",
+  "row.coda.why": "A coda is the last section",
+  "row.tocoda": "to coda",
+  "row.tocoda.why": "Mark a later section as the coda first",
+  "row.pickup": "pickup",
+  "row.pickup.why": "Set a part to enter before the bar",
+  /* A LANE YOU CAN DRAW (2026-09-05, the review's item 10). */
+  "row.draw": "draw a lane",
+  "lane.draw": "draw",
+  "lane.drawn": "drawn",
   /* ===== THE PLAYER SHEET (model.ts colSheet) =========================== */
   "col.ops": "this player",
   "col.plays": "plays",
@@ -1253,6 +1274,10 @@ var FIELDS = {
   "value.harmonyModal": "Modal — one mode, no chords",
   "value.harmonyCycle": "Cycle — repeating chords",
   "value.harmonyEmergent": "Emergent — chords from the parts",
+  /* …and what it is worth when no part voices a chord (2026-09-05, measured:
+     11 of the 13 rows that declare it render exactly as Modal, because every
+     chair on them plays a line). */
+  "harmony.emergent.why": "No part voices chords, so this sounds like Modal. Add a pad.",
   /* ===== HOW THE RECORD IS PLAYED, AND WHO SINGS (fields.js) ============ */
   "play.loop": "Repeats at the end",
   "play.once": "Plays to the end and stops",

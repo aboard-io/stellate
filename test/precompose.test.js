@@ -405,18 +405,31 @@ function sectionEvents(doc, i) {
       });
     }
 
-    /* --- G2 THE CELL INVARIANT --------------------------------------- */
-    // Every LINE cell in one document is the SAME length and a whole multiple
-    // of stepsIn(meter). Two lengths give two voices different bar arithmetic
-    // against one `total` (ui/derive.js:420) — that is the failure mode.
+    /* --- G2 THE CELL LENGTHS ------------------------------------------ */
+    /* Every LINE cell is a whole multiple of stepsIn(meter), and `barsOf` is
+       the longest of them in bars.
+
+       THIS USED TO DEMAND ONE LENGTH FOR THE WHOLE DOCUMENT and does not any
+       more (2026-09-05, the review's item 8: *"A three-bar ostinato under a
+       four-bar tune is not writable."*). A hand may now give each chair its own
+       phrase length; the walk loops each on its own period and the section's
+       end cuts it, and the chord schedule stays shared because `toGenre` stamps
+       `cellBars` and `kernel.js render` divides its loop counter by it.
+       WHAT THE COMPOSER DEALS IS STILL ONE LENGTH — `cellBarsOf` picks one `cb`
+       per record — so this gate still asserts the composed set is uniform (a
+       reading that dealt two lengths by accident is still a bug) and says so as
+       its own line rather than as the law it used to be. */
     const steps = K.stepsIn({ meter: NF.METERLABEL[T.meter] ? K.METERS[T.meter] : null });
     const lens = new Set(names.filter((n) => doc.material.cells[n].kind !== "drum")
                               .map((n) => doc.material.cells[n].deg.length));
-    if (lens.size !== 1) bad.cell.push(where + ": " + lens.size + " different cell lengths");
-    const L = [...lens][0];
-    if (L % steps) bad.cell.push(where + ": cell " + L + " is not a multiple of " + steps);
+    if (lens.size !== 1)
+      bad.cell.push(where + ": the COMPOSER dealt " + lens.size +
+                    " cell lengths (a hand may write two; a reading may not)");
+    for (const L2 of lens)
+      if (L2 % steps) bad.cell.push(where + ": cell " + L2 + " is not a multiple of " + steps);
+    const L = Math.max(...lens);
     const cb = Doc.barsOf(doc);
-    if (cb !== L / steps) bad.cell.push(where + ": barsOf says " + cb + ", cell says " + L / steps);
+    if (cb !== L / steps) bad.cell.push(where + ": barsOf says " + cb + ", the longest cell says " + L / steps);
     cbHist[cb] = (cbHist[cb] || 0) + 1;
 
     /* --- G3 ≥3 DISTINCT CELLS ---------------------------------------- */

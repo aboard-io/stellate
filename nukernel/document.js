@@ -96,7 +96,12 @@
     }
     return n || Math.max(1, K.stepsIn({ meter: metRow(doc.time) }));
   };
-  const entryOK = (x) => typeof x === "number" && isFinite(x) && x >= 0;
+  /* ...AND A PICKUP IS A NEGATIVE ONE, DOWN TO A BAR (2026-09-05, item 9).
+     `entry: -0.25` is "a beat before the section", which the lead-in channel
+     (ui/derive.js `lead` -> songBars) now carries; `kernel.js ENTRY_LEAD` is
+     the same one-bar ceiling read from the other end. Anything earlier than a
+     bar is a chair in the previous section and is refused at the door. */
+  const entryOK = (x) => typeof x === "number" && isFinite(x) && x >= -1;
   const entrySnap = (x, steps) => Math.round(x * steps) / steps;
   const { WORDS } = NuSongs;
 
@@ -151,17 +156,38 @@
     return m[secId] != null ? m[secId] : m[""];
   };
 
-  /* ---------- HOW MANY BARS A CELL IS (§2.1's invariant) -------------------
-     The kernel reads a phrase's own length AS the bar (`kernel.js:1379`), and
-     the meter says how many steps a bar has (`kernel.js:356 stepsIn`). So a
-     32-step cell in four is two bars, and `sections[].bars` counts CELL bars.
-     THE INVARIANT is that every line cell in one document is the same length:
-     two lengths give two voices different bar arithmetic against one `total`
-     (`ui/derive.js:420`), which is the failure mode and the reason it is a law.
-     This function does NOT enforce it — a half-edited document must not make
-     the page throw mid-keystroke — it takes the longest line cell so the bar
-     count is never short. `test/precompose.test.js` is where the invariant is
-     asserted, per design 05 §8 step 3. */
+  /* ---------- HOW MANY BARS A CELL IS — AND EACH CELL KEEPS ITS OWN LENGTH
+     (2026-09-05, the review's item 8) ---------------------------------------
+     The kernel reads a phrase's own length AS the bar (`kernel.js render`,
+     `N = subj.deg.length`), and the meter says how many steps a bar has
+     (`kernel.js stepsIn`). So a 32-step cell in four is two bars.
+
+     THE INVARIANT THAT STOOD HERE — *"every LINE cell in one document is the
+     same length"* — IS LIFTED. The musicologist's review: *"All four lines
+     must be the same length. document.js:110–117 requires every line cell in
+     one document to carry the same number of steps. A three-bar ostinato under
+     a four-bar tune is not writable."* It is writable now: a cell is a phrase
+     and a phrase has its own length, the walk loops each one on its OWN period
+     inside the section, and the section's end cuts whatever is still running.
+     A 2-bar phrase under a 4-bar section states itself twice; a 3-bar phrase
+     against a 4-bar section drifts, which is a composer's tool and not a bug.
+
+     WHAT THE OLD LAW WAS ACTUALLY PROTECTING, said plainly, because it was
+     protecting something real: HARMONY. `render` indexes the chord schedule by
+     its own loop counter, so a two-bar phrase takes one chord every two bars.
+     With one length that is one answer for the whole band; with two lengths it
+     would be two — the 2-bar chair on chord 2 while the 4-bar chair is still
+     on chord 1. That is fixed where it belongs (`toGenre` stamps `cellBars`,
+     `kernel.js render` divides its loop counter by it) rather than by forbidding
+     the music. TIME is not the same question and needs no fixing: each phrase
+     already renders at `b * N`, its own length, which is why lengths could
+     always differ in the kernel and only the document forbade it.
+
+     `barsOf` is THE REFERENCE LENGTH — the longest line cell, in bars. It is
+     what `sections[].bars` is counted against, what the entry slider counts a
+     cell in (`ui/eight.js barBeats`) and what the harmony above is aligned to.
+     Taking the longest (not the first, not an average) keeps the bar count from
+     ever being short, which is the reading it has always had. */
   function barsOf(doc) {
     const cells = doc.material.cells, names = cellNames(doc);
     let n = 0;
@@ -173,6 +199,83 @@
     if (!n) return 1;
     const steps = stepsIn({ meter: metRow(doc.time) });
     return Math.max(1, Math.round(n / steps));
+  }
+  /* ...AND WHETHER THE RECORD ACTUALLY USES THE FREEDOM. PRESENT-ONLY is the
+     law every field of the last three rounds keeps (`art`, `alt`, `meter`): a
+     document whose line cells are all one length must compile to the genre it
+     always compiled to, byte for byte, closures and all — so `toGenre` stamps
+     `cellBars` ONLY when there is more than one length to align. Every record
+     in the catalogue and every genre closure ever written takes the absent
+     branch. */
+  function mixedLengths(doc) {
+    const cells = (doc.material && doc.material.cells) || {};
+    let n = 0;
+    for (const name of Object.keys(cells)) {
+      const c = cells[name];
+      if (!c || c.kind === "drum" || !c.deg) continue;
+      if (!n) n = c.deg.length;
+      else if (c.deg.length !== n) return true;
+    }
+    return false;
+  }
+
+  /* ---------- THE FORM WALK: repeats, endings and the coda -----------------
+     (2026-09-05, the review's item 9.) The document holds the sections ONCE,
+     in the order they are written. This is the one function that says what the
+     RECORD PLAYS, and every reader of the form asks it: `boxesOf` stamps its
+     answer on the boxes, `ui/derive.js songBars` repeats the bars with it,
+     `scoreOf` walks it, the score prints its marks and the exports unroll it.
+
+     ONE BOX PER SECTION, IN WRITTEN ORDER, and that is deliberate: the page
+     indexes SONG by section index in a dozen places (`ui/engineer.js` rows,
+     `scoreParts`, `scoreLen`, the caption's reserve), and a walk that
+     duplicated or reordered boxes would silently re-address all of them. So a
+     repeat is a COUNT the walk plays, not a copy of the section.
+
+     WHAT EACH WORD IS WORTH, in one place:
+       · `plays`   how many times the section's bars are played (1 unless it
+                   repeats).
+       · `cut`     how many bars come off the LAST statement, which is the
+                   second ending's own length: statements 1..N-1 play the
+                   section whole (its own last bar IS the first ending) and the
+                   last one stops short so the alternative can take its place.
+       · `skip`    a section the form jumps over on its way to the coda.
+     A record that says none of the four gets `plays: 1, cut: 0` on every
+     section — the walk the page has always taken, bar for bar. */
+  const REPEAT_MAX = 8;
+  const repOf = (s) => {
+    const n = s && s.repeat;
+    return Number.isInteger(n) && n >= 2 && n <= REPEAT_MAX ? n : 1;
+  };
+  function formWalk(doc) {
+    const secs = (doc.form && doc.form.sections) || [];
+    const out = secs.map((s2, i) => ({ si: i, id: s2.id,
+      bars: Math.max(1, s2.bars | 0), plays: 1, cut: 0 }));
+    const codaIx = secs.findIndex((s2) => s2 && s2.coda);
+    for (let i = 0; i < secs.length; i++) {
+      const s2 = secs[i], e = out[i];
+      if (!s2) continue;
+      // AN ENDING BELONGS TO THE SECTION ABOVE IT and is played once, in its
+      // own place, which is where the walk already is when the last statement
+      // stops short. Nothing to do here but refuse to repeat it.
+      if (s2.ending) continue;
+      e.plays = repOf(s2);
+      const nxt = secs[i + 1];
+      if (nxt && nxt.ending && e.plays > 1)
+        e.cut = Math.min(e.bars - 1, Math.max(1, nxt.bars | 0));
+      // ...AND THE JUMP. `tocoda` on a section whose coda lies AFTER it means
+      // the walk leaves at the end of that section's last statement.
+      if (s2.tocoda && codaIx > i) {
+        // ...AND THE SECOND ENDING IS PART OF THE LAST STATEMENT, not part of
+        // what the jump skips: the walk leaves AFTER it.
+        const from = (nxt && nxt.ending) ? i + 2 : i + 1;
+        for (let k = from; k < codaIx; k++) out[k].skip = true;
+        break;
+      }
+    }
+    if (codaIx >= 0) { out[codaIx].plays = 1; out[codaIx].cut = 0;
+                       out[codaIx].coda = true; out[codaIx].skip = false; }
+    return out;
   }
 
   /* ---------- the document becomes a genre, per section ---------- */
@@ -372,6 +475,20 @@
                         prog, roots: prog.map((c) =>
                           (Array.isArray(c) ? c[0] : c).d),
       /* MATERIAL */    kit, ...(on ? {} : noKit),
+                        /* ...AND THE REFERENCE PHRASE LENGTH, WHERE THE CHAIRS
+                           DISAGREE (2026-09-05, the review's item 8). Two
+                           chairs may read phrases of different lengths now.
+                           Time takes care of itself — each phrase renders at
+                           its own `b * N` — but the CHORD SCHEDULE is indexed
+                           by the loop counter, so without this the 2-bar chair
+                           would be a chord ahead of the 4-bar one. `cellBars`
+                           is `barsOf`'s reference (the longest cell, in bars)
+                           and `kernel.js render` divides its counter by it, so
+                           every chair takes the same chord in the same bar.
+                           PRESENT-ONLY: absent wherever the cells agree, which
+                           is every record in the catalogue, so the compiled
+                           genre — closures and all — is byte-identical. */
+                        ...(mixedLengths(doc) ? { cellBars: barsOf(doc) } : {}),
       /* CAST */        voices: lines.length,
                         // ...AND IT IS RESOLVED PER SECTION, WHICH IS WHERE IT
                         // WAS ALREADY BEING APPLIED. Measured 2026-09-03:
@@ -719,8 +836,24 @@
       const r = resolveFrom(doc, i, 0, f);
       return r.from === "row" ? r.v : undefined;
     };
+    /* THE FORM, ONTO THE BOXES (2026-09-05, the review's item 9). One walk
+       (`formWalk` above) answers for the whole record and this is where its
+       answer is written down, PRESENT-ONLY: a record that repeats nothing,
+       ends nothing twice and has no coda stamps not one of these keys and the
+       boxes are the objects they always were, byte for byte. */
+    const WALK = formWalk(doc);
     return secs.map((s2, i) => { const sw = rowOnly(i, "swing"), gv = rowOnly(i, "groove");
+      const w = WALK[i] || { plays: 1, cut: 0 };
       return ({ ...NuSong.emptyBox(),
+      ...(w.plays > 1 ? { plays: w.plays } : {}),
+      ...(w.cut ? { cut: w.cut } : {}),
+      ...(w.skip ? { skip: true } : {}),
+      ...(w.coda ? { coda: true } : {}),
+      ...(s2.ending ? { ending: true } : {}),
+      // …AND THE LANES THE ROW ITSELF DRAWS (2026-09-05, item 10). Present-only:
+      // `audio/desk.js compileAuto` appends `sec.auto` after the `mot` shapes
+      // and has done since it was written; what was missing was a writer.
+      ...(Array.isArray(s2.auto) && s2.auto.length ? { auto: s2.auto } : {}),
       stack: [{ g: pre + i, slots: lines.map((c, v) => v * NS + i) }],
       len: s2.bars, role: s2.role, cue: s2.role,
       bassop: wordAt(doc, bass, i) || null,
@@ -1333,6 +1466,22 @@
       v.cells[id][field] = w;
       return true;
     }
+    /* ...AND AN ENTRY IS JUDGED AND SNAPPED AT THE DOOR, not only at
+       `normalize` (2026-09-05). It is the one remaining cell field with a
+       RANGE rather than a vocabulary — a bar count from −1 (a pickup, item 9)
+       upwards, on the cell's own step grid — and the door refusing what the
+       door downstream would drop is what keeps a slider from writing a number
+       the next recompile deletes (§1b's register bug, twice shipped).
+       `entryOK` / `entrySnap` are the same two readers `normalize` uses. */
+    if (field === "entry") {
+      if (!entryOK(value)) return false;
+      const snapped = entrySnap(value, cellStepsOf(doc));
+      if (had === snapped) return false;
+      v.cells = v.cells || {};
+      v.cells[id] = v.cells[id] || {};
+      v.cells[id][field] = snapped;
+      return true;
+    }
     if (had === value) return false;
     v.cells = v.cells || {};
     v.cells[id] = v.cells[id] || {};
@@ -1547,6 +1696,45 @@
     breath:{ cell: null, column: null, row: (s) => s && s.breath, record: null, genre: () => undefined },
     pipe:  { cell: null, column: null, row: (s) => s && s.pipe,   record: null, genre: () => undefined },
     nudge: { cell: null, column: null, row: (s) => s && s.nudge,  record: null, genre: () => undefined },
+    /* ---- THE ROW'S OWN DRAWN LANES (2026-09-05, the review's item 10) ----
+       *"The section's own `automation` row is greyed: compiled from the motion
+       above."* It is compiled from `mot` AND from this, which is what
+       `audio/desk.js compileAuto` has always said — *"the box's own list: real
+       entries only"* — with nobody able to write one. This is the writer.
+       A lane is `{ param, points: [[bar, value], …], curve?, in: "bars" }`.
+       `in: "bars"` is not decoration: a lane compose deals is in BEATS
+       (compose.js autoShape) and a hand draws over the section's BARS, so the
+       ruler travels with the numbers and `compileAuto` scales the ones that
+       say so. Absent means beats, which is every lane ever written. */
+    auto:  { cell: null, column: null,
+             row: (s) => (s && Array.isArray(s.auto) && s.auto.length) ? s.auto : undefined,
+             record: null, genre: () => undefined },
+    /* ---- THE FORM GRAMMAR (2026-09-05, the review's item 9) -------------
+       *"Fifteen section roles and no way to say 'play it twice with a
+       different last bar'."* Four words on the row, no tier above it — a
+       repeat is a fact about ONE section the way its length is:
+
+         repeat  how many times the section is played. The WALK plays it
+                 (ui/derive.js songBars repeats the box's bars); the document
+                 keeps ONE section, which is the whole point — a duplicated
+                 section is two sections to edit.
+         ending  this section is the SECOND ENDING of the section above it: on
+                 the last repeat of that section its own last bars are dropped
+                 and these are played instead. It is a section, so it already
+                 has its own cells, its own chairs and its own chart — which is
+                 what a second ending is.
+         coda    played once, after the form's last repeat.
+         tocoda  the point the form jumps to the coda from: after this
+                 section's last repeat the walk goes straight to the coda and
+                 the sections between are not played.
+
+       They are ROW-ONLY on purpose. A cell reader would let one chair repeat
+       and another not, which is not a form, it is a mistake; `CELLWRITE` is
+       derived from the `cell` reader, so leaving it null is the refusal. */
+    repeat: { cell: null, column: null, row: (s) => s && s.repeat, record: null, genre: () => undefined },
+    ending: { cell: null, column: null, row: (s) => s && s.ending, record: null, genre: () => undefined },
+    coda:   { cell: null, column: null, row: (s) => s && s.coda,   record: null, genre: () => undefined },
+    tocoda: { cell: null, column: null, row: (s) => s && s.tocoda, record: null, genre: () => undefined },
   };
   // WHICH OF THEM A HAND MAY WRITE IN A CELL (§2: "a cell stores only what a
   // hand wrote there") — the fields with a `cell` reader, and no others. One
@@ -1760,9 +1948,58 @@
       const row = NF.FIELDS.find((x) => x.key === f);
       return (row && row.table) || null;
     };
+    /* ---- THE FORM GRAMMAR AT THE DOOR (2026-09-05, the review's item 9).
+       Four words, and each one is refused where it would be a claim about a
+       form this build cannot play honestly — the same FILTER rule the enums
+       below keep, said for a structure instead of a vocabulary:
+         · `repeat` is a whole count 2..8. One is not a repeat and is dropped
+           back to absent, so "plays once" keeps ONE spelling.
+         · `ending` needs a section above it to be the ending OF, and that
+           section has to repeat — a second ending under no repeat is a bar
+           nothing ever plays instead of.
+         · `coda` is the LAST section. A coda in the middle of the form is a
+           sign pointing at music the walk would play in place anyway, and the
+           walk's promise ("played once, after the form's last repeat") would
+           be false.
+         · `tocoda` needs a coda after it to jump to. */
+    {
+      const S = doc.form.sections, last = S.length - 1;
+      const codaIx = S.findIndex((x) => x && x.coda);
+      S.forEach((s2, i) => {
+        if (s2.repeat != null &&
+            !(Number.isInteger(s2.repeat) && s2.repeat >= 2 && s2.repeat <= REPEAT_MAX))
+          delete s2.repeat;
+        if (s2.coda != null && (s2.coda !== true || i !== last)) delete s2.coda;
+        if (s2.ending != null &&
+            (s2.ending !== true || i === 0 || repOf(S[i - 1]) < 2)) delete s2.ending;
+        if (s2.tocoda != null &&
+            (s2.tocoda !== true || codaIx < 0 || codaIx <= i)) delete s2.tocoda;
+      });
+    }
     for (const s2 of doc.form.sections) {
       for (const f of Object.keys(s2)) {
         if (!ROWWRITE(f) || f === "nudge") continue;   // nudge is a count, not a word
+        // the four form words are counts and flags, not vocabularies: they are
+        // judged in the block above and the word table has no opinion on them
+        if (f === "repeat" || f === "ending" || f === "coda" || f === "tocoda") continue;
+        /* A DRAWN LANE IS A SHAPE, NOT A WORD (2026-09-05, item 10) — the
+           same paranoia `prog`'s array takes two blocks down: a list of
+           `{param, points}` whose param this build knows and whose points are
+           finite pairs, or the whole field goes. A lane with fewer than two
+           points is a number with extra syntax and is dropped. */
+        if (f === "auto") {
+          const okPts = (a) => a && typeof a === "object" && !Array.isArray(a) &&
+            Object.prototype.hasOwnProperty.call(NF.AUTOPARAMS, a.param) &&
+            Array.isArray(a.points) && a.points.length >= 2 &&
+            a.points.every((p) => Array.isArray(p) && p.length === 2 &&
+                                  p.every(Number.isFinite));
+          const keep = (Array.isArray(s2.auto) ? s2.auto : []).filter(okPts)
+            .map((a) => ({ param: a.param, points: a.points.map((p) => [+p[0], +p[1]]),
+                           ...(a.curve === "exp" ? { curve: "exp" } : {}),
+                           ...(a.in === "bars" ? { in: "bars" } : {}) }));
+          if (keep.length) s2.auto = keep; else delete s2.auto;
+          continue;
+        }
         if (f === "fx") {
           const keep = (Array.isArray(s2.fx) ? s2.fx : [])
             .filter((k) => Object.prototype.hasOwnProperty.call(NF.FX, k))
@@ -1996,34 +2233,61 @@
        `barSteps` makes the sum `bar * barSteps` again, to the bit) and the
        right one for a record whose rows do. */
     let bar = 0, t0 = 0;
-    secs.forEach((s2, i) => {
+    /* THE FORM IS WALKED, NOT THE SECTION LIST (2026-09-05, the review's item
+       9). `formWalk` says what the record PLAYS — how many times each section
+       is stated, how many bars come off the last statement for a second
+       ending, which sections the coda jump goes over. A record that says none
+       of it walks `plays: 1, cut: 0, skip: false` on every section, which is
+       `secs.forEach` to the bit and is every record in the catalogue. */
+    formWalk(doc).forEach((w) => {
+      if (w.skip) return;
+      const i = w.si, s2 = secs[i];
       const g = toGenre(doc, i, GENRES, fleet);
       const barSteps = stepsIn(g) / g.rate;
       const total = Math.max(1, s2.bars || g.bars);
       const phrases = lines.map((c) => toPhrase(doc, materialAt(c, SECID(doc, i))));
       const nP = phrases.length;
+      const lead = phrases[0] || NuSong.blank();
+      const dr = K.drums(lead, g, g.bars), loopSteps = g.bars * barSteps;
+      const bassEv = K.bass(lead, g, total);
+      const lineEv = [];
       phrases.forEach((ph, pi) => {
         const evs = K.render(ph, g, total);
         for (let v = pi; v < g.voices; v += nP)
           for (const e of evs) if (e.v === v)
-            out.push({ ...e, t: e.t + t0, kind: "line", lv: v, sec: i });
+            lineEv.push({ ...e, kind: "line", lv: v, sec: i });
       });
-      // Drums and bass follow the FIRST phrase — the kit is genre data anyway,
-      // and the bass reads accents, which only one line can own.
-      const lead = phrases[0] || NuSong.blank();
-      const dr = K.drums(lead, g, g.bars), loopSteps = g.bars * barSteps;
-      for (let r = 0; r < Math.ceil(total / g.bars); r++)
-        for (const e of dr)
-          out.push({ ...e, kind: "hit", t: e.t + r * loopSteps + t0, sec: i });
-      for (const e of K.bass(lead, g, total))
-        out.push({ ...e, kind: "bass", t: e.t + t0, sec: i });
-      bar += total; t0 += total * barSteps;
+      for (let r = 0; r < Math.max(1, w.plays | 0); r++) {
+        // the LAST statement stops short by the second ending's own length;
+        // every other one plays the section whole
+        const played = (r === w.plays - 1) ? Math.max(1, total - (w.cut | 0)) : total;
+        // …and a statement that stops short takes its events with it. `cut` is
+        // 0 on every record that says nothing, so this predicate is false and
+        // not one event is filtered out.
+        const keep = (e) => !w.cut || e.t < played * barSteps;
+        for (const e of lineEv) if (keep(e)) out.push({ ...e, t: e.t + t0 });
+        // Drums and bass follow the FIRST phrase — the kit is genre data
+        // anyway, and the bass reads accents, which only one line can own.
+        for (let k = 0; k < Math.ceil(total / g.bars); k++)
+          for (const e of dr) {
+            const t = e.t + k * loopSteps;
+            if (!w.cut || t < played * barSteps)
+              out.push({ ...e, kind: "hit", t: t + t0, sec: i });
+          }
+        for (const e of bassEv) if (keep(e))
+          out.push({ ...e, kind: "bass", t: e.t + t0, sec: i });
+        bar += played; t0 += played * barSteps;
+      }
     });
     out.sort((a, b) => a.t - b.t);
     return { bars: bar, events: out };
   }
 
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
+           /* THE FORM WALK (2026-09-05, item 9): what the record PLAYS —
+              repeats, the second ending's cut, the coda and the jump. One
+              owner; the score, the walk and the gates all ask it. */
+           formWalk, REPEAT_MAX,
            /* ---- THE TABLE (TABLE.md wave 1) ---------------------------
               `TIERS` is §1 as data — the gate reads the claim rather than
               restating it — and `resolve` is §2's ONE owner: every reader

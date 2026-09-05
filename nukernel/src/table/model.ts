@@ -236,28 +236,50 @@ function cellEntry(A: TableAPI, i: number, vi: number): StripField {
  *  THROUGH THE ONE DOOR: the whole map is read, one key changed, `putCell`
  *  handed the result. */
 function cellLane(A: TableAPI, i: number, vi: number, spec: LaneSpec): StripField {
-  const read = () => (A.cellOf(i, vi, "mixauto") as Record<string, string>) || {};
+  const read = () => (A.cellOf(i, vi, "mixauto") as Record<string, unknown>) || {};
   const now = read()[spec.key];
-  const cur = now == null ? "" : String(now);
+  /* ...OR A CURVE (2026-09-05, the review's item 10). A lane holds a WORD (one
+     offset for the whole section) or a DRAWN line (`{points}`), and the strip
+     is where a hand says which: the words, then `draw`. Choosing `draw` seeds
+     the lane at the two ends of its own range — a real ramp, audible at once,
+     rather than a flat line that would be a chip with extra syntax — and the
+     plate for it is the field directly under this one (`cellSheet`). */
+  const drawn = !!(now && typeof now === "object" &&
+                   Array.isArray((now as { points?: unknown }).points));
+  const cur = drawn ? DRAWWORD : (now == null ? "" : String(now));
   const has = cur !== "";
   const put = (w: string) => {
-    const next: Record<string, string> = { ...read() };
-    if (w === "") delete next[spec.key]; else next[spec.key] = w;
+    const next: Record<string, unknown> = { ...read() };
+    if (w === "") delete next[spec.key];
+    else if (w === DRAWWORD) {
+      const ns = Object.values(spec.table).map(Number).filter((n) => isFinite(n));
+      const bars = Math.max(1, Number(A.doc().form.sections[i]!.bars) || 1);
+      next[spec.key] = { points: [[0, Math.min(...ns)], [bars, Math.max(...ns)]] };
+    } else next[spec.key] = w;
     A.putCell(i, vi, "mixauto", Object.keys(next).length ? next : null);
   };
   const words = Object.keys(spec.table).filter((k) => spec.table[k]);
   return { key: "tcellauto|" + spec.key + "|" + vi + "|" + i,
     label: t("cell.lane.label", { name: spec.label }),
-    word: has ? (spec.labels[cur] || cur) : t("value.default"),
+    word: drawn ? t("lane.drawn") : has ? (spec.labels[cur] || cur) : t("value.default"),
     value: cur,
     derived: !has,
     /* NO CAPTION UNDER IT. The word IS "default" now, and a second line
        saying the same thing is the prose test/text-diet.test.js takes off. */
     sub: null,
     options: [{ v: "", w: t("value.default") },
-              ...words.map((k) => ({ v: k, w: spec.labels[k] || k } as Choice))],
+              ...words.map((k) => ({ v: k, w: spec.labels[k] || k } as Choice)),
+              { v: DRAWWORD, w: t("lane.draw") } as Choice],
     set: (v: string) => put(v || ""),
     clear: has ? () => put("") : null };
+}
+/** THE WORD THAT MEANS "NOT A WORD" — the strip's own name for the drawn
+ *  state, kept out of the lane vocabularies so it can never collide with one
+ *  (`fields.js CELLAUTO` owns those and none of them is a verb). */
+const DRAWWORD = "draw";
+function isDrawn(v: unknown): boolean {
+  return !!(v && typeof v === "object" && !Array.isArray(v) &&
+            Array.isArray((v as { points?: unknown }).points));
 }
 
 /** ONE OF THE FIVE 1 MOVED FROM THE BOX TO THE CELL (wave 4).
@@ -369,6 +391,39 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
   f.push(shField(A, "form.role", { section: sid }, t("row.type")));
   f.push(numField(A, "bars|" + sid, t("row.bars"), s.bars, BARSTEPS,
     (v) => A.putRow(i, "bars", +v), false));
+  /* ---- THE FORM (2026-09-05, the review's item 9) ----------------------
+     *"Fifteen section roles and no way to say 'play it twice with a different
+     last bar'."* Four controls, in the order a composer says them: how many
+     TIMES, whether this section is the second ENDING of the one above, whether
+     it is the CODA, and where the form leaves for it. DESIGN.md §11c puts them
+     first in the row's Form group, above the section's own length words.
+
+     EACH ONE THAT CANNOT BE SAID HERE IS DRAWN REFUSED WITH ITS SENTENCE
+     (DESIGN.md §2.14, and the review's own "protect the refusals"): a second
+     ending with no repeat above it, a coda that is not the last section, a
+     jump with no coda to jump to. The document refuses the same three at the
+     door (`document.js normalize`), so the control and the model agree. */
+  f.push(numField(A, "repeat|" + sid, t("row.repeat"),
+    (s.repeat as number) || "", [2, 3, 4, 5, 6, 7, 8],
+    (v) => A.putRow(i, "repeat", v === "" ? null : +v), true, t("row.repeat.once")));
+  const flag = (key: string, on: boolean, label: string, why: string | null) => {
+    const fld: Field = { key: key + "|" + sid, label,
+      word: on ? t("row.ending.on") : t("row.ending.off"),
+      value: on ? "1" : "", derived: !on, why,
+      options: [{ v: "", w: t("row.ending.off") },
+                { v: "1", w: t("row.ending.on") }],
+      ...(why ? {} : { set: (v: string) => A.putRow(i, key, v ? true : null),
+                       clear: on ? () => A.putRow(i, key, null) : null }) };
+    f.push(fld);
+  };
+  const prev = secs[i - 1];
+  flag("ending", s.ending === true, t("row.ending"),
+       (i > 0 && ((prev && (prev.repeat as number)) || 0) >= 2) ? null : t("row.ending.why"));
+  flag("coda", s.coda === true, t("row.coda"),
+       i === secs.length - 1 ? null : t("row.coda.why"));
+  const codaIx = secs.findIndex((x) => x && x.coda);
+  flag("tocoda", s.tocoda === true, t("row.tocoda"),
+       codaIx > i ? null : t("row.tocoda.why"));
   /* THE LABELS ARE THE COMPOSER'S WORDS (TABLE.md §12a, the musicologist's
      review): dynamics not shape, automation not motion, feel not pace,
      phrase structure not period, note-length limit not breath. The ADDRESSES
@@ -433,10 +488,43 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
     [0, 1, 2, 3, 4, 6, 8], (v) => A.putRow(i, "nudge", +v), true));
   /* THE COMPILED LANES ARE READ-ONLY ON THE ROW (1: "written by mot and by
      cells"), and saying so is the refused-control law rather than a silence. */
-  const auto = (s.auto as unknown[]) || [];
+  /* ---- THE SECTION'S OWN LANES, AND ONE A HAND MAY DRAW (2026-09-05, the
+     review's item 10). The count stays a `say` — those are COMPILED, from the
+     automation word above and from the cells, and a number you cannot move is
+     a reading and not a control. What is new is the line under it: a lane a
+     hand draws, on the same plate the cell's lanes use, over this section's
+     own bars. `audio/desk.js compileAuto` has appended `sec.auto` since it was
+     written; until today nothing wrote one. */
+  const auto = (s.auto as { param?: string }[]) || [];
   f.push({ kind: "say", label: t("row.lanes"),
     word: (auto.length ? tn("row.lanes", auto.length) : t("value.none")),
     why: t("row.lanes.why") });
+  {
+    const params = Object.keys(A.AUTOPARAMS || {});
+    const mine = auto.find((a) => a && a.param && params.includes(a.param));
+    const cur = mine && mine.param ? mine.param : "";
+    f.push({ key: "trowauto|" + sid, label: t("row.draw"),
+      word: cur ? ((A.AUTOPARAMLABEL || {})[cur] || cur) : t("value.none"),
+      value: cur, derived: !cur,
+      options: [{ v: "", w: t("value.none") },
+                ...params.map((p) => ({ v: p,
+                  w: (A.AUTOPARAMLABEL || {})[p] || p } as Choice))],
+      set: (v: string) => {
+        const rest = auto.filter((a) => !a || a.param !== cur);
+        if (!v) { A.putRow(i, "auto", rest.length ? rest : null); return; }
+        const R = (A.AUTOPARAMS || {})[v];
+        const bars = Math.max(1, Number(s.bars) || 1);
+        A.putRow(i, "auto", [...rest, { param: v, in: "bars",
+          curve: R && R.curve === "exp" ? "exp" : "lin",
+          points: [[0, R ? R.lo : 0], [bars, R ? R.hi : 1]] }]);
+      },
+      clear: cur ? () => A.putRow(i, "auto",
+        auto.filter((a) => !a || a.param !== cur)) : null });
+    if (cur) {
+      const node = A.rowLaneNode ? A.rowLaneNode(i, cur) : null;
+      if (node) f.push({ kind: "node", label: t("row.draw"), node });
+    }
+  }
   return f;
 }
 
@@ -632,8 +720,20 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
   f.push({ kind: "say", label: t("cell.focus"),
     word: A.cellOf(i, vi, "focus") ? t("cell.focus.on") : t("cell.focus.off"),
     why: t("cell.focus.why") });
-  /* 5 · THE CELL'S MIX LANE, RELATIVE TO THE ROW'S (wave 3). */
-  for (const spec of (A.CELLAUTO || [])) f.push(cellLane(A, i, vi, spec));
+  /* 5 · THE CELL'S MIX LANE, RELATIVE TO THE ROW'S (wave 3) — a word, or a
+     LINE YOU DRAG (2026-09-05, the review's item 10). The plate follows its
+     own strip and is drawn only where the lane is drawn, so a lane that says a
+     word is one control and a lane that says a curve is a control and its
+     picture, which is what the mode precedent on this page already looks
+     like. */
+  for (const spec of (A.CELLAUTO || [])) {
+    f.push(cellLane(A, i, vi, spec));
+    const now = ((A.cellOf(i, vi, "mixauto") as Record<string, unknown>) || {})[spec.key];
+    if (!isDrawn(now)) continue;
+    const node = A.cellLaneNode ? A.cellLaneNode(i, vi, spec.key) : null;
+    if (node) f.push({ kind: "node",
+      label: t("cell.lane.label", { name: spec.label }), node });
+  }
   /* 6 · THE FIVE THAT WERE PER BOX (wave 4), FOUR STRIPS AND ONE SENTENCE, AND
      THEY ARE THE PITCHED CHAIRS' ALONE. All five are read inside `kernel.js
      render`, which is what a LINE plays; the kit is `K.drums` and the bass is

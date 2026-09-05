@@ -2086,3 +2086,105 @@ sentence ≤ 12; the glyph's `data-say` from the same catalogue. The gate
 (`test/copy.test.js`) reads the rendered page and fails on any printed
 string not in the catalogue, on the banned patterns, and on the budgets. A
 second language is then a second file, nothing else.
+
+### 12c · What items 8, 9 and 10 landed, and the seven things they measured (2026-09-05)
+
+The review's last three, plus its three leftovers. Every claim below is a
+gate in the tree, and every one of them is read off the RENDERED path —
+`document.js scoreOf`, `ui/derive.js sectionEvents`/`songBars`,
+`audio/desk.js deskUnits`, `ui/abc.js toScore` — never off the model alone.
+
+**8 · INDEPENDENT PHRASE LENGTHS PER VOICE.** The invariant that every line
+cell in one document is the same length is LIFTED (document.js `barsOf`'s
+own paragraph). Each cell keeps its own length; the walk loops each on its
+own period and the section's end cuts it. What the old law was protecting
+was HARMONY, not time — `render` indexes the chord schedule by its loop
+counter, so a 2-bar chair would take a chord twice as often as a 4-bar one
+— and that is fixed at the one kernel site: `toGenre` stamps `cellBars`
+(the longest cell, in bars) ONLY where the cells disagree, and `render`
+divides its counter by it. **T4t:** two chairs on 2- and 4-bar phrases in a
+4-bar section render 24 notes as two statements and 4 as one, both cut at
+bar 4; a one-bar phrase alone walks [62,67,57,59] and beside a 4-bar chair
+holds [62,62,62,62]. **Absent = byte-identical:** T2a/b/c green against
+04d06e4 (479 anchors × 3 seeds; documents, compiled genres and events).
+`test/precompose.test.js` G2 now says "the COMPOSER dealt N lengths" rather
+than "the document has one".
+
+**9 · A FORM GRAMMAR.** Four words on the section row — `repeat` (2..8),
+`ending` (this section is the second ending of the one above), `coda` (the
+last section, played once), `tocoda` (the jump) — and ONE walk,
+`document.js formWalk`, that says what the record plays. **ONE BOX PER
+SECTION, IN WRITTEN ORDER:** a repeat is a COUNT the walk plays
+(`ui/derive.js songBars` pushes the box's own bars again), not a copy of
+the section, because a dozen readers index SONG by section. The score stays
+AS WRITTEN and prints the marks (`ui/abc.js opts.form`: `|:` `:|` `[1` `[2`
+`!coda!` "To Coda", "x3"); the exports unroll honestly by construction
+(`audio/plan.js:539` is `songBars`). **THE UPBEAT is the lead-in channel the
+last round wrote a tombstone for:** a negative `entry` (to one bar,
+`kernel.js ENTRY_LEAD`) starts the chair's loop a statement early,
+`sectionEvents` hands back what falls before the section's zero as `lead`,
+and `songBars` puts it in the previous box's last bar — or, on the first
+box, in a lead-in bar the record grows. **T4u:** 4 bars ×2 = 7 played + a
+1-bar second ending whose bar differs from the first ending's; the coda
+plays last and the jump skips three sections; a lead-in bar with 2 notes at
+step 12.03 of 16 and the record's first note at −3.97 steps, before beat 1.
+**T10y** (browser): the row sheet offers all four, the repeat is a 48px
+slider, and `repeat: 2` is one section in the document.
+
+**10 · DRAWABLE LANES.** A cell's mix lane is a WORD or a CURVE
+(`{points: [[bar, value]…]}`, fields.js `cellAutoClean`/`cellAutoLanes`),
+and a SECTION may draw its own (`section.auto`, `{param, points, in:
+"bars"}` — `audio/desk.js compileAuto` has appended `sec.auto` since it was
+written and nothing wrote one). One component draws both: `src/envelope`'s
+breakpoint mode, wired at last (`ui/eight.js cellLaneNode` / `rowLaneNode`),
+44px handles, one write per settled gesture through `putCell` / `putRow`.
+The desk evaluates the cell's curve through its OWN `laneAt` at the bar it
+is standing in and ADDS it to the static word (¶A: cell + row + seat, each
+once); the Live export carries it in the same `map` the static offset rode
+in, so the file still holds row + cell in ONE breakpoint list —
+`laneEvents` hands the map its time now, and a box whose cell draws a lane
+and whose row draws none is given breakpoints at the drawn points' times.
+**T4x:** a −6 → +6 dB line over four bars renders −6.00 → −3.00 → 0.00 →
++3.00 dB bar by bar (3.00 dB a bar) on ONE chair in ONE section, every other
+chair and section unmoved, and the exported envelope ramps 0.501 → 1.995.
+
+**THE KOTEKAN, AGAINST THE OTHER CHAIR.** `complementOf(chair)` is a
+chair-aware MARKER the render loop resolves — it builds the other chair's
+phrase for THIS BAR (its own word, its own period, its own entry offset)
+and complements the gate against that, not against the phrase as written.
+gamelan's second chair says `complementOf(0)`. **T4v:** shared onsets by bar
+`[], [], [], []` against the review's `[], [1,7,10], [1,5,7,13,15],
+[1,5,7,10,13,15]`.
+
+**`harmony: "emergent"` — MEASURED AND KEPT.** 13 rows declare it; 11 render
+byte-identically to `modal` as shipped, exactly as the review measured. It
+is NOT retired, because the word has no CONSUMER on those rows rather than
+no meaning: add one chair that voices chords and 8 of the 11 move at once
+(fugue polychoral counterpoint serial isorhythm winchester francoflemish
+georgian). The three that stay still (cologneschool contenanceangloise
+tapemusic) do so because their own words never transpose. What it gets is
+the sentence the review's copy table asked for, on the control
+(`harmony.emergent.why`: "No part voices chords, so this sounds like
+Modal. Add a pad."). **T4w** holds both halves.
+
+**THE DYNAMICS REDS WERE THE GATE'S, NOT THE PAGE'S.** C0/C1 drove
+`button[data-k^="form.env|"]`, which since the row sheets landed matches the
+CELL (`form.env|s5`) *and every chip in the strip it opens*
+(`form.env|s5|big`) — so the walk clicked chips as cells, and a chip click
+WRITES: the record came out of the loop with `env: "big"` on all eight
+sections, the opposite of what C0 arranges. A cell's key has one pipe, a
+chip's has two. 24/24 green.
+
+**Gates run:** `ui-build --check` · `tsc` · table.test 40/40 (T2 against
+04d06e4) · table.browser 220 ok · bench · precompose · document 31/31 ·
+dynamics 24/24 · smf-tempo 24/24 · als-page 23/23 · hook · genres-build
+12/12. `test/table.test.js` grew `--only=<name>`, which runs one gate's body
+in seconds while still standing the baseline worktree up.
+
+**Left, and said out loud:** `document.js scoreOf` does not window a
+section, so a multi-bar cell's events run past the section's own end (475 of
+479 anchors have 2-bar cells and it has always been so) — the page walk
+windows and the gates read the page walk; the day scoreOf is fixed, T2c's
+baseline moves with it. And a cell lane drawn in bars snaps its entry grid
+to the LONGEST cell (`cellStepsOf`), which is the same reference `barsOf`
+gives.

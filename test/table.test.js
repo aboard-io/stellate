@@ -72,7 +72,15 @@ const NC = N("compose.js"), Songs = N("songs.js");
 const { GENRES } = NG;
 
 let pass = 0, fail = 0;
+/* `--only=<text>` RUNS THE GATES WHOSE NAME CONTAINS IT (2026-09-05). T2 walks
+   479 anchors through TWO trees and takes minutes; a round that is writing one
+   new claim should be able to read that claim back in seconds. It skips the
+   BODIES only — the base worktree still stands up, so a run with `--only` can
+   never pass by not building — and a full run says nothing about it. */
+const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
+let skipped = 0;
 const ok = (name, fn) => {
+  if (ONLY && !name.includes(ONLY)) { skipped++; return; }
   try { fn(); pass++; console.log("  ok   " + name); }
   catch (e) { fail++; console.log("  FAIL " + name + "\n       " + e.message); }
 };
@@ -392,8 +400,17 @@ ok("T1g the door keeps a legal override and drops an illegal one", () => {
   D.putCell(d, 1, vi, "focus", true);
   const kept = JSON.stringify(D.normalize(J(d)).voices[vi].cells);
   assert.strictEqual(kept, JSON.stringify({ [id]: { reg: -2, entry: 3, focus: true } }));
+  /* `entry: -1` WAS THE ILLEGAL ONE HERE AND IS LEGAL NOW (2026-09-05, the
+     review's item 9): a negative entry is a PICKUP, down to one bar, and the
+     lead-in channel carries it. The illegal value is a chair that would enter
+     more than a bar before its section, which is a chair in the previous
+     section and not an anacrusis. */
+  const pu = J(d);
+  D.putCell(pu, 1, vi, "entry", -0.25);
+  assert.strictEqual(D.normalize(pu).voices[vi].cells[id].entry, -0.25,
+    "a quarter-bar pickup must survive the door");
   const bad = J(d);
-  bad.voices[vi].cells[id] = { reg: 99, entry: -1, focus: "yes", nosuch: 1 };
+  bad.voices[vi].cells[id] = { reg: 99, entry: -2, focus: "yes", nosuch: 1 };
   bad.voices[vi].cells.deadsection = { reg: 0 };
   D.normalize(bad);
   assert.ok(!("cells" in bad.voices[vi]), "the door kept garbage: " +
@@ -1899,25 +1916,34 @@ const T4O_PIN = {
       " notes, " + ov + " overlapping pairs, answer " + (Y[0].t - X[0].t) +
       " steps after the subject");
 
-    /* THE PICKUP, AND WHY IT IS CLAMPED. `ui/derive.js` windows a section's
-       events at `e.t >= from && e.t < to`, so an event before a section's own
-       start is DROPPED; `document.js scoreOf` would place it before the
-       record's zero on the first section. So a negative entry is refused at
-       the door (it falls back to the inherited value) and `kernel.js
-       entryBar`/`entryStep` clamp at 0 for anything that reaches them. */
+    /* THE PICKUP, AND IT EXISTS NOW (2026-09-05, the review's item 9). This
+       half of the gate asserted the REFUSAL — *"a negative entry must not be
+       stored"* — with the tombstone naming what would lift it: *"what a
+       lead-in channel would take is written down."* Item 9 built the channel
+       (`ui/derive.js sectionEvents` returns `lead`, `songBars` puts it in the
+       previous box's last bar or in a lead-in bar of the record's own), so a
+       negative entry is stored, down to ONE BAR, and the kernel starts the
+       chair's loop a statement early. T4u measures where it lands on the page;
+       what is measured here is the door and the kernel. */
     const back = J(base);
     back.voices.find((v) => v.name === lead).cast.entry = -0.25;
     D.normalize(back);
-    assert.strictEqual(back.voices.find((v) => v.name === lead).cast.entry,
-      undefined, "a negative entry must not be stored");
-    const raw = J(base);
-    raw.voices.find((v) => v.name === lead).cast.entry = -0.25;
-    const C = evsOf(raw, 0);                         // NOT normalized: the kernel's own clamp
-    assert.strictEqual(C[0].t, A[0].t,
-      "the kernel must clamp a negative entry at bar 0");
-    console.log("       pickup: a negative entry is refused at the door and " +
-      "clamped at 0 in the kernel (the walk windows [from, to) — nothing " +
-      "before a section's start survives it)");
+    assert.strictEqual(back.voices.find((v) => v.name === lead).cast.entry, -0.25,
+      "a pickup of a quarter bar must survive the door");
+    const C = evsOf(back, 0);
+    assert.ok(C[0].t < 0,
+      "the pickup must sound BEFORE the section's own zero, not at it");
+    assert.ok(Math.abs((A[0].t - C[0].t) - N0 * 0.25) < 0.5,
+      "a quarter-bar pickup comes a quarter bar early");
+    const deep = J(base);
+    deep.voices.find((v) => v.name === lead).cast.entry = -2;
+    D.normalize(deep);
+    assert.strictEqual(deep.voices.find((v) => v.name === lead).cast.entry,
+      undefined, "a chair entering two bars early is a chair in the previous " +
+      "section, not an anacrusis — the door must refuse it");
+    console.log("       pickup: entry -0.25 puts the first note at " +
+      C[0].t.toFixed(2) + " steps, before the section's own zero (" +
+      A[0].t.toFixed(2) + "); one bar is the ceiling and -2 is refused");
   });
 
   /* T4r — ACCENT AND ARTICULATION PER NOTE (review item 6). The `acc` vector
@@ -2019,7 +2045,426 @@ const T4O_PIN = {
     }
   });
 
-  console.log("\n" + pass + " passed, " + fail + " failed");
+  /* T4t — INDEPENDENT PHRASE LENGTHS PER VOICE (review item 8). The review:
+     *"All four lines must be the same length … a three-bar ostinato under a
+     four-bar tune is not writable."* Three claims:
+       · the document KEEPS two lengths (normalize does not flatten them) and
+         the compiled genre stamps `cellBars` — the reference the chord
+         schedule is aligned to — only when they disagree;
+       · each chair loops on ITS OWN period inside one section: a 2-bar phrase
+         states itself twice under a 4-bar section, a 4-bar phrase once, and
+         the SECTION'S END cuts whatever is still running (read off the real
+         `ui/derive.js` walk, which is the one that windows a box);
+       · the chord under both chairs is the SAME chord in the same bar, which
+         is what `cellBars` buys and the reason the old invariant existed. */
+  ok("T4t two chairs with 2- and 4-bar phrases render their own periods", () => {
+    const SPB = K.stepsIn({ meter: null });            // sixteen
+    /* the fixture: TERMS with the two line chairs' cells grown, both singing
+       in the FIRST section (the schola is written `out` there) */
+    /* EACH ADDED MEASURE IS THE FIRST ONE A DEGREE HIGHER, so a phrase's own
+       length is READABLE in what it plays: a 4-bar phrase whose bars 3-4 are
+       its bars 1-2 again would be indistinguishable from a 2-bar phrase
+       looping, and this gate would pass on a bug. */
+    const grow = (H, times) => {
+      for (const k of ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld",
+                       "play", "hold", "art", "alt"]) {
+        if (!Array.isArray(H[k])) continue;
+        const src = H[k].slice();
+        for (let r = 1; r < times; r++)
+          H[k] = H[k].concat(k === "deg" ? src.map((x) => x + r) : src);
+      }
+    };
+    const mk = (a, b) => {
+      const d = J(Songs.TERMS);
+      const [v0, v1] = d.voices.filter((v) => v.kind === "line");
+      grow(d.material.cells[v0.material], a);
+      grow(d.material.cells[v1.material], b);
+      // …and every OTHER cell in the bank to the first chair's length, so the
+      // "same" fixture really is one length and the mixed one really is two
+      for (const n of Object.keys(d.material.cells)) {
+        const c = d.material.cells[n];
+        if (!c || c.kind === "drum" || !c.deg) continue;
+        if (n !== v0.material && n !== v1.material) grow(c, a);
+      }
+      for (const id of Object.keys(v1.development)) v1.development[id] = "as written";
+      d.form.sections[0].bars = 4;
+      return D.normalize(d);
+    };
+    const mixed = mk(2, 4), same = mk(2, 2);
+    const cellOf = (d, i) => d.material.cells[
+      d.voices.filter((v) => v.kind === "line")[i].material];
+    assert.strictEqual(cellOf(mixed, 0).deg.length, 2 * SPB, "the 2-bar cell was flattened");
+    assert.strictEqual(cellOf(mixed, 1).deg.length, 4 * SPB, "the 4-bar cell was flattened");
+    const gm = D.toGenre(mixed, 0, GENRES), gs = D.toGenre(same, 0, GENRES);
+    assert.strictEqual(gm.cellBars, 4, "the reference length was not stamped");
+    assert.ok(!("cellBars" in gs),
+      "a document whose cells agree must stamp NO reference length (absent is today)");
+
+    /* THE RENDERED PERIODS, off the page's own walk. `sectionEvents` windows
+       the box at its own length, which is the section's end doing the cutting. */
+    const evsFor = (doc) => {
+      const slots = slotsFor(doc), boxes = boxesFor(doc);
+      const ev = DER.sectionEvents(boxes[0], slots, doc.time.groove, doc.time.swing).ev;
+      /* THE ONSET AND THE NOTE, because a period is a claim about the MUSIC:
+         two bars with the same rhythm and different pitches are two bars. */
+      return [0, 1].map((lv) => ev.filter((e) => e.kind === "line" && e.lv === lv)
+        .map((e) => ({ t: Math.round(e.t), n: e.n })).sort((x, y) => x.t - y.t));
+    };
+    const [A, B] = evsFor(mixed);
+    assert.ok(A.length && B.length, "both chairs must sound");
+    const span = 4 * SPB;
+    assert.ok(Math.max(...A.map((e) => e.t), ...B.map((e) => e.t)) < span,
+      "the section's end must cut: an onset landed past bar 4");
+    /* A STATES ITSELF TWICE, B ONCE — read as the onset SET repeating at the
+       phrase's own length and not at the other chair's. */
+    const setOf = (L, from, to) => L.filter((e) => e.t >= from && e.t < to)
+      .map((e) => (e.t - from) + ":" + e.n).join(",");
+    assert.strictEqual(setOf(A, 0, 2 * SPB), setOf(A, 2 * SPB, 4 * SPB),
+      "the 2-bar phrase did not restate itself in bars 3-4");
+    assert.notStrictEqual(setOf(B, 0, 2 * SPB), setOf(B, 2 * SPB, 4 * SPB),
+      "the 4-bar phrase repeated at two bars — it is not playing its own period");
+    console.log("       periods: the 2-bar chair states " + A.length +
+      " notes as two statements, the 4-bar chair " + B.length + " as one, " +
+      "both cut at bar 4 (" + span + " steps)");
+
+    /* AND THE HARMONY IS SHARED. Under a chord cycle two chairs must take the
+       SAME chord in the same bar; without `cellBars` a short phrase takes a new
+       chord every time it comes round, which is twice as often as a phrase
+       twice its length. Measured on the kernel directly, which is where the
+       one site is: the same one-bar phrase under the same chart, rendered with
+       and without the reference length. */
+    const cyc = J(mixed);
+    cyc.alphabet.harmony = "cycle";
+    cyc.alphabet.prog = [{ d: 0 }, { d: 3 }, { d: 4 }, { d: 5 }];
+    D.normalize(cyc);
+    const gc = D.toGenre(cyc, 0, GENRES);
+    const one = D.toPhrase(cyc, Object.keys(cyc.material.cells)[0]);
+    one.deg = one.deg.slice(0, SPB); one.gate = one.gate.slice(0, SPB);
+    for (const k of ["oct", "vel", "inc", "stk", "acc", "sld"])
+      if (Array.isArray(one[k])) one[k] = one[k].slice(0, SPB);
+    const perBar = (g2) => {
+      const E = K.render(one, g2, 4).filter((e) => e.v === 0);
+      return [0, 1, 2, 3].map((b) => {
+        const inB = E.filter((e) => e.t >= b * SPB && e.t < (b + 1) * SPB);
+        return inB.length ? Math.min(...inB.map((e) => e.n)) : null;
+      });
+    };
+    const loose = { ...gc }; delete loose.cellBars;      // today's law
+    const tied = { ...gc, cellBars: 4 };                 // a 4-bar chair beside it
+    const L = perBar(loose), T = perBar(tied);
+    assert.ok(new Set(L).size > 1,
+      "the chart must move the line bar to bar when the phrase IS the bar");
+    assert.strictEqual(new Set(T).size, 1,
+      "against a 4-bar reference the one-bar phrase must hold ONE chord for " +
+      "four bars — it took " + JSON.stringify(T));
+    console.log("       shared chart: a 1-bar phrase alone walks " +
+      JSON.stringify(L) + "; beside a 4-bar chair it holds " +
+      JSON.stringify(T) + " — one chord per reference phrase for both");
+  });
+
+  /* T4u — A FORM GRAMMAR (review item 9). *"Fifteen section roles and no way
+     to say 'play it twice with a different last bar'."* Four claims, each read
+     off `songBars` — the page's own walk from boxes to BARS, which is what the
+     transport plays and what the exports unroll:
+       · a section repeated x2 renders two statements of the same bars;
+       · with a second ending, the two statements' LAST bars differ, because
+         the last one stops short and the ending section plays in its place;
+       · a coda plays ONCE, at the end, and the jump skips what lies between;
+       · a pickup of one beat lands BEFORE the first bar — the record's first
+         note is before beat 1, which is what a lead-in channel is for. */
+  /* (async because claim 5 imports the engraver, which is an ES module. `ok`
+     takes the promise's own failure through the same counter — a rejected
+     body would otherwise pass silently, so it is awaited here rather than
+     fired and forgotten.) */
+  const ABC = await import(path.join(ROOT, "nukernel", "ui", "abc.js"));
+  ok("T4u a repeat, a second ending, a coda and a pickup", () => {
+    const walkOf = (doc) => DER.songBars(boxesFor(doc), slotsFor(doc),
+      doc.time.groove, doc.time.swing, null, { pickups: false, rubato: false });
+    const base = J(Songs.TERMS);
+    const plain = walkOf(D.normalize(J(base)));
+    const barsIn = (W, si) => W.filter((b) => b.si === si).length;
+
+    /* 1 · THE REPEAT. The document keeps ONE section (the walk plays it
+       twice), which is the whole point — a duplicated section is two sections
+       to edit. */
+    const rep = J(base); rep.form.sections[0].repeat = 2; D.normalize(rep);
+    assert.strictEqual(rep.form.sections.length, base.form.sections.length,
+      "a repeat must not duplicate the section in the document");
+    const W2 = walkOf(rep);
+    assert.strictEqual(barsIn(W2, 0), 2 * barsIn(plain, 0),
+      "a section repeated x2 must render twice its bars");
+    const sig = (b) => b.ev.map((e) => Math.round(e.off * 100) / 100 + ":" +
+      (e.n == null ? e.d || "" : e.n)).join(",");
+    const R = W2.filter((b) => b.si === 0), half = R.length / 2;
+    assert.strictEqual(sig(R[0]), sig(R[half]),
+      "the second statement must be the same music as the first");
+
+    /* 2 · THE SECOND ENDING. A section of its own, marked `ending`, playing in
+       place of the last bar(s) of the LAST repeat. */
+    const alt = J(base);
+    alt.form.sections[0].repeat = 2;
+    alt.form.sections[1].ending = true;
+    alt.form.sections[1].bars = 1;
+    D.normalize(alt);
+    assert.strictEqual(alt.form.sections[1].ending, true,
+      "the ending was refused at the door");
+    const W3 = walkOf(alt);
+    const S0 = W3.filter((b) => b.si === 0), S1 = W3.filter((b) => b.si === 1);
+    assert.strictEqual(S0.length, 2 * barsIn(plain, 0) - 1,
+      "the last statement must stop one bar short for the ending");
+    assert.strictEqual(S1.length, 1, "the ending is one bar, played once");
+    const first = S0[barsIn(plain, 0) - 1];           // the FIRST ending's bar
+    assert.notStrictEqual(sig(first), sig(S1[0]),
+      "the two endings must not be the same bar of music");
+    console.log("       repeat + ending: " + barsIn(plain, 0) + " bars x2 = " +
+      S0.length + " played + a " + S1.length + "-bar second ending; " +
+      "statement 1 ends " + (sig(first) ? "on its own bar" : "empty") +
+      " and statement 2 on the alternative");
+
+    /* 3 · THE CODA, and the jump. */
+    const cod = J(base);
+    cod.form.sections[cod.form.sections.length - 1].coda = true;
+    cod.form.sections[0].repeat = 2;
+    cod.form.sections[0].tocoda = true;
+    D.normalize(cod);
+    const W4 = walkOf(cod), last = cod.form.sections.length - 1;
+    assert.ok(W4.length, "the walk went silent");
+    assert.strictEqual(W4[W4.length - 1].si, last, "the coda must be last");
+    assert.strictEqual(barsIn(W4, last), barsIn(plain, last),
+      "the coda plays once, whole");
+    for (let i = 1; i < last; i++)
+      assert.strictEqual(barsIn(W4, i), 0,
+        "section " + i + " is between the jump and the coda and must not play");
+    console.log("       coda: the walk plays " +
+      [...new Set(W4.map((b) => b.si))].join(",") +
+      " — the repeat, then the coda, and " + (last - 1) + " sections jumped");
+
+    /* 4 · THE PICKUP. A beat before bar one, on the record's own first
+       section, which is where there is no previous bar to borrow. */
+    const pu = J(base);
+    pu.voices.find((v) => v.kind === "line").cast.entry = -0.25;
+    D.normalize(pu);
+    assert.strictEqual(pu.voices.find((v) => v.kind === "line").cast.entry, -0.25,
+      "a pickup must survive the door now (it was refused before item 9)");
+    const W5 = walkOf(pu);
+    assert.ok(W5[0].lead, "the record must grow a lead-in bar");
+    assert.ok(W5[0].ev.length, "the lead-in bar is empty — nothing led in");
+    assert.strictEqual(W5.length, plain.length + 1,
+      "the lead-in bar is ONE bar and the record is otherwise unchanged");
+    const off0 = Math.min(...W5[0].ev.map((e) => e.off));
+    assert.ok(off0 >= W5[0].barSteps * 0.5 && off0 < W5[0].barSteps,
+      "a quarter-bar pickup sounds in the last quarter of the lead-in bar");
+    /* AND THE SAME FACT ON THE NODE WALK, where a record has an absolute
+       zero: the first note is BEFORE it. */
+    const sc = D.scoreOf(pu, GENRES).events.filter((e) => e.kind === "line");
+    const t0 = Math.min(...sc.map((e) => e.t));
+    assert.ok(t0 < 0, "the record's first note must be before beat 1");
+    console.log("       pickup: a lead-in bar with " + W5[0].ev.length +
+      " notes at step " + off0.toFixed(2) + " of " + W5[0].barSteps +
+      "; the record's first note is at " + t0.toFixed(2) + " steps (before 0)");
+
+    /* 5 · THE MARKS ON THE PAPER. `ui/abc.js` is the engraver and `opts.form`
+       is the form in bar numbers; the score stays AS WRITTEN (one statement
+       per section) so a repeat is a sign and not eight bars. */
+    const one = { name: "v", phrase: { deg: [0, 0, 0, 0], oct: [0, 0, 0, 0],
+      vel: [5, 5, 5, 5], gate: [1, 1, 1, 1] } };
+    const marked = ABC.toScore([one], { stepsPerBar: 1, close: "|]",
+      form: { open: new Set([0]), close: new Set([2]), times: new Map([[0, 3]]),
+              volta: new Map([[2, 1], [3, 2]]), coda: new Set([3]),
+              tocoda: new Set([1]) } }).abc;
+    for (const [mark, why] of [["|:", "the repeat's open"],
+                               [":|", "the repeat's close"],
+                               ["[1", "the first ending"],
+                               ["[2", "the second ending"],
+                               ["!coda!", "the coda sign"],
+                               ["To Coda", "the jump"],
+                               ["x3", "the number of times"]])
+      assert.ok(marked.includes(mark), "the score does not print " + why);
+    const bare = ABC.toScore([one], { stepsPerBar: 1, close: "|]" }).abc;
+    assert.ok(!bare.includes("|:") && !bare.includes("[1"),
+      "a record with no form must engrave no repeat marks");
+    console.log("       score: " + marked.split("\n").pop().trim());
+
+    /* 6 · ABSENT IS TODAY. A record that says none of the four walks the bar
+       list it always did — the same claim T2 holds on the catalogue, said
+       here on the fixture so this gate carries its own control. */
+    /* (the SHAPE of the bar list, not the genre object hanging off every bar:
+       `boxesFor` registers a fresh genre per call and its `__v` counter moves,
+       which is a fact about the harness and not about the music.) */
+    const shape = (W) => W.map((b) => b.si + "/" + (b.first ? "1" : "0") +
+      (b.lead ? "L" : "") + ":" + b.barSteps + ":" + sig(b)).join("|");
+    assert.strictEqual(shape(walkOf(D.normalize(J(base)))), shape(plain),
+      "a record with no form words moved");
+  });
+
+  /* T4v — THE KOTEKAN, AGAINST THE OTHER CHAIR (the review's gamelan attempt).
+     *"Measured on the shipped row, the interlock is exact in ONE BAR IN FOUR:
+     the complement is taken against the phrase AS WRITTEN, and the other
+     voice's rotate(2) and fill(2) move out from under it — shared onsets by
+     bar: [], [1,7,10], [1,5,7,13,15], [1,5,7,10,13,15]."* `complementOf(0)`
+     takes it against what chair 0 IS PLAYING, bar by bar, its own word and its
+     own period included. Read off the rendered events, on the shipped row. */
+  ok("T4v the gamelan's two chairs share no onset in any bar", () => {
+    const g = GENRES.gamelan;
+    assert.strictEqual(g.harmony, "modal", "the row changed under this gate");
+    const subj = Songs.blank ? Songs.blank(16) : N("song.js").blank(16);
+    subj.gate = [1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0];
+    subj.deg = subj.deg.map((_, i) => i % 5);
+    const ev = K.render(subj, g, 4);
+    const steps = K.stepsIn(g);
+    const onsets = (v) => {
+      const out = [[], [], [], []];
+      for (const e of ev) if (e.v === v) {
+        const b = Math.floor(e.t / steps);
+        if (out[b]) out[b].push(Math.round(e.t) % steps);
+      }
+      return out.map((a) => [...new Set(a)].sort((x, y) => x - y));
+    };
+    const A = onsets(0), B = onsets(1);
+    const shared = A.map((a, i) => a.filter((x) => B[i].includes(x)));
+    const sounding = B.filter((b) => b.length).length;
+    assert.ok(sounding >= 2, "the interlocking chair never sounds");
+    assert.deepStrictEqual(shared.map((x) => x.length), [0, 0, 0, 0],
+      "the two chairs must never land on the same step: " + JSON.stringify(shared));
+    console.log("       kotekan: chair 0 " + JSON.stringify(A) +
+      "\n                chair 1 " + JSON.stringify(B) +
+      "\n                shared  " + JSON.stringify(shared) +
+      " (the review measured [], [1,7,10], [1,5,7,13,15], [1,5,7,10,13,15])");
+  });
+
+  /* T4w — `harmony: "emergent"`, MEASURED AND KEPT. The review: *"the fugue
+     row's emergent harmony is INAUDIBLE — byte-identical event streams either
+     way."* True, and the reason is that nothing on those rows consumes the
+     roots. The word is not retired because a hand can add the consumer in one
+     tap: with a pad chair, eight of the eleven move. This gate holds BOTH
+     halves, so neither can rot into a claim nobody checks. */
+  ok("T4w emergent is inert where no chair voices a chord, and live where one does", () => {
+    const rows = ANCHORS.filter((k) => (GENRES[k] || {}).harmony === "emergent");
+    assert.ok(rows.length >= 10, "the emergent rows went missing");
+    const subj = N("song.js").blank(16);
+    subj.gate = [1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0];
+    subj.deg = subj.deg.map((_, i) => ((i * 3) % 7) - 3);
+    const same = (g, h) => JSON.stringify(K.render(subj, g, 4)) ===
+                           JSON.stringify(K.render(subj, { ...g, harmony: h }, 4));
+    const withPad = (g, h) => ({ ...g, harmony: h, voices: g.voices + 1,
+      realize: (v) => (v === g.voices ? "pad" : g.realize(v)),
+      word: (v, s2) => (v === g.voices ? [] : g.word(v, s2)),
+      reg: (v) => (v === g.voices ? 0 : g.reg(v)),
+      entry: (v) => (v === g.voices ? 0 : g.entry(v)),
+      /* `part` is a FUNCTION on some rows and an ARRAY on others (kernel.js
+         `castAs` reads both), so the added chair is spliced through the same
+         two readings rather than through one of them. */
+      part: g.part
+        ? (typeof g.part === "function"
+            ? (v) => (v === g.voices ? "pad" : g.part(v))
+            : [...g.part, "pad"])
+        : undefined });
+    const inert = [], live = [], wakes = [], asleep = [];
+    for (const k of rows) {
+      const g = GENRES[k];
+      (same(g, "modal") ? inert : live).push(k);
+      if (!same(g, "modal")) continue;
+      const a = JSON.stringify(K.render(subj, withPad(g, "emergent"), 4));
+      const b = JSON.stringify(K.render(subj, withPad(g, "modal"), 4));
+      (a === b ? asleep : wakes).push(k);
+    }
+    assert.ok(wakes.length >= 6,
+      "the word must reach the sound the moment a chair voices a chord — " +
+      "only " + wakes.length + " of " + inert.length + " woke up");
+    console.log("       emergent: " + rows.length + " rows, " + inert.length +
+      " render exactly as modal as shipped (" + live.length + " move already); " +
+      "with ONE pad chair added, " + wakes.length + " of them move: " +
+      wakes.join(" ") + (asleep.length
+        ? " — and " + asleep.join(" ") + " still do not, because their own " +
+          "words never transpose and a root computed off a voice that does " +
+          "not move does not move" : ""));
+  });
+
+  /* T4x — A LANE YOU CAN DRAW (review item 10). *"The cell's four mix lanes
+     offer four fixed offsets each. There is no breakpoint, no start value, no
+     end value, no curve … A DAW gives you a line you drag."* A drawn level
+     lane from −6 dB at bar 0 to +6 dB at bar 4 on ONE cell, read off the DESK
+     bar by bar — the same `deskUnits` walk the transport hands the engine — and
+     nothing else may move. */
+  /* (the export walk is an ES module, imported once beside the engraver) */
+  const LD = await import(path.join(ROOT, "nukernel", "export", "live-devices.js"));
+  ok("T4x a drawn level lane ramps that voice through the section, and nothing else", () => {
+    const doc = D.normalize(P.genreToDocument("acid", 1));
+    const si = 1, vi = doc.voices.findIndex((v) => v.kind === "line");
+    const sec = doc.form.sections[si];
+    const bars = Math.max(2, sec.bars | 0);
+    const key = "v" + vi;
+    /* the desk, asked at a BAR — `deskUnits` samples the lanes at
+       `boxBeatOf(0)`, so the bar is handed in as that beat. */
+    const unitsAt = (box, bar) => {
+      const addr = {}, units = {};
+      for (const r of DESK.voiceRoster(box)) {
+        addr["v" + r.v] = r.key; units["v" + r.v] = { lvl: 1, dry: 1 };
+      }
+      const bpb = 4 / ((GENRES[box.stack[0].g] || {}).rate || 1);
+      const out = DESK.deskUnits(units, addr, box, () => bar * bpb, null);
+      const o = {};
+      for (const k of Object.keys(units)) o[k] = out[k].lvl;
+      return o;
+    };
+    const read = (d) => boxesFor(d).map((b, i) =>
+      Array.from({ length: bars }, (_, bar) => unitsAt(b, bar)));
+    const before = read(doc);
+    assert.strictEqual(D.putCell(doc, si, vi, "mixauto",
+      { level: { points: [[0, -6], [4, 6]] } }), true);
+    const stored = doc.voices[vi].cells[sec.id].mixauto.level;
+    assert.ok(stored && Array.isArray(stored.points),
+      "the drawn lane was refused at the door");
+    assert.deepStrictEqual(stored.points, [[0, -6], [4, 6]],
+      "the door moved the points");
+    const after = read(doc);
+    /* THE RAMP. Bar by bar, the same chair's gain climbs, and the ends are the
+       dB the hand drew: −6 at bar 0 and, four bars later, +6. */
+    const dB = (a, b) => 20 * Math.log10(b / a);
+    const ramp = after[si].map((u, bar) => dB(before[si][bar][key], u[key]));
+    for (let b = 1; b < bars; b++)
+      assert.ok(ramp[b] > ramp[b - 1] + 0.5,
+        "the gain must climb bar to bar: " + JSON.stringify(ramp.map((x) => +x.toFixed(2))));
+    assert.ok(Math.abs(ramp[0] + 6) < 0.05,
+      "bar 0 must be the −6 dB the hand drew, not " + ramp[0].toFixed(2));
+    const perBar = (ramp[bars - 1] - ramp[0]) / (bars - 1);
+    assert.ok(Math.abs(perBar - 3) < 0.05,
+      "a −6→+6 line over four bars is 3 dB a bar, not " + perBar.toFixed(2));
+    /* AND NOTHING ELSE MOVED — not another chair in this section, not this
+       chair in another one. */
+    for (let i = 0; i < before.length; i++)
+      for (let bar = 0; bar < bars; bar++)
+        for (const k of Object.keys(before[i][bar]))
+          if (!(i === si && k === key))
+            assert.strictEqual(after[i][bar][k], before[i][bar][k],
+              "a drawn lane moved " + k + " in section " + i + " bar " + bar);
+    console.log("       drawn lane: " +
+      ramp.map((x) => (x > 0 ? "+" : "") + x.toFixed(2)).join(" → ") +
+      " dB across " + bars + " bars, " + perBar.toFixed(2) +
+      " dB a bar; every other chair and section unmoved");
+
+    /* THE EXPORT WRITES THE RAMP. `export/live-devices.js laneEvents` is the
+       one walk both the .als envelope writer and this gate go through, and the
+       cell's drawn lane rides in the `map` — which is handed the TIME now, so
+       an offset that is itself a curve lands on the right breakpoint. */
+    const pts = stored.points;
+    const base = { curve: "lin", points: pts.map(([x]) => [x, 1]) };
+    const evs = LD.laneEvents(base, 0, 4, (x, t) => {
+      const i2 = pts.findIndex((p) => p[0] >= t);
+      const [x1, y1] = pts[Math.max(0, i2)], [x0, y0] = pts[Math.max(0, i2 - 1)];
+      const k = x1 > x0 ? (t - x0) / (x1 - x0) : 1;
+      return x * Math.pow(10, (y0 + (y1 - y0) * k) / 20);
+    });
+    assert.ok(evs.length >= 2, "the exported envelope has no breakpoints");
+    assert.ok(evs[evs.length - 1].value > evs[0].value * 3,
+      "the exported envelope does not ramp: " +
+      JSON.stringify(evs.map((e) => +e.value.toFixed(3))));
+    console.log("       exported envelope: " +
+      evs.map((e) => e.time + "→" + e.value.toFixed(3)).join(", "));
+  });
+
+  console.log("\n" + pass + " passed, " + fail + " failed" +
+              (skipped ? ", " + skipped + " skipped (--only=" + ONLY + ")" : ""));
   process.exit(fail ? 1 : 0);
 })().catch((e) => {
   console.log("  FAIL the rendered-path block threw\n       " + (e && e.stack || e));

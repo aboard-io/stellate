@@ -837,18 +837,85 @@
      from another build). ONE reader, so the resolver and the doors cannot
      disagree about what a legal cell lane is — the drift `chairsOf`/`voiceRoster`
      already pays a gate to prevent. Returns the words kept, or null. */
+  /* ---- A LANE A HAND DRAWS (2026-09-05, the review's item 10) -------------
+     *"There is no breakpoint, no start value, no end value, no curve … A DAW
+     gives you a line you drag."* A cell lane may now be either of two things
+     and the vocabulary above is still the FIRST of them:
+
+       a WORD    "+3" — one offset for the whole section, a chip, a decision;
+       a CURVE   `{ points: [[bar, value], …] }` — the same lane drawn, in the
+                 lane's own unit (dB for level, the pan/send/shelf numbers for
+                 the other three), at BAR positions inside the section.
+
+     WHY THE POINTS ARE IN BARS. The section's own lanes are compiled in BEATS
+     (audio/desk.js compileAuto) because that is what the desk samples; a hand
+     draws over the section's BARS, which is what the plate under the thumb is
+     ruled in and what the row's `bars` says. The conversion is ONE
+     multiplication and it is made where the beat count is known
+     (audio/desk.js), not stored twice.
+
+     THE RANGE IS THE WORD TABLE'S OWN, deliberately: a drawn level lane
+     reaches exactly as far as the chips do (±6 dB), so a curve and a chip
+     cannot mean different amounts of "louder" — the same law the words were
+     minted under.
+     TWO POINTS AT LEAST — one point is a word with extra syntax — and eight at
+     most, which is what fits a 44px handle across a phone's plate. */
+  const LANE_MAXPTS = 8;
+  const laneRange = (f) => {
+    const ns = Object.values(f.table).map(Number).filter(isFinite);
+    return [Math.min(...ns), Math.max(...ns)];
+  };
+  const cleanLane = (f, v) => {
+    if (!v || typeof v !== "object" || Array.isArray(v) ||
+        !Array.isArray(v.points)) return null;
+    const [lo, hi] = laneRange(f);
+    const pts = [];
+    for (const p of v.points) {
+      if (!Array.isArray(p) || p.length < 2) continue;
+      const x = +p[0], y = +p[1];
+      if (!isFinite(x) || !isFinite(y) || x < 0) continue;
+      pts.push([x, Math.max(lo, Math.min(hi, y))]);
+    }
+    pts.sort((a, b) => a[0] - b[0]);
+    if (pts.length < 2) return null;
+    // A FLAT LANE IS A WORD, and the neutral word is absent — one spelling of
+    // "this cell rides the row exactly", which is the law the table above kept.
+    if (pts.every((p) => p[1] === pts[0][1]) && !pts[0][1]) return null;
+    return { points: pts.slice(0, LANE_MAXPTS) };
+  };
+  const isLane = (v) => !!(v && typeof v === "object" && !Array.isArray(v) &&
+                           Array.isArray(v.points));
   const cellAutoClean = (m) => {
     if (!m || typeof m !== "object" || Array.isArray(m)) return null;
     const out = {};
     for (const f of CELLAUTO) {
       const w = m[f.key];
-      if (w == null ||
-          !Object.prototype.hasOwnProperty.call(f.table, String(w))) continue;
+      if (w == null) continue;
+      if (isLane(w)) { const L = cleanLane(f, w); if (L) out[f.key] = L; continue; }
+      if (!Object.prototype.hasOwnProperty.call(f.table, String(w))) continue;
       if (!f.table[String(w)]) continue;            // the neutral word IS absent
       out[f.key] = String(w);
     }
     return Object.keys(out).length ? out : null;
   };
+  /* ...AND THE DRAWN HALF, IN THE MIXER'S OWN DIALECT — the same four wires
+     `cellAutoOffset` writes a static number onto, as LANES the desk evaluates
+     per bar through its own `laneAt`. One conversion table, used twice, so a
+     chip and a curve can never disagree about which wire a lane is.
+     `null` when nothing is drawn, which is every record until a hand draws. */
+  function cellAutoLanes(m) {
+    if (!m || typeof m !== "object" || Array.isArray(m)) return null;
+    const out = {};
+    for (const f of CELLAUTO) {
+      const v = m[f.key];
+      if (!isLane(v)) continue;
+      const key = f.key === "level" ? "fader" : f.key === "pan" ? "pan"
+                : f.key === "send" ? "rev" : "eqhi";
+      out[key] = { points: v.points.map(([x, y]) =>
+        [x, f.key === "level" ? faderDb(y) : f.key === "cutoff" ? eqDb(y) : y]) };
+    }
+    return Object.keys(out).length ? out : null;
+  }
 
   // THE REVERB RETURN, absolute rather than a multiplier: it IS `state.reverb`,
   // and the parent reads `rgain = clamp(reverb * 3.2, 0, 2) * reverbScale`
@@ -3240,6 +3307,7 @@
                 fxHasMix, fxChainFor, busFxChain,
                 TRIMS, TRIMLABEL, trimApply,
                 CELLAUTO, CELLAUTOBY, cellAutoOffset, cellAutoClean,
+                cellAutoLanes, LANE_MAXPTS,
                 CELLVEC, CELLVECBY, cellVecClean,
                 SENDS, SENDLABEL,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,

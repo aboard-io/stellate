@@ -810,12 +810,48 @@ export function toScore(parts, opts = {}) {
        along a hundred bars of one line has nothing else to find the chorus by.
        Absent, this is byte-for-byte the `join(" | ")` it replaced. */
     const div = opts.divide instanceof Set ? opts.divide : null;
+    /* ---- THE FORM, ON THE PAPER (2026-09-05, the review's item 9) --------
+       *"Fifteen section roles and no way to say 'play it twice with a
+       different last bar'."* The record is engraved AS WRITTEN — one statement
+       per section, the way a score is — so the form has to be readable as the
+       marks it has been printed with for four hundred years:
+
+         open    a bar the repeat opens on            `|:`
+         close   a bar the repeat closes on (-> N)    `:|`, and "x3" above it
+                                                      where twice is not enough
+         volta   the first / second ending            `[1` `[2`
+         coda    the coda's own bar                   `!coda!`
+         tocoda  where the form leaves for it         "To Coda"
+
+       `opts.form` is a set of BAR INDEXES per mark — the caller counts the
+       record's bars, this file draws them — and absent it, the line below is
+       byte for byte the `join` it replaced. */
+    const F = opts.form || null;
+    const has = (k, i) => !!(F && F[k] && F[k].has && F[k].has(i));
     const bs = eng.bars;
+    const seam = (i) => {
+      if (i === bs.length - 1) return "";
+      const c = has("close", i), o = has("open", i + 1);
+      if (c && o) return " :: ";
+      if (c) return " :| ";
+      if (o) return " |: ";
+      return div && div.has(i) ? " || " : " | ";
+    };
+    const pre = (i) => {
+      if (!F) return "";
+      const v = F.volta && F.volta.get ? F.volta.get(i) : 0;
+      return (i === 0 && has("open", 0) ? "|: " : "") +
+             (v ? "[" + v + " " : "") +
+             (has("coda", i) ? "!coda!" : "") +
+             (has("tocoda", i) ? '"^To Coda"' : "") +
+             (F.times && F.times.get && F.times.get(i)
+               ? '"^x' + F.times.get(i) + '"' : "");
+    };
     const line = bs.length
-      ? bs.map((b, i) => b + (i === bs.length - 1 ? ""
-                              : div && div.has(i) ? " || " : " | ")).join("")
+      ? bs.map((b, i) => pre(i) + b + seam(i)).join("")
       : "z" + spb;
-    body.push(line + " " + (opts.close || "|]"));
+    body.push(line + " " +
+      (has("close", bs.length - 1) ? ":|" : (opts.close || "|]")));
     for (const nt of eng.notes) {
       const bar = Math.floor(nt.at / spb);
       let set = onsets.get(bar);

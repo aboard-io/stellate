@@ -52,8 +52,8 @@
   const K = (typeof module !== "undefined" && module.exports)
     ? require("./kernel.js") : root.NuKernel;
 /*#region HEAD*/
-  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del,
-          split, spread, keep } = K;
+  const { rotate, reverse, transpose, invert, complement, complementOf, excerpt,
+          only, drop, fill, del, split, spread, keep } = K;
   // `keep(0, 4, 8, 12)` MEANT `keep(0, 4, 8, 12)` at forty-eight sites below
   // (2026-08-29): only(k, op) is the one-vector combinator, so every numeric
   // call built an op that THREW when render() applied it — seven anchors

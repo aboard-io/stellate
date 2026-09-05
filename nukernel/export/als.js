@@ -1215,11 +1215,34 @@ export function alsFromScore(donorXml, score, opts = {}) {
      * (the section's own `lvl` shade) is a per-box number and nothing else in
      * the record is allowed to be a special case just for it.
      */
+    /* WHICH CELL LANE OFFSETS WHICH ROW PARAM — fields.js `cellAutoLanes`
+       writes the mixer's own four keys and this is the same map read from the
+       export's side. `send.echo` has no cell lane (a cell's send is bus 1),
+       and `cutoff` is a per-voice shelf with no automation target here, which
+       the paragraph above settles. */
+    const CELLKEY = { level: "fader", pan: "pan", "send.rev": "rev" };
     const ride = (target, param, hold, map) => {
       if (target == null) return;
+      /* A BOX WHOSE **CELL** DRAWS A LANE AND WHOSE ROW DRAWS NONE STILL NEEDS
+         BREAKPOINTS (2026-09-05, item 10). Without a lane `stitchEnvelope`
+         writes ONE event for the box — the hold, mapped — and a ramp inside it
+         would be flattened to its first value. So the box is given a lane at
+         the drawn points' own times, holding the row's own value, and the map
+         puts the drawn offset on top: one envelope, one application, and the
+         picture the hand drew. */
+      const drawnBase = (box, beats) => {
+        const k = CELLKEY[param];
+        const co = k ? cellOf(box) : null;
+        const L = co && co.lanes && co.lanes[k];
+        if (!L || !Array.isArray(L.points) || L.points.length < 2) return null;
+        const perBeat = Math.max(1e-9, beats) / Math.max(1, box.len || 1);
+        return { curve: "lin",
+                 points: L.points.map(([x]) => [x * perBeat, hold(box)]) };
+      };
       const evs = stitchEnvelope(views.map((v) => ({
-        beat0: v.beat0, beats: v.beats, lane: laneFor(v.box, param),
-        hold: hold(v.box), map: map(v.box) })));
+        beat0: v.beat0, beats: v.beats,
+        lane: laneFor(v.box, param) || drawnBase(v.box, v.beats),
+        hold: hold(v.box), map: map(v.box, v.beats) })));
       /* A FLAT ENVELOPE IS NOT AN ENVELOPE — it is the Manual value with extra
          steps, and it is worse than nothing: Live shows the lane as automated,
          greys the knob, and a person who moves the fader finds it snapping
@@ -1254,11 +1277,41 @@ export function alsFromScore(donorXml, score, opts = {}) {
        `rise` sweep's paragraph above settles the precedent in the other
        direction and this one settles it in this. */
     const cellOf = (box) => coOfBox(box, laneName);
+    /* ...AND A CELL LANE MAY BE DRAWN (2026-09-05, the review's item 10). The
+       static offset above is one number for the box; a drawn lane is a line
+       across it, in the lane's own units at BAR positions, and it rides in the
+       SAME map — which is what keeps the file carrying row + cell in one
+       breakpoint list and applying each exactly once (the paragraph above is
+       that law and this obeys it rather than adding a second envelope).
+       `laneEvents` hands the map its TIME in beats now, so the offset can be
+       asked where the point is. A box with no drawn lane returns the same
+       closure it always did, to the byte. */
+    const atPts = (pts, x) => {
+      if (!pts || !pts.length) return 0;
+      if (x <= pts[0][0]) return pts[0][1];
+      for (let i = 1; i < pts.length; i++) {
+        if (x > pts[i][0]) continue;
+        const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+        const k = x1 > x0 ? (x - x0) / (x1 - x0) : 1;
+        return y0 + (y1 - y0) * k;
+      }
+      return pts[pts.length - 1][1];
+    };
+    const drawnOf = (box, k, beats) => {
+      const co = cellOf(box);
+      const L = co && co.lanes && co.lanes[k];
+      if (!L || !Array.isArray(L.points) || !L.points.length) return null;
+      const perBeat = Math.max(1, box.len || 1) / Math.max(1e-9, beats);
+      return (t) => atPts(L.points, (t || 0) * perBeat);
+    };
     if (!isDrums && anyLevel)
-      ride(mixTarget("Volume"), "level", () => 1, (box) => {
+      ride(mixTarget("Volume"), "level", () => 1, (box, beats) => {
         const co = cellOf(box);
         const g = vol * (LEVEL_GAIN[box.lvl] == null ? 1 : LEVEL_GAIN[box.lvl]) *
           (co && co.fader ? Math.pow(10, co.fader / 20) : 1);
+        const dr = drawnOf(box, "fader", beats);
+        if (dr) return (x, t) => clamp(g * Math.pow(10, dr(t) / 20) * x,
+                                       SEND_FLOOR, 1.99526238);
         return (x) => clamp(g * x, SEND_FLOOR, 1.99526238);
       });
     /* THE OTHER THREE LANES A BOX CAN DRAW, and they land on Live's own mixer
@@ -1292,9 +1345,13 @@ export function alsFromScore(donorXml, score, opts = {}) {
       const offOf = (box, k) => { const co = cellOf(box); return (co && co[k]) || 0; };
       // NO OFFSET RETURNS THE OLD CLOSURE, not `x + 0`: identity has to be
       // identity to the byte, and `-0 + 0` is `0`.
-      const toPan = (box) => { const d = offOf(box, "pan");
+      const toPan = (box, beats) => { const d = offOf(box, "pan");
+        const dr = drawnOf(box, "pan", beats);
+        if (dr) return (x, t) => clamp(x + d + dr(t), -1, 1);
         return d ? (x) => clamp(x + d, -1, 1) : (x) => clamp(x, -1, 1); };
-      const toSend = (k) => (box) => { const d = offOf(box, k);
+      const toSend = (k) => (box, beats) => { const d = offOf(box, k);
+        const dr = drawnOf(box, k, beats);
+        if (dr) return (x, t) => clamp(x + d + dr(t), SEND_FLOOR, 1);
         return d ? (x) => clamp(x + d, SEND_FLOOR, 1)
                  : (x) => clamp(x, SEND_FLOOR, 1); };
       ride(mixTarget("Pan"), "pan", () => panHold, toPan);

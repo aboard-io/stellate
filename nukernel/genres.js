@@ -39,8 +39,8 @@
   "use strict";
   const K = (typeof module !== "undefined" && module.exports)
     ? require("./kernel.js") : root.NuKernel;
-  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del,
-          split, spread, keep } = K;
+  const { rotate, reverse, transpose, invert, complement, complementOf, excerpt,
+          only, drop, fill, del, split, spread, keep } = K;
   // `keep(0, 4, 8, 12)` MEANT `keep(0, 4, 8, 12)` at forty-eight sites below
   // (2026-08-29): only(k, op) is the one-vector combinator, so every numeric
   // call built an op that THREW when render() applied it — seven anchors
@@ -40300,7 +40300,7 @@
         "the gong, once a cycle, under everything"
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(2), fill(2)]][s % 4]
-                    : v === 1 ? [only("gate", complement("gate")), transpose(12)]
+                    : v === 1 ? [complementOf(0), transpose(12)]
                     : v === 2 ? [keep(0, 4, 8, 12), transpose(-12)]
                     : [keep(0), drop(12)]),
     },

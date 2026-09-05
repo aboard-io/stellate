@@ -613,6 +613,22 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   const evAll = vBase > g.voices ? harmonizeStage(out, masterCtx(sec, slots)) : out;
 
   const win = evAll.filter(e => e.t >= from && e.t < to).map(e => ({ ...e, t: e.t - from }));
+  /* ---- THE LEAD-IN CHANNEL (2026-09-05, the review's item 9) --------------
+     *"There is no bar zero … `intro: count-in` is a click, not an anacrusis."*
+     A chair may enter BEFORE its section now (`kernel.js entryBar`, a negative
+     `entry`), and those events land at a negative time — before the section's
+     own zero, where the window above drops them and where the last round wrote
+     the refusal down. This is the channel that carries them: `songBars` puts
+     them in the previous box's last bar, or in a lead-in bar of the record's
+     own when there is no previous box.
+     THE OFFSETS ARE THE SECTION'S OWN, not the window's: a pickup leads into
+     the music, and the music is where the box starts. A nudged box therefore
+     carries only a pickup that fits in the bar before it — everything earlier
+     belongs to bars the nudge is skipping on purpose.
+     PRESENT-ONLY: nothing before a section's zero is the only stream this box
+     has ever produced, so a record that writes no pickup returns the identical
+     object it always did. */
+  const leadEv = evAll.filter(e => e.t < 0 && e.t >= -barSteps);
   // ORDER MATTERS, and this is the only order that makes sense. The envelope is
   // a curve over the whole section, so it must see the section as written; the
   // intro and outro REPLACE bars, so they must go last or the curve would fade
@@ -641,7 +657,7 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // followed the tune off the grid. It left with the espeak organ on
  // 2026-08-17; kernel-daw.html holds the tombstone. The stream is the band's
   // again, and every event in it is a note, a hit or a bass note.)
-  return { g, bars: len, vBase, ev };
+  return { g, bars: len, vBase, ev, ...(leadEv.length ? { lead: leadEv } : {}) };
 }
 
 /* ---------- a stable seed from a string ---------- */
@@ -1109,7 +1125,7 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
   const list = loopOnly == null
     ? song.map((s, i) => [s, i]) : [[song[loopOnly], loopOnly]];
   for (const [sec, si] of list) {
-    const { g, bars, ev } = sectionRender(sec, slots, songGroove, songSwing);
+    const { g, bars, ev, lead } = sectionRender(sec, slots, songGroove, songSwing);
     // A BOX THAT PRODUCES NOTHING TAKES NO TIME. Since Simple became the
     // default there is no "empty" box any more, so a fresh page was four boxes
     // of which three had no phrase — one bar of music followed by three bars of
@@ -1173,7 +1189,66 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
         : { ...e, off: t - b * barSteps,
             ...(e.dur > 0 ? { dur: e.dur * mu } : {}) });
     }
-    for (let b = 0; b < bars; b++)
+    /* ---- THE FORM: A REPEAT, A SECOND ENDING, A CODA (2026-09-05, the
+       review's item 9) ---------------------------------------------------
+       *"Fifteen section roles and no way to say 'play it twice with a
+       different last bar'."* `document.js formWalk` is the one owner of what
+       the record plays and `boxesOf` stamps its answer here:
+
+         sec.plays   how many times these bars are played. The SAME bars: a
+                     repeat sign means the same music again, so the buckets
+                     built above are pushed again rather than the box being
+                     re-rendered longer. That is also why the box's own `len`
+                     never moves — the score engraves the section ONCE with a
+                     repeat sign, and every reader of `SONG[si].len` (the
+                     caption, the ribbon's reserve, the desk's rows) keeps the
+                     written form it has always read.
+         sec.cut     the bars the LAST statement stops short by — the second
+                     ending's own length. Statements 1..N-1 play the section
+                     whole (its last bar IS the first ending); the last one
+                     stops, and the next box, the one marked `ending`, plays
+                     the alternative in its place.
+         sec.skip    a section the form jumps over on its way to the coda.
+
+       ABSENT IS TODAY: no `plays`, no `cut`, no `skip` is one statement of the
+       whole box, which is exactly the loop this replaced. */
+    if (sec.skip) continue;
+    /* ---- THE UPBEAT LANDS BEFORE THE BAR IT LEADS TO (2026-09-05, item 9).
+       `lead` is what this box's chairs play before their own section starts
+       (sectionEvents, a negative `entry`). It sounds in the bar BEFORE — the
+       previous box's last bar, exactly where `leadIns` puts the pickups this
+       file derives for itself — and when there is no previous box the record
+       grows the one bar a written-out anacrusis has always needed. The bar is
+       tagged `lead` and its events `pu`/`puSi`, which is the same pair the
+       transport already reads for a derived pickup, so nothing downstream
+       learns a new word. */
+    if (lead && lead.length) {
+      const puOf = (barLen, b) => lead
+        .map((e) => ({ ...e, off: barLen + (mu === 1 ? e.t : e.t * mu),
+                       ...(e.dur > 0 && mu !== 1 ? { dur: e.dur * mu } : {}),
+                       pu: "upbeat", puSi: si }))
+        .filter((e) => e.off >= 0)
+        .forEach((e) => b.ev.push(e));
+      const prev = out[out.length - 1];
+      if (prev) { puOf(prev.barSteps, prev); prev.ev.sort((x, y) => x.off - y.off); }
+      else {
+        const b0 = { si, g, barSteps, steps: barSteps, first: true, lead: true,
+                     ev: [], ...(sec.lvl ? { lvl: sec.lvl } : {}),
+                     ...(roleOf(sec) ? { role: roleOf(sec) } : {}) };
+        puOf(barSteps, b0);
+        b0.ev.sort((x, y) => x.off - y.off);
+        out.push(b0);
+      }
+    }
+    const plays = Math.max(1, sec.plays | 0), cut = Math.max(0, sec.cut | 0);
+    // …and the record's own lead-in bar is the box's first bar, so the box's
+    // own bar 0 is not a second one (stampBoxSpan reads `first` as the start
+    // of a run and two of them would make the pickup its own box).
+    const ledIn = out.length && out[out.length - 1].lead &&
+                  out[out.length - 1].si === si;
+    for (let r = 0; r < plays; r++) {
+    const upto = (r === plays - 1) ? Math.max(1, bars - cut) : bars;
+    for (let b = 0; b < upto; b++)
       // …AND THE SECTION'S DEALT LEVEL RIDES ITS BARS (2026-08-30, the score
       // dynamics round). `lvl` is the one section word that reaches the sound
       // WITHOUT touching the events — audio/desk.js sectionOf is a desk gain,
@@ -1183,7 +1258,8 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
       // it if the one walk that knows the section writes it down. PRESENT-ONLY,
       // like `pace` on the anchor: a wordless section stamps no key and every
       // reader of the bar list sees the exact object it always saw.
-      out.push({ si, g, barSteps, steps: barSteps, first: b === 0, ev: buckets[b],
+      out.push({ si, g, barSteps, steps: barSteps,
+                 first: b === 0 && !(r === 0 && ledIn), ev: buckets[b],
                  ...(sec.lvl ? { lvl: sec.lvl } : {}),
                  /* THE SECTION'S OWN WORD TRAVELS WITH THE BAR (2026-08-31).
                     Paul, of the exported set: "You named all the track rows
@@ -1202,7 +1278,13 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
                     boxes must get the same answer the accelerando did.
                     Present-only, exactly like `lvl` above: a roleless section
                     stamps no key. */
-                 ...(roleOf(sec) ? { role: roleOf(sec) } : {}) });
+                 ...(roleOf(sec) ? { role: roleOf(sec) } : {}),
+                 /* WHICH STATEMENT OF A REPEATED SECTION THIS BAR IS IN, said
+                    on the bar because the bar is what every reader downstream
+                    holds. Present-only: a section that plays once stamps
+                    nothing and the bar is the object it always was. */
+                 ...(plays > 1 ? { play: r, plays } : {}) });
+    }
   }
   if (o.pickups !== false) leadIns(out, song, slots);
   // `o.ending` — see tempoNodes: absent means WRAP (the live transport only

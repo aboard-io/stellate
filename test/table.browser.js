@@ -3273,6 +3273,111 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       "T10x …and every lamp goes out when the record stops (" + off + " left)");
   }
 
+  /* ============ T10y · THE FORM, AND A LANE YOU CAN DRAW ================
+     The review's items 9 and 10, on the RENDERED page: the row sheet offers
+     the form words (a repeat with a count, a second ending, a coda, the jump)
+     and the two lanes a hand may DRAW — the section's own and a cell's — each
+     on the one curve editor. Measured as a WRITE, not as the presence of a
+     control: a chip that writes nothing is this repo's characteristic bug. */
+  {
+    const cellK = (v, id) => "tcell|" + v + "|" + id;
+    const sid = (await doc()).form.sections[0].id;
+    const sid2 = (await doc()).form.sections[1].id;
+    await tap("trow|" + sid2);
+    const form = await p.evaluate((id) => {
+      const k = (x) => document.querySelector('#pan-band [data-k="' + x + '"]');
+      const sl = document.querySelector(
+        '#pan-band input.nu-numslide[data-k="repeat|' + id + '"]');
+      const h = (x) => (x ? Math.round(x.getBoundingClientRect().height) : 0);
+      return { repeat: !!sl, rh: h(sl),
+               ending: !!k("ending|" + id), coda: !!k("coda|" + id),
+               tocoda: !!k("tocoda|" + id), draw: !!k("trowauto|" + id) };
+    }, sid2);
+    check(form.repeat && form.ending && form.coda && form.tocoda && form.draw,
+      "T10y the row sheet offers the FORM — a repeat, a second ending, a coda, " +
+      "the jump — and a lane to draw (" + JSON.stringify(form) + ")");
+    check(form.rh >= 44, "T10y …and the repeat is a 44px slider, not a chip row");
+    /* THE REPEAT WRITES, AND THE DOCUMENT KEEPS ONE SECTION. */
+    const rep = await p.evaluate((id) => {
+      const r = document.querySelector(
+        '#pan-band input.nu-numslide[data-k="repeat|' + id + '"]');
+      if (!r) return null;
+      const n0 = window.__eightDoc().form.sections.length;
+      r.value = 2; r.dispatchEvent(new Event("change", { bubbles: true }));
+      return { n0 };
+    }, sid2);
+    await p.waitForTimeout(600);
+    const repGot = await p.evaluate((id) => { const d = window.__eightDoc();
+      const s2 = d.form.sections.find((x) => x.id === id);
+      return { repeat: s2 && s2.repeat, n: d.form.sections.length,
+               }; }, sid2);
+    check(!!rep && repGot.repeat === 2 && repGot.n === rep.n0,
+      "T10y …and a repeat of 2 is ONE section played twice, not two sections " +
+      "in the document (" + JSON.stringify(repGot) + ")");
+    /* THE ROW'S OWN LANE: choose a param, and the plate arrives with it. */
+    await p.evaluate((id) => { const c = document.querySelector(
+      '#pan-band [data-k="trowauto|' + id + '"]'); if (c) c.click(); }, sid2);
+    await p.waitForTimeout(300);
+    await p.evaluate((id) => { const chip = document.querySelector(
+      '#pan-band [data-k="trowauto|' + id + '|level"]'); if (chip) chip.click(); }, sid2);
+    await p.waitForTimeout(700);
+    const rowLane = await p.evaluate((id) => {
+      const s2 = window.__eightDoc().form.sections.find((x) => x.id === id);
+      const plate = document.querySelector(
+        '#pan-band [data-k^="trowlane|level|"], #pan-band .nu-rowlane');
+      const hs = document.querySelectorAll('#pan-band .nu-rowlane [data-k]');
+      return { auto: s2 && s2.auto ? s2.auto.length : 0,
+               param: s2 && s2.auto && s2.auto[0] ? s2.auto[0].param : null,
+               inBars: !!(s2 && s2.auto && s2.auto[0] && s2.auto[0].in === "bars"),
+               plate: !!plate, handles: hs.length };
+    }, sid2);
+    check(rowLane.auto === 1 && rowLane.param === "level" && rowLane.inBars &&
+          rowLane.plate,
+      "T10y a section's own lane is DRAWN now — the row writes {param, points} " +
+      "and the plate is on the page (" + JSON.stringify(rowLane) + ")");
+    await p.evaluate((id) => { const d = window.__eightDoc();
+      const s2 = d.form.sections.find((x) => x.id === id);
+      if (s2) { delete s2.auto; delete s2.repeat; }
+      window.__eightDraw && window.__eightDraw(); }, sid2);
+    await p.waitForTimeout(400);
+    await tap("trow|" + sid2);
+
+    /* THE CELL'S OWN, on the same component. */
+    const vn = (await doc()).voices[0].name;
+    await selectCell(cellK(vn, sid));
+    await openCell(cellK(vn, sid));
+    const vi = (await doc()).voices.findIndex((v) => v.name === vn);
+    const laneKey = "tcellauto|level|" + vi + "|0";
+    await p.evaluate((k) => { const c = document.querySelector(
+      '#pan-band [data-k="' + k + '"]'); if (c) c.click(); }, laneKey);
+    await p.waitForTimeout(300);
+    await p.evaluate((k) => { const chip = document.querySelector(
+      '#pan-band [data-k="' + k + '|draw"]'); if (chip) chip.click(); }, laneKey);
+    await p.waitForTimeout(700);
+    const cellLane = await p.evaluate((n) => {
+      const d = window.__eightDoc();
+      const v = d.voices.find((x) => x.name === n);
+      const c = ((v || {}).cells || {})[d.form.sections[0].id] || {};
+      const L = (c.mixauto || {}).level;
+      const plate = document.querySelector('#pan-band .nu-celllane');
+      const hs = plate ? plate.querySelectorAll("[data-k]") : [];
+      const h = plate ? Math.round(plate.getBoundingClientRect().height) : 0;
+      return { points: L && L.points ? L.points : null, plate: !!plate,
+               handles: hs.length, h };
+    }, vn);
+    check(!!cellLane.points && cellLane.points.length >= 2 && cellLane.plate,
+      "T10y a cell's mix lane can be DRAWN — the word `draw` writes points and " +
+      "the plate arrives (" + JSON.stringify(cellLane) + ")");
+    check(cellLane.h >= 44,
+      "T10y …and the plate is a real plate, not a hairline (" + cellLane.h + "px)");
+    await p.evaluate((n) => { const d = window.__eightDoc();
+      const v = d.voices.find((x) => x.name === n);
+      const c = ((v || {}).cells || {})[d.form.sections[0].id];
+      if (c) delete c.mixauto;
+      window.__eightDraw && window.__eightDraw(); }, vn);
+    await p.waitForTimeout(400);
+  }
+
   /* ================= T0 · THE CONSOLE =================================== */
   check(errs.length === 0, "T0 no page or console error across all of it" +
     (errs.length ? " — " + errs.slice(0, 4).join(" | ") : ""));

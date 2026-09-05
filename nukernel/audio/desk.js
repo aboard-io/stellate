@@ -142,10 +142,18 @@ function compileAuto(sec, g) {
   }
   // the box's own list: real entries only (a bare param string is the
   // registry's inert placeholder shape and arms nothing)
+  /* ...AND A LANE A HAND DREW IS RULED IN BARS (2026-09-05, the review's item
+     10). Everything else here is in BEATS, which is what the desk samples; a
+     hand draws over the section's own bars, so the lane says which ruler its
+     numbers are on and this is the one place the two meet. `in: "bars"` is
+     absent on every lane compose ever dealt, so those are the identical
+     objects they were. */
+  const perBar = beats / Math.max(1, sec.len || g.bars || 1);
   for (const a of (sec.auto || []))
     if (a && typeof a === "object" && a.param && Array.isArray(a.points) && a.points.length)
       out.push({ param: a.param, curve: a.curve === "exp" ? "exp" : "lin",
-                 points: a.points });
+                 points: a.in === "bars"
+                   ? a.points.map(([x, y]) => [x * perBar, y]) : a.points });
   return out;
 }
 // WHO IS PLAYING IN THIS BOX, voice by voice — the same walk derive.js does to
@@ -649,6 +657,12 @@ function sectionOf(sec) {
     //     table.)
     fx: (sec.fx || []).filter(k => FX[k]).slice(0, MAX_FX),
     auto: compileAuto(sec, g),
+    /* HOW MANY BEATS A BAR OF THIS BOX IS — the one number a lane drawn in
+       BARS needs to land on a desk that samples in BEATS (2026-09-05, the
+       review's item 10). `compileAuto` computes the same product one line up
+       and this is it said once, where the rate and the section are both in
+       hand, rather than a second reading of `sec.rate` somewhere downstream. */
+    beatsPerBar: 4 / (g.rate * (sec.rate ? RATES[sec.rate] : 1)),
   };
 }
 
@@ -975,7 +989,30 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
        With a MIXER present the numeric lanes SUM through `sum()`; `eq` takes
        the last writer, which is this layer's existing law and is named rather
        than quietly changed. */
-    const co = CELL && chan ? CELL[chan] : null;
+    /* ...AND A CELL LANE MAY BE DRAWN, not only chosen (2026-09-05, the
+       review's item 10: *"the four mix lanes offer four fixed offsets each …
+       there is no breakpoint, no start value, no end value, no curve"*).
+       `co.lanes` is that curve, in the lane's own mixer units, at BAR
+       positions; it is evaluated HERE, at the bar this walk is standing in,
+       through `laneAt` — the same evaluator the ROW's lanes go through six
+       lines up, so a row curve and a cell curve cannot be read two ways.
+       The answer ADDS to the cell's static word (a hand may say "+3 dB" and
+       draw a swell on top of it), and the sum is still one term of the ¶A
+       list below: cell + row + seat, each applied once.
+       A CELL THAT DREW NOTHING PUSHES THE OBJECT IT ALWAYS PUSHED. */
+    const co0 = CELL && chan ? CELL[chan] : null;
+    let co = co0;
+    if (co0 && co0.lanes) {
+      const bar = S.beatsPerBar > 0 ? at / S.beatsPerBar : at;
+      co = { ...co0 };
+      delete co.lanes;
+      for (const [k, L] of Object.entries(co0.lanes)) {
+        const v = laneAt(L, bar);
+        if (v == null) continue;
+        if (k === "eqhi") co.eq = { ...(co.eq || {}), hi: ((co.eq || {}).hi || 0) + v };
+        else co[k] = (co[k] || 0) + v;
+      }
+    }
     if (co) os.push(co);
     const sum = (k2) => os.reduce((a, x) => a + (x[k2] || 0), 0) || undefined;
     const o = os.length === 1 ? os[0] : os.length ? Object.assign({}, ...os,

@@ -637,19 +637,24 @@ function cellEntry(A2, i5, vi) {
 function cellLane(A2, i5, vi, spec) {
   const read = () => A2.cellOf(i5, vi, "mixauto") || {};
   const now = read()[spec.key];
-  const cur = now == null ? "" : String(now);
+  const drawn = !!(now && typeof now === "object" && Array.isArray(now.points));
+  const cur = drawn ? DRAWWORD : now == null ? "" : String(now);
   const has = cur !== "";
   const put = (w2) => {
     const next = { ...read() };
     if (w2 === "") delete next[spec.key];
-    else next[spec.key] = w2;
+    else if (w2 === DRAWWORD) {
+      const ns = Object.values(spec.table).map(Number).filter((n3) => isFinite(n3));
+      const bars = Math.max(1, Number(A2.doc().form.sections[i5].bars) || 1);
+      next[spec.key] = { points: [[0, Math.min(...ns)], [bars, Math.max(...ns)]] };
+    } else next[spec.key] = w2;
     A2.putCell(i5, vi, "mixauto", Object.keys(next).length ? next : null);
   };
   const words = Object.keys(spec.table).filter((k2) => spec.table[k2]);
   return {
     key: "tcellauto|" + spec.key + "|" + vi + "|" + i5,
     label: t4("cell.lane.label", { name: spec.label }),
-    word: has ? spec.labels[cur] || cur : t4("value.default"),
+    word: drawn ? t4("lane.drawn") : has ? spec.labels[cur] || cur : t4("value.default"),
     value: cur,
     derived: !has,
     /* NO CAPTION UNDER IT. The word IS "default" now, and a second line
@@ -657,11 +662,16 @@ function cellLane(A2, i5, vi, spec) {
     sub: null,
     options: [
       { v: "", w: t4("value.default") },
-      ...words.map((k2) => ({ v: k2, w: spec.labels[k2] || k2 }))
+      ...words.map((k2) => ({ v: k2, w: spec.labels[k2] || k2 })),
+      { v: DRAWWORD, w: t4("lane.draw") }
     ],
     set: (v3) => put(v3 || ""),
     clear: has ? () => put("") : null
   };
+}
+var DRAWWORD = "draw";
+function isDrawn(v3) {
+  return !!(v3 && typeof v3 === "object" && !Array.isArray(v3) && Array.isArray(v3.points));
 }
 function cellVecField(A2, i5, vi, spec) {
   const own = A2.cellOf(i5, vi, spec.key);
@@ -734,6 +744,55 @@ function rowSheet(A2, i5) {
     (v3) => A2.putRow(i5, "bars", +v3),
     false
   ));
+  f2.push(numField(
+    A2,
+    "repeat|" + sid,
+    t4("row.repeat"),
+    s3.repeat || "",
+    [2, 3, 4, 5, 6, 7, 8],
+    (v3) => A2.putRow(i5, "repeat", v3 === "" ? null : +v3),
+    true,
+    t4("row.repeat.once")
+  ));
+  const flag = (key, on, label, why) => {
+    const fld = {
+      key: key + "|" + sid,
+      label,
+      word: on ? t4("row.ending.on") : t4("row.ending.off"),
+      value: on ? "1" : "",
+      derived: !on,
+      why,
+      options: [
+        { v: "", w: t4("row.ending.off") },
+        { v: "1", w: t4("row.ending.on") }
+      ],
+      ...why ? {} : {
+        set: (v3) => A2.putRow(i5, key, v3 ? true : null),
+        clear: on ? () => A2.putRow(i5, key, null) : null
+      }
+    };
+    f2.push(fld);
+  };
+  const prev = secs[i5 - 1];
+  flag(
+    "ending",
+    s3.ending === true,
+    t4("row.ending"),
+    i5 > 0 && (prev && prev.repeat || 0) >= 2 ? null : t4("row.ending.why")
+  );
+  flag(
+    "coda",
+    s3.coda === true,
+    t4("row.coda"),
+    i5 === secs.length - 1 ? null : t4("row.coda.why")
+  );
+  const codaIx = secs.findIndex((x2) => x2 && x2.coda);
+  flag(
+    "tocoda",
+    s3.tocoda === true,
+    t4("row.tocoda"),
+    codaIx > i5 ? null : t4("row.tocoda.why")
+  );
   for (const [key, lab] of [
     ["form.lvl", t4("field.level")],
     ["form.env", t4("field.dynamics")],
@@ -794,6 +853,49 @@ function rowSheet(A2, i5) {
     word: auto.length ? tn("row.lanes", auto.length) : t4("value.none"),
     why: t4("row.lanes.why")
   });
+  {
+    const params = Object.keys(A2.AUTOPARAMS || {});
+    const mine = auto.find((a2) => a2 && a2.param && params.includes(a2.param));
+    const cur = mine && mine.param ? mine.param : "";
+    f2.push({
+      key: "trowauto|" + sid,
+      label: t4("row.draw"),
+      word: cur ? (A2.AUTOPARAMLABEL || {})[cur] || cur : t4("value.none"),
+      value: cur,
+      derived: !cur,
+      options: [
+        { v: "", w: t4("value.none") },
+        ...params.map((p3) => ({
+          v: p3,
+          w: (A2.AUTOPARAMLABEL || {})[p3] || p3
+        }))
+      ],
+      set: (v3) => {
+        const rest = auto.filter((a2) => !a2 || a2.param !== cur);
+        if (!v3) {
+          A2.putRow(i5, "auto", rest.length ? rest : null);
+          return;
+        }
+        const R2 = (A2.AUTOPARAMS || {})[v3];
+        const bars = Math.max(1, Number(s3.bars) || 1);
+        A2.putRow(i5, "auto", [...rest, {
+          param: v3,
+          in: "bars",
+          curve: R2 && R2.curve === "exp" ? "exp" : "lin",
+          points: [[0, R2 ? R2.lo : 0], [bars, R2 ? R2.hi : 1]]
+        }]);
+      },
+      clear: cur ? () => A2.putRow(
+        i5,
+        "auto",
+        auto.filter((a2) => !a2 || a2.param !== cur)
+      ) : null
+    });
+    if (cur) {
+      const node = A2.rowLaneNode ? A2.rowLaneNode(i5, cur) : null;
+      if (node) f2.push({ kind: "node", label: t4("row.draw"), node });
+    }
+  }
   return f2;
 }
 function colSheet(A2, vi) {
@@ -979,7 +1081,17 @@ function cellSheet(A2, i5, vi) {
     word: A2.cellOf(i5, vi, "focus") ? t4("cell.focus.on") : t4("cell.focus.off"),
     why: t4("cell.focus.why")
   });
-  for (const spec of A2.CELLAUTO || []) f2.push(cellLane(A2, i5, vi, spec));
+  for (const spec of A2.CELLAUTO || []) {
+    f2.push(cellLane(A2, i5, vi, spec));
+    const now = (A2.cellOf(i5, vi, "mixauto") || {})[spec.key];
+    if (!isDrawn(now)) continue;
+    const node = A2.cellLaneNode ? A2.cellLaneNode(i5, vi, spec.key) : null;
+    if (node) f2.push({
+      kind: "node",
+      label: t4("cell.lane.label", { name: spec.label }),
+      node
+    });
+  }
   if (v3.kind === "line") {
     const chordChair = CHORDCHAIRS.has(String(A2.castOf(vi, "part") || ""));
     for (const spec of A2.CELLVEC || [])

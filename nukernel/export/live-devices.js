@@ -1307,7 +1307,14 @@ export function laneEvents(lane, beat0, beats, scale = (v) => v) {
   if (!pts.length) return [];
   const out = [];
   const push = (t, v) => {
-    const val = scale(v);
+    /* THE SCALE IS HANDED THE TIME AS WELL AS THE VALUE (2026-09-05, the
+       review's item 10). Every caller written before today takes one argument
+       and ignores this one, so nothing moves; what it buys is a per-BOX offset
+       that is itself a curve — a cell's drawn lane riding the row's — applied
+       in the same one place the static offset already was (als.js `map`), so
+       the file still carries row + cell in ONE breakpoint list and exactly
+       once (P3's double-count law). */
+    const val = scale(v, t);
     if (!isFinite(val)) return;
     // a repeated (time, value) is noise in the file and a wobble in the editor
     const last = out[out.length - 1];

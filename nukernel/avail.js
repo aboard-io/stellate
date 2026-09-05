@@ -470,6 +470,11 @@
      module, so `COPY` is not there yet when SHEETS is minted. A row's `label`
      is therefore a GETTER over a KEY, and an option list is built inside
      `values()` — both of which run when a sheet is DRAWN. */
+  /* THE CHAIRS THAT VOICE A CHORD rather than reading a subject — `kernel.js
+     render` takes the chord branch for `pad` and for any part whose PARTS row
+     sets `chordLock`, which today is `stab` and nothing else. `src/table/
+     model.ts CHORDCHAIRS` is the same set read from the other end. */
+  const CHORDCHAIR = new Set(["pad", "stab"]);
   const T = (key, p) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
     return C ? C.t(key, p) : key; };
   const TN = (key, n) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
@@ -749,9 +754,35 @@
     // (this select and the chord table); the table alone keeps the name, and
     // the style select takes the axis's own word. The KEY stays
     // `alphabet.harmony` — vocabulary keys never move.
+    /* ...AND `emergent` SAYS WHEN IT IS SAYING NOTHING (2026-09-05, the
+       musicologist's review: *"the fugue row's `harmony: 'emergent'` — the
+       roots computed from how far each voice has transposed — is INAUDIBLE …
+       byte-identical event streams either way, because all four voices are
+       lines, there is no bass and no pad, and nothing consumes the roots."*)
+
+       MEASURED, AND THE MEASUREMENT IS WHY THE WORD STAYS. Thirteen rows
+       declare it; eleven render byte-identically to `modal` as shipped. But
+       the word is not dead — it has no CONSUMER on those rows. Add one chair
+       that voices the chords (a pad) and EIGHT of the eleven move at once
+       (fugue, polychoral, counterpoint, serial, isorhythm, winchester,
+       francoflemish, georgian); the other three — cologneschool,
+       contenanceangloise, tapemusic — stay still because their own words never
+       transpose, and a root computed from a voice that does not move is a root
+       that does not move. Retiring the word would have deleted a capability a
+       hand reaches in one tap (`+ pad`), so what it gets instead is the
+       sentence the review's copy table asked for: what it means, and when it
+       is doing nothing. */
     "alphabet.harmony": { label: "harmony", scope: "song",
       values: () => HARMONIES().map((h) => ({ value: h, label: harmonyLabel(h) })),
       get: (doc) => doc.alphabet.harmony,
+      say: (doc) => {
+        if ((doc.alphabet || {}).harmony !== "emergent") return null;
+        const vs = doc.voices || [];
+        const voicer = vs.some((v) => v.kind === "line" &&
+          CHORDCHAIR.has((v.cast || {}).part)) ||
+          vs.some((v) => v.kind === "bass" && (v.cast || {}).style !== "nobass");
+        return voicer ? null : T("harmony.emergent.why");
+      },
       set: (doc, s, v) => { doc.alphabet.harmony = v; } },
     // THE ONE SHEET THAT MAY GO DARK WITHOUT AN EVENT KIND TO POINT AT. Its
     // subject is the progression, and the record reads the progression only
