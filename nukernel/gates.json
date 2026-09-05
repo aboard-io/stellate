@@ -1,5 +1,5 @@
 {
- "built": "2026-09-04",
+ "built": "2026-09-05",
  "from": "nukernel/gates-extract.js",
  "corpus": {
   "records": 55,
@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 75734
+  "compiles": 86099
  },
  "sheets": {
   "time.meter": {
@@ -76,13 +76,43 @@
   "alphabet.mode": {
    "scope": "song",
    "regenerates": true,
-   "options": {},
+   "options": {
+    "hungarian": {
+     "rule": {
+      "rule": "unless",
+      "a": {
+       "not": "time.swing"
+      },
+      "b": {
+       "not": "cast.hasChord"
+      }
+     }
+    },
+    "ukrainian": {
+     "rule": {
+      "rule": "unless",
+      "a": {
+       "not": "time.swing"
+      },
+      "b": {
+       "is": "alphabet.harmony.modal"
+      }
+     }
+    }
+   },
    "census": {
     "rows": 55,
     "alive": 54,
     "writes": [
      "alphabet.mode"
-    ]
+    ],
+    "openOptions": [
+     "asavari",
+     "dorian",
+     "kafi",
+     "nahawand"
+    ],
+    "overOffered": 18
    }
   },
   "alphabet.scale": {
@@ -91,7 +121,12 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 53
+    "alive": 53,
+    "openOptions": [
+     "dorian",
+     "kafi"
+    ],
+    "overOffered": 1
    }
   },
   "alphabet.harmony": {
@@ -113,7 +148,25 @@
    "scope": "song.bar",
    "regenerates": true,
    "options": {
-    "triad": {
+    "eleven": {
+     "rule": {
+      "rule": "when",
+      "is": "cast.hasChord"
+     }
+    },
+    "m7": {
+     "rule": {
+      "rule": "when",
+      "is": "cast.hasChord"
+     }
+    },
+    "madd9": {
+     "rule": {
+      "rule": "when",
+      "is": "cast.hasChord"
+     }
+    },
+    "mmaj7": {
      "rule": {
       "rule": "when",
       "is": "cast.hasChord"
@@ -127,9 +180,14 @@
      "bar.quality"
     ],
     "openOptions": [
-     "sus4"
+     "dim7",
+     "dom11",
+     "m13",
+     "m7b5",
+     "m9",
+     "sus2"
     ],
-    "overOffered": 15
+    "overOffered": 16
    },
    "rule": {
     "rule": "when",
@@ -389,6 +447,11 @@
       }
      }
     },
+    "at the octave": {
+     "inert": {
+      "rule": "always"
+     }
+    },
     "below, at the fifth": {
      "rule": {
       "rule": "unless",
@@ -411,24 +474,25 @@
       }
      }
     },
+    "filled in": {
+     "rule": {
+      "rule": "when",
+      "not": "voice.part.pad"
+     }
+    },
     "in wider steps": {
      "rule": {
       "rule": "when",
       "not": "voice.part.pad"
      }
     },
-    "inverted": {
+    "split in two": {
      "rule": {
-      "rule": "unless",
-      "a": {
-       "not": "alphabet.harmony.emergent"
-      },
-      "b": {
-       "is": "voice.part.pad"
-      }
+      "rule": "when",
+      "not": "voice.part.pad"
      }
     },
-    "split in two": {
+    "the first half": {
      "rule": {
       "rule": "when",
       "not": "voice.part.pad"
@@ -438,7 +502,7 @@
    "census": {
     "rows": 165,
     "alive": 162,
-    "overOffered": 28
+    "overOffered": 27
    }
   },
   "dev.bass": {
@@ -598,7 +662,11 @@
    "options": {},
    "census": {
     "rows": 165,
-    "alive": 156
+    "alive": 155,
+    "openOptions": [
+     "locrian2"
+    ],
+    "overOffered": 7
    }
   },
   "form.prog": {
@@ -633,7 +701,7 @@
    },
    "census": {
     "rows": 165,
-    "alive": 98,
+    "alive": 103,
     "overOffered": 2
    }
   },
@@ -706,6 +774,42 @@
    },
    "blind": true
   },
+  "form.artic": {
+   "scope": "section",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 165,
+    "alive": 147
+   }
+  },
+  "form.oct": {
+   "scope": "section",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 165,
+    "alive": 165
+   }
+  },
+  "form.rate": {
+   "scope": "section",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 165,
+    "alive": 165
+   }
+  },
+  "form.scale": {
+   "scope": "section",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 165,
+    "alive": 148
+   }
+  },
   "performance.stress": {
    "scope": "song",
    "regenerates": true,
@@ -741,11 +845,15 @@
   }
  },
  "proof": {
-  "rows": 24404,
-  "identical": 24258,
+  "rows": 29515,
+  "identical": 29337,
   "moved": 0,
-  "overOffered": 146,
+  "overOffered": 178,
   "bad": {
+   "alphabet.scale": {
+    "options": [],
+    "over": 2
+   },
    "sound.drumkit": {
     "options": [],
     "over": 13
@@ -758,13 +866,17 @@
     "options": [],
     "over": 30
    },
+   "alphabet.mode": {
+    "options": [],
+    "over": 24
+   },
    "development.breath": {
     "options": [],
     "over": 3
    },
    "dev.line": {
     "options": [],
-    "over": 31
+    "over": 30
    },
    "development.pipe": {
     "options": [],
@@ -774,6 +886,10 @@
     "options": [],
     "over": 4
    },
+   "form.mode": {
+    "options": [],
+    "over": 7
+   },
    "form.swing": {
     "options": [],
     "over": 1
@@ -781,14 +897,14 @@
   }
  },
  "proofHeld": {
-  "rows": 14771,
-  "identical": 14702,
+  "rows": 17814,
+  "identical": 17740,
   "moved": 0,
-  "overOffered": 69,
+  "overOffered": 74,
   "bad": {
    "alphabet.quality": {
     "options": [],
-    "over": 15
+    "over": 16
    },
    "development.pipe": {
     "options": [],
@@ -800,7 +916,11 @@
    },
    "dev.line": {
     "options": [],
-    "over": 28
+    "over": 27
+   },
+   "alphabet.mode": {
+    "options": [],
+    "over": 5
    },
    "form.swing": {
     "options": [],
