@@ -2229,7 +2229,10 @@
      scoreOf` does not window a section, so a multi-bar cell's events run past
      the section's own end"*). Two things were missing and they are one thing:
 
-       · A STATEMENT'S EVENTS STOP AT ITS OWN LAST BAR. `keep` used to cut only
+       · A STATEMENT'S EVENTS STOP AT ITS OWN LAST BAR — AND NEVER AT ITS
+         FIRST, because a pickup sounds before its section's zero on purpose
+         (the cut law's own paragraph, below, says why the two ends differ).
+         `keep` used to cut only
          when a second ending cut the statement short (`!w.cut || …`), so with
          no `ending` in the record nothing was cut at all — and the kit is
          rendered over the GENRE's loop (`K.drums(lead, g, g.bars)`) while the
@@ -2250,7 +2253,8 @@
      Returns `{ bars, events, from, to, t0 }`: `bars` is the window's own bar
      count (the whole record's, by default, exactly as before), `from`/`to` are
      its bounds in played bars and `t0` is where it starts in steps, for a
-     caller that wants to re-base. */
+     caller that wants to re-base. An event may sit BEFORE `t0` and that is not
+     a bug: it is the window's first section's pickup, which belongs to it. */
   function scoreOf(doc, GENRES, fleet, win = null) {
     const secs = doc.form.sections, lines = LINES(doc), out = [];
     /* THE FORM IS WALKED, NOT THE SECTION LIST (2026-09-05, the review's item
@@ -2328,13 +2332,33 @@
       });
       for (const st of p.stmts) {
         if (st.bar0 + st.played <= W.from || st.bar0 >= W.to) continue;
-        // A STEP TIME, AS A BAR OF THE RECORD: the statement's own bar plus how
-        // far into it the event falls. One predicate then says both things —
-        // the statement ends at its own last bar (the fix) and the window ends
-        // where it was asked to.
+        /* THE CUT LAW, IN ONE SENTENCE: a statement ends at its own last bar
+           and never begins at its first — everything past its end is cut, a
+           pickup before its zero always rides with it, and in between only a
+           bar the caller's window leaves out is dropped.
+
+           WHY THE LOWER END IS EXEMPT AND THE UPPER IS NOT. Past the end is
+           always a LOOP the kernel was asked for and the section is too short
+           to hold: `K.drums(lead, g, g.bars)` renders the GENRE's bars (a
+           4-bar kit into a 2-bar intro) and `K.render(ph, g, total)` counts
+           `total` PHRASE statements, which on a 2-bar cell is twice the
+           section (`ui/derive.js sectionEvents` has cut at exactly this place
+           since it was written — `evAll.filter(e => e.t >= from && e.t < to)`
+           — and an `entry` big enough to push a chair past the section's end
+           renders SILENT on the page: measured on reggae seed 2 section 2,
+           `entry: 2` is two CELLS = four bars of a four-bar section and
+           `sectionEvents` returns 0 notes for that chair, `entry: 1` returns
+           10 delayed by 32 steps, and this fold now answers the same both
+           times). Before its zero is the opposite: nothing loops backwards,
+           so a negative time is a PICKUP a hand wrote (`kernel.js
+           ENTRY_LEAD`, a negative `entry` down to one bar), it belongs to the
+           section that begins after it, and cutting it deleted the anacrusis
+           — which is what the first draft of this line did. */
         const keep = (t) => {
+          if (t >= st.played * barSteps) return false;
+          if (t < 0) return true;
           const b = st.bar0 + t / barSteps;
-          return t < st.played * barSteps && b >= W.from && b < W.to;
+          return b >= W.from && b < W.to;
         };
         for (const e of lineEv) if (keep(e.t)) out.push({ ...e, t: e.t + st.t0 });
         // Drums and bass follow the FIRST phrase — the kit is genre data

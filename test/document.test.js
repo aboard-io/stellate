@@ -250,17 +250,61 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
       assert.strictEqual(WHOLE.t0, 0);
     });
 
-    ok("G8e no event sounds past the end of the section that emitted it", () => {
-      // where each section starts in STEPS — the window's own answer, so the
-      // gate never re-derives a bar length of its own
+    ok("G8e a section's events end where it does — and a PICKUP before its zero is kept", () => {
+      /* THE CUT LAW, STATED: a statement ends at its own last bar and never
+         begins at its first. Past the end is always a LOOP the kernel was
+         asked for and the section is too short to hold — the kit is rendered
+         over the GENRE's bars (`K.drums(lead, g, g.bars)`: a 4-bar reggae kit
+         into its 2-bar intro) and `K.render(ph, g, total)` counts `total`
+         PHRASE statements, which on a 2-bar cell is twice the section. Before
+         the zero is the opposite: nothing loops backwards, so a negative time
+         is an anacrusis a hand wrote and it belongs to the section after it. */
       for (const s2 of SPAN) {
         const W = Doc.scoreOf(RG, GENRES, FLEET, { section: s2.si });
         const nx = Doc.scoreOf(RG, GENRES, FLEET, { from: s2.to, to: s2.to + 1 });
         const end = s2.to < WHOLE.bars ? nx.t0 : Infinity;
         for (const e of W.events)
-          assert.ok(e.t >= W.t0 && e.t < end,
-            "section " + s2.si + " event at " + e.t + " outside [" + W.t0 + "," + end + ")");
+          assert.ok(e.t < end, "section " + s2.si + " event at " + e.t +
+            " sounds past the section's exit at " + end);
       }
+      // …and the halves of the cut, counted rather than asserted in the
+      // abstract: the whole record loses only what ran past a section's end
+      const spill = Doc.formWalk(RG).filter((w) => !w.skip).reduce((n, w) => {
+        const i = w.si, g = Doc.toGenre(RG, i, GENRES, FLEET);
+        const bs = K.stepsIn(g) / g.rate;
+        const total = Math.max(1, RG.form.sections[i].bars || g.bars);
+        const c0 = RG.voices.filter((v) => v.kind === "line")[0];
+        const ph = Doc.toPhrase(RG, Doc.materialAt(c0, RG.form.sections[i].id));
+        const kit = K.drums(ph, g, g.bars);
+        let k = 0;
+        for (let r = 0; r < Math.ceil(total / g.bars); r++)
+          for (const e of kit) if (e.t + r * g.bars * bs >= total * bs) k++;
+        return n + k;
+      }, 0);
+      assert.ok(spill > 0, "the kit no longer overruns any section — " +
+        "this gate has nothing left to hold");
+    });
+
+    ok("G8e2 a PICKUP is not cut: a negative entry sounds before the record's zero", () => {
+      /* The review's item 9 — `kernel.js ENTRY_LEAD`, a negative `entry` down
+         to one bar. The first draft of the cut deleted exactly this, and
+         test/table.test.js T4q and T4u caught it: "the pickup must sound
+         BEFORE the section's own zero, not at it". */
+      const d = J(TERMS);
+      d.voices.find((v) => v.kind === "line").cast.entry = -0.25;
+      Doc.normalize(d);
+      assert.strictEqual(d.voices.find((v) => v.kind === "line").cast.entry, -0.25,
+        "the door dropped the pickup before the fold could keep it");
+      const S = Doc.scoreOf(d, GENRES, FLEET);
+      const early = S.events.filter((e) => e.t < 0);
+      assert.ok(early.length > 0, "the pickup was cut: no event before bar one");
+      const N0 = K.stepsIn({ meter: null });
+      assert.ok(Math.min(...early.map((e) => e.t)) >= -N0,
+        "a pickup may not reach back further than one bar");
+      // …and it rides with its own section's window, not the one before it
+      const W0 = Doc.scoreOf(d, GENRES, FLEET, { section: 0 });
+      assert.ok(W0.events.some((e) => e.t < 0),
+        "the pickup did not come with the section it leads into");
     });
 
     ok("G8f a bar window is the bars asked for, and an unplayed one is empty", () => {

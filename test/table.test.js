@@ -161,7 +161,7 @@ const FULL = process.argv.includes("--full");
    holding a base older than the catalogue only asserts that no row may ever
    gain a drummer. The strip set below is asked of the base, so it re-derives
    itself; T4j renders both sides and is base-aware already. */
-const BASE_SHA = "5672e84";  // v284. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+const BASE_SHA = "4bab683";  // scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
@@ -569,6 +569,16 @@ if (B) {
     assert.ok(si >= 0, "no section of three bars to test an entry in");
     const [voice, vi] = lines[0];
     const lv = 0;                                    // the kernel index of lines[0]
+    /* THE ENTRY IS ONE CELL, NOT TWO, AND THAT IS A MEASUREMENT (2026-09-05,
+       the scoreOf window). `entry` counts CELLS — `kernel.js render` loops in
+       PHRASE LENGTHS and reggae's cell is two bars — so `entry: 2` on this
+       four-bar section is "enters at bar four of four", i.e. never. Asked of
+       the PAGE, which is the only thing that answers for the sound:
+       `ui/derive.js sectionEvents` renders 0 notes for that chair at
+       `entry: 2` and 10 notes delayed by 32 steps at `entry: 1`. This check
+       was green before the window because `scoreOf` alone let the silent
+       chair spill into the sections after it; one cell is the entry that is
+       audible INSIDE the section, which is what the check says it measures. */
     const first = (sc) => {
       const e = sc.events.filter((x) => x.sec === si && x.kind === "line" && x.lv === lv);
       return e.length ? { t: e[0].t, n: e.map((x) => x.n).filter((n) => n != null) } : null;
@@ -576,7 +586,7 @@ if (B) {
     const before = first(D.scoreOf(d, GENRES));
     assert.ok(before, "the voice is silent in the section under test");
 
-    D.putCell(d, si, vi, "entry", 2);
+    D.putCell(d, si, vi, "entry", 1);
     const late = first(D.scoreOf(d, GENRES));
     assert.ok(late && late.t > before.t,
       "an entry override did not delay the first note (" +

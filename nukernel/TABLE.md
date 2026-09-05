@@ -2454,6 +2454,24 @@ section. `ui/derive.js sectionEvents` has always cut at the same place
 compiler did not, and that was the whole of the difference. After: 2551
 events, none past its own end.
 
+**THE CUT LAW, IN ONE SENTENCE:** a statement ends at its own last bar and
+never begins at its first — everything past its end is cut, a pickup before
+its zero always rides with it, and in between only a bar the caller's window
+leaves out is dropped. The two ends differ because past the end is always a
+LOOP the kernel was asked for and the section is too short to hold (the kit
+over the genre's bars; `K.render(ph, g, total)` counting `total` PHRASE
+statements, which on a 2-bar cell is twice the section), while nothing loops
+backwards, so a negative time is an anacrusis a hand wrote. The first draft
+cut both ends and `test/table.test.js` caught it in three places — T4q and
+T4u ("the pickup must sound BEFORE the section's own zero"), and T2d, whose
+fixture was the real fault: `entry` counts CELLS and reggae's cell is two
+bars, so its `entry: 2` on a four-bar section means "enters at bar four of
+four", i.e. never. **Asked of the page, which is the only thing that answers
+for the sound: `ui/derive.js sectionEvents` renders 0 notes for that chair at
+`entry: 2` and 10 notes delayed by 32 steps at `entry: 1`** — so the check
+had been reading the spill, and it now asks for one cell. Of the 2364 spilled
+events, 1798 were line, 152 bass and 414 kit.
+
 The window is the mechanism: `scoreOf(doc, GENRES, fleet, win)` takes
 `{ from, to }` in PLAYED bars, `{ section: <index | id> }`, or the bare
 index/id; absent is the whole record and is what every caller that has ever
