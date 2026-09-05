@@ -607,12 +607,15 @@
      spelled `"7/8"`, `"15/16"`, `"21/17"`, and `meterRow` is the one place
      that turns those two numbers into the four this file counts by.
 
-     THE STEP LAW, AND WHAT A DENOMINATOR THAT IS NOT A POWER OF TWO MEANS.
-     The denominator names the beat: in n/d the beat is 1/d of a whole note,
-     so 1/17 is a real note value even though no notehead has ever been drawn
-     for it. What the GRID needs is a step, and a step is a SUBDIVISION of
-     that beat — which is a halving, always, because that is what subdividing
-     a beat is. So:
+     THE STEP LAW, IN ONE SENTENCE: a step is the beat the denominator names
+     (1/d of a whole note) halved as many times as fits inside a sixteenth, so
+     a bar is always a WHOLE number of steps — n × sub — whatever d is.
+
+     AND WHAT A DENOMINATOR THAT IS NOT A POWER OF TWO MEANS. The denominator
+     names the beat: in n/d the beat is 1/d of a whole note, so 1/17 is a real
+     note value even though no notehead has ever been drawn for it. What the
+     GRID needs is a step, and a step is a SUBDIVISION of that beat — which is
+     a halving, always, because that is what subdividing a beat is. So:
 
        sub       steps per notated beat: the largest power of two that fits
                  inside 16/d (how many sixteenths one beat is worth), never
@@ -630,8 +633,12 @@
      is 4/4, 3/4, 6/8, 7/8, 5/4, 15/16 and every meter this box has ever
      counted — so a step is a sixteenth there and nothing downstream moves by
      a float. It is only the exotic denominators (17, 5, 3, 12, 24) where a
-     step is not a sixteenth, and there `audio/plan.js meterTL` scales the
-     bar's clock by units/steps so the bar lasts what the signature says.
+     step is not a sixteenth, and there `ui/derive.js boxesOf` — the one walk
+     that turns events on the grid into bars on the clock — multiplies every
+     event time by units/steps and gives the bar `units` to last, so the bar
+     lasts what the signature says. (It was named `audio/plan.js meterTL` here
+     for a day; there is no such function, and plan.js only ever divides the
+     clock derive.js handed it by four.)
 
        pulse     the FELT beat, in steps. `sub` normally; 3 x sub for a
                  COMPOUND signature (a numerator divisible by three, over 8 or
@@ -642,9 +649,18 @@
                  pulse is the eighth and the box does not guess. */
   const pow2Fit = (x) => { let p = 1; while (p * 2 <= x) p *= 2; return p; };
   const METCACHE = new Map();
+  /* THE OUTER WALL, AND WHY IT IS 999 (2026-09-05, the second half of the
+     any-meter round). Paul: *"it should all be possible"*. A signature is two
+     positive integers and this row is arithmetic on them, so the only honest
+     wall is the one every OTHER number in this box wears — three digits, the
+     same 999 the tempo fence takes (fields.js BPM_HI), so a hand cannot type
+     a signature one control can state and another cannot. It was 99 and two
+     digits for a day, which silently turned 101/113 into four-four: a clamp
+     that answers a different question is worse than a refusal. */
+  const METER_HI = 999;
   function meterRow(num, den) {
-    const n = Math.max(1, Math.min(99, Math.round(num)));
-    const d = Math.max(1, Math.min(99, Math.round(den)));
+    const n = Math.max(1, Math.min(METER_HI, Math.round(num)));
+    const d = Math.max(1, Math.min(METER_HI, Math.round(den)));
     const key = n + "/" + d;
     // FOUR-FOUR IS THE ABSENCE OF A METER AND HAS EXACTLY ONE SPELLING. A
     // hand that types 4 over 4 has said what every record already says, so it
@@ -665,7 +681,7 @@
   // A WORD FIRST, THEN A FRACTION, THEN HOME: `METERS` owns the two spellings
   // a save may already carry, `n/d` is the general one, and anything else at
   // all is the four-four an absent meter has always meant.
-  const FRACMET = /^(\d{1,2})\/(\d{1,2})$/;
+  const FRACMET = /^(\d{1,3})\/(\d{1,3})$/;
   const metOf = (g) => { const m = g && g.meter;
     if (m && m.steps) return m;
     if (typeof m === "string") {
@@ -3888,7 +3904,7 @@
   const edges = (ev, i, o, span, bs, met) =>
     outro(intro(ev, i, span, bs, met), o, span, bs, met);
 
-  const api = { METERS, MET4, metOf, stepsIn, pulseIn,
+  const api = { METERS, MET4, METER_HI, metOf, stepsIn, pulseIn,
                 meterRow, quartersIn, unitsIn, meterWordOf, okMeter,
                 degreesFor, octaveDegrees,
                 at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, complementOf, keep,

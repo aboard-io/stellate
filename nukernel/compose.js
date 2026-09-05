@@ -662,7 +662,7 @@
      below so a caller holding compose can still ask. */
   const { BPM_LO, BPM_HI } = NF;
   /* ...AND THE CATALOGUE'S OWN, WHICH IS NARROWER SINCE 2026-09-05. The pair
-     above is the fence a HAND may set (20..400 since the any-tempo round);
+     above is the fence a HAND may set (1..999 since the any-tempo round);
      what an ANCHOR may declare, and what the jitter may clamp to, is still
      the 40..220 the argument in fields.js makes. This file deals records; it
      is not the surface Paul asked to be able to type 21 into. */

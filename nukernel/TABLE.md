@@ -2543,3 +2543,54 @@ the catalogue has line cells of differing lengths — 0 of 479. Independent
 phrase lengths are a freedom the record can take and no shipped row takes,
 so "a lane over a section with mixed phrase lengths" is a hand-made case,
 not a catalogue one.
+
+### 12e · ANY METER, ANY TEMPO, THROUGH THE WHOLE PATH (2026-09-05)
+
+Paul: *"it should all be possible."* A signature is two positive integers and
+a tempo is a positive number, and the round before this one had made the
+KERNEL count any of them while five stages downstream still refused, clamped,
+or handed back a bar of the wrong length. Measured on twelve signatures —
+4/4 · 3/4 · 7/8 · 5/4 · 11/16 · 13/12 · 21/17 · 3/2 · 15/9 · 1/1 · 9/8 ·
+2/32 — against five tempos — 1 · 33.3 · 76 · 240 · 999 — and every stage was
+asked for the same one number:
+
+> **A bar of n/d at `bpm` lasts n × (240/d) seconds ÷ bpm. Exactly. Everywhere.**
+
+**THE STEP LAW, IN ONE SENTENCE** (now the first line of `kernel.js`'s own
+comment): *a step is the beat the denominator names — 1/d of a whole note —
+halved as many times as fits inside a sixteenth, so a bar is always a WHOLE
+number of steps, n × sub, whatever d is.*
+
+| stage | before | after |
+|---|---|---|
+| kernel `meterRow` | any n/d, but two digits each and a silent clamp at 99: `101/113` came back as **four-four** | three digits, `K.METER_HI` = 999, the same wall the tempo wears; 101/113 is 101/113 |
+| tempo fence (`fields.js`) | 20..400 — a musical opinion in the one place a hand cannot get past | **1..999**, a tenth at a time; the music's own 40..220 survives as `BPM_ROW_LO/HI` and the eight detents |
+| the typed meter (`eight.js meterNode`) | slider AND typed field both 1..32: typing 33 silently returned 32 | the slider is a reach (1..32), the typed number is the wall (1..`K.METER_HI`) |
+| the drum words (`chair.js`) | `stepWord` threw *"Cannot read properties of undefined"* on **every** metered record — the shipped waltzes included — because precompose stamps the KERNEL's row and only chair's two hand-written rows had `count`/`names` | both derive: the numerator IS the count, so one number lasts steps/num and the names are the numbers. 4/4, 3/4 and 6/8 come out byte-identical |
+| the timeline | already right (`derive.js boxesOf`, units/steps) — and `kernel.js` credited it to `audio/plan.js meterTL`, **a function that does not exist** | the comment names the real owner |
+| the staff (`ui/abc.js`) | `L:1/16` hard-coded: a 21/17 bar of 21 steps was written as 21 sixteenths and summed to **1.3125** whole notes where the signature says 1.2353 | `L:` is ONE STEP — 1/(d × spb/n) — which is 1/16 for every power-of-two denominator (byte-identical) and 1/17, 1/12, 1/9, 1/32 for the rest; a `%` line says the noteheads are the nearest drawn ones. `Q:` keeps its tenth (33.3 was rounded to 33) |
+| the .mid (`export/smf.js`) | `stepsPerBar` was ROUNDED, and every page caller passes the bar's quarters: a 7/8 record's last note landed at **33.85 s** where the record puts it at 38.68 s (12.5% early, and 7/8 is not an exotic meter). 1 BPM implied **38.7 s** bars where it means 240 — 0x51 holds three bytes of microseconds and a 60 s quarter is not a number it has | the steps are not rounded; the written signature takes the NEAREST power of two and is halved (then the numerator doubled) until the tempo fits, with the tick length and the tempo scaled by the same factor — so 21/17 at 76 is written 21/16 at 80.75, 4/4 at 1 is written 4/1 at 4, and the bar a DAW draws lasts what the record says. A `0x01` text meta states the true signature and the true tempo |
+| the .als (`export/als.js`) | the denominator was the nearest power of two AT OR BELOW: 13/12 was drawn as 13/8, half again too long | `pow2Near`, one owner shared with the .mid; the clip's own beats already carried the bar truth, and the clip NAME now states the true signature |
+
+**AND THE SOUND, WHICH IS THE ONLY THING THAT ANSWERS FOR ANY OF IT.**
+`test/meter.test.js` G1 feeds one bar through the real stream renderer with
+the real WASM procs (pace-meter's own harness) and counts frames: a 21/17 bar
+at 76 BPM renders **3.9010 s** where the signature says 3.9009 s, beside 4/4's
+3.1579 and 7/8's 2.7632.
+
+**THE GATE** is `test/meter.test.js` — 23 checks over the matrix, seven
+stages, six seconds, registered in `test/all.js` as `meter` (wave 2).
+Everything it asserts it reads off the artifact: the emitted ABC parsed by the
+vendored abcjs, the emitted `.mid` parsed back out of its bytes, the emitted
+`.als` scanned as XML, the PCM counted in frames.
+
+**WHAT STAYS REFUSED, AND HONESTLY.** abcjs has no notehead for a
+seventeenth (it warns `Duration not representable` and draws the nearest head
+it has) and parses only single-digit tuplet numbers, so `(17:16:21` is not a
+door; the durations are exact and the ABC says so in a comment. A bar-synced
+DELAY is still clamped to the delay line's 1.9 s (`audio/desk.js`), so at 1
+BPM a "one bar" delay is not a bar — an engine buffer, not a bar length, and
+left alone. And a .mid numerator past 255 that cannot be halved into the byte
+(999/1) draws short bar lines: the notes still land at the second the record
+puts them, and the text meta says which of the two it kept rather than
+claiming both.

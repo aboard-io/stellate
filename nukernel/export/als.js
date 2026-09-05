@@ -299,16 +299,21 @@ export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangemen
   // set-wide signature stays the donor's until a metered donor lands; the ask
   // is in tools/ableton/donor/README.md. The clips and their loop lengths
   // carry the bar truth regardless.)
-  /* A DENOMINATOR LIVE CANNOT DRAW (2026-09-05, the any-meter round). Live's
-     signature denominator is a power of two, the same constraint the .mid's
-     0x58 has, so 21/17 goes in as 21/16 — the nearest power of two at or
-     below — and the CLIP's own loop length still carries the bar truth (it is
-     `beatsPerBar` quarters, computed off the TRUE signature below and not off
-     this). What the two numbers decide here is where Live draws its bar
-     lines; what the clip length decides is where the music actually is.
-     Every representable signature is written exactly. */
+  /* A DENOMINATOR LIVE CANNOT DRAW (2026-09-05, the any-meter round; the
+     rounding corrected the same day). Live's signature denominator is a power
+     of two, the same constraint the .mid's 0x58 has, so 21/17 goes in as
+     21/16 — the NEAREST power of two, `pow2Near`, one owner for both
+     exporters: 13/12 drawn as 13/8 is half again too long a bar where 13/16
+     is a sixth too short, and "nearest" is the smaller lie in every case. The
+     CLIP's own loop length still carries the bar truth (it is `beatsPerBar`
+     quarters, computed off the TRUE signature below and not off this), so
+     where the two numbers decide only where Live draws its bar lines, the
+     clip length decides where the music actually is — and the clip's NAME
+     says the signature outright wherever these two numbers cannot (the same
+     honesty the .mid's text meta carries). Every representable signature is
+     written exactly. */
   if (sig) {
-    let dd = 1; while (dd * 2 <= (sig[1] | 0)) dd *= 2;
+    const dd = pow2Near(sig[1]);
     x = x.replace(/<Numerator Value="[^"]*" \/>/, '<Numerator Value="' + (sig[0] | 0) + '" />');
     x = x.replace(/<Denominator Value="[^"]*" \/>/, '<Denominator Value="' + dd + '" />');
   }
@@ -496,6 +501,9 @@ export function columnNames(boxes, laneNames) {
 }
 export const clipNameOf = (box, col) =>
   (box.role ? box.role + " " + col + " " + (box.nth || 1) : box.name + " " + col);
+/** the nearest power of two — what Live's (and 0x58's) denominator may be.
+ *  ONE owner for both exporters; export/smf.js makes the same choice. */
+export const pow2Near = (d) => Math.pow(2, Math.max(0, Math.round(Math.log2(Math.max(1, +d || 1)))));
 
 /* THE STRIP THE DESK GAVE THIS CHANNEL, WRITTEN ONTO LIVE'S OWN MIXER.
    Paul: "Could you sculpt the sound more to be appropriate and then use the
@@ -1024,7 +1032,13 @@ export function alsFromScore(donorXml, score, opts = {}) {
       const box = v.box;
       const lane = box.lanes.find((l) => l.name === laneName);
       if (!lane || !lane.notes.length) return;
-      const clipName = clipNameOf(box, colName[laneName]);
+      /* ...AND THE TRUE SIGNATURE RIDES THE NAME where Live's two numbers
+         cannot hold it (2026-09-05): a 21/17 clip is drawn on a 21/16 grid
+         and is named "verse tune 1 21/17", so the one place a reader looks
+         first says what the bar really is. Nothing is appended where the
+         signature is representable, which is every set exported before. */
+      const clipName = clipNameOf(box, colName[laneName]) +
+        (sig && pow2Near(sig[1]) !== sig[1] ? " " + sig[0] + "/" + sig[1] : "");
       const laneNotes = v.notes(lane.notes);
       const session = midiClip(tpl, { name: clipName, beats: v.beats, time: 0,
                                       notes: laneNotes, id: clipId++, sig, color });

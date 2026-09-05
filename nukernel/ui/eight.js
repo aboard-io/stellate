@@ -13932,7 +13932,7 @@ let bpmBig = null, bpmRange = null;
 
    DESIGN.md component 8, exactly: a slider for the continuous number, with
    the number printed and TYPEABLE beside it, one fence (fields.js
-   BPM_LO..BPM_HI, 20..400) and one step (BPM_STEP, a tenth). The two
+   BPM_LO..BPM_HI, 1..999) and one step (BPM_STEP, a tenth). The two
    controls are one component and write one fact through one door — `putBpm`
    below — so neither can be the copy that drifts, and the marks, the tap and
    a share link all land on the same number.
@@ -14015,33 +14015,42 @@ function meterNode() {
      with a printed number AND a typed number beside it would be one fact said
      three times. The question is on its own line over the pair, which is
      2026-08-25's law for every field on this page. */
-  const pair = (key, label, get, set, lo, hi) => {
+  /* THE SLIDER IS A REACH AND THE TYPED FIELD IS THE WALL (2026-09-05, the
+     second half of the any-meter round). They had one range, 1..32, and a
+     range on a TYPED number is a silent clamp: a hand that typed 33 got 32
+     back and was never told. The thumb still walks the signatures a hand
+     drags to — 32 is 2/32, the finest note this box counts a beat in — and
+     the number beside it takes anything kernel.js `meterRow` counts, which is
+     any positive integer up to `K.METER_HI`. A typed number past the end
+     simply leaves the thumb parked at the end: the slider is a control for
+     the common case and never the definition of what is possible. */
+  const pair = (key, label, get, set, lo, hi, typedHi) => {
     const wrap = el("div", null, "nu-timesigpart");
     const lab = el("label");
     lab.append(el("span", label, "nu-w"));
-    const { r } = range(key, get(), (v) => set(v), lo, hi, 1, label);
+    const { r } = range(key, Math.min(hi, get()), (v) => set(v), lo, hi, 1, label);
     const typed = document.createElement("input");
     typed.type = "number";
     typed.className = "nu-signum";
     typed.inputMode = "numeric";
     typed.dataset.k = key + ".typed";
-    typed.min = String(lo); typed.max = String(hi); typed.step = "1";
+    typed.min = String(lo); typed.max = String(typedHi); typed.step = "1";
     typed.value = String(get());
     typed.setAttribute("aria-label",
-      _t("range.typed.aria", { name: label, min: lo, max: hi }));
+      _t("range.typed.aria", { name: label, min: lo, max: typedHi }));
     r.addEventListener("input", () => { typed.value = r.value; });
     typed.addEventListener("change", () => {
-      const v = Math.max(lo, Math.min(hi, Math.round(+typed.value) || lo));
-      typed.value = String(v); r.value = String(v); set(v); changed();
+      const v = Math.max(lo, Math.min(typedHi, Math.round(+typed.value) || lo));
+      typed.value = String(v); r.value = String(Math.min(hi, v)); set(v); changed();
     });
     lab.append(r, typed);
     wrap.append(lab);
     box.append(wrap);
   };
   pair("meter.num", _t("time.beatsPerBar"), () => now().num,
-       (v) => put(v, now().den), 1, 32);
+       (v) => put(v, now().den), 1, 32, K.METER_HI);
   pair("meter.den", _t("time.beatNote"), () => now().den,
-       (v) => put(now().num, v), 1, 32);
+       (v) => put(now().num, v), 1, 32, K.METER_HI);
   // WHAT IT SAYS IT IS, in a composer's own two-number spelling — the one
   // reading that is true whichever of the four controls last moved.
   const say = el("p", _t("time.meterSay",

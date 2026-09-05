@@ -136,9 +136,18 @@ export function writeSmf(score, opts = {}) {
      fallback below still needs a whole one and takes its own. */
   const bpb = Math.max(0.0625, +score.beatsPerBar || 4);
   const bpbInt = Math.max(1, Math.round(bpb));
-  const spb = Math.max(1, Math.round(+score.stepsPerBar || 16));
+  /* ...AND NEITHER ARE THE STEPS (2026-09-05, the second half of the round).
+     This read `Math.round(+score.stepsPerBar || 16)` and every page caller
+     passes the bar's QUARTERS for both numbers (ui/eight.js:
+     `beatsPerBar: beatsPerBar()`, and smfFromScore hands the same number
+     down as stepsPerBar) — so a 7/8 bar arrived as 3.5 quarters over
+     round(3.5) = 4 steps and every note in the file landed 12.5% early.
+     MEASURED, before: a 7/8 record's last note ended at 33.85 s where the
+     record puts it at 38.68 s. A step count is a count wherever a caller
+     really has one (16 steps, 12 steps) and rounding never touched those. */
+  const spb = Math.max(0.0625, +score.stepsPerBar || 16);
   // a bar is `spb` steps AND `bpb` quarters, so one step is this many ticks:
-  const tickPerStep = (TPQ * bpb) / spb;
+  let tickPerStep = (TPQ * bpb) / spb;
   const drumMap = opts.drumMap || {};
   const dropped = [];
 
@@ -171,24 +180,75 @@ export function writeSmf(score, opts = {}) {
     return [0xff, 0x51, 0x03, (u >> 16) & 255, (u >> 8) & 255, u & 255]; };
   const ts = Array.isArray(score.timesig) && score.timesig.length === 2 &&
              score.timesig[0] > 0 && score.timesig[1] > 0 ? score.timesig : null;
-  /* A DENOMINATOR THAT IS NOT A POWER OF TWO (2026-09-05). 0x58 stores the
-     denominator as its LOG — one byte, `dd`, meaning 2^dd — so 17 is not a
-     number this file format has. It is not a number to refuse over either:
-     every note in the file carries an ABSOLUTE tick off `tickPerStep`, which
-     already knows the bar's true length in quarters, so the record PLAYS
-     right whatever the meta says. What the signature decides is only how a
-     DAW draws its bar lines, so we write the numerator as it is and the
-     nearest power of two at or below the denominator (17 -> 16), which puts
-     the drawn bar within one step of the played one. Every representable
-     signature — 4/4, 3/4, 6/8, 7/8, 5/4, 15/16 — is written exactly. */
-  const pow2At = (d) => { let p = 1; while (p * 2 <= d) p *= 2; return p; };
-  const sig = ts ? [Math.min(255, ts[0]), Math.round(Math.log2(pow2At(ts[1]))) & 255, 24, 8]
-                 : [bpbInt, 2, 24, 8];
+  /* A SIGNATURE THIS FORMAT CANNOT SPELL, AND A TEMPO IT CANNOT HOLD
+     (2026-09-05, rewritten in the second half of the round). Two walls, one
+     answer, and the answer is that THE BAR KEEPS ITS SECONDS:
+
+       0x58 stores the denominator as its LOG — one byte meaning 2^dd — so 17
+       is not a number this format has;
+       0x51 stores microseconds per quarter in THREE bytes — 16.78 s is the
+       longest quarter — so 1 BPM in four-four (a 60 s quarter) is not a
+       number it has either. MEASURED, before: a 4/4 record at 1 BPM came out
+       of the writer implying 38.7 s bars where it means 240.
+
+     Both are walls on WHAT A QUARTER IS, so both come down the same way: the
+     file gets to call a different note value "the quarter". We write the
+     nearest power of two to the true denominator, halving it (and, if that
+     runs out at 1/1, doubling the numerator) until the tempo fits — and then
+     scale BOTH the tick length and the tempo by the same factor, so the bar
+     a DAW draws off the file lasts exactly n × (240/d) / bpm seconds and
+     every note inside it lands at the second the record puts it.
+
+     A 21/17 record at 76 BPM is written 21/16 at 80.75 BPM; a 4/4 record at
+     1 BPM is written 4/1 at 4 BPM. Neither is a lie the file tells silently:
+     a 0x01 text meta at tick 0 states the true signature and the true tempo.
+     WHERE THE FORMAT CAN SAY IT — every power-of-two denominator up to 32 at
+     any tempo down to about 4 BPM, which is every record ever exported — the
+     scale is exactly 1, no text meta is written, and the bytes are the old
+     bytes. */
+  const pow2Near = (d) => Math.pow(2, Math.max(0, Math.round(Math.log2(Math.max(1, d)))));
+  const USPQ_MAX = 0xffffff;                 // three bytes of microseconds
+  // the numerator as it is, for now — the byte it has to fit in is a fence at
+  // the END of this, after halving has had its chance (see below)
+  let sigN = ts ? Math.max(1, ts[0] | 0) : bpbInt;
+  let sigD = ts ? pow2Near(ts[1]) : 4;
+  // how many file quarters the bar is drawn as, over how many it truly lasts
+  const trueQ = ts ? (4 * ts[0]) / ts[1] : bpbInt;
+  const scaleOf = () => ((4 * sigN) / sigD) / trueQ;
+  while (60e6 / Math.max(1e-9, bpm * scaleOf()) > USPQ_MAX && sigD > 1) sigD /= 2;
+  while (60e6 / Math.max(1e-9, bpm * scaleOf()) > USPQ_MAX && sigN * 2 <= 255) sigN *= 2;
+  // ...and the numerator is ONE BYTE. Halving both numbers is the identity on
+  // what the bar means (12/8 drawn as 6/4 is the same length), so a numerator
+  // past 255 comes down that way before anything is given up.
+  while (sigN > 255 && sigD > 1 && sigN % 2 === 0) { sigN /= 2; sigD /= 2; }
+  const scale = scaleOf();
+  tickPerStep *= scale;
+  const drawN = Math.min(255, Math.round(sigN));
+  const sig = [drawN, Math.round(Math.log2(sigD)) & 255, 24, 8];
+  const trueSig = ts ? ts[0] + "/" + ts[1] : null;
+  const said = scale !== 1 || drawN !== sigN || (ts && (sigN !== ts[0] || sigD !== ts[1]));
+  // ASCII ONLY, because a 0x01 meta is bytes and a reader may take them as
+  // Latin-1: anything else is dropped rather than written as half a character.
+  // ...AND THE SENTENCE SAYS WHICH OF THE TWO THINGS IS TRUE. A numerator past
+  // 255 with an odd count (999/1) cannot be halved into the byte and cannot be
+  // drawn at all: the notes still land at the second the record puts them, and
+  // the file says that rather than claiming a bar it did not keep.
+  const kept = Math.abs((4 * drawN) / sigD - trueQ * scale) < 1e-9;
+  const sayBytes = () => { const txt = ("meter " + (trueSig || bpbInt + "/4") +
+      " at " + (Math.round(bpm * 1000) / 1000) + " BPM - written " + drawN + "/" + sigD +
+      " at " + (Math.round(bpm * scale * 1000) / 1000) + " BPM" +
+      (kept ? " so the bar keeps its length"
+            : "; the numerator does not fit one byte, so the bar lines are short " +
+              "and only the note times are the record's"))
+      .split("").filter((c) => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127);
+    const b = txt.map((c) => c.charCodeAt(0));
+    return [0xff, 0x01, ...vlq(b.length), ...b]; };
   const t0 = track([
     { tick: 0, ord: 0, bytes: [0xff, 0x58, 0x04, ...sig] },
-    { tick: 0, ord: 1, bytes: tempoBytes(bpm) },
+    ...(said ? [{ tick: 0, ord: 0.5, bytes: sayBytes() }] : []),
+    { tick: 0, ord: 1, bytes: tempoBytes(bpm * scale) },
     ...(score.tempos || []).map((t, i) => (
-      { tick: t.at * tickPerStep, ord: 2 + i, bytes: tempoBytes(t.bpm) })),
+      { tick: t.at * tickPerStep, ord: 2 + i, bytes: tempoBytes(t.bpm * scale) })),
   ]);
 
   const tracks = [t0];
@@ -360,6 +420,10 @@ export function parseSmf(bytes) {
                                        // the writer emits CC11 for the section
                                        // levels (2026-08-30) and the parse-back
                                        // gate walks them like the tempo map
+    const texts = [];                  // every 0x01 text meta, in file order —
+                                       // the writer states a signature the
+                                       // format cannot spell in one of these
+                                       // (2026-09-05, the any-meter round)
     const notes = [], tempos = [];     // tempos: EVERY 0x51, in file order,
                                        // with its tick — the tempo MAP the
                                        // parse-back gate walks (2026-08-30);
@@ -375,6 +439,7 @@ export function parseSmf(bytes) {
         if (type === 0x51) { tempo = (b[at] << 16) | (b[at + 1] << 8) | b[at + 2];
                              tempos.push({ tick, uspq: tempo }); }
         if (type === 0x58) timesig = [b[at], 1 << b[at + 1]];
+        if (type === 0x01) texts.push(String.fromCharCode(...b.slice(at, at + mlen)));
         o = at + mlen;
       } else if ((s & 0xf0) === 0x90 || (s & 0xf0) === 0x80) {
         const ch = s & 0x0f, key = b[o++], vel = b[o++];
@@ -393,7 +458,7 @@ export function parseSmf(bytes) {
       } else throw new Error("unexpected byte 0x" + s.toString(16) + " at " + o);
     }
     notes.sort((a, b2) => a.tick - b2.tick || a.key - b2.key);
-    tracks.push({ name, notes, tempo, tempos, timesig, ccs });
+    tracks.push({ name, notes, tempo, tempos, timesig, ccs, texts });
   }
   return { format, division, tracks };
 }

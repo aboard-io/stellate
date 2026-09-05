@@ -86,8 +86,21 @@
      as the detent ladder the eight nudge marks still walk. NOTHING WRITTEN
      BEFORE MOVES: every shipped bpm is inside 40..220, which is inside this.
      A CATALOGUE ANCHOR IS STILL AN INTEGER (compose.js says so and throws by
-     name); the tenth is the HAND's, on the record it is holding. */
-  const BPM_LO = 20, BPM_HI = 400;
+     name); the tenth is the HAND's, on the record it is holding.
+
+     2026-09-05, LATER THE SAME DAY — 1..999, AND THE ARGUMENT ABOVE IS THE
+     ONE THAT MOVED. Paul, of the whole time axis: *"it should all be
+     possible."* 20 and 400 were an argument about what a TEMPO is ("slower
+     than a heartbeat", "faster than anything with a downbeat"), and that is a
+     musical opinion sitting in the one place a hand cannot get past. A record
+     at 1 BPM is a bar of drone and a record at 999 is a stack of grains, and
+     both are things a composer may mean; the box has no business deciding
+     they are not. So the fence is now what the CONTROLS can state — three
+     digits and a tenth, the same wall kernel.js `meterRow` puts on a
+     signature — and the music's own range survives, in full, as BPM_ROW_LO/HI
+     below and as the eight detent marks. NOTHING WRITTEN BEFORE MOVES: every
+     shipped bpm is inside 40..220, which is inside this. */
+  const BPM_LO = 1, BPM_HI = 999;
   // ...and the number of decimal places a tempo is said to. One place: 143.5
   // is a tempo a hand means and 143.47 is a number it did not choose.
   const BPM_STEP = 0.1;

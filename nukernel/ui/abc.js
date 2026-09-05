@@ -322,6 +322,44 @@ function meterOf(steps) {
   while (den < 4) { num *= 2; den *= 2; }
   return num + "/" + den;
 }
+/* ---- THE UNIT LENGTH: ONE STEP (2026-09-05, the any-meter round) ---------
+   `L:` is what a bare letter means, and every duration this file writes is a
+   COUNT OF STEPS — so the unit has to BE one step or the bar does not add up
+   to the signature over it. A bar of n/d is n/d whole notes and holds `spb`
+   steps, so one step is 1/(d × spb / n) of a whole note, and that is exactly
+   1/16 for 4/4, 3/4, 6/8, 7/8, 5/4, 15/16 and every signature whose
+   denominator is a power of two up to sixteen — every staff this file has
+   ever drawn, byte for byte. It is 1/17 for 21/17, 1/12 for 13/12 and 1/32
+   for 2/32, which are real note values the ABC standard says outright and the
+   vendored abcjs parses (measured: a 21/17 bar of 21 unit notes sums to
+   exactly 21/17 whole notes).
+
+   WHAT abcjs CANNOT DO WITH ONE, AND WHY THAT IS STILL THE RIGHT STRING. A
+   seventeenth has no notehead — no stem-and-flag spelling exists for it — so
+   abcjs warns "Duration not representable" once a note and draws the nearest
+   head it has. The DURATIONS are exact either way, which is what the staff
+   MEANS and what anything reading this string back gets; the alternative was
+   a tuplet, and the vendored build parses only single-digit tuplet numbers
+   (measured: `(17:16:21` comes back as "Unknown character ignored"). So the
+   string says the true thing and says, in a comment on its own line, that the
+   heads are approximate. */
+const unitOf = (sig, spb) => {
+  const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(String(sig == null ? "" : sig));
+  if (!m || !(spb > 0)) return 16;
+  const u = (+m[2] * spb) / +m[1];
+  return Number.isInteger(u) && u > 0 && u <= 1024 ? u : 16;
+};
+const drawable = (u) => Number.isInteger(Math.log2(u));
+/** the head lines for one signature: `M:`, `L:`, and — where a step has no
+ *  notehead — the one comment that says so. */
+const timeHead = (sig, spb) => {
+  const u = unitOf(sig, spb);
+  const out = ["M:" + sig, "L:1/" + u];
+  if (!drawable(u)) out.push("% one step is a 1/" + u + " note: the durations are exact, " +
+                            "the noteheads are the nearest ones drawn");
+  return out;
+};
+
 // ...AND WHY A SIGNATURE CAN BE DECLARED. Twelve steps reduce to 3/4 and
 // only ever to 3/4 — a 6/8 bar is the SAME twelve sixteenths heard in two
 // dotted-quarter beats, and no arithmetic on the step count can tell the two
@@ -673,9 +711,10 @@ function engrave(phrase, opts = {}) {
 
   const head = ["X:1"];
   if (opts.label) head.push("T:" + String(opts.label).replace(/[\r\n]+/g, " "));
-  head.push("M:" + (opts.abc || meterOf(spb)));
-  head.push("L:1/16");
-  if (opts.bpm) head.push("Q:1/4=" + Math.round(opts.bpm));
+  head.push(...timeHead(opts.abc || meterOf(spb), spb));
+  // THE TEMPO TO A TENTH, because a tenth is what a hand may set (fields.js
+  // BPM_STEP) and `Math.round` turned 33.3 into 33 on the page's own staff.
+  if (opts.bpm) head.push("Q:1/4=" + (Math.round(opts.bpm * 10) / 10));
   // the signature, and — when the staff moved — the octave clef that puts it
   // back: `clef=treble+8` is the little 8 above the G, "sounds an octave
   // higher than written" (verified rendering above)
@@ -750,8 +789,7 @@ export function toScore(parts, opts = {}) {
   const spb = opts.stepsPerBar || 16;
   const head = ["X:1"];
   if (opts.label) head.push("T:" + String(opts.label).replace(/[\r\n]+/g, " "));
-  head.push("M:" + (opts.abc || meterOf(spb)));
-  head.push("L:1/16");
+  head.push(...timeHead(opts.abc || meterOf(spb), spb));
   // NO `Q:` — the tempo mark costs a line of height above the first staff
   // (~25px, measured) and the record's tempo is already a control on the page,
   // one axis up. A score that repeats it buys nothing and pushes the music

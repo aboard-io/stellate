@@ -803,6 +803,15 @@ const GATES = [
   { name: "pace-meter", wave: 2, kind: "node",
     argv: ["test/pace-meter.test.js"], need: ["test/pace-meter.test.js"],
     covers: ["test/pace-meter.test.js"] },
+  /* ANY METER, ANY TEMPO, THROUGH THE WHOLE PATH (2026-09-05). Twelve
+     signatures against five tempos, from the kernel's own arithmetic to the
+     frames the WASM renders, and every stage asked for the same one number:
+     the bar lasts n × (240/d) / bpm seconds. It renders one bar of PCM, so it
+     covers the renderer the way pace-meter does. */
+  { name: "meter", wave: 2, kind: "node",
+    argv: ["test/meter.test.js"], need: ["test/meter.test.js"],
+    covers: ["test/meter.test.js", "nukernel/ui/abc.js",
+             "nukernel/export/smf.js", "nukernel/export/als.js"] },
   /* ...AND THE FIFTEENTH, REGISTERED 2026-09-02. The block above names
      `grain-reach` in its own list of the fourteen and then does not carry a
      row for it — so the one gate that proves vinyl crackle reaches the sound

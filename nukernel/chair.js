@@ -85,8 +85,37 @@
     six:   { w: "in six-eight", steps: 12, pulse: 6, count: 2,
              names: COUNT6, abc: "6/8", beam: 6 },
   };
+  /* WHAT A BAR IS COUNTED AS, FOR ANY SIGNATURE (2026-09-05, the second half
+     of the any-meter round). The two rows above are hand-written because they
+     are the two WORDS a save may carry; every other signature arrives here as
+     kernel.js `meterRow`'s own row — precompose stamps `row.met = K.metOf(…)`
+     — and that row has `steps`, `pulse`, `num` and `den` and has never had
+     `count` or `names`. MEASURED, before: `drums-kit.offered` threw
+     "Cannot read properties of undefined (reading 'length')" on EVERY record
+     that declares a meter, the shipped waltzes included, the moment a drum
+     word list was asked for.
+
+     The two numbers derive, and the two rows above are what the derivation
+     already says: a bar of n/d is COUNTED n times (the numerator is the
+     count — that is what a numerator is), so one number lasts `steps / num`
+     steps, which is 4 in 3/4, 2 in 6/8, 4 in four-four and 1 in 21/17. The
+     names are the numbers themselves. */
+  const NUMW = ["one", "two", "three", "four", "five", "six", "seven", "eight",
+                "nine", "ten", "eleven", "twelve"];
+  const COUNTED = new WeakMap();
+  const counted = (met) => {
+    if (met.names && met.count) return met;
+    let row = COUNTED.get(met);
+    if (row) return row;
+    const num = Math.max(1, met.num || Math.round(met.steps / 4));
+    const count = Math.max(1, Math.round(met.steps / num));
+    row = { ...met, count,
+            names: Array.from({ length: num }, (_, i) => NUMW[i] || String(i + 1)) };
+    COUNTED.set(met, row);
+    return row;
+  };
   // total: anything without a meter counts in four
-  const metOf = (m) => (m && m.met && m.met.steps) ? m.met : MET4;
+  const metOf = (m) => (m && m.met && m.met.steps) ? counted(m.met) : MET4;
   const stepsOf = (m) => metOf(m).steps;
 
   /* THE SAME PLACE IN THE BEAT, WITH THE BEATS WRAPPED. Every table in every
@@ -148,20 +177,25 @@
   // the numbers in it: "on the a of three" in a waltz, "on the and of five" in
   // a six. Two subdivisions to a number means the only sub-word is "and".
   const SUB2 = ["", "and"];
-  const subsOf = (m2) => (m2.count === 2 ? SUB2 : SUB);
+  const subsOf = (m2) => (m2.count === 2 ? SUB2 : m2.count === 4 ? SUB : null);
   const stepWord = (i, met) => {
-    const m2 = (met && met.steps) ? met : MET4;
+    const m2 = (met && met.steps) ? counted(met) : MET4;
     const u = m2.count, names = m2.names, sub = subsOf(m2);
     const k = Math.floor(i / u) % names.length;
-    return (i % u === 0) ? "on " + names[k]
-      : "on the " + sub[i % u] + " of " + names[k];
+    if (i % u === 0) return "on " + names[k];
+    // ...AND A SUBDIVISION NOBODY HAS A WORD FOR. "e and a" is what a
+    // quarter's four sixteenths are called and "and" is what an eighth's two
+    // are; a beat cut eight ways (3/2) or not cut at all has no such word, so
+    // the sentence counts the step outright rather than inventing one.
+    return sub ? "on the " + sub[i % u] + " of " + names[k]
+               : "on " + names[k] + ", step " + ((i % u) + 1);
   };
   // ...and the same sixteen places as CELLS of a 4×4 grid: column = the
   // count (one..four), row = the subdivision (the beat, e, and, a). The
   // SENTENCE stays the contract — a cell's tapped word is stepWord's own —
   // the grid is only the look.
   const stepCell = (i, met) => {
-    const m2 = (met && met.steps) ? met : MET4, u = m2.count;
+    const m2 = (met && met.steps) ? counted(met) : MET4, u = m2.count;
     return { beat: Math.floor(i / u), sub: i % u, word: stepWord(i, met) };
   };
 
