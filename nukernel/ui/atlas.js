@@ -808,7 +808,12 @@ export function mount(parent, ctx) {
       a.target = "_blank";
       a.dataset.kind = row.kind;
       a.dataset.gk = gk;
-      a.title = row.why;
+      /* THE RESEARCH NOTE IS NOT A TOOLTIP (2026-09-05, the copy audit: 484 of
+         592 delete-class strings on the page were `row.why` — a genre's
+         internal argument, dates and commit narrative, up to 1,546 characters
+         — shipped verbatim as the link's title). The why stays in wiki.js for
+         the gates and the report; the reader gets the destination. */
+      a.title = "Open " + w.name(gk) + " on Wikipedia";
       // an aria-label REPLACES an element's content (the 2026-08-29 lesson,
       // one column over) and the content is one arrow now — so the label
       // carries the whole of the name: the word, its kind, the destination.
@@ -833,10 +838,10 @@ export function mount(parent, ctx) {
     const s = el("span", { className: "nu-ixw nu-ixw-no",
                            textContent: word });
     s.dataset.gk = gk;
-    s.dataset.why = why;
-    s.dataset.say = why;
-    s.title = why;
-    s.setAttribute("aria-label", word + " — no article: " + why);
+    s.dataset.why = why;                 // the reason, for the gates and the report
+    s.dataset.say = "No Wikipedia article";  // the reader's sentence (DESIGN.md §4)
+    s.title = "No Wikipedia article";
+    s.setAttribute("aria-label", word + ", no Wikipedia article");
     return { plate: null, over: s };
   }
   function idxRow(year, genre, place, gk, why) {
