@@ -6464,7 +6464,55 @@ table.nu-trims{ color: var(--ink); }
    above that it sits over the grid, which is where a formula bar has always
    been. Sticky and not fixed: it stays inside the pane's own stacking and
    cannot cover a control it was opened from (the flyout law). */
-.nu-sheetwrap{ display: flex; flex-direction: column; min-inline-size: 0; }
+/* ===== THE PANE IS THE SCROLLPORT, ON BOTH AXES (2026-09-05) ===========
+   Paul, using the table: *"I really like the way this table is working — we
+   should have sticky headers for instruments and sections."*
+
+   WHAT WAS TRUE BEFORE THIS RULE, MEASURED (TABLE.md 11b, T9s2 at 320/390/
+   1280): the section heads held over 220px of horizontal pane scroll — they
+   moved 1px, and the 1 is `border-spacing` — and the instrument heads
+   declared `position: sticky` against a pane WITH ZERO VERTICAL SCROLL TO
+   GIVE. `.nu-pane` sized to its content and THE PAGE was the vertical
+   scrollport, so a hand scrolling down took the instruments with it. A
+   declaration that cannot move is the failure §9d caught twice.
+
+   THE DECISION, AND WHICH OF TWO LAWS GAVE. Making the column heads stick
+   means making the pane the vertical scrollport, which puts an open SHEET
+   inside a box that scrolls — and this page's standing law is *"menus never
+   scroll inside themselves … vertical space is cheap and abundant"* (2026-08-
+   16). The two are not the same sentence. That law is about a MENU with its
+   own little scrollbar, opened over a page that could have shown it whole; a
+   sheet here is a `<tr>` IN FLOW inside the table, and it scrolls with the
+   grid it belongs to exactly as a spreadsheet's expanded row does. What a
+   hand must never do is scroll a box inside a box; here there is one box, and
+   it is the whole instrument. DESIGN.md 2 component 2 (*"sticky on its axis at
+   every width, the corner pinned both ways"*) and 3 (*"the pane is the
+   scrollport; heads stick"*) are the spec this satisfies.
+
+   THE CAP IS THE WRAP'S, NOT THE PANE'S, and that is arithmetic and not
+   taste. The brief says "100dvh minus --top-h minus --bar-h"; the pane is not
+   the only thing between them. Measured on the rendered page at 320: the top
+   strip ends at 55.2 (`body { padding-block-start: var(--top-h) }`), `.nu-pan`
+   pays `var(--s4)` of padding above the wrap, `body` reserves
+   `calc(var(--bar-h) + var(--s3))` below everything for the foot bar, and the
+   FORMULA BAR is 106px tall inside the wrap at phone width. Cap the pane
+   alone and the formula bar pushes 106px of page scroll straight back. So the
+   WRAP takes the height between the two bands, the formula bar keeps its
+   natural size inside it, and the pane is the flex child that takes what is
+   left and scrolls. Measured after: documentElement.scrollHeight === its
+   clientHeight at 320/390/1280 — the page does not scroll on the Band sheet,
+   which is the other half of the shell's laws (no sideways page scroll, the
+   bar fixed).
+
+   `min-block-size: 0` ON THE PANE IS NOT DECORATION. A flex item's default
+   `min-height: auto` is its content, so a table 3,000px tall would refuse to
+   shrink and the cap would do nothing at all — the one line that turns a
+   height cap into a scroller. */
+.nu-sheetwrap{ display: flex; flex-direction: column; min-inline-size: 0;
+  block-size: calc(100dvh - var(--top-h) - var(--bar-h)
+                   - var(--s3) - var(--s4)); }
+.nu-sheetwrap > .nu-pane[data-pane="table"]{ flex: 1 1 auto; min-block-size: 0;
+  overflow: auto; overscroll-behavior: contain; }
 .nu-formula{ display: flex; flex-wrap: wrap; align-items: center;
   gap: var(--s2); padding: var(--s2) 0; position: sticky; inset-block-start: 0;
   z-index: 3; background: var(--paper); order: 0; }

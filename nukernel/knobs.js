@@ -6,9 +6,14 @@
 // `--check` fails if this file and the engine disagree.
 //
 //   key      what the document writes into `voice.set`
-//   param    what it was measured to move (the LABEL comes from this, the
+//   param    what it was measured to move (the NAME comes from this, the
 //            document key from the recipe word — `fenvAmount` moves
 //            `envAmount` on a juno60 and `fenvAmount` on a pad_saw)
+//   labelKey what the row is CALLED — a key into the one copy catalogue,
+//            nukernel/src/copy/knobs.ts, resolved by `t()` where the row is
+//            drawn. No English is written into this file, so a second
+//            language is a second table beside that one and nothing here
+//            is regenerated for it.
 //   min/max  the outermost values at which the parameter still moves, found
 //            by sweeping the parent's own declared bracket and trimming the
 //            dead travel off both ends
@@ -63,7 +68,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
   return {
-    "built": "2026-09-03",
+    "built": "2026-09-05",
     "from": "nukernel/knobs-extract.js",
     "total": 271,
     "budget": 40,
@@ -189,7 +194,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 12000,
@@ -200,7 +205,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -211,7 +216,7 @@
           {
             "key": "fenvAmount",
             "param": "envAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 3,
@@ -222,7 +227,7 @@
           {
             "key": "fenvDecay",
             "param": "envDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.02,
             "max": 2,
@@ -233,7 +238,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -244,7 +249,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -257,7 +262,7 @@
           {
             "key": "oscMix",
             "param": "oscMix",
-            "label": "the two oscillators",
+            "labelKey": "knobs.oscMix",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -268,7 +273,7 @@
           {
             "key": "drift",
             "param": "drift",
-            "label": "drift",
+            "labelKey": "knobs.drift",
             "kind": "number",
             "min": 0,
             "max": 25,
@@ -279,7 +284,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -290,7 +295,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -301,7 +306,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -312,7 +317,7 @@
           {
             "key": "fenvAttack",
             "param": "envAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.001,
             "max": 0.5,
@@ -332,7 +337,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 6000,
@@ -343,7 +348,7 @@
           {
             "key": "resonance",
             "param": "resonance",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -354,7 +359,7 @@
           {
             "key": "envmod",
             "param": "envmod",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -365,18 +370,18 @@
           {
             "key": "decay",
             "param": "decay",
-            "label": "how fast it falls to that",
+            "labelKey": "env.seg.decay",
             "kind": "number",
-            "min": 0.005,
+            "min": 0,
             "max": 2.5,
-            "step": 0.001,
+            "step": 0.005,
             "unit": "s",
             "derived": 0.4
           },
           {
             "key": "waveform",
             "param": "waveform",
-            "label": "the wave",
+            "labelKey": "knobs.waveform",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -396,7 +401,7 @@
           {
             "key": "wave",
             "param": "wave",
-            "label": "the wave",
+            "labelKey": "knobs.waveform",
             "kind": "word",
             "words": [
               "sine",
@@ -416,7 +421,7 @@
           {
             "key": "voices",
             "param": "voices",
-            "label": "how many voices",
+            "labelKey": "knobs.voiceCount",
             "kind": "number",
             "min": 1,
             "max": 7,
@@ -427,7 +432,7 @@
           {
             "key": "detune",
             "param": "detune",
-            "label": "detune",
+            "labelKey": "knobs.detune",
             "kind": "number",
             "min": 0,
             "max": 0.05,
@@ -438,7 +443,7 @@
           {
             "key": "octave",
             "param": "octave",
-            "label": "the sub-octave",
+            "labelKey": "knobs.subOctave",
             "kind": "number",
             "min": 0,
             "max": 0.4,
@@ -449,7 +454,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.03,
@@ -460,7 +465,7 @@
           {
             "key": "vibRate",
             "param": "vibRate",
-            "label": "how fast the vibrato is",
+            "labelKey": "knobs.vibratoRate",
             "kind": "number",
             "min": 0.1,
             "max": 12,
@@ -471,7 +476,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 80,
             "max": 18000,
@@ -482,7 +487,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -493,7 +498,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -504,7 +509,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -515,7 +520,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -526,7 +531,7 @@
           {
             "key": "fenv",
             "param": "fenv",
-            "label": "the filter zap",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 3,
@@ -537,7 +542,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -573,7 +578,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 80,
             "max": 12000,
@@ -584,7 +589,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -595,7 +600,7 @@
           {
             "key": "detune",
             "param": "detune",
-            "label": "detune",
+            "labelKey": "knobs.detune",
             "kind": "number",
             "min": 0,
             "max": 0.05,
@@ -606,7 +611,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -617,7 +622,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -653,7 +658,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 16000,
@@ -664,7 +669,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -675,7 +680,7 @@
           {
             "key": "fenvAmount",
             "param": "envAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": -4,
             "max": 3,
@@ -686,7 +691,7 @@
           {
             "key": "keytrack",
             "param": "keytrack",
-            "label": "how far the filter follows the key",
+            "labelKey": "knobs.keyTracking",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -697,7 +702,7 @@
           {
             "key": "lfoToFilter",
             "param": "lfoToFilter",
-            "label": "the LFO on the filter",
+            "labelKey": "knobs.lfoToFilter",
             "kind": "number",
             "min": 0,
             "max": 3,
@@ -708,7 +713,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -719,18 +724,18 @@
           {
             "key": "decay",
             "param": "decay",
-            "label": "how fast it falls to that",
+            "labelKey": "env.seg.decay",
             "kind": "number",
-            "min": 0.005,
+            "min": 0,
             "max": 5,
-            "step": 0.005,
+            "step": 0.01,
             "unit": "s",
             "derived": 0.6
           },
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -741,7 +746,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.01,
             "max": 6,
@@ -752,7 +757,7 @@
           {
             "key": "chorus",
             "param": "chorus",
-            "label": "the chorus",
+            "labelKey": "knobs.chorus",
             "kind": "number",
             "min": 0,
             "max": 2,
@@ -763,7 +768,7 @@
           {
             "key": "spread",
             "param": "spread",
-            "label": "how wide",
+            "labelKey": "knobs.stereoWidth",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -774,7 +779,7 @@
           {
             "key": "sawLevel",
             "param": "sawLevel",
-            "label": "the saw",
+            "labelKey": "knobs.sawLevel",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -785,7 +790,7 @@
           {
             "key": "pulseLevel",
             "param": "pulseLevel",
-            "label": "the pulse",
+            "labelKey": "knobs.pulseLevel",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -796,7 +801,7 @@
           {
             "key": "subLevel",
             "param": "subLevel",
-            "label": "the sub",
+            "labelKey": "knobs.subLevel",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -807,7 +812,7 @@
           {
             "key": "noiseLevel",
             "param": "noiseLevel",
-            "label": "the noise",
+            "labelKey": "knobs.noiseLevel",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -818,7 +823,7 @@
           {
             "key": "pwmBase",
             "param": "pwmBase",
-            "label": "the pulse width",
+            "labelKey": "knobs.pulseWidth",
             "kind": "number",
             "min": 0.05,
             "max": 0.5,
@@ -829,7 +834,7 @@
           {
             "key": "pwmLfo",
             "param": "pwmLfo",
-            "label": "how far the pulse width moves",
+            "labelKey": "knobs.pulseWidthDepth",
             "kind": "number",
             "min": 0,
             "max": 0.45,
@@ -840,7 +845,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -860,7 +865,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 12000,
@@ -871,7 +876,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -882,7 +887,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -893,7 +898,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.03,
@@ -904,7 +909,7 @@
           {
             "key": "vibRate",
             "param": "vibRate",
-            "label": "how fast the vibrato is",
+            "labelKey": "knobs.vibratoRate",
             "kind": "number",
             "min": 0.1,
             "max": 12,
@@ -915,7 +920,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -926,7 +931,7 @@
           {
             "key": "fenvAmount",
             "param": "fenvAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": -4,
             "max": 3,
@@ -937,7 +942,7 @@
           {
             "key": "fenvAttack",
             "param": "fenvAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -948,7 +953,7 @@
           {
             "key": "fenvDecay",
             "param": "fenvDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.01,
             "max": 3,
@@ -959,7 +964,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -970,7 +975,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -990,7 +995,7 @@
           {
             "key": "dx7Preset",
             "param": "module",
-            "label": "the cartridge",
+            "labelKey": "knobs.cartridge",
             "kind": "patch",
             "words": [
               "E.PIANO 1",
@@ -1580,7 +1585,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 14000,
@@ -1591,7 +1596,7 @@
           {
             "key": "ratio",
             "param": "ratio",
-            "label": "the ratio of the two operators",
+            "labelKey": "knobs.fmRatio",
             "kind": "number",
             "min": 0.25,
             "max": 8,
@@ -1602,7 +1607,7 @@
           {
             "key": "idx0",
             "param": "idx0",
-            "label": "how bright the attack is",
+            "labelKey": "knobs.fmIndexStart",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -1613,7 +1618,7 @@
           {
             "key": "idx1",
             "param": "idx1",
-            "label": "how bright it stays",
+            "labelKey": "knobs.fmIndexEnd",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -1624,7 +1629,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -1635,7 +1640,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.03,
@@ -1646,7 +1651,7 @@
           {
             "key": "vibRate",
             "param": "vibRate",
-            "label": "how fast the vibrato is",
+            "labelKey": "knobs.vibratoRate",
             "kind": "number",
             "min": 0.1,
             "max": 12,
@@ -1657,7 +1662,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -1668,7 +1673,7 @@
           {
             "key": "idxTime",
             "param": "idxTime",
-            "label": "how fast one becomes the other",
+            "labelKey": "knobs.fmIndexTime",
             "kind": "number",
             "min": 0.01,
             "max": 4,
@@ -1679,7 +1684,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -1715,7 +1720,7 @@
           {
             "key": "tone",
             "param": "tone",
-            "label": "the tone",
+            "labelKey": "knobs.tone",
             "kind": "number",
             "min": 300,
             "max": 12000,
@@ -1726,7 +1731,7 @@
           {
             "key": "octave",
             "param": "octave",
-            "label": "the sub-octave",
+            "labelKey": "knobs.octaveMix",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1737,7 +1742,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 1.5,
@@ -1748,7 +1753,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -1759,7 +1764,7 @@
           {
             "key": "chorusRate",
             "param": "chorusRate",
-            "label": "how fast the chorus is",
+            "labelKey": "knobs.chorusRate",
             "kind": "number",
             "min": 0.05,
             "max": 4,
@@ -1770,7 +1775,7 @@
           {
             "key": "chorusDepth",
             "param": "chorusDepth",
-            "label": "how deep the chorus is",
+            "labelKey": "knobs.chorusDepth",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1781,7 +1786,7 @@
           {
             "key": "ensemble",
             "param": "ensemble",
-            "label": "the ensemble",
+            "labelKey": "knobs.ensemble",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1817,7 +1822,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 40,
             "max": 16000,
@@ -1828,7 +1833,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1839,7 +1844,7 @@
           {
             "key": "filterMode",
             "param": "filterMode",
-            "label": "the filter",
+            "labelKey": "knobs.filterMode",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1850,7 +1855,7 @@
           {
             "key": "fenvAmount",
             "param": "envAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 3,
@@ -1861,7 +1866,7 @@
           {
             "key": "fenvAttack",
             "param": "envAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -1872,7 +1877,7 @@
           {
             "key": "fenvDecay",
             "param": "envDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.02,
             "max": 2,
@@ -1883,7 +1888,7 @@
           {
             "key": "envSustain",
             "param": "envSustain",
-            "label": "where the filter envelope rests",
+            "labelKey": "knobs.filterEnvSustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1894,7 +1899,7 @@
           {
             "key": "detune",
             "param": "detune",
-            "label": "detune",
+            "labelKey": "knobs.detune",
             "kind": "number",
             "min": 0,
             "max": 50,
@@ -1905,7 +1910,7 @@
           {
             "key": "osc2tune",
             "param": "osc2tune",
-            "label": "the second oscillator",
+            "labelKey": "knobs.osc2Tune",
             "kind": "number",
             "min": -36,
             "max": 24,
@@ -1916,7 +1921,7 @@
           {
             "key": "osc2lfo",
             "param": "osc2lfo",
-            "label": "the LFO on the second oscillator",
+            "labelKey": "knobs.osc2Lfo",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1927,7 +1932,7 @@
           {
             "key": "lfoRate",
             "param": "lfoRate",
-            "label": "how fast the LFO is",
+            "labelKey": "knobs.lfoRate",
             "kind": "number",
             "min": 0.02,
             "max": 14,
@@ -1938,7 +1943,7 @@
           {
             "key": "pmFM",
             "param": "pmFM",
-            "label": "how much it phase-modulates",
+            "labelKey": "knobs.phaseMod",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1949,7 +1954,7 @@
           {
             "key": "pmFilt",
             "param": "pmFilt",
-            "label": "how much it modulates the filter",
+            "labelKey": "knobs.phaseModFilter",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1960,7 +1965,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1971,7 +1976,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -1982,7 +1987,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -1993,7 +1998,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.01,
             "max": 6,
@@ -2004,7 +2009,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -2024,7 +2029,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 16000,
@@ -2035,7 +2040,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -2046,7 +2051,7 @@
           {
             "key": "scan",
             "param": "scan",
-            "label": "where the wavetable is scanned",
+            "labelKey": "knobs.scanPosition",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2057,7 +2062,7 @@
           {
             "key": "scanEnv",
             "param": "scanEnv",
-            "label": "how far the envelope scans",
+            "labelKey": "knobs.scanEnv",
             "kind": "number",
             "min": -1,
             "max": 1,
@@ -2068,7 +2073,7 @@
           {
             "key": "scanLfo",
             "param": "scanLfo",
-            "label": "how far the LFO scans",
+            "labelKey": "knobs.scanLfo",
             "kind": "number",
             "min": 0,
             "max": 0.5,
@@ -2079,7 +2084,7 @@
           {
             "key": "scanRate",
             "param": "scanRate",
-            "label": "how fast it scans",
+            "labelKey": "knobs.scanRate",
             "kind": "number",
             "min": 0.01,
             "max": 12,
@@ -2090,7 +2095,7 @@
           {
             "key": "fenvAmount",
             "param": "envAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 3,
@@ -2101,7 +2106,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2112,7 +2117,7 @@
           {
             "key": "sub",
             "param": "sub",
-            "label": "the sub",
+            "labelKey": "knobs.subLevel",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2123,7 +2128,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -2134,7 +2139,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2145,7 +2150,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -2156,7 +2161,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -2176,7 +2181,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 300,
             "max": 12000,
@@ -2187,7 +2192,7 @@
           {
             "key": "vowel",
             "param": "vowel",
-            "label": "the vowel",
+            "labelKey": "knobs.vowel",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2198,7 +2203,7 @@
           {
             "key": "ensemble",
             "param": "ensemble",
-            "label": "the ensemble",
+            "labelKey": "knobs.ensemble",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2209,7 +2214,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -2220,7 +2225,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2231,7 +2236,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -2242,7 +2247,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -2288,7 +2293,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 16000,
@@ -2299,7 +2304,7 @@
           {
             "key": "wave",
             "param": "wave",
-            "label": "the wave",
+            "labelKey": "knobs.waveform",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2310,7 +2315,7 @@
           {
             "key": "index",
             "param": "index",
-            "label": "the index",
+            "labelKey": "knobs.waveDistortion",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2321,7 +2326,7 @@
           {
             "key": "dcwAmount",
             "param": "dcwAmount",
-            "label": "how far the wave is distorted",
+            "labelKey": "knobs.distortionEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2332,7 +2337,7 @@
           {
             "key": "dcwAttack",
             "param": "dcwAttack",
-            "label": "how fast the distortion arrives",
+            "labelKey": "knobs.distortionAttack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -2343,7 +2348,7 @@
           {
             "key": "dcwDecay",
             "param": "dcwDecay",
-            "label": "how fast it falls away",
+            "labelKey": "knobs.distortionDecay",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -2354,7 +2359,7 @@
           {
             "key": "dcwSustain",
             "param": "dcwSustain",
-            "label": "where the distortion rests",
+            "labelKey": "knobs.distortionSustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2365,7 +2370,7 @@
           {
             "key": "detune",
             "param": "detune",
-            "label": "detune",
+            "labelKey": "knobs.detune",
             "kind": "number",
             "min": 0,
             "max": 40,
@@ -2376,7 +2381,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -2387,9 +2392,9 @@
           {
             "key": "decay",
             "param": "decay",
-            "label": "how fast it falls to that",
+            "labelKey": "env.seg.decay",
             "kind": "number",
-            "min": 0.005,
+            "min": 0,
             "max": 3,
             "step": 0.005,
             "unit": "s",
@@ -2398,7 +2403,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2409,7 +2414,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 4,
@@ -2420,7 +2425,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -2456,7 +2461,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 16000,
@@ -2467,7 +2472,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -2478,7 +2483,7 @@
           {
             "key": "syncRatio",
             "param": "syncRatio",
-            "label": "the sync ratio",
+            "labelKey": "knobs.syncRatio",
             "kind": "number",
             "min": 1,
             "max": 4,
@@ -2489,7 +2494,7 @@
           {
             "key": "syncSweep",
             "param": "syncSweep",
-            "label": "how far the sync sweeps",
+            "labelKey": "knobs.syncSweep",
             "kind": "number",
             "min": 0,
             "max": 4,
@@ -2500,7 +2505,7 @@
           {
             "key": "syncDecay",
             "param": "syncDecay",
-            "label": "how fast the sync falls back",
+            "labelKey": "knobs.syncDecay",
             "kind": "number",
             "min": 0.01,
             "max": 1.5,
@@ -2511,7 +2516,7 @@
           {
             "key": "detune",
             "param": "detune",
-            "label": "detune",
+            "labelKey": "knobs.detune",
             "kind": "number",
             "min": 0,
             "max": 40,
@@ -2522,7 +2527,7 @@
           {
             "key": "fenvAmount",
             "param": "envAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": 0,
             "max": 3,
@@ -2533,7 +2538,7 @@
           {
             "key": "fenvDecay",
             "param": "envDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.02,
             "max": 2,
@@ -2544,7 +2549,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -2555,7 +2560,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2566,7 +2571,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -2577,7 +2582,7 @@
           {
             "key": "sustain",
             "param": "sustain",
-            "label": "where it rests",
+            "labelKey": "env.seg.sustain",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2588,7 +2593,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -2608,7 +2613,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 14000,
@@ -2619,7 +2624,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -2639,7 +2644,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 80,
             "max": 12000,
@@ -2650,7 +2655,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -2661,7 +2666,7 @@
           {
             "key": "fenvAmount",
             "param": "fenvAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": -4,
             "max": 4,
@@ -2672,7 +2677,7 @@
           {
             "key": "fenvAttack",
             "param": "fenvAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -2683,7 +2688,7 @@
           {
             "key": "fenvDecay",
             "param": "fenvDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.01,
             "max": 3,
@@ -2703,7 +2708,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 3600,
@@ -2715,7 +2720,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 5,
@@ -2726,7 +2731,7 @@
           {
             "key": "fenvAmount",
             "param": "fenvAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": -4,
             "max": 4,
@@ -2737,7 +2742,7 @@
           {
             "key": "fenvAttack",
             "param": "fenvAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -2748,7 +2753,7 @@
           {
             "key": "fenvDecay",
             "param": "fenvDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.01,
             "max": 3,
@@ -2768,7 +2773,7 @@
           {
             "key": "bar16",
             "param": "bar16",
-            "label": "16' — the sub-octave",
+            "labelKey": "knobs.bar16",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2779,7 +2784,7 @@
           {
             "key": "bar513",
             "param": "bar513",
-            "label": "5 1/3' — the fifth",
+            "labelKey": "knobs.bar513",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2790,7 +2795,7 @@
           {
             "key": "bar8",
             "param": "bar8",
-            "label": "8' — the note",
+            "labelKey": "knobs.bar8",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2801,7 +2806,7 @@
           {
             "key": "bar4",
             "param": "bar4",
-            "label": "4' — the octave",
+            "labelKey": "knobs.bar4",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2812,7 +2817,7 @@
           {
             "key": "bar223",
             "param": "bar223",
-            "label": "2 2/3' — the twelfth",
+            "labelKey": "knobs.bar223",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2823,7 +2828,7 @@
           {
             "key": "bar2",
             "param": "bar2",
-            "label": "2' — the fifteenth",
+            "labelKey": "knobs.bar2",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2834,7 +2839,7 @@
           {
             "key": "bar135",
             "param": "bar135",
-            "label": "1 3/5' — the seventeenth",
+            "labelKey": "knobs.bar135",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2845,7 +2850,7 @@
           {
             "key": "bar113",
             "param": "bar113",
-            "label": "1 1/3' — the nineteenth",
+            "labelKey": "knobs.bar113",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2856,7 +2861,7 @@
           {
             "key": "bar1",
             "param": "bar1",
-            "label": "1' — the twenty-second",
+            "labelKey": "knobs.bar1",
             "kind": "number",
             "min": 0,
             "max": 8,
@@ -2867,7 +2872,7 @@
           {
             "key": "leslie",
             "param": "leslie",
-            "label": "the leslie",
+            "labelKey": "knobs.leslie",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2878,7 +2883,7 @@
           {
             "key": "perc",
             "param": "perc",
-            "label": "the percussive tap",
+            "labelKey": "knobs.percussion",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2889,7 +2894,7 @@
           {
             "key": "percHarm",
             "param": "percHarm",
-            "label": "which harmonic the tap is",
+            "labelKey": "knobs.percussionHarmonic",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2900,7 +2905,7 @@
           {
             "key": "percDecay",
             "param": "percDecay",
-            "label": "how fast the tap fades",
+            "labelKey": "knobs.percussionDecay",
             "kind": "number",
             "min": 0.05,
             "max": 2,
@@ -2911,7 +2916,7 @@
           {
             "key": "click",
             "param": "click",
-            "label": "the key click",
+            "labelKey": "knobs.keyClick",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2922,7 +2927,7 @@
           {
             "key": "leak",
             "param": "leak",
-            "label": "the drawbar leak",
+            "labelKey": "knobs.leakage",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2933,7 +2938,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2944,7 +2949,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 0.5,
@@ -2955,7 +2960,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 1,
@@ -2975,7 +2980,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 14000,
@@ -2986,7 +2991,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -2997,7 +3002,7 @@
           {
             "key": "pluckPos",
             "param": "pluckPos",
-            "label": "where it is plucked",
+            "labelKey": "knobs.pluckPosition",
             "kind": "number",
             "min": 0.02,
             "max": 0.98,
@@ -3008,7 +3013,7 @@
           {
             "key": "pickup",
             "param": "pickup",
-            "label": "where the pickup is",
+            "labelKey": "knobs.pickupPosition",
             "kind": "number",
             "min": 0.05,
             "max": 0.5,
@@ -3019,7 +3024,7 @@
           {
             "key": "bright",
             "param": "bright",
-            "label": "how bright",
+            "labelKey": "knobs.brightness",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3030,7 +3035,7 @@
           {
             "key": "ring",
             "param": "ring",
-            "label": "how long it rings",
+            "labelKey": "knobs.ringTime",
             "kind": "number",
             "min": 0.05,
             "max": 12,
@@ -3041,7 +3046,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 2,
@@ -3052,7 +3057,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 0.501,
@@ -3072,7 +3077,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 4500,
@@ -3084,7 +3089,7 @@
           {
             "key": "bright",
             "param": "bright",
-            "label": "how bright",
+            "labelKey": "knobs.brightness",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3095,7 +3100,7 @@
           {
             "key": "stiff",
             "param": "stiff",
-            "label": "how stiff the string is",
+            "labelKey": "knobs.stiffness",
             "kind": "number",
             "min": 0,
             "max": 0.7,
@@ -3106,7 +3111,7 @@
           {
             "key": "detune",
             "param": "detune",
-            "label": "detune",
+            "labelKey": "knobs.detune",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3117,7 +3122,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -3137,7 +3142,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 200,
             "max": 14000,
@@ -3148,7 +3153,7 @@
           {
             "key": "drive",
             "param": "drive",
-            "label": "how hard it is driven",
+            "labelKey": "knobs.drive",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3159,7 +3164,7 @@
           {
             "key": "pluckPos",
             "param": "pluckPos",
-            "label": "where it is plucked",
+            "labelKey": "knobs.pluckPosition",
             "kind": "number",
             "min": 0.02,
             "max": 0.98,
@@ -3170,7 +3175,7 @@
           {
             "key": "pickup",
             "param": "pickup",
-            "label": "where the pickup is",
+            "labelKey": "knobs.pickupPosition",
             "kind": "number",
             "min": 0.05,
             "max": 0.5,
@@ -3181,7 +3186,7 @@
           {
             "key": "bright",
             "param": "bright",
-            "label": "how bright",
+            "labelKey": "knobs.brightness",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3192,7 +3197,7 @@
           {
             "key": "ring",
             "param": "ring",
-            "label": "how long it rings",
+            "labelKey": "knobs.ringTime",
             "kind": "number",
             "min": 0.05,
             "max": 12,
@@ -3203,7 +3208,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 2,
@@ -3214,7 +3219,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 0.501,
@@ -3234,7 +3239,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 400,
             "max": 8000,
@@ -3246,7 +3251,7 @@
           {
             "key": "ring",
             "param": "ring",
-            "label": "how long it rings",
+            "labelKey": "knobs.ringTime",
             "kind": "number",
             "min": 0.02,
             "max": 3,
@@ -3257,7 +3262,7 @@
           {
             "key": "exPos",
             "param": "exPos",
-            "label": "where it is struck",
+            "labelKey": "knobs.strikePosition",
             "kind": "number",
             "min": 0,
             "max": 4,
@@ -3268,7 +3273,7 @@
           {
             "key": "tilt",
             "param": "tilt",
-            "label": "how the partials tilt",
+            "labelKey": "knobs.partialTilt",
             "kind": "number",
             "min": 1,
             "max": 12,
@@ -3279,7 +3284,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -3299,7 +3304,7 @@
           {
             "key": "force",
             "param": "force",
-            "label": "force",
+            "labelKey": "knobs.bowPressure",
             "kind": "number",
             "min": 0.35,
             "max": 1,
@@ -3310,7 +3315,7 @@
           {
             "key": "speed",
             "param": "speed",
-            "label": "speed",
+            "labelKey": "knobs.bowSpeed",
             "kind": "number",
             "min": 0.05,
             "max": 1,
@@ -3321,7 +3326,7 @@
           {
             "key": "bowPos",
             "param": "bowPos",
-            "label": "bowPos",
+            "labelKey": "knobs.bowPosition",
             "kind": "number",
             "min": 0.04,
             "max": 0.3,
@@ -3332,7 +3337,7 @@
           {
             "key": "skin",
             "param": "skin",
-            "label": "skin",
+            "labelKey": "knobs.skin",
             "kind": "number",
             "min": 500,
             "max": 2600,
@@ -3343,7 +3348,7 @@
           {
             "key": "pad",
             "param": "pad",
-            "label": "pad",
+            "labelKey": "knobs.bridgePad",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3354,7 +3359,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.05,
@@ -3365,7 +3370,7 @@
           {
             "key": "vibRate",
             "param": "vibRate",
-            "label": "how fast the vibrato is",
+            "labelKey": "knobs.vibratoRate",
             "kind": "number",
             "min": 0.1,
             "max": 12,
@@ -3376,7 +3381,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 1.5,
@@ -3387,7 +3392,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 0.501,
@@ -3407,7 +3412,7 @@
           {
             "key": "voice",
             "param": "voice",
-            "label": "who is singing",
+            "labelKey": "knobs.voiceType",
             "kind": "word",
             "words": [
               "alto",
@@ -3451,7 +3456,7 @@
           {
             "key": "vowels",
             "param": "vowel",
-            "label": "what the sounds are",
+            "labelKey": "knobs.vowels",
             "kind": "vowels",
             "words": [
               "a",
@@ -3480,7 +3485,7 @@
           {
             "key": "breath",
             "param": "breath",
-            "label": "breath",
+            "labelKey": "knobs.breath",
             "kind": "number",
             "min": 0,
             "max": 0.12,
@@ -3492,7 +3497,7 @@
           {
             "key": "sway",
             "param": "sway",
-            "label": "how the fold drifts",
+            "labelKey": "knobs.foldDrift",
             "kind": "number",
             "min": 0,
             "max": 0.5,
@@ -3503,7 +3508,7 @@
           {
             "key": "vowelSway",
             "param": "vowelSway",
-            "label": "how the vowel drifts",
+            "labelKey": "knobs.vowelDrift",
             "kind": "number",
             "min": 0,
             "max": 2,
@@ -3514,7 +3519,7 @@
           {
             "key": "swayRate",
             "param": "swayRate",
-            "label": "how fast it drifts",
+            "labelKey": "knobs.foldDriftRate",
             "kind": "number",
             "min": 0.01,
             "max": 2,
@@ -3525,7 +3530,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.05,
@@ -3536,7 +3541,7 @@
           {
             "key": "vibRate",
             "param": "vibRate",
-            "label": "how fast the vibrato is",
+            "labelKey": "knobs.vibratoRate",
             "kind": "number",
             "min": 3,
             "max": 8,
@@ -3547,7 +3552,7 @@
           {
             "key": "vibRise",
             "param": "vibRise",
-            "label": "how late the vibrato starts",
+            "labelKey": "knobs.vibratoDelay",
             "kind": "number",
             "min": 0.05,
             "max": 3,
@@ -3558,7 +3563,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -3569,7 +3574,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -3580,7 +3585,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 800,
             "max": 16000,
@@ -3591,7 +3596,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 0.4005,
@@ -3603,7 +3608,7 @@
           {
             "key": "vowelEvery",
             "param": "vowelEvery",
-            "label": "how long it stays on one sound",
+            "labelKey": "knobs.syllableLength",
             "kind": "number",
             "min": 0.25,
             "max": 8,
@@ -3623,7 +3628,7 @@
           {
             "key": "voice",
             "param": "voice",
-            "label": "who is singing",
+            "labelKey": "knobs.voiceType",
             "kind": "word",
             "words": [
               "alto",
@@ -3667,7 +3672,7 @@
           {
             "key": "vowels",
             "param": "vowel",
-            "label": "what the sounds are",
+            "labelKey": "knobs.vowels",
             "kind": "vowels",
             "words": [
               "a",
@@ -3696,7 +3701,7 @@
           {
             "key": "breath",
             "param": "breath",
-            "label": "breath",
+            "labelKey": "knobs.breath",
             "kind": "number",
             "min": 0,
             "max": 0.6,
@@ -3707,7 +3712,7 @@
           {
             "key": "spread",
             "param": "spread",
-            "label": "how wide",
+            "labelKey": "knobs.detuneSpread",
             "kind": "number",
             "min": 0,
             "max": 2,
@@ -3718,7 +3723,7 @@
           {
             "key": "drift",
             "param": "drift",
-            "label": "drift",
+            "labelKey": "knobs.vowelDrift",
             "kind": "number",
             "min": 0,
             "max": 1.5,
@@ -3729,7 +3734,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.04,
@@ -3740,7 +3745,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -3751,7 +3756,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 4,
@@ -3762,7 +3767,7 @@
           {
             "key": "width",
             "param": "width",
-            "label": "how wide",
+            "labelKey": "knobs.stereoWidth",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3773,7 +3778,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 800,
             "max": 16000,
@@ -3784,7 +3789,7 @@
           {
             "key": "vowelEvery",
             "param": "vowelEvery",
-            "label": "how long it stays on one sound",
+            "labelKey": "knobs.syllableLength",
             "kind": "number",
             "min": 0.5,
             "max": 16,
@@ -3804,7 +3809,7 @@
           {
             "key": "vowels",
             "param": "vowel",
-            "label": "what the sounds are",
+            "labelKey": "knobs.vowels",
             "kind": "vowels",
             "words": [
               "a",
@@ -3833,7 +3838,7 @@
           {
             "key": "babble",
             "param": "babble",
-            "label": "how the mouth moves",
+            "labelKey": "knobs.babble",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3844,7 +3849,7 @@
           {
             "key": "rate",
             "param": "rate",
-            "label": "how fast the mouth moves",
+            "labelKey": "knobs.babbleRate",
             "kind": "number",
             "min": 0.5,
             "max": 12,
@@ -3862,7 +3867,7 @@
           {
             "key": "seed",
             "param": "seed",
-            "label": "which sentence it says",
+            "labelKey": "knobs.babbleSeed",
             "kind": "number",
             "min": 0,
             "max": 4096,
@@ -3880,7 +3885,7 @@
           {
             "key": "artic",
             "param": "artic",
-            "label": "how far the mouth moves",
+            "labelKey": "knobs.articulation",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3891,7 +3896,7 @@
           {
             "key": "tongue",
             "param": "tongue",
-            "label": "the tongue",
+            "labelKey": "knobs.tonguePosition",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3914,7 +3919,7 @@
           {
             "key": "tongueD",
             "param": "tongueD",
-            "label": "how far the tongue reaches",
+            "labelKey": "knobs.tongueReach",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3937,7 +3942,7 @@
           {
             "key": "tongueL",
             "param": "tongueL",
-            "label": "how long the tongue is",
+            "labelKey": "knobs.tongueLength",
             "kind": "number",
             "min": 0.05,
             "max": 0.5,
@@ -3960,7 +3965,7 @@
           {
             "key": "lips",
             "param": "lips",
-            "label": "the lips",
+            "labelKey": "knobs.lips",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3983,7 +3988,7 @@
           {
             "key": "nasal",
             "param": "velum",
-            "label": "the nose",
+            "labelKey": "knobs.nasality",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -3994,7 +3999,7 @@
           {
             "key": "fric",
             "param": "fric",
-            "label": "the hiss",
+            "labelKey": "knobs.hiss",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -4005,7 +4010,7 @@
           {
             "key": "fricX",
             "param": "fricX",
-            "label": "where the hiss sits",
+            "labelKey": "knobs.hissPosition",
             "kind": "number",
             "min": 0,
             "max": 1,
@@ -4023,7 +4028,7 @@
           {
             "key": "voiced",
             "param": "voiced",
-            "label": "how much it phonates",
+            "labelKey": "knobs.voicing",
             "kind": "number",
             "min": 0.02,
             "max": 1,
@@ -4035,7 +4040,7 @@
           {
             "key": "open",
             "param": "open",
-            "label": "how open the glottis is",
+            "labelKey": "knobs.glottis",
             "kind": "number",
             "min": 0.15,
             "max": 0.95,
@@ -4046,7 +4051,7 @@
           {
             "key": "breath",
             "param": "breath",
-            "label": "breath",
+            "labelKey": "knobs.breath",
             "kind": "number",
             "min": 0,
             "max": 0.2,
@@ -4058,7 +4063,7 @@
           {
             "key": "vibrato",
             "param": "vibrato",
-            "label": "vibrato",
+            "labelKey": "knobs.vibrato",
             "kind": "number",
             "min": 0,
             "max": 0.05,
@@ -4069,7 +4074,7 @@
           {
             "key": "vibRate",
             "param": "vibRate",
-            "label": "how fast the vibrato is",
+            "labelKey": "knobs.vibratoRate",
             "kind": "number",
             "min": 3,
             "max": 8,
@@ -4080,7 +4085,7 @@
           {
             "key": "vibRise",
             "param": "vibRise",
-            "label": "how late the vibrato starts",
+            "labelKey": "knobs.vibratoDelay",
             "kind": "number",
             "min": 0.05,
             "max": 3,
@@ -4091,7 +4096,7 @@
           {
             "key": "attack",
             "param": "attack",
-            "label": "attack",
+            "labelKey": "env.seg.attack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -4102,7 +4107,7 @@
           {
             "key": "release",
             "param": "release",
-            "label": "release",
+            "labelKey": "env.seg.release",
             "kind": "number",
             "min": 0.005,
             "max": 3,
@@ -4113,7 +4118,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 800,
             "max": 16000,
@@ -4124,7 +4129,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 0.4005,
@@ -4136,7 +4141,7 @@
           {
             "key": "vowelEvery",
             "param": "vowelEvery",
-            "label": "how long it stays on one sound",
+            "labelKey": "knobs.syllableLength",
             "kind": "number",
             "min": 0.25,
             "max": 8,
@@ -4156,7 +4161,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 6000,
@@ -4167,7 +4172,7 @@
           {
             "key": "fenvAmount",
             "param": "fenvAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": -4,
             "max": 4,
@@ -4178,7 +4183,7 @@
           {
             "key": "fenvAttack",
             "param": "fenvAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -4189,7 +4194,7 @@
           {
             "key": "fenvDecay",
             "param": "fenvDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.01,
             "max": 3,
@@ -4200,7 +4205,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,
@@ -4220,7 +4225,7 @@
           {
             "key": "cutoff",
             "param": "cutoff",
-            "label": "the mic and the room",
+            "labelKey": "knobs.cutoff",
             "kind": "number",
             "min": 60,
             "max": 6000,
@@ -4231,7 +4236,7 @@
           {
             "key": "res",
             "param": "res",
-            "label": "resonance",
+            "labelKey": "knobs.resonance",
             "kind": "number",
             "min": 0,
             "max": 0.95,
@@ -4242,7 +4247,7 @@
           {
             "key": "wobbleBars",
             "param": "wobbleHz",
-            "label": "how often it wobbles",
+            "labelKey": "knobs.wobbleRate",
             "kind": "number",
             "min": 0.045,
             "max": 5,
@@ -4254,7 +4259,7 @@
           {
             "key": "fenvAmount",
             "param": "fenvAmount",
-            "label": "how far the envelope opens the filter",
+            "labelKey": "knobs.filterEnvAmount",
             "kind": "number",
             "min": -4,
             "max": 3,
@@ -4265,7 +4270,7 @@
           {
             "key": "fenvAttack",
             "param": "fenvAttack",
-            "label": "fenvAttack",
+            "labelKey": "knobs.filterEnvAttack",
             "kind": "number",
             "min": 0.001,
             "max": 2,
@@ -4276,7 +4281,7 @@
           {
             "key": "fenvDecay",
             "param": "fenvDecay",
-            "label": "fenvDecay",
+            "labelKey": "knobs.filterEnvDecay",
             "kind": "number",
             "min": 0.01,
             "max": 3,
@@ -4287,7 +4292,7 @@
           {
             "key": "glide",
             "param": "glide",
-            "label": "glide",
+            "labelKey": "knobs.glide",
             "kind": "number",
             "min": 0,
             "max": 500,

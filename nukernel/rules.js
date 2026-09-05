@@ -358,8 +358,12 @@
       edit: { kind: "enum", values: () => [{ value: null, label: T("value.commonTime") },
         ...opts(NF.METERLABEL, NF.METERLABEL),
         // ...AND THE SIGNATURES (2026-09-05, the any-meter round): the same
-        // four avail.js offers beside the two words, so a rule can say 7/8.
-        ...["2/4", "5/4", "7/8", "12/8"].map((v) => ({ value: v, label: v }))] },
+        // four avail.js offers beside the two words, so a rule can say 7/8 —
+        // read from `fields.js METERSIGS`, which is the one owner both menus
+        // and test/rules.test.js's R2 now ask. They were typed out here and
+        // typed out again in avail.js for a day; R2 measured the cost at 16
+        // offers no table could vouch for.
+        ...NF.METERSIGS.map((v) => ({ value: v, label: v }))] },
       // THE WORD OR THE SIGNATURE, NEVER THE NUMBERS — precompose.js:2172's
       // own law, validated by `K.okMeter`, which reads both and answers no to
       // four-four (the one spelling of that is null).

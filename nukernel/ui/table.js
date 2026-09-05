@@ -1797,12 +1797,15 @@ function bandTable(host, A2) {
       "--panew",
       pane2.clientWidth - 6 + "px"
     );
-    let y2 = 0;
-    for (const tr of Array.from(t5.querySelectorAll("thead > tr"))) {
-      for (const c3 of Array.from(tr.children))
-        c3.style.insetBlockStart = y2 + "px";
-      y2 += tr.getBoundingClientRect().height;
-    }
+    const rows = Array.from(t5.querySelectorAll("thead > tr"));
+    const cells = rows.map((tr) => Array.from(tr.children));
+    for (const cs of cells) for (const c3 of cs) c3.style.insetBlockStart = "";
+    const tRect = t5.getBoundingClientRect();
+    const base = pane2 ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
+    const tops = rows.map((tr) => base + (tr.getBoundingClientRect().top - tRect.top));
+    rows.forEach((_tr, i5) => {
+      for (const c3 of cells[i5]) c3.style.insetBlockStart = tops[i5] + "px";
+    });
   }
   onRedraw(draw);
   const op = (name, fn) => U.run(name, fn);
@@ -1982,7 +1985,7 @@ function bandTable(host, A2) {
       toggle("row|" + sid, true);
     }}
         >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}<b class="nu-colname">${A2.roleWord(s3.role)}</b
-        ><span class="nu-colinstr">${tn("count.bar", s3.bars)}</span></button>
+        ><span class="nu-colinstr">${tn("count.bar", s3.bars)}</span>${sm ? b`<span class="nu-vh">${sm.w}</span>` : A}</button>
       ${grip(sid, "tcol|" + sid, A2.secName(i5))}
     </th>`;
   };
@@ -2103,7 +2106,7 @@ function bandTable(host, A2) {
         data-say=${o2(rm && rm.s ? rm.s : void 0)}
         ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i5 + 1}</span></span
-        ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span></button>
+        ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span>${rm ? b`<span class="nu-vh">${rm.w}</span>` : A}</button>
       <small> ${tn("count.bar", s3.bars)}</small>
     </th>`;
   };
@@ -2122,7 +2125,7 @@ function bandTable(host, A2) {
     }}
         data-say=${o2(vm && vm.s ? vm.s : void 0)}
         ><span class="nu-g" aria-hidden="true">${vm ? vm.g : ""}</span
-        ><span class="nu-srowname">${name}</span></button>
+        ><span class="nu-srowname">${name}</span>${vm ? b`<span class="nu-vh">${vm.w}</span>` : A}</button>
       <small> ${A2.playsWhat(v3) || ""}</small>
     </th>`;
   };

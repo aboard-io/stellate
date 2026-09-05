@@ -286,8 +286,18 @@ const MEASURE = () => {
          page's SECTIONS and the log is a readout — its own naked-glyph check
          is the `nakedTabs` sweep one field down, which is page-wide. */
       if (window.__eightMenuOpen) window.__eightMenuOpen(true);
+      /* THE SUBJECT OF THE ACCESSIBLE NAME, and it has two shapes now. The
+         log's name carries its count, and the text pass (2026-09-05) respelt
+         the counted form: `glyph.log.empty` is still "log — nothing yet" and
+         `burger.log` is "log ({n})". A split on the em dash alone read the
+         second one back whole — measured, "log (1)" — and this list, whose
+         subject is the page's SECTIONS, reported a fifth row that is a
+         readout. Both shapes are `<subject><clause>`, so both suffixes come
+         off: a trailing count in parens, then the em-dash / comma clause. */
+      const subject = (b) => (b.getAttribute("aria-label") || "").trim()
+        .replace(/\s*\(\d+\)\s*$/, "").split(/ — |,/)[0].trim();
       const out = [...document.querySelectorAll("#nu-menu button")]
-        .map((b) => (b.getAttribute("aria-label") || "").trim().split(" — ")[0])
+        .map(subject)
         .filter((w) => w !== "log");
       if (window.__eightMenuOpen) window.__eightMenuOpen(false);
       return out; })(),

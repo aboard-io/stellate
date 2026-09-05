@@ -133,7 +133,14 @@ ok("R2 every option a rule offers exists in the table that owns it", () => {
     // standing answer is always offered (avail.js:15), and `drone` is at 0.25
     rate: () => new Set([1, ...Object.values(NF.RATES),
       ...Object.keys(GENRES).map((k) => GENRES[k].rate).filter((x) => x != null)]),
-    meter: () => new Set([null, ...Object.keys(NF.METERLABEL)]),
+    // the two WORDS plus the four SIGNATURES the menus offer — both halves
+    // out of fields.js, which owns the meter vocabulary (kernel.js owns the
+    // arithmetic). Written as `Object.keys(METERLABEL)` alone until
+    // 2026-09-05, when the any-meter round gave the menu 2/4, 5/4, 7/8 and
+    // 12/8: this line then WAS the fourth copy of a list avail.js and
+    // rules.js each typed out, and it went red on all four for all four
+    // anchors. Naming the owner is the fix; the offer is unchanged.
+    meter: () => new Set([null, ...Object.keys(NF.METERLABEL), ...NF.METERSIGS]),
     mode: () => new Set(Object.keys(NG.MODES)),
     scale: () => new Set([null, ...Object.keys(NG.SCALES), ...Object.keys(NG.MODES)]),
     harmony: () => new Set(Object.keys(NG.HARMONYLABEL)),

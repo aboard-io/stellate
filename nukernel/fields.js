@@ -338,6 +338,28 @@
   // reason there is no `groove` one. The NUMBERS live in kernel.js METERS —
   // one place, because they are algebra — and this is the vocabulary.
   const METERLABEL = { three: "in three", six: "in six-eight" };
+  /* THE COMMON SIGNATURES A MENU OFFERS (2026-09-05, the any-meter round).
+     Paul: *"I should be able to set any tempo at all like 21/17 you should
+     let me choose anything."* kernel.js `meterRow` counts ANY n/d, so the
+     vocabulary is no longer a closed set and there is nothing left to
+     enumerate — except the handful a hand reaches for, which is a MENU fact
+     and therefore this file's. The two words above are 3/4 and 6/8 and stay
+     words (every save and three anchors say them); these four are the rest of
+     DESIGN.md component 7's ceiling of eight chips.
+
+     WHY IT IS A LIST AND NOT A LABEL MAP. A signature labels itself — "7/8"
+     is both the value and the word — so there is nothing to translate and
+     nothing for T() to look up. Made a frozen array so no caller can push a
+     fifth signature into the registry at runtime.
+
+     IT HAD THREE COPIES FOR A DAY (measured 2026-09-05): avail.js:669 typed
+     the four, rules.js:362 typed the same four again, and test/rules.test.js
+     asked METERLABEL — which names two words and had never heard of them — so
+     R2 went red on 16 offers with no owner to check them against. All three
+     now read this line, which is what makes the gate's question answerable.
+     The NUMBERS are still kernel.js's: `okMeter` validates, `meterRow`
+     counts, and nothing here knows what a 7 over an 8 is worth. */
+  const METERSIGS = Object.freeze(["2/4", "5/4", "7/8", "12/8"]);
   /* ...AND THE PACE, WHICH IS THE FOURTH OF THIS FAMILY AND THE ONLY ONE THAT
      IS A BOX FIELD (2026-09-02, the composer round). Paul, B7: *"Tap tempo,
      the tempo editor appears, same for key. The tempo editor does not reflect
@@ -3207,6 +3229,8 @@
                 BPM_STEP, bpmSay, BPM_ROW_LO, BPM_ROW_HI,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
+                // the four chips the meter menus offer beside the two words
+                METERSIGS,
                 // the pace ladder, moved down from compose.js's closure so the UI
                 // may read it (2026-09-02) — compose.js re-exports it unchanged
                 PACES, PACELABEL,

@@ -602,15 +602,23 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      on the stripe while this one's are read. */
   for (const t of tabs) {
     await openTop("Band");
-    await p.click('[data-k="' + t + '"]'); await p.waitForTimeout(150);
-    eat(await survey());
     /* ...AND A VOICE IS ONE SHEET SINCE 2026-09-04 (nukernel/TABLE.md wave
        2c). The three facets are deleted with the pane they switched: a player
        is a COLUMN of the Band table and its whole vector is one sheet, opened
        by its column head. So the walk that was "the mark, then each of its
        facets" is "the mark, then its column head" — one more surface than the
        stripe alone, exactly as before, and every `cast.*` and `sound.*` menu
-       is on the page for the survey to eat. */
+       is on the page for the survey to eat.
+
+       AND THE STRIPE'S OWN TAP WENT WITH THE STRIPE (2026-09-05). A
+       `await p.click('[data-k="tab' + name + '"]')` stood at the head of this
+       loop — the gutter mark a player used to be opened from — and there has
+       been no such element since §10b step 7 deleted the tray. It did not
+       report a missing control: `page.click` WAITS, so the whole gate died at
+       `Timeout 30000ms exceeded · waiting for locator('[data-k="tabvoice"]')`
+       and nothing after this line was measured at all. A door that no longer
+       exists is a red on the FIRST player, not a census. The column head below
+       is the only door there is, and it is the one a thumb uses. */
     const opened = await p.evaluate((k) => {
       const name = String(k).replace(/^tab/, "");
       const b = document.querySelector('#pan-band [data-k="tcol|' + name + '"]');

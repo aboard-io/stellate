@@ -1835,14 +1835,69 @@ instruments and sections"*).** At 320, 390 and 1280, with the pane scrolled:
 | the special rows' stack | **72 · 121 · 170**, column heads at **235** at 320/390 (127 · 176 · 225 / 290 at 1280) — three pinned lines, none sharing one |
 | INSTRUMENT heads (the column heads), vertical | declared `sticky` and **the pane has 0px of vertical scroll to give** |
 
-THE VERTICAL AXIS IS A DECISION, NOT A BUG, AND IT IS OPEN. `.nu-pane` sizes to
-its content and THE PAGE is the vertical scrollport, so the column heads' own
-`position: sticky` has nothing to stick against going down: scroll the page and
-the instruments leave with it. Making them stick means making the pane the
+THE VERTICAL AXIS WAS A DECISION, NOT A BUG, AND IT WAS OPEN. `.nu-pane` sized
+to its content and THE PAGE was the vertical scrollport, so the column heads'
+own `position: sticky` had nothing to stick against going down: scroll the page
+and the instruments left with it. Making them stick means making the pane the
 vertical scrollport too — a height cap — and that puts an OPEN SHEET inside a
 box that scrolls, which this page has a standing law against (*"menus never
 scroll inside themselves … vertical space is cheap and abundant"*). One of the
-two laws has to give and it is not a choice this round should make quietly.
+two laws has to give and it is not a choice that round should make quietly.
+
+### 11c · THE PANE IS THE SCROLLPORT (2026-09-05, and the law that gave)
+
+**SHIPPED (uncommitted).** The decision above was taken: the pane scrolls on
+both axes and the heads stick to it. WHICH LAW GAVE, and why it was the right
+one — the standing law is about a MENU with its own little scrollbar, opened
+over a page that could have shown it whole. A sheet on this table is a `<tr>`
+IN FLOW inside the grid; it scrolls with the grid it belongs to, exactly as a
+spreadsheet's expanded row does. What a hand must never do is scroll a box
+inside a box, and here there is one box and it is the whole instrument.
+DESIGN.md §2 component 2 (*"sticky on its axis at every width, the corner
+pinned both ways"*) and §3 (*"the pane is the scrollport; heads stick"*) are
+the spec this satisfies.
+
+**THE CAP IS THE WRAP'S, NOT THE PANE'S**, and that is arithmetic. The brief
+said "100dvh minus `--top-h` minus `--bar-h`"; the pane is not the only thing
+between them. Measured at 320: the strip ends at 55.2 (`body`'s
+`padding-block-start`), `.nu-pan` pays `--s4` above the wrap, `body` reserves
+`calc(var(--bar-h) + var(--s3))` below for the foot bar, and the FORMULA BAR is
+106px inside the wrap at phone width. Cap the pane alone and the formula bar
+hands 106px of page scroll straight back. So `.nu-sheetwrap` takes the band,
+the formula bar keeps its natural size inside it, and the pane is the flex
+child (`min-block-size: 0` — without it a flex item's `auto` minimum is its
+content and the cap does nothing at all) that takes what is left and scrolls.
+
+**AND `stick()` WAS SUMMING HEIGHTS, WHICH IS NOT WHERE A ROW IS.** It read
+`y += tr.height` — every row's height and none of the space between them, and
+`.nu-trims` is `border-spacing: 3px`. It cost nothing while the pane had no
+vertical scroll; the moment it did, measured at 390 on Kingston 1969: the head
+rows stand at **4 · 53 · 102 · 167.1** in their own table and the sum said
+**0 · 46 · 92 · 154.1**, so every head SNAPPED 13px up the first time a thumb
+scrolled down. It measures now, with the pins RELEASED first (a stuck row
+reports the pin, not its place, so reading them while held feeds the loop its
+own last answer) — all inside one frame, nothing paints in between.
+
+**MEASURED AFTER**, at 320 · 390 · 1280 on Kingston 1969, the pane scrolled 400
+down and 220 across (T9s2–T9s5, and shell A4's exemption):
+
+| | measured |
+|---|---|
+| the pane's vertical scroll | **1053 · 1053 · 1002 px** (it was 0) |
+| INSTRUMENT heads over 400px down | **moved 0px**; the corner 0 |
+| SECTION heads over 220px across | **moved 1px**; the corner 1 (`border-spacing`) |
+| the special rows' stack | 72 · 121 · 170, column heads at 235 (127 · 176 · 225 / 290 at 1280) |
+| the PAGE's own scroll on the Band sheet | **none, either way** — `scrollHeight === clientHeight` at all three |
+
+**AND A LANDING STOPPED STEALING** (the same round, and it is T9b5's whole
+red). `tab` and `formSec` are page STATE — which player you are on — and
+`tablePanel` read them as an INSTRUCTION, so every rebuild re-issued the
+arrival. §9d stopped it CLOSING the door it wanted; it went on STEALING every
+other one. Measured: open a cell, open its strip of words, tap a chip, and the
+reading came back `{"strips":0,"open":["tcol|line 6"],"rows":["cast.material|
+line 6",…]}` — not a strip that closed, a sheet that was TAKEN. `landedOn`
+remembers the door this panel last landed on; `openVoice` and `openSection`
+re-arm it, so asking for the same player twice still opens their sheet.
 
 **A LANDING ONLY LANDS.** `tablePanel` ends every rebuild by CLICKING the head
 it wants open — the arrival door for the gutter, the atlas and a link — and

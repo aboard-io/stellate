@@ -247,12 +247,16 @@ function standUpServer() {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     if (window.__eightTab) window.__eightTab("Band");
     await wait(350);
-    let b2 = document.querySelector('[data-k="tab' + n + '"]');
-    if (!b2 && window.__eightUp) { window.__eightUp(); await wait(300);
-                                   b2 = document.querySelector('[data-k="tab' + n + '"]'); }
-    if (!b2) return { found: false };
-    b2.click(); await wait(350);
-    /* THE MUTE IS IN THE PLAYER'S MIX CELL SINCE 2026-09-07 (TABLE.md §10b
+    /* AND THE PLAYER IS NOT OPENED FROM A STRIPE, BECAUSE THERE IS NO STRIPE
+       (2026-09-05). Two lines stood here that tapped `[data-k="tab<voice>"]`,
+       the gutter mark a player used to be reached by, and returned
+       `{ found: false }` when they could not find it — which is what this
+       gate had been reporting for weeks: `"muteTrip":{"found":false}`, a red
+       that reads like a dead meter and is a dead DOOR. The tray was deleted in
+       §10b step 7; the mix cell below is addressed on the Band table itself
+       and needs no navigation at all beyond standing on the Band sheet.
+
+       THE MUTE IS IN THE PLAYER'S MIX CELL SINCE 2026-09-07 (TABLE.md §10b
        step 3). It was the COLUMN sheet from 2026-09-04 — `facet-mix` deleted,
        `voiceMix` seated in the sheet the column head opens — and §10a gives
        the strip a row of its own: the MIX row, one cell per voice column, in

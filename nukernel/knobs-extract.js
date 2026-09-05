@@ -255,73 +255,152 @@ function unitOf(dsp, key, param) {
     if (Object.prototype.hasOwnProperty.call(UNIT, k)) return UNIT[k];
   return null;
 }
-/* WHAT A ROW IS CALLED. The param's plain English, and only where plain
-   English is not already the param's own name — `nasal` writes `nasal` and the
-   row says "the nose" (VOICE.md §3). Anything absent falls back to the recipe
-   word itself, which is how 237 rows are nameable without 237 lines here. */
+/* WHAT A ROW IS CALLED — AS A COPY KEY, NEVER AS ENGLISH.
+   This table maps a param (or a recipe word, or one module's spelling of
+   either) to a key in `nukernel/src/copy/knobs.ts`, and the row this file
+   writes carries `labelKey`. Nothing here is a printed string: `ui/eight.js`
+   resolves the key through `t()` when it draws the row, so a second language
+   is a second table beside that one and this extractor never moves.
+
+   IT USED TO PRINT QUESTIONS. "how far the envelope opens the filter", "the
+   mic and the room", "how much it phonates" — a caption under a control rather
+   than a name on one, against DESIGN.md §4 ("nouns for things … a chip or a
+   face ≤ 6 words"), and untranslatable besides: a question's word order does
+   not survive the trip. The nouns are in the catalogue; what is measured here
+   is still only WHICH row exists.
+
+   FOUR ROWS BORROW `env.seg.*` (misc.ts) INSTEAD OF NAMING THEMSELVES.
+   Attack, decay, sustain and release are the envelope's own stages and are
+   named once for the plate and the table both — the same handle under two
+   names one line apart is what the envelope round deleted.
+
+   THE LOOKUP TAKES A MODULE OVERRIDE FIRST, exactly as `unitOf` does above and
+   for exactly the same reason: one word, two facts. A choir's `spread` is how
+   far its throats are out of tune with each other and a Juno's is antiphase in
+   the stereo field; a Solina's `octave` is an 8'/4' footing mix and a
+   supersaw's is a sub. `dsp/key` beats `dsp/param` beats `key` beats `param` —
+   and KEY BEFORE PARAM is deliberate: `nasal` has no entry of its own and
+   falls through to `velum`'s noun, while `vowels` (whose param is the singular
+   `vowel`) must not be named after a fifth of itself.
+
+   AND IT IS COMPLETE. `labelOf` throws on a row it cannot name, and `build`
+   checks every key against the catalogue on disk, so a new module cannot ship
+   a control that prints `knobs.somethingNew` back at whoever opened the sheet. */
 const LABEL = {
-  velum: "the nose", fric: "the hiss", fricX: "where the hiss sits",
-  voiced: "how much it phonates", open: "how open the glottis is",
-  breath: "breath", push: "the fold", artic: "how far the mouth moves",
-  babble: "how the mouth moves", rate: "how fast the mouth moves",
-  vowelEvery: "how long it stays on one sound", vowels: "what the sounds are",
-  seed: "which sentence it says", tongue: "the tongue",
-  tongueD: "how far the tongue reaches", tongueL: "how long the tongue is",
-  lips: "the lips", voice: "who is singing", vowel: "the vowel",
-  cutoff: "the mic and the room", vibrato: "vibrato",
-  vibRate: "how fast the vibrato is", vibRise: "how late the vibrato starts",
-  oscMix: "the two oscillators", sub: "the sub", subLevel: "the sub",
-  sawLevel: "the saw", pulseLevel: "the pulse", noiseLevel: "the noise",
-  spread: "how wide", width: "how wide", ensemble: "the ensemble",
-  chorus: "the chorus", leslie: "the leslie", perc: "the percussive tap",
-  drive: "how hard it is driven", leak: "the drawbar leak",
-  click: "the key click", keytrack: "how far the filter follows the key",
-  envmod: "how far the envelope opens the filter",
-  fenvAmount: "how far the envelope opens the filter",
-  envAmount: "how far the envelope opens the filter",
-  resonance: "resonance", res: "resonance",
-  wobbleBars: "how often it wobbles", wobbleHz: "how often it wobbles",
-  /* THE DRAWBARS, IN THE HAMMOND'S OWN VOCABULARY. Nine harmonics named by
-     ORGAN PIPE LENGTH — the sub-octave, the fifth above it, the note itself,
-     the octave, the twelfth, the fifteenth and the three mutations on top —
-     which is the only naming under which "888000000" means anything. `bar513`
-     is 5 1/3', spelled in the source the way a filename can be. */
-  bar16: "16' — the sub-octave", bar513: "5 1/3' — the fifth",
-  bar8: "8' — the note", bar4: "4' — the octave",
-  bar223: "2 2/3' — the twelfth", bar2: "2' — the fifteenth",
-  bar135: "1 3/5' — the seventeenth", bar113: "1 1/3' — the nineteenth",
-  bar1: "1' — the twenty-second",
-  // …and the rest of the plain English, one line per word the fleet uses.
-  // A row with no entry says its own key, which is the right answer for
-  // `attack`, `release`, `decay`, `sustain`, `vibrato`, `detune` and `glide` —
-  // every one of them is already the word a musician uses.
-  bright: "how bright", stiff: "how stiff the string is",
-  ring: "how long it rings", tone: "the tone",
-  pluckPos: "where it is plucked", pickup: "where the pickup is",
-  exPos: "where it is struck", tilt: "how the partials tilt",
-  wave: "the wave", waveform: "the wave", filterMode: "the filter",
-  voices: "how many voices", octave: "the sub-octave",
-  chorusRate: "how fast the chorus is", chorusDepth: "how deep the chorus is",
-  scan: "where the wavetable is scanned", scanEnv: "how far the envelope scans",
-  scanLfo: "how far the LFO scans", scanRate: "how fast it scans",
-  index: "the index", dcwAmount: "how far the wave is distorted",
-  dcwAttack: "how fast the distortion arrives", dcwDecay: "how fast it falls away",
-  dcwSustain: "where the distortion rests",
-  syncRatio: "the sync ratio", syncSweep: "how far the sync sweeps",
-  syncDecay: "how fast the sync falls back",
-  osc2tune: "the second oscillator", osc2lfo: "the LFO on the second oscillator",
-  lfoRate: "how fast the LFO is", lfoToFilter: "the LFO on the filter",
-  pmFM: "how much it phase-modulates", pmFilt: "how much it modulates the filter",
-  pwmBase: "the pulse width", pwmLfo: "how far the pulse width moves",
-  percHarm: "which harmonic the tap is", percDecay: "how fast the tap fades",
-  envSustain: "where the filter envelope rests",
-  sway: "how the fold drifts", swayRate: "how fast it drifts",
-  vowelSway: "how the vowel drifts", fenv: "the filter zap",
-  sustain: "where it rests", decay: "how fast it falls to that",
-  ratio: "the ratio of the two operators", idx0: "how bright the attack is",
-  idx1: "how bright it stays", idxTime: "how fast one becomes the other",
-  dx7Preset: "the cartridge",
+  /* ---- the filter ---- */
+  cutoff: "knobs.cutoff", resonance: "knobs.resonance", res: "knobs.resonance",
+  filterMode: "knobs.filterMode",
+  envmod: "knobs.filterEnvAmount", fenvAmount: "knobs.filterEnvAmount",
+  envAmount: "knobs.filterEnvAmount", fenv: "knobs.filterEnvAmount",
+  fenvAttack: "knobs.filterEnvAttack", envAttack: "knobs.filterEnvAttack",
+  fenvDecay: "knobs.filterEnvDecay", envDecay: "knobs.filterEnvDecay",
+  envSustain: "knobs.filterEnvSustain",
+  keytrack: "knobs.keyTracking", lfoToFilter: "knobs.lfoToFilter",
+
+  /* ---- the oscillators ---- */
+  oscMix: "knobs.oscMix", wave: "knobs.waveform", waveform: "knobs.waveform",
+  voices: "knobs.voiceCount",
+  sub: "knobs.subLevel", subLevel: "knobs.subLevel",
+  octave: "knobs.subOctave", "solina/octave": "knobs.octaveMix",
+  sawLevel: "knobs.sawLevel", pulseLevel: "knobs.pulseLevel",
+  noiseLevel: "knobs.noiseLevel",
+  pwmBase: "knobs.pulseWidth", pwmLfo: "knobs.pulseWidthDepth",
+  detune: "knobs.detune",
+  spread: "knobs.stereoWidth", width: "knobs.stereoWidth",
+  "voice_choir/spread": "knobs.detuneSpread",
+  drift: "knobs.drift",
+  "voice_choir/drift": "knobs.vowelDrift", "voice_lead/drift": "knobs.vowelDrift",
+  osc2tune: "knobs.osc2Tune", osc2lfo: "knobs.osc2Lfo",
+  lfoRate: "knobs.lfoRate", glide: "knobs.glide",
+
+  /* ---- FM, sync and phase ---- */
+  ratio: "knobs.fmRatio", idx0: "knobs.fmIndexStart", idx1: "knobs.fmIndexEnd",
+  idxTime: "knobs.fmIndexTime",
+  pmFM: "knobs.phaseMod", pmFilt: "knobs.phaseModFilter",
+  syncRatio: "knobs.syncRatio", syncSweep: "knobs.syncSweep",
+  syncDecay: "knobs.syncDecay",
+
+  /* ---- the wavetable and the phase-distortion wave ---- */
+  scan: "knobs.scanPosition", scanEnv: "knobs.scanEnv",
+  scanLfo: "knobs.scanLfo", scanRate: "knobs.scanRate",
+  index: "knobs.waveDistortion", dcwAmount: "knobs.distortionEnvAmount",
+  dcwAttack: "knobs.distortionAttack", dcwDecay: "knobs.distortionDecay",
+  dcwSustain: "knobs.distortionSustain",
+
+  /* ---- tone, drive and the built-in effects ---- */
+  tone: "knobs.tone", bright: "knobs.brightness", drive: "knobs.drive",
+  chorus: "knobs.chorus", chorusRate: "knobs.chorusRate",
+  chorusDepth: "knobs.chorusDepth", ensemble: "knobs.ensemble",
+  leslie: "knobs.leslie", vibrato: "knobs.vibrato",
+  vibRate: "knobs.vibratoRate", vibRise: "knobs.vibratoDelay",
+  wobbleBars: "knobs.wobbleRate", wobbleHz: "knobs.wobbleRate",
+
+  /* ---- THE DRAWBARS, IN THE HAMMOND'S OWN VOCABULARY. Nine harmonics named
+     by ORGAN PIPE LENGTH — the sub-octave, the fifth above it, the note
+     itself, the octave, the twelfth, the fifteenth and the three mutations on
+     top — which is the only naming under which "888000000" means anything.
+     `bar513` is 5 1/3', spelled in the source the way a filename can be. */
+  bar16: "knobs.bar16", bar513: "knobs.bar513", bar8: "knobs.bar8",
+  bar4: "knobs.bar4", bar223: "knobs.bar223", bar2: "knobs.bar2",
+  bar135: "knobs.bar135", bar113: "knobs.bar113", bar1: "knobs.bar1",
+  perc: "knobs.percussion", percHarm: "knobs.percussionHarmonic",
+  percDecay: "knobs.percussionDecay", click: "knobs.keyClick",
+  leak: "knobs.leakage",
+
+  /* ---- the physical models: a string, a bar, a bow ---- */
+  stiff: "knobs.stiffness", ring: "knobs.ringTime",
+  pluckPos: "knobs.pluckPosition", pickup: "knobs.pickupPosition",
+  exPos: "knobs.strikePosition", tilt: "knobs.partialTilt",
+  force: "knobs.bowPressure", speed: "knobs.bowSpeed",
+  bowPos: "knobs.bowPosition", skin: "knobs.skin", pad: "knobs.bridgePad",
+
+  /* ---- the throat and the tube ---- */
+  voice: "knobs.voiceType", breath: "knobs.breath",
+  open: "knobs.glottis", voiced: "knobs.voicing", velum: "knobs.nasality",
+  fric: "knobs.hiss", fricX: "knobs.hissPosition",
+  artic: "knobs.articulation", tongue: "knobs.tonguePosition",
+  tongueD: "knobs.tongueReach", tongueL: "knobs.tongueLength",
+  lips: "knobs.lips", vowel: "knobs.vowel", vowels: "knobs.vowels",
+  vowelEvery: "knobs.syllableLength", vowelSway: "knobs.vowelDrift",
+  sway: "knobs.foldDrift", swayRate: "knobs.foldDriftRate",
+  babble: "knobs.babble", rate: "knobs.babbleRate", seed: "knobs.babbleSeed",
+
+  /* ---- the envelope's own stages, named once for the plate and the table
+     (nukernel/src/copy/misc.ts) ---- */
+  attack: "env.seg.attack", decay: "env.seg.decay",
+  sustain: "env.seg.sustain", release: "env.seg.release",
+
+  /* ---- a voice whose one control is a patch ---- */
+  dx7Preset: "knobs.cartridge",
 };
+/* FIRST HIT WINS, and a miss is a THROW rather than the recipe word printed
+   raw: a row called `fenvDecay` on the page is code on a control, which
+   DESIGN.md §4 forbids and which no translator could ever fix. */
+function labelOf(dsp, key, param) {
+  for (const k of [dsp + "/" + key, dsp + "/" + param, key, param])
+    if (Object.prototype.hasOwnProperty.call(LABEL, k)) return LABEL[k];
+  throw new Error("knobs-extract: no name for " + dsp + "/" + key +
+    " (param " + param + ") — add it to LABEL here and to " +
+    "nukernel/src/copy/knobs.ts");
+}
+
+/* ---------- AND THE NAMES ARE CHECKED AGAINST THE CATALOGUE --------------
+   A `labelKey` the catalogue does not hold prints as itself (copy/api.ts: a
+   missing key is loud on purpose), so the page would say `knobs.somethingNew`
+   over a slider. Cheaper to refuse it here: read the keys out of
+   nukernel/src/copy/*.ts — the source the committed ui/copy.js is built from —
+   and fail the run rather than the reader. */
+function catalogueKeys() {
+  const dir = path.join(ROOT, "nukernel/src/copy");
+  if (!fs.existsSync(dir)) return null;
+  const keys = new Set();
+  for (const f of fs.readdirSync(dir))
+    if (/\.ts$/.test(f))
+      for (const m of fs.readFileSync(path.join(dir, f), "utf8")
+                        .matchAll(/"([a-z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9]+)+)"\s*:/g))
+        keys.add(m[1]);
+  return keys.size ? keys : null;
+}
 
 /* ---------- the word alphabets a `set` key may be spelled in -------------
    Three keys in the whole fleet are WORDS, and a numeric slider on a word is a
@@ -733,12 +812,12 @@ async function build() {
       // against VOICE.md §3 ("the label comes from the PARAM") and gives the
       // same answer everywhere but one. The rule's PURPOSE is that a row is
       // named for what you hear rather than for how it happens to be spelled —
-      // `nasal` has no entry and falls through to `velum`'s "the nose", which
+      // `nasal` has no entry and falls through to `velum`'s "Nasality", which
       // is exactly the intended behaviour. The exception is `vowels`, whose
       // param is `vowel`: the param is ONE vowel and the control is the whole
       // WORD, so naming it after the param would be naming it after a fifth of
-      // itself.
-      const label = LABEL[r.key] || LABEL[r.param] || r.key;
+      // itself. (A MODULE'S OWN SPELLING beats both — see `labelOf`.)
+      const labelKey = labelOf(dsp, r.key, r.param);
       /* WHAT THE PARENT ANSWERS WITH THE KEY ABSENT — and where it answers
          NOTHING AT ALL, the module's own. The uniform `fenv*` surface is
          written onto the unit only when a recipe asks for it ("fenvAmount
@@ -753,7 +832,7 @@ async function build() {
         : meta[r.param] && meta[r.param].init != null ? meta[r.param].init : null;
       const gate = gateOf(dsp, r.key);
       if (r.kind === "patch") {
-        out.push({ key: r.key, param: r.param, label: "the cartridge", kind: "patch",
+        out.push({ key: r.key, param: r.param, labelKey: "knobs.cartridge", kind: "patch",
           words: r.words, patches: r.patches, derived: b0.module });
         continue;
       }
@@ -798,7 +877,7 @@ async function build() {
             if (JSON.stringify(shot(probe({ [r.key]: vals[i] }))) === JSON.stringify(b0))
               { derivedWord = r.words[i]; break; }
         }
-        out.push({ key: r.key, param: r.param, label, kind: r.key === "vowels" ? "vowels" : "word",
+        out.push({ key: r.key, param: r.param, labelKey, kind: r.key === "vowels" ? "vowels" : "word",
           words: r.words, values: r.values, derived, derivedWord, ...(gate ? { gate } : {}),
           ...(r.key === "vowels" ? { rowOf } : {}),
           ...(Object.keys(compass).length ? { compass } : {}) });
@@ -887,7 +966,7 @@ async function build() {
         // different one.
         const mapped = derivedAt != null &&
           Math.abs(snap(derivedAt, min, step) - derived) > Math.abs(derived) * 1e-6 + 1e-9;
-        out.push({ key: r.key, param: r.param, label, kind: "number",
+        out.push({ key: r.key, param: r.param, labelKey, kind: "number",
           min: round(min, step), max: round(max, step), step,
           unit: unitOf(dsp, r.key, r.param),
           derived: typeof shown === "number" ? round(shown, step) : shown,
@@ -926,6 +1005,17 @@ async function build() {
     census[dsp] = out.length;
     total += out.length;
   }
+  /* EVERY NAME THIS RUN WROTE, AGAINST THE CATALOGUE ON DISK. One pass at the
+     end rather than one lookup per row, so the message can name all of them. */
+  const cat = catalogueKeys();
+  if (cat) {
+    const missing = [...new Set([].concat(
+      ...Object.values(voices).map((v) => v.rows.map((x) => x.labelKey))))]
+      .filter((k) => !cat.has(k)).sort();
+    if (missing.length)
+      throw new Error("knobs-extract: nukernel/src/copy holds no name for " +
+        missing.join(", ") + " — write it there before naming a row with it");
+  }
   return { voices, census, total, budget: SE.BUDGET, tract: tractTables() };
 }
 
@@ -939,9 +1029,14 @@ function banner(r) {
     "// `--check` fails if this file and the engine disagree.\n" +
     "//\n" +
     "//   key      what the document writes into `voice.set`\n" +
-    "//   param    what it was measured to move (the LABEL comes from this, the\n" +
+    "//   param    what it was measured to move (the NAME comes from this, the\n" +
     "//            document key from the recipe word — `fenvAmount` moves\n" +
     "//            `envAmount` on a juno60 and `fenvAmount` on a pad_saw)\n" +
+    "//   labelKey what the row is CALLED — a key into the one copy catalogue,\n" +
+    "//            nukernel/src/copy/knobs.ts, resolved by `t()` where the row is\n" +
+    "//            drawn. No English is written into this file, so a second\n" +
+    "//            language is a second table beside that one and nothing here\n" +
+    "//            is regenerated for it.\n" +
     "//   min/max  the outermost values at which the parameter still moves, found\n" +
     "//            by sweeping the parent's own declared bracket and trimming the\n" +
     "//            dead travel off both ends\n" +

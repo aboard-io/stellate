@@ -163,9 +163,40 @@ function sectionEvents(doc, i) {
     if (typeof A.diatonic !== "boolean") say("diatonic " + A.diatonic);
     if (!["modal", "cycle", "emergent"].includes(A.harmony)) say("harmony " + A.harmony);
     if (!Array.isArray(A.prog) || !A.prog.length) say("no prog");
-    for (const c of A.prog || []) {
-      if (!Number.isInteger(c.d)) say("prog degree " + c.d);
-      if (!QUAL.has(c.q)) say("prog quality " + c.q);
+    /* A PROG ENTRY IS A BAR, AND A BAR MAY HOLD MORE THAN ONE CHORD
+       (rewritten 2026-09-05). This read `for (const c of A.prog)` and treated
+       every entry as a chord, which was true of every record written before
+       v277 (ee8366d, the composer's asks) answered *"Don't we need the chord
+       editor to handle duration of chords? It must."* A bar is now either one
+       chord object or a LIST of them sharing the bar by `beats` — kernel.js
+       chordsOf:1041 is the owner of that reading (`const slot = at(g.prog,
+       bar), list = Array.isArray(slot) ? slot : [slot]`), document.js:1730
+       validates a save against exactly that shape, and precompose.js progOf
+       carries it into the record. The gate was the only reader left on the
+       old shape, so it asked an ARRAY for its `.d` and got `undefined` back:
+       36 problems, and measured they were exactly the six half-bar changes
+       this catalogue states — bossa 4, doowop 1, gospel 1 (the plagal amen,
+       IV-I inside the last bar) — times two questions times three seeds.
+       Nothing about the data is wrong; a turnaround inside one bar is the
+       feature. So the bar is flattened here and every chord in it is asked
+       the same two questions it always was, plus the one the new shape adds:
+       a `beats` split is a whole number of steps, and it may only appear
+       INSIDE a list, because a lone chord's window is the whole bar by
+       construction and a `beats` on one would reach nothing. */
+    for (const slot of A.prog || []) {
+      const bar = Array.isArray(slot) ? slot : [slot];
+      if (Array.isArray(slot) && !bar.length) say("prog bar with no chords");
+      for (const c of bar) {
+        if (!c || typeof c !== "object" || Array.isArray(c)) {
+          say("prog chord " + JSON.stringify(c)); continue;
+        }
+        if (!Number.isInteger(c.d)) say("prog degree " + c.d);
+        if (!QUAL.has(c.q)) say("prog quality " + c.q);
+        if (c.beats != null && (!Number.isInteger(c.beats) || c.beats < 1))
+          say("prog beats " + c.beats);
+        if (c.beats != null && !Array.isArray(slot))
+          say("prog beats on a lone chord");
+      }
     }
 
     const names = Object.keys(doc.material.cells);

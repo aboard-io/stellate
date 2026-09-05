@@ -62,7 +62,7 @@
   // TABLE (genres-tables.js, beside the label maps) and this file groups by it.
   const { GENRES, MODES, MODELABEL, SCALES, SCALELABEL,
           SCALEFAMILY, MODEFAMILY, FAMILYLABEL } = NG;
-  const { KEYS, KEYLABEL, METERLABEL, RATES, RATELABEL, SWINGLABEL, GROOVELABEL,
+  const { KEYS, KEYLABEL, METERLABEL, METERSIGS, RATES, RATELABEL, SWINGLABEL, GROOVELABEL,
           ROLES, BASSOPS, KITLABEL, DRUMKITS, INSTRCHOICES,
           // BASSCHOICES joined this line 2026-09-02 with `sound.bassinstrument`
           // below — the narrower list the bass chair may be handed.
@@ -666,7 +666,10 @@
       values: () => [{ value: "", label: "4/4" },
                      { value: "three", label: "3/4" },
                      { value: "six", label: "6/8" },
-                     ...["2/4", "5/4", "7/8", "12/8"].map((v) => ({ value: v, label: v }))],
+                     // the four chips are fields.js METERSIGS and not four
+                     // literals here — a signature labels itself, so value and
+                     // label are the same string (2026-09-05, R2's owner).
+                     ...METERSIGS.map((v) => ({ value: v, label: v }))],
       get: (doc) => doc.time.meter || "",
       set: (doc, s, v) => { doc.time.meter = v || null; } },
     /* "Speed", not "reading speed" — the review's glossary (a player PLAYS),

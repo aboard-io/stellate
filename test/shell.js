@@ -35,6 +35,10 @@
 //   A4  every .nu-pane has scrollHeight - clientHeight <= 1. `overflow-x: auto`
 //       silently computes `overflow-y` to `auto` as well, so a pane is a
 //       TWO-axis scroller and a table one pixel too tall hides a row.
+//       (…EXCEPT `[data-pane="table"]`, which since 2026-09-05 is the sonic
+//       spreadsheet's scrollport on purpose so its instrument heads have
+//       something to stick against. The exemption is measured and argued at
+//       the `clippedPanes` field below.)
 //   A5  NO TABLE OVERFLOWS ITS CONTAINER. A table wider than the column it
 //       sits in scrolls inside a `.nu-pane`; a table that fits needs no pane
 //       and must not have one. (WAS: "every <table> has a .nu-pane parent",
@@ -294,8 +298,23 @@ const SURVEY = () => {
     smallBoxes: all("input[type=checkbox], input[type=radio], button.nu-kc")
       .map((e) => { const t = target(e); return { n: name(e), w: +t.w.toFixed(1), h: +t.h.toFixed(1) }; })
       .filter((x) => x.w < 24 || x.h < 24),
-    // A4
+    /* A4 — ...EXCEPT THE ONE PANE THAT IS DELIBERATELY A TWO-AXIS SCROLLER
+       (2026-09-05). Every other pane on this page is a WIDE table in a column
+       that scrolls sideways, and a vertical overflow there is a row hidden by
+       accident — which is the whole of this check and why it exists.
+       The table's own pane is the other thing: Paul, using it, *"we should
+       have sticky headers for instruments and sections"*, and a `position:
+       sticky` head needs a scrollport to stick inside. `.nu-sheetwrap` is
+       capped to the band between the top strip and the foot bar and
+       `.nu-pane[data-pane="table"]` takes what is left and scrolls BOTH ways
+       (nu.css carries the arithmetic and the two laws it weighs). Its vertical
+       overflow is the feature; measured at 320/390/1280 on Kingston 1969, the
+       pane has 913 · 913 · 862 px to give and the page itself has NONE
+       (documentElement.scrollHeight === clientHeight), which is what keeps the
+       bar's promise. test/table.browser.js T9s2 asserts the heads hold over
+       it; this line only stops asserting the opposite. */
     clippedPanes: all(".nu-pane")
+      .filter((p) => p.dataset.pane !== "table")
       .map((p, i) => ({ i, over: p.scrollHeight - p.clientHeight }))
       .filter((x) => x.over > 1),
     // A5 — a <table> that is WIDER THAN THE BOX IT IS IN and has nothing to
@@ -666,10 +685,15 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     const rowNames = await page.evaluate(() =>
       [...document.querySelectorAll("#nu-menu button")]
         /* THE HEAD OF THE ACCESSIBLE NAME, because the log's carries its
-           count ("log — 3 lines" / "log — nothing yet") — one node, two names,
-           and the one this list is about is the SUBJECT's. */
+           count — one node, two names, and the one this list is about is the
+           SUBJECT's. TWO SHAPES SINCE THE TEXT PASS (2026-09-05): the empty
+           form is still "log — nothing yet" and the counted one is "log ({n})",
+           so a split on the em dash alone reads "log (1)" back whole and this
+           line passes only while nothing has been logged yet. It went red in
+           test/text-diet.test.js the same hour, on the same node, for exactly
+           that reason. Both suffixes come off. */
         .map((b) => (b.getAttribute("aria-label") || "").trim()
-                     .split(/ — |,/)[0]));
+                     .replace(/\s*\(\d+\)\s*$/, "").split(/ — |,/)[0].trim()));
     is(JSON.stringify(rowNames) === JSON.stringify(MENU_ROWS.concat(["log"])),
       "A6d " + width + " · the hamburger is the four viewers and the log, in "
       + "TABS' own order — " + JSON.stringify(rowNames));

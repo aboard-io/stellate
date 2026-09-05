@@ -5,7 +5,7 @@
 // (`cell.default`, `op.transposeUp`, `refuse.noArticle`…), read by t(key, {n,
 // unit, name})"*.
 //
-// ONE KEYSPACE, WRITTEN IN ELEVEN PAGES. The catalogue is one flat map — one key,
+// ONE KEYSPACE, WRITTEN IN TWELVE PAGES. The catalogue is one flat map — one key,
 // one meaning, no key twice — and it is WRITTEN as a page per surface, because
 // a two-thousand-line object literal is a file nobody can review and a merge
 // conflict every round. `merge` below is what makes the split safe: a key that
@@ -27,6 +27,7 @@ import { SHEETS } from "./sheets.js";
 import { PRODUCE } from "./produce.js";
 import { BOARD } from "./board.js";
 import { GLYPHS } from "./glyph.js";
+import { KNOBS } from "./knobs.js";
 import { ATLAS } from "./atlas.js";
 import { RULES } from "./rules.js";
 import { FIELDS } from "./fields.js";
@@ -50,6 +51,7 @@ function merge(pages: Array<[string, Table]>): Table {
 
 export const STRINGS: Table = merge([
   ["core", CORE], ["table", TABLE], ["sheets", SHEETS], ["produce", PRODUCE],
-  ["board", BOARD], ["glyph", GLYPHS], ["atlas", ATLAS], ["rules", RULES],
+  ["board", BOARD], ["glyph", GLYPHS], ["knobs", KNOBS], ["atlas", ATLAS],
+  ["rules", RULES],
   ["fields", FIELDS], ["misc", MISC], ["shell", SHELL],
 ]);

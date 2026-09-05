@@ -861,6 +861,136 @@ var GLYPHS = {
   "glyph.icon.refused": "{word}, {why}"
 };
 
+// nukernel/src/copy/knobs.ts
+var KNOBS = {
+  /* ===== THE FILTER ===================================================== */
+  "knobs.cutoff": "Filter cutoff",
+  "knobs.resonance": "Resonance",
+  "knobs.filterMode": "Filter mode",
+  "knobs.filterEnvAmount": "Filter envelope amount",
+  "knobs.filterEnvAttack": "Filter envelope attack",
+  "knobs.filterEnvDecay": "Filter envelope decay",
+  "knobs.filterEnvSustain": "Filter envelope sustain",
+  "knobs.keyTracking": "Filter key tracking",
+  "knobs.lfoToFilter": "LFO to filter",
+  /* ===== THE OSCILLATORS ================================================ */
+  "knobs.oscMix": "Oscillator mix",
+  "knobs.waveform": "Waveform",
+  "knobs.voiceCount": "Voices",
+  "knobs.subLevel": "Sub level",
+  "knobs.subOctave": "Sub-octave",
+  /* the Solina's 8'/4' body, which is a FOOTING mix and not a sub. */
+  "knobs.octaveMix": "Octave mix",
+  "knobs.sawLevel": "Saw level",
+  "knobs.pulseLevel": "Pulse level",
+  "knobs.noiseLevel": "Noise level",
+  "knobs.pulseWidth": "Pulse width",
+  "knobs.pulseWidthDepth": "Pulse width depth",
+  "knobs.detune": "Detune",
+  /* a choir's `spread` is how far the throats are out of tune with each
+     other; a Juno's is antiphase in the stereo field. One word, two facts —
+     the extractor scopes them by module, exactly as it scopes a unit. */
+  "knobs.detuneSpread": "Detune spread",
+  "knobs.stereoWidth": "Stereo width",
+  "knobs.drift": "Oscillator drift",
+  "knobs.osc2Tune": "Oscillator 2 tune",
+  "knobs.osc2Lfo": "Oscillator 2 LFO",
+  "knobs.lfoRate": "LFO rate",
+  /* the row is a TIME (ms on the fleet, seconds on a waveguide), so the noun
+     says so — and `rule.headGlide` is the rules deck's own heading. */
+  "knobs.glide": "Glide time",
+  /* ===== FM, SYNC AND PHASE ============================================= */
+  "knobs.fmRatio": "Operator ratio",
+  "knobs.fmIndexStart": "Attack index",
+  "knobs.fmIndexEnd": "Settled index",
+  "knobs.fmIndexTime": "Index time",
+  "knobs.phaseMod": "Phase modulation",
+  "knobs.phaseModFilter": "Phase modulation to filter",
+  "knobs.syncRatio": "Sync ratio",
+  "knobs.syncSweep": "Sync sweep",
+  "knobs.syncDecay": "Sync decay",
+  /* ===== THE WAVETABLE AND THE PHASE-DISTORTION WAVE ==================== */
+  "knobs.scanPosition": "Wavetable position",
+  "knobs.scanEnv": "Scan envelope amount",
+  "knobs.scanLfo": "Scan LFO amount",
+  "knobs.scanRate": "Scan rate",
+  "knobs.waveDistortion": "Wave distortion",
+  "knobs.distortionEnvAmount": "Distortion envelope amount",
+  "knobs.distortionAttack": "Distortion attack",
+  "knobs.distortionDecay": "Distortion decay",
+  "knobs.distortionSustain": "Distortion sustain",
+  /* ===== TONE, DRIVE AND THE BUILT-IN EFFECTS ========================== */
+  "knobs.tone": "Tone",
+  "knobs.brightness": "Brightness",
+  "knobs.drive": "Drive",
+  "knobs.chorus": "Chorus",
+  "knobs.chorusRate": "Chorus rate",
+  "knobs.chorusDepth": "Chorus depth",
+  "knobs.ensemble": "Ensemble",
+  "knobs.leslie": "Leslie",
+  "knobs.vibrato": "Vibrato",
+  "knobs.vibratoRate": "Vibrato rate",
+  "knobs.vibratoDelay": "Vibrato delay",
+  "knobs.wobbleRate": "Wobble rate",
+  /* ===== THE HAMMOND, IN ITS OWN VOCABULARY =============================
+     Nine harmonics named by ORGAN PIPE LENGTH, which is the only naming under
+     which "888000000" means anything, and the only one an organist uses. */
+  "knobs.bar16": "16' sub-octave",
+  "knobs.bar513": "5 1/3' fifth",
+  "knobs.bar8": "8' fundamental",
+  "knobs.bar4": "4' octave",
+  "knobs.bar223": "2 2/3' twelfth",
+  "knobs.bar2": "2' fifteenth",
+  "knobs.bar135": "1 3/5' seventeenth",
+  "knobs.bar113": "1 1/3' nineteenth",
+  "knobs.bar1": "1' twenty-second",
+  "knobs.percussion": "Percussion",
+  "knobs.percussionHarmonic": "Percussion harmonic",
+  "knobs.percussionDecay": "Percussion decay",
+  "knobs.keyClick": "Key click",
+  "knobs.leakage": "Drawbar leakage",
+  /* ===== THE PHYSICAL MODELS: a string, a bar, a bow ==================== */
+  "knobs.stiffness": "String stiffness",
+  "knobs.ringTime": "Ring time",
+  "knobs.pluckPosition": "Pluck position",
+  "knobs.pickupPosition": "Pickup position",
+  "knobs.strikePosition": "Strike position",
+  "knobs.partialTilt": "Partial tilt",
+  "knobs.bowPressure": "Bow pressure",
+  "knobs.bowSpeed": "Bow speed",
+  "knobs.bowPosition": "Bow position",
+  /* the erhu's python skin is the radiator and the qin dian damps it. */
+  "knobs.skin": "Skin resonance",
+  "knobs.bridgePad": "Bridge pad",
+  /* ===== THE THROAT AND THE TUBE ========================================
+     A singer and a vocal tract, named for the organ rather than for the
+     gesture: the control is a place or an amount, and "how far the mouth
+     moves" was a caption. */
+  "knobs.voiceType": "Voice type",
+  "knobs.breath": "Breath",
+  "knobs.glottis": "Glottis opening",
+  "knobs.voicing": "Voicing",
+  "knobs.nasality": "Nasality",
+  "knobs.hiss": "Hiss",
+  "knobs.hissPosition": "Hiss position",
+  "knobs.articulation": "Articulation",
+  "knobs.tonguePosition": "Tongue position",
+  "knobs.tongueReach": "Tongue reach",
+  "knobs.tongueLength": "Tongue length",
+  "knobs.lips": "Lips",
+  "knobs.vowel": "Vowel",
+  "knobs.vowels": "Vowels",
+  "knobs.syllableLength": "Syllable length",
+  "knobs.vowelDrift": "Vowel drift",
+  "knobs.foldDrift": "Fold drift",
+  "knobs.foldDriftRate": "Fold drift rate",
+  "knobs.babble": "Babble",
+  "knobs.babbleRate": "Babble rate",
+  "knobs.babbleSeed": "Babble seed",
+  /* ===== A VOICE WHOSE ONE CONTROL IS A PATCH =========================== */
+  "knobs.cartridge": "Cartridge"
+};
+
 // nukernel/src/copy/atlas.ts
 var ATLAS = {
   /* ===== THE GLOBE ====================================================== */
@@ -1227,6 +1357,7 @@ var STRINGS = merge([
   ["produce", PRODUCE],
   ["board", BOARD],
   ["glyph", GLYPHS],
+  ["knobs", KNOBS],
   ["atlas", ATLAS],
   ["rules", RULES],
   ["fields", FIELDS],

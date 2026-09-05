@@ -300,10 +300,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   if (!singer || !player) {
     check(false, "T5c2 this record seats no singer, or no player, to ask");
   } else {
+    /* A FIELD'S HEAD IS A TOGGLE, SO IT IS OPENED IDEMPOTENTLY — the same
+       sentence `openCell` above makes about a cell, and for the same reason
+       one round later. Until 2026-09-05 a strip could not survive the rebuild
+       its own write caused, so this helper arrived at a shut field every time
+       and a blind `click()` always meant "open". Now a strip stays out (Paul:
+       *"Don't dismiss things when I tap them to change values"*), and a blind
+       click on a field that is already open SHUTS it and hands this helper an
+       empty list. */
     const chipsOfField = (k) => p.evaluate((key) => {
       const f = document.querySelector('#pan-band [data-k="' + key + '"]');
       if (!f) return [];
-      f.click();
+      if (f.getAttribute("aria-expanded") !== "true") f.click();
       return [...document.querySelectorAll("#pan-band .nu-wchip")]
         .map((c) => c.dataset.k).filter((x) => x && x.indexOf(key + "|") === 0);
     }, k);
@@ -802,7 +810,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         return out; }
       const f = document.querySelector('#pan-band [data-k="' + k + '"]');
       if (!f) return [];
-      f.click();
+      /* IDEMPOTENT, because the head is a TOGGLE and a strip survives its own
+         write now — see `chipsOfField` above for the measurement. Blind, this
+         line shut the strip it was asked to read: T6e's clear-back never found
+         its chip ({"level":"+6"} left standing) and T6f's walk reported "NONE
+         OF 4 MOVED IT" about four words it had never actually pressed. */
+      if (f.getAttribute("aria-expanded") !== "true") f.click();
       return [...document.querySelectorAll("#pan-band .nu-wchip")]
         .filter((c) => !c.disabled && (c.dataset.k || "").split("|").pop() !== "")
         .map((c) => c.dataset.k);
@@ -1573,16 +1586,29 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const chipped = fk ? await p.evaluate((k) => {
         const f2 = document.querySelector('#pan-band [data-k="' + k + '"]');
         if (!f2) return null;
-        f2.click();
+        if (f2.getAttribute("aria-expanded") !== "true") f2.click();
         const c = [...document.querySelectorAll("#pan-band .nu-wchip")]
           .filter((x) => !x.disabled && (x.dataset.k || "").indexOf(k + "|") === 0);
         if (!c.length) return null;
         c[c.length - 1].click();
         return c[c.length - 1].dataset.k; }, fk) : null;
       await p.waitForTimeout(700);
-      const still = await p.evaluate(() => ({
+      /* ...AND WHEN IT FAILS IT SAYS WHICH DOOR. "strips: 0" is true of a
+         strip that closed, of a sheet that was replaced by another one, and of
+         a field that stopped being a chip field — three different defects with
+         one number. The reading names the open heads and the sheet's own first
+         rows so the next reader does not have to reconstruct the page. */
+      const still = await p.evaluate((k) => ({
         sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
-        strips: document.querySelectorAll("#pan-band .nu-wchip").length }));
+        strips: document.querySelectorAll("#pan-band .nu-wchip").length,
+        field: k,
+        fieldOpen: (document.querySelector('#pan-band [data-k="' + k + '"]')
+          || { getAttribute: () => null }).getAttribute("aria-expanded"),
+        open: [...document.querySelectorAll('#pan-band [aria-expanded="true"]')]
+          .map((x) => x.dataset.k),
+        rows: [...document.querySelectorAll(
+          "#pan-band tr.nu-wopen .nu-sheetrow .nu-wcell")]
+          .map((x) => x.dataset.k).slice(0, 6) }), fk);
       check(!!chipped && still.sheets === 1 && still.strips > 0,
         "T9b5 a chip write does NOT dismiss the sheet it was tapped in — the " +
         "sheet and its strip are still open after the write (" +
@@ -1691,7 +1717,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const wrote = await p.evaluate((k) => {
       const f = document.querySelector('#pan-band [data-k="' + k + '"]');
       if (!f) return null;
-      f.click();
+      if (f.getAttribute("aria-expanded") !== "true") f.click();
       const c = [...document.querySelectorAll("#pan-band .nu-wchip")]
         .filter((x) => !x.disabled && (x.dataset.k || "").indexOf(k + "|") === 0 &&
                        (x.dataset.k || "").split("|").pop() !== "");
@@ -1882,7 +1908,11 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const a = { col: rectOf(COL), row: rectOf(ROW), corner: rectOf(CORNER),
                       canY: pane.scrollHeight - pane.clientHeight,
                       canX: pane.scrollWidth - pane.clientWidth };
-          pane.scrollTop = Math.min(220, a.canY);
+          /* 400 DOWN AND 220 ACROSS. The down is deliberately deeper than
+             the across: a head that snapped by its own height would still be
+             inside 220px of slack, and 400 is past every head this table
+             draws at every width (the whole stack is 167px at 390). */
+          pane.scrollTop = Math.min(400, a.canY);
           pane.scrollLeft = Math.min(220, a.canX);
           setTimeout(() => {
             const b = { col: rectOf(COL), row: rectOf(ROW), corner: rectOf(CORNER),
@@ -1898,18 +1928,29 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           }, 220);
         }, 120));
       });
-      /* WHAT THE PANE CAN ACTUALLY SCROLL, and it is the honest half of this
-         claim. MEASURED at all three widths: the pane's vertical scroll is
-         ZERO, because `.nu-pane` sizes to its content and THE PAGE is the
-         vertical scrollport — so the column heads' `position: sticky` is a
-         true declaration with nothing to stick against on that axis, and a
-         hand scrolling DOWN the page does lose them. Making them stick
-         vertically means making the pane the vertical scrollport too (a height
-         cap), and that would put an open sheet inside a box that scrolls —
-         which this page has a standing law against ("menus never scroll inside
-         themselves"). It is a decision, not a bug, and it is named here rather
-         than asserted away. The HORIZONTAL axis — the section heads and the
-         corner, which is what a wide band actually needs — is asserted. */
+      /* WHAT THE PANE CAN ACTUALLY SCROLL, and it is the whole of this claim.
+         IT READ, and the reading was true the day it was written: "the pane's
+         vertical scroll is ZERO, because `.nu-pane` sizes to its content and
+         THE PAGE is the vertical scrollport — so the column heads' `position:
+         sticky` is a true declaration with nothing to stick against on that
+         axis… It is a decision, not a bug, and it is named here rather than
+         asserted away."
+
+         THE DECISION WAS TAKEN, 2026-09-05: the pane IS the scrollport now.
+         `.nu-sheetwrap` is capped to the band between the top strip and the
+         foot bar and `.nu-pane[data-pane="table"]` takes what is left and
+         scrolls on both axes (nu.css argues it, including which of the two
+         standing laws gave — a sheet here is a `<tr>` IN FLOW inside the grid,
+         not a menu with its own scrollbar). So the claim turns into its
+         opposite: the pane MUST have vertical scroll to give, and the
+         instrument heads must hold over it. `canY > 0` is asserted for the
+         same reason A8 stopped skipping — a check that measures a scroll which
+         cannot happen is not being made.
+
+         AND THE PAGE ITSELF NO LONGER SCROLLS ON THIS SHEET (T9s5 below): a
+         height cap a pixel wrong hands the difference straight back as page
+         scroll, and page scroll under a fixed foot bar is what test/shell.js
+         A6 and A6i exist to forbid. */
       const dY = (st.a.col && st.b.col) ? Math.abs(st.b.col.y - st.a.col.y) : 999;
       const dX = (st.a.row && st.b.row) ? Math.abs(st.b.row.x - st.a.row.x) : 999;
       const cY = (st.a.corner && st.b.corner)
@@ -1919,11 +1960,11 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       /* 4px OF SLACK, WHICH IS `.nu-trims`' OWN border-spacing, twice — the
          same allowance test/shell.js A8 makes and for the same measured
          reason. */
-      check(dY <= 4 && cY <= 4 && st.a.canY === 0,
+      check(dY <= 4 && cY <= 4 && st.a.canY > 0,
         "T9s2 at " + w + " the INSTRUMENT heads stay put over the pane's " +
         st.b.top + "px of vertical scroll (moved " + dY + "px; the corner " +
         cY + ") — and the pane has " + st.a.canY + "px to give, because THE " +
-        "PAGE is the vertical scrollport here");
+        "PANE is the vertical scrollport here");
       check(dX <= 4 && cX <= 4,
         "T9s3 at " + w + " …and the SECTION heads stay put over a " + st.b.left +
         "px scroll across (moved " + dX + "px; the corner " + cX + ")");
@@ -1934,6 +1975,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         "T9s4 at " + w + " …and the special rows keep their measured offsets, " +
         "with the column heads under all of them — " +
         JSON.stringify({ special: st.ys, colhead: st.colY }));
+      /* 9s5 · THE PAGE PAID FOR IT AND KEPT ITS OWN PROMISE. Read on the
+         rendered page after the pane has been scrolled and put back. */
+      const pg = await p.evaluate(() => ({
+        h: document.documentElement.scrollHeight,
+        ch: document.documentElement.clientHeight,
+        w: document.documentElement.scrollWidth,
+        cw: document.documentElement.clientWidth }));
+      check(pg.h <= pg.ch + 1 && pg.w <= pg.cw + 1,
+        "T9s5 at " + w + " …and the PAGE does not scroll on the Band sheet, " +
+        "in either direction — " + JSON.stringify(pg));
     }
     await ctx.pages()[0].setViewportSize({ width: 390, height: 900 });
     await p.waitForTimeout(420);

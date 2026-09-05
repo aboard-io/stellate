@@ -8534,6 +8534,11 @@ function laneAdd(parent, cellName, lanes) {
    ROSTER rather than on the first player, because "the band changed under you"
    is a fact about the BAND. */
 let tab = null;
+/* WHICH DOOR `tablePanel` LAST LANDED ON, so an arrival arrives once. See the
+   long note at the `land` call itself: `tab` and `formSec` are state, and a
+   landing is an event. `null` means "the next landing is owed", which is what
+   `openVoice` and `openSection` write when they re-arm it. */
+let landedOn = null;
 // THE FORM IS A TAB OF ITS OWN (Paul, 2026-08-23: "make section and bars non
 // interactive when I switch voices"). It was editable inside every voice's
 // tab, which put one song-level fact behind four doors and made a per-voice
@@ -8896,6 +8901,7 @@ function openSection(id) {
   setViewSec(i);
   formSec = id;
   tab = null;
+  landedOn = null;                    // an arrival is owed, even at the same door
   /* (`expand("secnav" + id, true)` STOOD HERE, opening the stripe's section
      level on the row this arrival names. The gutter is deleted (2026-09-09);
      `formSec` is what `tablePanel` lands on — it clicks `trow|<id>` — so the
@@ -9338,10 +9344,16 @@ function envSpecFor(v) {
   return null;
 }
 
+/* WHAT A MEASURED ROW IS CALLED. `knobs.js` carries no English: the extractor
+   writes a `labelKey` into the one copy catalogue (nukernel/src/copy/knobs.ts)
+   and the name is resolved HERE, where the row is drawn, so a second language
+   is a second table and the generated file never moves. */
+const knobLabel = (row) => _t(row.labelKey);
+
 /* A MODELLED CHAIR'S OWN ENVELOPE. Its rows are nukernel/knobs.js's —
-   measured, with their own min/max/step/unit/label — and only the segments
-   this instrument HAS are drawn: a `bell` declares two controls in the whole
-   census and neither of them is a sustain. */
+   measured, with their own min/max/step/unit and their own name in the
+   catalogue — and only the segments this instrument HAS are drawn: a `bell`
+   declares two controls in the whole census and neither of them is a sustain. */
 function knobsEnvSpec(v, V) {
   if (!V) return null;
   const byKey = {};
@@ -9353,7 +9365,7 @@ function knobsEnvSpec(v, V) {
     const S = knobSet(v);
     const d = knobDerived(v, row);
     fields.push({ seg, k: "env|" + v.name + "|" + seg,
-      label: row.label, unit: row.unit || "",
+      label: knobLabel(row), unit: row.unit || "",
       min: row.min, max: row.max, step: row.step,
       value: (S && S[row.key] != null) ? +S[row.key] : null,
       derived: typeof d === "number" ? d : row.derived,
@@ -9704,7 +9716,7 @@ function tractPad(parent, voice, V, byRow, sliders) {
     if (!row) return;
     const a = spokeAng(i), ux = Math.cos(a), uy = Math.sin(a);
     const shut = knobShut(voice, row, byRow);
-    if (shut) gated.set(row.label, shut);
+    if (shut) gated.set(knobLabel(row), shut);
     add("line", { class: "nu-pad-track" + (shut ? " is-off" : ""),
       x1: PAD.c + ux * PAD.r0, y1: PAD.c + uy * PAD.r0,
       x2: PAD.c + ux * PAD.r1, y2: PAD.c + uy * PAD.r1 });
@@ -9968,15 +9980,15 @@ function tractPad(parent, voice, V, byRow, sliders) {
     "i, e, a, o and u — so singing a word is walking between those letters, " +
     "and the dashed round is the walk this record is on. That walk is what " +
     "makes this a voice that SINGS rather than one that is played, and it is " +
-    "written in the row called " + ((vw && vw.label) || "what the sounds are") +
+    "written in the row called " + (vw ? knobLabel(vw) : _t("knobs.vowels")) +
     ", at the top of the table below. Everything on the ring outside the " +
     "square is an amount rather than a place.", "nu-why"));
-  P(parent, el("span", "across the square is " + tp.label +
+  P(parent, el("span", "across the square is " + knobLabel(tp) +
     " — the glottis at the left, the lips at the right; up the square is " +
-    td.label + " — a wide tube at the top, a closure at the bottom. The hollow " +
+    knobLabel(td) + " — a wide tube at the top, a closure at the bottom. The hollow " +
     "circle is where your own hand has put the tongue; the dot on the line " +
     "from a letter to it is where the tongue actually goes, and how far along " +
-    "that line it sits IS " + ar.label + ". " +
+    "that line it sits IS " + knobLabel(ar) + ". " +
     // ONE CLAUSE, TWO STATES, AND THE DEAD ONE IS NOT SILENT. A page that
     // offers "tap anywhere in the square" while the square is gated is the lie
     // this file spent the round deleting; a page that simply drops the
@@ -9991,7 +10003,7 @@ function tractPad(parent, voice, V, byRow, sliders) {
   for (const [why, labels] of (() => {
     const by = new Map();
     const put = (l, w) => { if (!by.has(w)) by.set(w, []); by.get(w).push(l); };
-    if (shutTongue) { put(tp.label, shutTongue); put(td.label, shutTongue); }
+    if (shutTongue) { put(knobLabel(tp), shutTongue); put(knobLabel(td), shutTongue); }
     for (const [l, w] of gated) put(l, w);
     return [...by].map(([w, l]) => [w, l]);
   })())
@@ -10088,7 +10100,7 @@ function knobsBlock(parent, voice, named) {
       b.type = "button";
       b.dataset.k = "clear|" + voice.name + "|" + row.key;
       b.append(el("span", "clear"));
-      b.setAttribute("aria-label", "clear " + row.label + " on " + voice.name);
+      b.setAttribute("aria-label", "clear " + knobLabel(row) + " on " + voice.name);
       b.addEventListener("click", () => { clearKnob(voice, row.key); changed(); });
       box.append(document.createTextNode(" "), b);
     }
@@ -10143,7 +10155,7 @@ function knobsBlock(parent, voice, named) {
       const modeCell = el("span");
       modeCell.append(el("span", "default, " +
         (+knobDerived(voice, row) > 0 ? "it babbles" : "by hand"), "nu-why"));
-      rowFor(row.label, sel, modeCell);
+      rowFor(knobLabel(row), sel, modeCell);
       if (byHand) continue;                 // no amount to show: it is zero
       const now = +knobNow(voice, row);
       const { r, out } = range("babble#" + voice.name, now,
@@ -10191,7 +10203,7 @@ function knobsBlock(parent, voice, named) {
         }));
       }
       kids.push(box);
-      rowFor(row.label, kids, thirdCell(row));
+      rowFor(knobLabel(row), kids, thirdCell(row));
       // …AND WHAT THAT WORD ACTUALLY SINGS, derived and not editable. The walk
       // is `step = Math.round(beat / vowelEvery)` and it WRAPS
       // (state-engine.js:2697), so there is no end condition to design and the
@@ -10218,7 +10230,7 @@ function knobsBlock(parent, voice, named) {
       const S = knobSet(voice);
       const cur = (S && S.dx7Preset) || "";
       const sel = selectEl({
-        key: "dx7|" + voice.name, label: row.label, value: cur,
+        key: "dx7|" + voice.name, label: knobLabel(row), value: cur,
         // `default`, AND NOT THE DERIVED WORD AFTER IT, 2026-08-26. This detent
         // read `"as it stands — " + knobSay(...)`, and it was wrong twice over.
         // Wrong in its word: Paul read the page and collapsed the box's two
@@ -10242,7 +10254,7 @@ function knobsBlock(parent, voice, named) {
           changed();
         },
       });
-      rowFor(row.label, sel, thirdCell(row));
+      rowFor(knobLabel(row), sel, thirdCell(row));
       continue;
     }
 
@@ -10254,7 +10266,7 @@ function knobsBlock(parent, voice, named) {
       const S = knobSet(voice);
       const cur = S && S[row.key] != null ? String(S[row.key]) : "";
       const sel = selectEl({
-        key: row.key + "|" + voice.name, label: row.label, value: cur,
+        key: row.key + "|" + voice.name, label: knobLabel(row), value: cur,
         ...(why ? { why } : {}),
         // `default`, for the reason written out at the cartridge menu above:
         // one word for absence across the whole page, and no repeat of the
@@ -10274,7 +10286,7 @@ function knobsBlock(parent, voice, named) {
                       else writeKnob(voice, row.key, isNaN(+v) ? v : +v);
                       changed(); },
       });
-      rowFor(row.label, sel, thirdCell(row), why);
+      rowFor(knobLabel(row), sel, thirdCell(row), why);
       continue;
     }
 
@@ -10285,12 +10297,12 @@ function knobsBlock(parent, voice, named) {
       Math.min(row.max, Math.max(row.min, now)),
       (v) => writeKnob(voice, row.key, v),
       row.min, row.max, row.step,
-      row.label + ", on " + voice.name, null, knobFmt(row));
+      knobLabel(row) + ", on " + voice.name, null, knobFmt(row));
     sliders[row.key] = { r, out };
     if (shut) { r.disabled = true; r.setAttribute("aria-disabled", "true");
                 r.dataset.why = shut;
-                r.setAttribute("aria-label", row.label + ", on " + voice.name + ", " + shut); }
-    rowFor(row.label, [r, document.createTextNode(" "), out], thirdCell(row), why);
+                r.setAttribute("aria-label", knobLabel(row) + ", on " + voice.name + ", " + shut); }
+    rowFor(knobLabel(row), [r, document.createTextNode(" "), out], thirdCell(row), why);
   }
 
   /* THE PICTURE GOES OVER THE TABLE, AND IT IS NOT ASKED WHICH INSTRUMENT
@@ -11203,7 +11215,7 @@ function tableAPI() {
        the moment anything in it recompiled (measured, T10e/T10f/T10j). A hand
        that opens a record-level row is not standing in a player any more, so
        the two page facts are cleared and the stripe's mark goes with them. */
-    leaveLanding: () => { tab = null; formSec = null; },
+    leaveLanding: () => { tab = null; formSec = null; landedOn = null; },
     bpmNode: () => bpmNode(),
     meterNode: () => meterNode(),
     tempoNode: () => tempoNode(),
@@ -11416,7 +11428,32 @@ function tablePanel(host) {
      writes the other's fact to null, so exactly one sheet opens on arrival,
      which is what a table with one accordion can honestly do. */
   const land = tab ? "tcol|" + tab : formSec ? "trow|" + formSec : null;
-  if (land) {
+  /* ...AND IT LANDS ON AN ARRIVAL, NOT ON EVERY REBUILD (2026-09-05, and this
+     is the THIRD sentence about this one call).
+
+     `tab` and `formSec` are page STATE — which player you are on, which
+     section you are writing — and they stay set for as long as you are there.
+     This call read them as an INSTRUCTION, so every rebuild re-issued it, and
+     `tablePanel` runs on every write. While a sheet died with its own rebuild
+     that was invisible; since a sheet SURVIVES one (Paul: *"Don't dismiss
+     things when I tap them to change values"*) the arrival started arriving
+     over the top of whatever a thumb had open. §9d stopped it CLOSING the
+     door it wanted; it went on STEALING every other one.
+
+     MEASURED, and it is test/table.browser.js T9b5's whole red: open a cell,
+     open its strip of words, tap a chip — and the reading came back
+     `{"strips":0,"open":["tcol|line 6"],"rows":["cast.material|line 6",…]}`.
+     The cell's sheet had been replaced, one write later, by the COLUMN sheet
+     of the player this session had last arrived at. Not a strip that closed: a
+     sheet that was taken.
+
+     So the landing is remembered. A door is landed on when it is a DIFFERENT
+     door from the last one this panel landed on, which is exactly "on
+     arrival"; `openVoice` and `openSection` — the two doors every arrival on
+     this page goes through — re-arm it, so asking for the same player twice
+     still opens their sheet the second time. */
+  if (land && land !== landedOn) {
+    landedOn = land;
     const b = host.querySelector('[data-k="' + CSS.escape(land) + '"]');
     /* ...AND A LANDING ONLY LANDS. Every door on this table is a TOGGLE, and
        since 2026-09-05 a sheet SURVIVES the rebuild its own write causes
@@ -11437,6 +11474,7 @@ function tablePanel(host) {
                : (formSec ? "row|" + formSec : null);
              if (key) tableGrid.land(key); else b.click(); }
   }
+  if (!land) landedOn = null;
   return g;
 }
 
@@ -13160,6 +13198,7 @@ function playsWhat(v) {
 function openVoice(name) {
   tab = name;
   formSec = null;
+  landedOn = null;                    // an arrival is owed, even at the same door
   showTab("Band");
   draw();
   markLink();

@@ -324,12 +324,37 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        TIME at 320 and 390. The strip is reserved by `body`'s
        `padding-block-start: var(--top-h)` instead, which is where a fixed
        plate's room has always been paid on this page. */
-    let y = 0;
-    for (const tr of Array.from(t.querySelectorAll<HTMLElement>("thead > tr"))) {
-      for (const c of Array.from(tr.children))
-        (c as HTMLElement).style.insetBlockStart = y + "px";
-      y += tr.getBoundingClientRect().height;
-    }
+    /* ...AND THE OFFSET IS THE ROW'S OWN PLACE, NOT A SUM OF HEIGHTS
+       (2026-09-05, the vertical-scrollport round). This read `y += tr.height`,
+       which is every row's height and NONE of the space between them:
+       `.nu-trims` is `border-collapse: separate; border-spacing: 3px`, so a
+       four-row head carries 3px above the first row and 3px between each pair
+       that no `getBoundingClientRect().height` reports. It cost nothing while
+       the pane had no vertical scroll to give; the moment it did, MEASURED at
+       390 on Kingston 1969: the head rows stand at 4 · 53 · 102 · 167.1 in
+       their own table and the sum said 0 · 46 · 92 · 154.1, so every head
+       SNAPPED 13px up the first time a thumb scrolled down — a freeze that
+       moves, which is the failure §9d has caught twice by declaring instead of
+       measuring.
+
+       SO IT MEASURES, AND IT MEASURES WITH THE PINS RELEASED. A stuck row
+       reports the pin, not its place, so reading the rows while they are held
+       would feed this loop its own last answer. The inline offsets come off
+       first, one layout is forced, each row's top is taken against the TABLE's
+       (the pane's scroll origin, which the base below adds back for the case
+       where the table is not the first thing in the pane), and the offsets go
+       on again — all inside one frame, so nothing paints in between. */
+    const rows = Array.from(t.querySelectorAll<HTMLElement>("thead > tr"));
+    const cells = rows.map((tr) => Array.from(tr.children) as HTMLElement[]);
+    for (const cs of cells) for (const c of cs) c.style.insetBlockStart = "";
+    const tRect = (t as HTMLElement).getBoundingClientRect();
+    const base = pane2
+      ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
+    const tops = rows.map((tr) =>
+      base + (tr.getBoundingClientRect().top - tRect.top));
+    rows.forEach((_tr, i) => {
+      for (const c of cells[i]!) c.style.insetBlockStart = tops[i]! + "px";
+    });
   }
   onRedraw(draw);
 
@@ -519,7 +544,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
         >${sm ? html`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : nothing
         }<b class="nu-colname">${A.roleWord(s.role)}</b
-        ><span class="nu-colinstr">${tn("count.bar", s.bars)}</span></button>
+        ><span class="nu-colinstr">${tn("count.bar", s.bars)}</span>${
+        sm ? html`<span class="nu-vh">${sm.w}</span>` : nothing}</button>
       ${grip(sid, "tcol|" + sid, A.secName(i))}
     </th>`;
   };
@@ -631,6 +657,26 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         : nothing; })}`;
   };
 
+  /* ---- A HEAD IS A FACE TOO, AND THREE OF THEM LOST THEIR WORD ---------
+     The glyph round (2026-09-05) gave every head a MARK. `face()` below emits
+     all four parts of one — the picture, the number, the visible word and the
+     `.nu-vh` word — but these three heads draw their marks BY HAND (they carry
+     a `data-live` count, a `<b class="nu-colname">` and a `<small>` that
+     `face()` has no shape for), and the hand-written version emitted three of
+     the four. The picture went in and the hidden word did not.
+
+     MEASURED, and it is the whole of two standing reds: test/shell.js A6h and
+     test/text-diet.test.js T2 both sweep `button .nu-g` and demand an
+     `aria-label` AND a `.nu-vh` on the button that holds it, and both named
+     `trow|s0` — the section row head — at every width, four and six times
+     over. `voiceColHead` above passes because it emits its `.nu-vh`; `secHead`,
+     `secRowHead` and `voiceRowHead` did not.
+
+     THE WORD IS THE MARK'S OWN (`mark.w`, ui/glyph.js's catalogue), never a
+     second spelling typed here — the same rule `face()` follows. It lands
+     inside a `<th>` that is `position: sticky`, which is a containing block,
+     so the absolutely-positioned hidden word cannot escape its own head and
+     take the page sideways (nu.css `.nu-ic`, and the measurement there). */
   const secRowHead = (sid: string) => {
     const i = A.doc().form.sections.findIndex((s) => s.id === sid);
     const s = A.doc().form.sections[i]!;
@@ -644,7 +690,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         data-say=${ifDefined(rm && rm.s ? rm.s : undefined)}
         ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i + 1}</span></span
-        ><span class="nu-srowname"> ${A.roleWord(s.role)}</span></button>
+        ><span class="nu-srowname"> ${A.roleWord(s.role)}</span>${
+        rm ? html`<span class="nu-vh">${rm.w}</span>` : nothing}</button>
       <small> ${tn("count.bar", s.bars)}</small>
     </th>`;
   };
@@ -661,7 +708,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("col|" + name, true); }}
         data-say=${ifDefined(vm && vm.s ? vm.s : undefined)}
         ><span class="nu-g" aria-hidden="true">${vm ? vm.g : ""}</span
-        ><span class="nu-srowname">${name}</span></button>
+        ><span class="nu-srowname">${name}</span>${
+        vm ? html`<span class="nu-vh">${vm.w}</span>` : nothing}</button>
       <small> ${A.playsWhat(v) || ""}</small>
     </th>`;
   };

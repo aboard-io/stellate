@@ -105,7 +105,36 @@ const FULL = process.argv.includes("--full");
    changed three rows' mouths (girlgroup, nuevacancion, doowop) on purpose —
    T2b read those three sections against v264 and was right to. Everything
    else must still be byte-identical to THIS base until a hand writes. */
-const BASE_SHA = "ee8366d";  // moved 2026-09-05: chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round
+/* BASE MOVED AGAIN 2026-09-05, to 04d06e4 (v278), AND THE REASON IS A NAME
+   RATHER THAN A NOTE — which is the first time that has been true, so it is
+   worth saying exactly what moved.
+
+   `7cf0d37` (the text pass: one catalogue of 878 keys) reworded two entries in
+   `nukernel/ideas-kit.js` — `ext.w` "one more time on the way out" -> "one
+   more on the way out", and `arpturn.w` "turns through the chord to the ninth"
+   -> "turns up to the ninth". Those words are not decoration: a motif's word
+   IS its name, `precompose` names the cell with it, and the name is the KEY in
+   `material.cells` and `material.prov` and the string a voice's `material`
+   points at. So a shorter sentence renames a cell in every record that deals
+   that idea.
+
+   MEASURED, before the base moved (the sweep is in the round's scratch, and
+   anyone can redo it against ee8366d):
+     · 564 of 1437 documents differ from ee8366d;
+     · 0 of those differences are anything but those two strings — no deg, no
+       play, no vel, no cast, no section field;
+     · and all 564 are byte-identical to the base once the two words are
+       renamed back, which is the whole claim in one line.
+   The fingerprints agree with it: `material.prov.<name>.fp` is unchanged under
+   the new key, so the box knows it is the same tune with a shorter name.
+
+   WHY THAT IS ALLOWED. [[verification-philosophy]]: byte-stability is a tool,
+   not a law, and fixture drift is acceptable when the round that caused it is
+   the round that was shipped. A rename of the composer's own vocabulary is
+   what the text pass was FOR, T2c re-rendered the events and they did not
+   move, and holding the old base would only mean asserting that no idea may
+   ever be renamed again. */
+const BASE_SHA = "04d06e4";  // v278. Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
@@ -1258,6 +1287,36 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
        4  and it MOVED: against the pinned base, every one of the fifteen rows
           resolves at least one chair to a different throat than it did. A
           change nobody can measure is a change that is not there. */
+/* FOUR REGISTERS RE-DERIVED 2026-09-05, and the reason is a round this table
+   is OLDER than. The pin was written at 1d15649 (the per-chair throat round);
+   `ee8366d` — the composer's asks, forty-two chord qualities, sixty-three
+   scales and chords with durations — moved four of these chairs by exactly one
+   octave, and when the T2 base moved onto that commit (ab7728e) this table was
+   not re-asked with it. So it has been describing a build that no longer
+   exists, which is the one thing a pin may never do.
+
+   WHICH FOUR, AND BY HOW MUCH (measured at 1d15649 and again at ee8366d, mean
+   written pitch of the chair over the whole record, seeds as named):
+     doowop/3   backing   reg 1 -> 0    mean 70.45 -> 58.86  (-11.6)
+     mbube/3    voice     reg 0 -> 1    mean 57.81 -> 69.62  (+11.8)
+     sacredharp/2 voice4  reg 0 -> -1   mean 56.75 -> 45.25  (-11.5)
+     georgian/1 voice     reg 0 -> 1    mean 56.68 -> 68.40  (+11.7)
+   A whole octave in each case, and the underlying line barely moved (the means
+   differ by a third of a semitone once the octave is taken out): the composer
+   round changed a handful of notes under the new qualities and `K.homeFor`
+   tipped to the neighbouring octave for those four chairs. Nothing after
+   ee8366d touches them — probed at 8bb3fcf, 1bf703b, 7cf0d37 and 04d06e4, all
+   four read what ee8366d reads — so this is one round's consequence and not a
+   drift.
+
+   THIS IS A RE-DERIVATION, NOT A WEAKENING. The gate's four claims are
+   untouched: claim 2 still holds that a chair's own word outranks its row's,
+   claim 3 still holds that every one of these lines is written INSIDE its
+   throat's compass (fold 0, which is what says the new octave is the honest
+   one and not a chair singing out of range), and claim 4 still holds that
+   fifteen rows resolve a throat they did not resolve before. Only the twelve
+   numbers-and-words this table remembers moved, and only where the seat moved
+   them. */
 const T4O_PIN = {
   "badakhyal/1":       "lead:tenor:0 vocal:alto:0",
   "badakhyal/2":       "lead:tenor:0 vocal:alto:1",
@@ -1270,11 +1329,11 @@ const T4O_PIN = {
   "chorale/3":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
   "doowop/1":          "stab:countertenor:0 riff:bass:0 lead:countertenor:1 vocal:alto:0 backing:alto:1",
   "doowop/2":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:1 vocal:alto:1 backing:alto:1",
-  "doowop/3":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:0 backing:alto:1 vocal:alto:0",
+  "doowop/3":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:0 backing:alto:0 vocal:alto:0",
   "francoflemish/1":   "voice:countertenor:1 voice2:countertenor:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
   "francoflemish/2":   "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
   "francoflemish/3":   "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
-  "georgian/1":        "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 vocal:alto:1",
+  "georgian/1":        "voice:countertenor:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:1",
   "georgian/2":        "voice:countertenor:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:1",
   "georgian/3":        "voice:countertenor:1 voice2:tenor:0 voice3:bass:0 vocal:alto:1",
   "hymn/1":            "voice:soprano:1 voice2:tenor:0 voice3:bass:-1 vocal:alto:0",
@@ -1288,12 +1347,12 @@ const T4O_PIN = {
   "kizomba/3":         "lead:tenor:0 vocal:alto:0",
   "mbube/1":           "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:1",
   "mbube/2":           "voice:countertenor:1 voice2:tenor:0 voice3:bass:0 voice4:bass:-1 vocal:alto:0",
-  "mbube/3":           "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:0",
+  "mbube/3":           "voice:countertenor:1 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:0",
   "polychoral/1":      "voice:bass:0 voice2:tenor:0 voice3:alto:1 voice4:soprano:1 voice5:bass:0 voice6:tenor:0 voice7:alto:1 voice8:soprano:1",
   "polychoral/2":      "voice:bass:-1 voice2:tenor:0 voice3:alto:0 voice4:soprano:1 voice5:bass:-1 voice6:tenor:0 voice7:alto:0 voice8:soprano:1",
   "polychoral/3":      "voice:bass:-1 voice2:tenor:-1 voice3:alto:0 voice4:soprano:1 voice5:bass:-1 voice6:tenor:-1 voice7:alto:0 voice8:soprano:1",
   "sacredharp/1":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
-  "sacredharp/2":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "sacredharp/2":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
   "sacredharp/3":      "voice:alto:1 voice2:soprano:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:0",
   "sitcom/1":          "lead:tenor:0 vocal:alto:0",
   "sitcom/2":          "lead:tenor:0 vocal:alto:0",
