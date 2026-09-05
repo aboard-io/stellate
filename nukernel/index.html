@@ -372,7 +372,8 @@
      of the words and the order; `chromeRow`/`paintChrome` fill this, and the
      empty <nav> ships so the chrome has its place in the document before a
      line of script runs. -->
-<nav id="nu-chrome" class="nu-chrome" aria-label="the box"></nav>
+<nav id="nu-chrome" class="nu-chrome" data-copy-aria="shell.chrome"
+     aria-label="Controls"></nav>
 
 <!-- THE NINE PANELS, IN PAUL'S ORDER. Each is a `.nu-pan`; ui/eight.js's
      `showTab` puts `data-off` + `inert` on the eight that are shut. The ids
@@ -386,7 +387,7 @@
      a `.nu-vh` heading since the tabs landed: the visible name of this panel
      is the word on its tab, and two spellings of one name on one screen is
      the second owner every law in this file is against. -->
-<h2 id="atlasHead">Where &amp; when</h2>
+<h2 id="atlasHead" data-copy="shell.where">Where &amp; when</h2>
 </section>
 
 <!-- 2-4 · TIME · MOTIFS · BAND — the three axis panels, and the four
@@ -611,6 +612,16 @@
      module, so it may sit anywhere after the classic tier. ui/deps.js is what
      hands both to the view. -->
 <script src="atlas-land.js"></script>
+
+<!-- THE CATALOGUE OF WORDS (TABLE.md §12b, 2026-09-05). Every string this page
+     prints is looked up by key in nukernel/src/copy/ -> the committed
+     nukernel/ui/copy.js, so a second language is a second table and nothing
+     else moves. It is named HERE, ahead of ui/eight.js, rather than left to
+     the import graph: the classic scripts above (fields.js, avail.js, rules.js,
+     atlas.js) hold KEYS in their tables and read `COPY.t` when a value is
+     printed, and this tag is what says, in the document, that the global they
+     read is up before anything draws. -->
+<script type="module" src="ui/copy.js"></script>
 <script type="module" src="ui/eight.js"></script>
 
 <!-- THE EXPLAINER'S ONE BOX (Paul, 2026-08-28: "Provide a simple long tap or
@@ -664,6 +675,6 @@
      the machine talking over the music. It is READ when it is opened, and it
      is opened by a hand. -->
 <div id="nu-log" class="nu-log" role="log" aria-live="off"
-     aria-label="log" hidden></div>
+     data-copy-aria="glyph.log" aria-label="log" hidden></div>
 </body>
 </html>

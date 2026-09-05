@@ -1275,13 +1275,22 @@
        year at which nothing was played. The gate's assertion is rewritten in
        place — "six roles" becomes "six roles and the blank state" — rather
        than loosened, because the number is still the point. */
-    silence: "the blank state has no place — nothing has been chosen yet",
-    simple:  "a role, not a record — the plain default, with no history",
-    solo:    "a role: whoever is taking it, wherever the record is from",
-    vocal:   "a role: the voice out front, in any city",
-    backing: "a role: the voices behind it, in any city",
-    riff:    "a role: the figure the record is built on",
-    pad:     "a role: the sustained thing underneath",
+    /* THE VALUE IS A COPY KEY, NOT A SENTENCE (2026-09-05, the functional text
+       pass). It held seven hand-written paragraphs — "a role: the voices
+       behind it, in any city" — and ui/atlas.js printed them straight onto the
+       index row as its accessible name and its `data-why`. This file is a
+       classic <script> and is also `require`d by atlas.gate.js in node, so it
+       may not call `COPY.t` at load time; it holds the ADDRESS of the sentence
+       and ui/atlas.js reads it at the moment the row is drawn (TABLE.md §12b).
+       Six of the seven share one sentence because they are one fact; `silence`
+       is the seventh kind of not-a-place and keeps its own. */
+    silence: "atlas.silence",
+    simple:  "atlas.role",
+    solo:    "atlas.role",
+    vocal:   "atlas.role",
+    backing: "atlas.role",
+    riff:    "atlas.role",
+    pad:     "atlas.role",
   };
 
   /* ======================================================================

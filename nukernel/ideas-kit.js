@@ -217,7 +217,7 @@
                f: (k) => (k % 48 === 47 ? 1
                           : (k % 16) < 8 ? [0, 2, 4, 2][k % 4]
                                          : [4, 2, 0, 2][k % 4]) },
-    arpturn: { w: "turns through the chord to the ninth",
+    arpturn: { w: "turns up to the ninth",
                // the long one: eight steps, so it never lines up with the bar
                // and takes three bars to come home. Berlin-school motion.
                f: (k) => (k % 64 === 63 ? 11 : [0, 2, 4, 7, 9, 7, 4, 2][k % 8]) },
@@ -909,7 +909,7 @@
     aug:    { w: "stretched out" },
     dim:    { w: "doubled" },
     trunc:  { w: "cut short" },
-    ext:    { w: "one more time on the way out" },
+    ext:    { w: "one more on the way out" },
     pick:   { w: "with a pickup" },
     nopick: { w: "in on the beat" },
     later:  { w: "a pulse later" },

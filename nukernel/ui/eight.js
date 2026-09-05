@@ -386,7 +386,11 @@ import { songDurSec, voicing, setVoicing } from "../audio/plan.js";
 // by refusing the glyphs and drawing its tabs as words. Paul asked for marks
 // on every strip on the page, in four files, so the table is EXTRACTED to
 // ui/glyph.js and imported here; nothing about the three characters changed.
-import { GLYPH, kindGlyph, cellMark, sayLog, icon, paintIcon,
+/* (`sayLog` LEFT THIS IMPORT with the text pass: the log's count is a COUNTED
+   NOUN now — `burger.log` / `burger.menuLog`, picked by `tn` — and a plural
+   chosen by an `if` in ui/glyph.js cannot be taught a second language's rest.
+   ui/glyph.js still exports it and nothing calls it.) */
+import { GLYPH, kindGlyph, cellMark, icon, paintIcon,
          wireSay } from "./glyph.js";
 // THE ? MARK AND THE PAGE IT OPENS (2026-08-30, Paul: "add a ? Icon above the
 // log icon that fully explains every aspect of a genre"). The whole explainer
@@ -441,6 +445,16 @@ import { mountRules } from "./rules.js";
    the loop points, `vpaintOf` for the player's colour and `playsWhat` for what
    the chair is on. Not one of those four facts is re-derived over there. */
 import { samplesOf, mountSamples, stopSample } from "./samples.js";
+/* THE CATALOGUE (TABLE.md §12b). Every word this file prints is looked up by
+   key; `nukernel/src/copy/sheets.ts` is the page that holds them.
+   ...AND IT IS HELD UNDER TWO MORE NAMES, which is not a second owner. A dozen
+   functions in this file already bind `t` as a local (a `<table>`, a tempo
+   pair, a truthy flag) and one binds `tn` (a `<td>`), so inside those scopes
+   the imported names are shadowed and a `t("key")` there would call a DOM node.
+   `_t` / `_tn` are bound once, at module scope, where nothing shadows them,
+   and are the same two functions. */
+import { t, tn, fmt } from "./copy.js";
+const _t = t, _tn = tn;
 
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
@@ -2181,7 +2195,11 @@ function chordGrid(parent, sid) {
     putProg(writeChanges(rows, BB, SP)); changed(); };
   const t = el("table");
   const head = el("tr");
-  for (const h of ["bar", "chord", "", "quality", "bass", "", "for", "", ""])
+  /* THE CHART'S OWN COLUMN HEADS. Keys, not words: the bass column's head is
+     the vocabulary's `bass` (a value word), the other three are copy. */
+  for (const h of [_t("chart.head.bar"), _t("noun.chord"), "",
+                   _t("chart.head.quality"), _t("chart.head.bass"), "",
+                   _t("chart.head.for"), "", ""])
     head.append(el("th", h));
   t.append(head);
   chordCell = []; chordRow = []; chordLabel = [];
@@ -2221,7 +2239,7 @@ function chordGrid(parent, sid) {
        once at the control instead of after it. */
     const d = range("prog" + i + "d", c.d || 0, (v) => { own(); liveChord(row).d = v; },
       0, NUM.length - 1, 1,
-      "chord " + (i + 1) + " degree", false, numeral, "84px");
+      _t("chart.degree.aria", { n: i + 1 }), false, numeral, "84px");
     const td = el("td"); td.append(d.r); tr.append(td);
     const to = el("td"); to.append(d.out); tr.append(to);
     // THE QUALITY IS BACK IN THE GRID, AND THAT IS A REVERSAL WRITTEN DOWN.
@@ -2241,7 +2259,7 @@ function chordGrid(parent, sid) {
     // own wheel on a thumb and the typed combo with a keyboard.
     const qs = shSpec("alphabet.quality",
                       { bar: row.bar, chord: row.ix, section: sid },
-                      "chord " + (i + 1) + " quality");
+                      _t("chart.quality.aria", { n: i + 1 }));
     /* THE SHEET-LEVEL REFUSAL IS CLEARED HERE AND NOWHERE ELSE (2026-09-02).
        `avail.js` is untouched: its measurement is right about a record as it
        STANDS, and the thing that makes it wrong is a write this grid is about
@@ -2279,7 +2297,7 @@ function chordGrid(parent, sid) {
       if (v < 4) { lc.inv = v; delete lc.bass; }
       else { lc.inv = 0; lc.bass = v - 4; } },
       0, 3 + NUM.length, 1,
-      "chord " + (i + 1) + " bass", false, bassWord, "84px");
+      _t("chart.bass.aria", { n: i + 1 }), false, bassWord, "84px");
     const ti = el("td"); ti.append(iv.r); tr.append(ti);
     const tn = el("td"); tn.append(iv.out); tr.append(tn);
     /* HOW LONG IT LASTS (2026-09-05) — the control this chart did not have.
@@ -2293,7 +2311,7 @@ function chordGrid(parent, sid) {
        redraws rather than the readout being trusted. */
     const ln = range("prog" + i + "len", Math.max(1, Math.round(row.beats)),
       (v) => relen(row, v), 1, BB * 4, 1,
-      "chord " + (i + 1) + " length in beats", false,
+      _t("chart.length.aria", { n: i + 1 }), false,
       (v) => lenWord(v, BB), "84px");
     const tl = el("td"); tl.append(ln.r); tr.append(tl);
     const tw = el("td"); tw.append(ln.out); tr.append(tw);
@@ -2305,11 +2323,11 @@ function chordGrid(parent, sid) {
     const noSplit = Math.round(row.beats) < 2
       ? "a one-beat chord has no halves" : null;
     const noJoin = i >= rows.length - 1
-      ? "nothing after the last chord to take" : null;
+      ? _t("chart.join.none") : null;
     const bSp = icon({ k: "prog" + i + "-split", glyph: "\u00f7",
-      word: "split", say: noSplit || "split this chord in two", why: noSplit });
+      word: _t("chart.split"), say: noSplit || _t("chart.split.say"), why: noSplit });
     const bJn = icon({ k: "prog" + i + "-join", glyph: "\u2194",
-      word: "join", say: noJoin || "take in the chord after this one",
+      word: _t("chart.join"), say: noJoin || _t("chart.join.say"),
       why: noJoin });
     bSp.addEventListener("click", () => { if (!noSplit) split(i); });
     bJn.addEventListener("click", () => { if (!noJoin) join(i); });
@@ -2357,18 +2375,18 @@ function chordGrid(parent, sid) {
     const P2 = progOf();
     const row = el("p", null, "nu-row nu-progops");
     const add = P2.length >= BARCAP
-      ? BARCAP + " bars is as long as this chart draws" : null;
-    const cut = P2.length <= 1 ? "a cycle is at least one bar" : null;
+      ? _t("chart.addBar.why", { value: _tn("count.bar", BARCAP) }) : null;
+    const cut = P2.length <= 1 ? _t("chart.cutBar.why") : null;
     /* TWO MARKS, TWO NAMES. The glyphs are `+` and `−` and the WORD under each
        is the whole gesture — not "bar" twice, which is what a screen reader
        would have been read and what the page would say with the stylesheet
        off: two controls with one name is the duplicate-address bug in the
        accessibility tree. */
-    const bAdd = icon({ k: "prog-add", glyph: "+", word: "add a bar",
-      say: add || "add a bar to the cycle, the same chord as the last",
+    const bAdd = icon({ k: "prog-add", glyph: "+", word: _t("chart.addBar"),
+      say: add || _t("chart.addBar.say"),
       why: add });
-    const bCut = icon({ k: "prog-cut", glyph: "−", word: "take a bar off",
-      say: cut || "take the last bar off the cycle", why: cut });
+    const bCut = icon({ k: "prog-cut", glyph: "−", word: _t("chart.cutBar"),
+      say: cut || _t("chart.cutBar.say"), why: cut });
     bAdd.addEventListener("click", () => {
       if (progOf().length >= BARCAP) return;
       own(); const P3 = progOf();
@@ -2833,8 +2851,8 @@ function scoreParts(si, k, bars) {
    cannot place. Tense as the written captions used it: stopped it is a
    prediction of the section you are writing, playing it is a report. */
 function scoreCaption(si, ei, k, M, asPlayed) {
-  const where = secName(si) + ", bars " + (k + 1) + "-" +
-                Math.min(M, k + SCORE_BARS) + " of " + M;
+  const where = _t("deck.bars", { name: secName(si), from: k + 1,
+                                  to: Math.min(M, k + SCORE_BARS), total: M });
   // ...and when the two disagree, WHICH ONE THIS IS. You can be writing the tag
   // while the second verse sounds, and a picture that does not say which
   // section it is showing is worse than no picture — the same sentence
@@ -2847,9 +2865,10 @@ function scoreCaption(si, ei, k, M, asPlayed) {
   // wraps to a second line and moved the whole page down 16px the first time
   // the transport crossed into a section that was not the one being written.
   const t = asPlayed == null ? playing : asPlayed;
-  const elsewhere = t && si !== ei ? " - you are writing " + secName(ei) : "";
-  return "the whole band - " + where + ", " +
-         (t ? "as played" : "as it will play") + elsewhere;
+  if (!t) return where;
+  return si !== ei
+    ? _t("deck.playingElsewhere", { value: where, name: secName(ei) })
+    : _t("deck.playing", { value: where });
 }
 
 /* THE PICTURE MAY NOT CHANGE HEIGHT, EVER, and that is not a preference: the
@@ -4158,7 +4177,7 @@ function scoreBlock(parent) {
   const run = el("div", null, "nu-run");
   const paper = el("div", null, "nu-paper");
   const gut = el("div", null, "nu-gutter");
-  const load = el("p", "engraving the whole score…", "nu-load");
+  const load = el("p", _t("deck.engraving"), "nu-load");
   load.hidden = true;
   run.append(paper);
   box.append(run, gut, load);
@@ -4793,9 +4812,9 @@ function exportRow(parent) {
   songCard(grid);
   // WAV — LIVE. The press path exists (engine/faust/press + the stream
   // worker's PCM sink); export/wav.js is that machinery pointed at a file.
-  exportCard(grid, "WAV", "the render",
-    "44.1 kHz · 16-bit · the exact artifact the speakers get", (card) => {
-    const b = el("button", "download .wav");
+  exportCard(grid, _t("exportTab.wav.name"), _t("exportTab.wav.what"),
+    _t("exportTab.wav.sub"), (card) => {
+    const b = el("button", _t("exportTab.wav.save"));
     b.type = "button"; b.dataset.k = "deck.exp.wav";
     b.addEventListener("click", () => {
       b.disabled = true; expSay("pressing…");
@@ -4817,9 +4836,9 @@ function exportRow(parent) {
      precedent. The subtitle changed with the fold: "the staff's own notes"
      described the notated grid, and the file is the played timeline now,
      ornaments at their real offsets. */
-  exportCard(grid, "MID", "the notes",
-    "type 1 · one track per seat · the played record, ornaments and all", (card) => {
-    const b = el("button", "download .mid");
+  exportCard(grid, _t("exportTab.mid.name"), _t("exportTab.mid.what"),
+    _t("exportTab.mid.sub"), (card) => {
+    const b = el("button", _t("exportTab.mid.save"));
     b.type = "button"; b.dataset.k = "deck.exp.mid";
     b.addEventListener("click", () => {
       b.disabled = true; expSay("folding the played record…");
@@ -4857,9 +4876,9 @@ function exportRow(parent) {
      "the listening copy" (moved up out of the subtitle, whose measured encode
      facts test/mp3.test.js M1 still reads), MID is "the notes", ALS is "the
      Live set". No card says its own name twice. */
-  exportCard(grid, "MP3", "the listening copy",
-    "192 kbps CBR · 44.1 kHz · stereo", (card) => {
-    const b = el("button", "download .mp3");
+  exportCard(grid, _t("exportTab.mp3.name"), _t("exportTab.mp3.what"),
+    _t("exportTab.mp3.sub"), (card) => {
+    const b = el("button", _t("exportTab.mp3.save"));
     b.type = "button"; b.dataset.k = "deck.exp.mp3";
     b.addEventListener("click", () => {
       b.disabled = true; expSay("pressing…");
@@ -4907,9 +4926,9 @@ function exportRow(parent) {
      argues why P1 and not P0 (Paul asked for HIS SONG, and P0 is one clip).
      A song with more boxes than the donor has scenes REFUSES with that
      sentence; it never hands over a half-right set. */
-  exportCard(grid, "ALS", "the Live set",
-    "one track per voice · scenes are the boxes", (card) => {
-    const b = el("button", "download .als");
+  exportCard(grid, _t("exportTab.als.name"), _t("exportTab.als.what"),
+    _t("exportTab.als.sub"), (card) => {
+    const b = el("button", _t("exportTab.als.save"));
     b.type = "button"; b.dataset.k = "deck.exp.als";
     b.addEventListener("click", () => {
       b.disabled = true; expSay("splicing…");
@@ -4948,7 +4967,7 @@ function deckBlock(parent) {
   // "The score", initial cap, 2026-08-27 — the §5 table's own spelling for
   // the foot ("`Motifs` mid-page + `The score` at the foot"), and the one
   // case rule every heading now follows.
-  ax.append(el("h2", "The score"));
+  ax.append(el("h2", _t("panel.score")));
   /* THE TWO VIEW BUTTONS ARE BACK IN THIS ROW, 2026-09-09, AND THE ADDRESSES
      DID NOT MOVE. "TWO MARKS THAT ARE ONE BOX TURNED: ▤ is ruled paper, the
      staff, which runs across; ▥ is the roll, blocks standing up the pitch
@@ -4999,7 +5018,7 @@ function deckBlock(parent) {
   const lit = el("span", null, "nu-legv");
   const litChip = el("i");
   litChip.style.background = paints().clock;
-  lit.append(litChip, document.createTextNode("sounding"));
+  lit.append(litChip, document.createTextNode(_t("deck.sounding")));
   leg.append(lit);
   row.append(leg);
   ax.append(row);
@@ -5013,8 +5032,7 @@ function deckBlock(parent) {
   live.className = "nu-roll";
   rollHost = el("div", null, "nu-rollwin");
   rollCv = document.createElement("canvas");
-  rollCv.setAttribute("aria-label", "piano roll: pitch across, low left to " +
-    "high right; time pours down through the fixed red now-band");
+  rollCv.setAttribute("aria-label", _t("deck.roll.aria"));
   rollHost.append(rollCv);
   live.append(rollHost);
   deckRollView.append(live);
@@ -5326,9 +5344,13 @@ function motifLampNode(name) {
    `·` join is the same one TIME and the master wear. */
 function motifsFace() {
   const names = motifNames();
-  if (!names.length) return "nothing in the bank yet";
-  if (motifTab) return "in " + motifTab + " · " + names.length + " in the bank";
-  return names.length + " in the bank · " + names.join(", ");
+  if (!names.length) return _t("bank.empty");
+  if (motifTab) return _tn("bank.faceIn", names.length, { name: motifTab });
+  /* THE NAMES ARE DATA, NOT COPY — a `·`-joined readout of proper nouns, cut
+     at three with the rest as a bare numeral so the face keeps its budget. */
+  const shown = names.slice(0, 3).join(", ") +
+                (names.length > 3 ? " +" + (names.length - 3) : "");
+  return _tn("bank.face", names.length, { names: shown });
 }
 
 /* THE PRODUCE ROW'S COLLAPSED FACE (2026-09-08, §10b step 5) — the producer's
@@ -5341,15 +5363,21 @@ function motifsFace() {
 function produceFace() {
   let S = null;
   try { S = prodSaid(DOC); } catch (e) { S = null; }
-  if (!S || !S.n) return "nothing said — the record as the atlas dealt it";
-  return S.n + " of " + S.max + " · \u201c" + (S.last || "that") + "\u201d";
+  if (!S || !S.n) return _t("produceRow.none");
+  return S.last ? _t("produceRow.face", { n: S.n, max: S.max, value: S.last })
+                : _t("produceRow.faceCount", { n: S.n, max: S.max });
 }
 
 /* WHERE IT CAME FROM (§3), IN ONE WORD. `document.js provOf/provWord` is the
    one owner: `own` is the genre's, `guest` is another genre's row, `hand` is
    yours and is DERIVED from the fingerprint rather than stamped. */
 function provOfCell(name) {
-  try { return NuDocument.provWord(NuDocument.provOf(DOC, name)); }
+  /* THE WORD IS THE CATALOGUE'S (2026-09-05, the functional text pass).
+     `document.js provWord` answers the ADDRESS — `own` · `guest` · `hand` —
+     and `ui/glyph.js`'s cell marks already hold what each is called, so the
+     bank and the cell's mark say the same thing in one place. */
+  try { const w = NuDocument.provWord(NuDocument.provOf(DOC, name));
+        return w ? _t("glyph.cell.prov." + w) : null; }
   catch (e) { return null; }
 }
 
@@ -5401,8 +5429,11 @@ function motifBank(box) {
     const prov = provOfCell(name);
     if (prov) b.append(el("small", prov, "nu-bankprov"));
     const sub = motifSub(name, H);
-    b.setAttribute("aria-label", name + " — " + (prov || "in the bank") +
-      (sub ? ", " + sub : "") + " — point the selected cell at it");
+    /* THE ROW'S OWN READOUT IS DATA — its provenance word, its length and who
+       plays it, `·`-joined — and the name is a proper noun. */
+    const said = [prov, sub].filter(Boolean).join(" · ");
+    b.setAttribute("aria-label",
+      said ? _t("bank.item.aria", { name, value: said }) : name);
     b.addEventListener("click", () => {
       if (!tableGrid || !tableGrid.pointMotif) return;
       const wrote = tableGrid.pointMotif(name);
@@ -5412,16 +5443,15 @@ function motifBank(box) {
          bank inside the same accordion; two attributes are the honest edit. */
       for (const n of list.querySelectorAll(".nu-bankname"))
         n.setAttribute("aria-pressed", String(n === b));
-      logPut("act", "point at " + name, "the next cell you tap");
+      logPut("act", _t("bank.pointed", { name }), _t("bank.pointedWhy"));
     });
     head.append(b, motifLampNode(name));
     const op = document.createElement("button");
     op.type = "button";
     op.className = "nu-bankopen";
     op.dataset.k = "motifopen|" + name;
-    op.append(el("span", "open"));
-    op.setAttribute("aria-label", "open " + name + " — its staff, its editor " +
-      "and the fourteen ways to rewrite it");
+    op.append(el("span", _t("act.open")));
+    op.setAttribute("aria-label", _t("bank.item.edit", { name }));
     op.addEventListener("click", () => { motifTab = name; push(); draw(); });
     head.append(op);
     row.append(head);
@@ -5429,16 +5459,16 @@ function motifBank(box) {
     list.append(row);
   }
   if (!names.length)
-    list.append(el("p", "nothing in the bank — make one", "nu-why"));
+    list.append(el("p", _t("bank.listEmpty"), "nu-why"));
   box.append(list);
   const add = el("p", null, "nu-bankadd");
-  for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
+  for (const [face, aria, kind] of [["bank.addPhrase", "bank.addPhrase.aria", "line"],
+                                    ["bank.addDrums", "bank.addDrums.aria", "drum"]]) {
     const a = document.createElement("button");
     a.type = "button";
     a.dataset.k = kind === "drum" ? "adddrumcell" : "addcell";
-    a.append(el("span", label));
-    a.setAttribute("aria-label", label + " — a new cell in the bank, opened " +
-                                 "as you make it");
+    a.append(el("span", _t(face)));
+    a.setAttribute("aria-label", _t(aria));
     a.addEventListener("click", () => { motifTab = addCell(kind);
                                         push(); draw(); });
     add.append(a, document.createTextNode(" "));
@@ -6639,7 +6669,7 @@ function readBy(parent, cell) {
     rows.push({ v, vi, secs, follows: v.kind === "bass" });
   });
   const strip = el("p", null, "nu-readby");
-  if (!rows.length) { strip.append(el("span", "read by nobody", "nu-why"));
+  if (!rows.length) { strip.append(el("span", _t("bank.nobody"), "nu-why"));
                       parent.append(strip); return; }
   for (const r of rows) {
     const b = document.createElement("button");
@@ -6653,10 +6683,16 @@ function readBy(parent, cell) {
     b.append(g, el("b", r.v.name, "nu-readname"));
     if (line) b.append(el("i", line, "nu-readinstr"));
     if (r.secs.length) b.append(el("small", r.secs.join(", "), "nu-readsecs"));
-    b.setAttribute("aria-label", r.v.name + (line ? " on " + line : "") +
-      (r.follows ? ", which follows the first line's motif" : "") +
-      (r.secs.length ? " — " + r.secs.join(", ") : "") +
-      " — open what " + r.v.name + " plays");
+    /* THE SECTIONS ARE DATA (a comma list of proper nouns); the four keys are
+       the four shapes this name comes in, whole, so a second language may put
+       the instrument and the sections wherever it puts them. */
+    const P = { name: r.v.name, instrument: line, value: r.secs.join(", ") };
+    b.setAttribute("aria-label",
+      line ? _t(r.follows
+                  ? (r.secs.length ? "bank.chip.ariaFollowsWhere"
+                                   : "bank.chip.ariaFollows")
+                  : (r.secs.length ? "bank.chip.ariaWhere" : "bank.chip.aria"), P)
+           : (r.secs.length ? _t("bank.item.aria", P) : r.v.name));
     b.addEventListener("click", () => openVoice(r.v.name));
     strip.append(b);
   }
@@ -7417,7 +7453,7 @@ function loopStrip(voice) {
   const stated = () => typeof S().loopin === "number" ||
                        typeof S().loopout === "number";
 
-  wrap.append(el("span", "loop", "nu-lplab"));
+  wrap.append(el("span", _t("loop.label"), "nu-lplab"));
   const strip = el("span", null, "nu-lps");
   strip.dataset.k = "loopstrip" + voice.name;
   const bar = el("i", null, "nu-lpb");
@@ -7429,11 +7465,11 @@ function loopStrip(voice) {
     const inp = document.createElement("input");
     inp.type = "range"; inp.min = "0"; inp.max = "1"; inp.step = "0.01";
     inp.className = "nu-lpin"; inp.dataset.k = which + voice.name;
-    inp.setAttribute("aria-label", voice.name + " " + aria);
+    inp.setAttribute("aria-label", _t(aria, { name: voice.name }));
     return inp;
   };
-  const inA = mkIn("loopin", "loop in");
-  const inB = mkIn("loopout", "loop out");
+  const inA = mkIn("loopin", "loop.in.aria");
+  const inB = mkIn("loopout", "loop.out.aria");
   strip.append(bar, inA, inB);
   wrap.append(strip);
 
@@ -7446,15 +7482,15 @@ function loopStrip(voice) {
     put("looping", CYC[S().looping || ""] || null); changed();
   });
   // ...and the way back to the zone's own points, only when a point is stated
-  const reset = el("button", "↺ zone's own", "nu-lpr");
+  const reset = el("button", _t("loop.reset"), "nu-lpr");
   reset.type = "button"; reset.dataset.k = "loopreset" + voice.name;
-  reset.setAttribute("aria-label", voice.name + " loop points back to the zone's own");
+  reset.setAttribute("aria-label", _t("loop.reset.aria", { name: voice.name }));
   reset.addEventListener("click", () => {
     put("loopin", null); put("loopout", null); changed();
   });
   wrap.append(onBtn, reset);
 
-  const pctText = (f) => Math.round(f * 100) + "% of the zone";
+  const pctText = (f) => fmt(Math.round(f * 100), "%");
   function paint() {
     const a = aOf(), b = bOf(), st = stated();
     ha.style.insetInlineStart = (a * 100) + "%";
@@ -7465,15 +7501,15 @@ function loopStrip(voice) {
     reset.classList.toggle("off", !st);
     inA.value = String(a); inB.value = String(b);
     inA.setAttribute("aria-valuetext",
-      (typeof S().loopin === "number" ? "loop in at " + pctText(a)
-        : "the zone's own loop start"));
+      (typeof S().loopin === "number"
+        ? _t("loop.inAt", { value: pctText(a) }) : _t("loop.inDefault")));
     inB.setAttribute("aria-valuetext",
-      (typeof S().loopout === "number" ? "loop out at " + pctText(b)
-        : "the zone's own loop end"));
+      (typeof S().loopout === "number"
+        ? _t("loop.outAt", { value: pctText(b) }) : _t("loop.outDefault")));
     const w = S().looping || "";
     onBtn.textContent = w ? LW[w] : "—";
-    onBtn.setAttribute("aria-label", voice.name + " looping: " +
-      (w ? LW[w] : "the zone's own"));
+    onBtn.setAttribute("aria-label", _t("loop.mode.aria",
+      { name: voice.name, value: w ? LW[w] : _t("value.default") }));
   }
 
   // the touch law: capture on the strip, value from the bar's own rect, the
@@ -8021,9 +8057,8 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
      for a motif, so here is the motif. */
   const mk = document.createElement("button");
   mk.type = "button"; mk.dataset.k = "panel-addcell";
-  mk.append(el("span", "+ motif"));
-  mk.setAttribute("aria-label", "+ motif — a new cell in the bank, opened as " +
-    "you make it");
+  mk.append(el("span", _t("bank.addPhrase")));
+  mk.setAttribute("aria-label", _t("bank.addPhrase.aria"));
   mk.addEventListener("click", () => {
     motifTab = addCell("line");
     /* (`expand("motiftab-" + motifTab, true)` STOOD HERE — the stripe's bank
@@ -8958,23 +8993,28 @@ const mmDown = (b) => [...MM].reverse().find((x) => x < b - 0.001) ??
    because the beat does not move: ←→ is the bar pulling apart (half time,
    twice as long) and →← is the bar closing up (double time). Paul's own
    sentence, on the axis where this row's meaning is horizontal: time. */
+/* THE WORD IS A KEY AND `w` IS AN ADDRESS. `data-k` is "tempo-" + `w` and a
+   gate presses these by that key (test/knobs.js 8e), so `w` may not move; the
+   PRINTED face is `k` below and the reason is a key with its numbers filled. */
 const TEMPOS = [
-  { w: "a little slower", why: () => BPM_LO + " is as slow as this box counts",
+  { w: "a little slower", k: "tempoOp.slower",
+    why: () => _t("tempoOp.why.min", { value: fmt(BPM_LO, "BPM") }),
     g0: "\u266a", g: "\u2193",
     mk: (t) => (mmDown(t.bpm) == null ? null : { ...t, bpm: mmDown(t.bpm) }) },
-  { w: "a little faster", why: () => BPM_HI + " is as fast as this box counts",
+  { w: "a little faster", k: "tempoOp.faster",
+    why: () => _t("tempoOp.why.max", { value: fmt(BPM_HI, "BPM") }),
     g0: "\u266a", g: "\u2191",
     mk: (t) => (mmUp(t.bpm) == null ? null : { ...t, bpm: mmUp(t.bpm) }) },
-  { w: "half the tempo", why: (t) => "half of " + bpmSay(t.bpm) + " is " +
-      bpmSay(t.bpm / 2) + ", and " + BPM_LO + " is as slow as this box counts",
+  { w: "half the tempo", k: "tempoOp.half",
+    why: () => _t("tempoOp.why.min", { value: fmt(BPM_LO, "BPM") }),
     g0: "\u266a", g: "\u2193\u2193",
     // HALVING A TYPED TEMPO KEEPS ITS TENTH (2026-09-05): half of 143.5 is
     // 71.75, and rounding that to a whole number would make the mark a
     // different operation from the one its word says.
     mk: (t) => (t.bpm / 2 < BPM_LO ? null
                 : { ...t, bpm: Math.round(t.bpm * 5) / 10 }) },
-  { w: "twice the tempo", why: (t) => "twice " + bpmSay(t.bpm) + " is " +
-      bpmSay(t.bpm * 2) + ", and " + BPM_HI + " is as fast as this box counts",
+  { w: "twice the tempo", k: "tempoOp.double",
+    why: () => _t("tempoOp.why.max", { value: fmt(BPM_HI, "BPM") }),
     g0: "\u266a", g: "\u2191\u2191",
     mk: (t) => (t.bpm * 2 > BPM_HI ? null
                 : { ...t, bpm: Math.round(t.bpm * 20) / 10 }) },
@@ -8983,11 +9023,14 @@ const TEMPOS = [
   // bar half as long — the pattern comes round twice as often over a clock that
   // has not moved. That is what a half-time feel IS, and it is not a tempo
   // change, which is why it is four separate buttons and not two.
-  { w: "half time", why: () => "it is already read at half speed", g: "\u2190\u2192",
+  { w: "half time", k: "tempoOp.halfTime",
+    why: () => _t("tempoOp.why.alreadyHalf"), g: "\u2190\u2192",
     mk: (t) => (t.rate === 0.5 ? null : { ...t, rate: 0.5 }) },
-  { w: "double time", why: () => "it is already read at double speed", g: "\u2192\u2190",
+  { w: "double time", k: "tempoOp.doubleTime",
+    why: () => _t("tempoOp.why.alreadyDouble"), g: "\u2192\u2190",
     mk: (t) => (t.rate === 2 ? null : { ...t, rate: 2 }) },
-  { w: "as written", why: () => "it is already read as written", g: "1\u00d7",
+  { w: "as written", k: "tempoOp.normal",
+    why: () => _t("tempoOp.why.alreadyNormal"), g: "1\u00d7",
     mk: (t) => (t.rate === 1 ? null : { ...t, rate: 1 }) },
   /* …and back to ABSENT, which is the only spelling of a default a rate has.
      THE WORD IS PAUL'S, 2026-08-26: *"'the record's own' -- make that
@@ -8999,7 +9042,8 @@ const TEMPOS = [
      `default` now. `↺` is the face: not a speed at all, but the way back.
      (`data-k` is "tempo-" + w, so this rename moves the key — test/knobs.js 8e
      presses it by that key and was moved with it.) */
-  { w: "the default speed", why: () => "it is already the default", g: "\u21ba",
+  { w: "the default speed", k: "tempoOp.defaultSpeed",
+    why: () => _t("tempoOp.why.alreadyDefault"), g: "\u21ba",
     mk: (t) => (t.rate == null ? null : { ...t, rate: null }) },
 ];
 /* THE ROW. Same `.nu-tf-row`, same `.nu-vh` word inside the button, same
@@ -9280,7 +9324,7 @@ function envSpecFor(v) {
                value: val, derived: D[seg] };
     });
     return {
-      k: "env|" + v.name, label: "how it sounds each note", fields,
+      k: "env|" + v.name, label: _t("env.plate"), fields,
       set: (seg, n) => { const o = { ...(v.sound || {}) };
         o[SAMPKEY[seg]] = n;
         v.sound = o; changed(); },
@@ -9320,7 +9364,7 @@ function knobsEnvSpec(v, V) {
      keeps that one and this returns nothing. */
   if (fields.length < 2) return null;
   return {
-    k: "env|" + v.name, label: "how it sounds each note", fields,
+    k: "env|" + v.name, label: _t("env.plate"), fields,
     set: (seg, n) => { writeKnob(v, seg, n); changed(); },
     clear: (seg) => { if (seg) clearKnob(v, seg);
                       else for (const x of ENVSEGS) clearKnob(v, x);
@@ -9982,9 +10026,7 @@ function knobsBlock(parent, voice, named) {
      works needs no apology". Both apply: no silent dead control, and no
      apology beside a live one. */
   if (!V) {
-    P(parent, el("span", "a recording has one breath in it — this instrument is " +
-      "a recording, so there is nothing here to turn. The fader, the EQ and the " +
-      "sends are on the engineer below.", "nu-why"));
+    P(parent, el("span", _t("knobs.sampled"), "nu-why"));
     return;
   }
 
@@ -10973,8 +11015,8 @@ function tableAPI() {
     /* A SECTION WEARS THE MARK THIS PAGE HAS ALWAYS GIVEN A SECTION — ▦,
        `GLYPH.sec.one`, the same block the deleted Structure tab and the
        `per-section` facet wear. The same fact wears the same mark. */
-    rowMark: () => ({ g: GLYPH.sec.one.g, w: "Section",
-                      s: "A section: its bars and what each player does." }),
+    rowMark: () => ({ g: GLYPH.sec.one.g, w: _t("noun.section"),
+                      s: _t("grid.sectionRow.say") }),
     mixMark: (name) => { const v = VOICE(name);
       if (!v) return null;
       const t = (v.desk && v.desk.fader) || null;
@@ -11205,10 +11247,9 @@ function tableAPI() {
       const head = (f) => { try { const R = NuRules.byField[f];
                                   return (R && R.head) || f; }
                             catch (e) { return f; } };
-      if (!rs.length) return "nothing written — the genre as the atlas deals it";
+      if (!rs.length) return _t("rulesRow.none");
       const last = rs[rs.length - 1];
-      return rs.length + (rs.length === 1 ? " rule" : " rules") +
-             " written · last " + head(last.f);
+      return _tn("rulesRow.face", rs.length, { name: head(last.f) });
     },
     /* "MAKE X Y" AS A COLUMN OP (§5). The verb, the qualities and the note are
        ui/produce.js's — `targets` says which qualities this subject can
@@ -12197,7 +12238,7 @@ const BUILD = {
      either of them offered has a home in this one — test/table-inventory.json
      names each one and T7 reads the rendered page to prove it is reachable by
      tap at 320px. */
-  Band: (host) => tablePanel(axis(host, "ax-band", "The band")),
+  Band: (host) => tablePanel(axis(host, "ax-band", _t("panel.band"))),
   /* (`Mix: (host) => mountBoard(host, CTX)` STOOD HERE. `mountBoard` is
      unchanged and is called from one place now — the table's `boardRack()`
      door, which is the MIX row's corner sheet. See the tombstone in `TABS`.) */
@@ -12413,12 +12454,13 @@ function paintBadge() {
                          word: GLYPH.act.menu.w, say: GLYPH.act.menu.s });
     menuBtn.setAttribute("aria-expanded", String(menuOpen));
     menuBtn.setAttribute("aria-label",
-      GLYPH.act.menu.w + (n ? ", " + sayLog(logs.length) : ""));
+      n ? _tn("burger.menuLog", n) : GLYPH.act.menu.w);
   }
   if (!logBtn) return;
   paintIcon(logBtn, { glyph: GLYPH.log.g, num: n,
                       word: GLYPH.log.w, say: GLYPH.log.s, on: logOpen });
-  logBtn.setAttribute("aria-label", sayLog(logs.length));
+  logBtn.setAttribute("aria-label",
+    logs.length ? _tn("burger.log", logs.length) : _t("glyph.log.empty"));
 }
 function addRow(coalesced) {
   if (!logPanel || !logOpen) return;
@@ -12656,8 +12698,8 @@ function logRecord() {
      writes the same string to `document.title` and this reads it back there,
      so the log line and the browser tab still cannot disagree: one owner, one
      string, a reader rather than a copy. */
-  logPut("act", H ? H.what : "record", CLIP(CLEAN(document.title)) || null);
-  announceChange(H ? H.what : "record", null, {});
+  logPut("act", H ? H.what : _t("log.record"), CLIP(CLEAN(document.title)) || null);
+  announceChange(H ? H.what : _t("log.record"), null, {});
 }
 
 /* ===== THE ENGINE'S OWN SENTENCE, WHICH IS NOW A LOG LINE ===============
@@ -12960,7 +13002,8 @@ function chromeRow() {
   // is the one writer of both and of the ≡'s own badge
   logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: GLYPH.log.w,
                   say: GLYPH.log.s, on: false });
-  logBtn.setAttribute("aria-label", sayLog(logs.length));
+  logBtn.setAttribute("aria-label",
+    logs.length ? _tn("burger.log", logs.length) : _t("glyph.log.empty"));
   logBtn.setAttribute("aria-controls", "nu-log");
   logBtn.addEventListener("click", () => { setLog(!logOpen); setMenu(false);
                                            paintChrome(); });
@@ -13016,7 +13059,8 @@ function paintChrome() {
   if (closeBtn) {
     const shut = openTab === "Band";
     closeBtn.hidden = shut;
-    if (!shut) closeBtn.setAttribute("aria-label", "close " + openTab);
+    if (!shut) closeBtn.setAttribute("aria-label",
+      _t("act.closeTab.aria", { name: openTab }));
   }
   nameRecord();
 }
@@ -13141,8 +13185,8 @@ function motifSub(name, H) {
   const lead = LINES()[0];
   const who = DOC.voices.filter((v) => (v.kind === "bass"
     ? (lead && usesCell(lead, name)) : usesCell(v, name))).map((v) => v.name);
-  const len = bars ? bars + " bar" + (bars === 1 ? "" : "s") : "";
-  return [len, who.length ? "read by " + who.join(", ") : ""]
+  const len = bars ? _tn("count.bar", bars) : "";
+  return [len, who.length ? _t("bank.playedBy", { names: who.join(", ") }) : ""]
     .filter(Boolean).join(" · ") || null;
 }
 /* OPEN A TAB. Four things happen and no fifth: the tab you are leaving writes
@@ -13452,7 +13496,7 @@ function bpmNode() {
   big.min = String(BPM_LO); big.max = String(BPM_HI); big.step = String(BPM_STEP);
   big.value = bpmSay(DOC.time.bpm);
   big.setAttribute("aria-label",
-    "tempo, beats a minute — " + BPM_LO + " to " + BPM_HI);
+    _t("time.tempoTyped.aria", { min: BPM_LO, max: BPM_HI }));
   box.append(big);
   // ONE DOOR. Clamped to the fence and rounded to the step, so nothing this
   // page can produce is a tempo no control can restate (song.js rounds the
@@ -13522,7 +13566,8 @@ function meterNode() {
     typed.dataset.k = key + ".typed";
     typed.min = String(lo); typed.max = String(hi); typed.step = "1";
     typed.value = String(get());
-    typed.setAttribute("aria-label", label + " \u2014 " + lo + " to " + hi);
+    typed.setAttribute("aria-label",
+      _t("range.typed.aria", { name: label, min: lo, max: hi }));
     r.addEventListener("input", () => { typed.value = r.value; });
     typed.addEventListener("change", () => {
       const v = Math.max(lo, Math.min(hi, Math.round(+typed.value) || lo));
@@ -13532,14 +13577,14 @@ function meterNode() {
     wrap.append(lab);
     box.append(wrap);
   };
-  pair("meter.num", "beats a bar", () => now().num,
+  pair("meter.num", _t("time.beatsPerBar"), () => now().num,
        (v) => put(v, now().den), 1, 32);
-  pair("meter.den", "beat note", () => now().den,
+  pair("meter.den", _t("time.beatNote"), () => now().den,
        (v) => put(now().num, v), 1, 32);
   // WHAT IT SAYS IT IS, in a composer's own two-number spelling — the one
   // reading that is true whichever of the four controls last moved.
-  const say = el("p", now().num + "/" + now().den + " \u00b7 " +
-    K.stepsIn(DOC.time) + " steps a bar", "nu-hint");
+  const say = el("p", _t("time.meterSay",
+    { meter: now().num + "/" + now().den, n: K.stepsIn(DOC.time) }), "nu-hint");
   say.dataset.k = "meter.say";
   box.append(say);
   return box;
@@ -13584,14 +13629,16 @@ function tempoNode() {
                        rate: DOC.time.rate == null ? null : DOC.time.rate });
   for (const d of TEMPOS) {
     const t = now(), next = d.mk(t);
-    const b = icon({ k: "tempo-" + d.w, glyph: (d.g0 || "") + d.g, word: d.w,
-      say: d.w + " — " + (next
-        ? "the record counts " + bpmSay(next.bpm) + " a minute" +
-          (next.rate === t.rate ? ""
-            : ", read at " + (next.rate == null ? "the anchor's own speed"
-                                                : next.rate + "×"))
-        : d.why(t)),
-      why: next ? null : d.why(t) });
+    const word = _t(d.k);
+    const say = !next ? _t("tempoOp.sayWhy", { word, why: d.why(t) })
+      : next.rate === t.rate
+        ? _t("tempoOp.say", { word, value: fmt(next.bpm, "BPM") })
+      : next.rate == null
+        ? _t("tempoOp.sayDefaultRate", { word, value: fmt(next.bpm, "BPM") })
+        : _t("tempoOp.sayRate", { word, value: fmt(next.bpm, "BPM"),
+                                  rate: fmt(next.rate, "\u00d7") });
+    const b = icon({ k: "tempo-" + d.w, glyph: (d.g0 || "") + d.g, word,
+      say, why: next ? null : d.why(t) });
     b.addEventListener("click", () => { const v = d.mk(now()); if (!v) return;
                                         DOC.time.bpm = v.bpm;
                                         DOC.time.rate = v.rate; changed(); });
@@ -13631,7 +13678,7 @@ function changesNode(sid) {
 function boardNode() {
   const pt = el("p", null, "nu-hint");
   const a = document.createElement("a");
-  a.href = "#board"; a.textContent = "record gain — on the board's main strip";
+  a.href = "#board"; a.textContent = _t("boardLink.gain");
   a.className = "nu-routelink";
   a.dataset.k = "goto.board";
   a.addEventListener("click", (e) => { e.preventDefault(); openMixRow("master"); });
@@ -13934,17 +13981,17 @@ function readLink() {
    refusal ends with the whole thing selected and "press Ctrl-C", which is a
    working path and not an apology. */
 function shareCard(grid) {
-  exportCard(grid, "URL", "the link",
-    "this place, this year, this reading — and the tab you are on", (card) => {
+  exportCard(grid, _t("exportTab.url.name"), _t("exportTab.url.what"),
+    _t("exportTab.link.sub"), (card) => {
     const f = el("input");
     f.type = "text";
     f.id = "sharelink";
     f.readOnly = true;
     f.dataset.k = "deck.exp.link";
-    f.setAttribute("aria-label", "a link to this record");
+    f.setAttribute("aria-label", _t("exportTab.link.aria"));
     f.value = shareUrl();
     f.addEventListener("focus", () => f.select());
-    const b = el("button", "copy link");
+    const b = el("button", _t("exportTab.url.copy"));
     b.type = "button"; b.dataset.k = "deck.exp.copy";
     b.addEventListener("click", () => {
       // the field is refreshed at the moment of the press, never trusted to be
@@ -14020,9 +14067,9 @@ function shareCard(grid) {
    detached. `expSay` reads the module-level `deckSay` at call time, so the
    sentence lands on the line that is on the page. */
 function songCard(grid) {
-  exportCard(grid, "JSON", "the record",
-    "the band you built — every player, motif, section and sentence", (card) => {
-    const b = el("button", "save .song.json");
+  exportCard(grid, _t("exportTab.json.name"), _t("exportTab.json.what"),
+    _t("exportTab.record.sub"), (card) => {
+    const b = el("button", _t("exportTab.record.save"));
     b.type = "button"; b.dataset.k = "deck.exp.song";
     b.addEventListener("click", () => {
       try {
@@ -14040,7 +14087,7 @@ function songCard(grid) {
     f.type = "file";
     f.accept = ".json,application/json";
     f.dataset.k = "deck.exp.songopen";
-    f.setAttribute("aria-label", "open a .song.json record");
+    f.setAttribute("aria-label", _t("exportTab.record.open"));
     f.addEventListener("change", () => {
       const file = f.files && f.files[0];
       if (!file) return;
@@ -14174,7 +14221,7 @@ seedInEl.setAttribute("pattern", "[0-9]*");
 seedInEl.dataset.k = "seed-in";
 seedInEl.hidden = true;
 seedInEl.setAttribute("aria-label",
-  "the seed — type a number from 0 to " + SEEDMAX + ", then Enter");
+  _t("seedRow.type.aria", { min: 0, max: SEEDMAX }));
 /* AND THE WAIT, WHICH IS THE CLOCK'S ONE SQUARE INCH OF THIS ROW. Same
    declaration the foot's other countdown carries (`data-live="pending"`), same
    feed (audio/live.js `pending`), same arithmetic — which is NOT here and must
@@ -14523,8 +14570,7 @@ const printReading = () => {
      name (the gesture), and the number's name (the subject and what a press
      on it will do). A screen reader must not be told "4242" and left to guess
      that it is pressable. */
-  seedValBtn.setAttribute("aria-label",
-    "the seed, " + n + " — tap to type another");
+  seedValBtn.setAttribute("aria-label", _t("seedRow.value.aria", { n }));
 };
 on("box", printReading);
 
@@ -14780,9 +14826,7 @@ rewriteBtn.addEventListener("click", () => rewriteNow());
    `printReading`, which reads `ATLAS.reading()`. This section holds no copy
    of the seed; `#seedin.value` is a string a hand is in the middle of typing
    and is thrown away on Escape. */
-seedValBtn.dataset.say = "the seed — the number this record was written "
-  + "from. Tap the die for a new one, or tap the number to type one from 0 to "
-  + SEEDMAX + ". And 0 and 1 are the same record: the idiom as written.";
+seedValBtn.dataset.say = _t("seedRow.value.say");
 
 /* ---------- armSeed: which door the record comes back through ----------
    THE COUNT IS RAISED BEFORE THE COMPOSE AND SPENT BY THE LANDING (see

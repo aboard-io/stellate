@@ -42,6 +42,9 @@
 // OFFLINE LAW: same-origin clips, inline shader, nothing imported at runtime.
 
 import { CLIPS, VIDEO_DIR } from "./video-clips.js";
+/* EVERY WORD THIS DECK PRINTS IS THE CATALOGUE'S (TABLE.md §12b): one table,
+   keyed, so a second language is a second file and nothing else moves. */
+import { t, tn, fmt } from "./copy.js";
 
 const ihash = (s) => { let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
@@ -243,15 +246,17 @@ export function mountVideo(host, CTX) {
      T2 only noticed when its roster grew past nine. `.nu-vh` = read by a
      screen reader and by the stylesheet-off law, invisible otherwise. */
   const vh = document.createElement("h2");
-  vh.className = "nu-vh"; vh.textContent = "The film";
+  vh.className = "nu-vh"; vh.textContent = t("video.title");
   host.appendChild(vh);
   const wrap = document.createElement("div");
   wrap.className = "nu-video";
   host.appendChild(wrap);
   if (!CLIPS.length || !secs.length) {
     const p = document.createElement("p");
-    p.textContent = CLIPS.length ? "This record has no sections yet."
-                                 : "No clips — run node tools/video-manifest.js.";
+    /* NO CLIPS ON DISK means the manifest has not been built — `node
+       tools/video-manifest.js`. That sentence is for whoever is reading this
+       file; what a user is told is that there is nothing to show. */
+    p.textContent = CLIPS.length ? t("video.noSections") : t("video.noClips");
     wrap.appendChild(p); return () => {};
   }
 
@@ -271,8 +276,9 @@ export function mountVideo(host, CTX) {
     b.type = "button"; b.textContent = label; b.addEventListener("click", fn);
     bar.appendChild(b); return b; };
   let paused = false;
-  const bPause = mk("pause", () => { paused = !paused; bPause.textContent = paused ? "play" : "pause"; });
-  mk("cut", () => { cur = pick((Math.random() * 1e6) | 0); loadInto(vids[slot], cur); });
+  const bPause = mk(t("video.pause"), () => { paused = !paused;
+    bPause.textContent = paused ? t("act.play") : t("video.pause"); });
+  mk(t("video.cut"), () => { cur = pick((Math.random() * 1e6) | 0); loadInto(vids[slot], cur); });
   /* FULL SCREEN, WITH THE WEBKIT SPELLINGS (2026-09-01). Paul: "Full screen
      does nothing." Measured in Chromium it worked — requestFullscreen resolved
      and document.fullscreenElement was set — which is exactly why the report
@@ -292,7 +298,7 @@ export function mountVideo(host, CTX) {
     const v = vids[slot];
     if (v && v.webkitEnterFullscreen) { try { v.webkitEnterFullscreen(); } catch {} }
   };
-  mk("full screen", goFull);
+  mk(t("video.fullScreen"), goFull);
   wrap.appendChild(bar);
 
   const vids = [0, 1].map(() => { const v = document.createElement("video");
@@ -303,15 +309,17 @@ export function mountVideo(host, CTX) {
   strip.className = "nu-video-form";
   const cells = secs.map((s) => { const li = document.createElement("li");
     li.className = "nu-video-sec";
-    const nm = document.createElement("b"); nm.textContent = s.role || "section";
-    const bs = document.createElement("span"); bs.textContent = (s.bars || 0) + " bars";
+    const nm = document.createElement("b");
+    nm.textContent = s.role || t("noun.section");
+    const bs = document.createElement("span");
+    bs.textContent = tn("count.bar", s.bars || 0);
     li.append(nm, bs); strip.appendChild(li); return li; });
   wrap.appendChild(strip);
   const cap = document.createElement("p");
   cap.className = "nu-video-cap"; wrap.appendChild(cap);
 
   const gl = canvas.getContext("webgl", { alpha: false, antialias: false });
-  if (!gl) { cap.textContent = "WebGL is unavailable here."; return () => {}; }
+  if (!gl) { cap.textContent = t("video.noVideo"); return () => {}; }
   const prog = gl.createProgram();
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
   gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
@@ -420,7 +428,7 @@ export function mountVideo(host, CTX) {
     if (!rolling) {
       // hold: pause the sources once, leave the last frame on the canvas
       if (wasPlaying) { vids.forEach((v) => v.pause()); wasPlaying = false; }
-      cap.textContent = T.playing ? "paused" : "stopped — press play";
+      cap.textContent = T.playing ? t("video.paused") : t("video.stopped");
       return;
     }
     if (!wasPlaying) { vids.forEach((v) => { v.playbackRate = 0.5; v.play().catch(() => {}); }); wasPlaying = true; }
@@ -518,9 +526,13 @@ export function mountVideo(host, CTX) {
     const lead = incoming && xfade >= 0.5 ? incoming : cur;
     const behind = lead === cur ? incoming : cur;
     const behindPct = Math.round((lead === cur ? xfade : 1 - xfade) * 100);
-    cap.textContent = "bar " + (bar + 1) + "/" + totalBars + " · " +
-      (secs[si].role || "section") + " · " + cur.mode + " · " + nm(lead) +
-      (behind ? " ← " + behindPct + "% " + nm(behind) : "");
+    const line = { bar: t("video.bar", { n: bar + 1, of: totalBars }),
+                   role: secs[si].role || t("noun.section"),
+                   mode: cur.mode, clip: nm(lead) };
+    cap.textContent = behind
+      ? t("video.capBehind", { ...line, pct: fmt(behindPct, "%"),
+                               behind: nm(behind) })
+      : t("video.cap", line);
   };
   /* THE TAB CLOSING IS THE OFF SWITCH (2026-09-01, lifted from the
      screensaver deck, which shipped it first and honester). Measured before

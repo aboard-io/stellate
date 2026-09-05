@@ -38,8 +38,12 @@ export interface EnvField {
   seg: Seg;
   /** the address the gates and the page read — `data-k` on the handle. */
   k: string;
-  /** the word beside the handle. The FIELD'S OWN word: `knobs.js` calls
-   *  sustain "where it rests" on a juno and the editor does not rename it. */
+  /** the caller's own word for this field, kept for the caller's bookkeeping
+   *  and NOT printed. The word beside the handle is the STAGE's, from the
+   *  catalogue (`env.seg.attack` -> "Attack"): `knobs.js` calls sustain "where
+   *  it rests" on a juno and "sustain" on the next instrument, and a handle
+   *  whose name changes with the instrument under it reads as six controls
+   *  rather than one. (TABLE.md §12b, the text pass.) */
   label: string;
   /** "s" · "ms" · "" (a level has none). Printed, never converted. */
   unit: string;
@@ -81,7 +85,10 @@ export interface EnvSpec {
   mode?: "adsr";
   /** the editor's own address; every handle is `<k>|<seg>`. */
   k: string;
-  /** what this envelope is OF — "the amp", "the filter". */
+  /** what this envelope is OF — "the amp", "the filter". NOT printed today:
+   *  one plate is drawn per sheet and it is named `env.plate` ("Envelope"). A
+   *  sheet that grows a second plate wants a key per plate, not a sentence
+   *  from a caller. */
   label: string;
   fields: EnvField[];
   /** ONE WRITE PER GESTURE, through the caller's own door. A drag calls this

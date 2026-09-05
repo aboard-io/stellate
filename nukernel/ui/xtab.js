@@ -33,6 +33,8 @@
 // are nu.css's, unchanged and un-renamed: this is a MOVE and not a redesign.
 
 import { GENRES, ROMAN, NuAtlas, NuRules } from "./deps.js";
+/* THE CATALOGUE (nukernel/TABLE.md §12b): the lineage block's words. */
+import { t } from "./copy.js";
 
 /* ---------- the local kit (glyph.js's own three-liner) ------------------ */
 const el = (tag, text, cls) => { const n = document.createElement(tag);
@@ -112,7 +114,8 @@ const tableOf = (head, rows) => {
   const dual = rows.some((r) => r.dual);
   if (dual) {
     const tr = el("tr");
-    tr.append(el("th", "fact"), el("th", "genre"), el("th", "this record"));
+    tr.append(el("th", t("kin.col.fact")), el("th", t("noun.genre")),
+             el("th", t("head.song")));
     t.append(tr);
   }
   for (const r of rows) {
@@ -236,8 +239,8 @@ function lineage(gk, g, go) {
     const y = when && String(when.year);
     const yearInk = y && label.indexOf(y) < 0 ? y + " · " : "";
     if (NuAtlas.EXCLUDE && NuAtlas.EXCLUDE[k]) {
-      rowEl.append(el("span", label), el("span", " ·" + w + " — a role",
-        "nu-xwt"));
+      rowEl.append(el("span", label),
+        el("span", t("kin.aRole", { weight: w }), "nu-xwt"));
       return rowEl;
     }
     if (!when) {
@@ -253,7 +256,7 @@ function lineage(gk, g, go) {
   };
 
   const s = el("section", null, "nu-xax nu-xflow");
-  s.append(el("h3", "Lineage"));
+  s.append(el("h3", t("kin.heading")));
   const rows = [];
   if (gens.length) {
     /* oldest generation first: gens[last] at depth 0, parents just above
@@ -265,8 +268,10 @@ function lineage(gk, g, go) {
   } else {
     const none = el("div", null, "nu-xf");
     none.dataset.own = "genres.js parents";
-    none.append(el("b", "parents"), document.createTextNode(
-      " none declared — a root (genres.js parents: {})"));
+    /* WHY IT IS A ROOT is a fact about the catalogue (`genres.js parents:
+       {}`) and belongs in this comment, not on the page. */
+    none.append(el("b", t("kin.parents")),
+      document.createTextNode(" " + t("kin.noParents")));
     rows.push(none);
   }
   const meDepth = gens.length;
@@ -276,12 +281,11 @@ function lineage(gk, g, go) {
   const meWhen = NuAtlas.WHEN[gk];
   if (meWhen != null) me.dataset.year = meWhen.year;
   if (meDepth > 0) me.append(el("span", "└ ", "nu-xtie"));
-  me.append(el("b", (g.label || gk) + " — this record"));
+  me.append(el("b", t("kin.thisRecord", { name: g.label || gk })));
   rows.push(me);
   for (const [k, w] of kids) rows.push(flowLine(k, w, meDepth + 1, "down"));
   if (Array.isArray(g.wants) && g.wants.length) {
-    const owed = el("p", "still owed: " + g.wants.join(", ") +
-      " — the missing rungs this row names as debts", "nu-xnote");
+    const owed = el("p", t("kin.owed", { list: g.wants.join(", ") }), "nu-xnote");
     owed.dataset.own = "genres.js wants";
     rows.push(owed);
   }

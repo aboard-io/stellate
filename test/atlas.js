@@ -927,8 +927,14 @@ function g18() {
     (document.getElementById("atlasSay") || {}).textContent);
   const readAgain = await p.evaluate(() =>
     (document.getElementById("reading") || {}).textContent);
+  /* `"reading " + readAgain` STOOD HERE UNTIL 2026-09-05 (the functional text
+     pass). "reading 3" for a seed is one of the twenty banned families the
+     copy audit measured — a seed is a seed, and the gutter's own readout has
+     always called it that — so ui/atlas.js's sentence says "seed 57824" now
+     and this join follows the word. The claim is unchanged: the sentence under
+     the globe and `#reading` are the same one number. */
   check(readAgain !== String(seedNow) &&
-        sayAgain.indexOf("reading " + readAgain) >= 0,
+        sayAgain.indexOf("seed " + readAgain) >= 0,
     "G9 · …and says so: the reading went " + seedNow + " -> " + readAgain +
     " and the sentence agrees — " + JSON.stringify(sayAgain.slice(-40)));
 

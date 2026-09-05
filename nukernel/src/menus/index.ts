@@ -99,6 +99,10 @@ import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import type { MenuSpec, Word, Picker } from "./api.js";
 import { pickerFor, coarse, CHIPMAX, LONGSTRIP, forgetPointer } from "./pick.js";
+/* THE WORDS ARE THE CATALOGUE'S (TABLE.md §12b). `../copy/global.js`, never
+   `../copy/index.js`: this is its own build entry, and importing the catalogue
+   would bundle a second copy of every string on the page into ui/menus.js. */
+import { t } from "../copy/global.js";
 
 export { pickerFor, coarse, CHIPMAX, LONGSTRIP, forgetPointer };
 export type { MenuSpec, Word, Picker };
@@ -109,7 +113,7 @@ export type { MenuSpec, Word, Picker };
 export function optionText(o: Word): string {
   const label = o.label == null ? String(o.value) : String(o.label);
   const why = o.why && String(o.why).trim();
-  return why ? label + ", " + why : label;
+  return why ? t("menu.withWhy", { name: label, why }) : label;
 }
 
 /** The words a choice is FILTERED on — its label, and not the reason joined to
@@ -219,7 +223,8 @@ function rowsOf(spec: MenuSpec): { rows: Row[]; now: string; matched: Row } {
     // table has no "" is the producer's own shape — "no verb has been said
     // yet". A value that is NOT empty and not in the table is a fault in the
     // record rather than a state of the page, so it says so.
-    const word = now === "" ? "choose one" : now + ", not in this table";
+    const word = now === "" ? t("menu.choose")
+                            : t("menu.unknown", { name: now });
     matched = { o: { value: now, label: word, quiet: true, why: word },
                 value: now, word, placeholder: true };
     rows.unshift(matched);
@@ -244,7 +249,8 @@ function chips(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
   strip.setAttribute("role", "group");
   strip.tabIndex = 0;
   const label = spec.label == null ? key : String(spec.label);
-  strip.setAttribute("aria-label", off ? label + ", " + off : label);
+  strip.setAttribute("aria-label",
+    off ? t("menu.withWhy", { name: label, why: off }) : label);
   if (off) { strip.dataset.why = off; strip.classList.add("is-off");
              strip.setAttribute("aria-disabled", "true"); }
   address(strip, spec, key, "chips", matched.value);
@@ -297,7 +303,7 @@ function chips(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
       aria-disabled=${ifDefined(refused ? "true" : undefined)}
       data-why=${ifDefined(why == null ? undefined : why)}
       title=${ifDefined(hard && off ? off : undefined)}
-      aria-label=${why ? w + ", " + why : w}
+      aria-label=${why ? t("menu.withWhy", { name: w, why }) : w}
       @click=${() => write(r.value)}><span class="nu-chipword">${w}</span
       >${own ? html`<small class="nu-why">${own}</small>` : nothing}</button> `;
   })}`, strip);
@@ -323,7 +329,8 @@ function native(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
   sel.className = "nu-combofield nu-menu-native";
   const label = spec.label == null ? key : String(spec.label);
   const off = spec.why && String(spec.why).trim();
-  sel.setAttribute("aria-label", off ? label + ", " + off : label);
+  sel.setAttribute("aria-label",
+    off ? t("menu.withWhy", { name: label, why: off }) : label);
   if (off) { sel.disabled = true; sel.setAttribute("aria-disabled", "true");
              sel.dataset.why = off; box.classList.add("is-off"); }
   address(sel, spec, key, "native", matched.value);
@@ -410,7 +417,8 @@ function combo(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
     f.disabled = true; f.setAttribute("aria-disabled", "true");
     f.dataset.why = off; box.classList.add("is-off");
   }
-  f.setAttribute("aria-label", off ? label + ", " + off : label);
+  f.setAttribute("aria-label",
+    off ? t("menu.withWhy", { name: label, why: off }) : label);
 
   interface Li extends Row { li: HTMLLIElement }
   const lis: Li[] = [];
@@ -441,7 +449,7 @@ function combo(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
   }
   const none = doc.createElement("li");
   none.className = "nu-why nu-combonone";
-  none.textContent = "no word here matches";
+  none.textContent = t("menu.noMatch");
   none.setAttribute("role", "presentation");
   none.hidden = true;
   list.append(none);
@@ -654,11 +662,11 @@ export function menu(spec: MenuSpec): HTMLElement {
   if (!words.length) {
     // NEVER AN EMPTY CONTROL, which is a bug that looks like a design — the
     // same refusal ui/sheets.js:114 makes with its "nothing to choose here".
-    const why = (spec.why && String(spec.why).trim()) || "nothing to choose here";
+    const none = t("menu.empty");
+    const why = (spec.why && String(spec.why).trim()) || none;
     box.dataset.widget = "native";
     const empty = native({ ...spec, why,
-      words: [{ value: "", label: "nothing to choose here",
-                quiet: true, why: "nothing to choose here" }],
+      words: [{ value: "", label: none, quiet: true, why: none }],
       value: "" }, key, box);
     empty.dataset.widget = "native";
     box.classList.add("is-off");

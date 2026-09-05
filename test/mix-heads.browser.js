@@ -178,7 +178,13 @@ function standUpServer() {
   const wantCols = chairs.map((c) => "col|" + c.name);
   const badHead = headsRead.filter((h, i) =>
     h.k !== wantCols[i] || !h.instr || !h.name || h.vi == null ||
-    !/ — open this player's instrument$/.test(h.aria || ""));
+    /* THE ARIA NAMES THE PLAYER AND THE INSTRUMENT, and it stopped ending
+       with " — open this player's instrument" in the functional text pass
+       (2026-09-05, TABLE.md §11: a tap-to instruction inside a label is one of
+       the twenty banned families). The claim was never the instruction — it is
+       that the head's accessible name carries BOTH facts — so it is asserted
+       as that: the instrument and the player's name, both in the aria. */
+    !(h.aria || "").includes(h.instr) || !(h.aria || "").includes(h.name));
   check(headsRead.length === chairs.length && !badHead.length,
     "X2 every column head is a `col|<voice>` button naming an INSTRUMENT over " +
     "a PLAYER, in that player's category colour — " +

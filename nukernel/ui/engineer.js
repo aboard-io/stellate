@@ -143,6 +143,13 @@ import { gid } from "./derive.js";
    for a label paragraph, and ui/selects.js's own header says the bare form
    exists "for a table cell". */
 import { selectEl, selectField } from "./selects.js";
+/* THE CATALOGUE (TABLE.md §12b). Every word this file prints is a KEY read
+   here at the moment it is printed; a dB value goes through `fmt` so the sign
+   and the decimal are made in one place. Three local names that shadowed these
+   imports were renamed on 2026-09-05 rather than the imports being aliased:
+   `line` for the legend string, `stage` for a board tab, `show` for a
+   slider's own formatter. */
+import { t, tn, fmt } from "./copy.js";
 /* THE WORD GRID (2026-09-02, wave 4). Paul: *"make those tables of dropdowns
    full of tappable grids that change options rather than dropdowns — like the
    other selection table in mix … institutionalize it."* "The other selection
@@ -234,7 +241,7 @@ function returnShut() {
 function genreAsk(sec) {
   const g = (sec && GENRES[gid(sec)]) || {};
   const v = g.tone && g.tone.verb != null ? g.tone.verb : 0.15;
-  return "the genre asks " + v;
+  return t("board.send.rev.title", { value: fmt(v) });
 }
 
 /* ---------- THE FOUR SENDS OF A STRIP (2026-08-27) ------------------------
@@ -259,9 +266,11 @@ function genreAsk(sec) {
        second gain on the same wire is two owners of one fact.
    The refusal still standing is drawn (never live-and-dead, never missing)
    with its sentence, per the standing law. */
-const MAINSEND_WHY = "the dry path to the main is the fader below — one owner " +
-  "per fact, so this send is parked rather than drawn as a second gain on the " +
-  "same wire";
+/* THE REASON IS THE SAME AND THE ARGUMENT IS A COMMENT NOW (2026-09-05, the
+   functional text pass): the dry path to the main IS the fader below, one
+   owner per fact, so this send is parked rather than drawn as a second gain on
+   the same wire. The user reads the first clause; the rest stays here. */
+const MAINSEND_WHY = t("board.mainSend.why");
 // THE BLEED WAS REFUSED and is LIVE as of 2026-08-27 (same round). The refusal
 // read: "the bleed is a constant in the DSP — not wired: fx_bus.dsp:221 runs
 // the delay into the reverb at the literal 0.2 (`d*0.2`)… a .dsp edit plus a
@@ -296,12 +305,13 @@ const MAINSEND_WHY = "the dry path to the main is the fader below — one owner 
    sampled chair is measured per frame, a Faust chair per bar, the well says
    which in its title, and a chair with neither number draws an EMPTY well
    saying "not yet measured — plays first". Absent is still not zero. */
-const STEREO_WHY = "this voice is stereo — the parent's insert path is mono " +
-  "and a chain would fold its width to one channel (audio/desk.js widthKept), " +
-  "so the seats are refused rather than silently stripped";
-const SWEEP_WET_WHY = "filter sweep is serial — the module declares no mix " +
-  "param (a swept resonant lowpass is a replacement, not a blend), so there " +
-  "is no wet to move";
+/* SAME TWO REFUSALS, AND THE MODULE NAMES ARE COMMENTS (2026-09-05). STEREO:
+   the parent's insert path is mono and a chain would fold this voice's width
+   to one channel (audio/desk.js `widthKept`), so the seats are refused rather
+   than silently stripped. SWEEP: the module declares no mix param — a swept
+   resonant lowpass is a replacement, not a blend — so there is no wet. */
+const STEREO_WHY = t("board.stereo.why");
+const SWEEP_WET_WHY = t("board.sweepWet.why");
 
 /* ---------- reading and writing one strip --------------------------------- */
 const deskOf = (voice) => (voice && voice.desk) || {};
@@ -314,15 +324,16 @@ function setDesk(ctx, voice, key, v) {
 // word for it is `default`, everywhere (Paul, 2026-08-26: "just use 'default'
 // for 'nothing set'").
 function optionsFor(table, labels, cur, gate, emptyLabel) {
-  const head = [{ value: "", label: emptyLabel, group: "default" }];
+  const head = [{ value: "", label: emptyLabel, group: t("value.default") }];
   return head.concat(Object.keys(table).map((k) => {
     const g = gate ? gate(k) : null;
     const isCur = String(cur) === k;
     if (g && isCur)
-      return { value: k, label: (labels && labels[k]) || k, group: "as you say",
-               quiet: true, why: g + ", and it is what the record says" };
+      return { value: k, label: (labels && labels[k]) || k,
+               group: t("board.group.words"), quiet: true,
+               why: t("board.currentAnyway.why", { why: g }) };
     return { value: k, label: (labels && labels[k]) || k,
-             group: "as you say",
+             group: t("board.group.words"),
              ...(g ? { disabled: true, why: g } : {}) };
   }));
 }
@@ -360,7 +371,8 @@ function detentsOf(field, table, labels, emptyLabel, dfltOverride) {
     console.error("engineer: detentsOf(" + field + ") got a table that is not a scale");
   let i = 0;
   while (i < d.length && d[i].n < dflt) i++;
-  d.splice(i, 0, { v: "", w: emptyLabel == null ? "default" : emptyLabel, n: dflt });
+  d.splice(i, 0, { v: "", w: emptyLabel == null ? t("value.default") : emptyLabel,
+                   n: dflt });
   return d;
 }
 
@@ -448,9 +460,9 @@ function vnum(k, opts) {
   input.value = String(opts.value);
   input.dataset.k = k;
   input.setAttribute("aria-label", opts.aria);
-  const fmt = opts.fmt || ((v) => String(v));
-  const out = el("output", fmt(+input.value), "nu-vs-val");
-  input.addEventListener("input", () => { out.textContent = fmt(+input.value); });
+  const show = opts.fmt || ((v) => String(v));
+  const out = el("output", show(+input.value), "nu-vs-val");
+  input.addEventListener("input", () => { out.textContent = show(+input.value); });
   if (opts.onInput) input.addEventListener("input", () => opts.onInput(+input.value));
   input.addEventListener("change", () => opts.set(+input.value));
   const { track } = vchassis(input, () =>
@@ -468,7 +480,7 @@ function vrefused(k, aria, short, why, tall) {
   input.type = "range"; input.min = "0"; input.max = "1"; input.value = "0";
   input.className = "nu-vs-in";
   if (k) input.dataset.k = k;
-  input.setAttribute("aria-label", aria + " (refused)");
+  input.setAttribute("aria-label", t("board.aria.refused", { name: aria }));
   const w = refuse(input, why, short);
   const { track } = vchassis(input, () => 0);
   track.classList.add("is-off");
@@ -517,9 +529,11 @@ function voiceSlotOwner(ctx, voice) {
   return {
     seatK: (n) => "ins|" + voice.name + "|" + n,
     knobK: (kind, n) => "b|" + kind + n + "|" + voice.name,
-    seatAria: (n) => voice.name + " insert " + n,
-    knobAria: (n, word) => voice.name + " insert " + n + " " + word,
-    faceAria: (n, k, label) => voice.name + " " + k + " " + label,
+    seatAria: (n) => t("board.slot.insert.aria", { name: voice.name, n }),
+    knobAria: (n, word) => t("board.slot.insert.knob.aria",
+                             { name: voice.name, n, word }),
+    faceAria: (n, k, label) => t("board.slot.face.aria",
+                                 { name: voice.name, fx: k, label }),
     read: () => slotsOf(voice),
     write: (slots) => writeSlots(ctx, voice, slots),
     setKnob: (n, kind, v) => setDesk(ctx, voice, kind + n, v),
@@ -538,9 +552,9 @@ function busSlotOwner(ctx, doc, bus, name) {
   return {
     seatK: (n) => "bus|" + bus + "|fx" + n,
     knobK: (kind, n) => "bus|" + bus + "|" + kind + n,
-    seatAria: (n) => name + " effect " + n,
-    knobAria: (n, word) => name + " effect " + n + " " + word,
-    faceAria: (n, k, label) => name + " " + k + " " + label,
+    seatAria: (n) => t("board.slot.effect.aria", { name, n }),
+    knobAria: (n, word) => t("board.slot.effect.knob.aria", { name, n, word }),
+    faceAria: (n, k, label) => t("board.slot.face.aria", { name, fx: k, label }),
     read: () => {
       const e = row(), out = [];
       for (let n = 1; n <= MAX_FX; n++) {
@@ -605,13 +619,13 @@ function writeSlots(ctx, voice, slots) {
 function seatSelect(ctx, own, slots, i, why) {
   const cur = slots[i] ? slots[i].k : null;
   const taken = slots.map((s, j) => (j === i ? null : s.k));
-  const words = [{ value: "", label: "—", group: "default" }];
+  const words = [{ value: "", label: "—", group: t("value.default") }];
   for (const k of Object.keys(FX)) {
-    const w = { value: k, label: FXLABEL[k] || k, group: "as you say" };
+    const w = { value: k, label: FXLABEL[k] || k, group: t("board.group.words") };
     // AN EFFECT SEATS ONCE PER CHAIN: the slots are a chain and the same pedal
     // twice in it is the same pedal once, louder about it.
     if (taken.includes(k) && k !== cur) {
-      w.disabled = true; w.why = "already seated in another slot";
+      w.disabled = true; w.why = t("board.seatTaken.why");
     }
     words.push(w);
   }
@@ -657,13 +671,14 @@ function slotEl(ctx, own, slots, i, stereoWhy) {
   // since the page-foot digest was deleted 2026-08-28).
   if (NuFields.fxHasMix(s.k)) {
     const dfltMix = NuFields.fxMix(s.k);
-    body.append(col("wet", vknob(own.knobK("fxw", n), null,
+    body.append(col(t("board.col.wet"), vknob(own.knobK("fxw", n), null,
       NuFields.FXWETS, NuFields.FXWETLABEL, s.w,
-      own.knobAria(n, "wet"),
-      (v) => own.setKnob(n, "fxw", v), "default", dfltMix)));
+      own.knobAria(n, t("board.col.wet")),
+      (v) => own.setKnob(n, "fxw", v), t("value.default"), dfltMix)));
   } else {
-    body.append(col("wet", vrefused(null, own.knobAria(n, "wet"),
-      "serial", SWEEP_WET_WHY)));
+    body.append(col(t("board.col.wet"),
+      vrefused(null, own.knobAria(n, t("board.col.wet")),
+      t("board.sweepWet.short"), SWEEP_WET_WHY)));
   }
   // ...AND ITS OWN SETTINGS: the module's declared face params, in the
   // module's own units (fields.js FXFACE, off the dist manifests), as
@@ -677,11 +692,11 @@ function slotEl(ctx, own, slots, i, stereoWhy) {
   if (face[0]) body.append(col(face[0].label,
     vknob(own.knobK("fxa", n), null, NuFields.FXPOTS,
       NuFields.FXPOTLABEL, s.a, own.faceAria(n, s.k, face[0].label),
-      (v) => own.setKnob(n, "fxa", v), "default", dfltFrac(face[0]))));
+      (v) => own.setKnob(n, "fxa", v), t("value.default"), dfltFrac(face[0]))));
   if (face[1]) body.append(col(face[1].label,
     vknob(own.knobK("fxb", n), null, NuFields.FXPOTS,
       NuFields.FXPOTLABEL, s.b, own.faceAria(n, s.k, face[1].label),
-      (v) => own.setKnob(n, "fxb", v), "default", dfltFrac(face[1]))));
+      (v) => own.setKnob(n, "fxb", v), t("value.default"), dfltFrac(face[1]))));
   box.append(body);
   return box;
 }
@@ -729,7 +744,7 @@ export function channelStrip(ctx, c, env) {
   const off = env.anySolo && !d.solo;
   const strip = el("article", null, "nu-strip" + (off || d.mute ? " is-off" : ""));
   strip.dataset.ch = key;
-  strip.setAttribute("aria-label", voice.name + " strip");
+  strip.setAttribute("aria-label", t("board.strip.aria", { name: voice.name }));
   const head = el("header");
   head.append(el("b", voice.name, "nu-sname"));
   head.append(el("small", (voice.instrument || voice.kind || "") + " · " + key));
@@ -739,7 +754,7 @@ export function channelStrip(ctx, c, env) {
   // `nu-srow-ins`: the three slots sit SIDE BY SIDE in the width the tab
   // bought, and stack again under ~460px (nu.css).
   const srow1 = el("div", null, "nu-srow nu-srow-ins");
-  srow1.append(el("p", "inserts · up to three · in order", "nu-rowlab"));
+  srow1.append(el("p", t("board.row.inserts"), "nu-rowlab"));
   const stereoWhy = env.facts[key] && env.facts[key].stereo ? STEREO_WHY : null;
   const own = voiceSlotOwner(ctx, voice);
   const slots = own.read();
@@ -749,7 +764,7 @@ export function channelStrip(ctx, c, env) {
 
   // ---- sends: four, post-insert --------------------------------------
   const srow2 = el("div", null, "nu-srow");
-  srow2.append(el("p", "sends · post-insert", "nu-rowlab"));
+  srow2.append(el("p", t("board.row.sends"), "nu-rowlab"));
   const sends = el("div", null, "nu-sends");
   // UN-REFUSED 2026-08-27 (the series-bus engine round). This column was
   // drawn refused — "the genre bus is engine work — not wired" — and the
@@ -757,31 +772,36 @@ export function channelStrip(ctx, c, env) {
   // accumulator (stream-renderer/press `gen`) whose chained return sums into
   // the DELAY bus, so the send is a real wire: genre → delay → reverb →
   // main. The word is desk `genre` (fields.js PARTMIX, SENDS family).
-  sends.append(col("genre", vknob("b|genre|" + voice.name, "genre",
-    SENDS, SENDLABEL, d.genre, voice.name + " send to the genre bus",
-    (v) => setDesk(ctx, voice, "genre", v), "default")));
+  sends.append(col(t("noun.genre"), vknob("b|genre|" + voice.name, "genre",
+    SENDS, SENDLABEL, d.genre, t("board.send.aria.genre", { name: voice.name }),
+    (v) => setDesk(ctx, voice, "genre", v), t("value.default"))));
   sends.append(col(busName("echo"), vknob("b|echo|" + voice.name, "echo",
-    SENDS, SENDLABEL, d.echo, voice.name + " send to " + busName("echo"),
-    (v) => setDesk(ctx, voice, "echo", v), "default")));
+    SENDS, SENDLABEL, d.echo,
+    t("board.send.aria.bus", { name: voice.name, bus: busName("echo") }),
+    (v) => setDesk(ctx, voice, "echo", v), t("value.default"))));
   const revK = vknob("b|rev|" + voice.name, "rev",
-    SENDS, SENDLABEL, d.rev, voice.name + " send to " + busName("rev"),
-    (v) => setDesk(ctx, voice, "rev", v), "default");
+    SENDS, SENDLABEL, d.rev,
+    t("board.send.aria.bus", { name: voice.name, bus: busName("rev") }),
+    (v) => setDesk(ctx, voice, "rev", v), t("value.default"));
   { const inp = revK.querySelector("input");
-    inp.title = genreAsk(env.sec) + "; a part send adds to it, so absent adds nothing"; }
-  sends.append(col(busName("rev") + (env.shut ? " (shut)" : ""), revK));
-  sends.append(col("main", vrefused("b|main|" + voice.name,
-    voice.name + " send to the main", "the fader's", MAINSEND_WHY)));
+    inp.title = genreAsk(env.sec); }
+  sends.append(col(env.shut ? t("board.bus.shut", { name: busName("rev") })
+                            : busName("rev"), revK));
+  sends.append(col(t("board.bus.main.name"), vrefused("b|main|" + voice.name,
+    t("board.send.aria.main", { name: voice.name }),
+    t("board.mainSend.short"), MAINSEND_WHY)));
   srow2.append(sends);
   strip.append(srow2);
 
   // ---- eq -------------------------------------------------------------
   const srow3 = el("div", null, "nu-srow");
-  srow3.append(el("p", "eq", "nu-rowlab"));
+  srow3.append(el("p", t("board.row.eq"), "nu-rowlab"));
   const eqrow = el("div", null, "nu-sends");
   for (const b of EQ_BANDS) {
     eqrow.append(col(b.label.replace(/^eq\s*/, ""), vnum("b|eq" + b.key + "|" + voice.name, {
       min: -12, max: 12, step: 0.5, value: (d.eq && d.eq[b.key]) || 0,
-      aria: voice.name + " " + b.label, fmt: (v) => fmtDb(v),
+      aria: t("board.eq.aria", { name: voice.name, band: b.label }),
+      fmt: (v) => fmtDb(v),
       set: (v) => {
         const next = { ...(deskOf(voice).eq || {}) };
         next[b.key] = v;
@@ -798,19 +818,20 @@ export function channelStrip(ctx, c, env) {
   // record is on CLEARS it — absent is the only spelling of a default, and
   // there is no other way to spell it with buttons.
   const srow4 = el("div", null, "nu-srow");
-  srow4.append(el("p", "pan", "nu-rowlab"));
+  srow4.append(el("p", t("field.pan"), "nu-rowlab"));
   const panrow = el("div", null, "nu-panrow");
   panrow.setAttribute("role", "group");
-  panrow.setAttribute("aria-label", voice.name + " pan");
+  panrow.setAttribute("aria-label", t("board.pan.aria", { name: voice.name }));
   const marks = { l: "L", hl: "l", c: "C", hr: "r", r: "R" };
   const cur = d.pan || null;
-  const word = el("p", cur ? (PANLABEL[cur] || cur) : "default",
+  const word = el("p", cur ? (PANLABEL[cur] || cur) : t("value.default"),
     "nu-panword" + (cur ? "" : " is-dflt"));
   for (const p of Object.keys(PANS)) {
     const b = el("button", marks[p], "nu-panbtn");
     b.type = "button";
     b.dataset.k = "b|pan|" + voice.name + "|" + p;
-    b.setAttribute("aria-label", voice.name + " pan " + (PANLABEL[p] || p));
+    b.setAttribute("aria-label", t("board.pan.btn.aria",
+      { name: voice.name, word: PANLABEL[p] || p }));
     const on = cur ? cur === p : p === "c";
     b.setAttribute("aria-pressed", on ? "true" : "false");
     b.addEventListener("click", () =>
@@ -822,14 +843,15 @@ export function channelStrip(ctx, c, env) {
 
   // ---- the fader ------------------------------------------------------
   const srow5 = el("div", null, "nu-srow");
-  srow5.append(el("p", "fader", "nu-rowlab"));
+  srow5.append(el("p", t("board.row.fader"), "nu-rowlab"));
   const fw = el("div", null, "nu-fadwrap");
   const fout = { o: null };
   const fader = vnum("b|fader|" + voice.name, {
     min: -24, max: 12, step: 0.5, value: faderDb(d.fader),
-    aria: voice.name + " fader", tall: true, fmt: (v) => fmtDb(v),
+    aria: t("board.fader.aria", { name: voice.name }), tall: true,
+    fmt: (v) => fmtDb(v),
     set: (v) => setDesk(ctx, voice, "fader", v) });
-  fw.append(col("level", fader));
+  fw.append(col(t("field.level"), fader));
   /* THE METER WELL, MEASURED — 2026-09-02. It was `vrefused(null, …, "no tap",
      METER_WHY, true)` for as long as the engine had one tap; METER_WHY's
      tombstone at the head of this file carries the whole reversal. The well is
@@ -846,7 +868,7 @@ export function channelStrip(ctx, c, env) {
     const wout = el("output", "", "nu-vs-val");
     wout.dataset.live = "meter";
     wellWrap.append(well, wout);
-    fw.append(col("meter", wellWrap));
+    fw.append(col(t("noun.meter"), wellWrap));
     (env.meters = env.meters || []).push({ chan: key, well, bar: wbar, out: wout,
       said: null,
       grain: (env.facts[key] || {}).sampled ? "per frame" : "per bar" });
@@ -855,11 +877,14 @@ export function channelStrip(ctx, c, env) {
   // mute/solo WEAR THEIR OWN NAMES since 2026-08-27 (FUTURE.md §5: "cut"
   // collided with EQ cut three rows up; the desk keys were always mute/solo,
   // so the buttons stop translating them).
-  for (const [k2, label] of [["mute", "mute"], ["solo", "solo"]]) {
+  for (const [k2, key2] of [["mute", "board.tgl.mute"],
+                            ["solo", "state.solo"]]) {
+    const label = t(key2);
     const b = el("button", label, "nu-tgl");
     b.type = "button";
     b.dataset.k = "b|" + k2 + "|" + voice.name;
-    b.setAttribute("aria-label", voice.name + " " + label);
+    b.setAttribute("aria-label",
+                   t("board.tgl.aria", { name: voice.name, word: label }));
     b.setAttribute("aria-pressed", d[k2] ? "true" : "false");
     b.addEventListener("click", () => setDesk(ctx, voice, k2, !deskOf(voice)[k2]));
     duo.append(b);
@@ -872,7 +897,9 @@ export function channelStrip(ctx, c, env) {
   // an undeclared clock write is the finding it exists for.
   const drive = el("small", "", "nu-drive nu-hint");
   drive.dataset.live = "model";
-  drive.title = "the model: deskChannelBase().gain × the box's level automation";
+  // WHAT THE NUMBER IS, for a hand reading the code rather than the page:
+  // `deskChannelBase().gain` × the section's level automation, per beat.
+  drive.title = t("board.drive.title");
   duo.append(drive);
   env.drives.push({ el: drive, key });
   fw.append(duo);
@@ -942,7 +969,7 @@ export function seatWord(doc, name) {
   let seated = true;
   try { seated = DD().channelVoicesOf(doc, GENRES)
     .some((c) => c.voice.name === name); } catch (e) { seated = true; }
-  if (!seated) return "no channel";
+  if (!seated) return t("board.seat.noChannel");
   /* NOTHING WRITTEN IS AN EM DASH, WHICH IS THIS TABLE'S OWN SPELLING FOR IT
      and not a shrug: the cell is `is-derived` (dim) beside it, and the words
      it would otherwise carry — "as mixed" — MEASURED at 56px, the width of a
@@ -954,10 +981,10 @@ export function seatWord(doc, name) {
   const db = faderDb(d.fader);
   if (db) out.push(fmtDb(db));
   if (d.pan) out.push(PANLABEL[d.pan] || d.pan);
-  if (d.mute) out.push("muted");
-  if (d.solo) out.push("solo");
+  if (d.mute) out.push(t("state.muted"));
+  if (d.solo) out.push(t("state.solo"));
   const n = slotsOf(v).length;
-  if (n) out.push(n + " fx");
+  if (n) out.push(tn("board.count.fx", n));
   return out.length ? out.join(" \u00b7 ") : "\u2014";
 }
 /** ...and whether a HAND put any of it there, which is the dim-is-derived
@@ -977,12 +1004,13 @@ export function voiceMix(parent, ctx, voiceName) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
   const c = chans.find((x) => x.voice.name === voiceName);
-  if (ctx.heading) ctx.heading(parent, "mix");
-  else parent.append(el("h3", "mix"));
+  if (ctx.heading) ctx.heading(parent, t("special.mix.word"));
+  else parent.append(el("h3", t("special.mix.word")));
   if (!c) {
-    const w = el("p", voiceName + " has no channel on this record — the desk " +
-      "seats a kit only once it is hired (desk-doc channelVoicesOf), so there " +
-      "is no strip to draw rather than an empty one", "nu-why");
+    /* THE DESK SEATS A KIT ONLY ONCE IT IS HIRED (desk-doc
+       `channelVoicesOf`), so there is no strip to draw rather than an empty
+       one. The reason is here; the page says the fact. */
+    const w = el("p", t("board.strip.noChannel.why", { name: voiceName }), "nu-why");
     parent.append(w);
     MIX = null;
     return;
@@ -1001,7 +1029,7 @@ export function voiceMix(parent, ctx, voiceName) {
   // for a person's own muscle memory as `#voicemix`, which is what this is.
   const host = el("div", null, "nu-strips");
   host.id = "voicemix";
-  host.setAttribute("aria-label", voiceName + " strip");
+  host.setAttribute("aria-label", t("board.strip.aria", { name: voiceName }));
   host.append(channelStrip(ctx, c, env));
   parent.append(host);
   // WHERE IT GOES, said on the voice as well as on the board. The strip's own
@@ -1010,7 +1038,7 @@ export function voiceMix(parent, ctx, voiceName) {
   // their controls — one owner per fact, and the buses' owner is the board.
   const go = el("p", null, "nu-hint");
   const a = document.createElement("a");
-  a.href = "#board"; a.textContent = "the buses this feeds are on the board";
+  a.href = "#board"; a.textContent = t("board.link.buses");
   go.append(a);
   parent.append(go);
   // the model readout under the fader is written once a beat by the page's own
@@ -1055,9 +1083,9 @@ let BOARDTAB = { kind: "bus", key: null };
 
 export function mount(parent, ctx) {
   const host = ctx.section
-    ? ctx.section(parent, "board", "The board")
+    ? ctx.section(parent, "board", t("board.title"))
     : (() => { const s = el("section"); s.className = "nu-ax"; s.id = "board";
-               s.append(el("h2", "The board")); parent.append(s); return s; })();
+               s.append(el("h2", t("board.title"))); parent.append(s); return s; })();
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
   const sec = atBox();
@@ -1118,10 +1146,9 @@ export function mount(parent, ctx) {
   note.dataset.k = "board.legend";
   const WELLED = { main: true, auto: true };
   const sayLegend = () => {
-    const t = "dim is derived · bright is set" +
-      (WELLED[BOARDTAB.key] || BOARDTAB.kind === "auto"
-        ? " · green is measured" : "");
-    if (note.textContent !== t) note.textContent = t;
+    const line = t(WELLED[BOARDTAB.key] || BOARDTAB.kind === "auto"
+                     ? "board.legend.measured" : "board.legend");
+    if (note.textContent !== line) note.textContent = line;
   };
   host.append(note);
 
@@ -1232,7 +1259,8 @@ export function mount(parent, ctx) {
      registry word passes nothing extra. */
   const busSel = (g, busKey, spec, word) => selectField(g, {
     key: "bus|" + busKey + "|" + spec.key, label: word || spec.label,
-    options: optionsFor(spec.table, spec.labels, bv(busKey, spec.key), null, "default"),
+    options: optionsFor(spec.table, spec.labels, bv(busKey, spec.key), null,
+                        t("value.default")),
     value: bv(busKey, spec.key),
     set: (v) => { DD().writeBus(doc, busKey, spec.key, v); ctx.changed(); },
   });
@@ -1275,14 +1303,13 @@ export function mount(parent, ctx) {
   PLATES.genre = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "genre";
-    p.setAttribute("aria-label", "genre fx bus");
+    p.setAttribute("aria-label", t("board.bus.genre.name"));
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", busTitle("genre", "genre fx bus"), "nu-busname"));
-    h.append(el("small", "in ← genre sends · three effects, in order",
-      "nu-busin"));
+    h.append(el("b", busTitle("genre", t("board.bus.genre.name")), "nu-busname"));
+    h.append(el("small", t("board.bus.genre.in"), "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
-    busSel(g, "genre", knobOf("genre", "name"), "called");
+    busSel(g, "genre", knobOf("genre", "name"), t("board.bus.sel.called"));
     p.append(g);
     // THE CHAIN. Same slot the strips draw, in slot order, keyed
     // `bus|genre|fx<n>` at the seat and `bus|genre|fxw<n>`/`fxa<n>`/`fxb<n>`
@@ -1290,19 +1317,20 @@ export function mount(parent, ctx) {
     // opens onto these seats unchanged and untouched knobs sound exactly as
     // they always did.
     const ins = el("div", null, "nu-srow nu-srow-ins");
-    ins.append(el("p", "in order · fed by the strips’ genre sends", "nu-rowlab"));
-    const own = busSlotOwner(ctx, doc, "genre", "genre bus");
+    ins.append(el("p", t("board.bus.genre.chain"), "nu-rowlab"));
+    const own = busSlotOwner(ctx, doc, "genre", t("board.bus.genre.slots"));
     const slots = own.read();
     for (let i = 0; i < MAX_FX; i++) ins.append(slotEl(ctx, own, slots, i, null));
     p.append(ins);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("genre", "level");
-    r.append(col("level → delay", vknob("bus|genre|level", "level", spec.table,
-      spec.labels, bv("genre", "level"), "genre bus level into the delay bus",
+    r.append(col(t("board.col.levelDelay"),
+      vknob("bus|genre|level", "level", spec.table,
+      spec.labels, bv("genre", "level"), t("board.aria.genreLevel"),
       (v) => { DD().writeBus(doc, "genre", "level", v); ctx.changed(); },
-      "default", 1, true)));
+      t("value.default"), 1, true)));
     p.append(r);
-    p.append(flow("into the delay bus"));
+    p.append(flow(t("board.flow.delay")));
     return p;
   };
 
@@ -1310,40 +1338,42 @@ export function mount(parent, ctx) {
   PLATES.echo = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "echo";
-    p.setAttribute("aria-label", "delay bus");
+    p.setAttribute("aria-label", t("board.bus.echo.name"));
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", busTitle("echo", "delay bus"), "nu-busname"));
-    h.append(el("small", "in ← " + busName("echo") + " sends", "nu-busin"));
+    h.append(el("b", busTitle("echo", t("board.bus.echo.name")), "nu-busname"));
+    h.append(el("small", t("board.bus.echo.in", { name: busName("echo") }),
+      "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
-    busSel(g, "echo", knobOf("echo", "name"), "called");
-    busSel(g, "echo", knobOf("echo", "time"), "time");
-    busSel(g, "echo", knobOf("echo", "fb"), "repeats");
-    busSel(g, "echo", knobOf("echo", "tone"), "tone");
+    busSel(g, "echo", knobOf("echo", "name"), t("board.bus.sel.called"));
+    busSel(g, "echo", knobOf("echo", "time"), t("board.bus.sel.time"));
+    busSel(g, "echo", knobOf("echo", "fb"), t("board.bus.sel.repeats"));
+    busSel(g, "echo", knobOf("echo", "tone"), t("noun.tone"));
     p.append(g);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("echo", "ret");
-    r.append(col("return → main", vknob("bus|echo|ret", "ret", spec.table,
-      spec.labels, bv("echo", "ret"), "delay bus return",
+    r.append(col(t("board.col.returnMain"),
+      vknob("bus|echo|ret", "ret", spec.table,
+      spec.labels, bv("echo", "ret"), t("board.aria.echoRet"),
       (v) => { DD().writeBus(doc, "echo", "ret", v); ctx.changed(); },
-      "default", 1, true)));
+      t("value.default"), 1, true)));
     // THE BLEED, LIVE 2026-08-27 (series-bus round) — it was refused here as
     // "a constant" while fx_bus ran the literal `d*0.2`; the literal is the
     // `bleed` slider now (default 0.2 = as shipped, byte-identical) and
     // buses.echo.bleed is its one hand: masterState -> state.bleed -> fxParams,
     // rev_bleed mirrored so a colored room hears the same knob.
     { const bspec = knobOf("echo", "bleed");
-      r.append(col("bleed → reverb", vknob("bus|echo|bleed", "bleed",
+      r.append(col(t("board.col.bleedReverb"), vknob("bus|echo|bleed", "bleed",
         bspec.table, bspec.labels, bv("echo", "bleed"),
-        "delay bus bleed into the reverb bus",
+        t("board.aria.echoBleed"),
         (v) => { DD().writeBus(doc, "echo", "bleed", v); ctx.changed(); },
-        "default", 0.2, true))); }
+        t("value.default"), 0.2, true))); }
     const says = el("small", "", "nu-busmodel nu-hint");
     says.dataset.live = "model";   // the clock writes it, so it says so
     r.append(says);
     busSays.push({ el: says, bus: "echo" });
     p.append(r);
-    p.append(flow("into the reverb bus"));
+    p.append(flow(t("board.flow.reverb")));
     return p;
   };
 
@@ -1351,22 +1381,23 @@ export function mount(parent, ctx) {
   PLATES.rev = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "rev";
-    p.setAttribute("aria-label", "reverb bus");
+    p.setAttribute("aria-label", t("board.bus.rev.name"));
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", busTitle("rev", "reverb bus"), "nu-busname"));
-    h.append(el("small", "in ← " + busName("rev") +
-      " sends + the delay's bleed", "nu-busin"));
+    h.append(el("b", busTitle("rev", t("board.bus.rev.name")), "nu-busname"));
+    h.append(el("small", t("board.bus.rev.in", { name: busName("rev") }),
+      "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
-    busSel(g, "rev", knobOf("rev", "name"), "called");
-    busSel(g, "rev", knobOf("rev", "color"), "reverb type");
+    busSel(g, "rev", knobOf("rev", "name"), t("board.bus.sel.called"));
+    busSel(g, "rev", knobOf("rev", "color"), t("board.bus.sel.reverbType"));
     p.append(g);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("rev", "ret");
-    r.append(col("return → main", vknob("bus|rev|ret", "ret", spec.table,
-      spec.labels, bv("rev", "ret"), "reverb bus return",
+    r.append(col(t("board.col.returnMain"),
+      vknob("bus|rev|ret", "ret", spec.table,
+      spec.labels, bv("rev", "ret"), t("board.aria.revRet"),
       (v) => { DD().writeBus(doc, "rev", "ret", v); ctx.changed(); },
-      "default", 0, true)));
+      t("value.default"), 0, true)));
     const says = el("small", "", "nu-busmodel nu-hint");
     says.dataset.live = "model";   // the clock writes it, so it says so
     r.append(says);
@@ -1378,9 +1409,8 @@ export function mount(parent, ctx) {
     // is untouched (`returnShut`: masterState says the reverb return resolves
     // to 0 while the voices' `rev` sends are non-zero), so only the address
     // moved: the sends are on each voice's own `mix` facet now.
-    if (shut) p.append(el("small", "every voice is sending into a return" +
-      " whose gain is zero — open it on this return", "nu-why"));
-    p.append(flow("into main — the record"));
+    if (shut) p.append(el("small", t("board.bus.rev.shut.why"), "nu-why"));
+    p.append(flow(t("board.flow.main")));
     return p;
   };
 
@@ -1398,17 +1428,17 @@ export function mount(parent, ctx) {
   PLATES.main = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "main";
-    p.setAttribute("aria-label", "main");
+    p.setAttribute("aria-label", t("board.bus.main.name"));
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", "main · the record", "nu-busname"));
-    h.append(el("small", "in ← dry + reverb out · out → the speakers",
-      "nu-busin"));
+    h.append(el("b", t("board.bus.main.plate"), "nu-busname"));
+    h.append(el("small", t("board.bus.main.in"), "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     for (const f of MASTER_FIELDS) {
       selectField(g, {
         key: "master|" + f.key, label: f.label,
-        options: optionsFor(f.table, f.labels, mv(f.key), null, "default"),
+        options: optionsFor(f.table, f.labels, mv(f.key), null,
+                            t("value.default")),
         value: mv(f.key),
         set: (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); },
       });
@@ -1441,16 +1471,10 @@ export function mount(parent, ctx) {
       off.dataset.k = "master|bypass";
       const draw = () => {
         const isNone = F.masterIsNone(doc.sound && doc.sound.master);
-        off.textContent = isNone ? "master: OFF — every stage bypassed"
-                                 : "turn the master off — every word to none";
+        off.textContent = t(isNone ? "board.master.off" : "board.master.on");
         off.setAttribute("aria-pressed", isNone ? "true" : "false");
-        off.title = isNone
-          ? "all seven words say none: no drive, no glue, no tape head, no " +
-            "global room, no width trim, no tilt, no clip stage. The air " +
-            "shelf and the band limits stay — they are the engine's, not the " +
-            "record's."
-          : "writes none into drive, glue, tape, space, width, tilt and " +
-            "ceiling at once — the record with nothing done to it";
+        off.title = t(isNone ? "board.master.off.title"
+                             : "board.master.on.title");
       };
       off.addEventListener("click", () => {
         const isNone = F.masterIsNone(doc.sound && doc.sound.master);
@@ -1475,10 +1499,12 @@ export function mount(parent, ctx) {
     {
       const tone = (GENRES[doc.basis] || {}).tone || { gain: 0.28 };
       const max = +(1 / tone.gain).toFixed(2);
-      r.append(col("record gain", vnum("level", {
+      r.append(col(t("time.gain"), vnum("level", {
         min: 0.5, max, step: 0.25,
         value: doc.sound && doc.sound.level != null ? doc.sound.level : 1,
-        aria: "record gain", tall: true, fmt: (v) => "×" + v,
+        /* THE MULTIPLIER SIGN LEADS THE NUMBER (\u00d72), which `fmt` cannot
+           spell — its units follow. It is a mark on a readout, not a word. */
+        aria: t("time.gain"), tall: true, fmt: (v) => "\u00d7" + v,
         set: (v) => { doc.sound = doc.sound || {}; doc.sound.level = v;
                       ctx.changed(); } })));
     }
@@ -1502,10 +1528,10 @@ export function mount(parent, ctx) {
     {
       const base = ((GENRES[doc.basis] || {}).tone || {}).grain || 0;
       const cur = doc.sound && doc.sound.grain != null ? doc.sound.grain : base;
-      r.append(col("surface", vnum("grain", {
+      r.append(col(t("board.col.surface"), vnum("grain", {
         min: 0, max: 1, step: 0.05, value: cur,
-        aria: "surface noise", tall: true,
-        fmt: (v) => (v <= 0 ? "clean" : Math.round(v * 100) + "%"),
+        aria: t("board.aria.surface"), tall: true,
+        fmt: (v) => (v <= 0 ? t("board.surface.clean") : fmt(v * 100, "%")),
         set: (v) => { doc.sound = doc.sound || {};
                       if (Math.abs(v - base) < 1e-9) delete doc.sound.grain;
                       else doc.sound.grain = v;
@@ -1521,14 +1547,17 @@ export function mount(parent, ctx) {
       well.dataset.live = "meter";
       const bar = el("i", null, "nu-meterbar");
       well.append(bar);
-      well.title = "measured: the engine's master RMS (audio/live.js rmsNow)";
+      // THE NUMBER IS the engine's master RMS (audio/live.js `rmsNow`) —
+      // said here, where a hand reading the code needs it, and not on a
+      // tooltip, where a person listening does not.
+      well.title = t("board.meter.title");
       const wellOut = el("output", "", "nu-vs-val");
       wellOut.dataset.live = "meter";   // the clock writes it, so it says so
       wellWrap.append(well, wellOut);
       masterMeter = { bar, out: wellOut };
-      r.append(col("meter", wellWrap, "nu-metercol"));
+      r.append(col(t("noun.meter"), wellWrap, "nu-metercol"));
     }
-    r.append(col("listening", listening()));
+    r.append(col(t("board.col.listening"), listening()));
     p.append(r);
     /* CHARACTER IS GONE (2026-08-27). Paul, listening on staging: *"We can get
        rid of Character right? We don't really use it any more do we?"* — and
@@ -1741,8 +1770,8 @@ export function mount(parent, ctx) {
      open plate survives a redraw, and a stage the registry stopped declaring
      does not. */
   const CHILDREN = TABS.concat([{ kind: "auto", key: "auto",
-                                  label: "section automation" }]);
-  if (!CHILDREN.some((t) => t.kind === BOARDTAB.kind && t.key === BOARDTAB.key))
+                                  label: t("board.auto.label") }]);
+  if (!CHILDREN.some((x) => x.kind === BOARDTAB.kind && x.key === BOARDTAB.key))
     BOARDTAB = CHILDREN[0] ? { kind: CHILDREN[0].kind, key: CHILDREN[0].key }
                            : { kind: "bus", key: null };
 
@@ -1767,7 +1796,7 @@ export function mount(parent, ctx) {
   const tabsBar = el("p", null, "nu-row");
   tabsBar.id = "boardtabs";
   tabsBar.setAttribute("role", "group");
-  tabsBar.setAttribute("aria-label", "the stages of the board");
+  tabsBar.setAttribute("aria-label", t("board.tabs.aria"));
   const tabBtn = new Map();
   const markTabs = () => {
     for (const [k, b] of tabBtn) {
@@ -1778,28 +1807,27 @@ export function mount(parent, ctx) {
       if (on) { const mk = el("mark"); mk.append(...b.childNodes); b.append(mk); }
     }
   };
-  for (const t of CHILDREN) {
+  for (const stage of CHILDREN) {
     /* THE WORD IS THE REGISTRY'S FOR THE FOUR BUSES AND `automation` FOR THE
        FIFTH. `CHILDREN` spells the grid "section automation" because that is
        what the RACK is labelled when it is open; on a button in a row of five
        it is the only word that is a sentence, and `automation` is the word the
        gutter's five rows wore for a wave and the word nukernel/desk-gate.js
        joins into the chain it asserts. The full sentence rides `title`. */
-    const word = t.kind === "auto" ? "automation" : t.label;
+    const word = stage.kind === "auto" ? t("noun.automation") : stage.label;
     const b = el("button", word);
     b.type = "button";
-    b.dataset.k = "boardtab|" + t.kind + "|" + t.key;
+    b.dataset.k = "boardtab|" + stage.kind + "|" + stage.key;
     /* THE ACCESSIBLE NAME IS THE STAGE'S OWN WORD AND NOTHING ELSE, because
        nukernel/desk-gate.js joins these five `aria-label`s into the chain it
        asserts — `genre fx → delay → reverb → main → automation` — and a name
        carrying a sentence would read as a chain of sentences. What the
        sentence is FOR rides `title`. */
     b.setAttribute("aria-label", word);
-    b.title = t.kind === "auto"
-      ? "section automation — a trim on every fader, section by section"
-      : "this stage of the board";
-    b.addEventListener("click", () => { showBoardHere(t.kind, t.key); });
-    tabBtn.set(t.kind + "|" + t.key, b);
+    b.title = t(stage.kind === "auto" ? "board.tab.auto.title"
+                                       : "board.tab.bus.title");
+    b.addEventListener("click", () => { showBoardHere(stage.kind, stage.key); });
+    tabBtn.set(stage.kind + "|" + stage.key, b);
     tabsBar.append(b);
   }
   host.append(tabsBar);
@@ -1812,9 +1840,9 @@ export function mount(parent, ctx) {
     if (make) rack.append(make());
     // the fifth plate is not a bus and has no BUSROWS label (2026-09-02); it
     // is the one word this file spells beside `main`, for the same reason.
-    rack.setAttribute("aria-label",
-      (BOARDTAB.kind === "auto" ? "section automation" : busLabel(BOARDTAB.key))
-      + " plate");
+    rack.setAttribute("aria-label", t("board.rack.aria", { name:
+      BOARDTAB.kind === "auto" ? t("board.auto.label")
+                               : busLabel(BOARDTAB.key) }));
     panel.append(rack);
     // the legend says what THIS plate can say — see its own block above
     sayLegend();
@@ -1905,8 +1933,7 @@ export function mount(parent, ctx) {
     wrap.dataset.bus = "auto";
     // compressed 2026-08-27 (text diet): the grid draws sections running down
     // and a tap teaches itself; what the label must say is what a word IS.
-    wrap.append(el("p", "section automation · a trim on the fader, per section",
-      "nu-rowlab"));
+    wrap.append(el("p", t("board.auto.rowlab"), "nu-rowlab"));
     // THE GRID ARRIVES FILLED (2026-08-28). Paul: *"Shouldn't automation
     // already have values preset per generated song."* It should, and the half
     // of that this surface owes is SHOWING what the record deals rather than
@@ -2012,9 +2039,11 @@ export function mount(parent, ctx) {
       well.append(bar);
       const o = { id: "col|" + c.voice.name, word: c.voice.name, sub: line,
         vi: face.slot >= 0 ? face.slot : null, extra: well,
-        aria: c.voice.name + (line ? " on " + line : "") +
-              " — open this player's instrument",
-        title: "open " + c.voice.name + "'s instrument",
+        /* WITH NO INSTRUMENT TO NAME, THE NAME IS THE WHOLE LABEL and no key
+           is needed: a player's name is data, not copy. */
+        aria: line ? t("board.col.aria.on", { name: c.voice.name, inst: line })
+                   : c.voice.name,
+        title: t("board.col.title", { name: c.voice.name }),
         act: () => { if (ctx.openVoice) ctx.openVoice(c.voice.name); },
         chan: c };
       headMeters.push({ chan: c.key, th: null, well, bar, said: null,
@@ -2078,11 +2107,11 @@ export function mount(parent, ctx) {
       const name = ctx.secName ? ctx.secName(si) : (s2.role || s2.id);
       const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env,
                      (SONG[si] || {}).pace].filter(Boolean).join(" · ");
+      const bars = tn("count.bar", s2.bars);
       return { id: s2.id, k: "row|" + s2.id, word: name,
-               sub: s2.bars + " bars" + (dealt ? " · " + dealt : ""),
-               aria: "play from " + name,
-               title: "put the ear here — while the record plays the jump " +
-                      "lands on the next bar line, and the countdown says when",
+               sub: dealt ? t("board.row.sub", { bars, dealt }) : bars,
+               aria: t("board.row.aria", { name }),
+               title: t("board.row.title"),
                act: () => { if (ctx.playFrom) ctx.playFrom(si); } };
     });
     /* WORDS ON BOTH SIDES OF THE CELL, 2026-08-28. Paul: *"The settings you
@@ -2120,27 +2149,34 @@ export function mount(parent, ctx) {
       // legend's deletion): a SET word says what it is worth in dB — the one
       // fact the deleted paragraph carried that a reader genuinely needs to
       // work the grid, and TRIMS is still its only owner.
+      /* ONE SENTENCE PER STATE, AND THE TAP-TO INSTRUCTION CAME OFF
+         (2026-09-05, the functional text pass). This built twenty-one
+         rendered variants out of six fragments — "derived: the section's own
+         fwd + lift deals this voice +1.0 dB and a tone move — tap to set a
+         word over it" — which is a sentence no second language can be given
+         in that order. It is three keys now, each a whole sentence with a
+         {value} the formatter makes, and the instruction is gone because
+         DESIGN.md §3 already says a tap edits and delete returns to default.
+         (The section's own words — `lvl` and `env` — named the CAUSE and are
+         one long-press away on the row head, which is where the cause lives.) */
       let title;
       if (cur !== "") {
         const dbv = NuFields.TRIMS[cur];
-        title = WSHOW(cur) + " — " + (dbv == null ? "silent here"
-          : (dbv > 0 ? "+" : "−") + Math.abs(dbv).toFixed(1) +
-            " dB on this voice's fader for this section") +
-          " — tap for the words";
+        title = dbv == null
+          ? t("board.cell.setSilent.title", { word: WSHOW(cur) })
+          : t("board.cell.setDb.title",
+              { word: WSHOW(cur), value: fmt(dbv, "dB") });
       } else if (!(d && d.db)) {
-        title = "as mixed — no word set here, so the fader stands " +
-          "— tap for the words";
+        title = t("board.cell.default.title");
       } else {
-        title = "derived: the section's own " +
-          [(SONG[si] || {}).lvl, (SONG[si] || {}).env].filter(Boolean).join(" + ") +
-          " deals this voice " + (d.db > 0 ? "+" : "−") +
-          Math.abs(d.db).toFixed(1) + " dB" + (d.eq ? " and a tone move" : "") +
-          " — tap to set a word over it";
+        title = t(d.eq ? "board.cell.derivedTone.title"
+                       : "board.cell.derived.title",
+                  { value: fmt(d.db, "dB") });
       }
       return { key: "t|" + c.voice.name + "|" + secId,
         value: cur, label: shown, cls: "w-" + (cur || "mid"),
         derived: cur === "" && !!(d && d.db),
-        say: c.voice.name + " in " + secId,
+        say: t("board.cell.say", { name: c.voice.name, section: secId }),
         title,
         options: CYCLE.map((w) => ({ v: w, w: WSHOW(w) })),
         set: (v) => {
@@ -2150,7 +2186,7 @@ export function mount(parent, ctx) {
         } };
     };
     autoGrid = wordGrid(wrap, { key: "trimgrid", id: "trimgrid",
-                                live: "trimrow", corner: "section",
+                                live: "trimrow", corner: t("noun.section"),
                                 rows, cols, cell });
     // the heads were built before the grid was, so their `<th>`s are seated
     // here — the meter registry needs the cell the well ended up in, and the
@@ -2217,7 +2253,13 @@ export function mount(parent, ctx) {
   { const a2 = document.createElement("a");
     a2.href = "docs/BOARD-ROUTING.md";
     a2.className = "nu-routelink";
-    a2.textContent = "the fixed wires — docs/BOARD-ROUTING.md";
+    /* THE PRINTED WORDS ARE NOT THE PATH ANY MORE (2026-09-05). DESIGN.md §4
+       forbids a source file in the UI, and this was the one markdown path the
+       page showed a listener. The ADDRESS is unchanged and is where it always
+       belonged — the `href` above — so the pointer the essay's move rests on
+       is intact. nukernel/desk-gate.js G14 still tests the printed TEXT for
+       the path and must be moved onto the `href` it reads two lines earlier. */
+    a2.textContent = t("board.routing");
     edges.append(a2); }
   host.append(edges);
   /* THE REFUSAL LIST UNDER THE RACK IS DELETED, 2026-08-28. Paul: *"the text
@@ -2261,14 +2303,18 @@ export function mount(parent, ctx) {
     const bf = deskBusFeed(s, MASTER, BUSES);
     for (const x of busSays) {
       const f = bf[x.bus];
-      x.el.textContent = "model · in " + f.feed.toFixed(2) +
-        (f.ret != null ? " · return " + f.ret : "") + " · out " + f.out.toFixed(2);
+      x.el.textContent = f.ret != null
+        ? t("board.model.bus.ret", { in: fmt(f.feed), ret: f.ret,
+                                     out: fmt(f.out) })
+        : t("board.model.bus", { in: fmt(f.feed), out: fmt(f.out) });
     }
     if (masterMeter) {
       const r = rmsNow();
       const f = Math.max(0, Math.min(1, gainToF(r * 4)));
       masterMeter.bar.style.height = Math.round(f * 100) + "%";
-      masterMeter.out.textContent = playing ? (r > 0 ? "live" : "…") : "stopped";
+      masterMeter.out.textContent = t(playing
+        ? (r > 0 ? "board.meter.live" : "board.meter.wait")
+        : "board.meter.stopped");
     }
     /* THE SOUNDING ROW AND THE SOUNDING COLUMNS, IN ONE CALL (2026-09-02,
        wave 4). It read `#trimgrid tbody tr` and compared `+tr.dataset.sec`,
@@ -2333,9 +2379,13 @@ export function mount(parent, ctx) {
         h.bar.style.width = measured
           ? Math.round(Math.max(0, Math.min(1, gainToF(r * 4))) * 100) + "%" : "0%";
         h.well.classList.toggle("is-unmeasured", !measured);
+        /* WHAT THE NUMBER IS: this chair's rms, per frame on a sampled
+           chair (a live AnalyserNode on its own unit) and per bar on a Faust
+           one (the bar audit's). The grain is the honest half and stays on
+           the page; the chair's key and the word "rms" do not. */
         const say = measured
-          ? "measured: " + h.chan + "'s rms — " + h.grain
-          : "not yet measured — plays first";
+          ? t(h.grain === "per frame" ? "board.meter.frame" : "board.meter.bar")
+          : t("board.meter.none");
         if (h.said !== say) { h.well.title = say; h.said = say; }
       }
     }
@@ -2392,7 +2442,13 @@ const sayDrives = (drives) => {
   const s = atBox();
   for (const x of drives) {
     const g = liveGain(s, x.key);
-    x.el.textContent = "model " + fmtDb(20 * Math.log10(Math.max(1e-4, g))) + " dB";
+    /* `fmtDb` AND NOT `fmt(v, "dB")`: nukernel/desk-gate.js compares this
+       readout to a number it builds with an ASCII minus and a fixed decimal,
+       and the catalogue's formatter spells a real minus sign and trims a
+       trailing zero. The unit lives in the key, where a translator can move
+       it; the number keeps the desk's own spelling. */
+    x.el.textContent = t("board.model.level",
+      { value: fmtDb(20 * Math.log10(Math.max(1e-4, g))) });
   }
 };
 /* THE MEASURED HALF OF THE STRIP, 2026-09-02 — the same arithmetic and the
@@ -2413,10 +2469,12 @@ const sayMeters = (meters) => {
     m.bar.style.height = measured
       ? Math.round(Math.max(0, Math.min(1, gainToF(r * 4))) * 100) + "%" : "0%";
     m.well.classList.toggle("is-unmeasured", !measured);
-    m.out.textContent = measured ? (r > 0 ? "live" : "…")
-      : (playing ? "…" : "stopped");
-    const say = measured ? "measured: " + m.chan + "'s rms — " + m.grain
-                         : "not yet measured — plays first";
+    m.out.textContent = t(measured
+      ? (r > 0 ? "board.meter.live" : "board.meter.wait")
+      : (playing ? "board.meter.wait" : "board.meter.stopped"));
+    const say = measured
+      ? t(m.grain === "per frame" ? "board.meter.frame" : "board.meter.bar")
+      : t("board.meter.none");
     if (m.said !== say) { m.well.title = say; m.said = say; }
   }
 };
@@ -2439,7 +2497,7 @@ function listening() {
   r.type = "range"; r.min = "0"; r.max = "100"; r.step = "1";
   r.value = String(vol); r.id = "vol2"; r.dataset.k = "m|listening";
   r.className = "nu-vs-in";
-  r.setAttribute("aria-label", "listening level");
+  r.setAttribute("aria-label", t("board.aria.listening"));
   const o = el("output", Math.round(vol) + "%", "nu-vs-val");
   const say = () => { o.textContent = Math.round(+r.value) + "%";
                       r.setAttribute("aria-valuetext", o.textContent); };
@@ -2450,7 +2508,7 @@ function listening() {
   // "room only — not saved", 2026-08-27 — FUTURE.md §5's own compression
   // ("refusal kept, halved"). `nu-why` because it IS a refusal-with-reason:
   // this value refuses to be part of the record.
-  const w = el("small", "room only — not saved", "nu-why");
+  const w = el("small", t("board.listening.why"), "nu-why");
   wrap.append(w);
   return wrap;
 }

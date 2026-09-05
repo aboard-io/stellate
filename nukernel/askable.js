@@ -68,27 +68,47 @@
   // there is no table in the view any more — so a knob added here without a
   // head is a question with no home, which test/unit/every-head.test.js
   // fails on rather than letting it slide into a nameless run.
+  /* ---------- WHY `label` IS A CATALOGUE KEY AND `ask` IS NOT -------------
+     `src/copy/index.ts`. This is a classic <script>, loaded before any module,
+     so it cannot call `COPY.t` at load time; the row carries the KEY and the
+     surface that DRAWS the control resolves it (`fields.js perfRow`, at draw
+     time). `ask` stays plain English because it is not a control label — it is
+     the sentence the interview reads out. */
+
+  /* A QUESTION IS NOT A LABEL (2026-09-05, the functional text pass). `ask` is
+     what the INTERVIEW asks and stays a question — that is what an interview
+     is. `label` is what the same field is called when it is drawn as a CONTROL
+     (the row sheets `avail.js` mints off `fields.js nudgesFor`), and a control
+     wears a noun. Two surfaces, two strings, one row. */
   const ASKABLE = [
-    { field: "stress", head: "the feel", role: "drums", ask: "how much does the band lean on the beat?",
+    { field: "stress", head: "the feel", role: "drums", label: "field.push",
+      ask: "how much does the band lean on the beat?",
       opts: [["dead straight", 0], ["a little", 0.35], ["hard on the one", 0.8]] },
-    { field: "phrase", head: "the sound", role: "keys", ask: "does the line breathe?",
+    { field: "phrase", head: "the sound", role: "keys", label: "field.phrasing",
+      ask: "does the line breathe?",
       opts: [["flat", 0], ["a little", 0.4], ["it arches", 0.85]] },
-    { field: "maxHold", head: "the sound", role: "keys", ask: "how long do the notes hold?",
+    { field: "maxHold", head: "the sound", role: "keys", label: "field.longestNote",
+      ask: "how long do the notes hold?",
       opts: [["let them ring", 0], ["a beat", 4], ["half a bar", 8]] },
-    { field: "orn", head: "the sound", role: "guitar", ask: "how much decoration?",
+    { field: "orn", head: "the sound", role: "guitar", label: "field.ornament",
+      ask: "how much decoration?",
       opts: [["none", null], ["a grace here and there", { grace: 0.22 }],
              ["passing notes too", { grace: 0.25, approach: 0.3, pass: 0.3 }],
              ["it never sits still", { grace: 0.4, approach: 0.4, pass: 0.4, roll: 0.2 }]] },
-    { field: "scale", head: "the tune", role: "arranger", ask: "what notes is the tune made of?",
+    { field: "scale", head: "the tune", role: "arranger", label: "field.scale",
+      ask: "what notes is the tune made of?",
       opts: Object.values(SCALES).map((s) => [s.w, s.v]) },
-    { field: "diatonic", head: "the tune", role: "arranger", ask: "does the line follow the chords?",
+    { field: "diatonic", head: "the tune", role: "arranger", label: "field.melody",
+      ask: "does the line follow the chords?",
       opts: [["it follows the chords", false], ["it stays in the key", true]] },
-    { field: "kitProb", head: "the feel", role: "drums", ask: "does every hat land?",
+    { field: "kitProb", head: "the feel", role: "drums", label: "field.hats",
+      ask: "does every hat land?",
       opts: [["every one", null],
              ["most of them", { h: [7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7] }],
              ["about half", { h: [5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5] }],
              ["now and then", { h: [3,3,3,3, 3,3,3,3, 3,3,3,3, 3,3,3,3] }]] },
-    { field: "fill", head: "the fills", role: "drums", ask: "what's the fill made of?",
+    { field: "fill", head: "the fills", role: "drums", label: "field.fill",
+      ask: "what's the fill made of?",
       opts: [["on the snare", { s: [0,0,0,0, 0,0,0,0, 1,0,1,1, 1,0,1,1] }],
              ["round the toms", { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
                                   t: [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],

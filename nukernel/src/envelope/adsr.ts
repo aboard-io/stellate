@@ -29,6 +29,17 @@ import type { EnvSpec, EnvField, Seg, Editor } from "./api.js";
 import { ISLEVEL } from "./api.js";
 import { R, handle, keyStep, quantise, say, scaleOf } from "./plate.js";
 import type { DragHost } from "./plate.js";
+/* THE WORDS ARE THE CATALOGUE'S (TABLE.md §12b). `../copy/global.js`, never
+   `../copy/index.js`: this is its own build entry, and importing the catalogue
+   would bundle a second copy of every string on the page into ui/envelope.js. */
+import { t } from "../copy/global.js";
+
+/** THE STAGE'S OWN WORD, and it is this component's rather than the caller's.
+ *  A field's `label` is whatever knobs.js calls it — "where it rests" on a
+ *  juno, "sustain" on the next instrument — so a handle drawn from it changes
+ *  its name with the instrument under it. The stage is the same stage either
+ *  way, and the catalogue names it once. */
+const segWord = (s: Seg): string => t("env.seg." + s);
 
 /* THE PLATE'S SIZE. 100% of its row, and a height that is two `--tap`s plus the
    line of numbers under it — tall enough that the curve is a shape and not a
@@ -240,7 +251,7 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
       return gg; })() : null;
     return html`
       <div class="nu-envplate" data-k=${spec.k}
-           aria-label=${spec.label + " envelope"}>
+           aria-label=${t("env.plate")}>
         <svg class="nu-envsvg" viewBox=${"0 0 " + w + " " + PLATE_H}
              width=${w} height=${PLATE_H} aria-hidden="true"
              preserveAspectRatio="none">
@@ -253,7 +264,7 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
           const pos = seat(g, s);
           const v = valOf(f);
           const b = handle({
-            k: spec.k + "|" + s, label: f.label, value: v,
+            k: spec.k + "|" + s, label: segWord(s), value: v,
             min: f.min, max: f.max, step: f.step,
             say: say(v, f.unit), axis: ISLEVEL[s] ? "y" : "x",
             x: pos.x, y: pos.y, why: f.why || null }, dragHost);
@@ -284,11 +295,11 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
           const set = f.value != null;
           return html`<span class=${"nu-envsay" + (set ? " is-said" : "")}
             data-k=${"envsay|" + spec.k + "|" + s}
-            ><b>${f.label}</b> <span>${say(valOf(f), f.unit)}</span>${
+            ><b>${segWord(s)}</b> <span>${say(valOf(f), f.unit)}</span>${
             set ? html` <button type="button" class="nu-clearback"
               data-k=${"clear|" + spec.k + "|" + s}
-              aria-label=${"clear " + f.label + " back to " + say(f.derived, f.unit)}
-              @click=${() => { spec.clear(s); draw(); }}>clear</button>` : nothing
+              aria-label=${t("env.clearBack", { name: segWord(s) })}
+              @click=${() => { spec.clear(s); draw(); }}>${t("act.clear")}</button>` : nothing
           }</span>`; })}
       </div>`;
   };

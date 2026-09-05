@@ -51,6 +51,7 @@
 
 import type { TableAPI, Field, StripField, Choice } from "./api.js";
 import { shField } from "./model.js";
+import { t, fmt } from "../copy/global.js";
 
 /* WHICH VOCABULARIES KEEP THE CALLER'S OWN MENU WIDGET IN A SPECIAL ROW, and
    the list is not this file's opinion either: it is `test/selects.js MENUS`,
@@ -104,9 +105,13 @@ export function timeFace(A: TableAPI): string {
     const c = A.wcell(sp);
     return c.label == null ? "" : String(c.label);
   };
-  const bpm = doc.time && doc.time.bpm != null ? String(doc.time.bpm) : "—";
+  /* A TEMPO IS A NUMBER AND ITS UNIT (`79 BPM`), not the prose "79 a minute":
+     one formatter, `fmt`, so every quantity on the page rounds and spaces the
+     same way and a translator moves the separator once. */
+  const bpm = doc.time && doc.time.bpm != null
+    ? fmt(doc.time.bpm, "BPM") : "—";
   const key = [w("alphabet.key"), w("alphabet.mode")].filter(Boolean).join(" ");
-  return [bpm + " a minute", w("time.meter"), key]
+  return [bpm, w("time.meter"), key]
     .filter(Boolean).join(" · ");
 }
 
@@ -120,8 +125,8 @@ export function timeSheet(A: TableAPI): Field[] {
      under it (`data-k="bpm"`, `BPM_LO..BPM_HI`), and the one row that carries
      the tap and the eight operations (`data-k="tempo-…"`, nine of them, which
      is the literal test/knobs.js gate 8 counts). */
-  f.push({ kind: "node", label: "tempo", node: A.bpmNode() });
-  f.push({ kind: "node", label: "by hand", node: A.tempoNode() });
+  f.push({ kind: "node", label: t("field.tempo"), node: A.bpmNode() });
+  f.push({ kind: "node", label: t("time.byHand"), node: A.tempoNode() });
   /* THE METER, TWICE OVER, AND THAT IS ONE COMPONENT AND NOT TWO (2026-09-05,
      the any-meter round). Paul: *"I should be able to set any tempo at all
      like 21/17 you should let me choose anything."* The CHIPS are the seven
@@ -132,44 +137,50 @@ export function timeSheet(A: TableAPI): Field[] {
      the WORD every save already carries, so a chip and a slider can never
      leave one meter with two names. Reading order is the composer's
      (DESIGN.md 5): the common answer first, the general one under it. */
-  f.push(seated(A, "time.meter", "meter"));
-  f.push({ kind: "node", label: "signature", node: A.meterNode() });
-  f.push(seated(A, "time.swing", "swing"));
-  f.push(seated(A, "time.groove", "groove"));
+  /* THE LABEL IS SAID HERE AND NOT ASKED OF THE SHEET, and only until
+     `avail.js` keys these six the way it has keyed `ROWFACTS`: their sheet
+     labels are still bare literals there, and a word the catalogue does not
+     hold is a word no second language can reach. When they are keyed, these
+     overrides become `null` — one owner — the way the row sheet's eleven
+     already have. */
+  f.push(seated(A, "time.meter", t("noun.meter")));
+  f.push({ kind: "node", label: t("time.signature"), node: A.meterNode() });
+  f.push(seated(A, "time.swing", t("field.swing")));
+  f.push(seated(A, "time.groove", t("field.groove")));
   /* RUBATO IS A DEVICE SETTING AND SAYS SO BY BEING STICKY: `setRubato` writes
      the preference, no document changes, and a share link carries nothing.
      That is why it is a word about YOUR box rather than a rule about the
      record — the record always breathes; this is whether your box plays it
      that way. */
-  f.push(flagField("rubato", "the breathing", A.rubatoOn(),
-    "played to the grid", "the record breathes",
+  f.push(flagField("rubato", t("time.rubato"), A.rubatoOn(),
+    t("time.rubato.off"), t("time.rubato.on"),
     (on) => A.setRubato(on),
-    "your box, not the record — a link carries nothing of it"));
+    t("time.rubato.sub")));
   /* THE KEY IS THE CIRCLE OF FIFTHS (Paul, 2026-08-24: *"Maybe put the circle
      of fifths back in there for key selection, it was nice."*) — the one
      control on this page that is a menu's spec drawn as a picture, because it
      is the only drawing that shows which keys are next door to the one you are
      in. ui/selects.js `keyCircle` is its owner and did not move. */
-  f.push({ kind: "node", label: "key", node: A.keyNode() });
-  const mode = seated(A, "alphabet.mode", "mode") as StripField;
+  f.push({ kind: "node", label: t("field.key"), node: A.keyNode() });
+  const mode = seated(A, "alphabet.mode", t("field.mode")) as StripField;
   const cap = A.tuningSay();
   if (cap && mode.key) mode.sub = cap;
   f.push(mode);
-  f.push(seated(A, "alphabet.scale", "scale"));
-  f.push(seated(A, "alphabet.harmony", "harmony"));
-  f.push(flagField("diatonic", "the line", !!A.diatonicOn(),
-    "follows the chords", "stays in the key",
+  f.push(seated(A, "alphabet.scale", t("field.scale")));
+  f.push(seated(A, "alphabet.harmony", t("time.harmony")));
+  f.push(flagField("diatonic", t("field.melody"), !!A.diatonicOn(),
+    t("time.melody.chords"), t("time.melody.key"),
     (on) => A.setDiatonic(on)));
   /* THE CHANGES, WHOLE. `chordGrid` is a table of its own — a degree slider, a
      quality menu and an inversion slider per bar, `+ bar` and `− bar` — and it
      registers the playhead's own `chordCell` for the bar that is sounding. It
      comes across as one node for exactly the reason the voice's channel strip
      does: it is not a vector and has no cell. */
-  f.push({ kind: "node", label: "the changes", node: A.changesNode() });
+  f.push({ kind: "node", label: t("time.changes"), node: A.changesNode() });
   /* AND THE POINTER STANDS LAST, which is 2026-08-29's measurement and not a
      habit: reading order is working order, a hand opening TIME came for the
      tempo, and a cross-reference is back matter. */
-  f.push({ kind: "node", label: "record gain", node: A.boardNode() });
+  f.push({ kind: "node", label: t("time.gain"), node: A.boardNode() });
   return f;
 }
 
@@ -278,18 +289,23 @@ export interface SpecialRow {
   lamp?(A: TableAPI): HTMLElement | null;
 }
 
+/* THE WORD AND THE SENTENCE ARE GETTERS, and that is the one-catalogue law
+   said in the shape of this table rather than in a comment: a string read at
+   MODULE EVALUATION would be read once, at import, and a page that changed
+   its language would keep the words it booted with. `word` and `aria` are
+   looked up the moment `grid.ts` draws the row. */
 export const SPECIALS: SpecialRow[] = [
-  { k: "ttime", id: "time", word: "time",
-    aria: "the record's own time — how fast it counts, what it counts in, " +
-          "and what it counts in the key of",
+  { k: "ttime", id: "time",
+    get word() { return t("special.time.word"); },
+    get aria() { return t("special.time.aria"); },
     face: timeFace, sheet: timeSheet },
-  { k: "trules", id: "rules", word: "rules",
-    aria: "the genre, as sentences you can edit",
+  { k: "trules", id: "rules",
+    get word() { return t("special.rules.word"); },
+    get aria() { return t("special.rules.aria"); },
     face: rulesFace, sheet: rulesSheet },
-  { k: "tmotifs", id: "motifs", word: "motifs",
-    aria: "the bank — every tune and beat this record holds, who reads each " +
-          "one, and where it came from; tap a name to point the selected cell " +
-          "at it",
+  { k: "tmotifs", id: "motifs",
+    get word() { return t("special.phrases.word"); },
+    get aria() { return t("special.phrases.aria"); },
     face: motifsFace, sheet: motifsSheet,
     lamp: (A) => A.motifLamp() },
 ];
@@ -301,9 +317,9 @@ export const SPECIALS: SpecialRow[] = [
  *  same `sp|` open key — so it is STICKY for the same reason the other four
  *  are (every control in it recompiles) and the keyboard lets it alone. */
 export const PRODUCE: SpecialRow =
-  { k: "tproduce", id: "produce", word: "produce",
-    aria: "the producer — what has been said about this record, and what may " +
-          "be said next",
+  { k: "tproduce", id: "produce",
+    get word() { return t("special.produce.word"); },
+    get aria() { return t("special.produce.aria"); },
     face: produceFace, sheet: produceSheet };
 
 /* ===================================================================== */
@@ -357,8 +373,7 @@ export function masterFace(A: TableAPI): string {
     const cur = A.masterOf(m.key);
     if (cur != null && cur !== "") said.push(m.labels[cur] || String(cur));
   }
-  return said.length ? said.join(" \u00b7 ")
-                     : "the genre's own chain, nothing written";
+  return said.length ? said.join(" \u00b7 ") : t("value.default");
 }
 
 /** THE CORNER'S SHEET IS THE BOARD, AND THE MASTER'S SEVEN WORDS ARE IN IT.
@@ -378,5 +393,5 @@ export function masterFace(A: TableAPI): string {
  *  why every one of nukernel/desk-gate.js's `#boardpanel #rack .nu-plate`
  *  queries reads the markup it always did. */
 export function masterMixSheet(A: TableAPI): Field[] {
-  return [{ kind: "node", label: "the buses", node: A.boardRack() }];
+  return [{ kind: "node", label: t("master.buses"), node: A.boardRack() }];
 }

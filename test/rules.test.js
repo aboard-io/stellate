@@ -54,6 +54,14 @@ const assert = require("assert");
 const path = require("path");
 const R = (p) => require(path.join(__dirname, "..", "nukernel", p));
 
+/* THE CATALOGUE FIRST (2026-09-05, the functional text pass — TABLE.md §12b).
+   Every word `rules.js` prints is a key now, and the classic scripts resolve
+   it through `globalThis.COPY`, which `nukernel/ui/copy.js` sets when it is
+   loaded. On the page that is a <script type=module>; here it is this line.
+   Without it the tier sentences read back as their own keys and every
+   assertion about a printed word would be asserting about a machine name. */
+R("ui/copy.js");
+
 const NG = R("genres.js"), NF = R("fields.js"), NC = R("compose.js");
 const Id = R("ideas-kit.js"), K = R("kernel.js");
 const NU = R("rules.js"), P = R("precompose.js"), Doc = R("document.js");

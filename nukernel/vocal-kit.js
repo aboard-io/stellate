@@ -35,7 +35,7 @@
               says: "held vowels, up top" },
     answer: { w: "an answering phrase", part: "counter", gate: on(8, 10, 12), reg: 0,
               dg: deg(0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 2, 0, 0, 0, 0, 0),
-              says: "a phrase that answers the line, in the back half of the bar" },
+              says: "answers the line, late in the bar" },
     chant:  { w: "a chant on the beat", part: "stab", gate: on(0, 4, 8, 12), reg: 0,
               says: "one syllable a beat" },
     hold:   { w: "one long note", part: "drone", gate: on(0), reg: 0,

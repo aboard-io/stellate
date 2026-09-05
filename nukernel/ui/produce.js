@@ -38,6 +38,11 @@
 // every sentence the page offers is one producer.js can actually make, and an
 // unsayable one is never offered rather than guessed at.
 import { GENRES, render, NuDocument, NuDeskDoc, Prod } from "./deps.js";
+/* EVERY WORD THIS FILE PRINTS COMES FROM THE CATALOGUE (TABLE.md §12b,
+   nukernel/src/copy/produce.ts -> ui/copy.js): one key, one whole sentence,
+   {name}/{n} placeholders, a count picking a key through `tn`. Nothing below
+   glues two fragments together, which is what the WHY table used to do. */
+import { t, tn } from "./copy.js";
 // ONE OPTION IS A MENU, AND THIS IS THE ONE PLACE THE SHIPPED PAGE HAS ONE.
 // Same name, same signature: ui/selects.js re-exports ui/sheets.js's `sheet`
 // through a router that draws a <select> for any spec offering one option and
@@ -243,7 +248,10 @@ function voiceRow(doc, v, ix, chairKey, plays, OUT, lines) {
   // second line voice and not on a channel that never existed. It is a PART
   // chan (a bare key), never `unit:` — that prefix is the kit's (desk.js:589).
   const row = {
-    id, w: "the " + v.name, bare: v.name,
+    // THE CHIP'S FACE IS A CATALOGUE STRING, not an article glued to a name:
+    // "the " is English, and a language that puts no article there says so in
+    // the table rather than in this line.
+    id, w: t("produce.subject", { name: v.name }), bare: v.name,
     under: null, kind: "chair", chan: [chairKey], ix,
     // which ADJ rows this voice inherits: producer.js's own FAM verdict on its
     // instrument, read by H3's `asOf`
@@ -533,10 +541,10 @@ export function undo(doc) {
    `install()` has already filled by the time any of these can be reached
    (`mount` calls `produced()` first, and every tap goes through `subjects()` or
    `targets()`); the fallback is there because a label may not throw. */
-const sentenceOf = (note) => { try { return Prod.sentence(note) || "that"; }
-                               catch (e) { return "that"; } };
+const sentenceOf = (note) => { try { return Prod.sentence(note) || t("produce.thisNote"); }
+                               catch (e) { return t("produce.thisNote"); } };
 const lineAt = (doc, i) => { const n = notes(doc)[i];
-                             return n ? sentenceOf(n) : "that"; };
+                             return n ? sentenceOf(n) : t("produce.thisNote"); };
 /* THE LAST THING THE PRODUCER SAID, AND HOW MANY STAND — the PRODUCE row's
    collapsed face (2026-09-08, TABLE.md §10b step 5). A face is a READING and
    never a second opinion: it is the same `sentence` assembler `run` uses for
@@ -547,18 +555,23 @@ export const said = (doc) => { const l = notes(doc);
   return { n: l.length, max: Prod.MAXNOTES,
            last: l.length ? sentenceOf(l[l.length - 1]) : null }; };
 /** Say a thing. Saying it again is a PUSH, not an eleventh line (producer.js:1657). */
+/* WHAT UNDO WILL PUT BACK IS A WHOLE SENTENCE PER MOVE, one key each. It read
+   `"more on \u201c" + lineAt(doc, i) + "\u201d"` — a fragment, a quotation mark
+   and a name in an order English happens to take — and "Undo " was glued in
+   front of it at the button. One key holds the whole of it now, and the note
+   itself arrives as `{note}`. */
 export const say = (doc, verb, sid, dsc) =>
   thru(doc, (m) => Prod.addNote(m, verb, sid, dsc || null),
-       "\u201c" + sentenceOf({ v: verb, s: sid, d: dsc || null }) + "\u201d");
+       t("produce.undo.note", { note: sentenceOf({ v: verb, s: sid, d: dsc || null }) }));
 export const pushNote = (doc, i) =>
-  thru(doc, (m) => Prod.bump(m, i, +1), "more on \u201c" + lineAt(doc, i) + "\u201d");
+  thru(doc, (m) => Prod.bump(m, i, +1), t("produce.undo.more", { note: lineAt(doc, i) }));
 export const pullNote = (doc, i) =>
-  thru(doc, (m) => Prod.bump(m, i, -1), "less on \u201c" + lineAt(doc, i) + "\u201d");
+  thru(doc, (m) => Prod.bump(m, i, -1), t("produce.undo.less", { note: lineAt(doc, i) }));
 export const offNote  = (doc, i) =>
-  thru(doc, (m) => Prod.drop(m, i), "taking \u201c" + lineAt(doc, i) + "\u201d off");
+  thru(doc, (m) => Prod.drop(m, i), t("produce.undo.off", { note: lineAt(doc, i) }));
 export const forget   = (doc)    =>
   thru(doc, (m) => Prod.clearNotes(m),
-       "forgetting all " + notes(doc).length + " of them");
+       tn("produce.undo.clear", notes(doc).length));
 
 /* ================= WHAT MAY BE SAID, AND WHY NOT =======================
    Paul: "when an option makes another one unaccessible gray it out." The
@@ -566,19 +579,28 @@ export const forget   = (doc)    =>
    greyed and THE REASON PRINTED — a fixed vocabulary (17 rows, 30 words) gets
    learned, and a sheet that changes shape under your thumb cannot be.
 
-   EVERY REASON IS ONE OF `speak`'s OWN SENTENCES (producer.js:1389-1419),
-   VERBATIM, so the page and the mover cannot drift: if the page says a word is
-   unavailable and the mover would refuse it, they say the same thing. The two
-   this table adds are about the OFFERING rather than the move, and they exist
-   because "nothing would happen" is a different fact from "there is nothing
-   there". */
+   EVERY REASON IS ONE OF `speak`'s OWN KEYS, so the page and the mover cannot
+   drift: if the page says a word is unavailable and the mover would refuse it,
+   they say the same thing. The two this table adds are about the OFFERING
+   rather than the move, and they exist because "nothing would happen" is a
+   different fact from "there is nothing there".
+
+   IT WAS A SENTENCE ASSEMBLER AND IT IS A TABLE OF KEYS NOW (TABLE.md §12b).
+   `spent` read `(w) => "it's as " + w + " as it's going to get"` and printed
+   "it's as brighter as it's going to get" in forty-eight places; `notplaying`
+   computed English subject-verb agreement off `/s$/.test(S.bare)`; `dishonest`
+   glued a subject onto "that is not an honest word about ". A caller that
+   conjugates is a caller a second language cannot follow, so each row below is
+   ONE KEY holding ONE WHOLE SENTENCE, and where a refusal would have had to
+   inflect with its subject the SUBJECT IS DROPPED rather than conjugated — the
+   sentence sits beside the control that already names it (DESIGN.md §2,
+   component 14), so "Not playing on this record" is true of every noun. */
 const WHY = {
-  nodrums:  "there are no drums on this record",
-  notplaying: (S) => S.w + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? " are" : " is") +
-                     " not playing on this record",
-  nothing:  "there is no ",
-  spent:    (w) => "it's as " + w + " as it's going to get",
-  nomove:   (S) => "nothing here would move " + S.w + " on this record",
+  nodrums:  () => t("refuse.noDrums"),
+  notplaying: () => t("refuse.notPlaying"),
+  nothing:  () => t("refuse.notHere"),
+  spent:    () => t("refuse.spent"),
+  nomove:   (S) => t("refuse.noMove", { name: S.w }),
   // `notverb` STOOD HERE and went with the verb sheet, 2026-09-01: it read
   // `(V) => "there is nothing on this record to " + V.w` and its only reader
   // was tap one, which is gone (there is one verb, so there is nothing to
@@ -588,9 +610,9 @@ const WHY = {
   // line is what the bass plays rather than a thing you add. They are ADJ.on
   // entries now (producer.js A_LEVEL / A_INOUT) and this row is the last
   // reader of `takes()`, which one verb can no longer make false.
-  notsaid:  (V, S) => "\u201c" + V.w + " " + S.w + "\u201d is not a sentence",
-  dishonest:(S) => "that is not an honest word about " + S.w,
-  ceiling:  (n) => "that is " + n + " things — take one off before you say another",
+  notsaid:  (S) => t("refuse.noWords", { name: S.w }),
+  dishonest:(S) => t("refuse.notAWord", { name: S.w }),
+  ceiling:  (n) => t("refuse.ceiling", { n }),
 };
 
 const offeredSubjects = (st, doc, verb) => new Set(
@@ -613,12 +635,11 @@ export function subjects(doc, genreFor, verb = VERB1) {
     const on = offered.has(row.id);
     let why = null;
     if (!on) {
-      if (!Prod.takes(verb, row.id)) why = WHY.notsaid(Prod.VERB[verb], row);
-      else if ((row.lane || row.id === "drums") && kitless) why = WHY.nodrums;
+      if (!Prod.takes(verb, row.id)) why = WHY.notsaid(row);
+      else if ((row.lane || row.id === "drums") && kitless) why = WHY.nodrums();
       else if (!Prod.livesOn(probe, row))
-        why = row.kind === "chair" ? WHY.notplaying(row)
-                                   : WHY.nothing + row.bare + " on this record";
-      else why = Prod.VERB[verb].d === "no" ? WHY.spent(row.bare) : WHY.nomove(row);
+        why = row.kind === "chair" ? WHY.notplaying() : WHY.nothing();
+      else why = Prod.VERB[verb].d === "no" ? WHY.spent() : WHY.nomove(row);
     }
     return { row, on, why };
   });
@@ -641,7 +662,7 @@ export function targets(doc, genreFor, verb, sid) {
     return { id: a.id, w: a.w, said: a.said, on: on.has(a.id),
              why: on.has(a.id) ? null
                 : !honest ? WHY.dishonest(S || { w: sid })
-                          : WHY.spent(a.w) };
+                          : WHY.spent() };
   });
   return { bare, adj, gen,
            hidden: verb === "make" ? Object.keys(GENRES).length - gen.length : 0 };
@@ -677,7 +698,7 @@ export function mount(parent, ctx) {
   const doc = ctx.doc();
   // "The producer" — the ordinal came off with every heading's, 2026-08-27
   // (FUTURE.md §5: "9 of eight" was the numbering admitting failure).
-  const sec = ctx.section(parent, "ax-produce", "The producer");
+  const sec = ctx.section(parent, "ax-produce", t("produce.name"));
   // THE 285-CHAR PREAMBLE IS DELETED, 2026-08-27 (FUTURE.md §2, the text
   // diet: "the producer's 285-char philosophy paragraph is deleted (the note
   // stack demonstrates what it explained)"). It read: "Not one of the eight —
@@ -695,9 +716,17 @@ export function mount(parent, ctx) {
 
   plate(sec, R);
 
-  if (R.orphans && R.orphans.length) sec.append(el("p",
-    R.orphans.map((n) => n.s.replace(/^v:/, "") + " is gone — that note went " +
-      "with it.").join(" "), "nu-hint"));
+  /* ONE SENTENCE PER ORPHAN, ONE TEXT NODE EACH. Joining them into a single
+     string would print a run of words no catalogue entry holds, and
+     test/copy.browser.js reads TEXT NODES: two orphans joined are one node
+     that matches nothing. A span each, and every node is a whole string. */
+  if (R.orphans && R.orphans.length) {
+    const gone = el("p", null, "nu-hint");
+    for (const n of R.orphans)
+      gone.append(el("span", t("produce.orphan",
+        { name: n.s.replace(/^v:/, "") })), " ");
+    sec.append(gone);
+  }
 
   if (R.said.length) notesTable(sec, R, ctx);
   // THE STRIP IS DRAWN WHETHER OR NOT THERE IS A TABLE, and that is the whole
@@ -743,14 +772,14 @@ export function mount(parent, ctx) {
 function plate(parent, R) {
   const p = el("h3", null, "nu-namebar nu-prodplate");
   p.dataset.k = "prod.name";
-  p.append(el("b", "the producer"));
-  p.append(el("small", R.said.length + " of " + Prod.MAXNOTES + " said",
-    "nu-namebar-sub"));
+  p.append(el("b", t("produce.name")));
+  p.append(el("small", t("produce.count",
+    { n: R.said.length, max: Prod.MAXNOTES }), "nu-namebar-sub"));
   // THE SENTENCE UNDER CONSTRUCTION, and it is producer.js's own assembler
   // with the descriptor still missing — never a second spelling of "make X".
   if (psubj) {
     const S = Prod.SUB[psubj] || { w: psubj };
-    p.append(el("small", "make " + S.w + " \u2026",
+    p.append(el("small", t("produce.saying", { name: S.w }),
       "nu-namebar-sub nu-prodsay"));
   }
   parent.append(p);
@@ -763,7 +792,9 @@ function plate(parent, R) {
    (producer.js:1443) and never parsed. */
 function notesTable(parent, R, ctx) {
   const doc = ctx.doc();
-  const t = el("table"); t.className = "nu-notes";
+  // THE TABLE IS `tbl`. It was `t`, which is the catalogue reader's name now
+  // — one letter, and a shadowed import prints keys instead of words.
+  const tbl = el("table"); tbl.className = "nu-notes";
   /* THE CAPTION COUNTED, AND THE PLATE COUNTS NOW (2026-09-02). It read:
 
        "what has been said · " + R.said.length + " of " + Prod.MAXNOTES +
@@ -777,11 +808,12 @@ function notesTable(parent, R, ctx) {
      telling that ten are available. Printing it twice on the same screen is
      one fact with two owners, so the caption keeps only what the plate cannot
      say: that the lines are applied in the order they are read. */
-  t.append(el("caption", "in the order they were said"));
+  tbl.append(el("caption", t("produce.caption")));
   const head = el("tr");
-  for (const h of ["the note", "how far", "what it did", "change it"]) {
-    const th = el("th", h); th.scope = "col"; head.append(th); }
-  t.append(head);
+  for (const h of ["produce.colNote", "produce.colAmount",
+                   "produce.colResult", "produce.colChange"]) {
+    const th = el("th", t(h)); th.scope = "col"; head.append(th); }
+  tbl.append(head);
   R.said.forEach((line, i) => {
     const tr = el("tr");
     // A REFUSED LINE IS STRUCK WHOLE (2026-09-02, COMPOSER.md §2.9: "the
@@ -795,7 +827,7 @@ function notesTable(parent, R, ctx) {
     const again = el("button", line.sentence);
     again.type = "button";
     again.dataset.k = "note|" + i;
-    again.title = "say it again, harder";
+    again.title = t("produce.pushAgain");
     again.addEventListener("click", () => { pushNote(doc, i); ctx.changed(); });
     th.append(again); tr.append(th);
     // A REFUSED NOTE SAYS SO IN THE PERCENTAGE. `refused` is producer.js's own
@@ -829,17 +861,18 @@ function notesTable(parent, R, ctx) {
     const op = (word, k, fn) => {
       const b = el("button", word);
       b.type = "button"; b.dataset.k = k + "|" + i;
-      // the sentence again, for a screen reader that hears only "more"
-      const vh = el("span", " — " + line.sentence, "nu-vh");
+      // the sentence again, for a screen reader that hears only "More"
+      const vh = el("span", " " + t("produce.onNote", { note: line.sentence }),
+        "nu-vh");
       b.append(vh);
       b.addEventListener("click", () => { fn(doc, i); ctx.changed(); });
       strip.append(b, " ");
     };
-    op("more", "pnup", pushNote);
-    op("less", "pndn", pullNote);
-    op("take it off", "pndel", offNote);
+    op(t("act.more"), "pnup", pushNote);
+    op(t("act.less"), "pndn", pullNote);
+    op(t("produce.takeOff"), "pndel", offNote);
     tr.append(td3);
-    t.append(tr);
+    tbl.append(tr);
   });
   const pane = el("div"); pane.className = "nu-pane"; pane.tabIndex = 0;
   // WHICH PANE THIS IS ACROSS A REBUILD (ui/eight.js keepPanes/putPanes,
@@ -847,9 +880,9 @@ function notesTable(parent, R, ctx) {
   // `pane()` keys one: a note stack wider than the phone kept its sideways
   // scroll only by accident before, because every tap in it rebuilt the page
   // and the new pane started at 0.
-  const p0 = t.querySelector("[data-k]");
+  const p0 = tbl.querySelector("[data-k]");
   if (p0) pane.dataset.pane = p0.dataset.k;
-  pane.append(t); parent.append(pane);
+  pane.append(tbl); parent.append(pane);
 }
 
 /* ---- THE STACK'S OWN TWO BUTTONS, and UNDO is the one Paul's sentence asked
@@ -867,16 +900,22 @@ function stackStrip(parent, doc, ctx) {
   if (!notes(doc).length && !back) return;
   const p = el("p", null, "nu-row");   // a strip of buttons — nu.css
   if (notes(doc).length) {
-    const clear = el("button", "forget all of it");
+    const clear = el("button", t("produce.clearAll"));
     clear.type = "button"; clear.dataset.k = "pclear";
-    clear.title = "take every note off and hear the record the band made";
+    clear.title = t("produce.clearAll.title");
     clear.addEventListener("click", () => { forget(doc); ctx.changed(); });
     p.append(clear, " ");
   }
   if (back) {
-    const u = el("button", "undo \u2014 " + back);
+    /* THE FACE IS THE VERB AND THE SENTENCE IS THE NAME. It read
+       `"undo \u2014 " + back` — a button face that grew with the note it would
+       put back, past the six words a face is held to — and the claim that
+       matters (an undo you can READ) is kept where a sentence is allowed:
+       `back` is one whole catalogue string ("Undo more on make the drums
+       harder"), on the title and on the accessible name. */
+    const u = el("button", t("act.undo"));
     u.type = "button"; u.dataset.k = "pundo";
-    u.title = "put the note stack back the way it was one move ago";
+    u.title = back; u.setAttribute("aria-label", back);
     u.addEventListener("click", () => { undo(doc); ctx.changed(); });
     p.append(u, " ");
   }
@@ -983,7 +1022,7 @@ function castRow(parent, doc, ctx) {
       b.disabled = true;
       b.dataset.why = r.why;
       b.title = r.why;
-      b.append(el("span", " \u2014 " + r.why, "nu-vh"));
+      b.append(el("span", " " + r.why, "nu-vh"));
     } else {
       b.setAttribute("aria-pressed", psubj === r.row.id ? "true" : "false");
       b.addEventListener("click", () => {
@@ -1004,7 +1043,8 @@ function castRow(parent, doc, ctx) {
    every sheet that could finish it. */
 function tapTarget(parent, doc, ctx, land) {
   const S = Prod.SUB[psubj] || { w: psubj };
-  const t = targets(doc, null, VERB1, psubj);
+  // THE TARGETS ARE `tg`, for the reason `notesTable`'s table is `tbl`.
+  const tg = targets(doc, null, VERB1, psubj);
 
   /* "JUST ADD IT" AND "BACK IN" ARE ONE GESTURE, 2026-09-02, and the
      redundancy was named at the seam that made it (producer.js:GONE, the bare
@@ -1016,8 +1056,8 @@ function tapTarget(parent, doc, ctx, land) {
      every other record and therefore learned. The bare tap is drawn alone,
      and then it means the other half of its own mechanism: a LANE the record
      has never had, put in with the record's own idiom (ADDPAT). */
-  const bring = t.adj.some((a) => a.id === "back" && a.on);
-  if (t.bare.length && !bring) {
+  const bring = tg.adj.some((a) => a.id === "back" && a.on);
+  if (tg.bare.length && !bring) {
     /* ...AND IT IS A BUTTON, NOT A MENU OF ONE (2026-09-02). The 2026-08-24
        law it is measured against — Paul: "in general where there is ONE option
        a dropdown is preferred" — is about a CHOICE with one answer left in it,
@@ -1027,27 +1067,27 @@ function tapTarget(parent, doc, ctx, land) {
        doing one thing is a button. Drawn as a menu it cost two gestures (open,
        pick) to say what one press says, on the page's most direct sentence. */
     const p = el("p", null, "nu-row");
-    const b = el("button", t.bare[0].w);
+    const b = el("button", tg.bare[0].w);
     b.type = "button"; b.dataset.k = "prod.bare";
-    b.title = "make " + S.w + " — the record's own idiom for what is missing";
+    b.title = t("produce.bareAdd.title", { name: S.w });
     b.addEventListener("click", () => { say(doc, VERB1, psubj, null); land(); });
     p.append(b); parent.append(p);
   }
 
   const grid = el("div", null, "nu-ptargets");
-  if (t.adj.length) sheet(grid, { key: "prod.word", label: "qualities",
+  if (tg.adj.length) sheet(grid, { key: "prod.word", label: t("produce.qualities"),
     value: "", ungated: true,
-    options: t.adj.map((a) => ({ value: a.id, label: a.w,
+    options: tg.adj.map((a) => ({ value: a.id, label: a.w,
       disabled: !a.on, why: a.on ? null : a.why })),
     set: (id) => { say(doc, VERB1, psubj, id); land(); } });
-  if (t.gen.length) {
-    const field = sheet(grid, { key: "prod.record", label: "records",
+  if (tg.gen.length) {
+    const field = sheet(grid, { key: "prod.record", label: t("produce.records"),
       value: "", ungated: true,
       // THE ANCHOR'S OWN LABEL IS WHAT THE WORD MEANS — "punk" is New York
       // 1976 — and it belongs ON the option. The old page put it in a `title`,
       // which is invisible on a phone, and that is the only place this page is
       // really read (sheets.js says the same thing about `why`).
-      options: t.gen.map((g) => ({ value: g.id,
+      options: tg.gen.map((g) => ({ value: g.id,
         label: g.label ? g.w + " \u00b7 " + g.label : g.w })),
       set: (id) => { say(doc, VERB1, psubj, id); land(); } });
     /* THE HIDDEN COUNT IS THE FIELD'S OWN REFUSAL NOW (2026-09-02). It was a
@@ -1056,15 +1096,15 @@ function tapTarget(parent, doc, ctx, land) {
        on a list of forty, which is the same fact every greyed option on this
        page prints in a `.nu-why`, and the epsilon law (producer.js:1573) is
        what computes it. Same words, on the control they are about. */
-    if (t.hidden > 0 && field) field.append(el("small",
-      "\u2026and " + t.hidden + " other records this would not move.", "nu-why"));
+    if (tg.hidden > 0 && field) field.append(el("small",
+      tn("produce.hidden", tg.hidden), "nu-why"));
   }
   if (grid.childNodes.length) parent.append(grid);
 
-  if (!t.bare.length && !t.adj.length && !t.gen.length)
+  if (!tg.bare.length && !tg.adj.length && !tg.gen.length)
     // ...and this is a refusal with its reason, in the page's own class for
     // one, rather than a hint. `WHY.nomove` is `speak`'s own sentence.
-    parent.append(el("p", WHY.nomove(S) + ".", "nu-why"));
+    parent.append(el("p", WHY.nomove(S), "nu-why"));
 }
 
 /* `back(parent, ctx, word, fn)` STOOD HERE and is deleted, 2026-09-02. It drew

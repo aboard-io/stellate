@@ -11,18 +11,18 @@
 
 // node_modules/lit-html/lit-html.js
 var t = globalThis;
-var i = (t2) => t2;
+var i = (t3) => t3;
 var s = t.trustedTypes;
-var e = s ? s.createPolicy("lit-html", { createHTML: (t2) => t2 }) : void 0;
+var e = s ? s.createPolicy("lit-html", { createHTML: (t3) => t3 }) : void 0;
 var h = "$lit$";
 var o = `lit$${Math.random().toFixed(9).slice(2)}$`;
 var n = "?" + o;
 var r = `<${n}>`;
 var l = document;
 var c = () => l.createComment("");
-var a = (t2) => null === t2 || "object" != typeof t2 && "function" != typeof t2;
+var a = (t3) => null === t3 || "object" != typeof t3 && "function" != typeof t3;
 var u = Array.isArray;
-var d = (t2) => u(t2) || "function" == typeof t2?.[Symbol.iterator];
+var d = (t3) => u(t3) || "function" == typeof t3?.[Symbol.iterator];
 var f = "[ 	\n\f\r]";
 var v = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g;
 var _ = /-->/g;
@@ -32,7 +32,7 @@ var p = RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^
 var g = /'/g;
 var $ = /"/g;
 var y = /^(?:script|style|textarea|title)$/i;
-var x = (t2) => (i2, ...s2) => ({ _$litType$: t2, strings: i2, values: s2 });
+var x = (t3) => (i2, ...s2) => ({ _$litType$: t3, strings: i2, values: s2 });
 var b = x(1);
 var w = x(2);
 var T = x(3);
@@ -40,68 +40,68 @@ var E = /* @__PURE__ */ Symbol.for("lit-noChange");
 var A = /* @__PURE__ */ Symbol.for("lit-nothing");
 var C = /* @__PURE__ */ new WeakMap();
 var P = l.createTreeWalker(l, 129);
-function V(t2, i2) {
-  if (!u(t2) || !t2.hasOwnProperty("raw")) throw Error("invalid template strings array");
+function V(t3, i2) {
+  if (!u(t3) || !t3.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return void 0 !== e ? e.createHTML(i2) : i2;
 }
-var N = (t2, i2) => {
-  const s2 = t2.length - 1, e2 = [];
+var N = (t3, i2) => {
+  const s2 = t3.length - 1, e2 = [];
   let n2, l2 = 2 === i2 ? "<svg>" : 3 === i2 ? "<math>" : "", c2 = v;
   for (let i3 = 0; i3 < s2; i3++) {
-    const s3 = t2[i3];
+    const s3 = t3[i3];
     let a2, u2, d2 = -1, f2 = 0;
     for (; f2 < s3.length && (c2.lastIndex = f2, u2 = c2.exec(s3), null !== u2); ) f2 = c2.lastIndex, c2 === v ? "!--" === u2[1] ? c2 = _ : void 0 !== u2[1] ? c2 = m : void 0 !== u2[2] ? (y.test(u2[2]) && (n2 = RegExp("</" + u2[2], "g")), c2 = p) : void 0 !== u2[3] && (c2 = p) : c2 === p ? ">" === u2[0] ? (c2 = n2 ?? v, d2 = -1) : void 0 === u2[1] ? d2 = -2 : (d2 = c2.lastIndex - u2[2].length, a2 = u2[1], c2 = void 0 === u2[3] ? p : '"' === u2[3] ? $ : g) : c2 === $ || c2 === g ? c2 = p : c2 === _ || c2 === m ? c2 = v : (c2 = p, n2 = void 0);
-    const x2 = c2 === p && t2[i3 + 1].startsWith("/>") ? " " : "";
+    const x2 = c2 === p && t3[i3 + 1].startsWith("/>") ? " " : "";
     l2 += c2 === v ? s3 + r : d2 >= 0 ? (e2.push(a2), s3.slice(0, d2) + h + s3.slice(d2) + o + x2) : s3 + o + (-2 === d2 ? i3 : x2);
   }
-  return [V(t2, l2 + (t2[s2] || "<?>") + (2 === i2 ? "</svg>" : 3 === i2 ? "</math>" : "")), e2];
+  return [V(t3, l2 + (t3[s2] || "<?>") + (2 === i2 ? "</svg>" : 3 === i2 ? "</math>" : "")), e2];
 };
 var S = class _S {
-  constructor({ strings: t2, _$litType$: i2 }, e2) {
+  constructor({ strings: t3, _$litType$: i2 }, e2) {
     let r2;
     this.parts = [];
     let l2 = 0, a2 = 0;
-    const u2 = t2.length - 1, d2 = this.parts, [f2, v2] = N(t2, i2);
+    const u2 = t3.length - 1, d2 = this.parts, [f2, v2] = N(t3, i2);
     if (this.el = _S.createElement(f2, e2), P.currentNode = this.el.content, 2 === i2 || 3 === i2) {
-      const t3 = this.el.content.firstChild;
-      t3.replaceWith(...t3.childNodes);
+      const t4 = this.el.content.firstChild;
+      t4.replaceWith(...t4.childNodes);
     }
     for (; null !== (r2 = P.nextNode()) && d2.length < u2; ) {
       if (1 === r2.nodeType) {
-        if (r2.hasAttributes()) for (const t3 of r2.getAttributeNames()) if (t3.endsWith(h)) {
-          const i3 = v2[a2++], s2 = r2.getAttribute(t3).split(o), e3 = /([.?@])?(.*)/.exec(i3);
-          d2.push({ type: 1, index: l2, name: e3[2], strings: s2, ctor: "." === e3[1] ? I : "?" === e3[1] ? L : "@" === e3[1] ? z : H }), r2.removeAttribute(t3);
-        } else t3.startsWith(o) && (d2.push({ type: 6, index: l2 }), r2.removeAttribute(t3));
+        if (r2.hasAttributes()) for (const t4 of r2.getAttributeNames()) if (t4.endsWith(h)) {
+          const i3 = v2[a2++], s2 = r2.getAttribute(t4).split(o), e3 = /([.?@])?(.*)/.exec(i3);
+          d2.push({ type: 1, index: l2, name: e3[2], strings: s2, ctor: "." === e3[1] ? I : "?" === e3[1] ? L : "@" === e3[1] ? z : H }), r2.removeAttribute(t4);
+        } else t4.startsWith(o) && (d2.push({ type: 6, index: l2 }), r2.removeAttribute(t4));
         if (y.test(r2.tagName)) {
-          const t3 = r2.textContent.split(o), i3 = t3.length - 1;
+          const t4 = r2.textContent.split(o), i3 = t4.length - 1;
           if (i3 > 0) {
             r2.textContent = s ? s.emptyScript : "";
-            for (let s2 = 0; s2 < i3; s2++) r2.append(t3[s2], c()), P.nextNode(), d2.push({ type: 2, index: ++l2 });
-            r2.append(t3[i3], c());
+            for (let s2 = 0; s2 < i3; s2++) r2.append(t4[s2], c()), P.nextNode(), d2.push({ type: 2, index: ++l2 });
+            r2.append(t4[i3], c());
           }
         }
       } else if (8 === r2.nodeType) if (r2.data === n) d2.push({ type: 2, index: l2 });
       else {
-        let t3 = -1;
-        for (; -1 !== (t3 = r2.data.indexOf(o, t3 + 1)); ) d2.push({ type: 7, index: l2 }), t3 += o.length - 1;
+        let t4 = -1;
+        for (; -1 !== (t4 = r2.data.indexOf(o, t4 + 1)); ) d2.push({ type: 7, index: l2 }), t4 += o.length - 1;
       }
       l2++;
     }
   }
-  static createElement(t2, i2) {
+  static createElement(t3, i2) {
     const s2 = l.createElement("template");
-    return s2.innerHTML = t2, s2;
+    return s2.innerHTML = t3, s2;
   }
 };
-function M(t2, i2, s2 = t2, e2) {
+function M(t3, i2, s2 = t3, e2) {
   if (i2 === E) return i2;
   let h2 = void 0 !== e2 ? s2._$Co?.[e2] : s2._$Cl;
   const o2 = a(i2) ? void 0 : i2._$litDirective$;
-  return h2?.constructor !== o2 && (h2?._$AO?.(false), void 0 === o2 ? h2 = void 0 : (h2 = new o2(t2), h2._$AT(t2, s2, e2)), void 0 !== e2 ? (s2._$Co ??= [])[e2] = h2 : s2._$Cl = h2), void 0 !== h2 && (i2 = M(t2, h2._$AS(t2, i2.values), h2, e2)), i2;
+  return h2?.constructor !== o2 && (h2?._$AO?.(false), void 0 === o2 ? h2 = void 0 : (h2 = new o2(t3), h2._$AT(t3, s2, e2)), void 0 !== e2 ? (s2._$Co ??= [])[e2] = h2 : s2._$Cl = h2), void 0 !== h2 && (i2 = M(t3, h2._$AS(t3, i2.values), h2, e2)), i2;
 }
 var R = class {
-  constructor(t2, i2) {
-    this._$AV = [], this._$AN = void 0, this._$AD = t2, this._$AM = i2;
+  constructor(t3, i2) {
+    this._$AV = [], this._$AN = void 0, this._$AD = t3, this._$AM = i2;
   }
   get parentNode() {
     return this._$AM.parentNode;
@@ -109,35 +109,35 @@ var R = class {
   get _$AU() {
     return this._$AM._$AU;
   }
-  u(t2) {
-    const { el: { content: i2 }, parts: s2 } = this._$AD, e2 = (t2?.creationScope ?? l).importNode(i2, true);
+  u(t3) {
+    const { el: { content: i2 }, parts: s2 } = this._$AD, e2 = (t3?.creationScope ?? l).importNode(i2, true);
     P.currentNode = e2;
     let h2 = P.nextNode(), o2 = 0, n2 = 0, r2 = s2[0];
     for (; void 0 !== r2; ) {
       if (o2 === r2.index) {
         let i3;
-        2 === r2.type ? i3 = new k(h2, h2.nextSibling, this, t2) : 1 === r2.type ? i3 = new r2.ctor(h2, r2.name, r2.strings, this, t2) : 6 === r2.type && (i3 = new Z(h2, this, t2)), this._$AV.push(i3), r2 = s2[++n2];
+        2 === r2.type ? i3 = new k(h2, h2.nextSibling, this, t3) : 1 === r2.type ? i3 = new r2.ctor(h2, r2.name, r2.strings, this, t3) : 6 === r2.type && (i3 = new Z(h2, this, t3)), this._$AV.push(i3), r2 = s2[++n2];
       }
       o2 !== r2?.index && (h2 = P.nextNode(), o2++);
     }
     return P.currentNode = l, e2;
   }
-  p(t2) {
+  p(t3) {
     let i2 = 0;
-    for (const s2 of this._$AV) void 0 !== s2 && (void 0 !== s2.strings ? (s2._$AI(t2, s2, i2), i2 += s2.strings.length - 2) : s2._$AI(t2[i2])), i2++;
+    for (const s2 of this._$AV) void 0 !== s2 && (void 0 !== s2.strings ? (s2._$AI(t3, s2, i2), i2 += s2.strings.length - 2) : s2._$AI(t3[i2])), i2++;
   }
 };
 var k = class _k {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
-  constructor(t2, i2, s2, e2) {
-    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t2, this._$AB = i2, this._$AM = s2, this.options = e2, this._$Cv = e2?.isConnected ?? true;
+  constructor(t3, i2, s2, e2) {
+    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t3, this._$AB = i2, this._$AM = s2, this.options = e2, this._$Cv = e2?.isConnected ?? true;
   }
   get parentNode() {
-    let t2 = this._$AA.parentNode;
+    let t3 = this._$AA.parentNode;
     const i2 = this._$AM;
-    return void 0 !== i2 && 11 === t2?.nodeType && (t2 = i2.parentNode), t2;
+    return void 0 !== i2 && 11 === t3?.nodeType && (t3 = i2.parentNode), t3;
   }
   get startNode() {
     return this._$AA;
@@ -145,45 +145,45 @@ var k = class _k {
   get endNode() {
     return this._$AB;
   }
-  _$AI(t2, i2 = this) {
-    t2 = M(this, t2, i2), a(t2) ? t2 === A || null == t2 || "" === t2 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t2 !== this._$AH && t2 !== E && this._(t2) : void 0 !== t2._$litType$ ? this.$(t2) : void 0 !== t2.nodeType ? this.T(t2) : d(t2) ? this.k(t2) : this._(t2);
+  _$AI(t3, i2 = this) {
+    t3 = M(this, t3, i2), a(t3) ? t3 === A || null == t3 || "" === t3 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t3 !== this._$AH && t3 !== E && this._(t3) : void 0 !== t3._$litType$ ? this.$(t3) : void 0 !== t3.nodeType ? this.T(t3) : d(t3) ? this.k(t3) : this._(t3);
   }
-  O(t2) {
-    return this._$AA.parentNode.insertBefore(t2, this._$AB);
+  O(t3) {
+    return this._$AA.parentNode.insertBefore(t3, this._$AB);
   }
-  T(t2) {
-    this._$AH !== t2 && (this._$AR(), this._$AH = this.O(t2));
+  T(t3) {
+    this._$AH !== t3 && (this._$AR(), this._$AH = this.O(t3));
   }
-  _(t2) {
-    this._$AH !== A && a(this._$AH) ? this._$AA.nextSibling.data = t2 : this.T(l.createTextNode(t2)), this._$AH = t2;
+  _(t3) {
+    this._$AH !== A && a(this._$AH) ? this._$AA.nextSibling.data = t3 : this.T(l.createTextNode(t3)), this._$AH = t3;
   }
-  $(t2) {
-    const { values: i2, _$litType$: s2 } = t2, e2 = "number" == typeof s2 ? this._$AC(t2) : (void 0 === s2.el && (s2.el = S.createElement(V(s2.h, s2.h[0]), this.options)), s2);
+  $(t3) {
+    const { values: i2, _$litType$: s2 } = t3, e2 = "number" == typeof s2 ? this._$AC(t3) : (void 0 === s2.el && (s2.el = S.createElement(V(s2.h, s2.h[0]), this.options)), s2);
     if (this._$AH?._$AD === e2) this._$AH.p(i2);
     else {
-      const t3 = new R(e2, this), s3 = t3.u(this.options);
-      t3.p(i2), this.T(s3), this._$AH = t3;
+      const t4 = new R(e2, this), s3 = t4.u(this.options);
+      t4.p(i2), this.T(s3), this._$AH = t4;
     }
   }
-  _$AC(t2) {
-    let i2 = C.get(t2.strings);
-    return void 0 === i2 && C.set(t2.strings, i2 = new S(t2)), i2;
+  _$AC(t3) {
+    let i2 = C.get(t3.strings);
+    return void 0 === i2 && C.set(t3.strings, i2 = new S(t3)), i2;
   }
-  k(t2) {
+  k(t3) {
     u(this._$AH) || (this._$AH = [], this._$AR());
     const i2 = this._$AH;
     let s2, e2 = 0;
-    for (const h2 of t2) e2 === i2.length ? i2.push(s2 = new _k(this.O(c()), this.O(c()), this, this.options)) : s2 = i2[e2], s2._$AI(h2), e2++;
+    for (const h2 of t3) e2 === i2.length ? i2.push(s2 = new _k(this.O(c()), this.O(c()), this, this.options)) : s2 = i2[e2], s2._$AI(h2), e2++;
     e2 < i2.length && (this._$AR(s2 && s2._$AB.nextSibling, e2), i2.length = e2);
   }
-  _$AR(t2 = this._$AA.nextSibling, s2) {
-    for (this._$AP?.(false, true, s2); t2 !== this._$AB; ) {
-      const s3 = i(t2).nextSibling;
-      i(t2).remove(), t2 = s3;
+  _$AR(t3 = this._$AA.nextSibling, s2) {
+    for (this._$AP?.(false, true, s2); t3 !== this._$AB; ) {
+      const s3 = i(t3).nextSibling;
+      i(t3).remove(), t3 = s3;
     }
   }
-  setConnected(t2) {
-    void 0 === this._$AM && (this._$Cv = t2, this._$AP?.(t2));
+  setConnected(t3) {
+    void 0 === this._$AM && (this._$Cv = t3, this._$AP?.(t3));
   }
 };
 var H = class {
@@ -193,79 +193,85 @@ var H = class {
   get _$AU() {
     return this._$AM._$AU;
   }
-  constructor(t2, i2, s2, e2, h2) {
-    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t2, this.name = i2, this._$AM = e2, this.options = h2, s2.length > 2 || "" !== s2[0] || "" !== s2[1] ? (this._$AH = Array(s2.length - 1).fill(new String()), this.strings = s2) : this._$AH = A;
+  constructor(t3, i2, s2, e2, h2) {
+    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t3, this.name = i2, this._$AM = e2, this.options = h2, s2.length > 2 || "" !== s2[0] || "" !== s2[1] ? (this._$AH = Array(s2.length - 1).fill(new String()), this.strings = s2) : this._$AH = A;
   }
-  _$AI(t2, i2 = this, s2, e2) {
+  _$AI(t3, i2 = this, s2, e2) {
     const h2 = this.strings;
     let o2 = false;
-    if (void 0 === h2) t2 = M(this, t2, i2, 0), o2 = !a(t2) || t2 !== this._$AH && t2 !== E, o2 && (this._$AH = t2);
+    if (void 0 === h2) t3 = M(this, t3, i2, 0), o2 = !a(t3) || t3 !== this._$AH && t3 !== E, o2 && (this._$AH = t3);
     else {
-      const e3 = t2;
+      const e3 = t3;
       let n2, r2;
-      for (t2 = h2[0], n2 = 0; n2 < h2.length - 1; n2++) r2 = M(this, e3[s2 + n2], i2, n2), r2 === E && (r2 = this._$AH[n2]), o2 ||= !a(r2) || r2 !== this._$AH[n2], r2 === A ? t2 = A : t2 !== A && (t2 += (r2 ?? "") + h2[n2 + 1]), this._$AH[n2] = r2;
+      for (t3 = h2[0], n2 = 0; n2 < h2.length - 1; n2++) r2 = M(this, e3[s2 + n2], i2, n2), r2 === E && (r2 = this._$AH[n2]), o2 ||= !a(r2) || r2 !== this._$AH[n2], r2 === A ? t3 = A : t3 !== A && (t3 += (r2 ?? "") + h2[n2 + 1]), this._$AH[n2] = r2;
     }
-    o2 && !e2 && this.j(t2);
+    o2 && !e2 && this.j(t3);
   }
-  j(t2) {
-    t2 === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t2 ?? "");
+  j(t3) {
+    t3 === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t3 ?? "");
   }
 };
 var I = class extends H {
   constructor() {
     super(...arguments), this.type = 3;
   }
-  j(t2) {
-    this.element[this.name] = t2 === A ? void 0 : t2;
+  j(t3) {
+    this.element[this.name] = t3 === A ? void 0 : t3;
   }
 };
 var L = class extends H {
   constructor() {
     super(...arguments), this.type = 4;
   }
-  j(t2) {
-    this.element.toggleAttribute(this.name, !!t2 && t2 !== A);
+  j(t3) {
+    this.element.toggleAttribute(this.name, !!t3 && t3 !== A);
   }
 };
 var z = class extends H {
-  constructor(t2, i2, s2, e2, h2) {
-    super(t2, i2, s2, e2, h2), this.type = 5;
+  constructor(t3, i2, s2, e2, h2) {
+    super(t3, i2, s2, e2, h2), this.type = 5;
   }
-  _$AI(t2, i2 = this) {
-    if ((t2 = M(this, t2, i2, 0) ?? A) === E) return;
-    const s2 = this._$AH, e2 = t2 === A && s2 !== A || t2.capture !== s2.capture || t2.once !== s2.once || t2.passive !== s2.passive, h2 = t2 !== A && (s2 === A || e2);
-    e2 && this.element.removeEventListener(this.name, this, s2), h2 && this.element.addEventListener(this.name, this, t2), this._$AH = t2;
+  _$AI(t3, i2 = this) {
+    if ((t3 = M(this, t3, i2, 0) ?? A) === E) return;
+    const s2 = this._$AH, e2 = t3 === A && s2 !== A || t3.capture !== s2.capture || t3.once !== s2.once || t3.passive !== s2.passive, h2 = t3 !== A && (s2 === A || e2);
+    e2 && this.element.removeEventListener(this.name, this, s2), h2 && this.element.addEventListener(this.name, this, t3), this._$AH = t3;
   }
-  handleEvent(t2) {
-    "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t2) : this._$AH.handleEvent(t2);
+  handleEvent(t3) {
+    "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t3) : this._$AH.handleEvent(t3);
   }
 };
 var Z = class {
-  constructor(t2, i2, s2) {
-    this.element = t2, this.type = 6, this._$AN = void 0, this._$AM = i2, this.options = s2;
+  constructor(t3, i2, s2) {
+    this.element = t3, this.type = 6, this._$AN = void 0, this._$AM = i2, this.options = s2;
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  _$AI(t2) {
-    M(this, t2);
+  _$AI(t3) {
+    M(this, t3);
   }
 };
 var B = t.litHtmlPolyfillSupport;
 B?.(S, k), (t.litHtmlVersions ??= []).push("3.3.3");
-var D = (t2, i2, s2) => {
+var D = (t3, i2, s2) => {
   const e2 = s2?.renderBefore ?? i2;
   let h2 = e2._$litPart$;
   if (void 0 === h2) {
-    const t3 = s2?.renderBefore ?? null;
-    e2._$litPart$ = h2 = new k(i2.insertBefore(c(), t3), t3, void 0, s2 ?? {});
+    const t4 = s2?.renderBefore ?? null;
+    e2._$litPart$ = h2 = new k(i2.insertBefore(c(), t4), t4, void 0, s2 ?? {});
   }
-  return h2._$AI(t2), h2;
+  return h2._$AI(t3), h2;
 };
 
 // nukernel/src/envelope/api.ts
 var SEGS = ["delay", "attack", "hold", "decay", "sustain", "release"];
 var ISLEVEL = { sustain: true };
+
+// nukernel/src/copy/global.ts
+var C2 = () => globalThis.COPY;
+var t2 = (key, p2) => C2().t(key, p2);
+var tn = (key, n2, p2) => C2().tn(key, n2, p2);
+var fmt = (n2, unit) => C2().fmt(n2, unit);
 
 // nukernel/src/envelope/plate.ts
 var R2 = 22;
@@ -277,10 +283,8 @@ function quantise(v2, min, max, step) {
   return Math.min(max, Math.max(min, +q.toFixed(dp)));
 }
 function say(v2, unit) {
-  if (unit === "s") return v2 < 0.1 ? Math.round(v2 * 1e3) + " ms" : (v2 < 10 ? v2.toFixed(2) : v2.toFixed(1)) + " s";
-  if (unit === "ms") return Math.round(v2) + " ms";
-  if (!unit) return v2 >= 1 ? v2.toFixed(2) : v2.toFixed(3).replace(/0+$/, "");
-  return (v2 >= 10 ? v2.toFixed(1) : v2.toFixed(2)) + " " + unit;
+  if (unit === "s" && v2 < 0.1) return fmt(v2 * 1e3, "ms");
+  return fmt(v2, unit);
 }
 function handle(o2, host) {
   const b2 = document.createElement("button");
@@ -293,7 +297,7 @@ function handle(o2, host) {
   b2.setAttribute("aria-valuemax", String(o2.max));
   b2.setAttribute("aria-valuenow", String(o2.value));
   b2.setAttribute("aria-valuetext", o2.say);
-  b2.setAttribute("aria-label", o2.label + ", " + o2.say + (o2.why ? " — " + o2.why : " (drag, or the arrow keys; press and hold to clear)"));
+  b2.setAttribute("aria-label", o2.why ? t2("env.handleWhy", { name: o2.label, value: o2.say, why: o2.why }) : t2("env.handle", { name: o2.label, value: o2.say }));
   if (o2.why) {
     b2.setAttribute("aria-disabled", "true");
     b2.dataset.why = o2.why;
@@ -378,6 +382,7 @@ function keyStep(e2, v2, min, max, step, axis) {
 }
 
 // nukernel/src/envelope/adsr.ts
+var segWord = (s2) => t2("env.seg." + s2);
 var PLATE_H = 132;
 function adsrEditor(host, spec0) {
   let spec = spec0;
@@ -410,7 +415,7 @@ function adsrEditor(host, spec0) {
     const plateau = Math.max(total, 1e-3) / 3;
     const span = total + plateau;
     const usable = Math.max(1, w2 - 2 * R2);
-    const px = (t2) => R2 + t2 / span * usable;
+    const px = (t3) => R2 + t3 / span * usable;
     const top = R2, bot = PLATE_H - R2;
     const y2 = (lv) => bot - Math.min(1, Math.max(0, lv)) * (bot - top);
     const x0 = px(0);
@@ -521,7 +526,7 @@ function adsrEditor(host, spec0) {
     })() : null;
     return b`
       <div class="nu-envplate" data-k=${spec.k}
-           aria-label=${spec.label + " envelope"}>
+           aria-label=${t2("env.plate")}>
         <svg class="nu-envsvg" viewBox=${"0 0 " + w2 + " " + PLATE_H}
              width=${w2} height=${PLATE_H} aria-hidden="true"
              preserveAspectRatio="none">
@@ -535,7 +540,7 @@ function adsrEditor(host, spec0) {
       const v2 = valOf(f2);
       const b2 = handle({
         k: spec.k + "|" + s2,
-        label: f2.label,
+        label: segWord(s2),
         value: v2,
         min: f2.min,
         max: f2.max,
@@ -581,13 +586,13 @@ function adsrEditor(host, spec0) {
       const set = f2.value != null;
       return b`<span class=${"nu-envsay" + (set ? " is-said" : "")}
             data-k=${"envsay|" + spec.k + "|" + s2}
-            ><b>${f2.label}</b> <span>${say(valOf(f2), f2.unit)}</span>${set ? b` <button type="button" class="nu-clearback"
+            ><b>${segWord(s2)}</b> <span>${say(valOf(f2), f2.unit)}</span>${set ? b` <button type="button" class="nu-clearback"
               data-k=${"clear|" + spec.k + "|" + s2}
-              aria-label=${"clear " + f2.label + " back to " + say(f2.derived, f2.unit)}
+              aria-label=${t2("env.clearBack", { name: segWord(s2) })}
               @click=${() => {
         spec.clear(s2);
         draw();
-      }}>clear</button>` : A}</span>`;
+      }}>${t2("act.clear")}</button>` : A}</span>`;
     })}
       </div>`;
   };
@@ -701,7 +706,11 @@ function breakpointEditor(host, spec0) {
     const d2 = P2.map((p2, i2) => (i2 ? "L " : "M ") + g2.px(p2.x).toFixed(1) + " " + g2.py(p2.y).toFixed(1)).join(" ");
     return b`
       <div class="nu-envplate" data-k=${spec.k}
-           aria-label=${spec.label + " — " + P2.length + " points over " + spec.span + " " + spec.xUnit}>
+           aria-label=${tn(
+      "env.lane",
+      P2.length,
+      { name: spec.label, span: fmt(spec.span, spec.xUnit) }
+    )}>
         <svg class="nu-envsvg" viewBox=${"0 0 " + w2 + " " + PLATE_H2}
              width=${w2} height=${PLATE_H2} aria-hidden="true"
              preserveAspectRatio="none">
@@ -712,12 +721,15 @@ function breakpointEditor(host, spec0) {
         ${P2.map((p2, i2) => {
       const b2 = handle({
         k: spec.k + "|" + i2,
-        label: "point " + (i2 + 1),
+        label: t2("env.point", { n: i2 + 1 }),
         value: p2.y,
         min: spec.lo,
         max: spec.hi,
         step: (spec.hi - spec.lo) / 100,
-        say: say(p2.y, spec.yUnit) + " at " + say(p2.x, spec.xUnit),
+        say: t2("env.pointAt", {
+          value: say(p2.y, spec.yUnit),
+          at: say(p2.x, spec.xUnit)
+        }),
         axis: "xy",
         x: g2.px(p2.x),
         y: g2.py(p2.y)
@@ -745,13 +757,17 @@ function breakpointEditor(host, spec0) {
       </div>
       <div class="nu-envsays">
         <span class="nu-envsay"><b>${spec.label}</b>
-          <span>${P2.length} points over ${spec.span} ${spec.xUnit}</span>
+          <span>${tn(
+      "env.points",
+      P2.length,
+      { span: fmt(spec.span, spec.xUnit) }
+    )}</span>
           <button type="button" class="nu-clearback" data-k=${"clear|" + spec.k}
-            aria-label=${"clear " + spec.label + " back to what it inherits"}
+            aria-label=${t2("env.clearBack", { name: spec.label })}
             @click=${() => {
       spec.clear();
       draw();
-    }}>clear</button></span>
+    }}>${t2("act.clear")}</button></span>
       </div>`;
   };
   const paintLive = () => {
@@ -769,7 +785,10 @@ function breakpointEditor(host, spec0) {
       el.setAttribute("aria-valuenow", String(q.y));
       el.setAttribute(
         "aria-valuetext",
-        say(q.y, spec.yUnit) + " at " + say(q.x, spec.xUnit)
+        t2("env.pointAt", {
+          value: say(q.y, spec.yUnit),
+          at: say(q.x, spec.xUnit)
+        })
       );
     });
   };

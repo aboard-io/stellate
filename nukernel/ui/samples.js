@@ -73,6 +73,8 @@
 
 import { isMachine, LANE } from "../audio/to-engine.js";
 import { kitFilesFor, auditionKit, stopAudition } from "../audio/audition.js";
+/* THE CATALOGUE (nukernel/TABLE.md §12b): the crate's words are keys. */
+import { t } from "./copy.js";
 
 /* THE SITE ROOT, THE WAY audio/audition.js SPELLS IT. The engine's own strings
    are repo-relative with no leading slash ("found/samples/breaks/dl_82_10.wav")
@@ -414,16 +416,16 @@ const WORDFOR = (cls) => {
    not a target on a page whose every other door is 44px). */
 /* THE PRESS THAT COULD NOT SOUND, AND THE SAME PRESS ONCE IT CAN. Two halves
    of one fact, so the reason cannot be left on a button that would now work. */
-const PLAYWHY = "the record is playing — stop it to hear one file alone";
+const PLAYWHY = () => t("crate.busy.why");
 function refuse(li, b, r) {
-  b.dataset.why = PLAYWHY;
-  b.setAttribute("aria-label", "hear " + r.name + " alone, " + PLAYWHY);
+  b.dataset.why = PLAYWHY();
+  b.setAttribute("aria-label", t("crate.hearBusy.aria", { name: r.name }));
   if (!li.querySelector(".nu-crefuse"))
-    li.append(el("p", PLAYWHY, "nu-why nu-crefuse"));
+    li.append(el("p", PLAYWHY(), "nu-why nu-crefuse"));
 }
 function unrefuse(li, b, r) {
   delete b.dataset.why;
-  b.setAttribute("aria-label", "hear " + r.name + " alone");
+  b.setAttribute("aria-label", t("crate.hear.aria", { name: r.name }));
   const p = li.querySelector(".nu-crefuse");
   if (p) p.remove();
 }
@@ -541,7 +543,7 @@ export function mountSamples(host, ctx) {
       b.type = "button";
       b.className = "nu-cplay";
       b.dataset.k = "sample-play|" + g.voice + "|" + i;
-      b.append(el("span", "hear it"));
+      b.append(el("span", t("act.play")));
       b.setAttribute("aria-pressed", "false");
       if (!r.href) {
         /* A ROW THE RECORD CANNOT REACH EITHER, and the reason is the engine's
@@ -552,11 +554,10 @@ export function mountSamples(host, ctx) {
            all. It is LISTED — it is in the pool the genre dealt this chair —
            and it says why it is not one of the files you can hear. */
         b.disabled = true;
-        b.dataset.why = "an address, not a file in the crate — the record " +
-                        "cannot reach it either";
-        b.setAttribute("aria-label", r.name + " — " + b.dataset.why);
+        b.dataset.why = t("crate.noFile.why");
+        b.setAttribute("aria-label", t("crate.noFile.aria", { name: r.name }));
       } else {
-        b.setAttribute("aria-label", "hear " + r.name + " alone");
+        b.setAttribute("aria-label", t("crate.hear.aria", { name: r.name }));
         b.addEventListener("click", () => {
           /* NOT WHILE THE RECORD RUNS, and the refusal SAYS SO. It is the same
              law the motif audition holds (ui/eight.js: two musics at once is

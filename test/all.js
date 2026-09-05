@@ -241,6 +241,11 @@ const GATES = [
              "nukernel/src/table/index.ts", "nukernel/src/table/grid.ts",
              "nukernel/src/table/model.ts", "nukernel/src/table/sheet.ts",
              "nukernel/src/table/undo.ts", "nukernel/src/table/style.ts",
+             /* THE CATALOGUE OF WORDS is the fifth entry (TABLE.md §12b): an
+                edit to a string is an edit to a committed artifact, and this
+                is the gate that says the two agree. */
+             "nukernel/src/copy/index.ts", "nukernel/src/copy/api.ts",
+             "nukernel/src/copy/strings.ts", "nukernel/src/copy/core.ts",
              "nukernel/TABLE.md"] },
   /* THE TABLE'S MODEL (2026-09-03, TABLE.md wave 1). Paul: "a song can be
      understood as a grid with sections as rows and instruments as columns …
@@ -698,6 +703,52 @@ const GATES = [
              "engine/faust/voices/sampler.js",
              "engine/faust/voices/state-engine.js",
              "nukernel/audio/to-engine.js"] },
+  /* ===== THE FUNCTIONAL TEXT PASS (2026-09-05, TABLE.md §11 and §12b) =====
+     Paul: *"There's all this copy like 'the sections own' and so forth. Just
+     call things 'default.' Rewrite it all to be familiar and app like. It's
+     very random and claudeish right now."* and, the same day: *"look for ways
+     to simplify copy strings assuming they will eventually be translated."*
+     Every string the page prints lives in ONE catalogue (nukernel/src/copy →
+     the committed nukernel/ui/copy.js) and is read through `t(key, params)`.
+
+     TWO GATES, AND NEITHER IS SUFFICIENT ALONE. `copy` reads the CATALOGUE —
+     the budgets (a face 6 words, a sentence 12), the twenty banned patterns
+     the audit measured, duplicate meanings, lonely plurals, and every key the
+     code asks for. `copy-page` reads the RENDERED PAGE and fails on any
+     printed word the catalogue did not produce: 477 of the audit's offenders
+     are composed at runtime and a source sweep cannot see one of them
+     ([[test-the-artifact]]). `copy` is wave 1 and node — no browser, no
+     server, under a second — so a bad string is refused before anything is
+     stood up. */
+  { name: "copy",       wave: 1, kind: "node",
+    argv: ["test/copy.test.js"], need: ["test/copy.test.js", "nukernel/ui/copy.js"],
+    covers: ["test/copy.test.js", "nukernel/ui/copy.js",
+             "nukernel/src/copy/api.ts", "nukernel/src/copy/strings.ts",
+             "nukernel/src/copy/core.ts", "nukernel/src/copy/table.ts",
+             "nukernel/src/copy/sheets.ts", "nukernel/src/copy/produce.ts",
+             "nukernel/src/copy/board.ts", "nukernel/src/copy/glyph.ts",
+             "nukernel/src/copy/atlas.ts", "nukernel/src/copy/rules.ts",
+             "nukernel/src/copy/fields.ts", "nukernel/src/copy/misc.ts",
+             "nukernel/DESIGN.md"] },
+  { name: "copy-page",  wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/copy.browser.js"],
+    need: ["test/copy.browser.js", "test/copy.test.js"],
+    /* `covers` NAMES EVERY SURFACE THIS GATE READS, so an edit to any file
+       that prints a word selects it in an `--impacted` run. That is the whole
+       tree's copy: the catalogue itself, the four built entries' sources, the
+       hand-written modules, the classic scripts that hold keys, and the
+       document that stamps its own three. */
+    covers: ["test/copy.browser.js", "nukernel/ui/copy.js",
+             "nukernel/ui/glyph.js", "nukernel/ui/eight.js",
+             "nukernel/ui/produce.js", "nukernel/ui/engineer.js",
+             "nukernel/ui/atlas.js", "nukernel/ui/rules.js",
+             "nukernel/ui/wordgrid.js", "nukernel/ui/samples.js",
+             "nukernel/ui/xtab.js", "nukernel/ui/video.js",
+             "nukernel/ui/screensaver.js", "nukernel/ui/table.js",
+             "nukernel/audio/offline.js", "nukernel/index.html",
+             "nukernel/fields.js", "nukernel/avail.js", "nukernel/rules.js",
+             "nukernel/atlas.js", "nukernel/producer.js",
+             "nukernel/askable.js"] },
   { name: "erhu",       wave: 2, kind: "node",
     argv: ["test/erhu.test.js"], need: ["test/erhu.test.js"],
     covers: ["test/erhu.test.js", "engine/faust/dsp/erhu.dsp"] },

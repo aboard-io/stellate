@@ -74,6 +74,9 @@
   "use strict";
 
   const { GENRES, MODES, SCALES, MODELABEL, SCALELABEL, PROGS, HARMONYLABEL } = NG;
+  /* the three harmony words, keyed — one spelling for the page and the deck. */
+  const HARMONYWORD = { modal: "value.harmonyModal", cycle: "value.harmonyCycle",
+                        emergent: "value.harmonyEmergent" };
 
   /* ======================================================================
      1 · SENTENCE PARTS
@@ -87,6 +90,21 @@
      A view that only wants the prose joins `parts.map(p => p.w)`; a view that
      wants controls walks the slots. One shape serves both, which is why the
      sentence is not a template string with a `{}` in it. */
+  /* ---------- THE CATALOGUE, READ AT PRINT TIME AND NEVER AT LOAD --------
+     `src/copy/index.ts`: this file is a classic <script> and index.html loads
+     it before any module, so `COPY` is not there yet at factory time. Every
+     printed word below is held as a KEY and resolved through `T` at the moment
+     `say` / `motifs` / `offerable` hand it out — which is always after
+     ui/copy.js has run. In node (the gates require this file directly) there
+     is no catalogue and the key itself comes back, which is the same loud,
+     greppable answer `t()` gives for a key nobody wrote. */
+  const T = (key, p) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
+    return C ? C.t(key, p) : key; };
+  const TN = (key, n) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
+    return C ? C.tn(key, n) : key + " " + n; };
+  const N = (n, unit) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
+    return C ? C.fmt(n, unit) : String(n) + (unit ? " " + unit : ""); };
+
   const w = (s) => ({ w: String(s) });
   const val = (word, v) => ({ w: String(word), v, slot: true });
   /* A CLAUSE THAT IS NOT PART OF THE SENTENCE (2026-09-02). Paul, on the genre
@@ -248,10 +266,12 @@
      which read `toGenre` and asked of every field whether the document already
      overrides it. */
   const TIERS = {
-    row:     "nothing moves — this is what the record is called",
-    render:  "the band plays it from the next bar",
-    compose: "the record is written again at this seed",
+    row:     "rule.tierRow",
+    render:  "rule.tierRender",
+    compose: "rule.tierCompose",
   };
+  /* the tier as a PRINTED sentence — the one place TIERS is resolved */
+  const tierSay = (k) => T(TIERS[k] || TIERS.row);
 
   /* ======================================================================
      3 · RULES — one row per structural field
@@ -274,8 +294,8 @@
        pair    two numbers (touch)     none    said only; `why` says why */
   const RULES = [
     /* ---------------------------- TIME --------------------------------- */
-    { field: "bpm", axis: "Time", head: "tempo", rederive: "compose",
-      say: (g) => [w("the tempo is "), val(g.bpm, g.bpm), w(" beats a minute")],
+    { field: "bpm", axis: "Time", head: "field.tempo", rederive: "compose",
+      say: (g) => [w(T("field.tempo") + " "), val(g.bpm, g.bpm), w(" " + T("rule.unitBPM"))],
       read: (g) => g.bpm,
       /* THE FENCE IS fields.js's (2026-09-02) — one owner for "what is a
          tempo", read at CALL time so this row cannot be the copy that drifts.
@@ -299,17 +319,17 @@
        and draws exactly one number from its stream either way, so all 395
        standing anchors compose the same bytes they did the day before this
        row existed (the determinism sweep G6a/G6g holds it). */
-    { field: "jitter", axis: "Time", head: "tempo give", rederive: "compose",
+    { field: "jitter", axis: "Time", head: "rule.headTempoGive", rederive: "compose",
       say: (g) => { const j = jitterOf(g);
-        return [w("give or take "), val(j, g.jitter), w(j === 1 ? " beat" : " beats")]; },
+        return [w(T("rule.headTempoGive") + " "), val(j, g.jitter), w(" " + T("rule.unitBeats"))]; },
       read: (g) => g.jitter,
       edit: { kind: "number", min: 0, max: 12, step: 1 },
       write: (r, v) => writeAt(r, "jitter", v == null ? null : Math.max(0, Math.min(12, Math.round(v)))) },
 
-    { field: "rate", axis: "Time", head: "reading speed", rederive: "compose",
+    { field: "rate", axis: "Time", head: "field.speed", rederive: "compose",
       say: (g) => { const n = g.rate == null ? 1 : g.rate;
         const k = Object.keys(NF.RATES).find((x) => NF.RATES[x] === n);
-        return [w("it is read at "), val(k ? NF.RATELABEL[k] : "as written", n)]; },
+        return [w(T("field.speed") + " "), val(k ? NF.RATELABEL[k] : T("value.asWritten"), n)]; },
       read: (g) => g.rate,
       /* THE STANDING ANSWER IS ALWAYS OFFERED (avail.js:15 — "you can always
          see the word you are on"). `fields.js RATES` names only the two
@@ -323,7 +343,7 @@
          `quarter` row in fields.js RATES, which is the page's menu and not
          this file's to grow; it is reported rather than taken. */
       edit: { kind: "enum", values: (g) => {
-        const out = [{ value: 1, label: "as written" },
+        const out = [{ value: 1, label: T("value.asWritten") },
           ...Object.keys(NF.RATES).map((k) => ({ value: NF.RATES[k], label: NF.RATELABEL[k] }))];
         const own = g && g.rate;
         if (own != null && !out.some((o) => o.value === own))
@@ -331,11 +351,11 @@
         return out; } },
       write: (r, v) => writeAt(r, "rate", v == null ? null : +v) },
 
-    { field: "meter", axis: "Time", head: "count", rederive: "compose",
-      say: (g) => [w("it counts "), val(g.meter
-        ? (NF.METERLABEL[g.meter] || g.meter) : "in four", g.meter || null)],
+    { field: "meter", axis: "Time", head: "rule.headMeter", rederive: "compose",
+      say: (g) => [w(T("rule.headMeter") + " "), val(g.meter
+        ? (NF.METERLABEL[g.meter] || g.meter) : T("value.commonTime"), g.meter || null)],
       read: (g) => g.meter,
-      edit: { kind: "enum", values: () => [{ value: null, label: "in four" },
+      edit: { kind: "enum", values: () => [{ value: null, label: T("value.commonTime") },
         ...opts(NF.METERLABEL, NF.METERLABEL),
         // ...AND THE SIGNATURES (2026-09-05, the any-meter round): the same
         // four avail.js offers beside the two words, so a rule can say 7/8.
@@ -345,13 +365,13 @@
       // four-four (the one spelling of that is null).
       write: (r, v) => writeAt(r, "meter", K.okMeter(v) ? String(v) : null) },
 
-    { field: "swing", axis: "Time", head: "swing", rederive: "compose",
+    { field: "swing", axis: "Time", head: "field.swing", rederive: "compose",
       say: (g) => { const k = g.swing == null ? null
           : Object.keys(NF.SWINGS).reduce((b, x) =>
               b == null || Math.abs(NF.SWINGS[x] - g.swing) < Math.abs(NF.SWINGS[b] - g.swing) ? x : b, null);
         return k && k !== "straight"
-          ? [w("the eighths lean "), val(NF.SWINGLABEL[k], g.swing)]
-          : [w("the eighths are "), val("straight", g.swing == null ? null : g.swing)]; },
+          ? [w(T("field.swing") + " "), val(NF.SWINGLABEL[k], g.swing)]
+          : [w(T("field.swing") + " "), val(T("value.straight"), g.swing == null ? null : g.swing)]; },
       read: (g) => g.swing,
       /* A NUMBER WITH THE TABLE'S RUNGS AS DETENTS, not a five-word menu.
          `fields.js SWINGS` has five rungs and the catalogue declares SIXTEEN
@@ -378,13 +398,13 @@
        read off `PLANS` rather than restated. A pace is the one field in this
        whole table with a real per-section band (`dealPaces` leans it ±1 rung,
        and only onto rungs the row already uses). */
-    { field: "paces", axis: "Time", head: "section speed", rederive: "compose",
+    { field: "paces", axis: "Time", head: "rule.headSectionSpeed", rederive: "compose",
       say: (g) => { const p = g.paces || {};
         const ks = Object.keys(p);
-        if (!ks.length) return [w("every section runs at "), val("the record's tempo", null)];
+        if (!ks.length) return [w(T("rule.headSectionSpeed") + " "), val(T("value.defaultCap"), null)];
         const parts = [];
         ks.forEach((k, i) => { if (i) parts.push(w(", "));
-          parts.push(w("the " + k + " runs "), val(p[k], p[k])); });
+          parts.push(w(k + " "), val(p[k], p[k])); });
         return parts; },
       read: (g) => g.paces,
       edit: { kind: "map", keys: (g) => planRoles(g),
@@ -392,94 +412,109 @@
       write: (r, v) => writeAt(r, "paces", v && Object.keys(v).length ? { ...v } : null) },
 
     /* -------------------------- ALPHABET ------------------------------- */
-    { field: "mode", axis: "Alphabet", head: "mode", rederive: "compose",
+    { field: "mode", axis: "Alphabet", head: "field.mode", rederive: "compose",
       say: (g) => { const k = nameOf(MODES, g.mode) || "aeolian";
-        return [w("the mode is "), val(MODELABEL[k] || k, k)]; },
+        return [w(T("field.mode") + " "), val(MODELABEL[k] || k, k)]; },
       read: (g) => nameOf(MODES, g.mode),
       edit: { kind: "enum", values: () => opts(MODELABEL, MODELABEL) },
       write: (r, v) => writeAt(r, "mode", v && MODES[v] ? MODES[v].slice() : null) },
 
     /* `scaleName` accepts a SCALES key OR a MODES key (precompose.js:877), so
        the menu is the union — one owner each, neither list retyped. */
-    { field: "scale", axis: "Alphabet", head: "the tune's notes", rederive: "compose",
+    { field: "scale", axis: "Alphabet", head: "field.scale", rederive: "compose",
       say: (g) => { const k = nameOf(SCALES, g.scale) || nameOf(MODES, g.scale);
-        return k ? [w("the tune is made of "), val(SCALELABEL[k] || MODELABEL[k] || k, k)]
-                 : [w("the tune is made of "), val("the mode's own notes", null)]; },
+        return k ? [w(T("field.scale") + " "), val(SCALELABEL[k] || MODELABEL[k] || k, k)]
+                 : [w(T("field.scale") + " "), val(T("rule.modesOwnNotes"), null)]; },
       read: (g) => nameOf(SCALES, g.scale) || nameOf(MODES, g.scale),
-      edit: { kind: "enum", values: () => [{ value: null, label: "the mode's own notes" },
+      edit: { kind: "enum", values: () => [{ value: null, label: T("rule.modesOwnNotes") },
         ...opts(SCALELABEL, SCALELABEL), ...opts(MODELABEL, MODELABEL)] },
       write: (r, v) => writeAt(r, "scale",
         v ? ((SCALES[v] || MODES[v] || []).slice()) : null) },
 
-    { field: "harmony", axis: "Alphabet", head: "harmony", rederive: "compose",
-      say: (g) => [w("the harmony is "), val(HARMONYLABEL[g.harmony] || g.harmony, g.harmony)],
+    { field: "harmony", axis: "Alphabet", head: "rule.headHarmony", rederive: "compose",
+      /* THE WORD IS THE CATALOGUE'S, not `genres.js HARMONYLABEL`'s — that
+         table holds a SENTENCE ("emergent — the changes come from the
+         voices") and a sentence is copy wherever it is stored. `avail.js`
+         reads the same three keys for the same three words. */
+      say: (g) => [w(T("rule.headHarmony") + " "),
+                   val(HARMONYWORD[g.harmony] ? T(HARMONYWORD[g.harmony])
+                                              : (HARMONYLABEL[g.harmony] || g.harmony),
+                       g.harmony)],
       read: (g) => g.harmony,
-      edit: { kind: "enum", values: () => opts(HARMONYLABEL, HARMONYLABEL) },
+      /* …AND SO ARE THE CHIPS. `opts(HARMONYLABEL, HARMONYLABEL)` printed the
+         data table's sentence on every chip; the WORDS are the same three
+         keys the row above reads. */
+      edit: { kind: "enum", values: () => Object.keys(HARMONYLABEL).map((k) =>
+        ({ value: k, label: HARMONYWORD[k] ? T(HARMONYWORD[k])
+                                           : HARMONYLABEL[k] || k })) },
       write: (r, v) => writeAt(r, "harmony", HARMONYLABEL[v] ? v : "cycle") },
 
-    { field: "diatonic", axis: "Alphabet", head: "the line and the chords",
+    { field: "diatonic", axis: "Alphabet", head: "field.melody",
       rederive: "compose",
-      say: (g) => [w("the line "), val(g.diatonic ? "stays in the key" : "follows the chords", !!g.diatonic)],
+      say: (g) => [w(T("field.melody") + " "),
+        val(T(g.diatonic ? "rule.staysInKey" : "rule.followsChords"), !!g.diatonic)],
       read: (g) => g.diatonic,
       edit: { kind: "flag" },
       write: (r, v) => writeAt(r, "diatonic", v ? true : null) },
 
-    { field: "prog", axis: "Alphabet", head: "the changes", rederive: "compose",
+    { field: "prog", axis: "Alphabet", head: "field.chords", rederive: "compose",
       say: (g) => { const p = g.prog ? progWord(g.prog)
           : g.roots ? progWord(g.roots.map((d) => ({ d, q: "triad" }))) : null;
-        return [w("the changes go "), val(p || "I, and stay there", g.prog || null)]; },
+        return [w(T("field.chords") + " "), val(p || T("rule.oneChord"), g.prog || null)]; },
       read: (g) => g.prog,
       edit: { kind: "changes" },
       write: (r, v) => writeAt(r, "prog", Array.isArray(v) && v.length ? v : null),
-      // kernel.js:671 throws the changes away on a record that is not a cycle;
-      // avail.js:11 quotes the same line. A refusal with its measurement.
+      // WHY: kernel.js:671 throws the changes away on a record that is not a
+      // cycle; avail.js:11 quotes the same line. The reader gets the fact.
       why: (g) => g.harmony === "cycle" ? null
-        : "a " + g.harmony + " record has no cycle of changes to write (kernel.js:671)" },
+        : T("rule.noChordCycle", { value: g.harmony }) },
 
-    { field: "roots", axis: "Alphabet", head: "the roots", rederive: "compose",
-      say: (g) => [w("the roots run "),
-        val(g.roots ? progWord(g.roots.map((d) => ({ d, q: "triad" }))) : "on the tonic", g.roots || null)],
+    { field: "roots", axis: "Alphabet", head: "rule.headRoots", rederive: "compose",
+      say: (g) => [w(T("rule.headRoots") + " "),
+        val(g.roots ? progWord(g.roots.map((d) => ({ d, q: "triad" }))) : T("rule.tonic"), g.roots || null)],
       read: (g) => g.roots,
       edit: { kind: "changes" },
       write: (r, v) => writeAt(r, "roots", Array.isArray(v) && v.length ? v.slice() : null),
-      // progOf (:919) reads `prog` FIRST and only falls to `roots`.
-      why: (g) => g.prog ? "the row writes its changes out in full, and those win (progOf)" : null },
+      // WHY: precompose.js `progOf` (:919) reads `prog` FIRST and only falls
+      // back to `roots`, so a written-out chord list wins over the roots.
+      why: (g) => g.prog ? T("rule.chordsWritten") : null },
 
-    { field: "progFamily", axis: "Alphabet", head: "borrowed changes",
+    { field: "progFamily", axis: "Alphabet", head: "rule.headBorrowed",
       rederive: "compose",
       say: (g) => { const p = g.progFamily || {};
         const ks = Object.keys(p);
-        if (!ks.length) return [w("no section borrows "), val("another record's changes", null)];
+        if (!ks.length) return [w(T("rule.headBorrowed") + " "), val(T("value.none"), null)];
         const parts = [];
         ks.forEach((k, i) => { if (i) parts.push(w(", "));
-          parts.push(w("the " + k + " uses the "), val(p[k], p[k]), w(" changes")); });
+          parts.push(w(k + " "), val(p[k], p[k])); });
         return parts; },
       read: (g) => g.progFamily,
       edit: { kind: "map", keys: (g) => planRoles(g),
         values: () => Object.keys(PROGS).map((k) => ({ value: k, label: k })) },
       write: (r, v) => writeAt(r, "progFamily", v && Object.keys(v).length ? { ...v } : null),
+      // WHY: kernel.js:671 again — no cycle, nothing to borrow into.
       why: (g) => g.harmony === "cycle" ? null
-        : "a " + g.harmony + " record plays no cycle to borrow into (kernel.js:671)" },
+        : T("rule.noCycleToBorrow") },
 
     /* ---------------------------- FORM --------------------------------- */
     /* THE SENTENCE THAT FOLLOWS THIS ONE IS DERIVED, NOT STORED: the sections
        are `compose.js PLANS[plan]` read out. A plan is the genre's kind of
        record; the FORM is one reading of it. */
-    { field: "plan", axis: "Form", head: "arrangement", rederive: "compose",
-      say: (g) => [w("it is arranged as "),
-        val(g.plan === "dance" ? "a dance record" : g.plan === "arc" ? "a single arc" : "a song", g.plan),
+    { field: "plan", axis: "Form", head: "rule.headArrangement", rederive: "compose",
+      say: (g) => [w(T("rule.headArrangement") + " "), val(planWord(g.plan), g.plan),
         aside(planRoles(g).join(", "))],
       read: (g) => g.plan,
       edit: { kind: "enum", values: () => Object.keys(NC.PLANS || {}).map((k) =>
-        ({ value: k, label: k === "dance" ? "a dance record" : k === "arc" ? "a single arc" : "a song" })) },
+        ({ value: k, label: planWord(k) })) },
       // plan is one of the two fields compose.js refuses to default
       // (genres.js:22484): a write that cleared it would throw by name.
       write: (r, v) => { if ((NC.PLANS || {})[v]) writeAt(r, "plan", v); } },
 
-    { field: "intro", axis: "Form", head: "how it opens", rederive: "compose",
-      say: (g) => [w("it opens "), val(g.intro ? NF.INLABEL[g.intro] || g.intro : "however the form falls", g.intro || null)],
+    { field: "intro", axis: "Form", head: "field.intro", rederive: "compose",
+      say: (g) => [w(T("field.intro") + " "),
+        val(g.intro ? NF.INLABEL[g.intro] || g.intro : T("rule.formFalls"), g.intro || null)],
       read: (g) => g.intro,
-      edit: { kind: "enum", values: () => [{ value: null, label: "however the form falls" },
+      edit: { kind: "enum", values: () => [{ value: null, label: T("rule.formFalls") },
         ...opts(NF.INLABEL, NF.INLABEL)] },
       write: (r, v) => writeAt(r, "intro", v && NF.INLABEL[v] ? v : null) },
 
@@ -499,18 +534,17 @@
        twelve anchors: an edit here moves the composed document (gregorian,
        bars 8: nine section lengths change), so it is a compose. R6 asserts
        every tier in this table BY MEASUREMENT now, so this cannot drift back. */
-    { field: "bars", axis: "Form", head: "the loop", rederive: "compose",
+    { field: "bars", axis: "Form", head: "rule.headLoop", rederive: "compose",
       say: (g) => { const b = g.bars == null ? 4 : g.bars;
-        return [w("the loop is "), val(b, g.bars), w(b === 1 ? " bar" : " bars")]; },
+        return [w(T("rule.headLoop") + " "), val(TN("count.bar", b), g.bars)]; },
       read: (g) => g.bars,
       edit: { kind: "number", min: 1, max: 16, step: 1 },
       write: (r, v) => writeAt(r, "bars", Math.max(1, Math.min(16, Math.round(v)))) },
 
     /* ---------------------------- CAST --------------------------------- */
-    { field: "voices", axis: "Cast", head: "chairs", rederive: "compose",
+    { field: "voices", axis: "Cast", head: "rule.headPlayers", rederive: "compose",
       say: (g) => { const n = g.voices == null ? 2 : g.voices;
-        return n === 0 ? [w("nobody is seated — "), val(0, g.voices), w(" chairs")]
-          : [val(n, g.voices), w(n === 1 ? " chair plays it" : " chairs play it")]; },
+        return [w(T("rule.headPlayers") + " "), val(n, g.voices)]; },
       read: (g) => g.voices,
       edit: { kind: "number", min: 0, max: 8, step: 1 },
       write: (r, v) => writeAt(r, "voices", Math.max(0, Math.min(8, Math.round(v)))) },
@@ -518,21 +552,21 @@
     /* `part[]` IS THE EDITABLE HALF OF `realize` — precompose.js:2500 reads
        `(G.part && G.part[v]) || G.realize(v)`, so a written part wins over the
        closure without anybody having to edit a formula. */
-    { field: "part", axis: "Cast", head: "what they play", rederive: "compose",
+    { field: "part", axis: "Cast", head: "rule.headParts", rederive: "compose",
       say: (g) => { const p = list(g.part);
-        return p.length ? [w("they play "), val(p.join(", "), p.slice())]
-                        : [w("what each chair plays is "), val("whatever its formula says", null)]; },
+        return [w(T("rule.headParts") + " "),
+          val(p.length ? p.join(", ") : T("value.defaultCap"), p.length ? p.slice() : null)]; },
       read: (g) => g.part,
       edit: { kind: "list", of: "enum", count: (g) => Math.max(1, g.voices || 1),
         values: () => opts(NF.PARTCHOICES, NF.PARTCHOICES) },
       write: (r, v) => writeAt(r, "part", Array.isArray(v) && v.length ? v.slice() : null),
-      why: (g) => (g.voices || 0) > 0 ? null : "no chair is seated on this record" },
+      why: (g) => (g.voices || 0) > 0 ? null : T("rule.noPlayers") },
 
-    { field: "instr", axis: "Cast", head: "what they hold", rederive: "compose",
+    { field: "instr", axis: "Cast", head: "rule.headInstruments", rederive: "compose",
       say: (g) => { const i = list(g.instr);
         return i.length
-          ? [w("they hold "), val(i.map((x) => NF.INSTRCHOICES[x] || x).join(", "), i.slice())]
-          : [w("they hold "), val("nothing — nobody is seated", null)]; },
+          ? [w(T("rule.headInstruments") + " "), val(i.map((x) => NF.INSTRCHOICES[x] || x).join(", "), i.slice())]
+          : [w(T("rule.headInstruments") + " "), val(T("rule.nobodySeated"), null)]; },
       read: (g) => g.instr,
       // NATIVE FIRST, THEN THE RECORDINGS — `instrOpts` above carries the
       // sentence of Paul's that put them in that order and the measurement.
@@ -543,9 +577,8 @@
       write: (r, v) => { if (Array.isArray(v) && v.length) writeAt(r, "instr", v.slice());
                          else if (typeof v === "string" && v) writeAt(r, "instr", v); } },
 
-    { field: "instrumental", axis: "Cast", head: "singing", rederive: "compose",
-      say: (g) => [val(g.instrumental ? "nobody sings on this record" : "the record may be sung",
-        !!g.instrumental)],
+    { field: "instrumental", axis: "Cast", head: "rule.headSinging", rederive: "compose",
+      say: (g) => [val(T(g.instrumental ? "rule.notSung" : "rule.sung"), !!g.instrumental)],
       read: (g) => g.instrumental,
       edit: { kind: "flag" },
       write: (r, v) => writeAt(r, "instrumental", v ? true : null) },
@@ -562,32 +595,30 @@
        that only an offline report can read is a fact this box cannot show.
        ABSENT IS TODAY: nothing in the engine branches on it; it is a claim
        about the record, said in one sentence, the way `instrumental` is. */
-    { field: "organic", axis: "Cast", head: "modelled or recorded",
+    { field: "organic", axis: "Cast", head: "rule.headModelled",
       // "render": MEASURED, not claimed — nothing in compose() branches on
       // this, which is the whole design (see above). test/rules.test.js R6
       // walks every rule's tier against what changing it actually moves.
       rederive: "render",
-      say: (g) => [val(g.organic
-        ? "the recording IS the instrument — the engine models none of this"
-        : "the engine models this record where it can", !!g.organic)],
+      say: (g) => [val(T(g.organic ? "rule.recorded" : "rule.modelled"), !!g.organic)],
       read: (g) => g.organic,
       edit: { kind: "flag" },
       write: (r, v) => writeAt(r, "organic", v ? true : null) },
 
-    { field: "nobass", axis: "Cast", head: "bass", rederive: "compose",
-      say: (g) => [val(g.nobass ? "there is no bass" : "a bass plays under it", !!g.nobass)],
+    { field: "nobass", axis: "Cast", head: "rule.headBass", rederive: "compose",
+      say: (g) => [val(T(g.nobass ? "rule.noBassPlays" : "rule.bassPlays"), !!g.nobass)],
       read: (g) => g.nobass,
       edit: { kind: "flag" },
       write: (r, v) => writeAt(r, "nobass", v ? true : null) },
 
-    { field: "bassStyle", axis: "Cast", head: "the bass figure", rederive: "compose",
-      say: (g) => [w("the bass plays "),
+    { field: "bassStyle", axis: "Cast", head: "rule.headBassFigure", rederive: "compose",
+      say: (g) => [w(T("rule.headBassFigure") + " "),
         val(NF.BASSOPS[g.bassStyle || "eighths"] || g.bassStyle || "eighths", g.bassStyle || null)],
       read: (g) => g.bassStyle,
       edit: { kind: "enum", values: () => opts(NF.BASSOPS, NF.BASSOPS) },
       write: (r, v) => writeAt(r, "bassStyle", v && NF.BASSOPS[v] ? v : null),
-      // precompose.js:2786 seats no bass at all on a `nobass` row.
-      why: (g) => g.nobass ? "this record has no bass to give a figure to" : null },
+      // WHY: precompose.js:2786 seats no bass at all on a `nobass` row.
+      why: (g) => g.nobass ? T("rule.noBass") : null },
 
     /* WHO THE BASS IS (2026-09-02, the catalogue round). The row above says
        what the bass PLAYS and there was no row for what it plays it ON: the
@@ -611,54 +642,57 @@
        bass) rather than reaching for a synth-bass id that is a sample of one.
        The group label says which is which on the menu; nothing is added and
        nothing is taken away. */
-    { field: "bassInstr", axis: "Cast", head: "the bass instrument",
+    { field: "bassInstr", axis: "Cast", head: "rule.headBassInstrument",
       rederive: "compose",
-      say: (g) => [w("the bass is "),
-        val(NF.BASSCHOICES[g.bassInstr] || "the record's own — a double bass",
-            g.bassInstr || null)],
+      say: (g) => [w(T("rule.headBassInstrument") + " "),
+        val(NF.BASSCHOICES[g.bassInstr] || T("value.defaultCap"), g.bassInstr || null)],
       read: (g) => g.bassInstr,
       edit: { kind: "enum", values: () => bassOpts() },
       write: (r, v) => writeAt(r, "bassInstr",
         v && Object.prototype.hasOwnProperty.call(NF.BASSCHOICES, v) ? v : null),
-      // precompose.js seats no bass at all on a `nobass` row.
-      why: (g) => g.nobass ? "this record has no bass to give an instrument to" : null },
+      // WHY: precompose.js seats no bass at all on a `nobass` row.
+      why: (g) => g.nobass ? T("rule.noBass") : null },
 
     /* THE TWO CLOSURES THAT ARE SAID AND NOT EDITED. song.js:484-491 is the
        owner of the reason and it is quoted, not restated. Each has an editable
        substitute that IS a row above: `part[]` for `realize`, and the
        document's own `cast.reg` for `reg`. */
-    { field: "entry", axis: "Cast", head: "when they come in", rederive: "row",
+    { field: "entry", axis: "Cast", head: "rule.headEntry", rederive: "row",
       say: (g) => { const n = Math.max(1, g.voices || 1);
         const e = []; for (let v = 0; v < n; v++) { try { e.push(g.entry(v)); } catch (x) { e.push("?"); } }
         return e.every((x) => x === 0)
-          ? [w("everybody starts "), val("at the top", null)]
-          : [w("the chairs come in at bars "), val(e.join(", "), null)]; },
+          ? [w(T("rule.headEntry") + " "), val(T("rule.atTheTop"), null)]
+          : [w(T("rule.headEntry") + " "), val(T("rule.barsList", { value: e.join(", ") }), null)]; },
       read: (g) => g.entry,
       edit: null,
-      why: () => "written as a formula, and a formula is not JSON — a saved " +
-        "genre would come back with no behaviour at all (song.js:484)" },
+      // WHY: `entry` is written as a FORMULA on the genre row and a formula is
+      // not JSON — song.js:484: a saved genre would come back with no
+      // behaviour at all. The editable substitute is the cast's own entry.
+      why: () => T("rule.setByGenre") },
 
-    { field: "reg", axis: "Cast", head: "where they sit", rederive: "row",
+    { field: "reg", axis: "Cast", head: "field.octave", rederive: "row",
       say: (g) => { const n = Math.max(1, g.voices || 1);
         const e = []; for (let v = 0; v < n; v++) { try { e.push(g.reg(v)); } catch (x) { e.push("?"); } }
         return e.every((x) => x === 0)
-          ? [w("every chair sits "), val("where it sits", null)]
-          : [w("the chairs sit at "), val(e.join(", "), null), w(" octaves off centre")]; },
+          ? [w(T("field.octave") + " "), val(T("value.defaultCap"), null)]
+          : [w(T("field.octave") + " "), val(e.join(", "), null)]; },
       read: (g) => g.reg,
       edit: null,
-      why: () => "written as a formula; the record's own chairs carry the " +
-        "sounding register (cast.reg), and that is the row a hand edits" },
+      // WHY: `reg` is a formula too; each player's own `cast.reg` carries the
+      // sounding register, and THAT is the row a hand edits.
+      why: () => T("rule.setOnPlayerRow") },
 
-    { field: "parents", axis: "Cast", head: "what it comes from", rederive: "row",
+    { field: "parents", axis: "Cast", head: "rule.headParents", rederive: "row",
       say: (g) => { const p = g.parents || {};
         const ks = Object.keys(p);
         return ks.length
-          ? [w("it descends from "), val(ks.map((k) => k + " " + p[k]).join(", "), { ...p })]
-          : [w("it descends from "), val("nothing the catalogue holds", null)]; },
+          ? [w(T("rule.headParents") + " "), val(ks.map((k) => k + " " + p[k]).join(", "), { ...p })]
+          : [w(T("rule.headParents") + " "), val(T("rule.fromNothing"), null)]; },
       read: (g) => g.parents,
       edit: null,
-      why: () => "a lineage is a claim about the catalogue, not a setting — " +
-        "it is edited where a genre is invented (the session recipe, song.js:478)" },
+      // WHY: a lineage is a claim about the catalogue, not a setting — it is
+      // edited where a genre is invented (the session recipe, song.js:478).
+      why: () => T("rule.setWhenInvented") },
 
     /* ------------------------- DEVELOPMENT ------------------------------ */
     /* COMPOSE, NOT RENDER (2026-09-02, the same measurement as `bars`).
@@ -667,22 +701,24 @@
        reggae, artic "staccato": one held step becomes a rest. A render tier
        would have handed the kernel the new word over cells still written with
        the old holds. */
-    { field: "artic", axis: "Development", head: "articulation", rederive: "compose",
-      say: (g) => [w("the notes are "), val(NF.ARTICS[g.artic || "normal"] || "normal", g.artic || null)],
+    { field: "artic", axis: "Development", head: "field.articulation", rederive: "compose",
+      say: (g) => [w(T("field.articulation") + " "),
+        val(NF.ARTICS[g.artic || "normal"] || "normal", g.artic || null)],
       read: (g) => g.artic,
       edit: { kind: "enum", values: () => opts(NF.ARTICS, NF.ARTICS) },
       write: (r, v) => writeAt(r, "artic", v && NF.ARTICS[v] ? v : null),
-      // capOf (:572) reads maxHold FIRST and only falls back to the articulation.
+      // WHY: precompose.js `capOf` (:572) reads maxHold FIRST and only falls
+      // back to the articulation, so the longest-note row wins over this one.
       why: (g) => g.maxHold == null ? null
-        : "the row caps its holds at " + g.maxHold + " steps, and that cap wins (capOf)" },
+        : T("rule.holdCapped", { n: N(g.maxHold, T("rule.unitSteps")) }) },
 
     /* COMPOSE (2026-09-02). Same seam as `artic` and louder: `capOf` reads
        maxHold FIRST, so an edit here rewrites the `play` row of every cell —
        measured on reggae, maxHold 2: 182 steps of the document move. */
-    { field: "maxHold", axis: "Development", head: "longest note", rederive: "compose",
+    { field: "maxHold", axis: "Development", head: "field.longestNote", rederive: "compose",
       say: (g) => g.maxHold == null
-        ? [w("the notes hold "), val("as long as the articulation lets them", null)]
-        : [w("no note holds longer than "), val(g.maxHold, g.maxHold), w(" steps")],
+        ? [w(T("field.longestNote") + " "), val(T("rule.holdsAsArticulated"), null)]
+        : [w(T("field.longestNote") + " "), val(g.maxHold, g.maxHold), w(" " + T("rule.unitSteps"))],
       read: (g) => g.maxHold,
       edit: { kind: "number", min: 1, max: 12, step: 1,
         /* THE CAP THIS ROW ALREADY PLAYS UNDER (2026-09-02) — `precompose.js
@@ -702,47 +738,50 @@
        owner is `precompose.js IDIOM`/`IDIOM_ANCHOR` and not the genre row, so
        there is nothing here for a write to land on. No silent grey: the
        refusal names the owner. */
-    { field: "contour", axis: "Development", head: "the figure's shape", rederive: "row",
+    { field: "contour", axis: "Development", head: "rule.headContour", rederive: "row",
       say: (g, gk) => { const r = idiomRow(gk);
         const c = r && r.row.contour, C = c && Id.CONTOURS[c];
-        return [w("the figure "), val(C ? C.w : "is not written down", c || null)]; },
+        return [w(T("rule.headContour") + " "), val(C ? C.w : T("rule.figureUnwritten"), c || null)]; },
       read: (g, gk) => { const r = idiomRow(gk); return r && r.row.contour; },
       edit: null,
-      why: () => "the figure is written in precompose.js IDIOM, per family and " +
-        "per anchor — not on the genre row" },
+      // WHY: the figure is written in precompose.js IDIOM, per family and per
+      // anchor — not on the genre row, so there is nothing here to write into.
+      why: () => T("rule.setByGenre") },
 
-    { field: "len", axis: "Development", head: "the phrase length", rederive: "row",
+    { field: "len", axis: "Development", head: "rule.headPhraseLength", rederive: "row",
       say: (g, gk) => { const r = idiomRow(gk);
         const l = r && r.row.len, L = l && Id.LENGTHS[l];
-        return [w("the phrase is "), val(L ? L.w : "not written down", l || null)]; },
+        return [w(T("rule.headPhraseLength") + " "), val(L ? L.w : T("rule.figureUnwritten"), l || null)]; },
       read: (g, gk) => { const r = idiomRow(gk); return r && r.row.len; },
       edit: null,
-      why: () => "the phrase length is precompose.js IDIOM's, and the cell-bar " +
-        "ceiling halves it to divide the form (cellBarsOf)" },
+      // WHY: the phrase length is precompose.js IDIOM's, and `cellBarsOf`
+      // halves it against the cell-bar ceiling to divide the form.
+      why: () => T("rule.setByGenre") },
 
-    { field: "land", axis: "Development", head: "where it lands", rederive: "row",
+    { field: "land", axis: "Development", head: "rule.headLanding", rederive: "row",
       say: (g, gk) => { const r = idiomRow(gk);
         const l = r && r.row.land, L = l && Id.LANDINGS[l];
-        return [w("the figure "), val(L ? L.w : "lands where it lands", l || null)]; },
+        return [w(T("rule.headLanding") + " "), val(L ? L.w : T("rule.lands"), l || null)]; },
       read: (g, gk) => { const r = idiomRow(gk); return r && r.row.land; },
       edit: null,
-      why: () => "the landing is precompose.js IDIOM's, beside the contour it " +
-        "belongs to" },
+      // WHY: the landing is precompose.js IDIOM's, beside the contour it
+      // belongs to.
+      why: () => T("rule.setByGenre") },
 
     /* ---------------------------- SOUND -------------------------------- */
-    { field: "drumkit", axis: "Sound", head: "the kit", rederive: "compose",
-      say: (g) => [w("the drums are a "),
-        val((NF.DRUMKITS[g.drumkit || "acoustic"] || "acoustic") + " kit", g.drumkit || null)],
+    { field: "drumkit", axis: "Sound", head: "rule.headKit", rederive: "compose",
+      say: (g) => [w(T("rule.headKit") + " "),
+        val(NF.DRUMKITS[g.drumkit || "acoustic"] || "acoustic", g.drumkit || null)],
       read: (g) => g.drumkit,
       edit: { kind: "enum", values: () => opts(NF.DRUMKITS, NF.DRUMKITS) },
       write: (r, v) => writeAt(r, "drumkit", v && NF.DRUMKITS[v] ? v : null),
-      // precompose.js:2794 seats a drummer only where the row has a grid.
+      // WHY: precompose.js:2794 seats a drummer only where the row has a grid.
       why: (g) => Object.keys(g.kit || {}).length ? null
-        : "this record has no drum grid, so no drummer is seated to hold a kit" },
+        : T("rule.noDrums") },
 
-    { field: "tone.verb", axis: "Sound", head: "the room", rederive: "compose",
+    { field: "tone.verb", axis: "Sound", head: "field.room", rederive: "compose",
       say: (g) => { const v = (g.tone || {}).verb;
-        return [w("the record is "), val(v == null ? "dry" : Math.round(v * 100) + "% wet", v)]; },
+        return [w(T("field.room") + " "), val(v == null ? T("value.off") : N(v * 100, "%"), v)]; },
       read: (g) => (g.tone || {}).verb,
       edit: { kind: "number", min: 0, max: 1, step: 0.01 },
       write: (r, v) => writeAt(r, "tone.verb", v == null ? null : Math.max(0, Math.min(1, +v))) },
@@ -760,23 +799,23 @@
                           how a word marks them
        500 ms is the modules' own ceiling (state-engine GLIDE_MAP) and 0 is
        absent, which is what `writeAt(null)` writes. */
-    { field: "tone.glide", axis: "Sound", head: "the whole line slides",
+    { field: "tone.glide", axis: "Sound", head: "rule.headGlide",
       // RENDER, not compose, and the gate MEASURED that: a glide changes no
       // note, no cell and no chair — it changes how the note ARRIVES, which is
       // the engine's business and nothing the document has to be rebuilt for.
       rederive: "render",
       say: (g) => { const v = (g.tone || {}).glide;
-        return [w("every note "), val(v == null ? "lands square"
-          : "slides in over " + Math.round(v * 1000) + " ms", v)]; },
+        return [w(T("rule.headGlide") + " "),
+          val(v == null ? T("rule.square") : N(v * 1000, "ms"), v)]; },
       read: (g) => (g.tone || {}).glide,
       edit: { kind: "number", min: 0, max: 0.5, step: 0.005 },
       write: (r, v) => writeAt(r, "tone.glide",
         v == null || +v <= 0 ? null : Math.max(0, Math.min(0.5, +v))) },
 
-    { field: "tone.slide", axis: "Sound", head: "the slide", rederive: "render",
+    { field: "tone.slide", axis: "Sound", head: "rule.headSlide", rederive: "render",
       say: (g) => { const v = (g.tone || {}).slide;
-        return [w("a marked note "), val(v == null ? "lands square"
-          : "slides in over " + Math.round(v * 1000) + " ms", v)]; },
+        return [w(T("rule.headSlide") + " "),
+          val(v == null ? T("rule.square") : N(v * 1000, "ms"), v)]; },
       read: (g) => (g.tone || {}).slide,
       edit: { kind: "number", min: 0, max: 0.5, step: 0.005 },
       write: (r, v) => writeAt(r, "tone.slide",
@@ -787,11 +826,11 @@
        fold at document.js normalize retired the record-wide key — so the chips
        live in the document, not in the basis spread, and an edit here has to be
        composed again. Measured on reggae, fx ["chorus"]: six chairs move. */
-    { field: "fx", axis: "Sound", head: "the chips", rederive: "compose",
+    { field: "fx", axis: "Sound", head: "field.effects", rederive: "compose",
       say: (g) => { const f = list(g.fx);
-        return f.length ? [val(f.map((k) => (NF.FX[k] || {}).label || k).join(", "), f.slice()),
-                           w(" sits on it")]
-                        : [w("nothing sits on it — "), val("no chips", null)]; },
+        return [w(T("field.effects") + " "),
+          val(f.length ? f.map((k) => (NF.FX[k] || {}).label || k).join(", ") : T("value.none"),
+              f.length ? f.slice() : null)]; },
       read: (g) => g.fx,
       edit: { kind: "list", of: "enum", max: NF.MAX_FX,
         values: () => Object.keys(NF.FX).map((k) => ({ value: k, label: NF.FX[k].label || k })) },
@@ -802,9 +841,9 @@
        The three questions below are ASKABLE's own, and their words are read
        out of `askable.js` rather than said twice: that file's `ask` IS the
        sentence a musician answers. */
-    { field: "stress", axis: "Performance", head: "the beat", rederive: "compose",
-      say: (g) => [w("the band leans on the beat "), val(numWord(g.stress), g.stress),
-                   w(" — " + nearWord("stress", g.stress))],
+    { field: "stress", axis: "Performance", head: "field.push", rederive: "compose",
+      say: (g) => [w(T("field.push") + " "), val(numWord(g.stress), g.stress),
+                   w(" \u2014 " + nearWord("stress", g.stress))],
       read: (g) => g.stress,
       edit: { kind: "number", min: 0, max: 1, step: 0.01, detents: () => askOpts("stress") },
       write: (r, v) => writeAt(r, "stress", v == null ? null : Math.max(0, Math.min(1, +v))) },
@@ -817,29 +856,28 @@
        the kernel's arch (kernel.js:1337-1348). So the honest sentence is the
        cheaper one, and a hand that moves the breath no longer restarts the
        band. */
-    { field: "phrase", axis: "Performance", head: "the line's breath",
+    { field: "phrase", axis: "Performance", head: "field.phrasing",
       rederive: "render",
-      say: (g) => [w("the line breathes "), val(numWord(g.phrase), g.phrase),
-                   w(" — " + nearWord("phrase", g.phrase))],
+      say: (g) => [w(T("field.phrasing") + " "), val(numWord(g.phrase), g.phrase),
+                   w(" \u2014 " + nearWord("phrase", g.phrase))],
       read: (g) => g.phrase,
       edit: { kind: "number", min: 0, max: 1, step: 0.01, detents: () => askOpts("phrase") },
       write: (r, v) => writeAt(r, "phrase", v == null ? null : Math.max(0, Math.min(1, +v))) },
 
-    { field: "touch", axis: "Performance", head: "the hand", rederive: "compose",
+    { field: "touch", axis: "Performance", head: "rule.headTouch", rederive: "compose",
       say: (g) => { const t = g.touch || {};
         return t.t == null && t.v == null
-          ? [w("the hand is "), val("a machine", null)]
-          : [w("the hand is loose by "), val(t.t, t.t), w(" steps and "),
-             val(t.v, t.v), w(" in level")]; },
+          ? [w(T("rule.headTouch") + " "), val(T("rule.machineHand"), null)]
+          : [w(T("rule.headTouch") + " "), val(t.t, t.t), w(" " + T("rule.unitSteps") + " "),
+             val(t.v, t.v), w(" " + T("field.level"))]; },
       read: (g) => g.touch,
       edit: { kind: "pair", keys: ["t", "v"], min: 0, max: 1, step: 0.01 },
       write: (r, v) => writeAt(r, "touch", v && (v.t != null || v.v != null) ? { ...v } : null) },
 
-    { field: "humanize", axis: "Performance", head: "the wobble",
+    { field: "humanize", axis: "Performance", head: "rule.headWobble",
       rederive: "compose",
-      say: (g) => g.humanize
-        ? [w("the timing wobbles by "), val(g.humanize, g.humanize)]
-        : [w("the timing "), val("does not wobble", g.humanize)],
+      say: (g) => [w(T("rule.headWobble") + " "),
+        val(g.humanize ? g.humanize : T("value.off"), g.humanize)],
       read: (g) => g.humanize,
       edit: { kind: "number", min: 0, max: 0.12, step: 0.01 },
       write: (r, v) => writeAt(r, "humanize", v ? Math.max(0, Math.min(0.12, +v)) : null) },
@@ -855,8 +893,8 @@
        the rule is a MAP over the five kinds `kernel.js ORNSALT` salts a die
        for, each a chance 0..1, with askable's four answers riding along as
        PRESETS. The question is still askable's; the surface is the kernel's. */
-    { field: "orn", axis: "Performance", head: "decoration", rederive: "render",
-      say: (g) => [w("the line takes "), val(ornWord(g.orn), g.orn || null)],
+    { field: "orn", axis: "Performance", head: "field.ornament", rederive: "render",
+      say: (g) => [w(T("field.ornament") + " "), val(ornWord(g.orn), g.orn || null)],
       read: (g) => g.orn,
       edit: { kind: "map", keys: () => Object.keys(K.ORNSALT),
         min: 0, max: 1, step: 0.05, presets: () => askOpts("orn") },
@@ -879,7 +917,11 @@
      data, never a prose paraphrase"); the askable word rides beside it as the
      caption, so the slot a hand drags is the number and the sentence still
      reads. */
-  const numWord = (n) => n == null ? "nothing" : String(Math.round(n * 100) / 100);
+  const numWord = (n) => n == null ? T("value.none") : String(Math.round(n * 100) / 100);
+  /* the three arrangements, in the catalogue's words rather than a ternary of
+     literals — `compose.js PLANS` owns the KEYS and this owns the reading */
+  const PLANWORD = { dance: "rule.planDance", arc: "rule.planArc", song: "rule.planSong" };
+  const planWord = (k) => T(PLANWORD[k] || PLANWORD.song);
   const nearWord = (f, n) => { const o = askOpts(f);
     if (!o.length) return String(n);
     if (n == null) return o[0].label;
@@ -890,7 +932,7 @@
     const j = JSON.stringify(v == null ? null : v);
     const hit = o.find((x) => JSON.stringify(x.value == null ? null : x.value) === j);
     if (hit) return hit.label;
-    if (v == null) return "nothing";
+    if (v == null) return T("value.none");
     // no preset matches (113 of the 117 policies in the catalogue): say the
     // KINDS it names, in kernel.js's own order, with the numbers beside them —
     // data verbatim, never a paraphrase (ui/explain.js:129)
@@ -912,35 +954,42 @@
      each, no control, and the reason is on the row — the box's own no-silent-
      grey law. Two of them take their reason from `askable.js NOT_ASKED`
      verbatim, because that file already wrote it. */
-  const VECTOR_WHY = "a sixteen-step vector, not a value: the beat is written " +
-    "in the motifs, and the tracker is where it is edited";
+  /* WHY, FOR A MAINTAINER, IN THE ONE PLACE IT BELONGS: these seven fields are
+     sixteen-step VECTORS and not values — the beat is written into the
+     phrases, and the phrase editor is the surface that edits them. The reader
+     is told where to go and nothing else. `askable.js NOT_ASKED` still carries
+     the long reason for `bassGrid` and `ghost`; it is documentation for this
+     file's own maintainer and is no longer printed at anybody. */
+  const VECTOR_WHY = () => T("rule.phraseEditor");
   const MOTIF = [
-    { field: "kit",      axis: "Material", head: "the drum grid",
-      say: (g) => [w("the drums are written out over "),
-        val(Object.keys(g.kit || {}).length + " lanes", null)],
-      why: () => VECTOR_WHY },
-    { field: "kits",     axis: "Material", head: "the section grids",
-      say: (g) => [w("it changes grid "), val(list(g.kits).length + " times", null)],
-      why: () => VECTOR_WHY },
-    { field: "kitVel",   axis: "Material", head: "the grid's velocities",
-      say: (g) => [w("the grid carries "),
-        val(Object.keys(g.kitVel || {}).length + " velocity lanes", null)],
-      why: () => VECTOR_WHY },
-    { field: "kitProb",  axis: "Material", head: "the grid's chances",
-      say: (g) => [w("the grid carries "),
-        val(Object.keys(g.kitProb || {}).length + " chance lanes", null)],
-      why: () => VECTOR_WHY },
-    { field: "fill",     axis: "Material", head: "the fill",
-      say: (g) => [w("the fill is written over "),
-        val(Object.keys(g.fill || {}).length + " lanes", null)],
-      why: () => VECTOR_WHY },
-    { field: "bassGrid", axis: "Material", head: "the bass grid",
-      say: (g) => [w("the bass figure is written out over "),
-        val(list(g.bassGrid).length + " steps", null)],
-      why: () => (NuAskable.NOT_ASKED || {}).bassGrid || VECTOR_WHY },
-    { field: "ghost",    axis: "Material", head: "the ghost notes",
-      say: (g) => [w("the ghosting is "), val(list(g.ghost).join(", ") || "not written", null)],
-      why: () => (NuAskable.NOT_ASKED || {}).ghost || VECTOR_WHY },
+    { field: "kit",      axis: "Material", head: "rule.headDrumGrid",
+      say: (g) => [w(T("rule.headDrumGrid") + " "),
+        val(TN("row.lanes", Object.keys(g.kit || {}).length), null)],
+      why: VECTOR_WHY },
+    { field: "kits",     axis: "Material", head: "rule.headSectionGrids",
+      say: (g) => [w(T("rule.headSectionGrids") + " "),
+        val(N(list(g.kits).length, T("rule.unitTimes")), null)],
+      why: VECTOR_WHY },
+    { field: "kitVel",   axis: "Material", head: "rule.headVelocities",
+      say: (g) => [w(T("rule.headVelocities") + " "),
+        val(TN("row.lanes", Object.keys(g.kitVel || {}).length), null)],
+      why: VECTOR_WHY },
+    { field: "kitProb",  axis: "Material", head: "rule.headChances",
+      say: (g) => [w(T("rule.headChances") + " "),
+        val(TN("row.lanes", Object.keys(g.kitProb || {}).length), null)],
+      why: VECTOR_WHY },
+    { field: "fill",     axis: "Material", head: "field.fill",
+      say: (g) => [w(T("field.fill") + " "),
+        val(TN("row.lanes", Object.keys(g.fill || {}).length), null)],
+      why: VECTOR_WHY },
+    { field: "bassGrid", axis: "Material", head: "rule.headBassGrid",
+      say: (g) => [w(T("rule.headBassGrid") + " "),
+        val(N(list(g.bassGrid).length, T("rule.unitSteps")), null)],
+      why: VECTOR_WHY },
+    { field: "ghost",    axis: "Material", head: "rule.headGhost",
+      say: (g) => [w(T("rule.headGhost") + " "),
+        val(list(g.ghost).join(", ") || T("rule.ghostUnwritten"), null)],
+      why: VECTOR_WHY },
   ];
 
   /* ======================================================================
@@ -971,12 +1020,12 @@
     const { g: G, gk: K2 } = pair(g, gk);
     if (!G) throw new Error("rules: no anchor \"" + gk + "\"");
     return RULES.map((r) => ({
-      field: r.field, axis: r.axis, head: r.head,
+      field: r.field, axis: r.axis, head: T(r.head),
       parts: r.say(G, K2),
       value: r.read ? r.read(G, K2) : undefined,
       declared: r.read ? r.read(G, K2) !== undefined : false,
       edit: r.edit || null,
-      rederive: r.rederive, tier: TIERS[r.rederive],
+      rederive: r.rederive, tier: tierSay(r.rederive),
       why: r.why ? r.why(G, K2) : null,
     }));
   }
@@ -986,8 +1035,8 @@
     const { g: G, gk: K2 } = pair(g, gk);
     if (!G) throw new Error("rules: no anchor \"" + gk + "\"");
     return MOTIF.filter((r) => G[r.field] != null).map((r) => ({
-      field: r.field, axis: r.axis, head: r.head,
-      parts: r.say(G, K2), edit: null, rederive: "row", tier: TIERS.row,
+      field: r.field, axis: r.axis, head: T(r.head),
+      parts: r.say(G, K2), edit: null, rederive: "row", tier: tierSay("row"),
       why: r.why(G, K2),
     }));
   }
@@ -1024,8 +1073,8 @@
     const { g: G, gk: K2 } = pair(g || gk, gk);
     if (!G) throw new Error("rules: no anchor \"" + gk + "\"");
     return RULES.filter((r) => r.edit && (!r.read || r.read(G, K2) === undefined))
-      .map((r) => ({ field: r.field, axis: r.axis, head: r.head,
-                     edit: r.edit, rederive: r.rederive, tier: TIERS[r.rederive],
+      .map((r) => ({ field: r.field, axis: r.axis, head: T(r.head),
+                     edit: r.edit, rederive: r.rederive, tier: tierSay(r.rederive),
                      why: r.why ? r.why(G, K2) : null }));
   }
 

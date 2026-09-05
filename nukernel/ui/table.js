@@ -11,18 +11,18 @@
 
 // node_modules/lit-html/lit-html.js
 var t = globalThis;
-var i = (t4) => t4;
+var i = (t5) => t5;
 var s = t.trustedTypes;
-var e = s ? s.createPolicy("lit-html", { createHTML: (t4) => t4 }) : void 0;
+var e = s ? s.createPolicy("lit-html", { createHTML: (t5) => t5 }) : void 0;
 var h = "$lit$";
 var o = `lit$${Math.random().toFixed(9).slice(2)}$`;
 var n = "?" + o;
 var r = `<${n}>`;
 var l = document;
 var c = () => l.createComment("");
-var a = (t4) => null === t4 || "object" != typeof t4 && "function" != typeof t4;
+var a = (t5) => null === t5 || "object" != typeof t5 && "function" != typeof t5;
 var u = Array.isArray;
-var d = (t4) => u(t4) || "function" == typeof t4?.[Symbol.iterator];
+var d = (t5) => u(t5) || "function" == typeof t5?.[Symbol.iterator];
 var f = "[ 	\n\f\r]";
 var v = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g;
 var _ = /-->/g;
@@ -32,7 +32,7 @@ var p = RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^
 var g = /'/g;
 var $ = /"/g;
 var y = /^(?:script|style|textarea|title)$/i;
-var x = (t4) => (i5, ...s3) => ({ _$litType$: t4, strings: i5, values: s3 });
+var x = (t5) => (i5, ...s3) => ({ _$litType$: t5, strings: i5, values: s3 });
 var b = x(1);
 var w = x(2);
 var T = x(3);
@@ -40,68 +40,68 @@ var E = /* @__PURE__ */ Symbol.for("lit-noChange");
 var A = /* @__PURE__ */ Symbol.for("lit-nothing");
 var C = /* @__PURE__ */ new WeakMap();
 var P = l.createTreeWalker(l, 129);
-function V(t4, i5) {
-  if (!u(t4) || !t4.hasOwnProperty("raw")) throw Error("invalid template strings array");
+function V(t5, i5) {
+  if (!u(t5) || !t5.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return void 0 !== e ? e.createHTML(i5) : i5;
 }
-var N = (t4, i5) => {
-  const s3 = t4.length - 1, e4 = [];
+var N = (t5, i5) => {
+  const s3 = t5.length - 1, e4 = [];
   let n3, l2 = 2 === i5 ? "<svg>" : 3 === i5 ? "<math>" : "", c3 = v;
   for (let i6 = 0; i6 < s3; i6++) {
-    const s4 = t4[i6];
+    const s4 = t5[i6];
     let a2, u4, d2 = -1, f2 = 0;
     for (; f2 < s4.length && (c3.lastIndex = f2, u4 = c3.exec(s4), null !== u4); ) f2 = c3.lastIndex, c3 === v ? "!--" === u4[1] ? c3 = _ : void 0 !== u4[1] ? c3 = m : void 0 !== u4[2] ? (y.test(u4[2]) && (n3 = RegExp("</" + u4[2], "g")), c3 = p) : void 0 !== u4[3] && (c3 = p) : c3 === p ? ">" === u4[0] ? (c3 = n3 ?? v, d2 = -1) : void 0 === u4[1] ? d2 = -2 : (d2 = c3.lastIndex - u4[2].length, a2 = u4[1], c3 = void 0 === u4[3] ? p : '"' === u4[3] ? $ : g) : c3 === $ || c3 === g ? c3 = p : c3 === _ || c3 === m ? c3 = v : (c3 = p, n3 = void 0);
-    const x2 = c3 === p && t4[i6 + 1].startsWith("/>") ? " " : "";
+    const x2 = c3 === p && t5[i6 + 1].startsWith("/>") ? " " : "";
     l2 += c3 === v ? s4 + r : d2 >= 0 ? (e4.push(a2), s4.slice(0, d2) + h + s4.slice(d2) + o + x2) : s4 + o + (-2 === d2 ? i6 : x2);
   }
-  return [V(t4, l2 + (t4[s3] || "<?>") + (2 === i5 ? "</svg>" : 3 === i5 ? "</math>" : "")), e4];
+  return [V(t5, l2 + (t5[s3] || "<?>") + (2 === i5 ? "</svg>" : 3 === i5 ? "</math>" : "")), e4];
 };
 var S = class _S {
-  constructor({ strings: t4, _$litType$: i5 }, e4) {
+  constructor({ strings: t5, _$litType$: i5 }, e4) {
     let r2;
     this.parts = [];
     let l2 = 0, a2 = 0;
-    const u4 = t4.length - 1, d2 = this.parts, [f2, v3] = N(t4, i5);
+    const u4 = t5.length - 1, d2 = this.parts, [f2, v3] = N(t5, i5);
     if (this.el = _S.createElement(f2, e4), P.currentNode = this.el.content, 2 === i5 || 3 === i5) {
-      const t5 = this.el.content.firstChild;
-      t5.replaceWith(...t5.childNodes);
+      const t6 = this.el.content.firstChild;
+      t6.replaceWith(...t6.childNodes);
     }
     for (; null !== (r2 = P.nextNode()) && d2.length < u4; ) {
       if (1 === r2.nodeType) {
-        if (r2.hasAttributes()) for (const t5 of r2.getAttributeNames()) if (t5.endsWith(h)) {
-          const i6 = v3[a2++], s3 = r2.getAttribute(t5).split(o), e5 = /([.?@])?(.*)/.exec(i6);
-          d2.push({ type: 1, index: l2, name: e5[2], strings: s3, ctor: "." === e5[1] ? I : "?" === e5[1] ? L : "@" === e5[1] ? z : H }), r2.removeAttribute(t5);
-        } else t5.startsWith(o) && (d2.push({ type: 6, index: l2 }), r2.removeAttribute(t5));
+        if (r2.hasAttributes()) for (const t6 of r2.getAttributeNames()) if (t6.endsWith(h)) {
+          const i6 = v3[a2++], s3 = r2.getAttribute(t6).split(o), e5 = /([.?@])?(.*)/.exec(i6);
+          d2.push({ type: 1, index: l2, name: e5[2], strings: s3, ctor: "." === e5[1] ? I : "?" === e5[1] ? L : "@" === e5[1] ? z : H }), r2.removeAttribute(t6);
+        } else t6.startsWith(o) && (d2.push({ type: 6, index: l2 }), r2.removeAttribute(t6));
         if (y.test(r2.tagName)) {
-          const t5 = r2.textContent.split(o), i6 = t5.length - 1;
+          const t6 = r2.textContent.split(o), i6 = t6.length - 1;
           if (i6 > 0) {
             r2.textContent = s ? s.emptyScript : "";
-            for (let s3 = 0; s3 < i6; s3++) r2.append(t5[s3], c()), P.nextNode(), d2.push({ type: 2, index: ++l2 });
-            r2.append(t5[i6], c());
+            for (let s3 = 0; s3 < i6; s3++) r2.append(t6[s3], c()), P.nextNode(), d2.push({ type: 2, index: ++l2 });
+            r2.append(t6[i6], c());
           }
         }
       } else if (8 === r2.nodeType) if (r2.data === n) d2.push({ type: 2, index: l2 });
       else {
-        let t5 = -1;
-        for (; -1 !== (t5 = r2.data.indexOf(o, t5 + 1)); ) d2.push({ type: 7, index: l2 }), t5 += o.length - 1;
+        let t6 = -1;
+        for (; -1 !== (t6 = r2.data.indexOf(o, t6 + 1)); ) d2.push({ type: 7, index: l2 }), t6 += o.length - 1;
       }
       l2++;
     }
   }
-  static createElement(t4, i5) {
+  static createElement(t5, i5) {
     const s3 = l.createElement("template");
-    return s3.innerHTML = t4, s3;
+    return s3.innerHTML = t5, s3;
   }
 };
-function M(t4, i5, s3 = t4, e4) {
+function M(t5, i5, s3 = t5, e4) {
   if (i5 === E) return i5;
   let h3 = void 0 !== e4 ? s3._$Co?.[e4] : s3._$Cl;
   const o4 = a(i5) ? void 0 : i5._$litDirective$;
-  return h3?.constructor !== o4 && (h3?._$AO?.(false), void 0 === o4 ? h3 = void 0 : (h3 = new o4(t4), h3._$AT(t4, s3, e4)), void 0 !== e4 ? (s3._$Co ??= [])[e4] = h3 : s3._$Cl = h3), void 0 !== h3 && (i5 = M(t4, h3._$AS(t4, i5.values), h3, e4)), i5;
+  return h3?.constructor !== o4 && (h3?._$AO?.(false), void 0 === o4 ? h3 = void 0 : (h3 = new o4(t5), h3._$AT(t5, s3, e4)), void 0 !== e4 ? (s3._$Co ??= [])[e4] = h3 : s3._$Cl = h3), void 0 !== h3 && (i5 = M(t5, h3._$AS(t5, i5.values), h3, e4)), i5;
 }
 var R = class {
-  constructor(t4, i5) {
-    this._$AV = [], this._$AN = void 0, this._$AD = t4, this._$AM = i5;
+  constructor(t5, i5) {
+    this._$AV = [], this._$AN = void 0, this._$AD = t5, this._$AM = i5;
   }
   get parentNode() {
     return this._$AM.parentNode;
@@ -109,35 +109,35 @@ var R = class {
   get _$AU() {
     return this._$AM._$AU;
   }
-  u(t4) {
-    const { el: { content: i5 }, parts: s3 } = this._$AD, e4 = (t4?.creationScope ?? l).importNode(i5, true);
+  u(t5) {
+    const { el: { content: i5 }, parts: s3 } = this._$AD, e4 = (t5?.creationScope ?? l).importNode(i5, true);
     P.currentNode = e4;
     let h3 = P.nextNode(), o4 = 0, n3 = 0, r2 = s3[0];
     for (; void 0 !== r2; ) {
       if (o4 === r2.index) {
         let i6;
-        2 === r2.type ? i6 = new k(h3, h3.nextSibling, this, t4) : 1 === r2.type ? i6 = new r2.ctor(h3, r2.name, r2.strings, this, t4) : 6 === r2.type && (i6 = new Z(h3, this, t4)), this._$AV.push(i6), r2 = s3[++n3];
+        2 === r2.type ? i6 = new k(h3, h3.nextSibling, this, t5) : 1 === r2.type ? i6 = new r2.ctor(h3, r2.name, r2.strings, this, t5) : 6 === r2.type && (i6 = new Z(h3, this, t5)), this._$AV.push(i6), r2 = s3[++n3];
       }
       o4 !== r2?.index && (h3 = P.nextNode(), o4++);
     }
     return P.currentNode = l, e4;
   }
-  p(t4) {
+  p(t5) {
     let i5 = 0;
-    for (const s3 of this._$AV) void 0 !== s3 && (void 0 !== s3.strings ? (s3._$AI(t4, s3, i5), i5 += s3.strings.length - 2) : s3._$AI(t4[i5])), i5++;
+    for (const s3 of this._$AV) void 0 !== s3 && (void 0 !== s3.strings ? (s3._$AI(t5, s3, i5), i5 += s3.strings.length - 2) : s3._$AI(t5[i5])), i5++;
   }
 };
 var k = class _k {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
-  constructor(t4, i5, s3, e4) {
-    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t4, this._$AB = i5, this._$AM = s3, this.options = e4, this._$Cv = e4?.isConnected ?? true;
+  constructor(t5, i5, s3, e4) {
+    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t5, this._$AB = i5, this._$AM = s3, this.options = e4, this._$Cv = e4?.isConnected ?? true;
   }
   get parentNode() {
-    let t4 = this._$AA.parentNode;
+    let t5 = this._$AA.parentNode;
     const i5 = this._$AM;
-    return void 0 !== i5 && 11 === t4?.nodeType && (t4 = i5.parentNode), t4;
+    return void 0 !== i5 && 11 === t5?.nodeType && (t5 = i5.parentNode), t5;
   }
   get startNode() {
     return this._$AA;
@@ -145,45 +145,45 @@ var k = class _k {
   get endNode() {
     return this._$AB;
   }
-  _$AI(t4, i5 = this) {
-    t4 = M(this, t4, i5), a(t4) ? t4 === A || null == t4 || "" === t4 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t4 !== this._$AH && t4 !== E && this._(t4) : void 0 !== t4._$litType$ ? this.$(t4) : void 0 !== t4.nodeType ? this.T(t4) : d(t4) ? this.k(t4) : this._(t4);
+  _$AI(t5, i5 = this) {
+    t5 = M(this, t5, i5), a(t5) ? t5 === A || null == t5 || "" === t5 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t5 !== this._$AH && t5 !== E && this._(t5) : void 0 !== t5._$litType$ ? this.$(t5) : void 0 !== t5.nodeType ? this.T(t5) : d(t5) ? this.k(t5) : this._(t5);
   }
-  O(t4) {
-    return this._$AA.parentNode.insertBefore(t4, this._$AB);
+  O(t5) {
+    return this._$AA.parentNode.insertBefore(t5, this._$AB);
   }
-  T(t4) {
-    this._$AH !== t4 && (this._$AR(), this._$AH = this.O(t4));
+  T(t5) {
+    this._$AH !== t5 && (this._$AR(), this._$AH = this.O(t5));
   }
-  _(t4) {
-    this._$AH !== A && a(this._$AH) ? this._$AA.nextSibling.data = t4 : this.T(l.createTextNode(t4)), this._$AH = t4;
+  _(t5) {
+    this._$AH !== A && a(this._$AH) ? this._$AA.nextSibling.data = t5 : this.T(l.createTextNode(t5)), this._$AH = t5;
   }
-  $(t4) {
-    const { values: i5, _$litType$: s3 } = t4, e4 = "number" == typeof s3 ? this._$AC(t4) : (void 0 === s3.el && (s3.el = S.createElement(V(s3.h, s3.h[0]), this.options)), s3);
+  $(t5) {
+    const { values: i5, _$litType$: s3 } = t5, e4 = "number" == typeof s3 ? this._$AC(t5) : (void 0 === s3.el && (s3.el = S.createElement(V(s3.h, s3.h[0]), this.options)), s3);
     if (this._$AH?._$AD === e4) this._$AH.p(i5);
     else {
-      const t5 = new R(e4, this), s4 = t5.u(this.options);
-      t5.p(i5), this.T(s4), this._$AH = t5;
+      const t6 = new R(e4, this), s4 = t6.u(this.options);
+      t6.p(i5), this.T(s4), this._$AH = t6;
     }
   }
-  _$AC(t4) {
-    let i5 = C.get(t4.strings);
-    return void 0 === i5 && C.set(t4.strings, i5 = new S(t4)), i5;
+  _$AC(t5) {
+    let i5 = C.get(t5.strings);
+    return void 0 === i5 && C.set(t5.strings, i5 = new S(t5)), i5;
   }
-  k(t4) {
+  k(t5) {
     u(this._$AH) || (this._$AH = [], this._$AR());
     const i5 = this._$AH;
     let s3, e4 = 0;
-    for (const h3 of t4) e4 === i5.length ? i5.push(s3 = new _k(this.O(c()), this.O(c()), this, this.options)) : s3 = i5[e4], s3._$AI(h3), e4++;
+    for (const h3 of t5) e4 === i5.length ? i5.push(s3 = new _k(this.O(c()), this.O(c()), this, this.options)) : s3 = i5[e4], s3._$AI(h3), e4++;
     e4 < i5.length && (this._$AR(s3 && s3._$AB.nextSibling, e4), i5.length = e4);
   }
-  _$AR(t4 = this._$AA.nextSibling, s3) {
-    for (this._$AP?.(false, true, s3); t4 !== this._$AB; ) {
-      const s4 = i(t4).nextSibling;
-      i(t4).remove(), t4 = s4;
+  _$AR(t5 = this._$AA.nextSibling, s3) {
+    for (this._$AP?.(false, true, s3); t5 !== this._$AB; ) {
+      const s4 = i(t5).nextSibling;
+      i(t5).remove(), t5 = s4;
     }
   }
-  setConnected(t4) {
-    void 0 === this._$AM && (this._$Cv = t4, this._$AP?.(t4));
+  setConnected(t5) {
+    void 0 === this._$AM && (this._$Cv = t5, this._$AP?.(t5));
   }
 };
 var H = class {
@@ -193,116 +193,116 @@ var H = class {
   get _$AU() {
     return this._$AM._$AU;
   }
-  constructor(t4, i5, s3, e4, h3) {
-    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t4, this.name = i5, this._$AM = e4, this.options = h3, s3.length > 2 || "" !== s3[0] || "" !== s3[1] ? (this._$AH = Array(s3.length - 1).fill(new String()), this.strings = s3) : this._$AH = A;
+  constructor(t5, i5, s3, e4, h3) {
+    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t5, this.name = i5, this._$AM = e4, this.options = h3, s3.length > 2 || "" !== s3[0] || "" !== s3[1] ? (this._$AH = Array(s3.length - 1).fill(new String()), this.strings = s3) : this._$AH = A;
   }
-  _$AI(t4, i5 = this, s3, e4) {
+  _$AI(t5, i5 = this, s3, e4) {
     const h3 = this.strings;
     let o4 = false;
-    if (void 0 === h3) t4 = M(this, t4, i5, 0), o4 = !a(t4) || t4 !== this._$AH && t4 !== E, o4 && (this._$AH = t4);
+    if (void 0 === h3) t5 = M(this, t5, i5, 0), o4 = !a(t5) || t5 !== this._$AH && t5 !== E, o4 && (this._$AH = t5);
     else {
-      const e5 = t4;
+      const e5 = t5;
       let n3, r2;
-      for (t4 = h3[0], n3 = 0; n3 < h3.length - 1; n3++) r2 = M(this, e5[s3 + n3], i5, n3), r2 === E && (r2 = this._$AH[n3]), o4 ||= !a(r2) || r2 !== this._$AH[n3], r2 === A ? t4 = A : t4 !== A && (t4 += (r2 ?? "") + h3[n3 + 1]), this._$AH[n3] = r2;
+      for (t5 = h3[0], n3 = 0; n3 < h3.length - 1; n3++) r2 = M(this, e5[s3 + n3], i5, n3), r2 === E && (r2 = this._$AH[n3]), o4 ||= !a(r2) || r2 !== this._$AH[n3], r2 === A ? t5 = A : t5 !== A && (t5 += (r2 ?? "") + h3[n3 + 1]), this._$AH[n3] = r2;
     }
-    o4 && !e4 && this.j(t4);
+    o4 && !e4 && this.j(t5);
   }
-  j(t4) {
-    t4 === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t4 ?? "");
+  j(t5) {
+    t5 === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t5 ?? "");
   }
 };
 var I = class extends H {
   constructor() {
     super(...arguments), this.type = 3;
   }
-  j(t4) {
-    this.element[this.name] = t4 === A ? void 0 : t4;
+  j(t5) {
+    this.element[this.name] = t5 === A ? void 0 : t5;
   }
 };
 var L = class extends H {
   constructor() {
     super(...arguments), this.type = 4;
   }
-  j(t4) {
-    this.element.toggleAttribute(this.name, !!t4 && t4 !== A);
+  j(t5) {
+    this.element.toggleAttribute(this.name, !!t5 && t5 !== A);
   }
 };
 var z = class extends H {
-  constructor(t4, i5, s3, e4, h3) {
-    super(t4, i5, s3, e4, h3), this.type = 5;
+  constructor(t5, i5, s3, e4, h3) {
+    super(t5, i5, s3, e4, h3), this.type = 5;
   }
-  _$AI(t4, i5 = this) {
-    if ((t4 = M(this, t4, i5, 0) ?? A) === E) return;
-    const s3 = this._$AH, e4 = t4 === A && s3 !== A || t4.capture !== s3.capture || t4.once !== s3.once || t4.passive !== s3.passive, h3 = t4 !== A && (s3 === A || e4);
-    e4 && this.element.removeEventListener(this.name, this, s3), h3 && this.element.addEventListener(this.name, this, t4), this._$AH = t4;
+  _$AI(t5, i5 = this) {
+    if ((t5 = M(this, t5, i5, 0) ?? A) === E) return;
+    const s3 = this._$AH, e4 = t5 === A && s3 !== A || t5.capture !== s3.capture || t5.once !== s3.once || t5.passive !== s3.passive, h3 = t5 !== A && (s3 === A || e4);
+    e4 && this.element.removeEventListener(this.name, this, s3), h3 && this.element.addEventListener(this.name, this, t5), this._$AH = t5;
   }
-  handleEvent(t4) {
-    "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t4) : this._$AH.handleEvent(t4);
+  handleEvent(t5) {
+    "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t5) : this._$AH.handleEvent(t5);
   }
 };
 var Z = class {
-  constructor(t4, i5, s3) {
-    this.element = t4, this.type = 6, this._$AN = void 0, this._$AM = i5, this.options = s3;
+  constructor(t5, i5, s3) {
+    this.element = t5, this.type = 6, this._$AN = void 0, this._$AM = i5, this.options = s3;
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  _$AI(t4) {
-    M(this, t4);
+  _$AI(t5) {
+    M(this, t5);
   }
 };
 var j = { M: h, P: o, A: n, C: 1, L: N, R, D: d, V: M, I: k, H, N: L, U: z, B: I, F: Z };
 var B = t.litHtmlPolyfillSupport;
 B?.(S, k), (t.litHtmlVersions ??= []).push("3.3.3");
-var D = (t4, i5, s3) => {
+var D = (t5, i5, s3) => {
   const e4 = s3?.renderBefore ?? i5;
   let h3 = e4._$litPart$;
   if (void 0 === h3) {
-    const t5 = s3?.renderBefore ?? null;
-    e4._$litPart$ = h3 = new k(i5.insertBefore(c(), t5), t5, void 0, s3 ?? {});
+    const t6 = s3?.renderBefore ?? null;
+    e4._$litPart$ = h3 = new k(i5.insertBefore(c(), t6), t6, void 0, s3 ?? {});
   }
-  return h3._$AI(t4), h3;
+  return h3._$AI(t5), h3;
 };
 
 // node_modules/lit-html/directive.js
 var t2 = { ATTRIBUTE: 1, CHILD: 2, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4, EVENT: 5, ELEMENT: 6 };
-var e2 = (t4) => (...e4) => ({ _$litDirective$: t4, values: e4 });
+var e2 = (t5) => (...e4) => ({ _$litDirective$: t5, values: e4 });
 var i2 = class {
-  constructor(t4) {
+  constructor(t5) {
   }
   get _$AU() {
     return this._$AM._$AU;
   }
-  _$AT(t4, e4, i5) {
-    this._$Ct = t4, this._$AM = e4, this._$Ci = i5;
+  _$AT(t5, e4, i5) {
+    this._$Ct = t5, this._$AM = e4, this._$Ci = i5;
   }
-  _$AS(t4, e4) {
-    return this.update(t4, e4);
+  _$AS(t5, e4) {
+    return this.update(t5, e4);
   }
-  update(t4, e4) {
+  update(t5, e4) {
     return this.render(...e4);
   }
 };
 
 // node_modules/lit-html/directives/class-map.js
 var e3 = e2(class extends i2 {
-  constructor(t4) {
-    if (super(t4), t4.type !== t2.ATTRIBUTE || "class" !== t4.name || t4.strings?.length > 2) throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.");
+  constructor(t5) {
+    if (super(t5), t5.type !== t2.ATTRIBUTE || "class" !== t5.name || t5.strings?.length > 2) throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.");
   }
-  render(t4) {
-    return " " + Object.keys(t4).filter((s3) => t4[s3]).join(" ") + " ";
+  render(t5) {
+    return " " + Object.keys(t5).filter((s3) => t5[s3]).join(" ") + " ";
   }
   update(s3, [i5]) {
     if (void 0 === this.st) {
-      this.st = /* @__PURE__ */ new Set(), void 0 !== s3.strings && (this.nt = new Set(s3.strings.join(" ").split(/\s/).filter((t4) => "" !== t4)));
-      for (const t4 in i5) i5[t4] && !this.nt?.has(t4) && this.st.add(t4);
+      this.st = /* @__PURE__ */ new Set(), void 0 !== s3.strings && (this.nt = new Set(s3.strings.join(" ").split(/\s/).filter((t5) => "" !== t5)));
+      for (const t5 in i5) i5[t5] && !this.nt?.has(t5) && this.st.add(t5);
       return this.render(i5);
     }
     const r2 = s3.element.classList;
-    for (const t4 of this.st) t4 in i5 || (r2.remove(t4), this.st.delete(t4));
-    for (const t4 in i5) {
-      const s4 = !!i5[t4];
-      s4 === this.st.has(t4) || this.nt?.has(t4) || (s4 ? (r2.add(t4), this.st.add(t4)) : (r2.remove(t4), this.st.delete(t4)));
+    for (const t5 of this.st) t5 in i5 || (r2.remove(t5), this.st.delete(t5));
+    for (const t5 in i5) {
+      const s4 = !!i5[t5];
+      s4 === this.st.has(t5) || this.nt?.has(t5) || (s4 ? (r2.add(t5), this.st.add(t5)) : (r2.remove(t5), this.st.delete(t5)));
     }
     return E;
   }
@@ -321,52 +321,52 @@ var v2 = (o4, n3, e4) => {
     const i5 = l2.insertBefore(s2(), d2), n4 = l2.insertBefore(s2(), d2);
     e4 = new t3(i5, n4, o4, o4.options);
   } else {
-    const t4 = e4._$AB.nextSibling, n4 = e4._$AM, c3 = n4 !== o4;
+    const t5 = e4._$AB.nextSibling, n4 = e4._$AM, c3 = n4 !== o4;
     if (c3) {
-      let t5;
-      e4._$AQ?.(o4), e4._$AM = o4, void 0 !== e4._$AP && (t5 = o4._$AU) !== n4._$AU && e4._$AP(t5);
+      let t6;
+      e4._$AQ?.(o4), e4._$AM = o4, void 0 !== e4._$AP && (t6 = o4._$AU) !== n4._$AU && e4._$AP(t6);
     }
-    if (t4 !== d2 || c3) {
+    if (t5 !== d2 || c3) {
       let o5 = e4._$AA;
-      for (; o5 !== t4; ) {
-        const t5 = i3(o5).nextSibling;
-        i3(l2).insertBefore(o5, d2), o5 = t5;
+      for (; o5 !== t5; ) {
+        const t6 = i3(o5).nextSibling;
+        i3(l2).insertBefore(o5, d2), o5 = t6;
       }
     }
   }
   return e4;
 };
-var u2 = (o4, t4, i5 = o4) => (o4._$AI(t4, i5), o4);
+var u2 = (o4, t5, i5 = o4) => (o4._$AI(t5, i5), o4);
 var m2 = {};
-var p2 = (o4, t4 = m2) => o4._$AH = t4;
+var p2 = (o4, t5 = m2) => o4._$AH = t5;
 var M2 = (o4) => o4._$AH;
 var h2 = (o4) => {
   o4._$AR(), o4._$AA.remove();
 };
 
 // node_modules/lit-html/directives/repeat.js
-var u3 = (e4, s3, t4) => {
+var u3 = (e4, s3, t5) => {
   const r2 = /* @__PURE__ */ new Map();
-  for (let l2 = s3; l2 <= t4; l2++) r2.set(e4[l2], l2);
+  for (let l2 = s3; l2 <= t5; l2++) r2.set(e4[l2], l2);
   return r2;
 };
 var c2 = e2(class extends i2 {
   constructor(e4) {
     if (super(e4), e4.type !== t2.CHILD) throw Error("repeat() can only be used in text expressions");
   }
-  dt(e4, s3, t4) {
+  dt(e4, s3, t5) {
     let r2;
-    void 0 === t4 ? t4 = s3 : void 0 !== s3 && (r2 = s3);
+    void 0 === t5 ? t5 = s3 : void 0 !== s3 && (r2 = s3);
     const l2 = [], o4 = [];
     let i5 = 0;
-    for (const s4 of e4) l2[i5] = r2 ? r2(s4, i5) : i5, o4[i5] = t4(s4, i5), i5++;
+    for (const s4 of e4) l2[i5] = r2 ? r2(s4, i5) : i5, o4[i5] = t5(s4, i5), i5++;
     return { values: o4, keys: l2 };
   }
-  render(e4, s3, t4) {
-    return this.dt(e4, s3, t4).values;
+  render(e4, s3, t5) {
+    return this.dt(e4, s3, t5).values;
   }
-  update(s3, [t4, r2, c3]) {
-    const d2 = M2(s3), { values: p3, keys: a2 } = this.dt(t4, r2, c3);
+  update(s3, [t5, r2, c3]) {
+    const d2 = M2(s3), { values: p3, keys: a2 } = this.dt(t5, r2, c3);
     if (!Array.isArray(d2)) return this.ut = a2, p3;
     const h3 = this.ut ??= [], v3 = [];
     let m3, y2, x2 = 0, j2 = d2.length - 1, k2 = 0, w2 = p3.length - 1;
@@ -377,11 +377,11 @@ var c2 = e2(class extends i2 {
     else if (h3[x2] === a2[w2]) v3[w2] = u2(d2[x2], p3[w2]), v2(s3, v3[w2 + 1], d2[x2]), x2++, w2--;
     else if (h3[j2] === a2[k2]) v3[k2] = u2(d2[j2], p3[k2]), v2(s3, d2[x2], d2[j2]), j2--, k2++;
     else if (void 0 === m3 && (m3 = u3(a2, k2, w2), y2 = u3(h3, x2, j2)), m3.has(h3[x2])) if (m3.has(h3[j2])) {
-      const e4 = y2.get(a2[k2]), t5 = void 0 !== e4 ? d2[e4] : null;
-      if (null === t5) {
+      const e4 = y2.get(a2[k2]), t6 = void 0 !== e4 ? d2[e4] : null;
+      if (null === t6) {
         const e5 = v2(s3, d2[x2]);
         u2(e5, p3[k2]), v3[k2] = e5;
-      } else v3[k2] = u2(t5, p3[k2]), v2(s3, d2[x2], t5), d2[e4] = null;
+      } else v3[k2] = u2(t6, p3[k2]), v2(s3, d2[x2], t6), d2[e4] = null;
       k2++;
     } else h2(d2[j2]), j2--;
     else h2(d2[x2]), x2++;
@@ -401,30 +401,36 @@ var c2 = e2(class extends i2 {
 var n2 = "important";
 var i4 = " !" + n2;
 var o3 = e2(class extends i2 {
-  constructor(t4) {
-    if (super(t4), t4.type !== t2.ATTRIBUTE || "style" !== t4.name || t4.strings?.length > 2) throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.");
+  constructor(t5) {
+    if (super(t5), t5.type !== t2.ATTRIBUTE || "style" !== t5.name || t5.strings?.length > 2) throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.");
   }
-  render(t4) {
-    return Object.keys(t4).reduce((e4, r2) => {
-      const s3 = t4[r2];
+  render(t5) {
+    return Object.keys(t5).reduce((e4, r2) => {
+      const s3 = t5[r2];
       return null == s3 ? e4 : e4 + `${r2 = r2.includes("-") ? r2 : r2.replace(/(?:^(webkit|moz|ms|o)|)(?=[A-Z])/g, "-$&").toLowerCase()}:${s3};`;
     }, "");
   }
   update(e4, [r2]) {
     const { style: s3 } = e4.element;
     if (void 0 === this.ft) return this.ft = new Set(Object.keys(r2)), this.render(r2);
-    for (const t4 of this.ft) null == r2[t4] && (this.ft.delete(t4), t4.includes("-") ? s3.removeProperty(t4) : s3[t4] = null);
-    for (const t4 in r2) {
-      const e5 = r2[t4];
+    for (const t5 of this.ft) null == r2[t5] && (this.ft.delete(t5), t5.includes("-") ? s3.removeProperty(t5) : s3[t5] = null);
+    for (const t5 in r2) {
+      const e5 = r2[t5];
       if (null != e5) {
-        this.ft.add(t4);
+        this.ft.add(t5);
         const r3 = "string" == typeof e5 && e5.endsWith(i4);
-        t4.includes("-") || r3 ? s3.setProperty(t4, r3 ? e5.slice(0, -11) : e5, r3 ? n2 : "") : s3[t4] = e5;
+        t5.includes("-") || r3 ? s3.setProperty(t5, r3 ? e5.slice(0, -11) : e5, r3 ? n2 : "") : s3[t5] = e5;
       }
     }
     return E;
   }
 });
+
+// nukernel/src/copy/global.ts
+var C2 = () => globalThis.COPY;
+var t4 = (key, p3) => C2().t(key, p3);
+var tn = (key, n3, p3) => C2().tn(key, n3, p3);
+var fmt = (n3, unit) => C2().fmt(n3, unit);
 
 // nukernel/src/menus/pick.ts
 var CHIPMAX = 8;
@@ -501,7 +507,7 @@ function shField(A2, key, scope, label) {
     kind: "say",
     label: label || key,
     word: "—",
-    why: "no vocabulary owner for " + key
+    why: t4("sheet.noOwner.why")
   };
   const w2 = A2.wcell(sp);
   const base = {
@@ -531,7 +537,7 @@ function numField(A2, key, label, cur, steps, set, clearable, noneWord) {
     value: has ? String(cur) : "",
     derived: !has,
     options: [
-      ...clearable ? [{ v: "", w: noneWord || "none" }] : [],
+      ...clearable ? [{ v: "", w: noneWord || t4("value.none") }] : [],
       ...list.map((n3) => ({ v: String(n3), w: String(n3) }))
     ],
     /* ...AND IT IS A SLIDER (2026-09-05). Paul: *"When you redesign think
@@ -567,9 +573,9 @@ function cellNum(A2, i5, vi, field, label, steps) {
     word: has ? String(own) : inh == null ? "—" : String(inh),
     value: has ? String(own) : "",
     derived: !has,
-    sub: has ? null : "the column's",
+    sub: has ? null : t4("value.defaultCap"),
     options: [
-      { v: "", w: "the column's" },
+      { v: "", w: t4("value.default") },
       ...list.map((n3) => ({ v: String(n3), w: String(n3) }))
     ],
     /* THE CELL'S OVERRIDE IS A QUANTITY TOO, and the slider's ghost value is
@@ -600,13 +606,15 @@ function cellLane(A2, i5, vi, spec) {
   const words = Object.keys(spec.table).filter((k2) => spec.table[k2]);
   return {
     key: "tcellauto|" + spec.key + "|" + vi + "|" + i5,
-    label: "mix · " + spec.label,
-    word: has ? spec.labels[cur] || cur : "rides the section",
+    label: t4("cell.lane.label", { name: spec.label }),
+    word: has ? spec.labels[cur] || cur : t4("value.default"),
     value: cur,
     derived: !has,
-    sub: has ? null : "the section's own lane, unchanged",
+    /* NO CAPTION UNDER IT. The word IS "default" now, and a second line
+       saying the same thing is the prose test/text-diet.test.js takes off. */
+    sub: null,
     options: [
-      { v: "", w: "rides the section" },
+      { v: "", w: t4("value.default") },
       ...words.map((k2) => ({ v: k2, w: spec.labels[k2] || k2 }))
     ],
     set: (v3) => put(v3 || ""),
@@ -622,19 +630,19 @@ function cellVecField(A2, i5, vi, spec) {
   return {
     key: "tcellvec|" + spec.key + "|" + vi + "|" + i5,
     label: spec.label,
-    word: has ? wordOf2(own) : wordOf2(row) || "as the genre asks",
+    word: has ? wordOf2(own) : wordOf2(row) || t4("value.default"),
     value: has ? String(own) : "",
     derived: !has,
-    sub: has ? null : spec.none || "the row's",
+    sub: has ? null : spec.none || t4("value.defaultCap"),
     options: [
-      { v: "", w: spec.none || "the row's" },
+      { v: "", w: spec.none || t4("value.default") },
       ...words.map((k2) => ({ v: k2, w: String(spec.labels[k2] || k2) }))
     ],
     set: (v3) => A2.putCell(i5, vi, spec.key, v3 === "" ? null : v3),
     clear: has ? () => A2.putCell(i5, vi, spec.key, null) : null
   };
 }
-var RAMPWHY = "measured 2026-09-05: a document's motifs carry no ramp — document.js toPhrase writes inc and stk all-zero on every phrase, so 0 of 18,793 motifs across 479 anchors at three readings has a ramp for a limit to limit. It is the tracker's control; the address is kept, and the gate lights it the day a ramp column lands";
+var rampWhy = () => t4("cell.ramp.why");
 function cellVecSay(A2, i5, vi, spec, chordChair) {
   const own = A2.cellOf(i5, vi, spec.key);
   const row = A2.rowOf ? A2.rowOf(i5, spec.key) : null;
@@ -642,8 +650,8 @@ function cellVecSay(A2, i5, vi, spec, chordChair) {
   return {
     kind: "say",
     label: spec.label,
-    word: said == null ? "as the genre asks" : String(spec.labels[String(said)] || said),
-    why: chordChair ? "measured 2026-09-04: this chair voices the bar's CHORD (kernel.js render sends a pad and any chordLock part down the chord branch), so it never reads an articulation or a subject alphabet — its octave and its time still answer. Give it a line part to say this." : RAMPWHY
+    word: said == null ? t4("value.default") : String(spec.labels[String(said)] || said),
+    why: chordChair ? t4("cell.chordPart.why") : rampWhy()
   };
 }
 function rowVecSay(A2, i5, spec) {
@@ -651,8 +659,8 @@ function rowVecSay(A2, i5, spec) {
   return {
     kind: "say",
     label: spec.label,
-    word: said == null ? "as the genre asks" : String(spec.labels[String(said)] || said),
-    why: RAMPWHY
+    word: said == null ? t4("value.default") : String(spec.labels[String(said)] || said),
+    why: rampWhy()
   };
 }
 function groupsFor(options) {
@@ -673,53 +681,53 @@ function rowSheet(A2, i5) {
   const s3 = secs[i5];
   const sid = s3.id;
   const f2 = [];
-  f2.push({ kind: "ops", label: "this section", ops: rowOps(A2, i5, s3) });
-  f2.push(shField(A2, "form.role", { section: sid }, "type"));
+  f2.push({ kind: "ops", label: t4("row.ops"), ops: rowOps(A2, i5, s3) });
+  f2.push(shField(A2, "form.role", { section: sid }, t4("row.type")));
   f2.push(numField(
     A2,
     "bars|" + sid,
-    "bars",
+    t4("row.bars"),
     s3.bars,
     BARSTEPS,
     (v3) => A2.putRow(i5, "bars", +v3),
     false
   ));
   for (const [key, lab] of [
-    ["form.lvl", "level"],
-    ["form.env", "shape"],
-    ["form.intro", "intro"],
-    ["form.outro", "outro"],
-    ["form.mot", "motion"],
-    ["form.pace", "pace"],
-    ["development.period", "period"],
-    ["development.breath", "breath"],
-    ["development.pipe", "pipe"]
+    ["form.lvl", t4("field.level")],
+    ["form.env", t4("field.dynamics")],
+    ["form.intro", t4("field.intro")],
+    ["form.outro", t4("field.outro")],
+    ["form.mot", t4("noun.automation")],
+    ["form.pace", t4("noun.feel")],
+    ["development.period", t4("field.phraseStructure")],
+    ["development.breath", t4("row.noteLimit")],
+    ["development.pipe", t4("row.pipe")]
   ])
     f2.push(shField(A2, key, { section: sid }, lab));
-  for (const [key, lab] of [
-    ["form.key", "key"],
-    ["form.mode", "mode"],
-    ["form.prog", "changes"],
-    ["form.swing", "swing"],
-    ["form.groove", "groove"]
+  for (const key of [
+    "form.key",
+    "form.mode",
+    "form.prog",
+    "form.swing",
+    "form.groove"
   ]) {
-    f2.push(shField(A2, key, { section: sid }, lab));
+    f2.push(shField(A2, key, { section: sid }, null));
     if (key === "form.prog")
       f2.push({
         kind: "node",
-        label: "this section's chart",
+        label: t4("row.chart"),
         node: A2.changesNode(sid)
       });
   }
-  for (const [key, lab] of [
-    ["form.fx", "chain"],
-    ["form.rev", "reverb"],
-    ["form.echo", "echo"],
-    ["form.dtime", "echo time"],
-    ["form.room", "room"],
-    ["form.pan", "across"]
+  for (const key of [
+    "form.fx",
+    "form.rev",
+    "form.echo",
+    "form.dtime",
+    "form.room",
+    "form.pan"
   ])
-    f2.push(shField(A2, key, { section: sid }, lab));
+    f2.push(shField(A2, key, { section: sid }, null));
   for (const spec of A2.CELLVEC || []) {
     if (spec.key === "clamp") {
       f2.push(rowVecSay(A2, i5, spec));
@@ -731,7 +739,7 @@ function rowSheet(A2, i5) {
   f2.push(numField(
     A2,
     "nudge|" + sid,
-    "starts at",
+    t4("row.startsAt"),
     s3.nudge || 0,
     [0, 1, 2, 3, 4, 6, 8],
     (v3) => A2.putRow(i5, "nudge", +v3),
@@ -740,35 +748,45 @@ function rowSheet(A2, i5) {
   const auto = s3.auto || [];
   f2.push({
     kind: "say",
-    label: "automation",
-    word: auto.length ? auto.length + " lanes" : "none",
-    why: "compiled from the motion above — a cell's own lane is an offset on it"
+    label: t4("row.lanes"),
+    word: auto.length ? tn("row.lanes", auto.length) : t4("value.none"),
+    why: t4("row.lanes.why")
   });
   return f2;
 }
 function colSheet(A2, vi) {
   const v3 = A2.doc().voices[vi];
   const f2 = [];
-  f2.push({ kind: "ops", label: "this player", ops: colOps(A2, vi, v3) });
-  if (v3.kind === "line") f2.push(shField(A2, "cast.part", { voice: v3.name }, "plays"));
+  f2.push({ kind: "ops", label: t4("col.ops"), ops: colOps(A2, vi, v3) });
+  if (v3.kind === "line") f2.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
   const ik = v3.kind === "bass" ? "sound.bassinstrument" : v3.kind === "drums" ? "sound.drumkit" : "sound.instrument";
-  f2.push(shField(A2, ik, { voice: v3.name }, v3.kind === "drums" ? "machine" : "instrument"));
+  f2.push(shField(
+    A2,
+    ik,
+    { voice: v3.name },
+    v3.kind === "drums" ? t4("col.machine") : t4("noun.instrument")
+  ));
   if (v3.kind === "drums") {
     const on = A2.castOf(vi, "on") !== false;
     f2.push({
       key: "drums",
-      label: "drummer",
-      word: on ? "playing" : "sitting out",
+      label: t4("col.drummer"),
+      word: on ? t4("state.playing") : t4("col.drummer.off"),
       value: on ? "1" : "",
       derived: false,
-      options: [{ v: "1", w: "playing" }, { v: "", w: "sitting out" }],
+      options: [
+        { v: "1", w: t4("state.playing") },
+        { v: "", w: t4("col.drummer.off") }
+      ],
       set: (x2) => A2.putCast(vi, "on", !!x2)
     });
   }
   if (A2.hasCrate(v3.name))
-    f2.push({ kind: "node", label: "its files", node: A2.voiceCrate(v3.name) });
-  if (v3.kind === "line") f2.push(shField(A2, "cast.material", { voice: v3.name }, "reads by default"));
-  if (v3.kind === "bass") f2.push(shField(A2, "cast.bassStyle", { voice: v3.name }, "does by default"));
+    f2.push({ kind: "node", label: t4("col.files"), node: A2.voiceCrate(v3.name) });
+  if (v3.kind === "line")
+    f2.push(shField(A2, "cast.material", { voice: v3.name }, t4("col.material")));
+  if (v3.kind === "bass")
+    f2.push(shField(A2, "cast.bassStyle", { voice: v3.name }, t4("col.bassStyle")));
   const env = A2.voiceEnv(v3.name);
   if (env) f2.push({ kind: "node", label: env.label, node: env.node });
   for (const k2 of env ? ["sound.double", "sound.looping"] : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
@@ -778,12 +796,12 @@ function colSheet(A2, vi) {
   const th = A2.throat(vi);
   if (th) f2.push({
     key: "throat|" + v3.name,
-    label: "sings as",
+    label: t4("col.throat"),
     word: th.word,
     value: th.own,
     derived: !th.own,
     options: [
-      { v: "", w: "the record's" },
+      { v: "", w: t4("value.default") },
       ...th.words.map((w2) => ({ v: w2, w: w2 }))
     ],
     set: (x2) => A2.putCast(vi, "voice", x2 || null),
@@ -793,35 +811,35 @@ function colSheet(A2, vi) {
   f2.push(numField(
     A2,
     "reg|" + v3.name,
-    "register",
+    t4("col.register"),
     reg == null ? "" : reg,
     REGSTEPS,
     (x2) => A2.putCast(vi, "reg", x2 === "" ? null : +x2),
     true,
-    "the genre's"
+    t4("value.default")
   ));
   const en = A2.castOf(vi, "entry");
   f2.push(numField(
     A2,
     "entry|" + v3.name,
-    "enters at bar",
+    t4("col.entry"),
     en == null ? "" : en,
     [0, 1, 2, 4, 8],
     (x2) => A2.putCast(vi, "entry", x2 === "" ? null : +x2),
     true,
-    "bar one"
+    t4("col.entry.none")
   ));
-  f2.push({ kind: "ops", label: "the desk", ops: [
+  f2.push({ kind: "ops", label: t4("col.desk"), ops: [
     {
       k: "tseat|" + v3.name,
-      word: "its seat on the mix row",
-      aria: v3.name + " — its fader, pan, sends, EQ and inserts, in the mix row",
+      word: t4("col.seat.word"),
+      aria: t4("col.seat.aria", { name: v3.name }),
       act: () => A2.showSeat(v3.name)
     },
     {
       k: "tbuses|" + v3.name,
-      word: "the buses",
-      aria: v3.name + " — the buses its sends feed, on the board",
+      word: t4("master.buses"),
+      aria: t4("col.buses.aria", { name: v3.name }),
       act: () => A2.showBoard()
     }
   ] });
@@ -832,20 +850,20 @@ function cellSheet(A2, i5, vi) {
   const s3 = doc.form.sections[i5], v3 = doc.voices[vi];
   const sid = s3.id;
   const f2 = [];
-  f2.push({ kind: "ops", label: "this cell", ops: cellOps(A2, i5, vi) });
+  f2.push({ kind: "ops", label: t4("cell.ops"), ops: cellOps(A2, i5, vi) });
   if (v3.kind === "bass") {
     const b2 = A2.bassReads();
     f2.push({
       kind: "say",
-      label: "motifs",
-      word: b2 && b2.cell ? b2.cell + " · " + b2.lead + "'s" : "the first line's",
-      why: "the bass takes its accents from the first line's phrase (document.js scoreOf, ui/derive.js sectionEvents), so it reads what " + (b2 && b2.lead || "that line") + " reads. Give it a motif of its own by changing that cell."
+      label: t4("special.phrases.word"),
+      word: b2 && b2.cell ? t4("cell.bass.reads", { value: b2.cell, lead: b2.lead }) : t4("cell.bass.readsNone"),
+      why: t4("cell.bass.why")
     });
   }
   const reads = v3.kind === "bass" ? null : A2.sh(
     "material.cell",
     { voice: v3.name, section: sid },
-    v3.name + " reads · " + A2.secName(i5)
+    t4("cell.sheet.plays", { name: v3.name, section: A2.secName(i5) })
   );
   if (reads) {
     const w2 = A2.wcell(reads);
@@ -856,7 +874,7 @@ function cellSheet(A2, i5, vi) {
     });
     f2.push({
       key: w2.key,
-      label: "motifs",
+      label: t4("special.phrases.word"),
       word: w2.derived ? A2.cellWord(i5, vi) : w2.label,
       value: w2.value == null ? "" : String(w2.value),
       derived: w2.derived,
@@ -869,13 +887,16 @@ function cellSheet(A2, i5, vi) {
   const dev = A2.sh(
     A2.devSheetFor(v3.kind),
     { voice: v3.name, section: sid },
-    v3.name + " does · " + A2.secName(i5)
+    t4("cell.sheet.variation", {
+      name: v3.name,
+      section: A2.secName(i5)
+    })
   );
   if (dev) {
     const w2 = A2.wcell(dev);
     const fld = {
       key: w2.key,
-      label: "does",
+      label: t4("noun.variation"),
       word: w2.label,
       value: w2.value == null ? "" : String(w2.value),
       derived: w2.derived,
@@ -887,13 +908,13 @@ function cellSheet(A2, i5, vi) {
     if (v3.kind === "drums") fld.groups = groupsFor(w2.options);
     f2.push(fld);
   }
-  f2.push(cellNum(A2, i5, vi, "entry", "enters at bar", [0, 1, 2, 4, 8]));
-  f2.push(cellNum(A2, i5, vi, "reg", "register", REGSTEPS));
+  f2.push(cellNum(A2, i5, vi, "entry", t4("col.entry"), [0, 1, 2, 4, 8]));
+  f2.push(cellNum(A2, i5, vi, "reg", t4("col.register"), REGSTEPS));
   f2.push({
     kind: "say",
-    label: "focus",
-    word: A2.cellOf(i5, vi, "focus") ? "featured" : "no",
-    why: "measured 2026-09-04: box.focus indexes a one-entry stack and moves no event — the gate names it the day a reader lands"
+    label: t4("cell.focus"),
+    word: A2.cellOf(i5, vi, "focus") ? t4("cell.focus.on") : t4("cell.focus.off"),
+    why: t4("cell.focus.why")
   });
   for (const spec of A2.CELLAUTO || []) f2.push(cellLane(A2, i5, vi, spec));
   if (v3.kind === "line") {
@@ -902,9 +923,9 @@ function cellSheet(A2, i5, vi) {
       f2.push(spec.key === "clamp" || chordChair && (spec.key === "artic" || spec.key === "scale") ? cellVecSay(A2, i5, vi, spec, chordChair && spec.key !== "clamp") : cellVecField(A2, i5, vi, spec));
   } else f2.push({
     kind: "say",
-    label: "artic · oct · rate · scale · clamp",
-    word: "the pitched chairs'",
-    why: "measured 2026-09-04: all five are read inside kernel.js render, which is what a LINE plays — the kit is K.drums and the bass is K.bass, and each has its own words for the same ideas (the kit's halftime/doubletime, the bass's own artic and register)"
+    label: t4("cell.pitchedOnly.label"),
+    word: t4("cell.pitchedOnly.word"),
+    why: t4("cell.pitchedOnly.why")
   });
   return f2;
 }
@@ -916,7 +937,7 @@ function perfCells(A2) {
     return {
       key: w2.key,
       label: p3.label,
-      word: p3.short + " " + w2.label,
+      word: t4("perf.cell", { short: p3.short, value: w2.label }),
       value: w2.value == null ? "" : String(w2.value),
       derived: w2.derived,
       options: w2.options,
@@ -935,7 +956,7 @@ function perfSheet(A2) {
     numField(
       A2,
       "take",
-      "take",
+      t4("noun.take"),
       A2.perfOf("take") || 1,
       [1, 2, 3, 4, 5, 6, 8, 12],
       (v3) => A2.putPerf("take", +v3),
@@ -944,22 +965,22 @@ function perfSheet(A2) {
     numField(
       A2,
       "humanize",
-      "humanize",
+      t4("perf.humanize"),
       A2.perfOf("humanize") == null ? "" : A2.perfOf("humanize"),
       [0, 0.2, 0.4, 0.6, 0.8, 1],
       (v3) => A2.putPerf("humanize", v3 === "" ? null : +v3),
       true,
-      "the genre's"
+      t4("value.default")
     ),
     {
       key: "ontime",
-      label: "on time",
-      word: A2.perfOf("ontime") ? "dead on the grid" : "as the band plays",
+      label: t4("perf.ontime"),
+      word: A2.perfOf("ontime") ? t4("perf.ontime.on") : t4("perf.ontime.off"),
       value: A2.perfOf("ontime") ? "1" : "",
       derived: !A2.perfOf("ontime"),
       options: [
-        { v: "", w: "as the band plays" },
-        { v: "1", w: "dead on the grid" }
+        { v: "", w: t4("perf.ontime.off") },
+        { v: "1", w: t4("perf.ontime.on") }
       ],
       set: (v3) => A2.putPerf("ontime", v3 ? true : null),
       clear: A2.perfOf("ontime") ? () => A2.putPerf("ontime", null) : null
@@ -975,53 +996,53 @@ function rowOps(A2, i5, s3) {
        cold it seeks, playing it QUEUES on the next box line. */
     {
       k: "trow-here|" + s3.id,
-      word: "put the ear here",
-      aria: "play from this section",
+      word: t4("op.playFrom"),
+      aria: t4("op.playFrom.aria"),
       act: () => A2.playFrom(i5)
     },
     {
       k: "trow-add",
-      word: "+ section",
-      aria: "add a section after this one",
+      word: t4("op.addSection"),
+      aria: t4("op.addSection.after"),
       act: () => A2.addSection(i5 + 1)
     },
     {
       k: "trow-up|" + s3.id,
-      word: "▲ up",
-      aria: "move this section earlier",
-      why: i5 === 0 ? "it is already first" : null,
+      word: t4("op.up"),
+      aria: t4("op.up.aria"),
+      why: i5 === 0 ? t4("refuse.alreadyFirst") : null,
       act: () => A2.moveSection(i5, -1)
     },
     {
       k: "trow-down|" + s3.id,
-      word: "▼ down",
-      aria: "move this section later",
-      why: i5 === n3 - 1 ? "it is already last" : null,
+      word: t4("op.down"),
+      aria: t4("op.down.aria"),
+      why: i5 === n3 - 1 ? t4("refuse.alreadyLast") : null,
       act: () => A2.moveSection(i5, 1)
     },
     {
       k: "trow-dup|" + s3.id,
-      word: "duplicate",
-      aria: "duplicate this section",
+      word: t4("op.duplicate"),
+      aria: t4("op.duplicate.aria"),
       act: () => A2.dupSection(s3.id)
     },
     ...REPEATS.map((r2) => ({
       k: "trow-rep|" + s3.id + "|" + r2,
-      word: "×" + r2,
-      aria: "repeat this section " + r2 + " times",
+      word: t4("op.repeat", { n: r2 }),
+      aria: t4("op.repeat.aria", { n: r2 }),
       act: () => A2.repeatSection(s3.id, r2)
     })),
     {
       k: "trow-deal|" + s3.id,
-      word: "deal again",
-      aria: "deal this section's cells again from the genre",
+      word: t4("op.reset"),
+      aria: t4("op.resetRow.aria"),
       act: () => A2.dealRow(i5)
     },
     {
       k: "trow-del|" + s3.id,
-      word: "delete",
-      aria: "delete this section",
-      why: n3 <= 1 ? "a record needs one section" : null,
+      word: t4("op.deleteSection"),
+      aria: t4("op.deleteSection.aria"),
+      why: n3 <= 1 ? t4("refuse.lastSection") : null,
       act: () => A2.dropSection(s3.id)
     }
   ];
@@ -1031,48 +1052,48 @@ function colOps(A2, vi, v3) {
   return [
     {
       k: "tcol-solo|" + v3.name,
-      word: "▶ alone",
-      aria: "play " + v3.name + " alone",
+      word: t4("op.solo"),
+      aria: t4("op.solo.aria", { name: v3.name }),
       act: () => A2.soloVoice(v3.name)
     },
     {
       k: "tcol-add|line",
-      word: "+ line",
-      aria: "hire another line",
+      word: t4("op.addLine"),
+      aria: t4("op.addLine.aria"),
       act: () => A2.addVoice("line")
     },
     {
       k: "tcol-add|bass",
-      word: "+ bass",
-      aria: "hire a bass",
-      why: A2.hasKind("bass") ? "the record already has a bass" : null,
+      word: t4("op.addBass"),
+      aria: t4("op.addBass.aria"),
+      why: A2.hasKind("bass") ? t4("refuse.haveBass") : null,
       act: () => A2.addVoice("bass")
     },
     {
       k: "tcol-add|drums",
-      word: "+ drums",
-      aria: "hire a drummer",
-      why: A2.hasKind("drums") ? "the record already has a drummer" : null,
+      word: t4("op.addDrums"),
+      aria: t4("op.addDrums.aria"),
+      why: A2.hasKind("drums") ? t4("refuse.haveDrums") : null,
       act: () => A2.addVoice("drums")
     },
     {
       k: "tcol-left|" + v3.name,
-      word: "◀ left",
-      aria: "move this player left",
-      why: vi === 0 ? "it is already first" : null,
+      word: t4("op.left"),
+      aria: t4("op.left.aria"),
+      why: vi === 0 ? t4("refuse.alreadyFirst") : null,
       act: () => A2.moveVoice(vi, -1)
     },
     {
       k: "tcol-right|" + v3.name,
-      word: "right ▶",
-      aria: "move this player right",
-      why: vi === n3 - 1 ? "it is already last" : null,
+      word: t4("op.right"),
+      aria: t4("op.right.aria"),
+      why: vi === n3 - 1 ? t4("refuse.alreadyLast") : null,
       act: () => A2.moveVoice(vi, 1)
     },
     {
       k: "tcol-deal|" + v3.name,
-      word: "deal again",
-      aria: "deal this player's cells again from the genre",
+      word: t4("op.reset"),
+      aria: t4("op.resetCol.aria"),
       act: () => A2.dealCol(vi)
     },
     /* "MAKE X Y" IS A COLUMN OP NOW (5). ui/produce.js owns the verb and its
@@ -1081,15 +1102,15 @@ function colOps(A2, vi, v3) {
     ...A2.makeQualities(v3.name).map((q) => ({
       k: "tcol-make|" + v3.name + "|" + q.v,
       word: q.w,
-      aria: "make " + v3.name + " " + q.w,
+      aria: t4("op.make.aria", { name: v3.name, quality: q.w }),
       why: q.why || null,
       act: () => A2.makeXY(v3.name, q.v)
     })),
     {
       k: "tcol-del|" + v3.name,
-      word: "remove",
-      aria: "remove " + v3.name + " from the band",
-      why: n3 <= 1 ? "a band needs one player" : null,
+      word: t4("op.remove"),
+      aria: t4("op.remove.aria", { name: v3.name }),
+      why: n3 <= 1 ? t4("refuse.lastPlayer") : null,
       act: () => A2.dropVoice(v3.name)
     }
   ];
@@ -1100,23 +1121,23 @@ function cellOps(A2, i5, vi) {
   return [
     {
       k: "tcell-clear|" + v3.name + "|" + s3.id,
-      word: "clear to inherit",
-      aria: "clear everything written in this cell",
-      why: A2.written(i5, vi) ? null : "nothing is written here",
+      word: t4("op.clearCell"),
+      aria: t4("op.clearCell.aria"),
+      why: A2.written(i5, vi) ? null : t4("refuse.nothingToClear"),
       act: () => A2.clearCell(i5, vi)
     },
     /* FILL RIGHT AND FILL DOWN ARE 5's COPY-TO-ROW AND COPY-TO-COLUMN, said in
        a spreadsheet's own words (9a). One door each, unchanged. */
     {
       k: "tcell-copyrow|" + v3.name + "|" + s3.id,
-      word: "fill across the row",
-      aria: "give every player in this section what this cell says",
+      word: t4("op.fillRow"),
+      aria: t4("op.fillRow.aria"),
       act: () => A2.copyCell(i5, vi, "row")
     },
     {
       k: "tcell-copycol|" + v3.name + "|" + s3.id,
-      word: "fill down the column",
-      aria: "give this player the same thing in every section",
+      word: t4("op.fillCol"),
+      aria: t4("op.fillCol.aria"),
       act: () => A2.copyCell(i5, vi, "col")
     }
   ];
@@ -1125,20 +1146,20 @@ function tableOps(A2, across) {
   return [
     {
       k: "ttab-fill",
-      word: "fill from a genre",
-      aria: "start this record again from a genre",
+      word: t4("op.fillGenre"),
+      aria: t4("op.fillGenre.aria"),
       act: () => A2.fillFromGenre()
     },
     {
       k: "ttab-seed",
-      word: "re-seed",
-      aria: "deal this record again at a new reading",
+      word: t4("op.reseed"),
+      aria: t4("op.reseed.aria"),
       act: () => A2.reseed()
     },
     {
       k: "ttab-transpose",
-      word: across ? "sections down" : "players down",
-      aria: across ? "turn the table back: sections down the side" : "turn the table round: players down the side",
+      word: across ? t4("op.transposeSections") : t4("op.transposePlayers"),
+      aria: across ? t4("op.transposeSections.aria") : t4("op.transposePlayers.aria"),
       act: () => A2.setFacing(across ? "sections" : "voices")
     }
   ];
@@ -1147,22 +1168,22 @@ function playerOffers(A2) {
   return [
     {
       k: "tcol-add|line",
-      word: "+ line",
-      aria: "hire another line",
+      word: t4("op.addLine"),
+      aria: t4("op.addLine.aria"),
       act: () => A2.addVoice("line")
     },
     {
       k: "tcol-add|bass",
-      word: "+ bass",
-      aria: "hire a bass",
-      why: A2.hasKind("bass") ? "the record already has a bass" : null,
+      word: t4("op.addBass"),
+      aria: t4("op.addBass.aria"),
+      why: A2.hasKind("bass") ? t4("refuse.haveBass") : null,
       act: () => A2.addVoice("bass")
     },
     {
       k: "tcol-add|drums",
-      word: "+ drums",
-      aria: "hire a drummer",
-      why: A2.hasKind("drums") ? "the record already has a drummer" : null,
+      word: t4("op.addDrums"),
+      aria: t4("op.addDrums.aria"),
+      why: A2.hasKind("drums") ? t4("refuse.haveDrums") : null,
       act: () => A2.addVoice("drums")
     }
   ];
@@ -1171,8 +1192,8 @@ function sectionOffer(A2) {
   const n3 = A2.doc().form.sections.length;
   return [{
     k: "trow-add",
-    word: "+ section",
-    aria: "add a section at the end",
+    word: t4("op.addSection"),
+    aria: t4("op.addSection.end"),
     act: () => A2.addSection(n3)
   }];
 }
@@ -1184,6 +1205,13 @@ function pickerFor2(f2) {
   return pickerFor((f2.options || []).length, { strip: true });
 }
 var wordOf = (f2) => f2.word == null || f2.word === "" ? "—" : String(f2.word);
+var valueAria = (value, derived) => derived ? t4("value.defaultAria", { value }) : value;
+function chipAria(word, why, prov) {
+  if (why && prov) return t4("sheet.chip.whyProv", { name: word, why, prov });
+  if (why) return t4("sheet.refused", { name: word, why });
+  if (prov) return t4("sheet.chip.prov", { name: word, prov });
+  return word;
+}
 function chipStrip(f2, onWrite) {
   const cur = f2.value == null ? "" : String(f2.value);
   const chip = (o4) => {
@@ -1201,7 +1229,11 @@ function chipStrip(f2, onWrite) {
       aria-disabled=${o2(hard || off ? "true" : void 0)}
       data-why=${o2(why == null ? void 0 : why)}
       title=${o2(why ? why : void 0)}
-      aria-label=${hard || off && o4.why || o4.prov ? w2 + (hard ? ", " + cellWhy : off && o4.why ? ", " + o4.why : "") + (o4.prov ? ", " + o4.prov : "") : w2}
+      aria-label=${chipAria(
+      w2,
+      hard ? cellWhy : off ? o4.why || null : null,
+      o4.prov || null
+    )}
       @click=${() => {
       if (hard || off) return;
       onWrite(v3);
@@ -1219,7 +1251,7 @@ function chipStrip(f2, onWrite) {
     return v3 === cur || v3 === "";
   };
   return b`<div class="nu-wgroups">
-    <div class="nu-groupbar" role="group" aria-label="what it acts on">
+    <div class="nu-groupbar" role="group" aria-label=${t4("sheet.groups.aria")}>
       ${f2.groups.map((g2) => b`<button type="button" class="nu-groupbtn"
         data-g=${g2.word} data-k=${f2.key + "|group|" + g2.word}
         aria-pressed=${String(g2.word === want)}
@@ -1229,7 +1261,7 @@ function chipStrip(f2, onWrite) {
   }}>${g2.word}</button> `)}
     </div>
     <div class="nu-wchips nu-pinned" role="group"
-      aria-label="the word it is on">${all.filter(isPin).map(chip)}</div>
+      aria-label=${t4("sheet.pinned.aria")}>${all.filter(isPin).map(chip)}</div>
     <div class="nu-wchips" role="group" aria-label=${f2.label}>${all.filter((o4) => !isPin(o4)).map((o4) => {
     const v3 = String(o4.v == null ? "" : o4.v);
     const g2 = (f2.groups || []).find((gg) => gg.vals.includes(v3));
@@ -1263,7 +1295,10 @@ function fieldRow(f2, openField, setOpenField, after) {
         aria-disabled=${o2(op.why ? "true" : void 0)}
         data-why=${o2(op.why || void 0)}
         title=${o2(op.why || void 0)}
-        aria-label=${(op.aria || op.word) + (op.why ? ", " + op.why : "")}
+        aria-label=${op.why ? t4(
+      "sheet.refused",
+      { name: op.aria || op.word, why: op.why }
+    ) : op.aria || op.word}
         @click=${() => {
       if (op.why || !op.act) return;
       try {
@@ -1287,7 +1322,7 @@ function fieldRow(f2, openField, setOpenField, after) {
       <span class=${e3({ "nu-sheetsay": true, "is-refused": !!s3.why })}
         data-why=${o2(s3.why || void 0)}
         title=${o2(s3.why || void 0)}
-        aria-label=${s3.why ? s3.label + ": " + wordOf(s3) + ", " + s3.why : s3.label + ": " + wordOf(s3)}>${wordOf(s3)}</span>
+        aria-label=${s3.why ? t4("sheet.say.refused", { name: s3.label, value: wordOf(s3), why: s3.why }) : t4("sheet.field", { name: s3.label, value: wordOf(s3) })}>${wordOf(s3)}</span>
       ${s3.sub ? b`<small class="nu-sheetsub">${s3.sub}</small>` : A}
     </div>`;
   }
@@ -1302,14 +1337,14 @@ function fieldRow(f2, openField, setOpenField, after) {
     after();
   };
   const clearBack = sf.clear && !sf.derived ? b`<button type="button" class="nu-clearback" data-k=${"clear|" + sf.key}
-        aria-label=${"clear " + sf.label + " back to what it inherits"}
+        aria-label=${t4("sheet.clearBack.aria", { name: sf.label })}
         @click=${() => {
     try {
       sf.clear();
     } catch (e4) {
     }
     after();
-  }}>clear</button>` : A;
+  }}>${t4("act.clear")}</button>` : A;
   if (pick === "combo")
     return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
@@ -1331,8 +1366,11 @@ function fieldRow(f2, openField, setOpenField, after) {
       <input class="nu-numslide" type="range" data-k=${sf.key}
         min=${String(N2.min)} max=${String(N2.max)} step=${String(N2.step)}
         .value=${String(shown)}
-        aria-label=${sf.label + (N2.unit ? ", in " + N2.unit : "")}
-        aria-valuetext=${String(shown) + (N2.unit ? " " + N2.unit : "") + (cur == null ? ", inherited" : "")}
+        aria-label=${N2.unit ? t4(
+      "sheet.slider.unit.aria",
+      { name: sf.label, unit: N2.unit }
+    ) : t4("head.name", { name: sf.label })}
+        aria-valuetext=${valueAria(fmt(shown, N2.unit || void 0), cur == null)}
         @input=${(e4) => {
       const box = e4.target.parentElement?.querySelector(".nu-numbox");
       if (box) box.value = e4.target.value;
@@ -1342,7 +1380,7 @@ function fieldRow(f2, openField, setOpenField, after) {
         type="number" data-k=${"num|" + sf.key}
         min=${String(N2.min)} max=${String(N2.max)} step=${String(N2.step)}
         .value=${String(shown)}
-        aria-label=${sf.label + " — type a number"}
+        aria-label=${t4("sheet.numbox.aria", { name: sf.label })}
         @change=${(e4) => slide(e4.target.value)} />
       ${N2.unit ? b`<small class="nu-numunit">${N2.unit}</small>` : A}
       ${clearBack}
@@ -1375,7 +1413,10 @@ function fieldRow(f2, openField, setOpenField, after) {
         aria-disabled=${o2(sf.why ? "true" : void 0)}
         data-why=${o2(sf.why || void 0)}
         title=${o2(sf.why || void 0)}
-        aria-label=${sf.why ? sf.label + ": " + sf.why : sf.label + ": " + wordOf(sf) + (sf.derived ? ", inherited" : ", written here")}
+        aria-label=${sf.why ? t4("sheet.field.refused", { name: sf.label, why: sf.why }) : t4("sheet.field", {
+    name: sf.label,
+    value: valueAria(wordOf(sf), !!sf.derived)
+  })}
         @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
       ${clearBack}
       ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
@@ -1421,44 +1462,44 @@ function timeFace(A2) {
     const c3 = A2.wcell(sp);
     return c3.label == null ? "" : String(c3.label);
   };
-  const bpm = doc.time && doc.time.bpm != null ? String(doc.time.bpm) : "—";
+  const bpm = doc.time && doc.time.bpm != null ? fmt(doc.time.bpm, "BPM") : "—";
   const key = [w2("alphabet.key"), w2("alphabet.mode")].filter(Boolean).join(" ");
-  return [bpm + " a minute", w2("time.meter"), key].filter(Boolean).join(" · ");
+  return [bpm, w2("time.meter"), key].filter(Boolean).join(" · ");
 }
 function timeSheet(A2) {
   const f2 = [];
-  f2.push({ kind: "node", label: "tempo", node: A2.bpmNode() });
-  f2.push({ kind: "node", label: "by hand", node: A2.tempoNode() });
-  f2.push(seated(A2, "time.meter", "meter"));
-  f2.push({ kind: "node", label: "signature", node: A2.meterNode() });
-  f2.push(seated(A2, "time.swing", "swing"));
-  f2.push(seated(A2, "time.groove", "groove"));
+  f2.push({ kind: "node", label: t4("field.tempo"), node: A2.bpmNode() });
+  f2.push({ kind: "node", label: t4("time.byHand"), node: A2.tempoNode() });
+  f2.push(seated(A2, "time.meter", t4("noun.meter")));
+  f2.push({ kind: "node", label: t4("time.signature"), node: A2.meterNode() });
+  f2.push(seated(A2, "time.swing", t4("field.swing")));
+  f2.push(seated(A2, "time.groove", t4("field.groove")));
   f2.push(flagField(
     "rubato",
-    "the breathing",
+    t4("time.rubato"),
     A2.rubatoOn(),
-    "played to the grid",
-    "the record breathes",
+    t4("time.rubato.off"),
+    t4("time.rubato.on"),
     (on) => A2.setRubato(on),
-    "your box, not the record — a link carries nothing of it"
+    t4("time.rubato.sub")
   ));
-  f2.push({ kind: "node", label: "key", node: A2.keyNode() });
-  const mode = seated(A2, "alphabet.mode", "mode");
+  f2.push({ kind: "node", label: t4("field.key"), node: A2.keyNode() });
+  const mode = seated(A2, "alphabet.mode", t4("field.mode"));
   const cap = A2.tuningSay();
   if (cap && mode.key) mode.sub = cap;
   f2.push(mode);
-  f2.push(seated(A2, "alphabet.scale", "scale"));
-  f2.push(seated(A2, "alphabet.harmony", "harmony"));
+  f2.push(seated(A2, "alphabet.scale", t4("field.scale")));
+  f2.push(seated(A2, "alphabet.harmony", t4("time.harmony")));
   f2.push(flagField(
     "diatonic",
-    "the line",
+    t4("field.melody"),
     !!A2.diatonicOn(),
-    "follows the chords",
-    "stays in the key",
+    t4("time.melody.chords"),
+    t4("time.melody.key"),
     (on) => A2.setDiatonic(on)
   ));
-  f2.push({ kind: "node", label: "the changes", node: A2.changesNode() });
-  f2.push({ kind: "node", label: "record gain", node: A2.boardNode() });
+  f2.push({ kind: "node", label: t4("time.changes"), node: A2.changesNode() });
+  f2.push({ kind: "node", label: t4("time.gain"), node: A2.boardNode() });
   return f2;
 }
 function rulesFace(A2) {
@@ -1483,24 +1524,36 @@ var SPECIALS = [
   {
     k: "ttime",
     id: "time",
-    word: "time",
-    aria: "the record's own time — how fast it counts, what it counts in, and what it counts in the key of",
+    get word() {
+      return t4("special.time.word");
+    },
+    get aria() {
+      return t4("special.time.aria");
+    },
     face: timeFace,
     sheet: timeSheet
   },
   {
     k: "trules",
     id: "rules",
-    word: "rules",
-    aria: "the genre, as sentences you can edit",
+    get word() {
+      return t4("special.rules.word");
+    },
+    get aria() {
+      return t4("special.rules.aria");
+    },
     face: rulesFace,
     sheet: rulesSheet
   },
   {
     k: "tmotifs",
     id: "motifs",
-    word: "motifs",
-    aria: "the bank — every tune and beat this record holds, who reads each one, and where it came from; tap a name to point the selected cell at it",
+    get word() {
+      return t4("special.phrases.word");
+    },
+    get aria() {
+      return t4("special.phrases.aria");
+    },
     face: motifsFace,
     sheet: motifsSheet,
     lamp: (A2) => A2.motifLamp()
@@ -1509,8 +1562,12 @@ var SPECIALS = [
 var PRODUCE = {
   k: "tproduce",
   id: "produce",
-  word: "produce",
-  aria: "the producer — what has been said about this record, and what may be said next",
+  get word() {
+    return t4("special.produce.word");
+  },
+  get aria() {
+    return t4("special.produce.aria");
+  },
   face: produceFace,
   sheet: produceSheet
 };
@@ -1523,10 +1580,10 @@ function masterFace(A2) {
     const cur = A2.masterOf(m3.key);
     if (cur != null && cur !== "") said.push(m3.labels[cur] || String(cur));
   }
-  return said.length ? said.join(" · ") : "the genre's own chain, nothing written";
+  return said.length ? said.join(" · ") : t4("value.default");
 }
 function masterMixSheet(A2) {
-  return [{ kind: "node", label: "the buses", node: A2.boardRack() }];
+  return [{ kind: "node", label: t4("master.buses"), node: A2.boardRack() }];
 }
 
 // nukernel/src/table/undo.ts
@@ -1551,10 +1608,10 @@ var DocUndo = class {
   }
   /** the word the button says, so "undo" is never a promise with no object. */
   get undoWord() {
-    return this.back.length ? "undo " + (this.names[this.names.length - 1] || "the last change") : "undo";
+    return this.back.length ? t4("undo.undoOf", { name: this.names[this.names.length - 1] || t4("undo.lastChange") }) : t4("act.undo");
   }
   get redoWord() {
-    return this.fwd.length ? "redo " + (this.fwdNames[this.fwdNames.length - 1] || "the last change") : "redo";
+    return this.fwd.length ? t4("undo.redoOf", { name: this.fwdNames[this.fwdNames.length - 1] || t4("undo.lastChange") }) : t4("act.redo");
   }
   /** Run `op` with the document remembered first. EVERY op the grid performs
    *  goes through here, which is what "for every op" in 9a means and what the
@@ -1600,7 +1657,7 @@ var DocUndo = class {
     }
     if (now) {
       this.fwd.push(now);
-      this.fwdNames.push(name || "the last change");
+      this.fwdNames.push(name || t4("undo.lastChange"));
     }
     this.inside = true;
     try {
@@ -1622,7 +1679,7 @@ var DocUndo = class {
     }
     if (now) {
       this.back.push(now);
-      this.names.push(name || "the last change");
+      this.names.push(name || t4("undo.lastChange"));
     }
     this.inside = true;
     try {
@@ -1733,15 +1790,15 @@ function bandTable(host, A2) {
     RO.observe(paneEl2);
   };
   function stick() {
-    const t4 = host.querySelector("table.nu-sheetgrid");
-    if (!t4) return;
+    const t5 = host.querySelector("table.nu-sheetgrid");
+    if (!t5) return;
     const pane2 = host.querySelector(".nu-pane");
-    if (pane2) t4.style.setProperty(
+    if (pane2) t5.style.setProperty(
       "--panew",
       pane2.clientWidth - 6 + "px"
     );
     let y2 = 0;
-    for (const tr of Array.from(t4.querySelectorAll("thead > tr"))) {
+    for (const tr of Array.from(t5.querySelectorAll("thead > tr"))) {
       for (const c3 of Array.from(tr.children))
         c3.style.insetBlockStart = y2 + "px";
       y2 += tr.getBoundingClientRect().height;
@@ -1757,38 +1814,42 @@ function bandTable(host, A2) {
   const formulaHead = (S2) => {
     const at = S2.at();
     const doc = A2.doc();
-    const addr = at ? A2.secName(at.i) + " × " + (doc.voices[at.vi]?.name || "") : "no cell selected";
+    const addr = at ? t4("bar.address", {
+      section: A2.secName(at.i),
+      player: doc.voices[at.vi]?.name || ""
+    }) : t4("bar.noCell");
     const rangeN = rangeCells(S2).length;
-    return b`<div class="nu-formula" role="group" aria-label="the selection">
-      <span class="nu-fadr" data-k="taddr"
-        aria-live="polite">${addr}${rangeN > 1 ? " · " + rangeN + " cells" : ""}</span>
+    const shown = rangeN > 1 ? tn("bar.addrRange", rangeN, { addr }) : addr;
+    return b`<div class="nu-formula" role="group"
+        aria-label=${t4("bar.selection")}>
+      <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
       <div class="nu-fops">
         ${barBtn(
       "tundo",
-      "↶ undo",
+      t4("bar.undo"),
       U.undoWord,
       U.canUndo,
-      "nothing has been done here to take back",
+      t4("bar.undo.none"),
       () => {
         U.undo();
       }
     )}
         ${barBtn(
       "tredo",
-      "↷ redo",
+      t4("bar.redo"),
       U.redoWord,
       U.canRedo,
-      "nothing has been taken back to put forward",
+      t4("bar.redo.none"),
       () => {
         U.redo();
       }
     )}
         ${barBtn(
       "tcopy",
-      "copy",
-      "copy this cell's vector",
+      t4("bar.copy"),
+      t4("act.copy"),
       !!at,
-      "no cell is selected — tap one first",
+      t4("bar.noSel"),
       () => {
         if (!SEL) return;
         CLIP = { ...SEL };
@@ -1797,10 +1858,10 @@ function bandTable(host, A2) {
     )}
         ${barBtn(
       "tpaste",
-      "paste",
-      "paste the copied vector here",
+      t4("bar.paste"),
+      t4("act.paste"),
       !!at && !!CLIP,
-      !at ? "no cell is selected — tap one first" : "nothing has been copied yet",
+      !at ? t4("bar.noSel") : t4("bar.paste.none"),
       () => pasteHere(S2)
     )}
       </div>
@@ -1811,7 +1872,7 @@ function bandTable(host, A2) {
       aria-disabled=${o2(on ? void 0 : "true")}
       data-why=${o2(on ? void 0 : why)}
       title=${o2(on ? void 0 : why)}
-      aria-label=${on ? aria : aria + ", " + why}
+      aria-label=${on ? aria : t4("sheet.refused", { name: aria, why })}
       @click=${() => {
     if (!on) return;
     act();
@@ -1850,7 +1911,7 @@ function bandTable(host, A2) {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
         <button type="button" class="nu-sphead" data-k=${sp.k}
           aria-expanded=${String(open)}
-          aria-label=${sp.word + " — " + sp.aria}
+          aria-label=${sp.aria}
           @click=${() => toggle(openKey)}
           @contextmenu=${(e4) => {
       e4.preventDefault();
@@ -1874,13 +1935,13 @@ function bandTable(host, A2) {
   const cornerBtn = (S2) => b`<button type="button"
     class="nu-rowjump nu-corner" data-k="tcorner"
     aria-expanded=${String(OPEN === "corner")}
-    aria-label="the whole record — fill it from a genre, re-seed it, or turn the table round"
+    aria-label=${t4("head.corner.aria")}
     @click=${() => toggle("corner")}
     @contextmenu=${(e4) => {
     e4.preventDefault();
     toggle("corner", true);
   }}
-    >${S2.across ? "player" : "section"}</button>`;
+    >${S2.across ? t4("noun.player") : t4("noun.section")}</button>`;
   const voiceHead = (S2, name) => {
     const v3 = A2.doc().voices.find((x2) => x2.name === name);
     const vi = A2.doc().voices.indexOf(v3);
@@ -1890,8 +1951,11 @@ function bandTable(host, A2) {
         scope="col">
       <button type="button" class="nu-colbtn nu-vpaint" data-k=${"tcol|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
-        aria-label=${name + " — " + (sub || "no instrument") + " — open this player's vector"}
-        title=${name + (sub ? " — " + sub : "")}
+        aria-label=${t4(
+      "head.player.aria",
+      { name, instrument: sub || t4("head.player.none") }
+    )}
+        title=${sub ? t4("head.player.aria", { name, instrument: sub }) : t4("head.name", { name })}
         data-say=${o2(cm && cm.s ? cm.s : void 0)}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e4) => {
@@ -1910,7 +1974,7 @@ function bandTable(host, A2) {
     return b`<th class="nu-colhead" scope="col">
       <button type="button" class="nu-colbtn" data-k=${"tcol|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
-        aria-label=${A2.secName(i5) + " — open this section's vector"}
+        aria-label=${tn("head.section", s3.bars, { name: A2.secName(i5) })}
         @click=${() => toggle("row|" + sid)}
         data-say=${o2(sm && sm.s ? sm.s : void 0)}
         @contextmenu=${(e4) => {
@@ -1918,13 +1982,13 @@ function bandTable(host, A2) {
       toggle("row|" + sid, true);
     }}
         >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}<b class="nu-colname">${A2.roleWord(s3.role)}</b
-        ><span class="nu-colinstr">${s3.bars} bars</span></button>
+        ><span class="nu-colinstr">${tn("count.bar", s3.bars)}</span></button>
       ${grip(sid, "tcol|" + sid, A2.secName(i5))}
     </th>`;
   };
   const grip = (colId, addr, name) => b`<button type="button"
     class="nu-colgrip" data-k=${"tgrip|" + addr}
-    aria-label=${"resize the " + name + " column — drag, or the arrow keys"}
+    aria-label=${t4("head.grip.aria", { name })}
     @keydown=${(e4) => {
     const d2 = e4.key === "ArrowRight" ? 12 : e4.key === "ArrowLeft" ? -12 : 0;
     if (!d2) return;
@@ -1957,7 +2021,10 @@ function bandTable(host, A2) {
     aria-disabled=${o2(o4.why ? "true" : void 0)}
     data-why=${o2(o4.why || void 0)}
     title=${o2(o4.why || void 0)}
-    aria-label=${(o4.aria || o4.word) + (o4.why ? ", " + o4.why : "")}
+    aria-label=${o4.why ? t4(
+    "sheet.refused",
+    { name: o4.aria || o4.word, why: o4.why }
+  ) : o4.aria || o4.word}
     @click=${() => {
     if (o4.why || !o4.act) return;
     op(o4.word, o4.act);
@@ -1978,9 +2045,9 @@ function bandTable(host, A2) {
     if (OPEN === "corner")
       return openRow(S2, sheetFor("corner", () => [{
         kind: "ops",
-        label: "this record",
+        label: t4("head.song"),
         ops: tableOps(A2, S2.across).map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
-      }]), "the whole record");
+      }]), t4("head.song"));
     for (const sp of SPECIALS)
       if (OPEN === "sp|" + sp.id)
         return openRow(S2, sheetFor(OPEN, () => wrapOps(sp.sheet(A2))), sp.word);
@@ -2007,7 +2074,17 @@ function bandTable(host, A2) {
     ), rid) : A}
     ${cols.map((c3) => {
       const key = S2.across ? "cell|" + c3 + "|" + rid : "cell|" + rid + "|" + c3;
-      return OPEN === key ? openRow(S2, sheetFor(key, () => cellSheetOf(S2, rid, c3)), key) : A;
+      return OPEN === key ? openRow(
+        S2,
+        sheetFor(key, () => cellSheetOf(S2, rid, c3)),
+        t4(
+          "cell.sheet.name",
+          {
+            name: S2.across ? rid : c3,
+            section: S2.across ? c3 : rid
+          }
+        )
+      ) : A;
     })}`;
   };
   const secRowHead = (sid) => {
@@ -2017,7 +2094,7 @@ function bandTable(host, A2) {
     return b`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
-        aria-label=${A2.secName(i5) + ", " + s3.bars + " bars — open this section's vector"}
+        aria-label=${tn("head.section", s3.bars, { name: A2.secName(i5) })}
         @click=${() => toggle("row|" + sid)}
         @contextmenu=${(e4) => {
       e4.preventDefault();
@@ -2027,7 +2104,7 @@ function bandTable(host, A2) {
         ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i5 + 1}</span></span
         ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span></button>
-      <small> ${s3.bars} bars</small>
+      <small> ${tn("count.bar", s3.bars)}</small>
     </th>`;
   };
   const voiceRowHead = (name) => {
@@ -2037,7 +2114,7 @@ function bandTable(host, A2) {
     return b`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
-        aria-label=${name + " — open this player's vector"}
+        aria-label=${t4("head.name", { name })}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e4) => {
       e4.preventDefault();
@@ -2076,7 +2153,12 @@ function bandTable(host, A2) {
         data-k=${key}
         aria-expanded=${String(OPEN === openKey)}
         aria-selected=${String(sel)}
-        aria-label=${name + " · " + A2.secName(i5) + ": " + word + (mark ? " (" + mark.w + ")" : "") + (sel ? " — selected; tap again to edit" : " — tap to select")}
+        aria-label=${mark ? t4("cell.aria.mark", {
+      name,
+      section: A2.secName(i5),
+      value: word,
+      mark: mark.w
+    }) : t4("cell.aria", { name, section: A2.secName(i5), value: word })}
         data-say=${o2(mark && mark.s ? mark.s : void 0)}
         @click=${(e4) => {
       if (e4.shiftKey && SEL) {
@@ -2113,8 +2195,8 @@ function bandTable(host, A2) {
     S2,
     "perf",
     "tfoot|perf",
-    "performance",
-    "how the band plays it — the record's own performance",
+    t4("special.perf.word"),
+    t4("axis.performance"),
     perfCells(A2),
     () => perfSheet(A2)
   )}
@@ -2123,7 +2205,7 @@ function bandTable(host, A2) {
     const master = "mix|master";
     const face2 = masterFace(A2);
     return b`<tr class="nu-footrow nu-mixrow" data-row="mix">
-      <th class="nu-srowh" scope="row"><span class="nu-srowname">mix</span></th>
+      <th class="nu-srowh" scope="row"><span class="nu-srowname">${t4("special.mix.word")}</span></th>
       ${c2(cols, (c3) => c3, (c3) => mixCell(c3))}
       <td class="nu-addcell"></td>
     </tr>
@@ -2131,17 +2213,21 @@ function bandTable(host, A2) {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
         <button type="button" class="nu-sphead" data-k="tmix"
           aria-expanded=${String(OPEN === master)}
-          aria-label=${"the master — " + face2 + " — and the buses every strip feeds"}
+          aria-label=${t4("special.master.aria", { face: face2 })}
           @click=${() => toggle(master)}
           @contextmenu=${(e4) => {
       e4.preventDefault();
       toggle(master, true);
     }}
-          ><b class="nu-spword">master</b
+          ><b class="nu-spword">${t4("special.master.word")}</b
           ><span class="nu-spface">${face2}</span></button>
       </th>
     </tr>
-    ${OPEN === master ? openRow(S2, sheetFor(master, () => wrapOps(masterMixSheet(A2))), "master") : A}
+    ${OPEN === master ? openRow(
+      S2,
+      sheetFor(master, () => wrapOps(masterMixSheet(A2))),
+      t4("special.master.word")
+    ) : A}
     ${cols.map((c3) => OPEN === "mix|" + c3 ? openRow(S2, sheetFor(OPEN, () => wrapOps(mixSheet(A2, c3))), c3) : A)}`;
   };
   const produceRow = (S2) => {
@@ -2156,7 +2242,7 @@ function bandTable(host, A2) {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
         <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
           aria-expanded=${String(OPEN === openKey)}
-          aria-label=${PRODUCE.word + " — " + PRODUCE.aria}
+          aria-label=${PRODUCE.aria}
           @click=${() => toggle(openKey)}
           @contextmenu=${(e4) => {
       e4.preventDefault();
@@ -2181,7 +2267,7 @@ function bandTable(host, A2) {
     })}
         data-k=${"tmix|" + name}
         aria-expanded=${String(OPEN === openKey)}
-        aria-label=${name + " — its seat on the desk: " + word + (mk ? " (" + mk.w + ")" : "")}
+        aria-label=${mk ? t4("mix.cell.aria.mark", { name, value: word, mark: mk.w }) : t4("mix.cell.aria", { name, value: word })}
         data-say=${o2(mk && mk.s ? mk.s : void 0)}
         @click=${() => toggle(openKey)}
         @contextmenu=${(e4) => {
@@ -2218,7 +2304,10 @@ function bandTable(host, A2) {
       "is-derived": !!f2.derived
     })}
       data-k=${f2.key}
-      aria-label=${(f2.label || f2.key) + ": " + (f2.word ?? "—")}
+      aria-label=${t4("sheet.field", {
+      name: f2.label || f2.key,
+      value: f2.word ?? "—"
+    })}
       @click=${() => {
       const row = "foot|perf";
       if (SHEETKEY !== row) {
@@ -2260,8 +2349,8 @@ function bandTable(host, A2) {
     if (ops) ops.ops.push(
       {
         k: "tcell-copy|" + A2.doc().voices[vi].name + "|" + sid,
-        word: "copy",
-        aria: "copy this cell's vector",
+        word: t4("bar.copy"),
+        aria: t4("act.copy"),
         act: () => {
           CLIP = { sec: sid, voice: A2.doc().voices[vi].name };
           draw();
@@ -2269,9 +2358,9 @@ function bandTable(host, A2) {
       },
       {
         k: "tcell-paste|" + A2.doc().voices[vi].name + "|" + sid,
-        word: "paste",
-        aria: "paste the copied vector here",
-        why: CLIP ? null : "nothing has been copied",
+        word: t4("bar.paste"),
+        aria: t4("act.paste"),
+        why: CLIP ? null : t4("bar.paste.none"),
         act: () => pasteInto(i5, vi)
       }
     );
@@ -2287,11 +2376,11 @@ function bandTable(host, A2) {
       const s3 = f2;
       if (s3.set) {
         const set = s3.set;
-        s3.set = (v3) => op(s3.label || "the change", () => set(v3));
+        s3.set = (v3) => op(s3.label || t4("op.change"), () => set(v3));
       }
       if (s3.clear) {
         const cl = s3.clear;
-        s3.clear = () => op("clearing " + (s3.label || ""), cl);
+        s3.clear = () => op(t4("op.clearing", { name: s3.label || "" }), cl);
       }
     }
     return fields;
@@ -2373,7 +2462,7 @@ function bandTable(host, A2) {
     const fi = doc.form.sections.findIndex((s3) => s3.id === CLIP.sec);
     const fv = doc.voices.findIndex((v3) => v3.name === CLIP.voice);
     if (fi < 0 || fv < 0) return;
-    op("paste", () => A2.copyCellTo(fi, fv, i5, vi));
+    op(t4("bar.paste"), () => A2.copyCellTo(fi, fv, i5, vi));
   }
   function pasteHere(S2) {
     const at = S2.at();
@@ -2413,7 +2502,7 @@ function bandTable(host, A2) {
     const at = S2.at();
     if (!at) return;
     op(
-      way === "row" ? "fill across the row" : "fill down the column",
+      way === "row" ? t4("op.fillRow") : t4("op.fillCol"),
       () => A2.copyCell(at.i, at.vi, way)
     );
   }
@@ -2529,7 +2618,7 @@ function bandTable(host, A2) {
         e4.preventDefault();
         const cells = rangeCells(S2);
         op(
-          cells.length > 1 ? "clearing " + cells.length + " cells" : "clearing the cell",
+          cells.length > 1 ? tn("op.clearCells", cells.length) : t4("op.clearingCell"),
           () => {
             for (const c3 of cells) {
               const i5 = A2.doc().form.sections.findIndex((s3) => s3.id === c3.sid);
@@ -2558,10 +2647,10 @@ function bandTable(host, A2) {
     if (OUT) document.removeEventListener("pointerdown", OUT, true);
     OUT = (e4) => {
       if (!OPEN) return;
-      const t4 = e4.target;
-      if (!t4 || !t4.closest) return;
-      if (t4.closest(".nu-wopen")) return;
-      if (t4.closest("button, a, input, select, textarea, [role=slider], label"))
+      const t5 = e4.target;
+      if (!t5 || !t5.closest) return;
+      if (t5.closest(".nu-wopen")) return;
+      if (t5.closest("button, a, input, select, textarea, [role=slider], label"))
         return;
       if (!host.isConnected) return;
       OPEN = null;

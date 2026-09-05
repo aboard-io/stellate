@@ -58,6 +58,11 @@
 // is, and atlas.js is the only file that knows where a place is on one.
 import { NuAtlas, NuPrecompose, TERMS } from "./deps.js";
 import { makeGlobe, ARC_MIN, ARC_MAX } from "./globe.js";
+/* THE WORDS COME FROM THE CATALOGUE (TABLE.md §12b, nukernel/src/copy/atlas.ts).
+   Nothing on this surface is typed here: a key names a whole sentence and the
+   names, places and years this page is about arrive as placeholders, because a
+   genre name is DATA and a sentence about it is copy. */
+import { t, tn } from "./copy.js";
 
 /* WINDOW LEFT THIS LIST when the marks stopped deciding for themselves what
    aligns with the year: this file used to compute `Math.abs(r.year - Y) <=
@@ -398,9 +403,7 @@ export function mount(parent, ctx) {
        be reachable by Tab; the globe comes first in the tab order and the marks
        follow it. */
     tabindex: "0",
-    "aria-label": "A globe of the records. Drag to turn, pinch or scroll to "
-      + "zoom, plus and minus to zoom by keyboard. Tab moves between the places "
-      + "that have a record near the year on the when slider." });
+    "aria-label": t("atlas.globe.aria") });
   wrap.append(svg);
 
   const globe = makeGlobe(svg);
@@ -644,8 +647,7 @@ export function mount(parent, ctx) {
      is where it always belonged: a screen reader entering the list is told
      what it is and how much of it there is, and a sighted reader can see. */
   idxRows.setAttribute("aria-label",
-    "every genre in the catalogue, oldest first — all "
-    + (ALL.length + ROLES.length) + " of them");
+    t("atlas.index.aria", { n: ALL.length + ROLES.length }));
   idx.append(idxRows);
 
   parent.append(say, wrap, idx);
@@ -782,10 +784,17 @@ export function mount(parent, ctx) {
     const w = W(), row = w && w.WIKI[gk];
     if (w && row) {
       const title = w.name(gk);
-      const kind = row.kind !== "genre" ? " · the " + row.kind : "";
+      const kind = row.kind !== "genre" ? row.kind : "";
       const s = el("span", { className: "nu-ixw", textContent: title });
       s.dataset.gk = gk;
-      if (kind) s.append(el("span", { className: "nu-kind", textContent: kind }));
+      /* THE SEPARATOR IS A SPACE AND THE SENTENCE IS A KEY. The kind rides in
+         its own span so nu.css can keep it quiet and `nowrap` at 320; the
+         leading space is LAYOUT between two spans, not a word, which is why it
+         is here and not inside the catalogue string (a padded string is a
+         thing test/copy.test.js C9 refuses, and rightly — a translator should
+         never own trailing whitespace). */
+      if (kind) s.append(el("span", { className: "nu-kind",
+                                      textContent: " " + t("atlas.wiki.kind", { kind }) }));
       /* THE MARK IS ↗ AND NOT A "W" (2026-08-30), argued rather than picked:
            · a W is Wikipedia's WORDMARK shrunk to one letter — a logo on a
              page that draws marks, and the one thing the mark would say
@@ -813,17 +822,33 @@ export function mount(parent, ctx) {
          internal argument, dates and commit narrative, up to 1,546 characters
          — shipped verbatim as the link's title). The why stays in wiki.js for
          the gates and the report; the reader gets the destination. */
-      a.title = "Open " + w.name(gk) + " on Wikipedia";
+      a.title = t("atlas.wiki.title", { name: title });
       // an aria-label REPLACES an element's content (the 2026-08-29 lesson,
       // one column over) and the content is one arrow now — so the label
       // carries the whole of the name: the word, its kind, the destination.
-      a.setAttribute("aria-label", title + kind + " on Wikipedia");
+      // TWO KEYS RATHER THAN A SUFFIX GLUED ON: "{name} · the {kind} on
+      // Wikipedia" is one sentence in one order here and in another order
+      // somewhere else, and a caller that concatenated could not be taught it.
+      a.setAttribute("aria-label", kind
+        ? t("atlas.wiki.kindAria", { name: title, kind })
+        : t("atlas.wiki.aria", { name: title }));
       return { plate: s, over: a };
     }
-    const miss = w && (w.MISSES || []).find((m) => m.key === gk);
-    const why = roleWhy
-      ? "a role has a job, not a history — " + roleWhy
-      : (miss ? miss.why : "no article for this anchor in the catalogue yet");
+    /* THE REASON IS THREE SENTENCES AND NONE OF THEM IS THE RESEARCH NOTE
+       (2026-09-05, the functional text pass). `NuWiki.MISSES[].why` and
+       `atlas.js EXCLUDE`'s old paragraphs were printed here verbatim — a
+       genre's internal argument, with its dates, its backticked keys and its
+       quoted reviewer, up to 1,546 characters — as `data-why`, `data-say`, the
+       `title` and the accessible name of a row in a list of genres. The note
+       stays in wiki.js and in the genre JSON for the gates and the report. A
+       reader gets the plain fact, and it is still a REASON rather than a blank:
+       test/atlas.js G23 and test/gutter.js T5 both read `data-why` back off the
+       rendered row and fail on an empty one.
+         · a ROLE — atlas.js EXCLUDE hands over the KEY of its sentence, so the
+           classic script holds an address and this line holds the print.
+         · a REFUSED ANCHOR — one sentence, the same for all 28. */
+    const sayKey = roleWhy || "atlas.noArticle";
+    const say = t(roleWhy ? roleWhy + ".say" : sayKey);
     /* THE KEY IS THE LAST RESORT NOW, NOT THE ANSWER (2026-09-03). "IT IS THE
        ROW'S OWN KEY" above was written when the alternative was an em dash and
        it is still true of the six ROLES, whose key IS their name ("simple",
@@ -838,10 +863,11 @@ export function mount(parent, ctx) {
     const s = el("span", { className: "nu-ixw nu-ixw-no",
                            textContent: word });
     s.dataset.gk = gk;
-    s.dataset.why = why;                 // the reason, for the gates and the report
-    s.dataset.say = "No Wikipedia article";  // the reader's sentence (DESIGN.md §4)
-    s.title = "No Wikipedia article";
-    s.setAttribute("aria-label", word + ", no Wikipedia article");
+    s.dataset.why = say;                 // the reason, for the gates and the report
+    s.dataset.say = say;                 // the reader's sentence (DESIGN.md §4)
+    s.title = say;
+    s.setAttribute("aria-label",
+      t(roleWhy ? roleWhy + ".aria" : "atlas.noArticle.aria", { name: word }));
     return { plate: null, over: s };
   }
   function idxRow(year, genre, place, gk, why) {
@@ -872,9 +898,17 @@ export function mount(parent, ctx) {
        what the mark's second line says on the globe, so a reader who hears
        "dub" here and sees "dub" on the earth is hearing one thing named once.
        That is also the only place the slug still lives, which is the honest
-       cost of taking it off the page. */
-    b.setAttribute("aria-label", why ? "play " + genre + " — " + why
-      : "play " + place + " " + year + " — " + genre);
+       cost of taking it off the page.
+
+       THE NAME IS THE ONE ON THE PLATE (2026-09-05, the functional text pass).
+       It used to be the KEY — "play Kingston 1973 — dub" — with EXCLUDE's whole
+       paragraph in place of the year and place on the seven rows that have
+       none. A row now says what it plays and where it is from, in the words a
+       reader can see, and the sentence is one key with three placeholders. */
+    const label = (W() && W().name(gk)) || genre;
+    b.setAttribute("aria-label", why
+      ? t("atlas.rowRole.aria", { name: label })
+      : t("atlas.row.aria", { name: label, place, year }));
     const li = el("li", { className: "nu-ixli" });
     li.dataset.gk = gk;
     /* THE PLACE RIDES ON THE <li> AS A CANON NAME, because `sweep()` below
@@ -926,9 +960,10 @@ export function mount(parent, ctx) {
        at the top of a chronology. Its plate PLAYS through `openRow`'s role
        branch, which already calls `pick(gk, playNow)` for a placeless key —
        no new door. */
-    f.append(idxRow("—", PINNED, "the blank state", PINNED, EXCLUDE[PINNED]));
+    f.append(idxRow("—", PINNED, t("atlas.place.none"), PINNED, EXCLUDE[PINNED]));
     for (const r of ALL) f.append(idxRow(yearWord(r.year), r.gk, r.place, r.gk, null));
-    for (const gk of LISTROLES) f.append(idxRow("—", gk, "a role", gk, EXCLUDE[gk]));
+    for (const gk of LISTROLES)
+      f.append(idxRow("—", gk, t("atlas.place.any"), gk, EXCLUDE[gk]));
     idxRows.append(f);
     idxMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
     /* THE COST IS DECLARED ON THE ARTIFACT, not promised in this comment.
@@ -1505,8 +1540,10 @@ export function mount(parent, ctx) {
          deployed page when he wrote "Don't show ghost genres when the time
          isn't right". A mark that exists only where its record does needs no
          disclaimer. */
-      const lab = name + (WITHIN[name] ? ", in " + WITHIN[name] : "")
-        + " " + yearWord(r.year) + ", " + r.gk;
+      const lab = WITHIN[name]
+        ? t("atlas.markWithin.aria",
+            { place: name, region: WITHIN[name], year: yearWord(r.year), name: r.gk })
+        : t("atlas.mark.aria", { place: name, year: yearWord(r.year), name: r.gk });
       if (m.lab !== lab) { m.lab = lab; m.g.setAttribute("aria-label", lab); }
       /* AND THE GENRE NAME IS PRINTED — the one the TAP WOULD PICK, never a
          pile. `r` is `shown.get(name)`, which atlas.js built from recordAt():
@@ -1854,9 +1891,16 @@ export function mount(parent, ctx) {
        the dashes; eraOf stays exported by atlas.js for whoever needs an
        era's name. */
     const nR = at.exact.size + at.near.size;
-    say.textContent = yearWord(Y) + " · " + nR + " record" + (nR === 1 ? "" : "s")
-      + " within ten years · " + six.join(", ")
-      + (more > 0 ? ", +" + more + " more" : "");
+    /* A COUNT PICKS A KEY (TABLE.md §12b): `nR === 1 ? "" : "s"` is a rule
+       about English that a second table cannot be taught, so the plural is
+       `atlas.record.one` / `.other` and `tn` chooses. The place list itself is
+       DATA — names joined by the page's own comma — and it enters the sentence
+       as one placeholder. */
+    const places = more > 0
+      ? t("atlas.places.more", { places: six.join(", "), n: more })
+      : six.join(", ");
+    say.textContent = t("atlas.yearSay",
+      { year: yearWord(Y), records: tn("atlas.record", nR), places });
   }
 
   /* ---------- the tap that composes ------------------------------------ */
@@ -1895,7 +1939,7 @@ export function mount(parent, ctx) {
        the work happens on the second frame — otherwise the only frame the
        browser renders is the finished one and the box looks frozen for half a
        second with no explanation. */
-    say.textContent = where + " — writing the record…";
+    say.textContent = t("atlas.writing", { where });
     /* ===== AND A TIMER BESIDE THE TWO FRAMES (2026-09-02) ================
        The deferral is two `requestAnimationFrame`s so the sentence above is
        PAINTED before the work starts — the reason is in the paragraph above
@@ -1919,22 +1963,30 @@ export function mount(parent, ctx) {
       let doc;
       try { doc = NuPrecompose.genreToDocument(gk, seed, rules || null); }
       catch (e) {
-        // NAMED, NOT SWALLOWED. The page keeps the record it had; the sentence
-        // says which genre this box cannot write yet and why.
-        say.textContent = "this box cannot write a " + gk + " yet — " + e.message;
+        // NAMED, NOT SWALLOWED. The page keeps the record it had and the
+        // sentence says which genre could not be written. The THROWN MESSAGE
+        // is a programmer's string — it is logged, where a programmer reads
+        // it, and never printed, where it would be a sentence no catalogue
+        // holds and no translator can reach (TABLE.md §12b).
+        try { console.error("nukernel: " + gk + " did not compose", e); } catch (e2) {}
+        say.textContent = t("atlas.cannotWrite", { name: gk });
         return;
       }
       here = gk;
       ctx.setDocument(doc);
       redraw();
-      say.textContent = where + " · " + gk + " — " + doc.form.sections.length
-        + " sections, " + doc.voices.length + " voices, take "
-        + doc.performance.take
-        // `take` is a field of the document and a REWRITE does not move it —
-        // it moves the SEED, which is what makes a second reading of the same
-        // anchor a different record. (The .nu-bar has both buttons since
-        // 2026-08-27: "take" bumps that field, "rewrite" bumps this seed.)
-        + (seed > 1 ? " · reading " + seed : "") + ".";
+      // `take` is a field of the document and a REWRITE does not move it —
+      // it moves the SEED, which is what makes a second write of the same
+      // anchor a different record. (The .nu-bar has both buttons since
+      // 2026-08-27: "take" bumps that field, "rewrite" bumps this seed.)
+      // TWO KEYS, NOT A SUFFIX: the seed clause is part of the sentence, and a
+      // sentence assembled from a tail cannot be reordered in another language.
+      const counted = { where, name: gk,
+        sections: tn("count.section", doc.form.sections.length),
+        voices: tn("count.player", doc.voices.length),
+        take: doc.performance.take, seed };
+      say.textContent = seed > 1 ? t("atlas.wroteSeed", counted)
+                                 : t("atlas.wrote", counted);
       /* THE SEED MOVED EVEN WHEN THE YEAR DID NOT. `setYear` announces most of
          this, through `showing()`; a rewrite of a ROLE genre never reaches it
          (`showing` returns early — "a role has a job, not a history"), and a
@@ -1968,7 +2020,7 @@ export function mount(parent, ctx) {
   function reseed(gk, done) {
     const target = gk || here;
     if (!target) {
-      say.textContent = "pick a place first, then this writes it again.";
+      say.textContent = t("atlas.pickPlace");
       return false;
     }
     let n = drawSeed();
@@ -2042,7 +2094,8 @@ export function mount(parent, ctx) {
        reach this with a name that is not in it; the guard is what keeps that a
        fact rather than an assumption. */
     const r = shown.get(name);
-    if (!r) { say.textContent = name + " — no record here at " + YEARS[yi] + "."; return; }
+    if (!r) { say.textContent = t("atlas.noRecordAt", { place: name, year: YEARS[yi] });
+             return; }
     // …AND THE SECOND TAP ROLLS RATHER THAN COUNTS (2026-09-02), for the
     // reason `reseed` gives: a seed is a position in a domain, and `seed++`
     // had no ceiling and no wrap.
@@ -2502,9 +2555,13 @@ export function mount(parent, ctx) {
       // nobody asked, say what the year holds.
       redraw();
       if (!asked) { sentence(); return; }
-      say.textContent = EXCLUDE[gk]
-        ? "“" + gk + "” has no place on the map — " + EXCLUDE[gk] + "."
-        : "“" + gk + "” has no place on the map yet.";
+      /* ONE SENTENCE FOR BOTH BRANCHES (2026-09-05). It used to splice
+         EXCLUDE's paragraph onto the end and wrap the key in curly quotes —
+         a quoted string is one of the audit's banned families, and the two
+         branches were saying the same fact twice. The row's own cell in the
+         index already carries WHY it has no place; this line carries THAT it
+         has none, which is what a reader who just tapped needs. */
+      say.textContent = t("atlas.noPlace.say", { name: gk });
       return;
     }
     const w = WHEN[gk];
@@ -2663,19 +2720,21 @@ export function mount(parent, ctx) {
     const asked = String((want && want.at) || "").trim();
     const name = canon(asked);
     if (!asked || !PLACES[name]) {
-      return refuse("this link points at "
-        + (asked ? "“" + asked + "”" : "no place")
-        + ", which is not a place on this globe — so the box opened on its own record.");
+      /* THE THING THE LINK NAMED IS PRINTED, NOT QUOTED (2026-09-05). These
+         three read "this link points at “Kingstn”, which is not a place on
+         this globe — so the box opened on its own record": curly quotes and
+         "the box" are two of the audit's banned families, and the clause about
+         what happened next is the same in all three. One key each, whole. */
+      return refuse(asked ? t("atlas.linkNoPlace.say", { place: asked })
+                          : t("atlas.linkBlank.say"));
     }
     const Y = Number(want.y);
     if (!Number.isFinite(Y)) {
-      return refuse("this link's year (“" + String(want.y) + "”) is not a year"
-        + " — so the box opened on its own record.");
+      return refuse(t("atlas.linkYear.say", { year: String(want.y) }));
     }
     const r = recordAt(name, Y);
     if (!r) {
-      return refuse(name + " has no record on this globe"
-        + " — so the box opened on its own record.");
+      return refuse(t("atlas.linkRecord.say", { place: name }));
     }
     /* THE SEED IS THE ONE THE BAR PRINTS, and it is clamped rather than
        trusted: a fragment is a string a stranger typed, and `genreToDocument`

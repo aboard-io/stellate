@@ -43,6 +43,11 @@
 // NO IMPORTS. It builds DOM and calls back; `el` is four lines and copying
 // four lines is cheaper than an import cycle between the two files that use it.
 
+/* THE CATALOGUE (nukernel/TABLE.md §12b): every word this grid prints is a
+   key, and the table element below is `tbl` rather than `t` so the reader and
+   the element cannot be the same name. */
+import { t } from "./copy.js";
+
 const el = (tag, text, cls) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text;
   if (cls) n.className = cls; return n; };
@@ -124,25 +129,25 @@ export function wordGrid(host, spec) {
   const trOf = new Map();              // row id -> its <tr>
   let openKey = null, openTr = null, openBtn = null;
 
-  const t = el("table", null, "nu-wordgrid nu-trims");
+  const tbl = el("table", null, "nu-wordgrid nu-trims");
   /* AN ID ONLY WHERE ONE IS ALREADY AN ADDRESS. The board's grid has been
      `#trimgrid` since it was written and three gates reach it by that id; a
      component that renamed it would be moving an address. Every other caller
      passes none and gets none — an id is a promise to be unique in the
      document, and five grids on one panel could not keep it. */
-  if (spec.id) t.id = spec.id;
+  if (spec.id) tbl.id = spec.id;
   /* HOW MANY COLUMNS, AS A NUMBER THE STYLESHEET CAN DO ARITHMETIC ON. The
      grids are `table-layout: fixed` so the heads are EQUAL (the probe of
      2026-09-02 measured what they are without it: "column heads 145/195/105/
      113/119/88/88px wide so the meters are seven scales"), and a fixed table
      at 100% would then crush nine players into 20px each. CSS cannot count
      `<th>`s, so the count is handed over. It is a COUNT and not a width. */
-  t.style.setProperty("--cols", String(cols.length));
-  if (spec.live) t.dataset.live = spec.live;
-  if (spec.cap) t.append(el("caption", spec.cap, "nu-rowlab"));
+  tbl.style.setProperty("--cols", String(cols.length));
+  if (spec.live) tbl.dataset.live = spec.live;
+  if (spec.cap) tbl.append(el("caption", spec.cap, "nu-rowlab"));
 
   const thead = el("thead"), hr = el("tr");
-  hr.append(el("th", spec.corner == null ? "section" : spec.corner));
+  hr.append(el("th", spec.corner == null ? t("grid.corner") : spec.corner));
   for (const c of cols) {
     const th = el("th", null, "nu-colhead");
     /* THE ATTRIBUTE ON THE CELL, THE PAINT ON THE BUTTON — `.nu-vpaint`'s own
@@ -185,7 +190,7 @@ export function wordGrid(host, spec) {
     hr.append(th);
     colHeads.set(c.id, { th, btn: b });
   }
-  thead.append(hr); t.append(thead);
+  thead.append(hr); tbl.append(thead);
 
   const tbody = el("tbody");
 
@@ -291,7 +296,7 @@ export function wordGrid(host, spec) {
     const box = el("div", null, "nu-wgroups");
     const bar = el("div", null, "nu-groupbar");
     bar.setAttribute("role", "group");
-    bar.setAttribute("aria-label", "what it acts on");
+    bar.setAttribute("aria-label", t("grid.actsOn"));
     const cur2 = c.value == null ? "" : String(c.value);
     const pin = el("div", null, "nu-wchips nu-pinned");
     for (const ch of [...strip.children]) {
@@ -392,10 +397,10 @@ export function wordGrid(host, spec) {
       if (f.node) {
         line.append(f.node);
         if (f.clear && !f.derived) {
-          const cb2 = el("button", "clear", "nu-clearback");
+          const cb2 = el("button", t("act.clear"), "nu-clearback");
           cb2.type = "button";
           cb2.dataset.k = "clear|" + f.key;
-          cb2.setAttribute("aria-label", "clear " + f.label + " back to what it inherits");
+          cb2.setAttribute("aria-label", t("grid.clearBack.aria", { name: f.label }));
           cb2.addEventListener("click", () => { try { f.clear(); } catch (e) {} });
           line.append(cb2);
         }
@@ -409,7 +414,8 @@ export function wordGrid(host, spec) {
         const s = el("span", f.word == null || f.word === "" ? "—" : String(f.word),
                      "nu-sheetsay" + (f.why ? " is-refused" : ""));
         if (f.why) { s.dataset.why = f.why; s.title = f.why;
-                     s.setAttribute("aria-label", f.label + ": " + f.word + ", " + f.why); }
+                     s.setAttribute("aria-label", t("grid.cell.ariaWhy",
+            { name: f.label, value: f.word, why: f.why })); }
         line.append(s);
         if (f.sub) line.append(el("small", f.sub, "nu-sheetsub"));
         box.append(line);
@@ -420,15 +426,20 @@ export function wordGrid(host, spec) {
       b.type = "button";
       b.dataset.k = f.key;
       if (f.derived) b.classList.add("is-derived");
-      b.setAttribute("aria-label", f.label + ": " +
-        (f.word == null || f.word === "" ? "—" : f.word) +
-        (f.derived ? ", inherited" : ", written here"));
+      /* THE SUFFIX WAS ", inherited" / ", written here" (2026-09-05, the
+         functional text pass). DESIGN.md §3 says blank = default and bold =
+         written, which a screen reader cannot see, so the word is said —
+         once, in the catalogue's own spelling — and only for the default. */
+      b.setAttribute("aria-label", t("sheet.field", { name: f.label,
+        value: (f.word == null || f.word === "" ? "—" : f.word) }) +
+        (f.derived ? t("grid.cell.ariaDefault") : ""));
       if (f.why) {
         b.dataset.why = f.why;
         b.setAttribute("aria-disabled", "true");
         b.classList.add("is-refused");
         b.title = f.why;
-        b.setAttribute("aria-label", f.label + ": " + f.why);
+        b.setAttribute("aria-label", t("sheet.field",
+          { name: f.label, value: f.why }));
       }
       b.setAttribute("aria-expanded", "false");
       b.addEventListener("click", () => {
@@ -457,10 +468,10 @@ export function wordGrid(host, spec) {
          written value returns the cell to what it inherits" — so the control
          exists exactly where there is something to delete. */
       if (f.clear && !f.derived) {
-        const cb = el("button", "clear", "nu-clearback");
+        const cb = el("button", t("act.clear"), "nu-clearback");
         cb.type = "button";
         cb.dataset.k = "clear|" + f.key;
-        cb.setAttribute("aria-label", "clear " + f.label + " back to what it inherits");
+        cb.setAttribute("aria-label", t("grid.clearBack.aria", { name: f.label }));
         cb.addEventListener("click", () => { try { f.clear(); } catch (e) {} });
         line.append(cb);
       }
@@ -641,7 +652,7 @@ export function wordGrid(host, spec) {
     trOf.set(row.id, tr);
     rowHeads.set(row.id, { th, btn: jb, live });
   });
-  t.append(tbody);
+  tbl.append(tbody);
 
   /* ---- THE FOOTER: THE RECORD'S OWN ROWS (2026-09-04) -------------------
      TABLE.md §1: "The master is drawn as the table's footer row." A footer row
@@ -738,7 +749,7 @@ export function wordGrid(host, spec) {
       }
       tf.append(tr);
     }
-    t.append(tf);
+    tbl.append(tf);
   }
 
   /* ESCAPE FOLDS IT, and only Escape and the two taps do. Bound on the TABLE
@@ -746,7 +757,7 @@ export function wordGrid(host, spec) {
      would be a second owner of a key the log, the seed strip and the hold
      explainer all already answer, and this one is scoped to the thing the
      thumb is inside. */
-  t.addEventListener("keydown", (e) => {
+  tbl.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !openKey) return;
     const b = cellBtns.get(openKey);
     close();
@@ -759,7 +770,7 @@ export function wordGrid(host, spec) {
   const pane = el("div", null, "nu-pane");
   pane.tabIndex = 0;
   pane.dataset.pane = spec.key;
-  pane.append(t);
+  pane.append(tbl);
   host.append(pane);
 
   /* WHO IS SOUNDING, DRIVEN BY THE CALLER FROM ITS EXISTING "pos" PATH. This

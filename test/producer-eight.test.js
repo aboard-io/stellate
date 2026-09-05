@@ -216,10 +216,16 @@ const setNotes = (doc, list) => {
 };
 const runWith = (doc, list) => { setNotes(doc, list); return Produce.produced(doc); };
 
+/* THE SENTENCES `speak` RETURNS WHEN NOTHING MOVED — the catalogue's
+   `refuse.` family since the functional text pass (TABLE.md §12b). They read
+   "the drums are not playing on this record" / "it's as brighter as it's
+   going to get" until producer.js stopped assembling them out of fragments;
+   the subject is dropped rather than conjugated now, so each is one whole
+   string and the match is exact. nukernel/src/copy/produce.ts is the owner. */
 const FAILURES = [
-  /is not playing on this record$/, /^there (is|are) no /,
-  /^this one counts in /, /as it's going to get$/,
-  /^not yet — push it further$/, / has no opinion about /,
+  /^Not playing on this record$/, /^Not on this record$/,
+  /^this one counts in /, /^Already at the limit$/,
+  /^not yet — push it further$/, / does not change /,
 ];
 const isFailure = (s) => FAILURES.some((re) => re.test(s));
 

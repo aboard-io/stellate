@@ -2622,9 +2622,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         .find((x) => /BOARD-ROUTING\.md$/.test(x.getAttribute("href") || ""));
       return a ? { href: a.getAttribute("href"), text: a.textContent } : null;
     });
-    ok(!!routePtr && /docs\/BOARD-ROUTING\.md/.test(routePtr.text),
+    /* THE CLAIM IS THE LINK, NOT THE FILENAME. It read `.test(routePtr.text)`
+       until the functional text pass (2026-09-05, TABLE.md §11): a markdown
+       path printed as a control's own label is one of the audit's banned
+       families ("a source file, path or identifier"), and the pointer says
+       "Fixed routing" now. The address it points AT has not moved, so the
+       assertion moves to the `href` — which is what "the pointer is there"
+       was always about — and the visible word is only required to be a word. */
+    ok(!!routePtr && /docs\/BOARD-ROUTING\.md$/.test(routePtr.href) &&
+       !!(routePtr.text || "").trim(),
        "the board carries the one-line pointer to docs/BOARD-ROUTING.md " +
-       "(the essay moved, the address is printed)", JSON.stringify(routePtr));
+       "(the essay moved, the address is the link)", JSON.stringify(routePtr));
     // the doc wraps its quotes as markdown blockquotes, so the comparison is
     // whitespace-flattened — the WORDS must match, not the line breaks.
     const routeDoc = require("fs").readFileSync(R("docs/BOARD-ROUTING.md"), "utf8")

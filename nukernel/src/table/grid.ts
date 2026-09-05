@@ -62,6 +62,7 @@ import { SPECIALS, PRODUCE, mixSheet, masterFace,
          masterMixSheet } from "./special.js";
 import { undoStack } from "./undo.js";
 import type { DocUndo } from "./undo.js";
+import { t, tn } from "../copy/global.js";
 
 /* ---- the four facts that survive a rebuild --------------------------- */
 
@@ -362,23 +363,27 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const at = S.at();
     const doc = A.doc();
     const addr = at
-      ? A.secName(at.i) + " × " + (doc.voices[at.vi]?.name || "")
-      : "no cell selected";
+      ? t("bar.address", { section: A.secName(at.i),
+                           player: doc.voices[at.vi]?.name || "" })
+      : t("bar.noCell");
     const rangeN = rangeCells(S).length;
-    return html`<div class="nu-formula" role="group" aria-label="the selection">
-      <span class="nu-fadr" data-k="taddr"
-        aria-live="polite">${addr}${rangeN > 1 ? " · " + rangeN + " cells" : ""}</span>
+    /* THE ADDRESS AND THE RANGE ARE ONE PRINTED STRING, not an address with a
+       count bolted on: a count picks a KEY (`bar.addrRange.one/.other`) and
+       the whole line comes out of the catalogue in one piece. */
+    const shown = rangeN > 1 ? tn("bar.addrRange", rangeN, { addr }) : addr;
+    return html`<div class="nu-formula" role="group"
+        aria-label=${t("bar.selection")}>
+      <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
       <div class="nu-fops">
-        ${barBtn("tundo", "↶ undo", U.undoWord, U.canUndo,
-                 "nothing has been done here to take back", () => { U.undo(); })}
-        ${barBtn("tredo", "↷ redo", U.redoWord, U.canRedo,
-                 "nothing has been taken back to put forward", () => { U.redo(); })}
-        ${barBtn("tcopy", "copy", "copy this cell's vector", !!at,
-                 "no cell is selected — tap one first",
+        ${barBtn("tundo", t("bar.undo"), U.undoWord, U.canUndo,
+                 t("bar.undo.none"), () => { U.undo(); })}
+        ${barBtn("tredo", t("bar.redo"), U.redoWord, U.canRedo,
+                 t("bar.redo.none"), () => { U.redo(); })}
+        ${barBtn("tcopy", t("bar.copy"), t("act.copy"), !!at,
+                 t("bar.noSel"),
                  () => { if (!SEL) return; CLIP = { ...SEL }; draw(); })}
-        ${barBtn("tpaste", "paste", "paste the copied vector here", !!at && !!CLIP,
-                 !at ? "no cell is selected — tap one first"
-                     : "nothing has been copied yet",
+        ${barBtn("tpaste", t("bar.paste"), t("act.paste"), !!at && !!CLIP,
+                 !at ? t("bar.noSel") : t("bar.paste.none"),
                  () => pasteHere(S))}
       </div>
     </div>`;
@@ -397,7 +402,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       aria-disabled=${ifDefined(on ? undefined : "true")}
       data-why=${ifDefined(on ? undefined : why)}
       title=${ifDefined(on ? undefined : why)}
-      aria-label=${on ? aria : aria + ", " + why}
+      aria-label=${on ? aria : t("sheet.refused", { name: aria, why })}
       @click=${() => { if (!on) return; act(); }}>${word}</button>`;
 
   /* ---- THE PANE AND THE TABLE ---------------------------------------- */
@@ -443,7 +448,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
         <button type="button" class="nu-sphead" data-k=${sp.k}
           aria-expanded=${String(open)}
-          aria-label=${sp.word + " — " + sp.aria}
+          aria-label=${sp.aria}
           @click=${() => toggle(openKey)}
           @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
           ><b class="nu-spword">${sp.word}</b
@@ -467,10 +472,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const cornerBtn = (S: Shape) => html`<button type="button"
     class="nu-rowjump nu-corner" data-k="tcorner"
     aria-expanded=${String(OPEN === "corner")}
-    aria-label="the whole record — fill it from a genre, re-seed it, or turn the table round"
+    aria-label=${t("head.corner.aria")}
     @click=${() => toggle("corner")}
     @contextmenu=${(e: Event) => { e.preventDefault(); toggle("corner", true); }}
-    >${S.across ? "player" : "section"}</button>`;
+    >${S.across ? t("noun.player") : t("noun.section")}</button>`;
 
   /** A PLAYER'S HEAD. The lamp is a SIBLING of the button inside the `<th>` and
    *  never a child of it: `[data-live]` is a surface the clock may write, and a
@@ -485,8 +490,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         scope="col">
       <button type="button" class="nu-colbtn nu-vpaint" data-k=${"tcol|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
-        aria-label=${name + " — " + (sub || "no instrument") + " — open this player's vector"}
-        title=${name + (sub ? " — " + sub : "")}
+        aria-label=${t("head.player.aria",
+                       { name, instrument: sub || t("head.player.none") })}
+        title=${sub ? t("head.player.aria", { name, instrument: sub })
+                    : t("head.name", { name })}
         data-say=${ifDefined(cm && cm.s ? cm.s : undefined)}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("col|" + name, true); }}
@@ -506,13 +513,13 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return html`<th class="nu-colhead" scope="col">
       <button type="button" class="nu-colbtn" data-k=${"tcol|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
-        aria-label=${A.secName(i) + " — open this section's vector"}
+        aria-label=${tn("head.section", s.bars, { name: A.secName(i) })}
         @click=${() => toggle("row|" + sid)}
         data-say=${ifDefined(sm && sm.s ? sm.s : undefined)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
         >${sm ? html`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : nothing
         }<b class="nu-colname">${A.roleWord(s.role)}</b
-        ><span class="nu-colinstr">${s.bars} bars</span></button>
+        ><span class="nu-colinstr">${tn("count.bar", s.bars)}</span></button>
       ${grip(sid, "tcol|" + sid, A.secName(i))}
     </th>`;
   };
@@ -530,7 +537,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      `tgrip|<address>` a hand and the inventory reach it by. */
   const grip = (colId: string, addr: string, name: string) => html`<button type="button"
     class="nu-colgrip" data-k=${"tgrip|" + addr}
-    aria-label=${"resize the " + name + " column — drag, or the arrow keys"}
+    aria-label=${t("head.grip.aria", { name })}
     @keydown=${(e: KeyboardEvent) => {
       const d = e.key === "ArrowRight" ? 12 : e.key === "ArrowLeft" ? -12 : 0;
       if (!d) return;
@@ -555,7 +562,9 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     aria-disabled=${ifDefined(o.why ? "true" : undefined)}
     data-why=${ifDefined(o.why || undefined)}
     title=${ifDefined(o.why || undefined)}
-    aria-label=${(o.aria || o.word) + (o.why ? ", " + o.why : "")}
+    aria-label=${o.why ? t("sheet.refused",
+                           { name: o.aria || o.word, why: o.why })
+                       : (o.aria || o.word)}
     @click=${() => { if (o.why || !o.act) return; op(o.word, o.act); }}
     >${o.word}</button>`;
 
@@ -582,9 +591,9 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     if (!OPEN) return nothing;
     if (OPEN === "corner")
       return openRow(S, sheetFor("corner", () => [{ kind: "ops",
-        label: "this record",
+        label: t("head.song"),
         ops: tableOps(A, S.across).map((x) => x.act
-          ? { ...x, act: () => op(x.word, x.act!) } : x) }]), "the whole record");
+          ? { ...x, act: () => op(x.word, x.act!) } : x) }]), t("head.song"));
     /* A SPECIAL ROW'S SHEET IS AN ORPHAN TOO, and for the same reason the
        column head's is: its row is in the `<thead>`, which freezes, and a
        frozen sheet is a sheet that covers the grid it is editing. */
@@ -615,7 +624,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     ${cols.map((c) => {
       const key = S.across ? "cell|" + c + "|" + rid : "cell|" + rid + "|" + c;
       return OPEN === key
-        ? openRow(S, sheetFor(key, () => cellSheetOf(S, rid, c)), key)
+        ? openRow(S, sheetFor(key, () => cellSheetOf(S, rid, c)),
+                  t("cell.sheet.name",
+                    { name: S.across ? rid : c,
+                      section: S.across ? c : rid }))
         : nothing; })}`;
   };
 
@@ -626,14 +638,14 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return html`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
-        aria-label=${A.secName(i) + ", " + s.bars + " bars — open this section's vector"}
+        aria-label=${tn("head.section", s.bars, { name: A.secName(i) })}
         @click=${() => toggle("row|" + sid)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
         data-say=${ifDefined(rm && rm.s ? rm.s : undefined)}
         ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i + 1}</span></span
         ><span class="nu-srowname"> ${A.roleWord(s.role)}</span></button>
-      <small> ${s.bars} bars</small>
+      <small> ${tn("count.bar", s.bars)}</small>
     </th>`;
   };
 
@@ -644,7 +656,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return html`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + name}
         aria-expanded=${String(OPEN === "col|" + name)}
-        aria-label=${name + " — open this player's vector"}
+        aria-label=${t("head.name", { name })}
         @click=${() => toggle("col|" + name)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("col|" + name, true); }}
         data-say=${ifDefined(vm && vm.s ? vm.s : undefined)}
@@ -722,9 +734,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         data-k=${key}
         aria-expanded=${String(OPEN === openKey)}
         aria-selected=${String(sel)}
-        aria-label=${name + " · " + A.secName(i) + ": " + word +
-          (mark ? " (" + mark.w + ")" : "") +
-          (sel ? " — selected; tap again to edit" : " — tap to select")}
+        aria-label=${mark
+          ? t("cell.aria.mark", { name, section: A.secName(i),
+                                  value: word, mark: mark.w })
+          : t("cell.aria", { name, section: A.secName(i), value: word })}
         data-say=${ifDefined(mark && mark.s ? mark.s : undefined)}
         @click=${(e: MouseEvent) => {
           if (e.shiftKey && SEL) { ANCHOR = { sec: sid, voice: name }; draw(); return; }
@@ -760,8 +773,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const tfoot = (S: Shape, cols: string[]): TemplateResult => html`<tfoot>
     ${mixRow(S, cols)}
     ${produceRow(S)}
-    ${footRow(S, "perf", "tfoot|perf", "performance",
-              "how the band plays it — the record's own performance",
+    ${footRow(S, "perf", "tfoot|perf", t("special.perf.word"),
+              t("axis.performance"),
               perfCells(A), () => perfSheet(A))}
   </tfoot>`;
 
@@ -797,7 +810,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const master = "mix|master";
     const face = masterFace(A);
     return html`<tr class="nu-footrow nu-mixrow" data-row="mix">
-      <th class="nu-srowh" scope="row"><span class="nu-srowname">mix</span></th>
+      <th class="nu-srowh" scope="row"><span class="nu-srowname">${
+        t("special.mix.word")}</span></th>
       ${repeat(cols, (c) => c, (c) => mixCell(c))}
       <td class="nu-addcell"></td>
     </tr>
@@ -805,16 +819,16 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
         <button type="button" class="nu-sphead" data-k="tmix"
           aria-expanded=${String(OPEN === master)}
-          aria-label=${"the master — " + face +
-            " — and the buses every strip feeds"}
+          aria-label=${t("special.master.aria", { face })}
           @click=${() => toggle(master)}
           @contextmenu=${(e: Event) => { e.preventDefault(); toggle(master, true); }}
-          ><b class="nu-spword">master</b
+          ><b class="nu-spword">${t("special.master.word")}</b
           ><span class="nu-spface">${face}</span></button>
       </th>
     </tr>
     ${OPEN === master
-      ? openRow(S, sheetFor(master, () => wrapOps(masterMixSheet(A))), "master")
+      ? openRow(S, sheetFor(master, () => wrapOps(masterMixSheet(A))),
+                t("special.master.word"))
       : nothing}
     ${cols.map((c) => OPEN === "mix|" + c
       ? openRow(S, sheetFor(OPEN!, () => wrapOps(mixSheet(A, c))), c)
@@ -837,7 +851,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
         <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
           aria-expanded=${String(OPEN === openKey)}
-          aria-label=${PRODUCE.word + " — " + PRODUCE.aria}
+          aria-label=${PRODUCE.aria}
           @click=${() => toggle(openKey)}
           @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
           ><b class="nu-spword">${PRODUCE.word}</b
@@ -867,8 +881,9 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
                            "is-derived": !A.mixWritten(name) })}
         data-k=${"tmix|" + name}
         aria-expanded=${String(OPEN === openKey)}
-        aria-label=${name + " — its seat on the desk: " + word +
-                     (mk ? " (" + mk.w + ")" : "")}
+        aria-label=${mk
+          ? t("mix.cell.aria.mark", { name, value: word, mark: mk.w })
+          : t("mix.cell.aria", { name, value: word })}
         data-say=${ifDefined(mk && mk.s ? mk.s : undefined)}
         @click=${() => toggle(openKey)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
@@ -908,7 +923,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       class=${classMap({ "nu-wcell": true, "nu-cellword": true,
                          "is-derived": !!f.derived })}
       data-k=${f.key}
-      aria-label=${(f.label || f.key) + ": " + (f.word ?? "—")}
+      aria-label=${t("sheet.field", { name: f.label || f.key,
+                                      value: f.word ?? "—" })}
       @click=${() => { /* (`String(f.key).indexOf("tmaster|") === 0 ? "foot|
            master" : …` STOOD HERE. The footer had two rows of cells and this
            told them apart; it has one, because the master's seven cells are
@@ -949,12 +965,12 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const ops = f.find((x) => (x as { kind?: string }).kind === "ops") as
       { kind: "ops"; ops: Op[] } | undefined;
     if (ops) ops.ops.push(
-      { k: "tcell-copy|" + A.doc().voices[vi]!.name + "|" + sid, word: "copy",
-        aria: "copy this cell's vector",
+      { k: "tcell-copy|" + A.doc().voices[vi]!.name + "|" + sid,
+        word: t("bar.copy"), aria: t("act.copy"),
         act: () => { CLIP = { sec: sid, voice: A.doc().voices[vi]!.name }; draw(); } },
-      { k: "tcell-paste|" + A.doc().voices[vi]!.name + "|" + sid, word: "paste",
-        aria: "paste the copied vector here",
-        why: CLIP ? null : "nothing has been copied",
+      { k: "tcell-paste|" + A.doc().voices[vi]!.name + "|" + sid,
+        word: t("bar.paste"), aria: t("act.paste"),
+        why: CLIP ? null : t("bar.paste.none"),
         act: () => pasteInto(i, vi) });
     return f;
   };
@@ -975,8 +991,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     for (const f of fields) {
       const s = f as { set?: (v: string) => void; clear?: (() => void) | null;
                        label?: string };
-      if (s.set) { const set = s.set; s.set = (v) => op(s.label || "the change", () => set(v)); }
-      if (s.clear) { const cl = s.clear; s.clear = () => op("clearing " + (s.label || ""), cl); }
+      if (s.set) { const set = s.set;
+        s.set = (v) => op(s.label || t("op.change"), () => set(v)); }
+      if (s.clear) { const cl = s.clear;
+        s.clear = () => op(t("op.clearing", { name: s.label || "" }), cl); }
     }
     return fields;
   }
@@ -1076,7 +1094,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const fi = doc.form.sections.findIndex((s) => s.id === CLIP!.sec);
     const fv = doc.voices.findIndex((v) => v.name === CLIP!.voice);
     if (fi < 0 || fv < 0) return;
-    op("paste", () => A.copyCellTo(fi, fv, i, vi));
+    op(t("bar.paste"), () => A.copyCellTo(fi, fv, i, vi));
   }
   function pasteHere(S: Shape): void {
     const at = S.at();
@@ -1127,7 +1145,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   function fill(S: Shape, way: "row" | "col"): void {
     const at = S.at();
     if (!at) return;
-    op(way === "row" ? "fill across the row" : "fill down the column",
+    op(way === "row" ? t("op.fillRow") : t("op.fillCol"),
        () => A.copyCell(at.i, at.vi, way));
   }
 
@@ -1204,7 +1222,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
            range it is that op once per cell inside one snapshot, so Ctrl-Z
            takes the whole rectangle back. */
         const cells = rangeCells(S);
-        op(cells.length > 1 ? "clearing " + cells.length + " cells" : "clearing the cell",
+        op(cells.length > 1 ? tn("op.clearCells", cells.length)
+                            : t("op.clearingCell"),
            () => { for (const c of cells) {
              const i = A.doc().form.sections.findIndex((s) => s.id === c.sid);
              const vi = A.doc().voices.findIndex((v) => v.name === c.name);

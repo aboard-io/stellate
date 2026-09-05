@@ -23,8 +23,8 @@
 // one of its honest adjectives. Two of the six verbs take no descriptor at
 // all, so a two-tap sentence has to read as English too — 'less the crash'
 // does not, 'less crash' does, and the SUBJECT's word is spelled per verb for
-// exactly that reason (SUBJ.bare)." There is no two-tap sentence any more, so
-// `bare` survives only in speak's failure prose and in `wordOf`.
+// exactly that reason (SUBJ.bare)." There is no two-tap sentence any more, and
+// no printed sentence splices `bare` in: it is a routing token.
 //
 // THE MECHANISM is a deterministic VECTOR STEP in genre space, scoped to a
 // subsystem. No model call, no parser, instant, offline, and the same taps
@@ -72,6 +72,24 @@
   "use strict";
 
   const GENRES = NG.GENRES;
+
+  /* ===== THE WORDS THIS FILE PRINTS COME FROM THE CATALOGUE ==============
+     TABLE.md §12b: every string the page prints lives in one keyed table,
+     nukernel/src/copy/ -> the committed nukernel/ui/copy.js, read by
+     `t(key, {name, n})`. This is a CLASSIC SCRIPT — it runs before any module
+     — so the catalogue is asked for a sentence AT THE MOMENT IT IS PRINTED
+     and never at load time; index.html loads ui/copy.js ahead of anything
+     that draws, and a node gate that has not stood the module tier up gets
+     the KEY back rather than a throw.
+
+     THE REFUSALS ARE SHARED WITH ui/produce.js, BY KEY. The page greys a word
+     before it is said and `speak` below refuses it after; the two used to
+     stay identical by having the same sentence typed into both files (and
+     they drifted — the page's `notplaying` and this file's were two copies of
+     the same regex-driven subject-verb agreement). One key, read twice. */
+  const TXT = { t: (k, p) => { const C = (typeof globalThis !== "undefined" &&
+                                          globalThis.COPY) || null;
+                               return C && C.t ? C.t(k, p) : k; } };
 
   /* THE GENRES ARE OFFERED IN TIME ORDER, NOT IN FILE ORDER (2026-08-31).
      Paul: "in producer mode list the genres in the same chronological order as
@@ -158,8 +176,11 @@
      `d` stays on the row and stays "need": every sentence has a descriptor
      slot, and the bare tap is a descriptor that spells itself null. */
   const VERBS = [
+    // `says` HOLDS A CATALOGUE KEY, NOT A SENTENCE. A classic script may carry
+    // a key as data and must not call `COPY.t` at load time (TABLE.md §12b);
+    // whoever draws this row prints `TXT.t(v.says)`.
     { id: "make",  w: "make",      d: "need",
-      says: "change what it IS — toward a record, or toward a word" },
+      says: "produce.makeSay" },
   ];
   const VERB = {}; for (const v of VERBS) VERB[v.id] = v;
 
@@ -192,44 +213,56 @@
 
   /* ================= THE SUBJECTS ========================================
      THE WHOLE TREE. The record, each chair, each chair's own components, and
-     the mix. `w` is the noun as "make"/"add"/"keep only"/"take away" say it
-     ("the drums"); `bare` is how "more"/"less" say it ("more drums", never
-     "more the drums"). `chan` is the desk address (audio/desk.js speaks
-     three kinds: a part chan, a UNIT chan, an instrument chan) and `lane` is
-     the kit letter or letters this subject owns. */
+     the mix. `w` is the noun the sentence says ("the drums"); `bare` is the
+     offering's own routing token. `chan` is the desk address (audio/desk.js
+     speaks three kinds: a part chan, a UNIT chan, an instrument chan) and
+     `lane` is the kit letter or letters this subject owns.
+
+     `w` IS WRITTEN AS A CATALOGUE KEY AND READ AS A WORD. This table is built
+     at LOAD time and a classic script may not call `COPY.t` there (TABLE.md
+     §12b), so the key is what the literal holds and the getter installed under
+     the table is what asks the catalogue — at the moment the word is printed,
+     which is the law. Every existing reader (`S.w`, `SUB[id].w`, `chanWord`,
+     ui/produce.js's cast chips) is unchanged and still gets a string. */
   const SUBJ = [
-    { id: "record", w: "the sound",   bare: "of everything", under: null,
+    { id: "record", w: "produce.subj.record",   bare: "of everything", under: null,
       chan: [], master: true, kind: "record" },
-    { id: "drums",  w: "the drums",   bare: "drums",   under: null, chan: ["drums"],
+    { id: "drums",  w: "produce.subj.drums",   bare: "drums",   under: null, chan: ["drums"],
       lane: ["k","s","h","o","f","c","p","t","m","l","r","x"], kind: "chair" },
-    { id: "kick",   w: "the kick",    bare: "kick",    under: "drums",
+    { id: "kick",   w: "produce.subj.kick",    bare: "kick",    under: "drums",
       chan: ["unit:kick"],  lane: ["k"] },
-    { id: "snare",  w: "the snare",   bare: "snare",   under: "drums",
+    { id: "snare",  w: "produce.subj.snare",   bare: "snare",   under: "drums",
       chan: ["unit:snare"], lane: ["s"] },
-    { id: "hats",   w: "the hats",    bare: "hats",    under: "drums",
+    { id: "hats",   w: "produce.subj.hats",    bare: "hats",    under: "drums",
       chan: ["unit:hat"],   lane: ["h","o","f"] },
-    { id: "toms",   w: "the toms",    bare: "toms",    under: "drums",
+    { id: "toms",   w: "produce.subj.toms",    bare: "toms",    under: "drums",
       chan: ["unit:tom"],   lane: ["t","m","l"] },
-    { id: "cymbals",w: "the cymbals", bare: "cymbals", under: "drums",
+    { id: "cymbals",w: "produce.subj.cymbals", bare: "cymbals", under: "drums",
       chan: ["unit:crash","unit:ride"], lane: ["x","r"] },
-    { id: "perc",   w: "the percussion", bare: "percussion", under: "drums",
+    { id: "perc",   w: "produce.subj.perc", bare: "percussion", under: "drums",
       chan: ["unit:clap","unit:rim"],   lane: ["c","p"] },
-    { id: "bass",   w: "the bass",    bare: "bass",    under: null,
+    { id: "bass",   w: "produce.subj.bass",    bare: "bass",    under: null,
       chan: ["bass"], kind: "chair" },
-    { id: "line",   w: "the bass line", bare: "bass line", under: "bass", chan: [] },
-    { id: "bamp",   w: "the bass sound", bare: "bass sound", under: "bass", chan: [] },
-    { id: "keys",   w: "the keys",    bare: "keys",    under: null,
+    { id: "line",   w: "produce.subj.line", bare: "bass line", under: "bass", chan: [] },
+    { id: "bamp",   w: "produce.subj.bamp", bare: "bass sound", under: "bass", chan: [] },
+    { id: "keys",   w: "produce.subj.keys",    bare: "keys",    under: null,
       chan: ["inst:keys","inst:pads"], kind: "chair" },
-    { id: "guitar", w: "the guitar",  bare: "guitar",  under: null,
+    { id: "guitar", w: "produce.subj.guitar",  bare: "guitar",  under: null,
       chan: ["inst:guitar"], kind: "chair" },
-    { id: "amp",    w: "the amp",     bare: "amp",     under: "guitar", chan: [] },
-    { id: "voice",  w: "the voice",   bare: "voice",   under: null,
+    { id: "amp",    w: "produce.subj.amp",     bare: "amp",     under: "guitar", chan: [] },
+    { id: "voice",  w: "produce.subj.voice",   bare: "voice",   under: null,
       chan: ["vocals"], kind: "chair" },
-    { id: "tune",   w: "the tune",    bare: "tune",    under: null,
+    { id: "tune",   w: "produce.subj.tune",    bare: "tune",    under: null,
       chan: ["lead"], kind: "chair" },
-    { id: "mix",    w: "the mix",     bare: "mix",     under: null,
+    { id: "mix",    w: "produce.subj.mix",     bare: "mix",     under: null,
       chan: [], master: true, kind: "mix" },
   ];
+  /* ...AND HERE IS THE GETTER. One loop, so the seventeen rows above stay a
+     table a person can read down, and so nothing asks the catalogue before the
+     page has one. `enumerable` keeps a spread of a row spelling the word. */
+  for (const r of SUBJ) { const k = r.w;
+    Object.defineProperty(r, "w", { enumerable: true, configurable: true,
+                                    get: () => TXT.t(k) }); }
   const SUB = {}; for (const s of SUBJ) SUB[s.id] = s;
   /* WHICH VERBS A SUBJECT TAKES — RETIRED 2026-09-01 with the five verbs, and
      the table is kept here because its four reasons are not retired at all.
@@ -1604,22 +1637,23 @@
       if (d.nogrid) return ["this one counts in " + ((base[0].genre.meter || {}).steps === 12
         ? "three" : "something other than four") + " — I can move the sound but not the pattern"];
       if (note.d && GENRES[note.d] && !SCOPEFIELDS[note.s])
-        return [GENRES[note.d].label + " has no opinion about " + SUB[note.s].w];
+        return [TXT.t("refuse.genreSilent",
+          { genre: GENRES[note.d].label, name: SUB[note.s].w })];
       // THERE IS NOTHING THERE. The live-channel law's own sentence: a
       // subject this record does not have cannot be made more or less of,
       // and the honest thing is to name it rather than to say the record is
       // already as cymballed as it is going to get. (A chair keeps its own
       // wording — "the voice is not playing" is what an absent PLAYER is.)
       if (!livesOn(base, S))
-        // ...and a PLURAL chair is plural in both halves of the sentence. The
-        // drums became sayable here the day the kitless fence landed, and
-        // "the drums is not playing on this record" is not a thing a person
-        // says. The same test the other branch already made, moved up one.
-        return [S.kind === "chair"
-          ? SUB[note.s].w + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? " are" : " is") +
-            " not playing on this record"
-          : "there " + (/s$/.test(S.bare) && !/ss$/.test(S.bare) ? "are" : "is") +
-            " no " + S.bare + " on this record"];
+        /* ...AND NOBODY COMPUTES AGREEMENT ANY MORE. Both halves used to
+           conjugate off `/s$/.test(S.bare)` — "the drums ARE not playing" vs
+           "the cantor IS not playing" — which is English grammar written in
+           JavaScript and unportable by construction. The SUBJECT IS DROPPED
+           instead: the sentence stands beside the note whose heading already
+           names it, so one string is true of every noun. Same two keys the
+           page greys the chip with (ui/produce.js WHY). */
+        return [TXT.t(S.kind === "chair" ? "refuse.notPlaying"
+                                         : "refuse.notHere")];
       // ...and the one that is not a failure at all: the staggered
       // thresholds mean a first press can be below every noun this target
       // disagrees about. Say so, and say what to do about it. TWO-TAP verbs
@@ -1631,7 +1665,10 @@
                                     : wouldMove(model, base, note.s, note.d))
                   : wouldVerb(model, base, note.v, note.s)))
         return ["not yet — push it further"];
-      return ["it's as " + wordOf(note.d, note.s) + " as it's going to get"];
+      // "it's as brighter as it's going to get" — the ungrammatical template
+      // the audit found in forty-eight rendered places, and the case TABLE.md
+      // §12b names. One key, no adjective spliced into a comparative.
+      return [TXT.t("refuse.spent")];
     }
     // ONE MOVE, SAID ONCE. The stack moves every section and every matching
     // channel, and a producer does not say "put them on a big rock kit" five
@@ -1654,10 +1691,16 @@
     : false);
   const chanWord = (c) => {
     const s = SUBJ.find((x) => x.chan.includes(c));
-    return s ? s.w : c === "master" ? "the mix" : c.replace(/^unit:|^inst:/, "the ");
+    // "the mix" IS THE MIX ROW'S OWN WORD — the same key SUBJ.mix reads, not a
+    // second spelling of it.
+    return s ? s.w : c === "master" ? TXT.t("produce.subj.mix")
+                                    : c.replace(/^unit:|^inst:/, "the ");
   };
-  const wordOf = (dsc, sid) => (dsc && GENRES[dsc] ? dsc
-    : dsc && ADJOF[dsc] ? ADJOF[dsc].w : SUB[sid] ? SUB[sid].bare : String(dsc));
+  /* `wordOf(dsc, sid)` STOOD HERE and is deleted with the sentence that read
+     it: `"it's as " + wordOf(...) + " as it's going to get"`. It existed to
+     find the ADJECTIVE or the BARE noun to splice into that comparative, and
+     the comparative is one catalogue key now (`refuse.spent`), so nothing
+     needs the word. `SUBJ.bare` is still the offering's own routing token. */
 
   /* ================= THE SENTENCE ========================================
      Assembled by the taps, never read from them.
@@ -1666,8 +1709,8 @@
      that stood here said: "Two of the six verbs take no descriptor, and their
      subject is spelled BARE so a two-tap sentence is real English: 'more
      kick', not 'more the kick'." There is no two-tap sentence any more, so
-     four of the five branches went with the four verbs, and `bare` survives in
-     `wordOf` and in speak's failure prose only.
+     four of the five branches went with the four verbs, and `bare` is a
+     routing token now rather than a word anybody prints.
 
      THE TRAILING SPACE IS THE BARE TAP'S. A sentence whose descriptor is null
      is "make the drums" — "just add it" is a TAP, not a word, and what it
@@ -1680,7 +1723,11 @@
     const V = VERB[n.v], S = SUB[n.s];
     if (!V || !S) return "";
     const dsc = n.d ? (GENRES[n.d] ? n.d : (ADJOF[n.d] ? ADJOF[n.d].w : n.d)) : "";
-    return "make " + S.w + (dsc ? " " + dsc : "");
+    // TWO KEYS RATHER THAN A TERNARY INSIDE ONE. It read `"make " + S.w +
+    // (dsc ? " " + dsc : "")`: a verb, a subject and a quality in the order
+    // English takes them, which is not the order every language takes them.
+    return dsc ? TXT.t("produce.sentence", { name: S.w, quality: dsc })
+               : TXT.t("produce.sentenceBare", { name: S.w });
   }
 
   /* ================= WHAT MAY BE SAID ====================================

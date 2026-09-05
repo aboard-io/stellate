@@ -141,6 +141,10 @@
 import { GENRES, NuWiki, NuRules, NuPrecompose } from "./deps.js";
 import { selectField } from "./selects.js";
 import { el, kinOf } from "./xtab.js";
+/* THE CATALOGUE (src/copy/index.ts). This file is an ES module under ui/, so
+   it imports the reader directly rather than reading the global the classic
+   scripts use. Every word this panel prints is a key. */
+import { t } from "./copy.js";
 
 /* ---------- the three-liner every view in this directory carries ---------- */
 const txt = (s) => document.createTextNode(String(s));
@@ -175,14 +179,13 @@ export function mountRules(host, ctx) {
   const doc = ctx.doc();
   const gk = doc.basis;
   const base = GENRES[gk];
-  const ax = ctx.section(host, "ax-rules", "The rules");
+  const ax = ctx.section(host, "ax-rules", t("rule.deckName"));
   if (!base) {
     /* THROW BY NAME is `precompose.js`'s law for a caller that asks for an
        anchor that is not there; a VIEW cannot throw at draw time without
        taking the page with it, so it refuses in the one way this page allows —
        visibly, with the reason. */
-    ax.append(el("p", "no anchor “" + gk + "” — this record was " +
-      "composed by a build that had one", "nu-why"));
+    ax.append(el("p", t("rule.noAnchor", { name: gk }), "nu-why"));
     return () => {};
   }
 
@@ -233,10 +236,10 @@ export function mountRules(host, ctx) {
   const kin = kinOf(gk, base);
   const kinWords = [];
   if (kin.parents.length)
-    kinWords.push("out of " + kin.parents.map((p) => p[0]).join(", "));
+    kinWords.push(t("rule.kinFrom", { value: kin.parents.map((p) => p[0]).join(", ") }));
   if (kin.kids.length)
-    kinWords.push("into " + kin.kids.slice(0, 4).map((p) => p[0]).join(", ") +
-      (kin.kids.length > 4 ? " +" + (kin.kids.length - 4) : ""));
+    kinWords.push(t("rule.kinTo", { value: kin.kids.slice(0, 4).map((p) => p[0]).join(", ") +
+      (kin.kids.length > 4 ? " +" + (kin.kids.length - 4) : "") }));
   if (kinWords.length) {
     /* ONE LINE, AND THE REST BEHIND A HOLD. The lineage is a nowrap line that
        ellipsises (a plate whose height depends on how many children a genre
@@ -518,7 +521,7 @@ export function mountRules(host, ctx) {
     if (!e || e.kind === "changes") {
       div.append(el("p", sayFlat(r), "nu-why"));
       if (!why && e && e.kind === "changes") {
-        const w2 = "the chord grid is the Key panel's, one bar at a time";
+        const w2 = t("rule.chordsFromKey");
         div.dataset.why = w2;
         div.dataset.say = w2 + " — " + r.tier;
         div.classList.add("is-off");
@@ -723,7 +726,7 @@ export function mountRules(host, ctx) {
     const keys = e.keys ? e.keys(row, gk) : [];
     const cur = r.value || {};
     if (!keys.length) {
-      lab.append(el("span", "— nothing to answer for", "nu-w"));
+      lab.append(el("span", t("rule.nothingToAnswer"), "nu-w"));
       return;
     }
     const write = (k, v) => {
@@ -797,10 +800,10 @@ export function mountRules(host, ctx) {
      `data-say` is what a hold or a hover opens. Nothing about WHICH tier a
      rule is in changed; only whether the panel says it before it is asked. */
   function resetInto(div, r) {
-    const b = el("button", "reset");
+    const b = el("button", t("act.reset"));
     b.type = "button";
     b.dataset.k = "rule-reset|" + r.field;
-    b.setAttribute("aria-label", "reset " + r.head);
+    b.setAttribute("aria-label", t("rule.reset", { name: r.head }));
     b.addEventListener("click", () => drop(r.field));
     div.append(b);
   }
@@ -822,11 +825,10 @@ export function mountRules(host, ctx) {
        with a reason that would have to be invented to sit under it. */
     if (!NuRules.RULES.some((r) => r.axis === axis && r.edit)) return;
     const rows = offers.filter((o) => o.axis === axis);
-    const opts = [{ value: "", label: "+ add a rule" }, ...rows.map((o) => ({
+    const opts = [{ value: "", label: t("rule.addRule") }, ...rows.map((o) => ({
       value: o.field, label: o.head,
       disabled: !!o.why || o.edit.kind === "changes",
-      why: o.why || (o.edit.kind === "changes"
-        ? "the chord grid is the Key panel's, one bar at a time" : null),
+      why: o.why || (o.edit.kind === "changes" ? t("rule.chordsFromKey") : null),
     }))];
     /* ONE COMPACT `+` AT THE BLOCK'S FOOT (2026-09-02, wave 4 §4: *"the
        palette is ONE compact '+ add' combo per axis at the block's foot"*). It
@@ -838,11 +840,11 @@ export function mountRules(host, ctx) {
        writes onto the control), and the offer is still the first option's own
        words, where a reader who can see it already reads it. */
     const p = el("p", null, "nu-pal");
-    menu(p, "rule-add|" + axis, "add a rule to " + axis, opts, "", (f) => {
+    menu(p, "rule-add|" + axis, t("rule.addRuleTo", { name: axis }), opts, "", (f) => {
       if (!f) return;
       const r = NuRules.say(row, gk).find((x) => x.field === f);
       if (r) land(f, startAt(r));
-    }, rows.length ? null : "every rule this axis has is already on the record");
+    }, rows.length ? null : t("rule.allRulesOn"));
     parent.append(p);
   }
 
@@ -877,7 +879,7 @@ export function mountRules(host, ctx) {
        vocabulary ("that's how we are going to talk about nukernel") and
        `rules.js AXES` is the one list of the eight. An `<h3>`, because that is
        what it is: the name of the block under it. */
-    sec.append(el("h3", axis, "nu-axword"));
+    sec.append(el("h3", t("axis." + axis.toLowerCase()), "nu-axword"));
     for (const r of mine) ruleRow(sec, r);
     /* THE MOTIFS ARE READ AND NOT EDITED — Paul, in the same message: *"The
        motifs don't need to be editable. Just the structural rules."*
@@ -896,8 +898,9 @@ export function mountRules(host, ctx) {
       const div = el("div", null, "nu-rule nu-motifs");
       div.dataset.rule = "motifs";
       div.dataset.tier = "row";
-      div.dataset.say = mine2.map((r) => sayFlat(r) + " — " + r.why).join(" · ");
-      div.append(el("p", "the motifs are written in the tracker", "nu-why"));
+      div.dataset.say = mine2.map((r) => sayFlat(r)).join(" \u00b7 ") +
+        " \u00b7 " + t("rule.phrasesEdited");
+      div.append(el("p", t("rule.phrasesEdited"), "nu-why"));
       sec.append(div);
     }
     paletteInto(sec, axis, offers);

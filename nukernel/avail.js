@@ -459,13 +459,40 @@
   // a HARMONYLABEL row this round, applied by the precompose slice; when it
   // lands it is preferred for the LABELS. The KEYS stay derived either way,
   // because a label is prose and a vocabulary is data.)
+  /* ---------- THE CATALOGUE, READ AT PRINT TIME AND NEVER AT LOAD --------
+     `src/copy/index.ts`: index.html loads this classic <script> before any
+     module, so `COPY` is not there yet when SHEETS is minted. A row's `label`
+     is therefore a GETTER over a KEY, and an option list is built inside
+     `values()` — both of which run when a sheet is DRAWN. */
+  const T = (key, p) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
+    return C ? C.t(key, p) : key; };
+  const TN = (key, n) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
+    return C ? C.tn(key, n) : key + " " + n; };
+  /* a row whose head is a catalogue key rather than a typed word */
+  const named = (key, row) => Object.defineProperty(row, "label",
+    { get: () => T(key), enumerable: true, configurable: true });
+  /* ...and a row minted off the REGISTRY, whose head is read back through the
+     registry's own getter every time it is drawn (`fields.js nudgesFor` and
+     `fields.js CELLVEC` resolve the catalogue there — one owner for the
+     vocabulary, and this file never spells a control's name a second time) */
+  const namedAsk = (src, row) => Object.defineProperty(row, "label",
+    { get: () => src.ask, enumerable: true, configurable: true });
+
   const HARMONIES = () => [...new Set(Object.values(GENRES)
     .map((g) => g.harmony).filter((h) => typeof h === "string"))].sort();
-  const HARMONYWORD = { modal: "one mode, no changes",
-                        cycle: "a cycle of changes",
-                        emergent: "the changes come from the voices" };
-  const harmonyLabel = (h) => (NG.HARMONYLABEL && NG.HARMONYLABEL[h]) ||
-    h + " — " + (HARMONYWORD[h] || h);
+  const HARMONYWORD = { modal: "value.harmonyModal",
+                        cycle: "value.harmonyCycle",
+                        emergent: "value.harmonyEmergent" };
+  /* THE CATALOGUE WINS OVER THE DATA TABLE HERE (2026-09-05, the functional
+     text pass). `genres.js HARMONYLABEL` is a data table that happens to hold
+     a SENTENCE — "emergent — the changes come from the voices", seven words of
+     explanation on a chip — and a sentence is copy wherever it is stored. The
+     three words themselves are the vocabulary and are unchanged; what a person
+     reads comes from the one catalogue, so a second language reaches it.
+     `HARMONYLABEL` is still the fallback for a word the catalogue has not met
+     (a genre table can name a fourth harmony before this file hears of it). */
+  const harmonyLabel = (h) => (HARMONYWORD[h] ? T(HARMONYWORD[h]) : null) ||
+    (NG.HARMONYLABEL && NG.HARMONYLABEL[h]) || h;
   // THE QUALITIES, GROUPED BY FAMILY — and the grouping is the KERNEL'S, not
   // this file's. kernel.js `QUALFAM` is one ordered table of eight families
   // (the mode's own stacks, triads, sixths, sevenths, ninths, elevenths,
@@ -569,8 +596,8 @@
      one WORD per fact when two controls answer one field, so both say `default`
      now — this is the one place the rename went past the literal phrase, and
      that is why. */
-  const RATEOPTS = () => [{ value: "", label: "default" },
-                          { value: "1", label: "as written" },
+  const RATEOPTS = () => [{ value: "", label: T("value.default") },
+                          { value: "1", label: T("value.asWritten") },
                           ...Object.keys(RATES).map((k) => ({ value: k, label: RATELABEL[k] }))];
   const rateNow = (doc) => doc.time.rate == null ? ""
     : doc.time.rate === 1 ? "1"
@@ -610,25 +637,16 @@
      performance nudges), and this is the INVENTORY of what is left, because the
      idea is still spelled four ways and nobody can see that from one row:
 
-       "default"          time.rate, dev.bass, cast.bassStyle, and fields.js
-                          stress / phrase / orn — the ones renamed, plus the
-                          rate button in ui/eight.js that is the same option
-       "—" (was "the voice's own")  material.cell — this SECTION says nothing, so the
-                          voice's own standing cell is read
-       "as written"       dev.line, dev.kit, and `time.rate`'s value 1 — and
-                          NOTE THAT IT MEANS TWO DIFFERENT THINGS: on dev.line
-                          and dev.kit it is the absent option, and on time.rate
-                          it is a REAL value (rate exactly 1) sitting one row
-                          under `default`, which is the absent one
-
-     THE RECOMMENDATION, NOT TAKEN HERE BECAUSE IT WAS NOT ASKED FOR: `default`
-     for all four absent options, and `as written` kept ONLY for time.rate's
-     value 1, where it is a real answer and not an absence. That would leave one
-     word for "say nothing" and no word doing two jobs. It is three more string
-     edits and a line in test/knobs.js; it is not made without an instruction,
-     because dev.line's "as written" is a MUSICIAN'S word for playing the motif
-     as the composer set it down, and losing it may be a real loss rather than a
-     tidy-up — that is a judgement about the vocabulary and not about the code. */
+     THE RECOMMENDATION WAS TAKEN, 2026-09-05 (the functional text pass; Paul:
+     *"Just call things 'default.'"*). Every empty detent on this page is
+     `core.ts value.default` — time.rate, dev.bass, dev.kit, cast.bassStyle,
+     the eleven ROWFACTS rows, the four row-vector strips and the three
+     performance rows — and `as written` is kept ONLY on `time.rate`'s value 1,
+     where it is a REAL answer (rate exactly 1) and not an absence. `dev.line`
+     has no empty option at all: its `absent` is the VALUE "as written", which
+     is a word in songs.js WORDS and an address, not copy.
+     "—" stays on `material.cell` and on the six voice-sound strips: a dash is
+     a detent with no value to name, not a second spelling of default. */
   const SHEETS = {
     /* ---- 1 TIME (song) ---- */
     /* ---- THE METER: THE COMMON SIGNATURES AS CHIPS (2026-09-05) --------
@@ -651,7 +669,9 @@
                      ...["2/4", "5/4", "7/8", "12/8"].map((v) => ({ value: v, label: v }))],
       get: (doc) => doc.time.meter || "",
       set: (doc, s, v) => { doc.time.meter = v || null; } },
-    "time.rate": { label: "reading speed", scope: "song",
+    /* "Speed", not "reading speed" — the review's glossary (a player PLAYS),
+       and the same word `rules.js` puts on the genre's own row. */
+    "time.rate": { get label() { return T("field.speed"); }, scope: "song",
       values: () => RATEOPTS(),
       get: (doc) => rateNow(doc),
       set: (doc, s, v) => { doc.time.rate = v === "" ? null : v === "1" ? 1 : RATES[v]; } },
@@ -673,7 +693,7 @@
        absent option and therefore the default detent, which is what makes the
        combo say whether the record's groove is the composer's or yours. */
     "time.groove": { label: "groove", scope: "song",
-      values: () => [{ value: "", label: "the grid" },
+      values: () => [{ value: "", label: T("value.onTheGrid") },
                      ...opts(Object.keys(GROOVELABEL), GROOVELABEL)],
       get: (doc) => doc.time.groove || "",
       set: (doc, s, v) => { doc.time.groove = v || null; } },
@@ -743,7 +763,7 @@
       set: (doc, s, v) => { const c = CHORD(PROGIN(doc, s), s); if (c) c.q = v; } },
 
     /* ---- 4 FORM (one section) ---- */
-    "form.role": { label: "role", scope: "section",
+    "form.role": { get label() { return T("row.type"); }, scope: "section",
       values: () => opts(Object.keys(ROLES), ROLES),
       get: (doc, s) => SEC(doc, s).role,
       set: (doc, s, v) => { const x = SEC(doc, s); if (x.id) x.role = v; } },
@@ -796,7 +816,11 @@
        The `""` key in the promotion is load-bearing. Turning the string into
        `{ "<secId>": v }` alone would leave every OTHER section with no entry
        and no default, and materialAt would return undefined for all of them. */
-    "material.cell": { label: "reads", scope: "voice.section", chair: "line",
+    /* THE PHRASE, NOT "reads" — the review's glossary (TABLE.md §12a: a
+       player PLAYS, and what it plays is a PHRASE). This row is the per-
+       section material cell, so the noun is what it holds. */
+    "material.cell": { get label() { return T("noun.phrase"); },
+      scope: "voice.section", chair: "line",
       absent: "", local: true,          // cell names, not a vocabulary — see above
       /* "—", NOT "the voice's own", 2026-08-28 (Paul: *"Replace 'the voice's
          own' with '—' everywhere"*). This is the per-SECTION material cell's
@@ -824,7 +848,8 @@
        read "the record's own" — Paul, 2026-08-26: *"'the record's own' -- make
        that 'default'."* Two controls pointing at one fact have to point with
        one word or neither of them is readable. */
-    "cast.bassStyle": { label: "default", scope: "voice", chair: "bass", kind: "bass",
+    "cast.bassStyle": { get label() { return T("value.default"); },
+      scope: "voice", chair: "bass", kind: "bass",
       values: () => [{ value: "", label: "no bass" }, ...opts(Object.keys(BASSOPS), BASSOPS)],
       get: (doc, s) => (V(doc, s).cast || {}).style || "",
       set: (doc, s, v) => { V(doc, s).cast.style = v || null; } },
@@ -1026,12 +1051,17 @@
        in the header note above `SHEETS`; only the ones that are LITERALLY this
        option, drawn twice, were changed with it. */
     "dev.bass": { label: "the bass", scope: "voice.section", chair: "bass", kind: "bass", absent: "",
-      values: () => [{ value: "", label: "default" },
+      values: () => [{ value: "", label: T("value.default") },
                      ...opts(Object.keys(BASSOPS), BASSOPS)],
       get: (doc, s) => (V(doc, s).development || {})[s.section] || "",
       set: (doc, s, v) => { V(doc, s).development[s.section] = v; } },
+    /* THE EMPTY DETENT SAYS `default`, LIKE ITS SIBLING (2026-09-05). It read
+       "as written", which is the same idea in a second spelling — and on
+       `time.rate` "as written" is a REAL value (rate exactly 1) one row under
+       the absent one, so the word was doing two jobs. This is the header's own
+       recommendation, taken. */
     "dev.kit": { label: "the kit", scope: "voice.section", chair: "drums", kind: "hit", absent: "",
-      values: () => [{ value: "", label: "as written" },
+      values: () => [{ value: "", label: T("value.default") },
                      ...opts(Object.keys(KITLABEL), KITLABEL)],
       get: (doc, s) => (V(doc, s).development || {})[s.section] || "",
       set: (doc, s, v) => { V(doc, s).development[s.section] = v; } },
@@ -1060,10 +1090,10 @@
     for (const r of NF.nudgesFor(axis)) {
       if (!r.options) continue;
       const key = r.key;
-      SHEETS[axis + "." + key] = { label: r.ask, scope: "section", nudge: key,
+      SHEETS[axis + "." + key] = namedAsk(r, { scope: "section", nudge: key,
         values: () => r.options,
         get: (doc, s) => SEC(doc, s)[key] || "",
-        set: (doc, s, v) => { const x = SEC(doc, s); if (x.id) x[key] = v || null; } };
+        set: (doc, s, v) => { const x = SEC(doc, s); if (x.id) x[key] = v || null; } });
     }
   /* ===== THE ROW'S OWN FACTS, MINTED THE SAME WAY (2026-09-04) ==========
      TABLE.md wave 2a gave a SECTION a document address for its harmony, its
@@ -1094,29 +1124,40 @@
      wave 2a made the section able to override them — so their tables are named
      here off fields.js's own SWINGLABEL / GROOVELABEL, which is still the one
      owner of those words. */
+  /* A NOUN, AND ONE WORD FOR THE EMPTY DETENT (2026-09-05, the functional
+     text pass). This table wore an interview QUESTION as each control's name
+     ("and what mode?") and spelled "this section says nothing, so what stands
+     above it stands" SIX different ways — `the record's key`, `the record's
+     mode`, `the record's own`, `the record's swing`, `the record's groove`,
+     `the genre's own`, `the record's delay`. Paul: *"'the record's own' --
+     make that 'default'."* Both columns are CATALOGUE KEYS now, and the empty
+     detent on all eleven is the one word `core.ts value.default` holds.
+     `fx` and `pan` came with it: "no chain" and "centre" are not what an
+     empty `fx`/`pan` means — the SONG's chain and the SONG's placement are,
+     which is what default says. */
   const ROWFACTS = [
-    ["key",   "what key is this section in?",     "the record's key"],
-    ["mode",  "and what mode?",                   "the record's mode"],
-    ["prog",  "what changes does it run?",        "the record's own"],
-    ["swing", "how does this section swing?",     "the record's swing"],
-    ["groove","and how does it sit?",             "the record's groove"],
-    ["fx",    "what is in its chain?",            "no chain"],
-    ["rev",   "how much reverb?",                 "the genre's own"],
-    ["echo",  "how much echo?",                   "the genre's own"],
-    ["dtime", "how long is the echo?",            "the record's delay"],
-    ["room",  "how much room on the kit?",        "the genre's own"],
-    ["pan",   "where does it sit across?",        "centre"],
+    ["key",   "field.key"],
+    ["mode",  "field.mode"],
+    ["prog",  "field.chords"],
+    ["swing", "field.swing"],
+    ["groove","field.groove"],
+    ["fx",    "field.effects"],
+    ["rev",   "field.reverb"],
+    ["echo",  "field.echo"],
+    ["dtime", "field.echoTime"],
+    ["room",  "field.room"],
+    ["pan",   "field.pan"],
   ];
   const ROWTABLE = { swing: NF.SWINGLABEL, groove: NF.GROOVELABEL };
-  for (const [key, ask, none] of ROWFACTS) {
+  for (const [key, head] of ROWFACTS) {
     const f = NF.FIELD[key];
     const labels = ROWTABLE[key] || (f && (f.labels || f.table));
     if (!labels) continue;
     const list = key === "fx"
       ? Object.keys(labels).map((k) => [k, (NF.FXLABEL || labels)[k] || k])
       : Object.keys(labels).map((k) => [k, labels[k]]);
-    SHEETS["form." + key] = { label: ask, scope: "section", rowfact: key,
-      values: () => [{ value: "", label: none },
+    SHEETS["form." + key] = named(head, { scope: "section", rowfact: key,
+      values: () => [{ value: "", label: T("value.default") },
                      ...list.map(([v, w]) => ({ value: v, label: String(w) }))],
       /* THE LIST FIELD READS BACK AS ONE WORD OR AS THE JOIN. A chain of one
          is the word (and its chip is pressed); a chain of two prints both and
@@ -1135,15 +1176,14 @@
         return v == null ? "" : String(v); },
       say: (doc, s) => { const x = SEC(doc, s);
         if (key === "prog") { const v = x.prog;
-          return Array.isArray(v)
-            ? "its own — " + v.length + (v.length === 1 ? " bar" : " bars")
-            : null; }
+          /* A COUNT PICKS A KEY, never `n === 1 ? a : b` in a caller. */
+          return Array.isArray(v) ? TN("count.bar", v.length) : null; }
         if (key !== "fx") return null;
         const v = x.fx;
         return Array.isArray(v) && v.length > 1 ? v.join(" + ") : null; },
       set: (doc, s, v) => { const x = SEC(doc, s); if (!x.id) return;
         if (key === "fx") { x.fx = v ? [v] : []; return; }
-        x[key] = v || null; } };
+        x[key] = v || null; } });
   }
 
   /* ===== ...AND THE FIVE THE CELL ALREADY ASKS, ASKED OF THE ROW =========
@@ -1189,8 +1229,8 @@
        this `continue` comes out, and the strip is back with its vocabulary
        unchanged. */
     if (f.key === "clamp") continue;
-    SHEETS["form." + f.key] = { label: f.ask, scope: "section", rowvec: f.key,
-      values: () => [{ value: "", label: "as the genre asks" },
+    SHEETS["form." + f.key] = namedAsk(f, { scope: "section", rowvec: f.key,
+      values: () => [{ value: "", label: T("value.default") },
                      ...Object.keys(f.table)
                        .filter((k) => k !== f.neutral)
                        .map((k) => ({ value: k,
@@ -1200,15 +1240,15 @@
       set: (doc, s, v) => { const x = SEC(doc, s); if (!x.id) return;
         const si = ((doc.form || {}).sections || []).indexOf(x);
         if (si < 0) return;
-        ND.putRow(doc, si, f.key, NF.cellVecClean(f.key, v)); } };
+        ND.putRow(doc, si, f.key, NF.cellVecClean(f.key, v)); } });
   }
 
   for (const r of NF.nudgesFor("performance")) {
     const key = r.key;
-    SHEETS["performance." + key] = { label: r.ask, scope: "song",
+    SHEETS["performance." + key] = namedAsk(r, { scope: "song",
       values: () => r.options,
       get: (doc) => NF.nudgeWord(key, (doc.performance || {})[key]),
-      set: (doc, s, v) => { doc.performance[key] = NF.nudgeValue(key, v); } };
+      set: (doc, s, v) => { doc.performance[key] = NF.nudgeValue(key, v); } });
   }
 
   // WHICH SHEET A VOICE'S DEVELOPMENT COLUMN IS. One place, so the page, the

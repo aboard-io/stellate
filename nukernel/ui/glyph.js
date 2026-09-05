@@ -63,6 +63,27 @@
 // still keeps its sentence ON the page (`data-why`, printed, ui/selects.js) —
 // no reason ever moves in here.
 
+/* ===== EVERY WORD AND EVERY CLAUSE BELOW IS A CATALOGUE KEY (2026-09-05) ==
+   TABLE.md §12b: *"every string the page prints lives in ONE catalogue …
+   keyed … read by t(key, {n, unit, name})"*. This table's three columns are
+   the glyph (an address — a character the marks are chosen from and the gates
+   read), the WORD and the CLAUSE; the two that are COPY are looked up in
+   `nukernel/src/copy/glyph.ts` and nothing here is written twice.
+
+   THE LOOKUP HAPPENS WHERE THE TABLE IS BUILT, once, at module load, and that
+   IS the point of printing for these two columns: `GLYPH` is a constant that
+   five files read as STRINGS and hand straight to `paintIcon`, to
+   `src/table/grid.ts` and to `data-say`. Resolving here keeps one key per
+   printed string and leaves every caller's contract exactly as it was — a
+   second language is a second catalogue and this file does not move.
+
+   THE WORDS ARE ADDRESSES TOO, which is why several of them come back lower
+   case and unchanged: five gates read the transport's accessible name off the
+   rendered page and compare it to "play" / "stop", test/shell.js A6d splits
+   the log's name on " — " and requires "log", and the tab words are
+   ui/eight.js TABS' own keys. The text pass rewrote the CLAUSES. */
+import { t, tn } from "./copy.js";
+
 /* ---------- the local kit ------------------------------------------------ */
 const el = (tag, text, cls) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text;
@@ -99,10 +120,10 @@ export const GLYPH = {
      voice … and neither is performance … ◈ beside ▦, from the same geometric
      family, because what those two have in common is that nobody plays them." */
   song: {
-    form:        { g: "▦", w: "form",
-                   s: "the sections, their bars, and the questions each one answers" },
-    performance: { g: "◈", w: "performance",
-                   s: "the take, the humanising, and whether the band plays dead on the grid" },
+    form:        { g: "▦", w: t("glyph.song.form"),
+                   s: t("glyph.song.form.say") },
+    performance: { g: "◈", w: t("special.perf.word"),
+                   s: t("glyph.song.performance.say") },
   },
 
   /* THE NINE, IN PAUL'S ORDER (his list of 2026-08-27). The WORD column is the
@@ -152,25 +173,25 @@ export const GLYPH = {
        with a threshold in it that you can edit. It is not ≡ (that is a list),
        not ⚙ (that is settings, and `act.opts` takes it below), and not ⚖ (a
        balance is a judgement; these are declarations). */
-    Rules:   { g: "§", w: "Rules",
-               s: "the genre as sentences you can edit" },
-    Where:   { g: "⊕", w: "Where",
-               s: "the globe and the when-slider — where and when the record comes from" },
-    Rules:   { g: "§", w: "Rules",
-               s: "the genre as sentences — the rules this record was written from" },
+    /* (`Rules` STOOD HERE TWICE, two clauses, the second winning. One row,
+       one mark, one key: the pair is collapsed on 2026-09-05 with the text
+       pass, and the surviving clause is the one the page was printing.) */
+    Rules:   { g: "§", w: t("glyph.tab.rules"),
+               s: t("glyph.tab.rules.say") },
+    Where:   { g: "⊕", w: t("glyph.tab.where"),
+               s: t("glyph.tab.where.say") },
     /* TIME AND MOTIFS, 2026-09-04 (nukernel/TABLE.md §8). `Tempo` and `Key`
        folded into one tab and the mark is the CLOCK's, because the panel opens
        on how fast it counts and the harmony is the section under it; `Key`'s ♯
        is not lost — it is the Harmony heading's own subject inside the panel.
        `Motif` -> `Motifs`, which is the word its heading, its bench and its
        bank have always used. */
-    Time:    { g: "♩", w: "Time",
-               s: "how fast it counts, how a bar is divided, and the key it is in" },
-    Motifs:  { g: "♬", w: "Motifs",
-               s: "the motifs — the little tunes and beats the record is built from" },
-    Band:    { g: "☰", w: "Band",
-               s: "the table — sections down, players across, and a vector in " +
-                  "every cell" },
+    Time:    { g: "♩", w: t("glyph.tab.time"),
+               s: t("glyph.tab.time.say") },
+    Motifs:  { g: "♬", w: t("glyph.tab.motifs"),
+               s: t("glyph.tab.motifs.say") },
+    Band:    { g: "☰", w: t("glyph.tab.band"),
+               s: t("glyph.tab.band.say") },
     /* STRUCTURE (2026-09-02). Paul, 2026-09-01: *"Sections/Structure has the
        same challenges … It should be top level, not buried under band, and
        below band. Bring performance into structure."* ▦ is the ruled block,
@@ -191,15 +212,14 @@ export const GLYPH = {
        Band table's rows and the tree draws them under `Band`. ▦ is still this
        page's mark for a section and `sec` and `facet.sections` still wear
        it.) */
-    Mix:     { g: "⇅", w: "Mix",
-               s: "the bus series — genre fx, delay, reverb, main — and the " +
-                  "section automation grid" },
-    Produce: { g: "✦", w: "Produce",
-               s: "the producer — a step through genre space, and what it moved" },
-    Score:   { g: "𝄞", w: "Score",
-               s: "the record as notation and as a piano roll" },
-    Video:   { g: "▣", w: "Video",
-               s: "the record as a film — the deck's own picture" },
+    Mix:     { g: "⇅", w: t("glyph.tab.mix"),
+               s: t("glyph.tab.mix.say") },
+    Produce: { g: "✦", w: t("glyph.tab.produce"),
+               s: t("glyph.tab.produce.say") },
+    Score:   { g: "𝄞", w: t("glyph.tab.score"),
+               s: t("glyph.tab.score.say") },
+    /* (`Video` STOOD HERE TOO, a second row with a second clause, the one
+       below winning. Collapsed 2026-09-05 with the text pass.) */
     /* Screensaver (2026-09-01, "Bring back the screensaver from stellate as a
        new view like the video view"): ✷ is a star with rays — the old star
        map's whole subject — and ✦ was already spent on Produce. (This said
@@ -223,12 +243,12 @@ export const GLYPH = {
        moving pictures. ▶ was not available (it is `act.play`, and a tab that
        looks like the transport is the confusion the transport's own glyph
        note is written to avoid). */
-    Video:   { g: "▣", w: "Video",
-               s: "the film, cut to the record's own sections" },
-    Screensaver: { g: "✷", w: "Screensaver",
-               s: "the little aliens dancing — one per player, hopping on its own notes" },
-    Export:  { g: "⇩", w: "Export",
-               s: "a link, a .wav, a .mid — the record out of the box" },
+    Video:   { g: "▣", w: t("glyph.tab.video"),
+               s: t("glyph.tab.video.say") },
+    Screensaver: { g: "✷", w: t("glyph.tab.screensaver"),
+               s: t("glyph.tab.screensaver.say") },
+    Export:  { g: "⇩", w: t("glyph.tab.export"),
+               s: t("glyph.tab.export.say") },
   },
 
   /* THE TRANSPORT. `play` and `stop` are ONE button in two states and the word
@@ -269,14 +289,14 @@ export const GLYPH = {
      than INSIDE it — `#reading` is a separate <b> and stays exactly where it
      was, and ui/eight.js still hand-paints that button around it. */
   act: {
-    play:    { g: "▶", w: "play",
-               s: "play the record from the top" },
-    stop:    { g: "■", w: "stop",
-               s: "stop the record" },
-    rewrite: { g: "⚄", w: "rewrite",
-               s: "write the record again from the same place, on a new seed" },
-    take:    { g: "↻", w: "take",
-               s: "the same record, played again — a new roll of the hand's dice" },
+    play:    { g: "▶", w: t("glyph.act.play"),
+               s: t("glyph.act.play.say") },
+    stop:    { g: "■", w: t("glyph.act.stop"),
+               s: t("act.stop") },
+    rewrite: { g: "⚄", w: t("glyph.act.rewrite"),
+               s: t("glyph.act.rewrite.say") },
+    take:    { g: "↻", w: t("noun.take"),
+               s: t("glyph.act.take.say") },
     /* THREE MORE, 2026-09-02 (the composer round). `opts` pays the debt
        nu.css named at `#playops` ("A PICTURE FOR IT IS OWED and it wants a row
        in ui/glyph.js `GLYPH.act`"): ⚙ is the gear every platform spells
@@ -287,8 +307,8 @@ export const GLYPH = {
        and what eleven gates call it) and the SUBJECT's ("seed", what an eye
        reads under the die). `tap` is the tap-tempo mark the Tempo panel takes
        in the next wave. */
-    opts:    { g: "⚙", w: "opts",
-               s: "play options — the mode, the take, the voices and the room" },
+    opts:    { g: "⚙", w: t("glyph.act.opts"),
+               s: t("glyph.act.opts.say") },
     /* TWO MORE, 2026-09-09 (TABLE.md §10b step 6, the hamburger and the bar).
        Paul: *"…then have a hamburger menu for score, video, screensaver, and
        have genre, dice, playstop along the bottom."*
@@ -304,11 +324,10 @@ export const GLYPH = {
        same argument `¶` won its row on ("the one glyph here that cannot be
        tofu"), and it is the mark the word "close" has worn on every sheet
        anybody has ever shut. */
-    menu:    { g: "≡", w: "menu",
-               s: "the score, the video, the screensaver, the export — and " +
-                  "the log" },
-    close:   { g: "\u00d7", w: "close",
-               s: "close this view and go back to the table" },
+    menu:    { g: "≡", w: t("glyph.act.menu"),
+               s: t("glyph.act.menu.say") },
+    close:   { g: "\u00d7", w: t("glyph.act.close"),
+               s: t("glyph.act.close.say") },
     /* ...AND THE WORD IS NO LONGER ON THE FACE, 2026-09-03. Paul: *"just get
        rid of the word seed and put the number."* The number stands where the
        word stood (`#seedval`, its own target, beside the die), so ui/eight.js
@@ -318,11 +337,10 @@ export const GLYPH = {
        name, in the table where the page's names live; the sentence is the
        explainer the die carries as `data-say`, and it named a slider that no
        longer exists. */
-    seed:    { g: "⚄", w: "seed",
-               s: "tap for another reading of this record — a new number, " +
-                  "the same place" },
-    tap:     { g: "⏱", w: "tap",
-               s: "tap a tempo and the record counts what you tapped" },
+    seed:    { g: "⚄", w: t("noun.seed"),
+               s: t("glyph.act.rewrite.say") },
+    tap:     { g: "⏱", w: t("glyph.act.tap"),
+               s: t("glyph.act.tap.say") },
   },
 
   /* THE BUS SERIES, IN THE ENGINE'S OWN ORDER. The board numbers these 1..4 —
@@ -332,10 +350,10 @@ export const GLYPH = {
      off the fields.js registry (`busLabel`), because "a renamed row is renamed
      on the tab by existing", and that is still true. */
   bus: {
-    genre: { g: "✳", s: "the genre's own effects — the first stage every strip feeds" },
-    echo:  { g: "⋯", s: "the delay bus — the echoes, and their bleed into the reverb" },
-    rev:   { g: "≋", s: "the reverb bus — the room the whole record sits in" },
-    main:  { g: "◎", s: "main — where the series ends and the record leaves" },
+    genre: { g: "✳", s: t("glyph.bus.genre.say") },
+    echo:  { g: "⋯", s: t("glyph.bus.echo.say") },
+    rev:   { g: "≋", s: t("glyph.bus.rev.say") },
+    main:  { g: "◎", s: t("glyph.bus.main.say") },
   },
 
   /* THE ONE MOVE THAT IS NOT A SIBLING (2026-08-28). Paul: *"There should be
@@ -361,7 +379,7 @@ export const GLYPH = {
      future stripe ever needs a non-sibling move, this is the mark and this is
      why it is not an arrow pointing left. Nothing on the page draws it. */
   nav: {
-    up: { g: "\u2191", w: "up" },
+    up: { g: "\u2191", w: t("glyph.nav.up") },
   },
 
   /* THE FOOT OF THE GUTTER — THE LOGGER (2026-08-28). Paul: *"Add a logger on
@@ -386,9 +404,8 @@ export const GLYPH = {
      ♪ over 2). Here the digit says HOW MANY, drawn by the same `.nu-n` span in
      the same place, tinted by nu.css so it reads as a badge rather than as an
      index. Nothing new is spelled. */
-  log: { g: "¶", w: "log",
-         s: "what the box has done — every change you made, newest first, and "
-          + "what the engine says about the sound" },
+  log: { g: "¶", w: t("glyph.log"),
+         s: t("glyph.log.say") },
 
   /* ===== TOMBSTONE: THE ? ROW THIS TABLE WAS OWED, AND WILL NOT GET =====
      ui/explain.js carried its own three columns — `{ g: "?", w: "explain", s:
@@ -444,17 +461,17 @@ export const GLYPH = {
        ▦  the sections again, because "per-section" is the form seen from
              inside one player, and the same fact wears the same mark. */
   sec: {
-    list: { g: "\u25a6", w: "sections",
-            s: "every section of the record, by name — tap one for its own questions" },
-    one:  { g: "\u25a6", w: "section" },
-    add:  { g: "+\u25a6", w: "+ section",
-            s: "another section, added after the one you are in" },
-    up:   { g: "\u25a6\u2191", w: "move up",
-            s: "this section trades places with the one before it" },
-    down: { g: "\u25a6\u2193", w: "move down",
-            s: "this section trades places with the one after it" },
-    drop: { g: "\u25a6\u00d7", w: "remove",
-            s: "this section leaves the record, and every word keyed to it goes with it" },
+    list: { g: "\u25a6", w: t("glyph.sec.list"),
+            s: t("glyph.sec.list.say") },
+    one:  { g: "\u25a6", w: t("noun.section") },
+    add:  { g: "+\u25a6", w: t("op.addSection"),
+            s: t("glyph.sec.add.say") },
+    up:   { g: "\u25a6\u2191", w: t("glyph.sec.up"),
+            s: t("glyph.sec.up.say") },
+    down: { g: "\u25a6\u2193", w: t("glyph.sec.down"),
+            s: t("glyph.sec.down.say") },
+    drop: { g: "\u25a6\u00d7", w: t("op.remove"),
+            s: t("glyph.sec.drop.say") },
   },
 
   /* WHAT A VOICE IS, IN THREE FACETS (see the paragraph above). */
@@ -463,15 +480,14 @@ export const GLYPH = {
        It read "what this voice is, what is on it, and where it sits — the
        whole strip", written the night the strip was a row on this facet. The
        strip is the `mix` mark below now, so the clause says what is left. */
-    inst:  { g: "\u25cd", w: "instrument",
-             s: "what this voice is — its instrument, its machine, and its throat" },
-    mix:   { g: "\u21c5", w: "mix",
-             s: "this voice's channel strip — its inserts, its sends, its tone, " +
-                "where it sits and how loud" },
-    plays: { g: "\u266b", w: "what it plays",
-             s: "its part, its register, when it comes in, and the motif it reads by default" },
-    sec:   { g: "\u25a6", w: "per-section",
-             s: "what this voice reads and does, section by section" },
+    inst:  { g: "\u25cd", w: t("noun.instrument"),
+             s: t("glyph.facet.inst.say") },
+    mix:   { g: "\u21c5", w: t("special.mix.word"),
+             s: t("glyph.facet.mix.say") },
+    plays: { g: "\u266b", w: t("glyph.facet.plays"),
+             s: t("glyph.facet.plays.say") },
+    sec:   { g: "\u25a6", w: t("glyph.facet.sec"),
+             s: t("glyph.facet.sec.say") },
     /* THE FIFTH MARK, AND IT IS A WAVEFORM (2026-09-03). Paul, 2026-09-01:
        *"I can't really access or organize samples used in, say, San Francisco
        1996. They aren't accessible to the app in any way."*
@@ -496,9 +512,8 @@ export const GLYPH = {
        of Band (the whole record's crate, `bandsamples`) and as a facet of one
        member (that player's own files, `facet-samples`) — one picture, one
        word, two depths. */
-    samples: { g: "\u223f", w: "samples",
-               s: "every recording this plays \u2014 the file, the loop points, " +
-                  "and a way to put another in its place" },
+    samples: { g: "\u223f", w: t("glyph.facet.samples"),
+               s: t("glyph.facet.samples.say") },
   },
 
   /* ===== THE TABLE'S OWN MARKS (2026-09-05) ==============================
@@ -530,15 +545,24 @@ export const GLYPH = {
        head already prints as a word. `line`, `bass` and `drums` keep the marks
        `kind` above already gives them: the same fact wears the same mark. */
     part: {
-      line:    { g: "♪", w: "Line",    s: "A melodic part." },
-      lead:    { g: "★", w: "Lead",    s: "The tune, out in front." },
-      riff:    { g: "◆", w: "Riff",    s: "A repeating figure under the tune." },
-      counter: { g: "⇄", w: "Counter", s: "A line running against the tune." },
-      pad:     { g: "▬", w: "Pad",     s: "Held chords underneath." },
-      stab:    { g: "▪", w: "Stab",    s: "Short chord hits on the changes." },
-      drone:   { g: "═", w: "Drone",   s: "One note held through the section." },
-      bass:    { g: "▼", w: "Bass",    s: "The bass part." },
-      drums:   { g: "◉", w: "Drums",   s: "The kit." },
+      line:    { g: "♪", w: t("glyph.cell.part.line"),
+                 s: t("glyph.cell.part.line.say") },
+      lead:    { g: "★", w: t("glyph.cell.part.lead"),
+                 s: t("glyph.cell.part.lead.say") },
+      riff:    { g: "◆", w: t("glyph.cell.part.riff"),
+                 s: t("glyph.cell.part.riff.say") },
+      counter: { g: "⇄", w: t("glyph.cell.part.counter"),
+                 s: t("glyph.cell.part.counter.say") },
+      pad:     { g: "▬", w: t("glyph.cell.part.pad"),
+                 s: t("glyph.cell.part.pad.say") },
+      stab:    { g: "▪", w: t("glyph.cell.part.stab"),
+                 s: t("glyph.cell.part.stab.say") },
+      drone:   { g: "═", w: t("glyph.cell.part.drone"),
+                 s: t("glyph.cell.part.drone.say") },
+      bass:    { g: "▼", w: t("glyph.cell.part.bass"),
+                 s: t("glyph.cell.part.bass.say") },
+      drums:   { g: "◉", w: t("glyph.cell.part.drums"),
+                 s: t("glyph.cell.part.drums.say") },
     },
     /* WHERE A MOTIF CAME FROM — TABLE.md §1's `material.prov`, the one fact a
        cell carries that a picture says better than a word (it is a PROPERTY of
@@ -546,20 +570,32 @@ export const GLYPH = {
        fingerprint and never stamped, which is why it is worth marking: it is
        the only one a reader cannot work out from the record. */
     prov: {
-      own:   { g: "●", w: "From this genre",  s: "Phrase from the genre of this record." },
-      guest: { g: "○", w: "From a guest",     s: "Phrase from a guest genre." },
-      hand:  { g: "✎", w: "Edited",           s: "Phrase edited by hand." },
+      own:   { g: "●", w: t("glyph.cell.prov.own"),
+               s: t("glyph.cell.prov.own.say") },
+      guest: { g: "○", w: t("glyph.cell.prov.guest"),
+               s: t("glyph.cell.prov.guest.say") },
+      hand:  { g: "✎", w: t("glyph.cell.prov.hand"),
+               s: t("glyph.cell.prov.hand.say") },
     },
     /* WHERE A SEAT SITS — fields.js TRIMS, the mix row's own five words plus
        the place a seat nobody has touched sits. Arrows, because a level is a
        direction and every one of these words is one. */
     level: {
-      out:  { g: "✕",  w: "Out",     s: "Out of the mix." },
-      hush: { g: "⇊",  w: "Hushed",  s: "6 dB down." },
-      back: { g: "↓",  w: "Back",    s: "2.5 dB down." },
-      norm: { g: "◇",  w: "Default", s: "Level as dealt." },
-      fwd:  { g: "↑",  w: "Forward", s: "2.5 dB up." },
-      lift: { g: "⇈",  w: "Lifted",  s: "5 dB up." },
+      out:  { g: "✕",  w: t("glyph.cell.level.out"),
+              s: t("glyph.cell.level.out.say") },
+      hush: { g: "⇊",  w: t("glyph.cell.level.hush"),
+              s: t("glyph.cell.level.hush.say") },
+      back: { g: "↓",  w: t("glyph.cell.level.back"),
+              s: t("glyph.cell.level.back.say") },
+      /* THE ONE WORD FOR A VALUE NOBODY WROTE is core's, not this page's:
+         `value.defaultCap` (src/copy/core.ts), so this row and the empty cell
+         below say it the same way in every language. */
+      norm: { g: "◇",  w: t("value.defaultCap"),
+              s: t("glyph.cell.level.norm.say") },
+      fwd:  { g: "↑",  w: t("glyph.cell.level.fwd"),
+              s: t("glyph.cell.level.fwd.say") },
+      lift: { g: "⇈",  w: t("glyph.cell.level.lift"),
+              s: t("glyph.cell.level.lift.say") },
     },
     /* AND THE ONE CELL THAT SAYS NOTHING. An em dash is this table's own
        spelling for absent (`seatWord`'s note says so at length); as a mark it
@@ -575,7 +611,8 @@ export const GLYPH = {
        question is the bug, and the shape that prevents it is one table per
        kind. */
     state: {
-      none: { g: "–", w: "Default", s: "Nothing set here; plays the default." },
+      none: { g: "–", w: t("value.defaultCap"),
+              s: t("glyph.cell.state.none.say") },
     },
   },
 
@@ -584,8 +621,8 @@ export const GLYPH = {
      ▥ is the roll — blocks standing up the pitch axis. Turn one and you have
      the other, which is exactly what the two buttons do. */
   view: {
-    not:  { g: "▤", w: "notation", s: "the record engraved, as it would be printed" },
-    roll: { g: "▥", w: "piano roll", s: "the record as blocks — pitch up, time across" },
+    not:  { g: "▤", w: t("glyph.view.not"),  s: t("glyph.view.not.say") },
+    roll: { g: "▥", w: t("glyph.view.roll"), s: t("glyph.view.roll.say") },
   },
 };
 
@@ -616,10 +653,14 @@ export const cellMark = (kind, value) => {
    orders lines, then bass, then drums, and drops a kit that is not hired; if
    the number were read off THAT list, the same player would be 2 on one screen
    and 3 on the other. It is read off the roster in both.) */
-const KINDWORD = { line: "a line", bass: "the bass", drums: "the kit" };
+/* ...AND IT IS ONE KEY PER SENTENCE, NOT A STEM PLUS A TAIL (2026-09-05).
+   This read `name + " \u2014 voice " + n + " of " + of + ", " + KINDWORD[kind]`
+   — four fragments in an order no second language is obliged to keep. The
+   kind picks a WHOLE sentence and the three names arrive as placeholders. */
+const KINDKEY = { line: "glyph.voice.line.say", bass: "glyph.voice.bass.say",
+                  drums: "glyph.voice.drums.say" };
 export const sayVoice = (name, kind, n, of) =>
-  name + " — voice " + n + " of " + of +
-  (KINDWORD[kind] ? ", " + KINDWORD[kind] : "");
+  t(KINDKEY[kind] || "glyph.voice.plain.say", { name, n, of });
 
 /* ...AND WHAT `\u2191` SAYS, WHICH IS WHERE IT TAKES YOU FROM. The word on the
    button is always "up" — one verb, so a person who has learned the stripe
@@ -636,7 +677,8 @@ export const sayVoice = (name, kind, n, of) =>
    is still "up", one verb at every depth; what varies is the clause, and the
    clause is the whole reason this is a function. */
 export const sayUp = (parent, back) =>
-  "up \u2014 out of " + parent + ", back to " + (back || "the nine tabs");
+  back ? t("glyph.nav.up.sayBack", { parent, back })
+       : t("glyph.nav.up.say", { parent });
 
 /* ...AND WHAT THE LOGGER'S MARK SAYS, WHICH IS HOW MUCH IS IN IT (2026-08-28).
    Paul: *"Badge the logger with the number of lines it holds."* The badge is
@@ -650,8 +692,7 @@ export const sayUp = (parent, back) =>
    nought (ui/eight.js passes `num: null`) and the NAME carries the fact for
    anyone who asks: "log — nothing yet". */
 export const sayLog = (n) =>
-  n ? "log \u2014 " + n + " line" + (n === 1 ? "" : "s")
-    : "log \u2014 nothing yet";
+  n ? tn("glyph.log.count", n) : t("glyph.log.empty");
 
 /* ===== THE BUTTON ========================================================
    ONE SPELLING, FIVE ROWS. Every strip of tabs on this page is already "a
@@ -726,7 +767,8 @@ export function paintIcon(b, opts) {
   const word = opts.word == null ? "" : String(opts.word);
   const want = opts.on ? "MARK" : "SPAN";
   const why = opts.why == null ? "" : String(opts.why).trim();
-  b.setAttribute("aria-label", why ? word + ", " + why : word);
+  b.setAttribute("aria-label",
+                 why ? t("glyph.icon.refused", { word, why }) : word);
   if (why) { b.disabled = true; b.setAttribute("aria-disabled", "true");
              b.dataset.why = why; }
   else { b.disabled = false; b.removeAttribute("aria-disabled");

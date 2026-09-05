@@ -68,6 +68,8 @@ import { warmSources, unitTable, compile, barCount, barPlan, parentState, deps }
 import { FONT, fontUrl } from "./fonts.js";
 import { on, MASTER, BUSES } from "../ui/state.js";
 import { masterState } from "./desk.js";
+/* THE CATALOGUE (nukernel/TABLE.md §12b): the hold sentence is a key. */
+import { t, tn } from "../ui/copy.js";
 
 const SITE = new URL("../../", import.meta.url).href;   // the site root, from /nukernel/audio/
 const shellDone = new Set();                            // the shell, asked for once ever
@@ -554,16 +556,14 @@ export function holdLine() {
   // bug turned on the hold itself — declared, costed, and reaching no sound —
   // and it is the one claim on this page that a person acts on before a tunnel.
   if (!sawRecord) return settleTries >= SETTLE.length
-    ? "not held — the record would not settle"
-    : "holding the record";
-  if (got === want.length) return "held — plays offline";
+    ? t("hold.notSettled") : t("hold.holding");
+  if (got === want.length) return t("hold.held");
   if (!queue.length && !running) {
     const missing = want.filter((u) => !secured.has(u));
-    if (missing.length) return "held all but " + missing.length + " — "
-      + shortName(missing[0]) + (missing.length > 1 ? " and " + (missing.length - 1) + " more" : "")
-      + " would not come";
+    if (missing.length) return tn("hold.allBut", missing.length,
+      { name: shortName(missing[0]), rest: missing.length - 1 });
   }
-  return "holding " + got + " of " + want.length;
+  return t("hold.progress", { n: got, total: want.length });
 }
 // the same facts as numbers, for a gate to assert on (test/hold.test.js)
 export const holdReport = () => ({

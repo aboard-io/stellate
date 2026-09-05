@@ -271,25 +271,27 @@
       // `stutter` repeats the last eighth. On a one-bar section that window IS
       // the section.
       drop:    { rule: { rule: "when", not: "section.oneBar",
-                         why: "a one-bar section is all edge — the cut would take the whole of it" } },
+                         // the cut deletes min(span/8, bar); on one bar that IS the section
+                         get why() { return T("refuse.oneBarSection"); } } },
       stutter: { rule: { rule: "when", not: "section.oneBar",
-                         why: "a one-bar section is all edge — the repeat window would be the whole of it" } },
+                         // the repeat window would be the whole of a one-bar section
+                         get why() { return T("refuse.oneBarSection"); } } },
     },
     period: {
       // a bar schedule over one bar is `word` (kernel.js:1202 periodOps reads
       // `at(g.period, s)` with s the bar index), so nothing moves — a remark,
       // not a refusal
       "2bar": { inert: { rule: "when", is: "section.oneBar",
-                         why: "there is only one bar here for the sentence to run over" } },
+                         get why() { return T("refuse.oneBarPeriod"); } } },
       "4bar": { inert: { rule: "when", is: "section.oneBar",
-                         why: "there is only one bar here for the sentence to run over" } },
+                         get why() { return T("refuse.oneBarPeriod"); } } },
     },
     pipe: {
       // kernel.js:577 `if (e.part !== (o.part || "pad")) return;` — strum
       // groups the notes of a voiced CHORD and spreads them; a record of pure
       // lines has no group to spread and the stream comes back `ev` untouched
       strum: { inert: { rule: "when", not: "cast.hasPad",
-                        why: "nobody is voicing a chord — a strum has nothing to spread" } },
+                        get why() { return T("refuse.noChordToStrum"); } } },
     },
   };
 
@@ -674,6 +676,16 @@
 
   // SENDS ARE DISCRETE, like everything else here. A chip is a decision; a
   // slider is a fiddle, and the whole surface is chips on purpose.
+  /* ---------- THE CATALOGUE, READ AT PRINT TIME AND NEVER AT LOAD --------
+     `src/copy/index.ts`: index.html loads this classic <script> before any
+     module, so `COPY` is not there yet at factory time. Every printed word in
+     this registry is a KEY, and the rows that hand one out do it through a
+     GETTER — `ask`, `none` and `label` are read when a sheet is DRAWN, which
+     is always after ui/copy.js has run. In node the key itself comes back,
+     which is the same loud answer `t()` gives a key nobody wrote. */
+  const T = (key, p) => { const C = typeof globalThis !== "undefined" && globalThis.COPY;
+    return C ? C.t(key, p) : key; };
+
   const SENDS = { none: 0, touch: 0.12, some: 0.3, wet: 0.55, drown: 0.9 };
   const SENDLABEL = { none: "dry", touch: "touch", some: "some", wet: "wet", drown: "drown" };
   // `VERBS` STOOD HERE — { room, hall, plate } — AND IS RETIRED, 2026-08-28.
@@ -1072,13 +1084,13 @@
      still renders byte-identically. */
   const VOICINGS = {
     vox:    { w: "sung", g: "◉",
-              says: "the singers sing it — the record as it was cast" },
+              get says() { return T("voicing.sung"); } },
     instr:  { w: "instruments", g: "♪",
-              says: "an instrument takes the vocal line — the band plays it" },
+              get says() { return T("voicing.instruments"); } },
     analog: { w: "all analog", g: "∿",
-              says: "the vocal chairs on analogue synthesis" },
+              get says() { return T("voicing.analog"); } },
     fm:     { w: "all FM", g: "⋔",
-              says: "the vocal chairs on two-operator FM" },
+              get says() { return T("voicing.fm"); } },
     // THE MARK IS ◎ AND IT IS ◉ WITH THE VOICE TAKEN OUT OF IT. Beside the
     // singer's filled throat this is the same circle as a GROOVE — a record,
     // a take that already happened — which is exactly the difference the
@@ -1087,7 +1099,7 @@
     // circles are never on the page together — the strip shows the position
     // you are ON, one mark and its word (ui/eight.js paintVoicing).
     chorus: { w: "chorus", g: "◎",
-              says: "the vocal chairs off the tape — sampled oohs and aahs" } };
+              get says() { return T("voicing.chorus"); } } };
   const VOICING_KEYS = Object.keys(VOICINGS);
 
   /* ===== WHAT HAPPENS WHEN THE RECORD ENDS (2026-08-30) ==================
@@ -1131,12 +1143,11 @@
      one can write you a different record while you are not looking. */
   const PLAYMODES = {
     loop:  { w: "loop", g: "▶∞",
-             says: "the record goes round and round — what it has always done" },
+             get says() { return T("play.loop"); } },
     once:  { w: "once", g: "▶|",
-             says: "the record plays to its end and stops" },
+             get says() { return T("play.once"); } },
     album: { w: "album", g: "▶⚄",
-             says: "at the end of the record the box writes another one and " +
-                   "plays it — the same anchor, a new reading" } };
+             get says() { return T("play.album"); } } };
   const PLAYMODE_KEYS = Object.keys(PLAYMODES);
   // The param a knob rides, per DSP naming. First name that EXISTS on the node
   // wins, so one chip covers tb303 / modeld / bass_reese / bass_wobble without
@@ -1196,16 +1207,38 @@
      null ? 7`), so "off" is a real statement that the ramp may run, and a cell
      that says nothing means seven. */
   const CELLVEC = [
-    { key: "artic", label: "articulation", ask: "how are the notes played?",
-      table: ARTICS,  labels: ARTICS,      none: "the row's" },
-    { key: "oct",    label: "octave",      ask: "where does this chair sit?",
-      table: OCTAVES, labels: OCTAVES,     none: "the row's", neutral: "0" },
-    { key: "rate",   label: "time",        ask: "does this chair double or halve?",
-      table: RATES,   labels: RATELABEL,   none: "the row's" },
-    { key: "scale",  label: "alphabet",    ask: "what alphabet is it written in?",
-      table: SCALES,  labels: SCALELABEL,  none: "the row's" },
-    { key: "clamp",  label: "ramp limit",  ask: "how far may a ramp climb?",
-      table: CLAMPS,  labels: CLAMPLABEL,  none: "the row's" },
+    /* A QUESTION IS NOT A LABEL, AND "DEFAULT" IS ONE WORD (2026-09-05, the
+       functional text pass). These five wore an interview question as their
+       control name ("how are the notes played?") and spelled the empty detent
+       "the row's"; the label is the NOUN and the empty detent is the one word
+       `core.ts value.default` holds for every tier on the page. `label`,
+       `ask` and `none` are GETTERS so the catalogue is read when the strip is
+       drawn rather than when this table is built. */
+    { key: "artic",
+      get label() { return T("field.articulation"); },
+      get ask()   { return T("field.articulation"); },
+      table: ARTICS,  labels: ARTICS,
+      get none()  { return T("value.default"); } },
+    { key: "oct",
+      get label() { return T("field.octave"); },
+      get ask()   { return T("field.octave"); },
+      table: OCTAVES, labels: OCTAVES, neutral: "0",
+      get none()  { return T("value.default"); } },
+    { key: "rate",
+      get label() { return T("field.timeShift"); },
+      get ask()   { return T("field.timeShift"); },
+      table: RATES,   labels: RATELABEL,
+      get none()  { return T("value.default"); } },
+    { key: "scale",
+      get label() { return T("field.scale"); },
+      get ask()   { return T("field.scale"); },
+      table: SCALES,  labels: SCALELABEL,
+      get none()  { return T("value.default"); } },
+    { key: "clamp",
+      get label() { return T("field.rampLimit"); },
+      get ask()   { return T("field.rampLimit"); },
+      table: CLAMPS,  labels: CLAMPLABEL,
+      get none()  { return T("value.default"); } },
   ];
   const CELLVECBY = {};
   for (const f of CELLVEC) CELLVECBY[f.key] = f;
@@ -2929,21 +2962,26 @@
       tab: "fx",     group: "room",                    default: null },
     { key: "lvl",     scope: "box",   table: LEVELS,   labels: LEVELLABEL,
       tab: "fx",     group: "level",                   default: null,
-      axis: "form", ask: "where does it sit?", none: "leave it alone" },
+      axis: "form", get ask() { return T("field.level"); },
+      get none() { return T("value.default"); } },
     { key: "pan",     scope: "box",   table: PANS,     labels: PANLABEL,
       tab: "fx",     group: "place",                   default: null },
     { key: "intro",   scope: "box",   table: INLABEL,  labels: INLABEL,
       tab: "move",   group: "intro",                   default: null,
-      axis: "form", ask: "how do we get into it?", none: "straight in" },
+      axis: "form", get ask() { return T("field.intro"); },
+      get none() { return T("value.default"); } },
     { key: "outro",   scope: "box",   table: OUTLABEL, labels: OUTLABEL,
       tab: "move",   group: "outro",                   default: null,
-      axis: "form", ask: "how do we get out of it?", none: "straight through" },
+      axis: "form", get ask() { return T("field.outro"); },
+      get none() { return T("value.default"); } },
     { key: "env",     scope: "box",   table: ENVLABEL, labels: ENVLABEL,
       tab: "move",   group: "level over the section",  default: null,
-      axis: "form", ask: "what does it do over the section?", none: "level" },
+      axis: "form", get ask() { return T("field.dynamics"); },
+      get none() { return T("value.default"); } },
     { key: "mot",     scope: "box",   table: MOTLABEL, labels: MOTLABEL,
       tab: "move",   group: "filter over the section", default: null,
-      axis: "form", ask: "the filter over it?", none: "no movement" },
+      axis: "form", get ask() { return T("field.filter"); },
+      get none() { return T("value.default"); } },
     // the window onto the genre's form — numeric, clamped rather than rejected
     { key: "len",     scope: "box",   type: "int", min: 1, max: MAX_LEN,
       tab: "song",   group: "length",                  default: 4 },
@@ -2953,7 +2991,7 @@
     // `axis` like its neighbours and no `none`, because a slider's absence is 0.
     { key: "nudge",   scope: "box",   type: "int", min: 0, max: MAX_NUDGE,
       tab: "song",   group: "nudge",                   default: 0,
-      axis: "form", ask: "how far into the tune does it start?" },
+      axis: "form", get ask() { return T("field.start"); } },
     // ---- the composition-depth surface (P4) — appended, never reordered ----
     { key: "key",     scope: "box",   table: KEYS,        labels: KEYLABEL,
       tab: "sound",  group: "key",                     default: null },
@@ -2961,15 +2999,16 @@
       tab: "sound",  group: "progression",             default: null },
     { key: "period",  scope: "box",   table: PERIODS,     labels: PERIODLABEL,
       tab: "sound",  group: "sentence",                default: null,
-      axis: "development", ask: "and bar by bar?", none: "the genre's own" },
+      axis: "development", get ask() { return T("field.phraseStructure"); },
+      get none() { return T("value.default"); } },
     { key: "breath",  scope: "box",   table: BREATHS,     labels: BREATHLABEL,
       tab: "line",   group: "breath",                  default: null,
-      axis: "development", ask: "how long may the notes be?",
-      none: "as long as they like" },
+      axis: "development", get ask() { return T("field.noteLength"); },
+      get none() { return T("value.default"); } },
     { key: "pipe",    scope: "box",   table: PIPESETS,    labels: PIPELABEL,
       tab: "line",   group: "pipe",                    default: null,
-      axis: "development", ask: "what happens to it after it's played?",
-      none: "nothing" },
+      axis: "development", get ask() { return T("field.afterNote"); },
+      get none() { return T("value.default"); } },
     { key: "part",    scope: "layer", table: PARTCHOICES, labels: PARTCHOICES,
       tab: "voice",  group: "part",                    default: null },
     // `parts` is the PER-PART MIX: a map of chair key -> {rev, echo, room,
@@ -3045,7 +3084,8 @@
        saying nothing is the thing that then happens. */
     { key: "pace",    scope: "box",   table: PACELABEL, labels: PACELABEL,
       tab: "song",   group: "pace",                      default: null,
-      axis: "form", ask: "how fast does it go here?", none: "steady" },
+      axis: "form", get ask() { return T("field.tempo"); },
+      get none() { return T("value.default"); } },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -3066,7 +3106,7 @@
      ("every question knows what heading it lives under") one layer down. */
   // one option list, from a row's own label table, with "say nothing" first
   const nudgeOpts = (f) => [
-    { value: "", label: f.none == null ? "nothing" : f.none },
+    { value: "", label: f.none == null ? T("value.default") : f.none },
     ...Object.keys(f.labels || f.table || {}).map((k) => ({
       value: k, label: (f.labels || {})[k] == null ? k : f.labels[k] })),
   ];
@@ -3086,19 +3126,38 @@
              // option as every other absent-is-today menu and were the same
              // phrase; `none` and the `""` label are one string said twice and
              // must not drift apart.
-             ask: r.ask, group: r.head, none: "default",
-             options: [{ value: "", label: "default" },
-                       ...r.opts.map(([w]) => ({ value: w, label: w }))] };
+             // THE LABEL IS THE NOUN AND THE QUESTION STAYS A QUESTION.
+             // `askable.js` writes both: `label` is what a control is called,
+             // `ask` is what the interview asks. This surface is a control.
+             get ask() { return T(r.label); }, group: r.head,
+             get none() { return T("value.default"); },
+             get options() { return [{ value: "", label: T("value.default") },
+                       ...r.opts.map(([w]) => ({ value: w, label: w }))]; } };
   };
   /** Every axis control for one axis, in REGISTRY order.
    *  -> [{ key, axis, scope, ask, group, none, options? , type?, min?, max? }] */
   function nudgesFor(axis) {
     if (axis === "performance") return PERFROWS.map(perfRow).filter(Boolean);
-    return FIELDS.filter((f) => f.axis === axis).map((f) => ({
-      key: f.key, axis: f.axis, scope: "section", ask: f.ask,
-      group: f.group, none: f.none,
-      ...(f.type === "int" ? { type: "int", min: f.min, max: f.max }
-                           : { options: nudgeOpts(f) }) }));
+    return FIELDS.filter((f) => f.axis === axis).map((f) => {
+      const row = { key: f.key, axis: f.axis, scope: "section",
+        get ask() { return f.ask; }, group: f.group,
+        get none() { return f.none; } };
+      /* THE OPTION LIST IS BUILT WHEN THE SHEET IS DRAWN, not when this list
+         is minted: `avail.js` mints its SHEETS at load, and a label resolved
+         there would be resolved before ui/copy.js has set the catalogue.
+         AND IT IS `defineProperty` AND NOT A SPREAD, which is where the first
+         version of this got it wrong and printed `value.default` — the key
+         itself — on nine section rows. AN OBJECT SPREAD COPIES A GETTER'S
+         VALUE, NOT THE GETTER: `{...{ get options() {…} }}` calls it once, at
+         spread time, which here is `avail.js`'s load — before ui/copy.js has
+         run. Measured on the rendered page: `SHEETS["form.lvl"].values()[0]`
+         read `value.default` while a fresh `nudgesFor("form")` read
+         `default`. */
+      if (f.type === "int") { row.type = "int"; row.min = f.min; row.max = f.max; }
+      else Object.defineProperty(row, "options",
+        { get: () => nudgeOpts(f), enumerable: true, configurable: true });
+      return row;
+    });
   }
   /** The value a performance WORD names — askable.js's own `valueOf`, so the
    *  number that reaches the kernel is the number askable.js wrote down. */

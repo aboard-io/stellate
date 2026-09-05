@@ -67,6 +67,8 @@
 // cast of aliens, forever.
 
 import { GENRES } from "./deps.js";
+/* the one catalogue of words (TABLE.md §12b). */
+import { t } from "./copy.js";
 import { songBars } from "./derive.js";
 import { SONG, SLOTS, GROOVE, SWING, RUBATO } from "./state.js";
 
@@ -128,7 +130,7 @@ export function mountScreensaver(host, CTX) {
   // video.js's block of the same date (buildTab clears the host, so the
   // builder owns the heading the way every axis does)
   const vh = document.createElement("h2");
-  vh.className = "nu-vh"; vh.textContent = "The floor";
+  vh.className = "nu-vh"; vh.textContent = t("saver.title");
   host.appendChild(vh);
   const wrap = document.createElement("div");
   wrap.className = "nu-saver";
@@ -150,7 +152,7 @@ export function mountScreensaver(host, CTX) {
   /* FULL SCREEN, WITH THE WEBKIT SPELLINGS — video.js's goFull, minus the
      <video> fallback: there is no media element here and iOS will simply
      refuse a canvas, which is a refusal and not a bug to paper over. */
-  mk("full screen", () => {
+  mk(t("video.fullScreen"), () => {
     const d = document;
     const on = d.fullscreenElement || d.webkitFullscreenElement;
     if (on) { (d.exitFullscreen || d.webkitExitFullscreen || (() => {})).call(d); return; }
@@ -170,7 +172,10 @@ export function mountScreensaver(host, CTX) {
   });
   const cap = document.createElement("p");
   cap.className = "nu-video-cap";
-  cap.textContent = "the band of " + label;
+  /* THE CAPTION IS THE RECORD'S NAME. It used to read "the band of Kingston
+     1969"; the name is the caption, and the four words in front of it were
+     house voice rather than information. */
+  cap.textContent = label;
   wrap.appendChild(cap);
 
   /* ==== THE PROBES, SET SYNCHRONOUSLY ==================================
@@ -263,8 +268,11 @@ export function mountScreensaver(host, CTX) {
     startRig();
   }).catch((e) => {
     if (dead) return;
-    /* NO SILENT GREY: a refusal says why, in the caption the deck already has. */
-    cap.textContent = "no dancers here — " + String((e && e.message) || e).slice(0, 80);
+    /* NO SILENT GREY: a refusal says so, in the caption the deck already has.
+       The EXCEPTION goes to the console, where whoever can act on it is
+       looking; a user is told the floor is unavailable, not handed a stack. */
+    console.error("screensaver:", e);
+    cap.textContent = t("saver.noFloor");
   });
 
   /* ==== THE RIG ========================================================
@@ -277,7 +285,7 @@ export function mountScreensaver(host, CTX) {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
     } catch (e) { renderer = null; }
     if (!renderer || !renderer.getContext || !renderer.getContext()) {
-      cap.textContent = "no 3D here — this browser gave no WebGL context";
+      cap.textContent = t("saver.noFloor");
       return;
     }
     renderer.setPixelRatio(dpr);
@@ -365,7 +373,7 @@ export function mountScreensaver(host, CTX) {
       role: q.member.role, extra: q.extra, mi: q.mi,
       voice: q.mi >= 0 ? ((voices[q.mi] || {}).name || null) : null,
       paint: q.paint }));
-    cap.textContent = "the band of " + ((brow && brow.label) || String(dealtBasis));
+    cap.textContent = (brow && brow.label) || String(dealtBasis);
     /* the blank state (`silence`) has no voices and earns no extras, so nobody
        ever walks on and buildOne never runs: an empty floor is READY the
        moment the rig stands. */

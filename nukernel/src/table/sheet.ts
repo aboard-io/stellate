@@ -41,6 +41,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import type { Field, StripField, Choice } from "./api.js";
 import { pickerFor as pick } from "../menus/pick.js";
+import { t, fmt } from "../copy/global.js";
 
 export type Picker = "combo" | "chips" | "native" | "slider";
 
@@ -76,6 +77,25 @@ export function pickerFor(f: StripField): Picker {
 const wordOf = (f: { word?: string | null }) =>
   (f.word == null || f.word === "" ? "—" : String(f.word));
 
+/* WHAT A SCREEN READER HEARS AFTER A VALUE NOBODY WROTE. DESIGN.md §3 says
+   blank = default and bold = written, which is exactly the distinction a
+   screen reader cannot see — so the WORD is added there and nowhere else,
+   and it is core.ts's one word rather than this file's (", inherited" /
+   ", written here" stood here, which is the same idea said two more ways). */
+const valueAria = (value: string, derived: boolean): string =>
+  derived ? t("value.defaultAria", { value }) : value;
+
+/** a chip's accessible name: its word, the reason it is refused if it is, and
+ *  where the value came from if the caller said so. One key per whole
+ *  sentence, never a name with fragments bolted onto it. */
+function chipAria(word: string, why: string | null,
+                  prov: string | null): string {
+  if (why && prov) return t("sheet.chip.whyProv", { name: word, why, prov });
+  if (why) return t("sheet.refused", { name: word, why });
+  if (prov) return t("sheet.chip.prov", { name: word, prov });
+  return word;
+}
+
 /* ---- THE STRIP OF WORDS, WHICH IS THE WHOLE OF THE INSTITUTION --------
    Lifted from ui/wordgrid.js unchanged in every way a gate can see: the same
    `.nu-wchip`, the same `data-k = "<field>|<value>"`, the same `aria-pressed`,
@@ -100,10 +120,8 @@ export function chipStrip(f: StripField,
       aria-disabled=${ifDefined(hard || off ? "true" : undefined)}
       data-why=${ifDefined(why == null ? undefined : why)}
       title=${ifDefined(why ? why : undefined)}
-      aria-label=${(hard || (off && o.why) || o.prov)
-        ? w + (hard ? ", " + cellWhy : (off && o.why ? ", " + o.why : "")) +
-          (o.prov ? ", " + o.prov : "")
-        : w}
+      aria-label=${chipAria(w, hard ? cellWhy : (off ? (o.why || null) : null),
+                            o.prov || null)}
       @click=${() => { if (hard || off) return; onWrite(v); }}
       >${o.pv ? o.pv : nothing}<span class="nu-chipword">${w}</span
       >${o.prov ? html`<small class="nu-chipprov">${o.prov}</small>` : nothing}</button> `;
@@ -128,7 +146,7 @@ export function chipStrip(f: StripField,
   const isPin = (o: Choice) => { const v = String(o.v == null ? "" : o.v);
     return v === cur || v === ""; };
   return html`<div class="nu-wgroups">
-    <div class="nu-groupbar" role="group" aria-label="what it acts on">
+    <div class="nu-groupbar" role="group" aria-label=${t("sheet.groups.aria")}>
       ${f.groups.map((g) => html`<button type="button" class="nu-groupbtn"
         data-g=${g.word} data-k=${f.key + "|group|" + g.word}
         aria-pressed=${String(g.word === want)}
@@ -136,7 +154,7 @@ export function chipStrip(f: StripField,
           if (REDRAW) REDRAW(); }}>${g.word}</button> `)}
     </div>
     <div class="nu-wchips nu-pinned" role="group"
-      aria-label="the word it is on">${all.filter(isPin).map(chip)}</div>
+      aria-label=${t("sheet.pinned.aria")}>${all.filter(isPin).map(chip)}</div>
     <div class="nu-wchips" role="group" aria-label=${f.label}>${
       all.filter((o) => !isPin(o)).map((o) => {
         const v = String(o.v == null ? "" : o.v);
@@ -186,7 +204,9 @@ function fieldRow(f: Field, openField: string | null,
         aria-disabled=${ifDefined(op.why ? "true" : undefined)}
         data-why=${ifDefined(op.why || undefined)}
         title=${ifDefined(op.why || undefined)}
-        aria-label=${(op.aria || op.word) + (op.why ? ", " + op.why : "")}
+        aria-label=${op.why ? t("sheet.refused",
+                                { name: op.aria || op.word, why: op.why })
+                            : (op.aria || op.word)}
         @click=${() => { if (op.why || !op.act) return;
           try { op.act(); } catch (e) {} }}>${op.word}</button>`)}</div>
     </div>`;
@@ -211,8 +231,9 @@ function fieldRow(f: Field, openField: string | null,
       <span class=${classMap({ "nu-sheetsay": true, "is-refused": !!s.why })}
         data-why=${ifDefined(s.why || undefined)}
         title=${ifDefined(s.why || undefined)}
-        aria-label=${s.why ? s.label + ": " + wordOf(s) + ", " + s.why
-                           : s.label + ": " + wordOf(s)}>${wordOf(s)}</span>
+        aria-label=${s.why
+          ? t("sheet.say.refused", { name: s.label, value: wordOf(s), why: s.why })
+          : t("sheet.field", { name: s.label, value: wordOf(s) })}>${wordOf(s)}</span>
       ${s.sub ? html`<small class="nu-sheetsub">${s.sub}</small>` : nothing}
     </div>`;
   }
@@ -230,8 +251,9 @@ function fieldRow(f: Field, openField: string | null,
     try { if (sf.set) sf.set(v); } catch (e) {} after(); };
   const clearBack = (sf.clear && !sf.derived)
     ? html`<button type="button" class="nu-clearback" data-k=${"clear|" + sf.key}
-        aria-label=${"clear " + sf.label + " back to what it inherits"}
-        @click=${() => { try { sf.clear!(); } catch (e) {} after(); }}>clear</button>`
+        aria-label=${t("sheet.clearBack.aria", { name: sf.label })}
+        @click=${() => { try { sf.clear!(); } catch (e) {} after(); }}>${
+          t("act.clear")}</button>`
     : nothing;
   if (pick === "combo")
     /* THE SUB IS DRAWN HERE TOO, 2026-09-06. It was on the `native` branch and
@@ -274,9 +296,10 @@ function fieldRow(f: Field, openField: string | null,
       <input class="nu-numslide" type="range" data-k=${sf.key}
         min=${String(N.min)} max=${String(N.max)} step=${String(N.step)}
         .value=${String(shown)}
-        aria-label=${sf.label + (N.unit ? ", in " + N.unit : "")}
-        aria-valuetext=${String(shown) + (N.unit ? " " + N.unit : "") +
-                         (cur == null ? ", inherited" : "")}
+        aria-label=${N.unit ? t("sheet.slider.unit.aria",
+                                  { name: sf.label, unit: N.unit })
+                            : t("head.name", { name: sf.label })}
+        aria-valuetext=${valueAria(fmt(shown, N.unit || undefined), cur == null)}
         @input=${(e: Event) => { const box = (e.target as HTMLElement)
             .parentElement?.querySelector(".nu-numbox") as HTMLInputElement | null;
           if (box) box.value = (e.target as HTMLInputElement).value; }}
@@ -285,7 +308,7 @@ function fieldRow(f: Field, openField: string | null,
         type="number" data-k=${"num|" + sf.key}
         min=${String(N.min)} max=${String(N.max)} step=${String(N.step)}
         .value=${String(shown)}
-        aria-label=${sf.label + " — type a number"}
+        aria-label=${t("sheet.numbox.aria", { name: sf.label })}
         @change=${(e: Event) => slide((e.target as HTMLInputElement).value)} />
       ${N.unit ? html`<small class="nu-numunit">${N.unit}</small>` : nothing}
       ${clearBack}
@@ -317,8 +340,10 @@ function fieldRow(f: Field, openField: string | null,
         aria-disabled=${ifDefined(sf.why ? "true" : undefined)}
         data-why=${ifDefined(sf.why || undefined)}
         title=${ifDefined(sf.why || undefined)}
-        aria-label=${sf.why ? sf.label + ": " + sf.why
-          : sf.label + ": " + wordOf(sf) + (sf.derived ? ", inherited" : ", written here")}
+        aria-label=${sf.why
+          ? t("sheet.field.refused", { name: sf.label, why: sf.why })
+          : t("sheet.field", { name: sf.label,
+                               value: valueAria(wordOf(sf), !!sf.derived) })}
         @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
       ${clearBack}
       ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}

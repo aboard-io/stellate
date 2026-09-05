@@ -288,7 +288,14 @@ function standUpServer() {
   check(JSON.stringify(shape.axes) === JSON.stringify(EIGHT),
     "R1 the panel is the eight axes of AXES.md, in the evaluation order " +
     JSON.stringify(shape.axes));
-  check(JSON.stringify(shape.words) === JSON.stringify(EIGHT),
+  /* THE HEADING IS THE CATALOGUE'S WORD FOR THE AXIS, and the axis itself is
+     the ADDRESS (`section[data-axis]`, which R1 above still reads as AXES.md's
+     own eight). They were the same string until the functional text pass
+     (2026-09-05): the review's glossary renames what a reader sees — alphabet
+     → SCALE — while `rules.js AXES` keeps the word the rows claim. */
+  const HEADS = ["Time", "Scale", "Material", "Form",
+                 "Development", "Cast", "Sound", "Performance"];
+  check(JSON.stringify(shape.words) === JSON.stringify(HEADS),
     "…and each block wears its axis word as a heading " + JSON.stringify(shape.words));
   check(String(shape.h2).trim() === "The rules",
     "…under the panel's own <h2> " + JSON.stringify(shape.h2));
@@ -426,7 +433,12 @@ function standUpServer() {
 
   /* the seven motif lines are one row now, with the list behind the hold */
   check(shape.motifs.length === 1 &&
-    /the motifs are written in the tracker/.test(shape.motifs[0].text) &&
+    /* IT READ `/the motifs are written in the tracker/` UNTIL 2026-09-05 (the
+       functional text pass, TABLE.md §11): "motif" is "phrase" in the review's
+       glossary and "the tracker" is a name no composer uses. The claim is
+       unchanged — ONE row, whose text points at where phrases are edited, with
+       the list itself behind `data-say`. */
+    /phrase editor/i.test(shape.motifs[0].text) &&
     shape.motifs[0].say > 40,
     "R9a the motifs are ONE read-only row with the list behind data-say " +
     JSON.stringify(shape.motifs));

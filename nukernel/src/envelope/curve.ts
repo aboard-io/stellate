@@ -19,6 +19,8 @@ import type { TemplateResult } from "lit/html.js";
 import type { CurveSpec, Editor } from "./api.js";
 import { R, handle, keyStep, quantise, say } from "./plate.js";
 import type { DragHost } from "./plate.js";
+/* the catalogue, through the bundle's own door — see adsr.ts's note. */
+import { t, tn, fmt } from "../copy/global.js";
 
 const PLATE_H = 132;
 
@@ -95,8 +97,8 @@ export function breakpointEditor(host: HTMLElement, spec0: CurveSpec): Editor {
                               g.py(p.y).toFixed(1)).join(" ");
     return html`
       <div class="nu-envplate" data-k=${spec.k}
-           aria-label=${spec.label + " — " + P.length + " points over " +
-                        spec.span + " " + spec.xUnit}>
+           aria-label=${tn("env.lane", P.length,
+                           { name: spec.label, span: fmt(spec.span, spec.xUnit) })}>
         <svg class="nu-envsvg" viewBox=${"0 0 " + w + " " + PLATE_H}
              width=${w} height=${PLATE_H} aria-hidden="true"
              preserveAspectRatio="none">
@@ -106,10 +108,11 @@ export function breakpointEditor(host: HTMLElement, spec0: CurveSpec): Editor {
         </svg>
         ${P.map((p, i) => {
           const b = handle({
-            k: spec.k + "|" + i, label: "point " + (i + 1),
+            k: spec.k + "|" + i, label: t("env.point", { n: i + 1 }),
             value: p.y, min: spec.lo, max: spec.hi,
             step: (spec.hi - spec.lo) / 100,
-            say: say(p.y, spec.yUnit) + " at " + say(p.x, spec.xUnit),
+            say: t("env.pointAt", { value: say(p.y, spec.yUnit),
+                                    at: say(p.x, spec.xUnit) }),
             axis: "xy", x: g.px(p.x), y: g.py(p.y) }, dragHost);
           b.addEventListener("keydown", (e: KeyboardEvent) => {
             const nv = keyStep(e, p.y, spec.lo, spec.hi,
@@ -124,10 +127,11 @@ export function breakpointEditor(host: HTMLElement, spec0: CurveSpec): Editor {
       </div>
       <div class="nu-envsays">
         <span class="nu-envsay"><b>${spec.label}</b>
-          <span>${P.length} points over ${spec.span} ${spec.xUnit}</span>
+          <span>${tn("env.points", P.length,
+                     { span: fmt(spec.span, spec.xUnit) })}</span>
           <button type="button" class="nu-clearback" data-k=${"clear|" + spec.k}
-            aria-label=${"clear " + spec.label + " back to what it inherits"}
-            @click=${() => { spec.clear(); draw(); }}>clear</button></span>
+            aria-label=${t("env.clearBack", { name: spec.label })}
+            @click=${() => { spec.clear(); draw(); }}>${t("act.clear")}</button></span>
       </div>`;
   };
 
@@ -144,7 +148,8 @@ export function breakpointEditor(host: HTMLElement, spec0: CurveSpec): Editor {
       el.style.top = (g.py(q.y) - R) + "px";
       el.setAttribute("aria-valuenow", String(q.y));
       el.setAttribute("aria-valuetext",
-        say(q.y, spec.yUnit) + " at " + say(q.x, spec.xUnit)); });
+        t("env.pointAt", { value: say(q.y, spec.yUnit),
+                           at: say(q.x, spec.xUnit) })); });
   };
 
   const draw = () => { render(view(), node); };

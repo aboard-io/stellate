@@ -36,6 +36,7 @@
 // stack safe next to another editor.
 
 import type { Doc, TableAPI } from "./api.js";
+import { t } from "../copy/global.js";
 
 /** How deep. Twenty-five documents of a few tens of kilobytes is a megabyte at
  *  the outside, and a producer who wants to walk back further than
@@ -63,9 +64,13 @@ export class DocUndo {
   get canRedo(): boolean { return this.fwd.length > 0; }
   /** the word the button says, so "undo" is never a promise with no object. */
   get undoWord(): string { return this.back.length
-    ? "undo " + (this.names[this.names.length - 1] || "the last change") : "undo"; }
+    ? t("undo.undoOf", { name: this.names[this.names.length - 1] ||
+                               t("undo.lastChange") })
+    : t("act.undo"); }
   get redoWord(): string { return this.fwd.length
-    ? "redo " + (this.fwdNames[this.fwdNames.length - 1] || "the last change") : "redo"; }
+    ? t("undo.redoOf", { name: this.fwdNames[this.fwdNames.length - 1] ||
+                               t("undo.lastChange") })
+    : t("act.redo"); }
 
   /** Run `op` with the document remembered first. EVERY op the grid performs
    *  goes through here, which is what "for every op" in 9a means and what the
@@ -95,7 +100,7 @@ export class DocUndo {
     if (!prev) return false;
     let now: Doc | null = null;
     try { now = this.A.snapshot(); } catch (e) { now = null; }
-    if (now) { this.fwd.push(now); this.fwdNames.push(name || "the last change"); }
+    if (now) { this.fwd.push(now); this.fwdNames.push(name || t("undo.lastChange")); }
     this.inside = true;
     try { this.A.evolve(prev); } finally { this.inside = false; }
     return true;
@@ -107,7 +112,7 @@ export class DocUndo {
     if (!next) return false;
     let now: Doc | null = null;
     try { now = this.A.snapshot(); } catch (e) { now = null; }
-    if (now) { this.back.push(now); this.names.push(name || "the last change"); }
+    if (now) { this.back.push(now); this.names.push(name || t("undo.lastChange")); }
     this.inside = true;
     try { this.A.evolve(next); } finally { this.inside = false; }
     return true;

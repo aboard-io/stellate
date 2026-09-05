@@ -32,6 +32,11 @@
 // service. The handle MOVES live (the curve follows the thumb, which is the
 // whole point of drawing it) and the DOCUMENT is written when the thumb lifts.
 
+/* THE WORDS ARE THE CATALOGUE'S (TABLE.md §12b). A build entry reaches it
+   through ../copy/global.js — never ../copy/index.js, which would bundle a
+   second copy of every string on the page into ui/envelope.js. */
+import { t, fmt } from "../copy/global.js";
+
 /** the handle's radius in CSS px — half of `--tap`. */
 export const R = 22;
 /** the drawn dot inside the 44px target. A mark is a thumb target or it is
@@ -45,7 +50,10 @@ export const HOLD_MS = 600;
 export interface HandleOpts {
   /** the address — `data-k`. */
   k: string;
-  /** what a reader is told this handle is. */
+  /** the stage's own word, from the catalogue (`env.seg.*`) — "Attack",
+   *  "Sustain". NOT the caller's field label: knobs.js calls sustain "where it
+   *  rests" on one instrument and "sustain" on the next, and a handle whose
+   *  word changes with the instrument under it reads as six controls. */
   label: string;
   /** the value, in the field's own units, and its bracket. */
   value: number;
@@ -90,11 +98,13 @@ export function quantise(v: number, min: number, max: number, step: number): num
  *  tenth read as milliseconds because that is how a hand thinks about an
  *  attack, and the unit is printed either way so nothing is guessed. */
 export function say(v: number, unit: string): string {
-  if (unit === "s") return v < 0.1 ? Math.round(v * 1000) + " ms"
-    : (v < 10 ? v.toFixed(2) : v.toFixed(1)) + " s";
-  if (unit === "ms") return Math.round(v) + " ms";
-  if (!unit) return v >= 1 ? v.toFixed(2) : v.toFixed(3).replace(/0+$/, "");
-  return (v >= 10 ? v.toFixed(1) : v.toFixed(2)) + " " + unit;
+  /* THE UNIT IS CHOSEN HERE, THE NUMBER IS FORMATTED IN ONE PLACE. A tenth of
+     a second reads as milliseconds because that is how a hand thinks about an
+     attack; everything after that — the decimals, the real minus sign, the
+     space before the unit — is `fmt`'s, so a translator moves a separator once
+     rather than in two hundred callers. */
+  if (unit === "s" && v < 0.1) return fmt(v * 1000, "ms");
+  return fmt(v, unit);
 }
 
 export interface DragHost {
@@ -122,8 +132,14 @@ export function handle(o: HandleOpts, host: DragHost): HTMLButtonElement {
   b.setAttribute("aria-valuemax", String(o.max));
   b.setAttribute("aria-valuenow", String(o.value));
   b.setAttribute("aria-valuetext", o.say);
-  b.setAttribute("aria-label", o.label + ", " + o.say +
-    (o.why ? " — " + o.why : " (drag, or the arrow keys; press and hold to clear)"));
+  /* THE NAME IS THE STAGE AND THE VALUE, AND NOTHING ELSE. "(drag, or the
+     arrow keys; press and hold to clear)" used to ride every handle: a
+     `role="slider"` with a value already tells a reader what it is and how it
+     answers, the gesture law is DESIGN.md §3, and an instruction repeated once
+     per handle is a paragraph read aloud four times a sheet. */
+  b.setAttribute("aria-label", o.why
+    ? t("env.handleWhy", { name: o.label, value: o.say, why: o.why })
+    : t("env.handle", { name: o.label, value: o.say }));
   if (o.why) { b.setAttribute("aria-disabled", "true"); b.dataset.why = o.why;
                b.title = o.why; }
   b.style.left = (o.x - R) + "px";

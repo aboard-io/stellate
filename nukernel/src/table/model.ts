@@ -18,6 +18,7 @@
 
 import type { TableAPI, Field, StripField, Op, Choice, LaneSpec,
                Section, Voice } from "./api.js";
+import { t, tn } from "../copy/global.js";
 
 /* ===== THE DRUMMER'S SIXTY-EIGHT, GROUPED BY WHAT THEY ACT ON ==========
    TABLE.md 6: *"the does-array sheet groups the 68 ops by what they act on —
@@ -90,8 +91,11 @@ export function shField(A: TableAPI, key: string,
                         scope: Record<string, unknown>,
                         label: string | null): Field {
   const sp = A.sh(key, scope, null);
+  /* NO SHEET OWNS THIS KEY. The control is drawn refused with a plain
+     sentence rather than a silence (DESIGN.md §2.14); which key it was is a
+     fact for a developer's console, not for a person reading a row. */
   if (!sp) return { kind: "say", label: label || key, word: "—",
-                    why: "no vocabulary owner for " + key };
+                    why: t("sheet.noOwner.why") };
   const w = A.wcell(sp);
   const base: StripField = {
     key: w.key, label: label || sp.label, word: w.label,
@@ -125,7 +129,7 @@ export function numField(A: TableAPI, key: string, label: string,
     word: has ? String(cur) : (noneWord || "—"),
     value: has ? String(cur) : "",
     derived: !has,
-    options: [...(clearable ? [{ v: "", w: noneWord || "none" } as Choice] : []),
+    options: [...(clearable ? [{ v: "", w: noneWord || t("value.none") } as Choice] : []),
               ...list.map((n) => ({ v: String(n), w: String(n) } as Choice))],
     /* ...AND IT IS A SLIDER (2026-09-05). Paul: *"When you redesign think
        sliders and other UI for data entry."* Every caller of this function
@@ -159,8 +163,8 @@ function cellNum(A: TableAPI, i: number, vi: number, field: string,
     word: has ? String(own) : (inh == null ? "—" : String(inh)),
     value: has ? String(own) : "",
     derived: !has,
-    sub: has ? null : "the column's",
-    options: [{ v: "", w: "the column's" },
+    sub: has ? null : t("value.defaultCap"),
+    options: [{ v: "", w: t("value.default") },
               ...list.map((n) => ({ v: String(n), w: String(n) } as Choice))],
     /* THE CELL'S OVERRIDE IS A QUANTITY TOO, and the slider's ghost value is
        what the column deals — so pushing the thumb off the inherited number is
@@ -192,12 +196,14 @@ function cellLane(A: TableAPI, i: number, vi: number, spec: LaneSpec): StripFiel
   };
   const words = Object.keys(spec.table).filter((k) => spec.table[k]);
   return { key: "tcellauto|" + spec.key + "|" + vi + "|" + i,
-    label: "mix · " + spec.label,
-    word: has ? (spec.labels[cur] || cur) : "rides the section",
+    label: t("cell.lane.label", { name: spec.label }),
+    word: has ? (spec.labels[cur] || cur) : t("value.default"),
     value: cur,
     derived: !has,
-    sub: has ? null : "the section's own lane, unchanged",
-    options: [{ v: "", w: "rides the section" },
+    /* NO CAPTION UNDER IT. The word IS "default" now, and a second line
+       saying the same thing is the prose test/text-diet.test.js takes off. */
+    sub: null,
+    options: [{ v: "", w: t("value.default") },
               ...words.map((k) => ({ v: k, w: spec.labels[k] || k } as Choice))],
     set: (v: string) => put(v || ""),
     clear: has ? () => put("") : null };
@@ -218,11 +224,11 @@ function cellVecField(A: TableAPI, i: number, vi: number, spec: LaneSpec): Strip
   const words = Object.keys(spec.table).filter((k) => k !== spec.neutral);
   return { key: "tcellvec|" + spec.key + "|" + vi + "|" + i,
     label: spec.label,
-    word: has ? wordOf(own) : (wordOf(row) || "as the genre asks"),
+    word: has ? wordOf(own) : (wordOf(row) || t("value.default")),
     value: has ? String(own) : "",
     derived: !has,
-    sub: has ? null : (spec.none || "the row's"),
-    options: [{ v: "", w: spec.none || "the row's" },
+    sub: has ? null : (spec.none || t("value.defaultCap")),
+    options: [{ v: "", w: spec.none || t("value.default") },
               ...words.map((k) => ({ v: k, w: String(spec.labels[k] || k) } as Choice))],
     set: (v: string) => A.putCell(i, vi, spec.key, v === "" ? null : v),
     clear: has ? () => A.putCell(i, vi, spec.key, null) : null };
@@ -236,12 +242,15 @@ function cellVecField(A: TableAPI, i: number, vi: number, spec: LaneSpec): Strip
  *  at three readings carries a ramp column, and `nukernel/gates.json`'s own
  *  census says the same from the other end (`form.clamp`, 165 rows, 0 alive).
  *  test/table.test.js T4m fails the day a ramp column lands. */
-const RAMPWHY =
-  "measured 2026-09-05: a document's motifs carry no ramp — document.js " +
-  "toPhrase writes inc and stk all-zero on every phrase, so 0 of 18,793 " +
-  "motifs across 479 anchors at three readings has a ramp for a limit to " +
-  "limit. It is the tracker's control; the address is kept, and the gate " +
-  "lights it the day a ramp column lands";
+/* THE MEASUREMENT LIVES HERE, IN THE CODE, AND NOT ON THE SCREEN:
+   `document.js toPhrase` returns `inc: z(n), stk: z(n)` unconditionally
+   (document.js:581), so `kernel.js rampOf`'s raw ramp is `(0 + 0) * loop` —
+   0 of 18,793 motif phrases across 479 anchors at three readings carries a
+   ramp column (measured 2026-09-05), and `nukernel/gates.json`'s census says
+   the same from the other end (`form.clamp`, 165 rows, 0 alive). What a
+   PERSON reads is one plain sentence. test/table.test.js T4m fails the day a
+   ramp column lands. */
+const rampWhy = () => t("cell.ramp.why");
 
 /** ...AND THE ONE OF THE FIVE THAT IS TOLD RATHER THAN ASKED, with the
  *  measurement that makes it a sentence. */
@@ -250,15 +259,14 @@ function cellVecSay(A: TableAPI, i: number, vi: number, spec: LaneSpec,
   const own = A.cellOf(i, vi, spec.key);
   const row = A.rowOf ? A.rowOf(i, spec.key) : null;
   const said = own != null ? own : row;
+  /* WHY A CHORD PART REFUSES THESE: `kernel.js render` sends a pad and any
+     `chordLock` part down the chord branch, which `continue`s before the
+     articulation and the scale are read (measured 2026-09-04). The octave and
+     the time still answer. The sentence a person reads says the useful half. */
   return { kind: "say", label: spec.label,
-    word: said == null ? "as the genre asks"
+    word: said == null ? t("value.default")
                        : String(spec.labels[String(said)] || said),
-    why: chordChair
-      ? "measured 2026-09-04: this chair voices the bar's CHORD (kernel.js " +
-        "render sends a pad and any chordLock part down the chord branch), " +
-        "so it never reads an articulation or a subject alphabet — its " +
-        "octave and its time still answer. Give it a line part to say this."
-      : RAMPWHY };
+    why: chordChair ? t("cell.chordPart.why") : rampWhy() };
 }
 
 /** THE SAME SENTENCE ON THE ROW (2026-09-05). The row tier of the five landed
@@ -273,9 +281,9 @@ function cellVecSay(A: TableAPI, i: number, vi: number, spec: LaneSpec,
 function rowVecSay(A: TableAPI, i: number, spec: LaneSpec): Field {
   const said = A.rowOf ? A.rowOf(i, spec.key) : null;
   return { kind: "say", label: spec.label,
-    word: said == null ? "as the genre asks"
+    word: said == null ? t("value.default")
                        : String(spec.labels[String(said)] || said),
-    why: RAMPWHY };
+    why: rampWhy() };
 }
 
 /** THE DRUMMER'S GROUPS, built from the options the sheet actually offers so a
@@ -306,24 +314,36 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
      further operations are buttons around the table."* They are on the header
      menu and on the header buttons too; the formula bar carries them because
      the formula bar is what a phone opens. */
-  f.push({ kind: "ops", label: "this section", ops: rowOps(A, i, s) });
-  f.push(shField(A, "form.role", { section: sid }, "type"));
-  f.push(numField(A, "bars|" + sid, "bars", s.bars, BARSTEPS,
+  f.push({ kind: "ops", label: t("row.ops"), ops: rowOps(A, i, s) });
+  f.push(shField(A, "form.role", { section: sid }, t("row.type")));
+  f.push(numField(A, "bars|" + sid, t("row.bars"), s.bars, BARSTEPS,
     (v) => A.putRow(i, "bars", +v), false));
-  for (const [key, lab] of [["form.lvl", "level"], ["form.env", "shape"],
-                            ["form.intro", "intro"], ["form.outro", "outro"],
-                            ["form.mot", "motion"], ["form.pace", "pace"],
-                            ["development.period", "period"],
-                            ["development.breath", "breath"],
-                            ["development.pipe", "pipe"]] as [string, string][])
+  /* THE LABELS ARE THE COMPOSER'S WORDS (TABLE.md §12a, the musicologist's
+     review): dynamics not shape, automation not motion, feel not pace,
+     phrase structure not period, note-length limit not breath. The ADDRESSES
+     on the left of each pair are untouched. */
+  for (const [key, lab] of [["form.lvl", t("field.level")],
+                            ["form.env", t("field.dynamics")],
+                            ["form.intro", t("field.intro")],
+                            ["form.outro", t("field.outro")],
+                            ["form.mot", t("noun.automation")],
+                            ["form.pace", t("noun.feel")],
+                            ["development.period", t("field.phraseStructure")],
+                            ["development.breath", t("row.noteLimit")],
+                            ["development.pipe", t("row.pipe")]] as [string, string][])
     f.push(shField(A, key, { section: sid }, lab));
   /* THE ROW'S OWN HARMONY AND FEEL (wave 2a's five). They resolve
      row-before-record, so the WORD a row prints when it says nothing is the
      RECORD's word and the row is drawn quiet — which is 2 exactly. */
-  for (const [key, lab] of [["form.key", "key"], ["form.mode", "mode"],
-                            ["form.prog", "changes"], ["form.swing", "swing"],
-                            ["form.groove", "groove"]] as [string, string][]) {
-    f.push(shField(A, key, { section: sid }, lab));
+  /* THE LABEL IS NOT OVERRIDDEN HERE ANY MORE (2026-09-05). `avail.js
+     ROWFACTS` names these eleven sheets out of the catalogue itself
+     (`field.key`, `field.chords`, `field.effects`, `field.pan`…), so a word
+     spelled again here would be a SECOND owner of one label — the exact shape
+     the one-owner law refuses, and the way two surfaces drift apart in a
+     second language. `null` asks the sheet what it is called. */
+  for (const key of ["form.key", "form.mode", "form.prog", "form.swing",
+                     "form.groove"]) {
+    f.push(shField(A, key, { section: sid }, null));
     /* ...AND THE CHANGES OPEN THE CHART ITSELF, right under the menu that
        names one (2026-09-05). The row's `changes` offered eleven named genre
        charts and nothing a hand could write — *"the bridge cannot have its
@@ -333,14 +353,13 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
        write forks it onto the row. One editor, two scopes, no second
        drawing of a chord chart anywhere on the page. */
     if (key === "form.prog")
-      f.push({ kind: "node", label: "this section's chart",
+      f.push({ kind: "node", label: t("row.chart"),
                node: A.changesNode(sid) });
   }
   /* ...AND ITS CHAIN AND ITS ROOM (wave 2a's six). */
-  for (const [key, lab] of [["form.fx", "chain"], ["form.rev", "reverb"],
-                            ["form.echo", "echo"], ["form.dtime", "echo time"],
-                            ["form.room", "room"], ["form.pan", "across"]] as [string, string][])
-    f.push(shField(A, key, { section: sid }, lab));
+  for (const key of ["form.fx", "form.rev", "form.echo", "form.dtime",
+                     "form.room", "form.pan"])
+    f.push(shField(A, key, { section: sid }, null));
   /* THE FIVE THE ROW HAD AN ADDRESS AND A RESOLVER FOR AND NO CONTROL (wave 4
      named this gap itself: "`avail.js ROWFACTS` does not name them, so the row
      sheet draws no strip … it is five lines there when somebody wants it").
@@ -359,45 +378,49 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
     if (A.hasSheet("form." + spec.key, { section: sid }))
       f.push(shField(A, "form." + spec.key, { section: sid }, spec.label));
   }
-  f.push(numField(A, "nudge|" + sid, "starts at", (s.nudge as number) || 0,
+  f.push(numField(A, "nudge|" + sid, t("row.startsAt"), (s.nudge as number) || 0,
     [0, 1, 2, 3, 4, 6, 8], (v) => A.putRow(i, "nudge", +v), true));
   /* THE COMPILED LANES ARE READ-ONLY ON THE ROW (1: "written by mot and by
      cells"), and saying so is the refused-control law rather than a silence. */
   const auto = (s.auto as unknown[]) || [];
-  f.push({ kind: "say", label: "automation",
-    word: (auto.length ? auto.length + " lanes" : "none"),
-    why: "compiled from the motion above — a cell's own lane is an offset on it" });
+  f.push({ kind: "say", label: t("row.lanes"),
+    word: (auto.length ? tn("row.lanes", auto.length) : t("value.none")),
+    why: t("row.lanes.why") });
   return f;
 }
 
 export function colSheet(A: TableAPI, vi: number): Field[] {
   const v = A.doc().voices[vi]!;
   const f: Field[] = [];
-  f.push({ kind: "ops", label: "this player", ops: colOps(A, vi, v) });
-  if (v.kind === "line") f.push(shField(A, "cast.part", { voice: v.name }, "plays"));
+  f.push({ kind: "ops", label: t("col.ops"), ops: colOps(A, vi, v) });
+  if (v.kind === "line") f.push(shField(A, "cast.part", { voice: v.name }, t("col.plays")));
   const ik = v.kind === "bass" ? "sound.bassinstrument"
            : v.kind === "drums" ? "sound.drumkit" : "sound.instrument";
-  f.push(shField(A, ik, { voice: v.name }, v.kind === "drums" ? "machine" : "instrument"));
+  f.push(shField(A, ik, { voice: v.name },
+                 v.kind === "drums" ? t("col.machine") : t("noun.instrument")));
   /* IS THERE A DRUMMER AT ALL — `cast.on`. avail.js `f["voice.on"]` is read off
      it and greys all sixty-eight kit words when it is false, so deleting this
      would leave a record with a drummer nobody could sit out. Said in two words
      rather than as a tick, which is this surface's law. */
   if (v.kind === "drums") {
     const on = A.castOf(vi, "on") !== false;
-    f.push({ key: "drums", label: "drummer",
-             word: on ? "playing" : "sitting out",
+    f.push({ key: "drums", label: t("col.drummer"),
+             word: on ? t("state.playing") : t("col.drummer.off"),
              value: on ? "1" : "",
              derived: false,
-             options: [{ v: "1", w: "playing" }, { v: "", w: "sitting out" }],
+             options: [{ v: "1", w: t("state.playing") },
+                       { v: "", w: t("col.drummer.off") }],
              set: (x: string) => A.putCast(vi, "on", !!x) });
   }
   /* ...AND ITS FILES, DIRECTLY UNDER IT. The samples crate is not a vector and
      has no cell, so it comes here WHOLE, under the instrument it swaps, and is
      absent on a chair no recording plays. */
   if (A.hasCrate(v.name))
-    f.push({ kind: "node", label: "its files", node: A.voiceCrate(v.name) });
-  if (v.kind === "line") f.push(shField(A, "cast.material", { voice: v.name }, "reads by default"));
-  if (v.kind === "bass") f.push(shField(A, "cast.bassStyle", { voice: v.name }, "does by default"));
+    f.push({ kind: "node", label: t("col.files"), node: A.voiceCrate(v.name) });
+  if (v.kind === "line")
+    f.push(shField(A, "cast.material", { voice: v.name }, t("col.material")));
+  if (v.kind === "bass")
+    f.push(shField(A, "cast.bassStyle", { voice: v.name }, t("col.bassStyle")));
   /* ---- THE ENVELOPE, DRAWN (2026-09-05, TABLE.md §11) ------------------
      Paul, after the AUX spike: *"Make an Adsr and envelope editor though and
      use that for samples etc."* The plate goes ABOVE the two words that are
@@ -430,24 +453,24 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
      and the word it prints is then the ROW's — clearing does not silence the
      singer, it hands the question back to the genre. */
   const th = A.throat(vi);
-  if (th) f.push({ key: "throat|" + v.name, label: "sings as",
+  if (th) f.push({ key: "throat|" + v.name, label: t("col.throat"),
     word: th.word, value: th.own, derived: !th.own,
-    options: [{ v: "", w: "the record's" },
+    options: [{ v: "", w: t("value.default") },
               ...th.words.map((w) => ({ v: w, w } as Choice))],
     set: (x: string) => A.putCast(vi, "voice", x || null),
     clear: th.own ? () => A.putCast(vi, "voice", null) : null });
   /* THE COLUMN DEFAULTS A CELL MAY OVERRIDE (1: "the column DEFAULT; a cell
      may override"). Written here, they move every cell that says nothing. */
   const reg = A.castOf(vi, "reg");
-  f.push(numField(A, "reg|" + v.name, "register",
+  f.push(numField(A, "reg|" + v.name, t("col.register"),
     reg == null ? "" : (reg as number),
     REGSTEPS, (x) => A.putCast(vi, "reg", x === "" ? null : +x), true,
-    "the genre's"));
+    t("value.default")));
   const en = A.castOf(vi, "entry");
-  f.push(numField(A, "entry|" + v.name, "enters at bar",
+  f.push(numField(A, "entry|" + v.name, t("col.entry"),
     en == null ? "" : (en as number),
     [0, 1, 2, 4, 8], (x) => A.putCast(vi, "entry", x === "" ? null : +x), true,
-    "bar one"));
+    t("col.entry.none")));
   /* WHERE IT SITS IN THE MIX IS THE MIX ROW NOW (2026-09-07, §10b step 3).
      `f.push({ kind: "node", label: "seat", node: A.voiceStrip(v.name) })`
      STOOD HERE and was right for one round: the board had bus strips and the
@@ -461,12 +484,12 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
      THE POINTER IS THE `tseat|<voice>` OP IT ALWAYS WAS, one word wider: it
      used to open the Mix TAB (which is deleted) and it opens the seat's own
      cell instead. */
-  f.push({ kind: "ops", label: "the desk", ops: [
-    { k: "tseat|" + v.name, word: "its seat on the mix row",
-      aria: v.name + " — its fader, pan, sends, EQ and inserts, in the mix row",
+  f.push({ kind: "ops", label: t("col.desk"), ops: [
+    { k: "tseat|" + v.name, word: t("col.seat.word"),
+      aria: t("col.seat.aria", { name: v.name }),
       act: () => A.showSeat(v.name) },
-    { k: "tbuses|" + v.name, word: "the buses",
-      aria: v.name + " — the buses its sends feed, on the board",
+    { k: "tbuses|" + v.name, word: t("master.buses"),
+      aria: t("col.buses.aria", { name: v.name }),
       act: () => A.showBoard() } ] });
   return f;
 }
@@ -476,7 +499,7 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
   const s = doc.form.sections[i]!, v = doc.voices[vi]!;
   const sid = s.id;
   const f: Field[] = [];
-  f.push({ kind: "ops", label: "this cell", ops: cellOps(A, i, vi) });
+  f.push({ kind: "ops", label: t("cell.ops"), ops: cellOps(A, i, vi) });
   /* 1 · THE MOTIFS, WITH THEIR PREVIEWS AND THEIR PROVENANCE (3). One control
      and not two: the chips ARE the motif list, each wearing its own preview and
      the word that says where it came from.
@@ -486,16 +509,18 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
      dead control. */
   if (v.kind === "bass") {
     const b = A.bassReads();
-    f.push({ kind: "say", label: "motifs",
-      word: b && b.cell ? b.cell + " · " + b.lead + "'s" : "the first line's",
-      why: "the bass takes its accents from the first line's phrase " +
-           "(document.js scoreOf, ui/derive.js sectionEvents), so it reads " +
-           "what " + ((b && b.lead) || "that line") + " reads. Give it a " +
-           "motif of its own by changing that cell." });
+    /* WHY: both compilers hand `K.bass` the first line's compiled phrase
+       (document.js scoreOf, ui/derive.js sectionEvents), so a motif named on
+       a bass cell would be named into nothing. The person reads the useful
+       half — where it comes from, and which cell to change. */
+    f.push({ kind: "say", label: t("special.phrases.word"),
+      word: b && b.cell ? t("cell.bass.reads", { value: b.cell, lead: b.lead })
+                        : t("cell.bass.readsNone"),
+      why: t("cell.bass.why") });
   }
   const reads = v.kind === "bass" ? null
     : A.sh("material.cell", { voice: v.name, section: sid },
-           v.name + " reads · " + A.secName(i));
+           t("cell.sheet.plays", { name: v.name, section: A.secName(i) }));
   if (reads) {
     const w = A.wcell(reads);
     /* THE PICTURE AND THE PROVENANCE RIDE ON THE MOTIFS ONLY. The first option
@@ -506,7 +531,7 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
     /* AN INHERITED MOTIF PRINTS WHAT IT INHERITS, QUIETLY — 2: "an inherited
        value is drawn quiet", not an em dash. `cellWord` is the same reader the
        grid's own cell uses, so the sheet and the cell can never disagree. */
-    f.push({ key: w.key, label: "motifs",
+    f.push({ key: w.key, label: t("special.phrases.word"),
              word: w.derived ? A.cellWord(i, vi) : w.label,
              value: w.value == null ? "" : String(w.value),
              derived: w.derived, options, set: (x: string) => w.set(x),
@@ -516,10 +541,11 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
   /* 2 · WHAT IT DOES HERE. For a drummer that is an array out of the
      sixty-eight, grouped; for anybody else it is the development word. */
   const dev = A.sh(A.devSheetFor(v.kind), { voice: v.name, section: sid },
-                   v.name + " does · " + A.secName(i));
+                   t("cell.sheet.variation", { name: v.name,
+                                               section: A.secName(i) }));
   if (dev) {
     const w = A.wcell(dev);
-    const fld: StripField = { key: w.key, label: "does", word: w.label,
+    const fld: StripField = { key: w.key, label: t("noun.variation"), word: w.label,
                   value: w.value == null ? "" : String(w.value),
                   derived: w.derived, options: w.options,
                   set: (x: string) => w.set(x), why: w.why || null,
@@ -528,15 +554,18 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
     f.push(fld);
   }
   /* 3 · THE TWO COLUMN DEFAULTS A CELL MAY OVERRIDE (wave 1's cell tier). */
-  f.push(cellNum(A, i, vi, "entry", "enters at bar", [0, 1, 2, 4, 8]));
-  f.push(cellNum(A, i, vi, "reg", "register", REGSTEPS));
+  f.push(cellNum(A, i, vi, "entry", t("col.entry"), [0, 1, 2, 4, 8]));
+  f.push(cellNum(A, i, vi, "reg", t("col.register"), REGSTEPS));
   /* 4 · FOCUS — stored, resolved, and reaching nothing, which 1a measured and
      T2e pins. A control that pretended otherwise would be the
      declared-but-never-arriving bug drawn on purpose. */
-  f.push({ kind: "say", label: "focus",
-    word: A.cellOf(i, vi, "focus") ? "featured" : "no",
-    why: "measured 2026-09-04: box.focus indexes a one-entry stack and " +
-         "moves no event — the gate names it the day a reader lands" });
+  /* MEASURED 2026-09-04, IN THE CODE AND NOT ON THE SCREEN: `box.focus`
+     indexes a one-entry stack and moves no event, so the control is drawn
+     refused with a plain sentence. T2e pins it; the gate names it the day a
+     reader lands. */
+  f.push({ kind: "say", label: t("cell.focus"),
+    word: A.cellOf(i, vi, "focus") ? t("cell.focus.on") : t("cell.focus.off"),
+    why: t("cell.focus.why") });
   /* 5 · THE CELL'S MIX LANE, RELATIVE TO THE ROW'S (wave 3). */
   for (const spec of (A.CELLAUTO || [])) f.push(cellLane(A, i, vi, spec));
   /* 6 · THE FIVE THAT WERE PER BOX (wave 4), FOUR STRIPS AND ONE SENTENCE, AND
@@ -551,12 +580,13 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
         ? cellVecSay(A, i, vi, spec, chordChair && spec.key !== "clamp")
         : cellVecField(A, i, vi, spec));
   }
-  else f.push({ kind: "say", label: "artic · oct · rate · scale · clamp",
-    word: "the pitched chairs'",
-    why: "measured 2026-09-04: all five are read inside kernel.js render, " +
-         "which is what a LINE plays — the kit is K.drums and the bass is " +
-         "K.bass, and each has its own words for the same ideas (the kit's " +
-         "halftime/doubletime, the bass's own artic and register)" });
+  /* MEASURED 2026-09-04: all five are read inside `kernel.js render`, which
+     is what a LINE plays; the kit is `K.drums` and the bass is `K.bass`, and
+     each has its own words for the same ideas (the kit's halftime/doubletime,
+     the bass's own artic and register). The person reads the plain half. */
+  else f.push({ kind: "say", label: t("cell.pitchedOnly.label"),
+    word: t("cell.pitchedOnly.word"),
+    why: t("cell.pitchedOnly.why") });
   return f;
 }
 
@@ -582,7 +612,8 @@ export function perfCells(A: TableAPI): Field[] {
     const sp = A.sh(p.key, {}, p.label);
     if (!sp) return { kind: "say", label: p.label, word: "—" } as Field;
     const w = A.wcell(sp);
-    return { key: w.key, label: p.label, word: p.short + " " + w.label,
+    return { key: w.key, label: p.label,
+             word: t("perf.cell", { short: p.short, value: w.label }),
              value: w.value == null ? "" : String(w.value),
              derived: w.derived, options: w.options,
              set: (x: string) => w.set(x), why: w.why || null,
@@ -596,18 +627,19 @@ export function perfSheet(A: TableAPI): Field[] {
        read `|| 0`, so an untouched record printed "0" and the strip grew a
        `take|0` chip — a word a hand could tap that writes a take the record
        cannot hold (`takeSeed` is `Math.max(1, take|0)`). */
-    numField(A, "take", "take", (A.perfOf("take") as number) || 1,
+    numField(A, "take", t("noun.take"), (A.perfOf("take") as number) || 1,
       [1, 2, 3, 4, 5, 6, 8, 12], (v) => A.putPerf("take", +v), false),
-    numField(A, "humanize", "humanize",
+    numField(A, "humanize", t("perf.humanize"),
       A.perfOf("humanize") == null ? "" : (A.perfOf("humanize") as number),
       [0, 0.2, 0.4, 0.6, 0.8, 1],
-      (v) => A.putPerf("humanize", v === "" ? null : +v), true, "the genre's"),
-    { key: "ontime", label: "on time",
-      word: A.perfOf("ontime") ? "dead on the grid" : "as the band plays",
+      (v) => A.putPerf("humanize", v === "" ? null : +v), true,
+      t("value.default")),
+    { key: "ontime", label: t("perf.ontime"),
+      word: A.perfOf("ontime") ? t("perf.ontime.on") : t("perf.ontime.off"),
       value: A.perfOf("ontime") ? "1" : "",
       derived: !A.perfOf("ontime"),
-      options: [{ v: "", w: "as the band plays" },
-                { v: "1", w: "dead on the grid" }],
+      options: [{ v: "", w: t("perf.ontime.off") },
+                { v: "1", w: t("perf.ontime.on") }],
       set: (v: string) => A.putPerf("ontime", v ? true : null),
       clear: A.perfOf("ontime") ? () => A.putPerf("ontime", null) : null },
   ];
@@ -632,23 +664,28 @@ export function rowOps(A: TableAPI, i: number, s: Section): Op[] {
        somehow."* The five Structure grids answered that on their ROW HEADS and
        the head is a door on this table. `CTX.playFrom` is the one play door:
        cold it seeks, playing it QUEUES on the next box line. */
-    { k: "trow-here|" + s.id, word: "put the ear here",
-      aria: "play from this section", act: () => A.playFrom(i) },
-    { k: "trow-add", word: "+ section", aria: "add a section after this one",
+    { k: "trow-here|" + s.id, word: t("op.playFrom"),
+      aria: t("op.playFrom.aria"), act: () => A.playFrom(i) },
+    { k: "trow-add", word: t("op.addSection"), aria: t("op.addSection.after"),
       act: () => A.addSection(i + 1) },
-    { k: "trow-up|" + s.id, word: "▲ up", aria: "move this section earlier",
-      why: i === 0 ? "it is already first" : null, act: () => A.moveSection(i, -1) },
-    { k: "trow-down|" + s.id, word: "▼ down", aria: "move this section later",
-      why: i === n - 1 ? "it is already last" : null, act: () => A.moveSection(i, 1) },
-    { k: "trow-dup|" + s.id, word: "duplicate", aria: "duplicate this section",
-      act: () => A.dupSection(s.id) },
-    ...REPEATS.map((r) => ({ k: "trow-rep|" + s.id + "|" + r, word: "×" + r,
-      aria: "repeat this section " + r + " times", act: () => A.repeatSection(s.id, r) })),
-    { k: "trow-deal|" + s.id, word: "deal again",
-      aria: "deal this section's cells again from the genre",
+    { k: "trow-up|" + s.id, word: t("op.up"), aria: t("op.up.aria"),
+      why: i === 0 ? t("refuse.alreadyFirst") : null,
+      act: () => A.moveSection(i, -1) },
+    { k: "trow-down|" + s.id, word: t("op.down"), aria: t("op.down.aria"),
+      why: i === n - 1 ? t("refuse.alreadyLast") : null,
+      act: () => A.moveSection(i, 1) },
+    { k: "trow-dup|" + s.id, word: t("op.duplicate"),
+      aria: t("op.duplicate.aria"), act: () => A.dupSection(s.id) },
+    ...REPEATS.map((r) => ({ k: "trow-rep|" + s.id + "|" + r,
+      word: t("op.repeat", { n: r }),
+      aria: t("op.repeat.aria", { n: r }),
+      act: () => A.repeatSection(s.id, r) })),
+    { k: "trow-deal|" + s.id, word: t("op.reset"),
+      aria: t("op.resetRow.aria"),
       act: () => A.dealRow(i) },
-    { k: "trow-del|" + s.id, word: "delete", aria: "delete this section",
-      why: n <= 1 ? "a record needs one section" : null,
+    { k: "trow-del|" + s.id, word: t("op.deleteSection"),
+      aria: t("op.deleteSection.aria"),
+      why: n <= 1 ? t("refuse.lastSection") : null,
       act: () => A.dropSection(s.id) },
   ];
 }
@@ -656,32 +693,36 @@ export function rowOps(A: TableAPI, i: number, s: Section): Op[] {
 export function colOps(A: TableAPI, vi: number, v: Voice): Op[] {
   const n = A.doc().voices.length;
   return [
-    { k: "tcol-solo|" + v.name, word: "▶ alone", aria: "play " + v.name + " alone",
+    { k: "tcol-solo|" + v.name, word: t("op.solo"),
+      aria: t("op.solo.aria", { name: v.name }),
       act: () => A.soloVoice(v.name) },
-    { k: "tcol-add|line", word: "+ line", aria: "hire another line",
+    { k: "tcol-add|line", word: t("op.addLine"), aria: t("op.addLine.aria"),
       act: () => A.addVoice("line") },
-    { k: "tcol-add|bass", word: "+ bass", aria: "hire a bass",
-      why: A.hasKind("bass") ? "the record already has a bass" : null,
+    { k: "tcol-add|bass", word: t("op.addBass"), aria: t("op.addBass.aria"),
+      why: A.hasKind("bass") ? t("refuse.haveBass") : null,
       act: () => A.addVoice("bass") },
-    { k: "tcol-add|drums", word: "+ drums", aria: "hire a drummer",
-      why: A.hasKind("drums") ? "the record already has a drummer" : null,
+    { k: "tcol-add|drums", word: t("op.addDrums"), aria: t("op.addDrums.aria"),
+      why: A.hasKind("drums") ? t("refuse.haveDrums") : null,
       act: () => A.addVoice("drums") },
-    { k: "tcol-left|" + v.name, word: "◀ left", aria: "move this player left",
-      why: vi === 0 ? "it is already first" : null, act: () => A.moveVoice(vi, -1) },
-    { k: "tcol-right|" + v.name, word: "right ▶", aria: "move this player right",
-      why: vi === n - 1 ? "it is already last" : null, act: () => A.moveVoice(vi, 1) },
-    { k: "tcol-deal|" + v.name, word: "deal again",
-      aria: "deal this player's cells again from the genre",
+    { k: "tcol-left|" + v.name, word: t("op.left"), aria: t("op.left.aria"),
+      why: vi === 0 ? t("refuse.alreadyFirst") : null,
+      act: () => A.moveVoice(vi, -1) },
+    { k: "tcol-right|" + v.name, word: t("op.right"), aria: t("op.right.aria"),
+      why: vi === n - 1 ? t("refuse.alreadyLast") : null,
+      act: () => A.moveVoice(vi, 1) },
+    { k: "tcol-deal|" + v.name, word: t("op.reset"),
+      aria: t("op.resetCol.aria"),
       act: () => A.dealCol(vi) },
     /* "MAKE X Y" IS A COLUMN OP NOW (5). ui/produce.js owns the verb and its
        qualities; what the table adds is the X — the column you opened is the
        subject, so the sentence is already half said when you get there. */
     ...A.makeQualities(v.name).map((q) => ({ k: "tcol-make|" + v.name + "|" + q.v,
-      word: q.w, aria: "make " + v.name + " " + q.w,
+      word: q.w, aria: t("op.make.aria", { name: v.name, quality: q.w }),
       why: q.why || null,
       act: () => A.makeXY(v.name, q.v) })),
-    { k: "tcol-del|" + v.name, word: "remove", aria: "remove " + v.name + " from the band",
-      why: n <= 1 ? "a band needs one player" : null,
+    { k: "tcol-del|" + v.name, word: t("op.remove"),
+      aria: t("op.remove.aria", { name: v.name }),
+      why: n <= 1 ? t("refuse.lastPlayer") : null,
       act: () => A.dropVoice(v.name) },
   ];
 }
@@ -690,30 +731,31 @@ export function cellOps(A: TableAPI, i: number, vi: number): Op[] {
   const doc = A.doc();
   const v = doc.voices[vi]!, s = doc.form.sections[i]!;
   return [
-    { k: "tcell-clear|" + v.name + "|" + s.id, word: "clear to inherit",
-      aria: "clear everything written in this cell",
-      why: A.written(i, vi) ? null : "nothing is written here",
+    { k: "tcell-clear|" + v.name + "|" + s.id, word: t("op.clearCell"),
+      aria: t("op.clearCell.aria"),
+      why: A.written(i, vi) ? null : t("refuse.nothingToClear"),
       act: () => A.clearCell(i, vi) },
     /* FILL RIGHT AND FILL DOWN ARE 5's COPY-TO-ROW AND COPY-TO-COLUMN, said in
        a spreadsheet's own words (9a). One door each, unchanged. */
-    { k: "tcell-copyrow|" + v.name + "|" + s.id, word: "fill across the row",
-      aria: "give every player in this section what this cell says",
+    { k: "tcell-copyrow|" + v.name + "|" + s.id, word: t("op.fillRow"),
+      aria: t("op.fillRow.aria"),
       act: () => A.copyCell(i, vi, "row") },
-    { k: "tcell-copycol|" + v.name + "|" + s.id, word: "fill down the column",
-      aria: "give this player the same thing in every section",
+    { k: "tcell-copycol|" + v.name + "|" + s.id, word: t("op.fillCol"),
+      aria: t("op.fillCol.aria"),
       act: () => A.copyCell(i, vi, "col") },
   ];
 }
 
 export function tableOps(A: TableAPI, across: boolean): Op[] {
   return [
-    { k: "ttab-fill", word: "fill from a genre",
-      aria: "start this record again from a genre", act: () => A.fillFromGenre() },
-    { k: "ttab-seed", word: "re-seed",
-      aria: "deal this record again at a new reading", act: () => A.reseed() },
-    { k: "ttab-transpose", word: across ? "sections down" : "players down",
-      aria: across ? "turn the table back: sections down the side"
-                   : "turn the table round: players down the side",
+    { k: "ttab-fill", word: t("op.fillGenre"),
+      aria: t("op.fillGenre.aria"), act: () => A.fillFromGenre() },
+    { k: "ttab-seed", word: t("op.reseed"),
+      aria: t("op.reseed.aria"), act: () => A.reseed() },
+    { k: "ttab-transpose",
+      word: across ? t("op.transposeSections") : t("op.transposePlayers"),
+      aria: across ? t("op.transposeSections.aria")
+                   : t("op.transposePlayers.aria"),
       act: () => A.setFacing(across ? "sections" : "voices") },
   ];
 }
@@ -727,19 +769,20 @@ export function tableOps(A: TableAPI, across: boolean): Op[] {
  *  these three in the T7 inventory the day the ops left the tray. */
 export function playerOffers(A: TableAPI): Op[] {
   return [
-    { k: "tcol-add|line", word: "+ line", aria: "hire another line",
+    { k: "tcol-add|line", word: t("op.addLine"), aria: t("op.addLine.aria"),
       act: () => A.addVoice("line") },
-    { k: "tcol-add|bass", word: "+ bass", aria: "hire a bass",
-      why: A.hasKind("bass") ? "the record already has a bass" : null,
+    { k: "tcol-add|bass", word: t("op.addBass"), aria: t("op.addBass.aria"),
+      why: A.hasKind("bass") ? t("refuse.haveBass") : null,
       act: () => A.addVoice("bass") },
-    { k: "tcol-add|drums", word: "+ drums", aria: "hire a drummer",
-      why: A.hasKind("drums") ? "the record already has a drummer" : null,
+    { k: "tcol-add|drums", word: t("op.addDrums"), aria: t("op.addDrums.aria"),
+      why: A.hasKind("drums") ? t("refuse.haveDrums") : null,
       act: () => A.addVoice("drums") },
   ];
 }
 export function sectionOffer(A: TableAPI): Op[] {
   const n = A.doc().form.sections.length;
-  return [{ k: "trow-add", word: "+ section", aria: "add a section at the end",
+  return [{ k: "trow-add", word: t("op.addSection"),
+            aria: t("op.addSection.end"),
             act: () => A.addSection(n) }];
 }
 

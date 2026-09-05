@@ -103,7 +103,15 @@ function standUpServer() {
    cell-row per field in §1's order". Written out here rather than derived from
    the page, because a gate that asked the page what order it was in would be
    asserting that the page equals itself. */
-const CELL_ORDER = ["motifs", "does", "enters at bar", "register", "focus",
+/* THE WORDS MOVED IN THE FUNCTIONAL TEXT PASS (2026-09-05, TABLE.md §11 and
+   the review's glossary at §12a): motif → phrase, does → variation, shape →
+   dynamics, motion → automation, pace → feel, period → phrase structure,
+   breath → note-length limit, alphabet → scale, chain → effects, changes →
+   chords, across → pan, time → time shift. THE CLAIM IS UNCHANGED — the sheet
+   is §1's vector in §1's order, and the ADDRESSES (`data-k`) never moved; only
+   what the labels say. The old spellings are kept in this comment so the next
+   reader can see that this is a rename and not a reordering. */
+const CELL_ORDER = ["phrases", "variation", "enters at bar", "register", "focus",
                     /* ...AND THE FOUR LANE KINDS THAT REPLACED ONE GREY ROW
                        (TABLE.md wave 3, 2026-09-04). §1's "mix automation" was
                        one line while it was a promise; it is four strips now,
@@ -114,12 +122,15 @@ const CELL_ORDER = ["motifs", "does", "enters at bar", "register", "focus",
                        clamp" was one line while it was a promise; it is four
                        strips and one measurement now, in fields.js CELLVEC's
                        own order, drawn under their working names. */
-                    "articulation", "octave", "time", "alphabet", "ramp limit"];
-const ROW_ORDER  = ["type", "bars", "level", "shape", "intro", "outro",
-                    "motion", "pace", "period", "breath", "pipe",
-                    "key", "mode", "changes", "swing", "groove",
-                    "chain", "reverb", "echo", "echo time", "room", "across",
-                    "starts at", "automation"];
+                    "articulation", "octave", "time shift", "scale", "ramp limit"];
+const ROW_ORDER  = ["type", "bars", "level", "dynamics", "intro", "outro",
+                    "automation", "feel", "phrase structure",
+                    "note-length limit", "pipe",
+                    "key", "mode", "chords", "swing", "groove",
+                    "effects", "reverb", "echo", "echo time", "room", "pan",
+                    /* `form.mot` is AUTOMATION now and the compiled-lane
+                       readout — which was called "automation" — is `lanes`. */
+                    "starts at", "lanes"];
 const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
 (async () => {
@@ -244,8 +255,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   const rlabs = (rs || []).map((r) => r.lab).filter((x) => ROW_ORDER.includes(x));
   check(JSON.stringify(rlabs) === JSON.stringify(ROW_ORDER.filter((x) => rlabs.includes(x))),
     "T5b the row sheet is §1's SECTION vector in §1's order (" + rlabs.length + " fields)");
-  check(rlabs.includes("pace"),
-    "…and pace is on the ROW now, out of Time (TABLE.md §1, Paul 2026-09-03)");
+  check(rlabs.includes("feel"),
+    "…and the feel is on the ROW now, out of Time (TABLE.md §1, Paul " +
+    "2026-09-03; the word was `pace` until the text pass renamed it)");
   check(rlabs.includes("key") && rlabs.includes("swing") && rlabs.includes("reverb"),
     "…with wave 2a's own row overrides: key, swing, the chain and the room");
   await tap("trow|" + secId);
@@ -389,7 +401,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
      five are live strips that refuse nothing, and the FIFTH — the ramp limit —
      keeps a refusal, because it is measured to move no note on the document
      path and an honest sentence beats a dead control. */
-  check(!greyed.some((r) => ["articulation", "octave", "time", "alphabet"]
+  check(!greyed.some((r) => ["articulation", "octave", "time shift", "scale"]
           .includes(r.lab)),
     "…artic, oct, rate and scale are LIVE strips, not greyed (wave 4 arrived)");
   check(greyed.some((r) => r.lab === "ramp limit" && /no ramp/.test(r.why)),
@@ -1131,7 +1143,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       { t: "T6f", key: "artic", say: "articulation" },
       { t: "T6g", key: "oct",   say: "octave" },
       { t: "T6h", key: "rate",  say: "double time" },
-      { t: "T6i", key: "scale", say: "alphabet" },
+      /* labelled `scale` since the text pass — the review's glossary
+          (TABLE.md §12a): alphabet → scale. The KEY never moved. */
+      { t: "T6i", key: "scale", say: "scale" },
     ];
     for (const sp of SPECS) {
       const fkey = "tcellvec|" + sp.key + "|" + vi7 + "|" + si7;
@@ -1215,12 +1229,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const sr = await sheetRows();
       const row = (l) => (sr || []).find((r) => r.lab === l) || null;
       const told = (l) => { const r = row(l);
-        return !!(r && r.why && /voices the bar's CHORD/.test(r.why)); };
+        /* THE SENTENCE, NOT THE MEASUREMENT. It read
+            `/voices the bar's CHORD/` until 2026-09-05: the refusal cited what
+            the code does ("this chair voices the bar's CHORD") where a person
+            needs what to do about it. `src/copy/table.ts cell.chordPart.why`
+            is the one spelling now, and the claim — this row is TOLD, with a
+            reason — is unchanged. */
+        return !!(r && r.why && /plays chords, not a line/.test(r.why)); };
       const live = (l) => { const r = row(l); return !!(r && !r.why); };
-      check(told("articulation") && told("alphabet") &&
-            live("octave") && live("time"),
+      check(told("articulation") && told("scale") &&
+            live("octave") && live("time shift"),
         "T6k a chord-voicing chair (" + stab.name + ", " +
-        (stab.cast || {}).part + ") is TOLD its articulation and its alphabet " +
+        (stab.cast || {}).part + ") is TOLD its articulation and its scale " +
         "with the measurement, and keeps its octave and its time as strips");
       await tap("tcell|" + stab.name + "|" + sid7);
     } else {
@@ -2722,7 +2742,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          and be a lie about every row but one. */
       {
         const B = await bank();
-        const WORDS = ["own", "guest", "hand"];
+        /* THE WORD IS THE CATALOGUE'S SINCE 2026-09-05 (the functional text
+           pass). `document.js provWord` is still the one owner of WHICH of
+           the three a cell is — own · guest · hand — and those three are
+           ADDRESSES; what the row PRINTS is `src/copy/glyph.ts`'s spelling of
+           them ("From this genre" · "From a guest" · "Edited"), the same
+           words the cell's own mark wears. The claim is unchanged: every bank
+           row says where its phrase came from, in one of exactly three ways. */
+        const WORDS = await p.evaluate(() => ["own", "guest", "hand"]
+          .map((k) => globalThis.COPY.t("glyph.cell.prov." + k)));
         const said = B.rows.map((r) => r.prov);
         const shapes = new Set(B.rows.map((r) => r.shape));
         const degs = await p.evaluate(() => { const d = window.__eightDoc();
@@ -2989,8 +3017,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          two owners the sheet's caption counts against (producer.js `sentence`,
          `Prod.MAXNOTES`) — never re-assembled here. */
       const prod0 = await p.evaluate(() => window.__eightProd());
+      /* IT READ `/nothing said/` UNTIL 2026-09-05. "nothing said — the record
+         as the atlas dealt it" is three of the audit's banned families in one
+         line; the empty face is `src/copy/sheets.ts produceRow.none` now. The
+         claim is the same: with no notes the face says so, and with notes it
+         is the producer's own count. */
       check(prod0.notes.length === 0
-              ? /nothing said/.test(row.face || "")
+              ? /no notes yet/i.test(row.face || "")
               : (row.face || "").indexOf(prod0.notes.length + " of ") === 0,
         "T10w …and its face is the producer's own line — “" + row.face +
         "” against " + prod0.notes.length + " note(s)");
