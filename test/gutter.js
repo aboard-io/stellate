@@ -1025,9 +1025,21 @@ function standUpServer() {
         (laid ? shown : hidden).push([k, v.textContent.trim(),
                                       +r.width.toFixed(1), +r.height.toFixed(1)]);
         if (!v.textContent.trim()) bad.push([k, "label has no text"]);
-        // the name may carry a number or a refusal's reason; the WORD is its head
-        else if (name !== v.textContent.trim() &&
-                 name.indexOf(v.textContent.trim()) !== 0)
+        /* the name may carry a number or a refusal's reason; the WORD is its
+           head — READ WITHOUT REGARD TO CASE, because the two strings come out
+           of two catalogue conventions that DESIGN.md §4 sets on purpose and
+           the text pass (7cf0d37) applied to all of them: a glyph's word is a
+           tiny lower-case label under a mark (`glyph.act.close` is "close")
+           and an accessible name is a sentence-cased verb phrase ("Verbs for
+           actions" — all 53 `*.aria` keys in the catalogue begin with a
+           capital, "Close {name}" among them). `#sheetclose` is the one mark
+           where a visible word and an `*.aria` name meet, so it was the only
+           one this read could catch, and it has read "close vs Close Where" on
+           every tab since the text pass — v281 fails it identically, so it is
+           older than the design pass. A capital is not a different word; a
+           different word is. */
+        else if (name.toLowerCase() !== v.textContent.trim().toLowerCase() &&
+                 name.toLowerCase().indexOf(v.textContent.trim().toLowerCase()) !== 0)
           bad.push([k, v.textContent + " vs " + name]);
         /* BOTH AXES. Sideways is where a fixed row clips (`.nu-bar` is
            `flex-wrap: nowrap`); DOWNWARD is where a flex column clips, and it

@@ -852,12 +852,30 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      player actually mean. `openVoice` is the page's own one door and the table
      opens that column's sheet on arrival, so this is the gesture rather than a
      second spelling of it. */
+  /* IT ASKS THE RECORD FOR THE COLUMN'S NAME, THE WAY `openDoes` ALREADY DOES
+     (2026-09-05). `openCol("kit")` was written when eight.js called the
+     drummer's voice `kit`; b5ade6b (2026-09-02, wave 3 of the composer) renamed
+     him — *"'drums' AND NOT 'kit'… `drums` is the KIND, which is the word the
+     gutter's glyph row, the roster's category edge, `devSheetFor` and every one
+     of Paul's own sentences ('+ drums') already use"* (eight.js:8839). So
+     `#pan-band [data-k="tcol|kit"]` has matched nothing on the shipped page
+     since that day, this helper has been a silent no-op at all three call
+     sites, and 4b below read a shut sheet and reported the drum kit missing.
+     `openDoes` survived the rename because it falls back to the voice whose
+     KIND is drums; this one had no fallback, so it gets the same one. The name
+     is still the word the call sites say, because it is still the sentence they
+     are making — it is just resolved against the document rather than typed
+     into a selector. */
   const openCol = async (name) => {
     await p.evaluate(async (n) => {
       if (!window.__eightTab || !n) return;
       window.__eightTab("Band");
       await new Promise((r) => setTimeout(r, 250));
-      const b = document.querySelector('#pan-band [data-k="tcol|' + n + '"]');
+      const D = window.__eightDoc ? window.__eightDoc() : null;
+      const v = D && D.voices && (D.voices.find((x) => x.name === n) ||
+                                  D.voices.find((x) => x.kind === n) ||
+                                  (n === "kit" && D.voices.find((x) => x.kind === "drums")));
+      const b = document.querySelector('#pan-band [data-k="tcol|' + ((v && v.name) || n) + '"]');
       if (b && b.getAttribute("aria-expanded") !== "true") b.click();
     }, name);
     await p.waitForTimeout(350);

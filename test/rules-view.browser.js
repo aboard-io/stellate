@@ -271,15 +271,31 @@ function standUpServer() {
          role=combobox>` — which threw here and killed the run before R1 was
          asked. Both spellings are read; the CLAIM ("native, then sampled") did
          not move. */
+      /* ...AND A THIRD SPELLING, 2026-09-05 (TABLE.md §11d, DESIGN.md
+         component 16): a long vocabulary is a LOZENGE FIELD now — *"every
+         option visible as a tight lozenge, clustered semantically under small
+         headings"* — and the design pass measured this very control moving
+         from "1 of 147 words on the glass" to all of them in clusters. So the
+         `<optgroup>` became an `<li class="nu-combogrp">` in the combo round
+         and is a `<section class="nu-lzcluster" data-cluster>` now. The group
+         NAMES and their order did not move — the field carries
+         `data-widget="lozenge"` and its two clusters read `native` (33) then
+         `sampled` (87), which is the order `nukernel/rules.js instrOpts`
+         hands it and exactly the claim below. All three spellings are read;
+         the CLAIM ("native, then sampled") has never moved. */
       instr: (() => {
         const m = document.querySelector('#pan-band [data-sel="rule.instr.0"]');
         if (!m) return null;
         const box = m.closest(".nu-combo") || m.parentElement;
-        const groups = m.options
-          ? [...m.querySelectorAll("optgroup")].map((g) => g.label)
-          : [...box.querySelectorAll("li.nu-combogrp")].map((g) => g.dataset.grp);
+        const lz = [...box.querySelectorAll("section.nu-lzcluster")]
+          .map((g) => g.dataset.cluster);
+        const groups = lz.length ? lz
+          : m.options
+            ? [...m.querySelectorAll("optgroup")].map((g) => g.label)
+            : [...box.querySelectorAll("li.nu-combogrp")].map((g) => g.dataset.grp);
         const words = window.__combo.words(m);
-        return { groups, first: words[0] && words[0].v, n: words.length };
+        return { groups, widget: m.getAttribute("data-widget") || null,
+                 first: words[0] && words[0].v, n: words.length };
       })(),
     };
   });

@@ -398,13 +398,42 @@ function byLen(vocab) {
   return VOCAB_BY_LEN;
 }
 
+/* A STRIKE IS ON WHOLE WORDS, AND THIS IS NOT A REFINEMENT — IT IS THE BUG
+   (2026-09-05). `rest.split(p).join(…)` struck a catalogue string ANYWHERE it
+   appeared, including inside another word, and the catalogue holds two-letter
+   strings: `row.ending.off` is "no". So striking it out of "mode natural
+   minor" left "natural mi   r", the vocabulary's own "natural minor" no longer
+   matched, and the residue reported was "natural" — a word nobody printed.
+   Both residues this gate carried reduced to that one substitution ("key: D
+   natural minor · meter: 4/4" lost the same three letters), and it was red on
+   v281 too, so it is older than the design pass and is a fault in the STRIKE
+   and not in the page. A letter-boundary is the whole fix: a needle that
+   begins with a letter may not start in the middle of a word, and one that
+   ends with a letter may not end in the middle of one. The same guard is put
+   on the vocabulary strike below, which had the identical hole. */
+const strike = (rest, needle) => {
+  const headL = /[A-Za-z]/.test(needle[0]);
+  const tailL = /[A-Za-z]/.test(needle[needle.length - 1]);
+  let out = "", i = 0;
+  for (;;) {
+    const at = rest.indexOf(needle, i);
+    if (at < 0) { out += rest.slice(i); return out; }
+    const before = at > 0 ? rest[at - 1] : " ";
+    const after = rest[at + needle.length] || " ";
+    const ok = !(headL && /[A-Za-z]/.test(before)) &&
+               !(tailL && /[A-Za-z]/.test(after));
+    out += rest.slice(i, at) + (ok ? "   " : needle);
+    i = at + needle.length;
+  }
+};
+
 /** Strike every catalogue string, then every value, and see if letters remain. */
 function covered(text, byLength, vocab) {
   let rest = " " + String(text) + " ";
   for (const p of byLength) {
     if (p.length < 2) continue;
     if (rest.indexOf(p) < 0) continue;
-    rest = rest.split(p).join(" \u0000 ");
+    rest = strike(rest, p);
     if (!/[A-Za-z]/.test(rest)) return true;
   }
   /* what a value looks like: a number, a number with a unit, a chord numeral,
@@ -414,7 +443,7 @@ function covered(text, byLength, vocab) {
      out of "lands on the root" leaves "lands on the", which matches nothing
      and reads as copy. (Measured: the Landing rule's own line.) */
   for (const v of byLen(vocab)) if (rest.indexOf(v) >= 0)
-    rest = rest.split(v).join(" ");
+    rest = strike(rest, v);
   rest = rest.replace(/\b[ivxIVX]+\b|\b[A-G][#b♯♭]?\b/g, " ");
   /* a one- or two-letter token left standing is a value's own short name
      (the touch curve's `t`), not a word of copy. */

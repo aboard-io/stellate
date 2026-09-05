@@ -75,6 +75,33 @@ const R = (p) => require(path.join(ROOT, "nukernel", p));
 const K = R("kernel.js");
 global.window = global.window || global;
 global.self = global;
+/* ...AND A DOCUMENT, BECAUSE THE MODULE TIER NOW BUNDLES LIT (41bb3e3, "every
+   menu works on a phone", which gave ui/selects.js an import of ui/menus.js).
+   ui/produce.js → ui/selects.js → ui/menus.js, and menus.js is a build product
+   with lit-html bundled in: its very first lines are `var l = document;` and
+   `var c = () => l.createComment("")`, evaluated at IMPORT time. So this file's
+   header sentence ("PURE NODE. No DOM") stopped being true of the IMPORT the
+   moment the Lit migration landed, and the gate has thrown
+   `ReferenceError: document is not defined` at menus.js:21 ever since — before
+   v278, before the design pass. Nothing below renders anything; the gate reads
+   the producer's plan and the kernel's events. So the document it needs is the
+   one test/precompose.test.js already stands on: enough of a shape for a module
+   to EVALUATE against, and no page. If something here ever wants a real page it
+   belongs in `producer-ui` (test/producer.browser.js), which drives the box in
+   a browser. */
+const stubEl = () => ({ style: {}, dataset: {}, children: [], attributes: {},
+  append() {}, appendChild(n) { return n; }, remove() {}, click() {},
+  setAttribute() {}, removeAttribute() {}, getAttribute: () => null,
+  addEventListener() {}, removeEventListener() {}, querySelector: () => null,
+  querySelectorAll: () => [], classList: { add() {}, remove() {}, toggle() {},
+    contains: () => false } });
+global.document = global.document || {
+  visibilityState: "visible", body: stubEl(), documentElement: stubEl(),
+  createElement: stubEl, createElementNS: stubEl, createTextNode: stubEl,
+  createComment: stubEl, createDocumentFragment: stubEl,
+  createTreeWalker: () => ({ currentNode: null, nextNode: () => null }),
+  getElementById: () => null, querySelector: () => null, querySelectorAll: () => [],
+  addEventListener() {}, removeEventListener() {}, adoptedStyleSheets: [] };
 const put = (name, mod) => { global.window[name] = mod; };
 put("NuKernel", K);
 put("NuGenres", R("genres.js"));

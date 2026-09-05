@@ -142,7 +142,26 @@ const FULL = process.argv.includes("--full");
    what the text pass was FOR, T2c re-rendered the events and they did not
    move, and holding the old base would only mean asserting that no idea may
    ever be renamed again. */
-const BASE_SHA = "04d06e4";  // v278. Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+/* BASE MOVED AGAIN 2026-09-05, to 5672e84 (v284), FOR THE SAME KIND OF REASON
+   AS THE LAST TWO: the CATALOGUE moved on purpose between v278 and v284 and the
+   base was still v278, so T2a/T2b were reporting the rounds that shipped.
+
+   MEASURED against 04d06e4 before the base moved:
+     · T2a: 18 of 1437 documents differ — viennadownbeat, chillout, versailles;
+     · T2b: 24 of 180 rendered sections compile to a different genre —
+       politicalhiphop, northernsoul, viennadownbeat;
+   and every one of those five anchors is a file this window edited on purpose:
+   `0669383` ("the swings that never reached a kit") and `bce7b13` ("two rows
+   that named a drummer and gave him nothing to play") rewrote
+   nukernel/genres/{viennadownbeat,chillout,versailles,politicalhiphop,
+   northernsoul}.json — `git diff --name-only 04d06e4..5672e84 -- nukernel/
+   genres/` names all five. A row that gained a kit is a sound moved on purpose,
+   gated in its own round, and the same [[verification-philosophy]] sentence the
+   move to 04d06e4 leaned on applies: byte-stability is a tool, not a law, and
+   holding a base older than the catalogue only asserts that no row may ever
+   gain a drummer. The strip set below is asked of the base, so it re-derives
+   itself; T4j renders both sides and is base-aware already. */
+const BASE_SHA = "5672e84";  // v284. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
