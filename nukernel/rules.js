@@ -321,7 +321,7 @@
        row existed (the determinism sweep G6a/G6g holds it). */
     { field: "jitter", axis: "Time", head: "rule.headTempoGive", rederive: "compose",
       say: (g) => { const j = jitterOf(g);
-        return [w(T("rule.headTempoGive") + " "), val(j, g.jitter), w(" " + T("rule.unitBeats"))]; },
+        return [w(T("rule.headTempoGive") + " "), val(j, g.jitter), w(" " + T("unit.beats"))]; },
       read: (g) => g.jitter,
       edit: { kind: "number", min: 0, max: 12, step: 1 },
       write: (r, v) => writeAt(r, "jitter", v == null ? null : Math.max(0, Math.min(12, Math.round(v)))) },

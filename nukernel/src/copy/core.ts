@@ -67,6 +67,13 @@ export const CORE: Table = {
   "noun.song": "song",
 
   /* ===== COUNTED NOUNS — a plural is a key, never an `if` in a caller ==== */
+  /* THE UNIT WORDS, WHICH ARE NOT COUNTS. A count carries its number
+     ("3 beats"); a unit stands after a number a control already prints, so
+     it has no placeholder and it is one key however many surfaces use it —
+     C4's law ("one meaning, one key"). `rule.unitBeats` was the first of
+     these and it was on the rules page; it is here now because a second
+     surface (the table's entry slider) asks the same question. */
+  "unit.beats": "beats",
   "count.bar.one": "{n} bar",
   "count.bar.other": "{n} bars",
   "count.beat.one": "{n} beat",

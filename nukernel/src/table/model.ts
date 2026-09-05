@@ -148,6 +148,33 @@ export function numField(A: TableAPI, key: string, label: string,
     clear: (clearable && has) ? () => set("") : null };
 }
 
+/* ---- WHERE A PLAYER COMES IN, IN BEATS (2026-09-05, the review's item 4) --
+   *"`enters at bar` is validated `Number.isInteger` … a pickup, a stretto, an
+   answer on beat 3 cannot exist."* `entry` is stored in BARS with a beat
+   fraction — one fact, one address, document.js's own validator — and the
+   HAND counts in beats, so this is the one place the two units meet: the
+   slider's min, max, step and printed number are beats, and `set` divides by
+   the bar's beat count on the way to the document.
+
+   THE STEP IS THE BAR'S OWN GRID, never a fixed quarter: `A.barBeats()` reads
+   `steps / pulse` and `1 / pulse` off the record's meter, so in four-four the
+   thumb lands every sixteenth (0.25 beats) and in 21/17 every notated beat.
+   A hand can still type a number between two steps — document.js snaps it.
+
+   EIGHT BARS' WORTH OF RUN, which is exactly the top the chips offered
+   (`[0, 1, 2, 4, 8]` bars) said in the new unit; a value already written
+   past it widens the range rather than being clipped, the same law
+   `numField` keeps. */
+const ENTRYBARS = 8;
+function entryNum(A: TableAPI, cur: number | null, ghost: number | null) {
+  const B = A.barBeats();
+  const bpb = B.beats > 0 ? B.beats : 4;
+  const toBeats = (bars: number) => Math.round((bars * bpb) / B.step) * B.step;
+  const top = Math.max(ENTRYBARS * bpb,
+    ...[cur, ghost].filter((x): x is number => x != null).map(toBeats));
+  return { bpb, B, top, toBeats };
+}
+
 /** A CELL OVERRIDE OF A COLUMN DEFAULT — 2 drawn as a control. The word it
  *  prints when nothing is written here is what it INHERITS, drawn quiet; the
  *  clear-back appears the moment a hand writes. */
@@ -174,6 +201,30 @@ function cellNum(A: TableAPI, i: number, vi: number, field: string,
            step: 1, unit: "", derivedNum: inh == null ? null : +inh },
     set: (v: string) => A.putCell(i, vi, field, v === "" ? null : +v),
     clear: has ? () => A.putCell(i, vi, field, null) : null };
+}
+
+/** THE CELL'S OWN ENTRY, IN BEATS — the column default said again at the
+ *  crossing (2 drawn as a control). The GHOST is what the column deals, so
+ *  pushing the thumb off it is visibly a departure; the word it prints while
+ *  nothing is written here is the inherited number, quiet. */
+function cellEntry(A: TableAPI, i: number, vi: number): StripField {
+  const own = A.cellOf(i, vi, "entry") as number | null;
+  const inh = A.resolve(i, vi, "entry") as number | null;
+  const E = entryNum(A, own, inh);
+  const mine = own == null ? null : E.toBeats(own);
+  const ghost = inh == null ? 0 : E.toBeats(inh);
+  return { key: "tcellnum|entry|" + vi + "|" + i, label: t("col.entry"),
+    word: String(mine == null ? ghost : mine),
+    value: mine == null ? "" : String(mine),
+    derived: mine == null,
+    sub: mine == null ? t("value.defaultCap") : null,
+    options: [{ v: "", w: t("value.default") } as Choice,
+              ...[0, 1, 2, 4, 8].map((n) => ({ v: String(n * E.bpb),
+                                               w: String(n * E.bpb) } as Choice))],
+    num: { min: 0, max: E.top, step: E.B.step, unit: t("unit.beats"),
+           derivedNum: ghost },
+    set: (x: string) => A.putCell(i, vi, "entry", x === "" ? null : (+x) / E.bpb),
+    clear: mine == null ? null : () => A.putCell(i, vi, "entry", null) };
 }
 
 /** ONE LANE OF A CELL'S MIX AUTOMATION, RELATIVE TO THE SECTION'S (wave 3).
@@ -466,11 +517,26 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
     reg == null ? "" : (reg as number),
     REGSTEPS, (x) => A.putCast(vi, "reg", x === "" ? null : +x), true,
     t("value.default")));
-  const en = A.castOf(vi, "entry");
-  f.push(numField(A, "entry|" + v.name, t("col.entry"),
-    en == null ? "" : (en as number),
-    [0, 1, 2, 4, 8], (x) => A.putCast(vi, "entry", x === "" ? null : +x), true,
-    t("col.entry.none")));
+  /* THE COLUMN'S ENTRY, IN BEATS. Not `numField`, because that builds a
+     slider whose value IS the stored number and this one's unit differs from
+     its address's: the strip reads beats and the document keeps bars. */
+  const en = A.castOf(vi, "entry") as number | null;
+  {
+    const E = entryNum(A, en, null);
+    const beats = en == null ? null : E.toBeats(en);
+    f.push({ key: "entry|" + v.name, label: t("col.entry"),
+      word: beats == null ? t("col.entry.none") : String(beats),
+      value: beats == null ? "" : String(beats),
+      derived: beats == null,
+      options: [{ v: "", w: t("col.entry.none") } as Choice,
+                ...[0, 1, 2, 4, 8].map((n) => ({ v: String(n * E.bpb),
+                                                 w: String(n * E.bpb) } as Choice))],
+      num: { min: 0, max: E.top, step: E.B.step, unit: t("unit.beats"),
+             derivedNum: 0 },
+      set: (x: string) => A.putCast(vi, "entry",
+        x === "" ? null : (+x) / E.bpb),
+      clear: beats == null ? null : () => A.putCast(vi, "entry", null) });
+  }
   /* WHERE IT SITS IN THE MIX IS THE MIX ROW NOW (2026-09-07, §10b step 3).
      `f.push({ kind: "node", label: "seat", node: A.voiceStrip(v.name) })`
      STOOD HERE and was right for one round: the board had bus strips and the
@@ -554,7 +620,7 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
     f.push(fld);
   }
   /* 3 · THE TWO COLUMN DEFAULTS A CELL MAY OVERRIDE (wave 1's cell tier). */
-  f.push(cellNum(A, i, vi, "entry", t("col.entry"), [0, 1, 2, 4, 8]));
+  f.push(cellEntry(A, i, vi));
   f.push(cellNum(A, i, vi, "reg", t("col.register"), REGSTEPS));
   /* 4 · FOCUS — stored, resolved, and reaching nothing, which 1a measured and
      T2e pins. A control that pretended otherwise would be the

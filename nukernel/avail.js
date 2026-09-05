@@ -347,12 +347,18 @@
          genre where it has always reported 0. `resolveFrom`'s `from` is what
          makes that distinction sayable rather than guessed at. */
       const vix = vs.indexOf(v), six = secs.findIndex((x) => x.id === S.section);
-      const cellv = (fld) => {
-        if (vix < 0 || six < 0) return cast[fld] | 0;
+      /* `| 0` TRUNCATES, AND AN ENTRY HAS A FRACTION NOW (2026-09-05, the
+         review's item 4): a chair entering at 0.75 of a bar reported 0 here,
+         which is the one surface that would have told a hand its voice comes
+         in on the downbeat while it comes in on beat four. A register is
+         still an integer and keeps the integer read. */
+      const cellv = (fld, num) => {
+        const n = (x) => num ? (x == null ? 0 : +x) : (x | 0);
+        if (vix < 0 || six < 0) return n(cast[fld]);
         const r = ND.resolveFrom(doc, six, vix, fld);
-        return (r.from === "cell" || r.from === "column") ? (r.v | 0) : (cast[fld] | 0);
+        return (r.from === "cell" || r.from === "column") ? n(r.v) : n(cast[fld]);
       };
-      f["voice.entry"]  = cellv("entry");
+      f["voice.entry"]  = cellv("entry", true);
       f["voice.reg"]    = cellv("reg");
       f["voice.on"]     = v.kind === "drums" ? !!cast.on : true;
       // chair.js:326's law, verbatim and from the other end: "A PAD DOES NOT

@@ -20,6 +20,44 @@
 //         and not a switch, but a small ENUM naming a way of PLAYING the note.
 //         Absent (an old phrase, a composed one) reads as the all-zero vector
 //         and renders byte-identically, which is why nothing needed migrating.
+//   art   ARTICULATION MARK on this step — 0 none, 1 staccato, 2 tenuto,
+//         3 slur. The tenth vector and the same THIRD type as `orn`: a small
+//         enum, present-only, absent reading as all-zero. It says HOW LONG
+//         the note is held against its own step, which is the one thing
+//         `vel`, `acc` and `hold` between them could not say (2026-09-05, the
+//         musicologist's review item 6: *"Articulation per note: no. ARTICS
+//         is settable per genre, per section row and per cell — never per
+//         note."*).
+//         THE SLIDE IS NOT IN IT, and that is deliberate: a slide is an EDGE
+//         fact (`sld`, "into this step") that `reverse()` must shift by one,
+//         and a node vector holding it would come out of a retrograde
+//         attached to the wrong side of its transition. `sld` stays the one
+//         owner of the slide and `art` the one owner of the length; the
+//         BENCH draws them as one five-state mark because that is what a
+//         hand means by "how is this note played".
+//   alt   ACCIDENTAL on this step — a SIGNED SEMITONE offset, -1 or +1,
+//         applied AFTER the alphabet has answered. The eleventh vector,
+//         present-only, absent reading as all-zero (2026-09-05, the
+//         musicologist's review item 7: *"the pitch bar locks to the record's
+//         scale, and the toggle that would have unlocked it was deleted, not
+//         built … In B-flat ionian you cannot write a blue note, a #11, or a
+//         chromatic approach."*).
+//         IT IS NOT `inc`, AND THE REASON IS NOT THAT `inc` IS BUSY. `inc` is
+//         a per-step ramp in scale DEGREES that accumulates every LOOP
+//         (`rampOf`), read by the render, copied by `split` and bounded by
+//         `clamp`; that its columns happen to be all-zero in today's
+//         catalogue makes it UNUSED, not FREE, and a semitone put into it
+//         would be read by every one of those readers as a degree per loop.
+//         An accidental is a different quantity (semitones, not degrees), at
+//         a different time (this note, not every loop) and at a different
+//         place in the pipeline (after the scale lookup, not before it), so
+//         it is its own vector.
+//         AND IT SURVIVES THE ANCHOR ON PURPOSE. `anchored` moves a long note
+//         onto the nearest chord tone; applying the accidental after it is
+//         what makes a written raised fourth stay raised — the review's
+//         *"the dissonance you write is the thing the design is built to
+//         erase"* is a statement about a note the alphabet produced, and this
+//         is a note a hand produced.
 //
 // vel and acc are NOT the same knob. vel is how loud; acc is the 303's accent,
 // a categorical flag that opens the filter and that operators key on (the ghost
@@ -70,6 +108,12 @@
                 inc: f(p.inc || Z(p)), stk: f(p.stk || Z(p)),
                 gate: f(p.gate), acc: f(p.acc), sld: f(p.sld) };
     if (p.orn) o.orn = f(p.orn);
+    // `art` rides exactly as `orn` does, for the same group-law reason: a
+    // phrase that never carried marks must come out of rotate(0) as the same
+    // keys it went in as, not as one more.
+    if (p.art) o.art = f(p.art);
+    // ...and so does `alt`, the accidental, for the same reason.
+    if (p.alt) o.alt = f(p.alt);
     // `hold` rides exactly as `orn` does — present-only, a per-note length
     // the hand wrote (the tie made first-class: see the render's cap). The
     // same group-law reason: a phrase that never carried holds must come out
@@ -243,6 +287,8 @@
         out.inc[j] = step; out.stk[j] = p.stk ? p.stk[i] : 0;
         out.acc[j] = 0; out.sld[j] = 0;            // a subdivision is not an accent
         if (out.orn) out.orn[j] = 0;               // …and it is not an ornament either
+        if (out.art) out.art[j] = 0;               // …and it is not articulated either
+        if (out.alt) out.alt[j] = 0;               // …and it carries no accidental
       }
     }
     return out;
@@ -634,6 +680,35 @@
   // expression, named, never rearranged.
   const timeOf = (g, b, N, i) => (b * N + i + swing(g, i)) / g.rate;
 
+  /* ---- WHERE A CHAIR COMES IN, IN BARS AND BEATS (2026-09-05) -------------
+     The musicologist's review, item 4: *"`enters at bar` is validated
+     `Number.isInteger` … a second violin cannot come in on beat 3."* No
+     pickup, no stretto, no answer off the barline — and the engine never
+     needed any of that fixing, because a bar is only N steps and a fraction
+     of a bar is a whole number of them.
+
+     SO `entry` IS ONE NUMBER, IN BARS, AND ITS FRACTION IS THE BEATS. `0.75`
+     is three beats of four; `0.5` on a second chair against `0` on a first is
+     a stretto; `2` is what it has always been. One number and not `{bar,
+     beat}` because `entry` is ONE FACT with ONE ADDRESS everywhere it is read
+     — document.js TIERS, the resolver, precompose's cast, the genre closures,
+     `g.entry(v)` here — and splitting it into two fields would have meant two
+     validators, two clear-backs and two ways to spell "the same place".
+     A bar float also multiplies straight into the step arithmetic this file
+     is already written in, and an INTEGER entry is byte-identical by
+     construction: `entryStep` is 0 and nothing below it runs.
+
+     THE FRACTION IS QUANTISED TO THE BAR'S OWN STEP, never to a fixed
+     sixteenth: `N` is the phrase's grid, which document.js pins to
+     `stepsIn(meter)` — so in 6/8 (12 steps) a third of a bar is exactly four
+     steps and in 21/17 the step is the notated beat itself. A fraction
+     between two steps is rounded to the nearer one rather than refused,
+     because the control that writes it is a slider and a slider's business is
+     to land on the grid. */
+  const entryBar = (e) => Math.max(0, Math.floor(+e || 0));
+  const entryStep = (e, N) => { const x = Math.max(0, +e || 0);
+    return Math.round((x - Math.floor(x)) * N); };
+
   // ---- GROOVE: the part of a performance that is not in the notes -----------
   // Swing bends the grid. GROOVE bends the grid AND the dynamics, per sixteenth,
   // as a repeating sixteen-slot fingerprint — some steps arrive a hair late, some
@@ -895,7 +970,11 @@
       // voice was in, which is true of an exposition and false of everything
       // after it — an eight-bar fugue used to sit on one chord from bar 4.
       const v = Math.min(bar, g.voices - 1), sc = g.scale || PENT;
-      const q = word(subj, g.word(v, Math.max(0, bar - g.entry(v))));
+      // ...AND THE ENTRY IS READ AS A BAR HERE, because this asks which bar
+      // of its own statement a voice is in and a fraction of a bar is not a
+      // bar. `entryBar` is `Math.max(0, Math.floor(e))`, which for the
+      // integer entry every genre closure returns is the number itself.
+      const q = word(subj, g.word(v, Math.max(0, bar - entryBar(g.entry(v)))));
       return near(pcw(pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)), md);
     }
     return 0;                                            // modal: no motion
@@ -1884,8 +1963,17 @@
             per = sc.period || 12;
       let voicing = null;      // pad voice-leading memory: per voice, across bars
       let compv = null;        // the comping hand's voicing memory, same law
-      for (let b = g.entry(v); b < bars; b++) {
-        const s = b - g.entry(v);
+      /* THE CHAIR COMES IN AT A BAR AND A BEAT (2026-09-05, the review's item
+         4). The loop below is the ONE loop, and it still counts whole bars —
+         what changed is that `entry` may carry a fraction, so the bar it
+         starts on and the STEPS INTO that bar are two readings of one number.
+         `eStep` is 0 for every integer entry, which is every record and every
+         genre closure that has ever been written, and the whole offset pass
+         at the foot of this loop is then skipped. */
+      const eBar = entryBar(g.entry(v)), eStep = entryStep(g.entry(v), N);
+      const evFrom = ev.length;
+      for (let b = eBar; b < bars; b++) {
+        const s = b - eBar;
         // the genre's word plus the bar schedule's word for THIS bar — the
         // sixth type joins the pipeline exactly where the timeless one runs
         const p = word(subj, g.word(v, s).concat(periodOps(g, v, s)));
@@ -2084,7 +2172,7 @@
                 return k * N;
               };
               for (const c of chords) {
-                if (c.held && c.start === 0 && b > g.entry(v)) continue;
+                if (c.held && c.start === 0 && b > eBar) continue;
                 const run = c === chords[chords.length - 1] ? heldRun() : 0;
                 voicing = voiceLead(voicing, c.pcs, ctr);
                 // A VOICE-LED PAD MAY NOT WALK OUT OF THE ROOM — for a genre
@@ -2212,9 +2300,38 @@
           // half and the staff drew a bow the air never played. The slide
           // has always had this exemption (a physical connection cannot be
           // shortened); the hand's tie is the notational one.
-          const legato = slid || hd ? 1 : (ART[artic] || 0.92);
+          /* ---- THE MARK THIS NOTE CARRIES (2026-09-05, review item 6) ----
+             `art[i]` is the hand's word about THIS note and it outranks the
+             chair's, the genre's and the part's, for the reason a written
+             hold already outranks the cap: an articulation written on a step
+             is a measurement, and `artic` is a policy about the notes nobody
+             measured. Three marks, each doing exactly what its name means:
+               1 staccato — half the step (`ART.staccato`, the same 0.5 the
+                 word has always been worth, so a marked note and a staccato
+                 chair sound the same length);
+               2 tenuto   — the WHOLE step, no breath;
+               3 slur     — the whole step AND exempt from `maxHold`, which
+                 is the same exemption a slide has always had, because a slur
+                 is a connection to the next note and a cap that cut it would
+                 be a bow lifted mid-stroke.
+             `art` absent (every phrase in the catalogue) is `mk === 0` and
+             takes the expression that stood here, byte for byte. */
+          const mk = (p.art && p.art[i]) | 0;
+          /* STACCATO OUTRANKS A WRITTEN HOLD, and it is the one mark that
+             does. `hold` and `art` are about DIFFERENT THINGS: a hold says
+             how many steps the note OCCUPIES (its notated value, and the
+             reason it beats `maxHold`), a mark says how much of that value
+             SOUNDS. A staccato quarter is a quarter played short — the value
+             is a quarter, the sound is an eighth — so the two compose rather
+             than compete, and a staccato on a tied note is a real thing to
+             write. Measured before this line: a staccato on a held step left
+             the duration exactly where it was. */
+          const legato = mk === 1 ? ART.staccato
+                       : (slid || hd || mk === 2 || mk === 3) ? 1
+                       : (ART[artic] || 0.92);
           const held = hd ? Math.min(steps, hd)
-                          : (slid || !cap ? steps : Math.min(steps, cap));
+                          : ((slid || mk === 3 || !cap) ? steps
+                             : Math.min(steps, cap));
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const dg = p.deg[i] + degShiftAt(i);
@@ -2227,9 +2344,32 @@
                   : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rs + per * p.oct[i],
                   held * legato, set)
               : fold(n, ctr);                                    // chords voice per note
-            prevN = pitchOf;
-            barEv.push({ t: timeOf(g, b, N, i), dur: held * legato / g.rate, v, part,
-                         n: pitchOf + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
+            /* THE ACCIDENTAL, AFTER THE ALPHABET AND AFTER THE ANCHOR
+               (2026-09-05, review item 7). `pitch(deg, sc)` is the scale
+               lookup and `anchored` is the chord-tone correction that runs on
+               top of it; a hand's raised fourth has to survive both or the
+               control is a picture. So the semitone is added LAST, on the
+               finished pitch, and `prevN` — the direction of travel `anchored`
+               reads on the NEXT step — is the note that actually sounds.
+               `alt` absent is `+ 0` and no allocation, which is every phrase
+               in the catalogue. */
+            const alt = (p.alt && p.alt[i]) | 0;
+            const sounds = alt ? pitchOf + alt : pitchOf;
+            prevN = sounds;
+            const e2 = { t: timeOf(g, b, N, i), dur: held * legato / g.rate, v, part,
+                         n: sounds + key, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) };
+            /* THE MARK RIDES THE EVENT, PRESENT-ONLY. The score has to print
+               a staccato dot and a slur and cannot read them back out of a
+               duration (0.5 of a step is also what a `staccato` CHAIR plays,
+               and a slur is a length nothing distinguishes from a long note);
+               the exports carry them for the same reason. Absent where no
+               mark is written, so an unmarked event is the same object shape
+               it has always been. `alt` rides too, and for the same reason: a
+               sharp is a NOTATION fact, and a pitch alone cannot say whether
+               it is a raised fourth or a flattened fifth. */
+            if (mk) e2.art = mk;
+            if (alt) e2.alt = alt;
+            barEv.push(e2);
             barAt.push(i); barHold.push(held / g.rate);
           }
         }
@@ -2264,6 +2404,37 @@
             ev.push(e);
           }
         } else for (const e of barEv) ev.push(e);
+      }
+      /* ---- ...AND THEN THE WHOLE CHAIR MOVES BY THE BEATS (2026-09-05) ----
+         The bars above are rendered exactly as they always were and the
+         chair's finished stream is TRANSLATED by `eStep` steps. That is what
+         the musical gesture actually is: a stretto is the same statement
+         later, not a different statement — the phrase keeps its own accents,
+         its own swing parity and its own shape, and only its clock moves.
+         Rendering into a re-quantised grid instead would have meant
+         re-deriving swing, groove and every per-step lean against a bar line
+         the phrase does not sit on, which is a different piece of music.
+         ONE CAVEAT, STATED RATHER THAN HIDDEN: swing is `(i % 2) * g.swing`,
+         so a translation by an ODD number of steps swaps which of the
+         phrase's own steps are the swung ones. Every beat of every meter this
+         box counts is an even number of steps (`sub` is a power of two), so a
+         beat-aligned entry never does it; a hand that drags the slider to an
+         odd step on a swung record gets the phrase's off-beats leaned the
+         other way, which is what "moved by a sixteenth" sounds like.
+         AND WHAT FALLS OFF THE END IS CUT, the same law `chairShape` keeps
+         for a half-time chair ("whatever runs past the section's last bar is
+         cut"): an onset at or past the section's last step belongs to a
+         section that has not started. The tail of a note that STARTED inside
+         is left alone — a note is allowed to ring over a bar line. */
+      if (eStep) {
+        const dt = eStep / g.rate, end = (bars * N) / g.rate;
+        let w = evFrom;
+        for (let k = evFrom; k < ev.length; k++) {
+          const t = ev[k].t + dt;
+          if (t >= end - 1e-9) continue;
+          ev[w++] = { ...ev[k], t };
+        }
+        ev.length = w;
       }
     }
     const sorted = ev.sort((a, b) => a.t - b.t);

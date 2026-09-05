@@ -119,8 +119,13 @@ export const TABLE: Table = {
   "col.bassStyle": "default variation",
   "col.throat": "sings as",
   "col.register": "register",
-  "col.entry": "enters at bar",
-  "col.entry.none": "bar one",
+  /* AN ENTRY IS A BEAT NOW, NOT A BAR (2026-09-05, the review's item 4): a
+     pickup, a stretto and an answer on beat three are all fractions of a bar,
+     so the control is a slider in BEATS and the label is the noun a musician
+     uses for the thing (DESIGN.md 4). The unit is its own key because it
+     prints after the number and a second language declines it. */
+  "col.entry": "entry",
+  "col.entry.none": "the first beat",
   "col.desk": "the desk",
   "col.seat.word": "mix row",
   "col.seat.aria": "{name} — channel strip",

@@ -560,6 +560,17 @@ function numField(A2, key, label, cur, steps, set, clearable, noneWord) {
     clear: clearable && has ? () => set("") : null
   };
 }
+var ENTRYBARS = 8;
+function entryNum(A2, cur, ghost) {
+  const B2 = A2.barBeats();
+  const bpb = B2.beats > 0 ? B2.beats : 4;
+  const toBeats = (bars) => Math.round(bars * bpb / B2.step) * B2.step;
+  const top = Math.max(
+    ENTRYBARS * bpb,
+    ...[cur, ghost].filter((x2) => x2 != null).map(toBeats)
+  );
+  return { bpb, B: B2, top, toBeats };
+}
 function cellNum(A2, i5, vi, field, label, steps) {
   const own = A2.cellOf(i5, vi, field);
   const inh = A2.resolve(i5, vi, field);
@@ -590,6 +601,37 @@ function cellNum(A2, i5, vi, field, label, steps) {
     },
     set: (v3) => A2.putCell(i5, vi, field, v3 === "" ? null : +v3),
     clear: has ? () => A2.putCell(i5, vi, field, null) : null
+  };
+}
+function cellEntry(A2, i5, vi) {
+  const own = A2.cellOf(i5, vi, "entry");
+  const inh = A2.resolve(i5, vi, "entry");
+  const E2 = entryNum(A2, own, inh);
+  const mine = own == null ? null : E2.toBeats(own);
+  const ghost = inh == null ? 0 : E2.toBeats(inh);
+  return {
+    key: "tcellnum|entry|" + vi + "|" + i5,
+    label: t4("col.entry"),
+    word: String(mine == null ? ghost : mine),
+    value: mine == null ? "" : String(mine),
+    derived: mine == null,
+    sub: mine == null ? t4("value.defaultCap") : null,
+    options: [
+      { v: "", w: t4("value.default") },
+      ...[0, 1, 2, 4, 8].map((n3) => ({
+        v: String(n3 * E2.bpb),
+        w: String(n3 * E2.bpb)
+      }))
+    ],
+    num: {
+      min: 0,
+      max: E2.top,
+      step: E2.B.step,
+      unit: t4("unit.beats"),
+      derivedNum: ghost
+    },
+    set: (x2) => A2.putCell(i5, vi, "entry", x2 === "" ? null : +x2 / E2.bpb),
+    clear: mine == null ? null : () => A2.putCell(i5, vi, "entry", null)
   };
 }
 function cellLane(A2, i5, vi, spec) {
@@ -819,16 +861,37 @@ function colSheet(A2, vi) {
     t4("value.default")
   ));
   const en = A2.castOf(vi, "entry");
-  f2.push(numField(
-    A2,
-    "entry|" + v3.name,
-    t4("col.entry"),
-    en == null ? "" : en,
-    [0, 1, 2, 4, 8],
-    (x2) => A2.putCast(vi, "entry", x2 === "" ? null : +x2),
-    true,
-    t4("col.entry.none")
-  ));
+  {
+    const E2 = entryNum(A2, en, null);
+    const beats = en == null ? null : E2.toBeats(en);
+    f2.push({
+      key: "entry|" + v3.name,
+      label: t4("col.entry"),
+      word: beats == null ? t4("col.entry.none") : String(beats),
+      value: beats == null ? "" : String(beats),
+      derived: beats == null,
+      options: [
+        { v: "", w: t4("col.entry.none") },
+        ...[0, 1, 2, 4, 8].map((n3) => ({
+          v: String(n3 * E2.bpb),
+          w: String(n3 * E2.bpb)
+        }))
+      ],
+      num: {
+        min: 0,
+        max: E2.top,
+        step: E2.B.step,
+        unit: t4("unit.beats"),
+        derivedNum: 0
+      },
+      set: (x2) => A2.putCast(
+        vi,
+        "entry",
+        x2 === "" ? null : +x2 / E2.bpb
+      ),
+      clear: beats == null ? null : () => A2.putCast(vi, "entry", null)
+    });
+  }
   f2.push({ kind: "ops", label: t4("col.desk"), ops: [
     {
       k: "tseat|" + v3.name,
@@ -908,7 +971,7 @@ function cellSheet(A2, i5, vi) {
     if (v3.kind === "drums") fld.groups = groupsFor(w2.options);
     f2.push(fld);
   }
-  f2.push(cellNum(A2, i5, vi, "entry", t4("col.entry"), [0, 1, 2, 4, 8]));
+  f2.push(cellEntry(A2, i5, vi));
   f2.push(cellNum(A2, i5, vi, "reg", t4("col.register"), REGSTEPS));
   f2.push({
     kind: "say",

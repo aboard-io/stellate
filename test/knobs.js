@@ -409,17 +409,67 @@ const J = (x) => JSON.parse(JSON.stringify(x));
         });
         check(r.heading != null, "4 " + dsp + " draws a heading" + tag);
         check(r.silent === 0, "4 " + dsp + ": no silent grey (" + r.silent + ")" + tag);
-        if (dsp === "ahh_choir")
-          check(!r.has && /a recording has one breath in it/.test(r.why),
-            "4 a sampled instrument says why there is nothing to turn" + tag);
+        /* THE SENTENCE MOVED INTO THE CATALOGUE (2026-09-05, v278's text pass).
+           This read the old prose literally — "a recording has one breath in
+           it" — and the copy round replaced that whole sentence with the key
+           `knobs.sampled`. A gate that types a sentence it does not own is a
+           second copy of it, which is exactly the law the catalogue exists to
+           enforce, so the expected text is ASKED OF THE PAGE'S OWN `COPY.t`
+           rather than written here: the check is now "the sampled chair prints
+           the catalogue's sentence and draws no knob table", and a re-worded
+           key keeps it green while a DELETED key turns it red. */
+        if (dsp === "ahh_choir") {
+          const say = await p.evaluate(() => (globalThis.COPY
+            ? globalThis.COPY.t("knobs.sampled") : null));
+          check(!r.has && !!say && r.why.includes(say),
+            "4 a sampled instrument says why there is nothing to turn " +
+            JSON.stringify(say) + tag);
+        }
         if (dsp === "vp330")
           check(/0\.4 dB across its whole range/.test(r.why),
             "4 the VP-330's silent breath control prints its number" + tag);
         if (dsp === "dx7_alg5")
           check(r.n === 1 && /114 of them/.test(r.why),
             "4 a DX7 is edited with its cartridges, and says so" + tag);
-        if (dsp === "fm2op")
-          check(r.n >= 9, "4 two-operator FM reaches " + r.n + " controls" + tag);
+        /* EIGHT, NOT NINE, AND THE ROWS THAT LEFT ARE ON THE CURVE EDITOR
+           (2026-09-05, TABLE.md §11's envelope round). This asked for nine
+           sliders in the knob TABLE. `knobsEnvSpec` now lifts every envelope
+           SEGMENT nukernel/knobs.js measured on this instrument out of that
+           table and onto the one envelope editor (`envSpecFor` →
+           `curveEditor`; `knobsBlock` skips exactly the rows the editor
+           drew) — for `fm2op` that is `attack` and `release`, the two of the
+           four segments its census actually has, so ten measured rows are
+           now eight in the table and two on the plate.
+           A COUNT ALONE WOULD PASS IF THE ROWS HAD SIMPLY BEEN DELETED, so
+           what this asserts is the MOVE: the table's addresses and the
+           plate's handles together are the instrument's whole measured
+           census, read off knobs.js rather than typed here. Nothing lost. */
+        if (dsp === "fm2op") {
+          const drawn = await p.evaluate(() => {
+            const t = document.querySelector("table.nu-knobs");
+            const box = document.querySelector(".nu-seatenv");
+            const addr = (k) => String(k || "").split("#")[0];
+            return {
+              tbl: t ? [...t.querySelectorAll("input,select")]
+                .map((c) => addr(c.dataset.k)) : [],
+              /* A HANDLE IS A BUTTON ON THE PLATE, not an `<input>`: ui/
+                 envelope.js draws `.nu-envh` at `env|<voice>|<segment>` and
+                 prints the number beside it in `.nu-envsay`. */
+              env: box ? [...box.querySelectorAll(".nu-envh")]
+                .map((c) => (c.dataset.k || "").split("|").pop()) : [] };
+          });
+          const census = KN.voices.fm2op.rows.map((x) => x.key);
+          const both = [...drawn.tbl, ...drawn.env].sort();
+          check(r.n === 8, "4 two-operator FM reaches " + r.n + " controls" + tag);
+          check(drawn.env.length === 2 && drawn.env.includes("attack") &&
+            drawn.env.includes("release"),
+            "4 …and its attack and release are handles on the envelope editor " +
+            JSON.stringify(drawn.env) + tag);
+          check(JSON.stringify(both) ===
+            JSON.stringify([...census].sort()),
+            "4 …and the two owners together are the whole measured census (" +
+            census.length + ") " + JSON.stringify(both) + tag);
+        }
         if (dsp === "tract_voice") {
           const g = await p.evaluate(() => {
             const t = document.querySelector("table.nu-knobs");

@@ -3342,6 +3342,25 @@
       ...(b.echo ? { echo: b.echo } : {}),
     }));
     const minBars = Math.min(...sections.map((x) => x.bars));
+    /* WHERE A CHAIR MAY COME IN, CLAMPED BY THE SECTION'S LENGTH IN BEATS
+       (2026-09-05, the review's item 4). `entry` is bars with a beat
+       fraction now (kernel.js `entryBar`/`entryStep`), and the clamp has two
+       halves for one reason each:
+         · the WHOLE bars are clamped to `minBars - 1`, verbatim what stood
+           here — a voice that entered past the shortest section's last bar
+           was simply silent there, which is what the clamp exists to refuse;
+         · the FRACTION is kept only where the bar it lands in still leaves a
+           beat of the section to play, i.e. `whole + frac < minBars`. That is
+           the clamp "by the section's length in beats": the last legal entry
+           is one step short of the end, not the top of the last bar.
+       An INTEGER entry — every closure in the catalogue — is
+       `Math.max(0, Math.min(e, minBars - 1))` to the bit, which is the
+       expression this replaced. */
+    const entryClamp = (e, nBars) => {
+      const x = Math.max(0, +e || 0), whole = Math.floor(x), frac = x - whole;
+      const bar = Math.min(whole, Math.max(0, nBars - 1));
+      return (frac && bar + frac < nBars) ? bar + frac : bar;
+    };
 
     /* ---- who plays what, per section ----------------------------------- */
     // ui/derive.js:408 is the law: nP = e.slots.length, and phrase index pi
@@ -3984,7 +4003,15 @@
                 // ENTRY IS BARS INTO EVERY SECTION HERE, not into the record
                 // (ui/derive.js renders each box independently), so an
                 // unclamped entry of 3 SILENCES a voice in a two-bar intro.
-                entry: Math.max(0, Math.min(G.entry(v) | 0, minBars - 1)),
+                // ...AND IT IS CLAMPED IN BEATS NOW (2026-09-05, the review's
+                // item 4): `entry` may carry a fraction of a bar, so the
+                // WHOLE bars are clamped to the shortest section's last bar
+                // exactly as they always were, and the fraction rides on top
+                // only where the section still has a beat left for it to
+                // start in. `G.entry(v)` is an integer on every genre closure
+                // in the catalogue, where `entryClamp` is `Math.max(0,
+                // Math.min(e, minBars - 1))` to the bit.
+                entry: entryClamp(G.entry(v), minBars),
                 // ...AND WHO SINGS IT, WHERE THE ROW SAYS (2026-09-04).
                 // Absent on the 464 rows that state no `throat` closure, which
                 // is why every other record composes byte-identically;

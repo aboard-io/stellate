@@ -276,6 +276,15 @@ export interface TableAPI {
    *  beside it are `time.meter`'s own vocabulary; these are the way to say a
    *  meter no chip names (2026-09-05: "like 21/17"). */
   meterNode(): HTMLElement;
+  /** THE BAR, IN BEATS AND IN STEPS — what an ENTRY is measured in
+   *  (2026-09-05, the review's item 4). `entry` is stored in BARS with a beat
+   *  fraction (document.js's validator, kernel.js `entryBar`/`entryStep`) and
+   *  the control that writes it is a slider in BEATS, so exactly one place
+   *  needs to know the record's meter and this is the door to it:
+   *  `beats` = how many felt beats a bar has (`steps / pulse`), `step` = the
+   *  grid's own resolution in beats (`1 / pulse`), which is what the slider
+   *  steps by so a hand can only land on a beat the box can count. */
+  barBeats(): { beats: number; step: number };
   tempoNode(): HTMLElement;
   keyNode(): HTMLElement;
   /** the chord chart. With no argument it edits the RECORD's changes; with a

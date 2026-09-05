@@ -92,6 +92,31 @@ export const SHEETS: Table = {
   "bank.pointedWhy": "The next cell you tap",
   "bank.addPhrase": "+ phrase",
   "bank.addPhrase.aria": "Add phrase",
+  /* ---- THE BENCH'S TWO NEW MARKS (2026-09-05, the review's items 6+7) ----
+     An accent, an articulation and an accidental, one word each, said once.
+     The accent and the mark are separate controls because they are separate
+     facts: an accented staccato is a real thing to write. Each state carries
+     its own key rather than a built sentence, so a second language declines
+     them (the i18n law, TABLE.md 12b). */
+  "bench.acc": "Accent",
+  "bench.acc.aria": "{name} step {n} accent",
+  "bench.acc.on": "accented",
+  "bench.acc.off": "no accent",
+  "bench.mark": "Mark",
+  "bench.mark.aria": "{name} step {n} mark",
+  "bench.mark.none": "no mark",
+  "bench.mark.stacc": "staccato",
+  "bench.mark.ten": "tenuto",
+  "bench.mark.slur": "slur",
+  "bench.mark.slide": "slide",
+  "bench.alt": "Accidental",
+  "bench.alt.aria": "{name} step {n} accidental",
+  "bench.alt.nat": "natural",
+  "bench.alt.sharp": "sharp",
+  "bench.alt.flat": "flat",
+  /* a mark on a step that does not sound has nothing to be a mark ON — the
+     same refusal the pitch bar and the weight bar already carry */
+  "bench.mark.why": "Say note on this step to mark it",
   "bank.addDrums": "+ drum pattern",
   "bank.addDrums.aria": "Add drum pattern",
   /* the chips under a phrase: who plays it, on what, and where */

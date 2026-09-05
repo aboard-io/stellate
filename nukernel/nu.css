@@ -4323,11 +4323,34 @@ table.nu-trims{ color: var(--ink); }
    same wave), so on a phone this is a swipe on the table rather than a
    document that scrolls sideways — the page's standing answer for a table
    wider than its column, and the reason the pane went back on. */
-.nu-bench{ inline-size: 100%; min-inline-size: 314px; table-layout: fixed; }
+.nu-bench{ inline-size: 100%; min-inline-size: 426px; table-layout: fixed; }
 .nu-bench th:first-child{ inline-size: 34px; }
 .nu-bench td.nu-kindTd{ inline-size: 118px; }
 .nu-bench td.nu-velTd{ inline-size: 72px; }
 @media (min-width: 620px){ .nu-bench td.nu-velTd{ inline-size: 120px; } }
+/* ---- THE MARK COLUMN (2026-09-05, the review's items 6+7) -----------------
+   Three cycling buttons per step — accent, articulation, accidental — in one
+   cell. 3 x 36px + two 2px gaps = 112px, the same 36px face the kind's own
+   segments wear, so the column reads as a second segmented control and the
+   thumb finds the same target size it already knows. The table's floor goes
+   314 -> 426 with it, which is a swipe inside the pane it has been in since
+   wave 4 and not a page that scrolls sideways. */
+.nu-bench td.nu-markTd{ inline-size: 112px; white-space: nowrap; }
+.nu-mkb{ inline-size: 36px; block-size: 40px; padding: 0; min-height: 0;
+  margin-inline-end: 2px; vertical-align: middle;
+  border: var(--bw) solid var(--rule-strong); border-radius: var(--r2);
+  background: var(--panel); color: var(--faint); cursor: pointer;
+  font: var(--btn-fw) 15px/1 var(--sans);
+  display: inline-flex; align-items: center; justify-content: center; }
+.nu-mkb:last-child{ margin-inline-end: 0; }
+.nu-mkb:hover:not(:disabled){ background: var(--flag-tint); }
+/* WRITTEN IS INK, DEFAULT IS QUIET — 3's law ("blank = default, bold =
+   written"), said as weight rather than as a second glyph. */
+.nu-mkb[aria-pressed="true"]{ color: var(--hand); border-color: var(--hand);
+  font-weight: var(--fw-block); }
+.nu-mkb:disabled{ opacity: .35; cursor: default; }
+.nu-mkb[data-why]{ border-style: dashed; }
+.nu-mkg{ pointer-events: none; }
 /* one 52px line per step — fixed, the thumb's map of the bar holds */
 .nu-bench td{ block-size: 52px; padding: 3px 2px; }
 .nu-bench td.nu-pitTd{ position: relative; }

@@ -110,8 +110,11 @@ function standUpServer() {
    chords, across → pan, time → time shift. THE CLAIM IS UNCHANGED — the sheet
    is §1's vector in §1's order, and the ADDRESSES (`data-k`) never moved; only
    what the labels say. The old spellings are kept in this comment so the next
-   reader can see that this is a rename and not a reordering. */
-const CELL_ORDER = ["phrases", "variation", "enters at bar", "register", "focus",
+   reader can see that this is a rename and not a reordering.
+   (...AND "enters at bar" -> "entry", 2026-09-05, the review's item 4: the
+   control counts BEATS now, so a label naming bars was naming the wrong
+   unit. Same address, same row, same place in the order.) */
+const CELL_ORDER = ["phrases", "variation", "entry", "register", "focus",
                     /* ...AND THE FOUR LANE KINDS THAT REPLACED ONE GREY ROW
                        (TABLE.md wave 3, 2026-09-04). §1's "mix automation" was
                        one line while it was a promise; it is four strips now,
@@ -273,7 +276,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
      the POINTER to it (`the desk`, `tseat|<voice>`). T10n asserts both halves:
      the cell draws the whole strip, and the column sheet draws none of it. */
   check(clabs.includes("instrument") && clabs.includes("register") &&
-        clabs.includes("enters at bar") && clabs.includes("the desk"),
+        clabs.includes("entry") && clabs.includes("the desk"),
     "T5c the column sheet is §1's VOICE vector (" + clabs.length + " rows): " +
     clabs.join(" · "));
   await tap("tcol|" + vName);
@@ -1671,6 +1674,68 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       check(!!wrote && got === wrote.to,
         "T9b8 …and moving the slider writes the document (" +
         JSON.stringify(wrote) + " -> " + got + ")");
+
+      /* 9b9 · AN ENTRY IS A SLIDER IN BEATS, AND THE DOCUMENT KEEPS BARS
+         (2026-09-05, the review's item 4). The one control on this page
+         whose unit differs from its address's: `cast.entry` is BARS with a
+         beat fraction (document.js's own validator) and the thumb counts
+         BEATS, because that is what a composer says. So the claim is a pair
+         — the control's step is the bar's own grid in beats (`1 / pulse`,
+         a sixteenth in four-four), and one step of the thumb writes ONE
+         SIXTEENTH OF A BAR into the document, not one bar. Before this
+         round the step was 1 and `Number.isInteger` refused anything else,
+         which is exactly why a pickup could not be said. */
+      const en = await p.evaluate((n) => {
+        const r = document.querySelector(
+          '#pan-band input.nu-numslide[data-k="entry|' + n + '"]');
+        if (!r) return null;
+        const box = document.querySelector(
+          '#pan-band input.nu-numbox[data-k="num|entry|' + n + '"]');
+        const h = (x) => x ? Math.round(x.getBoundingClientRect().height) : 0;
+        const unit = r.parentElement
+          && r.parentElement.querySelector(".nu-numunit");
+        /* MEASURED BEFORE THE WRITE, and that is not tidiness: `change` on
+           this control is a document write, and a document write redraws the
+           sheet — so the element under `r` is DETACHED by the time the
+           dispatch returns, and a detached element measures 0x0. The first
+           cut of this check read the rects afterwards and reported a 0px
+           slider on a control that is 48px on the page. */
+        const out = { step: +r.step, min: +r.min, box: !!box,
+                      rh: h(r), bh: h(box), typed: box ? box.step : null,
+                      unit: unit ? unit.textContent : null };
+        r.value = r.step;                       // one grid step off the floor
+        out.to = +r.value;
+        r.dispatchEvent(new Event("change", { bubbles: true }));
+        return out; }, v9a);
+      await p.waitForTimeout(700);
+      const enGot = await p.evaluate((n) => { const c =
+        window.__eightDoc().voices.find((x) => x.name === n).cast || {};
+        return c.entry == null ? null : c.entry; }, v9a);
+      check(!!en && en.step > 0 && en.step < 1 && en.box &&
+        en.rh >= 44 && en.bh >= 44 && !!en.unit,
+        "T9b9 the entry is a slider in BEATS with the number typeable, " +
+        "stepping the bar's own grid — " + JSON.stringify(en));
+      /* THE CLAIM IS THE FRACTION, and it is asserted as one rather than
+         against an arithmetic this file would have to keep a second copy of:
+         one step of the thumb writes a number strictly between 0 and 1 into
+         `cast.entry`, which is a value `Number.isInteger` refused until
+         today and is exactly what a pickup, a stretto and an answer on beat
+         three all are. The round trip is the other half — the redrawn
+         slider stands where the hand left it, so the two units agree. */
+      const enBack = await p.evaluate((n) => { const r = document.querySelector(
+        '#pan-band input.nu-numslide[data-k="entry|' + n + '"]');
+        return r ? +r.value : null; }, v9a);
+      check(!!en && enGot != null && enGot > 0 && enGot < 1 &&
+        !Number.isInteger(enGot) && enBack === en.to,
+        "T9b9b …and one step of the thumb writes a FRACTION of a bar, which " +
+        "Number.isInteger refused until today — " +
+        JSON.stringify({ beats: en && en.to, bars: enGot, redrawn: enBack }));
+      await p.evaluate((n) => { const d = window.__eightDoc();
+        const v = d.voices.find((x) => x.name === n);
+        if (v && v.cast) delete v.cast.entry;
+        window.__eightDraw && window.__eightDraw(); }, v9a);
+      await p.waitForTimeout(400);
+
       await shutAll();
       await selectCell(cell(v9a, s9a));
     }

@@ -116,7 +116,6 @@ export const RULES: Table = {
 
   /* ===== THE UNIT AFTER THE CONTROL ===================================== */
   "rule.unitBPM": "BPM",
-  "rule.unitBeats": "beats",
   "rule.unitSteps": "steps",
   "rule.unitTimes": "times",
 

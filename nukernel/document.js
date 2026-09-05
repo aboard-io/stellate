@@ -63,6 +63,41 @@
      all, which is what keeps every record written before today byte-identical. */
   const metRow = (t) => { const m = t && t.meter; if (!m) return null;
     const r = K.metOf({ meter: m }); return r === K.MET4 ? null : r; };
+  /* ---- AN ENTRY IS BARS, AND ITS FRACTION IS BEATS (2026-09-05) -----------
+     The review's item 4: *"`enters at bar` is validated `Number.isInteger` …
+     a pickup, a stretto, an answer on beat 3 cannot exist."* One number, in
+     BARS, whose fraction is a whole number of the bar's OWN steps —
+     `kernel.js entryBar` / `entryStep` are the readers and this is the
+     validator. `0.75` in four-four is three beats; `0.5` is two.
+     ONE FACT, ONE ADDRESS: not `{bar, beat}`, because `entry` is read as one
+     number by TIERS, the resolver, precompose's cast, the genre closures and
+     `g.entry(v)`, and two fields would have meant two validators and two ways
+     to spell the same place.
+     A NUMBER OFF THE GRID IS SNAPPED, NOT DROPPED — the control that writes
+     it is a slider, and refusing a rounding error would delete the value a
+     hand just set. An INTEGER passes through untouched, which is every record
+     ever written and is what keeps `normalize` a byte-identical no-op. */
+  /* THE GRID AN ENTRY SNAPS TO IS THE CELL'S, NOT THE BAR'S — and they are
+     the same number for every one-bar cell, which is nearly every record.
+     `kernel.js render` counts its loop in PHRASE LENGTHS (`N =
+     subj.deg.length`, `b * N` is the time), and `sections[].bars` counts CELL
+     bars (`barsOf`'s own law two screens up), so an integer `entry` has
+     always meant "this many cells later". A fraction of it is therefore a
+     fraction of a CELL, whose finest honest grid is one of its own steps —
+     which is what `kernel.js entryStep(e, N)` divides by at the other end.
+     A document with no line cell at all falls back to the meter's bar. */
+  const cellStepsOf = (doc) => {
+    let n = 0;
+    const cells = (doc.material && doc.material.cells) || {};
+    for (const name of Object.keys(cells)) {
+      const c = cells[name];
+      if (!c || c.kind === "drum" || !c.deg) continue;
+      if (c.deg.length > n) n = c.deg.length;
+    }
+    return n || Math.max(1, K.stepsIn({ meter: metRow(doc.time) }));
+  };
+  const entryOK = (x) => typeof x === "number" && isFinite(x) && x >= 0;
+  const entrySnap = (x, steps) => Math.round(x * steps) / steps;
   const { WORDS } = NuSongs;
 
   /* ---------- reading the document ----------------------------------------
@@ -617,8 +652,31 @@
     // document with no meter stamps nothing and every phrase ever compiled
     // is byte-identical.
     const met = metRow(doc.time);
+    /* ---- THE MARKS A HAND WRITES ON A STEP (2026-09-05, review items 6+7)
+       Three of the cell's vectors reach the phrase here and only here:
+         · `acc` — the accent, already compiled and already read by the
+           kernel (ACCENT_LIFT x1.15) and by the exports (velOfWritten). It
+           was the one vector NOBODY WROTE; the bench writes it now.
+         · `sld` — the slide INTO a step. `z()` stood here, so a slide written
+           on a cell was thrown away before the kernel could see it; the
+           vector itself is not new (the `slides` operator has always made
+           one) and this is the door the hand's own slide walks through.
+         · `art` — the new articulation mark (0 none, 1 staccato, 2 tenuto,
+           3 slur), PRESENT-ONLY the way `hold` is: a cell with no marks
+           compiles the same eight keys it always did, so every phrase in the
+           catalogue is byte-identical and nothing needed migrating.
+         · `alt` — the accidental, a signed semitone, present-only for the
+           same reason.
+       A CELL WITH AN ALL-ZERO VECTOR STAMPS NO KEY, which keeps ONE spelling
+       of "nothing is marked" — the same law `hold`'s own `written` flag
+       keeps two lines up, and the reason a mark cleared back to none leaves
+       no residue in the document. */
+    const marked = (a) => Array.isArray(a) && a.length === n && a.some(Boolean);
     return { deg: H.deg.slice(), oct: z(), vel: (H.vel || z()).slice(),
-             inc: z(), stk: z(), gate, acc: (H.acc || z()).slice(), sld: z(),
+             inc: z(), stk: z(), gate, acc: (H.acc || z()).slice(),
+             sld: (H.sld || z()).slice(),
+             ...(marked(H.art) ? { art: H.art.slice() } : {}),
+             ...(marked(H.alt) ? { alt: H.alt.slice() } : {}),
              ...(written ? { hold } : {}),
              ...(met ? { bar: met.steps, pulse: met.pulse } : {}) };
   }
@@ -1786,6 +1844,16 @@
          Absent stays absent: a chair with no word writes no key. */
       if (v.cast && v.cast.voice != null && !NF.isThroat(v.cast.voice))
         delete v.cast.voice;
+      /* ...AND THE COLUMN DEFAULT IS THE SAME FACT WITH THE SAME SHAPE
+         (2026-09-05). `cast.entry` had no validator here at all — the cell
+         tier was checked and the column it inherits from was not — so a saved
+         record could carry a negative or a NaN entry into `g.entry(v)`. It
+         takes the cell's own law: a non-negative number on the bar's grid, an
+         integer untouched, anything else dropped back to the genre's. */
+      if (v.cast && v.cast.entry != null) {
+        if (!entryOK(v.cast.entry)) delete v.cast.entry;
+        else v.cast.entry = entrySnap(v.cast.entry, cellStepsOf(doc));
+      }
       const dflt = v.kind === "line" ? "as written" : "";
       v.development = v.development || {};
       for (const id of ids) if (v.development[id] == null) v.development[id] = dflt;
@@ -1845,8 +1913,19 @@
                 if (w == null) delete c[f]; else c[f] = w;
                 continue;
               }
+              /* AN ENTRY IS SNAPPED TO THE BAR'S OWN STEP BEFORE IT IS
+                 JUDGED (2026-09-05, the review's item 4). It used to be
+                 `Number.isInteger`, which is what made a pickup and a stretto
+                 unsayable; it is now any non-negative number on the meter's
+                 grid, and one off the grid is moved onto the nearest step
+                 rather than deleted. An integer is its own snap, so this is a
+                 no-op on every record written before today. */
+              if (f === "entry" && entryOK(c[f])) {
+                const snapped = entrySnap(c[f], cellStepsOf(doc));
+                if (snapped !== c[f]) c[f] = snapped;
+              }
               const bad = !CELLWRITE(f) ||
-                (f === "entry" && !(Number.isInteger(c[f]) && c[f] >= 0)) ||
+                (f === "entry" && !entryOK(c[f])) ||
                 (f === "reg" && !(Number.isInteger(c[f]) && c[f] >= -4 && c[f] <= 3)) ||
                 (f === "focus" && typeof c[f] !== "boolean");
               if (bad) delete c[f];

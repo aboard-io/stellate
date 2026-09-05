@@ -182,9 +182,9 @@
     {
       "k": "entry<voice>",
       "pane": "Band / plays facet",
-      "was": "enters at bar (a range input)",
+      "was": "entry (a slider in beats)",
       "home": "column",
-      "field": "enters at bar, as chips; a cell may override it",
+      "field": "entry, as a slider in beats; a cell may override it",
       "reach": "entry|<voice>",
       "open": "tcol|<voice>"
     },

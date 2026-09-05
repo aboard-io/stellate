@@ -422,6 +422,15 @@ const BARS_PER_LINE = 2;
 // `midi` takes exactly the old branch, byte for byte.
 export function toNotes(phrase, opts = {}) {
   const { deg = [], oct = [], gate = [] } = phrase || {};
+  /* ---- THE MARKS A HAND WROTE ON THE STEP (2026-09-05, review items 6+7) --
+     Four per-step vectors reach the paper: `acc` (the accent), `art` (0 none,
+     1 staccato, 2 tenuto, 3 slur), `sld` (a slide INTO this step) and `alt`
+     (a signed semitone). All four are PRESENT-ONLY — a phrase without them
+     engraves exactly the bytes it always did. */
+  const vAcc = (phrase && phrase.acc) || null;
+  const vArt = (phrase && phrase.art) || null;
+  const vSld = (phrase && phrase.sld) || null;
+  const vAlt = (phrase && phrase.alt) || null;
   const mid = phrase && phrase.midi;
   const n = gate.length;
   const key = opts.key | 0;
@@ -454,9 +463,25 @@ export function toNotes(phrase, opts = {}) {
     // `| 0` is kept for the number case rather than dropped, because that is
     // the coercion every phrase in the box has been engraved through.
     const raw = mid ? mid[at] : null;
-    notes.push({ at, len: span,
+    /* THE ACCIDENTAL IS PART OF THE PITCH, and only on the WRITTEN branch:
+       an `alt` on a phrase read straight off the document has not been
+       through the kernel, so the semitone is added here exactly where the
+       kernel adds it (after the scale lookup). On the `midi` branch the
+       pitch came back from the engine with the semitone already in it, and
+       adding it twice would draw a note nobody plays. The spelling pass does
+       the rest: a note off the signature is written with its own accidental,
+       which is why item 7 needed no new engraving rule. */
+    const alt = vAlt ? (vAlt[at] | 0) : 0;
+    const nt = { at, len: span,
       midi: mid ? (typeof raw === "number" ? raw | 0 : raw)
-                : 60 + key + regShift + degPitch(deg[at] | 0, mode) + 12 * (oct[at] | 0) });
+                : 60 + key + regShift + degPitch(deg[at] | 0, mode) +
+                  12 * (oct[at] | 0) + alt };
+    /* ...AND THE MARKS RIDE THE NOTE, present-only so a phrase with none is
+       the same object it has always been. */
+    if (vAcc && vAcc[at]) nt.acc = 1;
+    if (vSld && vSld[at]) nt.sld = 1;
+    if (vArt && vArt[at]) nt.art = vArt[at] | 0;
+    notes.push(nt);
   });
   return { n, spb, notes };
 }
@@ -514,9 +539,34 @@ function engrave(phrase, opts = {}) {
   const kind = new Array(n).fill(0);          // 0 rest, 1 note-start, 2 held
   const len = new Array(n).fill(0);
   const midiAt = new Array(n).fill(0);
+  /* ---- THE MARKS, PER ONSET (2026-09-05, review item 6) -------------------
+     WHAT THE VENDORED abcjs ACTUALLY DRAWS, measured against its own tables
+     rather than assumed (vendor/abcjs/abcjs-basic-min.js, `legalAccents` and
+     `accentPseudonyms`):
+       * `!accent!` — legal, and `>` is its pseudonym.
+       * `!tenuto!` — legal.
+       * `!slide!`  — legal.
+       * `!staccato!` is NOT in `legalAccents` and would answer "Unknown
+         decoration". The STACCATO DOT is the bare `.` shorthand the parser
+         reads one screen up (`case ".": … return [1,"staccato"]`), so that
+         is what is written. A decoration we cannot draw is a lie either way
+         — the same rule that rejected `!8va(!` above.
+     A SLUR IS NOT A DECORATION, it is a pair of parentheses round the notes
+     it covers, so `art === 3` opens one before this note and closes it after
+     the NEXT onset — which is what "slur into the next note" means and is
+     as much as a per-step mark can honestly say. */
+  const decoAt = new Array(n).fill("");
+  const slurAt = new Array(n).fill(0);
   for (const note of notes) {
     kind[note.at] = 1; len[note.at] = note.len; midiAt[note.at] = note.midi;
     for (let j = 1; j < note.len; j++) kind[note.at + j] = 2;
+    let d = "";
+    if (note.acc) d += "!accent!";
+    if (note.sld) d += "!slide!";
+    if (note.art === 1) d += ".";
+    else if (note.art === 2) d += "!tenuto!";
+    else if (note.art === 3) slurAt[note.at] = 1;
+    decoAt[note.at] = d;
   }
 
   // Fold the timeline into bars. A note crossing a barline splits and TIES;
@@ -528,6 +578,15 @@ function engrave(phrase, opts = {}) {
   const out = [];
   const glyphs = [];                          // pitched glyph -> toNotes index
   let cur = "", accState = {}, pos = 0, ni = -1;
+  /* THE OPEN SLUR. A slur is a pair of parentheses round the notes it covers,
+     so it is state and not a decoration: `slurOpen` says one is running, and
+     `shut()` closes it on the LAST TOKEN ALREADY WRITTEN — which may be in
+     `cur` or, if a barline flushed since, at the end of the last bar in
+     `out`. A run of slurred steps opens once and closes once, which is a
+     phrase mark; a slur left open at a rest, or at the end of the phrase, is
+     closed there, because an unbalanced parenthesis is a parse error and not
+     a picture. */
+  let slurOpen = 0;
 
   // steps to a beam group: the quarter in simple time, the dotted quarter in
   // compound. `(x | 0) > 0` and not `Math.max(1, x | 0) || 4` — the clamp is
@@ -549,6 +608,13 @@ function engrave(phrase, opts = {}) {
       out.push(cur); cur = ""; accState = {}; group = -1;
     }
   };
+  const shut = () => {
+    if (!slurOpen) return;
+    slurOpen = 0;
+    if (cur) { cur += ")"; return; }
+    for (let k = out.length - 1; k >= 0; k--)
+      if (out[k]) { out[k] += ")"; return; }
+  };
 
   let i = 0;
   while (i < n) {
@@ -556,6 +622,18 @@ function engrave(phrase, opts = {}) {
       const midi = midiAt[i];              // as SOUNDED; headOf writes it down
       let remain = len[i];
       ni++;                                   // the next toNotes note, in order
+      /* THE MARK GOES ON THE FIRST PIECE ONLY. A five-step note is written as
+         tied pieces and an accent restated on each of them would be three
+         accents on one attack — the mark belongs to the ATTACK, which is the
+         piece the tie starts from. `closeSlur` is the debt the previous
+         note's slur left; it is paid after this note's last piece. */
+      /* THE MARK GOES ON THE FIRST PIECE ONLY. A five-step note is written
+         as tied pieces, and an accent restated on each of them would be
+         three accents on one attack — a mark belongs to the ATTACK. The
+         slur opens ONCE, on the first step of a slurred run, and the run's
+         end closes it after the note that follows. */
+      const opens = slurAt[i] && !slurOpen;
+      let first = true;
       while (remain > 0) {
         const room = spb - (pos % spb);
         const chunk = Math.min(remain, room);
@@ -566,14 +644,19 @@ function engrave(phrase, opts = {}) {
           // accidental said again, and the bar-scoped accState knows when
           const name = headOf(midi, ott, sigInfo, accState);
           const tie = k < ps.length - 1 || crossesBar ? "-" : "";
-          push(name + durStr(p) + tie);
+          const lead = first ? (opens ? "(" : "") + decoAt[i] : "";
+          first = false;
+          push(lead + name + durStr(p) + tie);
           glyphs.push(ni);                    // every tied piece is this note's
           advance(p);
         });
         remain -= chunk;
       }
+      if (opens) slurOpen = 1;
+      else if (slurOpen && !slurAt[i]) shut();   // the note after the run
       i += len[i];
     } else {
+      shut();                        // a slur may not run over a rest
       let run = 0, j = i;
       while (j < n && kind[j] === 0) { run++; j++; }
       while (run > 0) {
@@ -585,6 +668,7 @@ function engrave(phrase, opts = {}) {
       i = j;
     }
   }
+  shut();                          // never leave a parenthesis open
   if (cur) out.push(cur);
 
   const head = ["X:1"];

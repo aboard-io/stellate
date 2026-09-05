@@ -118,6 +118,13 @@ var CORE = {
   "noun.genre": "genre",
   "noun.song": "song",
   /* ===== COUNTED NOUNS — a plural is a key, never an `if` in a caller ==== */
+  /* THE UNIT WORDS, WHICH ARE NOT COUNTS. A count carries its number
+     ("3 beats"); a unit stands after a number a control already prints, so
+     it has no placeholder and it is one key however many surfaces use it —
+     C4's law ("one meaning, one key"). `rule.unitBeats` was the first of
+     these and it was on the rules page; it is here now because a second
+     surface (the table's entry slider) asks the same question. */
+  "unit.beats": "beats",
   "count.bar.one": "{n} bar",
   "count.bar.other": "{n} bars",
   "count.beat.one": "{n} beat",
@@ -236,8 +243,13 @@ var TABLE = {
   "col.bassStyle": "default variation",
   "col.throat": "sings as",
   "col.register": "register",
-  "col.entry": "enters at bar",
-  "col.entry.none": "bar one",
+  /* AN ENTRY IS A BEAT NOW, NOT A BAR (2026-09-05, the review's item 4): a
+     pickup, a stretto and an answer on beat three are all fractions of a bar,
+     so the control is a slider in BEATS and the label is the noun a musician
+     uses for the thing (DESIGN.md 4). The unit is its own key because it
+     prints after the number and a second language declines it. */
+  "col.entry": "entry",
+  "col.entry.none": "the first beat",
   "col.desk": "the desk",
   "col.seat.word": "mix row",
   "col.seat.aria": "{name} — channel strip",
@@ -418,6 +430,31 @@ var SHEETS = {
   "bank.pointedWhy": "The next cell you tap",
   "bank.addPhrase": "+ phrase",
   "bank.addPhrase.aria": "Add phrase",
+  /* ---- THE BENCH'S TWO NEW MARKS (2026-09-05, the review's items 6+7) ----
+     An accent, an articulation and an accidental, one word each, said once.
+     The accent and the mark are separate controls because they are separate
+     facts: an accented staccato is a real thing to write. Each state carries
+     its own key rather than a built sentence, so a second language declines
+     them (the i18n law, TABLE.md 12b). */
+  "bench.acc": "Accent",
+  "bench.acc.aria": "{name} step {n} accent",
+  "bench.acc.on": "accented",
+  "bench.acc.off": "no accent",
+  "bench.mark": "Mark",
+  "bench.mark.aria": "{name} step {n} mark",
+  "bench.mark.none": "no mark",
+  "bench.mark.stacc": "staccato",
+  "bench.mark.ten": "tenuto",
+  "bench.mark.slur": "slur",
+  "bench.mark.slide": "slide",
+  "bench.alt": "Accidental",
+  "bench.alt.aria": "{name} step {n} accidental",
+  "bench.alt.nat": "natural",
+  "bench.alt.sharp": "sharp",
+  "bench.alt.flat": "flat",
+  /* a mark on a step that does not sound has nothing to be a mark ON — the
+     same refusal the pitch bar and the weight bar already carry */
+  "bench.mark.why": "Say note on this step to mark it",
   "bank.addDrums": "+ drum pattern",
   "bank.addDrums.aria": "Add drum pattern",
   /* the chips under a phrase: who plays it, on what, and where */
@@ -1129,7 +1166,6 @@ var RULES = {
   "rule.headGhost": "Ghost notes",
   /* ===== THE UNIT AFTER THE CONTROL ===================================== */
   "rule.unitBPM": "BPM",
-  "rule.unitBeats": "beats",
   "rule.unitSteps": "steps",
   "rule.unitTimes": "times",
   /* ===== THE ANSWER, WHERE THE ANSWER IS A WORD AND NOT A NUMBER ======== */

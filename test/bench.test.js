@@ -804,6 +804,100 @@ async function openMotif(pg, name) {
   await page.click("#play");
   await page.waitForTimeout(600);
 
+  /* ===== B13 · THE THREE MARKS ON A STEP (2026-09-05, review items 6+7) ====
+     The musicologist's review found the bench had no word for an accent, an
+     articulation or an accidental — and the kernel had a reader for two of
+     the three already (`acc` x1.15 at the engine; `sld` per step) with
+     nobody writing them. Three cycling buttons per step, and the claim is
+     measured on the RENDERED page and on the DOCUMENT it writes: the marks
+     exist at 44px, a tap walks their states, and each lands in the cell's own
+     vector — `acc`, `art`/`sld`, `alt` — where document.js compiles it. */
+  await openMotif(page);
+  const marks = await page.evaluate(() => {
+    const td = document.querySelector(".nu-bench td.nu-markTd");
+    if (!td) return null;
+    const bs = [...td.querySelectorAll("button.nu-mkb")];
+    const h = (x) => Math.round(x.getBoundingClientRect().height);
+    return { n: bs.length, tall: bs.every((b) => h(b) >= 40),
+      ks: bs.map((b) => (b.dataset.k || "").replace(/^g\d+-/, "")
+                          .replace(/\d+$/, "")),
+      words: bs.map((b) => (b.querySelector(".nu-vh") || {}).textContent || ""),
+      labels: bs.map((b) => b.getAttribute("aria-label") || "") };
+  });
+  is(!!marks && marks.n === 3 && marks.tall,
+    "B13 · every step carries three marks — accent, articulation, accidental " +
+    "— each a 44px control (" + JSON.stringify(marks && marks.ks) + ")");
+  is(!!marks && marks.words.every((w) => w && w.length) &&
+     marks.labels.every((a) => a && a.length),
+    "B13 · …each with its own word and its own accessible name (" +
+    JSON.stringify(marks && marks.words) + ")");
+  /* A TAP WALKS THE STATES AND EACH ONE LANDS IN THE DOCUMENT. The first row
+     of the shipped chant is a NOTE, so all three are live there. */
+  const wrote = await page.evaluate(async () => {
+    const bank = window.__eightBank();
+    const name = bank[0];
+    const cellOf = () => window.__eightDoc().material.cells[name];
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    /* B10 ABOVE CLEARED THIS CELL TO SIXTEEN RESTS, and a mark is a fact
+       about a NOTE — so step one is made a note first, through the kind
+       control a thumb would use. Without this the three buttons are (rightly)
+       refused and the taps below would measure the refusal instead. */
+    const row0 = document.querySelector(".nu-bench tr");
+    const note = [...row0.querySelectorAll(".nu-segb")]
+      .find((b) => /note/.test(b.getAttribute("aria-label") || ""));
+    if (note && !note.disabled) { note.click(); await wait(350); }
+    const td = document.querySelector(".nu-bench td.nu-markTd");
+    const bs = [...td.querySelectorAll("button.nu-mkb")];
+    const out = { name };
+    bs[0].click(); await wait(250);
+    out.acc = (cellOf().acc || [])[0];
+    bs[1].click(); await wait(250);
+    out.art1 = (cellOf().art || [])[0];
+    bs[2].click(); await wait(250);
+    out.alt = (cellOf().alt || [])[0];
+    /* THE MARK CYCLES ALL THE WAY ROUND TO THE SLIDE, which lives on `sld`
+       and not on `art` — one control, two owners (kernel.js's reason: a
+       slide is edge-valued and `reverse()` shifts it). */
+    const btn = () => [...document.querySelector(".nu-bench td.nu-markTd")
+      .querySelectorAll("button.nu-mkb")][1];
+    for (let k = 0; k < 3; k++) { btn().click(); await wait(200); }
+    out.sld = (cellOf().sld || [])[0];
+    out.artAfter = (cellOf().art || [])[0];
+    return out;
+  });
+  is(!!wrote && wrote.acc === 1,
+    "B13 · a tap on the accent writes `acc` on that step (" +
+    JSON.stringify(wrote && wrote.acc) + ")");
+  is(!!wrote && wrote.art1 === 1,
+    "B13 · a tap on the mark writes staccato into `art` (" +
+    JSON.stringify(wrote && wrote.art1) + ")");
+  is(!!wrote && (wrote.alt === 1 || wrote.alt === -1),
+    "B13 · a tap on the accidental writes a semitone into `alt` (" +
+    JSON.stringify(wrote && wrote.alt) + ")");
+  is(!!wrote && wrote.sld === 1 && !wrote.artAfter,
+    "B13 · …and the mark's fifth state is the slide, on `sld`, with `art` " +
+    "cleared — one control, one fact each (" +
+    JSON.stringify({ sld: wrote && wrote.sld, art: wrote && wrote.artAfter }) + ")");
+  /* A MARK IS A FACT ABOUT A NOTE: on a rest row all three are refused with
+     their reason, which is the law the pitch bar and the weight bar keep. */
+  const refused = await page.evaluate(async () => {
+    const rows = [...document.querySelectorAll(".nu-bench tr")];
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    for (const tr of rows) {
+      const rest = [...tr.querySelectorAll(".nu-segb")]
+        .find((b) => /rest/.test(b.getAttribute("aria-label") || ""));
+      if (!rest || rest.disabled) continue;
+      rest.click(); await wait(300);
+      const bs = [...tr.querySelectorAll("button.nu-mkb")];
+      return { n: bs.length, off: bs.filter((b) => b.disabled).length,
+               why: bs.filter((b) => b.dataset.why).length };
+    }
+    return null;
+  });
+  is(!!refused && refused.off === refused.n && refused.why === refused.n,
+    "B13 · a rest refuses all three marks and says why — no silent grey (" +
+    JSON.stringify(refused) + ")");
+
   // B7 — clean at both widths
   const over390 = await page.evaluate(() =>
     document.documentElement.scrollWidth - window.innerWidth);

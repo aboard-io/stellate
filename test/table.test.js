@@ -1842,6 +1842,183 @@ const T4O_PIN = {
       " line chairs, 0 re-seated (the door is a no-op on a seated record)");
   });
 
+  /* ================= THE REVIEW'S 4, 6 AND 7 (2026-09-05) ===============
+     scratchpad/REVIEW.md, ranked items 4, 6 and 7 — three walls the engine
+     could already have gone through and the surface had no word for. Each
+     check MEASURES THE RENDERED STREAM (test-the-artifact), never the field
+     that was written. */
+
+  /* T4q — AN ENTRY IS BARS AND BEATS. The review: *"`enters at bar` is
+     validated Number.isInteger … a pickup, a stretto, an answer on beat 3
+     cannot exist."* Three claims, one render each:
+       · 0.75 bars delays the chair's first note by three beats of four;
+       · a STRETTO — one phrase, two chairs, entries 0 and 0.5 — renders two
+         statements that OVERLAP (the review's own measurement law: counting
+         a shared onset finds nothing, counting overlap finds the canon);
+       · a NEGATIVE entry is refused at the document door and clamped at 0 by
+         the kernel, because the walk windows a section at `[from, to)` and
+         there is nothing before the first section to hold an anacrusis. */
+  ok("T4q an entry of 0.75 bars comes in three beats late, and a stretto overlaps", () => {
+    const evsOf = (doc, lv) => D.scoreOf(doc, GENRES).events
+      .filter((e) => e.kind === "line" && e.sec === 0 && e.lv === lv)
+      .sort((a, b) => a.t - b.t);
+    const base = J(Songs.TERMS);
+    const lead = base.voices.find((v) => v.kind === "line").name;
+    const A = evsOf(base, 0);
+    const late = J(base);
+    late.voices.find((v) => v.name === lead).cast.entry = 0.75;
+    D.normalize(late);
+    assert.strictEqual(late.voices.find((v) => v.name === lead).cast.entry, 0.75,
+      "normalize dropped a fractional entry");
+    const B = evsOf(late, 0);
+    const N0 = K.stepsIn({ meter: null });          // sixteen, the bar's grid
+    assert.strictEqual(B[0].t - A[0].t, N0 * 0.75,
+      "0.75 bars should delay the first note by " + (N0 * 0.75) + " steps");
+    console.log("       entry 0.75: first note " + A[0].t + " -> " + B[0].t +
+      " step units (" + (N0 * 0.75 / (N0 / 4)) + " beats of four)");
+
+    /* THE STRETTO. Two chairs on ONE phrase, entries 0 and 0.5. */
+    const st = J(base);
+    const lines = st.voices.filter((v) => v.kind === "line");
+    const [a, b] = lines;
+    b.material = a.material;
+    for (const id of Object.keys(b.development)) b.development[id] = a.development[id];
+    b.cast.reg = a.cast.reg; b.cast.part = a.cast.part;
+    a.cast.entry = 0; b.cast.entry = 0.5;
+    D.normalize(st);
+    const X = evsOf(st, 0), Y = evsOf(st, 1);
+    assert.ok(X.length && Y.length, "a stretto needs two chairs sounding");
+    assert.strictEqual(Y[0].t - X[0].t, N0 * 0.5,
+      "the answer should enter half a bar after the subject");
+    let ov = 0;
+    for (const x of X) for (const y of Y)
+      if (y.t < x.t + x.dur - 1e-9 && x.t < y.t + y.dur - 1e-9) ov++;
+    assert.ok(ov > 0, "two entries half a bar apart must OVERLAP — " +
+      "the exposition abutted instead of overlapping");
+    console.log("       stretto: " + X.length + " + " + Y.length +
+      " notes, " + ov + " overlapping pairs, answer " + (Y[0].t - X[0].t) +
+      " steps after the subject");
+
+    /* THE PICKUP, AND WHY IT IS CLAMPED. `ui/derive.js` windows a section's
+       events at `e.t >= from && e.t < to`, so an event before a section's own
+       start is DROPPED; `document.js scoreOf` would place it before the
+       record's zero on the first section. So a negative entry is refused at
+       the door (it falls back to the inherited value) and `kernel.js
+       entryBar`/`entryStep` clamp at 0 for anything that reaches them. */
+    const back = J(base);
+    back.voices.find((v) => v.name === lead).cast.entry = -0.25;
+    D.normalize(back);
+    assert.strictEqual(back.voices.find((v) => v.name === lead).cast.entry,
+      undefined, "a negative entry must not be stored");
+    const raw = J(base);
+    raw.voices.find((v) => v.name === lead).cast.entry = -0.25;
+    const C = evsOf(raw, 0);                         // NOT normalized: the kernel's own clamp
+    assert.strictEqual(C[0].t, A[0].t,
+      "the kernel must clamp a negative entry at bar 0");
+    console.log("       pickup: a negative entry is refused at the door and " +
+      "clamped at 0 in the kernel (the walk windows [from, to) — nothing " +
+      "before a section's start survives it)");
+  });
+
+  /* T4r — ACCENT AND ARTICULATION PER NOTE (review item 6). The `acc` vector
+     was written by nobody and `art` did not exist; both are measured on the
+     RENDERED events and on what the .mid writer makes of them. */
+  ok("T4r an accent lifts the velocity and a mark changes the note's length", () => {
+    const SCORE = require(path.join(ROOT, "nukernel", "export", "score.js"));
+    const base = J(Songs.TERMS);
+    const cellName = Object.keys(base.material.cells)[0];
+    const sid = base.form.sections[0].id;
+    const vi = base.voices.findIndex((v) => v.kind === "line");
+    const evsOf = (doc) => D.scoreOf(doc, GENRES).events
+      .filter((e) => e.kind === "line" && e.sec === 0 && e.lv === 0)
+      .sort((a, b) => a.t - b.t);
+    const at = (L, i) => L.find((e) => Math.abs(e.t - i) < 0.4);
+    const mk = (f) => { const d = J(base); f(d); D.normalize(d); return d; };
+
+    /* THE ACCENT. x1.15 at the engine (audio/to-engine.js ACCENT_LIFT, the
+       one owner) and the same 1.15 on the way into the file. */
+    const A = evsOf(base);
+    const acc = evsOf(mk((d) => { const H = d.material.cells[cellName];
+      H.acc = H.deg.map(() => 0); H.acc[0] = 1; }));
+    assert.strictEqual(at(A, 0).acc, 0, "the fixture should start unaccented");
+    assert.strictEqual(at(acc, 0).acc, 1, "the accent did not reach the event");
+    const v0 = SCORE.velOfWritten(at(A, 0).vel, at(A, 0).acc);
+    const v1 = SCORE.velOfWritten(at(acc, 0).vel, at(acc, 0).acc);
+    assert.ok(v1 > v0, "the .mid velocity did not move");
+    assert.strictEqual(v1, Math.max(1, Math.min(127,
+      Math.round(at(acc, 0).vel / 9 * SCORE.VEL_TOP * SCORE.ACCENT_LIFT))),
+      "the .mid velocity is not the written value x ACCENT_LIFT");
+    console.log("       accent: .mid velocity " + v0 + " -> " + v1 +
+      ", engine amp x" + SCORE.ACCENT_LIFT);
+
+    /* THE MARKS, AGAINST A CHAIR TOLD STACCATO — which is the case that
+       proves the mark OUTRANKS the chair's word rather than agreeing with
+       it by luck. Step 10 of the psalm has no written hold; step 12 has. */
+    const stac = mk((d) => {
+      d.voices[vi].cells = { [sid]: { artic: "staccato" } }; });
+    const S = evsOf(stac);
+    const M = evsOf(mk((d) => {
+      d.voices[vi].cells = { [sid]: { artic: "staccato" } };
+      const H = d.material.cells[cellName];
+      H.art = H.deg.map(() => 0); H.art[10] = 2; H.art[12] = 1; }));
+    assert.ok(at(M, 10).dur > at(S, 10).dur,
+      "a tenuto must lengthen a staccato chair's note");
+    assert.strictEqual(at(M, 10).dur, 1, "a tenuto is the WHOLE step");
+    assert.strictEqual(at(M, 12).dur, at(S, 12).dur / 2 * 1,
+      "a staccato step should be half the length");
+    console.log("       marks (a chair told staccato): tenuto " +
+      at(S, 10).dur + " -> " + at(M, 10).dur + " steps; staccato " +
+      at(S, 12).dur + " -> " + at(M, 12).dur + " steps");
+
+    /* A STACCATO OUTRANKS A WRITTEN HOLD, because a hold is the note's VALUE
+       and a mark is how much of it sounds. */
+    const held = evsOf(mk((d) => { const H = d.material.cells[cellName];
+      H.art = H.deg.map(() => 0); H.art[0] = 1; }));
+    assert.strictEqual(held.find((e) => e.t === 0).dur,
+      A.find((e) => e.t === 0).dur / 2,
+      "a staccato on a held note must halve it");
+  });
+
+  /* T4s — A CHROMATIC CHANNEL (review item 7). One flag, one semitone,
+     measured in the rendered pitch and printed as an accidental. */
+  ok("T4s an accidental moves one step by exactly one semitone", () => {
+    const base = J(Songs.TERMS);
+    const cellName = Object.keys(base.material.cells)[0];
+    const evsOf = (doc) => D.scoreOf(doc, GENRES).events
+      .filter((e) => e.kind === "line" && e.sec === 0 && e.lv === 0)
+      .sort((a, b) => a.t - b.t);
+    const A = evsOf(base);
+    for (const k of [1, -1]) {
+      const d = J(base); const H = d.material.cells[cellName];
+      H.alt = H.deg.map(() => 0); H.alt[0] = k;
+      D.normalize(d);
+      const B = evsOf(d);
+      assert.strictEqual(B.length, A.length, "an accidental added or lost a note");
+      /* THE MARK IS ON A STEP OF THE PHRASE, AND A PHRASE LOOPS. The cell is
+         sixteen steps and the section is four bars, so step 0 sounds four
+         times and every one of them carries the accidental — which is what a
+         mark on a repeating figure means, and is why this walks the STEP
+         rather than the event index. (The onsets are the humanised ones —
+         swing, groove and the tape's drift are all in `t` — so the step is
+         read by rounding, exactly as ui/eight.js `scoreParts` reads it.) */
+      const N0 = A.length ? K.stepsIn({ meter: null }) : 16;
+      let hit = 0;
+      for (let i = 0; i < A.length; i++) {
+        const step = ((Math.round(A[i].t) % N0) + N0) % N0;
+        if (step === 0) { hit++;
+          assert.strictEqual(B[i].n - A[i].n, k,
+            "the marked step should move exactly " + k + " semitone"); }
+        else assert.strictEqual(B[i].n, A[i].n,
+          "an accidental moved a note it was not on (step " + step + ")");
+      }
+      assert.ok(hit > 0, "the marked step never sounded");
+      if (k === 1) console.log("       accidental: " + hit + " soundings of " +
+        "the marked step move " + A[0].n + " -> " + (A[0].n + 1) +
+        " (and " + (A[0].n - 1) + " flat); the other " + (A.length - hit) +
+        " notes do not move");
+    }
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => {

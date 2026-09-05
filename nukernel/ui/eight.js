@@ -2790,9 +2790,15 @@ function scoreParts(si, k, bars) {
   const W = bars * scoreSPB(), from = k * scoreSPB();
   const z = () => new Array(W).fill(0);
   const bucket = new Map();                 // voice name -> the section's steps
+  /* ...AND THE MARKS THE EVENT CARRIES (2026-09-05, review items 6+7). Four
+     more per-step vectors, filled off the events themselves so the paper
+     prints what the ENGINE was handed and never a second derivation of it:
+     `acc` has ridden every event since the kernel wrote it, `art` and `alt`
+     are the two the render round added, and `sld` is the slide. */
   const mine = (name) => { let b = bucket.get(name);
     if (!b) bucket.set(name, b = { midi: new Array(W).fill(null),
-                                   gate: z(), hold: z() });
+                                   gate: z(), hold: z(),
+                                   acc: z(), art: z(), sld: z() });
     return b; };
   const bassV = DOC.voices.find((v) => v.kind === "bass");
   const drumV = DOC.voices.find((v) => v.kind === "drums");
@@ -2831,17 +2837,26 @@ function scoreParts(si, k, bars) {
     // which is the difference between a score and a grid.
     const len = Math.max(1, Math.round((+e.dur || 0) * rate));
     if (len > b.hold[i]) b.hold[i] = len;
+    /* A CHORD IS ONE STEM AND SO IT IS ONE MARK: two events at the same step
+       in one voice are noteheads on one stem (the branch above), and the
+       mark is the OR of theirs — an accented triad is one accent over the
+       stack, which is how it is engraved. */
+    if (e.acc) b.acc[i] = 1;
+    if (e.sld) b.sld[i] = 1;
+    if (e.art) b.art[i] = e.art;
   }
   const parts = DOC.voices.map((v) => {
     const b = bucket.get(v.name) || { midi: new Array(W).fill(null),
-                                      gate: z(), hold: z() };
+                                      gate: z(), hold: z(),
+                                      acc: z(), art: z(), sld: z() };
     return { name: v.name,
              // the bass reads in F and the kit on a percussion staff; every
              // other part takes ui/abc.js's own octave decision (8va / 8vb),
              // which keeps a high line off a stack of ledger lines
              clef: v.kind === "bass" ? "bass" : v.kind === "drums" ? "perc" : "",
              phrase: { deg: z(), oct: z(), vel: z(), gate: b.gate,
-                       midi: b.midi, hold: b.hold } };
+                       midi: b.midi, hold: b.hold,
+                       acc: b.acc, art: b.art, sld: b.sld } };
   });
   return parts;
 }
@@ -3015,7 +3030,8 @@ function recordParts() {
   const parts = DOC.voices.map((v) => ({
     name: v.name,
     clef: v.kind === "bass" ? "bass" : v.kind === "drums" ? "perc" : "",
-    phrase: { deg: [], oct: [], vel: [], gate: [], midi: [], hold: [] } }));
+    phrase: { deg: [], oct: [], vel: [], gate: [], midi: [], hold: [],
+              acc: [], art: [], sld: [] } }));
   const secAt = [], divide = new Set();
   let step = 0, bars = 0;
   for (let si = 0; si < NS; si++) {
@@ -3025,7 +3041,8 @@ function recordParts() {
     secAt[si] = step;
     got.forEach((p, i) => {
       const a = parts[i].phrase, b = p.phrase;
-      for (const k of ["deg", "oct", "vel", "gate", "midi", "hold"])
+      for (const k of ["deg", "oct", "vel", "gate", "midi", "hold",
+                       "acc", "art", "sld"])
         for (const x of b[k]) a[k].push(x);
     });
     step += M * scoreSPB();
@@ -7403,6 +7420,91 @@ function benchVel(key, aria, get, set, commitFn) {
   return { el: wrap, paint, input: inp };
 }
 
+/* ---- THE MARKS A HAND WRITES ON A STEP (2026-09-05, review items 6+7) ------
+   The musicologist's review, driving this bench: *"Accent and articulation per
+   note: no. ARTICS is settable per genre, per section row and per cell — never
+   per note."* and *"Accidentals: the pitch bar locks to the record's scale,
+   and the toggle that would have unlocked it was deleted, not built."*
+
+   THREE MARKS IN ONE CELL, and they are three because they are three FACTS:
+     · ACCENT — `acc`, a binary the kernel has read since it was written
+       (`acc: p.acc[i]` on every event, ACCENT_LIFT x1.15 in audio/to-engine.js,
+       `velOfWritten(v, acc)` in export/score.js) and that NOBODY WROTE. This
+       is the writer. It is not the weight bar: the kernel's own header says
+       so — *"vel is how loud; acc is the 303's accent, a categorical flag …
+       Level is continuous, accent is an event"* — and an accented ghost note
+       is a real thing to write.
+     · MARK — the articulation. Five states over TWO vectors, and that is one
+       control over two owners rather than two spellings of one fact: `art`
+       (0 none, 1 staccato, 2 tenuto, 3 slur) is a NODE fact, and the SLIDE is
+       `sld`, which is EDGE-valued because `reverse()` has to shift it by one
+       (kernel.js's own reason). A slide living in a node vector would come
+       out of a retrograde attached to the wrong side of its transition, so
+       the algebra keeps its two vectors and the thumb gets one button.
+     · ACCIDENTAL — `alt`, a signed semitone applied after the scale lookup.
+       Three states, because the review asked for a flag and not a cents
+       channel: *"Not full cents — one flag, three states, and a sharp on the
+       staff."*
+
+   THEY CYCLE, WHICH IS THIS PAGE'S OWN IDIOM FOR A SMALL ENUM UNDER A THUMB:
+   the weight bar's tap cycles ghost/hit/accent and the drum lane cycles
+   rest/ghost/hit/accent. A chip strip per step would be five chips x sixteen
+   rows; a popover per step would be a dismiss law per step. One 44px button
+   that steps through its own states, with the state's WORD on it as the
+   accessible name, is the control this grid already teaches.
+
+   A MARK IS A FACT ABOUT A NOTE, so on a rest or a hold row the buttons are
+   REFUSED with their reason (`data-why`) rather than absent — the law the
+   pitch bar and the weight bar on the same row already keep. */
+/* WHICH VECTOR EACH STATE LIVES ON is `markOf`/`markSet`'s job below and is
+   not a field here: 1..3 are `art` and 4 is `sld`, said once, in the one
+   place that reads and writes them. */
+const MARKS = [
+  { v: 0, g: "\u25cb", key: "bench.mark.none" },
+  { v: 1, g: "\u2022", key: "bench.mark.stacc" },
+  { v: 2, g: "\u203e", key: "bench.mark.ten" },
+  { v: 3, g: "\u2312", key: "bench.mark.slur" },
+  { v: 4, g: "\u2571", key: "bench.mark.slide" },
+];
+const ALTS = [
+  { v: 0, g: "\u266e", key: "bench.alt.nat" },
+  { v: 1, g: "\u266f", key: "bench.alt.sharp" },
+  { v: -1, g: "\u266d", key: "bench.alt.flat" },
+];
+/* ONE BUTTON THAT WALKS A LIST. `get` answers the current value, `set` takes
+   the next one, and the FACE is the state's mark with the state's word behind
+   it in a `.nu-vh` — the same two-part face every glyph control on this page
+   wears, so a stylesheet-off reading is the word and a screen reader gets the
+   `aria-label`. `paint` is the one place that states, which is `sync()`'s law
+   for this whole grid. */
+function benchCycle(key, aria, list, get, set, commitFn, cls) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "nu-mkb" + (cls ? " " + cls : "");
+  b.dataset.k = key;
+  const mark = el("span", null, "nu-mkg");
+  mark.setAttribute("aria-hidden", "true");
+  const word = el("span", null, "nu-vh");
+  b.append(mark, word);
+  const ix = () => { const v = get();
+    const i = list.findIndex((m) => m.v === v); return i < 0 ? 0 : i; };
+  function paint() {
+    const m = list[ix()];
+    mark.textContent = m.g;
+    word.textContent = _t(m.key);
+    b.setAttribute("aria-label", aria + " \u2014 " + _t(m.key));
+    b.setAttribute("aria-pressed", String(m.v !== 0));
+    b.dataset.mark = String(m.v);
+  }
+  b.addEventListener("click", () => {
+    if (b.disabled) return;
+    set(list[(ix() + 1) % list.length].v);
+    paint(); commitFn();
+  });
+  paint();
+  return { el: b, paint, input: b };
+}
+
 /* ---- THE LOOP STRIP (2026-08-30, the sampling round) ----------------------
    Paul: "bring over sampling from the old version … add loop points and make
    them editable." One horizontal bar standing for the seated recording's
@@ -7702,6 +7804,26 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
      (`vel(p,i)`, kernel.js:301), which is why a fresh step is not silent. */
   const velOf = (i) => (H.vel ? (H.vel[i] | 0) : 0);
   const velArr = () => (H.vel || (H.vel = H.deg.map(() => 0)));
+  /* THE THREE MARK VECTORS, MATERIALISED ON FIRST TOUCH (2026-09-05, review
+     items 6+7) — exactly the law `velArr` above keeps: an absent vector reads
+     as all-zero, which IS what document.js `toPhrase` compiles for it, so
+     the array that appears in the document is the one the record was already
+     being played with and every other step renders byte-identically.
+     `acc` and `sld` are the kernel's own vectors and were always compiled;
+     `art` and `alt` are new and present-only, so a cell that never gets a
+     mark never grows a key. */
+  const vecOf = (k, i) => (H[k] ? (H[k][i] | 0) : 0);
+  const vecArr = (k) => (H[k] || (H[k] = H.deg.map(() => 0)));
+  /* THE MARK IS ONE CONTROL OVER TWO VECTORS (see MARKS, above): 4 is the
+     slide and lives on `sld`, 1..3 are the lengths and live on `art`, and
+     writing either CLEARS the other — a note cannot be both slid into and
+     played short, and leaving a stale value in the vector nobody is reading
+     would be a document that says two things. */
+  const markOf = (i) => (vecOf("sld", i) ? 4 : vecOf("art", i));
+  const markSet = (i, v) => {
+    if (v === 4) { vecArr("sld")[i] = 1; if (H.art) H.art[i] = 0; }
+    else { vecArr("art")[i] = v; if (H.sld) H.sld[i] = 0; }
+  };
   // THE RECORD'S OWN LATTICE, once per build — the alphabet only moves through
   // the Alphabet axis, and that is a full draw() (see benchEnv, above)
   const ENV = benchEnv();
@@ -7740,6 +7862,18 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
       s2.vel.input.disabled = !live;
       s2.pit.paint();
       s2.vel.paint();
+      /* A MARK IS A FACT ABOUT A NOTE (2026-09-05). A rest has nothing to
+         accent and a hold is the note before it still sounding, so all three
+         marks are live under exactly the condition the degree is — and
+         REFUSED, with their reason, rather than absent. */
+      for (const m of [s2.acc, s2.mark, s2.alt]) {
+        if (!m) continue;
+        m.input.disabled = !live;
+        if (live) { delete m.input.dataset.why; m.input.removeAttribute("title"); }
+        else { m.input.dataset.why = _t("bench.mark.why");
+               m.input.title = m.input.dataset.why; }
+        m.paint();
+      }
       /* WHY A FADED ROW IS FADED — ON THE CONTROLS NOW, NOT PRINTED OVER THEM
          (rewritten 2026-08-28). This wrote a sentence into a `.nu-mutewhy`
          span lying across the pitch cell: "rest — nothing sounds", "held — 3̂
@@ -7881,7 +8015,8 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
       const th = countCell(COUNT[j % COUNT.length]);
       if (mine) mine.cells[i] = th;
       tr.append(th);
-      const ref = steps[i] = { row: tr, seg: {}, pit: null, vel: null };
+      const ref = steps[i] = { row: tr, seg: {}, pit: null, vel: null,
+                               acc: null, mark: null, alt: null };
       /* THE KIND IS ONE SEGMENTED BUTTON (composer.html: "One segmented kind
          button"). The three radios' keys are kept verbatim on the three
          segments, so focus survives the change of face (PROGRAM.md §2.2).
@@ -7942,6 +8077,36 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
         () => commit());
       velTd.append(ref.vel.el);
       tr.append(velTd);
+      /* ---- THE MARKS (2026-09-05, review items 6+7) --------------------
+         One cell, three buttons: the accent, the articulation and the
+         accidental. They are the LAST column because they are what a
+         composer writes last — DESIGN.md 5's order is the phrase, then its
+         dynamics, then its treatment — and because putting them before the
+         pitch would move the two controls a thumb uses on every step. */
+      const mkTd = el("td", null, "nu-markTd");
+      ref.acc = benchCycle(seq + cellName + "acc" + i,
+        _t("bench.acc.aria", { name: cellName, n: i + 1 }),
+        /* ONE GLYPH, TWO WEIGHTS. An accent HAS a mark and its absence has
+           none, so a second glyph for "no accent" would be inventing a
+           notation; `aria-pressed` and the `.nu-vh` word carry the state and
+           nu.css draws the unpressed one in `--faint`. */
+        [{ v: 0, g: "\u003e", key: "bench.acc.off" },
+         { v: 1, g: "\u003e", key: "bench.acc.on" }],
+        () => vecOf("acc", i),
+        (v) => { if (H.play[i] === "n") vecArr("acc")[i] = v; },
+        () => commit(), "nu-mkacc");
+      ref.mark = benchCycle(seq + cellName + "mark" + i,
+        _t("bench.mark.aria", { name: cellName, n: i + 1 }),
+        MARKS, () => markOf(i),
+        (v) => { if (H.play[i] === "n") markSet(i, v); },
+        () => commit(), "nu-mkart");
+      ref.alt = benchCycle(seq + cellName + "alt" + i,
+        _t("bench.alt.aria", { name: cellName, n: i + 1 }),
+        ALTS, () => vecOf("alt", i),
+        (v) => { if (H.play[i] === "n") vecArr("alt")[i] = v; },
+        () => commit(), "nu-mkalt");
+      mkTd.append(ref.acc.el, ref.mark.el, ref.alt.el);
+      tr.append(mkTd);
       // (`tr.addEventListener("click", () => speak(i))` stood here — sixteen
       //  listeners whose only job was to write the wisdom rail's sentence.
       //  Deleted 2026-08-28 with the rail; a tap on a row now does exactly
@@ -11218,6 +11383,26 @@ function tableAPI() {
     leaveLanding: () => { tab = null; formSec = null; landedOn = null; },
     bpmNode: () => bpmNode(),
     meterNode: () => meterNode(),
+    /* WHAT AN ENTRY IS COUNTED IN, off the record's own meter and its own
+       cell length, and nowhere else (2026-09-05). `K.metOf` is the one
+       resolver for a word and a signature alike, and `steps / pulse` is the
+       felt beat count a bar already carries: four in four-four, two in
+       six-eight (two dotted beats), seven in seven-eight, twenty-one in
+       21/17.
+       THE UNIT IS A CELL AND NOT A BAR, because that is what `entry` has
+       always meant: `kernel.js render` counts its loop in PHRASE LENGTHS and
+       `sections[].bars` counts CELL bars, so `entry: 1` on a two-bar cell has
+       always been two bars later. `NuDocument.barsOf` is the one owner of
+       "how many bars a cell is" (the invariant that every line cell in one
+       document is the same length is what makes that ONE number), and it is
+       1 for nearly every record. The STEP does not move with it — the finest
+       grid inside a cell is still one sixteenth, which is `1 / pulse` beats
+       whatever the cell's length. */
+    barBeats: () => { const m = K.metOf(DOC.time);
+      const pulse = Math.max(1, m.pulse | 0), steps = Math.max(1, m.steps | 0);
+      let cb = 1;
+      try { cb = Math.max(1, NuDocument.barsOf(DOC) | 0); } catch (e) { cb = 1; }
+      return { beats: cb * steps / pulse, step: 1 / pulse }; },
     tempoNode: () => tempoNode(),
     keyNode: () => keyNode(),
     changesNode: (sid) => changesNode(sid),
