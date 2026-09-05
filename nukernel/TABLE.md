@@ -1670,7 +1670,24 @@ things up to be tappable is good"*.
   and its wiring (samples first) → the EQ curve and the XY pad → the in-cell
   typed editor + synonyms → the restyle pass over the rest.
 
-### 11a · The in-cell editor: type, and the options filter semantically
+### 11a · The in-cell editor — DROPPED (Paul, 2026-09-05: *"Don't bother with
+8, typed in cell. Instead just nicely structure each expanded interface as
+proper software that's easy to scan and nicely grouped."*). The typed
+semantic editor and the synonym table are not built. What replaces it:
+
+### 11c · Every expanded interface is proper software
+
+Each sheet, pop-up and special row's open face is STRUCTURED: fields in
+GROUPS with a short heading (a composer's order, DESIGN.md §5 — for a
+chair: Instrument · Envelope · Tone · Mix; for a section: Form · Time · Key
+· Feel · Chain; for a cell: Phrase · Variation · Dynamics · Placement),
+one row per field (label left, control right, the value printed, the
+clear-back at the end), the groups separated by `--s5`, consistent widths,
+nothing narrative, scannable in one pass at 390 and at 1280. The picker
+for a long vocabulary stays the native/typed one from §9c step 2. The
+restyle round (§11 order, last) does this pass over every surface.
+
+### (former 11a, kept for the record)
 
 Paul: *"I think what I want is to type into the cell and the options get
 filtered for me in a smart semantic way."*
