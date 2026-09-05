@@ -105,7 +105,7 @@ const FULL = process.argv.includes("--full");
    changed three rows' mouths (girlgroup, nuevacancion, doowop) on purpose —
    T2b read those three sections against v264 and was right to. Everything
    else must still be byte-identical to THIS base until a hand writes. */
-const BASE_SHA = "1d15649";  // moved 2026-09-04 night: the throat round and the sweep changed 17 rows' sound on purpose (T4o pins the throats; gospel and bossa argued in their notes)
+const BASE_SHA = "ee8366d";  // moved 2026-09-05: chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
