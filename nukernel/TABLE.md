@@ -958,9 +958,23 @@ lost two rows, `BUILD` two builders, `TABKIDS` two branches, and
 `<thead>`, above the column heads, holding ONE `<th colspan="<every column>">`
 whose whole content is a button: the WORD (`TIME`, `RULES`) and, beside it, the
 FACE — `79 a minute · four · D natural minor`, and `nothing written — the genre
-as the atlas deals it`. The sheet opens where a column head's has always
-opened, at the top of `<tbody>`, because a sheet inside a frozen head is a
-sheet that covers the grid it is editing.
+as the atlas deals it`. The sheet opened where a column head's has always
+opened, at the top of `<tbody>` — **AND THAT WAS WRONG, MEASURED BY PAUL ON
+v284: *"When I click time and rules they show up under phrases."*** It is
+right for a column head, which has no row of its own; a special row HAS one,
+three rows and a set of column heads above the body, so TIME's editor opened
+four rows away from the word that opened it. **THE SHEET IS THAT ROW'S OWN
+NEXT LINE** — a `<tr class="nu-wopen nu-spopen">` of the `<thead>`,
+immediately after its own row (DESIGN.md §2.3 *"expanded = its sheet"*, §2.4
+*"in flow, never a modal"*: nothing may stand between a row and its sheet).
+The rows BELOW the tapped one move under the editor and `stick()` releases
+their pins, which is §2.3's other clause — a row *"pins under the rows ABOVE
+it"* — read the only way it can be read when the editor is 4,700px tall: the
+tapped row and the rows above it stay frozen (that is how you close the row
+you are inside), and the ones below ride the scroll, holding a `sticky`
+declaration with an `auto` offset. Measured at 390 and 1280: the editor's top
+edge is 8.6px under the bottom edge of TIME, RULES or PHRASES — the 3px of
+`border-spacing` plus the sheet row's own `--s2` — which is T12m.
 
 **FIVE THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT.**
 

@@ -352,8 +352,26 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
     const tops = rows.map((tr) =>
       base + (tr.getBoundingClientRect().top - tRect.top));
+    /* ...AND THE STACK ENDS WHERE AN OPEN SPECIAL ROW'S SHEET BEGINS
+       (2026-09-05, Paul: *"when I click time and rules they show up under
+       phrases"*). The sheet is a row of the head now, under the row that
+       opened it, so the rows AFTER it stand a whole editor further down the
+       scroll content — and an offset written from there is not a pin but a
+       shove: these numbers are distances from the top of the pane's CONTENT
+       used as distances from the top of what a hand can SEE, which is only
+       the same thing while the head is at the content's top. Pinning RULES at
+       the 3,000px its own sheet-pushed line reports would drive it to the
+       bottom of the table on the first scroll. So the pins stop at the open
+       sheet: the tapped row and the rows above it stay frozen (which is how
+       you close the row you are inside), the sheet and the rows below it ride
+       the scroll, and every one of them keeps `position: sticky` with an
+       `auto` offset — a declaration with nothing to hold, which is what a row
+       under an open editor honestly is. */
+    const cut = rows.findIndex((r) => r.classList.contains("nu-spopen"));
     rows.forEach((_tr, i) => {
-      for (const c of cells[i]!) c.style.insetBlockStart = tops[i]! + "px";
+      const free = cut >= 0 && i >= cut;
+      for (const c of cells[i]!)
+        c.style.insetBlockStart = free ? "auto" : tops[i]! + "px";
     });
   }
   onRedraw(draw);
@@ -510,24 +528,47 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      ITS FACE IS ITS OWN CONTROL. The word and the line of values are one
      button, full width, so at 320 the whole row is the target: `ttime` /
      `trules`, `aria-expanded`, Enter and Escape from the pane's own keyboard,
-     and the sheet under it at the top of the body. */
-  const specialRows = (S: Shape): TemplateResult[] => SPECIALS.map((sp) => {
-    const openKey = "sp|" + sp.id;
-    const open = OPEN === openKey;
-    let face = "";
-    try { face = sp.face(A); } catch (e) { face = ""; }
-    return html`<tr class="nu-sprow" data-special=${sp.id}>
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
-        <button type="button" class="nu-sphead" data-k=${sp.k}
-          aria-expanded=${String(open)}
-          aria-label=${sp.aria}
-          @click=${() => toggle(openKey)}
-          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
-          ><b class="nu-spword">${sp.word}</b
-          ><span class="nu-spface">${face}</span></button>${spLamp(sp)}
-      </th>
-    </tr>`;
-  });
+     and the sheet DIRECTLY UNDER IT.
+
+     AND "DIRECTLY UNDER IT" IS THE WHOLE OF THIS BLOCK (Paul, on v284:
+     *"When I click time and rules they show up under phrases"*). The sheet
+     used to be an ORPHAN — drawn at the top of the `<tbody>`, which is where a
+     column head's sheet lands because a column has no row of its own — and a
+     special row DOES have a row of its own, three rows up: tapping TIME opened
+     an editor under TIME, RULES and PHRASES and the column heads, four rows
+     away from the word that opened it. DESIGN.md §2.3 says a special row's
+     *"expanded = its sheet"* and §2.4 says a sheet is *"in flow (never a
+     modal)"*, so the sheet is this row's own next line and nothing else may
+     stand between them; §2.3's other clause — a row *"pins under the rows
+     ABOVE it"* — then says which rows keep their pins while it is open: the
+     ones above the tapped row do, and the ones below it are rows the editor
+     has pushed down, exactly as a section's sheet pushes the grid down. So the
+     open sheet is a `<tr class="nu-wopen nu-spopen">` of the `<thead>`,
+     immediately after its own row, and `stick()` releases the pins below it. */
+  const specialRows = (S: Shape): TemplateResult[] => {
+    const out: TemplateResult[] = [];
+    for (const sp of SPECIALS) {
+      const openKey = "sp|" + sp.id;
+      const open = OPEN === openKey;
+      let face = "";
+      try { face = sp.face(A); } catch (e) { face = ""; }
+      out.push(html`<tr class="nu-sprow" data-special=${sp.id}>
+        <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
+          <button type="button" class="nu-sphead" data-k=${sp.k}
+            aria-expanded=${String(open)}
+            aria-label=${sp.aria}
+            @click=${() => toggle(openKey)}
+            @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
+            ><b class="nu-spword">${sp.word}</b
+            ><span class="nu-spface">${face}</span></button>${spLamp(sp)}
+        </th>
+      </tr>`);
+      if (open)
+        out.push(openRow(S, sheetFor(openKey, () => wrapOps(sp.sheet(A))),
+                         sp.word, "nu-spopen"));
+    }
+    return out;
+  };
 
   const thead = (S: Shape, cols: string[]): TemplateResult => html`<thead>
     ${specialRows(S)}
@@ -667,12 +708,12 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         label: t("head.song"),
         ops: tableOps(A, S.across).map((x) => x.act
           ? { ...x, act: () => op(x.word, x.act!) } : x) }]), t("head.song"));
-    /* A SPECIAL ROW'S SHEET IS AN ORPHAN TOO, and for the same reason the
-       column head's is: its row is in the `<thead>`, which freezes, and a
-       frozen sheet is a sheet that covers the grid it is editing. */
-    for (const sp of SPECIALS)
-      if (OPEN === "sp|" + sp.id)
-        return openRow(S, sheetFor(OPEN, () => wrapOps(sp.sheet(A))), sp.word);
+    /* A SPECIAL ROW'S SHEET IS NOT AN ORPHAN, and that is the v285 repair:
+       it HAS a row of its own, in the `<thead>`, and `specialRows` draws the
+       sheet as that row's own next line. It stood here until Paul read the
+       result out loud — *"when I click time and rules they show up under
+       phrases"* — which is what an orphan sheet says when its row is three
+       rows above the body. */
     if (OPEN.indexOf("col|") === 0 && !S.across)
       return openRow(S, sheetFor(OPEN, () => colSheetOf(OPEN!.slice(4))), OPEN.slice(4));
     if (OPEN.indexOf("row|") === 0 && S.across)
@@ -1031,8 +1072,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   };
 
   /* ---- THE OPEN ROW, WHICH IS THE FORMULA BAR'S BODY ------------------ */
-  const openRow = (S: Shape, fields: Field[], name: string): TemplateResult =>
-    html`<tr class="nu-wopen"><td colspan=${nCols(S)}>${
+  const openRow = (S: Shape, fields: Field[], name: string,
+                   cls?: string): TemplateResult =>
+    html`<tr class=${cls ? "nu-wopen " + cls : "nu-wopen"}
+      ><td colspan=${nCols(S)}>${
       sheetBody(fields, name, OPENFIELD,
                 (k) => { OPENFIELD = k; draw(); },
                 () => { /* the write ends in changed() -> draw(); nothing here */ })

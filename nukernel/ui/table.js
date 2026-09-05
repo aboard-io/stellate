@@ -2108,8 +2108,11 @@ function bandTable(host, A2) {
     const tRect = t5.getBoundingClientRect();
     const base = pane2 ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
     const tops = rows.map((tr) => base + (tr.getBoundingClientRect().top - tRect.top));
+    const cut = rows.findIndex((r2) => r2.classList.contains("nu-spopen"));
     rows.forEach((_tr, i5) => {
-      for (const c3 of cells[i5]) c3.style.insetBlockStart = tops[i5] + "px";
+      const free = cut >= 0 && i5 >= cut;
+      for (const c3 of cells[i5])
+        c3.style.insetBlockStart = free ? "auto" : tops[i5] + "px";
     });
   }
   onRedraw(draw);
@@ -2242,30 +2245,41 @@ function bandTable(host, A2) {
     </div>`;
   };
   const nCols = (S2) => (S2.across ? S2.secs.length : S2.voices.length) + 2;
-  const specialRows = (S2) => SPECIALS.map((sp) => {
-    const openKey = "sp|" + sp.id;
-    const open = OPEN === openKey;
-    let face2 = "";
-    try {
-      face2 = sp.face(A2);
-    } catch (e4) {
-      face2 = "";
+  const specialRows = (S2) => {
+    const out = [];
+    for (const sp of SPECIALS) {
+      const openKey = "sp|" + sp.id;
+      const open = OPEN === openKey;
+      let face2 = "";
+      try {
+        face2 = sp.face(A2);
+      } catch (e4) {
+        face2 = "";
+      }
+      out.push(b`<tr class="nu-sprow" data-special=${sp.id}>
+        <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+          <button type="button" class="nu-sphead" data-k=${sp.k}
+            aria-expanded=${String(open)}
+            aria-label=${sp.aria}
+            @click=${() => toggle(openKey)}
+            @contextmenu=${(e4) => {
+        e4.preventDefault();
+        toggle(openKey, true);
+      }}
+            ><b class="nu-spword">${sp.word}</b
+            ><span class="nu-spface">${face2}</span></button>${spLamp(sp)}
+        </th>
+      </tr>`);
+      if (open)
+        out.push(openRow(
+          S2,
+          sheetFor(openKey, () => wrapOps(sp.sheet(A2))),
+          sp.word,
+          "nu-spopen"
+        ));
     }
-    return b`<tr class="nu-sprow" data-special=${sp.id}>
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
-        <button type="button" class="nu-sphead" data-k=${sp.k}
-          aria-expanded=${String(open)}
-          aria-label=${sp.aria}
-          @click=${() => toggle(openKey)}
-          @contextmenu=${(e4) => {
-      e4.preventDefault();
-      toggle(openKey, true);
-    }}
-          ><b class="nu-spword">${sp.word}</b
-          ><span class="nu-spface">${face2}</span></button>${spLamp(sp)}
-      </th>
-    </tr>`;
-  });
+    return out;
+  };
   const thead = (S2, cols) => b`<thead>
     ${specialRows(S2)}
     <tr>
@@ -2392,9 +2406,6 @@ function bandTable(host, A2) {
         label: t4("head.song"),
         ops: tableOps(A2, S2.across).map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
       }]), t4("head.song"));
-    for (const sp of SPECIALS)
-      if (OPEN === "sp|" + sp.id)
-        return openRow(S2, sheetFor(OPEN, () => wrapOps(sp.sheet(A2))), sp.word);
     if (OPEN.indexOf("col|") === 0 && !S2.across)
       return openRow(S2, sheetFor(OPEN, () => colSheetOf(OPEN.slice(4))), OPEN.slice(4));
     if (OPEN.indexOf("row|") === 0 && S2.across)
@@ -2664,7 +2675,8 @@ function bandTable(host, A2) {
     }}
       >${f2.label ?? f2.word ?? "—"}</button>`;
   };
-  const openRow = (S2, fields, name) => b`<tr class="nu-wopen"><td colspan=${nCols(S2)}>${sheetBody(
+  const openRow = (S2, fields, name, cls) => b`<tr class=${cls ? "nu-wopen " + cls : "nu-wopen"}
+      ><td colspan=${nCols(S2)}>${sheetBody(
     fields,
     name,
     OPENFIELD,

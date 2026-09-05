@@ -3643,22 +3643,37 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       document.body.appendChild(swatch);
       const want = getComputedStyle(swatch).color; swatch.remove();
       const rows = []; const seen = new Set();
-      for (const th of grid.querySelectorAll("thead th")) {
+      /* THE GRID'S OWN HEAD ROWS, AND NOT EVERY thead th UNDER IT
+         (2026-09-05). A special row's sheet is a row of this head now, and the
+         sheets seat whole tables of their own — the chord grid's head is a
+         head cell too, and reading it counted five more "frozen rows" with
+         185px "seams" between them. The child selector below is the stack this
+         check is about: the rows of the band table's own head. */
+      for (const th of grid.querySelectorAll(":scope > thead > tr > th")) {
         const cs = getComputedStyle(th);
         if (cs.position !== "sticky") continue;
         const r = th.getBoundingClientRect();
         const k = r.top.toFixed(1); if (seen.has(k)) continue; seen.add(k);
         rows.push({ top: r.top, bottom: r.bottom, bg: cs.backgroundColor,
-                    z: zOf(th), spread: spread(cs.boxShadow) });
+                    z: zOf(th), spread: spread(cs.boxShadow),
+                    /* PINNED, WHICH IS NOT THE SAME AS STICKY SINCE
+                       2026-09-05: stick() writes auto on the head rows that
+                       stand below an open special row's editor, because their
+                       line is a whole sheet down the scroll content and a pin
+                       written from there is a shove, not a freeze. They keep
+                       the declaration and hold nothing — so the SEAMS below
+                       are counted between the rows that are actually frozen. */
+                    pin: cs.insetBlockStart !== "auto" });
       }
       rows.sort((a, b) => a.top - b.top);
       const sheet = host.querySelector(".nu-vsheet");
       const sz = sheet ? zOf(sheet) : -1;
       const seams = [];
-      for (let i = 0; i < rows.length - 1; i++)
-        seams.push({ gap: +(rows[i + 1].top - rows[i].bottom).toFixed(2),
-                     cover: rows[i].spread + rows[i + 1].spread });
-      return { n: rows.length, want, sheet: !!sheet, sz,
+      const pinned = rows.filter((r) => r.pin);
+      for (let i = 0; i < pinned.length - 1; i++)
+        seams.push({ gap: +(pinned[i + 1].top - pinned[i].bottom).toFixed(2),
+                     cover: pinned[i].spread + pinned[i + 1].spread });
+      return { n: rows.length, pinned: pinned.length, want, sheet: !!sheet, sz,
         clear: rows.filter((r) => r.bg !== want).length,
         under: rows.filter((r) => r.z <= sz).length,
         open: seams.filter((s) => s.gap > 0.5 && s.cover + 0.01 < s.gap).length,
@@ -3668,12 +3683,21 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       await ctx.pages()[0].setViewportSize({ width: W, height: W === 1280 ? 900 : 844 });
       await p.waitForTimeout(400);
       await top("Band");
-      /* the exact repro: the long vocabulary open under the frozen rows */
-      await p.evaluate(() => window.__eightRow("time", true));
-      await p.waitForTimeout(500);
+      /* THE EXACT REPRO IS A CELL'S SHEET, WHICH IS THE ONE THE LEAK WAS
+         MEASURED ON ("…default | fill…" printing between TIME and RULES at
+         390 on Kingston 1969) AND THE ONE THAT STILL SCROLLS UNDER ALL FOUR
+         ROWS. It was the TIME row's sheet until 2026-09-05, when a special
+         row's editor became that row's own next line in the head (Paul, on
+         v284: *"when I click time and rules they show up under phrases"*): the
+         rows BELOW an open special row ride the scroll with its editor, so the
+         stack under an open TIME is one row deep and there is no seam left in
+         it to leak through. T12m measures that arrangement; this measures the
+         full stack, with a sheet — lozenge field and all — under it. */
+      await openCell("tcell|" + vn12 + "|" + sid12);
       await p.evaluate(() => {
-        const el = document.querySelector('#pan-band [data-sel="alphabet.scale"]');
-        if (el) el.scrollIntoView({ block: "center" }); });
+        const pane = document.querySelector("#pan-band .nu-pane");
+        if (pane) pane.scrollTop =
+          Math.min(320, pane.scrollHeight - pane.clientHeight); });
       await p.waitForTimeout(300);
       const st = await p.evaluate(STACK);
       check(st.n >= 4 && st.clear === 0,
@@ -3682,12 +3706,96 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       check(st.sheet && st.under === 0,
         "T12k …and every one of them is ABOVE the sheet that scrolls under it " +
         "(sheet z " + st.sz + ", " + st.under + " heads at or below it)");
-      check(st.open === 0,
+      /* THE STACK IS FOUR ROWS DEEP AND THEREFORE THREE SEAMS DEEP, asserted
+         so the count below cannot pass by having nothing to measure. */
+      check(st.open === 0 && st.pinned >= 4 && st.seams.length >= 3,
         "T12k …and NOTHING renders through the seams between them — " +
         st.open + " of " + st.seams.length + " uncovered " +
         JSON.stringify(st.seams));
-      await p.evaluate(() => window.__eightRow("time", false));
+      await tap("tcell|" + vn12 + "|" + sid12);
+      await p.evaluate(() => {
+        const pane = document.querySelector("#pan-band .nu-pane");
+        if (pane) pane.scrollTop = 0; });
       await p.waitForTimeout(250);
+    }
+
+    /* ---- T12m · A SPECIAL ROW'S EDITOR OPENS UNDER THAT ROW -----------
+       Paul, on v284: *"When I click time and rules they show up under
+       phrases."* They did: the sheet was drawn at the top of the `<tbody>`,
+       which is where a COLUMN head's sheet lands because a column has no row
+       of its own — and TIME has a row of its own, three rows and a set of
+       column heads above the body. DESIGN.md §2.3 says a special row's
+       *"expanded = its sheet"* and §2.4 says a sheet is *"in flow (never a
+       modal)"*: the sheet is the tapped row's own next line, nothing may stand
+       between them, and §2.3's *"pins under the rows ABOVE it"* says which
+       rows keep their freeze while it is open — the ones above the tapped row.
+       SO THIS MEASURES THE RENDERED GEOMETRY, at both ends of the range: the
+       editor's top edge against the bottom edge of the row that opened it, the
+       row itself still pinned and still opaque over the sheet scrolling under
+       it, and the tap-outside law unbroken. */
+    {
+      const SPGEOM = `(() => {
+        const grid = document.querySelector("#pan-band table.nu-sheetgrid");
+        const rows = [...grid.querySelectorAll(":scope > thead > tr")];
+        const open = grid.querySelector(":scope > thead > tr.nu-spopen");
+        if (!open) return { none: true };
+        const i = rows.indexOf(open);
+        const row = rows[i - 1];
+        const sheet = open.querySelector(".nu-vsheet");
+        if (!row || !sheet) return { none: true };
+        const rr = row.getBoundingClientRect(), sr = sheet.getBoundingClientRect();
+        const th = row.querySelector("th"), cs = getComputedStyle(th);
+        const bg = getComputedStyle(sheet).backgroundColor;
+        return { id: row.dataset.special,
+                 own: row.classList.contains("nu-sprow"),
+                 lit: th.querySelector("[aria-expanded=true]") ? true : false,
+                 gap: +(sr.top - rr.bottom).toFixed(1),
+                 pinned: cs.position === "sticky" && cs.insetBlockStart !== "auto",
+                 seen: sr.height > 40 && sr.width > 40 && sr.top < innerHeight,
+                 solid: !!bg && !/rgba\\(0, 0, 0, 0\\)/.test(bg) &&
+                        bg !== "transparent" };
+      })()`;
+      for (const W of [390, 1280]) {
+        await ctx.pages()[0].setViewportSize({ width: W, height: W === 1280 ? 900 : 844 });
+        await p.waitForTimeout(400);
+        await top("Band");
+        for (const id of ["time", "rules", "motifs"]) {
+          await tap("t" + id);
+          const g = await p.evaluate(SPGEOM);
+          /* 12px: `.nu-trims` pays 3px of `border-spacing` between two rows
+             and `.nu-wopen > td` pays `--s2` of air above the sheet — measured
+             at 9.0 at both widths on all three rows. Anything more is another
+             row standing in between, which is the bug. */
+          check(!g.none && g.own && g.id === id && g.gap >= 0 && g.gap <= 12,
+            "T12m at " + W + " the " + id.toUpperCase() + " row's editor opens " +
+            "DIRECTLY under that row — " + JSON.stringify(g));
+          check(!g.none && g.pinned && g.seen && g.solid,
+            "T12m …with the row still frozen over an editor that is visible " +
+            "and opaque — " + JSON.stringify(g));
+          /* ...AND WHATEVER IS STILL FROZEN IS STILL A FROZEN HEAD: opaque in
+             `--ground`, above the sheet riding under it, no open seam. */
+          const st = await p.evaluate(STACK);
+          check(st.n >= 1 && st.clear === 0 && st.under === 0 && st.open === 0,
+            "T12m …and nothing renders through the frozen stack with " + id +
+            " open (" + st.pinned + " of " + st.n + " head rows frozen, " +
+            st.clear + " see-through, " + st.under + " under the sheet, " +
+            st.open + " open seams)");
+          /* THE TAP-OUTSIDE LAW, UNBROKEN BY THE MOVE (Paul: *"dismiss them
+             when I tap outside of them"*) — a press on the page's own chrome,
+             which is what `armOutside` calls outside. */
+          const shut = await p.evaluate(() => {
+            const el = document.querySelector("#pan-band .nu-pan") ||
+                       document.getElementById("pan-band");
+            el.dispatchEvent(new PointerEvent("pointerdown",
+              { bubbles: true, composed: true }));
+            return new Promise((res) => setTimeout(() => res(
+              !document.querySelector("#pan-band tr.nu-spopen")), 350)); });
+          check(shut, "T12m …and a tap outside still shuts " + id);
+          if (!shut) await tap("t" + id);
+        }
+      }
+      await ctx.pages()[0].setViewportSize({ width: 390, height: 844 });
+      await p.waitForTimeout(400);
     }
 
     /* ---- T12l · THE SECTION NAMES ARE THE NAVIGATION ------------------
