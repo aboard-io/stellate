@@ -593,9 +593,9 @@ const spread = (ev) => {
      `adddrums` was a row in the stripe's Band branch; the offer is the adder
      cell at the end of the table's player axis now, at the address the T7
      inventory filed it onto. Same hire, same one door (`addVoice("drums")`).
-     ...AND IT IS IN THE ADD SHEET SINCE 2026-09-05 (TABLE.md §13a.5): the
-     grid's foot `+` opens it, the address is unchanged. */
-  await tap("tadd|foot");
+     ...AND THE `+` IS THE OFFER SINCE 2026-09-05 (TABLE.md §13e, Paul: *"Just
+     add it."*): the head's `+` carries `tcol-add|drums` on a record with no
+     drummer, so the address is unchanged and there is no sheet to open. */
   const hired = await tap("tcol-add|drums");
   check(hired, "the page offers a drummer (+ drums)");
   await openSection(S2);

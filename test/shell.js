@@ -835,22 +835,15 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02, Paul: *"Add a 'silence'
          genre at the top of the genre list. This is a blank state."*) and a
          blank state has NO PLAYERS, which is the point of it. So the gate
-         hires one the way a reader does — and since 2026-09-05 (TABLE.md
-         §13a.5) that is TWO taps and not one: the `+` at the grid's foot
-         opens the ADD sheet and `tcol-add|line` is the lozenge inside it, at
-         the address it has always had. The three adder buttons that stood in
-         the head row took 22ch of a phone; the `+` takes `--tap`. */
-      const openAdd = async () => {
-        const plus = await page.$('#pan-band [data-k="tadd|foot"]');
-        if (!plus) return false;
-        if (await page.evaluate((b) => b.getAttribute("aria-expanded") !== "true",
-                                plus)) { await plus.click();
-                                         await page.waitForTimeout(500); }
-        return true; };
+         hires one the way a reader does, and since 2026-09-05 (TABLE.md §13e,
+         Paul: *"Don't pop up an interface when I add a section or a voice.
+         Just add it."*) that is ONE tap on the head's `+`, which CARRIES the
+         address of the hire it will make — `tcol-add|` and the first kind the
+         band has not got. The three adder buttons that stood in the head row
+         took 22ch of a phone; the `+` takes `--tap`. */
       const anyCol = await page.$('#pan-band th.nu-colhead button');
       if (!anyCol) {
-        await openAdd();
-        const add = await page.$('#pan-band [data-k="tcol-add|line"]');
+        const add = await page.$('#pan-band thead th.nu-plushead .nu-plusbtn');
         if (add) { await add.click(); await page.waitForTimeout(900); }
       }
       const head = await page.$('#pan-band th.nu-colhead button[data-k^="tcol|"]');
@@ -864,8 +857,11 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         /* IT IS OPENED IDEMPOTENTLY, WHICH IS `__eightRow`'S OWN DISCIPLINE
            AND WAS MEASURED HERE (2026-09-09). A head is a TOGGLE, and
            `tablePanel` lands an arrival by CLICKING the head it wants open —
-           so after a hire the new player's sheet is ALREADY open and a gate
-           that presses it once has shut it. Measured: `{"name":"line 1",
+           so a head may already be open when this arrives and a gate that
+           presses it once would have shut it. (A HIRE no longer lands at all
+           since 2026-09-05 — TABLE.md §13e, Paul: *"Just add it."* — so the
+           discipline now stands for every other arrival rather than for this
+           one; it is kept because it is what makes the tap idempotent.) Measured: `{"name":"line 1",
            "del":false}` at all four widths, with the sheet standing open in
            the frame before the tap. */
         const name = await page.evaluate((h) => h.dataset.k.slice(5), head);
@@ -876,21 +872,22 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
           del: !!document.querySelector(
             '#pan-band [data-k="' + CSS.escape("tcol-del|" + name) + '"]') }),
           name);
-        /* ...AND THE THREE HIRES ARE ONE DOOR FURTHER IN (2026-09-05, §13a.5):
-           the `+` at the grid's foot, then the ADD sheet's three lozenges. Two
-           taps from rest, which is what §13b asks of every control the addbars
-           used to stand around holding. The player's own `remove` is where it
-           always was, in the sheet its column head opens. */
-        await openAdd();
+        /* ...AND THE THREE HIRES ARE IN THAT SAME SHEET (2026-09-05, §13e).
+           They spent an afternoon behind a `+` and an ADD sheet — two taps
+           from rest — and the sheet is deleted: each `+` fires ONE offer now
+           (the head's, the kind the band has not got), so the place that holds
+           all three whatever the record already has is `colOps`, the sheet
+           this player's own column head has just opened. One tap from rest,
+           beside the player's own `remove`. */
         const r = Object.assign({}, rdel, await page.evaluate(() => {
           const at = (k) => !!document.querySelector(
             '#pan-band [data-k="' + CSS.escape(k) + '"]');
           return { hire: ["line", "bass", "drums"]
                      .filter((k) => at("tcol-add|" + k)).length }; }));
         is(!!r.name && r.del && r.hire === 3,
-          "A6l " + width + " · a player's `remove` is in the sheet its own "
-          + "column head opens and the three hires are in the ADD sheet the "
-          + "`+` opens, two taps from rest — "
+          "A6l " + width + " · a player's `remove` AND the three hires are in "
+          + "the sheet its own column head opens, one tap from rest; the `+` "
+          + "at the head of the axis fires the one the band has not got — "
           + JSON.stringify(r));
         const rowHead = await page.$('#pan-band th.nu-srowh button[data-k^="trow|"]');
         if (rowHead) {
@@ -905,13 +902,32 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
                      ops: ["trow-up|", "trow-down|", "trow-dup|", "trow-del|"]
                        .filter((k) => at(k + id)).length };
           }, rowId);
-          await openAdd();
+          /* `+ section` IS IN THIS SHEET AND ON THE GRID'S FOOT (§13e): the
+             row sheet's own `rowOps` carries `trow-add`, and so does the `+`
+             row at the foot of the grid, which fires it on the tap. One
+             address, two places a thumb can be. */
           const rs = Object.assign({}, rs0, await page.evaluate(() => ({
-            add: !!document.querySelector('#pan-band [data-k="trow-add"]') })));
-          is(!!rs.id && rs.ops === 4 && rs.add,
+            add: !!document.querySelector('#pan-band [data-k="trow-add"]'),
+            plus: !!document.querySelector(
+              '#pan-band tbody tr.nu-addrow th .nu-plusbtn[data-k="trow-add"]')
+          })));
+          is(!!rs.id && rs.ops === 4 && rs.add && rs.plus,
             "A6l " + width + " · …and a section's four operations plus "
-            + "`+ section` are on the table at their own addresses — "
+            + "`+ section` are on the table at their own addresses, the last "
+            + "of them on the `+` at the grid's foot — "
             + JSON.stringify(rs));
+          /* AND IT SHUTS THE DOOR IT OPENED (2026-09-05). A6l opens a column
+             head and then a row head to read the ops inside each, and the
+             accordion keeps one of them open: a section's sheet seats the
+             CHORD CHART, which is a second `<table>` in this pane, and A5b
+             (*"one table per pane"*) measured the Band tab a few lines later
+             and reported it nested, four times over. It was invisible until
+             2026-09-05 only because a hire USED to land on the new player and
+             replace this sheet with a column's (TABLE.md §13e deletes that
+             landing). A gate that opens a door closes it. */
+          if (await page.evaluate((h) => h.getAttribute("aria-expanded") === "true",
+                                  rowHead)) await rowHead.click();
+          await page.waitForTimeout(400);
         } else skip(width + " · no section row head for A6l");
       } else skip(width + " · no player column head for A6l");
     }
@@ -924,15 +940,23 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     // ...AND IT IS THE TABLE'S OFFER SINCE 2026-09-05 (TABLE.md §9a, "no op
     // lives in the nav"): `adddrums` was a row in the Band branch of the
     // stripe and is `tcol-add|drums`, which is the address the T7 inventory
-    // filed it onto the day the ops left the tray. It is inside the ADD sheet
-    // since TABLE.md §13a.5 — same address, opened by the grid's foot `+`.
+    // filed it onto the day the ops left the tray. It spent one afternoon
+    // inside an ADD sheet (§13a.5); since TABLE.md §13e the head row's `+` IS
+    // that address on a record with no drummer, which is this one, so the hire
+    // is one tap and the address has not moved.
     await page.evaluate(() => window.__eightTab("Band"));
     await page.waitForTimeout(TAB_SETTLE("Band"));
-    await page.evaluate(() => window.__eightRow("add|foot", true));
-    await page.waitForTimeout(500);
-    const add = await page.$('#pan-band [data-k="tcol-add|drums"]');
+    /* ...AND IT ONLY HIRES WHERE THERE IS NO DRUMMER. The `+` carries the
+       kind the band has NOT got, so on a record that already has a kit
+       `tcol-add|drums` is not on the table at all — it is in any column
+       head's sheet — and a gate that read its absence as "no offer" would
+       skip the widest thing this page draws on the one record that has it. */
+    const hasKit = await page.evaluate(() =>
+      (window.__eightDoc().voices || []).some((v) => v.kind === "drums"));
+    const add = hasKit ? null : await page.$('#pan-band [data-k="tcol-add|drums"]');
     if (add) { await add.click(); await page.waitForTimeout(1200); }
-    else skip(width + " · no [data-k=tcol-add|drums] button — the kit grid was not measured");
+    else if (!hasKit)
+      skip(width + " · no [data-k=tcol-add|drums] button — the kit grid was not measured");
 
     for (const tab of tabs) {
       await page.evaluate((t) => window.__eightTab(t), tab);

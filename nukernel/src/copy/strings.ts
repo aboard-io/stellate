@@ -14,10 +14,10 @@
 // is still one more directory beside this one.
 //
 // THE VOICE is DESIGN.md §4 and the review's glossary (TABLE.md §12a): plays
-// (not reads), variation (not does), phrase (not motif), transformation (not
-// word operator), part (not chair), dynamics (not shape), automation (not
-// motion), scale (not alphabet), phrase structure (not period), feel (not
-// pace). A chip or a face is ≤ 6 words, a sentence beside a refused control
+// (not reads), variation (not does), motif (not phrase — Paul reversed that
+// one on 2026-09-05, TABLE.md §13e), transformation (not word operator), part
+// (not chair), dynamics (not shape), automation (not motion), scale (not
+// alphabet), phrase structure (not period), feel (not pace). A chip or a face is ≤ 6 words, a sentence beside a refused control
 // ≤ 12; `test/copy.test.js` holds both, and the banned patterns with them.
 
 import type { Table } from "./api.js";

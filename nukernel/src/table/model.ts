@@ -51,7 +51,7 @@ function groupOf(op: string): string {
    Paul: *"just nicely structure each expanded interface as proper software
    that's easy to scan and nicely grouped."* §11c names the three sets and
    DESIGN.md §5 names their order — *"Time (tempo · meter · key) -> the form
-   (sections) -> the players -> each cell's phrase, then its dynamics, then its
+   (sections) -> the players -> each cell's motif, then its dynamics, then its
    treatment. In a chair's sheet: the instrument, then its envelope, then its
    tone, then where it sits."*
 
@@ -1087,6 +1087,27 @@ export function sectionOffer(A: TableAPI): Op[] {
   return [{ k: "trow-add", word: t("op.addSection"),
             aria: t("op.addSection.end"),
             act: () => A.addSection(n) }];
+}
+
+/** WHICH ONE PLAYER A BARE `+` HIRES (2026-09-05, TABLE.md §13e). Paul:
+ *  *"Don't pop up an interface when I add a section or a voice. Just add
+ *  it."* A section offer is one op and has nothing to ask; a player offer is
+ *  three, and a `+` that adds cannot ask which. THE BAND'S OWN ORDER ANSWERS
+ *  IT — build-the-band hires a drummer, then a bass, then the lines — so the
+ *  `+` offers the first kind this record has not got, and its accessible name
+ *  says which before a thumb commits to it.
+ *  IT PICKS OUT OF `playerOffers` AND IS NOT A SECOND LIST: the word, the
+ *  sentence, the refusal and the door are that function's, so a kind renamed
+ *  or a door moved is renamed and moved once. The pick is never a refused
+ *  offer — `bass` and `drums` refuse only when the record HAS one, which is
+ *  the same test that skips them here — so the `+` is never a dead control. */
+export function nextPlayerOffer(A: TableAPI): Op {
+  const offers = playerOffers(A);
+  const of = (kind: string): Op =>
+    offers.find((o) => o.k === "tcol-add|" + kind)!;
+  if (!A.hasKind("drums")) return of("drums");
+  if (!A.hasKind("bass")) return of("bass");
+  return of("line");
 }
 
 export { groupsFor, cellNum, cellLane, cellVecField, CHORDCHAIRS };

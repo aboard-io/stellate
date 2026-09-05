@@ -118,7 +118,7 @@ function standUpServer() {
    design pass). Paul: *"Think like a composer when you do the redesign"* and
    *"just nicely structure each expanded interface as proper software that's
    easy to scan and nicely grouped."* The sheet is GROUPS now — for a cell,
-   Phrase · Variation · Dynamics · Placement — and the lists below are those
+   Motif · Variation · Dynamics · Placement — and the lists below are those
    groups' contents concatenated, which is the reading order on the glass.
    IT IS A REORDER AND NOT A RE-VOCABULARY: every `data-k` is the one it had on
    v281, T7 walks the same inventory, and what moved is written down in
@@ -127,7 +127,7 @@ function standUpServer() {
    `ramp limit` went to the variation it limits; the mix lanes split (level,
    send and tone are dynamics, place is placement); `entry` and `register`
    went DOWN into placement beside the pan and the time shift. */
-const CELL_ORDER = [/* Phrase */    "phrases", "articulation", "octave", "scale",
+const CELL_ORDER = [/* Motif */     "motifs", "articulation", "octave", "scale",
                     /* Variation */ "variation", "ramp limit",
                     /* Dynamics */  "focus", "mix · level", "mix · send",
                                     "mix · tone",
@@ -146,7 +146,10 @@ const ROW_ORDER  = [/* Form  */ "type", "bars", "intro", "outro",
                                 "echo time", "room", "pan", "lanes"];
 /* THE THREE GROUP SETS, which are `src/copy/sheets.ts group.*` and are read
    here as words because that is what a reader sees. */
-const CELLGROUPS = ["Phrase", "Variation", "Dynamics", "Placement"];
+/* (`Phrase` WAS THE FIRST OF THESE UNTIL 2026-09-05 — TABLE.md §13e, Paul:
+   *"Call phrases motifs."* The heading and the field under it say `motif`
+   now; the KEY is still `group.phrase` and no address moved.) */
+const CELLGROUPS = ["Motif", "Variation", "Dynamics", "Placement"];
 const ROWGROUPS  = ["Form", "Time", "Key", "Feel", "Chain"];
 const COLGROUPS  = ["Instrument", "Envelope", "Tone", "Mix"];
 const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
@@ -182,6 +185,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (el.disabled) return "disabled";
       el.click(); return "ok"; }, k);
     await p.waitForTimeout(420); return r; };
+  /* THE `+` IS ITS OWN OFFER SINCE 2026-09-05 (TABLE.md §13e). Paul: *"Don't
+     pop up an interface when I add a section or a voice. Just add it."* So the
+     address a gate taps to hire is read OFF the button rather than typed here:
+     the head's `+` carries `tcol-add|<the kind the band has not got>` and the
+     foot's carries `trow-add`, and which kind that is depends on the record. */
+  const plusK = async (where) => p.evaluate((w) => {
+    const b = document.querySelector(w === "head"
+      ? "#pan-band thead th.nu-plushead .nu-plusbtn"
+      : "#pan-band tbody tr.nu-addrow th .nu-plusbtn");
+    return b ? b.dataset.k : null; }, where);
+
   /* ...AND A CELL TAKES TWO OF THEM SINCE TABLE.md §11 (2026-09-05). The first
      tap SELECTS (the ring, the formula bar's head) and the second EDITS — the
      spreadsheet gesture — so a gate that wants a cell's vector open asks for
@@ -742,10 +756,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         opener + ": " + o + ")"); return; } }
     const before = await snap();
     /* A SHEET THAT WAS ALREADY OPEN IS CLOSED BY THE TAP THAT WOULD HAVE
-       OPENED IT. Hiring a player lands ON that player (ui/eight.js `addVoice`
-       writes `tab`, and the table opens that column's sheet on arrival), so the
-       next op's "open its sheet" tap FOLDS it. One retry, which is what a thumb
-       does. */
+       OPENED IT — one retry, which is what a thumb does. (It said "hiring a
+       player lands ON that player, so the next op's tap FOLDS it"; since
+       2026-09-05 a hire opens nothing at all — TABLE.md §13e — and the retry
+       stands for every other way a door can already be open.) */
     let r = await tap(k);
     if (r === "missing" && opener) { await tap(opener); r = await tap(k); }
     const after = await snap();
@@ -776,13 +790,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     ["voices"], "tcell|" + cellV + "|" + cellS);
   await opCase("cell · clear to inherit", "tcell-clear|" + cellV + "|" + cellS,
     ["voices"], "tcell|" + cellV + "|" + cellS);
-  /* THE OFFERS ARE IN THE ADD SHEET SINCE 2026-09-05 (TABLE.md §13a.5): the
-     head row's `+` and the grid's foot `+` open it, and `tcol-add|line` is the
-     lozenge inside — the SAME address, one door further in. The opener is the
-     foot's `+`, which is in the frozen section column and reachable at 320
-     without scrolling the pane sideways. */
-  await opCase("column · hire a line", "tcol-add|line", ["voices"],
-    "tadd|foot");
+  /* THE OFFER IS THE `+` ITSELF SINCE 2026-09-05 (TABLE.md §13e): the head
+     row's `+` CARRIES the address of the hire it will make — `tcol-add|` and
+     the first kind this record has not got — and a tap on it hires. There is
+     no opener and no sheet, so the address is read off the button rather than
+     typed here: which kind is offered is the record's business. */
+  const hireK = await plusK("head");
+  await opCase("column · hire the kind the band has not got (" + hireK + ")",
+    hireK, ["voices"]);
   const D5 = await doc();
   await opCase("column · remove", "tcol-del|" + D5.voices[D5.voices.length - 1].name,
     ["voices"], "tcol|" + D5.voices[D5.voices.length - 1].name);
@@ -1329,27 +1344,37 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
      row of the inventory (T7). What follows is the REMAINDER: seven claims
      neither T4 nor T6 makes, folded here rather than lost with the files. */
 
-  /* T8a (was band B2) · HIRING LANDS ON THE PLAYER. `+ line` is a document
-     write T4 already diffs; what it does not measure is the GESTURE Paul asked
-     for — *"add → hear it → choose its sound"* — which on the table is the new
-     column's own sheet standing open on arrival. */
+  /* T8a (was band B2) · HIRING ADDS THE PLAYER AND OPENS NOTHING. `+ line`
+     is a document write T4 already diffs; what this measures is what a hire
+     does to the GLASS. It read *"hiring LANDS on the player"* — Paul's *"add →
+     hear it → choose its sound"* (2026-09-04), the new column's own sheet
+     standing open on arrival — until 2026-09-05, when Paul used that: *"Don't
+     pop up an interface when I add a section or a voice. Just add it."*
+     (TABLE.md §13e). The claim is inverted and still measured: the column
+     arrives with its HEAD on the table, one tap from its sheet, nothing opens
+     over it, and whatever the hand had open is still what is open. */
   await top("Band");
-  await tap("tcol|" + vName);
+  await tap("tcol|" + vName);      // a sheet the hand had open before the hire
   const nBefore = (await doc()).voices.length;
-  await tap("tadd|foot");
-  await tap("tcol-add|line");
+  const openBefore = await p.evaluate(() =>
+    document.querySelectorAll("#pan-band .nu-wopen").length);
+  await tap(await plusK("head"));
   await p.waitForTimeout(700);
   const landed = await p.evaluate(() => {
     const D = window.__eightDoc();
     const last = D.voices[D.voices.length - 1].name;
     const head = document.querySelector('#pan-band [data-k="tcol|' + last + '"]');
-    return { n: D.voices.length, last,
+    return { n: D.voices.length, last, head: !!head,
              open: head ? head.getAttribute("aria-expanded") : null,
+             wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
              sheets: document.querySelectorAll("#pan-band .nu-vsheet").length };
   });
-  check(landed.n === nBefore + 1 && landed.open === "true" && landed.sheets === 1,
-    "T8a hiring a player lands on ITS column sheet, open, and only one sheet " +
-    "is open (" + JSON.stringify(landed) + ")");
+  check(landed.n === nBefore + 1 && landed.head && landed.open === "false" &&
+        landed.wopen === openBefore,
+    "T8a hiring a player ADDS IT AND OPENS NOTHING — its head is on the " +
+    "table, one tap from its sheet, and the sheets standing open are the ones " +
+    "that already were (" + JSON.stringify(landed) + ", before " +
+    openBefore + ")");
 
   /* T8b (was band B6) · THE BASS'S INSTRUMENT REACHES THE ENGINE. The one
      claim in band.browser.js that was about SOUND rather than about the
@@ -1954,35 +1979,53 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        using the nav and sections too."* They are at the END OF EACH AXIS and
        they are the SAME ADDRESSES build-the-band already had, so the T7
        inventory's nine nav ops keep their homes. */
-    /* ...AND SINCE 2026-09-05 THEY ARE A SHEET AND NOT COLUMNS (§13a.5). The
-       head row ends in ONE `+` cell and the grid in ONE `+` row, both `--tap`,
-       and either opens the ADD sheet whose body is these same four addresses.
-       MEASURED on v287: the three offers took a 22ch column — 224px of a
-       364.4px pane at 390 — which is what pushed the first player's head to
-       "…he ntl". */
-    await tap("tadd|foot");
+    /* ...AND SINCE 2026-09-05 THEY ARE ONE CELL EACH, AND THE CELL IS THE
+       OFFER (§13a.5, then §13e). The head row ends in ONE `+` cell and the
+       grid in ONE `+` row, both `--tap` — MEASURED on v287, the three offers
+       took a 22ch column, 224px of a 364.4px pane at 390, which is what pushed
+       the first player's head to "…he ntl". For one afternoon the `+`s opened
+       an ADD sheet; Paul: *"Don't pop up an interface when I add a section or
+       a voice. Just add it."* So each `+` CARRIES the address it fires —
+       `trow-add` at the foot, and at the head `tcol-add|` plus the first kind
+       the band has not got, in build-the-band's own order — and the other two
+       kinds are where they have always also been, in a column head's own
+       sheet (`colOps`). */
     const offers = await p.evaluate(() => {
-      const g = (k) => { const b = document.querySelector(
-        '#pan-band [data-k="' + k + '"]');
-        return b ? Math.round(b.getBoundingClientRect().height) : 0; };
       const px = (el) => el ? Math.round(el.getBoundingClientRect().width) : 0;
-      return { line: g("tcol-add|line"), bass: g("tcol-add|bass"),
-               drums: g("tcol-add|drums"), sec: g("trow-add"),
-               head: px(document.querySelector("#pan-band thead th.nu-plushead")),
-               row: px(document.querySelector(
-                 "#pan-band tbody tr.nu-addrow th .nu-plusbtn")),
+      const hb = document.querySelector(
+        "#pan-band thead th.nu-plushead .nu-plusbtn");
+      const fb = document.querySelector(
+        "#pan-band tbody tr.nu-addrow th .nu-plusbtn");
+      const box = (b) => b ? { k: b.dataset.k, say: b.getAttribute("aria-label"),
+        h: Math.round(b.getBoundingClientRect().height),
+        disclosure: b.getAttribute("aria-expanded") } : null;
+      return { head: box(hb), foot: box(fb),
+               headw: px(document.querySelector("#pan-band thead th.nu-plushead")),
+               roww: px(fb),
+               wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
                olds: document.querySelectorAll("#pan-band .nu-addbar," +
                  " #pan-band .nu-addbtn, #pan-band .nu-addhead").length }; });
-    check(offers.line >= 44 && offers.sec >= 44 && offers.head <= 48 &&
-          offers.row <= 48 && offers.olds === 0,
-      "T9n the two `+`s are one `--tap` cell each and the four offers are the " +
-      "sheet they open, at the addresses they always had — " +
-      JSON.stringify(offers));
+    check(!!offers.head && !!offers.foot &&
+          /^tcol-add\|(line|bass|drums)$/.test(offers.head.k) &&
+          offers.foot.k === "trow-add" &&
+          offers.head.h >= 44 && offers.foot.h >= 44 &&
+          offers.headw <= 48 && offers.roww <= 48 && offers.olds === 0 &&
+          offers.head.disclosure === null && offers.foot.disclosure === null &&
+          /\S/.test(offers.head.say || "") && /\S/.test(offers.foot.say || ""),
+      "T9n the two `+`s are one `--tap` cell each and each IS its offer — the " +
+      "address it fires is its own `data-k`, it is not a disclosure, and its " +
+      "name says what a tap will add — " + JSON.stringify(offers));
     const nBefore = (await doc()).voices.length;
-    await tap("tcol-add|line");
+    const wopenBefore = offers.wopen;
+    await tap(offers.head.k);
+    const after9o = await p.evaluate(() => ({
+      wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+      sheets: document.querySelectorAll("#pan-band .nu-addopen").length }));
     const nAfter = (await doc()).voices.length;
-    check(nAfter === nBefore + 1,
-      "T9o …and the offer hires (" + nBefore + " -> " + nAfter + ")");
+    check(nAfter === nBefore + 1 && after9o.sheets === 0,
+      "T9o …and the `+` hires ON THE TAP, with no ADD sheet drawn (" +
+      nBefore + " -> " + nAfter + ", .nu-addopen " + after9o.sheets +
+      ", .nu-wopen " + wopenBefore + " -> " + after9o.wopen + ")");
     /* UNDO IS PRESSED WITH THE KEYBOARD HERE, and that is not a dodge: the
        four verbs live on the open CELL sheet's first line since §13a.6, a hire
        leaves the new player's COLUMN sheet open and not a cell's, and Ctrl-Z is
@@ -2434,7 +2477,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const rows = heads.filter((r) => r.classList.contains("nu-sprow"));
       const pane = document.querySelector("#pan-band .nu-pane");
       return {
-        order: heads.map((r) => r.dataset.special || "heads"),
+        /* ...AND THE LABEL ROW IS NAMED, NOT COUNTED AS A SECOND HEAD ROW
+           (2026-09-05, §13e). The grid's own header (`nu-gridlabel`) stands
+           between the special rows and the column heads; it carries no
+           `data-special` because it opens no sheet, so a walk that read only
+           that attribute called it "heads" and reported two of them. */
+        order: heads.map((r) => r.dataset.special ||
+          (r.classList.contains("nu-gridlabel") ? "label" : "heads")),
         cols,
         rows: rows.map((r) => {
           const th = r.querySelector("th");
@@ -2471,10 +2520,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          sheet and is deliberately NOT here: it is in the `<tfoot>`, under the
          mix, because a row above the column heads is a row above the music and
          the producer speaks about a record already dealt (T10q reads it). */
+      /* FIVE ROWS SINCE 2026-09-05 (§13e): the grid's own header — SECTIONS,
+         a LABEL and not a special row — stands between MOTIFS and the column
+         heads. It is not in `r.rows` (which filters `.nu-sprow`), because it
+         has no sheet, no `data-k` and no button to measure; T13m is where it
+         is measured. */
       const ok = !r.missing &&
-        r.order.length === 4 && r.order[0] === "time" &&
+        r.order.length === 5 && r.order[0] === "time" &&
         r.order[1] === "rules" && r.order[2] === "motifs" &&
-        r.order[3] === "heads" &&
+        r.order[3] === "label" && r.order[4] === "heads" &&
         r.rows.every((x) => x.colspan === r.cols) &&
         r.rows.every((x) => x.h >= 44) &&
         /* WITHIN 12px OF THE PANE, and the 12 is `.nu-trims`' own 3px
@@ -2485,8 +2539,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            as what a hand can see", which is what §10b asks for. */
         r.rows.every((x) => x.w >= x.paneW - 12 && x.w <= x.paneW + 2);
       check(ok, "T10a " + w + " · TIME, RULES and MOTIFS are merged rows of the sheet, " +
-        "above the column heads, colspan = the whole table, 44px, the pane's " +
-        "own width — " + JSON.stringify(r));
+        "above the SECTIONS label and the column heads, colspan = the whole " +
+        "table, 44px, the pane's own width — " + JSON.stringify(r));
       /* T10b · ONE PIN, AND IT IS THE COLUMN HEADS (rewritten 2026-09-05,
          TABLE.md §13a.1). It read "the whole head freezes as a STACK — each row
          pinned under the one above it", which was right while the head was
@@ -3647,7 +3701,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     await openCell("tcell|" + vn12 + "|" + sid12);
     const cellg = await headsOf();
     check(!!cellg && JSON.stringify(cellg.heads) === JSON.stringify(CELLGROUPS),
-      "T12e a CELL's sheet is Phrase · Variation · Dynamics · Placement — " +
+      "T12e a CELL's sheet is Motif · Variation · Dynamics · Placement — " +
       JSON.stringify(cellg && cellg.heads) + " holding " +
       JSON.stringify(cellg && cellg.fields));
     await tap("tcell|" + vn12 + "|" + sid12);
@@ -4277,7 +4331,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        j  nothing in `<tfoot>` is pinned in the block direction
        k  every special row is ONE LINE at rest
        l  T7's law re-proved at 320: the formula bar's five and the addbars'
-          four are each reachable in ≤ 2 taps from rest */
+          four are each reachable in ≤ 2 taps from rest
+       m  the grid has its own header — SECTIONS, one `--tap` line above the
+          column heads, a label with no control in it and no pin on it (§13e)
+       n  a tap on either `+` ADDS, asks nothing, and moves no scroll (§13e) */
   {
     const REST = 8;
     const beds = [["Kingston 1969", REGGAE], ["the Silence record", ""]];
@@ -4445,13 +4502,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         /* ---- f/g · THE CELLS AND THE HEADS ---------------------------- */
         /* THE BLANK STATE HAS NO PLAYERS, WHICH IS THE POINT OF IT — so the
            record §13b names for the overlap count is BUILT here, through the
-           ADD sheet's own three offers, which is the gesture a reader makes
-           and the one this round moved. */
+           head's own `+`, which is the gesture a reader makes and the one this
+           round moved. SINCE 2026-09-05 (§13e) THAT IS THREE TAPS ON ONE
+           BUTTON: the `+` offers the first kind the band has not got, in
+           build-the-band's order, so its address walks drums -> bass -> line
+           as the band fills up, and each tap is a hire. The tap that follows
+           closes the column sheet the last hire landed on, because everything
+           below this measures a head AT REST. */
         const nvoices = await z.evaluate(() => window.__eightDoc().voices.length);
         if (nvoices === 0) {
-          await ztap("tadd|foot");
-          for (const k of ["line", "bass", "drums"]) await ztap("tcol-add|" + k);
-          await ztap("tadd|foot");
+          for (const k of ["drums", "bass", "line"]) await ztap("tcol-add|" + k);
+          await z.evaluate(() => {
+            const o = document.querySelector(
+              '#pan-band [aria-expanded="true"]');
+            if (o) o.click(); });
           await z.waitForTimeout(400);
         }
         const grid = await z.evaluate(() => {
@@ -4544,6 +4608,84 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           "close of " + moves.map((m) => m.name).join(", ") + " — " +
           JSON.stringify(moves.map((m) => [m.name, m.y0, m.y1, m.y2])));
 
+        /* ---- m · THE GRID'S OWN HEADER (§13e) ------------------------- */
+        /* Paul: *"Give the main composer interface its own header call it
+           Sections."* It is a LABEL: one line in the special row's own shape,
+           directly above the column heads, with no button in it and no pin on
+           it — the pane's one pin is spent on the heads (b, above), and a
+           label that pinned would be the second band §13 exists to delete. */
+        const lab = await z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const rows = t ? [...t.querySelectorAll("thead > tr")] : [];
+          const tr = t && t.querySelector("thead tr.nu-gridlabel");
+          const th = tr && tr.firstElementChild;
+          const word = th && th.querySelector(".nu-spword");
+          const face = th && th.querySelector(".nu-spface");
+          const r = th ? th.getBoundingClientRect() : null;
+          const wr = word ? word.getBoundingClientRect() : null;
+          const fr = face ? face.getBoundingClientRect() : null;
+          const cs = th ? getComputedStyle(th) : null;
+          return { there: !!th, h: r ? +r.height.toFixed(1) : 0,
+            pos: cs ? cs.position : null,
+            pinned: !!(cs && cs.position === "sticky" &&
+                       cs.insetBlockStart !== "auto"),
+            btns: th ? th.querySelectorAll("button").length : 0,
+            k: th ? th.getAttribute("data-k") : null,
+            word: word ? (word.textContent || "").trim() : "",
+            face: face ? (face.textContent || "").trim() : "",
+            upper: word ? getComputedStyle(word).textTransform : null,
+            oneLine: !!(wr && fr && Math.abs(wr.top - fr.top) < 6),
+            right: !!(wr && fr && fr.right > wr.right),
+            aboveHeads: rows.indexOf(tr) === rows.length - 2 };
+        });
+        check(lab.there && lab.btns === 0 && !lab.k && !lab.pinned &&
+              lab.h >= 44 && lab.h <= 48 && lab.oneLine && lab.right &&
+              lab.aboveHeads && /^sections$/i.test(lab.word) &&
+              /section/i.test(lab.face) && /bar/i.test(lab.face),
+          "T13m " + at + " · the grid has its own header — the word SECTIONS " +
+          "left, its count right, one `--tap` line directly above the column " +
+          "heads, no control in it and no pin on it — " + JSON.stringify(lab));
+
+        /* ---- n · A `+` ADDS. IT DOES NOT ASK (§13e) -------------------- */
+        /* Paul, on the ADD sheet that shipped this morning: *"Don't pop up an
+           interface when I add a section or a voice. Just add it."* So a tap
+           on either `+` writes the record: the row count or the column count
+           goes up by one, NO sheet asks anything first, and the pane's
+           scrollTop does not move (the same law §13a.3 gives every open and
+           close). The SECTION `+` is measured for the sheet count because a
+           section arrives with no sheet at all; a hired player still LANDS on
+           its own column sheet, which is T8a's own claim and older than this
+           round. */
+        const addN = async () => z.evaluate(() => {
+          const D = window.__eightDoc();
+          const pane = document.querySelector(
+            "#pan-band .nu-pane[data-pane=table]");
+          return { secs: D.form.sections.length, voices: D.voices.length,
+                   wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+                   add: document.querySelectorAll("#pan-band .nu-addopen").length,
+                   y: pane ? pane.scrollTop : -1 }; });
+        const footK = await z.evaluate(() => {
+          const b = document.querySelector(
+            "#pan-band tbody tr.nu-addrow th .nu-plusbtn");
+          return b ? b.dataset.k : null; });
+        const headK2 = await z.evaluate(() => {
+          const b = document.querySelector(
+            "#pan-band thead th.nu-plushead .nu-plusbtn");
+          return b ? b.dataset.k : null; });
+        const add0 = await addN();
+        await ztap(footK);
+        const add1 = await addN();
+        await ztap(headK2);
+        const add2 = await addN();
+        check(footK === "trow-add" && /^tcol-add\|/.test(headK2 || "") &&
+              add1.secs === add0.secs + 1 && add1.wopen === add0.wopen &&
+              add1.add === 0 && add1.y === add0.y &&
+              add2.voices === add1.voices + 1 && add2.add === 0,
+          "T13n " + at + " · a tap on either `+` ADDS — the section `+` (" +
+          footK + ") with no sheet drawn and the pane unmoved, the player `+` (" +
+          headK2 + ") hiring the kind the band has not got — " +
+          JSON.stringify([add0, add1, add2]));
+
         /* ---- l · T7's LAW RE-PROVED, IN TAPS -------------------------- */
         /* Every control the formula bar, the addbars and `.nu-top` offered,
            reachable in ≤ 2 taps FROM REST. It is counted in taps and not in
@@ -4560,11 +4702,28 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             if (!el) return 0;
             const r = el.getBoundingClientRect();
             return r.width > 0 && r.height >= 43.5 ? 1 : -1; }, k);
-          /* the addbars' four: `+` (one tap), then the offer */
-          await ztap("tadd|foot");
-          for (const k of ["tcol-add|line", "tcol-add|bass", "tcol-add|drums",
-                           "trow-add"]) reach[k] = await seen(k);
-          await ztap("tadd|foot");
+          /* THE ADDBARS' FOUR, SINCE 2026-09-05 (§13e): the two `+`s ARE two
+             of them (zero taps — `trow-add` at the foot and the band's next
+             kind at the head), and all three player kinds stand in a column
+             head's own sheet, one tap from rest. A kind the `+` is not
+             offering is a kind this record already has, which is why the sheet
+             is where the claim is proved: nothing is behind three doors. */
+          const headK = await z.evaluate(() => {
+            const b = document.querySelector(
+              "#pan-band thead th.nu-plushead .nu-plusbtn");
+            return b ? b.dataset.k : null; });
+          reach[headK] = await seen(headK);
+          reach["trow-add"] = await seen("trow-add");
+          const colK = await z.evaluate(() => {
+            const b = document.querySelector(
+              '#pan-band th.nu-colhead button[data-k^="tcol|"]');
+            return b ? b.dataset.k : null; });
+          if (colK) {
+            await ztap(colK);
+            for (const k of ["tcol-add|line", "tcol-add|bass", "tcol-add|drums"])
+              reach[k] = await seen(k);
+            await ztap(colK);
+          }
           /* the formula bar's five: the cell (two taps — select, then edit) */
           if (cellK) {
             /* IDEMPOTENTLY, WHICH IS THE SAME DISCIPLINE `openCell` KEEPS: a

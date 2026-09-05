@@ -74,28 +74,12 @@ interface LozDoor {
 const LOZ = (): LozDoor | null =>
   (globalThis as unknown as { NuLozenge?: LozDoor }).NuLozenge || null;
 
-/* ---- THE OFFERS AS A LOZENGE FIELD (2026-09-05, TABLE.md §13a.5) ------
-   The ADD sheet's body is the addbars' own two lists, moved. `grid.ts` holds
-   the lists and the ops; this file holds the DOOR to the lozenge component
-   (one owner, for `LOZ`'s own reason above), so the field is built here and
-   handed back.
-   IT CARRIES NO VALUE, AND THAT IS WHAT AN OFFER IS. A lozenge field is a
-   value widget everywhere else on this page; here every word is an ACT — hire
-   a line, hire a kit — so the standing value is always empty and a tap runs
-   the op through the caller's own `op()` wrapper (the undo stack's door). The
-   panel is rebuilt by the write, so the pill a thumb pressed comes back cold,
-   which is the honest drawing of "this did something" rather than "this is
-   selected". A refused offer arrives dashed with its own sentence, which the
-   dashed `.nu-addbtn` only ever put in a `title`. */
-export function offerLozenge(key: string, label: string,
-    options: { value: string; label: string; why?: string | null;
-               disabled?: boolean }[],
-    onPick: (v: string) => void): HTMLElement | null {
-  const door = LOZ();
-  if (!door) return null;
-  return door.lozengeField({ key, label, options, value: "",
-                             onWrite: (v: string) => onPick(v) });
-}
+/* (`offerLozenge` STOOD HERE — the ADD sheet's body as a lozenge field, for
+   one afternoon. 2026-09-05, TABLE.md §13e, Paul: *"Don't pop up an interface
+   when I add a section or a voice. Just add it."* With the sheet deleted the
+   offers have no field to be drawn in: each `+` IS its offer, and `grid.ts
+   plusBtn` runs the op on the tap. `LOZ` above stays — `pickerFor` asks it
+   for every vocabulary past the chip limit.) */
 
 /** DOES THIS FIELD KNOW WHAT KIND EACH OF ITS WORDS IS? Two ways, and both are
  *  data the caller already had: the drummer's `groups` (model.ts `groupsFor`,

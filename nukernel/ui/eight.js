@@ -11208,6 +11208,25 @@ function tableAPI() {
      (or in a function that ends here), which is what makes "one document
      write" measurable: T4 diffs the document across the tap. */
   const after = () => { changed(); };
+  /* AN ADD ARRIVES WITHOUT OPENING ANYTHING (2026-09-05, TABLE.md §13e).
+     Paul: *"Don't pop up an interface when I add a section or a voice. Just
+     add it."* `addVoice` writes `tab` and `addSection` writes `formSec` — page
+     facts meaning "the player you are on" and "the section you are writing",
+     which the cell writes and the board read, so they are set as they always
+     were. What changes is the LANDING: `tablePanel` opens a sheet when the
+     door those two name is a DIFFERENT door from the last one it landed on,
+     and after an add it always is. `spend()` marks that arrival consumed
+     before the redraw, so the new column or row stands on the table with
+     nothing over it.
+     IT IS SPENT HERE AND NOT IN `addVoice`/`addSection`, which are the
+     record's own writers: the landing is the PANEL's, and a caller that DOES
+     mean "take me to it" (`openVoice` / `openSection`, which re-arm by writing
+     `landedOn = null`) is untouched.
+     THIS REVERSES T8a's *"add → hear it → choose its sound"* (2026-09-04),
+     which put the new player's own sheet on the glass on arrival. Paul used
+     that and asked for it to stop; the sheet is one tap away, on the head. */
+  const spend = () => { landedOn = tab ? "tcol|" + tab
+                                : formSec ? "trow|" + formSec : landedOn; };
   const subjOf = (v) => (v.kind === "drums" ? "drums"
                       : v.kind === "bass" ? "bass" : "line");
   return {
@@ -11558,6 +11577,23 @@ function tableAPI() {
       if (f === "voice") { try { NuPrecompose.reseatVoice(DOC, vi); } catch (e) {} }
       after(); },
 
+    /* ---- AN ADD ARRIVES WITHOUT OPENING ANYTHING (2026-09-05, §13e) --
+       Paul: *"Don't pop up an interface when I add a section or a voice. Just
+       add it."* `addVoice` writes `tab` and `addSection` writes `formSec` —
+       page facts that mean "the player you are on" and "the section you are
+       writing", which every cell write and the board read, so they are set as
+       they always were. What changes is the LANDING: `tablePanel` opens a
+       sheet when the door those two name is a DIFFERENT door from the last one
+       it landed on, and after an add it always is. `spend()` marks the arrival
+       consumed before the redraw, so the new column or row stands on the table
+       with nothing over it.
+       IT IS SPENT HERE AND NOT IN `addVoice`/`addSection`, because those two
+       are the record's own writers and the landing is the PANEL's: a caller
+       that does want to be taken to what it made (`openVoice` / `openSection`,
+       which re-arm the landing by writing `landedOn = null`) is untouched.
+       THIS REVERSES T8a's *"add → hear it → choose its sound"* (2026-09-04),
+       which put the new player's own sheet on the glass on arrival. Paul used
+       that and asked for it to stop; the sheet is one tap away on the head. */
     /* ---- §5's op grammar, every one an existing door ---------------- */
     /* THE STRUCTURAL OPS END IN `push(); draw()` — the sequence the section
        tray has always used (`secOpsTrayItems`), which `changed()` IS plus a
@@ -11572,7 +11608,7 @@ function tableAPI() {
          is what a hand means by "after this one" — so the op names the row and
          lets the one owner do the splice. */
       formSec = secs[Math.max(0, at - 1)] ? secs[at - 1].id : formSec;
-      addSection(); after(); },
+      addSection(); spend(); after(); },
     moveSection: (i, d) => { if (moveSection(i, d)) { normalize(); after(); } },
     dupSection: (id) => { dupSection(id); after(); },
     dropSection: (id) => { if (dropSection(id)) after(); },
@@ -11595,7 +11631,7 @@ function tableAPI() {
         delete v.material;
       delete v.development; delete v.cells;
       normalize(); after(); },
-    addVoice: (kind) => { addVoice(kind); after(); },
+    addVoice: (kind) => { addVoice(kind); spend(); after(); },
     dropVoice: (name) => { dropVoice(name); after(); },
     moveVoice: (vi, d) => { const vs = V(), j = vi + d;
       if (j < 0 || j >= vs.length) return;

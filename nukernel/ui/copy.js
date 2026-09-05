@@ -106,7 +106,7 @@ var CORE = {
   "noun.section": "section",
   "noun.player": "player",
   "noun.part": "part",
-  "noun.phrase": "phrase",
+  "noun.phrase": "motif",
   "noun.chord": "chord",
   "noun.take": "take",
   "noun.seed": "seed",
@@ -137,8 +137,8 @@ var CORE = {
   "count.section.other": "{n} sections",
   "count.player.one": "{n} player",
   "count.player.other": "{n} players",
-  "count.phrase.one": "{n} phrase",
-  "count.phrase.other": "{n} phrases",
+  "count.phrase.one": "{n} motif",
+  "count.phrase.other": "{n} motifs",
   "count.take.one": "{n} take",
   "count.take.other": "{n} takes",
   "count.change.one": "{n} change",
@@ -199,14 +199,29 @@ var TABLE = {
   "special.time.aria": "Time — tempo, meter and key",
   "special.rules.word": "rules",
   "special.rules.aria": "Rules — the genre as editable rules",
-  "special.phrases.word": "phrases",
-  "special.phrases.aria": "Phrases — every tune and beat in this song",
+  /* THE WORD IS `motifs` SINCE 2026-09-05 (TABLE.md §13e, Paul: *"Call
+     phrases motifs"*). The KEY does not move — an address does not move when a
+     word does — and `motif` was the page's address for this thing all along
+     (`motifpoint|…`, `A.motifLamp`), so the row and the bank now read the way
+     they are addressed. */
+  "special.phrases.word": "motifs",
+  "special.phrases.aria": "Motifs — every tune and beat in this song",
   "special.produce.word": "produce",
   "special.produce.aria": "Produce — producer notes",
   "special.mix.word": "mix",
   "special.master.word": "master",
   "special.master.aria": "Master: {face} — and the buses",
   "special.perf.word": "performance",
+  /* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ==============
+     Paul: *"Give the main composer interface its own header call it
+     Sections."* It is a LABEL and not a control — no sheet, no tap, no pin —
+     so it has a word and a count and nothing else. The count is one `tn()`
+     key with its own plural, and `{bars}` is `count.bar`'s own plural handed
+     in as data: two counts in one line, each declined by the catalogue that
+     owns it. */
+  "grid.sections.word": "sections",
+  "grid.sections.count.one": "{n} section · {bars}",
+  "grid.sections.count.other": "{n} sections · {bars}",
   /* ===== THE TIME SHEET (special.ts timeSheet) ========================== */
   "time.byHand": "tap tempo",
   "time.signature": "signature",
@@ -284,7 +299,7 @@ var TABLE = {
   "cell.sheet.variation": "{name} variation · {section}",
   "cell.bass.reads": "{value} — from {lead}",
   "cell.bass.readsNone": "from the first line",
-  "cell.bass.why": "The bass follows the first line's phrase. Change that cell.",
+  "cell.bass.why": "The bass follows the first line's motif. Change that cell.",
   "cell.focus": "focus",
   "cell.focus.on": "featured",
   "cell.focus.off": "not featured",
@@ -296,7 +311,7 @@ var TABLE = {
   "cell.chordPart.why": "This part plays chords, not a line; give it a line part",
   /* the ramp limit reaches no sound; the measurement that says so is a CODE
      COMMENT in model.ts, and this is what a person reads. */
-  "cell.ramp.why": "The phrases carry no ramp for this to limit",
+  "cell.ramp.why": "The motifs carry no ramp for this to limit",
   /* ===== THE MIX ROW'S CELLS (grid.ts mixCell) ========================== */
   "mix.cell.aria": "{name} mix: {value}",
   "mix.cell.aria.mark": "{name} mix: {value} ({mark})",
@@ -383,7 +398,7 @@ var SHEETS = {
      Paul: *"just nicely structure each expanded interface as proper software
      that's easy to scan and nicely grouped."* Thirteen words, one per heading,
      in the three sets §11c names — a chair (Instrument · Envelope · Tone ·
-     Mix), a section (Form · Time · Key · Feel · Chain), a cell (Phrase ·
+     Mix), a section (Form · Time · Key · Feel · Chain), a cell (Motif ·
      Variation · Dynamics · Placement) — plus the three the TIME row uses.
      They are NOUNS, they are what a composer calls the thing (DESIGN.md §4),
      and none of them is a question. `src/table/model.ts G` is their one
@@ -397,28 +412,18 @@ var SHEETS = {
   "group.key": "Key",
   "group.feel": "Feel",
   "group.chain": "Chain",
-  "group.phrase": "Phrase",
+  "group.phrase": "Motif",
   "group.variation": "Variation",
   "group.dynamics": "Dynamics",
   "group.placement": "Placement",
   "group.tempo": "Tempo",
   "group.meter": "Meter",
   "group.chords": "Chords",
-  /* ...AND ONE MORE FOR THE ADD SHEET (2026-09-05, TABLE.md §13a.5): the head
-     row's `+` and the grid's foot `+` open one sheet, and its two lists — the
-     player offers and the section offer — stand under their own headings, in
-     the same shape every other sheet on this page is grouped in. The sections'
-     heading is `group.form` above, unedited: a record's sections ARE its form,
-     which is what §11c already calls them in a section's own sheet. */
-  "group.band": "The players",
-  /* ===== THE ADD SHEET (2026-09-05, TABLE.md §13a.5) =====================
-     Paul, on the Silence record at 390: *"three adders took more width than
-     the three players they were offering to join."* The three buttons in the
-     head and the one under the last section are one `+` at each edge now, and
-     these are the two questions its sheet asks. (Its NAME is `act.add` and the
-     `+`'s own clause is `glyph.act.add.say`; neither is spelled again here.) */
-  "add.players": "Who else plays",
-  "add.sections": "What comes next",
+  /* (`group.band`, `add.players` AND `add.sections` STOOD HERE — the ADD
+     sheet's three headings, for one afternoon. TABLE.md §13e, Paul: *"Don't
+     pop up an interface when I add a section or a voice. Just add it."* The
+     sheet is deleted with them: a `+` that adds asks no question, so there is
+     no answer to put a heading over.) */
   /* ===== THE FOLLOW-UP SWEEP (2026-09-05) ================================
      What the copy BROWSER gate found still assembled in ui/eight.js after the
      surface pass: the time row's two sliders and its readout, the chord
@@ -472,16 +477,17 @@ var SHEETS = {
   "exportTab.als.save": "Download .als",
   "act.closeTab.aria": "Close {name}",
   "grid.sectionRow.say": "A section: its bars and what each player plays",
-  /* ===== THE PHRASE BANK (the MOTIFS row's sheet) =======================
+  /* ===== THE MOTIF BANK (the MOTIFS row's sheet) ========================
      `motif` is an ADDRESS in this page (`data-k="motifpoint|…"`, `motifTab`)
-     and the address does not move; the WORD a musician reads is `phrase`
-     (TABLE.md §12a). */
-  "bank.empty": "No phrases yet",
-  "bank.face.one": "{n} phrase · {names}",
-  "bank.face.other": "{n} phrases · {names}",
-  "bank.faceIn.one": "In {name} · {n} phrase",
-  "bank.faceIn.other": "In {name} · {n} phrases",
-  "bank.listEmpty": "No phrases yet — add one",
+     and the address does not move; since 2026-09-05 the WORD a musician reads
+     is the same one (TABLE.md §13e, Paul: *"Call phrases motifs"*), so these
+     keys keep their `bank.*` names and say `motif`. */
+  "bank.empty": "No motifs yet",
+  "bank.face.one": "{n} motif · {names}",
+  "bank.face.other": "{n} motifs · {names}",
+  "bank.faceIn.one": "In {name} · {n} motif",
+  "bank.faceIn.other": "In {name} · {n} motifs",
+  "bank.listEmpty": "No motifs yet — add one",
   /* a name and the row's own readout (its length, and who plays it) */
   "bank.item.aria": "{name} — {value}",
   "bank.item.edit": "Edit {name}",
@@ -489,8 +495,8 @@ var SHEETS = {
   "bank.nobody": "Nobody plays this yet",
   "bank.pointed": "Pointed at {name}",
   "bank.pointedWhy": "The next cell you tap",
-  "bank.addPhrase": "+ phrase",
-  "bank.addPhrase.aria": "Add phrase",
+  "bank.addPhrase": "+ motif",
+  "bank.addPhrase.aria": "Add motif",
   /* ---- THE BENCH'S TWO NEW MARKS (2026-09-05, the review's items 6+7) ----
      An accent, an articulation and an accidental, one word each, said once.
      The accent and the mark are separate controls because they are separate
@@ -518,7 +524,7 @@ var SHEETS = {
   "bench.mark.why": "Say note on this step to mark it",
   "bank.addDrums": "+ drum pattern",
   "bank.addDrums.aria": "Add drum pattern",
-  /* the chips under a phrase: who plays it, on what, and where */
+  /* the chips under a motif: who plays it, on what, and where */
   "bank.chip.aria": "{name} on {instrument}",
   "bank.chip.ariaWhere": "{name} on {instrument} — {value}",
   "bank.chip.ariaFollows": "{name} on {instrument}, follows the lead",
@@ -844,10 +850,10 @@ var GLYPHS = {
   "glyph.tab.where.say": "Place and year",
   "glyph.tab.time": "Time",
   "glyph.tab.time.say": "Tempo, meter and key",
-  /* THE REVIEW'S GLOSSARY (TABLE.md §12a): motif -> phrase. The tab's
-     ADDRESS is still `Motifs` in ui/eight.js and in eleven gates; the printed
-     word is the composer's. */
-  "glyph.tab.motifs": "Phrases",
+  /* THE GLOSSARY WENT BACK (2026-09-05, TABLE.md §13e, Paul: *"Call phrases
+     motifs"*). The tab's ADDRESS was always `Motifs` — in ui/eight.js and in
+     eleven gates — and the printed word is that word again. */
+  "glyph.tab.motifs": "Motifs",
   "glyph.tab.motifs.say": "The song's tunes and beats",
   "glyph.tab.band": "Band",
   "glyph.tab.band.say": "Sections down, players across",
@@ -920,7 +926,7 @@ var GLYPHS = {
   /* the word is the MIX row's own — `special.mix.word`. */
   "glyph.facet.mix.say": "Channel strip — inserts, sends, tone and level",
   "glyph.facet.plays": "what it plays",
-  "glyph.facet.plays.say": "Part, register, entry and default phrase",
+  "glyph.facet.plays.say": "Part, register, entry and default motif",
   "glyph.facet.sec": "per-section",
   "glyph.facet.sec.say": "What this player does, section by section",
   "glyph.facet.samples": "samples",
@@ -945,11 +951,11 @@ var GLYPHS = {
   "glyph.cell.part.drums": "Drums",
   "glyph.cell.part.drums.say": "The kit.",
   "glyph.cell.prov.own": "From this genre",
-  "glyph.cell.prov.own.say": "Phrase from this song's genre.",
+  "glyph.cell.prov.own.say": "Motif from this song's genre.",
   "glyph.cell.prov.guest": "From a guest",
-  "glyph.cell.prov.guest.say": "Phrase from a guest genre.",
+  "glyph.cell.prov.guest.say": "Motif from a guest genre.",
   "glyph.cell.prov.hand": "Edited",
-  "glyph.cell.prov.hand.say": "Phrase edited by hand.",
+  "glyph.cell.prov.hand.say": "Motif edited by hand.",
   "glyph.cell.level.out": "Out",
   "glyph.cell.level.out.say": "Out of the mix.",
   "glyph.cell.level.hush": "Hushed",
@@ -1206,8 +1212,12 @@ var RULES = {
   "rule.noBass": "This song has no bass.",
   "rule.noDrums": "This song has no drum grid.",
   "rule.holdCapped": "The longest note wins at {n}.",
-  "rule.phraseEditor": "Edited in the phrase editor.",
-  "rule.phrasesEdited": "Edit phrases in the phrase editor.",
+  /* THE EDITOR IS THE MOTIF BANK'S (2026-09-05, TABLE.md §13e: *"Call
+     phrases motifs"*). `rule.headPhraseLength` below is NOT renamed with
+     them: a phrase length and a phrase structure are the form's own terms in
+     the Development axis, not the bank's thing. */
+  "rule.phraseEditor": "Edited in the motif editor.",
+  "rule.phrasesEdited": "Edit motifs in the motif editor.",
   "rule.chordsFromKey": "Chords come from the Key panel.",
   /* ===== THE NAME ON A RULE ROW ========================================= */
   "rule.headTempoGive": "Tempo give",

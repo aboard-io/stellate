@@ -920,8 +920,9 @@ const GATES = [
   /* (`band` STOOD HERE and is deleted with its subject, 2026-09-04, TABLE.md
      wave 2c. It drove the ROSTER — the band as boxes, the motif tray, the four
      facets — and the roster is the table's header row now. What it proved that
-     `table-page` did not is folded there as T8a (hiring lands on the new
-     player's column sheet) and T8b (the bass's instrument reaches the engine);
+     `table-page` did not is folded there as T8a (what a hire does to the
+     glass — it LANDED on the new player's column sheet until 2026-09-05,
+     TABLE.md §13e, and now it opens nothing) and T8b (the bass's instrument reaches the engine);
      everything else it asserted is T5a, T6, T7 or T0 about the same record.) */
   /* THE SAMPLE CRATE, DRIVEN (2026-09-03). Paul, 2026-09-01: "I can't really
      access or organize samples used in, say, San Francisco 1996. They aren't

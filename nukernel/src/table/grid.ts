@@ -55,9 +55,9 @@ import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { TableAPI, Field, Op, Mark } from "./api.js";
 import { rowSheet, colSheet, cellSheet, perfSheet,
-         perfCells, tableOps, playerOffers, sectionOffer,
+         perfCells, tableOps, nextPlayerOffer, sectionOffer,
          rowOps, colOps, cellOps } from "./model.js";
-import { sheetBody, onRedraw, offerLozenge } from "./sheet.js";
+import { sheetBody, onRedraw } from "./sheet.js";
 import { SPECIALS, PRODUCE, mixSheet, masterFace,
          masterMixSheet } from "./special.js";
 import { undoStack } from "./undo.js";
@@ -191,13 +191,11 @@ const STICKY = (k: string | null): boolean => !!k && k !== "corner";
 const SPECIAL = (k: string | null): boolean => !!k &&
   (k.indexOf("sp|") === 0 || k.indexOf("mix|") === 0);
 
-/* THE ADD SHEET'S TWO OPEN KEYS (§13a.5). Two `+`s, one builder: the head's
-   and the foot's, so the sheet opens at the row a thumb touched. They are
-   `sp|`-prefixed because they are what `SPECIAL` means — a MERGED row whose
-   own controls recompile the record — which is what lets the sheet survive
-   the rebuild its own hire causes and hands the keyboard to it. */
-const ADDHEAD = "sp|add-head";
-const ADDFOOT = "sp|add-foot";
+/* (`ADDHEAD` AND `ADDFOOT` STOOD HERE — the ADD sheet's two open keys, for
+   one afternoon. 2026-09-05, TABLE.md §13e, Paul: *"Don't pop up an interface
+   when I add a section or a voice. Just add it."* A `+` writes now, so there
+   is no sheet to open and no key to open it with; `plusBtn` fires the op
+   itself, through the same `op()` wrapper every other control uses.) */
 
 /* THE MARKS REACH THIS BUNDLE THROUGH `globalThis`, which is `sheet.ts`'s own
    arrangement said again: `src/table` is its own build entry and an import of
@@ -659,30 +657,59 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return out;
   };
 
-  /* ---- THE HEAD ROW, AND ITS LAST CELL IS ONE `+` (§13a.5) ------------
+  /* ---- THE GRID'S OWN HEADER (2026-09-05, §13e) -----------------------
+     Paul: *"Give the main composer interface its own header call it
+     Sections."* TIME, RULES and MOTIFS each name what their line is about;
+     the grid under them — the thing the whole page is for — named nothing,
+     and a reader arriving at the column heads had to infer that the rows
+     below were the song's sections.
+     IT IS A LABEL AND NOT A ROW WITH A SHEET. No button, no `aria-expanded`,
+     no `data-k`: there is nothing to open, so there is nothing to tap, and a
+     one-line heading that swallowed a thumb would be the fifth surface in a
+     head that §13a spent a round emptying. It wears the special row's own
+     furniture (`.nu-spline`, `.nu-spword`, `.nu-spface`) because it IS that
+     line — the word left, the count right, `--tap` tall, a hairline under —
+     and it is the ONE `<thead>` row that does not pin: `stick()` pins the
+     LAST head row (the column heads) and this stands directly above them, in
+     the flow, scrolling away with the special rows.
+     ITS COUNT IS THE RECORD'S, NOT THE VIEW'S. Sections and bars are document
+     facts, so the line reads the same when §5's transpose turns the grid and
+     the sections are running across it. */
+  const gridLabel = (S: Shape): TemplateResult => {
+    const secs = A.doc().form.sections;
+    const bars = secs.reduce((n, x) => n + (x.bars || 0), 0);
+    return html`<tr class="nu-gridlabel">
+      <th class="nu-spheadcell nu-labelcell" scope="colgroup"
+          colspan=${nCols(S)}>
+        <div class="nu-spline">
+          <b class="nu-spword">${t("grid.sections.word")}</b>
+          <span class="nu-spface">${tn("grid.sections.count", secs.length,
+            { bars: tn("count.bar", bars) })}</span>
+        </div>
+      </th>
+    </tr>`;
+  };
+
+  /* ---- THE HEAD ROW, AND ITS LAST CELL IS ONE `+` (§13a.5, §13e) ------
      Paul, on the Silence record at 390: *"three adders (`+ line · + bass · +
      drums`) took more width than the three players they were offering to
      join."* MEASURED on v287 at 390 and at 320: the adder column is 224px of
      a 364.4px pane (`--addw: 22ch`), the head cell 57.3px tall, and the three
      offers stand there whether or not a hand is adding anything.
-     SO THE ADDERS ARE A SHEET. The head row ends in ONE `+` cell, `--tap`
-     wide, and the grid ends in ONE `+` row; either opens the ADD sheet, whose
-     body IS `playerOffers`/`sectionOffer` — moved, not copied. The three
-     column widths the adders took go back to the players.
-     ITS SHEET IS THE NEXT `<tr>`, which is §10c's placement said about the
-     head row: the sheet a control opens is that control's row's own next
-     line, and nothing may stand between them. */
+     SO THE ADDERS ARE ONE CELL. The head row ends in ONE `+` cell, `--tap`
+     wide, and the grid ends in ONE `+` row. For one afternoon they opened an
+     ADD sheet; §13e deletes it — *"Don't pop up an interface when I add a
+     section or a voice. Just add it."* — so each `+` IS its own offer and a
+     tap on it writes. The three column widths the adders took stay with the
+     players. */
   const thead = (S: Shape, cols: string[]): TemplateResult => html`<thead>
     ${specialRows(S)}
+    ${gridLabel(S)}
     <tr>
       <th class="nu-cornerh">${cornerBtn(S)}</th>
       ${repeat(cols, (c) => c, (c) => S.across ? secHead(S, c) : voiceHead(S, c))}
-      <th class="nu-plushead" scope="col">${plusBtn("head")}</th>
+      <th class="nu-plushead" scope="col">${plusBtn(S, "head")}</th>
     </tr>
-    ${OPEN === ADDHEAD
-      ? openRow(S, sheetFor(ADDHEAD, () => addSheet(S)), t("act.add"),
-                "nu-spopen nu-addopen")
-      : nothing}
   </thead>`;
 
   /** THE HEAD'S WORD, TWICE: the whole name and its first word. Which of the
@@ -806,72 +833,49 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up); }}></button>`;
 
-  /* ---- THE `+` AND WHAT IT OPENS (§13a.5) ------------------------------
-     TWO BUTTONS, ONE SHEET, ONE BUILDER. The head's `+` and the foot's `+`
-     are the two edges a spreadsheet has always put "one more" at, and each
-     opens the SAME list at its own row, because §10c's placement is that a
-     sheet is the row's own next line and a control three rows away from the
-     word that opened it is the defect that placement was written against.
-     `ADDHEAD`/`ADDFOOT` are two open keys and `addSheet` is one function: the
-     list is moved, never copied. */
-  const plusBtn = (where: "head" | "foot"): TemplateResult => {
-    const k = where === "head" ? ADDHEAD : ADDFOOT;
+  /* ---- THE `+` ADDS. IT DOES NOT ASK (2026-09-05, §13e) ---------------
+     Paul, on the ADD sheet that shipped this morning: *"Don't pop up an
+     interface when I add a section or a voice. Just add it."*
+
+     TWO BUTTONS, TWO OPS, NO SHEET. The head's `+` and the foot's `+` are the
+     two edges a spreadsheet has always put "one more" at, and each now writes
+     the record on the tap: the `+` at the end of the ROW axis adds a section
+     (`sectionOffer`, one offer, nothing to choose), the `+` at the end of the
+     COLUMN axis hires the one player the band has not got (`nextPlayerOffer`,
+     build-the-band's own order — drums, then bass, then a line). §5's
+     transpose swaps which edge is which, and the two offers swap with it,
+     because the axis is what the `+` is at the end of.
+
+     ITS `data-k` IS THE OFFER'S OWN, and that is the address law (line 833's
+     `<field>|<value>`) rather than a convenience: `tcol-add|drums` and
+     `trow-add` are the addresses build-the-band minted and eleven gates and
+     the T7 inventory drive, so the control a hand taps and the op it runs are
+     spelled the same. The other two player kinds are one tap away in any
+     column head's own sheet (`colOps`), and reachable from the `+` itself the
+     moment the one it offers exists — a second tap offers the next.
+
+     AND ITS ACCESSIBLE NAME SAYS WHICH ONE, because a `+` that writes without
+     asking has to say what it is about to write before a thumb commits: the
+     offer's own `aria` (`Add drums`, `Add bass`, `Add line`, `Add section at
+     the end`), never a generic "add". The mark stays `GLYPH.act.add` — one
+     picture for "one more" at either edge — and the `.nu-vh` word beside it is
+     the offer's. */
+  const plusOffer = (S: Shape, where: "head" | "foot"): Op =>
+    (where === "head") === S.across
+      ? sectionOffer(A)[0]! : nextPlayerOffer(A);
+
+  const plusBtn = (S: Shape, where: "head" | "foot"): TemplateResult => {
+    const o = plusOffer(S, where);
     const mk = actMark("add");
     return html`<button type="button" class="nu-plusbtn"
-      data-k=${"tadd|" + where}
-      aria-expanded=${String(OPEN === k)}
-      aria-label=${t("glyph.act.add.say")}
-      data-say=${ifDefined(mk && mk.s ? mk.s : undefined)}
-      @click=${() => toggle(k)}
-      @contextmenu=${(e: Event) => { e.preventDefault(); toggle(k, true); }}
+      data-k=${o.k}
+      aria-label=${o.aria || o.word}
+      data-say=${ifDefined(o.aria || undefined)}
+      @click=${() => { if (o.act) op(o.word, o.act); }}
       ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "+"}</span
-      ><span class="nu-vh">${mk ? mk.w : t("glyph.act.add")}</span></button>`;
+      ><span class="nu-vh">${o.word}</span></button>`;
   };
 
-  /* THE ADD SHEET'S BODY, AND IT IS THE ADDBARS' OWN TWO LISTS. The player
-     offers arrive as a LOZENGE FIELD (DESIGN.md §2 component 16) at the
-     address they have always had — `tcol-add|line`, `tcol-add|bass`,
-     `tcol-add|drums`, because a lozenge's `data-k` is `<field>|<value>` and
-     the field is `tcol-add` — so every gate that drove an adder still drives
-     one. The section offer keeps `trow-add` and stands in the sheet's own op
-     row under its own heading, which is what a list of one is.
-     THE OFFERS ARE ACTS AND THE FIELD HOLDS NO VALUE. Every write on this
-     page ends in `changed()` -> `push(); draw()`, which builds this panel
-     again from the record, so the field is handed the empty value on every
-     draw and a tap is a hire rather than a selection: `onWrite` runs the op
-     through the same `op()` wrapper the addbars used, which is the undo
-     stack's own door. A refused offer (a record that already has a kit)
-     arrives dashed with its own sentence, which is more than `.nu-addbtn`
-     did — it printed the reason only in `title`. */
-  const addSheet = (S: Shape): Field[] => {
-    const players = S.across ? sectionOffer(A) : playerOffers(A);
-    const sections = S.across ? playerOffers(A) : sectionOffer(A);
-    const out: Field[] = [];
-    const lz = offerField(players);
-    if (lz) out.push({ kind: "node", group: "band",
-                       label: t("add.players"), node: lz });
-    else out.push({ kind: "ops", group: "band", label: t("add.players"),
-                    ops: runOps(players) });
-    out.push({ kind: "ops", group: "form", label: t("add.sections"),
-               ops: runOps(sections) });
-    return out;
-  };
-  const runOps = (ops: Op[]): Op[] =>
-    ops.map((x) => x.act ? { ...x, act: () => op(x.word, x.act!) } : x);
-  /** the offers as ONE lozenge field, or null where they do not share a `data-k`
-   *  stem — the address law (`<field>|<value>`) is what makes this a move. */
-  const offerField = (ops: Op[]): HTMLElement | null => {
-    const parts = ops.map((o) => o.k.split("|"));
-    if (parts.length < 2 || parts.some((p) => p.length !== 2)) return null;
-    const stem = parts[0]![0]!;
-    if (parts.some((p) => p[0] !== stem)) return null;
-    return offerLozenge(stem, t("add.players"), ops.map((o, i) => ({
-      value: parts[i]![1]!, label: o.word, why: o.why || null,
-      disabled: !!o.why })), (v) => {
-        const o = ops.find((x) => x.k === stem + "|" + v);
-        if (o && !o.why && o.act) op(o.word, o.act);
-      });
-  };
 
   /* ---- THE BODY ------------------------------------------------------ */
   const tbody = (S: Shape, rows: string[], cols: string[]): TemplateResult =>
@@ -879,13 +883,9 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       ${orphanSheet(S)}
       ${repeat(rows, (r) => r, (r) => bodyRow(S, r, cols))}
       <tr class="nu-addrow">
-        <th class="nu-plusrowh" scope="row">${plusBtn("foot")}</th>
+        <th class="nu-plusrowh" scope="row">${plusBtn(S, "foot")}</th>
         <td colspan=${nCols(S) - 1}></td>
       </tr>
-      ${OPEN === ADDFOOT
-        ? openRow(S, sheetFor(ADDFOOT, () => addSheet(S)), t("act.add"),
-                  "nu-addopen")
-        : nothing}
     </tbody>`;
 
   /** A SHEET WITH NO ROW OF ITS OWN LANDS AT THE TOP OF THE BODY, which is

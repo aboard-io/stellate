@@ -2,8 +2,8 @@
   "what": "T7, TABLE.md §6 ¶A and §7 — the inventory of every control the Band pane and the Structure pane offered at HEAD (v265, 3ce6125), with the home each one has in the Band table. Paul, 2026-09-03: 'get rid of everything it replaces. Move things around as needed. Don't lose unreplaced options. Find places for things and keep discoverability high.'",
   "how": "MEASURED, not read off the source: test/table-inventory.probe.js walked the rendered DOM of #pan-band and #pan-structure through all 36 states the two panes have (the roster, the crate, each voice x each of its four facets, the section list, each section's own questions, performance) at 390x844 and collected every button/select/input/[data-k]/[data-sel] in each. 72 control families, plus the two panes' own nav-tree children, which are controls too.",
   "law": "A home is (tier, where) — tier is row | column | cell | footer | table | elsewhere, and `reach` is the data-k the gate must find on the rendered table at 320px, tappable, at least 44px. `open` is what has to be tapped first to reach it (the sheet it lives in). A control with no home fails T7; so does a home that is not tap-reachable at 320.",
-  "unmoved": "2026-09-05 (TABLE.md \u00a713a.2): the three performance controls keep their addresses and move one door in \u2014 the PERFORM row is ONE LINE now (it was a row head beside a wrapping three-line strip of word plates, measured 92px on the Silence record at 390) and its three words are its FACE, so `performance.stress|phrase|orn` are in the sheet the row opens, with take, humanize and on time. Nothing is lost: `footCell` set `OPENFIELD` to an address the sheet it opened did not contain, so those three strips could not be opened at all.  2026-09-04 (wave 2c): the three performance sheets keep the address they had — `performance.stress|phrase|orn` — because an address does not move when a row does and three gates drive them by name. Wave 2b's first draft re-keyed them `tperf|<short>` for uniqueness inside the table; `tperf|` is gone from the page with that draft; the footer's other three fields (take, humanize, on time) already carried their own names.",
-  "renamed": "2026-09-04 (wave 2c): the Motif tab is `Motifs` (TABLE.md §8), so `tray-new`'s reach is `toptab-Motifs`. The HOME did not move — the bank still owns a motif's own editor — only the door's word; an inventory row is edited when its address is renamed and never when a control is lost.  ...AND TEN CONTROLS ARRIVED WITH THE SONIC SPREADSHEET (2026-09-05, TABLE.md §9a): the formula bar's head (taddr · tundo · tredo · tcopy · tpaste), the two clipboard verbs on the cell's own op bar, the column grip, and the two axis offers — which keep build-the-band's own addresses (tcol-add|line and trow-add), so the nine nav ops filed above still land on the controls they were filed onto.  ...AND THE NAV'S OP CHILDREN ARE GONE (2026-09-05, TABLE.md 9a: 'NO OP LIVES IN THE NAV: the tray keeps the Band tab and, at most, jump links'). addvoice/addbass/adddrums/addsec/secup/secdown/secdup/secdrop/dropvoice were all still drawn as tray rows beside the table homes filed here; the tray rows are deleted and the homes are unchanged, which is why not one `reach` in this file moved. What the stripe keeps is the JUMP: tab<voice> opens tcol|<voice> and secnav<id> opens trow|<id>, and neither has children. test/shell.js A6l and test/gutter.js shorten() drove the deleted branches by name and read the table's own ops in the same edit.",
+  "unmoved": "2026-09-05 (TABLE.md §13a.2): the three performance controls keep their addresses and move one door in — the PERFORM row is ONE LINE now (it was a row head beside a wrapping three-line strip of word plates, measured 92px on the Silence record at 390) and its three words are its FACE, so `performance.stress|phrase|orn` are in the sheet the row opens, with take, humanize and on time. Nothing is lost: `footCell` set `OPENFIELD` to an address the sheet it opened did not contain, so those three strips could not be opened at all.  2026-09-04 (wave 2c): the three performance sheets keep the address they had — `performance.stress|phrase|orn` — because an address does not move when a row does and three gates drive them by name. Wave 2b's first draft re-keyed them `tperf|<short>` for uniqueness inside the table; `tperf|` is gone from the page with that draft; the footer's other three fields (take, humanize, on time) already carried their own names.",
+  "renamed": "2026-09-04 (wave 2c): the Motif tab is `Motifs` (TABLE.md §8), so `tray-new`'s reach is `toptab-Motifs`. The HOME did not move — the bank still owns a motif's own editor — only the door's word; an inventory row is edited when its address is renamed and never when a control is lost.  ...AND TEN CONTROLS ARRIVED WITH THE SONIC SPREADSHEET (2026-09-05, TABLE.md §9a): the formula bar's head (taddr · tundo · tredo · tcopy · tpaste), the two clipboard verbs on the cell's own op bar, the column grip, and the two axis offers — which keep build-the-band's own addresses (tcol-add|line and trow-add), so the nine nav ops filed above still land on the controls they were filed onto.  ...AND THE NAV'S OP CHILDREN ARE GONE (2026-09-05, TABLE.md 9a: 'NO OP LIVES IN THE NAV: the tray keeps the Band tab and, at most, jump links'). addvoice/addbass/adddrums/addsec/secup/secdown/secdup/secdrop/dropvoice were all still drawn as tray rows beside the table homes filed here; the tray rows are deleted and the homes are unchanged, which is why not one `reach` in this file moved. What the stripe keeps is the JUMP: tab<voice> opens tcol|<voice> and secnav<id> opens trow|<id>, and neither has children. test/shell.js A6l and test/gutter.js shorten() drove the deleted branches by name and read the table's own ops in the same edit.  ...AND THE TWO `tadd|` ADDRESSES LASTED ONE AFTERNOON (2026-09-05, TABLE.md 13e). v288 filed `tadd|head` and `tadd|foot` as new — the two `+` cells, each opening an ADD sheet. Paul: \"Don't pop up an interface when I add a section or a voice. Just add it.\" So a `+` now CARRIES the address of the op it fires (`tcol-add|<the first kind the band has not got>` at the head, `trow-add` at the foot) and writes on the tap; the two rows are deleted rather than re-pointed, because the button they filed is the button the offer's own row already files. NOTHING IS LOST AND NOTHING MOVED HOME: the four offers are at the addresses build-the-band minted, the three player kinds are all in every column head's sheet (`colOps`), and the `+` reaches the next of them the moment the one it offers exists.",
   "elsewhere": "Two homes are outside the table on purpose and each says why: the Motifs bank owns a motif's own editor, and Where owns starting a record. Each is reached by ONE tap from the table, and the reach names that door. The SEAT is not one of them: it was filed as the board's in the first draft and test/sheets.js measured that wrong within the hour (zero insert seats on the whole page), so the voice's channel strip is drawn in its column sheet.",
   "controls": [
     {
@@ -38,18 +38,18 @@
       "pane": "Band / roster",
       "was": "+ line / + bass / + drums — hire another player",
       "home": "column op",
-      "field": "add a voice (build-the-band's own three offers)",
+      "field": "add a voice (build-the-band's own three offers). Since 2026-09-05 (TABLE.md 13e) the head row's `+` IS one of them — it carries the address of the first kind the band has not got and hires on the tap — and all three stand in every column head's own sheet, which is the door named here because it holds all three whatever the record already has",
       "reach": "tcol-add|line",
-      "open": "tadd|foot"
+      "open": "tcol|<voice>"
     },
     {
       "k": "addvoice",
       "pane": "Band / nav tree",
       "was": "+ line on the stripe",
       "home": "column op",
-      "field": "the same three offers, at the table's own adder cell (tcol-add|line / bass / drums); the stripe carries no op at all since 2026-09-05 (TABLE.md 9a, 'NO OP LIVES IN THE NAV')",
+      "field": "the same three offers, at the table's own adder cell (tcol-add|line / bass / drums); the stripe carries no op at all since 2026-09-05 (TABLE.md 9a, 'NO OP LIVES IN THE NAV'). The head's `+` fires whichever kind the band lacks (TABLE.md 13e); the column head's sheet holds all three",
       "reach": "tcol-add|line",
-      "open": "tadd|foot"
+      "open": "tcol|<voice>"
     },
     {
       "k": "dropvoice",
@@ -412,9 +412,9 @@
       "pane": "Structure / nav tree",
       "was": "+ section",
       "home": "row op",
-      "field": "add — a section of a type, dealt by compose from the record's own rules",
+      "field": "add — a section of a type, dealt by compose from the record's own rules. The `+` row at the grid's foot IS this address since 2026-09-05 (TABLE.md 13e): it carries `trow-add` and adds on the tap",
       "reach": "trow-add",
-      "open": "tadd|foot"
+      "open": null
     },
     {
       "k": "secup",
@@ -1221,23 +1221,13 @@
     },
     {
       "reach": "trow-add",
-      "open": "tadd|foot",
-      "why": "§13a.5 (2026-09-05): the ADD sheet's section offer. It was the `+` at the end of the SECTION axis, in a row under the last one — Paul: \"I should be able to add players without using the nav and sections too\". Same address the row sheet's own offer has, because an address does not move when a control does"
+      "open": null,
+      "why": "§13e (2026-09-05): the `+` row at the grid's foot IS the section offer — it carries `trow-add` and a tap adds a section. It spent one afternoon behind an ADD sheet (§13a.5) until Paul: \"Don't pop up an interface when I add a section or a voice. Just add it.\" Same address the row sheet's own offer has, because an address does not move when a control does"
     },
     {
       "reach": "tcol-add|line",
-      "open": "tadd|foot",
-      "why": "§13a.5 (2026-09-05): the ADD sheet's player offers, as a lozenge field. They were three dashed word plates in a 22ch head cell after the last player — measured 224px of a 364.4px pane at 390, which is what cut the first player's head to \"…he ntl\" — and the head row ends in ONE `+` cell of `--tap` now, with a second `+` row at the grid's foot; either opens the sheet. Same three addresses build-the-band already had, which is what keeps the nine nav ops' T7 homes"
-    },
-    {
-      "reach": "tadd|head",
-      "open": null,
-      "why": "§13a.5 (2026-09-05): the `+` at the end of the COLUMN HEAD row, one `--tap` cell, which opens the ADD sheet as its own next `<tr>` (§10c's placement). It replaces the three dashed offers that stood there."
-    },
-    {
-      "reach": "tadd|foot",
-      "open": null,
-      "why": "§13a.5: the `+` at the GRID'S FOOT, one line, in the frozen section column — so the ADD sheet is one tap from rest at 320 without scrolling the pane sideways. Same sheet, opened at the row a thumb touched."
+      "open": "tcol|<voice>",
+      "why": "§13e (2026-09-05): the head row's `+` IS a player offer — one `--tap` cell carrying `tcol-add|` plus the first kind the band has not got (drums, then bass, then a line), hiring on the tap. They were three dashed word plates in a 22ch head cell after the last player (measured 224px of a 364.4px pane at 390, which is what cut the first player's head to \"…he ntl\"), then a lozenge field in an ADD sheet for one afternoon (§13a.5). ALL THREE ARE STILL REACHABLE: the `+` offers the missing one, a second tap offers the next, and every column head's own sheet holds all three (`colOps`) — which is the door filed here, because it holds them whatever the record already has. Same three addresses build-the-band always had, which is what keeps the nine nav ops' T7 homes"
     },
     {
       "reach": "motifpoint|<motif>",

@@ -72,14 +72,30 @@ export const TABLE: Table = {
   "special.time.aria": "Time — tempo, meter and key",
   "special.rules.word": "rules",
   "special.rules.aria": "Rules — the genre as editable rules",
-  "special.phrases.word": "phrases",
-  "special.phrases.aria": "Phrases — every tune and beat in this song",
+  /* THE WORD IS `motifs` SINCE 2026-09-05 (TABLE.md §13e, Paul: *"Call
+     phrases motifs"*). The KEY does not move — an address does not move when a
+     word does — and `motif` was the page's address for this thing all along
+     (`motifpoint|…`, `A.motifLamp`), so the row and the bank now read the way
+     they are addressed. */
+  "special.phrases.word": "motifs",
+  "special.phrases.aria": "Motifs — every tune and beat in this song",
   "special.produce.word": "produce",
   "special.produce.aria": "Produce — producer notes",
   "special.mix.word": "mix",
   "special.master.word": "master",
   "special.master.aria": "Master: {face} — and the buses",
   "special.perf.word": "performance",
+
+  /* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ==============
+     Paul: *"Give the main composer interface its own header call it
+     Sections."* It is a LABEL and not a control — no sheet, no tap, no pin —
+     so it has a word and a count and nothing else. The count is one `tn()`
+     key with its own plural, and `{bars}` is `count.bar`'s own plural handed
+     in as data: two counts in one line, each declined by the catalogue that
+     owns it. */
+  "grid.sections.word": "sections",
+  "grid.sections.count.one": "{n} section · {bars}",
+  "grid.sections.count.other": "{n} sections · {bars}",
 
   /* ===== THE TIME SHEET (special.ts timeSheet) ========================== */
   "time.byHand": "tap tempo",
@@ -161,7 +177,7 @@ export const TABLE: Table = {
   "cell.sheet.variation": "{name} variation · {section}",
   "cell.bass.reads": "{value} — from {lead}",
   "cell.bass.readsNone": "from the first line",
-  "cell.bass.why": "The bass follows the first line's phrase. Change that cell.",
+  "cell.bass.why": "The bass follows the first line's motif. Change that cell.",
   "cell.focus": "focus",
   "cell.focus.on": "featured",
   "cell.focus.off": "not featured",
@@ -173,7 +189,7 @@ export const TABLE: Table = {
   "cell.chordPart.why": "This part plays chords, not a line; give it a line part",
   /* the ramp limit reaches no sound; the measurement that says so is a CODE
      COMMENT in model.ts, and this is what a person reads. */
-  "cell.ramp.why": "The phrases carry no ramp for this to limit",
+  "cell.ramp.why": "The motifs carry no ramp for this to limit",
 
   /* ===== THE MIX ROW'S CELLS (grid.ts mixCell) ========================== */
   "mix.cell.aria": "{name} mix: {value}",

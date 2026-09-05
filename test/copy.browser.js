@@ -497,7 +497,7 @@ function budgetFor(kind) {
 
     await snap("boot (the sheet at rest)");
 
-    /* THE FIVE SPECIAL ROWS — time · rules · phrases · mix · produce. */
+    /* THE FIVE SPECIAL ROWS — time · rules · motifs · mix · produce. */
     const heads = await p.$$("tr.nu-sprow .nu-sphead, .nu-sprow button.nu-sphead");
     for (let i = 0; i < heads.length && i < 6; i++) {
       const nm = await heads[i].evaluate((e) =>

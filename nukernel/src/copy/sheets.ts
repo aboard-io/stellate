@@ -1,6 +1,6 @@
 // nukernel/src/copy/sheets.ts — ONE PAGE OF THE CATALOGUE (strings.ts merges it).
 //
-// the cell and player sheets — ui/eight.js, ui/band.js, ui/abc.js: the phrase bank, the mix rows, the sample crate, the score line
+// the cell and player sheets — ui/eight.js, ui/band.js, ui/abc.js: the motif bank, the mix rows, the sample crate, the score line
 //
 // The voice is DESIGN.md §4; the budgets are a chip or a face ≤ 6 words and a
 // sentence beside a refused control ≤ 12, held by test/copy.test.js. A key is
@@ -20,7 +20,7 @@ export const SHEETS: Table = {
      Paul: *"just nicely structure each expanded interface as proper software
      that's easy to scan and nicely grouped."* Thirteen words, one per heading,
      in the three sets §11c names — a chair (Instrument · Envelope · Tone ·
-     Mix), a section (Form · Time · Key · Feel · Chain), a cell (Phrase ·
+     Mix), a section (Form · Time · Key · Feel · Chain), a cell (Motif ·
      Variation · Dynamics · Placement) — plus the three the TIME row uses.
      They are NOUNS, they are what a composer calls the thing (DESIGN.md §4),
      and none of them is a question. `src/table/model.ts G` is their one
@@ -34,29 +34,18 @@ export const SHEETS: Table = {
   "group.key": "Key",
   "group.feel": "Feel",
   "group.chain": "Chain",
-  "group.phrase": "Phrase",
+  "group.phrase": "Motif",
   "group.variation": "Variation",
   "group.dynamics": "Dynamics",
   "group.placement": "Placement",
   "group.tempo": "Tempo",
   "group.meter": "Meter",
   "group.chords": "Chords",
-  /* ...AND ONE MORE FOR THE ADD SHEET (2026-09-05, TABLE.md §13a.5): the head
-     row's `+` and the grid's foot `+` open one sheet, and its two lists — the
-     player offers and the section offer — stand under their own headings, in
-     the same shape every other sheet on this page is grouped in. The sections'
-     heading is `group.form` above, unedited: a record's sections ARE its form,
-     which is what §11c already calls them in a section's own sheet. */
-  "group.band": "The players",
-
-  /* ===== THE ADD SHEET (2026-09-05, TABLE.md §13a.5) =====================
-     Paul, on the Silence record at 390: *"three adders took more width than
-     the three players they were offering to join."* The three buttons in the
-     head and the one under the last section are one `+` at each edge now, and
-     these are the two questions its sheet asks. (Its NAME is `act.add` and the
-     `+`'s own clause is `glyph.act.add.say`; neither is spelled again here.) */
-  "add.players": "Who else plays",
-  "add.sections": "What comes next",
+  /* (`group.band`, `add.players` AND `add.sections` STOOD HERE — the ADD
+     sheet's three headings, for one afternoon. TABLE.md §13e, Paul: *"Don't
+     pop up an interface when I add a section or a voice. Just add it."* The
+     sheet is deleted with them: a `+` that adds asks no question, so there is
+     no answer to put a heading over.) */
 
   /* ===== THE FOLLOW-UP SWEEP (2026-09-05) ================================
      What the copy BROWSER gate found still assembled in ui/eight.js after the
@@ -115,16 +104,17 @@ export const SHEETS: Table = {
   "act.closeTab.aria": "Close {name}",
   "grid.sectionRow.say": "A section: its bars and what each player plays",
 
-  /* ===== THE PHRASE BANK (the MOTIFS row's sheet) =======================
+  /* ===== THE MOTIF BANK (the MOTIFS row's sheet) ========================
      `motif` is an ADDRESS in this page (`data-k="motifpoint|…"`, `motifTab`)
-     and the address does not move; the WORD a musician reads is `phrase`
-     (TABLE.md §12a). */
-  "bank.empty": "No phrases yet",
-  "bank.face.one": "{n} phrase · {names}",
-  "bank.face.other": "{n} phrases · {names}",
-  "bank.faceIn.one": "In {name} · {n} phrase",
-  "bank.faceIn.other": "In {name} · {n} phrases",
-  "bank.listEmpty": "No phrases yet — add one",
+     and the address does not move; since 2026-09-05 the WORD a musician reads
+     is the same one (TABLE.md §13e, Paul: *"Call phrases motifs"*), so these
+     keys keep their `bank.*` names and say `motif`. */
+  "bank.empty": "No motifs yet",
+  "bank.face.one": "{n} motif · {names}",
+  "bank.face.other": "{n} motifs · {names}",
+  "bank.faceIn.one": "In {name} · {n} motif",
+  "bank.faceIn.other": "In {name} · {n} motifs",
+  "bank.listEmpty": "No motifs yet — add one",
   /* a name and the row's own readout (its length, and who plays it) */
   "bank.item.aria": "{name} — {value}",
   "bank.item.edit": "Edit {name}",
@@ -132,8 +122,8 @@ export const SHEETS: Table = {
   "bank.nobody": "Nobody plays this yet",
   "bank.pointed": "Pointed at {name}",
   "bank.pointedWhy": "The next cell you tap",
-  "bank.addPhrase": "+ phrase",
-  "bank.addPhrase.aria": "Add phrase",
+  "bank.addPhrase": "+ motif",
+  "bank.addPhrase.aria": "Add motif",
   /* ---- THE BENCH'S TWO NEW MARKS (2026-09-05, the review's items 6+7) ----
      An accent, an articulation and an accidental, one word each, said once.
      The accent and the mark are separate controls because they are separate
@@ -161,7 +151,7 @@ export const SHEETS: Table = {
   "bench.mark.why": "Say note on this step to mark it",
   "bank.addDrums": "+ drum pattern",
   "bank.addDrums.aria": "Add drum pattern",
-  /* the chips under a phrase: who plays it, on what, and where */
+  /* the chips under a motif: who plays it, on what, and where */
   "bank.chip.aria": "{name} on {instrument}",
   "bank.chip.ariaWhere": "{name} on {instrument} — {value}",
   "bank.chip.ariaFollows": "{name} on {instrument}, follows the lead",

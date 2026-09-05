@@ -76,8 +76,12 @@ export const RULES: Table = {
   "rule.noBass": "This song has no bass.",
   "rule.noDrums": "This song has no drum grid.",
   "rule.holdCapped": "The longest note wins at {n}.",
-  "rule.phraseEditor": "Edited in the phrase editor.",
-  "rule.phrasesEdited": "Edit phrases in the phrase editor.",
+  /* THE EDITOR IS THE MOTIF BANK'S (2026-09-05, TABLE.md §13e: *"Call
+     phrases motifs"*). `rule.headPhraseLength` below is NOT renamed with
+     them: a phrase length and a phrase structure are the form's own terms in
+     the Development axis, not the bank's thing. */
+  "rule.phraseEditor": "Edited in the motif editor.",
+  "rule.phrasesEdited": "Edit motifs in the motif editor.",
   "rule.chordsFromKey": "Chords come from the Key panel.",
 
   /* ===== THE NAME ON A RULE ROW ========================================= */

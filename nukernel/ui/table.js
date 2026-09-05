@@ -1425,20 +1425,16 @@ function sectionOffer(A2) {
     act: () => A2.addSection(n3)
   }];
 }
+function nextPlayerOffer(A2) {
+  const offers = playerOffers(A2);
+  const of = (kind) => offers.find((o4) => o4.k === "tcol-add|" + kind);
+  if (!A2.hasKind("drums")) return of("drums");
+  if (!A2.hasKind("bass")) return of("bass");
+  return of("line");
+}
 
 // nukernel/src/table/sheet.ts
 var LOZ = () => globalThis.NuLozenge || null;
-function offerLozenge(key, label, options, onPick) {
-  const door = LOZ();
-  if (!door) return null;
-  return door.lozengeField({
-    key,
-    label,
-    options,
-    value: "",
-    onWrite: (v3) => onPick(v3)
-  });
-}
 function clustersOf(f2) {
   if (f2.groups && f2.groups.length > 1) return f2.groups;
   const by = /* @__PURE__ */ new Map();
@@ -2041,8 +2037,6 @@ function shapeOf(A2) {
 }
 var STICKY = (k2) => !!k2 && k2 !== "corner";
 var SPECIAL = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0);
-var ADDHEAD = "sp|add-head";
-var ADDFOOT = "sp|add-foot";
 var actMark = (k2) => {
   const d2 = globalThis.NuGlyph;
   return d2 && d2.GLYPH && d2.GLYPH.act && d2.GLYPH.act[k2] || null;
@@ -2289,19 +2283,31 @@ function bandTable(host, A2) {
     }
     return out;
   };
+  const gridLabel = (S2) => {
+    const secs = A2.doc().form.sections;
+    const bars = secs.reduce((n3, x2) => n3 + (x2.bars || 0), 0);
+    return b`<tr class="nu-gridlabel">
+      <th class="nu-spheadcell nu-labelcell" scope="colgroup"
+          colspan=${nCols(S2)}>
+        <div class="nu-spline">
+          <b class="nu-spword">${t4("grid.sections.word")}</b>
+          <span class="nu-spface">${tn(
+      "grid.sections.count",
+      secs.length,
+      { bars: tn("count.bar", bars) }
+    )}</span>
+        </div>
+      </th>
+    </tr>`;
+  };
   const thead = (S2, cols) => b`<thead>
     ${specialRows(S2)}
+    ${gridLabel(S2)}
     <tr>
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
       ${c2(cols, (c3) => c3, (c3) => S2.across ? secHead(S2, c3) : voiceHead(S2, c3))}
-      <th class="nu-plushead" scope="col">${plusBtn("head")}</th>
+      <th class="nu-plushead" scope="col">${plusBtn(S2, "head")}</th>
     </tr>
-    ${OPEN === ADDHEAD ? openRow(
-    S2,
-    sheetFor(ADDHEAD, () => addSheet(S2)),
-    t4("act.add"),
-    "nu-spopen nu-addopen"
-  ) : A}
   </thead>`;
   const spClose = (openKey, open, name) => {
     if (!open) return A;
@@ -2402,76 +2408,27 @@ function bandTable(host, A2) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   }}></button>`;
-  const plusBtn = (where) => {
-    const k2 = where === "head" ? ADDHEAD : ADDFOOT;
+  const plusOffer = (S2, where) => where === "head" === S2.across ? sectionOffer(A2)[0] : nextPlayerOffer(A2);
+  const plusBtn = (S2, where) => {
+    const o4 = plusOffer(S2, where);
     const mk = actMark("add");
     return b`<button type="button" class="nu-plusbtn"
-      data-k=${"tadd|" + where}
-      aria-expanded=${String(OPEN === k2)}
-      aria-label=${t4("glyph.act.add.say")}
-      data-say=${o2(mk && mk.s ? mk.s : void 0)}
-      @click=${() => toggle(k2)}
-      @contextmenu=${(e4) => {
-      e4.preventDefault();
-      toggle(k2, true);
+      data-k=${o4.k}
+      aria-label=${o4.aria || o4.word}
+      data-say=${o2(o4.aria || void 0)}
+      @click=${() => {
+      if (o4.act) op(o4.word, o4.act);
     }}
       ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "+"}</span
-      ><span class="nu-vh">${mk ? mk.w : t4("glyph.act.add")}</span></button>`;
-  };
-  const addSheet = (S2) => {
-    const players = S2.across ? sectionOffer(A2) : playerOffers(A2);
-    const sections = S2.across ? playerOffers(A2) : sectionOffer(A2);
-    const out = [];
-    const lz = offerField(players);
-    if (lz) out.push({
-      kind: "node",
-      group: "band",
-      label: t4("add.players"),
-      node: lz
-    });
-    else out.push({
-      kind: "ops",
-      group: "band",
-      label: t4("add.players"),
-      ops: runOps(players)
-    });
-    out.push({
-      kind: "ops",
-      group: "form",
-      label: t4("add.sections"),
-      ops: runOps(sections)
-    });
-    return out;
-  };
-  const runOps = (ops) => ops.map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2);
-  const offerField = (ops) => {
-    const parts = ops.map((o4) => o4.k.split("|"));
-    if (parts.length < 2 || parts.some((p3) => p3.length !== 2)) return null;
-    const stem = parts[0][0];
-    if (parts.some((p3) => p3[0] !== stem)) return null;
-    return offerLozenge(stem, t4("add.players"), ops.map((o4, i5) => ({
-      value: parts[i5][1],
-      label: o4.word,
-      why: o4.why || null,
-      disabled: !!o4.why
-    })), (v3) => {
-      const o4 = ops.find((x2) => x2.k === stem + "|" + v3);
-      if (o4 && !o4.why && o4.act) op(o4.word, o4.act);
-    });
+      ><span class="nu-vh">${o4.word}</span></button>`;
   };
   const tbody = (S2, rows, cols) => b`<tbody>
       ${orphanSheet(S2)}
       ${c2(rows, (r2) => r2, (r2) => bodyRow(S2, r2, cols))}
       <tr class="nu-addrow">
-        <th class="nu-plusrowh" scope="row">${plusBtn("foot")}</th>
+        <th class="nu-plusrowh" scope="row">${plusBtn(S2, "foot")}</th>
         <td colspan=${nCols(S2) - 1}></td>
       </tr>
-      ${OPEN === ADDFOOT ? openRow(
-    S2,
-    sheetFor(ADDFOOT, () => addSheet(S2)),
-    t4("act.add"),
-    "nu-addopen"
-  ) : A}
     </tbody>`;
   const orphanSheet = (S2) => {
     if (!OPEN) return A;

@@ -2638,12 +2638,13 @@ it.** In full:
    open sheet. Never both. `stick()` already releases rows at and after
    `.nu-spopen`; it now releases the column heads for a CELL sheet too, and
    pins nothing in `<tfoot>` ever.
-2. **Every special row is ONE LINE at rest** — TIME, RULES, PHRASES, MIX,
-   MASTER, PRODUCE, PERFORM: `var(--tap)` tall, the word left, the sentence or
+2. **Every special row is ONE LINE at rest** — TIME, RULES, MOTIFS, MIX,
+   MASTER, PRODUCE, PERFORM (the row was PHRASES for a day; §13e): `var(--tap)`
+   tall, the word left, the sentence or
    the count right, a hairline under. No plate, no tint, no chips or lozenges
-   inline, no lamp on a second line (the MOTIF lamp draws inside the PHRASES
+   inline, no lamp on a second line (the MOTIF lamp draws inside the MOTIFS
    row's own line or not at all). The sentence is the one the row already
-   says (`TIME  79 BPM · 4/4 · D natural minor`; `PHRASES  3 motifs`;
+   says (`TIME  79 BPM · 4/4 · D natural minor`; `MOTIFS  3 motifs`;
    `PERFORM  push · phrasing · ornament`); it is truncated with an ellipsis,
    never wrapped.
 3. **Tap a row and it pins as the HEADER of its own sheet.** The row sticks to
@@ -2663,6 +2664,13 @@ it.** In full:
    lists the addbars render today (one owner, moved, not copied), as lozenges
    in the Cast's clusters (instruments.js `familyOf`). The three column widths
    the adders took go back to the players.
+   **THE SHEET IS SUPERSEDED, THE SAME DAY (2026-09-05, §13e).** Paul used it:
+   *"Don't pop up an interface when I add a section or a voice. Just add it."*
+   The two `+` cells and their `var(--tap)` are exactly as this clause left
+   them; what is deleted is the sheet behind them. Each `+` now CARRIES the
+   address of the offer it fires and writes the record on the tap — read §13e
+   for which offer, and why the bare `+` can pick one player kind without
+   asking.
 6. **The formula bar goes.** `.nu-formula` is deleted from `.nu-sheetwrap`.
    Its head — the ADDRESS of the selection, undo, redo, copy, paste — becomes
    the first line of the open CELL sheet (present only while a sheet is
@@ -2877,3 +2885,115 @@ column head's SECOND line — `.nu-colinstr`, what the player is playing — had
 first-word fallback and printed "acoustic ba…" on the Silence record at 390 with
 a band in it. A head that cannot show its instrument whole drops it now
 (`is-noinstr`); the accessible name and the title still carry it.
+
+### 13e · Sections header, motifs, direct add (2026-09-05)
+
+**THREE LINES, VERBATIM**, after an hour with v288 on the phone:
+
+> *"Give the main composer interface its own header call it Sections"*
+>
+> *"Call phrases motifs"*
+>
+> *"Don't pop up an interface when I add a section or a voice. Just add it."*
+
+**A · THE GRID HAS ITS OWN HEADER.** TIME, RULES and MOTIFS each name what
+their line is about; the grid under them — the thing the page is for — named
+nothing, and a reader arriving at the column heads had to infer that the rows
+below were the song's sections. So the grid gets one line of its own, directly
+above the column heads, in the special row's furniture: the word SECTIONS
+left, the count right (`13 sections · 76 bars`), `var(--tap)` tall, a hairline
+under, no plate. It is a LABEL and not a row with a sheet — no button, no
+`data-k`, no `aria-expanded`, nothing to open — and it is **the one `<thead>`
+row that does not pin**: §13a.1 gives the pane one pin and `stick()` spends it
+on the column heads directly below. Measured at 390 and 320 on both records:
+**45.0px**, at **y 147** at rest, and at **y −53** after a 200px scroll of the
+pane while the column heads held **y −5** — a label in the flow, under one
+pinned band. `position` is `static` in the stylesheet rather than left to
+`stick()`'s inline `auto`, so what the law says and what the box computes are
+the same sentence. Its count is the record's and not the view's: sections and
+bars are document facts, so the line reads the same when §5's transpose turns
+the grid.
+
+**B · PHRASES ARE MOTIFS.** The review's glossary (§12a) renamed the bank's
+thing `motif → phrase`; the box has addressed it `motif` all along
+(`motifpoint|…`, `A.motifLamp`, the row's own `data-special="motifs"`,
+`glyph.tab.motifs`), so the printed word went back to the address rather than
+the other way round. **Twenty-three strings**, no keys: `special.phrases.word`
+is `motifs`, its aria is `Motifs — every tune and beat in this song`, the eight
+`bank.*` strings say motif, `group.phrase` is `Motif`, `noun.phrase` is
+`motif`, `count.phrase.one/other` are `{n} motif(s)`, `glyph.tab.motifs` is
+`Motifs`, three `glyph.cell.prov.*.say` say `Motif from …`, and the two rules
+sentences point at *the motif editor*. **What keeps `phrase`:** `phrasing` in
+the PERFORMANCE row (an articulation), `field.phraseStructure` (*phrase
+structure*, the Development axis's own term, which §12a chose over *period*)
+and `rule.headPhraseLength` (*Phrase length*, its neighbour on that axis). A
+phrase length and a phrase structure are the FORM's terms; a motif is the
+thing in the bank. `test/copy.test.js`'s glossary net is inverted to match —
+it banned `motif`, it bans `phrase` now, and it exempts those two by name.
+
+**C · A `+` ADDS. IT DOES NOT ASK.** The ADD sheet §13a.5 shipped this morning
+is deleted — `ADDHEAD`/`ADDFOOT`, `addSheet`, `offerField`, `sheet.ts
+offerLozenge`, and the three copy keys `group.band` / `add.players` /
+`add.sections`. Each `+` **is** its offer: its `data-k` is the address of the
+op it fires, its accessible name says what a tap will add, and the tap writes
+the record through the same `op()` wrapper (the undo stack's door) every other
+control uses.
+
+- **The `+` at the end of the ROW axis** fires `sectionOffer` — one offer,
+  nothing to choose. `data-k="trow-add"`, name *"Add section at the end"*.
+- **The `+` at the end of the COLUMN axis** fires `nextPlayerOffer`, which is
+  new beside `playerOffers` and picks OUT of it rather than being a second
+  list. **Which player, and why one can be picked at all:** there are three
+  kinds and a `+` that adds cannot ask, so it takes **the band's own order —
+  drums if there is no kit, else bass if there is no bass, else a line** —
+  which is build-the-band's order, the order this box has hired in since the
+  nav had a Band branch. It is never a refused offer (`bass` and `drums` refuse
+  only when the record HAS one, the same test that skips them), and the name
+  says which before a thumb commits: `Add drums` on the Silence record,
+  `Add line` on Kingston 1969, measured. The other two kinds are not lost —
+  a second tap offers the next one, and every column head's own sheet holds all
+  three (`colOps`), which is the door `test/table-inventory.json` files.
+- §5's transpose swaps which edge is which and the two offers swap with it,
+  because the axis is what a `+` is at the end of.
+
+**AND AN ADD OPENS NOTHING, WHICH IS THE HALF THE SHEET WAS HIDING.** Measured
+on v288: a hire also opened the new player's COLUMN sheet and an add opened the
+new section's ROW sheet — `tablePanel` lands an arrival on the door `tab` /
+`formSec` names, which is T8a's *"add → hear it → choose its sound"*
+(2026-09-04). That is an interface popping up when you add a voice, so it goes
+too: `tableAPI`'s `addVoice` and `addSection` now `spend()` the arrival — one
+line, marking `landedOn` consumed before the redraw — and the new column or row
+stands on the table with nothing over it, its sheet one tap away on its own
+head. `openVoice` / `openSection`, which mean *"take me to it"*, are untouched.
+**T8a is inverted rather than deleted**, so the claim stays measured.
+
+**THE NUMBERS** (`scratchpad/design/direct-add/probe.cjs`, `devices["iPhone
+14"]`, DPR 3, `isMobile`, `hasTouch`, 390 and 320, on Kingston 1969 and the
+Silence record; before off a `git archive HEAD` of v288 served beside the
+working tree):
+
+| | before (v288) | after |
+|---|---|---|
+| the grid's own header | **none** | **SECTIONS**, 45.0px, `position: static`, `13 sections · 76 bars` (Kingston) · `1 section · 8 bars` (Silence) |
+| head rows in `<thead>` | 4 (TIME · RULES · PHRASES · heads) | **5** — the label between them, and still **one pinned band**, the heads at 0 |
+| the label under a 200px scroll | — | **y 147 → −53**, the heads **−5** (in the flow, under the one pin) |
+| the MOTIFS row's word | `phrases` | **`motifs`**, the row still 45px |
+| the head `+` | `data-k="tadd|head"`, aria *"Add a player or a section"*, `aria-expanded="false"` | **`tcol-add|drums`** (Silence) / **`tcol-add|line`** (Kingston), aria *"Add drums"* / *"Add line"*, no disclosure, 44 × 44 |
+| the foot `+` | `data-k="tadd|foot"`, same generic name | **`trow-add`**, aria *"Add section at the end"*, 44 × 44 |
+| a tap on the foot `+` | sections **13 → 13**, `.nu-addopen` **1** | sections **13 → 14**, `.nu-addopen` **0** |
+| a tap on the head `+` | voices **7 → 7**, `.nu-addopen` **1** | voices **7 → 8**, `.nu-addopen` **0** |
+| sheets open after either tap | **1** (the ADD sheet; then, one tap deeper, the arrival's own) | **0** — `.nu-wopen` unchanged across both taps |
+| the pane's `scrollTop` across an add | 90 → 90 | **90 → 90** |
+
+**GATES.** `test/table.browser.js` T13 grew **m** (the header: present, one
+`--tap` line, above the heads, no control in it, no pin on it, the count right)
+and **n** (either `+` adds, draws no sheet and moves no scroll); T9n/T9o read
+the `+` as its own offer, T8a is inverted, T12e and `CELLGROUPS` say `Motif`,
+and `CELL_ORDER`'s first field is `motifs`. `test/copy.test.js` GLOSSARY is
+inverted with its two exemptions. Four gates that hired through the ADD sheet
+(`shell.js`, `sheets.js`, `selects.js`, `nudges.js`) tap the `+` itself.
+`test/rules-view.browser.js` R9a reads *the motif editor*.
+`test/table-inventory.json` re-files the four offers (`open: tcol|<voice>` for
+the three kinds, `null` for the section) and deletes the two `tadd|` rows v288
+minted, with the reason in its own `renamed` note: the button is the offer's,
+so it is filed under the offer it fires.

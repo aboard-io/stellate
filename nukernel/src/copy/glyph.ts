@@ -38,10 +38,10 @@ export const GLYPHS: Table = {
   "glyph.tab.where.say": "Place and year",
   "glyph.tab.time": "Time",
   "glyph.tab.time.say": "Tempo, meter and key",
-  /* THE REVIEW'S GLOSSARY (TABLE.md §12a): motif -> phrase. The tab's
-     ADDRESS is still `Motifs` in ui/eight.js and in eleven gates; the printed
-     word is the composer's. */
-  "glyph.tab.motifs": "Phrases",
+  /* THE GLOSSARY WENT BACK (2026-09-05, TABLE.md §13e, Paul: *"Call phrases
+     motifs"*). The tab's ADDRESS was always `Motifs` — in ui/eight.js and in
+     eleven gates — and the printed word is that word again. */
+  "glyph.tab.motifs": "Motifs",
   "glyph.tab.motifs.say": "The song's tunes and beats",
   "glyph.tab.band": "Band",
   "glyph.tab.band.say": "Sections down, players across",
@@ -120,7 +120,7 @@ export const GLYPHS: Table = {
   /* the word is the MIX row's own — `special.mix.word`. */
   "glyph.facet.mix.say": "Channel strip — inserts, sends, tone and level",
   "glyph.facet.plays": "what it plays",
-  "glyph.facet.plays.say": "Part, register, entry and default phrase",
+  "glyph.facet.plays.say": "Part, register, entry and default motif",
   "glyph.facet.sec": "per-section",
   "glyph.facet.sec.say": "What this player does, section by section",
   "glyph.facet.samples": "samples",
@@ -147,11 +147,11 @@ export const GLYPHS: Table = {
   "glyph.cell.part.drums.say": "The kit.",
 
   "glyph.cell.prov.own": "From this genre",
-  "glyph.cell.prov.own.say": "Phrase from this song's genre.",
+  "glyph.cell.prov.own.say": "Motif from this song's genre.",
   "glyph.cell.prov.guest": "From a guest",
-  "glyph.cell.prov.guest.say": "Phrase from a guest genre.",
+  "glyph.cell.prov.guest.say": "Motif from a guest genre.",
   "glyph.cell.prov.hand": "Edited",
-  "glyph.cell.prov.hand.say": "Phrase edited by hand.",
+  "glyph.cell.prov.hand.say": "Motif edited by hand.",
 
   "glyph.cell.level.out": "Out",
   "glyph.cell.level.out.say": "Out of the mix.",

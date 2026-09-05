@@ -6499,10 +6499,12 @@ table.nu-trims{ color: var(--ink); }
    so the first player's head was cut to '…he ntl'."* MEASURED on v287 at 390:
    the adder column is 224px (`--addw: 22ch`) of a 364.4px pane and its head
    cell is 57.3px tall — a permanent shop window over a table you are trying to
-   read. The offers are a SHEET now: one `+` cell at the end of the head row
-   and one `+` row at the grid's foot, each `--tap`, each opening the same list
-   (`src/table/grid.ts addSheet`, which IS `playerOffers`/`sectionOffer` —
-   moved, not copied), and the three column widths go back to the players.
+   read. The offers are ONE CELL AT EACH EDGE now: a `+` at the end of the head
+   row and a `+` row at the grid's foot, each `--tap`, and the three column
+   widths go back to the players. They opened an ADD sheet for one afternoon;
+   since §13e (Paul: *"Don't pop up an interface when I add a section or a
+   voice. Just add it."*) each `+` IS its offer — `src/table/grid.ts plusBtn`
+   carries the op's own `data-k` and fires it on the tap.
    WHAT STOOD HERE: `.nu-addbar` (the wrapping flex row), `.nu-addbtn` (the
    dashed 44px word plate and its `[disabled]`), the two `.nu-addhead` padding
    rules and `.nu-addrow`'s dashed top rule. */
@@ -6745,6 +6747,29 @@ table.nu-trims{ color: var(--ink); }
 .nu-spface{ flex: 1 1 auto; min-inline-size: 0; text-align: end;
   font: var(--num-fw) var(--t3)/1.2 var(--sans, inherit); color: var(--dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ================
+   Paul: *"Give the main composer interface its own header call it Sections."*
+   One line above the column heads, in the special row's own furniture — the
+   word left, the count right, `--tap` tall, a hairline under — and NOT a
+   control: there is no button in it, so the padding `.nu-sphead` would have
+   given the line is given to the two words instead and the line stays exactly
+   one `--tap` high.
+   IT IS THE ONE `<thead>` ROW THAT IS NOT STICKY, and it says so in the
+   stylesheet rather than leaving it to the inline offsets `stick()` writes:
+   §13a.1 gives the pane ONE pin and `stick()` spends it on the LAST head row
+   (the column heads, directly below this one). A label that pinned would be a
+   second band over the grid, which is the whole of the complaint §13 answers. */
+.nu-sheetgrid thead tr.nu-gridlabel > th.nu-labelcell{ position: static; }
+.nu-gridlabel .nu-spword{ padding-inline-start: var(--s3); }
+/* ...AND THE COUNT IS NOT SHOUTED. `.nu-trims thead th` is a dim UPPERCASE
+   word — the type a column head wears — and the other special rows escape it
+   by putting their face inside a `<button>`, which does not inherit it. This
+   row has no button in it (it is a label), so it drew `13 SECTIONS · 76 BARS`
+   in caps beside three faces in sentence case, measured on the first drawing.
+   The word keeps the uppercase, because that is what a row's word IS here. */
+.nu-gridlabel .nu-spface{ padding-inline-end: var(--s3);
+  text-transform: none; letter-spacing: 0; }
 
 /* ===== THE MOTIFS ROW AND ITS BANK (2026-09-08, TABLE.md §10b step 4) ====
    §10a: *"MOTIFS is the bank across the top with previews and provenance, and

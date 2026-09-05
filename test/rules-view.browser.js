@@ -450,11 +450,13 @@ function standUpServer() {
   /* the seven motif lines are one row now, with the list behind the hold */
   check(shape.motifs.length === 1 &&
     /* IT READ `/the motifs are written in the tracker/` UNTIL 2026-09-05 (the
-       functional text pass, TABLE.md §11): "motif" is "phrase" in the review's
-       glossary and "the tracker" is a name no composer uses. The claim is
-       unchanged — ONE row, whose text points at where phrases are edited, with
-       the list itself behind `data-say`. */
-    /phrase editor/i.test(shape.motifs[0].text) &&
+       functional text pass, TABLE.md §11), then `/phrase editor/` for one
+       afternoon, and `motif` is the printed word again since TABLE.md §13e
+       (Paul: *"Call phrases motifs"*). "The tracker" is still a name no
+       composer uses. The claim is unchanged through all three — ONE row, whose
+       text points at where the motifs are edited, with the list itself behind
+       `data-say`. */
+    /motif editor/i.test(shape.motifs[0].text) &&
     shape.motifs[0].say > 40,
     "R9a the motifs are ONE read-only row with the list behind data-say " +
     JSON.stringify(shape.motifs));

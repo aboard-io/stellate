@@ -84,7 +84,16 @@ const BANNED = [
    than about narrative, so they are their own list and their own line. */
 const GLOSSARY = [
   ["\"chair\" for a part", /\bchairs?\b/i],
-  ["\"motif\" for a phrase", /\bmotifs?\b/i],
+  /* ...AND THIS ONE IS THE OTHER WAY ROUND SINCE 2026-09-05 (TABLE.md §13e).
+     Paul: *"Call phrases motifs."* The review renamed the bank's thing to
+     `phrase` and the box has been addressing it `motif` all along
+     (`motifpoint|…`, `A.motifLamp`, the MOTIFS row's own `data-special`), so
+     the word went back to the address. What is banned is `phrase` FOR THAT
+     THING; the form's own terms keep it — `phrasing` is an articulation (the
+     PERFORMANCE row) and `phrase structure` / `phrase length` are the
+     Development axis's, which is why the net exempts them by name rather than
+     by hoping no key says them. */
+  ["\"phrase\" for a motif", /\bphrases?\b(?!\s+(structure|length))/i],
   ["\"alphabet\" for a scale", /\balphabets?\b/i],
   ["\"word operator\" for a transformation", /\bword operators?\b/i],
   ["\"pace\" for feel", /\bpace\b/i],
@@ -166,6 +175,13 @@ const SAME_TEXT_OK = [
      (which meter a rule is about); `group.meter` is the heading over the TIME
      row's meter chips and its two numbers. */
   ["rule.headMeter", "group.meter"],
+  /* ...and `glyph.sec.list` is the WORD ON A MARK (ui/glyph.js `GLYPH.sec.list`
+     — the picture for "every section, by name"), while `grid.sections.word` is
+     the heading over the grid itself (2026-09-05, TABLE.md §13e). The same
+     argument `glyph.tab.time` makes above: one is a label on an icon and one is
+     a heading over a block of the table, and a translator may not spell them
+     the same. */
+  ["glyph.sec.list", "grid.sections.word"],
 ];
 
 async function run() {

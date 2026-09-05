@@ -25,7 +25,7 @@ musician uses.
 States every component may wear: **rest · derived (quiet, inherited/default) · written (bold, a hand set it) · selected (ring in --hand) · editing (the control popped up) · refused (dashed, with its sentence) · sounding (lamp in --clock) · measured (--meter)**. A state is a class the gates can read; a live state writes CHILDREN only.
 
 1. **Cell** — a plain value at rest: its GLYPH first, the word only where no honest glyph exists, a number small beside its glyph, tabular. No border, no plate. First tap selects; second tap / Enter / F2 / a printable key edits; Delete clears to default; Escape restores; Tab commits and moves. Range by Shift or drag.
-2. **Head** — a row or column header: glyph first and its word where the column has room for it whole (≥ 9ch; a head is never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that opens the ADD sheet (TABLE.md §13a.5), never a row of offers.
+2. **Head** — a row or column header: glyph first and its word where the column has room for it whole (≥ 9ch; a head is never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that ADDS on the tap (TABLE.md §13e) — a section at the row axis, and at the column axis the one kind the band has not got, in build-the-band's order — never a row of offers and never a sheet asking which. Its accessible name says what a tap will add.
 3. **Special row** — TIME · RULES · MOTIFS above, MIX · PRODUCE · PERFORM below: a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
 4. **Sheet** — a vector as rows (label · value · clear-back), full pane width, wrapping, in flow (never a modal), opened as the next `<tr>` under the row that owns it; its owner row is its header and is the pane's ONE pin while it is open (a cell sheet pins nothing at all — its header is component 5, in flow at its top).
 5. **Cell sheet header** — the first line of the OPEN cell sheet: the address of the selection, then undo · redo · copy · paste. Present only while a cell sheet is open, in flow at its top, never fixed and never sticky. (It was the **formula bar**, a strip above the pane that became a bottom sheet on a phone — 105.8px of a 844px screen at rest, measured — until TABLE.md §13a.6 moved its head into the sheet and found its readout was the sheet's own first group all along. Undo and redo therefore live where the change was made.)
@@ -74,6 +74,14 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     CONTROL ON ITS FACT — no native picker drawn beside it and none of the
     picker's ▾ over it; the native picker
     stays only where a vocabulary is long AND flat (a genre list).
+17. **Label row** (TABLE.md §13e, Paul, 2026-09-05: *"Give the main composer
+    interface its own header call it Sections"*) — a one-line heading over a
+    block of the table, and the only row that is not a control: the word left
+    in the special row's own style (uppercase, `--fw-block`), its count right,
+    `--tap` tall, a hairline under, no plate — and no button, no address and
+    nothing to open. It is also the one `<thead>` row that NEVER pins: the
+    pane's single pin belongs to the column heads under it. SECTIONS, over the
+    grid, is the only one.
 
 ## 3 · Interaction laws
 
@@ -83,7 +91,7 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 - Blank = default (inherited); bold = written; delete = back to default.
 - Nothing dismisses under a finger that is changing a value.
 - Nothing scrolls sideways at the page level; the pane is the scrollport.
-- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are a sheet, not columns. A cell is its glyph first and its word where the column has room. Opening or closing a sheet leaves the pane's `scrollTop` identical.
+- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell is its glyph first and its word where the column has room. Opening or closing a sheet leaves the pane's `scrollTop` identical.
 
 ## 4 · Copy (the voice)
 
@@ -92,11 +100,13 @@ value. Verbs for actions ("Add player", "Delete section"), nouns for things
 ("Tempo", "Key", "Swing", "Attack"), units after numbers. No narrative, no
 possessives of the box ("the record's own"), no dates, no code, no quotes.
 A chip or a face: ≤ 6 words. A sentence beside a refused control: ≤ 12
-words. What a composer calls it wins: phrase, chord, key, tempo, meter,
-part, player, section, take.
+words. What a composer calls it wins: motif, chord, key, tempo, meter,
+part, player, section, take. (It read *phrase* until 2026-09-05 — Paul:
+*"Call phrases motifs"*, TABLE.md §13e. *Phrasing* and *phrase structure* stay
+where they mean the performance and the form.)
 
 ## 5 · The composer's order (what a sheet lists first)
 
 Time (tempo · meter · key) → the form (sections) → the players → each
-cell's phrase, then its dynamics, then its treatment. In a chair's sheet:
+cell's motif, then its dynamics, then its treatment. In a chair's sheet:
 the instrument, then its envelope, then its tone, then where it sits.
