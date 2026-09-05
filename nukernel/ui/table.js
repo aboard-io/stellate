@@ -1448,6 +1448,11 @@ function pickerFor2(f2) {
   return pickerFor((f2.options || []).length, { strip: true });
 }
 var wordOf = (f2) => f2.word == null || f2.word === "" ? "—" : String(f2.word);
+var subOf = (f2) => {
+  const s3 = f2.sub == null ? "" : String(f2.sub).trim();
+  if (!s3) return null;
+  return s3.toLowerCase() === wordOf(f2).trim().toLowerCase() ? null : s3;
+};
 var valueAria = (value, derived) => derived ? t4("value.defaultAria", { value }) : value;
 function chipAria(word, why, prov) {
   if (why && prov) return t4("sheet.chip.whyProv", { name: word, why, prov });
@@ -1588,7 +1593,7 @@ function fieldRow(f2, openField, setOpenField, after) {
         data-why=${o2(s3.why || void 0)}
         title=${o2(s3.why || void 0)}
         aria-label=${s3.why ? t4("sheet.say.refused", { name: s3.label, value: wordOf(s3), why: s3.why }) : t4("sheet.field", { name: s3.label, value: wordOf(s3) })}>${wordOf(s3)}</span>
-      ${s3.sub ? b`<small class="nu-sheetsub">${s3.sub}</small>` : A}
+      ${subOf(s3) ? b`<small class="nu-sheetsub">${subOf(s3)}</small>` : A}
     </div>`;
   }
   const sf = f2;
@@ -1613,7 +1618,7 @@ function fieldRow(f2, openField, setOpenField, after) {
   if (pick === "combo")
     return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
-      ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
+      ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>`;
   if (pick === "slider") {
     const N2 = sf.num;
@@ -1649,7 +1654,7 @@ function fieldRow(f2, openField, setOpenField, after) {
         @change=${(e4) => slide(e4.target.value)} />
       ${N2.unit ? b`<small class="nu-numunit">${N2.unit}</small>` : A}
       ${clearBack}
-      ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
+      ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>`;
   }
   if (pick === "native")
@@ -1662,7 +1667,7 @@ function fieldRow(f2, openField, setOpenField, after) {
           value=${String(o4.v == null ? "" : o4.v)}
           ?disabled=${!!o4.off}>${o4.w == null ? String(o4.v) : o4.w}</option>`)}
       </select>${clearBack}
-      ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
+      ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>`;
   return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>
@@ -1684,7 +1689,7 @@ function fieldRow(f2, openField, setOpenField, after) {
   })}
         @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
       ${clearBack}
-      ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
+      ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>${open ? pick === "lozenge" ? lozengeFor(sf, write) : chipStrip(sf, write) : A}`;
 }
 function lozengeFor(f2, onWrite) {

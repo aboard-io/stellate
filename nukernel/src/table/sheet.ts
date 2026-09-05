@@ -122,6 +122,24 @@ export function pickerFor(f: StripField): Picker {
 const wordOf = (f: { word?: string | null }) =>
   (f.word == null || f.word === "" ? "—" : String(f.word));
 
+/* ONE OWNER PER FACT (DESIGN.md §3), AND THE CAPTION WAS SAYING THE VALUE'S
+   WORD BACK TO IT. A field with nothing written carries `sub: "Default"` — the
+   caption that says WHERE the value came from — and a field with nothing
+   written and nothing inherited prints `t("value.default")` as its VALUE, so
+   the cell sheet's octave row rendered `OCTAVE  default  default`: a label, a
+   value and a readout, three inks for one fact, measured at 390 on Kingston
+   1969. The caption is drawn only where it says something the value does not;
+   where they agree the quiet weight (`is-derived`) is already the whole
+   sentence. Compared case-folded, because `value.defaultCap` is `value.default`
+   with a capital. It is done HERE and not at the five field builders because a
+   caption is a property of the FIELD and this is the one place it is drawn. */
+const subOf = (f: { word?: string | null; sub?: string | null }):
+    string | null => {
+  const s = f.sub == null ? "" : String(f.sub).trim();
+  if (!s) return null;
+  return s.toLowerCase() === wordOf(f).trim().toLowerCase() ? null : s;
+};
+
 /* WHAT A SCREEN READER HEARS AFTER A VALUE NOBODY WROTE. DESIGN.md §3 says
    blank = default and bold = written, which is exactly the distinction a
    screen reader cannot see — so the WORD is added there and nowhere else,
@@ -341,7 +359,7 @@ function fieldRow(f: Field, openField: string | null,
         aria-label=${s.why
           ? t("sheet.say.refused", { name: s.label, value: wordOf(s), why: s.why })
           : t("sheet.field", { name: s.label, value: wordOf(s) })}>${wordOf(s)}</span>
-      ${s.sub ? html`<small class="nu-sheetsub">${s.sub}</small>` : nothing}
+      ${subOf(s) ? html`<small class="nu-sheetsub">${subOf(s)}</small>` : nothing}
     </div>`;
   }
   const sf = f as StripField;
@@ -372,7 +390,7 @@ function fieldRow(f: Field, openField: string | null,
        property of the FIELD, not of which widget the vocabulary earned. */
     return html`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
-      ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
+      ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>`;
   /* ---- A SLIDER, AND A NUMBER YOU CAN TYPE (2026-09-05) ----------------
      Paul: *"When you redesign think sliders and other UI for data entry."*
@@ -419,7 +437,7 @@ function fieldRow(f: Field, openField: string | null,
         @change=${(e: Event) => slide((e.target as HTMLInputElement).value)} />
       ${N.unit ? html`<small class="nu-numunit">${N.unit}</small>` : nothing}
       ${clearBack}
-      ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
+      ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>`;
   }
   if (pick === "native")
@@ -435,7 +453,7 @@ function fieldRow(f: Field, openField: string | null,
           value=${String(o.v == null ? "" : o.v)}
           ?disabled=${!!o.off}>${o.w == null ? String(o.v) : o.w}</option>`)}
       </select>${clearBack}
-      ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
+      ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>`;
   return html`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>
@@ -453,7 +471,7 @@ function fieldRow(f: Field, openField: string | null,
                                value: valueAria(wordOf(sf), !!sf.derived) })}
         @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
       ${clearBack}
-      ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
+      ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>${open ? (pick === "lozenge" ? lozengeFor(sf, write)
                                        : chipStrip(sf, write)) : nothing}`;
 }

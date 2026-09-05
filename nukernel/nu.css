@@ -7879,14 +7879,63 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   font: var(--fw-block) var(--t1)/1.15 var(--sans, inherit); }
 #pan-band .nu-wordgrid .nu-colname{
   font: var(--fw-body) var(--t0)/1.2 var(--mono, monospace); opacity: .7; }
-/* ...AND A ROW HEAD CLIPS RATHER THAN OVERFLOWING. `table-layout: fixed` gives
-   the head column 13ch and does not reflow for a longer word, so "drums & bass"
-   at `--t2` ran straight across the first two cells — measured on the rendered
-   page the minute the type moved. The whole name is in the button's accessible
-   name and in its `title`; the column is what it is. */
+/* ...AND A ROW HEAD CLIPS RATHER THAN OVERFLOWING — BUT ONLY ONCE THE COLUMN
+   IS THE WIDTH THIS PARAGRAPH CLAIMED IT WAS (repaired 2026-09-05).
+   The sentence that stood here said "`table-layout: fixed` gives the head
+   column 13ch". MEASURED, it does not, and has not since §10a put the special
+   rows in the `<thead>`: `.nu-wordgrid thead th:first-child` is now the TIME
+   row's `<th colspan>`, so the 13ch lands on a cell that spans every column
+   and sizes none of them, and no `<col>` carried a width either. Chrome shared
+   the table's declared width out instead and the head column came out 35.6px
+   at 320 AND at 390 — into which `--t2` plus `overflow: hidden` printed "b…",
+   "d…", "in…", "v…" under a corner reading "S…". The section names are what a
+   composer navigates by; a name at one letter is not a name.
+   THE WIDTHS ARE DECLARED ON THE `<col>`s AND THE TABLE IS THEIR SUM, which is
+   the one shape `table-layout: fixed` renders exactly — a table wider than the
+   sum has its surplus shared out in proportion, and the old formula
+   (`13ch + cols * 9ch`, 865px against a 364px pane) was 480px of surplus
+   parked in the adder column. Declared: the section names 8ch, a player 3.5ch
+   (which is what a player column already measured, so the players do not move),
+   the adder 22ch — its three offers on ONE line, measured at 214.3px, because
+   `.nu-addcol`'s own 9ch stacks them three deep and takes the header row from
+   48px to 139, which is 91px of a phone's screen spent on a gap above the
+   player heads (they are `vertical-align: bottom` and the corner is not); at
+   22ch the header row measures 57.3px. The offers still wrap when a record's
+   words are longer; the column no longer makes them. MEASURED at 320 AND 390: the head column 35.6 → 81.4px, a
+   player 35.6 → 35.6px, the dead adder 550 → 224px, the corner "SECTION" whole,
+   and "bass alone / drums & bass / intro / verse / chorus / bridge / solo /
+   outro" — every section name on this record but the twelve-character one —
+   printing whole where before every one of them was a letter and an ellipsis.
+   EIGHT AND NOT THIRTEEN: 13ch would be a third of a 320px pane spent on the
+   names; 8ch is the longest of the standard words ("chorus", "bridge") with
+   room, and a longer name still ellipsises, which is what the paragraph below
+   is about. Wider than the sum (1280) the proportion is what scales, which is
+   the same table with room.
+   THE `<col>`'s INLINE STYLE STILL WINS: `WIDTH` writes a resized player's
+   width onto its own `<col>` and no rule here can outrank an attribute. */
+#pan-band .nu-wordgrid{ --headw: 8ch; --colw: 3.5ch; --addw: 22ch;
+  inline-size: max(100%, calc(var(--headw) + (var(--cols, 2) - 1) * var(--colw)
+                              + var(--addw))); }
+#pan-band .nu-wordgrid > colgroup > col{ inline-size: var(--colw); }
+#pan-band .nu-wordgrid > colgroup > col:first-child{ inline-size: var(--headw); }
+#pan-band .nu-wordgrid > colgroup > col.nu-addcol{ inline-size: var(--addw); }
 #pan-band .nu-rowjump{ font: var(--fw-label) var(--t2)/1.2 var(--sans, inherit);
   overflow: hidden; text-overflow: ellipsis; }
+/* AND THE NAME GETS THE LINE. The mark and the section's number are inline
+   siblings of it, so in 36px they took the first line and left the name a
+   scrap of the second; as a block the name has the whole column, and the
+   ellipsis is its own — `text-overflow` on an inline box paints nothing, which
+   is why the clipping had to be read off the button. */
+#pan-band .nu-wordgrid .nu-srowname{ display: block; }
 #pan-band .nu-wordgrid tbody th.nu-srowh{ overflow: hidden; }
+/* ...AND THE CORNER KEEPS ITS OWN TYPE. `.nu-corner` is .62rem uppercase mono
+   — a head's word, not a value — and `#pan-band .nu-rowjump` above outranked
+   it by an id, printing "SECTION" at `--t2` sans into a column it does not
+   fit: "S…". A head is the one word on this surface that is allowed to be
+   small, because no hand edits it. */
+#pan-band .nu-wordgrid .nu-corner{
+  font: var(--fw-block) var(--t0)/1.3 var(--mono, monospace);
+  letter-spacing: .04em; }
 #pan-band .nu-rowjump:hover{ background: var(--hand-tint); border-color: transparent; }
 #pan-band .nu-trims tbody th small{ font-size: var(--t0); }
 /* the sheet's label column is the QUIET half of the row and the value is the
@@ -8242,6 +8291,42 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-wordgrid tbody th.nu-srowh,
 #pan-band .nu-wordgrid thead th.nu-cornerh,
 #pan-band .nu-wordgrid tbody th.nu-addhead{ background: var(--ground); }
+
+/* ...AND THE GROUND HAS TO COVER THE BORDER-SPACING, WHICH IS NOT THE CELL
+   (repaired 2026-09-05). A ground on a `<th>` paints the CELL. This table is
+   `border-collapse: separate; border-spacing: 3px` (the block above `.nu-srowh`
+   says why the freeze is pinned at 3px), so between TIME and RULES, between
+   RULES and PHRASES, and between the last of them and the column heads there
+   is a 3px line of table that no cell owns — and a sheet or a lozenge field
+   scrolling under the stack printed straight through it. MEASURED at 390 on
+   the cell sheet ("…default | fill…" between TIME and RULES, "PHRASE" under
+   PHRASES) and on the scale picker ("DIMINISHED, HALF-WHOLE" between TIME and
+   RULES). Three rows that are opaque with two seams through them are not a
+   sticky head; they are a venetian blind.
+   A SHADOW AND NOT AN OUTLINE, and the difference is what the tape measure
+   reads: `measure.cjs` counts any outline over a hairline as a THICK RULE, and
+   the pass's own headline is "rules thicker than a hairline 9 → 0" — a ground
+   that reported itself as twenty-one new rules would be a lie in the next
+   measurement. An outer `box-shadow` takes no layout (the pane's scrollWidth
+   is unchanged, measured), paints OUTSIDE the border box so each head keeps
+   its own hairline, and paints in the head's own stacking context —
+   z 2/4, over `.nu-vsheet`'s 0. 3px on every side closes each seam from both
+   directions at once, and the column gap beside the frozen row head with it.
+   IT IS `--ground`, the same token the cells carry, for the same reason: it is
+   the page's own cream, so the seam is invisible at rest and opaque under a
+   scroll. */
+#pan-band .nu-wordgrid thead th,
+#pan-band .nu-wordgrid tbody th.nu-srowh,
+#pan-band .nu-wordgrid thead th.nu-cornerh,
+#pan-band .nu-wordgrid tbody th.nu-addhead{
+  box-shadow: 0 0 0 3px var(--ground); }
+/* ...AND THE PLAYHEAD SURVIVES IT. `.nu-colhead.is-sounding` spends its own
+   `box-shadow` on the clock's edge bar under a sounding player; the rule above
+   is id-scoped and would have outranked it, so the two are ONE list here, the
+   lamp first. Nothing appears or disappears: the ground ring is on the head
+   whether it is sounding or not. */
+#pan-band .nu-wordgrid thead th.nu-colhead.is-sounding{
+  box-shadow: inset 0 -3px 0 var(--clock), 0 0 0 3px var(--ground); }
 
 /* ---- ...AND IT MUST BE ABOVE THE SHEET, NOT ONLY OPAQUE ---------------
    A ground stops what is UNDER a head; it does not stop what paints OVER it.

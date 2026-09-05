@@ -3607,6 +3607,161 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       side + "px)");
     await p.evaluate(() => window.__eightRow("time", false));
     await p.waitForTimeout(300);
+
+    /* ---- T12k · THE FROZEN STACK IS OPAQUE, AND SO ARE ITS SEAMS ------
+       The design pass gave the COLUMN heads a ground and a z-index because a
+       sheet was printing straight through them. The three merged rows above
+       them — TIME · RULES · PHRASES — got the ground, and nothing got the 3px
+       of `border-spacing` BETWEEN them: a cell sheet and a lozenge field
+       printed through both seams (measured at 390 on Kingston 1969, "…default
+       | fill…" between TIME and RULES and "DIMINISHED, HALF-WHOLE" under the
+       scale picker). Three opaque rows with two clear lines through them are
+       not a frozen head; they are a venetian blind.
+       READ OFF THE RENDERED STACK, not off the stylesheet: every frozen head
+       opaque in the page's own `--ground`, every one of them ABOVE the sheet
+       that scrolls under it, and every seam between two of them covered by the
+       grounds the two rows carry past their own edges. Before the repair the
+       cover was 0 against a 3px gap at all three widths. */
+    const STACK = `(() => {
+      const host = document.getElementById("pan-band");
+      const grid = host.querySelector("table.nu-wordgrid");
+      const zOf = (el) => { const z = getComputedStyle(el).zIndex;
+        return z === "auto" ? 0 : +z; };
+      /* the outer spread of a box-shadow, in px — what a head paints OUTSIDE
+         its own border box, which is the only thing that can reach a seam */
+      const spread = (sh) => { if (!sh || sh === "none") return 0;
+        let best = 0;
+        for (const part of sh.split(/,(?![^(]*\\))/)) {
+          if (/inset/.test(part)) continue;
+          const n = (part.match(/-?[0-9.]+px/g) || []).map(parseFloat);
+          if (n.length >= 4) best = Math.max(best, n[3]);
+        }
+        return best; };
+      const swatch = document.createElement("i");
+      swatch.style.color = getComputedStyle(document.documentElement)
+        .getPropertyValue("--ground").trim();
+      document.body.appendChild(swatch);
+      const want = getComputedStyle(swatch).color; swatch.remove();
+      const rows = []; const seen = new Set();
+      for (const th of grid.querySelectorAll("thead th")) {
+        const cs = getComputedStyle(th);
+        if (cs.position !== "sticky") continue;
+        const r = th.getBoundingClientRect();
+        const k = r.top.toFixed(1); if (seen.has(k)) continue; seen.add(k);
+        rows.push({ top: r.top, bottom: r.bottom, bg: cs.backgroundColor,
+                    z: zOf(th), spread: spread(cs.boxShadow) });
+      }
+      rows.sort((a, b) => a.top - b.top);
+      const sheet = host.querySelector(".nu-vsheet");
+      const sz = sheet ? zOf(sheet) : -1;
+      const seams = [];
+      for (let i = 0; i < rows.length - 1; i++)
+        seams.push({ gap: +(rows[i + 1].top - rows[i].bottom).toFixed(2),
+                     cover: rows[i].spread + rows[i + 1].spread });
+      return { n: rows.length, want, sheet: !!sheet, sz,
+        clear: rows.filter((r) => r.bg !== want).length,
+        under: rows.filter((r) => r.z <= sz).length,
+        open: seams.filter((s) => s.gap > 0.5 && s.cover + 0.01 < s.gap).length,
+        seams };
+    })()`;
+    for (const W of [320, 390, 1280]) {
+      await ctx.pages()[0].setViewportSize({ width: W, height: W === 1280 ? 900 : 844 });
+      await p.waitForTimeout(400);
+      await top("Band");
+      /* the exact repro: the long vocabulary open under the frozen rows */
+      await p.evaluate(() => window.__eightRow("time", true));
+      await p.waitForTimeout(500);
+      await p.evaluate(() => {
+        const el = document.querySelector('#pan-band [data-sel="alphabet.scale"]');
+        if (el) el.scrollIntoView({ block: "center" }); });
+      await p.waitForTimeout(300);
+      const st = await p.evaluate(STACK);
+      check(st.n >= 4 && st.clear === 0,
+        "T12k at " + W + " every frozen head is opaque in --ground (" +
+        st.clear + " of " + st.n + " see-through, want " + st.want + ")");
+      check(st.sheet && st.under === 0,
+        "T12k …and every one of them is ABOVE the sheet that scrolls under it " +
+        "(sheet z " + st.sz + ", " + st.under + " heads at or below it)");
+      check(st.open === 0,
+        "T12k …and NOTHING renders through the seams between them — " +
+        st.open + " of " + st.seams.length + " uncovered " +
+        JSON.stringify(st.seams));
+      await p.evaluate(() => window.__eightRow("time", false));
+      await p.waitForTimeout(250);
+    }
+
+    /* ---- T12l · THE SECTION NAMES ARE THE NAVIGATION ------------------
+       Paul's own order of controls is the form first, and the form is this
+       column: the row heads are how a composer moves around the record. The
+       restyle put the head at `--t2` with `overflow: hidden` in a column that
+       had never actually been given a width (`.nu-wordgrid thead th:first-child`
+       has addressed the TIME row's `<th colspan>` since §10a), and the names
+       rendered "b…", "d…", "in…", "v…" under a corner reading "S…".
+       MEASURED ON THE RENDERED TYPE: the five words a section is usually
+       called, laid out in the name's own computed font, must fit the name's
+       own box — a canvas measurement rather than a hard-coded pixel count, so
+       the check follows the type wherever the type goes. Plus: no short name
+       on the record itself ellipsised, the corner's word whole, and the bar
+       count on its own line UNDER the name (a head is a name and a count, in
+       that order). */
+    const NAMES = `(() => {
+      const host = document.getElementById("pan-band");
+      const grid = host.querySelector("table.nu-wordgrid");
+      const th = grid.querySelector("tbody th.nu-srowh");
+      const name = th && th.querySelector(".nu-srowname");
+      if (!name) return null;
+      const cs = getComputedStyle(name);
+      const cv = document.createElement("canvas").getContext("2d");
+      cv.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " +
+                cs.fontFamily;
+      const box = name.clientWidth;
+      const heads = [...grid.querySelectorAll("tbody th.nu-srowh")];
+      const named = heads.filter((t) => t.querySelector(".nu-srowname"));
+      const corner = host.querySelector(".nu-corner");
+      return {
+        headW: +th.getBoundingClientRect().width.toFixed(1), box,
+        font: cv.font,
+        misses: ["bass", "drums", "intro", "verse", "chorus"]
+          .filter((w) => cv.measureText(w).width > box + 0.5),
+        cut: named.map((t) => t.querySelector(".nu-srowname"))
+          .filter((n) => n.textContent.trim().length <= 6 &&
+                         n.scrollWidth > n.clientWidth + 1)
+          .map((n) => n.textContent.trim()),
+        corner: corner
+          ? { w: corner.textContent.trim(),
+              cut: corner.scrollWidth > corner.clientWidth + 1 } : null,
+        heads: named.length,
+        counted: named.filter((t) => {
+          const n = t.querySelector(".nu-srowname"), s = t.querySelector("small");
+          return s && /[0-9]/.test(s.textContent) &&
+            s.getBoundingClientRect().top >=
+              n.getBoundingClientRect().bottom - 1; }).length };
+    })()`;
+    for (const W of [320, 390, 1280]) {
+      await ctx.pages()[0].setViewportSize({ width: W, height: W === 1280 ? 900 : 844 });
+      await p.waitForTimeout(400);
+      await top("Band");
+      const nm = await p.evaluate(NAMES);
+      check(!!nm && nm.headW >= 64,
+        "T12l at " + W + " the section column is a column and not a letter — " +
+        (nm && nm.headW) + "px (was 35.6 at 320 and 390)");
+      check(!!nm && nm.misses.length === 0,
+        "T12l …and bass · drums · intro · verse · chorus all fit its type (" +
+        JSON.stringify(nm && nm.misses) + " do not, in " +
+        (nm && nm.box) + "px of " + (nm && nm.font) + ")");
+      check(!!nm && nm.cut.length === 0,
+        "T12l …no short name on the record ellipsised (" +
+        JSON.stringify(nm && nm.cut) + ")");
+      check(!!nm && !!nm.corner && !nm.corner.cut,
+        "T12l …the corner's own word whole (" +
+        JSON.stringify(nm && nm.corner) + ")");
+      check(!!nm && nm.heads > 0 && nm.counted === nm.heads,
+        "T12l …and the bar count under every one of them (" +
+        (nm && nm.counted) + " of " + (nm && nm.heads) + ")");
+    }
+    await ctx.pages()[0].setViewportSize({ width: 390, height: 844 });
+    await p.waitForTimeout(400);
+    await top("Band");
   }
 
   /* ================= T0 · THE CONSOLE =================================== */
