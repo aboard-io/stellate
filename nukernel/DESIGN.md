@@ -38,6 +38,29 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 13. **Hamburger** — `#burger` top-right with the log's badge; a full-height in-flow sheet per viewer (Score · Video · Screensaver · Export) with a close.
 14. **Refusal** — never a missing control: the control drawn disabled with its sentence beside it (no silent grey).
 15. **Glyph** — every icon from `ui/glyph.js`, each with its `.nu-vh` word and `data-say`; the sheet at 390 reads as a grid of marks.
+16. **Lozenge field** (Paul, 2026-09-05: *"a novel interface for when there
+    are tons of options and some of them can be multiple… tight lozenges,
+    organized by color and clustered semantically by the kind of things
+    they present… visibility into all of the options"*) — for any
+    vocabulary past the chip limit (the 68 drum ops, 42 chord qualities, 63
+    scales, 14+ transformations, the instruments): EVERY option visible at
+    once as a tight lozenge (`--r-pill`, hairline, `--t2` type, ~28px tall
+    visually with a 44px hit area through its margins), the field wrapping
+    to the pane's width, the options CLUSTERED semantically with a small
+    heading per cluster (drums: kick · snare · hats · toms & fills ·
+    dynamics · feel; qualities: triads · sixths · sevenths · ninths ·
+    elevenths · thirteenths · altered; scales: diatonic · melodic minor ·
+    harmonic minor · pentatonic · hexatonic · octatonic · bebop · maqam ·
+    thaat), each cluster carrying ONE hue from a small semantic palette
+    (the cluster's ink on a tint of it, not rainbow noise — hue means the
+    kind, weight means the state), the HOT ones (selected) filled in the
+    cluster's ink, the rest outlined; single-select fields toggle one, multi-
+    select fields toggle any number and keep an ordered chain where order
+    matters (the transformations); a cluster folds by its heading but starts
+    open; a long-press on a lozenge prints its sentence; the whole field is
+    scannable in one pass at 390 and never scrolls sideways. It replaces the
+    native picker for these vocabularies on every pointer; the native picker
+    stays only where a vocabulary is long AND flat (a genre list).
 
 ## 3 · Interaction laws
 

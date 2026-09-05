@@ -1687,6 +1687,15 @@ nothing narrative, scannable in one pass at 390 and at 1280. The picker
 for a long vocabulary stays the native/typed one from §9c step 2. The
 restyle round (§11 order, last) does this pass over every surface.
 
+### 11d · The lozenge field (DESIGN.md component 16)
+
+For the long vocabularies — the drum ops, the qualities, the scales, the
+transformations, the instruments — every option visible as a tight lozenge,
+clustered semantically under small headings, one hue per cluster, the hot
+ones filled, multi-select where the field allows it with the chain's order
+kept. Built in the restyle round; the drums' does-sheet and the chord
+quality picker are its first two surfaces.
+
 ### (former 11a, kept for the record)
 
 Paul: *"I think what I want is to type into the cell and the options get
