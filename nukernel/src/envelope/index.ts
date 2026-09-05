@@ -11,6 +11,7 @@
 // synth blocks' `fenv`, and the section and cell automation lanes as
 // breakpoint curves. A second envelope widget anywhere on this page is a bug.
 
-export { curveEditor, adsrEditor, breakpointEditor } from "./editor.js";
+export { curveEditor, adsrEditor, breakpointEditor, eqCurve, xyPad } from "./editor.js";
 export { SEGS, ISLEVEL } from "./api.js";
-export type { EnvSpec, EnvField, CurveSpec, CurveMode, Editor, Seg } from "./api.js";
+export type { EnvSpec, EnvField, CurveSpec, CurveMode, Editor, Seg,
+              EqSpec, EqBand, XySpec, XyAxis, AnySpec } from "./api.js";

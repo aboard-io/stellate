@@ -22,20 +22,25 @@
 // the top. The caller sees one component; the file tree sees the two shapes
 // the drawing actually takes.
 
-import type { EnvSpec, CurveSpec, Editor } from "./api.js";
+import type { EnvSpec, CurveSpec, EqSpec, XySpec, AnySpec, Editor } from "./api.js";
 import { adsrEditor as adsrPlate } from "./adsr.js";
 import { breakpointEditor as curvePlate } from "./curve.js";
+import { eqEditor as eqPlate, xyEditor as xyPlate } from "./bands.js";
 
-/** ONE COMPONENT. `mode` absent is `adsr`, which is what every caller on the
- *  page asks for today. */
-export function curveEditor(host: HTMLElement,
-                            spec: EnvSpec | CurveSpec): Editor {
+/** ONE COMPONENT. `mode` absent is `adsr`, which is what most callers on the
+ *  page ask for. */
+export function curveEditor(host: HTMLElement, spec: AnySpec): Editor {
   const mode: string = (spec as { mode?: string }).mode || "adsr";
   if (mode === "adsr") return adsrPlate(host, spec as EnvSpec);
-  /* `lane` is drawn; `eq` and `xy` are the same drawing with named handles and
-     their own units, and they take this branch the day something writes
-     through them. Until then they draw a lane rather than throwing, because a
-     mode that exists and refuses is worse than a mode that draws honestly. */
+  /* THE OTHER THREE ARE DRAWN NOW (2026-09-05). This branch used to read "`eq`
+     and `xy` … take this branch the day something writes through them. Until
+     then they draw a lane rather than throwing" — the day arrived: `eq` is
+     ui/engineer.js's channel strip and `xy` is the modelled chair's tone in
+     ui/eight.js. A band is NAMED and pinned in x and a pad's two axes carry two
+     units, so neither is a lane with different labels; both are in bands.ts,
+     both on plate.ts's own handle. */
+  if (mode === "eq") return eqPlate(host, spec as EqSpec);
+  if (mode === "xy") return xyPlate(host, spec as XySpec);
   return curvePlate(host, spec as CurveSpec);
 }
 
@@ -46,3 +51,7 @@ export const adsrEditor = (host: HTMLElement, spec: EnvSpec): Editor =>
   curveEditor(host, { ...spec, mode: "adsr" } as EnvSpec);
 export const breakpointEditor = (host: HTMLElement, spec: CurveSpec): Editor =>
   curveEditor(host, { ...spec, mode: spec.mode || "lane" });
+export const eqCurve = (host: HTMLElement, spec: EqSpec): Editor =>
+  curveEditor(host, { ...spec, mode: "eq" });
+export const xyPad = (host: HTMLElement, spec: XySpec): Editor =>
+  curveEditor(host, { ...spec, mode: "xy" });

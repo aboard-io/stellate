@@ -91,6 +91,24 @@ export interface PickOpts {
    *  test/table.browser.js T9's chip walk, which drives `throat|<name>`,
    *  `reg|<name>` and the mix-automation strips as chips. */
   strip?: boolean;
+  /** THE VOCABULARY DECLARES ITS OWN SEMANTIC CLUSTERS (2026-09-05, DESIGN.md
+   *  component 16). Paul: *"a novel interface for when there are tons of
+   *  options and some of them can be multiple… tight lozenges, organized by
+   *  color and clustered semantically… visibility into all of the options"*.
+   *
+   *  WHY THE FLAG IS "CLUSTERED" AND NOT A LIST OF KEYS. The five vocabularies
+   *  §11d names — the 68 kit ops, the 42 qualities, the 63 scales and modes,
+   *  the transformations, the instruments — are exactly the five that already
+   *  carry a `group` on every option (`avail.js QUALITIES`/`famOpts`/
+   *  `instrOptions` stamp the kernel's own family; `src/table/model.ts
+   *  groupsFor` returns the drummer's six). So the rule is a property of the
+   *  DATA and not a list this file has to be kept in step with: a vocabulary
+   *  that knows what kind each of its words is gets the field that draws
+   *  kinds, and one that does not cannot have one drawn for it.
+   *  It beats the coarse-pointer rule ON PURPOSE — §11d: *"It replaces the
+   *  native picker for these vocabularies on every pointer; the native picker
+   *  stays only where a vocabulary is long AND FLAT (a genre list)."* */
+  clustered?: boolean;
 }
 
 export function pickerFor(n: number, opts?: PickOpts): Picker {
@@ -98,6 +116,12 @@ export function pickerFor(n: number, opts?: PickOpts): Picker {
   if (opts && opts.tight) return coarse() ? "native" : "combo";
   // 1 · CHIPS ARE DECISIONS, and this page has said so since 2026-08-16.
   if (n <= CHIPMAX) return "chips";
+  // 1b · A LONG VOCABULARY THAT KNOWS ITS OWN KINDS GETS ALL OF ITSELF SHOWN.
+  //      Measured on the rendered page at 390 before this line existed: the
+  //      drummer's does-sheet offered ONE of its sixty-eight words at a time
+  //      (a native `<select>`), the quality picker one of forty-two, the scale
+  //      picker one of sixty-three. See `clustered` above.
+  if (opts && opts.clustered) return "lozenge";
   // 2 · A THUMB GETS THE PHONE'S OWN WHEEL. `(pointer: coarse)` is the only
   //     honest test for one, and the native picker is the single control on a
   //     phone that cannot be scrolled off the screen by the pane under it,

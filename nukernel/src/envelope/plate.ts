@@ -104,6 +104,10 @@ export function say(v: number, unit: string): string {
      space before the unit — is `fmt`'s, so a translator moves a separator once
      rather than in two hundred callers. */
   if (unit === "s" && v < 0.1) return fmt(v * 1000, "ms");
+  /* ...and a filter cutoff over a kilohertz reads in kilohertz, for the same
+     reason and by the same table `ui/eight.js knobFmt` already prints a knob's
+     own Hz row with. A hand thinks "two k", not "2000". */
+  if (unit === "Hz" && v >= 1000) return fmt(v / 1000, "kHz");
   return fmt(v, unit);
 }
 

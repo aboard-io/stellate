@@ -114,26 +114,41 @@ function standUpServer() {
    (...AND "enters at bar" -> "entry", 2026-09-05, the review's item 4: the
    control counts BEATS now, so a label naming bars was naming the wrong
    unit. Same address, same row, same place in the order.) */
-const CELL_ORDER = ["phrases", "variation", "entry", "register", "focus",
-                    /* ...AND THE FOUR LANE KINDS THAT REPLACED ONE GREY ROW
-                       (TABLE.md wave 3, 2026-09-04). §1's "mix automation" was
-                       one line while it was a promise; it is four strips now,
-                       one per lane kind, in fields.js CELLAUTO's own order. */
-                    "mix · level", "mix · place", "mix · send", "mix · tone",
-                    /* ...AND THE FIVE THAT REPLACED THE LAST GREY ROW (TABLE.md
-                       wave 4, 2026-09-04). §1's "artic / oct / rate / scale /
-                       clamp" was one line while it was a promise; it is four
-                       strips and one measurement now, in fields.js CELLVEC's
-                       own order, drawn under their working names. */
-                    "articulation", "octave", "time shift", "scale", "ramp limit"];
-const ROW_ORDER  = ["type", "bars", "level", "dynamics", "intro", "outro",
-                    "automation", "feel", "phrase structure",
-                    "note-length limit", "pipe",
-                    "key", "mode", "chords", "swing", "groove",
-                    "effects", "reverb", "echo", "echo time", "room", "pan",
-                    /* `form.mot` is AUTOMATION now and the compiled-lane
-                       readout — which was called "automation" — is `lanes`. */
-                    "starts at", "lanes"];
+/* ...AND THE ORDER IS THE COMPOSER'S SINCE 2026-09-05 (TABLE.md §11c, the
+   design pass). Paul: *"Think like a composer when you do the redesign"* and
+   *"just nicely structure each expanded interface as proper software that's
+   easy to scan and nicely grouped."* The sheet is GROUPS now — for a cell,
+   Phrase · Variation · Dynamics · Placement — and the lists below are those
+   groups' contents concatenated, which is the reading order on the glass.
+   IT IS A REORDER AND NOT A RE-VOCABULARY: every `data-k` is the one it had on
+   v281, T7 walks the same inventory, and what moved is written down in
+   `src/table/model.ts cellSheet`'s own paragraph. What moved, in one line
+   each: the four note words came UP out of the tail to stand with the phrase;
+   `ramp limit` went to the variation it limits; the mix lanes split (level,
+   send and tone are dynamics, place is placement); `entry` and `register`
+   went DOWN into placement beside the pan and the time shift. */
+const CELL_ORDER = [/* Phrase */    "phrases", "articulation", "octave", "scale",
+                    /* Variation */ "variation", "ramp limit",
+                    /* Dynamics */  "focus", "mix · level", "mix · send",
+                                    "mix · tone",
+                    /* Placement */ "entry", "register", "mix · place",
+                                    "time shift"];
+/* ...AND FOR A SECTION, Form · Time · Key · Feel · Chain. `repeat`, `second
+   ending`, `coda` and `to coda` stand at the head of FORM and are not listed
+   here for the reason they were never listed: this array is a FILTER, and the
+   claim is about the order of the fields it names. */
+const ROW_ORDER  = [/* Form  */ "type", "bars", "intro", "outro",
+                    /* Time  */ "feel", "phrase structure", "note-length limit",
+                                "pipe", "swing", "groove", "starts at",
+                    /* Key   */ "key", "mode", "chords",
+                    /* Feel  */ "level", "dynamics",
+                    /* Chain */ "automation", "effects", "reverb", "echo",
+                                "echo time", "room", "pan", "lanes"];
+/* THE THREE GROUP SETS, which are `src/copy/sheets.ts group.*` and are read
+   here as words because that is what a reader sees. */
+const CELLGROUPS = ["Phrase", "Variation", "Dynamics", "Placement"];
+const ROWGROUPS  = ["Form", "Time", "Key", "Feel", "Chain"];
+const COLGROUPS  = ["Instrument", "Envelope", "Tone", "Mix"];
 const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
 (async () => {
@@ -315,7 +330,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const f = document.querySelector('#pan-band [data-k="' + key + '"]');
       if (!f) return [];
       if (f.getAttribute("aria-expanded") !== "true") f.click();
-      return [...document.querySelectorAll("#pan-band .nu-wchip")]
+      /* `.nu-lz` IS THE FOURTH WIDGET (2026-09-05, DESIGN.md component 16). A
+         vocabulary that knows its own kinds opens as a LOZENGE FIELD rather
+         than a strip of chips, and it mints the same `<field>|<value>`
+         address on every option — so the walk reads both and neither this
+         gate nor the driver has to know which one a field earned. Read only
+         `.nu-wchip` and a converted field reports NO OPTIONS, which is the
+         silent no-op test/lib-combo.js's own header was written about. */
+      return [...document.querySelectorAll("#pan-band .nu-wchip, #pan-band .nu-lz")]
         .map((c) => c.dataset.k).filter((x) => x && x.indexOf(key + "|") === 0);
     }, k);
     const press = (k) => p.evaluate((key) => {
@@ -475,24 +497,40 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   if (drums) {
     await openCell("tcell|" + drums + "|" + secId);
     await tap("dev.kit|" + drums + "|" + secId);
+    /* THE WIDGET CHANGED AND SO DID THE LAW, 2026-09-05 (DESIGN.md component
+       16 · TABLE.md §11d). This read `.nu-groupbar` and asserted *"one group
+       open at a time"* — TABLE.md §6's ruling, which was right while the only
+       thing on offer was a strip of sixty-eight chips. Paul's design-pass
+       ruling supersedes it in as many words: *"tight lozenges, organized by
+       color and clustered semantically by the kind of things they present…
+       VISIBILITY INTO ALL OF THE OPTIONS."* So the claim inverts — every one
+       of the sixty-eight is on the glass, in its own cluster, and a cluster
+       folds only because a hand folded it — and the measurement stays what it
+       always was: the RENDERED BOX and never the `hidden` property, because
+       `.nu-wchip{display:inline-flex}` once outranked the UA's `[hidden]` and
+       this check said ten of sixty-eight about a page that was showing all of
+       them. TEST THE ARTIFACT. */
     const gr = await p.evaluate(() => {
-      const bar = document.querySelector("#pan-band .nu-groupbar");
-      const chips = [...document.querySelectorAll("#pan-band .nu-wgroups .nu-wchips:not(.nu-pinned) .nu-wchip")];
-      /* THE RENDERED BOX AND NOT THE `hidden` PROPERTY. Read the property and
-         this check passes over a stylesheet that never hid anything — which is
-         exactly what happened for one run: `.nu-wchip{display:inline-flex}`
-         outranks the UA's `[hidden]{display:none}`, all sixty-eight ops stayed
-         on the screen, and the gate said ten. TEST THE ARTIFACT. */
-      return { groups: bar ? [...bar.children].map((x) => x.textContent) : [],
-        chips: chips.length,
-        shown: chips.filter((c) => c.getBoundingClientRect().height > 0).length,
-        pinned: document.querySelectorAll("#pan-band .nu-pinned .nu-wchip").length };
+      const field = document.querySelector("#pan-band .nu-lzfield");
+      const secs = field ? [...field.querySelectorAll(".nu-lzcluster")] : [];
+      const lz = field ? [...field.querySelectorAll(".nu-lz")] : [];
+      return { groups: secs.map((x) =>
+                 ((x.querySelector(".nu-lzheadword") || {}).textContent || "").trim()),
+        hues: [...new Set(secs.map((x) => x.dataset.hue))].length,
+        chips: lz.length,
+        shown: lz.filter((c) => c.getBoundingClientRect().height > 0).length,
+        short: lz.filter((c) => { const r = c.getBoundingClientRect();
+          return r.height > 0 && r.height < 43.5; }).length,
+        pill: lz.length ? getComputedStyle(lz[0]).borderTopLeftRadius : null };
     });
     check(gr.groups.length >= 5 && KITGROUPS.every((g) => gr.groups.includes(g)),
       "T5f the drummer's ops are grouped by what they act on: " + gr.groups.join(" · "));
-    check(gr.shown > 0 && gr.shown < gr.chips,
-      "…one group open at a time (" + gr.shown + " of " + gr.chips + " shown)");
-    check(gr.pinned > 0, "…with the standing answer pinned above them");
+    check(gr.chips > 60 && gr.shown === gr.chips,
+      "…and EVERY ONE of them is on the glass at once (" + gr.shown + " of " +
+      gr.chips + "), which is what the lozenge field is for");
+    check(gr.hues === gr.groups.length && gr.short === 0,
+      "…one hue per cluster (" + gr.hues + " for " + gr.groups.length +
+      " clusters) and every lozenge 44px (" + gr.short + " short)");
     await shot("does-sheet-390");
     await tap("tcell|" + drums + "|" + secId);
   } else check(false, "T5f the record has no drummer to group");
@@ -819,7 +857,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          its chip ({"level":"+6"} left standing) and T6f's walk reported "NONE
          OF 4 MOVED IT" about four words it had never actually pressed. */
       if (f.getAttribute("aria-expanded") !== "true") f.click();
-      return [...document.querySelectorAll("#pan-band .nu-wchip")]
+      /* ...AND `.nu-lz` FOR THE SAME REASON `chipsOfField` reads it (above):
+         one address, two widgets. MEASURED the hour the lozenge landed: T8c
+         said "none of 0 moved it" about a `does` vocabulary whose words were
+         all on the glass — a gate that queried the old class and found
+         nothing, which is not the same claim as a control that does nothing. */
+      return [...document.querySelectorAll("#pan-band .nu-wchip, #pan-band .nu-lz")]
         .filter((c) => !c.disabled && (c.dataset.k || "").split("|").pop() !== "")
         .map((c) => c.dataset.k);
     }, fieldKey);
@@ -3376,6 +3419,194 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (c) delete c.mixauto;
       window.__eightDraw && window.__eightDraw(); }, vn);
     await p.waitForTimeout(400);
+  }
+
+  /* ================= T12 · THE DESIGN PASS (DESIGN.md, TABLE.md §11) ====
+     Paul, after the AUX spike: *"keep our stuff but make it less chunky and
+     more stylish"* · *"use more icons. Ideally the table is a large set of
+     icons"* · *"just nicely structure each expanded interface as proper
+     software that's easy to scan and nicely grouped"* · *"tight lozenges,
+     organized by color and clustered semantically… visibility into all of the
+     options."*
+
+     EVERY CHECK BELOW READS THE RENDERED BOX. A restyle is the one kind of
+     round where the plan and the artifact can differ silently — a rule that
+     never matched, a specificity that lost, a token nothing reads — so not one
+     of these asks the stylesheet what it says; they ask the page what it drew
+     ([[test-the-artifact]]).
+
+     A PLATE, COUNTED, is a box with a border on all FOUR sides and a ground of
+     its own. DESIGN.md §2 names exactly two on this page — the curve editor
+     (component 9) and the bar (component 12) — so this counts the ones inside
+     `#pan-band` and allows the ones a state or a category earns: a HOT chip or
+     lozenge (`aria-pressed`, "hot = filled"), a `.nu-vpaint` (which player),
+     the desk's own strip and detents seated in the mix row. */
+  {
+    const PLATEPROBE = `(() => {
+      const px = (s) => { const n = parseFloat(s); return isFinite(n) ? n : 0; };
+      const V = { w: innerWidth, h: innerHeight };
+      const vis = (r) => r.width > 0 && r.height > 0 && r.bottom > 0 &&
+                         r.top < V.h && r.right > 0 && r.left < V.w;
+      const host = document.getElementById("pan-band");
+      let plates = 0, thick = 0; const who = [];
+      for (const el of host.querySelectorAll("*")) {
+        const r = el.getBoundingClientRect();
+        if (!vis(r)) continue;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === "hidden") continue;
+        const bt = px(cs.borderTopWidth), bb = px(cs.borderBottomWidth),
+              bl = px(cs.borderLeftWidth), br = px(cs.borderRightWidth);
+        if (Math.max(bt, bb, bl, br) > 1.01) {
+          thick++; who.push("rule " + el.className + " " + Math.max(bt, bb, bl, br));
+        }
+        const bg = cs.backgroundColor || "";
+        const opaque = bg && bg !== "transparent" &&
+                       !/rgba\\(0, 0, 0, 0\\)/.test(bg);
+        if (!(r.width >= 24 && r.height >= 18 &&
+              bt > 0 && bb > 0 && bl > 0 && br > 0 && opaque)) continue;
+        /* the four a state or a category earns */
+        if (el.getAttribute("aria-pressed") === "true") continue;
+        if (el.classList.contains("nu-vpaint")) continue;
+        if (el.closest(".nu-strip, #rack, .nu-plate, .nu-env")) continue;
+        plates++; who.push("plate " + el.tagName + "." + el.className);
+      }
+      return { plates, thick, who: who.slice(0, 6) };
+    })()`;
+    for (const W of [320, 390, 1280]) {
+      await ctx.pages()[0].setViewportSize({ width: W, height: W === 1280 ? 900 : 844 });
+      await p.waitForTimeout(400);
+      await top("Band");
+      const m = await p.evaluate(PLATEPROBE);
+      check(m.thick === 0,
+        "T12a at " + W + " every rule on the table is a HAIRLINE — " + m.thick +
+        " over 1px (" + JSON.stringify(m.who) + ")");
+      check(m.plates <= 2,
+        "T12b …and a PLATE is only where DESIGN.md names one — " + m.plates +
+        " unnamed plates on screen (" + JSON.stringify(m.who) + ")");
+    }
+    await ctx.pages()[0].setViewportSize({ width: 390, height: 844 });
+    await p.waitForTimeout(400);
+    await top("Band");
+
+    /* ---- T12c · GROUPS WITH HEADINGS, IN THE COMPOSER'S ORDER (§11c) --- */
+    const headsOf = () => p.evaluate(() => {
+      const o = document.querySelector("#pan-band tr.nu-wopen");
+      if (!o) return null;
+      const gs = [...o.querySelectorAll(".nu-sheetgroup")];
+      /* THE HEADING'S WORD IS `.nu-groupword` AND NOT THE `<h4>`'s text, since
+         2026-09-05: the heading carries its MARK first (`ui/glyph.js
+         GLYPH.group` — Paul: *"use more icons"*) and reading the whole element
+         would read the glyph into the word. */
+      const gap = gs.length > 1
+        ? Math.round(parseFloat(getComputedStyle(gs[1]).marginBlockStart)) : 0;
+      return { heads: gs.map((g) =>
+                 ((g.querySelector(".nu-groupword") || {}).textContent || "").trim()),
+        marks: gs.filter((g) => g.querySelector(".nu-grouphead .nu-g")).length,
+        fields: gs.map((g) => g.querySelectorAll(".nu-sheetrow").length),
+        gap,
+        s5: Math.round(parseFloat(getComputedStyle(document.documentElement)
+              .getPropertyValue("--s5")) * 16) };
+    });
+    const sid12 = (await doc()).form.sections[0].id;
+    const vn12 = (await doc()).voices[0].name;
+    await tap("trow|" + sid12);
+    const rg = await headsOf();
+    check(!!rg && JSON.stringify(rg.heads) === JSON.stringify(ROWGROUPS),
+      "T12c a SECTION's sheet is five groups in the composer's order — " +
+      JSON.stringify(rg && rg.heads) + " holding " + JSON.stringify(rg && rg.fields));
+    check(!!rg && rg.gap >= 18,
+      "T12c …with --s5 between subjects (" + (rg && rg.gap) + "px)");
+    check(!!rg && rg.marks === rg.heads.length,
+      "T12c …and every heading wears its MARK (" + (rg && rg.marks) + " of " +
+      (rg && rg.heads.length) + "), which is Paul's *\"use more icons\"* on the " +
+      "one part of a sheet a hand scans");
+    await tap("trow|" + sid12);
+    await tap("tcol|" + vn12);
+    const cg = await headsOf();
+    check(!!cg && JSON.stringify(cg.heads) === JSON.stringify(COLGROUPS),
+      "T12d a CHAIR's sheet is Instrument · Envelope · Tone · Mix — " +
+      JSON.stringify(cg && cg.heads) + " holding " + JSON.stringify(cg && cg.fields));
+    await tap("tcol|" + vn12);
+    await openCell("tcell|" + vn12 + "|" + sid12);
+    const cellg = await headsOf();
+    check(!!cellg && JSON.stringify(cellg.heads) === JSON.stringify(CELLGROUPS),
+      "T12e a CELL's sheet is Phrase · Variation · Dynamics · Placement — " +
+      JSON.stringify(cellg && cellg.heads) + " holding " +
+      JSON.stringify(cellg && cellg.fields));
+    await tap("tcell|" + vn12 + "|" + sid12);
+
+    /* ---- T12f · THE LOZENGE FIELD, ON A LONG VOCABULARY (§11d) --------- */
+    await p.evaluate(() => window.__eightRow("time", true));
+    await p.waitForTimeout(500);
+    const opened = await p.evaluate(() => {
+      const el = document.querySelector('#pan-band [data-sel="alphabet.scale"]');
+      if (!el) return null;
+      el.scrollIntoView({ block: "center" });
+      return el.dataset.widget || null; });
+    check(opened === "lozenge",
+      "T12f the scale picker is a LOZENGE FIELD on every pointer (widget " +
+      opened + "), not a wheel that shows one of sixty-three");
+    const lz = await p.evaluate(() => {
+      const f = document.querySelector('#pan-band .nu-lzfield[data-sel="alphabet.scale"]');
+      if (!f) return null;
+      const secs = [...f.querySelectorAll(".nu-lzcluster")];
+      const all = [...f.querySelectorAll(".nu-lz")];
+      const hues = secs.map((x) => getComputedStyle(x).getPropertyValue("--lz").trim());
+      return { n: all.length, clusters: secs.length,
+        heads: secs.filter((x) => x.querySelector(".nu-lzhead")).length,
+        hues: [...new Set(hues)].length,
+        short: all.filter((c) => c.getBoundingClientRect().height < 43.5).length,
+        rect: all.filter((c) => c.getBoundingClientRect().height > 0).length,
+        hot: all.filter((c) => c.getAttribute("aria-pressed") === "true").length,
+        addr: all.length ? all[0].dataset.k : null,
+        pill: all.length ? getComputedStyle(all[0]).borderTopLeftRadius : null,
+        say: !!f.querySelector(".nu-lzsay") }; });
+    check(!!lz && lz.n > 40 && lz.rect === lz.n,
+      "T12f …with every one of its words on the glass (" +
+      (lz && lz.rect) + " of " + (lz && lz.n) + ")");
+    /* ONE HUE PER CLUSTER, AND THE PALETTE IS EIGHT (src/lozenge/api.ts `HUES`,
+       nu.css `--lz-h0..7`). Eight is a decision — past eight, hue stops being
+       a category anyone can hold — so a vocabulary with more clusters than
+       hues REUSES them, and asserting `hues === clusters` would be asserting
+       against the design. What is asserted is that every cluster has ONE, that
+       the palette is spent before any is repeated, and that every cluster with
+       a WORD has a heading: the clusterless bucket (`spec.other` absent) is
+       drawn unheaded on purpose rather than under an invented word. */
+    check(!!lz && lz.clusters >= 5 && lz.heads >= lz.clusters - 1 &&
+          lz.hues === Math.min(lz.clusters, 8),
+      "T12g …clustered semantically, a heading and ONE hue each (" +
+      (lz && lz.clusters) + " clusters, " + (lz && lz.heads) + " headings, " +
+      (lz && lz.hues) + " of 8 hues spent)");
+    check(!!lz && lz.short === 0 && /px/.test(String(lz && lz.pill)),
+      "T12h …every lozenge 44px of thumb in a pill (" + (lz && lz.short) +
+      " short, radius " + (lz && lz.pill) + ")");
+    /* A TAP WRITES, AND NOTHING DISMISSES — Paul's own sentence, on the widget
+       that most obviously gets tapped twice. */
+    const wrote = await p.evaluate(() => {
+      const f = document.querySelector('#pan-band .nu-lzfield[data-sel="alphabet.scale"]');
+      const cold = [...f.querySelectorAll(".nu-lz")]
+        .find((c) => c.getAttribute("aria-pressed") !== "true" && !c.disabled);
+      if (!cold) return null;
+      const want = cold.dataset.v;
+      cold.click();
+      const still = document.querySelector('#pan-band .nu-lzfield[data-sel="alphabet.scale"]');
+      return { want, doc: (window.__eightDoc().alphabet || {}).scale,
+               open: !!still,
+               hot: still ? [...still.querySelectorAll(".nu-lz")]
+                 .filter((c) => c.getAttribute("aria-pressed") === "true")
+                 .map((c) => c.dataset.v) : [] }; });
+    check(!!wrote && String(wrote.doc) === String(wrote.want) && wrote.open &&
+          wrote.hot.includes(wrote.want),
+      "T12i …a tap WRITES the document and the field is still open under the " +
+      "thumb (" + JSON.stringify(wrote) + ")");
+    /* AND THE PAGE STILL DOES NOT SCROLL SIDEWAYS, which is the one thing a
+       field of a hundred and forty-seven pills could plausibly break. */
+    const side = await p.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(side <= 1, "T12j …and the page still does not scroll sideways (" +
+      side + "px)");
+    await p.evaluate(() => window.__eightRow("time", false));
+    await p.waitForTimeout(300);
   }
 
   /* ================= T0 · THE CONSOLE =================================== */

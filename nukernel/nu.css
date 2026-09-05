@@ -475,7 +475,8 @@
   --r0: 0;         /* a plate is square */
   --r1: 6px;       /* a control eases to 6px */
   --r2: 3px;       /* a chip, or a fill inside a control */
-  --r-pill: 999px; /* a noun, and only a noun — nothing wears this yet */
+  --r-pill: 999px; /* a noun, and only a noun — the LOZENGE wears it (2026-09-05,
+                      DESIGN.md component 16); nothing else on this page does */
   /* THE BUTTON'S TEXT: SMALLER, AND NOT BOLD. It was 800/16px, the same size
      as body copy and heavier than an <h2>, which is what made a row of tabs
      read as a row of headlines. 500 is the body weight (the page already says
@@ -7717,3 +7718,543 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    two bands reserved by <body> exactly as they are for the table. */
 .nu-pan[data-sheet]{ min-block-size: calc(100dvh - var(--top-h)
                                           - var(--bar-h) - var(--s3)); }
+
+/* ======================================================================
+   THE DESIGN PASS (2026-09-05) — DESIGN.md §1–§2, TABLE.md §11's restyle
+   ======================================================================
+   Paul, after the AUX spike: *"keep our stuff but make it less chunky and
+   more stylish."* Everything above this line stays; this block is the
+   RESTYLE, and it is written as a block rather than as fifty edits in place
+   for one reason a reader can check: the rules it overrides are the ones the
+   census measured, each is named here beside its number, and pulling this
+   block out returns the page to what it looked like on v281.
+
+   WHAT WAS MEASURED, on the rendered page at 390 (scratchpad/design/
+   measure.cjs + census.cjs, Kingston 1969 at reading 1), before this block:
+
+     the sheet at rest   76 plates on screen · 9 rules over 1px · 5,780px² of
+                         border across 139 controls (41.6 each)
+     a cell sheet        47 plates · 259px² of border per control
+     a column sheet      75 plates · 205px² per control
+     a row sheet         54 plates · 196px² per control
+
+   A PLATE, COUNTED: a box with a border on all four sides AND a ground of its
+   own. DESIGN.md §2 names exactly two — the curve editor (component 9) and
+   the bar (component 12) — so every other one on this surface is a frame the
+   type could have carried. The census named who was drawing them: `th,td`
+   (the global 1px cell rule, 28 of them at rest), `button` (the Enamel face:
+   panel ground, ink border, hard shadow), `select`, `input`, `.nu-colbtn`
+   (seven filled hue plates), `.nu-vsheet`'s own frame.
+
+   WHAT THIS BLOCK MAY NOT SPEND: `--tap`. 44 stays 44 everywhere, which is
+   §11b's own sentence — the round buys INK, not rows.
+
+   IT IS SCOPED TO `#pan-band` AND THE TWO PIECES OF CHROME DESIGN.md NAMES
+   (the bar, the hamburger). The atlas, the globe, the screensaver and the
+   deck are not DESIGN.md's components and are not restyled by a document
+   that does not describe them.
+   ---------------------------------------------------------------------- */
+
+/* 1 · THE GRID IS NOT A GRID OF BOXES ---------------------------------
+   `th,td{ border: 1px solid var(--rule) }` (line ~1787) plus `.nu-trims`'s
+   3px `border-spacing` is what drew 28 little frames at rest. The table's own
+   `background`/`border` (line ~1782) is the 29th. The structure is the
+   spacing and the type; the only rules left are the two a spreadsheet needs —
+   one under the heads, one over the footer. */
+#pan-band table.nu-wordgrid{ background: none; border: 0; }
+#pan-band .nu-wordgrid th,
+#pan-band .nu-wordgrid td{ border: 0; background: none; }
+#pan-band .nu-wordgrid tbody > tr:nth-child(even) > td{ background: none; }
+#pan-band .nu-wordgrid thead th.nu-colhead,
+#pan-band .nu-wordgrid thead th.nu-cornerh,
+#pan-band .nu-wordgrid thead th.nu-addhead{
+  border-block-end: var(--bw) solid var(--rule); }
+#pan-band .nu-sheetgrid th.nu-spheadcell{
+  border-block-end: var(--bw) solid var(--rule); }
+/* the footer's own rule was `--bw-hard solid --rule` — an emphasis edge for a
+   boundary, which DESIGN.md §1 spends on a focus ring and on nothing else. */
+#pan-band .nu-wordgrid tfoot .nu-footrow > th,
+#pan-band .nu-wordgrid tfoot .nu-footrow > td{
+  border-block-start: var(--bw) solid var(--rule); }
+
+/* 2 · A CONTROL ON THE TABLE IS A WORD, NOT A PLATE -------------------
+   The Enamel face (`button`, line ~798: panel ground, ink border, 2px hard
+   shadow) is what a *page* of buttons is dressed in; a spreadsheet is a
+   surface of values, and a value that wears a button is a value you cannot
+   read past. Named class by class rather than as `#pan-band button`, because
+   three fills on this surface are SEMANTIC and must survive: `aria-pressed`
+   (the hand), the `.w-*` word paints on the mix row, and `--vpaint`. */
+#pan-band .nu-wcell,
+#pan-band .nu-rowjump,
+#pan-band .nu-opbtn,
+#pan-band .nu-addbtn,
+#pan-band .nu-groupbtn,
+#pan-band .nu-clearback,
+#pan-band .nu-colbtn{
+  background: transparent; box-shadow: none; border-width: 0; }
+/* AN OP IS A VERB AND KEEPS ITS EDGE — a hairline, and no ground, so it is a
+   control you can see and not a plate you have to read past. */
+#pan-band .nu-opbtn,
+#pan-band .nu-addbtn,
+#pan-band .nu-groupbtn{
+  border: var(--bw) solid var(--rule); border-radius: var(--r1); }
+#pan-band .nu-opbtn:hover,
+#pan-band .nu-addbtn:hover,
+#pan-band .nu-groupbtn:hover{ background: var(--hand-tint); }
+/* ...AND THE THREE SEMANTIC FILLS ARE SAID AGAIN AT THIS SPECIFICITY,
+   because `#pan-band .nu-opbtn` (1-1-0) outranks `button[aria-pressed]`
+   (0-2-0) and a pressed chip that lost its cobalt would be the state that
+   matters most, silently deleted by a restyle. */
+#pan-band .nu-groupbtn[aria-pressed="true"],
+#pan-band .nu-wchip[aria-pressed="true"]{
+  background: var(--hand); border-color: var(--hand); color: #FFFFFF; }
+
+/* 3 · A VALUE IN A SHEET IS A CUT, NOT A BOX --------------------------
+   A sheet row is `label · control · value · clear-back` and the control has to
+   be findable by a thumb, so it keeps ONE hairline — under it, where a form
+   has always put the line you write on. Radius `--r0`: an underline has no
+   corners to ease. The GRID's own cells keep zero border (T5e: "a resting cell
+   has no box"), which is why this is `.nu-vsheet`-scoped. */
+#pan-band .nu-vsheet .nu-wcell,
+#pan-band .nu-vsheet .nu-nativepick,
+#pan-band .nu-vsheet .nu-numbox,
+#pan-band .nu-vsheet .nu-combofield{
+  background: transparent; box-shadow: none;
+  border: 0; border-block-end: var(--bw) solid var(--rule);
+  border-radius: var(--r0); }
+#pan-band .nu-vsheet .nu-wcell:hover,
+#pan-band .nu-vsheet .nu-nativepick:hover{
+  background: transparent; border-block-end-color: var(--ink); }
+/* WRITTEN IS BOLD AND INHERITED IS QUIET, and on a sheet that is now the whole
+   of the difference — §11b measured it on the grid's cells and this is the
+   same law one tier in. */
+#pan-band .nu-vsheet .nu-wcell{ font-weight: var(--fw-label); }
+#pan-band .nu-vsheet .nu-wcell.is-derived{ font-weight: var(--fw-body); }
+/* A REFUSAL IS A DASH, NEVER A SILENCE (DESIGN.md §2.14). */
+#pan-band .nu-vsheet .nu-wcell.is-refused,
+#pan-band .nu-vsheet .nu-wcell[disabled]{
+  border-block-end-style: dashed; }
+/* THE SHEET ITSELF IS NOT A PLATE. It keeps its ground — an open row is a
+   region and a region may have a ground — and gives up the frame. */
+#pan-band .nu-vsheet{ border: 0; }
+
+/* 4 · A CHIP IS A HAIRLINE AND A WORD --------------------------------- */
+#pan-band .nu-wchip{
+  background: transparent; box-shadow: none;
+  border: var(--bw) solid var(--rule); border-radius: var(--r2); }
+#pan-band .nu-wchip:hover{ background: var(--hand-tint); }
+#pan-band .nu-wchip[disabled]{ background: transparent; border-style: dashed; }
+
+/* 5 · THE COLUMN HEAD KEEPS ITS HUE AND GIVES UP ITS FILL -------------
+   `.nu-vpaint` is a filled plate in the player's colour with white ink and an
+   ink border (line ~1586), and seven of them across the top of a 390px table
+   is seven filled plates. The HUE IS THE FACT (DESIGN.md §1: "--v0..3 = which
+   player") and it is kept — as the quiet form the same rule already declares
+   for a row that must keep its own ground (`.nu-vpaint.is-edge`), turned to
+   the block-end so it underlines the name instead of gripping its side. */
+#pan-band .nu-wordgrid thead th.nu-colhead .nu-colbtn.nu-vpaint{
+  background: transparent; color: var(--ink); border: 0;
+  box-shadow: inset 0 -3px 0 var(--vpaint, var(--ink)); }
+#pan-band .nu-wordgrid thead th.nu-colhead .nu-colbtn.nu-vpaint:hover{
+  background: var(--hand-tint); }
+/* ...AND THE HEAD'S OWN MARK IS PAINTED IN IT, so the hue is on the glyph a
+   thumb is aiming at and not only on a bar under it. */
+#pan-band .nu-wordgrid thead th.nu-colhead .nu-colbtn .nu-g{
+  color: var(--vpaint, var(--ink)); }
+
+/* 6 · HIERARCHY BY WEIGHT AND SIZE ------------------------------------
+   `.nu-trims thead th` / `tbody th` are .62rem uppercase mono — the type of a
+   dense readout, on the two things a hand navigates by. DESIGN.md §1: "nothing
+   under 16px on a phone that a hand edits; hierarchy by weight and size, not
+   by boxes." The instrument leads at --t2, the player's name follows at --t1,
+   and the section name is --t2 with its bars still small beside it. */
+/* MEASURED, AND THE FIRST DRAFT WAS WRONG ABOUT WHERE THE SIZE GOES. Seven
+   columns at 390 are 48px each; `--t2` on the instrument truncated every one
+   of them to three characters ("clea…", "perc…") — a name is not more legible
+   for being larger and cut off. So the head's hierarchy is WEIGHT: the
+   instrument keeps `--t1` and takes `--fw-block`, the player's name drops to
+   `--t0` and dims, and the size that was spent here is spent on the ROW head,
+   which has 13ch to spend it in. */
+#pan-band .nu-wordgrid .nu-colinstr{
+  font: var(--fw-block) var(--t1)/1.15 var(--sans, inherit); }
+#pan-band .nu-wordgrid .nu-colname{
+  font: var(--fw-body) var(--t0)/1.2 var(--mono, monospace); opacity: .7; }
+/* ...AND A ROW HEAD CLIPS RATHER THAN OVERFLOWING. `table-layout: fixed` gives
+   the head column 13ch and does not reflow for a longer word, so "drums & bass"
+   at `--t2` ran straight across the first two cells — measured on the rendered
+   page the minute the type moved. The whole name is in the button's accessible
+   name and in its `title`; the column is what it is. */
+#pan-band .nu-rowjump{ font: var(--fw-label) var(--t2)/1.2 var(--sans, inherit);
+  overflow: hidden; text-overflow: ellipsis; }
+#pan-band .nu-wordgrid tbody th.nu-srowh{ overflow: hidden; }
+#pan-band .nu-rowjump:hover{ background: var(--hand-tint); border-color: transparent; }
+#pan-band .nu-trims tbody th small{ font-size: var(--t0); }
+/* the sheet's label column is the QUIET half of the row and the value is the
+   loud one — the reverse of what a 700-weight label beside a 500-weight value
+   was saying. */
+#pan-band .nu-sheetlab{
+  font: var(--fw-body) var(--t2)/1.25 var(--sans, inherit); color: var(--dim);
+  text-transform: uppercase; letter-spacing: .04em; }
+
+/* 7 · THE BAR IS A PLATE, AND ITS MARKS ARE 44 -----------------------
+   DESIGN.md §2.12 names the bar as one of the two plates on the page, so it
+   keeps its ground and its edge. What it did not keep is four marks measured
+   UNDER the tap floor at all three widths (scratchpad/design/before). */
+.nu-bar button, .nu-bar select, .nu-bar .nu-barbtn{
+  min-block-size: var(--tap); min-inline-size: var(--tap); }
+
+/* 8 · THE SEATED WIDGETS, WHERE THEY ARE THE TABLE'S OWN --------------
+   The census after §1–§7 left the plates in exactly one place: inside a
+   `.nu-noderow`, which is where a CALLER'S OWN widget is seated (sheet.ts:
+   "a caller's own widget gets the whole row"). Most of those callers are other
+   surfaces — the desk's channel strip, the rack, the crate, the knob table —
+   and their look is theirs. Four of them are not: the tempo panel, the
+   producer's cast chips and the motif bank are drawn BY this table FOR this
+   table, and a strip of chips is a strip of chips wherever it is seated.
+   MEASURED at 390 before this rule: time 16 plates, produce 17, motifs 16. */
+#pan-band .nu-vsheet [data-k^="tempo-"],
+#pan-band .nu-castchip,
+#pan-band .nu-bankname,
+#pan-band .nu-bankopen{
+  background: transparent; box-shadow: none;
+  border: var(--bw) solid var(--rule); border-radius: var(--r2); }
+#pan-band .nu-vsheet [data-k^="tempo-"]:hover,
+#pan-band .nu-castchip:hover,
+#pan-band .nu-bankname:hover,
+#pan-band .nu-bankopen:hover{ background: var(--hand-tint); }
+/* ...AND THE HOT ONE STAYS FILLED, which is the one thing a restyle may not
+   take: `aria-pressed` is the state, and DESIGN.md §2 draws a state. */
+#pan-band .nu-castchip[aria-pressed="true"],
+#pan-band .nu-bankname[aria-pressed="true"],
+#pan-band .nu-bankopen[aria-pressed="true"]{
+  background: var(--hand); border-color: var(--hand); color: #FFFFFF; }
+/* A NUMBER YOU TYPE IS A CUT, NOT A PLATE — §3's own rule, said for the two
+   entries the time panel draws itself (`bpm.typed`, `meter.num/den.typed`). */
+#pan-band .nu-bpmbig, #pan-band .nu-signum{
+  background: transparent; box-shadow: none;
+  border: 0; border-block-end: var(--bw) solid var(--rule);
+  border-radius: var(--r0); }
+/* A STRIP OF CHIPS IS NOT A BOX OF CHIPS. `ui/menus.js` seats its chips in a
+   `.nu-wchips.nu-menu` that wears the combo chassis's plate; the chips are the
+   control and the strip is only where they wrap. */
+#pan-band .nu-wchips.nu-menu{ background: transparent; border: 0;
+  box-shadow: none; }
+
+/* ======================================================================
+   §11c · EVERY EXPANDED INTERFACE IS PROPER SOFTWARE (2026-09-05)
+   Paul: *"Don't bother with 8, typed in cell. Instead just nicely structure
+   each expanded interface as proper software that's easy to scan and nicely
+   grouped."* `src/table/model.ts` states the GROUPS and their order (the
+   composer's, DESIGN.md §5); `src/table/sheet.ts groupChunks` chunks the
+   consecutive fields that share one; this is what a group looks like.
+
+   MEASURED BEFORE: a cell sheet was 15 rows in ONE list, a column sheet 11, a
+   row sheet 36 — the longest run of unbroken fields on this page, and the
+   thing a hand scrolls past looking for "where does it come in".
+   `--s5` (1.4em) between subjects is DESIGN.md §1's own space law, said out
+   loud: *"between controls that answer one question: s3; between questions:
+   s4; between subjects: s5."*  A HEADING IS NOT A PLATE: a word in the label
+   weight over a hairline, which is the whole of the frame it replaces. */
+#pan-band .nu-vsheet > .nu-sheetgroup{
+  grid-column: 1 / -1;
+  display: grid; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--s2) var(--s3);
+  margin-block-start: var(--s5); }
+#pan-band .nu-vsheet > .nu-sheetgroup:first-child{ margin-block-start: 0; }
+#pan-band .nu-grouphead{
+  grid-column: 1 / -1; margin: 0;
+  font: var(--fw-block) var(--t1)/1.3 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--dim);
+  padding-block-end: var(--s1);
+  border-block-end: var(--bw) solid var(--rule); }
+/* THE THREE THAT TAKE THE WHOLE WIDTH TAKE IT INSIDE A GROUP TOO. The rule
+   two thousand lines up is `.nu-vsheet > .nu-sheetops` — a DIRECT child — and
+   a group is now between them, so an ops bar inside a group would have gone
+   back to one 20rem column. Said again for the new parent rather than loosened
+   to a descendant selector, because the claim is about a grid's own children
+   and there are now two grids. */
+#pan-band .nu-sheetgroup > .nu-sheetops,
+#pan-band .nu-sheetgroup > .nu-noderow,
+#pan-band .nu-sheetgroup > .nu-wchips,
+#pan-band .nu-sheetgroup > .nu-wgroups,
+#pan-band .nu-sheetgroup > .nu-lzfield{ grid-column: 1 / -1; }
+
+/* ======================================================================
+   THE LOZENGE FIELD (DESIGN.md component 16 · TABLE.md §11d, 2026-09-05)
+   ======================================================================
+   Paul: *"a novel interface for when there are tons of options and some of
+   them can be multiple… tight lozenges, organized by color and clustered
+   semantically by the kind of things they present… visibility into all of the
+   options."*
+
+   `nukernel/src/lozenge/` -> `nukernel/ui/lozenge.js` draws it; this is
+   everything it looks like, and it is the whole of the component's colour,
+   size and geometry — the TS sets no style and no height and stamps only
+   `data-hue`, which is the cluster's index modulo eight.
+
+   WHAT THIS REPLACES, MEASURED at 390 on the rendered page before it existed
+   (scratchpad/design/before/measure.json):
+     the drummer's does-sheet    ONE of sixty-eight words visible
+     the scale picker            ONE of sixty-three
+     the quality picker          ONE of forty-two
+   — because a coarse pointer earns the phone's own wheel and a wheel shows one
+   row. Every one of them is on the glass now.
+
+   ---- THE HUES: HUE MEANS THE KIND, WEIGHT MEANS THE STATE ---------------
+   Eight, and eight is a decision rather than a palette that ran out: past
+   eight, hue stops being a category anyone can hold and becomes noise, which
+   is the "rainbow" DESIGN.md §2/16 names and refuses. They are ONE ink each,
+   used two ways — as the outline and word of a cluster's cold lozenges, and as
+   the FILL of its hot ones — so a cluster reads as one family at a glance and
+   the thing you have chosen reads as chosen from ten feet away.
+   THEY ARE NOT THE SEMANTIC FOUR AND THEY ARE NOT THE VOICE SIX. `--hand`,
+   `--clock`, `--meter` and `--flag` mean four specific things on this page
+   (you set it · scheduled · measured · refused) and `--v0..3`/`--vb`/`--drum`
+   mean WHICH PLAYER; a cluster hue that collided with either would say
+   something it does not mean. These are their own ramp, at the same weight —
+   every one dark enough for white text (the lightest, `--lz-h4` #B26B00, is
+   4.0:1 on white) because the hot state fills. */
+:root{
+  --lz-h0: #1F5FBF;   /* 0 */
+  --lz-h1: #1B7A4B;   /* 1 */
+  --lz-h2: #7A3FBF;   /* 2 */
+  --lz-h3: #A62B62;   /* 3 */
+  --lz-h4: #B26B00;   /* 4 */
+  --lz-h5: #0F7C86;   /* 5 */
+  --lz-h6: #8A5A2B;   /* 6 */
+  --lz-h7: #4B5563;   /* 7 */
+}
+.nu-lzcluster[data-hue="0"]{ --lz: var(--lz-h0); }
+.nu-lzcluster[data-hue="1"]{ --lz: var(--lz-h1); }
+.nu-lzcluster[data-hue="2"]{ --lz: var(--lz-h2); }
+.nu-lzcluster[data-hue="3"]{ --lz: var(--lz-h3); }
+.nu-lzcluster[data-hue="4"]{ --lz: var(--lz-h4); }
+.nu-lzcluster[data-hue="5"]{ --lz: var(--lz-h5); }
+.nu-lzcluster[data-hue="6"]{ --lz: var(--lz-h6); }
+.nu-lzcluster[data-hue="7"]{ --lz: var(--lz-h7); }
+
+/* ---- THE FIELD, AND ITS CLUSTERS -------------------------------------- */
+.nu-lzfield{ display: block; inline-size: 100%; min-inline-size: 0; }
+.nu-lzcluster{ display: block; margin-block-start: var(--s3); }
+.nu-lzcluster:first-child{ margin-block-start: 0; }
+/* A HEADING IS A WORD AND A COUNT, in the cluster's own ink, over a hairline
+   of it — the same shape `.nu-grouphead` takes for a sheet's groups, one tier
+   in and one hue over. It is a BUTTON (it folds) and so it is 44px, which is
+   the one height on this page that is never spent. */
+.nu-lzhead{ display: flex; align-items: baseline; gap: var(--s2);
+  inline-size: 100%; min-block-size: var(--tap); padding: 0 0 var(--s1);
+  background: transparent; border: 0;
+  border-block-end: var(--bw) solid var(--lz, var(--rule));
+  border-radius: var(--r0); box-shadow: none;
+  color: var(--lz, var(--ink)); text-align: start; cursor: pointer; }
+.nu-lzhead:hover{ background: transparent; }
+.nu-lzheadword{ font: var(--fw-block) var(--t1)/1.2 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .08em; }
+.nu-lzcount{ font: var(--num-fw) var(--t0)/1.2 var(--mono, monospace);
+  opacity: .7; font-variant-numeric: tabular-nums; }
+/* A FOLD IS REAL, AND THE `[hidden]` HAS TO BE SAID (src/lozenge/field.ts's
+   own note): a bare `.nu-lzwrap{ display: flex }` is a UA-rule-beating
+   `display` and would un-fold every fold on the page — the same trap
+   `.nu-wchip[hidden]` two thousand lines up was written for. */
+.nu-lzwrap:not([hidden]){ display: flex; flex-wrap: wrap; }
+.nu-lzcluster.is-folded > .nu-lzhead{ opacity: .75; }
+
+/* ---- ONE LOZENGE: 28px OF GLASS, 44px OF THUMB -----------------------
+   DESIGN.md §2/16: *"~28px tall visually with a 44px hit area through its
+   margins"*, and the two halves of that are a padding and a negative margin.
+   The BUTTON is the target and is `--tap` tall; the visible pill is the button
+   minus 8px of padding top and bottom; and `margin-block: -5px` pulls the row
+   PITCH back down so a wall of sixty-eight words is a field a thumb can see
+   rather than a page it has to travel.
+   THE ARITHMETIC, MEASURED: 68 lozenges at 390 were 1,293px tall with a plain
+   44px pitch (the component's own probe, scratchpad/design/loz-probe) — a
+   screen and a half. At a 34px pitch they are ~1,000px, and folding a cluster
+   takes another 200 off. The hit areas OVERLAP by 5px top and bottom, which is
+   what "through its margins" means and is why the negative margin is half the
+   padding and not all of it: a thumb landing in the overlap gets the later
+   lozenge in document order, which is the one below — the direction a finger
+   is travelling when it misses. */
+.nu-lz{ display: inline-flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: var(--s1);
+  min-block-size: var(--tap);
+  padding: 8px .7ch; margin: -5px var(--s1) -5px 0;
+  background: transparent; box-shadow: none;
+  border: var(--bw) solid var(--lz, var(--rule));
+  border-radius: var(--r-pill);
+  color: var(--lz, var(--ink));
+  font: var(--fw-body) var(--t2)/1.2 var(--sans, inherit);
+  cursor: pointer; touch-action: manipulation; }
+.nu-lzword{ display: block; }
+.nu-lz:hover{ background: var(--panel); }
+/* HOT IS FILLED, and that is the state DESIGN.md §2 draws: the cluster's own
+   ink, white on it, and the label weight — hue for the kind, weight for the
+   state, said in one control. */
+.nu-lz.is-hot, .nu-lz[aria-pressed="true"]{
+  background: var(--lz, var(--hand)); border-color: var(--lz, var(--hand));
+  color: #FFFFFF; font-weight: var(--fw-label); }
+.nu-lz.is-hot:hover, .nu-lz[aria-pressed="true"]:hover{
+  background: var(--lz, var(--hand)); }
+/* A CHAIN PRINTS ITS ORDER, because "transpose then invert" is not "invert
+   then transpose" and a set of pressed pills cannot say which came first. */
+.nu-lzn{ font: var(--num-fw) var(--t0)/1 var(--mono, monospace);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 1.4em; text-align: center;
+  padding: 1px .3ch; border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .28); }
+/* REFUSED: dashed, dim, AND ITS SENTENCE PRINTED — the no-silent-grey law, in
+   the shape `.nu-wchip > .nu-why` already takes (a `flex: 0 0 100%` second
+   line inside the same button, capped so it wraps instead of stretching the
+   pill and pushing its neighbours sideways). */
+.nu-lz[disabled], .nu-lz[aria-disabled="true"]{
+  background: transparent; border-style: dashed;
+  color: var(--dim); opacity: .7; cursor: not-allowed; box-shadow: none; }
+.nu-lz.is-quiet{ opacity: .8; }
+.nu-lzwhy{ flex: 0 0 100%; max-inline-size: 18ch; text-align: center;
+  white-space: normal; font-weight: 400; font-size: var(--t0);
+  line-height: 1.25; }
+/* THE SENTENCE A LONG PRESS SAYS. It reserves its own line whether or not
+   there is one to say, for the reason `[data-k="board.legend"]` reserves two:
+   GEOMETRY IS RESERVED AT CREATION, or a sentence arriving under a thumb moves
+   the thing the thumb is on. */
+.nu-lzsay{ margin: var(--s2) 0 0; min-block-size: 1.4em;
+  font: var(--fw-body) var(--t1)/1.35 var(--sans, inherit); color: var(--dim); }
+/* THE WHOLE FIELD REFUSED: dashed and dim, with `menuField`'s own `.nu-why`
+   line under it — one refusal line in this file, not two. */
+.nu-lzfield.is-off .nu-lz{ cursor: not-allowed; }
+.nu-lzfield.is-off > .nu-why{ display: block; color: var(--dim);
+  font: var(--fw-body) var(--t1)/1.35 var(--sans, inherit); }
+/* IT IS A FIELD IN A SHEET, AND IT TAKES THE SHEET'S WHOLE WIDTH — the same
+   `grid-column: 1 / -1` an ops bar and an open chip strip take, for the same
+   reason: all of it answers one question and a column three-fifths of the way
+   across would be a second reading order. */
+#pan-band .nu-vsheet > .nu-lzfield{ grid-column: 1 / -1; }
+
+/* ---- THE FORMULA BAR MIRRORS THE CELL'S FIRST GROUP (2026-09-05) ------
+   DESIGN.md §2 component 5: *"the selected cell's vector as chips/values"*.
+   §11c gives "vector" a shape — four groups — and the bar holds the first of
+   them, which is what this cell PLAYS. It is a READOUT (`src/table/grid.ts
+   firstGroup` says why in full: one owner per fact, and the control is in the
+   sheet), so it is type and not buttons: the label small and dim, the value in
+   the label weight, quiet where nothing was written. */
+.nu-fvec{ display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--s1) var(--s3); flex: 1 1 100%; min-inline-size: 0; }
+.nu-fvechead{ font: var(--fw-block) var(--t0)/1.2 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.nu-fvecpair{ display: inline-flex; align-items: baseline; gap: var(--s1);
+  min-inline-size: 0; }
+.nu-fvecpair > small{ font: var(--fw-body) var(--t0)/1.2 var(--sans, inherit);
+  color: var(--dim); }
+.nu-fvecpair > b{ font: var(--fw-label) var(--t1)/1.2 var(--mono, monospace);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-inline-size: 16ch; }
+/* QUIET IS DERIVED, BOLD IS WRITTEN — the page's own law, on a readout. */
+.nu-fvecpair.is-derived > b{ font-weight: var(--fw-body); opacity: .75; }
+
+/* ---- A GROUP HEADING WEARS ITS MARK (2026-09-05) ---------------------
+   Paul: *"use more icons. Ideally the table is a large set of icons."* The
+   grid was already 118 marks of 139 controls (§11b); a SHEET was none, and its
+   headings are the thirteen things a hand scans. `ui/glyph.js GLYPH.group` is
+   the one owner of the pictures; this is what one looks like beside its word —
+   the heading's own dim ink, the same size, a hair of air, and `aria-hidden`
+   because the word is right there. */
+#pan-band .nu-grouphead{ display: flex; align-items: baseline; gap: var(--s2); }
+#pan-band .nu-grouphead > .nu-g{ flex: 0 0 auto; font-size: var(--t2);
+  line-height: 1; opacity: .8; }
+#pan-band .nu-groupword{ min-inline-size: 0; }
+/* ...AND THE STRIP OF CHIPS IS NOT A BOX OF CHIPS ANYWHERE (2026-09-05). The
+   `.nu-menu` form was named first because that is where the census found it;
+   at 1280 the sheet's own `.nu-wchips` wears the same plate and T12b counted
+   it. One rule for both, because it is one strip. */
+#pan-band .nu-wchips{ background: transparent; border: 0; box-shadow: none; }
+
+/* ======================================================================
+   THE EQ CURVE AND THE XY PAD (2026-09-05 · DESIGN.md component 9 ·
+   TABLE.md §11's third item)
+
+   Paul: *"Look for places where UX could help like eq editors too."* These
+   are the third and fourth modes of the ONE curve editor, so almost nothing
+   is written here: the plate, the handle, the 44px target, the 11px dot, the
+   focus ring, the refused state and the printed numbers are all
+   `.nu-envplate` / `.nu-envh` / `.nu-envdot` / `.nu-envsays` above, unchanged
+   and unduplicated. What a mode owns is the FURNITURE ITS OWN AXES NEED, and
+   that is four rules.
+
+   IT IS APPENDED AT THE END RATHER THAN EDITED INTO THE ENVELOPE BLOCK for
+   the reason the RESTYLE block gives about itself: another hand was writing
+   above it in the same round, and a block that can be pulled out whole is a
+   block a reader can check.
+
+   THE PLATE SURVIVES THE DE-PLATING because both drawings carry `.nu-env` on
+   their root, which the `#pan-band` RESTYLE exempts by name along with
+   `.nu-plate`, `#rack` and `.nu-strip`. DESIGN.md names the curve editor as
+   one of exactly two components that may wear a plate, so this is the
+   exemption working rather than an escape from it.
+   ---------------------------------------------------------------------- */
+
+/* 1 · A LINE ON THESE PLATES IS A NUMBER, NEVER A DECORATION.
+   On the EQ it is the band's own frequency (fields.js EQ_BANDS: 120 Hz,
+   1 kHz, 7.2 kHz — silkscreened on a real desk, so silkscreened here); on the
+   pad it is a decade of the cutoff's own log axis. A hairline, at the rule's
+   own weight, quieter than the zero line, because it is what the curve is
+   read AGAINST and not part of it. */
+.nu-eqrule{ stroke: var(--rule); stroke-width: var(--bw); opacity: .28; }
+
+/* 2 · THE CROSSHAIRS ARE THE HANDLE, EXTENDED. The pad draws no response
+   curve — nothing hands this page the chair's own filter law, and a curve
+   drawn from an invented Q would be a picture of physics nobody measured —
+   so the two rules through the handle ARE the reading: they carry the hand's
+   own cobalt, at the curve's weight, because what is drawn is what is being
+   set. */
+.nu-xycross{ stroke: var(--hand); stroke-width: var(--bw-hard); opacity: .5; }
+
+/* 3 · WHERE EACH ONE SITS IN THE SURFACE AROUND IT. The EQ is a row of the
+   channel strip and takes the row's full width (it replaced three `.nu-vcol`
+   columns, so it must not inherit their flex); the pad is a picture over the
+   knob table, the same seat `tractPad` takes, with the block of air DESIGN.md
+   §1 puts between two questions. */
+.nu-eqwrap{ display: block; inline-size: 100%; min-inline-size: 0; }
+.nu-seatxy{ display: block; inline-size: 100%; min-inline-size: 0;
+  margin-block: var(--s3) var(--s5); }
+
+/* 4 · A REFUSED AXIS PRINTS ITS SENTENCE BESIDE ITS NUMBER — the
+   no-silent-grey law, in the pad's own readout row rather than somewhere
+   else on the page. */
+.nu-envsay > .nu-why{ margin-inline-start: var(--s2); }
+
+/* ---- A STICKY HEAD MUST BE OPAQUE (2026-09-05, and it was measured) ---
+   The restyle took the table's own `background: var(--panel)` off (§1 above),
+   which is right — a grid is not a plate — and it took the heads' ground with
+   it, because a `<th>` had no ground of its own. MEASURED at 1280 on the row
+   sheet: the sheet's FORM group scrolled straight THROUGH the column heads,
+   "second ending / coda / to coda" printed over "stab lead vocal drone", and
+   the corner too. A `position: sticky` box does not stop what is under it; a
+   ground does.
+   IT IS `--ground` AND NOT `--paper`, and the difference is what the eye sees:
+   inside `.nu-pane` `--paper` is `--panel` (white), so a head painted with it
+   would be the white strip the restyle just deleted. `--ground` is the page's
+   own cream, which is exactly what is behind the table — so the head is
+   invisible at rest and opaque under a scroll, which is the whole requirement.
+   A GROUND IS NOT A PLATE: T12b counts a box with a border on all four sides
+   AND a ground, and these have one hairline each. */
+#pan-band .nu-wordgrid thead th,
+#pan-band .nu-wordgrid tbody th.nu-srowh,
+#pan-band .nu-wordgrid thead th.nu-cornerh,
+#pan-band .nu-wordgrid tbody th.nu-addhead{ background: var(--ground); }
+
+/* ---- ...AND IT MUST BE ABOVE THE SHEET, NOT ONLY OPAQUE ---------------
+   A ground stops what is UNDER a head; it does not stop what paints OVER it.
+   `.nu-vsheet` is `position: sticky` too (it rides the pane's horizontal
+   scroll — its own block says why), and two sticky boxes with no z-index of
+   their own paint in document order, so the sheet — which comes later — won
+   and its first rows printed across the column heads. MEASURED before this
+   rule at 1280 on the drummer's cell: "pitched parts only" over "+ line",
+   and the phrases row over the seven players. It was true on v281 too and
+   the restyle only made it visible, because the heads had an opaque ground
+   by accident (`table{ background: var(--panel) }`) and now have one on
+   purpose.
+   THE HEADS ARE 2 AND 5 (`thead th` and `.nu-spheadcell`, both already
+   declared); the sheet takes 0, which is under both and still above the
+   grid's own cells. */
+#pan-band .nu-vsheet{ z-index: 0; }

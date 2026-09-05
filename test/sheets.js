@@ -994,7 +994,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
     const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
       : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
-    const chips = strip ? [...strip.querySelectorAll(".nu-wchip")] : [];
+    /* ...AND THE SAME FOURTH WIDGET HERE — the drummer's sixty-eight are a
+       lozenge field since 2026-09-05 (see `padRead`'s note). */
+    const chips = strip ? [...strip.querySelectorAll(".nu-wchip, .nu-lz")] : [];
     const live = chips.filter((x) => !x.disabled &&
       x.getAttribute("aria-disabled") !== "true").length;
     const out = { as: "cell", off, why: c.dataset.why || null,
@@ -1023,7 +1025,18 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      worse lie than the checkboxes were. The drummer hired above is still on the
      record; his tab is where the control lives. */
   await openCol("kit");                   // the machine is what the kit IS
-  const dk = await p.evaluate(() => {
+  /* IT TAPS THE FIELD FIRST, BECAUSE A CONTROL ON A SHEET MAY BE A POP-UP
+     (2026-09-05, DESIGN.md §2 components 4 and 6: a sheet row is *"label ·
+     value · clear-back"* and a control is *"what a tap on a cell/field
+     opens"*). A vocabulary that knows its own kinds is drawn that way now, and
+     `sound.drumkit` is one tap away from being one — so the gate does what a
+     hand does before it reads. Idempotent, and a no-op on a seated widget. */
+  const dk = await p.evaluate(async () => {
+    const cell = document.querySelector('.nu-wcell[data-k^="sound.drumkit"]');
+    if (cell && !cell.disabled && cell.getAttribute("aria-expanded") !== "true") {
+      cell.click();
+      await new Promise((r) => setTimeout(r, 250));
+    }
     const f = document.querySelector('.nu-sheet[data-sheet^="sound.drumkit"]');
     const s2 = document.querySelector('[data-sel^="sound.drumkit"]');
     return { sheet: !!f, sheetMulti: f ? f.hasAttribute("data-multi") : null,
@@ -1228,11 +1241,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
       const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
         : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      /* `.nu-lz` IS THE FOURTH WIDGET (2026-09-05, DESIGN.md component 16). The
+         development words carry avail.js's own families — "the subject", "a
+         piece of it", "moved in pitch", "counterpoint" — so the strip a cell
+         opens is a LOZENGE FIELD now, minting the same `<field>|<value>`
+         address on every option. Read only `.nu-wchip` and this returned an
+         EMPTY LIST, which reads as "a pad greys nothing" and is not the same
+         claim as "the page offers nothing to grey". */
       if (strip)
-        for (const o of strip.querySelectorAll(".nu-wchip"))
+        for (const o of strip.querySelectorAll(".nu-wchip, .nu-lz"))
           rows.push({ v: o.dataset.k.slice(c.dataset.k.length + 1),
                       off: !!o.disabled || o.getAttribute("aria-disabled") === "true",
-                      why: o.dataset.why || "" });
+                      why: o.dataset.why ||
+                           ((o.querySelector(".nu-why, .nu-lzwhy") || {}).textContent || "") });
       if (shut && c.getAttribute("aria-expanded") === "true") c.click();
     }
     return rows;
@@ -1319,8 +1340,11 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
       const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
         : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      /* `.nu-lz` TOO, since 2026-09-05 — the development words are a lozenge
+         field now (see `padRead`'s note). Same `aria-pressed`, same
+         `<field>|<value>` address; only the class moved. */
       const chip = strip
-        ? [...strip.querySelectorAll(".nu-wchip")].find((x) =>
+        ? [...strip.querySelectorAll(".nu-wchip, .nu-lz")].find((x) =>
             x.getAttribute("aria-pressed") === "true") : null;
       const v = chip ? chip.dataset.k.slice(c.dataset.k.length + 1) : null;
       const out = v === "at the fifth"

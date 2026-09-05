@@ -103,6 +103,41 @@ import { pickerFor, coarse, CHIPMAX, LONGSTRIP, forgetPointer } from "./pick.js"
    `../copy/index.js`: this is its own build entry, and importing the catalogue
    would bundle a second copy of every string on the page into ui/menus.js. */
 import { t } from "../copy/global.js";
+/* ...AND THE LOZENGE FIELD IS READ OFF `globalThis` FOR THE SAME REASON
+   (2026-09-05, DESIGN.md component 16). `src/lozenge` is its own build entry
+   and `import { lozengeField } from "../lozenge/index.js"` here would compile
+   a second copy of the widget into ui/menus.js and a third into ui/table.js —
+   three widgets that can drift, which is what `src/copy/global.ts`'s five
+   lines exist to refuse. `index.html` loads ui/lozenge.js beside ui/copy.js
+   and this reads the one that shipped. */
+interface LozDoor {
+  lozengeField(spec: {
+    key: string; label: string;
+    options: { value: string; label: string; why?: string | null;
+               disabled?: boolean; quiet?: boolean; cluster?: string | null }[];
+    clusters?: { word: string; vals: string[] }[] | null;
+    value?: string | null; values?: string[] | null;
+    multi?: boolean; ordered?: boolean; why?: string | null;
+    other?: string | null; k?: string | null;
+    onWrite?: ((v: string) => void) | null;
+    onToggle?: ((v: string, on: boolean, order: string[]) => void) | null;
+    ungated?: boolean;
+  }): HTMLElement;
+}
+const LOZ = (): LozDoor | null =>
+  (globalThis as unknown as { NuLozenge?: LozDoor }).NuLozenge || null;
+
+/** Does this vocabulary know what KIND each of its words is? One reader, here,
+ *  because `pick.ts`'s `clustered` is a claim about the data and every caller
+ *  would otherwise ask it its own way. A vocabulary is clustered when at least
+ *  TWO of its words name a group and they do not all name the same one — one
+ *  heading over the whole list is a heading that says nothing. */
+export function clustered(words: { group?: string | null }[]): boolean {
+  const seen = new Set<string>();
+  for (const w of words || []) { const g = w.group && String(w.group).trim();
+    if (g) seen.add(g); }
+  return seen.size > 1;
+}
 
 export { pickerFor, coarse, CHIPMAX, LONGSTRIP, forgetPointer };
 export type { MenuSpec, Word, Picker };
@@ -674,12 +709,49 @@ export function menu(spec: MenuSpec): HTMLElement {
     return box;
   }
 
-  const pick = pickerFor(words.length, { tight: !!spec.compact });
+  const pick = pickerFor(words.length,
+    { tight: !!spec.compact, clustered: clustered(words) && !!LOZ() });
   box.dataset.widget = pick;
   if (pick === "chips") box.append(chips(spec, key, box));
   else if (pick === "native") box.append(native(spec, key, box));
+  else if (pick === "lozenge") box.append(lozenges(spec, key, box));
   else combo(spec, key, box);           // appends its own field and list
   return box;
+}
+
+/* ---- 4 · THE LOZENGE FIELD, for a long vocabulary that knows its own kinds
+   (2026-09-05, DESIGN.md component 16). `src/lozenge` draws it; this is the
+   twenty lines that turn a `MenuSpec` into a `LozSpec` and stamp the address.
+   THE MAPPING IS TWO RENAMES AND NOTHING ELSE — `words` -> `options` and
+   `group` -> `cluster` — which is the same two-key conversion `api.ts`'s own
+   header promises, and it is here rather than in the component because the
+   component is not allowed to know what a `Word` is. */
+function lozenges(spec: MenuSpec, key: string, box: HTMLElement): HTMLElement {
+  const door = LOZ()!;
+  const { rows, matched } = rowsOf(spec);
+  const off = spec.why && String(spec.why).trim();
+  const el = door.lozengeField({
+    key,
+    label: spec.label == null ? key : String(spec.label),
+    options: rows.map((r) => ({
+      value: r.value,
+      label: r.o.label == null ? r.value : String(r.o.label),
+      why: r.o.why || null,
+      disabled: !!r.o.disabled,
+      quiet: !!r.o.quiet,
+      cluster: r.o.group || null })),
+    value: matched.value,
+    why: off || null,
+    k: spec.k || null,
+    ungated: spec.ungated,
+    onWrite: (v: string) => {
+      if (off) return;
+      box.dataset.v = v;
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+      if (typeof spec.onWrite === "function") spec.onWrite(v);
+    } });
+  address(el, spec, key, "lozenge", matched.value);
+  return el;
 }
 
 /** One labelled control: `<p class="nu-sel"><label><span class="nu-w">…</span>

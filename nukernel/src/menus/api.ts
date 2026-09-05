@@ -50,5 +50,7 @@ export interface MenuSpec {
   k?: string | null;
 }
 
-/** Which of the three a vocabulary gets. `combo` is the typed one. */
-export type Picker = "chips" | "native" | "combo";
+/** Which of the FOUR a vocabulary gets. `combo` is the typed one; `lozenge`
+ *  is DESIGN.md component 16 — every option visible at once, clustered under
+ *  its own heading, one hue per cluster (2026-09-05). */
+export type Picker = "chips" | "native" | "combo" | "lozenge";

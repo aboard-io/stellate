@@ -330,6 +330,7 @@ function forgetPointer() {
 function pickerFor(n2, opts) {
   if (opts && opts.tight) return coarse() ? "native" : "combo";
   if (n2 <= CHIPMAX) return "chips";
+  if (opts && opts.clustered) return "lozenge";
   if (coarse()) return "native";
   if (opts && opts.strip) return "chips";
   return "combo";
@@ -340,6 +341,15 @@ var C2 = () => globalThis.COPY;
 var t3 = (key, p2) => C2().t(key, p2);
 
 // nukernel/src/menus/index.ts
+var LOZ = () => globalThis.NuLozenge || null;
+function clustered(words) {
+  const seen = /* @__PURE__ */ new Set();
+  for (const w2 of words || []) {
+    const g2 = w2.group && String(w2.group).trim();
+    if (g2) seen.add(g2);
+  }
+  return seen.size > 1;
+}
 function optionText(o3) {
   const label = o3.label == null ? String(o3.value) : String(o3.label);
   const why = o3.why && String(o3.why).trim();
@@ -826,12 +836,45 @@ function menu(spec) {
     box.append(empty);
     return box;
   }
-  const pick = pickerFor(words.length, { tight: !!spec.compact });
+  const pick = pickerFor(
+    words.length,
+    { tight: !!spec.compact, clustered: clustered(words) && !!LOZ() }
+  );
   box.dataset.widget = pick;
   if (pick === "chips") box.append(chips(spec, key, box));
   else if (pick === "native") box.append(native(spec, key, box));
+  else if (pick === "lozenge") box.append(lozenges(spec, key, box));
   else combo(spec, key, box);
   return box;
+}
+function lozenges(spec, key, box) {
+  const door = LOZ();
+  const { rows, matched } = rowsOf(spec);
+  const off = spec.why && String(spec.why).trim();
+  const el = door.lozengeField({
+    key,
+    label: spec.label == null ? key : String(spec.label),
+    options: rows.map((r2) => ({
+      value: r2.value,
+      label: r2.o.label == null ? r2.value : String(r2.o.label),
+      why: r2.o.why || null,
+      disabled: !!r2.o.disabled,
+      quiet: !!r2.o.quiet,
+      cluster: r2.o.group || null
+    })),
+    value: matched.value,
+    why: off || null,
+    k: spec.k || null,
+    ungated: spec.ungated,
+    onWrite: (v2) => {
+      if (off) return;
+      box.dataset.v = v2;
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+      if (typeof spec.onWrite === "function") spec.onWrite(v2);
+    }
+  });
+  address(el, spec, key, "lozenge", matched.value);
+  return el;
 }
 function menuField(parent, spec) {
   const p2 = document.createElement("p");
@@ -870,6 +913,7 @@ function menuEl(spec) {
 export {
   CHIPMAX,
   LONGSTRIP,
+  clustered,
   coarse,
   forgetPointer,
   menu,

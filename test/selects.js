@@ -372,12 +372,29 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
        pointer, the TYPED COMBO above eight with a keyboard. `data-widget` says
        which, on the same addressed element, so this reader asks the ARTIFACT
        what it is instead of guessing from a tag. */
+    /* ...AND ON A LOZENGE SINCE 2026-09-05, WHICH IS THE FOURTH (DESIGN.md
+       component 16 · TABLE.md §11d). Paul: *"tight lozenges, organized by
+       color and clustered semantically… visibility into all of the options."*
+       Same `data-sel`, same `data-widget`, same `<field>|<value>` on every
+       option — so this reader still asks the ARTIFACT what it is. */
     const widgetOf = (s) => s.dataset.widget ||
       (s.getAttribute("role") === "combobox" ? "combo"
-       : s.classList.contains("nu-wchips") ? "chips" : "native");
+       : s.classList.contains("nu-wchips") ? "chips"
+       : s.classList.contains("nu-lzfield") ? "lozenge" : "native");
     const isCombo = (s) => widgetOf(s) === "combo";
     const optionEls = (s) => {
       const kind = widgetOf(s);
+      if (kind === "lozenge") return [...s.querySelectorAll(".nu-lz")].map((o) => ({
+        /* THE WHOLE BUTTON'S TEXT, NOT ONLY ITS WORD — a refused lozenge
+           PRINTS its reason as a second line inside itself (`.nu-lzwhy`,
+           `chips()`'s own precedent), and check 5's law is that the reason is
+           in the words the option says. Reading `.nu-lzword` alone reported
+           two greyed modes as silent greys that were saying their reason on
+           the glass. */
+        t: o.textContent,
+        v: o.dataset.v == null ? "" : o.dataset.v,
+        off: o.disabled || o.getAttribute("aria-disabled") === "true",
+        why: o.dataset.why || "", ph: o.hasAttribute("data-placeholder") }));
       if (kind === "chips") return [...s.querySelectorAll(".nu-wchip")].map((o) => ({
         t: o.textContent, v: o.dataset.v == null ? "" : o.dataset.v,
         off: o.disabled || o.getAttribute("aria-disabled") === "true",
@@ -672,6 +689,37 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     return true;
   });
   if (openedCell) { await p.waitForTimeout(300); eat(await survey()); }
+  /* ...AND A COLUMN'S SHEET, 2026-09-05. `sound.instrument` and
+     `sound.drumkit` are MENUS keys and they live in a CHAIR's sheet; while
+     they were seated `ui/menus.js` widgets the walk found them somewhere else,
+     and since the design pass they are drawn by the sheet itself (a clustered
+     vocabulary earns the lozenge field — `src/table/model.ts shField`). A
+     survey that never opened a column sheet was reporting on a control it had
+     not looked at. */
+  const openedCol = await p.evaluate(async () => {
+    if (!window.__eightDoc) return false;
+    const v = window.__eightDoc().voices[0];
+    if (!v) return false;
+    const c = document.querySelector('#pan-band [data-k="tcol|' + v.name + '"]');
+    if (!c) return false;
+    if (c.getAttribute("aria-expanded") !== "true") c.click();
+    await new Promise((r) => setTimeout(r, 400));
+    /* ...AND THE INSTRUMENT FIELD IS TAPPED OPEN. Since 2026-09-05 a clustered
+       vocabulary is a POP-UP like every other strip of words on a sheet
+       (DESIGN.md §2 components 4 and 6) rather than a seated menu that was in
+       the DOM whether or not anybody asked. A survey that only looked at the
+       resting sheet would report the control missing, which is a claim about
+       where the gate looked. */
+    for (const k of ["sound.instrument|" + v.name, "sound.drumkit|" + v.name]) {
+      const f = document.querySelector('#pan-band .nu-wcell[data-k="' + k + '"]');
+      if (f && !f.disabled && f.getAttribute("aria-expanded") !== "true") {
+        f.click();
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+    return true;
+  });
+  if (openedCol) { await p.waitForTimeout(400); eat(await survey()); }
   const selKeys = new Set(sel.map((s) => s.k));
   const sheetKeys = new Set(sheets.map((s) => s.k));
   notes.push("     " + (tabs.length ? "tabs walked: " + tabs.join(" ") : "no tab strip") +
@@ -891,7 +939,16 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
        every `s.why` back out of the visible text of the panel it was collected
        from. MEASURED on the shipped chant: `rule-add|Form` is one chip,
        refused whole, "every rule this axis has is already on the record". */
-    const said = s.widget === "chips"
+    /* A LOZENGE IS A CHIP FOR THIS PURPOSE (2026-09-05, DESIGN.md component
+       16). The fork above is about SPELLING and not about the law: a one-line
+       control joins the reason to the word with a comma (`optionText`), and a
+       two-line control prints it as a `<small>` second line inside the same
+       button. `.nu-lzwhy` is `.nu-why` one widget along — the same shape, for
+       the same argument — so demanding the comma of it would be demanding it
+       be a one-line control, which is the widget question and not the
+       silent-grey one. */
+    const twoLine = s.widget === "chips" || s.widget === "lozenge";
+    const said = twoLine
       ? (o.t.indexOf(o.why) >= 0 || o.why === s.why)
       : o.t.endsWith(", " + o.why);
     if (!said) greyNotSaid.push(s.key + " / " + o.v + " [" + s.widget + "]");
@@ -1200,7 +1257,16 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       return (a && a.dataset && a.dataset.k) || (a ? a.tagName.toLowerCase() : "none");
     }));
   }
-  check(/^opt\|alphabet\.key\.rel\|/.test(stops[0]) && stops[1] === "sel|alphabet.mode",
+  /* THE SECOND STOP IS THE MODE FIELD'S FIRST FOCUSABLE, AND SINCE 2026-09-05
+     THAT IS A CLUSTER HEADING (DESIGN.md component 16). `alphabet.mode` is a
+     lozenge field now — forty-two modes in ten families — and its first tab
+     stop is the first family's fold button, `alphabet.mode|cluster|<word>`,
+     with the lozenges under it on a roving tab stop. The CLAIM is unchanged
+     and is about the diagram: two stops take you out of the circle and into
+     the mode control. Which element of that control the keyboard lands on is
+     the control's business, so this asks for either spelling of its head. */
+  const MODEHEAD = /^(sel\|alphabet\.mode$|alphabet\.mode\|cluster\||lz\|alphabet\.mode$)/;
+  check(/^opt\|alphabet\.key\.rel\|/.test(stops[0]) && MODEHEAD.test(stops[1] || ""),
     "Tab goes outer ring -> inner ring -> the mode menu beside the circle " +
     JSON.stringify(stops));
 
@@ -1208,9 +1274,16 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      from a MAJOR record on purpose: a browser fires no `change` on a radio
      that was already checked, so tapping Am while the record is already in a
      minor would prove nothing at all. */
+  /* SAID THROUGH THE SHARED DRIVER, 2026-09-05. This wrote `.value` and fired
+     `change` — the typed combo's own commit path, which `ui/selects.js`
+     documents as the fallback — and a `<div class="nu-lzfield">` has no
+     `.value` at all, so the day `alphabet.mode` became a lozenge field this
+     line set a property on a div and the record did not move. That is the
+     SILENT NO-OP test/lib-combo.js exists to prevent, and `window.__combo.say`
+     is the one driver that knows all four widgets. */
   await p.evaluate(async () => {
     const m = document.querySelector('#app [data-sel="alphabet.mode"]');
-    m.value = "ionian"; m.dispatchEvent(new Event("change", { bubbles: true }));
+    window.__combo.say(m, "ionian");
   });
   await p.waitForTimeout(350);
   await p.evaluate(() => {
@@ -1270,7 +1343,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      for the word "aeolian". */
   await p.evaluate(() => {
     const m = document.querySelector('#app [data-sel="alphabet.mode"]');
-    m.value = "dorian"; m.dispatchEvent(new Event("change", { bubbles: true }));
+    window.__combo.say(m, "dorian");
   });
   await p.waitForTimeout(400);
   const dorian = await p.evaluate(() => ({
@@ -1345,7 +1418,17 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      that ARE combos: a combo owns a `role=listbox` through `aria-controls`, it
      is shut until a hand asks, and there is no second box above it — the
      `.nu-combo-filter` the wrapper round drew is gone from the page. */
-  const WIDGETS = ["combo", "chips", "native"];
+  /* FOUR WIDGETS SINCE 2026-09-05 (DESIGN.md component 16 · TABLE.md §11d).
+     Paul: *"tight lozenges, organized by color and clustered semantically…
+     visibility into all of the options."* A vocabulary that knows what KIND
+     each of its words is — the modes and scales by `genres-tables.js
+     SCALEFAMILY`, the instruments by `instruments.js familyOf`, the kernel's
+     chord families — is drawn as a LOZENGE FIELD on every pointer now, which
+     is the fourth thing `src/menus/index.ts` may return. It carries the same
+     `data-sel` / `data-k` / `data-v` and says `data-widget="lozenge"`, so this
+     gate's law is unchanged: every menu in #app is one of the widgets the
+     module draws, and a hand-rolled `<select>` is still a fail. */
+  const WIDGETS = ["combo", "chips", "native", "lozenge"];
   const notCombo = sel.filter((s) => !s.multi && WIDGETS.indexOf(s.widget) < 0)
     .map((s) => s.key + " is a " + s.role + " / " + s.widget);
   check(!notCombo.length, "every menu in #app is one of the three widgets " +
@@ -1374,6 +1457,60 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      again") must not come back wearing a new element. */
   await openTop("Time");
   const wasMode = await p.evaluate(() => window.__D().alphabet.mode);
+  /* ---- WHICH WIDGET THIS VOCABULARY EARNED, ASKED OF THE PAGE ----------
+     `alphabet.mode` was a typed combo when this check was written and is a
+     LOZENGE FIELD since 2026-09-05: forty-two modes in ten families, all of
+     them on the glass. The claims below split rather than move, because the
+     two halves of Paul's sentence belong to different widgets — *"one line
+     instead of two"* is a combo's, and *"visibility into all of the options"*
+     is a lozenge's — and the half he did NOT have to ask for is the same for
+     both: after the redraw the thumb is back on the control and nothing has
+     popped up. That half is asserted on whichever widget is drawn. */
+  const modeWidget = await p.evaluate(() => {
+    const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+    return f ? (f.dataset.widget || null) : null; });
+  if (modeWidget === "lozenge") {
+    const lz = await p.evaluate(() => {
+      const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+      const all = [...f.querySelectorAll(".nu-lz")];
+      const secs = [...f.querySelectorAll(".nu-lzcluster")];
+      return { n: all.length,
+        rect: all.filter((c) => c.getBoundingClientRect().height > 0).length,
+        short: all.filter((c) => c.getBoundingClientRect().height < 43.5).length,
+        clusters: secs.length,
+        hues: [...new Set(secs.map((x) =>
+          getComputedStyle(x).getPropertyValue("--lz").trim()))].length,
+        sideways: document.documentElement.scrollWidth -
+                  document.documentElement.clientWidth }; });
+    check(lz.n > 12 && lz.rect === lz.n && lz.clusters > 1,
+      "the modes are a LOZENGE FIELD with every one of them on the glass, in " +
+      "its own kind " + JSON.stringify(lz));
+    check(lz.short === 0 && lz.sideways === 0,
+      "...every lozenge 44px of thumb, and the page does not scroll sideways " +
+      JSON.stringify({ short: lz.short, sideways: lz.sideways }));
+    const wrote = await p.evaluate(() => {
+      const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+      const cold = [...f.querySelectorAll(".nu-lz")].find((c) =>
+        c.getAttribute("aria-pressed") !== "true" && !c.disabled &&
+        c.dataset.v && !c.hasAttribute("data-placeholder"));
+      if (!cold) return null;
+      const want = cold.dataset.v;
+      cold.click();
+      return { want }; });
+    await p.waitForTimeout(450);
+    const landed = await p.evaluate(() => {
+      const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+      return { mode: window.__D().alphabet.mode, still: !!f,
+        hot: f ? [...f.querySelectorAll(".nu-lz")]
+          .filter((c) => c.getAttribute("aria-pressed") === "true")
+          .map((c) => c.dataset.v) : [] }; });
+    check(!!wrote && landed.mode === wrote.want && landed.mode !== wasMode,
+      "a tap on a lozenge writes the record " +
+      JSON.stringify({ was: wasMode, now: landed.mode, want: wrote && wrote.want }));
+    check(landed.still && landed.hot.includes(String(wrote && wrote.want)),
+      "...and NOTHING DISMISSES under the thumb: the field is still there with " +
+      "the word it wrote standing hot " + JSON.stringify(landed.hot));
+  } else {
   await p.click('#app [data-sel="alphabet.mode"]');
   await p.waitForTimeout(250);
   const opened = await p.evaluate(() => {
@@ -1453,6 +1590,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   check(committed.rows === committed.all,
     "...and the filter did not outlive its list: all " + committed.all +
     " words are back on the page");
+  }
 
   /* ---- 8 EVERY MENU SAYS WHAT IT IS ---- */
   const unnamed = sel.filter((s) => !s.name).map((s) => s.key);
@@ -1460,17 +1598,18 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
 
   /* ---- 9 CHOOSING ONE MOVES THE RECORD — driven, not asked ---- */
   const before = await p.evaluate(() => window.__D().alphabet.mode);
+  /* THROUGH THE SHARED DRIVER, 2026-09-05. This reached into `li[role=option]`
+     — the typed combo's own shape — and returned null the day `alphabet.mode`
+     became a lozenge field, which is the SILENT NO-OP test/lib-combo.js's own
+     header was written about. `window.__combo` knows all four widgets and
+     reads the address, never the tag. */
   const moved = await p.evaluate(() => {
     const s = document.querySelector('#app [data-sel="alphabet.mode"]');
     if (!s) return null;
-    const o = [...(s.closest(".nu-combo") || s.parentElement)
-      .querySelectorAll("li[role=option]")]
-      .find((x) => x.getAttribute("aria-disabled") !== "true" &&
-                   !x.hasAttribute("data-placeholder") && x.dataset.v !== s.dataset.v);
+    const o = window.__combo.words(s)
+      .find((x) => !x.off && !x.ph && x.v && x.v !== s.dataset.v);
     if (!o) return null;
-    s.value = o.dataset.v;
-    s.dispatchEvent(new Event("change", { bubbles: true }));
-    return o.dataset.v;
+    return window.__combo.say(s, o.v) ? o.v : null;
   });
   await p.waitForTimeout(300);
   const after = await p.evaluate(() => window.__D().alphabet.mode);
@@ -1920,11 +2059,22 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     check(!typed.length, "on a coarse pointer NO menu is a typed input — a " +
       "focused editable <input> is what raises a soft keyboard, and a keyboard " +
       "is what hid the list " + JSON.stringify(typed.slice(0, 6)));
-    /* 2 · AND EACH IS ONE OF THE TWO WIDGETS A THUMB GETS. */
-    const wrongW = rows.filter((r) => r.widget !== "chips" && r.widget !== "native")
+    /* 2 · AND EACH IS ONE OF THE THREE WIDGETS A THUMB GETS — three since
+           2026-09-05 (DESIGN.md component 16 · TABLE.md §11d). Paul, of the
+           long vocabularies: *"tight lozenges, organized by color and
+           clustered semantically by the kind of things they present… VISIBILITY
+           INTO ALL OF THE OPTIONS"*, and §11d in as many words: *"It replaces
+           the native picker for these vocabularies on EVERY POINTER; the
+           native picker stays only where a vocabulary is long AND FLAT."*
+           So the claim is not weakened, it is corrected: what a thumb may
+           never get is the TYPED COMBO (check 1 above, which is the one this
+           whole pass was written about), and a vocabulary that knows its own
+           kinds gets the field that draws them, on a phone as on a desk. */
+    const wrongW = rows.filter((r) => r.widget !== "chips" &&
+      r.widget !== "native" && r.widget !== "lozenge")
       .map((r) => r.k + " is " + r.widget);
-    check(!wrongW.length, "...and every one of them is CHIPS or the NATIVE " +
-      "picker, which is src/menus/pick.ts's answer for a thumb " +
+    check(!wrongW.length, "...and every one of them is CHIPS, the NATIVE " +
+      "picker or the LOZENGE FIELD, which is src/menus/pick.ts's answer for a thumb " +
       JSON.stringify(wrongW.slice(0, 6)));
     /* 3 · A CONTROL IS A THUMB TARGET. 44px, this page's own `--tap`. */
     const short = rows.filter((r) => r.h > 0 && r.h < 43)
@@ -1942,6 +2092,19 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     let standing = -1;
     for (const r of rows.slice(0, 400)) {
       if (r.n < 2) continue;
+      /* AN ADD MENU IS A VERB AND HAS NOTHING TO STAND ON (2026-09-05).
+         `rule-add|<axis>` offers "+ add a rule" and the kinds of rule you may
+         add; saying one ADDS that rule and the control goes back to offering,
+         so `data-v` is "" afterwards BY DESIGN. The claim under this loop is
+         "a tap commits and the menu stands on the word that was said", which
+         is a claim about a menu that holds a VALUE. It surfaced here only
+         because the census grew — the lozenge fields added rows and moved
+         which eight controls fall inside the drive window — and a claim that
+         passes or fails on ordering is a claim asked of the wrong control.
+         (What an add menu DOES is gated where it belongs:
+         test/rules-view.browser.js drives `rule-add` and reads the rule back
+         off the record.) */
+      if (/^rule-add\|/.test(r.k)) continue;
       if (r.at !== standing && opens[r.at]) {
         standing = r.at;
         await opens[r.at].open();

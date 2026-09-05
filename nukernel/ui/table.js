@@ -449,6 +449,7 @@ function coarse() {
 function pickerFor(n3, opts) {
   if (opts && opts.tight) return coarse() ? "native" : "combo";
   if (n3 <= CHIPMAX) return "chips";
+  if (opts && opts.clustered) return "lozenge";
   if (coarse()) return "native";
   if (opts && opts.strip) return "chips";
   return "combo";
@@ -490,6 +491,32 @@ function groupOf(op) {
   for (const [name, list] of KITGROUPS) if (list.includes(op)) return name;
   return "feel";
 }
+var G = {
+  /* a chair — DESIGN.md §5's own sentence, in four words */
+  instrument: "instrument",
+  envelope: "envelope",
+  tone: "tone",
+  mix: "mix",
+  /* a section */
+  form: "form",
+  time: "time",
+  key: "key",
+  feel: "feel",
+  chain: "chain",
+  /* a cell */
+  phrase: "phrase",
+  variation: "variation",
+  dynamics: "dynamics",
+  placement: "placement",
+  /* the record's own sheets */
+  tempo: "tempo",
+  meter: "meter",
+  chords: "chords"
+};
+function inGroup(f2, group) {
+  f2.group = group;
+  return f2;
+}
 var REGSTEPS = [-4, -3, -2, -1, 0, 1, 2, 3];
 var BARSTEPS = [1, 2, 4, 8, 12, 16, 24, 32];
 var REPEATS = [2, 3, 4];
@@ -521,8 +548,12 @@ function shField(A2, key, scope, label) {
     set: (v3) => w2.set(v3),
     clear: w2.derived ? null : () => w2.set("")
   };
-  if (COMBOKEYS.has(key) || (sp.options || []).length > LONGSTRIP)
-    return { ...base, node: A2.combo(sp) };
+  if (COMBOKEYS.has(key) || (sp.options || []).length > LONGSTRIP) {
+    const kinds = /* @__PURE__ */ new Set();
+    for (const o4 of base.options || [])
+      if (o4.g && String(o4.g).trim()) kinds.add(String(o4.g).trim());
+    if (kinds.size < 2) return { ...base, node: A2.combo(sp) };
+  }
   return base;
 }
 function numField(A2, key, label, cur, steps, set, clearable, noneWord) {
@@ -733,9 +764,10 @@ function rowSheet(A2, i5) {
   const s3 = secs[i5];
   const sid = s3.id;
   const f2 = [];
+  const form = [], time = [], keyG = [], feel = [], chain = [];
   f2.push({ kind: "ops", label: t4("row.ops"), ops: rowOps(A2, i5, s3) });
-  f2.push(shField(A2, "form.role", { section: sid }, t4("row.type")));
-  f2.push(numField(
+  form.push(shField(A2, "form.role", { section: sid }, t4("row.type")));
+  form.push(numField(
     A2,
     "bars|" + sid,
     t4("row.bars"),
@@ -744,7 +776,7 @@ function rowSheet(A2, i5) {
     (v3) => A2.putRow(i5, "bars", +v3),
     false
   ));
-  f2.push(numField(
+  form.push(numField(
     A2,
     "repeat|" + sid,
     t4("row.repeat"),
@@ -771,7 +803,7 @@ function rowSheet(A2, i5) {
         clear: on ? () => A2.putRow(i5, key, null) : null
       }
     };
-    f2.push(fld);
+    form.push(fld);
   };
   const prev = secs[i5 - 1];
   flag(
@@ -793,28 +825,30 @@ function rowSheet(A2, i5) {
     t4("row.tocoda"),
     codaIx > i5 ? null : t4("row.tocoda.why")
   );
-  for (const [key, lab] of [
-    ["form.lvl", t4("field.level")],
-    ["form.env", t4("field.dynamics")],
-    ["form.intro", t4("field.intro")],
-    ["form.outro", t4("field.outro")],
-    ["form.mot", t4("noun.automation")],
-    ["form.pace", t4("noun.feel")],
-    ["development.period", t4("field.phraseStructure")],
-    ["development.breath", t4("row.noteLimit")],
-    ["development.pipe", t4("row.pipe")]
+  for (const [key, lab, into] of [
+    ["form.intro", t4("field.intro"), form],
+    ["form.outro", t4("field.outro"), form],
+    ["form.pace", t4("noun.feel"), time],
+    ["development.period", t4("field.phraseStructure"), time],
+    ["development.breath", t4("row.noteLimit"), time],
+    ["development.pipe", t4("row.pipe"), time],
+    ["form.lvl", t4("field.level"), feel],
+    ["form.env", t4("field.dynamics"), feel],
+    ["form.mot", t4("noun.automation"), chain]
   ])
-    f2.push(shField(A2, key, { section: sid }, lab));
-  for (const key of [
+    into.push(shField(A2, key, { section: sid }, lab));
+  for (const kk of [
     "form.key",
     "form.mode",
     "form.prog",
     "form.swing",
     "form.groove"
   ]) {
-    f2.push(shField(A2, key, { section: sid }, null));
+    const key = kk;
+    const into = key === "form.swing" || key === "form.groove" ? time : keyG;
+    into.push(shField(A2, key, { section: sid }, null));
     if (key === "form.prog")
-      f2.push({
+      into.push({
         kind: "node",
         label: t4("row.chart"),
         node: A2.changesNode(sid)
@@ -828,16 +862,17 @@ function rowSheet(A2, i5) {
     "form.room",
     "form.pan"
   ])
-    f2.push(shField(A2, key, { section: sid }, null));
+    chain.push(shField(A2, key, { section: sid }, null));
   for (const spec of A2.CELLVEC || []) {
+    const into = spec.key === "scale" ? keyG : feel;
     if (spec.key === "clamp") {
-      f2.push(rowVecSay(A2, i5, spec));
+      into.push(rowVecSay(A2, i5, spec));
       continue;
     }
     if (A2.hasSheet("form." + spec.key, { section: sid }))
-      f2.push(shField(A2, "form." + spec.key, { section: sid }, spec.label));
+      into.push(shField(A2, "form." + spec.key, { section: sid }, spec.label));
   }
-  f2.push(numField(
+  time.push(numField(
     A2,
     "nudge|" + sid,
     t4("row.startsAt"),
@@ -847,7 +882,7 @@ function rowSheet(A2, i5) {
     true
   ));
   const auto = s3.auto || [];
-  f2.push({
+  chain.push({
     kind: "say",
     label: t4("row.lanes"),
     word: auto.length ? tn("row.lanes", auto.length) : t4("value.none"),
@@ -857,7 +892,7 @@ function rowSheet(A2, i5) {
     const params = Object.keys(A2.AUTOPARAMS || {});
     const mine = auto.find((a2) => a2 && a2.param && params.includes(a2.param));
     const cur = mine && mine.param ? mine.param : "";
-    f2.push({
+    chain.push({
       key: "trowauto|" + sid,
       label: t4("row.draw"),
       word: cur ? (A2.AUTOPARAMLABEL || {})[cur] || cur : t4("value.none"),
@@ -893,18 +928,24 @@ function rowSheet(A2, i5) {
     });
     if (cur) {
       const node = A2.rowLaneNode ? A2.rowLaneNode(i5, cur) : null;
-      if (node) f2.push({ kind: "node", label: t4("row.draw"), node });
+      if (node) chain.push({ kind: "node", label: t4("row.draw"), node });
     }
   }
+  for (const x2 of form) f2.push(inGroup(x2, G.form));
+  for (const x2 of time) f2.push(inGroup(x2, G.time));
+  for (const x2 of keyG) f2.push(inGroup(x2, G.key));
+  for (const x2 of feel) f2.push(inGroup(x2, G.feel));
+  for (const x2 of chain) f2.push(inGroup(x2, G.chain));
   return f2;
 }
 function colSheet(A2, vi) {
   const v3 = A2.doc().voices[vi];
   const f2 = [];
+  const instr = [], env = [], tone = [], mix = [];
   f2.push({ kind: "ops", label: t4("col.ops"), ops: colOps(A2, vi, v3) });
-  if (v3.kind === "line") f2.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
+  if (v3.kind === "line") instr.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
   const ik = v3.kind === "bass" ? "sound.bassinstrument" : v3.kind === "drums" ? "sound.drumkit" : "sound.instrument";
-  f2.push(shField(
+  instr.push(shField(
     A2,
     ik,
     { voice: v3.name },
@@ -912,7 +953,7 @@ function colSheet(A2, vi) {
   ));
   if (v3.kind === "drums") {
     const on = A2.castOf(vi, "on") !== false;
-    f2.push({
+    instr.push({
       key: "drums",
       label: t4("col.drummer"),
       word: on ? t4("state.playing") : t4("col.drummer.off"),
@@ -926,19 +967,19 @@ function colSheet(A2, vi) {
     });
   }
   if (A2.hasCrate(v3.name))
-    f2.push({ kind: "node", label: t4("col.files"), node: A2.voiceCrate(v3.name) });
+    instr.push({ kind: "node", label: t4("col.files"), node: A2.voiceCrate(v3.name) });
   if (v3.kind === "line")
-    f2.push(shField(A2, "cast.material", { voice: v3.name }, t4("col.material")));
+    instr.push(shField(A2, "cast.material", { voice: v3.name }, t4("col.material")));
   if (v3.kind === "bass")
-    f2.push(shField(A2, "cast.bassStyle", { voice: v3.name }, t4("col.bassStyle")));
-  const env = A2.voiceEnv(v3.name);
-  if (env) f2.push({ kind: "node", label: env.label, node: env.node });
-  for (const k2 of env ? ["sound.double", "sound.looping"] : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
-    if (A2.hasSheet(k2, { voice: v3.name })) f2.push(shField(A2, k2, { voice: v3.name }, null));
+    instr.push(shField(A2, "cast.bassStyle", { voice: v3.name }, t4("col.bassStyle")));
+  const curve = A2.voiceEnv(v3.name);
+  if (curve) env.push({ kind: "node", node: curve.node });
+  for (const k2 of curve ? ["sound.double", "sound.looping"] : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
+    if (A2.hasSheet(k2, { voice: v3.name })) env.push(shField(A2, k2, { voice: v3.name }, null));
   const kn = A2.voiceKnobs(v3.name);
-  if (kn) f2.push({ kind: "node", label: kn.label, node: kn.node });
+  if (kn) tone.push({ kind: "node", label: kn.label, node: kn.node });
   const th = A2.throat(vi);
-  if (th) f2.push({
+  if (th) tone.push({
     key: "throat|" + v3.name,
     label: t4("col.throat"),
     word: th.word,
@@ -952,7 +993,7 @@ function colSheet(A2, vi) {
     clear: th.own ? () => A2.putCast(vi, "voice", null) : null
   });
   const reg = A2.castOf(vi, "reg");
-  f2.push(numField(
+  mix.push(numField(
     A2,
     "reg|" + v3.name,
     t4("col.register"),
@@ -966,7 +1007,7 @@ function colSheet(A2, vi) {
   {
     const E2 = entryNum(A2, en, null);
     const beats = en == null ? null : E2.toBeats(en);
-    f2.push({
+    mix.push({
       key: "entry|" + v3.name,
       label: t4("col.entry"),
       word: beats == null ? t4("col.entry.none") : String(beats),
@@ -994,7 +1035,7 @@ function colSheet(A2, vi) {
       clear: beats == null ? null : () => A2.putCast(vi, "entry", null)
     });
   }
-  f2.push({ kind: "ops", label: t4("col.desk"), ops: [
+  mix.push({ kind: "ops", label: t4("col.desk"), ops: [
     {
       k: "tseat|" + v3.name,
       word: t4("col.seat.word"),
@@ -1008,17 +1049,22 @@ function colSheet(A2, vi) {
       act: () => A2.showBoard()
     }
   ] });
+  for (const x2 of instr) f2.push(inGroup(x2, G.instrument));
+  for (const x2 of env) f2.push(inGroup(x2, G.envelope));
+  for (const x2 of tone) f2.push(inGroup(x2, G.tone));
+  for (const x2 of mix) f2.push(inGroup(x2, G.mix));
   return f2;
 }
 function cellSheet(A2, i5, vi) {
   const doc = A2.doc();
   const s3 = doc.form.sections[i5], v3 = doc.voices[vi];
   const sid = s3.id;
+  const phrase = [], variation = [], dynamics = [], placement = [];
   const f2 = [];
   f2.push({ kind: "ops", label: t4("cell.ops"), ops: cellOps(A2, i5, vi) });
   if (v3.kind === "bass") {
     const b2 = A2.bassReads();
-    f2.push({
+    phrase.push({
       kind: "say",
       label: t4("special.phrases.word"),
       word: b2 && b2.cell ? t4("cell.bass.reads", { value: b2.cell, lead: b2.lead }) : t4("cell.bass.readsNone"),
@@ -1037,7 +1083,7 @@ function cellSheet(A2, i5, vi) {
       pv: A2.previewOf(String(o4.v)),
       prov: A2.provWord(String(o4.v))
     });
-    f2.push({
+    phrase.push({
       key: w2.key,
       label: t4("special.phrases.word"),
       word: w2.derived ? A2.cellWord(i5, vi) : w2.label,
@@ -1071,22 +1117,23 @@ function cellSheet(A2, i5, vi) {
       clear: w2.derived ? null : () => w2.set("")
     };
     if (v3.kind === "drums") fld.groups = groupsFor(w2.options);
-    f2.push(fld);
+    variation.push(fld);
   }
-  f2.push(cellEntry(A2, i5, vi));
-  f2.push(cellNum(A2, i5, vi, "reg", t4("col.register"), REGSTEPS));
-  f2.push({
+  placement.push(cellEntry(A2, i5, vi));
+  placement.push(cellNum(A2, i5, vi, "reg", t4("col.register"), REGSTEPS));
+  dynamics.push({
     kind: "say",
     label: t4("cell.focus"),
     word: A2.cellOf(i5, vi, "focus") ? t4("cell.focus.on") : t4("cell.focus.off"),
     why: t4("cell.focus.why")
   });
   for (const spec of A2.CELLAUTO || []) {
-    f2.push(cellLane(A2, i5, vi, spec));
+    const into = spec.key === "pan" ? placement : dynamics;
+    into.push(cellLane(A2, i5, vi, spec));
     const now = (A2.cellOf(i5, vi, "mixauto") || {})[spec.key];
     if (!isDrawn(now)) continue;
     const node = A2.cellLaneNode ? A2.cellLaneNode(i5, vi, spec.key) : null;
-    if (node) f2.push({
+    if (node) into.push({
       kind: "node",
       label: t4("cell.lane.label", { name: spec.label }),
       node
@@ -1094,14 +1141,20 @@ function cellSheet(A2, i5, vi) {
   }
   if (v3.kind === "line") {
     const chordChair = CHORDCHAIRS.has(String(A2.castOf(vi, "part") || ""));
-    for (const spec of A2.CELLVEC || [])
-      f2.push(spec.key === "clamp" || chordChair && (spec.key === "artic" || spec.key === "scale") ? cellVecSay(A2, i5, vi, spec, chordChair && spec.key !== "clamp") : cellVecField(A2, i5, vi, spec));
-  } else f2.push({
+    for (const spec of A2.CELLVEC || []) {
+      const fld = spec.key === "clamp" || chordChair && (spec.key === "artic" || spec.key === "scale") ? cellVecSay(A2, i5, vi, spec, chordChair && spec.key !== "clamp") : cellVecField(A2, i5, vi, spec);
+      (spec.key === "clamp" ? variation : spec.key === "rate" ? placement : phrase).push(fld);
+    }
+  } else phrase.push({
     kind: "say",
     label: t4("cell.pitchedOnly.label"),
     word: t4("cell.pitchedOnly.word"),
     why: t4("cell.pitchedOnly.why")
   });
+  for (const x2 of phrase) f2.push(inGroup(x2, G.phrase));
+  for (const x2 of variation) f2.push(inGroup(x2, G.variation));
+  for (const x2 of dynamics) f2.push(inGroup(x2, G.dynamics));
+  for (const x2 of placement) f2.push(inGroup(x2, G.placement));
   return f2;
 }
 function perfCells(A2) {
@@ -1374,9 +1427,24 @@ function sectionOffer(A2) {
 }
 
 // nukernel/src/table/sheet.ts
+var LOZ = () => globalThis.NuLozenge || null;
+function clustersOf(f2) {
+  if (f2.groups && f2.groups.length > 1) return f2.groups;
+  const by = /* @__PURE__ */ new Map();
+  for (const o4 of f2.options || []) {
+    const g2 = o4.g && String(o4.g).trim();
+    if (!g2) continue;
+    const v3 = String(o4.v == null ? "" : o4.v);
+    if (!by.has(g2)) by.set(g2, []);
+    by.get(g2).push(v3);
+  }
+  if (by.size < 2) return null;
+  return [...by].map(([word, vals]) => ({ word, vals }));
+}
 function pickerFor2(f2) {
   if (f2.node) return "combo";
   if (f2.num) return "slider";
+  if (LOZ() && clustersOf(f2)) return "lozenge";
   return pickerFor((f2.options || []).length, { strip: true });
 }
 var wordOf = (f2) => f2.word == null || f2.word === "" ? "—" : String(f2.word);
@@ -1440,8 +1508,8 @@ function chipStrip(f2, onWrite) {
     <div class="nu-wchips" role="group" aria-label=${f2.label}>${all.filter((o4) => !isPin(o4)).map((o4) => {
     const v3 = String(o4.v == null ? "" : o4.v);
     const g2 = (f2.groups || []).find((gg) => gg.vals.includes(v3));
-    const inGroup = !!want && !!g2 && g2.word === want;
-    return b`<span style=${inGroup ? "" : "display:none"}>${chip(o4)}</span>`;
+    const inGroup2 = !!want && !!g2 && g2.word === want;
+    return b`<span style=${inGroup2 ? "" : "display:none"}>${chip(o4)}</span>`;
   })}</div>
   </div>`;
 }
@@ -1457,7 +1525,29 @@ function onRedraw(fn) {
   REDRAW = fn;
 }
 function sheetBody(fields, name, openField, setOpenField, after) {
-  return b`<div class="nu-vsheet" role="group" aria-label=${name}>${fields.map((f2) => fieldRow(f2, openField, setOpenField, after))}</div>`;
+  const chunks = groupChunks(fields);
+  return b`<div class="nu-vsheet" role="group" aria-label=${name}>${chunks.map((c3) => c3.head == null ? c3.fields.map((f2) => fieldRow(f2, openField, setOpenField, after)) : groupSection(c3, openField, setOpenField, after))}</div>`;
+}
+var glyphDoor = () => globalThis.NuGlyph || null;
+function groupSection(c3, openField, setOpenField, after) {
+  const key = String(c3.head);
+  const word = t4("group." + key);
+  const g2 = glyphDoor();
+  const mark = g2 ? g2.groupMark(key) : null;
+  return b`<section class="nu-sheetgroup" data-group=${key}
+      role="group" aria-label=${word}>
+      <h4 class="nu-grouphead">${mark ? b`<span class="nu-g" aria-hidden="true">${mark}</span>` : A}<span class="nu-groupword">${word}</span></h4>${c3.fields.map((f2) => fieldRow(f2, openField, setOpenField, after))}
+    </section>`;
+}
+function groupChunks(fields) {
+  const out = [];
+  for (const f2 of fields) {
+    const g2 = f2.group || null;
+    const last = out[out.length - 1];
+    if (last && last.head === g2) last.fields.push(f2);
+    else out.push({ head: g2, fields: [f2] });
+  }
+  return out;
 }
 function fieldRow(f2, openField, setOpenField, after) {
   if (f2.kind === "ops") {
@@ -1595,7 +1685,37 @@ function fieldRow(f2, openField, setOpenField, after) {
         @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
       ${clearBack}
       ${sf.sub ? b`<small class="nu-sheetsub">${sf.sub}</small>` : A}
-    </div>${open ? chipStrip(sf, write) : A}`;
+    </div>${open ? pick === "lozenge" ? lozengeFor(sf, write) : chipStrip(sf, write) : A}`;
+}
+function lozengeFor(f2, onWrite) {
+  const door = LOZ();
+  if (!door) return chipStrip(f2, onWrite);
+  const cl = clustersOf(f2);
+  const cur = f2.value == null ? "" : String(f2.value);
+  const cellWhy = f2.why || null;
+  return door.lozengeField({
+    key: f2.key,
+    label: f2.label,
+    clusters: cl,
+    value: cur,
+    why: cellWhy,
+    options: (f2.options || []).map((o4) => {
+      const v3 = String(o4.v == null ? "" : o4.v);
+      const off = !!o4.off && v3 !== cur;
+      return {
+        value: v3,
+        label: o4.w == null ? v3 : String(o4.w),
+        why: off || o4.quiet ? o4.why || cellWhy || f2.label : o4.why || null,
+        disabled: off,
+        quiet: !!o4.quiet,
+        cluster: o4.g == null ? null : String(o4.g)
+      };
+    }),
+    onWrite: (v3) => {
+      if (cellWhy) return;
+      onWrite(v3);
+    }
+  });
 }
 
 // nukernel/src/table/special.ts
@@ -1643,13 +1763,18 @@ function timeFace(A2) {
 }
 function timeSheet(A2) {
   const f2 = [];
-  f2.push({ kind: "node", label: t4("field.tempo"), node: A2.bpmNode() });
-  f2.push({ kind: "node", label: t4("time.byHand"), node: A2.tempoNode() });
-  f2.push(seated(A2, "time.meter", t4("noun.meter")));
-  f2.push({ kind: "node", label: t4("time.signature"), node: A2.meterNode() });
-  f2.push(seated(A2, "time.swing", t4("field.swing")));
-  f2.push(seated(A2, "time.groove", t4("field.groove")));
-  f2.push(flagField(
+  const G2 = (g2, x2) => {
+    x2.group = g2;
+    return x2;
+  };
+  const TEMPO = "tempo", METER = "meter", KEY = "key", CHORDS = "chords";
+  f2.push(G2(TEMPO, { kind: "node", label: t4("field.tempo"), node: A2.bpmNode() }));
+  f2.push(G2(TEMPO, { kind: "node", label: t4("time.byHand"), node: A2.tempoNode() }));
+  f2.push(G2(METER, seated(A2, "time.meter", t4("noun.meter"))));
+  f2.push(G2(METER, { kind: "node", label: t4("time.signature"), node: A2.meterNode() }));
+  f2.push(G2(METER, seated(A2, "time.swing", t4("field.swing"))));
+  f2.push(G2(METER, seated(A2, "time.groove", t4("field.groove"))));
+  f2.push(G2(METER, flagField(
     "rubato",
     t4("time.rubato"),
     A2.rubatoOn(),
@@ -1657,24 +1782,24 @@ function timeSheet(A2) {
     t4("time.rubato.on"),
     (on) => A2.setRubato(on),
     t4("time.rubato.sub")
-  ));
-  f2.push({ kind: "node", label: t4("field.key"), node: A2.keyNode() });
+  )));
+  f2.push(G2(KEY, { kind: "node", label: t4("field.key"), node: A2.keyNode() }));
   const mode = seated(A2, "alphabet.mode", t4("field.mode"));
   const cap = A2.tuningSay();
   if (cap && mode.key) mode.sub = cap;
-  f2.push(mode);
-  f2.push(seated(A2, "alphabet.scale", t4("field.scale")));
-  f2.push(seated(A2, "alphabet.harmony", t4("time.harmony")));
-  f2.push(flagField(
+  f2.push(G2(KEY, mode));
+  f2.push(G2(KEY, seated(A2, "alphabet.scale", t4("field.scale"))));
+  f2.push(G2(KEY, seated(A2, "alphabet.harmony", t4("time.harmony"))));
+  f2.push(G2(KEY, flagField(
     "diatonic",
     t4("field.melody"),
     !!A2.diatonicOn(),
     t4("time.melody.chords"),
     t4("time.melody.key"),
     (on) => A2.setDiatonic(on)
-  ));
-  f2.push({ kind: "node", label: t4("time.changes"), node: A2.changesNode() });
-  f2.push({ kind: "node", label: t4("time.gain"), node: A2.boardNode() });
+  )));
+  f2.push(G2(CHORDS, { kind: "node", label: t4("time.changes"), node: A2.changesNode() }));
+  f2.push(G2(CHORDS, { kind: "node", label: t4("time.gain"), node: A2.boardNode() }));
   return f2;
 }
 function rulesFace(A2) {
@@ -2001,6 +2126,7 @@ function bandTable(host, A2) {
     return b`<div class="nu-formula" role="group"
         aria-label=${t4("bar.selection")}>
       <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
+      ${firstGroup(S2)}
       <div class="nu-fops">
         ${barBtn(
       "tundo",
@@ -2043,6 +2169,41 @@ function bandTable(host, A2) {
       () => pasteHere(S2)
     )}
       </div>
+    </div>`;
+  };
+  const firstGroup = (S2) => {
+    const at = S2.at();
+    if (!at) return A;
+    let fields = [];
+    try {
+      fields = cellSheet(A2, at.i, at.vi);
+    } catch (e4) {
+      return A;
+    }
+    const groupOf2 = (f2) => f2.group || null;
+    const first = fields.find((f2) => !!groupOf2(f2));
+    const head = first ? groupOf2(first) : null;
+    if (!head) return A;
+    const mine = fields.filter((f2) => groupOf2(f2) === head && f2.kind !== "ops" && f2.kind !== "node");
+    if (!mine.length) return A;
+    return b`<div class="nu-fvec" data-k="tvec" role="group"
+        aria-label=${t4("group." + head)}>
+      <b class="nu-fvechead">${t4("group." + head)}</b>
+      ${mine.map((f2) => {
+      const w2 = f2.word;
+      const word = w2 == null || w2 === "" ? "—" : String(w2);
+      const derived = !!f2.derived;
+      return b`<span class=${e3({
+        "nu-fvecpair": true,
+        "is-derived": derived
+      })}
+          aria-label=${t4("sheet.field", {
+        name: f2.label,
+        value: word
+      })}
+          ><small>${f2.label}</small
+          ><b>${word}</b></span>`;
+    })}
     </div>`;
   };
   const barBtn = (k2, word, aria, on, why, act) => b`<button type="button" class="nu-opbtn" data-k=${k2}

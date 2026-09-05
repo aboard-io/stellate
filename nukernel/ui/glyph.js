@@ -624,6 +624,48 @@ export const GLYPH = {
     not:  { g: "▤", w: t("glyph.view.not"),  s: t("glyph.view.not.say") },
     roll: { g: "▥", w: t("glyph.view.roll"), s: t("glyph.view.roll.say") },
   },
+
+  /* THE SHEET'S OWN GROUPS (2026-09-05, TABLE.md §11c · DESIGN.md §5). Paul:
+     *"use more icons. Ideally the table is a large set of icons."* Every
+     expanded interface is groups now — a chair's Instrument · Envelope · Tone
+     · Mix, a section's Form · Time · Key · Feel · Chain, a cell's Phrase ·
+     Variation · Dynamics · Placement — and a heading is the one place on a
+     sheet where a mark has something to say, because the thirteen headings are
+     the whole of what a hand scans for.
+
+     KEYED BY THE GROUP'S KEY AND NOT BY ITS WORD, which is the lesson the
+     nine tabs' own note above records the hard way: a table keyed by a
+     PRINTED word draws no mark the day the word is translated. `src/table/
+     model.ts` stamps the key; `src/copy/sheets.ts group.<key>` prints it.
+
+     WHY EACH MARK IS THE ONE IT IS:
+       instrument ♪  the voice kind's own mark — this group IS who plays
+       envelope   ◺  the ADSR's shape: rise, hold, fall
+       tone       ≈  a waveform, which is what a filter and a throat shape
+       mix        ⊞  a fader in its well, seen from above; the desk's own grid
+       form       ▦  `song.form`'s mark, unchanged — one idea, one picture
+       time       ◷  a clock face at the quarter; the only mark here that is
+                     literally what it names
+       key        ♯  the accidental, which is how a key is written down
+       feel       ~  the swung line: what a groove does to a straight one
+       chain      ⛓  the effects in series, and the only pictogram in the set
+       phrase     ♫  two notes beamed — the smallest thing that is a phrase
+       variation  ↻  the same phrase, again, differently
+       dynamics   ◐  half-filled: how much of it there is
+       placement  ⌖  a target: where it sits, in time and in the field
+       tempo      ♩  the beat you count
+       meter      𝄞  no — the bar line: ∥, because a meter is where the bars
+                     fall and a clef is not a meter
+       chords     ⌗  the chart's grid of bars
+     Sixteen marks, each with its `.nu-vh` word (the group's own heading) and
+     no `data-say`: a heading that needed an explainer would be a heading that
+     failed. */
+  group: {
+    instrument: "♪", envelope: "◺", tone: "≈", mix: "⊞",
+    form: "▦", time: "◷", key: "♯", feel: "~", chain: "⛓",
+    phrase: "♫", variation: "↻", dynamics: "◐", placement: "⌖",
+    tempo: "♩", meter: "∥", chords: "⌗",
+  },
 };
 
 /* THE VOICE'S OWN MARK. `kindOf` is a function and not a table lookup here
@@ -645,6 +687,23 @@ export const cellMark = (kind, value) => {
   const row = t[String(value == null ? "" : value)];
   return row && row.g ? row : null;
 };
+
+/* A SHEET GROUP'S MARK, AND IT ANSWERS NULL FOR THE SAME REASON `cellMark`
+   does: a group this table has no picture for prints its word alone rather
+   than a dot that says nothing. */
+export const groupMark = (key) =>
+  (GLYPH.group && GLYPH.group[String(key == null ? "" : key)]) || null;
+
+/* ---- AND THE MARKS REACH THE BUNDLES THROUGH `globalThis` -------------
+   `src/table` is its own build entry (tools/ui/build.js) and an
+   `import { groupMark } from "../../ui/glyph.js"` inside it would compile this
+   whole thousand-line table into ui/table.js — a second copy of every mark on
+   the page, which is the drift `src/copy/global.ts`'s five lines exist to
+   refuse ("the catalogue ships once, in one file, and every surface reads that
+   one"). Same arrangement, same reason: the marks ship once, here, and the
+   bundles read the one that shipped. A caller that is NOT a bundle imports
+   them normally and nothing changes for it. */
+globalThis.NuGlyph = { GLYPH, cellMark, kindGlyph, groupMark };
 
 /* WHAT A VOICE TAB SAYS WHEN YOU HOLD IT. The number on the tab is the voice's
    place in the RECORD's roster (`doc.voices`), and it is that in both rows

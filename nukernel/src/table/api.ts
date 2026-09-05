@@ -23,6 +23,12 @@ export interface Choice {
   off?: boolean;
   why?: string | null;
   quiet?: boolean;
+  /** WHICH KIND OF WORD THIS IS (2026-09-05, DESIGN.md component 16). It is
+   *  avail.js's own `group` — the kernel's chord family, `instruments.js
+   *  familyOf`, `genres-tables.js SCALEFAMILY` — carried through `wCell` at
+   *  last. It was dropped there since the sheets shipped, which is why a
+   *  forty-two-word quality picker arrived on this surface as a flat list. */
+  g?: string | null;
   /** a motif's picture (ui/preview.js) and its provenance (TABLE.md 3). */
   pv?: Node | null;
   prov?: string | null;
@@ -70,7 +76,23 @@ export interface SayField {
 }
 export interface OpsField { kind: "ops"; label?: string; ops: Op[] }
 export interface NodeField { kind: "node"; label?: string; node: HTMLElement | null }
-export type Field = StripField | SayField | OpsField | NodeField;
+/** WHICH GROUP A FIELD STANDS IN (2026-09-05, TABLE.md §11c). Paul: *"just
+ *  nicely structure each expanded interface as proper software that's easy to
+ *  scan and nicely grouped."* Every field carries the HEADING it stands under
+ *  — already translated, because the group words are the composer's own
+ *  (`Instrument · Envelope · Tone · Mix` for a chair, `Form · Time · Key ·
+ *  Feel · Chain` for a section, `Phrase · Variation · Dynamics · Placement`
+ *  for a cell) — and `sheet.ts sheetBody` chunks CONSECUTIVE fields that
+ *  share one into a `.nu-sheetgroup` under a `.nu-grouphead`.
+ *
+ *  IT IS A PROPERTY AND NOT A NEW `kind`, and that is the whole reason the
+ *  gates survive this round: a heading drawn as a FIELD would sit in
+ *  `.nu-sheetrow`'s own list and every check that reads "the sheet's fields in
+ *  order" (T5b, T5c, the inventory walk) would find headings among them. A
+ *  wrapper element preserves document order exactly, so `querySelectorAll
+ *  (".nu-sheetrow")` reads the same list it always did. */
+export type Grouped = { group?: string | null };
+export type Field = (StripField | SayField | OpsField | NodeField) & Grouped;
 
 export interface Op {
   k: string;

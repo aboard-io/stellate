@@ -119,14 +119,22 @@ export function timeFace(A: TableAPI): string {
  *  reading order — how fast it counts, then what it counts in. The inventory
  *  that proves the count is `test/table-inventory.json` (home `time-row`). */
 export function timeSheet(A: TableAPI): Field[] {
+  /* ---- FOUR GROUPS, IN THE COMPOSER'S ORDER (2026-09-05, TABLE.md §11c)
+     DESIGN.md §5 opens with this row: *"Time (tempo · meter · key)"*. The
+     fourteen controls were one flat list in `#pan-tempo`'s reading order;
+     they are TEMPO · METER · KEY · CHORDS now, and nothing moved except the
+     board pointer, which stands last under the chords it does not belong to
+     rather than in a fifth group of one. */
   const f: Field[] = [];
+  const G = (g: string, x: Field): Field => { x.group = g; return x; };
+  const TEMPO = "tempo", METER = "meter", KEY = "key", CHORDS = "chords";
   /* THE TEMPO, BIG, AT THE TOP, and then the nine marks that move it. Both are
      the pane's own widgets: the `<output class="nu-bpmbig">` with the slider
      under it (`data-k="bpm"`, `BPM_LO..BPM_HI`), and the one row that carries
      the tap and the eight operations (`data-k="tempo-…"`, nine of them, which
      is the literal test/knobs.js gate 8 counts). */
-  f.push({ kind: "node", label: t("field.tempo"), node: A.bpmNode() });
-  f.push({ kind: "node", label: t("time.byHand"), node: A.tempoNode() });
+  f.push(G(TEMPO, { kind: "node", label: t("field.tempo"), node: A.bpmNode() }));
+  f.push(G(TEMPO, { kind: "node", label: t("time.byHand"), node: A.tempoNode() }));
   /* THE METER, TWICE OVER, AND THAT IS ONE COMPONENT AND NOT TWO (2026-09-05,
      the any-meter round). Paul: *"I should be able to set any tempo at all
      like 21/17 you should let me choose anything."* The CHIPS are the seven
@@ -143,44 +151,44 @@ export function timeSheet(A: TableAPI): Field[] {
      hold is a word no second language can reach. When they are keyed, these
      overrides become `null` — one owner — the way the row sheet's eleven
      already have. */
-  f.push(seated(A, "time.meter", t("noun.meter")));
-  f.push({ kind: "node", label: t("time.signature"), node: A.meterNode() });
-  f.push(seated(A, "time.swing", t("field.swing")));
-  f.push(seated(A, "time.groove", t("field.groove")));
+  f.push(G(METER, seated(A, "time.meter", t("noun.meter"))));
+  f.push(G(METER, { kind: "node", label: t("time.signature"), node: A.meterNode() }));
+  f.push(G(METER, seated(A, "time.swing", t("field.swing"))));
+  f.push(G(METER, seated(A, "time.groove", t("field.groove"))));
   /* RUBATO IS A DEVICE SETTING AND SAYS SO BY BEING STICKY: `setRubato` writes
      the preference, no document changes, and a share link carries nothing.
      That is why it is a word about YOUR box rather than a rule about the
      record — the record always breathes; this is whether your box plays it
      that way. */
-  f.push(flagField("rubato", t("time.rubato"), A.rubatoOn(),
+  f.push(G(METER, flagField("rubato", t("time.rubato"), A.rubatoOn(),
     t("time.rubato.off"), t("time.rubato.on"),
     (on) => A.setRubato(on),
-    t("time.rubato.sub")));
+    t("time.rubato.sub"))));
   /* THE KEY IS THE CIRCLE OF FIFTHS (Paul, 2026-08-24: *"Maybe put the circle
      of fifths back in there for key selection, it was nice."*) — the one
      control on this page that is a menu's spec drawn as a picture, because it
      is the only drawing that shows which keys are next door to the one you are
      in. ui/selects.js `keyCircle` is its owner and did not move. */
-  f.push({ kind: "node", label: t("field.key"), node: A.keyNode() });
+  f.push(G(KEY, { kind: "node", label: t("field.key"), node: A.keyNode() }));
   const mode = seated(A, "alphabet.mode", t("field.mode")) as StripField;
   const cap = A.tuningSay();
   if (cap && mode.key) mode.sub = cap;
-  f.push(mode);
-  f.push(seated(A, "alphabet.scale", t("field.scale")));
-  f.push(seated(A, "alphabet.harmony", t("time.harmony")));
-  f.push(flagField("diatonic", t("field.melody"), !!A.diatonicOn(),
+  f.push(G(KEY, mode));
+  f.push(G(KEY, seated(A, "alphabet.scale", t("field.scale"))));
+  f.push(G(KEY, seated(A, "alphabet.harmony", t("time.harmony"))));
+  f.push(G(KEY, flagField("diatonic", t("field.melody"), !!A.diatonicOn(),
     t("time.melody.chords"), t("time.melody.key"),
-    (on) => A.setDiatonic(on)));
+    (on) => A.setDiatonic(on))));
   /* THE CHANGES, WHOLE. `chordGrid` is a table of its own — a degree slider, a
      quality menu and an inversion slider per bar, `+ bar` and `− bar` — and it
      registers the playhead's own `chordCell` for the bar that is sounding. It
      comes across as one node for exactly the reason the voice's channel strip
      does: it is not a vector and has no cell. */
-  f.push({ kind: "node", label: t("time.changes"), node: A.changesNode() });
+  f.push(G(CHORDS, { kind: "node", label: t("time.changes"), node: A.changesNode() }));
   /* AND THE POINTER STANDS LAST, which is 2026-08-29's measurement and not a
      habit: reading order is working order, a hand opening TIME came for the
      tempo, and a cross-reference is back matter. */
-  f.push({ kind: "node", label: t("time.gain"), node: A.boardNode() });
+  f.push(G(CHORDS, { kind: "node", label: t("time.gain"), node: A.boardNode() }));
   return f;
 }
 

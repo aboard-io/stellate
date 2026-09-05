@@ -43,7 +43,7 @@ import type { Field, StripField, Choice } from "./api.js";
 import { pickerFor as pick } from "../menus/pick.js";
 import { t, fmt } from "../copy/global.js";
 
-export type Picker = "combo" | "chips" | "native" | "slider";
+export type Picker = "combo" | "chips" | "native" | "slider" | "lozenge";
 
 /* THE RULE IS NOT THIS FILE'S ANY MORE, 2026-09-06. It was written here first
    and it was right here first — chips <= 8, the native picker on a coarse
@@ -55,6 +55,43 @@ export type Picker = "combo" | "chips" | "native" | "slider";
    one clause that is about the GRID and not about a vocabulary: a field
    carrying the CALLER'S OWN control is seated, never re-drawn. */
 export { coarse } from "../menus/pick.js";
+
+/* THE LOZENGE FIELD IS READ OFF `globalThis` (2026-09-05, DESIGN.md component
+   16), for `../copy/global.js`'s own reason: `src/lozenge` is its own build
+   entry and importing it here would compile a second copy of the widget into
+   ui/table.js. `index.html` loads ui/lozenge.js; this reads the one that
+   shipped. */
+interface LozDoor {
+  lozengeField(spec: {
+    key: string; label: string;
+    options: { value: string; label: string; why?: string | null;
+               disabled?: boolean; quiet?: boolean; cluster?: string | null }[];
+    clusters?: { word: string; vals: string[] }[] | null;
+    value?: string | null; why?: string | null; k?: string | null;
+    onWrite?: ((v: string) => void) | null;
+  }): HTMLElement;
+}
+const LOZ = (): LozDoor | null =>
+  (globalThis as unknown as { NuLozenge?: LozDoor }).NuLozenge || null;
+
+/** DOES THIS FIELD KNOW WHAT KIND EACH OF ITS WORDS IS? Two ways, and both are
+ *  data the caller already had: the drummer's `groups` (model.ts `groupsFor`,
+ *  the kernel's own six) or a `g` on the options themselves (avail.js's
+ *  `group`, carried through `wCell` since 2026-09-05). Two DIFFERENT kinds are
+ *  required — one heading over a whole list is a heading that says nothing. */
+function clustersOf(f: StripField): { word: string; vals: string[] }[] | null {
+  if (f.groups && f.groups.length > 1) return f.groups;
+  const by = new Map<string, string[]>();
+  for (const o of f.options || []) {
+    const g = o.g && String(o.g).trim();
+    if (!g) continue;
+    const v = String(o.v == null ? "" : o.v);
+    if (!by.has(g)) by.set(g, []);
+    by.get(g)!.push(v);
+  }
+  if (by.size < 2) return null;
+  return [...by].map(([word, vals]) => ({ word, vals }));
+}
 
 export function pickerFor(f: StripField): Picker {
   // 1 · A CALLER'S OWN WIDGET WINS. `model.ts` hands the long vocabularies a
@@ -69,6 +106,14 @@ export function pickerFor(f: StripField): Picker {
    *     quantity, and the shape of the answer (a line you slide along) thrown
    *     away. Words keep the chips. */
   if (f.num) return "slider";
+  /* 3 · A WALL OF WORDS THAT KNOWS ITS OWN KINDS IS A LOZENGE FIELD
+   *     (2026-09-05, DESIGN.md component 16 · TABLE.md §11d). Paul: *"tight
+   *     lozenges, organized by color and clustered semantically… visibility
+   *     into all of the options"*. MEASURED at 390 on the drummer's does-sheet
+   *     before this line: ONE of sixty-eight words on the glass, because a
+   *     coarse pointer earned the native wheel and a strip of 68 chips was a
+   *     wall either way. `pick.ts` owns the sentence; this asks it. */
+  if (LOZ() && clustersOf(f)) return "lozenge";
   //     `strip: true` — a cell sheet's row is inside a spreadsheet; see
   //     `PickOpts.strip` for the measurement that keeps it chips to 24.
   return pick((f.options || []).length, { strip: true });
@@ -187,8 +232,70 @@ export function sheetBody(fields: Field[], name: string,
                           openField: string | null,
                           setOpenField: (k: string | null) => void,
                           after: () => void): TemplateResult {
+  const chunks = groupChunks(fields);
   return html`<div class="nu-vsheet" role="group" aria-label=${name}>${
-    fields.map((f) => fieldRow(f, openField, setOpenField, after))}</div>`;
+    chunks.map((c) => c.head == null
+      ? c.fields.map((f) => fieldRow(f, openField, setOpenField, after))
+      : groupSection(c, openField, setOpenField, after))}</div>`;
+}
+
+/* ---- THE MARKS REACH THIS BUNDLE THROUGH `globalThis` -----------------
+   Paul, 2026-09-05: *"use more icons. Ideally the table is a large set of
+   icons."* A sheet's group heading is the one place on an expanded interface
+   where a mark has something to say — the thirteen headings are the whole of
+   what a hand scans for — and `ui/glyph.js` is the one owner of every mark on
+   this page. It is not IMPORTED here: this is its own build entry and an
+   import would compile a thousand lines of marks into ui/table.js, which is
+   the drift `../copy/global.js`'s five lines exist to refuse. Same
+   arrangement, same reason. A group this table has no picture for prints its
+   word alone (`groupMark` answers null rather than a dot that says nothing). */
+interface GlyphDoor { groupMark(key: string): string | null }
+const glyphDoor = (): GlyphDoor | null =>
+  (globalThis as unknown as { NuGlyph?: GlyphDoor }).NuGlyph || null;
+
+function groupSection(c: { head: string | null; fields: Field[] },
+                      openField: string | null,
+                      setOpenField: (k: string | null) => void,
+                      after: () => void): TemplateResult {
+  const key = String(c.head);
+  const word = t("group." + key);
+  const g = glyphDoor();
+  const mark = g ? g.groupMark(key) : null;
+  return html`<section class="nu-sheetgroup" data-group=${key}
+      role="group" aria-label=${word}>
+      <h4 class="nu-grouphead">${mark
+        ? html`<span class="nu-g" aria-hidden="true">${mark}</span>` : nothing
+        }<span class="nu-groupword">${word}</span></h4>${
+      c.fields.map((f) => fieldRow(f, openField, setOpenField, after))}
+    </section>`;
+}
+
+/* ---- THE GROUPS (2026-09-05, TABLE.md §11c) ---------------------------
+   Paul: *"just nicely structure each expanded interface as proper software
+   that's easy to scan and nicely grouped."* A sheet was a flat list of up to
+   thirty-six rows in the model's own order; it is a handful of GROUPS now,
+   each under a short heading, in the composer's order (DESIGN.md §5).
+
+   THE CHUNKING IS CONSECUTIVE AND NOT A SORT, and that is deliberate: the
+   caller (`model.ts`) states the order and this file states nothing about it.
+   A sort here would be a second opinion about the composer's order, in the
+   file that draws rather than in the file that decides — and a field that
+   moved between two groups would move on the screen without moving in the
+   model that the gates read.
+   FIELDS WITH NO GROUP LEAD, UNGROUPED. That is the ops bar: a toolbar is not
+   one of the subjects the headings name, and putting it under one would be a
+   heading that lied. */
+/** the chunks, by KEY. `head` is the group's key (`"phrase"`), never its
+ *  printed word — see `model.ts G`'s own paragraph. */
+function groupChunks(fields: Field[]): { head: string | null; fields: Field[] }[] {
+  const out: { head: string | null; fields: Field[] }[] = [];
+  for (const f of fields) {
+    const g = (f as { group?: string | null }).group || null;
+    const last = out[out.length - 1];
+    if (last && last.head === g) last.fields.push(f);
+    else out.push({ head: g, fields: [f] });
+  }
+  return out;
 }
 
 function fieldRow(f: Field, openField: string | null,
@@ -347,5 +454,35 @@ function fieldRow(f: Field, openField: string | null,
         @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
       ${clearBack}
       ${sf.sub ? html`<small class="nu-sheetsub">${sf.sub}</small>` : nothing}
-    </div>${open ? chipStrip(sf, write) : nothing}`;
+    </div>${open ? (pick === "lozenge" ? lozengeFor(sf, write)
+                                       : chipStrip(sf, write)) : nothing}`;
+}
+
+/* ---- THE LOZENGE FIELD, UNDER ITS OWN ROW (2026-09-05) ----------------
+   It opens exactly where the chip strip opens and closes exactly when the chip
+   strip closes, because it IS the chip strip for a vocabulary too long to be
+   one: same `data-k` on every option (`<field>|<value>`), same
+   `aria-pressed`, same refusal spelling, same close-then-nothing order (a
+   value tap does not dismiss — `write` here is the plain one). What it adds is
+   that all of it is on the glass, in its own kinds, at once. */
+function lozengeFor(f: StripField, onWrite: (v: string) => void): unknown {
+  const door = LOZ();
+  if (!door) return chipStrip(f, onWrite);
+  const cl = clustersOf(f);
+  const cur = f.value == null ? "" : String(f.value);
+  const cellWhy = f.why || null;
+  return door.lozengeField({
+    key: f.key,
+    label: f.label,
+    clusters: cl,
+    value: cur,
+    why: cellWhy,
+    options: (f.options || []).map((o) => {
+      const v = String(o.v == null ? "" : o.v);
+      const off = !!o.off && v !== cur;
+      return { value: v, label: o.w == null ? v : String(o.w),
+               why: (off || o.quiet) ? (o.why || cellWhy || f.label) : (o.why || null),
+               disabled: off, quiet: !!o.quiet,
+               cluster: o.g == null ? null : String(o.g) }; }),
+    onWrite: (v: string) => { if (cellWhy) return; onWrite(v); } });
 }

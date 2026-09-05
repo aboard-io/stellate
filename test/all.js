@@ -700,6 +700,16 @@ const GATES = [
     covers: ["test/envelope.browser.js", "nukernel/ui/envelope.js",
              "nukernel/src/envelope/adsr.ts", "nukernel/src/envelope/plate.ts",
              "nukernel/src/envelope/curve.ts", "nukernel/src/envelope/api.ts",
+             /* ...AND THE OTHER TWO MODES (2026-09-05, TABLE.md §11's third
+                item): the EQ curve on ui/engineer.js's channel strip and the
+                XY pad in ui/eight.js's knob block. Both are `src/envelope/
+                bands.ts`; both write through a caller, so the CALLER is named
+                here too — an edit to the strip or to the knob block selects
+                this gate in an impacted run, which is what caught the seat
+                eq's three sliders leaving. */
+             "nukernel/src/envelope/bands.ts",
+             "nukernel/src/envelope/editor.ts",
+             "nukernel/ui/engineer.js",
              "engine/faust/voices/sampler.js",
              "engine/faust/voices/state-engine.js",
              "nukernel/audio/to-engine.js"] },

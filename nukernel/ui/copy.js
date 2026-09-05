@@ -379,6 +379,31 @@ var TABLE = {
 
 // nukernel/src/copy/sheets.ts
 var SHEETS = {
+  /* ===== THE GROUP HEADINGS (2026-09-05, TABLE.md §11c) ==================
+     Paul: *"just nicely structure each expanded interface as proper software
+     that's easy to scan and nicely grouped."* Thirteen words, one per heading,
+     in the three sets §11c names — a chair (Instrument · Envelope · Tone ·
+     Mix), a section (Form · Time · Key · Feel · Chain), a cell (Phrase ·
+     Variation · Dynamics · Placement) — plus the three the TIME row uses.
+     They are NOUNS, they are what a composer calls the thing (DESIGN.md §4),
+     and none of them is a question. `src/table/model.ts G` is their one
+     reader; nothing on the page spells one of these words a second time. */
+  "group.instrument": "Instrument",
+  "group.envelope": "Envelope",
+  "group.tone": "Tone",
+  "group.mix": "Mix",
+  "group.form": "Form",
+  "group.time": "Time",
+  "group.key": "Key",
+  "group.feel": "Feel",
+  "group.chain": "Chain",
+  "group.phrase": "Phrase",
+  "group.variation": "Variation",
+  "group.dynamics": "Dynamics",
+  "group.placement": "Placement",
+  "group.tempo": "Tempo",
+  "group.meter": "Meter",
+  "group.chords": "Chords",
   /* ===== THE FOLLOW-UP SWEEP (2026-09-05) ================================
      What the copy BROWSER gate found still assembled in ui/eight.js after the
      surface pass: the time row's two sliders and its readout, the chord

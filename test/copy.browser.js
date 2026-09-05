@@ -162,6 +162,16 @@ const COLLECT = function () {
                        vocabulary's. A chip that printed copy would be a chip
                        that does not name what it does. */
                     ".nu-wchip, " +
+                    /* ...AND A LOZENGE IS A CHIP THAT KNOWS ITS KIND
+                       (2026-09-05, DESIGN.md §2 component 16). The same
+                       argument one line up, on the widget that replaced the
+                       native picker for the long vocabularies: the word on a
+                       lozenge is the VALUE it writes — `the mode`, `harmonic
+                       minor`, `tom fill` — and it is the musician's, not the
+                       app's. It needs saying because the words used to be
+                       `<option>`s, which the tag test above carved out; the
+                       strings did not change, the element did. */
+                    ".nu-lz, " +
                     "#nu-bar .nu-sub2, .nu-circ";
     const isValue = !!(av && slug(av) === slug(text)) ||
                     /^(option|optgroup)$/i.test(el.tagName) ||

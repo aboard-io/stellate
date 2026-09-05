@@ -158,6 +158,13 @@ import { t, tn, fmt } from "./copy.js";
    fact about trims and hands the component every fact about what a word grid
    IS. Four surfaces share it now. */
 import { wordGrid } from "./wordgrid.js";
+/* THE ONE CURVE EDITOR (src/envelope -> ui/envelope.js), in its `eq` mode.
+   TABLE.md §11: one owner for every plate-handles-curve control on this page —
+   the chair sheets' ADSR, the automation lanes, this strip's EQ and the
+   modelled chair's XY pad are the same component with a different mode. A
+   second EQ widget anywhere on this page would be the bug that law exists to
+   refuse. */
+import { curveEditor } from "./envelope.js";
 // THE MARKS ON THE TABS (2026-08-28). THIS FILE REFUSED THE GLYPHS ONCE AND
 // SAID SO — see THE TAB ROW below: "THE GLYPHS STAY IN eight.js … copying
 // three characters here would be that drift again, so a board tab wears the
@@ -793,22 +800,71 @@ export function channelStrip(ctx, c, env) {
   srow2.append(sends);
   strip.append(srow2);
 
-  // ---- eq -------------------------------------------------------------
+  /* ---- eq: A SHELF IS A CURVE (2026-09-05, TABLE.md §11) --------------
+     Paul: *"Look for places where UX could help like eq editors too."* §11's
+     own test for this family is *"Each replaces its number rows only where the
+     drawing is the honest control (a shelf is a curve; a bar count is a
+     number), and prints the numbers beside the curve"* — and three vertical
+     sliders labelled lo / mid / hi are the clearest case of it on this page.
+     They were three unrelated numbers; they are the one thing a hand is
+     deciding, which is where this instrument sits against the others.
+
+     WHAT STOOD HERE: three `vnum` columns, `min -12 max 12 step 0.5`, each
+     writing one band of `voice.desk.eq` through `setDesk`. The RANGE and the
+     STEP below are those, read off the control rather than invented — and the
+     ±12 is `fields.js EQ_RANGE`, which is the same number `eqDb` clamps a save
+     to, so the plate cannot offer a gain the loader would quietly trim.
+
+     THE ADDRESSES DO NOT MOVE. Each handle wears the exact `data-k` its slider
+     wore — `b|eqlo|<voice>`, `b|eqmid|`, `b|eqhi|` — because this repo's
+     standing law is that an address does not move when a widget does and
+     nukernel/desk-gate.js drives the desk by name. Nothing was renamed here,
+     and the three columns leave: two controls on one address is the shape
+     test/selects.js's own guard fails a page for.
+
+     AND THE CURVE IS THE ENGINE'S OWN. `fields.js EQ_BANDS` carries the type,
+     the frequency and the bell's Q, and `graph.js buildEq` puts those three
+     straight onto a BiquadFilterNode — so `src/envelope/bands.ts` draws the
+     RBJ magnitude of the biquads the renderer builds, not a picture of them. */
   const srow3 = el("div", null, "nu-srow");
   srow3.append(el("p", t("board.row.eq"), "nu-rowlab"));
-  const eqrow = el("div", null, "nu-sends");
-  for (const b of EQ_BANDS) {
-    eqrow.append(col(b.label.replace(/^eq\s*/, ""), vnum("b|eq" + b.key + "|" + voice.name, {
-      min: -12, max: 12, step: 0.5, value: (d.eq && d.eq[b.key]) || 0,
-      aria: t("board.eq.aria", { name: voice.name, band: b.label }),
-      fmt: (v) => fmtDb(v),
-      set: (v) => {
-        const next = { ...(deskOf(voice).eq || {}) };
-        next[b.key] = v;
-        setDesk(ctx, voice, "eq", next);
-      } })));
+  const eqbox = el("div", null, "nu-eqwrap");
+  {
+    const RANGE = NuFields.EQ_RANGE;
+    const eqNow = () => deskOf(voice).eq || {};
+    const bandWord = (b) => b.label.replace(/^eq\s*/, "");
+    try {
+      curveEditor(eqbox, {
+        mode: "eq",
+        k: "b|eq|" + voice.name,
+        label: t("board.eq.aria", { name: voice.name, band: t("board.row.eq") }),
+        lo: -RANGE, hi: RANGE, step: 0.5, unit: "dB",
+        /* THE DRAWN SPAN. Under the low shelf's own 120 Hz and over the high
+           shelf's 7.2 kHz, so both shelves have a shoulder to show; inside the
+           master's unconditional 10 Hz highpass and 20.5 kHz lowpass, so the
+           plate never draws a frequency the record cannot pass. */
+        fLo: 40, fHi: 18000,
+        bands: EQ_BANDS.map((b) => ({
+          key: b.key,
+          k: "b|eq" + b.key + "|" + voice.name,
+          label: bandWord(b), freq: b.freq, type: b.type, q: b.q,
+          /* ABSENT IS FLAT, and absent is the only spelling of it — `writeDesk`
+             deletes a band that lands on 0 and `eqIsFlat` deletes the map when
+             all three do, so `null` here is what the record says and 0 is what
+             stands. */
+          value: eqNow()[b.key] != null ? +eqNow()[b.key] : null,
+          derived: 0,
+        })),
+        set: (key, v) => { const next = { ...eqNow() }; next[key] = v;
+                           setDesk(ctx, voice, "eq", next); },
+        clear: (key) => { if (key == null) { setDesk(ctx, voice, "eq", null); return; }
+                          const next = { ...eqNow() }; delete next[key];
+                          setDesk(ctx, voice, "eq", next); },
+      });
+    } catch (e) { /* the plate is the control; a strip without one is caught by
+                     desk-gate's own reachability walk, not papered over here */ }
   }
-  srow3.append(eqrow);
+  srow3.append(eqbox);
   strip.append(srow3);
 
   // ---- pan: a left/right fact, five detents --------------------------
@@ -1425,6 +1481,42 @@ export function mount(parent, ctx) {
      `ceiling` was the word that claimed the clipper and the clipper was
      unconditional. A refusal you have fixed must stop being printed. */
   const mv = (k) => (doc.sound && doc.sound.master && doc.sound.master[k]) || "";
+  /* ===== THE MASTER TILT IS NOT DRAWN AS A CURVE, AND HERE IS WHY =========
+     (2026-09-05, the round that gave the strip its EQ curve. TABLE.md §11
+     names it in the same sentence: *"the per-voice EQ … and the master tilt as
+     an EQ CURVE with draggable bands"*, so its absence is said here rather
+     than left to be found.)
+
+     WHAT IT IS, MEASURED: `fields.js MASTER` row `tilt` is a WORD over a table
+     of five — `TILTS = { none: 0, dark: -4, warm: -2, clear: 2, bright: 4 }` —
+     resolved by `resolveMaster` and landing on `audio/desk.js masterState` ->
+     the fx_bus `mtilt` param, ONE first-order split about 1 kHz. It reaches
+     the sound; that is not the objection.
+
+     §11'S OWN TEST IS WHAT REFUSES IT: *"Each replaces its number rows only
+     where the drawing is the honest control (a shelf is a curve; a bar count
+     is a number)."* This is not a number row. It is a five-word vocabulary,
+     which DESIGN.md component 10 gives to the one menu owner, and a plate with
+     a draggable handle would draw a CONTINUUM over a fact the record stores as
+     five words: a thumb would slide it and feel it click to positions the
+     plate cannot name, and the number printed beside the handle ("−2.0 dB")
+     would be a number no save contains. The seat eq is the opposite case in
+     every way — three continuous gains, ±12 dB at 0.5, stored as the numbers
+     the handles write — which is why that one is a curve today.
+
+     WHAT WOULD MAKE IT ONE, so the next round has the two lines rather than
+     the argument: `tilt` becomes a NUMBER in `fields.js` (the five words kept
+     as detents on it, the way `faderDb` clamps a continuous fader), or the
+     master grows a numeric `mtilt` beside the word. Either is a fields.js
+     change with a migration for 139 shipped records, and it is a spec change
+     first and code second (DESIGN.md's own opening line).
+
+     AND ONE MEASURED CONSTRAINT THE NEXT ROUND WILL MEET: `nukernel/desk-gate.js`
+     drives this plate by name — it asserts `[data-sel="master|tilt"]` exists,
+     offers TILTS's own words and opens with `none`, and that all seven master
+     words are LIVE — so the day the widget changes, that walk changes with it.
+     An address does not move when a widget does; the WIDGET moving is what the
+     gate would have to be told about. */
   PLATES.main = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "main";

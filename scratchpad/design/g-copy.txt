@@ -1,0 +1,17 @@
+
+copy — the catalogue, held to DESIGN.md §4
+  … 1034 keys in the catalogue
+  ok   C1 every key is <surface>.<meaning>
+  ok   C2 no string is over budget (a face 6 words, a sentence 12)
+  ok   C3 no banned pattern in the catalogue
+  ok   C3b the review's glossary is kept
+  FAIL C4 no two keys mean the same thing — 6: "Envelope" = group.envelope + env.plate · "Tone" = group.tone + knobs.tone · "Mix" = group.mix + glyph.tab.mix · "Form" = group.form + axis.form · "Time" = group.time + glyph.tab.time + axis.time
+  ok   C5 every plural has both forms
+  ok   C6 placeholders are {name}-shaped
+  ok   C7 every key the code asks for is in the catalogue (558 asked)
+  …  555 of 1034 keys are reached by a literal call site (479 reached dynamically or unused)
+  ok   C8 fmt formats one way
+  ok   C9 no blank or padded string
+
+copy: 9 ok, 1 failed
+copy exit=1

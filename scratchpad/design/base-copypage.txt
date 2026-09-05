@@ -1,0 +1,15 @@
+
+copy.browser — every word on the page came from the catalogue
+  ok   B_ the catalogue is on the page (globalThis.COPY)
+  … 1018 keys · 2599 strings produced · 107998 printed strings collected over 22 surfaces
+  FAIL B0 no page error on any surface — 176: console: Failed to load resource: the server responded with a status of 404 (File not found) · console: Failed to load resource: the server responded with a status of 404 (File not found) · console: Failed to load resource: the server responded with a status of 404 (File not found)
+  ok   B1 the page asked for no key the catalogue lacks
+  ok   B2 no banned pattern is printed
+  FAIL B3 nothing printed is over budget — 1: text 7>6 · deck: log (4) · "held all but 35 — clean_guitar/z02_r59.wav and 34 more would not come"
+  FAIL B4 every printed string came from the catalogue — 3 not produced by t():
+         aria-label · "mode natural minor"   [special row: trules div.nu-rule>label.nu-said>span.nu-ctl>span.nu-combo>select.nu-combofield.nu-menu-native]
+         text · "key: D natural minor · meter: 4/4"   [deck: Score #ax-deck>div>p.nu-hint.nu-keyline]
+         text-hidden · "key: D natural minor · meter: 4/4"   [deck: Video #ax-deck>div>p.nu-hint.nu-keyline]
+
+copy.browser: 3 ok, 3 failed
+exit=1

@@ -399,6 +399,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return html`<div class="nu-formula" role="group"
         aria-label=${t("bar.selection")}>
       <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
+      ${firstGroup(S)}
       <div class="nu-fops">
         ${barBtn("tundo", t("bar.undo"), U.undoWord, U.canUndo,
                  t("bar.undo.none"), () => { U.undo(); })}
@@ -411,6 +412,52 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
                  !at ? t("bar.noSel") : t("bar.paste.none"),
                  () => pasteHere(S))}
       </div>
+    </div>`;
+  };
+
+  /* ---- THE BAR MIRRORS THE SELECTED CELL'S FIRST GROUP ---------------
+     DESIGN.md §2 component 5: *"Formula bar — address · the selected cell's
+     vector as chips/values · undo · redo · copy · paste"*, and §11c gives the
+     word "vector" a shape at last: a cell's vector is FOUR GROUPS now (Phrase
+     · Variation · Dynamics · Placement) and the first of them is what a
+     spreadsheet's bar holds — what this cell PLAYS. Eighteen fields on one
+     line would be the wall the groups were invented to break.
+
+     IT IS A READOUT AND NOT A SECOND CONTROL, and that is the one-owner law
+     rather than an economy: every one of these fields already has exactly one
+     control, in the sheet under the cell, at the address T7 walks. A tappable
+     copy up here would be two controls on one address — the shape
+     test/selects.js's own guard fails a page for, and the shape §11b deleted
+     four knob rows to avoid. So the bar SAYS and the sheet WRITES.
+     A cell whose sheet has no groups (a bass, whose phrase is told rather than
+     asked) prints nothing here rather than an empty strip. */
+  const firstGroup = (S: Shape): TemplateResult | typeof nothing => {
+    const at = S.at();
+    if (!at) return nothing;
+    let fields: Field[] = [];
+    try { fields = cellSheet(A, at.i, at.vi); } catch (e) { return nothing; }
+    const groupOf = (f: Field): string | null =>
+      (f as { group?: string | null }).group || null;
+    const first = fields.find((f) => !!groupOf(f));
+    const head = first ? groupOf(first) : null;
+    if (!head) return nothing;
+    const mine = fields.filter((f) => groupOf(f) === head &&
+      (f as { kind?: string }).kind !== "ops" &&
+      (f as { kind?: string }).kind !== "node");
+    if (!mine.length) return nothing;
+    return html`<div class="nu-fvec" data-k="tvec" role="group"
+        aria-label=${t("group." + head)}>
+      <b class="nu-fvechead">${t("group." + head)}</b>
+      ${mine.map((f) => {
+        const w = (f as { word?: string | null }).word;
+        const word = w == null || w === "" ? "\u2014" : String(w);
+        const derived = !!(f as { derived?: boolean }).derived;
+        return html`<span class=${classMap({ "nu-fvecpair": true,
+                                             "is-derived": derived })}
+          aria-label=${t("sheet.field", { name: (f as { label: string }).label,
+                                          value: word })}
+          ><small>${(f as { label: string }).label}</small
+          ><b>${word}</b></span>`; })}
     </div>`;
   };
 

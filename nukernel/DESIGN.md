@@ -13,8 +13,9 @@ musician uses.
 |---|---|---|
 | ink | `--ink --dim --faint --paper --panel --ground --well --zebra` | one ink, one dim, one refused; paper under panel under well |
 | meaning | `--hand --clock --meter --flag` (+ `-tint`) | **semantic, never decorative**: hand = you set it · clock = scheduled · meter = measured · flag = refused/warning; `--v0..3` = which player, `--q1..4` = how much |
+| cluster | `--lz-h0 … --lz-h7` (the lozenge field's palette, and `--lz` is the one a cluster is wearing) | **hue means the KIND, weight means the STATE** — one ink per semantic cluster, outline when cold and fill when hot. Eight, and eight is a decision: past eight, hue stops being a category anyone can hold. Not the meaning four and not the voice six, because a cluster hue that collided with either would say something it does not mean; a ninth cluster reuses the first hue rather than inventing a colour |
 | rule | `--bw` (1px) `--bw-hard --rule --rule-strong` | a rule is a HAIRLINE; a frame is a plate, and a plate is rare |
-| radius | `--r0` 0 (a plate) `--r1` 6px (a control) `--r2` 3px (a chip) `--r-pill` | small; nothing bubbles |
+| radius | `--r0` 0 (a plate) `--r1` 6px (a control) `--r2` 3px (a chip) `--r-pill` (a lozenge, and only a lozenge) | small; nothing bubbles |
 | space | `--s1` .2em hair · `--s2` .35em tight · `--s3` .55em gap · `--s4` .8em air · `--s5` 1.4em block | between controls that answer one question: s3; between questions: s4; between subjects: s5 |
 | type | `--t0` .6rem … `--t5` 1.5rem; `--fw-body` 500 · `--fw-label` 700 · `--fw-block` 800 · `--fw-display` 900; `--sans --mono --num-fw` | body t3 = 1rem; a value is tabular; NOTHING under 16px on a phone that a hand edits; hierarchy by weight and size, not by boxes |
 | tap | `--tap` 44px · `--bar-h` · `--head-h` | every control 44px tall; a control is a hair wider than its word (~.5ch each side); a slider's grab is `--sl-grab` |

@@ -9586,6 +9586,71 @@ function knobsEnvSpec(v, V) {
   };
 }
 
+/* ---------- THE XY PAD: CUTOFF ACROSS, RESONANCE UP (2026-09-05) --------
+   TABLE.md §11's graphical family, third item: *"cutoff and resonance as an XY
+   pad"*. The two are one gesture on every desk that has ever had them and they
+   were two rows of a table here — a hand that wants "darker and squelchier"
+   had to make two separate decisions and read two separate numbers.
+
+   MEASURED, NOT ASSUMED, LIKE EVERY OTHER ROW IN THIS BLOCK. The two fields
+   come out of nukernel/knobs.js, which is a PROBE of the parent's own
+   `pitchedUnit` at both ends of every candidate key: 11 of the fleet's 28
+   modelled instruments have a `cutoff` AND a resonance (`res` on ten of them,
+   `resonance` on the tb303) that were both measured to move a parameter, and
+   the pad is drawn on exactly those. On the other 17 the rows stay where they
+   are — an instrument with a cutoff and no resonance is a slider, and a pad
+   with one live axis would be a control that lies about its second dimension.
+
+   THE BRACKETS ARE THE ROW'S OWN, and they differ per instrument by a lot: a
+   tb303's cutoff tops out at 6 kHz and a supersaw's at 18. Nothing is invented
+   here; the plate is handed the measured min/max/step and clamps to them.
+
+   THE X AXIS IS LOGARITHMIC because a cutoff is heard in octaves — 2 kHz is
+   the middle of 60..16000 to an ear and 12% of it to a ruler. `log: true` is
+   on the frequency axis and nowhere else. */
+const XY_RES = ["res", "resonance"];      // the two spellings the probe found
+function xyRowsOf(V) {
+  if (!V) return null;
+  const by = {};
+  for (const r of V.rows) by[r.key] = r;
+  const cut = by.cutoff;
+  const res = XY_RES.map((k) => by[k]).find((r) => !!r);
+  if (!cut || !res) return null;
+  if (cut.kind !== "number" || res.kind !== "number") return null;
+  return { cut, res };
+}
+function xySpecFor(v, V) {
+  const rows = xyRowsOf(V);
+  if (!rows) return null;
+  const byRow = {};
+  for (const r of V.rows) byRow[r.key] = r;
+  const S = knobSet(v);
+  const axisOf = (row) => {
+    const d = knobDerived(v, row);
+    return { k: "xy|" + v.name + "|" + row.key,
+             label: knobLabel(row), unit: row.unit || "",
+             min: row.min, max: row.max, step: row.step,
+             value: (S && S[row.key] != null) ? +S[row.key] : null,
+             derived: typeof d === "number" ? d : row.derived,
+             why: knobShut(v, row, byRow) || row.floorWhy || row.ceilWhy || null };
+  };
+  const KEY = { x: rows.cut.key, y: rows.res.key };
+  return {
+    mode: "xy",
+    k: "xy|" + v.name,
+    /* THE PLATE'S NAME IS THE COMPOSER'S WORD FOR WHAT IT SETS. DESIGN.md §5:
+       *"In a chair's sheet: the instrument, then its envelope, then its tone,
+       then where it sits."* This is the tone. */
+    label: _t("knobs.tone"),
+    x: { ...axisOf(rows.cut), log: true },
+    y: axisOf(rows.res),
+    set: (ax, n) => { writeKnob(v, KEY[ax], n); changed(); },
+    clear: (ax) => { if (ax) clearKnob(v, KEY[ax]);
+                     else { clearKnob(v, KEY.x); clearKnob(v, KEY.y); }
+                     changed(); },
+  };
+}
+
 /* ---------- WHAT THE READOUT SAYS, AND IT SAYS THE MUSICAL THING --------
    The unit is data on the row (knobs.js `unit`), measured out of the param, so
    this is a table and not a switch over parameter names. No invented units:
@@ -10326,8 +10391,20 @@ function knobsBlock(parent, voice, named) {
     const sp = envSpecFor(voice);
     return sp ? new Set(sp.fields.map((x) => x.seg)) : null;
   } catch (e) { return null; } })();
+  /* ...AND WHAT THE XY PAD TOOK (2026-09-05, TABLE.md §11's third item). The
+     same law, one drawing later: `cutoff` and its resonance are ONE gesture, so
+     they are one handle on a pad above this table and their two sliders leave
+     it. Nothing is lost — both numbers print beside the pad in the field's own
+     units, with a clear-back each, and `test/envelope.browser.js` X2 asserts
+     the two owners together are still the instrument's whole measured census.
+     ONLY WHERE THE PAD IS ACTUALLY DRAWN: `xyRowsOf` answers null on an
+     instrument that has a cutoff and no measured resonance, and on that chair
+     these rows stay sliders. */
+  const drawnAsPad = (() => { const r = xyRowsOf(V);
+    return r ? new Set([r.cut.key, r.res.key]) : null; })();
   for (const row of V.rows) {
     if (drawnAsCurve && drawnAsCurve.has(row.key)) continue;
+    if (drawnAsPad && drawnAsPad.has(row.key)) continue;
     const shut = knobShut(voice, row, byRow);
     // A GATE FIRST, THEN THE TWO DEPARTURES THIS PAGE MAKES FROM A MODULE'S
     // OWN RANGE — `floorWhy` (a silence the module allows and the page will
@@ -10516,6 +10593,18 @@ function knobsBlock(parent, voice, named) {
      second tube would get the pad for free and a name check would not have
      given it one. */
   tractPad(parent, voice, V, byRow, sliders);
+
+  /* AND SO DOES THE PAD, for the same reason and by the same rule: a picture
+     over the table, drawn only where the instrument's MEASURED census has both
+     halves of it. One component with every other plate on this page — the
+     chair's ADSR, the automation lanes, the strip's EQ curve — in its `xy`
+     mode (src/envelope/bands.ts). */
+  if (drawnAsPad) {
+    const sp = xySpecFor(voice, V);
+    if (sp) { const box = el("div", null, "nu-seatxy");
+              try { curveEditor(box, sp); } catch (e) { /* no plate, no lie */ }
+              if (box.firstChild) parent.append(box); }
+  }
 
   pane(parent, t);
 
@@ -10926,9 +11015,20 @@ function wCell(sp) {
               here", which is offered. Mapping both onto one flag greyed the
               inert words: measured, a pad refused eleven development words
               where the record refuses eight. */
+           /* `g` IS THE OPTION'S OWN KIND, AND IT WAS BEING DROPPED HERE
+              (2026-09-05, DESIGN.md component 16). avail.js stamps `group` on
+              every word of the five long vocabularies — the kernel's chord
+              families (`QUALITIES`), `instruments.js familyOf`
+              (`instrOptions`), `genres-tables.js SCALEFAMILY`/`MODEFAMILY`
+              (`famOpts`) — and this mapping listed five keys and not that
+              one, so a sheet built from it could not know that its forty-two
+              words came in seven families. One character of data, and it is
+              the difference between a native wheel showing one word and a
+              lozenge field showing all forty-two. */
            options: (sp.options || []).map((o) => ({ v: o.value, w: o.label,
                                                      off: o.disabled,
-                                                     why: o.why, quiet: o.quiet })),
+                                                     why: o.why, quiet: o.quiet,
+                                                     g: o.group })),
            set: sp.set };
 }
 

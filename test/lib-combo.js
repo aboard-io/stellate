@@ -75,9 +75,25 @@ function INSTALL() {
     if (w) return w;
     if (n.getAttribute("role") === "combobox") return "combo";
     if (n.classList && n.classList.contains("nu-wchips")) return "chips";
+    if (n.classList && n.classList.contains("nu-lzfield")) return "lozenge";
     return "native";
   };
   const chips = (n) => [...n.querySelectorAll(".nu-wchip")];
+  /* ...AND THE FOURTH WIDGET, 2026-09-05 (DESIGN.md component 16). A lozenge
+     field is a strip of chips that knows what KIND each of its words is and
+     draws every one of them at once, under a heading per kind. It carries the
+     same `data-sel` / `data-k` / `data-v` and says `data-widget="lozenge"`, so
+     this driver reads it the way it reads the other three: by address and by
+     widget, never by tag. A FOLDED CLUSTER'S WORDS ARE STILL WORDS — they are
+     in the DOM, `hidden`, and `words()` is a census of what is OFFERED, not of
+     what is on the glass this second (which is what the browser gates measure
+     with a rect). `say()` unfolds first, because a thumb would. */
+  const lozs = (n) => [...n.querySelectorAll(".nu-lz")];
+  const unfold = (el) => {
+    const sec = el && el.closest(".nu-lzcluster");
+    const head = sec && sec.querySelector(".nu-lzhead");
+    if (head && head.getAttribute("aria-expanded") === "false") head.click();
+  };
   window.__combo = {
     widget,
     is: (n) => !!n && n.getAttribute("role") === "combobox",
@@ -89,6 +105,15 @@ function INSTALL() {
     words: (n) => {
       if (!n) return [];
       const kind = widget(n);
+      if (kind === "lozenge")
+        return lozs(n).map((c) => ({
+          v: c.dataset.v == null ? "" : c.dataset.v,
+          w: (c.querySelector(".nu-lzword") || c).textContent,
+          off: c.disabled || c.getAttribute("aria-disabled") === "true",
+          quiet: c.classList.contains("is-quiet"),
+          why: c.dataset.why || "",
+          ph: c.hasAttribute("data-placeholder"),
+          on: c.getAttribute("aria-pressed") === "true" }));
       if (kind === "chips")
         return chips(n).map((c) => ({
           v: c.dataset.v == null ? "" : c.dataset.v,
@@ -128,6 +153,14 @@ function INSTALL() {
       /* A STRIP IS SAID BY TAPPING ITS CHIP, which is the only gesture it has.
          There is no list to open and nothing to type, which is the whole of why
          a vocabulary of eight is drawn this way. */
+      if (kind === "lozenge") {
+        const c = lozs(n).find((x) => (x.dataset.v == null ? "" : x.dataset.v) === want);
+        if (!c || c.disabled || c.getAttribute("aria-disabled") === "true") return false;
+        unfold(c);
+        c.click();
+        return String(n.dataset.v) === want ||
+               c.getAttribute("aria-pressed") === "true";
+      }
       if (kind === "chips") {
         const c = chips(n).find((x) => (x.dataset.v == null ? "" : x.dataset.v) === want);
         if (!c || c.disabled || c.getAttribute("aria-disabled") === "true") return false;

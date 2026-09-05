@@ -73,11 +73,15 @@ export interface EnvField {
  *  envelope, an anonymous point on a lane, a shelf's corner, a pair of
  *  numbers — which is a switch inside one drawing, not a second widget.
  *
- *  ONLY `adsr` IS WIRED THIS ROUND (the chair sheets' envelopes). `lane` is
- *  built and gated on a fixture and waits for the automation round; `eq` and
- *  `xy` are DECLARED HERE AND NOT DRAWN, which is the honest half — a mode
- *  the component would answer to but that nothing asks for yet, named so the
- *  next round is a wiring rather than a second component. */
+ *  ALL FOUR ARE DRAWN NOW (2026-09-05, TABLE.md §11's third item — *"the
+ *  per-voice EQ (lo/mid/hi shelves, the desk's FAM_EQ and the seat eq) and the
+ *  master tilt as an EQ CURVE with draggable bands; cutoff and resonance as an
+ *  XY pad"*). `adsr` took the chair sheets' envelopes; `lane` took the cell
+ *  and section automation; `eq` is `ui/engineer.js`'s channel strip, and `xy`
+ *  is the modelled chair's tone in `ui/eight.js knobsBlock`. The paragraph
+ *  this replaces said `eq` and `xy` were "DECLARED HERE AND NOT DRAWN, which
+ *  is the honest half … named so the next round is a wiring rather than a
+ *  second component"; it was, and this is it. */
 export type CurveMode = "adsr" | "lane" | "eq" | "xy";
 
 export interface EnvSpec {
@@ -105,9 +109,10 @@ export interface EnvSpec {
  *  is a breakpoint curve whose points have names, which is why they share
  *  plate.ts and not just a stylesheet. */
 export interface CurveSpec {
-  /** `lane` today; `eq` and `xy` are the same drawing with named handles and
-   *  are not drawn until something writes through them. */
-  mode: "lane" | "eq" | "xy";
+  /** the anonymous-points drawing. `eq` and `xy` have their own specs below —
+   *  they share this plate but not this shape: a band is NAMED and pinned in
+   *  x, and an XY pad's two axes carry two different units. */
+  mode: "lane";
   k: string;
   label: string;
   /** what the horizontal axis counts: "bars" or "s". */
@@ -129,9 +134,130 @@ export interface CurveSpec {
   max?: number;
 }
 
+/* ===================================================================
+   THE EQ CURVE (mode `eq`) — A SHELF IS A CURVE.
+
+   TABLE.md §11's own test for this family: *"Each replaces its number rows
+   only where the drawing is the honest control (a shelf is a curve; a bar
+   count is a number), and prints the numbers beside the curve."* An EQ is the
+   clearest case on the page: three gains in three columns are three unrelated
+   facts, and the same three as a response curve are the one thing a hand is
+   actually deciding — where this instrument sits against the others.
+
+   THE BANDS ARE NOT POINTS. A band is pinned in x (its frequency is the
+   desk's, silkscreened once in `fields.js EQ_BANDS`) and moves only in gain,
+   so it is a NAMED handle on a fixed abscissa — which is why this is its own
+   spec rather than a `CurveSpec` with three points in it. A point a hand could
+   drag sideways would be a parametric EQ, and this desk does not have one.
+
+   AND THE ADDRESS DOES NOT MOVE. Each band carries its own `k` — the caller's
+   existing `data-k`, `b|eqlo|<voice>` and its two siblings — rather than one
+   built here from the plate's key, because this repo's standing law is that an
+   address does not move when a widget does and `nukernel/desk-gate.js` drives
+   the desk by name. */
+export interface EqBand {
+  /** the caller's own word for this band, handed back to `set`/`clear`. */
+  key: string;
+  /** THE ADDRESS, the caller's and unmoved — `data-k` on the handle. */
+  k: string;
+  /** what the band is called, printed and spoken ("lo", "mid", "hi"). */
+  label: string;
+  /** where it sits on the frequency axis, in Hz. `fields.js EQ_BANDS.freq`. */
+  freq: number;
+  /** what the engine builds there — the same three words `graph.js` puts on a
+   *  BiquadFilterNode, so the drawn curve is the built filter's own magnitude
+   *  and not a picture of one. */
+  type: "lowshelf" | "peaking" | "highshelf";
+  /** the bell's own Q where it has one (a shelf's is fixed at S = 1). */
+  q?: number;
+  /** what the record says today, or null where the channel inherits flat. */
+  value: number | null;
+  /** what stands when `value` is null — 0 dB on a desk whose absent IS flat. */
+  derived: number;
+  /** a refusal: drawn dim, with the sentence, and undraggable. */
+  why?: string | null;
+}
+
+export interface EqSpec {
+  mode: "eq";
+  /** the editor's own address; the plate wears it. */
+  k: string;
+  /** what this EQ is OF, spoken as the plate's name. The caller's, translated
+   *  by the caller — this module holds no English. */
+  label: string;
+  /** the GAIN bracket, read off the control this replaces and never invented
+   *  here (the seat eq is `fields.js EQ_RANGE`, ±12 dB at 0.5). */
+  lo: number;
+  hi: number;
+  step: number;
+  /** printed after every gain. "dB" everywhere today. */
+  unit: string;
+  /** the drawn frequency span, log-scaled. */
+  fLo: number;
+  fHi: number;
+  bands: EqBand[];
+  /** ONE WRITE PER GESTURE, through the caller's own door. */
+  set(key: string, v: number): void;
+  /** clear ONE band back to what it inherits; with no key, all of them. */
+  clear(key?: string): void;
+}
+
+/* ===================================================================
+   THE XY PAD (mode `xy`) — TWO NUMBERS A HAND HOLDS AT ONCE.
+
+   §11: *"cutoff and resonance as an XY pad"*. The two are one gesture on every
+   desk that has ever had them, and they are two rows of a table here. Same
+   plate, same 44px handle, same keyboard, same long-press: what differs is
+   that the handle's TWO coordinates are two different fields with two
+   different units, and both numbers print beside it.
+
+   THERE IS NO RESPONSE CURVE ON THIS PLATE, AND THAT IS DELIBERATE. The EQ
+   above draws a real one because the desk hands us the filter it builds — type,
+   frequency and Q, straight onto a BiquadFilterNode. Nothing hands this page
+   the chair's own filter law: `nukernel/knobs.js` is a MEASUREMENT that `res`
+   moves a parameter called `res` between 0 and 0.95, not a Q. A curve drawn
+   from a Q invented here would be a picture of physics nobody measured, which
+   is the exact shape of the bug this family exists to refuse. So the pad draws
+   what it can stand behind: a real log-frequency ruling, the two crosshairs
+   through the handle, and the two numbers. */
+export interface XyAxis {
+  /** THE ADDRESS, the caller's — `data-k` on the crosshair's own readout. */
+  k: string;
+  /** what this axis is called, printed and spoken. */
+  label: string;
+  /** "Hz" · "" (a bare 0..1 dial has none). Printed, never converted. */
+  unit: string;
+  min: number;
+  max: number;
+  step: number;
+  /** what the record says today, or null when the chair inherits. */
+  value: number | null;
+  /** what stands when `value` is null. */
+  derived: number;
+  /** a frequency-like axis is ruled and dragged LOGARITHMICALLY: 2 kHz sits in
+   *  the middle of 60..16000 the way an ear puts it there, not at 12%. */
+  log?: boolean;
+  why?: string | null;
+}
+
+export interface XySpec {
+  mode: "xy";
+  k: string;
+  label: string;
+  /** across — cutoff. */
+  x: XyAxis;
+  /** up — resonance. */
+  y: XyAxis;
+  set(axis: "x" | "y", v: number): void;
+  clear(axis?: "x" | "y"): void;
+}
+
+/** WHAT THE ONE DOOR ANSWERS TO. Four modes, one function (`editor.ts`). */
+export type AnySpec = EnvSpec | CurveSpec | EqSpec | XySpec;
+
 export interface Editor {
   /** the light-DOM node the caller seats. */
   node: HTMLElement;
   /** redraw against a new spec — the caller's document changed under it. */
-  update(spec: EnvSpec | CurveSpec): void;
+  update(spec: AnySpec): void;
 }

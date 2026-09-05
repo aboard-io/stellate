@@ -1,0 +1,428 @@
+shell gate · http://localhost:8777/nukernel/index.html
+  ok   A6d 320 · the hamburger is the four viewers and the log, in TABS' own order — ["Score","Video","Screensaver","Export","log"]
+  ok   A6g 320 · and every word is still IN the button, so the menu reads with the stylesheet off — ["Score","Video","Screensaver","Export","log"]
+  ok   A6d 320 · …and the genre is a name plate in the BAR, not a row in the hamburger — {"word":"Silence","sub":null,"inMenu":false}
+  ok   A6h 320 · no naked glyph — every mark has a word and a name []
+  ok   A6j 320 · there is no ↑, no gutter and no depth anywhere on the page — {"up":0,"tray":0,"depth":0}
+  ok   A6j 320 · every viewer in the hamburger opens as ONE full-width sheet over the table with a close, and the close lands back on the table — Score, Video, Screensaver, Export
+  ok   A6l 320 · a player's `remove` and the three hires are on the table, in the sheet its own column head opens — {"name":"line 1","del":true,"hire":3}
+  ok   A6l 320 · …and a section's four operations plus `+ section` are on the table at their own addresses — {"id":"s0","ops":4,"add":true}
+[320/Where] scroll 320/320 · h826 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 1 (linked)
+  ok   A1 320/Where · no sideways scroll (320 vs 320)
+  ok   A2 320/Where · no control under 44px
+  ok   A3 320/Where · every checkbox/radio/step-button target >= 24px
+  ok   A4 320/Where · no pane clips vertically
+  ok   A5 320/Where · no <table> overflows the box it is in
+  ok   A5c 320/Where · no .nu-pane around a rotated step grid
+  ok   A5b 320/Where · one table per pane, no nesting
+  ok   A7 320/Where · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 320/Where · body and #app keep overflow-x: visible
+  skip A8 320/Where · no pane with a sticky first column scrolls here
+  ok   A6 320/Where · over 11 stops to y=159: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 320/Where · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 320/Where · the bar is ONE row and never scrolls sideways (320 vs 320, 1 row)
+  ok   A6c 320/Where · on "Where" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Silence" (marks ["Silence"], pressed ["Silence"])
+  ok   A6i 320/Where · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[320/Band] scroll 320/320 · h667 · trays undefined · axes 1 · panes 1 · grids 0 · sheets 1 (linked)
+  ok   A1 320/Band · no sideways scroll (320 vs 320)
+  ok   A2 320/Band · no control under 44px
+  ok   A3 320/Band · every checkbox/radio/step-button target >= 24px
+  ok   A4 320/Band · no pane clips vertically
+  ok   A5 320/Band · no <table> overflows the box it is in
+  ok   A5c 320/Band · no .nu-pane around a rotated step grid
+  ok   A5b 320/Band · one table per pane, no nesting
+  ok   A7 320/Band · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 320/Band · body and #app keep overflow-x: visible
+  ok   A8 320/Band · nu-wordgrid nu-trims nu-sheetgrid's sticky first column moved 0px over a 113px scroll
+  ok   A6 320/Band · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 320/Band · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 320/Band · the bar is ONE row and never scrolls sideways (320 vs 320, 1 row)
+  ok   A6c 320/Band · on "Band" the chrome wears 0 <mark> and 0 aria-pressed, and they say null (marks [], pressed [])
+  ok   A6i 320/Band · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[320/Score] scroll 320/320 · h667 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 320/Score · no sideways scroll (320 vs 320)
+  ok   A2 320/Score · no control under 44px
+  ok   A3 320/Score · every checkbox/radio/step-button target >= 24px
+  ok   A4 320/Score · no pane clips vertically
+  ok   A5 320/Score · no <table> overflows the box it is in
+  ok   A5c 320/Score · no .nu-pane around a rotated step grid
+  ok   A5b 320/Score · one table per pane, no nesting
+  ok   A7 320/Score · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 320/Score · body and #app keep overflow-x: visible
+  skip A8 320/Score · no pane with a sticky first column scrolls here
+  ok   A6 320/Score · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 320/Score · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 320/Score · the bar is ONE row and never scrolls sideways (320 vs 320, 1 row)
+  ok   A6c 320/Score · on "Score" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Score" (marks ["Score"], pressed ["Score"])
+  ok   A6i 320/Score · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[320/Video] scroll 320/320 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 320/Video · no sideways scroll (320 vs 320)
+  ok   A2 320/Video · no control under 44px
+  ok   A3 320/Video · every checkbox/radio/step-button target >= 24px
+  ok   A4 320/Video · no pane clips vertically
+  ok   A5 320/Video · no <table> overflows the box it is in
+  ok   A5c 320/Video · no .nu-pane around a rotated step grid
+  ok   A5b 320/Video · one table per pane, no nesting
+  ok   A7 320/Video · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 320/Video · body and #app keep overflow-x: visible
+  skip A8 320/Video · no pane with a sticky first column scrolls here
+  ok   A6 320/Video · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 320/Video · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 320/Video · the bar is ONE row and never scrolls sideways (320 vs 320, 1 row)
+  ok   A6c 320/Video · on "Video" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Video" (marks ["Video"], pressed ["Video"])
+  ok   A6i 320/Video · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[320/Screensaver] scroll 320/320 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 320/Screensaver · no sideways scroll (320 vs 320)
+  ok   A2 320/Screensaver · no control under 44px
+  ok   A3 320/Screensaver · every checkbox/radio/step-button target >= 24px
+  ok   A4 320/Screensaver · no pane clips vertically
+  ok   A5 320/Screensaver · no <table> overflows the box it is in
+  ok   A5c 320/Screensaver · no .nu-pane around a rotated step grid
+  ok   A5b 320/Screensaver · one table per pane, no nesting
+  ok   A7 320/Screensaver · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 320/Screensaver · body and #app keep overflow-x: visible
+  skip A8 320/Screensaver · no pane with a sticky first column scrolls here
+  ok   A6 320/Screensaver · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 320/Screensaver · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 320/Screensaver · the bar is ONE row and never scrolls sideways (320 vs 320, 1 row)
+  ok   A6c 320/Screensaver · on "Screensaver" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Screensaver" (marks ["Screensaver"], pressed ["Screensaver"])
+  ok   A6i 320/Screensaver · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[320/Export] scroll 320/320 · h1419 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 320/Export · no sideways scroll (320 vs 320)
+  ok   A2 320/Export · no control under 44px
+  ok   A3 320/Export · every checkbox/radio/step-button target >= 24px
+  ok   A4 320/Export · no pane clips vertically
+  ok   A5 320/Export · no <table> overflows the box it is in
+  ok   A5c 320/Export · no .nu-pane around a rotated step grid
+  ok   A5b 320/Export · one table per pane, no nesting
+  ok   A7 320/Export · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 320/Export · body and #app keep overflow-x: visible
+  skip A8 320/Export · no pane with a sticky first column scrolls here
+  ok   A6 320/Export · over 11 stops to y=752: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 320/Export · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 320/Export · the bar is ONE row and never scrolls sideways (320 vs 320, 1 row)
+  ok   A6c 320/Export · on "Export" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Export" (marks ["Export"], pressed ["Export"])
+  ok   A6i 320/Export · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+  ok   A6e 320 · Export left at 451 came back at 451; Where left at 95 came back at 95 (and Where opened for the first time at 0)
+  ok   A6e 320 · a tab never opened starts at the top (Where opened at 0)
+  ok   A6d 375 · the hamburger is the four viewers and the log, in TABS' own order — ["Score","Video","Screensaver","Export","log"]
+  ok   A6g 375 · and every word is still IN the button, so the menu reads with the stylesheet off — ["Score","Video","Screensaver","Export","log"]
+  ok   A6d 375 · …and the genre is a name plate in the BAR, not a row in the hamburger — {"word":"Silence","sub":null,"inMenu":false}
+  ok   A6h 375 · no naked glyph — every mark has a word and a name []
+  ok   A6j 375 · there is no ↑, no gutter and no depth anywhere on the page — {"up":0,"tray":0,"depth":0}
+  ok   A6j 375 · every viewer in the hamburger opens as ONE full-width sheet over the table with a close, and the close lands back on the table — Score, Video, Screensaver, Export
+  ok   A6l 375 · a player's `remove` and the three hires are on the table, in the sheet its own column head opens — {"name":"line 1","del":true,"hire":3}
+  ok   A6l 375 · …and a section's four operations plus `+ section` are on the table at their own addresses — {"id":"s0","ops":4,"add":true}
+[375/Where] scroll 375/375 · h871 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 1 (linked)
+  ok   A1 375/Where · no sideways scroll (375 vs 375)
+  ok   A2 375/Where · no control under 44px
+  ok   A3 375/Where · every checkbox/radio/step-button target >= 24px
+  ok   A4 375/Where · no pane clips vertically
+  ok   A5 375/Where · no <table> overflows the box it is in
+  ok   A5c 375/Where · no .nu-pane around a rotated step grid
+  ok   A5b 375/Where · one table per pane, no nesting
+  ok   A7 375/Where · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 375/Where · body and #app keep overflow-x: visible
+  skip A8 375/Where · no pane with a sticky first column scrolls here
+  ok   A6 375/Where · over 11 stops to y=204: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 375/Where · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 375/Where · the bar is ONE row and never scrolls sideways (375 vs 375, 1 row)
+  ok   A6c 375/Where · on "Where" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Silence" (marks ["Silence"], pressed ["Silence"])
+  ok   A6i 375/Where · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[375/Band] scroll 375/375 · h667 · trays undefined · axes 1 · panes 1 · grids 0 · sheets 1 (linked)
+  ok   A1 375/Band · no sideways scroll (375 vs 375)
+  ok   A2 375/Band · no control under 44px
+  ok   A3 375/Band · every checkbox/radio/step-button target >= 24px
+  ok   A4 375/Band · no pane clips vertically
+  ok   A5 375/Band · no <table> overflows the box it is in
+  ok   A5c 375/Band · no .nu-pane around a rotated step grid
+  ok   A5b 375/Band · one table per pane, no nesting
+  ok   A7 375/Band · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 375/Band · body and #app keep overflow-x: visible
+  ok   A8 375/Band · nu-wordgrid nu-trims nu-sheetgrid's sticky first column moved 0px over a 58px scroll
+  ok   A6 375/Band · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 375/Band · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 375/Band · the bar is ONE row and never scrolls sideways (375 vs 375, 1 row)
+  ok   A6c 375/Band · on "Band" the chrome wears 0 <mark> and 0 aria-pressed, and they say null (marks [], pressed [])
+  ok   A6i 375/Band · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[375/Score] scroll 375/375 · h667 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 375/Score · no sideways scroll (375 vs 375)
+  ok   A2 375/Score · no control under 44px
+  ok   A3 375/Score · every checkbox/radio/step-button target >= 24px
+  ok   A4 375/Score · no pane clips vertically
+  ok   A5 375/Score · no <table> overflows the box it is in
+  ok   A5c 375/Score · no .nu-pane around a rotated step grid
+  ok   A5b 375/Score · one table per pane, no nesting
+  ok   A7 375/Score · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 375/Score · body and #app keep overflow-x: visible
+  skip A8 375/Score · no pane with a sticky first column scrolls here
+  ok   A6 375/Score · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 375/Score · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 375/Score · the bar is ONE row and never scrolls sideways (375 vs 375, 1 row)
+  ok   A6c 375/Score · on "Score" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Score" (marks ["Score"], pressed ["Score"])
+  ok   A6i 375/Score · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[375/Video] scroll 375/375 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 375/Video · no sideways scroll (375 vs 375)
+  ok   A2 375/Video · no control under 44px
+  ok   A3 375/Video · every checkbox/radio/step-button target >= 24px
+  ok   A4 375/Video · no pane clips vertically
+  ok   A5 375/Video · no <table> overflows the box it is in
+  ok   A5c 375/Video · no .nu-pane around a rotated step grid
+  ok   A5b 375/Video · one table per pane, no nesting
+  ok   A7 375/Video · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 375/Video · body and #app keep overflow-x: visible
+  skip A8 375/Video · no pane with a sticky first column scrolls here
+  ok   A6 375/Video · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 375/Video · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 375/Video · the bar is ONE row and never scrolls sideways (375 vs 375, 1 row)
+  ok   A6c 375/Video · on "Video" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Video" (marks ["Video"], pressed ["Video"])
+  ok   A6i 375/Video · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[375/Screensaver] scroll 375/375 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 375/Screensaver · no sideways scroll (375 vs 375)
+  ok   A2 375/Screensaver · no control under 44px
+  ok   A3 375/Screensaver · every checkbox/radio/step-button target >= 24px
+  ok   A4 375/Screensaver · no pane clips vertically
+  ok   A5 375/Screensaver · no <table> overflows the box it is in
+  ok   A5c 375/Screensaver · no .nu-pane around a rotated step grid
+  ok   A5b 375/Screensaver · one table per pane, no nesting
+  ok   A7 375/Screensaver · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 375/Screensaver · body and #app keep overflow-x: visible
+  skip A8 375/Screensaver · no pane with a sticky first column scrolls here
+  ok   A6 375/Screensaver · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 375/Screensaver · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 375/Screensaver · the bar is ONE row and never scrolls sideways (375 vs 375, 1 row)
+  ok   A6c 375/Screensaver · on "Screensaver" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Screensaver" (marks ["Screensaver"], pressed ["Screensaver"])
+  ok   A6i 375/Screensaver · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[375/Export] scroll 375/375 · h1400 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 375/Export · no sideways scroll (375 vs 375)
+  ok   A2 375/Export · no control under 44px
+  ok   A3 375/Export · every checkbox/radio/step-button target >= 24px
+  ok   A4 375/Export · no pane clips vertically
+  ok   A5 375/Export · no <table> overflows the box it is in
+  ok   A5c 375/Export · no .nu-pane around a rotated step grid
+  ok   A5b 375/Export · one table per pane, no nesting
+  ok   A7 375/Export · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 375/Export · body and #app keep overflow-x: visible
+  skip A8 375/Export · no pane with a sticky first column scrolls here
+  ok   A6 375/Export · over 11 stops to y=733: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 375/Export · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 375/Export · the bar is ONE row and never scrolls sideways (375 vs 375, 1 row)
+  ok   A6c 375/Export · on "Export" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Export" (marks ["Export"], pressed ["Export"])
+  ok   A6i 375/Export · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+  ok   A6e 375 · Export left at 440 came back at 440; Where left at 122 came back at 122 (and Where opened for the first time at 0)
+  ok   A6e 375 · a tab never opened starts at the top (Where opened at 0)
+  ok   A6d 430 · the hamburger is the four viewers and the log, in TABS' own order — ["Score","Video","Screensaver","Export","log"]
+  ok   A6g 430 · and every word is still IN the button, so the menu reads with the stylesheet off — ["Score","Video","Screensaver","Export","log"]
+  ok   A6d 430 · …and the genre is a name plate in the BAR, not a row in the hamburger — {"word":"Silence","sub":null,"inMenu":false}
+  ok   A6h 430 · no naked glyph — every mark has a word and a name []
+  ok   A6j 430 · there is no ↑, no gutter and no depth anywhere on the page — {"up":0,"tray":0,"depth":0}
+  ok   A6j 430 · every viewer in the hamburger opens as ONE full-width sheet over the table with a close, and the close lands back on the table — Score, Video, Screensaver, Export
+  ok   A6l 430 · a player's `remove` and the three hires are on the table, in the sheet its own column head opens — {"name":"line 1","del":true,"hire":3}
+  ok   A6l 430 · …and a section's four operations plus `+ section` are on the table at their own addresses — {"id":"s0","ops":4,"add":true}
+[430/Where] scroll 430/430 · h916 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 1 (linked)
+  ok   A1 430/Where · no sideways scroll (430 vs 430)
+  ok   A2 430/Where · no control under 44px
+  ok   A3 430/Where · every checkbox/radio/step-button target >= 24px
+  ok   A4 430/Where · no pane clips vertically
+  ok   A5 430/Where · no <table> overflows the box it is in
+  ok   A5c 430/Where · no .nu-pane around a rotated step grid
+  ok   A5b 430/Where · one table per pane, no nesting
+  ok   A7 430/Where · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 430/Where · body and #app keep overflow-x: visible
+  skip A8 430/Where · no pane with a sticky first column scrolls here
+  ok   A6 430/Where · over 11 stops to y=249: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 430/Where · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 430/Where · the bar is ONE row and never scrolls sideways (430 vs 430, 1 row)
+  ok   A6c 430/Where · on "Where" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Silence" (marks ["Silence"], pressed ["Silence"])
+  ok   A6i 430/Where · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[430/Band] scroll 430/430 · h667 · trays undefined · axes 1 · panes 1 · grids 0 · sheets 1 (linked)
+  ok   A1 430/Band · no sideways scroll (430 vs 430)
+  ok   A2 430/Band · no control under 44px
+  ok   A3 430/Band · every checkbox/radio/step-button target >= 24px
+  ok   A4 430/Band · no pane clips vertically
+  ok   A5 430/Band · no <table> overflows the box it is in
+  ok   A5c 430/Band · no .nu-pane around a rotated step grid
+  ok   A5b 430/Band · one table per pane, no nesting
+  ok   A7 430/Band · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 430/Band · body and #app keep overflow-x: visible
+  skip A8 430/Band · no pane with a sticky first column scrolls here
+  ok   A6 430/Band · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 430/Band · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 430/Band · the bar is ONE row and never scrolls sideways (430 vs 430, 1 row)
+  ok   A6c 430/Band · on "Band" the chrome wears 0 <mark> and 0 aria-pressed, and they say null (marks [], pressed [])
+  ok   A6i 430/Band · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[430/Score] scroll 430/430 · h667 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 430/Score · no sideways scroll (430 vs 430)
+  ok   A2 430/Score · no control under 44px
+  ok   A3 430/Score · every checkbox/radio/step-button target >= 24px
+  ok   A4 430/Score · no pane clips vertically
+  ok   A5 430/Score · no <table> overflows the box it is in
+  ok   A5c 430/Score · no .nu-pane around a rotated step grid
+  ok   A5b 430/Score · one table per pane, no nesting
+  ok   A7 430/Score · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 430/Score · body and #app keep overflow-x: visible
+  skip A8 430/Score · no pane with a sticky first column scrolls here
+  ok   A6 430/Score · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 430/Score · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 430/Score · the bar is ONE row and never scrolls sideways (430 vs 430, 1 row)
+  ok   A6c 430/Score · on "Score" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Score" (marks ["Score"], pressed ["Score"])
+  ok   A6i 430/Score · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[430/Video] scroll 430/430 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 430/Video · no sideways scroll (430 vs 430)
+  ok   A2 430/Video · no control under 44px
+  ok   A3 430/Video · every checkbox/radio/step-button target >= 24px
+  ok   A4 430/Video · no pane clips vertically
+  ok   A5 430/Video · no <table> overflows the box it is in
+  ok   A5c 430/Video · no .nu-pane around a rotated step grid
+  ok   A5b 430/Video · one table per pane, no nesting
+  ok   A7 430/Video · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 430/Video · body and #app keep overflow-x: visible
+  skip A8 430/Video · no pane with a sticky first column scrolls here
+  ok   A6 430/Video · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 430/Video · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 430/Video · the bar is ONE row and never scrolls sideways (430 vs 430, 1 row)
+  ok   A6c 430/Video · on "Video" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Video" (marks ["Video"], pressed ["Video"])
+  ok   A6i 430/Video · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[430/Screensaver] scroll 430/430 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 430/Screensaver · no sideways scroll (430 vs 430)
+  ok   A2 430/Screensaver · no control under 44px
+  ok   A3 430/Screensaver · every checkbox/radio/step-button target >= 24px
+  ok   A4 430/Screensaver · no pane clips vertically
+  ok   A5 430/Screensaver · no <table> overflows the box it is in
+  ok   A5c 430/Screensaver · no .nu-pane around a rotated step grid
+  ok   A5b 430/Screensaver · one table per pane, no nesting
+  ok   A7 430/Screensaver · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 430/Screensaver · body and #app keep overflow-x: visible
+  skip A8 430/Screensaver · no pane with a sticky first column scrolls here
+  ok   A6 430/Screensaver · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 430/Screensaver · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 430/Screensaver · the bar is ONE row and never scrolls sideways (430 vs 430, 1 row)
+  ok   A6c 430/Screensaver · on "Screensaver" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Screensaver" (marks ["Screensaver"], pressed ["Screensaver"])
+  ok   A6i 430/Screensaver · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[430/Export] scroll 430/430 · h1400 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 430/Export · no sideways scroll (430 vs 430)
+  ok   A2 430/Export · no control under 44px
+  ok   A3 430/Export · every checkbox/radio/step-button target >= 24px
+  ok   A4 430/Export · no pane clips vertically
+  ok   A5 430/Export · no <table> overflows the box it is in
+  ok   A5c 430/Export · no .nu-pane around a rotated step grid
+  ok   A5b 430/Export · one table per pane, no nesting
+  ok   A7 430/Export · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 430/Export · body and #app keep overflow-x: visible
+  skip A8 430/Export · no pane with a sticky first column scrolls here
+  ok   A6 430/Export · over 11 stops to y=733: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 430/Export · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 430/Export · the bar is ONE row and never scrolls sideways (430 vs 430, 1 row)
+  ok   A6c 430/Export · on "Export" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Export" (marks ["Export"], pressed ["Export"])
+  ok   A6i 430/Export · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+  ok   A6e 430 · Export left at 440 came back at 440; Where left at 149 came back at 149 (and Where opened for the first time at 0)
+  ok   A6e 430 · a tab never opened starts at the top (Where opened at 0)
+  ok   A6d 820 · the hamburger is the four viewers and the log, in TABS' own order — ["Score","Video","Screensaver","Export","log"]
+  ok   A6g 820 · and every word is still IN the button, so the menu reads with the stylesheet off — ["Score","Video","Screensaver","Export","log"]
+  ok   A6d 820 · …and the genre is a name plate in the BAR, not a row in the hamburger — {"word":"Silence","sub":null,"inMenu":false}
+  ok   A6h 820 · no naked glyph — every mark has a word and a name []
+  ok   A6j 820 · there is no ↑, no gutter and no depth anywhere on the page — {"up":0,"tray":0,"depth":0}
+  ok   A6j 820 · every viewer in the hamburger opens as ONE full-width sheet over the table with a close, and the close lands back on the table — Score, Video, Screensaver, Export
+  ok   A6l 820 · a player's `remove` and the three hires are on the table, in the sheet its own column head opens — {"name":"line 1","del":true,"hire":3}
+  ok   A6l 820 · …and a section's four operations plus `+ section` are on the table at their own addresses — {"id":"s0","ops":4,"add":true}
+[820/Where] scroll 820/820 · h999 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 1 (linked)
+  ok   A1 820/Where · no sideways scroll (820 vs 820)
+  ok   A2 820/Where · no control under 44px
+  ok   A3 820/Where · every checkbox/radio/step-button target >= 24px
+  ok   A4 820/Where · no pane clips vertically
+  ok   A5 820/Where · no <table> overflows the box it is in
+  ok   A5c 820/Where · no .nu-pane around a rotated step grid
+  ok   A5b 820/Where · one table per pane, no nesting
+  ok   A7 820/Where · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 820/Where · body and #app keep overflow-x: visible
+  skip A8 820/Where · no pane with a sticky first column scrolls here
+  ok   A6 820/Where · over 11 stops to y=332: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 820/Where · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 820/Where · the bar is ONE row and never scrolls sideways (820 vs 820, 1 row)
+  ok   A6c 820/Where · on "Where" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Silence" (marks ["Silence"], pressed ["Silence"])
+  ok   A6i 820/Where · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[820/Band] scroll 820/820 · h667 · trays undefined · axes 1 · panes 1 · grids 0 · sheets 1 (linked)
+  ok   A1 820/Band · no sideways scroll (820 vs 820)
+  ok   A2 820/Band · no control under 44px
+  ok   A3 820/Band · every checkbox/radio/step-button target >= 24px
+  ok   A4 820/Band · no pane clips vertically
+  ok   A5 820/Band · no <table> overflows the box it is in
+  ok   A5c 820/Band · no .nu-pane around a rotated step grid
+  ok   A5b 820/Band · one table per pane, no nesting
+  ok   A7 820/Band · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 820/Band · body and #app keep overflow-x: visible
+  skip A8 820/Band · no pane with a sticky first column scrolls here
+  ok   A6 820/Band · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 820/Band · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 820/Band · the bar is ONE row and never scrolls sideways (820 vs 820, 1 row)
+  ok   A6c 820/Band · on "Band" the chrome wears 0 <mark> and 0 aria-pressed, and they say null (marks [], pressed [])
+  ok   A6i 820/Band · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[820/Score] scroll 820/820 · h667 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 820/Score · no sideways scroll (820 vs 820)
+  ok   A2 820/Score · no control under 44px
+  ok   A3 820/Score · every checkbox/radio/step-button target >= 24px
+  ok   A4 820/Score · no pane clips vertically
+  ok   A5 820/Score · no <table> overflows the box it is in
+  ok   A5c 820/Score · no .nu-pane around a rotated step grid
+  ok   A5b 820/Score · one table per pane, no nesting
+  ok   A7 820/Score · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 820/Score · body and #app keep overflow-x: visible
+  skip A8 820/Score · no pane with a sticky first column scrolls here
+  ok   A6 820/Score · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 820/Score · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 820/Score · the bar is ONE row and never scrolls sideways (820 vs 820, 1 row)
+  ok   A6c 820/Score · on "Score" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Score" (marks ["Score"], pressed ["Score"])
+  ok   A6i 820/Score · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[820/Video] scroll 820/820 · h845 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 820/Video · no sideways scroll (820 vs 820)
+  ok   A2 820/Video · no control under 44px
+  ok   A3 820/Video · every checkbox/radio/step-button target >= 24px
+  ok   A4 820/Video · no pane clips vertically
+  ok   A5 820/Video · no <table> overflows the box it is in
+  ok   A5c 820/Video · no .nu-pane around a rotated step grid
+  ok   A5b 820/Video · one table per pane, no nesting
+  ok   A7 820/Video · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 820/Video · body and #app keep overflow-x: visible
+  skip A8 820/Video · no pane with a sticky first column scrolls here
+  ok   A6 820/Video · over 11 stops to y=178: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 820/Video · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 820/Video · the bar is ONE row and never scrolls sideways (820 vs 820, 1 row)
+  ok   A6c 820/Video · on "Video" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Video" (marks ["Video"], pressed ["Video"])
+  ok   A6i 820/Video · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[820/Screensaver] scroll 820/820 · h667 · trays undefined · axes 0 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 820/Screensaver · no sideways scroll (820 vs 820)
+  ok   A2 820/Screensaver · no control under 44px
+  ok   A3 820/Screensaver · every checkbox/radio/step-button target >= 24px
+  ok   A4 820/Screensaver · no pane clips vertically
+  ok   A5 820/Screensaver · no <table> overflows the box it is in
+  ok   A5c 820/Screensaver · no .nu-pane around a rotated step grid
+  ok   A5b 820/Screensaver · one table per pane, no nesting
+  ok   A7 820/Screensaver · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 820/Screensaver · body and #app keep overflow-x: visible
+  skip A8 820/Screensaver · no pane with a sticky first column scrolls here
+  ok   A6 820/Screensaver · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 820/Screensaver · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 820/Screensaver · the bar is ONE row and never scrolls sideways (820 vs 820, 1 row)
+  ok   A6c 820/Screensaver · on "Screensaver" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Screensaver" (marks ["Screensaver"], pressed ["Screensaver"])
+  ok   A6i 820/Screensaver · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+[820/Export] scroll 820/820 · h667 · trays undefined · axes 1 · panes 0 · grids 0 · sheets 3 (linked)
+  ok   A1 820/Export · no sideways scroll (820 vs 820)
+  ok   A2 820/Export · no control under 44px
+  ok   A3 820/Export · every checkbox/radio/step-button target >= 24px
+  ok   A4 820/Export · no pane clips vertically
+  ok   A5 820/Export · no <table> overflows the box it is in
+  ok   A5c 820/Export · no .nu-pane around a rotated step grid
+  ok   A5b 820/Export · one table per pane, no nesting
+  ok   A7 820/Export · the bar is 50.39px, --bar-h resolves to 50.39px
+  ok   A0 820/Export · body and #app keep overflow-x: visible
+  skip A8 820/Export · no pane with a sticky first column scrolls here
+  ok   A6 820/Export · over 11 stops to y=0: the bar is fixed at the foot, full width (50.4px tall, x=0)
+  ok   A6 820/Export · no axis heading is sticky any more — the navigation is a fixed bar
+  ok   A6b 820/Export · the bar is ONE row and never scrolls sideways (820 vs 820, 1 row)
+  ok   A6c 820/Export · on "Export" the chrome wears 1 <mark> and 1 aria-pressed, and they say "Export" (marks ["Export"], pressed ["Export"])
+  ok   A6i 820/Export · nothing under the chrome — its two bands are [[0,55.2],[616.6,667]] and no block overlaps either
+  ok   A6e 820 · Where left at 199 came back at 199; Video left at 107 came back at 107 (and Video opened for the first time at 0)
+  ok   A6e 820 · a tab never opened starts at the top (Video opened at 0)
+
+PASS — every shell assertion holds (22 skipped)
+shell exit=0

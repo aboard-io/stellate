@@ -1982,6 +1982,263 @@ and `node tools/ui/build.js --check` and `npx tsc --noEmit` are green.
   under it so "it did not move under the finger" is still a claim about a page
   that could have moved.
 
+### 11e · THE DESIGN PASS: what it measured, and what moved (2026-09-05)
+
+**SHIPPED (uncommitted).** The last round of §11 — the restyle (§11 ¶2), the
+structured sheets (§11c), the lozenge field (§11d), and the composer's order
+audited over every one of them. Paul's five sentences are the whole brief:
+*"keep our stuff but make it less chunky and more stylish"* · *"use more
+icons. Ideally the table is a large set of icons"* · *"think sliders and other
+UI for data entry"* · *"just nicely structure each expanded interface as proper
+software that's easy to scan and nicely grouped"* · *"tight lozenges, organized
+by color and clustered semantically … visibility into all of the options."*
+
+**MEASURED FIRST, ON THE RENDERED PAGE**, at 320 · 390 · 1280 on Kingston 1969
+at reading 1, per surface, before and after (`scratchpad/design/measure.cjs`
+and `census.cjs`, kept). A PLATE is counted as a box with a border on all four
+sides AND a ground of its own — DESIGN.md §2 names exactly two on this page
+(the curve editor and the bar), so the rest were frames the type could have
+carried. Border ink is `w·h − inner`, summed over every control of the surface.
+
+| at 390 | before | after |
+|---|---|---|
+| the sheet at rest | 5,780 px² of border over 139 controls (**41.6 each**), **76 plates**, **9** rules over 1px | **1,958 px²** (**14.1 each**), **1 plate**, **0** thick rules |
+| a cell sheet | **259.6 px²** a control, 47 plates, 15 rows in **0 groups** | **130.6**, 1 plate, 15 rows in **4 groups** (4 · 2 · 4 · 4) |
+| a column sheet | **205.5**, 75 plates, 11 rows in 0 groups | **166.3**, 1 plate, 11 rows in **4 groups** (3 · 3 · 1 · 3) |
+| a row sheet | **196.4**, 54 plates, 36 rows in 0 groups | **99.8**, 1 plate, 36 rows in **5 groups** (8 · 7 · 5 · 6 · 9) |
+| the TIME row | 55 plates | **3** |
+| the RULES row | 44 plates | **4** |
+| the MOTIFS row | 44 plates | **9** (its read chips wear the player's hue) |
+| the PRODUCE row | 47 plates | **1** |
+| the MIX row | 45 plates | **14** — the desk's own strip, its detents and its fader cap, which are not this document's components |
+| the hamburger | 76 plates | **2** |
+| the drums' does sheet | **1 of 69 words on the glass** | **69 of 69** |
+| the scale picker | **1 of 63** | **64 lozenges in 13 clusters** |
+| the instrument picker | **1 of 147** | **147 in 13 clusters** |
+| the bar | 10 marks, 7 with a glyph, 50.4px | unchanged — DESIGN.md §2.12 names it a plate |
+
+The row height did not move and neither did `--tap`: 44 is still 44, which is
+§11b's own sentence about what a restyle may not spend.
+
+**WHAT THE CENSUS NAMED, WHICH IS WHY THE RESTYLE IS TWENTY RULES AND NOT
+TWO HUNDRED.** The plates had five authors and the stylesheet says so beside
+each: `th,td{ border: 1px solid var(--rule) }` (28 little frames at rest, plus
+the table's own ground), the Enamel button face (`background: var(--panel)` +
+an ink border + a 2px hard shadow), `select`, `.nu-colbtn.nu-vpaint` (seven
+filled hue plates across the top), and `.nu-vsheet`'s own frame. The thick
+rules had exactly one: `thead th{ border-block-end: var(--bw-hard) }`, nine
+edges. Everything else on this surface was already a hairline.
+
+**THE RESTYLE IS SCOPED TO `#pan-band` AND THE TWO PIECES OF CHROME DESIGN.md
+NAMES**, and that is a reading of the document rather than caution: the atlas,
+the globe, the screensaver and the deck are not DESIGN.md's components and are
+not restyled by a document that does not describe them. Three fills survive
+inside the scope because they are SEMANTIC and not decorative — `aria-pressed`
+(the hand), the `.w-*` word paints on the mix row, and `--vpaint` (which
+player) — and each is re-stated at the restyle's own specificity, because
+`#pan-band .nu-opbtn` outranks `button[aria-pressed]` and a pressed chip that
+lost its cobalt would be the state that matters most, deleted by a restyle.
+
+**§11c · WHAT MOVED, AND WHY.** Every address is the one it had on v281; T7
+walks the same inventory. What changed is the ORDER and the HEADINGS:
+
+- **a cell — Phrase · Variation · Dynamics · Placement.** The four note words
+  (articulation · octave · scale, and the time shift) came UP out of the tail
+  to stand with the phrase, because they are what the notes ARE; a hand asking
+  "what does this cell play" was reading four fields of mix automation first.
+  `ramp limit` went to the variation it limits. The four mix lanes SPLIT —
+  level, send and tone are dynamics, place is placement — which is the cut
+  DESIGN.md §5 already makes for a chair ("its tone, then where it sits").
+  `entry` and `register` came DOWN out of the third slot into placement,
+  beside the pan and the time shift: when a part comes in and where it sits
+  are one question asked four ways.
+- **a section — Form · Time · Key · Feel · Chain.** `intro` and `outro` came
+  up beside the repeat marks (they are form). The seven time words are one
+  group now instead of three runs separated by the key and the chain. `level`
+  and `dynamics` came down into Feel, because they are how it is PLAYED and
+  not what it IS. `scale` went to Key and the rest of the row-tier note words
+  to Feel. The lanes and the drawn lane stand at the end of Chain, under the
+  six effects they automate.
+- **a chair — Instrument · Envelope · Tone · Mix.** DESIGN.md §5 spells this
+  one out and the order was already close; `register` and `entry` moved into
+  Mix (where it sits), and the throat stands with the knob table it belongs to.
+- **the TIME row — Tempo · Meter · Key · Chords.** Nothing moved but the board
+  pointer, which stands last.
+
+`--s5` between groups (measured 22px), one row per field, the label column in
+the body weight and the value in the label weight — the reverse of a 700-weight
+label beside a 500-weight value, which was the sheet telling you the question
+was more important than the answer.
+
+**AND THE FORMULA BAR MIRRORS THE CELL'S FIRST GROUP** (DESIGN.md §2.5: *"the
+selected cell's vector as chips/values"*). §11c gives "vector" a shape at last:
+a cell's vector is four groups and the first of them is what a spreadsheet's
+bar holds — what this cell PLAYS. It is a READOUT and not a second control,
+because every one of those fields already has exactly one, in the sheet under
+the cell, at the address T7 walks.
+
+**§11d · THE LOZENGE FIELD.** `nukernel/src/lozenge/` → `nukernel/ui/
+lozenge.js` is the fifth committed-build entry (`api.ts · clusters.ts ·
+field.ts · index.ts`). Every option visible at once as a `--r-pill` lozenge,
+~28px of glass in 44px of thumb (padding out, negative margin back, so the row
+PITCH is 34 and a wall of sixty-eight is a field rather than a page), wrapping
+to the pane, clustered semantically under a heading with a count, ONE hue per
+cluster from an eight-step palette that is its own (`--lz-h0..7`, and neither
+the semantic four nor the voice six, because a cluster hue that collided with
+either would say something it does not mean), the hot ones filled, multi-select
+keeping an ordered chain, a 600 ms press printing the sentence, a cluster
+folding by its heading and the fold surviving the rebuild.
+
+**IT IS CHOSEN BY THE DATA AND NOT BY A LIST.** `src/menus/pick.ts` grew one
+clause — a vocabulary whose words declare a `group` gets the field that draws
+kinds — and the five vocabularies §11d names are exactly the five that already
+carried one: the kernel's chord families (`avail.js QUALITIES`), `instruments.js
+familyOf` (`instrOptions`), `genres-tables.js SCALEFAMILY`/`MODEFAMILY`
+(`famOpts`), `model.ts groupsFor` (the drummer's six) and — measured, and not
+predicted — the DEVELOPMENT words, whose seven families ("the subject" · "a
+piece of it" · "moved in pitch" · "turned around" · "counterpoint" · "silence" ·
+"one vector at a time") have been in avail.js the whole time with nothing on the
+page drawing them.
+
+**ONE BYTE OF DATA WAS BEING DROPPED, AND IT IS WHY NONE OF THIS WAS POSSIBLE
+BEFORE.** `ui/eight.js wCell` maps avail.js's option records into the table's
+own `Choice` and listed five keys — `v · w · off · why · quiet` — and not
+`group`. So a forty-two-word quality picker arrived on this surface as a flat
+list, and the rule "a long vocabulary gets the phone's own wheel" was the only
+rule that could apply to it. One key added to one mapping.
+
+**THE PICKER'S FOURTH ANSWER, AND THE ONE SURFACE THAT KEEPS THE THIRD.** The
+chord quality INSIDE THE CHANGES GRID stays the native picker, and that is
+`pick.ts`'s `tight` rule standing where it was measured: `alphabet.quality|bar0`
+sits in a bar column **63 pixels wide**, and a lozenge field in 63px is the same
+wall the eight stacked chips were. Everywhere a quality, a scale, a mode, an
+instrument or a variation is asked as a SHEET FIELD — which is everywhere else —
+it is a lozenge.
+
+**FOUR GATES LEARNED THE FOURTH WIDGET, AND THREE OF THEM WERE ALREADY LYING
+ABOUT IT.** `test/lib-combo.js` is the one driver every browser gate shares and
+it knew three widgets; a gate that queried `.nu-wchip` on a field that had
+become a lozenge returned an EMPTY LIST, which reads as "the control does
+nothing" and is not the same claim as "the gate looked in the wrong place" —
+the silent no-op that file's own header was written about. Measured: T8c said
+*"none of 0 moved it"* about a `does` vocabulary every word of which was on the
+glass; `test/sheets.js` said *"a pad greys 0 development words"*; `test/
+selects.js` threw on `ul.nu-combolist` being null. All four read the address
+and the `data-widget` now, never the tag.
+
+**AND `ui/glyph.js` GREW `GLYPH.group`** (Paul: *"use more icons"*). The grid
+was already 118 marks over 139 controls; a SHEET was none, and its group
+headings are the thirteen things a hand scans. Sixteen marks, keyed by the
+group's KEY and never by its printed word — which is the lesson that file's own
+nine-tab table records the hard way — reaching the bundles through
+`globalThis.NuGlyph` for `ui/copy.js`'s exact reason: the marks ship once.
+
+**THE NEW GATE IS T12** in `test/table.browser.js`, ten checks at 320 · 390 ·
+1280, every one read off the rendered box: every rule a hairline, a plate only
+where DESIGN.md names one, the three group sets in the composer's order with
+`--s5` between them and a mark on every heading, the scale picker drawn as a
+lozenge field with all of its words on the glass in clustered hues, every
+lozenge 44px in a pill, a tap that writes the document and dismisses nothing,
+and no sideways scroll.
+
+**TWO THINGS THE RENDERED PAGE SAID THAT THE PLAN DID NOT.**
+
+- **A STICKY HEAD IS NOT OPAQUE BY ITSELF, AND IT WAS NEVER ABOVE THE SHEET.**
+  The table carried `background: var(--panel)` and every `<th>` inherited an
+  opaque ground by accident; the restyle took the table's plate off and the row
+  sheet scrolled straight THROUGH the column heads — measured at 1280, "second
+  ending / coda / to coda" printed over "stab lead vocal drone". A ground fixed
+  half of it. The other half was older than this round: `.nu-vsheet` is
+  `position: sticky` too (it rides the pane's horizontal scroll), two sticky
+  boxes with no z-index paint in document order, and the sheet comes later — so
+  it won, on v281 as well, and the accidental ground was all that had been
+  hiding it. The heads are 2 and 5; the sheet is 0.
+- **A GATE THAT QUERIES A CLASS IS ASSERTING ABOUT WHERE IT LOOKED.** Four
+  gates drove `.nu-wchip` and reported an empty list as a dead control the day
+  a field became a lozenge: T8c said *"none of 0 moved it"*, `test/sheets.js`
+  said *"a pad greys 0 development words"*, `test/selects.js` threw on a null
+  `ul.nu-combolist` and then set `.value` on a `<div>`. Each is the silent
+  no-op `test/lib-combo.js`'s own header was written about, and the repair is
+  that file's own: one driver, reading the ADDRESS and `data-widget`, never the
+  tag. It knows four widgets now.
+
+### 11f · THE EQ CURVE AND THE XY PAD (2026-09-05, the same round)
+
+**SHIPPED (uncommitted).** §11's *"THE GRAPHICAL EDITORS, one family"* — the
+two modes `src/envelope/api.ts` declared and left undrawn, *"named so the next
+round is a wiring rather than a second component."* This is that round.
+`nukernel/src/envelope/bands.ts` is new; nothing else about the component
+moved.
+
+**THE EQ CURVE.** The channel strip's three vertical `lo · mid · hi` sliders
+are one plate with three shelf handles, pinned in x at the frequencies
+`fields.js EQ_BANDS` actually builds (a 120 Hz low shelf, a 1 kHz peak at
+q .9, a 7.2 kHz high shelf) and moving only in gain over ±12 dB at 0.5 — which
+is `EQ_RANGE`, read off the control it replaced rather than invented, so the
+plate cannot offer a gain the loader would trim. The curve drawn between them
+is the RBJ magnitude of those biquads and not a picture of a filter.
+**THE ADDRESSES DID NOT MOVE**: each handle wears `b|eqlo|<voice>`,
+`b|eqmid|<voice>`, `b|eqhi|<voice>`, byte for byte.
+
+**THE XY PAD.** Cutoff × resonance, one handle, on the ELEVEN modelled chairs
+a census of `knobs.js` says carry both (`modeld tb303 supersaw pad_saw juno60
+lead_fuzz oberheim ppg synclead bell bass_wobble` — ten spell it `res` and
+tb303 spells it `resonance`, and the brackets differ per chair, so the pad
+reads each row's own). X is logarithmic and the keyboard steps 1% of the
+PLATE rather than one field-step, because `res` at 0.001 over 0–0.95 is 950
+presses end to end and that is a pointer-only control. It draws NO response
+curve: nothing on this page knows the chair's own filter law, and a curve off
+an invented Q would be physics nobody measured.
+
+**AND IT REACHES THE SOUND**, which is the half that matters on a branch whose
+characteristic bug is a parameter that is declared, costed and arrives
+nowhere. Every number below was written by driving the HANDLE — focus, then a
+key — so it travelled `spec.set` → `changed()` → `push()` the way a thumb sends
+it, and was read off the RENDERED path:
+
+| claim | measured |
+|---|---|
+| a voice's EQ | `__nuMix().units.v0.strip` `{lo:0, mid:0, hi:12}` → `{lo:12, …}` → clear-back → `{lo:0, …}` |
+| a chair's cutoff | 0.001265 RMS at 60 Hz → **0.063911 at 12 kHz (×50.5)** |
+| a chair's resonance | cutoff held at 12 kHz: res 0 → 0.063911 · res 0.95 → 0.043606 |
+
+**NOTHING WAS LOST AND NO INVENTORY MOVED**, and that is measured rather than
+assumed: `b|eq*`, `cutoff#` and `res#` appear nowhere in
+`test/table-inventory.json` (the probe walked Kingston 1969, whose chairs are
+all sampled), so §11b's re-pointing had nothing to re-point. What replaces it
+is stronger — a CENSUS check: the knob table, the ADSR curve and the pad
+together are `modeld`'s whole twelve rows, 7 · 3 · 2, with nothing missing.
+
+**THE MASTER TILT IS NOT A CURVE, AND THE REASON IS NOT ARRIVAL.** `tilt`
+reaches the sound (`masterState` → the fx bus's `mtilt`). It fails §11's own
+test — *"Each replaces its number rows only where the drawing is the honest
+control"* — because it is not a number row: it is five words over `TILTS`
+(`none · dark · warm · clear · bright`), which DESIGN.md component 10 gives to
+the one menu owner. A plate with a draggable handle over a fact stored as five
+words would click to positions it cannot name and print a number no save
+contains. The argument, and the two lines that would change it (make `tilt` a
+number in `fields.js` with the five words as detents — a spec change first,
+with a migration for 139 shipped records), stand as a tombstone above
+`PLATES.main` in `ui/engineer.js`.
+
+**AND `test/envelope.browser.js` WAS ALREADY RED AT HEAD, 5 of 26**, for a
+reason this round did not cause and did repair: the instrument picker moved
+from a seated menu to a sheet cell whose control exists only after a tap, and
+the gate reported *"the menu offers no modelled chair"* about a menu offering
+eleven. It is 88 ok at 320 · 390 · 1280 now.
+
+**GATES RUN** (against the working tree, `--page` at 127.0.0.1:8777):
+`node tools/ui/build.js --check` ok 5 entries · `npx tsc --noEmit` clean ·
+`table.browser` **PASSED, 237 ok** (T12 included) · `selects` **ALL PASS**
+(71 checks) · `sheets` 1 of 31, and that one is IDENTICAL on v281 — measured,
+by standing the baseline up on its own port and running the same gate against
+it (`git archive HEAD` on :8778) · `copy` (node) 10 ok 0 failed · `copy.browser`
+5 ok 1 failed, and its three residual strings are the SAME three v281 prints
+(the rules row's native picker aria, and the deck's key line twice) ·
+`shell` PASS, every assertion · `envelope` **PASSED, 88 ok** at three widths ·
+`desk-gate` **167 of 167**, identical to its pre-change baseline · `knobs`
+**ALL PASS, 100 checks**.
+
 ## 12 · The composer's asks (2026-09-05) — the music before the chrome
 
 Paul: *"Don't we need the chord editor to handle duration of chords? It

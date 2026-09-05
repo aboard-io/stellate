@@ -622,6 +622,14 @@
      printed, and this tag is what says, in the document, that the global they
      read is up before anything draws. -->
 <script type="module" src="ui/copy.js"></script>
+
+<!-- THE LOZENGE FIELD (DESIGN.md component 16, 2026-09-05). Named here for
+     `ui/copy.js`'s own reason: `src/menus` and `src/table` are their own
+     bundles and read the component off `globalThis.NuLozenge` rather than
+     importing it, so that a widget that must be ONE widget is not compiled
+     into three files. This tag is what says, in the document, that the global
+     is up before anything draws a sheet. -->
+<script type="module" src="ui/lozenge.js"></script>
 <script type="module" src="ui/eight.js"></script>
 
 <!-- THE EXPLAINER'S ONE BOX (Paul, 2026-08-28: "Provide a simple long tap or

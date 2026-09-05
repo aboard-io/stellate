@@ -1,0 +1,162 @@
+{
+  "drums-does": {
+    "320": {
+      "viewport": {
+        "w": 320,
+        "h": 844
+      },
+      "surface": "#pan-band tr.nu-wopen",
+      "controls": 91,
+      "under44": 0,
+      "marked": 0,
+      "borderInk": 21047,
+      "glyphInk": 0,
+      "wordInk": 93813,
+      "inkRatio": 0.224,
+      "borderPerControl": 231.3,
+      "maxRadius": 999,
+      "plates": 1,
+      "platedControls": 1,
+      "thickEdges": 1,
+      "edges": 143,
+      "bigRadii": 0,
+      "sheetRowsTotal": 11,
+      "sheetRowsOnScreen": 4,
+      "groups": 4,
+      "groupShape": [
+        {
+          "head": "Phrase",
+          "fields": 2
+        },
+        {
+          "head": "Variation",
+          "fields": 1
+        },
+        {
+          "head": "Dynamics",
+          "fields": 4
+        },
+        {
+          "head": "Placement",
+          "fields": 3
+        }
+      ],
+      "chipsVisible": 0,
+      "chipsTotal": 0,
+      "lozengesVisible": 13,
+      "lozengesTotal": 69,
+      "nativeSelects": 0,
+      "nativeOptions": 0,
+      "optionsAtOnce": 13,
+      "optionsTotal": 69,
+      "pageScrollX": 0
+    },
+    "390": {
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "surface": "#pan-band tr.nu-wopen",
+      "controls": 91,
+      "under44": 0,
+      "marked": 0,
+      "borderInk": 21467,
+      "glyphInk": 0,
+      "wordInk": 93813,
+      "inkRatio": 0.229,
+      "borderPerControl": 235.9,
+      "maxRadius": 999,
+      "plates": 1,
+      "platedControls": 1,
+      "thickEdges": 1,
+      "edges": 201,
+      "bigRadii": 0,
+      "sheetRowsTotal": 11,
+      "sheetRowsOnScreen": 4,
+      "groups": 4,
+      "groupShape": [
+        {
+          "head": "Phrase",
+          "fields": 2
+        },
+        {
+          "head": "Variation",
+          "fields": 1
+        },
+        {
+          "head": "Dynamics",
+          "fields": 4
+        },
+        {
+          "head": "Placement",
+          "fields": 3
+        }
+      ],
+      "chipsVisible": 0,
+      "chipsTotal": 0,
+      "lozengesVisible": 26,
+      "lozengesTotal": 69,
+      "nativeSelects": 0,
+      "nativeOptions": 0,
+      "optionsAtOnce": 26,
+      "optionsTotal": 69,
+      "pageScrollX": 0
+    },
+    "1280": {
+      "viewport": {
+        "w": 1280,
+        "h": 900
+      },
+      "surface": "#pan-band tr.nu-wopen",
+      "controls": 91,
+      "under44": 0,
+      "marked": 0,
+      "borderInk": 26771,
+      "glyphInk": 0,
+      "wordInk": 93813,
+      "inkRatio": 0.285,
+      "borderPerControl": 294.2,
+      "maxRadius": 999,
+      "plates": 1,
+      "platedControls": 1,
+      "thickEdges": 1,
+      "edges": 310,
+      "bigRadii": 0,
+      "sheetRowsTotal": 11,
+      "sheetRowsOnScreen": 4,
+      "groups": 4,
+      "groupShape": [
+        {
+          "head": "Phrase",
+          "fields": 2
+        },
+        {
+          "head": "Variation",
+          "fields": 1
+        },
+        {
+          "head": "Dynamics",
+          "fields": 4
+        },
+        {
+          "head": "Placement",
+          "fields": 3
+        }
+      ],
+      "chipsVisible": 0,
+      "chipsTotal": 0,
+      "lozengesVisible": 51,
+      "lozengesTotal": 69,
+      "nativeSelects": 0,
+      "nativeOptions": 0,
+      "optionsAtOnce": 51,
+      "optionsTotal": 69,
+      "pageScrollX": 0
+    }
+  },
+  "__errors": {
+    "320": [],
+    "390": [],
+    "1280": []
+  }
+}

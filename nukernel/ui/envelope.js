@@ -284,6 +284,7 @@ function quantise(v2, min, max, step) {
 }
 function say(v2, unit) {
   if (unit === "s" && v2 < 0.1) return fmt(v2 * 1e3, "ms");
+  if (unit === "Hz" && v2 >= 1e3) return fmt(v2 / 1e3, "kHz");
   return fmt(v2, unit);
 }
 function handle(o2, host) {
@@ -807,18 +808,484 @@ function breakpointEditor(host, spec0) {
   } };
 }
 
+// nukernel/src/envelope/bands.ts
+var PLATE_H3 = 132;
+var SR = 44100;
+function biquad(kind, f0, gainDb, q) {
+  const A2 = Math.pow(10, gainDb / 40);
+  const w0 = 2 * Math.PI * f0 / SR;
+  const cw = Math.cos(w0), sw = Math.sin(w0);
+  if (kind === "peaking") {
+    const al2 = sw / (2 * Math.max(1e-4, q));
+    return [1 + al2 * A2, -2 * cw, 1 - al2 * A2, 1 + al2 / A2, -2 * cw, 1 - al2 / A2];
+  }
+  const al = sw / 2 * Math.SQRT2;
+  const rt = 2 * Math.sqrt(A2) * al;
+  if (kind === "lowshelf") {
+    return [
+      A2 * (A2 + 1 - (A2 - 1) * cw + rt),
+      2 * A2 * (A2 - 1 - (A2 + 1) * cw),
+      A2 * (A2 + 1 - (A2 - 1) * cw - rt),
+      A2 + 1 + (A2 - 1) * cw + rt,
+      -2 * (A2 - 1 + (A2 + 1) * cw),
+      A2 + 1 + (A2 - 1) * cw - rt
+    ];
+  }
+  return [
+    A2 * (A2 + 1 + (A2 - 1) * cw + rt),
+    -2 * A2 * (A2 - 1 + (A2 + 1) * cw),
+    A2 * (A2 + 1 + (A2 - 1) * cw - rt),
+    A2 + 1 - (A2 - 1) * cw + rt,
+    2 * (A2 - 1 - (A2 + 1) * cw),
+    A2 + 1 - (A2 - 1) * cw - rt
+  ];
+}
+function bandDb(b2, gainDb, f2) {
+  if (!gainDb) return 0;
+  const [b0, b1, b22, a0, a1, a2] = biquad(b2.type, b2.freq, gainDb, b2.q || 1);
+  const w2 = 2 * Math.PI * Math.min(f2, SR / 2 - 1) / SR;
+  const c1 = Math.cos(w2), s1 = Math.sin(w2);
+  const c2 = Math.cos(2 * w2), s2 = Math.sin(2 * w2);
+  const nr = b0 + b1 * c1 + b22 * c2, ni = -(b1 * s1 + b22 * s2);
+  const dr = a0 + a1 * c1 + a2 * c2, di = -(a1 * s1 + a2 * s2);
+  const den = dr * dr + di * di;
+  if (!(den > 0)) return 0;
+  return 10 * Math.log10((nr * nr + ni * ni) / den);
+}
+function eqEditor(host, spec0) {
+  let spec = spec0;
+  const node = document.createElement("div");
+  node.className = "nu-env nu-eqbox";
+  host.append(node);
+  let LIVE = {};
+  let GRAB = {};
+  const byKey = () => {
+    const o2 = {};
+    for (const b2 of spec.bands) o2[b2.key] = b2;
+    return o2;
+  };
+  const valOf = (b2) => LIVE[b2.key] != null ? LIVE[b2.key] : b2.value != null ? b2.value : b2.derived;
+  const plateWidth = () => {
+    const el = node.querySelector(".nu-envplate");
+    const w2 = el ? el.getBoundingClientRect().width : 0;
+    return w2 > 40 ? w2 : 320;
+  };
+  const geometry = (w2) => {
+    const usable = Math.max(1, w2 - 2 * R2);
+    const top = R2, bot = PLATE_H3 - R2;
+    const l0 = Math.log(Math.max(1, spec.fLo)), l1 = Math.log(Math.max(2, spec.fHi));
+    const span = Math.max(1e-9, spec.hi - spec.lo);
+    return {
+      top,
+      bot,
+      usable,
+      px: (f2) => R2 + (Math.log(Math.min(spec.fHi, Math.max(spec.fLo, f2))) - l0) / Math.max(1e-9, l1 - l0) * usable,
+      fx: (px) => Math.exp(l0 + (px - R2) / usable * (l1 - l0)),
+      py: (db) => bot - (Math.min(spec.hi, Math.max(spec.lo, db)) - spec.lo) / span * (bot - top),
+      vy: (dy) => -(dy / (bot - top)) * span
+    };
+  };
+  const path = (g2, w2, read) => {
+    const p2 = [];
+    for (let x2 = R2; x2 <= w2 - R2 + 0.01; x2 += 3) {
+      const f2 = g2.fx(x2);
+      let db = 0;
+      for (const b2 of spec.bands) db += bandDb(b2, read(b2), f2);
+      p2.push((p2.length ? "L " : "M ") + x2.toFixed(1) + " " + g2.py(db).toFixed(1));
+    }
+    return p2.join(" ");
+  };
+  const dragHost = {
+    plate: node,
+    onMove(k2, _dx, dy) {
+      const b2 = spec.bands.find((x2) => x2.k === k2);
+      if (!b2) return;
+      const g2 = geometry(plateWidth());
+      const base = GRAB[b2.key] != null ? GRAB[b2.key] : b2.value != null ? b2.value : b2.derived;
+      LIVE[b2.key] = quantise(base + g2.vy(dy), spec.lo, spec.hi, spec.step);
+      paintLive();
+    },
+    onDrop(k2) {
+      const b2 = spec.bands.find((x2) => x2.k === k2);
+      const v2 = b2 ? LIVE[b2.key] : void 0;
+      LIVE = {};
+      GRAB = {};
+      if (!b2 || v2 == null) {
+        draw();
+        return;
+      }
+      spec.set(b2.key, v2);
+      draw();
+    },
+    onHold(k2) {
+      const b2 = spec.bands.find((x2) => x2.k === k2);
+      LIVE = {};
+      GRAB = {};
+      if (b2) spec.clear(b2.key);
+      draw();
+    }
+  };
+  const view = () => {
+    const w2 = plateWidth();
+    const g2 = geometry(w2);
+    const anySet = spec.bands.some((b2) => b2.value != null);
+    return b`
+      <div class="nu-envplate nu-eqplate" data-k=${spec.k} aria-label=${spec.label}>
+        <svg class="nu-envsvg" viewBox=${"0 0 " + w2 + " " + PLATE_H3}
+             width=${w2} height=${PLATE_H3} aria-hidden="true"
+             preserveAspectRatio="none">
+          ${w`<line class="nu-envbase" x1="0" y1=${g2.py(0)} x2=${w2} y2=${g2.py(0)} />`}
+          ${spec.bands.map((b2) => w`<line class="nu-eqrule"
+              x1=${g2.px(b2.freq)} y1=${g2.top} x2=${g2.px(b2.freq)} y2=${g2.bot} />`)}
+          ${anySet ? w`<path class="nu-envghost"
+              d=${path(g2, w2, (b2) => b2.derived)} />` : A}
+          ${w`<path class="nu-envcurve" d=${path(g2, w2, valOf)} />`}
+        </svg>
+        ${spec.bands.map((b2) => {
+      const v2 = valOf(b2);
+      const el = handle({
+        k: b2.k,
+        label: b2.label,
+        value: v2,
+        min: spec.lo,
+        max: spec.hi,
+        step: spec.step,
+        say: say(v2, spec.unit),
+        axis: "y",
+        x: g2.px(b2.freq),
+        y: g2.py(v2),
+        why: b2.why || null
+      }, dragHost);
+      el.addEventListener("keydown", (e2) => {
+        const nv = keyStep(e2, valOf(b2), spec.lo, spec.hi, spec.step, "y");
+        if (nv == null) {
+          if (e2.key === "Backspace" || e2.key === "Delete") {
+            e2.preventDefault();
+            e2.stopPropagation();
+            spec.clear(b2.key);
+            draw();
+          }
+          return;
+        }
+        e2.preventDefault();
+        e2.stopPropagation();
+        spec.set(b2.key, nv);
+        draw();
+      });
+      el.addEventListener("pointerdown", () => {
+        GRAB[b2.key] = valOf(b2);
+      });
+      return el;
+    })}
+      </div>
+      ${says()}`;
+  };
+  const says = () => b`
+      <div class="nu-envsays">
+        ${spec.bands.map((b2) => {
+    const set = b2.value != null;
+    return b`<span class=${"nu-envsay" + (set ? " is-said" : "")}
+            data-k=${"envsay|" + b2.k}
+            ><b>${b2.label}</b> <span>${say(valOf(b2), spec.unit)}</span>
+            <button type="button" class="nu-clearback"
+              data-k=${"clear|" + b2.k}
+              aria-label=${t2("env.clearBack", { name: b2.label })}
+              @click=${() => {
+      spec.clear(b2.key);
+      draw();
+    }}>${t2("act.clear")}</button
+            ></span>`;
+  })}
+      </div>`;
+  const paintLive = () => {
+    const w2 = plateWidth();
+    const g2 = geometry(w2);
+    const B2 = byKey();
+    const p2 = node.querySelector(".nu-envcurve");
+    if (p2) p2.setAttribute("d", path(g2, w2, valOf));
+    for (const el of Array.from(node.querySelectorAll(".nu-envh"))) {
+      const b2 = spec.bands.find((x2) => x2.k === el.dataset.k);
+      if (!b2) continue;
+      const v2 = valOf(b2);
+      el.style.left = g2.px(b2.freq) - R2 + "px";
+      el.style.top = g2.py(v2) - R2 + "px";
+      el.setAttribute("aria-valuenow", String(v2));
+      el.setAttribute("aria-valuetext", say(v2, spec.unit));
+    }
+    for (const el of Array.from(node.querySelectorAll(".nu-envsay"))) {
+      const key = (el.dataset.k || "").replace(/^envsay\|/, "");
+      const b2 = spec.bands.find((x2) => x2.k === key) || B2[key];
+      if (!b2) continue;
+      const out = el.querySelector("span");
+      if (out) out.textContent = say(valOf(b2), spec.unit);
+    }
+  };
+  const draw = () => {
+    D(view(), node);
+  };
+  draw();
+  requestAnimationFrame(() => {
+    if (node.isConnected) draw();
+  });
+  return { node, update(next) {
+    spec = next;
+    LIVE = {};
+    GRAB = {};
+    draw();
+  } };
+}
+function xyEditor(host, spec0) {
+  let spec = spec0;
+  const node = document.createElement("div");
+  node.className = "nu-env nu-xybox";
+  host.append(node);
+  let LIVE = {};
+  let GRAB = {};
+  const axis = (a2) => a2 === "x" ? spec.x : spec.y;
+  const valOf = (a2) => {
+    const A2 = axis(a2);
+    return LIVE[a2] != null ? LIVE[a2] : A2.value != null ? A2.value : A2.derived;
+  };
+  const plateWidth = () => {
+    const el = node.querySelector(".nu-envplate");
+    const w2 = el ? el.getBoundingClientRect().width : 0;
+    return w2 > 40 ? w2 : 320;
+  };
+  const scale = (A2, px0, px1) => {
+    const lg = !!A2.log && A2.min > 0;
+    const f2 = (v2) => lg ? Math.log(Math.max(A2.min, v2)) : v2;
+    const lo = f2(A2.min), hi = f2(A2.max);
+    const sp = Math.max(1e-9, hi - lo);
+    const rng = px1 - px0 || 1;
+    const clamp = (v2) => Math.min(A2.max, Math.max(A2.min, v2));
+    return {
+      to: (v2) => px0 + (f2(clamp(v2)) - lo) / sp * rng,
+      from: (px) => {
+        const u2 = lo + (px - px0) / rng * sp;
+        return lg ? Math.exp(u2) : u2;
+      },
+      /** how far `d` pixels moves this axis, from a value it started at. */
+      by: (v0, d2) => {
+        const u2 = f2(clamp(v0)) + d2 / rng * sp;
+        return lg ? Math.exp(u2) : u2;
+      }
+    };
+  };
+  const geometry = (w2) => {
+    const left = R2, right = w2 - R2, top = R2, bot = PLATE_H3 - R2;
+    return {
+      left,
+      right,
+      top,
+      bot,
+      X: scale(spec.x, left, right),
+      /* UP IS MORE, so the y scale runs from the plate's floor to its
+         ceiling and the pixel axis is inverted here rather than at four
+         call sites. */
+      Y: scale(spec.y, bot, top)
+    };
+  };
+  const decades = (g2) => {
+    if (!spec.x.log) return [];
+    const out = [];
+    for (let d2 = 1; d2 <= 1e5; d2 *= 10)
+      if (d2 > spec.x.min && d2 < spec.x.max) out.push(d2);
+    return out.map((d2) => g2.X.to(d2));
+  };
+  const dragHost = {
+    plate: node,
+    onMove(_k, dx, dy) {
+      const g2 = geometry(plateWidth());
+      const bx = GRAB.x != null ? GRAB.x : valOf("x");
+      const by = GRAB.y != null ? GRAB.y : valOf("y");
+      if (!spec.x.why)
+        LIVE.x = quantise(g2.X.by(bx, dx), spec.x.min, spec.x.max, spec.x.step);
+      if (!spec.y.why)
+        LIVE.y = quantise(g2.Y.by(by, dy), spec.y.min, spec.y.max, spec.y.step);
+      paintLive();
+    },
+    onDrop() {
+      const v2 = LIVE;
+      LIVE = {};
+      GRAB = {};
+      if (v2.x != null) spec.set("x", v2.x);
+      if (v2.y != null) spec.set("y", v2.y);
+      draw();
+    },
+    onHold() {
+      LIVE = {};
+      GRAB = {};
+      spec.clear();
+      draw();
+    }
+  };
+  const view = () => {
+    const w2 = plateWidth();
+    const g2 = geometry(w2);
+    const xv = valOf("x"), yv = valOf("y");
+    const hx = g2.X.to(xv), hy = g2.Y.to(yv);
+    const why = spec.x.why || spec.y.why || null;
+    return b`
+      <div class="nu-envplate nu-xyplate" data-k=${spec.k} aria-label=${spec.label}>
+        <svg class="nu-envsvg" viewBox=${"0 0 " + w2 + " " + PLATE_H3}
+             width=${w2} height=${PLATE_H3} aria-hidden="true"
+             preserveAspectRatio="none">
+          ${decades(g2).map((x2) => w`<line class="nu-eqrule" x1=${x2} y1=${g2.top}
+                                            x2=${x2} y2=${g2.bot} />`)}
+          ${w`<line class="nu-envbase" x1="0" y1=${g2.bot} x2=${w2} y2=${g2.bot} />`}
+          ${w`<line class="nu-xycross" x1=${hx} y1=${g2.top} x2=${hx} y2=${g2.bot} />`}
+          ${w`<line class="nu-xycross" x1=${g2.left} y1=${hy} x2=${g2.right} y2=${hy} />`}
+        </svg>
+        ${(() => {
+      const el = handle({
+        k: spec.k,
+        label: spec.label,
+        value: xv,
+        min: spec.x.min,
+        max: spec.x.max,
+        step: spec.x.step,
+        /* THE HANDLE IS A POINT AT TWO NUMBERS, which is the string the
+           lane already has for exactly this shape. */
+        say: t2("env.pointAt", {
+          value: say(xv, spec.x.unit),
+          at: say(yv, spec.y.unit)
+        }),
+        axis: "xy",
+        x: hx,
+        y: hy,
+        why
+      }, dragHost);
+      el.addEventListener("keydown", (e2) => {
+        const horiz = e2.key === "ArrowLeft" || e2.key === "ArrowRight" || e2.key === "Home" || e2.key === "End";
+        const vert = e2.key === "ArrowUp" || e2.key === "ArrowDown";
+        if (horiz || vert) {
+          const a2 = horiz ? "x" : "y";
+          const A2 = axis(a2);
+          if (A2.why) return;
+          const g3 = geometry(plateWidth());
+          const now = valOf(a2);
+          const big = e2.shiftKey ? 10 : 1;
+          let nv;
+          if (e2.key === "Home") nv = A2.min;
+          else if (e2.key === "End") nv = A2.max;
+          else {
+            const reach = horiz ? g3.right - g3.left : g3.top - g3.bot;
+            const dir = e2.key === "ArrowRight" || e2.key === "ArrowUp" ? 1 : -1;
+            const d2 = dir * (reach / 100) * big;
+            nv = quantise((horiz ? g3.X : g3.Y).by(now, d2), A2.min, A2.max, A2.step);
+            if (nv === now) nv = quantise(
+              now + dir * A2.step * big,
+              A2.min,
+              A2.max,
+              A2.step
+            );
+          }
+          if (nv === now) return;
+          e2.preventDefault();
+          e2.stopPropagation();
+          spec.set(a2, nv);
+          draw();
+          return;
+        }
+        if (e2.key === "Backspace" || e2.key === "Delete") {
+          e2.preventDefault();
+          e2.stopPropagation();
+          spec.clear();
+          draw();
+        }
+      });
+      el.addEventListener("pointerdown", () => {
+        GRAB = { x: valOf("x"), y: valOf("y") };
+      });
+      return el;
+    })()}
+      </div>
+      <div class="nu-envsays">
+        ${["x", "y"].map((a2) => {
+      const A2 = axis(a2);
+      const set = A2.value != null;
+      return b`<span class=${"nu-envsay" + (set ? " is-said" : "")}
+            data-k=${"envsay|" + A2.k}
+            ><b>${A2.label}</b> <span>${say(valOf(a2), A2.unit)}</span>
+            <button type="button" class="nu-clearback"
+              data-k=${"clear|" + A2.k}
+              aria-label=${t2("env.clearBack", { name: A2.label })}
+              @click=${() => {
+        spec.clear(a2);
+        draw();
+      }}>${t2("act.clear")}</button
+            >${A2.why ? b`<small class="nu-why">${A2.why}</small>` : A}</span>`;
+    })}
+      </div>`;
+  };
+  const paintLive = () => {
+    const w2 = plateWidth();
+    const g2 = geometry(w2);
+    const xv = valOf("x"), yv = valOf("y");
+    const hx = g2.X.to(xv), hy = g2.Y.to(yv);
+    const cross = Array.from(node.querySelectorAll(".nu-xycross"));
+    if (cross[0]) {
+      cross[0].setAttribute("x1", String(hx));
+      cross[0].setAttribute("x2", String(hx));
+    }
+    if (cross[1]) {
+      cross[1].setAttribute("y1", String(hy));
+      cross[1].setAttribute("y2", String(hy));
+    }
+    const el = node.querySelector(".nu-envh");
+    if (el) {
+      el.style.left = hx - R2 + "px";
+      el.style.top = hy - R2 + "px";
+      el.setAttribute("aria-valuenow", String(xv));
+      el.setAttribute(
+        "aria-valuetext",
+        t2("env.pointAt", {
+          value: say(xv, spec.x.unit),
+          at: say(yv, spec.y.unit)
+        })
+      );
+    }
+    for (const s2 of Array.from(node.querySelectorAll(".nu-envsay"))) {
+      const key = (s2.dataset.k || "").replace(/^envsay\|/, "");
+      const a2 = key === spec.x.k ? "x" : key === spec.y.k ? "y" : null;
+      if (!a2) continue;
+      const out = s2.querySelector("span");
+      if (out) out.textContent = say(valOf(a2), axis(a2).unit);
+    }
+  };
+  const draw = () => {
+    D(view(), node);
+  };
+  draw();
+  requestAnimationFrame(() => {
+    if (node.isConnected) draw();
+  });
+  return { node, update(next) {
+    spec = next;
+    LIVE = {};
+    GRAB = {};
+    draw();
+  } };
+}
+
 // nukernel/src/envelope/editor.ts
 function curveEditor(host, spec) {
   const mode = spec.mode || "adsr";
   if (mode === "adsr") return adsrEditor(host, spec);
+  if (mode === "eq") return eqEditor(host, spec);
+  if (mode === "xy") return xyEditor(host, spec);
   return breakpointEditor(host, spec);
 }
 var adsrEditor2 = (host, spec) => curveEditor(host, { ...spec, mode: "adsr" });
 var breakpointEditor2 = (host, spec) => curveEditor(host, { ...spec, mode: spec.mode || "lane" });
+var eqCurve = (host, spec) => curveEditor(host, { ...spec, mode: "eq" });
+var xyPad = (host, spec) => curveEditor(host, { ...spec, mode: "xy" });
 export {
   ISLEVEL,
   SEGS,
   adsrEditor2 as adsrEditor,
   breakpointEditor2 as breakpointEditor,
-  curveEditor
+  curveEditor,
+  eqCurve,
+  xyPad
 };

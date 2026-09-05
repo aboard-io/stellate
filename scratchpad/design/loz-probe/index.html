@@ -1,0 +1,70 @@
+<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>lozenge probe</title>
+<style>
+  /* STAND-IN ONLY. nu.css is being written by another hand this round; this is
+     the minimum a measurement needs and is NOT what ships. */
+  *{box-sizing:border-box} html,body{margin:0}
+  body{font:500 1rem/1.3 system-ui,sans-serif;padding:8px}
+  .nu-lzfield{display:block}
+  .nu-lzcluster{display:block;margin:0 0 .55em}
+  .nu-lzhead{display:flex;gap:.35em;align-items:center;min-block-size:44px;
+             background:none;border:0;font:700 .75rem/1 system-ui;padding:0 .5ch}
+  /* `:not([hidden])` ON PURPOSE — a bare `.nu-lzwrap{display:flex}` outranks
+     the UA's [hidden] rule and would un-fold every fold. */
+  .nu-lzwrap:not([hidden]){display:flex;flex-wrap:wrap;align-items:center}
+  .nu-lz{min-block-size:44px;min-inline-size:44px;display:inline-flex;
+         flex-wrap:wrap;align-items:center;justify-content:center;
+         padding:8px .5ch;margin:0;background:none;border:0;font:inherit;
+         font-size:.8rem;touch-action:manipulation}
+  .nu-lzword{display:inline-block;border:1px solid #999;border-radius:999px;
+             padding:2px .6ch;line-height:22px}
+  .nu-lz.is-hot .nu-lzword{background:#333;color:#fff}
+  .nu-lzn{font-size:.6rem;margin-inline-start:.2em}
+  .nu-lzwhy{flex:0 0 100%;font-size:.6rem;color:#a00}
+  .nu-lzsay{min-block-size:1.2em;font-size:.75rem;margin:.35em 0}
+  .nu-why{display:block;font-size:.7rem;color:#a00}
+</style>
+<div id="mount"></div>
+<script type="module">
+  import "/nukernel/ui/copy.js";
+  const { lozengeField } = await import("/nukernel/ui/lozenge.js");
+
+  /* SIX CLUSTERS, SIXTY-EIGHT WORDS — the drummer's own shape and count. */
+  const CL = [
+    ["kick",        12], ["snare", 14], ["hats", 12],
+    ["toms & fills", 12], ["dynamics", 10], ["feel", 8],
+  ];
+  const options = [];
+  let n = 0;
+  for (const [word, many] of CL)
+    for (let i = 0; i < many; i++)
+      options.push({ value: "op" + (n++), cluster: word,
+                     label: word.split(" ")[0] + " " + (i + 1) +
+                            (i % 4 === 3 ? " and back" : "") });
+  // three refused, each with its sentence
+  options[3].disabled = true;  options[3].why  = "no drummer in this record";
+  options[20].disabled = true; options[20].why = "the snare is off this section";
+  options[44].quiet = true;    options[44].why = "nothing consumes this yet";
+
+  const log = [];
+  const a = lozengeField({
+    key: "probe.kit", label: "Kit words", options,
+    value: "op1",
+    onWrite: (v) => log.push(["write", v]),
+  });
+  document.getElementById("mount").append(a);
+
+  /* THE ORDERED CHAIN */
+  const chainOpts = ["transpose","invert","retrograde","augment","diminish",
+                     "sequence","fragment","stretto"]
+    .map((w, i) => ({ value: w, label: w, cluster: i < 4 ? "pitch" : "time" }));
+  const b = lozengeField({
+    key: "probe.chain", label: "Transformations", options: chainOpts,
+    multi: true, ordered: true, values: [],
+    onToggle: (v, on, order) => log.push(["toggle", v, on, order.join(">")]),
+  });
+  document.getElementById("mount").append(b);
+
+  window.__probe = { a, b, log };
+</script>

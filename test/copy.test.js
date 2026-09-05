@@ -138,7 +138,34 @@ const SENTENCE_KEYS = new Set([]);
      word today; two strings a translator may want to spell differently, and
      one of them may not move at all. */
 const SAME_TEXT_OK = [
-  ["glyph.tab.time", "axis.time"],
+  ["glyph.tab.time", "axis.time", "group.time"],
+  /* ...AND THE SHEET GROUPS, 2026-09-05 (TABLE.md §11c). `group.*` are the
+     HEADINGS over a sheet's fields — the composer's four/five words for what a
+     run of controls is about — and five of the thirteen are spelled the same
+     as a word that already exists somewhere else on this page. Each pair is
+     two meanings, and each is a pair a translator must be free to spell
+     differently:
+       · `glyph.tab.mix` is the TAB's word and an ADDRESS (`ui/eight.js` TABS
+         is keyed by it, exactly as `glyph.tab.time` is above); `group.mix` is
+         "where this player sits", over a register and an entry.
+       · `axis.form` is the heading over the FORM rules in the Rules deck — a
+         family of rules; `group.form` is the section's own shape (its type,
+         its bars, its repeats).
+       · `env.plate` is the accessible NAME of one envelope plate
+         (`src/envelope/adsr.ts`); `group.envelope` is the heading over the
+         plate and the two words beside it.
+       · `knobs.tone` is a KNOB called Tone on a modelled throat
+         (`knobs.js:1723`); `group.tone` is the heading over that whole throat.
+     In every case one of the two may not move at all, which is the test this
+     list's own first entry states. */
+  ["glyph.tab.mix", "group.mix"],
+  ["axis.form", "group.form"],
+  ["env.plate", "group.envelope"],
+  ["knobs.tone", "group.tone"],
+  /* ...and `rule.headMeter` is a COLUMN HEAD in the rules deck's own table
+     (which meter a rule is about); `group.meter` is the heading over the TIME
+     row's meter chips and its two numbers. */
+  ["rule.headMeter", "group.meter"],
 ];
 
 async function run() {
