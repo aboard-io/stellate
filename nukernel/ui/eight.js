@@ -2501,6 +2501,12 @@ const SCOREHEAD = { k: "F", s: "c", p: "c", c: "c",
 // knew two words, `metOf` reads a signature — "7/8" — as well, and answers
 // the sixteen an absent meter has always answered for anything else.)
 const scoreSPB = () => K.stepsIn(DOC.time);
+/* ONE STEP OF THE RECORD'S METER, IN BARS — the grid a drawn automation lane
+   snaps to (`cellLaneNode` / `rowLaneNode` below say why). `scoreSPB` is the
+   signature's own step count for a bar, so this is 1/16 in four-four, 1/12 in
+   six-eight and 1/14 in seven-eight, and it is the SAME number in every
+   section of the record: one meter per record is band-kit's own law. */
+const laneGrid = () => 1 / Math.max(1, scoreSPB() | 0);
 // HOW MANY BARS THE SENTENCES SPEAK FOR, and it is no longer how much is
 // DRAWN. The caption and the syllable line say "bars 2-3" — the bar that is
 // sounding and the one after it, which is the ask of 2026-08-25 morning ("I
@@ -11198,7 +11204,16 @@ function tableAPI() {
 
        THE PLATE IS RULED IN THE SECTION'S OWN BARS, which is what the hand is
        looking at; `audio/desk.js` converts to beats where the beat count is
-       known, and nothing stores the same number twice. */
+       known, and nothing stores the same number twice.
+
+       ...AND IT SNAPS TO THE RECORD'S OWN METER (2026-09-05, TABLE.md §12c's
+       second leftover). `laneGrid` is one STEP of the signature, said in bars
+       — 1/16 in four-four, 1/12 in six-eight, 1/14 in seven-eight — and it is
+       the SAME number in every section, which is the whole point: the grid
+       under a drawn line is the bar's, not the section's length (the plate
+       used to quantise to a sixty-fourth of its own span, so an 8-bar chorus
+       and a 2-bar intro of one record snapped four steps apart). One meter per
+       record is band-kit's own law, so `DOC.time` answers for every row. */
     cellLaneNode: (si, vi, key) => {
       const spec = NuFields.CELLAUTOBY[key];
       if (!spec) return null;
@@ -11223,7 +11238,7 @@ function tableAPI() {
       const box = el("div", null, "nu-celllane");
       try {
         curveEditor(box, { mode: "lane", k: "tlane|" + key + "|" + vi + "|" + si,
-          label: spec.label, xUnit: "bars", span: bars,
+          label: spec.label, xUnit: "bars", span: bars, grid: laneGrid(),
           lo, hi, yUnit: key === "level" ? "dB" : "",
           points: pts, max: NuFields.LANE_MAXPTS,
           set: (P) => put({ points: P.map((p) => [p.x, p.y]) }),
@@ -11255,7 +11270,7 @@ function tableAPI() {
       try {
         curveEditor(box, { mode: "lane", k: "trowlane|" + param + "|" + si,
           label: NuFields.AUTOPARAMLABEL[param] || param, xUnit: "bars",
-          span: bars, lo: R.lo, hi: R.hi, yUnit: "",
+          span: bars, grid: laneGrid(), lo: R.lo, hi: R.hi, yUnit: "",
           points: pts, max: NuFields.LANE_MAXPTS,
           set: (P) => put({ param, curve: R.curve === "exp" ? "exp" : "lin",
                             in: "bars", points: P.map((p) => [p.x, p.y]) }),

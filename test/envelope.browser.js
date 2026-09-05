@@ -935,6 +935,173 @@ function standUpServer() {
     await p.close();
   }
 
+  /* ===== L1/L2 · A DRAWN LANE SNAPS TO THE RECORD'S METER =================
+     (2026-09-05, TABLE.md §12c's second leftover: *"a cell lane drawn in bars
+     snaps its entry grid to the LONGEST cell"*.) Measured: the lane mode
+     quantised x to `spec.span / 64` — a sixty-fourth of THE SECTION — so the
+     grid under a drawn line moved with how long the section was and never
+     matched the bar. On `reggae` seed 1 (four-four, sixteen steps a bar) that
+     was half a step in its 2-bar sections, a whole step in its 4-bar ones and
+     TWO steps in its 8-bar ones; on `nationalism` (six-eight, twelve steps a
+     bar) it was 0.38, 0.75 and 0.94 of a step — no grid at all, in any of its
+     eight sections. It is `1 / meterRow.steps` of a bar now (`ui/eight.js
+     laneGrid`), which is the same number in every section of a record.
+
+     READ OFF THE WRITE, NOT OFF THE SPEC. A real CDP touch drags the middle
+     handle a fraction of a step at a time and the x the DOCUMENT ends up
+     holding is collected after each one, so what is asserted is where a point
+     a hand moved actually landed. Two section lengths, because the claim is
+     that they now share one grid:
+
+       L1  every x a drag writes is a WHOLE NUMBER of the record's meter steps
+           (the old grid failed this on a short section: an eighth of a 2-bar
+           plate is a thirty-second of a bar, half a step)
+       L2  and two drags can land one step apart — the grid's resolution IS a
+           step (the old grid failed this on a long section: an eighth of an
+           8-bar plate is two steps, so nothing could ever land between them)
+
+     The third point is seeded into the document because the lane's two default
+     points are PINNED in x (api.ts: "a lane that started late would be a lane
+     with an undrawn value before it") and there is no add-a-point gesture yet;
+     the SEED is a fixture, the DRAG and the read-back are the measurement. */
+  {
+    const p = await b.newPage({ viewport: { width: 1280, height: 900 },
+                                hasTouch: true });
+    p.on("pageerror", (e) => errs.push("lane pageerror: " + e.message));
+    p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
+      errs.push("lane console: " + m.text()); });
+    await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+    await p.goto(PAGE + CHANT, { waitUntil: "load" });
+    await p.waitForFunction(() => {
+      try { const D = window.__eightDoc && window.__eightDoc();
+            return !!(D && D.voices && D.voices.length); }
+      catch (e) { return false; } }, null, { timeout: 20000 });
+    await p.waitForTimeout(800);
+    await p.evaluate(INSTALL);
+    const cdp = await p.context().newCDPSession(p);
+    const touch = (type, x, y) => cdp.send("Input.dispatchTouchEvent", {
+      type, touchPoints: type === "touchEnd" ? [] : [{ x, y, radiusX: 8, radiusY: 8 }] });
+
+    /* ONE DRAG PER MEASUREMENT, EACH FROM A FRESH SHEET. Measured while
+       writing this: a settled gesture writes, the write rebuilds the surface,
+       and the SECOND touch of a run landed on a node that was being replaced —
+       the tap-outside law then shut the row sheet and every drag after it fell
+       on nothing (`aria-expanded` false, no `.nu-rowlane`, the same x collected
+       twice). So the lane is seeded, opened, dragged ONCE and put back, and the
+       finger's distance is what varies between measurements. */
+    const laneSetup = async (bars) => p.evaluate(async (bars2) => {
+      const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+      const q = (k) => document.querySelector('#pan-band [data-k="' + k + '"]');
+      const shut = async (id) => { const r = q("trow|" + id);
+        if (r && r.getAttribute("aria-expanded") === "true") { r.click(); await nap(400); } };
+      const show = async (id) => { const r = q("trow|" + id);
+        if (r && r.getAttribute("aria-expanded") !== "true") { r.click(); await nap(500); } };
+      window.__eightTab("Band");
+      await nap(400);
+      const si = 0, id = window.__eightDoc().form.sections[si].id;
+      // the section's LENGTH is the fixture: the old grid was a sixty-fourth of
+      // it, so two lengths were two different grids where there should be one
+      await shut(id);
+      const s0 = window.__eightDoc().form.sections[si];
+      s0.bars = bars2; delete s0.auto;
+      window.__eightDraw && window.__eightDraw();
+      await nap(600);
+      await show(id);
+      const c = q("trowauto|" + id); if (c) c.click();
+      await nap(350);
+      const chip = q("trowauto|" + id + "|level"); if (chip) chip.click();
+      await nap(700);
+      const sec = window.__eightDoc().form.sections[si];
+      const lane = (sec.auto || []).find((a) => a && a.param === "level");
+      if (!lane) return { err: "the row wrote no lane" };
+      /* …and a third point to move. The two a lane opens with are PINNED in x
+         (api.ts: "a lane that started late would be a lane with an undrawn
+         value before it") and there is no add-a-point gesture yet, so the seed
+         is a fixture; the DRAG and the read-back are the measurement. */
+      const R = window.NuFields.AUTOPARAMS.level;
+      lane.points = [[0, R.lo], [bars2 / 2, (R.lo + R.hi) / 2], [bars2, R.hi]];
+      window.__eightDraw && window.__eightDraw();
+      await nap(450);
+      /* THE SHEET IS REOPENED, because `__eightDraw` redraws the record and does
+         NOT rebuild an open row sheet's plate — the probe that wrote this
+         dragged handle 1 of a still-TWO-point lane, which is the pinned end. */
+      await shut(id); await show(id);
+      await nap(300);
+      const h = document.querySelector(
+        '#pan-band .nu-envh[data-k="trowlane|level|' + si + '|1"]');
+      const hs = document.querySelectorAll('#pan-band .nu-rowlane .nu-envh').length;
+      if (!h || hs !== 3) return { err: "the lane drew " + hs + " handles, not 3" };
+      h.scrollIntoView({ block: "center" });
+      await nap(350);
+      const r2 = h.getBoundingClientRect();
+      const pl = h.closest(".nu-envplate").getBoundingClientRect();
+      const met = window.NuKernel.metOf(window.__eightDoc().time);
+      return { si, id, bars: bars2, x: r2.x + r2.width / 2, y: r2.y + r2.height / 2,
+               plateW: pl.width, from: lane.points[1][0],
+               steps: Math.max(1, met.steps | 0),
+               meter: window.__eightDoc().time.meter || "4/4" };
+    }, bars);
+
+    const runs = [];
+    for (const BARS of [8, 2]) {
+      const run = { bars: BARS, xs: [] };
+      /* the finger travels a different fraction of a step each time, so the
+         grid — and only the grid — decides which lines it can land on */
+      for (const mult of [0.6, 1.2, 1.8, 2.4, 3.0]) {
+        const L = await laneSetup(BARS);
+        if (L.err) { run.err = L.err; break; }
+        Object.assign(run, { steps: L.steps, meter: L.meter, from: L.from });
+        // one step, in PIXELS: the plate minus the handle inset (plate.ts R = 22
+        // at each end) spans `bars`, so a step is that over the bar's steps
+        const pxStep = Math.max(1, (L.plateW - 44) / L.bars / L.steps);
+        const dx = pxStep * mult;
+        run.pxStep = +pxStep.toFixed(2);
+        await touch("touchStart", L.x, L.y);
+        await touch("touchMove", L.x + dx * 0.5, L.y);
+        await touch("touchMove", L.x + dx, L.y);
+        await touch("touchEnd", L.x + dx, L.y);
+        await p.waitForTimeout(700);
+        const got = await p.evaluate((id) => {
+          const s2 = window.__eightDoc().form.sections.find((x) => x.id === id);
+          const A = ((s2 || {}).auto || []).find((a) => a && a.param === "level");
+          return A && A.points && A.points[1] ? A.points[1][0] : null; }, L.id);
+        if (typeof got === "number") run.xs.push(got);
+      }
+      runs.push(run);
+      // …and the record goes back the way it was found
+      await p.evaluate(() => {
+        const s2 = window.__eightDoc().form.sections[0];
+        if (s2) delete s2.auto;
+        const r = document.querySelector(
+          '#pan-band [data-k="trow|' + s2.id + '"]');
+        if (r && r.getAttribute("aria-expanded") === "true") r.click();
+        window.__eightDraw && window.__eightDraw(); });
+      await p.waitForTimeout(500);
+    }
+
+    for (const r of runs) {
+      if (r.err) { check(false, "L1 " + r.bars + "-bar lane: " + r.err); continue; }
+      const off = r.xs.filter((x) => Math.abs(x * r.steps - Math.round(x * r.steps)) > 1e-6);
+      check(r.xs.length >= 4 && off.length === 0,
+        "L1 every x a drag writes on a " + r.bars + "-bar section is a whole " +
+        "number of the record's meter steps (" + r.meter + ", " + r.steps +
+        " a bar): from bar " + r.from + " to " + JSON.stringify(r.xs) +
+        (off.length ? "  OFF-GRID: " + JSON.stringify(off) : ""));
+      const gaps = [];
+      for (let i = 1; i < r.xs.length; i++) {
+        const d = Math.abs(r.xs[i] - r.xs[i - 1]) * r.steps;
+        if (d > 1e-6) gaps.push(+d.toFixed(3));
+      }
+      const min = gaps.length ? Math.min(...gaps) : 0;
+      check(gaps.length > 0 && Math.abs(min - 1) < 1e-3,
+        "L2 …and the finest move it can make is ONE step, not the " +
+        (r.bars / 64 * r.steps).toFixed(2) + " a sixty-fourth of this " +
+        r.bars + "-bar plate used to be (gaps in steps: " +
+        JSON.stringify(gaps) + ", on a " + r.pxStep + "px step)");
+    }
+    await p.close();
+  }
+
   check(errs.length === 0, "E0 no page or console error across all of it" +
     (errs.length ? " — " + JSON.stringify(errs.slice(0, 4)) : ""));
 

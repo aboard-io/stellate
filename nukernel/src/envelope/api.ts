@@ -127,6 +127,14 @@ export interface CurveSpec {
    *  the span — a lane that started late would be a lane with an undrawn
    *  value before it. */
   points: { x: number; y: number }[];
+  /** THE GRID THE X AXIS SNAPS TO, in `xUnit` (2026-09-05). A lane in BARS
+   *  wants the SECTION'S METER: one step of it, which is `1 / meterRow.steps`
+   *  of a bar — 1/16 in four-four, 1/12 in six-eight, 1/14 in seven-eight.
+   *  Absent falls back to a sixty-fourth of the span, which is what every
+   *  caller got before this field existed and is what a lane in SECONDS still
+   *  wants (a second has no bar line in it). It is a length, not a count, so
+   *  the plate never has to know what the axis is counting. */
+  grid?: number;
   /** one write per settled gesture, with the whole list. */
   set(points: { x: number; y: number }[]): void;
   clear(): void;

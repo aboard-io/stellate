@@ -195,6 +195,106 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
     J(Doc.scoreOf(TERMS, GENRES, FLEET).events),
     J(Doc.scoreOf(TERMS, GENRES, FLEET).events)));
 
+  /* G8c/d/e — THE WINDOW (2026-09-05, TABLE.md §12c's first leftover:
+     "`document.js scoreOf` does not window a section, so a multi-bar cell's
+     events run past the section's own end"). Reggae rather than the chant
+     because the chant is two line voices and no rhythm section, and the
+     overrun was the KIT: the drums are rendered over the GENRE's loop
+     (`K.drums(lead, g, g.bars)`) and a section shorter than that loop used to
+     put the rest of it into the bars belonging to the sections after it.
+     MEASURED on `genreToDocument("reggae", 1)` before the fix: 2364 of 4915
+     events (48%) sounded past the end of the section that emitted them, in
+     all thirteen sections; after it, 2551 events and none. */
+  {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const RG = Doc.normalize(P2.genreToDocument("reggae", 1));
+    const WALK = Doc.formWalk(RG).filter((w) => !w.skip);
+    // the walk's own bar arithmetic, said here so the gate reads the claim
+    // rather than the implementation: entry bar and exit bar per section.
+    const SPAN = []; { let b = 0;
+      for (const w of WALK) {
+        const total = Math.max(1, RG.form.sections[w.si].bars | 0);
+        const from = b;
+        for (let r = 0, n = Math.max(1, w.plays | 0); r < n; r++)
+          b += (r === n - 1) ? Math.max(1, total - (w.cut | 0)) : total;
+        SPAN.push({ si: w.si, from, to: b });
+      } }
+    const WHOLE = Doc.scoreOf(RG, GENRES, FLEET);
+
+    ok("G8c a section window is that section's bars, entry to exit", () => {
+      assert.ok(SPAN.length > 1, "one section is not a form");
+      for (const s2 of SPAN) {
+        const W = Doc.scoreOf(RG, GENRES, FLEET, { section: s2.si });
+        assert.strictEqual(W.from, s2.from, "section " + s2.si + " entry bar");
+        assert.strictEqual(W.to, s2.to, "section " + s2.si + " exit bar");
+        assert.strictEqual(W.bars, s2.to - s2.from, "section " + s2.si + " bars");
+        assert.ok(W.events.length > 0, "section " + s2.si + "'s window is silent");
+        // …and nothing from any other section came with it
+        assert.deepStrictEqual([...new Set(W.events.map((e) => e.sec))], [s2.si]);
+        // the id names the same window the index does
+        const byId = Doc.scoreOf(RG, GENRES, FLEET, { section: RG.form.sections[s2.si].id });
+        assert.deepStrictEqual(J(byId), J(W), "section " + s2.si + " by id");
+      }
+    });
+
+    ok("G8d the union over all sections is the whole song, event for event", () => {
+      const union = [];
+      for (const s2 of SPAN)
+        for (const e of Doc.scoreOf(RG, GENRES, FLEET, { section: s2.si }).events)
+          union.push(e);
+      union.sort((a, b) => a.t - b.t);
+      assert.strictEqual(union.length, WHOLE.events.length, "event count");
+      assert.deepStrictEqual(J(union), J(WHOLE.events));
+      assert.strictEqual(WHOLE.from, 0);
+      assert.strictEqual(WHOLE.to, WHOLE.bars);
+      assert.strictEqual(WHOLE.t0, 0);
+    });
+
+    ok("G8e no event sounds past the end of the section that emitted it", () => {
+      // where each section starts in STEPS — the window's own answer, so the
+      // gate never re-derives a bar length of its own
+      for (const s2 of SPAN) {
+        const W = Doc.scoreOf(RG, GENRES, FLEET, { section: s2.si });
+        const nx = Doc.scoreOf(RG, GENRES, FLEET, { from: s2.to, to: s2.to + 1 });
+        const end = s2.to < WHOLE.bars ? nx.t0 : Infinity;
+        for (const e of W.events)
+          assert.ok(e.t >= W.t0 && e.t < end,
+            "section " + s2.si + " event at " + e.t + " outside [" + W.t0 + "," + end + ")");
+      }
+    });
+
+    ok("G8f a bar window is the bars asked for, and an unplayed one is empty", () => {
+      const s2 = SPAN[1];
+      const W = Doc.scoreOf(RG, GENRES, FLEET, { from: s2.from, to: s2.to });
+      assert.deepStrictEqual(J(W), J(Doc.scoreOf(RG, GENRES, FLEET, { section: s2.si })));
+      const none = Doc.scoreOf(RG, GENRES, FLEET, { section: "no-such-row" });
+      assert.deepStrictEqual(J(none), J({ bars: 0, events: [], from: 0, to: 0, t0: 0 }));
+    });
+
+    ok("G8g a repeated section's window covers every statement of it", () => {
+      // the review's item 9 said a repeat is a COUNT the walk plays, so a row
+      // that repeats is several statements at one address, and the window is
+      // all of them — including the second ending's short last one.
+      const d = J(RG);
+      d.form.sections[3].repeat = 3;
+      d.form.sections[4].ending = true;
+      const walk = Doc.formWalk(d);
+      const w3 = walk[3], b3 = Math.max(1, d.form.sections[3].bars | 0);
+      assert.strictEqual(w3.plays, 3);
+      assert.ok(w3.cut > 0, "no second ending was taken");
+      const W = Doc.scoreOf(d, GENRES, FLEET, { section: 3 });
+      assert.strictEqual(W.bars, b3 * 2 + (b3 - w3.cut), "three statements, the last short");
+      assert.strictEqual(W.to - W.from, W.bars);
+      assert.deepStrictEqual([...new Set(W.events.map((e) => e.sec))], [3]);
+      const whole = Doc.scoreOf(d, GENRES, FLEET);
+      const union = [];
+      for (const w of walk) if (!w.skip)
+        for (const e of Doc.scoreOf(d, GENRES, FLEET, { section: w.si }).events) union.push(e);
+      union.sort((a, b) => a.t - b.t);
+      assert.deepStrictEqual(J(union), J(whole.events), "the union still is the record");
+    });
+  }
+
   /* G9 — the fleet seam, stated as a test because it is the one thing this
      move could not carry: a caller that does not pass the Faust fleet gets the
      sampled spelling of the chair, and that is a real difference. */

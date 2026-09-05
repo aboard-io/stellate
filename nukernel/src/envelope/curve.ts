@@ -43,6 +43,33 @@ export function breakpointEditor(host: HTMLElement, spec0: CurveSpec): Editor {
     return w > 40 ? w : 320;
   };
 
+  /* THE X GRID IS THE SECTION'S METER, NOT A SIXTY-FOURTH OF THE SECTION
+     (2026-09-05, TABLE.md §12c's second leftover). `spec.span / 64` made the
+     quantum a function of HOW LONG THE SECTION IS, which is the one thing a
+     musical grid must not depend on: measured on `reggae` seed 1, the same
+     four-four record snapped to half a step in its 2-bar sections, a whole
+     step in its 4-bar ones and two steps in its 8-bar ones — three different
+     grids in one song — and on `nationalism` (six-eight, twelve steps a bar)
+     it was 0.38, 0.75 and 0.94 of a step, which is no grid at all in any of
+     its eight sections. `spec.grid` is the caller's own answer (`ui/eight.js`
+     hands `1 / K.metOf(DOC.time).steps` — one step of the record's meter, in
+     bars); the old number is kept as the fallback so a lane that names no
+     grid, and every unit fixture that draws one, moves exactly as before. */
+  const xGrid = (): number =>
+    (typeof spec.grid === "number" && spec.grid > 0) ? spec.grid : spec.span / 64;
+
+  /* ...AND THE SNAP IS ITS OWN, NOT `plate.ts quantise`. That one tidies to
+     `ceil(-log10(step)) + 1` decimal places, which is enough for a field whose
+     step is a round number and is NOT enough for a musical one: a sixteenth of
+     a bar is 0.0625, `quantise` rounds to three places, and the point a hand
+     dropped on bar 2.5625 was stored as 2.563 — off the grid it had just been
+     snapped to, and off by a fifth of a step. A twelfth (six-eight) is worse.
+     Six places holds every grid this box can draw and still refuses the
+     0.43729183 a raw pixel gives. (The fallback path changes with it; nothing
+     on the page takes it — every lane names its grid — so nothing moves.) */
+  const snapX = (x: number): number =>
+    Math.min(spec.span, Math.max(0, +(Math.round(x / xGrid()) * xGrid()).toFixed(6)));
+
   const geo = (w: number) => {
     const usable = Math.max(1, w - 2 * R);
     const top = R, bot = PLATE_H - R;   // see adsr.ts: a handle's centre is inset by R in BOTH axes
@@ -63,7 +90,7 @@ export function breakpointEditor(host: HTMLElement, spec0: CurveSpec): Editor {
       const g = geo(plateWidth());
       const p = base[i]; if (!p) return;
       const next = base.map((q, j) => j === i
-        ? { x: quantise(p.x + g.vx(dx), 0, spec.span, spec.span / 64),
+        ? { x: snapX(p.x + g.vx(dx)),
             y: quantise(p.y + g.vy(dy), spec.lo, spec.hi,
                         (spec.hi - spec.lo) / 100) }
         : { ...q });

@@ -652,6 +652,8 @@ function breakpointEditor(host, spec0) {
     const w2 = el ? el.getBoundingClientRect().width : 0;
     return w2 > 40 ? w2 : 320;
   };
+  const xGrid = () => typeof spec.grid === "number" && spec.grid > 0 ? spec.grid : spec.span / 64;
+  const snapX = (x2) => Math.min(spec.span, Math.max(0, +(Math.round(x2 / xGrid()) * xGrid()).toFixed(6)));
   const geo = (w2) => {
     const usable = Math.max(1, w2 - 2 * R2);
     const top = R2, bot = PLATE_H2 - R2;
@@ -672,7 +674,7 @@ function breakpointEditor(host, spec0) {
       const p2 = base[i2];
       if (!p2) return;
       const next = base.map((q, j) => j === i2 ? {
-        x: quantise(p2.x + g2.vx(dx), 0, spec.span, spec.span / 64),
+        x: snapX(p2.x + g2.vx(dx)),
         y: quantise(
           p2.y + g2.vy(dy),
           spec.lo,

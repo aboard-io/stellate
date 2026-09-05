@@ -2438,10 +2438,76 @@ dynamics 24/24 · smf-tempo 24/24 · als-page 23/23 · hook · genres-build
 12/12. `test/table.test.js` grew `--only=<name>`, which runs one gate's body
 in seconds while still standing the baseline worktree up.
 
-**Left, and said out loud:** `document.js scoreOf` does not window a
-section, so a multi-bar cell's events run past the section's own end (475 of
-479 anchors have 2-bar cells and it has always been so) — the page walk
-windows and the gates read the page walk; the day scoreOf is fixed, T2c's
-baseline moves with it. And a cell lane drawn in bars snaps its entry grid
-to the LONGEST cell (`cellStepsOf`), which is the same reference `barsOf`
-gives.
+### 12d · The two leftovers, closed (2026-09-05)
+
+**`scoreOf` WINDOWS A SECTION NOW — and the first half of that is a bug
+fix, not a feature.** The statement's events were cut only when a second
+ending cut the statement short (`!w.cut || …`), so a record with no `ending`
+in it — every record in the catalogue — was never cut at all; and the kit is
+rendered over the GENRE's loop (`K.drums(lead, g, g.bars)`), so a section
+shorter than that loop put the rest of the loop into the bars belonging to
+the sections after it. **Measured on `reggae` seed 1: 2364 of 4915 events
+(48%) sounded past the end of the section that emitted them, in all thirteen
+sections** — si 0 is two bars and its drums ran to step 126 of a 32-step
+section. `ui/derive.js sectionEvents` has always cut at the same place
+(`evAll.filter(e => e.t >= from && e.t < to)`): the page windowed, the pure
+compiler did not, and that was the whole of the difference. After: 2551
+events, none past its own end.
+
+The window is the mechanism: `scoreOf(doc, GENRES, fleet, win)` takes
+`{ from, to }` in PLAYED bars, `{ section: <index | id> }`, or the bare
+index/id; absent is the whole record and is what every caller that has ever
+called it gets, to the event. It renders only the statements the window
+touches — one section of a thirteen-section reggae costs 10.5 ms against
+131.7 ms for the record — and returns `{ bars, events, from, to, t0 }` with
+the times still ABSOLUTE, so **the union over all sections is the whole
+song, event for event** (`test/document.test.js` G8c–G8g). A repeated
+section is several statements at one address and the window is all of them,
+the short last one included. **T2c's baseline moves with this**, as the note
+below said it would.
+
+**THERE WAS NO SCORE VIEW TO WIRE IT TO, and that is worth writing down.**
+`document.js scoreOf` has zero callers on the page: the Score deck engraves
+through `ui/eight.js recordParts` → `scoreParts(si, 0, scoreLen(si))` →
+`ui/abc.js toScore`, which is already per-section and already windows
+(`sectionRender`'s own filter). The window is for the pure compiler's
+callers — the gates, the CLI, an export — and the score deck needed nothing.
+
+**A DRAWN LANE SNAPS TO THE METER, NOT TO THE SECTION'S LENGTH.** The note
+below blamed `cellStepsOf`; it was wrong, and `ui/eight.js barBeats` says so
+in its own comment ("the STEP does not move with it"). The real grid was
+`src/envelope/curve.ts`'s `quantise(…, spec.span / 64)` — a sixty-fourth of
+THE SECTION, so the quantum moved with how long the section was. **Measured:
+on `reggae` (four-four, sixteen steps a bar) that is half a step in its
+2-bar sections, one step in its 4-bar ones and TWO steps in its 8-bar ones —
+three grids in one song, nine of thirteen sections wrong; on `nationalism`
+(six-eight, twelve steps a bar) it is 0.38, 0.75 and 0.94 of a step, which
+is no grid at all, in all eight.** `CurveSpec.grid` is the caller's own
+answer and `ui/eight.js laneGrid` is `1 / K.metOf(DOC.time).steps` — one
+step of the signature, in bars, the same number in every section (one meter
+per record is band-kit's law). The span was already right (`sec.bars`).
+`curve.ts` also stopped snapping x through `plate.ts quantise`, whose
+`ceil(-log10(step)) + 1` decimal places store a point dropped on bar 2.5625
+as 2.563 — off the grid it was just snapped to.
+
+**L1/L2** in `test/envelope.browser.js` drive a real CDP touch on a seeded
+middle handle of the section's own lane and read the x out of the DOCUMENT.
+Five drags, each a different fraction of a step, on an 8-bar section and a
+2-bar one. **Before:** 8 bars → `[4, 4.13, 4.13, 4.13, 4.25]` (three values
+off any grid at all — `quantise`'s own rounding of 4.125 — and a smallest
+move of 2.08 steps); 2 bars → `[1.031, 1.063, 1.125, 1.156, 1.188]`, half-
+step grid. **After:** 8 bars → `[4.0625, 4.0625, 4.125, 4.125, 4.1875]` and
+2 bars → `[1.0625, 1.0625, 1.125, 1.125, 1.1875]` — every x a whole meter
+step, smallest move exactly one step, the same grid at both lengths. Two
+things the gate had to learn and are written into it: `__eightDraw()` does
+NOT rebuild an open row sheet's plate (the first probe dragged the pinned
+end of a still-two-point lane), and a settled gesture rebuilds the surface,
+so a second touch in the same run lands on a node being replaced and the
+tap-outside law shuts the sheet — one drag per measurement, from a fresh
+sheet.
+
+**Also measured, and it changes what item 8 is worth today:** NO genre in
+the catalogue has line cells of differing lengths — 0 of 479. Independent
+phrase lengths are a freedom the record can take and no shipped row takes,
+so "a lane over a section with mixed phrase lengths" is a hand-made case,
+not a catalogue one.

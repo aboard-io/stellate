@@ -2220,10 +2220,52 @@
      only one line can own").
 
      Times are in STEP UNITS from the top of the record, the same units the
-     kernel emits, so a caller multiplies by seconds-per-step once. */
-  function scoreOf(doc, GENRES, fleet) {
+     kernel emits, so a caller multiplies by seconds-per-step once. THEY STAY
+     ABSOLUTE when a window is asked for (below), so the union of every
+     section's window is the whole record's event list and nothing has to be
+     re-based to compare the two.
+
+     THE WINDOW (2026-09-05, TABLE.md §12c's first leftover: *"`document.js
+     scoreOf` does not window a section, so a multi-bar cell's events run past
+     the section's own end"*). Two things were missing and they are one thing:
+
+       · A STATEMENT'S EVENTS STOP AT ITS OWN LAST BAR. `keep` used to cut only
+         when a second ending cut the statement short (`!w.cut || …`), so with
+         no `ending` in the record nothing was cut at all — and the kit is
+         rendered over the GENRE's loop (`K.drums(lead, g, g.bars)`) while the
+         section may be shorter than it, so a 2-bar section of an 8-bar genre
+         put six bars of drums into the bars belonging to the sections after
+         it. Measured on `reggae` seed 1 before this line: 2364 of 4915 events
+         (48%) sounded past the end of the section that emitted them, every
+         section of the thirteen. `ui/derive.js sectionEvents` has always cut
+         at the same place (`evAll.filter(e => e.t >= from && e.t < to)`) — the
+         page windows, this did not, and that is the whole of the difference.
+       · AND A CALLER MAY ASK FOR ONE SECTION. `win` is `{ from, to }` in
+         PLAYED bars (`to` exclusive), or `{ section: <index | id> }`, or the
+         bare index/id; absent is the whole record, which is what every caller
+         that has ever called this gets, to the event. A window renders only
+         the statements it touches, so asking for one section of a
+         thirteen-section record does a thirteenth of the kernel work.
+
+     Returns `{ bars, events, from, to, t0 }`: `bars` is the window's own bar
+     count (the whole record's, by default, exactly as before), `from`/`to` are
+     its bounds in played bars and `t0` is where it starts in steps, for a
+     caller that wants to re-base. */
+  function scoreOf(doc, GENRES, fleet, win = null) {
     const secs = doc.form.sections, lines = LINES(doc), out = [];
-    /* THE OFFSET IS A TIME, NOT A BAR COUNT (TABLE.md wave 4, 2026-09-04).
+    /* THE FORM IS WALKED, NOT THE SECTION LIST (2026-09-05, the review's item
+       9). `formWalk` says what the record PLAYS — how many times each section
+       is stated, how many bars come off the last statement for a second
+       ending, which sections the coda jump goes over. A record that says none
+       of it walks `plays: 1, cut: 0, skip: false` on every section, which is
+       `secs.forEach` to the bit and is every record in the catalogue. */
+    /* PASS ONE — WHERE EVERY STATEMENT LANDS, and nothing else. The bar
+       arithmetic needs the genre (a section with no `bars` of its own takes
+       the genre's), so the genre is resolved here and handed to pass two
+       rather than resolved twice; the KERNEL work — render, drums, bass — is
+       what pass two does and what a window skips.
+
+       THE OFFSET IS A TIME, NOT A BAR COUNT (TABLE.md wave 4, 2026-09-04).
        This read `t0 = bar * barSteps` with THIS section's `barSteps` — which is
        exact for as long as every section counts its bar the same way, and that
        was true while `rate` was the RECORD's alone. A row may halve or double
@@ -2232,19 +2274,46 @@
        is the same number for a record whose rows say nothing (uniform
        `barSteps` makes the sum `bar * barSteps` again, to the bit) and the
        right one for a record whose rows do. */
+    const plan = [];
     let bar = 0, t0 = 0;
-    /* THE FORM IS WALKED, NOT THE SECTION LIST (2026-09-05, the review's item
-       9). `formWalk` says what the record PLAYS — how many times each section
-       is stated, how many bars come off the last statement for a second
-       ending, which sections the coda jump goes over. A record that says none
-       of it walks `plays: 1, cut: 0, skip: false` on every section, which is
-       `secs.forEach` to the bit and is every record in the catalogue. */
-    formWalk(doc).forEach((w) => {
-      if (w.skip) return;
+    for (const w of formWalk(doc)) {
+      if (w.skip) continue;
       const i = w.si, s2 = secs[i];
       const g = toGenre(doc, i, GENRES, fleet);
       const barSteps = stepsIn(g) / g.rate;
       const total = Math.max(1, s2.bars || g.bars);
+      const stmts = [];
+      for (let r = 0, n = Math.max(1, w.plays | 0); r < n; r++) {
+        // the LAST statement stops short by the second ending's own length;
+        // every other one plays the section whole
+        const played = (r === n - 1) ? Math.max(1, total - (w.cut | 0)) : total;
+        stmts.push({ bar0: bar, played, t0 });
+        bar += played; t0 += played * barSteps;
+      }
+      plan.push({ si: i, id: s2.id, g, barSteps, total,
+                  bar0: stmts[0].bar0, bar1: bar, t0: stmts[0].t0, stmts });
+    }
+    /* THE WINDOW, RESOLVED AGAINST THE WALK'S OWN NUMBERS — never against
+       `secs[i].bars`, because a repeated section is several statements and a
+       skipped one is none, and a caller naming a section means the bars the
+       record actually plays it in. A section the form skips, or a name no row
+       answers to, is an EMPTY window rather than a throw: the caller asked for
+       bars that are not played, and none is the honest answer. */
+    const W = (() => {
+      if (win == null) return { from: 0, to: bar };
+      const q = (typeof win === "object") ? win : { section: win };
+      if (q.section != null) {
+        const p = plan.find((p2) => p2.si === q.section || p2.id === q.section);
+        return p ? { from: p.bar0, to: p.bar1 } : { from: 0, to: 0 };
+      }
+      const from = Math.max(0, Math.min(bar, Math.floor(q.from == null ? 0 : q.from)));
+      const to = Math.max(from, Math.min(bar, Math.ceil(q.to == null ? bar : q.to)));
+      return { from, to };
+    })();
+    /* PASS TWO — the music, for the statements the window touches. */
+    for (const p of plan) {
+      if (p.bar1 <= W.from || p.bar0 >= W.to) continue;
+      const i = p.si, g = p.g, barSteps = p.barSteps, total = p.total;
       const phrases = lines.map((c) => toPhrase(doc, materialAt(c, SECID(doc, i))));
       const nP = phrases.length;
       const lead = phrases[0] || NuSong.blank();
@@ -2257,30 +2326,36 @@
           for (const e of evs) if (e.v === v)
             lineEv.push({ ...e, kind: "line", lv: v, sec: i });
       });
-      for (let r = 0; r < Math.max(1, w.plays | 0); r++) {
-        // the LAST statement stops short by the second ending's own length;
-        // every other one plays the section whole
-        const played = (r === w.plays - 1) ? Math.max(1, total - (w.cut | 0)) : total;
-        // …and a statement that stops short takes its events with it. `cut` is
-        // 0 on every record that says nothing, so this predicate is false and
-        // not one event is filtered out.
-        const keep = (e) => !w.cut || e.t < played * barSteps;
-        for (const e of lineEv) if (keep(e)) out.push({ ...e, t: e.t + t0 });
+      for (const st of p.stmts) {
+        if (st.bar0 + st.played <= W.from || st.bar0 >= W.to) continue;
+        // A STEP TIME, AS A BAR OF THE RECORD: the statement's own bar plus how
+        // far into it the event falls. One predicate then says both things —
+        // the statement ends at its own last bar (the fix) and the window ends
+        // where it was asked to.
+        const keep = (t) => {
+          const b = st.bar0 + t / barSteps;
+          return t < st.played * barSteps && b >= W.from && b < W.to;
+        };
+        for (const e of lineEv) if (keep(e.t)) out.push({ ...e, t: e.t + st.t0 });
         // Drums and bass follow the FIRST phrase — the kit is genre data
         // anyway, and the bass reads accents, which only one line can own.
         for (let k = 0; k < Math.ceil(total / g.bars); k++)
           for (const e of dr) {
             const t = e.t + k * loopSteps;
-            if (!w.cut || t < played * barSteps)
-              out.push({ ...e, kind: "hit", t: t + t0, sec: i });
+            if (keep(t)) out.push({ ...e, kind: "hit", t: t + st.t0, sec: i });
           }
-        for (const e of bassEv) if (keep(e))
-          out.push({ ...e, kind: "bass", t: e.t + t0, sec: i });
-        bar += played; t0 += played * barSteps;
+        for (const e of bassEv) if (keep(e.t))
+          out.push({ ...e, kind: "bass", t: e.t + st.t0, sec: i });
       }
-    });
+    }
     out.sort((a, b) => a.t - b.t);
-    return { bars: bar, events: out };
+    /* WHERE THE WINDOW STARTS IN STEPS, for a caller that wants to re-base.
+       It is the first statement the window touches, offset by the bars of it
+       the window leaves out — the same arithmetic `keep` does, said once. */
+    const head = plan.find((p) => p.bar1 > W.from && p.bar0 < W.to);
+    const wt0 = head ? head.t0 + (W.from - head.bar0) * head.barSteps : 0;
+    return { bars: W.to - W.from, events: out,
+             from: W.from, to: W.to, t0: wt0 };
   }
 
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
