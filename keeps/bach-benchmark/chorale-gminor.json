@@ -1,0 +1,230 @@
+{
+  "title": "Chorale in G minor",
+  "composer": "written for the Bach benchmark, 2026-09-06",
+  "source": "keeps/bach-benchmark/chorale-gminor.json",
+  "key": "g \\minor",
+  "abcKey": "Gm",
+  "time": "3/4",
+  "tonic": 7,
+  "leadingTone": 6,
+  "aug2Pair": [
+    3,
+    6
+  ],
+  "voices": [
+    [
+      70,
+      69,
+      70,
+      72,
+      70,
+      69,
+      66,
+      67,
+      67,
+      66,
+      67,
+      70,
+      70,
+      72,
+      69,
+      66,
+      67,
+      67,
+      66,
+      67
+    ],
+    [
+      67,
+      66,
+      67,
+      67,
+      67,
+      63,
+      62,
+      62,
+      63,
+      62,
+      62,
+      65,
+      63,
+      63,
+      63,
+      62,
+      62,
+      63,
+      62,
+      62
+    ],
+    [
+      62,
+      62,
+      62,
+      63,
+      62,
+      57,
+      57,
+      58,
+      60,
+      57,
+      58,
+      62,
+      55,
+      60,
+      60,
+      57,
+      58,
+      60,
+      57,
+      59
+    ],
+    [
+      55,
+      50,
+      55,
+      51,
+      46,
+      48,
+      50,
+      55,
+      48,
+      50,
+      55,
+      46,
+      51,
+      48,
+      48,
+      50,
+      55,
+      48,
+      50,
+      55
+    ]
+  ],
+  "chords": [
+    {
+      "bar": 1,
+      "name": "i",
+      "root": 7,
+      "qual": "min"
+    },
+    {
+      "bar": 1,
+      "name": "V",
+      "root": 2,
+      "qual": "maj"
+    },
+    {
+      "bar": 1,
+      "name": "i",
+      "root": 7,
+      "qual": "min"
+    },
+    {
+      "bar": 2,
+      "name": "iv6",
+      "root": 0,
+      "qual": "min"
+    },
+    {
+      "bar": 2,
+      "name": "i6",
+      "root": 7,
+      "qual": "min"
+    },
+    {
+      "bar": 2,
+      "name": "ii°6",
+      "root": 9,
+      "qual": "dim"
+    },
+    {
+      "bar": 3,
+      "name": "V",
+      "root": 2,
+      "qual": "maj"
+    },
+    {
+      "bar": 3,
+      "name": "i",
+      "root": 7,
+      "qual": "min"
+    },
+    {
+      "bar": 3,
+      "name": "iv",
+      "root": 0,
+      "qual": "min"
+    },
+    {
+      "bar": 4,
+      "name": "V",
+      "root": 2,
+      "qual": "maj",
+      "beats": 3,
+      "fermata": true
+    },
+    {
+      "bar": 5,
+      "name": "i",
+      "root": 7,
+      "qual": "min"
+    },
+    {
+      "bar": 5,
+      "name": "III",
+      "root": 10,
+      "qual": "maj"
+    },
+    {
+      "bar": 5,
+      "name": "VI",
+      "root": 3,
+      "qual": "maj"
+    },
+    {
+      "bar": 6,
+      "name": "iv",
+      "root": 0,
+      "qual": "min"
+    },
+    {
+      "bar": 6,
+      "name": "ii°6",
+      "root": 9,
+      "qual": "dim"
+    },
+    {
+      "bar": 6,
+      "name": "V",
+      "root": 2,
+      "qual": "maj"
+    },
+    {
+      "bar": 7,
+      "name": "i",
+      "root": 7,
+      "qual": "min"
+    },
+    {
+      "bar": 7,
+      "name": "iv",
+      "root": 0,
+      "qual": "min"
+    },
+    {
+      "bar": 7,
+      "name": "V",
+      "root": 2,
+      "qual": "maj"
+    },
+    {
+      "bar": 8,
+      "name": "I",
+      "root": 7,
+      "qual": "maj",
+      "beats": 3,
+      "fermata": true
+    }
+  ]
+}

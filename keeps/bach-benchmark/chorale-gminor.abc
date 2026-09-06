@@ -1,0 +1,17 @@
+%abc-2.1
+X:1
+T:Chorale in G minor
+C:written for the Bach benchmark, 2026-09-06
+%%score {(S A) | (T B)}
+M:3/4
+L:1/4
+Q:1/4=72
+K:Gm
+V:S clef=treble name="S"
+BAB | cBA | ^FGG | H^F3 | GBB | cA^F | GG^F | HG3 |]
+V:A clef=treble name="A"
+G^FG | GGE | DDE | HD3 | DFE | EED | DED | HD3 |]
+V:T clef=bass name="T"
+DDD | EDA, | A,B,C | HA,3 | B,DG, | CCA, | B,CA, | H=B,3 |]
+V:B clef=bass name="B"
+G,D,G, | E,B,,C, | D,G,C, | HD,3 | G,B,,E, | C,C,D, | G,C,D, | HG,3 |]
