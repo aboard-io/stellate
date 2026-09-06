@@ -25,7 +25,7 @@ musician uses.
 States every component may wear: **rest · derived (quiet, inherited/default) · written (bold, a hand set it) · selected (ring in --hand) · editing (the control popped up) · refused (dashed, with its sentence) · sounding (lamp in --clock) · measured (--meter)**. A state is a class the gates can read; a live state writes CHILDREN only.
 
 1. **Cell** — a plain value at rest: its GLYPH and its WORD (or its WORDS: a cell's variation may be a CHAIN, and the cell reads the whole of it — `"inverted + the first half"`, TABLE.md §15), a number small beside its glyph, tabular. No border, no plate. **It says a word at every width** (TABLE.md §14): a player column is never narrower than a word (9ch in the cell's own type plus its padding, measured), the mark stacks over the word where the two will not share a line, and where a record has more players than a phone has room for the PANE scrolls sideways with the section column frozen — never a grid of identical dots. **ONE TAP OPENS IT**; a second tap on the same cell shuts it; Enter / F2 / a printable key opens from the keyboard; Delete clears to default; Escape restores; Tab commits and moves. Range by Shift or drag. (It read *"first tap selects; second tap edits"* until 2026-09-06 — right while the formula bar stood above the grid and the first tap filled it, and empty from the day §13a.6 deleted that bar.)
-2. **Head** — a row or column header: glyph first and its NAME, which the column is now wide enough to hold because the cells under it are (TABLE.md §14; a head is still never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that ADDS on the tap (TABLE.md §13e) — a section at the row axis, and at the column axis the one kind the band has not got, in build-the-band's order — never a row of offers and never a sheet asking which. Its accessible name says what a tap will add.
+2. **Head** — a row or column header: glyph first and its NAME, which the column is now wide enough to hold because the cells under it are (TABLE.md §14; a head is still never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that ADDS on the tap (TABLE.md §13e) — a section at the row axis, and at the column axis the one kind the band has not got, in build-the-band's order — never a row of offers and never a sheet asking which. Its accessible name says what a tap will add. **THE FROZEN COLUMN'S HEAD — the corner — SAYS HOW MANY AND FOLDS THE GRID** (TABLE.md §15a, 2026-09-06): its own word (SECTION, or PLAYER when the table is turned) with the COUNT under it in the quiet register, and its tap is the disclosure that hides the block it heads. The count goes under and not beside because the corner is 8ch and may not grow — at 390 a wider corner shows three players instead of four — and it costs the head band no height, the wrap fitting inside the button's own 44px floor. Folded, it is the row's only cell, the pane's full width, and the count is what the grid says.
 3. **Special row** — the RECORD's seven (RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE), which are the sections of component 18 since 2026-09-06 (TABLE.md §14), and MIX, which is not one of them because a fader is the player's: a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
 4. **Sheet** — a vector as rows (label · value · clear-back), full pane width, wrapping, in flow (never a modal), opened as the next `<tr>` under the row that owns it; its owner row is its header and is the pane's ONE pin while it is open (a cell sheet pins nothing at all — its header is component 5, in flow at its top).
 5. **Cell sheet header** — the first line of the OPEN cell sheet: the address of the selection, then undo · redo · copy · paste. Present only while a cell sheet is open, in flow at its top, never fixed and never sticky. (It was the **formula bar**, a strip above the pane that became a bottom sheet on a phone — 105.8px of a 844px screen at rest, measured — until TABLE.md §13a.6 moved its head into the sheet and found its readout was the sheet's own first group all along. Undo and redo therefore live where the change was made.)
@@ -87,30 +87,38 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     CONTROL ON ITS FACT — no native picker drawn beside it and none of the
     picker's ▾ over it; the native picker
     stays only where a vocabulary is long AND flat (a genre list).
-17. **Label row** (TABLE.md §13e, Paul, 2026-09-05: *"Give the main composer
-    interface its own header call it Sections"*) — a one-line heading over a
-    block of the table: the word left in the special row's own style
-    (uppercase, `--fw-block`), its count right, `--tap` tall, a hairline under,
-    no plate. It is the one `<thead>` row that NEVER pins: the pane's single
-    pin belongs to the column heads under it. SECTIONS, over the grid, is the
-    only one.
-    **Disclosure state** (TABLE.md §13f, Paul, 2026-09-05: *"Sections should
-    collapse when I touch it."*) — the whole line is one button
-    (`aria-expanded`, `aria-controls` naming the body it folds), and a tap
-    hides the block it heads: the column heads, the grid's rows and the mix row
-    that is aligned to them. The count stays on the right in both states and,
-    folded, is the only thing the block says. It is a PAGE preference — no op,
-    no undo step, no document write, no share-link bit — persisted per browser,
-    so it survives a reload. It closes the block's own open sheet first (one
-    sheet at a time) and, folded, leaves nothing pinned; it never answers the
-    `.nu-sphead` selector, because a fold is not a sheet. (It read *"the only
-    row that is not a control … no button, no address and nothing to open"*
-    until 2026-09-05: there was nothing to OPEN, and there is something to DO.)
+17. **DELETED — the label row** (TABLE.md §15a, Paul, 2026-09-06: *"Get rid of
+    the words 'the record' and the Section header entirely — we can make
+    room."*). It was a one-line heading over a block of the table — SECTIONS
+    over the grid, the only one there ever was — with its count on the right,
+    and a disclosure since §13f. **A label over a column head that already
+    prints its own name is a word charging a phone a whole line**, so the row
+    is gone and its two jobs are the head's (component 2): the COUNT is drawn
+    under that head's word in the quiet register, and the FOLD is that head's
+    own tap. Everything the fold was is what it still is — `aria-expanded`,
+    `aria-controls` naming the body it hides, the same block (the player heads,
+    the grid's rows, the `+` row and the mix row aligned to them), a PAGE
+    preference persisted per browser and NOT an op, no undo step, no document
+    write, no share-link bit; it closes the block's own open sheet first, it
+    leaves nothing pinned, and it never answers the `.nu-sphead` selector,
+    because a fold is not a sheet. Folded, the head keeps its cell alone across
+    the pane's full width and its count is the only thing the grid says — which
+    is both the whole reason a hand folds it and the only way back. **No
+    component replaces this one**: a heading whose block can name itself is not
+    a component, it is a repetition.
 18. **Record row** (TABLE.md §14, off the Coach House walkthrough: *"the page
     is sorted by age, not by scope"*) — the sheet's FIRST row and the one
-    place the record talks: `THE RECORD`, one `--tap` line at rest, the word
-    left and the face right (**tempo · meter · key**, which is the TIME row's
-    own face and not a second reading of it), a hairline under, no plate. A
+    place the record talks: one `--tap` line at rest whose FACE IS THE LINE —
+    **tempo · meter · key**, the TIME row's own face and not a second reading
+    of it — read from the start at full ink, a hairline under, no plate. (It
+    carried the word `THE RECORD` to its left until 2026-09-06, TABLE.md §15a,
+    Paul: *"Get rid of the words 'the record' and the Section header entirely
+    — we can make room."* A label over a line that already says what it is is
+    a word for nothing; the accessible name, which says what a TAP does, is
+    what it always was.) The table's own options ride the END of this line as a
+    `--tap` square (`tcorner`: fill from the genre, re-seed, transpose), which
+    is where they belong by scope and is where the SECTIONS count displaced
+    them to — 8ch of frozen corner holds one 44px target, not two. A
     tap discloses its SEVEN SECTIONS — RULES · TIME · CHORDS · MOTIFS ·
     MASTER · PRODUCE · PERFORMANCE — each a special row (component 3) opening
     its own sheet, ONE at a time; every address is the one it had before the
@@ -161,7 +169,8 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 - Blank = default (inherited); bold = written; delete = back to default.
 - Nothing dismisses under a finger that is changing a value.
 - Nothing scrolls sideways at the page level; the pane is the scrollport.
-- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell says a WORD at every width — the column is sized to one and the pane scrolls sideways with the section column frozen, rather than the cells falling back to a grid of identical marks (§14). Opening or closing a sheet leaves the pane's `scrollTop` identical.
+- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell says a WORD at every width — the column is sized to one and the pane scrolls sideways with the section column frozen, rather than the cells falling back to a grid of identical marks (§14). Opening or closing a sheet leaves the pane's `scrollTop` identical. **NOTHING RUBBER-BANDS** (TABLE.md §15a, 2026-09-06, Paul: *"I can drag it too far right and then the whole thing moves including the fixed parts… it all feels reel wobbly"*): every scroller a thumb drags SIDEWAYS is `overscroll-behavior: none` and not `contain` — `contain` stops the gesture CHAINING to the scroller behind and still lets the scroller bounce inside itself, and a bounce translates its `position: sticky` children with it. The document too, which also turns pull-to-refresh off so a flick cannot reload the box mid-edit.
+- **A HEADING WHOSE BLOCK CAN NAME ITSELF IS NOT DRAWN** (TABLE.md §15a): no label row over a column that prints its own name, no word beside a face that already says what the row is. The accessible name carries what a control DOES; the glass carries the record's own words.
 
 ## 4 · Copy (the voice)
 

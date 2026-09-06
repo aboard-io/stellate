@@ -229,8 +229,14 @@ var TABLE = {
      owner of the same three facts.
      TWO ARIA KEYS BECAUSE IT IS A DISCLOSURE, which is `grid.sections`' own
      arrangement one row down: the accessible name says what a tap DOES, and
-     a disclosure does two different things depending on which way it stands. */
-  "special.record.word": "the record",
+     a disclosure does two different things depending on which way it stands.
+     ...AND THE WORD IS GONE SINCE 2026-09-06 (TABLE.md §15a). Paul: *"Get rid
+     of the words 'the record' and the Section header entirely — we can make
+     room."* `special.record.word` printed `the record` to the left of a line
+     that already read `84 BPM · 4/4 · G♯ natural minor`; the row IS its face,
+     so the face is the line and the key is deleted rather than left unused.
+     What a screen reader is told did not change: it was these two sentences
+     before the word went and it is these two sentences now. */
   "special.record.collapse.aria": "Hide the record settings",
   "special.record.expand.aria": "Show the record settings",
   /* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ==============
@@ -246,9 +252,26 @@ var TABLE = {
      are already on the glass beside it. Two keys because a disclosure has two
      states and each is a different sentence, which is `time.rubato.off/on`'s
      own arrangement. */
+  /* ...AND THE WORD IS GONE SINCE 2026-09-06 (TABLE.md §15a, Paul: *"Get rid
+     of the words 'the record' and the Section header entirely — we can make
+     room."*). The label row is deleted; its two jobs are the frozen column
+     head's, which prints `noun.section` (or `noun.player` when the table is
+     turned) as its own name and has done since the table was drawn. A second
+     spelling of that word for a row that no longer exists is an orphan, so
+     `grid.sections.word` goes with it. THE COUNT AND THE TWO ARIA SENTENCES
+     STAY, at the same keys, saying the same things on the head that now
+     carries them. */
   "grid.sections.collapse.aria": "Hide the sections",
   "grid.sections.expand.aria": "Show the sections",
-  "grid.sections.word": "sections",
+  /* (A NO-BREAK SPACE BEFORE THE `·` WAS TRIED AND MEASURED OUT, 2026-09-06.
+     The count wraps inside an 81.4px column head now, and the ordinary space
+     puts the separator at the start of the second line. Binding it to the word
+     before it needs 68.6px and the head's button has 66.7 — so the nbsp broke
+     the line one word EARLIER instead, giving three lines (`14` / `sections ·`
+     / `88 bars`) where the plain string gives two. Two lines with a leading
+     separator beat three; the 1.9px could have been taken out of the button's
+     own padding, and a line that fits by 0.8px on one record is a line that
+     wraps on the next.) */
   "grid.sections.count.one": "{n} section · {bars}",
   "grid.sections.count.other": "{n} sections · {bars}",
   /* ===== THE TIME SHEET (special.ts timeSheet) ========================== */

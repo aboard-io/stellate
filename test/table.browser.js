@@ -2567,13 +2567,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const rows = heads.filter((r) => r.classList.contains("nu-sprow"));
       const pane = document.querySelector("#pan-band .nu-pane");
       return {
-        /* ...AND THE LABEL ROW IS NAMED, NOT COUNTED AS A SECOND HEAD ROW
-           (2026-09-05, §13e). The grid's own header (`nu-gridlabel`) stands
-           between the special rows and the column heads; it carries no
-           `data-special` because it opens no sheet, so a walk that read only
-           that attribute called it "heads" and reported two of them. */
-        order: heads.map((r) => r.dataset.special ||
-          (r.classList.contains("nu-gridlabel") ? "label" : "heads")),
+        /* (THE LABEL ROW WAS NAMED HERE from 2026-09-05 to 2026-09-06 — a
+           head row with no `data-special`, which a walk reading only that
+           attribute called a second "heads". §15a deleted it into the head it
+           labelled, so there is exactly one such row again and it IS the
+           heads.) */
+        order: heads.map((r) => r.dataset.special || "heads"),
         cols,
         rows: rows.map((r) => {
           const th = r.querySelector("th");
@@ -2628,11 +2627,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          deliberately NOT here: it is in the `<tfoot>`, under the mix, because
          a row above the column heads is a row above the music and the producer
          speaks about a record already dealt (T10q reads it). */
-      /* AND THE LABEL ROW SINCE 2026-09-05 (§13e): the grid's own header —
-         SECTIONS, a LABEL and not a special row — stands between MOTIFS and
-         the column heads. It is not in `r.rows` (which filters `.nu-sprow`),
-         because it has no sheet, no `data-k` and no button to measure; T13m is
-         where it is measured. */
+      /* (A LABEL ROW STOOD BETWEEN THE PANEL AND THE HEADS from 2026-09-05 to
+         2026-09-06 — SECTIONS, the grid's own header. §15a deleted it into
+         the head it labelled: *"Get rid of the words 'the record' and the
+         Section header entirely — we can make room."* The head row is the row
+         after the panel now, and the count and the fold are on its corner,
+         where T13m measures them.) */
       /* ...AND SINCE 2026-09-06 (§14) THE SEVEN ARE THE SECTIONS OF ONE ROW:
          THE RECORD at the top, then RULES · TIME · CHORDS · MOTIFS (which were
          above the grid) and MASTER · PRODUCE · PERFORMANCE (which were below
@@ -2641,7 +2641,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          they are merged facts about the RECORD, and after this round they are
          all one scope in one place. */
       const ORDER = ["record", "rules", "time", "chords", "motifs",
-                     "master", "produce", "perf", "label", "heads"];
+                     "master", "produce", "perf", "heads"];
       const ok = !r.missing &&
         r.order.length === ORDER.length &&
         r.order.every((x, i) => x === ORDER[i]) &&
@@ -4950,7 +4950,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                opened" folded the grid instead and eleven checks below went red
                on a table that was not on the glass. A fold is not a sheet. */
             const o = document.querySelector(
-              '#pan-band [aria-expanded="true"]:not(.nu-labelbtn)');
+              '#pan-band [aria-expanded="true"]:not(.nu-labelbtn):not(.nu-corner)');
             if (o) o.click(); });
           await z.waitForTimeout(400);
         }
@@ -5054,58 +5054,91 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           "close of " + moves.map((m) => m.name).join(", ") + " — " +
           JSON.stringify(moves.map((m) => [m.name, m.y0, m.y1, m.y2])));
 
-        /* ---- m · THE GRID'S OWN HEADER (§13e, §13f) ------------------- */
-        /* Paul: *"Give the main composer interface its own header call it
-           Sections."* One line in the special row's own shape, directly above
-           the column heads, with no pin on it — the pane's one pin is spent on
-           the heads (b, above), and a label that pinned would be the second
-           band §13 exists to delete.
-           IT HAS A BUTTON SINCE 2026-09-05 (§13f, Paul: *"Sections should
-           collapse when I touch it."*). This asserted `btns === 0` and no
-           `data-k`, which was true of a label with nothing to do; the line
-           FOLDS the grid now, so what is asserted is the disclosure — exactly
-           one button, the whole line, `aria-expanded` and `aria-controls` on
-           it — and the two things that did NOT change: it is still one `--tap`
-           line above the heads and it still never pins. */
+        /* ---- m · THE GRID'S HEADER IS ITS OWN HEAD (§13e, §13f, §15a) - */
+        /* A ROW WAS ASSERTED HERE UNTIL 2026-09-06 — `thead tr.nu-gridlabel`,
+           the word SECTIONS left and the count right, one `--tap` line above
+           the column heads, a disclosure since §13f. Paul deleted it: *"Get
+           rid of the words 'the record' and the Section header entirely — we
+           can make room."* Every claim it made is made here of the head that
+           took its two jobs, plus the two that are new:
+             · the label row is GONE — no `.nu-gridlabel` anywhere;
+             · the frozen column's head prints its own word AND the count,
+               the count under the word and in the quiet register;
+             · the head IS the fold: one button, `data-k="tsections"`,
+               `aria-expanded`, `aria-controls` naming the body it folds;
+             · it is a 44px target, and the head band did not grow to hold the
+               count (the phone ceiling is §13b's 56);
+             · and the grid starts HIGHER than the label row left it, which is
+               asked AT REST — the record panel shut, nothing open — because
+               the room is a claim about the sheet a thumb arrives at. */
+        await zshut();
+        await zrec(false);
         const lab = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]") ||
+                       document.querySelector("#pan-band .nu-pane");
           const rows = t ? [...t.querySelectorAll("thead > tr")] : [];
-          const tr = t && t.querySelector("thead tr.nu-gridlabel");
-          const th = tr && tr.firstElementChild;
-          const word = th && th.querySelector(".nu-spword");
-          const face = th && th.querySelector(".nu-spface");
-          const r = th ? th.getBoundingClientRect() : null;
+          const th = t && t.querySelector("thead th.nu-cornerh");
+          const btn = th && th.querySelector("button");
+          const word = th && th.querySelector(".nu-cornerword");
+          const count = th && th.querySelector(".nu-seccount");
+          const r = btn ? btn.getBoundingClientRect() : null;
           const wr = word ? word.getBoundingClientRect() : null;
-          const fr = face ? face.getBoundingClientRect() : null;
-          const cs = th ? getComputedStyle(th) : null;
-          return { there: !!th, h: r ? +r.height.toFixed(1) : 0,
-            pos: cs ? cs.position : null,
-            pinned: !!(cs && cs.position === "sticky" &&
-                       cs.insetBlockStart !== "auto"),
+          const cr = count ? count.getBoundingClientRect() : null;
+          const headRow = rows[rows.length - 1];
+          /* AT THE TOP OF THE PANE, and that is not a detail: `gridTop` is
+             this round's headline number and a pane left 90px down by the
+             checks above would pass any budget by arithmetic rather than by
+             layout. Measured on Kingston the first time this ran: −12.7,
+             which is a true reading of a scrolled pane and a useless one. */
+          if (pane) pane.scrollTop = 0;
+          const pr = pane ? pane.getBoundingClientRect() : null;
+          const first = t && t.querySelector("tbody > tr[data-row]");
+          return {
+            label: !!(t && t.querySelector("thead tr.nu-gridlabel")),
+            there: !!btn, k: btn ? btn.dataset.k || null : null,
+            h: r ? +r.height.toFixed(1) : 0, w: r ? +r.width.toFixed(1) : 0,
+            band: headRow ? +headRow.getBoundingClientRect().height.toFixed(1) : 0,
+            headRows: rows.length,
             btns: th ? th.querySelectorAll("button").length : 0,
-            k: th ? (th.querySelector("button") || { dataset: {} }).dataset.k || null : null,
-            expanded: th && th.querySelector("button")
-              ? th.querySelector("button").getAttribute("aria-expanded") : null,
-            controls: th && th.querySelector("button")
-              ? th.querySelector("button").getAttribute("aria-controls") : null,
+            expanded: btn ? btn.getAttribute("aria-expanded") : null,
+            controls: btn ? btn.getAttribute("aria-controls") : null,
+            aria: btn ? btn.getAttribute("aria-label") : null,
             body: !!document.getElementById("nu-gridbody"),
             word: word ? (word.textContent || "").trim() : "",
-            face: face ? (face.textContent || "").trim() : "",
-            upper: word ? getComputedStyle(word).textTransform : null,
-            oneLine: !!(wr && fr && Math.abs(wr.top - fr.top) < 6),
-            right: !!(wr && fr && fr.right > wr.right),
-            aboveHeads: rows.indexOf(tr) === rows.length - 2 };
+            count: count ? (count.textContent || "").trim() : "",
+            /* THE COUNT IS UNDER THE WORD, not beside it: 81.4px of frozen
+               column does not hold both on one line, and §15a's own
+               arithmetic is why. */
+            under: !!(wr && cr && cr.top >= wr.bottom - 1),
+            dim: count ? getComputedStyle(count).color : null,
+            wordDim: word ? getComputedStyle(word).color : null,
+            gridTop: (pr && first)
+              ? +(first.getBoundingClientRect().top - pr.top).toFixed(1) : null };
         });
-        check(lab.there && lab.btns === 1 && lab.k === "tsections" &&
-              lab.expanded === "true" && lab.controls === "nu-gridbody" &&
-              lab.body && !lab.pinned &&
-              lab.h >= 44 && lab.h <= 48 && lab.oneLine && lab.right &&
-              lab.aboveHeads && /^sections$/i.test(lab.word) &&
-              /section/i.test(lab.face) && /bar/i.test(lab.face),
-          "T13m " + at + " · the grid has its own header — the word SECTIONS " +
-          "left, its count right, one `--tap` line directly above the column " +
-          "heads, ONE disclosure button naming the body it folds, and no pin " +
-          "on it — " + JSON.stringify(lab));
+        check(!lab.label && lab.there && lab.k === "tsections" &&
+              lab.btns === 1 && lab.expanded === "true" &&
+              lab.controls === "nu-gridbody" && lab.body &&
+              lab.h >= 44 && lab.band <= (W === 1280 ? 80 : 56) &&
+              lab.under && lab.dim !== lab.wordDim &&
+              /^(section|player)$/i.test(lab.word) &&
+              /section/i.test(lab.count) && /bar/i.test(lab.count),
+          "T13m " + at + " · the SECTIONS label row is gone and its two jobs " +
+          "are the frozen column head's — its own word, the count under it in " +
+          "the quiet register, and ONE disclosure button naming the body it " +
+          "folds, 44px and no taller a band — " + JSON.stringify(lab));
+        /* AND THE ROOM IS GIVEN TO THE GRID, which is what Paul asked for in
+           the same line: the label row cost 45px and 3px of border-spacing,
+           and the grid starts that much higher. 116 is the measured budget —
+           at 390 and 320 a section row is 67.5px apart in a 788px pane, so a
+           grid starting at 116 or less puts TEN section rows whole on the
+           glass where 155.3 put nine. */
+        check(lab.gridTop == null || lab.gridTop <= 116,
+          "T13m " + at + " · …and the grid starts where the label row was — " +
+          JSON.stringify({ gridTop: lab.gridTop, was: 155.3 }));
+        /* AND THE PANEL GOES BACK, because the checks after this one reach
+           the record's seven by name. */
+        await zrec(true);
 
         /* ---- n · A `+` ADDS. IT DOES NOT ASK (§13e) -------------------- */
         /* Paul, on the ADD sheet that shipped this morning: *"Don't pop up an
@@ -5252,7 +5285,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]");
           const btn = document.querySelector('#pan-band [data-k="tsections"]');
           const body = document.getElementById("nu-gridbody");
-          const heads = t ? [...t.querySelectorAll("thead > tr")].pop() : null;
+          const heads = t ? t.querySelector("thead th.nu-colhead") : null;
           const shown = (e) => !!e && e.getClientRects().length > 0;
           const held = t ? [...t.querySelectorAll("thead > tr")].filter((tr) => {
             const c = tr.firstElementChild; if (!c) return false;
@@ -5272,9 +5305,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             record: shown(t && t.querySelector("tr.nu-recrow")),
             foot: t ? [...t.querySelectorAll("tfoot > tr")].length : -1,
             sprows: t ? t.querySelectorAll("thead tr.nu-sprow").length : 0,
-            label: shown(t && t.querySelector("thead tr.nu-gridlabel")),
-            count: ((t && t.querySelector("tr.nu-gridlabel .nu-spface")
+            /* THE COUNT AND THE FOLD ARE THE FROZEN COLUMN HEAD'S SINCE
+               2026-09-06 (§15a): the label row that carried them is deleted,
+               so what is asked for is the head — still on the glass when the
+               grid is folded, because it is the way back. */
+            label: shown(t && t.querySelector("thead th.nu-cornerh")),
+            count: ((t && t.querySelector(".nu-seccount")
               || {}).textContent || "").trim(),
+            countShown: shown(t && t.querySelector(".nu-seccount")),
             wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
             held,
             y: pane ? Math.round(pane.scrollTop) : null,
@@ -5318,12 +5356,19 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            are one tap from either of them, folded or not. `sprows` is the
            same count before and after, which is the claim that the fold did
            not touch the panel. */
+        /* ...AND WHAT "THE COLUMN HEADS GO" MEANS SINCE 2026-09-06 (§15a):
+           every head but the CORNER, which is the button that folded them and
+           has to be the button that brings them back. `heads` is asked of the
+           last head row's player cells rather than the row, and the corner —
+           with the count on it — is asserted STILL DRAWN. Folded, that count
+           is the only thing the grid says, which is the whole reason a hand
+           folds it. */
         check(f1.expanded === "false" && !f1.body && !f1.heads && !f1.mix &&
-              f1.record && f1.label &&
+              f1.record && f1.label && f1.countShown &&
               f1.sprows === f0.sprows && f1.count === f0.count,
-          "T13p " + at + " · a tap on SECTIONS folds the grid — the body, the " +
-          "column heads and the mix row go; THE RECORD, the SECTIONS label " +
-          "and the count stay — " + JSON.stringify(f1));
+          "T13p " + at + " · a tap on the SECTION head folds the grid — the " +
+          "body, the player heads and the mix row go; THE RECORD, the head " +
+          "itself and its count stay — " + JSON.stringify(f1));
         check(f1.wopen === 0 && f1.held.length === 0 &&
               (f1.y === f0.y || f1.max <= 0),
           "T13p " + at + " · …the grid's open sheet is closed with it, nothing " +
@@ -5363,7 +5408,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         if (await z.evaluate(() => window.__eightDoc().voices.length === 0)) {
           for (const k of ["drums", "bass", "line"]) await ztap("tcol-add|" + k);
           await z.evaluate(() => { const o = document.querySelector(
-            '#pan-band [aria-expanded="true"]:not(.nu-labelbtn)');
+            '#pan-band [aria-expanded="true"]:not(.nu-labelbtn):not(.nu-corner)');
             if (o) o.click(); });
           await z.waitForTimeout(400);
         }
@@ -5373,6 +5418,62 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               f3.store === "1",
           "T13p " + at + " · …and a second tap puts it all back, with the " +
           "column heads the pane's one pin again — " + JSON.stringify(f3));
+
+        /* ---- q · NOTHING RUBBER-BANDS (2026-09-06, §15a) -------------- */
+        /* Paul: *"In the song section area I can drag it too far right and
+           then the whole thing moves including the fixed parts. So it all
+           feels reel wobbly."* MEASURED at 390 on Kingston before the fix: the
+           pane is clientWidth 364 / scrollWidth 625, `scrollLeft` clamps at
+           261, there is no dead space right of the table and the frozen
+           column's left edge is 16px at rest AND at maximum scroll — so there
+           is no layout fault to find. What a hand feels is the overscroll
+           BOUNCE, which `contain` does not stop: `contain` stops the gesture
+           CHAINING to the scroller behind, and a scroller may still rubber-band
+           inside itself, carrying its `position: sticky` children with it.
+           `none` is `contain` plus no bounce.
+           WHAT THIS GATE CAN AND CANNOT MEASURE, said plainly: a headless
+           engine does not rubber-band, so nothing here reproduces the feel.
+           What it holds is the DECLARATIONS that turn it off (on the pane and
+           on the document, both axes) and the three facts that say there is
+           nothing else under the complaint — the scroll clamps to its own
+           maximum, the frozen column does not move between rest and that
+           maximum, and the PAGE never scrolls sideways. */
+        const wob = await z.evaluate(async () => {
+          const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]") ||
+                       document.querySelector("#pan-band .nu-pane");
+          const froz = () => { const e =
+            document.querySelector("#pan-band .nu-sheetgrid tbody th.nu-srowh") ||
+            document.querySelector("#pan-band .nu-sheetgrid thead th.nu-cornerh");
+            return e ? +e.getBoundingClientRect().left.toFixed(1) : null; };
+          const cs = (e, p) => getComputedStyle(e).getPropertyValue(p);
+          const rest = froz();
+          pane.scrollLeft = 99999;
+          await new Promise((r) => setTimeout(r, 250));
+          const max = pane.scrollWidth - pane.clientWidth;
+          const got = pane.scrollLeft, atMax = froz();
+          pane.scrollLeft = 0;
+          await new Promise((r) => setTimeout(r, 200));
+          return { paneX: cs(pane, "overscroll-behavior-x"),
+                   paneY: cs(pane, "overscroll-behavior-y"),
+                   htmlX: cs(document.documentElement, "overscroll-behavior-x"),
+                   htmlY: cs(document.documentElement, "overscroll-behavior-y"),
+                   max, got, frozRest: rest, frozMax: atMax,
+                   pageW: document.documentElement.clientWidth,
+                   pageScrollW: document.scrollingElement.scrollWidth };
+        });
+        check(wob.paneX === "none" && wob.paneY === "none" &&
+              wob.htmlX === "none" && wob.htmlY === "none",
+          "T13q " + at + " · the pane and the document refuse the bounce, both " +
+          "axes — `contain` stopped the CHAIN and not the rubber-band, and a " +
+          "rubber-band carries the frozen column with it — " +
+          JSON.stringify(wob));
+        check(Math.abs(wob.got - wob.max) < 1 &&
+              wob.frozRest != null && wob.frozMax === wob.frozRest &&
+              wob.pageScrollW === wob.pageW,
+          "T13q " + at + " · …and there is nothing else under it: the pane's " +
+          "scroll clamps at its own maximum, the frozen column's edge is the " +
+          "same at rest and at that maximum, and the PAGE does not scroll " +
+          "sideways — " + JSON.stringify(wob));
 
         /* ---- l · T7's LAW RE-PROVED, IN TAPS -------------------------- */
         /* Every control the formula bar, the addbars and `.nu-top` offered,
@@ -5492,6 +5593,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               " thead th.nu-cornerh, thead th.nu-plushead").length : 0,
             h: tr ? +tr.getBoundingClientRect().height.toFixed(1) : 0,
             expanded: b ? b.getAttribute("aria-expanded") : null,
+            aria: b ? b.getAttribute("aria-label") : null,
             controls: b ? (b.getAttribute("aria-controls") || "").split(/\s+/).length : 0,
             btns: th ? th.querySelectorAll("button").length : 0,
             /* IT IS NOT A `.nu-sphead`, which is the SECTIONS disclosure's own
@@ -5501,28 +5603,62 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             label: !!(b && b.classList.contains("nu-labelbtn")),
             word: (word && word.textContent || "").trim(),
             face: (face && face.textContent || "").trim(),
-            oneLine: !!(wr && word && face &&
-              Math.abs(word.getBoundingClientRect().top -
-                       face.getBoundingClientRect().top) < 8),
+            /* THE FACE IS THE LINE SINCE 2026-09-06 (§15a). `oneLine` compared
+               the word's top with the face's; there is no word, so what is
+               asked is that the face fills the button and starts at its
+               leading edge — it IS what the row says, not a value hung off
+               the end of a heading. */
+            faceStart: !!(wr && face &&
+              face.getBoundingClientRect().left < wr.left + 24),
+            faceInk: face ? getComputedStyle(face).color : null,
+            bodyInk: getComputedStyle(document.body).color,
+            /* AND THE TABLE'S OWN OPTIONS RIDE THE END OF THIS LINE (§15a):
+               `tcorner` left the 81.4px corner when the SECTIONS count moved
+               into it. Its address, its key and its sheet did not move. */
+            opts: !!(tr && tr.querySelector('[data-k="tcorner"]')),
+            optsBox: (() => { const o = tr && tr.querySelector('[data-k="tcorner"]');
+              if (!o) return null; const q = o.getBoundingClientRect();
+              return [+q.width.toFixed(1), +q.height.toFixed(1)]; })(),
+            optsLast: !!(tr && tr.querySelector(".nu-spline") &&
+              tr.querySelector(".nu-spline").lastElementChild ===
+              tr.querySelector('[data-k="tcorner"]')),
             shown: scopes.filter((r) => r.getClientRects().length > 0).length,
             scopes: scopes.length };
         });
         const r14a = await recRow();
         await zrec(true);
         const r14aOpen = await recRow();
+        /* IT HAS NO WORD SINCE 2026-09-06 (§15a). Paul: *"Get rid of the
+           words 'the record' and the Section header entirely — we can make
+           room."* This asserted `/^the record$/i` on a `.nu-spword` beside the
+           face; the word is DELETED — from the row, from `special.ts RECORD`
+           and from the copy catalogue — so what is asserted is that there is
+           no `.nu-spword` on this line at all, that the face is the line
+           (starting at its leading edge, in the body's own ink and not a
+           face's dim), and that everything the row DID is unchanged: it is
+           still the first row, still one `--tap` line, still a
+           `.nu-labelbtn` and not a `.nu-sphead`, still `aria-controls`-ing its
+           seven, and its accessible name still says what a tap opens.
+           THE SECOND BUTTON IS `tcorner`, which the SECTIONS count displaced
+           out of the grid's corner (§15a): `btns` is 2 and the extra one is
+           named, measured at `--tap`, and standing at the line's end. */
         check(r14a.there && r14a.first && r14a.k === "trecord" &&
-              r14a.colspan === r14a.cols && r14a.btns === 1 &&
-              r14a.h >= 44 && r14a.h <= 48 && r14a.oneLine &&
-              !r14a.sphead && r14a.label &&
-              /^the record$/i.test(r14a.word) && r14a.face.length > 0 &&
+              r14a.colspan === r14a.cols && r14a.btns === 2 &&
+              r14a.h >= 44 && r14a.h <= 48 && r14a.faceStart &&
+              !r14a.sphead && r14a.label && r14a.word === "" &&
+              r14a.face.length > 0 && r14a.faceInk === r14a.bodyInk &&
+              r14a.opts && r14a.optsLast &&
+              r14a.optsBox[0] >= 44 && r14a.optsBox[1] >= 44 &&
+              /^(show|hide) the record settings$/i.test(r14a.aria || "") &&
               r14a.expanded === "false" && r14a.shown === 0 &&
               r14a.scopes === 7 && r14a.controls === 7 &&
               r14aOpen.expanded === "true" && r14aOpen.shown === 7,
-          "T14a " + at + " · THE RECORD is the sheet's first row, one `--tap` " +
-          "line at rest with its face beside its word, one disclosure button " +
-          "(not a sheet head) naming its seven sections — and a tap shows all " +
-          "seven — " + JSON.stringify([r14a, { open: r14aOpen.expanded,
-                                               shown: r14aOpen.shown }]));
+          "T14a " + at + " · THE RECORD is the sheet's first row and its FACE " +
+          "is the line — no word over it — one disclosure naming its seven " +
+          "sections, with the table's own options a `--tap` square at the " +
+          "line's end, and a tap shows all seven — " +
+          JSON.stringify([r14a, { open: r14aOpen.expanded,
+                                  shown: r14aOpen.shown }]));
         /* ...AND ITS FACE IS THE TIME ROW'S, one owner and not two. */
         const faces = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");

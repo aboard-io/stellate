@@ -845,9 +845,11 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
          §13f). The grid's own header carries `aria-expanded` since it became a
          fold, and it stands FIRST in the `<thead>` — so "is a sheet already
          open" answered yes on every arrival and this walk stopped opening
-         column sheets at all. */
+         column sheets at all. THE FOLD MOVED ONTO THE FROZEN COLUMN'S HEAD on
+         2026-09-06 (§15a) and took its `aria-expanded` with it, so the same
+         exclusion is spelled for `.nu-corner`: it is still not a sheet. */
       const open = document.querySelector(
-        '#pan-band thead [aria-expanded="true"]:not(.nu-labelbtn)');
+        '#pan-band thead [aria-expanded="true"]:not(.nu-labelbtn):not(.nu-corner)');
       if (open) return;                       // a sheet is already open
       const names = D.voices.map((v) => v.name);
       for (const n of names) {

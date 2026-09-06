@@ -408,10 +408,16 @@ export const SPECIALS: SpecialRow[] = [
  *  sheets that own those three words. A second reader of the same three facts
  *  is what this file's own header forbids, so the record's face IS the time
  *  row's face, one function, two callers. */
-export const RECORD: { k: string; id: string; word: string;
+/* ...AND IT HAS NO WORD SINCE 2026-09-06 (TABLE.md §15a). Paul: *"Get rid of
+   the words 'the record' and the Section header entirely — we can make room."*
+   `THE RECORD` stood to the left of a line that already reads
+   `84 BPM · 4/4 · G♯ natural minor` — a label over the thing it labels. The
+   row is its face now, so `word` is deleted from the shape rather than left
+   as a property nothing draws; the disclosure's accessible name is what says
+   what a tap opens, and it always was. */
+export const RECORD: { k: string; id: string;
                        face(A: TableAPI): string } = {
   k: "trecord", id: "record",
-  get word() { return t("special.record.word"); },
   face: timeFace,
 };
 

@@ -683,6 +683,26 @@
                 + env(safe-area-inset-top, 0px));
 }
 *,*::before,*::after{ box-sizing: border-box; }
+/* ---- NOTHING RUBBER-BANDS (2026-09-06, TABLE.md §15a) ----------------
+   Paul: *"In the song section area I can drag it too far right and then the
+   whole thing moves including the fixed parts. So it all feels reel wobbly."*
+   MEASURED at 390 on Kingston 1969 before this rule: the pane is
+   clientWidth 364 / scrollWidth 625, `scrollLeft` clamps at 261, there is no
+   dead space to the right of the table, and the frozen section column's left
+   edge is 16px at rest and 16px at maximum scroll. The page does not scroll
+   sideways (documentElement scrollWidth 390 = clientWidth). So there is no
+   layout fault under it: what a hand feels is the OVERSCROLL BOUNCE.
+   CHAINING IS NOT BOUNCING, and that distinction is the whole fix. `contain`
+   — which `.nu-pane` already carried — stops the gesture CHAINING to the
+   scroller behind it; it still lets the scroller rubber-band inside ITSELF at
+   its own end, and a rubber-band translates the whole scroller, `position:
+   sticky` children included. That is exactly *"the whole thing moves including
+   the fixed parts"*. `none` is `contain` plus no bounce.
+   AND IT IS ON THE DOCUMENT TOO, which has a second gain worth saying out
+   loud rather than hiding as a side effect: `overscroll-behavior-y: none` on
+   the page turns OFF pull-to-refresh, so a downward flick at the top of the
+   sheet can no longer reload the box in the middle of an edit. */
+html, body{ overscroll-behavior: none; }
 html{ -webkit-text-size-adjust: 100%; }
 body{ margin: 0; background: var(--paper); color: var(--ink);
   /* THE TYPE IS ENAMEL'S NOW (2026-08-27): one heavy system sans for
@@ -1842,7 +1862,11 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    shadow: two paper-coloured covers that scroll WITH the content and two
    shadows fixed to the box, so a shadow shows exactly when there is more
    table off that edge. */
-.nu-pane{ overflow-x: auto; overscroll-behavior-x: contain; max-inline-size: 100%;
+/* ...AND IT IS `none` AND NOT `contain` SINCE 2026-09-06 (§15a, above): the
+   pane is the one surface on this page a thumb drags SIDEWAYS, `contain` stops
+   the chain and not the bounce, and a bounce carries the frozen section column
+   with it. Both axes, because the pane scrolls both. */
+.nu-pane{ overflow-x: auto; overscroll-behavior: none; max-inline-size: 100%;
   background:
     linear-gradient(to right, var(--paper) 30%, transparent) left / 24px 100% no-repeat local,
     linear-gradient(to left,  var(--paper) 30%, transparent) right / 24px 100% no-repeat local,
@@ -5613,12 +5637,17 @@ table.nu-trims{ color: var(--ink); }
    and the `<small>` rule above still draws that line. Left-aligned and full
    width so a column of section names reads as a column. */
 .nu-trims tbody th.nu-srowh{ padding-inline: 0; }
-.nu-rowjump{ display: block; inline-size: 100%; min-block-size: var(--ctl);
+/* ...AND `.nu-corner` TAKES THIS BOX WITHOUT TAKING THE CLASS (2026-09-06,
+   §15a). The grid's corner is a fold now, so its `aria-expanded` is TRUE at
+   rest, and every "shut whatever is open" gesture that reaches for
+   `[aria-expanded="true"].nu-rowjump` would have folded the grid away. One
+   box, two classes — `.nu-labelbtn`'s own argument, a third time. */
+.nu-rowjump, .nu-corner{ display: block; inline-size: 100%; min-block-size: var(--ctl);
   padding: var(--s1) var(--s2); text-align: start; cursor: pointer;
   font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
   text-transform: none; letter-spacing: 0;
   border: var(--bw) solid transparent; border-radius: var(--r2); }
-.nu-rowjump:hover{ border-color: var(--ink); }
+.nu-rowjump:hover, .nu-corner:hover{ border-color: var(--ink); }
 
 /* ======================================================================
    SLICE 2f — THE PRODUCER PAGE (COMPOSER.md §2.9, 2026-09-02)
@@ -6630,7 +6659,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-sheetwrap{ display: flex; flex-direction: column; min-inline-size: 0;
   block-size: calc(100dvh - var(--bar-h) - var(--s2)); }
 .nu-sheetwrap > .nu-pane[data-pane="table"]{ flex: 1 1 auto; min-block-size: 0;
-  overflow: auto; overscroll-behavior: contain; }
+  overflow: auto; overscroll-behavior: none; }
 /* THE CELL SHEET'S FIRST LINE, WHICH IS WHAT `.nu-formula` BECAME. The address
    of the selection at the start, undo · redo · copy · paste at the end, drawn
    once, inside the sheet the selection opened — so the four verbs stand where
@@ -6818,29 +6847,63 @@ table.nu-trims{ color: var(--ink); }
    hairline the sections under it hang off. */
 .nu-sheetgrid tr.nu-recrow > th.nu-spheadcell{
   border-block-end: var(--bw) solid var(--rule); }
+/* ...AND SINCE 2026-09-06 THE FACE IS THE LINE (§15a). `THE RECORD` was a
+   label over a line that already read `84 BPM · 4/4 · G♯ natural minor`, and
+   Paul deleted it. With the word gone the face has no word to sit opposite, so
+   it reads from the START at full ink: it is not a subordinate value beside a
+   heading any more, it is what the row says. `.nu-spface`'s ellipsis and its
+   one-line rule stay — a header whose height depends on the genre's key name
+   is a header that jumps as you move around the catalogue. */
+.nu-sheetgrid tr.nu-recrow .nu-spface{ text-align: start; color: var(--ink); }
+/* THE TABLE'S OWN OPTIONS AT THE LINE'S END (§15a): the `--tap` square
+   `.nu-spclose` already is at the other end of an open row, wearing the gear
+   `ui/glyph.js` spells settings with. It is a SIBLING of the head button, for
+   the reason the × is one — a button inside a button is not a control — and it
+   hovers in `--hand-tint` rather than the ×'s `--flag-tint`, because it opens
+   something and does not close it. */
+.nu-spopts:hover{ background: var(--hand-tint); }
 
-/* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e, §13f) ==========
-   Paul: *"Give the main composer interface its own header call it Sections."*
-   One line above the column heads, in the special row's own furniture — the
-   word left, the count right, `--tap` tall, a hairline under. It said here
-   that it was *"NOT a control: there is no button in it"*; §13f gave it one
-   (*"Sections should collapse when I touch it"*), which is `.nu-labelbtn`
-   above, wearing `.nu-sphead`'s box and not its class.
-   IT IS THE ONE `<thead>` ROW THAT IS NOT STICKY, and it says so in the
-   stylesheet rather than leaving it to the inline offsets `stick()` writes:
-   §13a.1 gives the pane ONE pin and `stick()` spends it on the LAST head row
-   (the column heads, directly below this one). A label that pinned would be a
-   second band over the grid, which is the whole of the complaint §13 answers. */
-.nu-sheetgrid thead tr.nu-gridlabel > th.nu-labelcell{ position: static; }
-/* ...AND THE COUNT IS NOT SHOUTED. `.nu-trims thead th` is a dim UPPERCASE
-   word — the type a column head wears — and the other special rows escape it
-   by putting their face inside a `<button>`, which does not inherit it. This
-   row HAS one since 2026-09-05 (§13f: the line folds the grid), so it escapes
-   the same way they do and the padding it used to be given by hand
-   (`.nu-gridlabel .nu-spword{ padding-inline-start: var(--s3) }`) is
-   `.nu-sphead`'s own. The belt stays: a stylesheet that told the truth about
-   this line before the button arrived should not start lying because of it. */
-.nu-gridlabel .nu-spface{ text-transform: none; letter-spacing: 0; }
+/* ===== THE GRID'S OWN HEADER IS ITS OWN HEAD (2026-09-06, §15a) =========
+   A ROW STOOD HERE (`.nu-gridlabel`, §13e/§13f): the word SECTIONS left, the
+   count right, one `--tap` line above the column heads, a disclosure since
+   *"Sections should collapse when I touch it."* Paul deleted it — *"Get rid of
+   the words 'the record' and the Section header entirely — we can make
+   room."* — and its two jobs went one row down, into the head of the column it
+   was labelling. The rules that made it a label (`position: static` so it
+   never took the pane's one pin, and an escape from `.nu-trims thead th`'s
+   uppercase for its count) are deleted with it: a stylesheet keeping a
+   selector for a row nobody draws is the CSS half of an orphan key.
+
+   ===== THE FROZEN COLUMN'S HEAD, WHICH NOW SAYS HOW MANY ================
+   The corner is `--headw`'s floor on a phone — 8ch, MEASURED at 81.4px, 73.4
+   inside the cell's padding and 66.7 inside the button's — and it may not
+   grow: at 390 the players are 70px apart and 364.4 − 81.4 is exactly four of
+   them. So the count goes UNDER the word rather than beside it, and it WRAPS
+   rather than ellipsising, because `13 sections · 76 bars` is 121.3px on one
+   line and 63.5 + 40.4 on two. Three lines of 12.48px is 37.4px, inside the
+   button's own 44px floor: it costs the head band nothing, measured. */
+#pan-band .nu-wordgrid thead th.nu-cornerh > .nu-corner{
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: stretch; gap: 0; text-align: start; overflow: hidden; }
+#pan-band .nu-wordgrid .nu-cornerword{
+  font: var(--fw-block) var(--t0)/1.3 var(--mono, monospace);
+  text-transform: uppercase; letter-spacing: .04em; }
+/* THE COUNT IS THE QUIET HALF — the register the label's own face wore
+   (`.nu-spface`: `--dim`, no uppercase, no tracking) — so the head reads as a
+   name with a number under it and not as two headings. */
+#pan-band .nu-wordgrid .nu-seccount{
+  font: var(--num-fw) var(--t0)/1.3 var(--sans, inherit); color: var(--dim);
+  text-transform: none; letter-spacing: 0; white-space: normal;
+  overflow-wrap: anywhere; }
+/* ...AND A FOLDED TABLE IS THE PANE'S OWN WIDTH. With the grid folded the
+   player heads are not rendered and the body and the mix row are `hidden`, so
+   the table has ONE column — but its `inline-size` is still worked out from
+   `--cols`, which would leave 625px of scrollable width on a 364px pane with
+   nothing in it to scroll to. That slack is what a hand drags into and feels
+   as the wobble (§15a); `--panew` is what `stick()` measured the pane to be. */
+#pan-band .nu-wordgrid.is-folded{ inline-size: var(--panew, 100%); }
+#pan-band .nu-wordgrid.is-folded > colgroup > col:first-child{
+  inline-size: auto; }
 
 /* ===== THE PLAYING SECTION, LIT WHOLE (2026-09-05, TABLE.md §13f) ======
    Paul: *"Really light up the sections as you move through them — not just a
@@ -8057,6 +8120,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    (the hand), the `.w-*` word paints on the mix row, and `--vpaint`. */
 #pan-band .nu-wcell,
 #pan-band .nu-rowjump,
+#pan-band .nu-corner,
 #pan-band .nu-opbtn,
 #pan-band .nu-groupbtn,
 #pan-band .nu-clearback,
@@ -8366,7 +8430,8 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-wordgrid .nu-corner{
   font: var(--fw-block) var(--t0)/1.3 var(--mono, monospace);
   letter-spacing: .04em; }
-#pan-band .nu-rowjump:hover{ background: var(--hand-tint); border-color: transparent; }
+#pan-band .nu-rowjump:hover,
+#pan-band .nu-corner:hover{ background: var(--hand-tint); border-color: transparent; }
 #pan-band .nu-trims tbody th small{ font-size: var(--t0); }
 /* the sheet's label column is the QUIET half of the row and the value is the
    loud one — the reverse of what a 700-weight label beside a 500-weight value
@@ -8922,8 +8987,11 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
       must not become six rows of buttons above a list. `flex-basis: 100%` puts
       them on their own line under the field at every width, because a strip
       that scrolls has to own its line or the field's own width fights it. */
+/* THE ERA STRIP IS THE OTHER SURFACE A THUMB DRAGS SIDEWAYS, so it takes the
+   same `none` the table's pane takes (§15a): a strip that rubber-bands under a
+   flick is the same wobble in a smaller box. */
 #atlasJump{ flex: 1 0 100%; display: flex; gap: var(--s2);
-            overflow-x: auto; overscroll-behavior-x: contain;
+            overflow-x: auto; overscroll-behavior: none;
             -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 #atlasJump > button{ flex: 0 0 auto; white-space: nowrap;
                      min-block-size: var(--tap); }

@@ -189,22 +189,14 @@ const SAME_TEXT_OK = [
          move at all, which is this list's own first entry's test. */
   ["rule.headHarmony", "group.harmony"],
   ["field.chords", "special.chords.word"],
-  /* ...and `glyph.sec.list` is the WORD ON A MARK (ui/glyph.js `GLYPH.sec.list`
-     — the picture for "every section, by name"), while `grid.sections.word` is
-     the heading over the grid itself (2026-09-05, TABLE.md §13e). The same
-     argument `glyph.tab.time` makes above: one is a label on an icon and one is
-     a heading over a block of the table, and a translator may not spell them
-     the same. */
-  ["glyph.sec.list", "grid.sections.word"],
-  /* ...and the same shape once more, 2026-09-06 (TABLE.md §14): the record
-     collapses to one row and its word is `special.record.word`, the heading
-     over the seven surfaces that say something about the whole song.
-     `exportTab.json.what` is the Export card's SUBTITLE — what a `.song.json`
-     file holds, under the word JSON — which is a description of a file's
-     contents and not a heading over a panel. A translator may spell "the whole
-     record, as a file" and "THE RECORD" differently, and one of the two may
-     not move at all: this list's own first entry's test. */
-  ["exportTab.json.what", "special.record.word"],
+  /* (TWO PAIRS STOOD HERE UNTIL 2026-09-06, TABLE.md §15a. Paul: *"Get rid of
+     the words 'the record' and the Section header entirely — we can make
+     room."* `grid.sections.word` was the heading over the grid and
+     `special.record.word` the heading over the record's seven; both rows are
+     gone and both keys are deleted, so the exemptions they needed are deleted
+     with them rather than left pointing at nothing. An exemption for a key
+     that does not exist is the same orphan the keys themselves would have
+     been.) */
 ];
 
 async function run() {

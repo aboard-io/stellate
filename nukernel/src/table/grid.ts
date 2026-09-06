@@ -487,13 +487,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const owner = spOpen > 0 ? spOpen - 1 : -1;
     const last = rows.length - 1;
     /* ...AND THE LAST VISIBLE ROW IS ONLY A PIN WHEN IT IS THE COLUMN HEADS
-       (§13f). With the grid folded the last row left standing is the SECTIONS
-       label, which §13e made the one `<thead>` row that never pins; folding
-       must not promote it. So the fallback is spelled as what it has always
-       MEANT — the heads — rather than as "whatever is last". */
+       WITH A BODY UNDER THEM (§13f, and §15a). It read *"with the grid folded
+       the last row left standing is the SECTIONS label, which never pins"* —
+       true while that label existed. §15a deleted it into this row, so the
+       folded sheet's last standing row IS the head row, and a head pinned over
+       nothing is the second band §13 exists to delete. So the fallback says
+       both halves of what it has always meant: the heads, AND the body they
+       head being on the glass. */
     const lastRow = last >= 0 ? rows[last]! : null;
-    const heads = !!lastRow && !lastRow.dataset.special &&
-      !lastRow.classList.contains("nu-gridlabel") &&
+    const heads = GRIDOPEN && !!lastRow && !lastRow.dataset.special &&
       !lastRow.classList.contains("nu-spopen");
     const pinned = cellOpen ? -1 : (owner >= 0 ? owner : (heads ? last : -1));
     /* ...AND EVERY ROW IS WRITTEN, INCLUDING THE FOLDED ONES (2026-09-05,
@@ -695,14 +697,23 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const cols = S.across ? S.secs.map((s) => s.id) : S.voices.map((v) => v.name);
     return html`<div class="nu-pane" data-pane="table" tabindex="0"
         @keydown=${(e: KeyboardEvent) => onKey(e, S)}>
-      <table class="nu-wordgrid nu-trims nu-sheetgrid"
+      <table class=${"nu-wordgrid nu-trims nu-sheetgrid" +
+          (GRIDOPEN ? "" : " is-folded")}
         style=${styleMap({ "--cols": String(cols.length + 1) })}>
-        <colgroup>
+        ${/* AND A FOLDED TABLE DECLARES ONE COLUMN (2026-09-06, §15a). The
+              player columns are not rendered while the grid is folded, so a
+              `<colgroup>` still naming them would size a table with nothing in
+              it — 625px of scrollable width on a 364px pane, which is the
+              sideways slack Paul felt as *"wobbly"*. One `<col>`, and
+              `.is-folded` takes the pane's own width. */ nothing}
+        ${GRIDOPEN
+          ? html`<colgroup>
           <col />
           ${cols.map((c) => html`<col style=${styleMap(
             WIDTH.has(c) ? { inlineSize: WIDTH.get(c) + "px" } : {})} />`)}
           <col class="nu-addcol" />
-        </colgroup>
+        </colgroup>`
+          : html`<colgroup><col /></colgroup>`}
         ${thead(S, cols)}
         ${tbody(S, rows, cols)}
         ${S.across ? nothing : tfoot(S, cols)}
@@ -710,8 +721,17 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     </div>`;
   };
 
+  /** HOW MANY COLUMNS THE TABLE HAS — head column + players + adder — and it
+   *  is ONE while the grid is folded (2026-09-06, §15a). This is a fact about
+   *  the rendered table and not a convenience: with the body, the player heads
+   *  and the `+` all gone, the folded table has exactly one column, and a
+   *  merged row still claiming twelve is not a `colspan` that clamps — under
+   *  `table-layout: fixed` the FIRST row decides the grid, so the record's
+   *  `colspan="12"` cut the pane into twelve and left the corner 18.5px wide
+   *  with its own count wrapping 187px down the screen. Measured, the hour the
+   *  fold moved into the corner. */
   const nCols = (S: Shape) =>
-    (S.across ? S.secs.length : S.voices.length) + 2;   // head column + adder
+    GRIDOPEN ? (S.across ? S.secs.length : S.voices.length) + 2 : 1;
 
   /* ---- THE HEADER ROW ------------------------------------------------ */
   /* ---- THE SPECIAL ROWS (§10a) ---------------------------------------
@@ -828,7 +848,26 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
    *  disclosure's own argument one row down: it is a button the width of a
    *  special row's line, so it takes that box, and it is NOT a sheet's head,
    *  so it must not answer `[aria-expanded="true"].nu-sphead` — the selector
-   *  three gates and this page's own "shut whatever is open" gesture use. */
+   *  three gates and this page's own "shut whatever is open" gesture use.
+   *
+   *  ...AND SINCE 2026-09-06 IT HAS NO WORD (TABLE.md §15a). Paul: *"Get rid
+   *  of the words 'the record' and the Section header entirely — we can make
+   *  room."* `THE RECORD` sat to the left of a line that already read
+   *  `84 BPM · 4/4 · G♯ natural minor`, which is a label over the thing it is
+   *  labelling: the row IS its face, and the face is now the line's own words
+   *  and reads from the left at full strength. Nothing is lost to a screen
+   *  reader — the button's accessible name is the disclosure's own sentence
+   *  (*"Show the record settings"*), which says what a tap DOES, and it said
+   *  that before the word went.
+   *
+   *  AND THE TABLE'S OWN OPTIONS RIDE THE END OF THIS LINE (`optsBtn`, below).
+   *  `tcorner` stood in the grid's corner until the SECTIONS label row was
+   *  deleted into that corner, and 81.4px of frozen column does not hold two
+   *  44px targets — the arithmetic is in §15a. Its sheet is *"this song"*:
+   *  fill from the genre, re-seed, transpose. Two of those three rewrite the
+   *  whole record and the third turns the whole table, so the record's line is
+   *  where they belong under DESIGN §3's own law, and it is the same argument
+   *  §14 used to pull MASTER, PRODUCE and PERFORMANCE up out of the foot. */
   const recordRow = (S: Shape, list: Scope[]): TemplateResult => {
     let face = "";
     try { face = RECORD.face(A); } catch (e) { face = ""; }
@@ -841,11 +880,31 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
           aria-label=${RECOPEN ? t("special.record.collapse.aria")
                                : t("special.record.expand.aria")}
           @click=${openRecord}
-          ><b class="nu-spword">${RECORD.word}</b
-          ><span class="nu-spface">${face}</span></button>
+          ><span class="nu-spface">${face}</span></button>${optsBtn()}
         </div>
       </th>
     </tr>`;
+  };
+
+  /** THE TABLE'S OWN OPTIONS, AT THE END OF THE RECORD'S LINE (2026-09-06,
+   *  §15a). Everything about it but WHERE IT STANDS is untouched: the address
+   *  is `tcorner`, the open key is `corner`, the sheet is `tableOps` through
+   *  `orphanSheet`, `STICKY` still forgets it across a rebuild for §9d's
+   *  measured reason, and `openCorner()` still presses it by name. It is a
+   *  `--tap` square with a glyph and its hidden word — the shape `.nu-spclose`
+   *  already is at the other end of a special row's line — because the line's
+   *  words are the record's and a second sentence on it would be a second
+   *  subject. */
+  const optsBtn = (): TemplateResult => {
+    const mk = actMark("opts");
+    return html`<button type="button" class="nu-spclose nu-spopts"
+      data-k="tcorner"
+      aria-expanded=${String(OPEN === "corner")}
+      aria-label=${t("head.corner.aria")}
+      @click=${() => toggle("corner")}
+      @contextmenu=${(e: Event) => { e.preventDefault(); toggle("corner", true); }}
+      ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "\u2699"}</span
+      ><span class="nu-vh">${t("head.corner.aria")}</span></button>`;
   };
 
   /* THE PANEL ITSELF: the seven as sections, one open at a time. "One at a
@@ -890,52 +949,19 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     draw();
   }
 
-  /* ---- THE GRID'S OWN HEADER (2026-09-05, §13e) -----------------------
-     Paul: *"Give the main composer interface its own header call it
-     Sections."* TIME, RULES and MOTIFS each name what their line is about;
-     the grid under them — the thing the whole page is for — named nothing,
-     and a reader arriving at the column heads had to infer that the rows
-     below were the song's sections.
-     IT WEARS THE SPECIAL ROW'S OWN FURNITURE (`.nu-spline`, `.nu-spword`,
-     `.nu-spface`) because it IS that line — the word left, the count right,
-     `--tap` tall, a hairline under — and it is the ONE `<thead>` row that does
-     not pin: `stick()` pins the LAST head row (the column heads) and this
-     stands directly above them, in the flow, scrolling away with the special
-     rows.
-     ITS COUNT IS THE RECORD'S, NOT THE VIEW'S. Sections and bars are document
-     facts, so the line reads the same when §5's transpose turns the grid and
-     the sections are running across it.
-
-     ...AND IT IS A DISCLOSURE SINCE 2026-09-05 (§13f). Paul: *"Sections should
-     collapse when I touch it."* It said here, from 2026-09-05 to 2026-09-05,
-     that it was *"a LABEL and not a row with a sheet — no button, no
-     `aria-expanded`, no `data-k`: there is nothing to open, so there is
-     nothing to tap"*. There is something to do: FOLD. So the line is a button
-     the width of the row, `aria-expanded` says which way it stands and
-     `aria-controls` names the body it folds — and what it opens is not a
-     sheet, which is why the accordion (`OPEN`) does not know about it and one
-     sheet at a time is untouched. The COUNT stays on the right in both states:
-     folded, it is the only thing the grid says, which is the whole reason a
-     hand folds it. */
-  const gridLabel = (S: Shape): TemplateResult => {
-    const secs = A.doc().form.sections;
-    const bars = secs.reduce((n, x) => n + (x.bars || 0), 0);
-    return html`<tr class="nu-gridlabel">
-      <th class="nu-spheadcell nu-labelcell" scope="colgroup"
-          colspan=${nCols(S)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-labelbtn" data-k="tsections"
-          aria-expanded=${String(GRIDOPEN)} aria-controls="nu-gridbody"
-          aria-label=${GRIDOPEN ? t("grid.sections.collapse.aria")
-                                : t("grid.sections.expand.aria")}
-          @click=${foldGrid}
-          ><b class="nu-spword">${t("grid.sections.word")}</b
-          ><span class="nu-spface">${tn("grid.sections.count", secs.length,
-            { bars: tn("count.bar", bars) })}</span></button>
-        </div>
-      </th>
-    </tr>`;
-  };
+  /* ---- THE GRID'S OWN HEADER IS ITS OWN HEAD (2026-09-06, §15a) ------
+     A ROW STOOD HERE FROM 2026-09-05 TO 2026-09-06 — `gridLabel`, the word
+     SECTIONS left and the count right, `--tap` tall, a disclosure since §13f.
+     Paul deleted it: *"Get rid of the words 'the record' and the Section
+     header entirely — we can make room."* It was a label over a column that
+     already prints its own name, and it cost a whole line of a phone to say
+     what the head under it said.
+     ITS TWO JOBS MOVED ONE ROW DOWN, ONTO THE FROZEN COLUMN'S HEAD
+     (`cornerBtn`): the COUNT is drawn under that head's word, in the same
+     quiet register the label's face wore, and the FOLD is that head's own tap.
+     Nothing else about the fold changed — `data-k="tsections"`,
+     `aria-expanded`, `aria-controls="nu-gridbody"`, the `nu.band.grid.v1`
+     preference, no `op()`, no `changed()`, no undo step. */
 
   /* THE FOLD ITSELF, AND IT IS NOT AN OP (§13f). No `op()` wrapper, so the
      undo stack does not grow; no `changed()`, so nothing recompiles; the
@@ -972,21 +998,43 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      section or a voice. Just add it."* — so each `+` IS its own offer and a
      tap on it writes. The three column widths the adders took stay with the
      players. */
-  /* ...AND THE COLUMN HEADS FOLD WITH THE BODY THEY HEAD (§13f). `hidden` and
-     not a class: it is the attribute the platform already means by "not here",
-     it takes the row out of the accessibility tree as well as off the glass,
-     and `stick()` reads the same absence a hand does (a hidden row reports no
-     client rects, so it cannot be the pane's one pin). */
+  /* ...AND THE PLAYER HEADS FOLD WITH THE BODY THEY HEAD, WHILE THE CORNER
+     STAYS (2026-09-06, §15a). It read *"the column heads fold with the body
+     they head"* and hid the WHOLE row, which was right while the fold's own
+     button stood one row above it; the button is IN this row now, so a folded
+     row would take away the only way back. What folds is every cell BUT the
+     corner: the player heads and the `+` are not rendered at all, the corner
+     is the row's one cell, and — because a `display: none` row makes no
+     columns — the table is then one column wide and has nothing to scroll
+     sideways. The row is the SAME `<tr>` either way, so `stick()` reads one
+     head row in both states and `foldGrid` moves no furniture. */
+  /** THE TABLE'S OWN OPTIONS, AS THE RECORD ROW'S NEXT LINE (2026-09-06,
+   *  §15a). Same key, same fields, same `op()` wrapper as when it was an
+   *  orphan at the top of the `<tbody>`; what changed is that it is drawn
+   *  under the button that opens it, and that it is therefore on the glass
+   *  whether or not the grid is folded. It wears `nu-spopen`, so `stick()`
+   *  pins the record's line as its header the way it pins a scope's. */
+  const cornerSheet = (S: Shape): TemplateResult | typeof nothing => {
+    if (OPEN !== "corner") return nothing;
+    return openRow(S, sheetFor("corner", () => [{ kind: "ops",
+      label: t("head.song"),
+      ops: tableOps(A, S.across).map((x) => x.act
+        ? { ...x, act: () => op(x.word, x.act!) } : x) }]),
+      t("head.song"), "nu-spopen");
+  };
+
   const thead = (S: Shape, cols: string[]): TemplateResult => {
     const list = scopes();
     return html`<thead>
     ${recordRow(S, list)}
+    ${cornerSheet(S)}
     ${scopeRows(S, list)}
-    ${gridLabel(S)}
-    <tr ?hidden=${!GRIDOPEN}>
+    <tr class="nu-gridhead">
       <th class="nu-cornerh">${cornerBtn(S)}</th>
-      ${repeat(cols, (c) => c, (c) => S.across ? secHead(S, c) : voiceHead(S, c))}
-      <th class="nu-plushead" scope="col">${plusBtn(S, "head")}</th>
+      ${GRIDOPEN ? repeat(cols, (c) => c,
+          (c) => S.across ? secHead(S, c) : voiceHead(S, c)) : nothing}
+      ${GRIDOPEN ? html`<th class="nu-plushead" scope="col">${
+        plusBtn(S, "head")}</th>` : nothing}
     </tr>
   </thead>`;
   };
@@ -1023,13 +1071,58 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       ><span class="nu-cnfirst">${first}</span></b>`;
   };
 
-  const cornerBtn = (S: Shape) => html`<button type="button"
-    class="nu-rowjump nu-corner" data-k="tcorner"
-    aria-expanded=${String(OPEN === "corner")}
-    aria-label=${t("head.corner.aria")}
-    @click=${() => toggle("corner")}
-    @contextmenu=${(e: Event) => { e.preventDefault(); toggle("corner", true); }}
-    >${S.across ? t("noun.player") : t("noun.section")}</button>`;
+  /** THE FROZEN COLUMN'S HEAD, AND IT IS THE GRID'S OWN DISCLOSURE
+   *  (2026-09-06, §15a). Paul: *"Get rid of the words 'the record' and the
+   *  Section header entirely — we can make room."* The SECTIONS label row said
+   *  `sections` over a column head that already says SECTION, and it charged a
+   *  phone 45px + 3px of border-spacing to do it. Its two jobs are here now:
+   *  the head prints its own word and, UNDER it, the count the label's face
+   *  carried; and its TAP is the fold — `data-k="tsections"` (an address does
+   *  not move when a control does), `aria-expanded` saying which way it
+   *  stands, `aria-controls` naming the body it folds.
+   *
+   *  THE COUNT IS UNDER THE WORD AND NOT BESIDE IT, WHICH IS ARITHMETIC. The
+   *  corner is `--headbase` — 8ch, MEASURED at 81.4px on a phone, 73.4 inside
+   *  the cell's padding and 66.7 inside the button's — and it may not grow: at
+   *  390 the players are 70px apart and 364.4 − 81.4 is exactly four of them,
+   *  so a corner one pixel wider shows three. `13 sections · 76 bars` is
+   *  121.3px on one line and wraps to two inside 66.7 (`13 sections` 63.5,
+   *  `76 bars` 40.4). Three lines of 12.48 is 37.4px, which is inside the
+   *  button's own 44px floor: the count costs the head NO HEIGHT.
+   *
+   *  AND `tcorner` LEFT THIS CELL FOR THE SAME ARITHMETIC — 81.4px does not
+   *  hold two 44px targets side by side (47.1 + 44 = 91.1), and stacking them
+   *  costs 34.7px of head band, which is the 45px the label row gave back. It
+   *  is at the end of the record's line now (`optsBtn`), with its address, its
+   *  key and its sheet untouched.
+   *
+   *  THE COUNT IS THE RECORD'S AND NOT THE VIEW'S (§13e), so it reads the same
+   *  when §5's transpose turns the grid and the head's word becomes PLAYER:
+   *  sections and bars are document facts either way. */
+  const cornerBtn = (S: Shape) => {
+    const secs = A.doc().form.sections;
+    const bars = secs.reduce((n, x) => n + (x.bars || 0), 0);
+    /* AND IT DOES NOT WEAR `.nu-rowjump`, WHICH IS A MEASUREMENT AND NOT A
+       TIDY-UP. The corner has worn the row head's class since the table was
+       drawn, and that was free while its `aria-expanded` was FALSE at rest.
+       It is TRUE at rest now — a fold that stands open — and five gates and
+       this page's own "shut whatever is open" gesture reach for
+       `[aria-expanded="true"].nu-rowjump`. MEASURED the hour this landed:
+       T9m/T9n went red on a table that had been folded away by the tidy-up
+       before them, and the whole grid was off the glass. It takes the box
+       (`.nu-corner` is named beside `.nu-rowjump` in the stylesheet) and not
+       the class — §13f's own arrangement for `.nu-labelbtn`, a third time. */
+    return html`<button type="button"
+      class="nu-corner" data-k="tsections"
+      aria-expanded=${String(GRIDOPEN)} aria-controls="nu-gridbody"
+      aria-label=${GRIDOPEN ? t("grid.sections.collapse.aria")
+                            : t("grid.sections.expand.aria")}
+      @click=${foldGrid}
+      ><b class="nu-cornerword">${
+        S.across ? t("noun.player") : t("noun.section")}</b
+      ><span class="nu-seccount">${tn("grid.sections.count", secs.length,
+        { bars: tn("count.bar", bars) })}</span></button>`;
+  };
 
   /** A PLAYER'S HEAD. The lamp is a SIBLING of the button inside the `<th>` and
    *  never a child of it: `[data-live]` is a surface the clock may write, and a
@@ -1163,7 +1256,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       ${repeat(rows, (r) => r, (r) => bodyRow(S, r, cols))}
       <tr class="nu-addrow">
         <th class="nu-plusrowh" scope="row">${plusBtn(S, "foot")}</th>
-        <td colspan=${nCols(S) - 1}></td>
+        <td colspan=${Math.max(1, nCols(S) - 1)}></td>
       </tr>
     </tbody>`;
 
@@ -1174,11 +1267,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
    *  is asked rather than named, and the corner is an orphan either way. */
   const orphanSheet = (S: Shape): TemplateResult | typeof nothing => {
     if (!OPEN) return nothing;
-    if (OPEN === "corner")
-      return openRow(S, sheetFor("corner", () => [{ kind: "ops",
-        label: t("head.song"),
-        ops: tableOps(A, S.across).map((x) => x.act
-          ? { ...x, act: () => op(x.word, x.act!) } : x) }]), t("head.song"));
+    /* (THE CORNER'S SHEET WAS AN ORPHAN HERE until 2026-09-06, §15a, and it
+       stopped being one when its button did. `tcorner` stands on the RECORD's
+       line now, so its sheet is that row's own next line — §13a.3's law, the
+       one Paul read out loud as *"when I click time and rules they show up
+       under phrases"* — and it is drawn by `cornerSheet` in the `<thead>`.
+       The move is not tidiness: the `<tbody>` is `hidden` while the grid is
+       folded, and a gear that opened a sheet inside it would have been a door
+       to nothing on a folded sheet, which is this branch's own characteristic
+       bug.) */
     /* A SPECIAL ROW'S SHEET IS NOT AN ORPHAN, and that is the v285 repair:
        it HAS a row of its own, in the `<thead>`, and `specialRows` draws the
        sheet as that row's own next line. It stood here until Paul read the

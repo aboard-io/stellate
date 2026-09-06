@@ -3873,3 +3873,207 @@ by reading the code. The fix is one clause beside `set`'s own. `test/table.brows
 T15c drives it on the rendered phone: two picks write `"a + b"`, the CELL in the
 grid reads the whole chain, one Ctrl-Z takes the second word off and leaves the
 first standing, `default` clears, and the pane's `scrollTop` never moves.
+
+### 15a · The two labels go
+
+*(2026-09-06. Paul, verbatim: **"Get rid of the words 'the record' and the
+Section header entirely—we can make room."** And, the same afternoon:
+**"In the song section area I can drag it too far right and then the whole
+thing moves including the fixed parts. So it all feels reel wobbly."**)*
+
+Two rows at the top of the sheet cost two full lines of a phone and both said
+what the thing under them already was. `THE RECORD` sat to the left of a line
+that reads `84 BPM · 4/4 · G♯ natural minor`; `SECTIONS` sat over a column head
+that prints SECTION. **The words go, every function stays, and the grid gets
+the room.** Measured under `devices["iPhone 14"]`, DPR 3, `isMobile`,
+`hasTouch`, at 390 × 844 and 320 × 844 plus 1280, on **Kingston 1969**, the
+**Silence record** and **Coach House** (10 players, 14 sections, imported
+through the Export sheet's own `<input type="file">`). The probe is
+`scratchpad/design/no-labels/probe.cjs`, before and after on the same tree.
+
+#### THE RECORD ROW IS ITS OWN FACE
+
+`special.record.word` is deleted — from the row, from `special.ts RECORD`'s
+shape, and from the copy catalogue. The face is the line now: it reads from the
+START, at the body's own ink rather than a face's `--dim`, because it is no
+longer a value hung off the end of a heading. Nothing else moved: the row is
+still the sheet's first, still one `--tap` line, still `.nu-labelbtn` and not
+`.nu-sphead`, still `aria-controls`-ing its seven, and the accessible name is
+the disclosure's own two sentences — *"Show the record settings"* /
+*"Hide the record settings"* — which is what a screen reader was told before
+the word went and is what it is told now.
+
+#### THE SECTIONS LABEL ROW IS DELETED INTO THE HEAD IT LABELLED
+
+`gridLabel`, `.nu-gridlabel`, `.nu-labelcell` and `grid.sections.word` are
+gone. Its two jobs are the frozen column's head:
+
+- **the count** is drawn under that head's word, in the register the label's
+  face wore (`--dim`, no uppercase, no tracking) — `13 sections · 76 bars`;
+- **the fold** is that head's own tap. `data-k="tsections"` moved onto the
+  button (an address does not move when a control does), with `aria-expanded`,
+  `aria-controls="nu-gridbody"`, the `nu.band.grid.v1` preference, no `op()`,
+  no `changed()` and no undo step — unchanged, all of it.
+
+**WHERE THE COUNT SITS WHEN THE GRID IS FOLDED: exactly where it sits when it
+is open, on a line that is then the pane's full width.** Folded, the head row
+draws its CORNER and nothing else — the player heads and the `+` are not
+rendered, the `<tbody>` and the mix row are `hidden` — so the head is a
+344 × 44 line at 390 reading `SECTION   14 sections · 88 bars`, which is the
+old label row's own layout. It has to stay: it is the button that folded the
+grid and the only way back.
+
+**AND THE COUNT IS UNDER THE WORD BECAUSE OF ARITHMETIC, NOT TASTE.** The
+corner is `--headbase` — 8ch, **measured 81.4px** on both phone widths, 73.4
+inside the cell's padding and **66.7 inside the button's** — and it may not
+grow: at 390 the players are 70px apart and 364.4 − 81.4 is *exactly* four of
+them, so a corner one pixel wider shows three and §14's own number regresses.
+`14 sections · 88 bars` is 121.3px on one line and wraps to two inside 66.7.
+Three lines of 12.48px is **37.4px, inside the button's own 44px floor: the
+count costs the head band nothing** (53.3px before and after, against §13b's
+phone ceiling of 56).
+
+**A NO-BREAK SPACE BEFORE THE `·` WAS TRIED AND MEASURED OUT.** The plain
+string wraps as `14 sections` / `· 88 bars`, with the separator leading the
+second line. Binding it to the word before it needs **68.6px** against the
+button's 66.7, so the nbsp broke the line one word EARLIER and gave three lines
+(`14` / `sections ·` / `88 bars`). Two lines with a hanging separator beat
+three; the 1.9px could have come out of the button's padding, and a line that
+fits by 0.8px on one record is a line that wraps on the next.
+
+#### WHAT IT COST, SAID PLAINLY: `tcorner` LEFT THE CORNER
+
+The corner already held a control — `tcorner`, *"Song options"*: fill from the
+genre, re-seed, transpose. **81.4px does not hold two 44px targets** (the word
+is 40.4 plus 6.7 of padding, and a `--tap` sibling is 44: 91.1 against 73.4),
+and **stacking them costs 34.7px of head band, which is the 45px the label row
+just gave back** — measured, that puts the grid back at nine sections. So the
+head holds one control and it is the fold, which is what Paul asked for.
+
+`tcorner` is at the END OF THE RECORD'S LINE now, a `--tap` square (measured
+44 × 44) wearing `ui/glyph.js`'s own gear, in the shape `.nu-spclose` already
+is at the other end of an open row. **Its address, its open key, its fields,
+`STICKY`'s exception for it and `openCorner()` are all untouched** — only where
+the button stands changed, and with it where its SHEET is drawn: it was an
+orphan at the top of the `<tbody>` (which is where a column head's sheet lands,
+because a column has no row) and it is the record row's own next line now,
+§13a.3's law. **That is not tidiness: the `<tbody>` is `hidden` while the grid
+is folded, and the gear is the record's control and not the grid's — so left
+where it was, a tap on it with the sections folded would have opened a sheet
+nobody could see**, which is this branch's own characteristic bug. Measured in
+all four states: at rest, gear open (`ttab-fill` and `ttab-transpose` on the
+glass, one `.nu-spopen` in the head), folded, and folded WITH the gear open —
+the sheet is on the glass in both of the last two — so `test/table-inventory.json` needs no re-filing: `tcorner`
+is on the glass at rest with a 44px box, and `ttab-fill` · `ttab-seed` ·
+`ttab-transpose` still open behind one tap on it. Scope-wise it is where it
+belongs: two of its three ops rewrite the whole record and the third turns the
+whole table, which is the argument §14 used to pull MASTER, PRODUCE and
+PERFORMANCE up out of the foot.
+
+#### AND A FOLDED TABLE IS ONE COLUMN, WHICH THE FIRST DRAWING GOT WRONG
+
+`nCols` returns **1** while the grid is folded, and that is a fact about the
+rendered table rather than a convenience. Under `table-layout: fixed` the FIRST
+row decides the grid, and the record's merged `<th colspan="12">` cut a 358px
+pane into twelve: **measured, the corner came out 18.5px wide with its own
+count wrapping 187px down the screen.** With `nCols` honest, the folded table
+declares one `<col>`, takes `--panew` for its width (`.is-folded`) and has
+nothing to scroll sideways — `scrollWidth 364 = clientWidth 364` at 390.
+
+#### THE NUMBERS
+
+| | before (v295) | after |
+|---|---|---|
+| head rows at rest, all three records | **3** — record · SECTIONS label · heads | **2** — record · heads |
+| where the grid STARTS inside the pane, Kingston / Coach, 390 · 320 · 1280 | **155.3px** | **107.3px** — 48px higher |
+| …the Silence record | 147px | **99px** |
+| **sections whole on the glass at rest, Kingston 1969** (13), 390 · 320 · 1280 | **9** | **10** |
+| **sections whole on the glass at rest, Coach House** (14), 390 · 320 · 1280 | **9** | **10** |
+| the Silence record (1 section) | 1 | **1** |
+| the pinned band (the column heads) at 390 / 320 | 53.3px | **53.3px** — unmoved, count and all |
+| the corner head | 81.4 × 53.3, `SECTION` | **81.4 × 53.3**, `SECTION` over `14 sections · 88 bars`, its button 73.4 × 44 |
+| players whole on a 390 screen (Coach House) | 4 of 10 | **4 of 10** |
+| …on a 320 screen | 3 of 10 | **3 of 10** |
+| cells printing a word, Coach House / Kingston | 140/140 · 87/91 | **140/140 · 87/91** |
+| overlapping cell pairs, every record, every width | 0 | **0** |
+| the folded head at 390 | the label row, full width, with the count | **the corner, 344 × 44, with the count** |
+| the folded table's sideways slack at 390 | — | **0** (`scrollWidth 364 = clientWidth 364`) |
+| page errors, console errors | 0 | **0** |
+
+#### NOTHING RUBBER-BANDS
+
+> *"In the song section area I can drag it too far right and then the whole
+> thing moves including the fixed parts. So it all feels reel wobbly."*
+
+**MEASURED FIRST, at 390 on Kingston 1969 (v295):** the pane is
+`clientWidth 364 / scrollWidth 625`, `scrollLeft` clamps at **261**, there is
+**no dead space** to the right of the table, and the frozen section column's
+left edge is **16px at rest and 16px at maximum scroll**. The page itself does
+not scroll sideways (`documentElement.scrollWidth 390 = clientWidth 390`). So
+there is no layout fault under the complaint.
+
+**CHAINING IS NOT BOUNCING, and that distinction is the whole fix.**
+`.nu-pane` carried `overscroll-behavior-x: contain`, which stops the gesture
+CHAINING to the scroller behind it — and still lets the pane rubber-band inside
+ITSELF at its own end. A rubber-band translates the whole scroller, `position:
+sticky` children included, which is exactly *"the whole thing moves including
+the fixed parts"*. `html` was at `auto`, so the document could bounce too, and
+on iOS Safari a document bounce visibly shifts `position: fixed` chrome — our
+bottom bar. **`overscroll-behavior: none`** on `.nu-pane` (both axes; the pane
+scrolls both), on `.nu-sheetwrap`'s table pane, on `#atlasJump` (the other
+strip a thumb drags sideways) and on `html, body`. The vertical-only scrollers
+— the sheet wrap's own boxes, `#nu-menu`, `.nu-strip-out` — keep `contain`:
+they were not what a hand drags sideways and nothing measured says they bounce.
+
+**AND THE DOCUMENT'S `none` HAS A SECOND GAIN worth saying out loud rather
+than hiding as a side effect**: `overscroll-behavior-y: none` on the page turns
+OFF pull-to-refresh, so a downward flick at the top of the sheet can no longer
+reload the box in the middle of an edit.
+
+**WHAT THE GATE CAN AND CANNOT MEASURE, said in its own comment.** A headless
+engine does not rubber-band, so **T13q reproduces no feel**. It holds the
+DECLARATIONS (`overscroll-behavior-x` and `-y` are `none` on the pane and on
+the document element) and the three facts that say there is nothing else under
+the complaint: the pane's `scrollLeft` clamps to `scrollWidth − clientWidth`
+(measured 261 · 331 · 471 · 541 and got exactly that), the frozen column's left
+edge is identical at rest and at that maximum (15.8 both), and the page's
+`scrollWidth` still equals its `clientWidth` at both widths.
+
+#### THE GATES
+
+`test/table.browser.js` **T13m** is rewritten off the label row and onto the
+head that took its jobs: the label row is gone, the corner prints its own word
+with the count UNDER it in a different ink, it is ONE button at `tsections`
+with `aria-expanded` and `aria-controls`, it is 44px and the band is still
+inside §13b's ceiling, and the grid starts at ≤ 116px — the measured budget for
+a tenth section row (67.5px apart in a 788px pane). **T13p** asks the fold of
+the same head: what goes is the body, the PLAYER heads and the mix row, and
+what stays is the record's line, the head itself and its count, with the store,
+the undo stack, the scrollTop and the reload claims unchanged. **T13q** is new
+and is the wobble's. **T14a** drops `/^the record$/i` for the opposite claim —
+no `.nu-spword` on that line at all, the face starting at the line's leading
+edge in the body's ink — and asserts the second button by name, box and
+position. `test/table.browser.js` **T10a**'s row ORDER drops `"label"` — the sheet's
+head is `record · rules · time · chords · motifs · master · produce · perf ·
+heads`, nine rows where it was ten. `test/copy.test.js`'s two same-text
+exemptions
+(`glyph.sec.list`/`grid.sections.word`, `exportTab.json.what`/
+`special.record.word`) are deleted with the keys they exempted: an exemption
+for a key that does not exist is the same orphan the key would have been.
+
+**`test/table-inventory.json` IS NOT TOUCHED**, and that is the point of moving
+the button rather than the door: `tcorner` is still a `data-k` on the glass at
+rest with a 44px box, and the three `ttab-*` rows still name it as their
+`open`.
+
+**AND THREE GATE SELECTORS LEARNED THAT A FOLD IS NOT A SHEET, FOR THE THIRD
+TIME.** `.nu-labelbtn` exists because a disclosure must not answer
+`[aria-expanded="true"].nu-sphead` — every "shut whatever is open" gesture uses
+that shape. The corner has worn `.nu-rowjump` (the row head's class) since the
+table was drawn, which was free while its `aria-expanded` was FALSE at rest;
+it is TRUE at rest now. **MEASURED the hour it landed: T9m and T9n went red
+with every height at 0, because `shutAll()` had folded the whole grid away
+before them.** So the fold takes `.nu-rowjump`'s BOX and not its class
+(`.nu-corner` is named beside it in the stylesheet), and the two selectors that
+exclude `.nu-labelbtn` by name — `test/sheets.js`'s "is a sheet already open"
+and `test/table.browser.js`'s two shut gestures — exclude `.nu-corner` too.

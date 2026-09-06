@@ -2115,9 +2115,6 @@ var SPECIALS = [
 var RECORD = {
   k: "trecord",
   id: "record",
-  get word() {
-    return t4("special.record.word");
-  },
   face: timeFace
 };
 var PRODUCE = {
@@ -2401,7 +2398,7 @@ function bandTable(host, A2) {
     const owner = spOpen > 0 ? spOpen - 1 : -1;
     const last = rows.length - 1;
     const lastRow = last >= 0 ? rows[last] : null;
-    const heads = !!lastRow && !lastRow.dataset.special && !lastRow.classList.contains("nu-gridlabel") && !lastRow.classList.contains("nu-spopen");
+    const heads = GRIDOPEN && !!lastRow && !lastRow.dataset.special && !lastRow.classList.contains("nu-spopen");
     const pinned = cellOpen ? -1 : owner >= 0 ? owner : heads ? last : -1;
     const pinRow = pinned >= 0 ? rows[pinned] : null;
     for (const tr of all)
@@ -2527,22 +2524,29 @@ function bandTable(host, A2) {
     const cols = S2.across ? S2.secs.map((s3) => s3.id) : S2.voices.map((v3) => v3.name);
     return b`<div class="nu-pane" data-pane="table" tabindex="0"
         @keydown=${(e4) => onKey(e4, S2)}>
-      <table class="nu-wordgrid nu-trims nu-sheetgrid"
+      <table class=${"nu-wordgrid nu-trims nu-sheetgrid" + (GRIDOPEN ? "" : " is-folded")}
         style=${o3({ "--cols": String(cols.length + 1) })}>
-        <colgroup>
+        ${/* AND A FOLDED TABLE DECLARES ONE COLUMN (2026-09-06, §15a). The
+        player columns are not rendered while the grid is folded, so a
+        `<colgroup>` still naming them would size a table with nothing in
+        it — 625px of scrollable width on a 364px pane, which is the
+        sideways slack Paul felt as *"wobbly"*. One `<col>`, and
+        `.is-folded` takes the pane's own width. */
+    A}
+        ${GRIDOPEN ? b`<colgroup>
           <col />
           ${cols.map((c3) => b`<col style=${o3(
       WIDTH.has(c3) ? { inlineSize: WIDTH.get(c3) + "px" } : {}
     )} />`)}
           <col class="nu-addcol" />
-        </colgroup>
+        </colgroup>` : b`<colgroup><col /></colgroup>`}
         ${thead(S2, cols)}
         ${tbody(S2, rows, cols)}
         ${S2.across ? A : tfoot(S2, cols)}
       </table>
     </div>`;
   };
-  const nCols = (S2) => (S2.across ? S2.secs.length : S2.voices.length) + 2;
+  const nCols = (S2) => GRIDOPEN ? (S2.across ? S2.secs.length : S2.voices.length) + 2 : 1;
   const NOLAMP = () => A;
   const scopes = () => {
     const out = SPECIALS.map((sp) => ({
@@ -2618,11 +2622,24 @@ function bandTable(host, A2) {
           aria-controls=${list.map((x2) => "nu-scope-" + x2.id).join(" ")}
           aria-label=${RECOPEN ? t4("special.record.collapse.aria") : t4("special.record.expand.aria")}
           @click=${openRecord}
-          ><b class="nu-spword">${RECORD.word}</b
-          ><span class="nu-spface">${face2}</span></button>
+          ><span class="nu-spface">${face2}</span></button>${optsBtn()}
         </div>
       </th>
     </tr>`;
+  };
+  const optsBtn = () => {
+    const mk = actMark("opts");
+    return b`<button type="button" class="nu-spclose nu-spopts"
+      data-k="tcorner"
+      aria-expanded=${String(OPEN === "corner")}
+      aria-label=${t4("head.corner.aria")}
+      @click=${() => toggle("corner")}
+      @contextmenu=${(e4) => {
+      e4.preventDefault();
+      toggle("corner", true);
+    }}
+      ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "⚙"}</span
+      ><span class="nu-vh">${t4("head.corner.aria")}</span></button>`;
   };
   const scopeRows = (S2, list) => {
     const out = [];
@@ -2656,43 +2673,39 @@ function bandTable(host, A2) {
     RECOPEN = !RECOPEN;
     draw();
   }
-  const gridLabel = (S2) => {
-    const secs = A2.doc().form.sections;
-    const bars = secs.reduce((n3, x2) => n3 + (x2.bars || 0), 0);
-    return b`<tr class="nu-gridlabel">
-      <th class="nu-spheadcell nu-labelcell" scope="colgroup"
-          colspan=${nCols(S2)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-labelbtn" data-k="tsections"
-          aria-expanded=${String(GRIDOPEN)} aria-controls="nu-gridbody"
-          aria-label=${GRIDOPEN ? t4("grid.sections.collapse.aria") : t4("grid.sections.expand.aria")}
-          @click=${foldGrid}
-          ><b class="nu-spword">${t4("grid.sections.word")}</b
-          ><span class="nu-spface">${tn(
-      "grid.sections.count",
-      secs.length,
-      { bars: tn("count.bar", bars) }
-    )}</span></button>
-        </div>
-      </th>
-    </tr>`;
-  };
   function foldGrid() {
     if (GRIDOPEN && OPEN && !RECORD_KEY(OPEN)) toggle(OPEN);
     GRIDOPEN = !GRIDOPEN;
     saveGridOpen();
     draw();
   }
+  const cornerSheet = (S2) => {
+    if (OPEN !== "corner") return A;
+    return openRow(
+      S2,
+      sheetFor("corner", () => [{
+        kind: "ops",
+        label: t4("head.song"),
+        ops: tableOps(A2, S2.across).map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
+      }]),
+      t4("head.song"),
+      "nu-spopen"
+    );
+  };
   const thead = (S2, cols) => {
     const list = scopes();
     return b`<thead>
     ${recordRow(S2, list)}
+    ${cornerSheet(S2)}
     ${scopeRows(S2, list)}
-    ${gridLabel(S2)}
-    <tr ?hidden=${!GRIDOPEN}>
+    <tr class="nu-gridhead">
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
-      ${c2(cols, (c3) => c3, (c3) => S2.across ? secHead(S2, c3) : voiceHead(S2, c3))}
-      <th class="nu-plushead" scope="col">${plusBtn(S2, "head")}</th>
+      ${GRIDOPEN ? c2(
+      cols,
+      (c3) => c3,
+      (c3) => S2.across ? secHead(S2, c3) : voiceHead(S2, c3)
+    ) : A}
+      ${GRIDOPEN ? b`<th class="nu-plushead" scope="col">${plusBtn(S2, "head")}</th>` : A}
     </tr>
   </thead>`;
   };
@@ -2712,16 +2725,21 @@ function bandTable(host, A2) {
       ><span class="nu-cnfull">${name}</span
       ><span class="nu-cnfirst">${first}</span></b>`;
   };
-  const cornerBtn = (S2) => b`<button type="button"
-    class="nu-rowjump nu-corner" data-k="tcorner"
-    aria-expanded=${String(OPEN === "corner")}
-    aria-label=${t4("head.corner.aria")}
-    @click=${() => toggle("corner")}
-    @contextmenu=${(e4) => {
-    e4.preventDefault();
-    toggle("corner", true);
-  }}
-    >${S2.across ? t4("noun.player") : t4("noun.section")}</button>`;
+  const cornerBtn = (S2) => {
+    const secs = A2.doc().form.sections;
+    const bars = secs.reduce((n3, x2) => n3 + (x2.bars || 0), 0);
+    return b`<button type="button"
+      class="nu-corner" data-k="tsections"
+      aria-expanded=${String(GRIDOPEN)} aria-controls="nu-gridbody"
+      aria-label=${GRIDOPEN ? t4("grid.sections.collapse.aria") : t4("grid.sections.expand.aria")}
+      @click=${foldGrid}
+      ><b class="nu-cornerword">${S2.across ? t4("noun.player") : t4("noun.section")}</b
+      ><span class="nu-seccount">${tn(
+      "grid.sections.count",
+      secs.length,
+      { bars: tn("count.bar", bars) }
+    )}</span></button>`;
+  };
   const voiceHead = (S2, name) => {
     const v3 = A2.doc().voices.find((x2) => x2.name === name);
     const vi = A2.doc().voices.indexOf(v3);
@@ -2814,17 +2832,11 @@ function bandTable(host, A2) {
       ${c2(rows, (r2) => r2, (r2) => bodyRow(S2, r2, cols))}
       <tr class="nu-addrow">
         <th class="nu-plusrowh" scope="row">${plusBtn(S2, "foot")}</th>
-        <td colspan=${nCols(S2) - 1}></td>
+        <td colspan=${Math.max(1, nCols(S2) - 1)}></td>
       </tr>
     </tbody>`;
   const orphanSheet = (S2) => {
     if (!OPEN) return A;
-    if (OPEN === "corner")
-      return openRow(S2, sheetFor("corner", () => [{
-        kind: "ops",
-        label: t4("head.song"),
-        ops: tableOps(A2, S2.across).map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
-      }]), t4("head.song"));
     if (OPEN.indexOf("col|") === 0 && !S2.across)
       return openRow(S2, sheetFor(OPEN, () => colSheetOf(OPEN.slice(4))), OPEN.slice(4));
     if (OPEN.indexOf("row|") === 0 && S2.across)
