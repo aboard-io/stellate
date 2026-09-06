@@ -8553,6 +8553,21 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    same air, said on the container, and it is never negative. */
 .nu-lzwrap:not([hidden]){ display: flex; flex-wrap: wrap; gap: var(--s2); }
 .nu-lzcluster.is-folded > .nu-lzhead{ opacity: .75; }
+/* ...AND THE ONE FOLD THAT HOLDS THE ANSWER SAYS SO (2026-09-06, TABLE.md
+   §15). A field too tall for the phone opens on the cluster its standing word
+   is in, and when even that will not fit it opens on none — so the heading
+   that holds the record's own answer is drawn in `--hand` (DESIGN.md §1:
+   "hand = you set it") at full weight, and the word itself is on the field's
+   head one row above. `aria-current` is the same fact for a screen reader. */
+.nu-lzcluster.is-standing > .nu-lzhead{ opacity: 1;
+  color: var(--hand); border-block-end-color: var(--hand); }
+.nu-lzcluster.is-standing > .nu-lzhead .nu-lzheadword{ font-weight: var(--fw-display); }
+/* the word the record is standing on, read off a folded cluster's own heading:
+   a VALUE and not an option, so it is not a pill and carries no address. */
+.nu-lzheld{ margin-inline-start: auto; max-inline-size: 60%;
+  font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
+  color: var(--hand); text-transform: none; letter-spacing: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---- ONE LOZENGE: THE PILL IS THE THUMB, AND NOTHING OVERLAPS --------
    WHAT STOOD HERE, AND WHAT PAUL PHOTOGRAPHED. DESIGN.md §2/16 says *"~28px
@@ -8708,6 +8723,26 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    at 1280 the sheet's own `.nu-wchips` wears the same plate and T12b counted
    it. One rule for both, because it is one strip. */
 #pan-band .nu-wchips{ background: transparent; border: 0; box-shadow: none; }
+/* ---- THE REFUSAL SAID OUT LOUD (2026-09-06, TABLE.md §15) --------------
+   `.nu-lzsay`'s twin, for the widgets that are not a lozenge field: the chip
+   strip, the ops bar, a refused field's own head, the slider. Same law, same
+   shape — THE ROOM IS RESERVED AT CREATION so a sentence arriving under a
+   thumb moves nothing, and only a COLOUR changes when one arrives. */
+.nu-wsay{ margin: var(--s2) 0 0; min-block-size: 1.75em;
+  padding: var(--s1) var(--s2);
+  /* IT IS ITS OWN LINE. `.nu-sheetrow` is a wrapping FLEX row, so a say line
+     with no basis would sit beside the control it explains and squeeze it;
+     `flex: 1 0 100%` puts it on the line under, which is where a sentence
+     goes. `grid-column` is for the two callers that are grids. */
+  flex: 1 0 100%; grid-column: 1 / -1;
+  font: var(--fw-body) var(--t1)/1.35 var(--sans, inherit); color: var(--dim); }
+.nu-wsay[data-said]{ background: var(--well); color: var(--flag, var(--ink)); }
+/* A REFUSED CHIP IS `aria-disabled` NOW AND NOT `disabled` (§15), so the
+   rules that dressed `[disabled]` have to name the other spelling too — or a
+   word a hand may not choose would be drawn exactly like one it may. */
+.nu-wchip[aria-disabled="true"]{ opacity: .55; cursor: not-allowed;
+  border-style: dashed; }
+.nu-opbtn[aria-disabled="true"]{ opacity: .5; cursor: not-allowed; }
 
 /* ======================================================================
    THE EQ CURVE AND THE XY PAD (2026-09-05 · DESIGN.md component 9 ·

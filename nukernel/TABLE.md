@@ -3663,3 +3663,213 @@ carrying this minute. The eight `atlas.*` search keys wave A left PROVISIONAL
 are final as written — the reading that settles them is that the FIELD filters
 and the CHIPS jump, so one is named for what it matches on and the other for
 its verb.
+
+### 15 · Wave B — the editor fits, the refusal speaks, the variation chains
+
+**APPROVED 2026-09-06** (docs/REDESIGN-SCOPE.md, wave B: items 4, 5 and 6),
+off the Coach House walkthrough — a fourteen-section trip-hop record built in
+the box on a phone (`scratchpad/pm-walkthrough/NOTES.md`, the record in
+`keeps/triphop-pm-walkthrough/`). Three of its ten frictions are one round:
+
+> 6. **The variation popup is 1,378 px tall on an 844 px phone**, three options
+>    to a line, some 38 px wide; I mis-tapped `filled in` into `a beat later`
+>    and did not notice.
+> 7. **Refusals are silent.** `filled in` on a pad is disabled with the sentence
+>    *"a pad voices the chord, it does not follow a line"* — shown to no one. I
+>    tapped it eight times.
+
+…and Paul, on the same box: *"I still can't pick more than one variation for a
+motif"* and *"And the same with the drums."*
+
+#### B4 · NO CONTROL TALLER THAN THE PHONE
+
+**WHAT WAS MEASURED FIRST** (`scratchpad/design/wave-b/probe.cjs`, iPhone 14
+emulation, DPR 3, `isMobile`, `hasTouch`, at 390×844 and 320×844, walking every
+sheet — the record's seven, the section rows, the column heads and one cell per
+player — on **Kingston 1969**, the **Silence** record and **Coach House**,
+imported through the Export sheet's own file input): **734 pickers, 80 of them
+taller than the viewport, 8 distinct fields past it.** The five tallest:
+
+| field | words | drawn | the standing answer sat |
+|---|---|---|---|
+| `rule.instr.0` (RULES · instrument) | 121 | **5,876 px** | 5,807 px down |
+| `sound.instrument\|<voice>` (a player's) | 147 | **4,416 px** | 1,448 px down |
+| `alphabet.scale` (TIME) | 64 | **2,231 px** | 2,163 px down |
+| `dev.kit\|kit\|s0` (the drummer's cell) | 69 | **1,873 px** | 1,450 px down |
+| `dev.line\|<voice>\|s0` (a line's cell) | 27 | **1,178 px** | 954 px down |
+
+The walkthrough's own 1,378 px is the last row, measured again after v287's
+lozenge landed. Two clusters, one of them holding 87 of 120 words, is what an
+instrument field is; a scale field is thirteen clusters and none of them large.
+
+**THE MECHANISM: THE FIELD FOLDS ITSELF TO FIT.** DESIGN.md §2/16 law 1 already
+names the ONE thing that may hide an option — a folded cluster, with its count
+on its heading so a fold is never a disappearance. This makes the fold answer
+the height. Three states, measured in order, the first that fits winning:
+
+- **A · every cluster open** — law 1 exactly as it was, and what any vocabulary
+  that fits still gets.
+- **B · the cluster holding the standing answer open**, the rest headings with
+  their counts. Every other word is ONE TAP away and the count says how many.
+- **C · every cluster folded**, the one holding the standing answer MARKED
+  (`aria-current`, drawn in `--hand`) and **printing the word it holds**
+  (`.nu-lzheld`, a readout and not a pill — no `data-k`, so no second element
+  on one address). The answer is also on the field's own head one row above.
+
+The height is **estimated before the first paint and measured after it**: a
+field is built before it is in the document, so `getBoundingClientRect` is zero
+at build time and a measure-then-refold would paint 5,823 px once and shrink
+it. `src/lozenge/field.ts` packs the words at the page's own width, and ONE
+`requestAnimationFrame` after the mount reads the real box and steps the field
+down a state if the estimate was generous — never up, and never against a hand:
+the moment a thumb presses a heading the field stops guessing (`TOUCHED`).
+
+**WHAT WAS REJECTED, WITH THE MEASUREMENT THAT REJECTED IT.**
+
+- **A bounded scroll box with the value pinned in it.** It is law 1's own
+  forbidden shape (*"nothing behind a wheel, a scroll box, or a 'more'"*) and it
+  puts back exactly what the walkthrough complained of — *"you scroll inside a
+  popup, over a table, inside a sheet. Three nested scrolls."* §11c made the
+  PANE the scrollport; a second scrollport inside it is the disease.
+- **A typed filter row past N words.** `src/menus/pick.ts` measured what a
+  focused text input does on this page at 390: the soft keyboard takes 320 of
+  the 844 and *"the number of options a thumb could reach without scrolling was
+  ONE, on nine of the thirteen menus driven"*. A filter that raises the keyboard
+  to shorten a list is a shorter list nobody can see. The typed COMBO keeps that
+  job on a fine pointer, where the keyboard is already there (pick.ts rule 4).
+- **Sending the flat vocabularies back to the native picker** (DESIGN §2/16's
+  own exception: *"the native picker stays only where a vocabulary is long AND
+  flat"*). It would have worked — 120 instruments in two headings is flat — and
+  it was not needed: the fold answers 120 words in 707 px, and a picker-choice
+  change would have moved `rule.instr` and `sound.instrument` off the widget
+  that shows the shape of the possible, which is what they are shopping in.
+
+**AND A SHEET IS NOT A PICKER.** The same walk measures the open SHEETS too:
+101 of 120 are taller than 844px, the tallest being Coach House's MOTIFS at
+5,352px (twenty-four motifs with their contours and their readers). That is not
+a control taller than the phone — a sheet is a SECTION OF THE PANE, and the
+pane is this page's one scrollport (§11c), so a long sheet is one scroll and
+never a scroll inside a scroll. What §15 forbids is the second scrollport, and
+the count that matters is the one below.
+
+**AFTER, THE SAME 734 PICKER MEASUREMENTS: 0 over 844.** The five tallest are now
+`sound.instrument` **707 px** (147 words, state C), `alphabet.scale` **702 px**
+(64 words, state B — the standing word's cluster open at 634px into the field),
+`dev.kit` **636 px** (69 words, state B), `bus|genre|name` **616 px** (13 words,
+state A — it always fitted) and `dev.line` **588 px** (27 words, state B). `test/table.browser.js` T15a walks
+the tall half of that census on all three records at 390, 320 and 1280 and
+fails on ONE picker past the viewport, or on one that does not show the answer
+it is standing on — the HOT WORD where a cluster is open, else the MARKED
+HEADING of the cluster holding it, else the field's own head one row above.
+
+**AND ONE THING A FOLD CANNOT POINT AT**, found by that walk and worth writing
+down rather than papering over: a record can be standing on a word its own
+vocabulary does not hold — the Silence record's fresh `line 1` names `synth`,
+and `avail.js instrOptions` offers that word only where the record or its basis
+declares a native model. `src/menus rowsOf` has a shape for this (a placeholder
+row, `menu.unknown`); the lozenge field does not. So a folded field has nothing
+of its own to mark, the head above it still prints the word, and T15a REPORTS
+that case rather than failing on it: it is a fact about the record, not about
+the fold, and it is the same one whether the field is folded or open.
+
+#### B5 · A REFUSAL IS SAID OUT LOUD
+
+The law `src/lozenge/field.ts` law 6 has stated since v287, now for **every
+widget a sheet can draw**: a refused control is **`aria-disabled` and never
+`disabled`** — a `disabled` button takes no click, so its reason is reachable
+only through a screen reader, which is the silent grey wearing an accessible
+name — and **a tap on it prints its reason and writes nothing**.
+
+ONE OWNER FOR THE SENTENCE: the `why` the field or the option already carries
+(avail.js / gates.js measured it; nothing derives a second one). ONE PLACE PER
+WIDGET: `.nu-lzsay` inside a lozenge field, `.nu-wsay` everywhere else, keyed by
+the field's own address and held across the redraw every write causes. Where it
+landed, and what was silent before:
+
+| widget | before | now |
+|---|---|---|
+| lozenge field | said (v287) | unchanged |
+| chip strip (`chipStrip`) | `disabled`, reason in `data-why`/`title` only | `aria-disabled`, a tap prints it in `.nu-wsay` |
+| the grid's native `<select>` | **no reason at all**, on the element or in the text | the reason rides IN THE OPTION'S WORDS, through `menu.withWhy` — the same key and the same join `src/menus/index.ts optionText` makes |
+| ops bar (`.nu-opbtn`) | `disabled`, silent | `aria-disabled`, a tap prints it; the bar has one say line |
+| a refused field HEAD | said nothing at all | prints its reason **and still opens** |
+| the slider | `why` was not drawn at all | refused: says and does not move; a number outside the range says the range (`sheet.slider.range`) |
+
+**AND A REFUSAL NEVER HIDES A VOCABULARY.** The refused head said-and-refused-
+to-open for one afternoon and `test/sheets.js` caught what that costs:
+avail.js's founding law is *"hiding destroys the shape of the possible"* — a
+refused control greys its words, it does not take them off the screen — and a
+head that will not open is a vocabulary nobody can see. The tap does both.
+
+The native `<select>` is the ONE widget that cannot take the tap — the browser
+owns that wheel and `<option disabled>` is a refusal it enforces — so it answers
+the law the way the menus module already answers it, with the sentence in the
+wheel itself. `test/selects.js` 5a drives the artifact: every refused option
+drawn on the page is TAPPED and the sentence has to arrive on the glass, and a
+second check asserts that not one of them is `disabled`, which would swallow the
+tap that asks.
+
+#### B6 · A VARIATION IS A CHAIN
+
+**THE DOCUMENT KEEPS ONE STRING.** A chain is the words joined with `" + "` — a
+space each side — in picked order: `"inverted + the first half"`. A single word
+is the bare word, **byte for byte**, so every saved record, every one of the 358
+catalogue anchors and `test/table.test.js` T2's `BASE_SHA` identity are
+untouched (T2 stayed green with no re-pin; `test/document.test.js` G15 asserts
+a one-word chain is the one operator it always was).
+
+**ONE SPLITTER, IN THE VOCABULARY'S OWNER.** `songs.js` exports `CHAINSEP`,
+`chainOf(s) → string[]` and `chainWord(words) → string`. `document.js opsOf`,
+`ui/derive.js kitFold`/`kitSays`, `avail.js optionsFor` and
+`src/table/model.ts` all read those; there is no second `.split(" + ")` on the
+page, and G15c asserts no key of `WORDS` and no key of `KITLABEL` contains the
+separator (a word holding one would be two words the moment it was written).
+
+**BOTH COMPILERS CHAIN IDENTICALLY.** The tune's words reach the kernel through
+`document.js opsOf`, which both compilers share (`scoreOf` calls it directly;
+the derive path renders the per-section genre `toGenre` built, whose `word(v)`
+IS that call), so the chain is folded in ONE place. The kit's word is applied by
+`ui/derive.js` at its three sites, and all three now go through `kitFold` — a
+`reduce` over `KITOPS`, which is legal because a kit operator is kit→kit and
+TOTAL (kernel.js's own sentence beside `KITOPS`), so the operators compose.
+
+**WHICH SHEETS ARE A CHAIN.** `dev.line` (the tune, 27 words) and `dev.kit` (the
+drums, 69) declare `multi: true, ordered: true` in `avail.js`. **`dev.bass` is
+deliberately not one**: it is a PATTERN choice — walking, octaves, pedal, reese
+— and two patterns at once is not a chain of operators, it is two answers to
+"what does the bass play". Paul asked for the motifs and the drums.
+
+**THE ABSENT WORD STANDS ALONE.** `avail.js`'s own `absent` — `""` for the kit,
+`"as written"` for the tune — is the answer meaning "this cell says nothing".
+Picking it CLEARS the chain; picking any other word while it stands REPLACES it,
+which falls out of filtering it from the order rather than being a second rule.
+
+**THE ORDER IS THE MEANING AND THE FIELD PRINTS IT** (`.nu-lzn`, 1, 2, 3…), from
+two words up: a chain of one has no order, so the "1" beside a single standing
+word — and beside "default" — is a number nobody can act on, and it is not
+drawn. G15 measures the music on the reference phrase `portrait()` freezes the
+whole catalogue with: `"inverted + the first half"` compiles to exactly two
+operators and equals `K.excerpt(0,8)(K.invert(4)(REF))` applied by hand — degrees
+`[4,3,2,1,0,-1,-2,-3]` twice over (`excerpt` loops the eight it kept), which is
+the INVERTED phrase's first eight notes and not the inversion of the whole.
+`invert` and `excerpt` COMMUTE (one is pointwise on the degrees, the other picks
+positions), which is a fact worth writing down rather than asserting past; the
+order claim is made on a POSITIONAL pair, `"the first half + a beat later"`
+(`[4,5,6,7,0,1,2,3]…`) against `"a beat later + the first half"`
+(`[2,1,0,1,0,1,2,3]…`). G15b makes the same claim for the kit: over
+`four + backbeat`, `"ghosts + accents"` is `accents` over the ghosted kit —
+snare `[0,0,0,3,9,0,0,3,…]` against `ghosts` alone `[0,0,0,2,1,0,0,2,…]` — and
+is neither of its words nor the other order.
+
+**UNDO IS ONE TAP, AND THE GATE HAD TO SAY SO BEFORE IT WAS.** One tap is one
+`w.set`, which is one document write through `avail.js`'s own door, which is one
+undo step — and `src/table/grid.ts wrapOps` wraps `set` and `clear` and knew
+nothing about `setChain`, so the first draft of this round shipped a chain that
+reached the SOUND and not the STACK. Measured on the rendered phone by T15c
+before the line existed: two picks on a drums cell, then Ctrl-Z, and the
+document did not move at all. This is the branch's characteristic bug —
+declared, costed, and not arriving — caught by driving the artifact rather than
+by reading the code. The fix is one clause beside `set`'s own. `test/table.browser.js`
+T15c drives it on the rendered phone: two picks write `"a + b"`, the CELL in the
+grid reads the whole chain, one Ctrl-Z takes the second word off and leaves the
+first standing, `default` clears, and the pane's `scrollTop` never moves.

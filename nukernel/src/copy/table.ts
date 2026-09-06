@@ -321,5 +321,9 @@ export const TABLE: Table = {
   "sheet.clearBack.aria": "{name} back to default",
   "sheet.slider.unit.aria": "{name}, in {unit}",
   "sheet.numbox.aria": "{name} — type a number",
+  /* the one sentence a NUMBER can be refused with: the range it is outside.
+     TABLE.md §15 — a refusal is said out loud, and a slider refuses a value
+     rather than a word. */
+  "sheet.slider.range": "Between {min} and {max}",
   "sheet.noOwner.why": "Not available here",
 };

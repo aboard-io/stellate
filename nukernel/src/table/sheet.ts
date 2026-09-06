@@ -68,7 +68,12 @@ interface LozDoor {
                disabled?: boolean; quiet?: boolean; cluster?: string | null }[];
     clusters?: { word: string; vals: string[] }[] | null;
     value?: string | null; why?: string | null; k?: string | null;
+    /** A CHAIN, IN ORDER (2026-09-06, TABLE.md §15). The component has had
+     *  `multi`/`ordered`/`values`/`onToggle` since it was written; this is the
+     *  first caller that says them. */
+    values?: string[] | null; multi?: boolean; ordered?: boolean;
     onWrite?: ((v: string) => void) | null;
+    onToggle?: ((v: string, on: boolean, order: string[]) => void) | null;
   }): HTMLElement;
 }
 const LOZ = (): LozDoor | null =>
@@ -101,6 +106,13 @@ function clustersOf(f: StripField): { word: string; vals: string[] }[] | null {
 }
 
 export function pickerFor(f: StripField): Picker {
+  /* 0 · A CHAIN CAN ONLY BE SAID BY THE ONE WIDGET THAT DRAWS ONE
+   *     (2026-09-06, TABLE.md §15). A `<select>` cannot hold an ordered set,
+   *     and a chip strip has no place to print the position, so a `multi`
+   *     field is a lozenge field wherever the component is on the page. With
+   *     no `NuLozenge` at all it falls through and is drawn single, which is
+   *     the shape it had before this round rather than a broken control. */
+  if (f.multi && LOZ()) return "lozenge";
   // 1 · A CALLER'S OWN WIDGET WINS. `model.ts` hands the long vocabularies a
   //     built control (`A.combo`, which is `ui/menus.js` `menuEl` — so on a
   //     coarse pointer that control is ALREADY the native picker, and this
@@ -124,6 +136,55 @@ export function pickerFor(f: StripField): Picker {
   //     `strip: true` — a cell sheet's row is inside a spreadsheet; see
   //     `PickOpts.strip` for the measurement that keeps it chips to 24.
   return pick((f.options || []).length, { strip: true });
+}
+
+/* ===== A REFUSAL IS SAID OUT LOUD (2026-09-06, TABLE.md §15) ============
+   THE COMPLAINT, VERBATIM (the Coach House walkthrough, friction 7): *"`filled
+   in` on a pad is disabled with the sentence 'a pad voices the chord, it does
+   not follow a line' — shown to no one. I tapped it eight times."* And the
+   verdict beside it: *"The app has a beautiful explanation and shows it to
+   nobody."*
+
+   THE LAW `src/lozenge/field.ts` LAW 6 STATES, NOW FOR EVERY WIDGET ON A
+   SHEET. A refused control is `aria-disabled` and NOT `disabled` — a
+   `disabled` button takes no click, so its reason is reachable only through a
+   screen reader, which is the silent grey wearing an accessible name — and a
+   TAP ON IT PRINTS ITS REASON and writes nothing.
+
+   ONE OWNER FOR THE SENTENCE AND ONE PLACE PER WIDGET. The sentence is the
+   `why` the field or the option already carries (avail.js / gates.js measured
+   it; nothing here derives a second one), and it is printed into the widget's
+   own say line — `.nu-wsay` here, `.nu-lzsay` inside a lozenge field, which is
+   the same idea in the component that owns it. The memory is keyed by the
+   FIELD'S ADDRESS for `GROUPOPEN`'s own reason: every write on this table ends
+   in `changed() -> draw()`, so a sentence held in a local would be gone the
+   moment it was said.
+
+   THE ONE WIDGET THAT CANNOT TAKE A TAP is the NATIVE `<select>`: the browser
+   owns its wheel and a `<option disabled>` is a real refusal it enforces. So
+   that widget answers the law the way `src/menus/index.ts` already answers it
+   — the reason is APPENDED TO THE OPTION'S OWN WORDS through the same
+   `menu.withWhy` key — and the sentence is on the glass in the wheel itself. */
+const SAID = new Map<string, string>();
+function say(key: string, why: string | null | undefined): void {
+  const w = why == null ? "" : String(why).trim();
+  if (!w) return;
+  if (SAID.get(key) === w) return;
+  SAID.set(key, w);
+  if (REDRAW) REDRAW();
+}
+/** ...and a WRITE clears it: the reason a control gave for refusing is about
+ *  the answer it refused, and it is stale the moment a different one lands. */
+function unsay(key: string): void {
+  if (SAID.delete(key) && REDRAW) REDRAW();
+}
+/** the ONE line, drawn wherever a widget can refuse. It reserves its room
+ *  whether or not there is a sentence, for `.nu-lzsay`'s own reason: a
+ *  sentence arriving under a thumb must not move the thing the thumb is on. */
+function sayLine(key: string): TemplateResult {
+  const w = SAID.get(key) || "";
+  return html`<p class="nu-wsay" role="status" aria-live="polite"
+    data-k=${"say|" + key} ?data-said=${!!w}>${w}</p>`;
 }
 
 const wordOf = (f: { word?: string | null }) =>
@@ -182,24 +243,34 @@ export function chipStrip(f: StripField,
     const hard = !!cellWhy;
     const off = !hard && !!o.off && v !== cur;
     const why = hard ? cellWhy : (off ? (o.why || "") : (o.why || null));
+    /* `aria-disabled` AND NOT `disabled` (2026-09-06, §15): a refused chip has
+       to take the tap that asks it why. It is skipped by the keyboard's own
+       walk for the same reason a refused lozenge is — a word you may not
+       choose is not a stop on the way to one. */
     return html`<button type="button"
       class=${classMap({ "nu-wchip": true, "is-quiet": !!o.quiet })}
       data-k=${f.key + "|" + v}
+      data-v=${v}
       aria-pressed=${String(v === cur)}
-      ?disabled=${hard || off}
+      tabindex=${hard || off ? "-1" : "0"}
       aria-disabled=${ifDefined(hard || off ? "true" : undefined)}
       data-why=${ifDefined(why == null ? undefined : why)}
-      title=${ifDefined(why ? why : undefined)}
       aria-label=${chipAria(w, hard ? cellWhy : (off ? (o.why || null) : null),
                             o.prov || null)}
-      @click=${() => { if (hard || off) return; onWrite(v); }}
+      @click=${() => { if (hard || off) { say(f.key, why); return; }
+                       unsay(f.key); onWrite(v); }}
       >${o.pv ? o.pv : nothing}<span class="nu-chipword">${w}</span
       >${o.prov ? html`<small class="nu-chipprov">${o.prov}</small>` : nothing}</button> `;
   };
   const all = f.options || [];
+  /* THE SAY LINE IS INSIDE THE WIDGET, which is `.nu-lzsay` inside
+     `.nu-lzfield` said again here: a sentence about a strip belongs to the
+     strip, so anything reading "the control the field drew" reads its refusal
+     with it. `.nu-wchips` is a wrapping flex row and `.nu-wsay` carries
+     `flex: 1 0 100%`, so it is a line of its own under the words. */
   if (!f.groups || !f.groups.length)
     return html`<div class="nu-wchips" role="group"
-      aria-label=${f.label}>${all.map(chip)}</div>`;
+      aria-label=${f.label}>${all.map(chip)}${sayLine(f.key)}</div>`;
   /* ---- ONE GROUP OPEN AT A TIME ------------------------------------
      TABLE.md 6, of the drummer's sixty-eight: *"the does-array sheet groups
      the ops by what they act on … one group open at a time, the active ops
@@ -232,6 +303,7 @@ export function chipStrip(f: StripField,
         const inGroup = !!want && !!g && g.word === want;
         return html`<span style=${inGroup ? "" : "display:none"}>${chip(o)}</span>`;
       })}</div>
+    ${sayLine(f.key)}
   </div>`;
 }
 
@@ -328,19 +400,25 @@ function fieldRow(f: Field, openField: string | null,
                   after: () => void): TemplateResult {
   if ((f as { kind?: string }).kind === "ops") {
     const o = f as Extract<Field, { kind: "ops" }>;
+    /* AN OP SAYS WHY IT WILL NOT RUN (2026-09-06, §15). `?disabled` swallowed
+       the click, so "Already first" and "A song needs one section" — real
+       sentences, written and measured — reached nobody with a thumb. The bar
+       has ONE say line, addressed by the bar rather than by an op, because a
+       toolbar is one control with several verbs. */
+    const bark = "ops|" + (o.label || "") + "|" + (o.ops[0] ? o.ops[0].k : "");
     return html`<div class="nu-sheetrow nu-sheetops">
       ${o.label ? html`<b class="nu-sheetlab">${o.label}</b>` : nothing}
       <div class="nu-opbar">${o.ops.map((op) => html`<button type="button"
         class="nu-opbtn" data-k=${op.k}
-        ?disabled=${!!op.why}
         aria-disabled=${ifDefined(op.why ? "true" : undefined)}
         data-why=${ifDefined(op.why || undefined)}
-        title=${ifDefined(op.why || undefined)}
         aria-label=${op.why ? t("sheet.refused",
                                 { name: op.aria || op.word, why: op.why })
                             : (op.aria || op.word)}
-        @click=${() => { if (op.why || !op.act) return;
+        @click=${() => { if (op.why) { say(bark, op.why); return; }
+          if (!op.act) return; unsay(bark);
           try { op.act(); } catch (e) {} }}>${op.word}</button>`)}</div>
+      ${sayLine(bark)}
     </div>`;
   }
   if ((f as { kind?: string }).kind === "node") {
@@ -424,10 +502,29 @@ function fieldRow(f: Field, openField: string | null,
     const cur = sf.value === "" || sf.value == null ? null : +sf.value;
     const shown = cur != null ? cur
       : (N.derivedNum != null ? N.derivedNum : N.min);
-    const slide = (v: string) => { try { if (sf.set) sf.set(v); } catch (e) {} after(); };
+    /* A SLIDER REFUSES TOO, AND IT SAYS SO (2026-09-06, §15). Two ways: the
+       whole field may be refused (`why`, and then the control takes the tap
+       and answers it rather than moving), or the NUMBER BOX may be handed a
+       value outside the range — a `<input type=number>` fires `change` with
+       whatever was typed, the model clamps it, and before this line the number
+       simply jumped back with no word said. The range is the field's own
+       (`num`), so the sentence is arithmetic and not a second opinion. */
+    const slide = (v: string) => {
+      if (sf.why) { say(sf.key, sf.why); return; }
+      const n = +v;
+      if (Number.isFinite(n) && (n < N.min || n > N.max)) {
+        say(sf.key, t("sheet.slider.range",
+                      { min: fmt(N.min, N.unit || undefined),
+                        max: fmt(N.max, N.unit || undefined) }));
+        return;
+      }
+      unsay(sf.key);
+      try { if (sf.set) sf.set(v); } catch (e) {} after(); };
     return html`<div class="nu-sheetrow nu-numrow">
       <b class="nu-sheetlab">${sf.label}</b>
       <input class="nu-numslide" type="range" data-k=${sf.key}
+        aria-disabled=${ifDefined(sf.why ? "true" : undefined)}
+        data-why=${ifDefined(sf.why || undefined)}
         min=${String(N.min)} max=${String(N.max)} step=${String(N.step)}
         .value=${String(shown)}
         aria-label=${N.unit ? t("sheet.slider.unit.aria",
@@ -447,6 +544,7 @@ function fieldRow(f: Field, openField: string | null,
       ${N.unit ? html`<small class="nu-numunit">${N.unit}</small>` : nothing}
       ${clearBack}
       ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
+      ${sayLine(sf.key)}
     </div>`;
   }
   if (pick === "native")
@@ -458,9 +556,23 @@ function fieldRow(f: Field, openField: string | null,
         aria-label=${sf.label}
         .value=${sf.value == null ? "" : String(sf.value)}
         @change=${(e: Event) => write((e.target as HTMLSelectElement).value)}>${
-        (sf.options || []).map((o) => html`<option
-          value=${String(o.v == null ? "" : o.v)}
-          ?disabled=${!!o.off}>${o.w == null ? String(o.v) : o.w}</option>`)}
+        (sf.options || []).map((o) => {
+          /* NO SILENT GREY IN THE WHEEL (2026-09-06, §15). A `<option
+             disabled>` is a refusal the BROWSER enforces and cannot take a tap
+             of its own, so this widget answers the law the way
+             `src/menus/index.ts optionText` does: the reason is appended to
+             the option's own words through the same `menu.withWhy` key, and it
+             is read in the wheel itself. Before this line the grid's own
+             native pickers carried no reason at all — not in the text, not on
+             the element — which is the one place on this page the law was
+             simply missing. */
+          const w2 = o.w == null ? String(o.v) : String(o.w);
+          const why2 = o.why ? String(o.why).trim() : "";
+          return html`<option
+            value=${String(o.v == null ? "" : o.v)}
+            data-why=${ifDefined(why2 ? why2 : undefined)}
+            ?disabled=${!!o.off}>${why2
+              ? t("menu.withWhy", { name: w2, why: why2 }) : w2}</option>`; })}
       </select>${clearBack}
       ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>`;
@@ -478,10 +590,19 @@ function fieldRow(f: Field, openField: string | null,
           ? t("sheet.field.refused", { name: sf.label, why: sf.why })
           : t("sheet.field", { name: sf.label,
                                value: valueAria(wordOf(sf), !!sf.derived) })}
-        @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
+        /* A REFUSED FIELD SAYS WHY *AND STILL OPENS* (2026-09-06, §15). It
+           said-and-refused-to-open for an afternoon, and test/sheets.js caught
+           what that costs: avail.js's founding law is *"hiding destroys the
+           shape of the possible"* — a refused control greys its words, it does
+           not take them off the screen — and a head that will not open is a
+           vocabulary nobody can see. So the tap does both: the reason lands in
+           the say line and the field opens with every word refused under it. */
+        @click=${() => { if (sf.why) say(sf.key, sf.why);
+          setOpenField(open ? null : sf.key); }}>${wordOf(sf)}</button>
       ${clearBack}
       ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
-    </div>${open ? (pick === "lozenge" ? lozengeFor(sf, write)
+      ${sf.why ? sayLine(sf.key) : nothing}
+    </div>${open ? (pick === "lozenge" ? lozengeFor(sf, write, after)
                                        : chipStrip(sf, write)) : nothing}`;
 }
 
@@ -577,24 +698,39 @@ function textRow(tf: TextField, after: () => void): TemplateResult {
    `aria-pressed`, same refusal spelling, same close-then-nothing order (a
    value tap does not dismiss — `write` here is the plain one). What it adds is
    that all of it is on the glass, in its own kinds, at once. */
-function lozengeFor(f: StripField, onWrite: (v: string) => void): unknown {
+function lozengeFor(f: StripField, onWrite: (v: string) => void,
+                   after?: () => void): unknown {
   const door = LOZ();
   if (!door) return chipStrip(f, onWrite);
   const cl = clustersOf(f);
   const cur = f.value == null ? "" : String(f.value);
   const cellWhy = f.why || null;
+  /* A CHAIN IS THE FIELD'S OWN STANDING VALUE (2026-09-06, TABLE.md §15).
+     `values` is the model's chain in picked order; `off` below is still
+     computed against the whole `value` string, which for a chain is what the
+     document holds and what avail.js measured its refusals against. */
+  const chain = f.multi && f.values ? f.values.map(String) : null;
+  const stands = (v: string) => chain ? chain.indexOf(v) >= 0 : v === cur;
   return door.lozengeField({
     key: f.key,
     label: f.label,
     clusters: cl,
     value: cur,
+    ...(chain ? { values: chain, multi: true,
+                  ordered: !!f.ordered } : {}),
     why: cellWhy,
     options: (f.options || []).map((o) => {
       const v = String(o.v == null ? "" : o.v);
-      const off = !!o.off && v !== cur;
+      const off = !!o.off && !stands(v);
       return { value: v, label: o.w == null ? v : String(o.w),
                why: (off || o.quiet) ? (o.why || cellWhy || f.label) : (o.why || null),
                disabled: off, quiet: !!o.quiet,
                cluster: o.g == null ? null : String(o.g) }; }),
-    onWrite: (v: string) => { if (cellWhy) return; onWrite(v); } });
+    onWrite: (v: string) => { if (cellWhy) return; onWrite(v); },
+    ...(chain && f.setChain ? { onToggle: (v: string, on: boolean,
+                                           order: string[]) => {
+      if (cellWhy) return;
+      try { f.setChain!(v, on, order); } catch (e) {}
+      if (after) after();
+    } } : {}) });
 }

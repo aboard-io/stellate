@@ -776,6 +776,7 @@ function rowVecSay(A2, i5, spec) {
     why: rampWhy()
   };
 }
+var SONGS = () => globalThis.NuSongs || null;
 function groupsFor(options) {
   const by = /* @__PURE__ */ new Map();
   for (const o4 of options) {
@@ -1154,6 +1155,22 @@ function cellSheet(A2, i5, vi) {
       clear: w2.derived ? null : () => w2.set("")
     };
     if (v3.kind === "drums") fld.groups = groupsFor(w2.options);
+    const S2 = SONGS();
+    if (w2.multi && S2) {
+      const abs = w2.absent == null ? "" : String(w2.absent);
+      const chain = S2.chainOf(String(w2.value == null ? "" : w2.value));
+      fld.multi = true;
+      if (w2.ordered) fld.ordered = true;
+      fld.values = chain.length ? chain : [abs];
+      fld.setChain = (x2, on, order) => {
+        if (x2 === abs && on) {
+          w2.set(abs);
+          return;
+        }
+        const words = order.filter((y2) => y2 !== abs);
+        w2.set(words.length ? S2.chainWord(words) : abs);
+      };
+    }
     variation.push(fld);
   }
   placement.push(cellEntry(A2, i5, vi));
@@ -1486,10 +1503,27 @@ function clustersOf(f2) {
   return [...by].map(([word, vals]) => ({ word, vals }));
 }
 function pickerFor2(f2) {
+  if (f2.multi && LOZ()) return "lozenge";
   if (f2.node) return "combo";
   if (f2.num) return "slider";
   if (LOZ() && clustersOf(f2)) return "lozenge";
   return pickerFor((f2.options || []).length, { strip: true });
+}
+var SAID = /* @__PURE__ */ new Map();
+function say(key, why) {
+  const w2 = why == null ? "" : String(why).trim();
+  if (!w2) return;
+  if (SAID.get(key) === w2) return;
+  SAID.set(key, w2);
+  if (REDRAW) REDRAW();
+}
+function unsay(key) {
+  if (SAID.delete(key) && REDRAW) REDRAW();
+}
+function sayLine(key) {
+  const w2 = SAID.get(key) || "";
+  return b`<p class="nu-wsay" role="status" aria-live="polite"
+    data-k=${"say|" + key} ?data-said=${!!w2}>${w2}</p>`;
 }
 var wordOf = (f2) => f2.word == null || f2.word === "" ? "—" : String(f2.word);
 var subOf = (f2) => {
@@ -1516,18 +1550,22 @@ function chipStrip(f2, onWrite) {
     return b`<button type="button"
       class=${e3({ "nu-wchip": true, "is-quiet": !!o4.quiet })}
       data-k=${f2.key + "|" + v3}
+      data-v=${v3}
       aria-pressed=${String(v3 === cur)}
-      ?disabled=${hard || off}
+      tabindex=${hard || off ? "-1" : "0"}
       aria-disabled=${o2(hard || off ? "true" : void 0)}
       data-why=${o2(why == null ? void 0 : why)}
-      title=${o2(why ? why : void 0)}
       aria-label=${chipAria(
       w2,
       hard ? cellWhy : off ? o4.why || null : null,
       o4.prov || null
     )}
       @click=${() => {
-      if (hard || off) return;
+      if (hard || off) {
+        say(f2.key, why);
+        return;
+      }
+      unsay(f2.key);
       onWrite(v3);
     }}
       >${o4.pv ? o4.pv : A}<span class="nu-chipword">${w2}</span
@@ -1536,7 +1574,7 @@ function chipStrip(f2, onWrite) {
   const all = f2.options || [];
   if (!f2.groups || !f2.groups.length)
     return b`<div class="nu-wchips" role="group"
-      aria-label=${f2.label}>${all.map(chip)}</div>`;
+      aria-label=${f2.label}>${all.map(chip)}${sayLine(f2.key)}</div>`;
   const want = groupWords(f2, cur);
   const isPin = (o4) => {
     const v3 = String(o4.v == null ? "" : o4.v);
@@ -1560,6 +1598,7 @@ function chipStrip(f2, onWrite) {
     const inGroup2 = !!want && !!g2 && g2.word === want;
     return b`<span style=${inGroup2 ? "" : "display:none"}>${chip(o4)}</span>`;
   })}</div>
+    ${sayLine(f2.key)}
   </div>`;
 }
 var GROUPOPEN = /* @__PURE__ */ new Map();
@@ -1601,25 +1640,30 @@ function groupChunks(fields) {
 function fieldRow(f2, openField, setOpenField, after) {
   if (f2.kind === "ops") {
     const o4 = f2;
+    const bark = "ops|" + (o4.label || "") + "|" + (o4.ops[0] ? o4.ops[0].k : "");
     return b`<div class="nu-sheetrow nu-sheetops">
       ${o4.label ? b`<b class="nu-sheetlab">${o4.label}</b>` : A}
       <div class="nu-opbar">${o4.ops.map((op) => b`<button type="button"
         class="nu-opbtn" data-k=${op.k}
-        ?disabled=${!!op.why}
         aria-disabled=${o2(op.why ? "true" : void 0)}
         data-why=${o2(op.why || void 0)}
-        title=${o2(op.why || void 0)}
         aria-label=${op.why ? t4(
       "sheet.refused",
       { name: op.aria || op.word, why: op.why }
     ) : op.aria || op.word}
         @click=${() => {
-      if (op.why || !op.act) return;
+      if (op.why) {
+        say(bark, op.why);
+        return;
+      }
+      if (!op.act) return;
+      unsay(bark);
       try {
         op.act();
       } catch (e4) {
       }
     }}>${op.word}</button>`)}</div>
+      ${sayLine(bark)}
     </div>`;
   }
   if (f2.kind === "node") {
@@ -1671,6 +1715,22 @@ function fieldRow(f2, openField, setOpenField, after) {
     const cur = sf.value === "" || sf.value == null ? null : +sf.value;
     const shown = cur != null ? cur : N2.derivedNum != null ? N2.derivedNum : N2.min;
     const slide = (v3) => {
+      if (sf.why) {
+        say(sf.key, sf.why);
+        return;
+      }
+      const n3 = +v3;
+      if (Number.isFinite(n3) && (n3 < N2.min || n3 > N2.max)) {
+        say(sf.key, t4(
+          "sheet.slider.range",
+          {
+            min: fmt(N2.min, N2.unit || void 0),
+            max: fmt(N2.max, N2.unit || void 0)
+          }
+        ));
+        return;
+      }
+      unsay(sf.key);
       try {
         if (sf.set) sf.set(v3);
       } catch (e4) {
@@ -1680,6 +1740,8 @@ function fieldRow(f2, openField, setOpenField, after) {
     return b`<div class="nu-sheetrow nu-numrow">
       <b class="nu-sheetlab">${sf.label}</b>
       <input class="nu-numslide" type="range" data-k=${sf.key}
+        aria-disabled=${o2(sf.why ? "true" : void 0)}
+        data-why=${o2(sf.why || void 0)}
         min=${String(N2.min)} max=${String(N2.max)} step=${String(N2.step)}
         .value=${String(shown)}
         aria-label=${N2.unit ? t4(
@@ -1701,6 +1763,7 @@ function fieldRow(f2, openField, setOpenField, after) {
       ${N2.unit ? b`<small class="nu-numunit">${N2.unit}</small>` : A}
       ${clearBack}
       ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
+      ${sayLine(sf.key)}
     </div>`;
   }
   if (pick === "native")
@@ -1709,9 +1772,14 @@ function fieldRow(f2, openField, setOpenField, after) {
       <select class="nu-wcell nu-trimbtn nu-nativepick" data-k=${sf.key}
         aria-label=${sf.label}
         .value=${sf.value == null ? "" : String(sf.value)}
-        @change=${(e4) => write(e4.target.value)}>${(sf.options || []).map((o4) => b`<option
-          value=${String(o4.v == null ? "" : o4.v)}
-          ?disabled=${!!o4.off}>${o4.w == null ? String(o4.v) : o4.w}</option>`)}
+        @change=${(e4) => write(e4.target.value)}>${(sf.options || []).map((o4) => {
+      const w2 = o4.w == null ? String(o4.v) : String(o4.w);
+      const why2 = o4.why ? String(o4.why).trim() : "";
+      return b`<option
+            value=${String(o4.v == null ? "" : o4.v)}
+            data-why=${o2(why2 ? why2 : void 0)}
+            ?disabled=${!!o4.off}>${why2 ? t4("menu.withWhy", { name: w2, why: why2 }) : w2}</option>`;
+    })}
       </select>${clearBack}
       ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>`;
@@ -1733,10 +1801,21 @@ function fieldRow(f2, openField, setOpenField, after) {
     name: sf.label,
     value: valueAria(wordOf(sf), !!sf.derived)
   })}
-        @click=${() => setOpenField(open ? null : sf.key)}>${wordOf(sf)}</button>
+        /* A REFUSED FIELD SAYS WHY *AND STILL OPENS* (2026-09-06, §15). It
+           said-and-refused-to-open for an afternoon, and test/sheets.js caught
+           what that costs: avail.js's founding law is *"hiding destroys the
+           shape of the possible"* — a refused control greys its words, it does
+           not take them off the screen — and a head that will not open is a
+           vocabulary nobody can see. So the tap does both: the reason lands in
+           the say line and the field opens with every word refused under it. */
+        @click=${() => {
+    if (sf.why) say(sf.key, sf.why);
+    setOpenField(open ? null : sf.key);
+  }}>${wordOf(sf)}</button>
       ${clearBack}
       ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
-    </div>${open ? pick === "lozenge" ? lozengeFor(sf, write) : chipStrip(sf, write) : A}`;
+      ${sf.why ? sayLine(sf.key) : A}
+    </div>${open ? pick === "lozenge" ? lozengeFor(sf, write, after) : chipStrip(sf, write) : A}`;
 }
 var TEXTARMED = false;
 function armText() {
@@ -1808,21 +1887,28 @@ function textRow(tf, after) {
   }} />
   </div>`;
 }
-function lozengeFor(f2, onWrite) {
+function lozengeFor(f2, onWrite, after) {
   const door = LOZ();
   if (!door) return chipStrip(f2, onWrite);
   const cl = clustersOf(f2);
   const cur = f2.value == null ? "" : String(f2.value);
   const cellWhy = f2.why || null;
+  const chain = f2.multi && f2.values ? f2.values.map(String) : null;
+  const stands = (v3) => chain ? chain.indexOf(v3) >= 0 : v3 === cur;
   return door.lozengeField({
     key: f2.key,
     label: f2.label,
     clusters: cl,
     value: cur,
+    ...chain ? {
+      values: chain,
+      multi: true,
+      ordered: !!f2.ordered
+    } : {},
     why: cellWhy,
     options: (f2.options || []).map((o4) => {
       const v3 = String(o4.v == null ? "" : o4.v);
-      const off = !!o4.off && v3 !== cur;
+      const off = !!o4.off && !stands(v3);
       return {
         value: v3,
         label: o4.w == null ? v3 : String(o4.w),
@@ -1835,7 +1921,15 @@ function lozengeFor(f2, onWrite) {
     onWrite: (v3) => {
       if (cellWhy) return;
       onWrite(v3);
-    }
+    },
+    ...chain && f2.setChain ? { onToggle: (v3, on, order) => {
+      if (cellWhy) return;
+      try {
+        f2.setChain(v3, on, order);
+      } catch (e4) {
+      }
+      if (after) after();
+    } } : {}
   });
 }
 
@@ -2961,6 +3055,10 @@ function bandTable(host, A2) {
       if (s3.clear) {
         const cl = s3.clear;
         s3.clear = () => op(t4("op.clearing", { name: s3.label || "" }), cl);
+      }
+      if (s3.setChain) {
+        const sc = s3.setChain;
+        s3.setChain = (v3, on, o4) => op(s3.label || t4("op.change"), () => sc(v3, on, o4));
       }
     }
     return fields;

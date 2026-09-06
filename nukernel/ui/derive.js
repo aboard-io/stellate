@@ -11,7 +11,24 @@ import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          instrOf, partOf, PARTNAMES, BASS_INSTR, INSTRCHOICES,
          chordsOf, MODE, harmonizeStage,
          tempoWarp, seatNote, prng, TOMS,
-         METERS, metOf, stepsIn, pulseIn, quartersIn, unitsIn } from "./deps.js";
+         METERS, metOf, stepsIn, pulseIn, quartersIn, unitsIn,
+         chainOf } from "./deps.js";
+
+/* ---------- A KIT WORD IS A CHAIN (2026-09-06, TABLE.md §15) ----------
+   Paul: *"I still can't pick more than one variation for a motif … And the
+   same with the drums."* A KITOP is kit -> kit and TOTAL (kernel.js, beside
+   KITOPS: "a kit operator is total on kits"), so the operators COMPOSE and a
+   chain is a fold in picked order — `"ghosts + halftime"` is halftime applied
+   to the ghosted kit. `songs.js chainOf` is the one splitter; a bare word
+   answers `[word]`, so this is byte for byte the call it replaced and every
+   record written before it plays the same kit.
+   A WORD THIS TABLE NEVER HEARD OF IS SKIPPED rather than thrown on, which is
+   what `kitOf` below already did with its own `KITOPS[sec.kit] ?` guard. */
+export const kitFold = (name, base) => chainOf(name)
+  .reduce((k, w) => (KITOPS[w] ? KITOPS[w](k) : k), base);
+/** ...and "does this chain say that word", which for a bare word is the `===`
+ *  it replaces. `nodrums` is the one word the branches below test by name. */
+export const kitSays = (name, w) => chainOf(name).indexOf(w) >= 0;
 
 export const isBlank = p => p.gate.every(g => !g);
 
@@ -318,14 +335,14 @@ export const genreOf = (sec, ent) => {
     // record drums and then lose them again by asking for a shuffle. Asking
     // for a shuffled kit on a record with no kit means a shuffled four.
     const base = Object.keys(g.kit || {}).length ? (g.kit || {})
-      : (sec.kit === "nodrums" ? {} : KITOPS.four({}));
-    out.kit = KITOPS[sec.kit](base); out.fill = null;
+      : (kitSays(sec.kit, "nodrums") ? {} : KITOPS.four({}));
+    out.kit = kitFold(sec.kit, base); out.fill = null;
     // the operator reaches the kit SCHEDULE too — drums() prefers g.kits over
     // kit, so mapping the kit alone made every kit chip a no-op on a kits
     // genre (dnb's breakdown kept the full break under "no drums")
-    if (g.kits) out.kits = sec.kit === "nodrums" ? null
-      : g.kits.map(k2 => KITOPS[sec.kit](k2));
-    if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
+    if (g.kits) out.kits = kitSays(sec.kit, "nodrums") ? null
+      : g.kits.map(k2 => kitFold(sec.kit, k2));
+    if (kitSays(sec.kit, "nodrums")) out.ghost = null;  // the ghost lane is not in the kit
   }
   if (clamp != null) out.incClamp = +clamp;
   if (cmode) out.incMode = cmode;
@@ -400,8 +417,8 @@ export const kitOf = sec => {
   // the same base law genreOf applies: a kit word on a kitless genre implies
   // a four underneath, so asking a hired kit to shuffle does not delete it
   const base = Object.keys(g.kit || {}).length ? (g.kit || {})
-    : (sec.kit && sec.kit !== "nodrums" ? KITOPS.four({}) : {});
-  const k = sec.kit && KITOPS[sec.kit] ? KITOPS[sec.kit](base) : base;
+    : (sec.kit && !kitSays(sec.kit, "nodrums") ? KITOPS.four({}) : {});
+  const k = sec.kit ? kitFold(sec.kit, base) : base;
   return Object.keys(k).length || g.ghost ? "acoustic" : null;
 };
 

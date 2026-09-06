@@ -103,7 +103,7 @@
      bar is a chair in the previous section and is refused at the door. */
   const entryOK = (x) => typeof x === "number" && isFinite(x) && x >= -1;
   const entrySnap = (x, steps) => Math.round(x * steps) / steps;
-  const { WORDS } = NuSongs;
+  const { WORDS, chainOf } = NuSongs;
 
   /* ---------- reading the document ----------------------------------------
      One object per voice, `kind` instead of special cases, words keyed by
@@ -299,13 +299,19 @@
      seventh on a pentatonic. They are answered BEFORE `K[...]`, so neither
      name can be mistaken for an operator, and a scale-less caller falls to
      the kernel's own default alphabet rather than throwing. */
-  const opsOf = (name, sc) => (WORDS[name] || []).map((w) => {
+  /* ...AND A NAME MAY BE A CHAIN OF THEM (2026-09-06). Paul: *"I still can't
+     pick more than one variation for a motif"*. `songs.js chainOf` is the ONE
+     splitter — a bare word answers `[word]`, so a document written before this
+     line produces the identical operator list in the identical order and every
+     catalogue anchor's score is byte-identical (test/table.test.js T2). The
+     words apply LEFT TO RIGHT, which is what the numbered pills say. */
+  const opsOf = (name, sc) => chainOf(name).flatMap((n2) => (WORDS[n2] || []).map((w) => {
     if (typeof w === "string") return K.OPKEYS[w];
     if (w[0] === "interval") return K.transpose(K.degreesFor(sc, w[1]));
     if (w[0] === "octaves")
       return K.transpose(K.octaveDegrees(sc) * (w[1] | 0));
     return K[w[0]](...w.slice(1));
-  });
+  }));
   let ver = 0;
   /* WHAT A TAKE IS, in the two places it can be spent: the kernel's own dice
      (`kitSeed`) and the seeds the pipe operators carry (kernel.js:608 —

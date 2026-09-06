@@ -400,6 +400,66 @@ function bins(spec) {
   return out;
 }
 var FOLDS = /* @__PURE__ */ new Map();
+var TOUCHED = /* @__PURE__ */ new Set();
+var CH = 9.5;
+var PILLPAD = 34;
+var PILLGAP = 8;
+var PILLROW = 50;
+var HEADROW = 48;
+var SAYROW = 30;
+function budget() {
+  let h2 = 844;
+  try {
+    const vv = globalThis.visualViewport;
+    h2 = vv && vv.height || window.innerHeight || 844;
+  } catch (e4) {
+  }
+  let bar = 0;
+  try {
+    const el = document.querySelector(".nu-bar");
+    if (el) bar = el.getBoundingClientRect().height;
+  } catch (e4) {
+  }
+  return Math.max(320, h2 - bar - 8);
+}
+function fieldWidth() {
+  try {
+    return Math.max(240, (document.documentElement.clientWidth || 390) - 40);
+  } catch (e4) {
+    return 350;
+  }
+}
+function clusterHeight(b2, w2, shut) {
+  const head = b2.word ? HEADROW : 0;
+  if (shut) return head;
+  let rows = 1, x2 = 0;
+  for (const o3 of b2.opts) {
+    const pw = Math.max(44, String(o3.label || "").length * CH + PILLPAD) + PILLGAP;
+    if (x2 > 0 && x2 + pw > w2) {
+      rows++;
+      x2 = pw;
+    } else x2 += pw;
+  }
+  return head + rows * PILLROW;
+}
+function autoFolds(plan, at) {
+  if (plan.length < 2) return /* @__PURE__ */ new Set();
+  const w2 = fieldWidth(), cap = budget();
+  const shy = (i3) => !plan[i3].word;
+  const open = (shutAll, keep) => {
+    let h2 = SAYROW;
+    for (let i3 = 0; i3 < plan.length; i3++)
+      h2 += clusterHeight(plan[i3], w2, shutAll && i3 !== keep && !shy(i3));
+    return h2;
+  };
+  if (open(false, -1) <= cap) return /* @__PURE__ */ new Set();
+  const one = at >= 0 ? at : 0;
+  const shut = /* @__PURE__ */ new Set();
+  for (let i3 = 0; i3 < plan.length; i3++) if (i3 !== one && !shy(i3)) shut.add(i3);
+  if (open(true, one) <= cap) return shut;
+  if (!shy(one)) shut.add(one);
+  return shut;
+}
 function lozengeField(spec) {
   refuseSilentGrey(spec);
   const key = String(spec.key);
@@ -426,6 +486,16 @@ function lozengeField(spec) {
   const chain = (spec.values || []).map(String).filter((v2, i3, a2) => a2.indexOf(v2) === i3);
   const folded = FOLDS.get(spec.key) || /* @__PURE__ */ new Set();
   FOLDS.set(spec.key, folded);
+  const standingAt = () => {
+    const want = multi ? chain[0] || "" : cur;
+    if (want === "" && !multi) return -1;
+    return plan.findIndex((b2) => b2.opts.some((o3) => String(o3.value) === want));
+  };
+  if (!TOUCHED.has(key)) {
+    const want = autoFolds(plan, standingAt());
+    folded.clear();
+    for (const i3 of want) folded.add(i3);
+  }
   let said = "";
   let focusK = null;
   const stands = (v2) => multi ? chain.indexOf(v2) >= 0 : v2 === cur;
@@ -439,7 +509,7 @@ function lozengeField(spec) {
     const own = o3.why ? String(o3.why).trim() : "";
     const refused = !!off || !!o3.disabled;
     const why = off || own || "";
-    const n2 = ordered && multi && hot ? chain.indexOf(v2) + 1 : 0;
+    const n2 = ordered && multi && hot && chain.length > 1 ? chain.indexOf(v2) + 1 : 0;
     return b`<button type="button"
       class=${e3({ "nu-lz": true, "is-hot": hot, "is-quiet": !!o3.quiet })}
       data-k=${key + "|" + v2}
@@ -463,15 +533,23 @@ function lozengeField(spec) {
   const draw = () => D(b`${plan.map((b2, ci) => {
     const shut = folded.has(ci);
     const stop = stopOf(b2);
+    const holds = b2.opts.some((o3) => stands(String(o3.value)));
+    const held = shut && holds ? b2.opts.filter((o3) => stands(String(o3.value))).map((o3) => o3.label).join(", ") : "";
     return b`<section
-      class=${e3({ "nu-lzcluster": true, "is-folded": shut })}
+      class=${e3({
+      "nu-lzcluster": true,
+      "is-folded": shut,
+      "is-standing": shut && holds
+    })}
       data-cluster=${b2.word}
       data-hue=${ci % HUES}
       >${b2.word ? b`<button type="button" class="nu-lzhead"
           data-k=${key + "|cluster|" + b2.word}
           aria-expanded=${String(!shut)}
+          aria-current=${o2(shut && holds ? "true" : void 0)}
           ><span class="nu-lzheadword">${b2.word}</span
-          ><small class="nu-lzcount">${b2.opts.length}</small></button>` : A}<div class="nu-lzwrap" ?hidden=${shut}
+          ><small class="nu-lzcount">${b2.opts.length}</small
+          >${held ? b`<span class="nu-lzheld">${held}</span>` : A}</button>` : A}<div class="nu-lzwrap" ?hidden=${shut}
         >${b2.opts.map((o3) => lozenge(o3, stop === String(o3.value)))}</div
       ></section>`;
   })}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite"
@@ -549,6 +627,7 @@ function lozengeField(spec) {
       const sec = head.closest("section.nu-lzcluster");
       const ci = sec ? Array.from(host.children).indexOf(sec) : -1;
       if (ci >= 0) {
+        TOUCHED.add(key);
         if (folded.has(ci)) folded.delete(ci);
         else folded.add(ci);
         draw();
@@ -625,6 +704,22 @@ function lozengeField(spec) {
     if (el && host.contains(el)) focusK = el.dataset.k || null;
   });
   draw();
+  try {
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => {
+      if (!host.isConnected || TOUCHED.has(key) || plan.length < 2) return;
+      if (host.getBoundingClientRect().height <= budget()) return;
+      const one = standingAt() >= 0 ? standingAt() : 0;
+      const all = folded.size >= plan.length;
+      if (all) return;
+      const shy2 = (i3) => !plan[i3].word;
+      if (folded.size) {
+        if (!shy2(one)) folded.add(one);
+      } else for (let i3 = 0; i3 < plan.length; i3++)
+        if (i3 !== one && !shy2(i3)) folded.add(i3);
+      draw();
+    });
+  } catch (e4) {
+  }
   return host;
 }
 

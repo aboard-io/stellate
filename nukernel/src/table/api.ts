@@ -61,6 +61,21 @@ export interface StripField {
    *  `options` STAYS on the field either way, because the address and the
    *  vocabulary are what T7 and the inventory read; the slider is a second
    *  widget on the same seam, not a second field. */
+  /** A CHAIN OF WORDS, AND THE ORDER IS THE MEANING (2026-09-06, TABLE.md
+   *  §15). Paul: *"I still can't pick more than one variation for a motif …
+   *  And the same with the drums."* `multi` says more than one word may stand
+   *  and `values` is the chain IN ORDER; `ordered` says the field prints the
+   *  position (1, 2, 3). The DOCUMENT keeps one string — songs.js `chainWord`,
+   *  which is the one owner of the separator — so `value` above is still the
+   *  whole answer and `word` is still the face. Absent on every other field,
+   *  which is therefore single-select exactly as it was. */
+  multi?: boolean;
+  ordered?: boolean;
+  values?: string[];
+  /** the multi writer: the word toggled, whether it now stands, and the WHOLE
+   *  new order. `set` stays the single writer, so there is one document write
+   *  and one undo step either way. */
+  setChain?: (v: string, on: boolean, order: string[]) => void;
   num?: { min: number; max: number; step: number;
           /** what the number is in — "bars", "octaves", "" */
           unit?: string;
@@ -164,6 +179,12 @@ export interface Spec {
    *  arriving with an empty option list, which a menu would draw as a menu of
    *  nothing. Present-only: every other spec is the object it always was. */
   text?: boolean;
+  /** THIS ROW IS A CHAIN (2026-09-06, TABLE.md §15) — avail.js `dev.line` and
+   *  `dev.kit` say so, `ui/eight.js shSpec` carries it, and `absent` is the
+   *  one word of the row that stands ALONE. Present-only. */
+  multi?: boolean;
+  ordered?: boolean;
+  absent?: string;
   set: (v: unknown) => void;
 }
 /** ...translated by ui/eight.js `wCell` into what a control needs. */
@@ -173,6 +194,10 @@ export interface WCell {
   options: Choice[];
   /** carried through from the spec by `ui/eight.js wCell`; see `Spec.text`. */
   text?: boolean;
+  /** ...and `Spec.multi`, the same way (2026-09-06, TABLE.md §15). */
+  multi?: boolean;
+  ordered?: boolean;
+  absent?: string;
   set: (v: unknown) => void;
 }
 

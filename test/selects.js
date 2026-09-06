@@ -1010,6 +1010,75 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      `innerText` on exactly the one view that draws it. The claim is "the reason
      is on the page where the control is", so a reason is a failure only when no
      occurrence of it was ever printed. */
+  /* ---- 5a · AND THE REASON IS REACHABLE BY A THUMB (2026-09-06, §15) ----
+     THE LAW ABOVE PROVES THE REASON EXISTS. The Coach House walkthrough proved
+     that is not the same thing: *"`filled in` is disabled with a real and
+     excellent reason in `data-why` … On the phone the disabled option looks
+     identical to the others and TAPPING IT DOES NOTHING AT ALL — no shake, no
+     message. I tapped it eight times across four sections before dumping the
+     DOM to find the sentence."* So this drives the artifact: every refused
+     option drawn on the page right now is TAPPED, and the sentence has to
+     arrive on the glass — `.nu-lzsay` inside a lozenge field, `.nu-wsay`
+     beside a chip strip, an ops bar, a slider or a refused head.
+     A `<option>` of a native `<select>` is exempt and only there: the browser
+     owns that wheel and enforces `disabled` itself, so the reason rides IN THE
+     OPTION'S WORDS — which is exactly what check 5 above measures for it. */
+  const reach = await p.evaluate(async () => {
+    const out = { tried: 0, said: [], silent: [] };
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const seen = new Set();
+    for (let pass = 0; pass < 3; pass++) {
+      const bad = [...document.querySelectorAll(
+        '#app .nu-lz[aria-disabled="true"][data-why], ' +
+        '#app .nu-wchip[aria-disabled="true"][data-why], ' +
+        '#app .nu-opbtn[aria-disabled="true"][data-why]')]
+        /* an EMPTY `data-why` is the silent grey itself and is checked by 5
+           above; this check is about whether a REASON reaches a thumb, and a
+           reason that was never written is a different failure. */
+        .filter((e) => (e.dataset.why || "").trim() && !seen.has(e.dataset.k));
+      if (!bad.length) break;
+      const el = bad[0];
+      const k = el.dataset.k || "";
+      const why = el.dataset.why || "";
+      seen.add(k);
+      out.tried++;
+      /* a folded cluster is opened the way a thumb opens one, first */
+      const sec = el.closest("section.nu-lzcluster");
+      const head = sec && sec.querySelector(".nu-lzhead");
+      if (head && head.getAttribute("aria-expanded") === "false") {
+        head.click(); await wait(140);
+      }
+      const again = document.querySelector('[data-k="' + k + '"]');
+      (again || el).click();
+      await wait(220);
+      const fieldK = k.slice(0, k.lastIndexOf("|"));
+      const loz = document.querySelector('[data-sel="' + fieldK + '"] .nu-lzsay');
+      const wsay = document.querySelector('.nu-wsay[data-k="say|' + fieldK + '"]');
+      const anyw = [...document.querySelectorAll("#app .nu-wsay[data-said]")]
+        .map((e) => (e.textContent || "").trim()).join(" ¶ ");
+      const heard = [loz ? (loz.textContent || "").trim() : "",
+                     wsay ? (wsay.textContent || "").trim() : "", anyw].join(" ¶ ");
+      if (why && heard.indexOf(why) >= 0) out.said.push(k);
+      else out.silent.push(k + " :: " + why + " :: heard " + JSON.stringify(heard));
+    }
+    return out;
+  });
+  check(!reach.silent.length,
+    "5a NO SILENT GREY, REACHED BY A THUMB — a tap on a refused option prints " +
+    "its own reason on the page (" + reach.said.length + " of " + reach.tried +
+    " driven) " + JSON.stringify(reach.silent.slice(0, 3)));
+  /* ...AND A REFUSED OPTION IS `aria-disabled` AND NOT `disabled`, which is the
+     mechanism the check above rests on: a `disabled` button takes no click, so
+     its reason is reachable only through a screen reader — the silent grey
+     wearing an accessible name (src/lozenge/field.ts law 6, now sheet.ts's
+     too). The NATIVE `<option>` is the one exception and is asked separately. */
+  const hardGrey = await p.evaluate(() => [...document.querySelectorAll(
+    "#app .nu-lz[disabled], #app .nu-wchip[disabled], #app .nu-opbtn[disabled]")]
+    .map((e) => e.dataset.k || e.className).slice(0, 6));
+  check(!hardGrey.length,
+    "5a …and not one of them is `disabled`, which would swallow the tap that " +
+    "asks " + JSON.stringify(hardGrey));
+
   const sawWhy = new Set(sel.filter((s) => s.saidWhy && s.why).map((s) => s.why));
   const said = [...new Set(sel.filter((s) => s.disabled && s.why &&
     !sawWhy.has(s.why)).map((s) => s.why))];
@@ -1512,15 +1581,38 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       const secs = [...f.querySelectorAll(".nu-lzcluster")];
       return { n: all.length,
         rect: all.filter((c) => c.getBoundingClientRect().height > 0).length,
-        short: all.filter((c) => c.getBoundingClientRect().height < 43.5).length,
+        /* 44px OF THUMB IS ASKED OF THE PILLS THAT ARE DRAWN (2026-09-06,
+           TABLE.md §15): one inside a folded cluster has no box at all, and a
+           box of zero is not a short tap target — it is a word one tap away
+           behind a heading that says how many it holds. */
+        short: all.filter((c) => { const h = c.getBoundingClientRect().height;
+          return h > 0 && h < 43.5; }).length,
         clusters: secs.length,
+        /* ...AND WHERE THE REST OF THEM ARE. Every word is in exactly one
+           cluster and its count is on that cluster's own heading, so the
+           headings' counts plus the unheaded bin are the whole vocabulary. */
+        counts: secs.reduce((a, x) => a +
+          (+((x.querySelector(".nu-lzcount") || {}).textContent || 0) || 0), 0),
+        loose: secs.filter((x) => !x.querySelector(".nu-lzhead"))
+          .reduce((a, x) => a + x.querySelectorAll(".nu-lz").length, 0),
+        folded: secs.filter((x) => x.classList.contains("is-folded")).length,
+        h: Math.round(f.getBoundingClientRect().height),
+        vh: Math.round(window.innerHeight),
         hues: [...new Set(secs.map((x) =>
           getComputedStyle(x).getPropertyValue("--lz").trim()))].length,
         sideways: document.documentElement.scrollWidth -
                   document.documentElement.clientWidth }; });
-    check(lz.n > 12 && lz.rect === lz.n && lz.clusters > 1,
-      "the modes are a LOZENGE FIELD with every one of them on the glass, in " +
-      "its own kind " + JSON.stringify(lz));
+    /* THE CLAIM MOVED ONE CONDITION DEEPER, 2026-09-06 (TABLE.md §15). It read
+       *"every one of them on the glass"* until the Coach House walkthrough
+       measured what that is on a phone — this field's sibling drew 2,231px of
+       words on an 844px screen — so a field folds itself to FIT and the claim
+       is: every word is IN THE FIELD, in exactly one cluster, its count on
+       that cluster's own heading, and every one of them one tap from the
+       glass. What the field DRAWS is bounded by the viewport. */
+    check(lz.n > 12 && lz.counts + lz.loose === lz.n && lz.clusters > 1 &&
+          lz.h > 0 && lz.h <= lz.vh,
+      "the modes are a LOZENGE FIELD holding every one of them, in its own " +
+      "kind, inside the viewport " + JSON.stringify(lz));
     check(lz.short === 0 && lz.sideways === 0,
       "...every lozenge 44px of thumb, and the page does not scroll sideways " +
       JSON.stringify({ short: lz.short, sideways: lz.sideways }));

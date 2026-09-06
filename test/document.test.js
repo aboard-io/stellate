@@ -30,7 +30,7 @@ const K  = require(R + "/nukernel/kernel.js");
 const NG = require(R + "/nukernel/genres.js");
 const Songs = require(R + "/nukernel/songs.js");
 const Doc = require(R + "/nukernel/document.js");
-const { portrait } = require("./fixtures/terms-genre.freeze.js");
+const { portrait, REF } = require("./fixtures/terms-genre.freeze.js");
 const FIX = require("./fixtures/terms-genre.json");
 
 const J = (x) => JSON.parse(JSON.stringify(x));
@@ -692,6 +692,132 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
       // ...and a CELL may not say it: the reader is null, so `putCell` refuses.
       assert.strictEqual(Doc.putCell(d, 0, 0, "name", "mine"), false,
         "a cell was allowed to name the section it sits in");
+    });
+
+  /* ===== G15 · A VARIATION IS A CHAIN (2026-09-06, TABLE.md §15) ==========
+     Paul: *"I still can't pick more than one variation for a motif"* and *"And
+     the same with the drums."* The document keeps ONE STRING and songs.js owns
+     the separator; what is asserted here is the MUSIC — that the chain is the
+     two operators applied in the order a hand picked them, and not a third
+     thing. It is measured against `K.word(REF, …)` applied BY HAND, which is
+     the same reference phrase `portrait()` freezes the whole catalogue with. */
+  ok("G15 'inverted + the first half' IS invert then excerpt, in that order",
+    () => {
+      const lineIx = (d) => d.voices.filter((v) => v.kind === "line");
+      const run = (word) => {
+        const d = J(TERMS);
+        const sid = d.form.sections[0].id;
+        lineIx(d)[0].development[sid] = word;
+        return Doc.toGenre(d, 0, GENRES, FLEET).word(0);
+      };
+      const chain = run("inverted + the first half");
+      const one   = run("inverted");
+      /* THE ORDER IS THE MEANING — asked on a pair where it CAN be, which is
+         a fact about the operators and worth writing down: `invert` and
+         `excerpt` COMMUTE (one is pointwise on the degrees, the other picks
+         positions), so "inverted + the first half" and its reverse are the
+         same music and asserting otherwise would be asserting a bug. A
+         POSITIONAL pair does not commute, and that is what the numbered pills
+         are for. */
+      const ab = run("the first half + a beat later");
+      const ba = run("a beat later + the first half");
+
+      // BY HAND: songs.js says "inverted" is [["invert",4]] and "the first
+      // half" is [["excerpt",0,8]]. Neither reads the scale, so the operators
+      // are the kernel's own with the vocabulary's own arguments.
+      const byHand = K.word(REF, [K.invert(4), K.excerpt(0, 8)]);
+      const byChain = K.word(REF, chain);
+      assert.strictEqual(chain.length, 2,
+        "the chain compiled to " + chain.length + " operators, not two");
+      assert.deepStrictEqual(J(byChain), J(byHand),
+        "the chain is not invert-then-excerpt applied by hand");
+      /* ...AND IT IS THE INVERTED PHRASE'S FIRST EIGHT NOTES, said the other
+         way round: the excerpt of the INVERSION, never the inversion of the
+         whole. `excerpt(0,8)` keeps the phrase sixteen steps long and LOOPS
+         the eight it kept (kernel.js), so the claim is stated on both halves:
+         each is the inverted phrase's first eight, in order. */
+      const inv8 = K.word(REF, [K.invert(4)]).deg.slice(0, 8);
+      assert.deepStrictEqual(J(byChain.deg.slice(0, 8)), J(inv8),
+        "the chain's first eight degrees are not the inverted phrase's first eight");
+      assert.deepStrictEqual(J(byChain.deg.slice(8)), J(inv8),
+        "the excerpt did not loop the eight it kept");
+      // THE ORDER IS THE MEANING, which is why the field prints 1, 2.
+      assert.notDeepStrictEqual(J(K.word(REF, ab).deg), J(K.word(REF, ba).deg),
+        "the two orders produced the same music — the chain is a set, not a chain");
+      // AND A ONE-WORD CHAIN IS THE ONE WORD, BYTE FOR BYTE (T2's identity,
+      // stated here as arithmetic rather than as a hash).
+      assert.strictEqual(one.length, 1, "a bare word grew an operator");
+      assert.deepStrictEqual(J(K.word(REF, one)), J(K.word(REF, [K.invert(4)])),
+        "a bare word stopped meaning what it meant");
+      console.log("       inverted+the first half: deg " +
+        JSON.stringify(byChain.deg) + " · gate " + JSON.stringify(byChain.gate));
+      console.log("       first half+a beat later: deg " +
+        JSON.stringify(K.word(REF, ab).deg));
+      console.log("       a beat later+first half: deg " +
+        JSON.stringify(K.word(REF, ba).deg));
+    });
+
+  ok("G15b a two-word KIT chain applies the second to the first's result",
+    () => {
+      /* THE KIT'S HALF OF THE SAME CLAIM. A KITOP is kit -> kit and TOTAL
+         (kernel.js, beside KITOPS), so a chain is a FOLD — which is what
+         `ui/derive.js kitFold` does, spelled here with songs.js's own splitter
+         so the two cannot drift. (`ui/derive.js` itself is an ES module over
+         `deps.js`'s window reads; test/table.test.js drives the real one.) */
+      // a kit with a KICK AND A SNARE under it, because `ghosts` is a snare
+      // operator and a snare operator over a kick-only kit is the identity —
+      // which would have made this check pass by saying nothing.
+      const base = K.KITOPS.backbeat(K.KITOPS.four({}));
+      const words = Songs.chainOf("ghosts + accents");
+      assert.deepStrictEqual(words, ["ghosts", "accents"]);
+      const byChain = words.reduce((k, w) => K.KITOPS[w](k), base);
+      const byHand = K.KITOPS.accents(K.KITOPS.ghosts(base));
+      assert.deepStrictEqual(J(byChain), J(byHand),
+        "the kit chain is not the second operator over the first's result");
+      // it is neither of its words alone...
+      assert.notDeepStrictEqual(J(byChain), J(K.KITOPS.ghosts(base)));
+      assert.notDeepStrictEqual(J(byChain), J(K.KITOPS.accents(base)));
+      // ...and THE ORDER IS THE MEANING here too.
+      assert.notDeepStrictEqual(J(byChain), J(K.KITOPS.ghosts(K.KITOPS.accents(base))),
+        "the two orders produced the same kit — the chain is a set, not a chain");
+      // ...and one word is the one call it always was.
+      assert.deepStrictEqual(J(Songs.chainOf("ghosts").reduce(
+        (k, w) => K.KITOPS[w](k), base)), J(K.KITOPS.ghosts(base)));
+      console.log("       four+backbeat -> ghosts -> accents: s = " +
+        JSON.stringify(byChain.s) + " (ghosts alone " +
+        JSON.stringify(K.KITOPS.ghosts(base).s) + ")");
+    });
+
+  ok("G15c no word in either vocabulary contains the separator",
+    () => {
+      const NF2 = require(R + "/nukernel/fields.js");
+      const bad = [...Object.keys(Songs.WORDS), ...Object.keys(NF2.KITLABEL)]
+        .filter((k) => k.indexOf(Songs.CHAINSEP) >= 0);
+      assert.deepStrictEqual(bad, [],
+        "a word holding \" + \" would be two words the moment it was written");
+      // ...and the splitter is total: every word round-trips through it.
+      for (const k of Object.keys(Songs.WORDS))
+        assert.deepStrictEqual(Songs.chainOf(k), [k], k + " did not round-trip");
+      assert.strictEqual(Songs.chainWord(["inverted", "the first half"]),
+                         "inverted + the first half");
+      assert.deepStrictEqual(Songs.chainOf(""), []);
+    });
+
+  ok("G15d a chain survives normalize, a save and a load",
+    () => {
+      const d = J(TERMS);
+      const v = d.voices.find((x) => x.kind === "line");
+      const sid = d.form.sections[0].id;
+      v.development[sid] = "inverted + the first half";
+      Doc.normalize(d);
+      assert.strictEqual(d.voices.find((x) => x.name === v.name).development[sid],
+        "inverted + the first half", "normalize dropped the chain");
+      const back = JSON.parse(JSON.stringify(d));
+      Doc.normalize(back);
+      assert.strictEqual(back.voices.find((x) => x.name === v.name).development[sid],
+        "inverted + the first half", "a chain did not survive save -> load");
+      // ...and it is a DEVIATION, not the absent word, so the grid draws it bold
+      assert.notStrictEqual("inverted + the first half", "as written");
     });
 
   console.log("\n" + pass + " passed, " + fail + " failed");

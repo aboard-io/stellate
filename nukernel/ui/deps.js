@@ -150,7 +150,11 @@ export const NuWiki = window.NuWiki;
 // Rome 600" restores the shipped chant byte for byte — and a SECOND direct
 // window read is how a law stops being one, so it comes through here and
 // eight.js now imports it like everything else.
-export const { TERMS } = window.NuSongs;
+/* ...AND THE ONE SPLITTER A CHAIN IS READ WITH (2026-09-06, TABLE.md §15).
+   A cell's variation is a CHAIN of words joined with " + " and songs.js owns
+   what that means; `ui/derive.js` folds a kit chain with it. A second
+   `.split(" + ")` in this tier would be a second owner of the separator. */
+export const { TERMS, chainOf, chainWord } = window.NuSongs;
 
 // ---- pure persistence (song.js) ----
 export const NuSong = window.NuSong;

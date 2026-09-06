@@ -1196,9 +1196,16 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       if (shut) c.click();
       const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
       if (tr && tr.classList.contains("nu-wopen"))
-        for (const o of tr.querySelectorAll(".nu-wchip"))
+        /* BOTH SPELLINGS OF REFUSED (2026-09-06, TABLE.md §15). A refused chip
+           is `aria-disabled` and NOT `disabled` now — a `disabled` button takes
+           no click, so its reason was reachable only through a screen reader —
+           which is the same reading `padRead` two hundred lines down already
+           makes for the lozenge. Asking only `.disabled` here would have said a
+           pad refuses NOTHING. */
+        for (const o of tr.querySelectorAll(".nu-wchip, .nu-lz"))
           rows.push({ v: o.dataset.k.slice(c.dataset.k.length + 1),
-                      off: !!o.disabled });
+                      off: !!o.disabled ||
+                           o.getAttribute("aria-disabled") === "true" });
       if (shut && c.getAttribute("aria-expanded") === "true") c.click();
     }
     return rows;

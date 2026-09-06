@@ -461,6 +461,20 @@ function rowVecSay(A: TableAPI, i: number, spec: LaneSpec): Field {
     why: rampWhy() };
 }
 
+/* ===== THE ONE SPLITTER A CHAIN IS READ WITH (2026-09-06, TABLE.md §15) ===
+   `songs.js` owns what " + " means — it owns the vocabulary the separator
+   joins — and it is a classic script, so this bundle reads it off the global
+   exactly as it reads `NuLozenge` and `NuGlyph` two files over. There is no
+   `.split(" + ")` in this directory and there must not be one: a second
+   splitter is a second answer to what a chain is, which is the drift
+   `../copy/global.ts` was written to refuse. A page with no `NuSongs` gets a
+   SINGLE-select field (the shape it had before this round) rather than a
+   hand-rolled join. */
+interface SongsDoor { chainOf(s: string): string[];
+                      chainWord(ws: string[]): string }
+const SONGS = (): SongsDoor | null =>
+  (globalThis as unknown as { NuSongs?: SongsDoor }).NuSongs || null;
+
 /** THE DRUMMER'S GROUPS, built from the options the sheet actually offers so a
  *  refused word keeps its refusal and an empty group is not drawn. */
 function groupsFor(options: Choice[]): { word: string; vals: string[] }[] {
@@ -889,6 +903,34 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
                   set: (x: string) => w.set(x), why: w.why || null,
                   clear: w.derived ? null : () => w.set("") };
     if (v.kind === "drums") fld.groups = groupsFor(w.options);
+    /* ---- A VARIATION IS A CHAIN (2026-09-06, TABLE.md §15) --------------
+       Paul: *"I still can't pick more than one variation for a motif"* and
+       *"And the same with the drums."* `avail.js` says which sheets are one
+       (`dev.line`, `dev.kit`; `dev.bass` is a pattern choice and is not), and
+       the DOCUMENT keeps one string either way — so the field below is the
+       field above with a chain read off `w.value` and a second writer that
+       joins it back. One tap is one `w.set`, which is one document write and
+       one undo step, exactly as a single word was.
+
+       THE ABSENT WORD STANDS ALONE. `w.absent` is the row's own — `""` for the
+       kit, "as written" for the tune — and it is the answer that means "this
+       cell says nothing". Picking it CLEARS the chain; picking any other word
+       while it stands REPLACES it, which falls out of filtering it from the
+       order rather than being a second rule. */
+    const S = SONGS();
+    if (w.multi && S) {
+      const abs = w.absent == null ? "" : String(w.absent);
+      const chain = S.chainOf(String(w.value == null ? "" : w.value));
+      fld.multi = true;
+      if (w.ordered) fld.ordered = true;
+      // an empty chain IS the absent word, so the field draws it standing
+      fld.values = chain.length ? chain : [abs];
+      fld.setChain = (x: string, on: boolean, order: string[]) => {
+        if (x === abs && on) { w.set(abs); return; }
+        const words = order.filter((y) => y !== abs);
+        w.set(words.length ? S.chainWord(words) : abs);
+      };
+    }
     variation.push(fld);
   }
   /* 3 · THE TWO COLUMN DEFAULTS A CELL MAY OVERRIDE (wave 1's cell tier).

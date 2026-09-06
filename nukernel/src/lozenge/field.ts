@@ -189,11 +189,131 @@ function bins(spec: LozSpec): Bin[] {
   return out;
 }
 
-/** THE ONE DOOR. Returns the field element a caller appends; it owns its own
- *  standing value from then on and patches itself in place forever. */
 /** which clusters are folded, per field address. Module-level for the reason
  *  `sheet.ts`'s `GROUPOPEN` is: the panel is rebuilt from scratch on write. */
 const FOLDS = new Map<string, Set<number>>();
+/** ...and which fields a HAND has folded, which is a different fact from which
+ *  are folded. Past this set the field folds ITSELF to fit the phone (below);
+ *  inside it, the hand's own answer stands and is never overruled. */
+const TOUCHED = new Set<string>();
+
+/* ===== NO CONTROL TALLER THAN THE PHONE (2026-09-06, TABLE.md §15) ======
+   THE MEASUREMENT THAT ASKED FOR THIS. The Coach House walkthrough, on an
+   844px phone: *"the variation popup is 1,378 px tall … three options to a
+   line, some 38px wide; I mis-tapped `filled in` into `a beat later` and did
+   not notice."* Walked again on 2026-09-06 across three records at 390 and
+   320, the five tallest fields on the page measured 5,876px (the rules
+   sheet's instrument, 121 words), 4,416px (a player's instrument, 147),
+   2,231px (the scale, 64), 1,873px (the drummer's kit, 69) and 1,178px (the
+   tune's own variation, 27) — eight distinct fields past the viewport, and on
+   three of them the word the record was STANDING ON sat 1,448px, 1,450px and
+   2,163px down a field you had to scroll INSIDE, over a table, inside a sheet.
+
+   THE MECHANISM IS THE ONE THIS COMPONENT ALREADY HAS. Law 1 says the only
+   thing that may hide an option is a FOLDED CLUSTER; this makes the fold
+   answer the height. Three states, in order, and the first that fits wins:
+
+     A · every cluster open — law 1 exactly as it was, and what a vocabulary
+         that fits still gets;
+     B · the cluster holding the standing answer open, the rest headings with
+         their counts (so nothing has disappeared and every one is one tap);
+     C · every cluster folded, the standing one MARKED (`aria-current`), and
+         the answer itself read off the field's own head one row above.
+
+   WHAT WAS REJECTED, AND WHY, both measured before this was written:
+     · A BOUNDED SCROLL BOX with the value pinned in it. It is law 1's own
+       forbidden shape ("nothing behind a wheel, a scroll box, or a 'more'")
+       and it puts back exactly what the walkthrough complained of — a scroll
+       inside a popup inside a sheet. §11c made the PANE the scrollport; a
+       second scrollport inside it is the disease.
+     · A TYPED FILTER ROW past N words. `src/menus/pick.ts` measured what a
+       focused text input does on this page at 390: the soft keyboard takes
+       320 of the 844 and *"the number of options a thumb could reach without
+       scrolling was ONE, on nine of the thirteen menus driven"*. A filter that
+       raises the keyboard to shorten a list is a shorter list nobody can see.
+       The typed COMBO keeps that job on a fine pointer, where the keyboard is
+       already there — which is `pick.ts` rule 4 and is unchanged.
+
+   THE HEIGHT IS ESTIMATED BEFORE THE FIRST PAINT AND MEASURED AFTER IT.
+   A field is built before it is in the document, so `getBoundingClientRect`
+   is zero at build time and a measure-then-refold would paint 5,823px once
+   and then shrink it. So the fold is decided by PACKING the words at the
+   page's own width (`autoFolds` below), and one `requestAnimationFrame` after
+   mount the REAL height is read and the field steps down a state if the
+   estimate was generous — measured, never trusted, and only ever in the
+   direction that makes the field smaller. */
+
+/** a lozenge's width, packed. The constants are the rendered pill at `--t2`
+ *  with its padding and its reserved bold width, read off the phone. */
+const CH = 9.5, PILLPAD = 34, PILLGAP = 8, PILLROW = 50, HEADROW = 48, SAYROW = 30;
+
+/** WHAT THE FIELD MAY BE. The viewport the page is actually in, less the one
+ *  piece of fixed chrome on it (TABLE.md §13a.1: *"nothing is fixed but the
+ *  bottom bar"*), and never less than a floor that could not hold one
+ *  cluster. */
+function budget(): number {
+  let h = 844;
+  try {
+    const vv = (globalThis as unknown as { visualViewport?: { height: number } })
+      .visualViewport;
+    h = (vv && vv.height) || window.innerHeight || 844;
+  } catch (e) { /* no window: the estimate falls back to the phone */ }
+  let bar = 0;
+  try { const el = document.querySelector(".nu-bar");
+        if (el) bar = el.getBoundingClientRect().height; } catch (e) {}
+  return Math.max(320, h - bar - 8);
+}
+
+/** the width one row of pills has to fill. The document's own, because the
+ *  field is not in the tree yet; narrower than the truth is the SAFE error
+ *  (more rows, more folding), which is why nothing here rounds up. */
+function fieldWidth(): number {
+  try { return Math.max(240, (document.documentElement.clientWidth || 390) - 40); }
+  catch (e) { return 350; }
+}
+
+/** how tall a cluster draws, packed at `w`. A folded one is its heading. */
+function clusterHeight(b: Bin, w: number, shut: boolean): number {
+  const head = b.word ? HEADROW : 0;
+  if (shut) return head;
+  let rows = 1, x = 0;
+  for (const o of b.opts) {
+    const pw = Math.max(44, String(o.label || "").length * CH + PILLPAD) + PILLGAP;
+    if (x > 0 && x + pw > w) { rows++; x = pw; } else x += pw;
+  }
+  return head + rows * PILLROW;
+}
+
+/** THE FOLD THIS FIELD OPENS WITH. `at` is the index of the cluster holding
+ *  the standing answer (−1 for none), and the answer is state A, B or C as a
+ *  set of folded indexes — the first of the three that packs inside the
+ *  budget. */
+function autoFolds(plan: Bin[], at: number): Set<number> {
+  if (plan.length < 2) return new Set();
+  const w = fieldWidth(), cap = budget();
+  /* AN UNHEADED CLUSTER IS NEVER FOLDED. A fold is not a disappearance only
+     because its heading says how many it holds AND is the button that opens
+     it — so a bin with no word (the leftovers, and the absent detent that
+     belongs to no family) has neither, and folding it would hide options with
+     no door back. It is drawn open in every state and counted in the budget. */
+  const shy = (i: number) => !plan[i]!.word;
+  const open = (shutAll: boolean, keep: number) => {
+    let h = SAYROW;
+    for (let i = 0; i < plan.length; i++)
+      h += clusterHeight(plan[i]!, w, shutAll && i !== keep && !shy(i));
+    return h;
+  };
+  if (open(false, -1) <= cap) return new Set();                       // A
+  const one = at >= 0 ? at : 0;
+  const shut = new Set<number>();
+  for (let i = 0; i < plan.length; i++) if (i !== one && !shy(i)) shut.add(i);
+  if (open(true, one) <= cap) return shut;                            // B
+  if (!shy(one)) shut.add(one);                                       // C
+  return shut;
+}
+
+/** THE ONE DOOR. Returns the field element a caller appends; it owns its own
+ *  standing value from then on and patches itself in place forever. */
 
 export function lozengeField(spec: LozSpec): HTMLElement {
   refuseSilentGrey(spec);
@@ -226,7 +346,22 @@ export function lozengeField(spec: LozSpec): HTMLElement {
      that closed it, once per tap. The memory is keyed by the FIELD's address,
      which is what makes it the same field across two builds. */
   const folded = FOLDS.get(spec.key) || new Set<number>();
-  FOLDS.set(spec.key, folded);                // clusters start OPEN (law 1)
+  FOLDS.set(spec.key, folded);
+  /* ...AND UNTIL A HAND HAS FOLDED ANYTHING, THE FIELD FOLDS ITSELF TO FIT
+     (2026-09-06, TABLE.md §15). A vocabulary that packs inside the viewport
+     opens whole, which is law 1 unchanged; one that does not opens on the
+     cluster holding the standing answer. The moment a hand presses a heading
+     the field stops guessing and the hand's answer stands. */
+  const standingAt = () => {
+    const want = multi ? (chain[0] || "") : cur;
+    if (want === "" && !multi) return -1;
+    return plan.findIndex((b) => b.opts.some((o) => String(o.value) === want));
+  };
+  if (!TOUCHED.has(key)) {
+    const want = autoFolds(plan, standingAt());
+    folded.clear();
+    for (const i of want) folded.add(i);
+  }
   let said = "";                             // what the last long press said
   let focusK: string | null = null;          // the roving tab stop's own key
 
@@ -249,7 +384,11 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     const own = o.why ? String(o.why).trim() : "";
     const refused = !!off || !!o.disabled;
     const why = off || own || "";
-    const n = ordered && multi && hot ? chain.indexOf(v) + 1 : 0;
+    /* A CHAIN OF ONE HAS NO ORDER, so it prints no number — the "1" beside a
+       single standing word is a position nobody can act on, and on the absent
+       detent ("default", standing alone) it is a number on the answer that
+       means "nothing said here". Two words and up, every one is numbered. */
+    const n = ordered && multi && hot && chain.length > 1 ? chain.indexOf(v) + 1 : 0;
     return html`<button type="button"
       class=${classMap({ "nu-lz": true, "is-hot": hot, "is-quiet": !!o.quiet })}
       data-k=${key + "|" + v}
@@ -279,15 +418,34 @@ export function lozengeField(spec: LozSpec): HTMLElement {
   const draw = () => render(html`${plan.map((b, ci) => {
     const shut = folded.has(ci);
     const stop = stopOf(b);
+    /* WHERE THE ANSWER IS, WHEN THE ANSWER IS BEHIND A FOLD (§15 state C).
+       A heading that holds the standing word says so — `aria-current`, which
+       is what a screen reader announces and what nu.css paints in `--hand` —
+       so a folded field still points at the record's own answer, and the word
+       itself is on the field's head one row above. */
+    const holds = b.opts.some((o) => stands(String(o.value)));
+    /* ...AND IT SAYS WHICH WORD (§15 state C). A folded field that only
+       pointed at the cluster would be a field whose answer is one tap away
+       from being read, and this component's oldest rule is that you can
+       always see the word you are on. It is a READOUT and not a pill — a
+       `<span>`, no `data-k`, no `data-v` — because a second element on one
+       address is what `chipStrip`'s own pin law forbids. */
+    const held = shut && holds
+      ? b.opts.filter((o) => stands(String(o.value))).map((o) => o.label).join(", ")
+      : "";
     return html`<section
-      class=${classMap({ "nu-lzcluster": true, "is-folded": shut })}
+      class=${classMap({ "nu-lzcluster": true, "is-folded": shut,
+                         "is-standing": shut && holds })}
       data-cluster=${b.word}
       data-hue=${ci % HUES}
       >${b.word ? html`<button type="button" class="nu-lzhead"
           data-k=${key + "|cluster|" + b.word}
           aria-expanded=${String(!shut)}
+          aria-current=${ifDefined(shut && holds ? "true" : undefined)}
           ><span class="nu-lzheadword">${b.word}</span
-          ><small class="nu-lzcount">${b.opts.length}</small></button>` : nothing
+          ><small class="nu-lzcount">${b.opts.length}</small
+          >${held ? html`<span class="nu-lzheld">${held}</span>` : nothing
+          }</button>` : nothing
       }<div class="nu-lzwrap" ?hidden=${shut}
         >${b.opts.map((o) => lozenge(o, stop === String(o.value)))}</div
       ></section>`;
@@ -368,7 +526,8 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     if (head && host.contains(head)) {
       const sec = head.closest("section.nu-lzcluster") as HTMLElement | null;
       const ci = sec ? Array.from(host.children).indexOf(sec) : -1;
-      if (ci >= 0) { if (folded.has(ci)) folded.delete(ci); else folded.add(ci); draw(); }
+      if (ci >= 0) { TOUCHED.add(key);
+        if (folded.has(ci)) folded.delete(ci); else folded.add(ci); draw(); }
       return;
     }
     const el = tgt?.closest?.(".nu-lz") as HTMLElement | null;
@@ -450,5 +609,23 @@ export function lozengeField(spec: LozSpec): HTMLElement {
   });
 
   draw();
+  /* ...AND THE ESTIMATE IS CHECKED AGAINST THE RENDERED FIELD, ONCE (§15).
+     `autoFolds` packs words it has not measured; this reads the box the
+     browser actually drew and steps the field DOWN a state if it is still
+     past the budget. One frame, one direction, and never against a hand. */
+  try {
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => {
+      if (!host.isConnected || TOUCHED.has(key) || plan.length < 2) return;
+      if (host.getBoundingClientRect().height <= budget()) return;
+      const one = standingAt() >= 0 ? standingAt() : 0;
+      const all = folded.size >= plan.length;
+      if (all) return;                       // state C already: nothing below it
+      const shy2 = (i: number) => !plan[i]!.word;
+      if (folded.size) { if (!shy2(one)) folded.add(one); }   // B -> C
+      else for (let i = 0; i < plan.length; i++)
+        if (i !== one && !shy2(i)) folded.add(i);             // A -> B
+      draw();
+    });
+  } catch (e) { /* no rAF: the estimate stands */ }
   return host;
 }

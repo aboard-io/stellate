@@ -178,6 +178,37 @@
     "accents flipped":       "a piece of it",
   };
 
+  /* ===== A VARIATION IS A CHAIN (2026-09-06) ==============================
+     Paul: *"I still can't pick more than one variation for a motif"* and
+     *"And the same with the drums"*. The comment beside `inverted` above had
+     already named the hand this is for — *"a hand may chain the two when it
+     wants both"* — and there was no way for a hand to say it.
+
+     THE DOCUMENT KEEPS ONE STRING. A chain is the words joined with " + ", a
+     space each side, IN PICKED ORDER: `"inverted + the first half"`. A single
+     word is the bare word, byte for byte, so every saved record, every one of
+     the 358 catalogue anchors and test/table.test.js's BASE_SHA identity are
+     untouched by this file existing — a one-word chain compiles to the ops it
+     compiled to yesterday, in the same order, with no extra array.
+
+     THIS IS THE ONE SPLITTER ON THE PAGE. document.js (`opsOf`), ui/derive.js
+     (the kit fold), avail.js and the two sheets all read it here. A second
+     `.split(" + ")` anywhere is a second owner of what a chain is — which is
+     the drift this file's own header refuses ("an enumerated vocabulary").
+     NO KEY OF `WORDS` AND NO KEY OF `KITLABEL` MAY CONTAIN THE SEPARATOR:
+     nukernel/gates-extract.js --check asserts it, because a word with a " + "
+     in it would be two words the moment it was written down. */
+  const CHAINSEP = " + ";
+  /** the words of a chain, in order. `""` is the empty chain, and a word this
+   *  table never heard of is still returned — the resolver decides what an
+   *  unknown word means, exactly as `opsOf` already did for a bare one. */
+  const chainOf = (s) => String(s == null ? "" : s).split(CHAINSEP)
+    .map((w) => w.trim()).filter((w) => w !== "");
+  /** ...and back to the one string the document keeps. One word in, that word
+   *  out, byte for byte. */
+  const chainWord = (ws) => (ws || []).map((w) => String(w == null ? "" : w).trim())
+    .filter((w) => w !== "").join(CHAINSEP);
+
   /* ---- Rome 600 -----------------------------------------------------------
      (2026-08-24, Paul: "let's do Gregorian chant.")
 
@@ -346,5 +377,6 @@
     performance: { take: 0, humanize: 0, ontime: true },
   };
 
-  return { WORDS, WORDGROUP, TERMS, SONGS: { terms: TERMS } };
+  return { WORDS, WORDGROUP, CHAINSEP, chainOf, chainWord,
+           TERMS, SONGS: { terms: TERMS } };
 });

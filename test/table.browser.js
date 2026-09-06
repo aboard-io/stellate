@@ -566,13 +566,45 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         shown: lz.filter((c) => c.getBoundingClientRect().height > 0).length,
         short: lz.filter((c) => { const r = c.getBoundingClientRect();
           return r.height > 0 && r.height < 43.5; }).length,
-        pill: lz.length ? getComputedStyle(lz[0]).borderTopLeftRadius : null };
+        pill: lz.length ? getComputedStyle(lz[0]).borderTopLeftRadius : null,
+        /* ...AND WHAT THE HEADINGS PROMISE (2026-09-06, §15). A fold is only
+           not a disappearance if its count is on its own heading, so the
+           counts have to sum to the whole vocabulary. */
+        counts: secs.reduce((a, x) => a +
+          (+((x.querySelector(".nu-lzcount") || {}).textContent || 0) || 0), 0),
+        /* AN UNHEADED CLUSTER HAS NO COUNT AND IS NEVER FOLDED (§15): it has
+           no heading to carry the number and none to press, so it is drawn
+           whole in every state and counted here instead. */
+        loose: [...secs].filter((x) => !x.querySelector(".nu-lzhead"))
+          .reduce((a, x) => a + x.querySelectorAll(".nu-lz").length, 0),
+        folded: secs.filter((x) => x.classList.contains("is-folded")).length,
+        marked: secs.filter((x) => x.classList.contains("is-standing")).length,
+        h: field ? Math.round(field.getBoundingClientRect().height) : 0,
+        vh: Math.round(window.innerHeight) };
     });
     check(gr.groups.length >= 5 && KITGROUPS.every((g) => gr.groups.includes(g)),
       "T5f the drummer's ops are grouped by what they act on: " + gr.groups.join(" · "));
-    check(gr.chips > 60 && gr.shown === gr.chips,
-      "…and EVERY ONE of them is on the glass at once (" + gr.shown + " of " +
-      gr.chips + "), which is what the lozenge field is for");
+    /* THE LAW MOVED AGAIN, 2026-09-06 (§15), AND IT IS THE SAME LAW ONE
+       CONDITION DEEPER. It read *"every one of the sixty-eight is on the glass,
+       and a cluster folds only because a hand folded it"* — Paul's design-pass
+       ruling, *"VISIBILITY INTO ALL OF THE OPTIONS"*, taken literally. The
+       Coach House walkthrough then measured what "all of them at once" is on a
+       phone: 1,873px of kit words on an 844px screen with the word the record
+       was standing on 1,450px down it. So the claim is now the one §15 states:
+       EVERY ONE OF THEM IS IN THE FIELD, in exactly one cluster, and every one
+       is at most ONE TAP from the glass — the heading of its own cluster, which
+       carries its count so a fold is never a disappearance. What the field
+       DRAWS is bounded by the phone; what it HOLDS is still all sixty-eight. */
+    check(gr.chips > 60 && gr.counts + gr.loose === gr.chips,
+      "…and EVERY ONE of them is in the field, in exactly one cluster, its " +
+      "count on its own heading (" + gr.counts + " promised + " + gr.loose +
+      " unheaded = " + gr.chips + " drawn) — " + gr.shown + " on the glass at " +
+      "once, the other " + (gr.chips - gr.shown) + " one tap away behind " +
+      gr.folded + " folds");
+    check(gr.h > 0 && gr.h <= gr.vh && (!gr.folded || gr.shown > 0 || gr.marked > 0),
+      "…and the field FITS THE PHONE (" + gr.h + "px against " + gr.vh +
+      "px), with the standing answer on the glass (" +
+      (gr.marked ? "its cluster marked" : "its word hot") + ")");
     check(gr.hues === gr.groups.length && gr.short === 0,
       "…one hue per cluster (" + gr.hues + " for " + gr.groups.length +
       " clusters) and every lozenge 44px (" + gr.short + " short)");
@@ -3968,15 +4000,46 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       return { n: all.length, clusters: secs.length,
         heads: secs.filter((x) => x.querySelector(".nu-lzhead")).length,
         hues: [...new Set(hues)].length,
-        short: all.filter((c) => c.getBoundingClientRect().height < 43.5).length,
+        /* SHORT IS MEASURED ON THE DRAWN PILLS (2026-09-06, §15). A pill
+           inside a folded cluster has NO box at all, and a box of zero is not
+           a 34px tap target — it is a word one tap away behind a heading. */
+        short: all.filter((c) => { const h = c.getBoundingClientRect().height;
+          return h > 0 && h < 43.5; }).length,
         rect: all.filter((c) => c.getBoundingClientRect().height > 0).length,
+        /* ...AND WHAT THE HEADINGS PROMISE, which is where the other words
+           are: every one is in exactly one cluster and its count is on that
+           cluster's own heading, so a fold is never a disappearance. */
+        counts: secs.reduce((a, x) => a +
+          (+((x.querySelector(".nu-lzcount") || {}).textContent || 0) || 0), 0),
+        loose: secs.filter((x) => !x.querySelector(".nu-lzhead"))
+          .reduce((a, x) => a + x.querySelectorAll(".nu-lz").length, 0),
+        folded: secs.filter((x) => x.classList.contains("is-folded")).length,
+        marked: secs.filter((x) => x.classList.contains("is-standing")).length,
+        h: Math.round(f.getBoundingClientRect().height),
+        vh: Math.round(window.innerHeight),
         hot: all.filter((c) => c.getAttribute("aria-pressed") === "true").length,
         addr: all.length ? all[0].dataset.k : null,
         pill: all.length ? getComputedStyle(all[0]).borderTopLeftRadius : null,
         say: !!f.querySelector(".nu-lzsay") }; });
-    check(!!lz && lz.n > 40 && lz.rect === lz.n,
-      "T12f …with every one of its words on the glass (" +
-      (lz && lz.rect) + " of " + (lz && lz.n) + ")");
+    /* THE CLAIM MOVED ONE CONDITION DEEPER, 2026-09-06 (§15). It read *"every
+       one of its words is ON THE GLASS"* — §11d's *"visibility into all of the
+       options"* taken literally — and the Coach House walkthrough measured
+       what that is on a phone: this very field drew 2,231px of scale names on
+       an 844px screen with the word the record was standing on 2,163px down
+       it. So a field folds itself to fit, and the claim is the one §15 states:
+       every word is IN THE FIELD, in exactly one cluster, its count on that
+       cluster's own heading, and every one is at most ONE TAP from the glass.
+       What the field DRAWS is bounded by the phone; what it HOLDS is all 64. */
+    check(!!lz && lz.n > 40 && lz.counts + lz.loose === lz.n,
+      "T12f …with every one of its words in the field, in exactly one cluster, " +
+      "its count on its own heading (" + (lz && lz.counts) + " promised + " +
+      (lz && lz.loose) + " unheaded = " + (lz && lz.n) + ") — " + (lz && lz.rect) +
+      " on the glass at once, the other " + (lz && (lz.n - lz.rect)) +
+      " one tap away behind " + (lz && lz.folded) + " folds");
+    check(!!lz && lz.h > 0 && lz.h <= lz.vh,
+      "T12f …and the field FITS THE PHONE (" + (lz && lz.h) + "px against " +
+      (lz && lz.vh) + "px), with the standing answer on the glass (" +
+      (lz && (lz.marked ? "its cluster marked" : "its word hot")) + ")");
     /* ONE HUE PER CLUSTER, AND THE PALETTE IS EIGHT (src/lozenge/api.ts `HUES`,
        nu.css `--lz-h0..7`). Eight is a decision — past eight, hue stops being
        a category anyone can hold — so a vocabulary with more clusters than
@@ -4382,12 +4445,26 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         }).map((x) => (x.textContent || "").trim().slice(0, 40));
         const chassis = f.closest(".nu-combo");
         const own = chassis || f.closest(".nu-sheetrow") || f.parentElement;
-        const head = f.querySelector(".nu-lzhead");
-        const wrap = f.querySelector(".nu-lzwrap:not([hidden])");
-        const first = wrap ? wrap.querySelector("button.nu-lz") : null;
+        /* THE RULE IS MEASURED INSIDE ONE CLUSTER (2026-09-06, §15). A field
+           folds itself to fit now, so `f.querySelector(".nu-lzhead")` and
+           `f.querySelector(".nu-lzwrap:not([hidden])")` can belong to two
+           DIFFERENT clusters — a folded heading at the top and an open wrap
+           six headings down — and the "gap" between them measured 589px of
+           other clusters. The claim was always about one heading and the pills
+           under it, so it is asked of the first cluster that has both. */
+        const sec = [...f.querySelectorAll("section.nu-lzcluster")].find((x) => {
+          const w2 = x.querySelector(".nu-lzwrap");
+          return w2 && !w2.hidden && x.querySelector(".nu-lzhead") &&
+                 w2.querySelector("button.nu-lz"); });
+        const head = sec ? sec.querySelector(".nu-lzhead") : null;
+        const first = sec ? sec.querySelector(".nu-lzwrap button.nu-lz") : null;
         return { n: all.length, hits, worst,
           clusters: f.querySelectorAll(".nu-lzcluster").length,
-          short: box.filter((x) => x.h < 43.5).length,
+          /* 44px OF THUMB IS A CLAIM ABOUT A PILL THAT IS DRAWN. One inside a
+             folded cluster has no box at all, and a box of zero is not a short
+             tap target — it is a word one tap away behind its heading. */
+          short: box.filter((x) => x.h > 0 && x.h < 43.5).length,
+          drawn: box.filter((x) => x.h > 0).length,
           sentences: sentences.length, saidInside: sentences.slice(0, 1),
           whys: f.querySelectorAll(".nu-lzwhy").length,
           arrow: chassis ? getComputedStyle(chassis, "::after").content : "none",
@@ -4412,9 +4489,24 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             e.scrollHeight - e.clientHeight > 4 &&
             /auto|scroll/.test(getComputedStyle(e).overflowY));
           sc.push(document.scrollingElement);
-          const cold = [...f.querySelectorAll("button.nu-lz")].filter((x) =>
+          /* A PILL A THUMB CAN REACH (2026-09-06, §15): DRAWN, not merely in
+             the DOM. A field folds itself to fit, so a word behind a fold has
+             no box — tapping it is not the gesture this check is about, and
+             its "before" rectangle would be four zeros. */
+          const drawn = (x) => x.getBoundingClientRect().height > 0;
+          const coldOf = () => [...f.querySelectorAll("button.nu-lz")].filter((x) =>
             !x.disabled && x.getAttribute("aria-disabled") !== "true" &&
-            x.getAttribute("aria-pressed") !== "true");
+            x.getAttribute("aria-pressed") !== "true" && drawn(x));
+          /* A FIELD THAT OPENED ON NO CLUSTER HAS NO PILL TO TAP YET (§15
+             state C: 147 instruments in thirteen clusters, all folded). A
+             thumb opens one first, which is a heading, and THEN taps a word —
+             so the gate makes that gesture rather than reporting "missing"
+             about a control it never opened. */
+          if (!coldOf().length) {
+            const h = f.querySelector('.nu-lzhead[aria-expanded="false"]');
+            if (h) h.click();
+          }
+          const cold = coldOf();
           const t = cold[Math.min(cold.length - 1, Math.floor(cold.length * 0.7))];
           if (!t) return null;
           t.scrollIntoView({ block: "center" });
@@ -4532,22 +4624,42 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       check(shortOf.length === 0, "T12n …every pill 44px of thumb (" +
         (shortOf.length ? shortOf.map(([n, m]) => n + ": " + m.short).join(" · ")
          : "0 short") + ")");
-      const through = found.filter(([, m]) => m.rule == null || m.rule < 0);
+      /* A FIELD THAT OPENED ON NO CLUSTER HAS NO RULE TO MEASURE (§15 state
+         C): `null` is "there was no heading with pills under it", which is a
+         different fact from "the rule is drawn through the words". Only a
+         NEGATIVE gap is the bug this was written for. */
+      const through = found.filter(([, m]) => m.rule != null && m.rule < 0);
       check(through.length === 0, "T12n …the cluster's rule ABOVE its pills, " +
-        "not through them (" + found.map(([, m]) => m.rule).join(" · ") + "px)");
+        "not through them (" + found.map(([, m]) =>
+          m.rule == null ? "folded" : m.rule).join(" · ") + "px)");
       check(found.every(([, m]) => m.side <= 1), "T12n …and the page does not " +
         "scroll sideways (" + found.map(([, m]) => m.side).join(" · ") + "px)");
       check(!!refusal && refusal.pill === refusal.word && !!refusal.why &&
             refusal.said === refusal.why && refusal.now === refusal.was,
         "T12n …a refused word SAYS why in the say line and writes nothing — " +
         JSON.stringify(refusal));
-      for (const [name, j] of [["the mode picker", jmode],
-                               ["the instrument picker", jinstr]]) {
+      /* PAUL'S OWN SENTENCE IS ABOUT THE SCROLL — *"When I tap a mode you snap
+         to the top of the screen it shouldn't move at all"* — and it is asked
+         of both pickers: not one scrollport may move under the tap.
+         THE PILL'S OWN RECT IS THE STRONGER CLAIM AND IT IS ASKED WHERE IT IS
+         TRUE. The mode picker writes one word into one field and the sheet
+         around it is the sheet it was, so the pill must not move by a pixel.
+         The INSTRUMENT picker writes a CHAIR: a sampled instrument is asked
+         about its attack and its looping, a sung one about its throat, a
+         modelled one about neither — so the rows ABOVE the field are not the
+         same rows after the write, and measured at 320 the field moved down
+         one row (372.1 -> 421.7px) with both scrollports unmoved. That is the
+         sheet asking a different question, which is what it is for, and
+         asserting it away would be asserting that the sheet must not answer.
+         What is still asked of it: the scroll does not move, the field stays
+         open, and the word a thumb pressed is the one standing. */
+      for (const [name, j, rect] of [["the mode picker", jmode, true],
+                                     ["the instrument picker", jinstr, false]]) {
         check(!!j && JSON.stringify(j.tops) === JSON.stringify(j.now) &&
-              JSON.stringify(j.box) === JSON.stringify(j.after) &&
+              (!rect || JSON.stringify(j.box) === JSON.stringify(j.after)) &&
               j.open && j.hot === "true",
           "T12n …and a tap on " + name + " at " + W + " WRITES AND MOVES " +
-          "NOTHING — " + JSON.stringify(j));
+          (rect ? "NOTHING" : "NO SCROLLPORT") + " — " + JSON.stringify(j));
       }
       await pctx.close();
     }
@@ -5687,6 +5799,384 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                             { blank: n2.head, key: gone }, paneMid]));
           await zshut();
           await zrec(false);
+        }
+
+        /* ============ T15 · WAVE B (TABLE.md §15) =======================
+           4 · no control taller than the phone · 5 · refusals are said out
+           loud · 6 · a variation is a chain. */
+
+        /** open a sheet IDEMPOTENTLY — `ztap` clicks, and a click on an open
+         *  sheet is the gesture that shuts it. */
+        const zopen = async (k) => {
+          const r = await z.evaluate((key) => {
+            const el = document.querySelector('#pan-band [data-k="' + key + '"]');
+            if (!el) return "missing";
+            if (el.getAttribute("aria-expanded") !== "true") el.click();
+            return "ok"; }, k);
+          await z.waitForTimeout(420); return r; };
+        /** ...and open one of its fields, handing back the widget the field
+         *  drew — measured on the rendered page, never estimated. */
+        const openField = async (fieldK) => {
+          return z.evaluate((k) => {
+            const btn = document.querySelector(
+              '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+            if (!btn) return null;
+            if (btn.getAttribute("aria-expanded") !== "true") btn.click();
+            return true; }, fieldK);
+        };
+        /** the box the open field actually drew, and where its standing answer
+         *  is inside it. A lozenge field that folded itself reads its answer
+         *  off the MARKED heading (`aria-current`) instead of a hot pill —
+         *  §15's state C — and both are "the answer, on the glass". */
+        const widgetOf = async (fieldK) => z.evaluate((k) => {
+          const btn = document.querySelector(
+            '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+          if (!btn) return null;
+          const row = btn.closest(".nu-sheetrow");
+          const w = row && row.nextElementSibling;
+          if (!w || !/nu-lzfield|nu-wchips|nu-wgroups/.test(w.className)) return null;
+          const r = w.getBoundingClientRect();
+          const hot = w.querySelector(
+            '.nu-lz[aria-pressed=true], .nu-wchip[aria-pressed=true]');
+          const mark = w.querySelector('.nu-lzhead[aria-current=true]');
+          const at = (el) => el && el.getBoundingClientRect().height > 0
+            ? Math.round(el.getBoundingClientRect().top - r.top) : null;
+          return { h: Math.round(r.height), k,
+            kind: w.classList.contains("nu-lzfield") ? "lozenge" : "chips",
+            opts: w.querySelectorAll(".nu-lz, .nu-wchip").length,
+            standing: at(hot) != null ? at(hot) : at(mark),
+            /* A FIELD WITH NOTHING WRITTEN HAS NO ANSWER TO POINT AT, and a
+               vocabulary whose absent detent is not one of its own words has
+               none either — asking those to show a standing word would be
+               asking them to invent one. */
+            derived: btn.classList.contains("is-derived"),
+            /* ...AND WHETHER THE STANDING ANSWER IS ONE OF THIS FIELD'S OWN
+               WORDS AT ALL. A record can be standing on a word no table has —
+               `src/menus rowsOf` prepends a placeholder row for exactly that
+               and calls it `menu.unknown` — and a field with nothing of its own
+               to point at has no cluster to mark. Measured on the Silence
+               record: a fresh `line 1` names `synth`, and `avail.js
+               instrOptions` only offers that word where the record or its
+               basis declares a native model. It is a fact about the RECORD,
+               not about the fold, so it is reported and not failed. */
+            known: [...w.querySelectorAll(".nu-lz, .nu-wchip")]
+              .some((e) => (e.dataset.v || "") === (w.dataset.v || "")),
+            head: Math.round(btn.getBoundingClientRect().height) }; }, fieldK);
+
+        /* ---- T15a · NO PICKER TALLER THAN THE PHONE ------------------
+           MEASURED BEFORE THIS ROUND, on these same three records at 390 and
+           320: the five tallest fields on the page were 5,876px (the rules
+           sheet's instrument), 4,416px (a player's), 2,231px (the scale),
+           1,873px (the drummer's kit) and 1,178px (a line's own variation) —
+           eight distinct fields past an 844px viewport, and on three of them
+           the standing answer sat 1,448 / 1,450 / 2,163px down a field you
+           had to scroll INSIDE. The walk below is the tall half of that
+           census: every sheet that holds a lozenge field. */
+        {
+          /* THE TALL HALF, AND NOT THE WHOLE CENSUS. The full 734-picker walk
+             lives in `scratchpad/design/wave-b/probe.cjs`; what a gate on
+             every push needs is the field with the longest vocabulary of each
+             KIND — the rules sheet's 120 instruments, the alphabet's 64
+             scales, a player's 147 instruments, a line's 27 words and the
+             drummer's 69 — which is one column and one cell per player kind. */
+          const kinds = await z.evaluate(() => {
+            const d = window.__eightDoc(), seen = new Set(), out = [];
+            d.voices.forEach((v) => { if (seen.has(v.kind)) return;
+              seen.add(v.kind); out.push(v.name); });
+            return out; });
+          const owners = ["trules", "ttime", "trow|" + (sid14 || "s0"),
+            ...kinds.map((n) => "tcol|" + n),
+            ...kinds.map((n) => "tcell|" + n + "|" + (sid14 || "s0"))]
+            .filter((k) => k.indexOf("undefined") < 0);
+          const seen = [];
+          for (const o of owners) {
+            if (ZRECHEADS.indexOf(o) < 0) await zrec(false);
+            else await zrec(true);
+            if ((await zopen(o)) === "missing") continue;
+            const keys = await z.evaluate(() => [...document.querySelectorAll(
+              '#pan-band .nu-sheetrow .nu-wcell[aria-expanded]')].map((e) => e.dataset.k));
+            for (const fk of keys) {
+              await openField(fk);
+              await z.waitForTimeout(90);
+              const m = await widgetOf(fk);
+              if (m) seen.push(m);
+              await z.evaluate((k) => { const el = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                if (el) el.click(); }, fk);
+            }
+            await zshut();
+          }
+          seen.sort((a, c) => c.h - a.h);
+          const over = seen.filter((m) => m.h > 844);
+          const lost = seen.filter((m) => !m.derived && m.known !== false &&
+            (m.standing == null || m.standing > 844));
+          const stray = seen.filter((m) => m.known === false).map((m) => m.k);
+          check(seen.length > 0 && !over.length,
+            "T15a " + at + " · NOT ONE of the " + seen.length + " pickers on " +
+            "this record is taller than the phone — tallest " +
+            (seen[0] ? seen[0].h + "px (" + seen[0].opts + " words, " +
+             seen[0].k + ")" : "none") + "; " +
+            (over.length ? "OVER 844: " + JSON.stringify(over.slice(0, 3))
+                         : "0 over 844") + " — five tallest " +
+            JSON.stringify(seen.slice(0, 5).map((m) => m.h + "px " + m.k)));
+          check(!lost.length,
+            "T15a " + at + " · …and every one of them shows the answer it is " +
+            "standing on without a scroll (the hot word, or the marked " +
+            "cluster a folded field opens on) " +
+            JSON.stringify(lost.slice(0, 3)) +
+            (stray.length ? " — and " + stray.length + " standing on a word " +
+             "their own vocabulary does not hold " + JSON.stringify(stray) : ""));
+        }
+
+        /* ---- T15b · A REFUSED OPTION, TAPPED, SAYS WHY ---------------
+           The walkthrough, friction 7: *"`filled in` is disabled … tapping it
+           does nothing at all — no shake, no message. I tapped it eight times
+           … The app has a beautiful explanation and shows it to nobody."* */
+        {
+          /* ONE CELL PER PLAYER, because the refusals are the PLAYER's: a pad
+             refuses eleven development words and a line refuses none of them,
+             so the vocabulary that refuses is one per column. */
+          const cells = await z.evaluate(() => {
+            const seen = new Set(), out = [];
+            document.querySelectorAll('#pan-band [data-k^="tcell|"]').forEach((e) => {
+              const v = e.dataset.k.split("|")[1];
+              if (seen.has(v)) return; seen.add(v); out.push(e.dataset.k); });
+            return out; });
+          let said = null, tried = 0;
+          await zrec(false);
+          for (const o of cells) {
+            if (said) break;
+            if ((await zopen(o)) === "missing") continue;
+            const keys = await z.evaluate(() => [...document.querySelectorAll(
+              '#pan-band .nu-sheetrow .nu-wcell[aria-expanded]')].map((e) => e.dataset.k));
+            for (const fk of keys) {
+              if (said) break;
+              await openField(fk);
+              await z.waitForTimeout(90);
+              /* a refused word, its cluster opened the way a thumb opens one,
+                 then TAPPED — and what the field says afterwards. */
+              const r = await z.evaluate((k) => {
+                const btn = document.querySelector(
+                  '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                const w = btn && btn.closest(".nu-sheetrow").nextElementSibling;
+                if (!w) return null;
+                const bad = [...w.querySelectorAll(
+                  '.nu-lz[aria-disabled=true][data-why], ' +
+                  '.nu-wchip[aria-disabled=true][data-why]')]
+                  /* an EMPTY reason is the silent grey itself, and it is
+                     test/selects.js's check; this one is about REACH. */
+                  .find((e) => (e.dataset.why || "").trim());
+                if (!bad) return null;
+                const sec = bad.closest("section.nu-lzcluster");
+                const head = sec && sec.querySelector(".nu-lzhead");
+                if (head && head.getAttribute("aria-expanded") === "false") head.click();
+                return { why: bad.dataset.why, v: bad.dataset.v || "",
+                         k, drawn: bad.getBoundingClientRect().height > 0 }; }, fk);
+              if (!r) { await z.evaluate((k) => { const el = document.querySelector(
+                  '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                  if (el) el.click(); }, fk); continue; }
+              tried++;
+              await z.waitForTimeout(120);
+              await z.evaluate((q) => { const btn = document.querySelector(
+                  '#pan-band .nu-sheetrow [data-k="' + q.k + '"]');
+                const w = btn.closest(".nu-sheetrow").nextElementSibling;
+                const bad = [...w.querySelectorAll('[aria-disabled=true][data-why]')]
+                  .find((e) => (e.dataset.v || "") === q.v);
+                if (bad) bad.click(); }, r);
+              await z.waitForTimeout(160);
+              const heard = await z.evaluate((k) => { const btn =
+                  document.querySelector('#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                const row = btn.closest(".nu-sheetrow");
+                const txt = [row, row.nextElementSibling]
+                  .filter(Boolean)
+                  .map((n) => [...n.querySelectorAll(".nu-lzsay, .nu-wsay")]
+                    .map((e) => (e.textContent || "").trim()).join(" "))
+                  .join(" ");
+                return txt; }, fk);
+              if (r.why && heard.indexOf(r.why) >= 0)
+                said = { field: fk, word: r.v, why: r.why, heard, drawn: r.drawn };
+              await z.evaluate((k) => { const el = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                if (el) el.click(); }, fk);
+            }
+            await zshut();
+          }
+          check(!tried || !!said,
+            "T15b " + at + " · a REFUSED option, tapped, prints its own reason " +
+            "on the page (" + tried + " refused options found) — " +
+            JSON.stringify(said || "NOTHING SAID"));
+        }
+
+        /* ---- T15c · A VARIATION IS A CHAIN --------------------------
+           Paul: *"I still can't pick more than one variation for a motif …
+           And the same with the drums."* */
+        {
+          await zrec(false);
+          const pane = async () => z.evaluate(() => { const p2 =
+            document.querySelector("#pan-band .nu-pane[data-pane=table]");
+            return p2 ? Math.round(p2.scrollTop) : -1; });
+          /* THE TWO CELLS WHOSE VARIATION IS A CHAIN: one line and one kit,
+             which is exactly what Paul asked for ("a motif … and the same with
+             the drums"). One of each rather than the first three of anything,
+             so the kit's half of the claim is always driven. */
+          const cells = await z.evaluate(() => {
+            const d = window.__eightDoc(), sid = d.form.sections[0].id, out = [];
+            for (const kind of ["line", "drums"]) {
+              const v = d.voices.find((x) => x.kind === kind);
+              if (v) out.push({ v: v.name, kind,
+                key: (kind === "drums" ? "dev.kit|" : "dev.line|") + v.name +
+                     "|" + sid, sid });
+            }
+            return out; });
+          const done = [];
+          for (const c of cells) {
+            const owner = "tcell|" + c.v + "|" + c.sid;
+            if ((await zopen(owner)) === "missing") continue;
+            if (!(await openField(c.key))) { await zshut(); continue; }
+            await z.waitForTimeout(140);
+            const p0 = await pane();
+            /* TWO SAYABLE WORDS, neither the absent detent, each picked the
+               way a thumb picks one: open its cluster, press the pill. */
+            const pick = async (n) => z.evaluate((q) => {
+              const btn = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + q.k + '"]');
+              const w = btn && btn.closest(".nu-sheetrow").nextElementSibling;
+              if (!w) return null;
+              const live = [...w.querySelectorAll(".nu-lz, .nu-wchip")]
+                .filter((e) => e.getAttribute("aria-disabled") !== "true" &&
+                               (e.dataset.v || "") !== "" &&
+                               (e.dataset.v || "") !== q.absent &&
+                               e.getAttribute("aria-pressed") !== "true");
+              const el = live[0];
+              if (!el) return null;
+              const sec = el.closest("section.nu-lzcluster");
+              const head = sec && sec.querySelector(".nu-lzhead");
+              if (head && head.getAttribute("aria-expanded") === "false") head.click();
+              el.click();
+              return el.dataset.v || ""; },
+              { k: c.key, absent: c.kind === "drums" ? "" : "as written" });
+            const clear = async () => z.evaluate((q) => {
+              const btn = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + q.k + '"]');
+              const w = btn && btn.closest(".nu-sheetrow").nextElementSibling;
+              if (!w) return "no field";
+              const el = [...w.querySelectorAll(".nu-lz, .nu-wchip")]
+                .find((e) => (e.dataset.v || "") === q.absent);
+              if (!el) return "no detent";
+              const sec = el.closest("section.nu-lzcluster");
+              const head = sec && sec.querySelector(".nu-lzhead");
+              if (head && head.getAttribute("aria-expanded") === "false") head.click();
+              if (el.getAttribute("aria-pressed") !== "true") el.click();
+              return "ok"; },
+              { k: c.key, absent: c.kind === "drums" ? "" : "as written" });
+            /* THE CELL IS CLEARED FIRST, and that is not tidying: the checks
+               above this one write development words into these very cells, so
+               a chain started from whatever they left would be measured
+               against a moving floor. `default` is the field's own absent
+               detent and clearing through it is the same door a hand uses. */
+            await clear();
+            await z.waitForTimeout(500);
+            const d0 = await z.evaluate((q) => (window.__eightDoc().voices
+              .find((v) => v.name === q.v).development || {})[q.sid], c);
+            const w1 = await pick(1);
+            if (!w1) { await zshut(); continue; }   // a field this cell refuses whole
+            await z.waitForTimeout(500);
+            const d1 = await z.evaluate((q) => (window.__eightDoc().voices
+              .find((v) => v.name === q.v).development || {})[q.sid], c);
+            const w2 = await pick(2); await z.waitForTimeout(500);
+            const d2 = await z.evaluate((q) => (window.__eightDoc().voices
+              .find((v) => v.name === q.v).development || {})[q.sid], c);
+            /* WHERE THE CHAIN IS READ BACK. The FACE of the variation field is
+               the chain in order, on every kind. The CELL in the grid prints
+               the variation only where the variation is what the cell is
+               about — the kit's and the bass's; a pitched cell prints its
+               MOTIF (ui/eight.js `tableCellWord`, and the walkthrough's own
+               note: *"the kit and bass cells print their VARIATION, the
+               pitched cells print their MOTIF"*), so asking a line cell for
+               its variation would be asking it to say two things. */
+            const headSays = await z.evaluate((k) => { const el =
+              document.querySelector('#pan-band .nu-sheetrow [data-k="' + k + '"]');
+              return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+              }, c.key);
+            const cellSays = await z.evaluate((q) => { const el =
+              document.querySelector('#pan-band [data-k="tcell|' + q.v + '|' +
+                                     q.sid + '"]');
+              return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null; }, c);
+            const p1 = await pane();
+            /* ONE TAP IS ONE UNDO STEP — the second word comes off and the
+               first is still standing. */
+            await gridFocus();
+            await z.keyboard.press("Control+z");
+            await z.waitForTimeout(700);
+            const back1 = await z.evaluate((q) => (window.__eightDoc().voices
+              .find((v) => v.name === q.v).development || {})[q.sid], c);
+            await gridFocus();
+            await z.keyboard.press("Control+z");
+            await z.waitForTimeout(700);
+            const back0 = await z.evaluate((q) => (window.__eightDoc().voices
+              .find((v) => v.name === q.v).development || {})[q.sid], c);
+            /* ...AND `default` STANDS ALONE: picking it clears the chain. */
+            await zopen(owner);
+            await openField(c.key);
+            await z.waitForTimeout(140);
+            await pick(1); await z.waitForTimeout(400);
+            await pick(2); await z.waitForTimeout(400);
+            const cleared = await z.evaluate((q) => {
+              const btn = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + q.k + '"]');
+              const w = btn && btn.closest(".nu-sheetrow").nextElementSibling;
+              if (!w) return "no field";
+              const el = [...w.querySelectorAll(".nu-lz, .nu-wchip")]
+                .find((e) => (e.dataset.v || "") === q.absent);
+              if (!el) return "no detent";
+              const sec = el.closest("section.nu-lzcluster");
+              const head = sec && sec.querySelector(".nu-lzhead");
+              if (head && head.getAttribute("aria-expanded") === "false") head.click();
+              el.click(); return "ok"; },
+              { k: c.key, absent: c.kind === "drums" ? "" : "as written" });
+            await z.waitForTimeout(500);
+            const dz = await z.evaluate((q) => (window.__eightDoc().voices
+              .find((v) => v.name === q.v).development || {})[q.sid], c);
+            await zshut();
+            done.push({ who: c.v, kind: c.kind, w1, w2, d0, d1, d2, headSays,
+                        cellSays, back1, back0, cleared, dz, pane: [p0, p1] });
+          }
+          const chained = done.filter((r) => r.w1 && r.w2 &&
+            r.d1 === r.w1 && r.d2 === r.w1 + " + " + r.w2);
+          const readBack = chained.filter((r) => r.headSays &&
+            r.headSays.indexOf(r.w1) >= 0 && r.headSays.indexOf(r.w2) >= 0);
+          const onGrid = chained.filter((r) => r.kind !== "drums" ||
+            (r.cellSays && r.cellSays.indexOf(r.w1) >= 0 &&
+             r.cellSays.indexOf(r.w2) >= 0));
+          const undone = chained.filter((r) => r.back1 === r.d1 &&
+            r.back0 === r.d0);
+          const cleanly = chained.filter((r) => r.cleared === "ok" &&
+            (r.dz == null || r.dz === "" || r.dz === "as written"));
+          const still = done.filter((r) => r.pane[0] !== r.pane[1]);
+          check(done.length > 0 && chained.length === done.length,
+            "T15c " + at + " · picking two variations writes ONE STRING, " +
+            '"a + b", in picked order, on ' + chained.length + " of " +
+            done.length + " chain cells — " + JSON.stringify(done.map(
+              (r) => r.kind + " (" + r.who + "): " + JSON.stringify(r.d0) +
+                     " -> " + JSON.stringify(r.d1) + " -> " +
+                     JSON.stringify(r.d2))));
+          check(readBack.length === chained.length,
+            "T15c " + at + " · …and the FACE of the variation field is the " +
+            "chain, in order " + JSON.stringify(done.map((r) => r.headSays)));
+          check(onGrid.length === chained.length,
+            "T15c " + at + " · …and the CELL in the grid reads the whole chain " +
+            "where the cell is about the variation (the kit's) " +
+            JSON.stringify(done.map((r) => r.kind + ": " + r.cellSays)));
+          check(undone.length === chained.length,
+            "T15c " + at + " · …one tap is ONE undo step (the second word comes " +
+            "off, the first stands) " + JSON.stringify(done.map(
+              (r) => [r.d2, r.back1, r.back0])));
+          check(cleanly.length === chained.length,
+            "T15c " + at + " · …and `default` stands ALONE — picking it clears " +
+            "the chain " + JSON.stringify(done.map((r) => [r.cleared, r.dz])));
+          check(!still.length,
+            "T15c " + at + " · …the pane's scrollTop never moved " +
+            JSON.stringify(done.map((r) => r.pane)));
         }
 
         await c13.close();

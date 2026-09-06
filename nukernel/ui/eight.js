@@ -1664,6 +1664,16 @@ function shSpec(key, scope, label) {
            // ...and the one row that is a FIELD and not a menu (wave C) — see
            // avail.js `form.name` and `wCell` below. Present-only.
            ...(row.text ? { text: true } : {}),
+           /* ...AND THE TWO ROWS THAT ARE A CHAIN (2026-09-06, TABLE.md §15).
+              `dev.line` and `dev.kit` say `multi`/`ordered` in avail.js; the
+              document keeps one string and songs.js owns the separator. Both
+              PRESENT-ONLY, and `absent` rides with them because the word that
+              stands ALONE is the row's own (`""` for the kit, "as written" for
+              the tune) and a second table of that fact would be a second
+              answer to what "default" means here. */
+           ...(row.multi ? { multi: true } : {}),
+           ...(row.ordered ? { ordered: true } : {}),
+           ...(row.multi ? { absent: row.absent == null ? "" : String(row.absent) } : {}),
            // ONE OWNER FOR RECOMPILE, and it has survived both reversals:
            // neither widget ever redraws, `changed()` does — exactly as the
            // hand-built `select()` did before either of them existed.
@@ -11255,6 +11265,13 @@ function wCell(sp) {
               other sheet passes no key and the object a renderer receives is
               the one it received before this line. */
            ...(sp.text ? { text: true } : {}),
+           /* ...AND WHETHER MORE THAN ONE WORD MAY STAND (2026-09-06, §15).
+              Present-only, like `text`: every other sheet passes none of the
+              three and the object a renderer receives is the one it received
+              before this line. */
+           ...(sp.multi ? { multi: true } : {}),
+           ...(sp.ordered ? { ordered: true } : {}),
+           ...(sp.multi ? { absent: sp.absent == null ? "" : String(sp.absent) } : {}),
            set: sp.set };
 }
 

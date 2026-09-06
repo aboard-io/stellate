@@ -67,7 +67,7 @@
           // BASSCHOICES joined this line 2026-09-02 with `sound.bassinstrument`
           // below — the narrower list the bass chair may be handed.
           BASSCHOICES } = NF;
-  const { WORDS, WORDGROUP } = NuSongs;
+  const { WORDS, WORDGROUP, chainOf } = NuSongs;
   const J = (v) => { try { return JSON.stringify(v === undefined ? null : v); }
                      catch (e) { return "?"; } };
 
@@ -1112,7 +1112,23 @@
        an OPERATOR. ui/eight.js:424 `menuFor(kind)` chose between them with a
        ternary; the kind picks the sheet KEY now, so gates.js can say something
        different about each — which it does. */
+    /* ---- AND TWO OF THE THREE ARE CHAINS (2026-09-06, TABLE.md §15) ----
+       Paul: *"I still can't pick more than one variation for a motif"* and
+       *"And the same with the drums."* `multi` says more than one word may
+       stand; `ordered` says the ORDER IS THE MEANING and the field prints it
+       (1, 2, 3), because "inverted then the first half" is not "the first half
+       then inverted". The document keeps ONE STRING either way — songs.js
+       `chainWord`, the words joined with " + " — so a one-word answer is the
+       byte-identical answer it was, and `absent` below is still the one word
+       that stands ALONE: picking it clears the chain, and picking a word while
+       it stands replaces it.
+       `dev.bass` IS DELIBERATELY NOT ONE. It is a PATTERN choice — walking,
+       octaves, pedal, reese — and two patterns at once is not a chain of
+       operators, it is two answers to "what does the bass play". Paul asked
+       for the motifs and the drums; the bass stays single until it is asked
+       for. */
     "dev.line": { label: "the tune", scope: "voice.section", chair: "line", kind: "line", absent: "as written",
+      multi: true, ordered: true,
       values: () => devWords(),
       get: (doc, s) => (V(doc, s).development || {})[s.section] || "",
       set: (doc, s, v) => { V(doc, s).development[s.section] = v; } },
@@ -1134,6 +1150,7 @@
        the absent one, so the word was doing two jobs. This is the header's own
        recommendation, taken. */
     "dev.kit": { label: "the kit", scope: "voice.section", chair: "drums", kind: "hit", absent: "",
+      multi: true, ordered: true,
       values: () => [{ value: "", label: T("value.default") },
                      ...opts(Object.keys(KITLABEL), KITLABEL)],
       get: (doc, s) => (V(doc, s).development || {})[s.section] || "",
@@ -1392,7 +1409,16 @@
       // what the record says" — 76 characters in a 270px combo, measured on
       // the rendered page at 390 — where the last clause is the whole of the
       // information. The refusal half keeps its reason; the tautology drops.
-      if (String(cur) === value && (out.disabled || out.quiet)) {
+      /* ...AND A CHAIN'S WORDS ARE ALL STANDING ANSWERS (2026-09-06, §15).
+         `cur` on a `multi` row is the whole chain — "inverted + the first
+         half" — so a bare `===` would have said that NEITHER of the two words
+         a hand had just picked was the answer, and a rule that turned against
+         one of them would have greyed a word the record is saying. `chainOf`
+         is songs.js's one splitter; on a single row it answers `[cur]` and
+         this is the comparison it was. */
+      if ((String(cur) === value ||
+           (row.multi && chainOf(cur).indexOf(value) >= 0)) &&
+          (out.disabled || out.quiet)) {
         const tauto = out.quiet && !out.disabled;
         out.disabled = false; out.quiet = false;
         out.why = tauto ? "it is what the record says"

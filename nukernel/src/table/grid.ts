@@ -1574,11 +1574,23 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        makes Ctrl-Z take back a chip and not only a structural op. */
     for (const f of fields) {
       const s = f as { set?: (v: string) => void; clear?: (() => void) | null;
+                       setChain?: (v: string, on: boolean, o: string[]) => void;
                        label?: string };
       if (s.set) { const set = s.set;
         s.set = (v) => op(s.label || t("op.change"), () => set(v)); }
       if (s.clear) { const cl = s.clear;
         s.clear = () => op(t("op.clearing", { name: s.label || "" }), cl); }
+      /* ...AND THE CHAIN'S OWN WRITER (2026-09-06, TABLE.md §15). A `multi`
+         field writes through `setChain` rather than `set` — one tap, one word
+         added or removed, one document write — and this loop knew only about
+         the other two, so the FIRST chain shipped with picking a variation
+         reaching the sound and NOT the undo stack. Measured on the rendered
+         phone by T15c before this line existed: two picks on a drums cell,
+         then Ctrl-Z, and the document did not move at all. It is the same one
+         line as `set`'s, in the same place, for the same reason. */
+      if (s.setChain) { const sc = s.setChain;
+        s.setChain = (v, on, o) =>
+          op(s.label || t("op.change"), () => sc(v, on, o)); }
     }
     return fields;
   }
