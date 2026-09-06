@@ -4783,22 +4783,62 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                          h: +r.height.toFixed(1) });
             } else walk(c); } };
           walk(document.body);
+          const bar = document.getElementById("nu-bar");
+          const strip = document.getElementById("nu-topstrip");
           return { boxes: out,
                    tops: document.querySelectorAll(".nu-top").length,
                    bars: document.querySelectorAll("#nu-bar").length,
-                   burger: !!document.querySelector("#nu-bar #burger"),
-                   last: (() => { const bar = document.getElementById("nu-bar");
-                     return bar && bar.lastElementChild
-                       ? bar.lastElementChild.id : null; })(),
+                   strips: document.querySelectorAll("#nu-topstrip").length,
+                   burger: !!document.querySelector("#nu-topstrip #burger"),
+                   plate: !!document.querySelector(
+                     '#nu-topstrip [data-k="toptab-Where"]'),
+                   stripLast: strip && strip.lastElementChild
+                     ? strip.lastElementChild.id : null,
+                   barLast: bar && bar.lastElementChild
+                     ? String(bar.lastElementChild.className) : null,
+                   barBtns: bar ? [...bar.querySelectorAll("button")]
+                     .map((x) => x.id || x.dataset.k) : [],
+                   seedInBar: !!document.querySelector("#nu-bar .nu-seedrow"),
+                   seedInMenu: !!document.querySelector("#nu-menu .nu-seedrow"),
                    forms: document.querySelectorAll(".nu-formula").length };
         });
         const chromeH = chrome.boxes.reduce((a, x) => a + x.h, 0);
-        check(chrome.boxes.length === 1 && chrome.boxes[0].id === "nu-bar" &&
-              chromeH <= 72 && chrome.tops === 0 && chrome.forms === 0 &&
-              chrome.burger && chrome.last === "burger",
-          "T13a " + at + " · the bar is the ONLY fixed chrome (" + chromeH +
-          "pt), `.nu-top` and `.nu-formula` are gone, and the ≡ is the bar's " +
-          "last button — " + JSON.stringify(chrome));
+        /* ===== T13a IS TWO BANDS SINCE 2026-09-06 (docs/NAV.md) ==========
+           §13a.1 read *"nothing is fixed but the bottom bar"* and TABLE.md §16
+           amends it to TWO, in writing, because Paul asked for the second one:
+           *"move the view selector into a hamburger on the top right…
+           Consolidate that with the existing bottom right hamburger (which
+           goes away)."* The claim this check makes is unchanged in kind — the
+           page's fixed chrome is EXACTLY the bands the law names, no third
+           one has crept back, and each is the size its token declares — and it
+           is stated as a list of ids rather than as the number 1.
+           WHAT ELSE IS ASSERTED HERE, because it is the arrangement and not
+           just the height: the ≡ is the STRIP's last button (it was the bar's),
+           the record's name is the strip's first, the TAPE is the bar's last
+           child, and the bar holds THREE buttons — the options' door, the
+           voicing and play — with the seed row nowhere in it and in the menu
+           instead. `.nu-top` (the 2026-09-05 plate) and `.nu-formula` are
+           still gone; `.nu-topstrip` is a different element with a different
+           law, which is the whole of §16. */
+        /* THE FIVE THE BAR HOLDS, IN DOCUMENT ORDER: the three inside the
+           options' fold (a mode, a take — the room is a range and not a
+           button), then the fold's own door, the voicing and ▶. */
+        const wantBar = ["playmode", "take", "playops", "voicing", "play"];
+        check(chrome.boxes.length === 2 &&
+              chrome.boxes[0].id === "nu-topstrip" &&
+              chrome.boxes[1].id === "nu-bar" &&
+              chrome.boxes[0].h <= 48 && chrome.boxes[1].h <= 72 &&
+              chromeH <= 120 && chrome.tops === 0 && chrome.forms === 0 &&
+              chrome.strips === 1 && chrome.bars === 1 &&
+              chrome.burger && chrome.plate && chrome.stripLast === "burger" &&
+              chrome.barLast === "nu-tape" &&
+              !chrome.seedInBar && chrome.seedInMenu &&
+              JSON.stringify(chrome.barBtns) === JSON.stringify(wantBar),
+          "T13a " + at + " · the fixed chrome is the STRIP and the BAR and " +
+          "nothing else (" + chromeH + "pt of two bands), the ≡ is the " +
+          "strip's last button and the record's name its first, the tape is " +
+          "the bar's last child, and the bar is the transport alone — " +
+          JSON.stringify(chrome));
 
         /* ---- b · ONE PINNED BAND, AND IT IS THE HEADS ----------------- */
         const pins = () => z.evaluate(() => {
@@ -4898,18 +4938,26 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const geo = await z.evaluate(() => {
           const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]");
           const bar = document.getElementById("nu-bar");
+          const strip = document.getElementById("nu-topstrip");
           return { pane: pane ? +pane.getBoundingClientRect().height.toFixed(1) : 0,
                    bar: bar ? +bar.getBoundingClientRect().height.toFixed(1) : 0,
+                   /* ...AND THE TOP STRIP IS IN THE ARITHMETIC SINCE
+                      2026-09-06 (docs/NAV.md, TABLE.md §16). The floor is the
+                      screen minus BOTH bands: what §16 buys is honesty about
+                      the second one, not an exemption from the budget. */
+                   strip: strip
+                     ? +strip.getBoundingClientRect().height.toFixed(1) : 0,
                    vh: window.innerHeight,
                    page: document.documentElement.scrollHeight -
                          document.documentElement.clientHeight,
                    side: document.documentElement.scrollWidth -
                          document.documentElement.clientWidth }; });
-        const floor = geo.vh - geo.bar - REST;
+        const floor = geo.vh - geo.bar - geo.strip - REST;
         check(geo.pane >= floor && geo.side <= 1,
           "T13e " + at + " · the pane at rest is " + geo.pane + "px against a " +
-          "floor of " + floor.toFixed(1) + " (screen − bar − safe area − 8), " +
-          "and the page does not scroll sideways — " + JSON.stringify(geo));
+          "floor of " + floor.toFixed(1) + " (screen − strip − bar − safe " +
+          "area − 8), and the page does not scroll sideways — " +
+          JSON.stringify(geo));
 
         /* ---- i · ONE `+` AT EACH EDGE, `--tap` WIDE -------------------- */
         const plus = await z.evaluate(() => {
@@ -5485,9 +5533,19 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           await z.evaluate(() => window.__eightTab("Band"));
           await z.waitForTimeout(500);
           const reach = { };
+          /* ...AND BY `id` AS A LAST RESORT, SINCE 2026-09-06 (docs/NAV.md).
+             The chrome's own controls are the one family on this page addressed
+             by id rather than by `data-k` — `#rewrite`, `#seedval`, `#play`,
+             `#voicing` — which is what `test/table-inventory.json`'s chrome
+             walk has always said in its own note ("THE FOLD'S DOOR IS OPENED BY
+             ITS `data-k` AND NOT BY ITS id"), read the other way round.
+             MEASURED: the first draft of the seed's two lines reported them
+             LOST on a page that was drawing them 44px tall inside the open
+             plate. */
           const seen = (k) => z.evaluate((key) => {
             const el = document.querySelector('#pan-band [data-k="' + key + '"]') ||
-                       document.querySelector('[data-k="' + key + '"]');
+                       document.querySelector('[data-k="' + key + '"]') ||
+                       document.getElementById(key);
             if (!el) return 0;
             const r = el.getBoundingClientRect();
             return r.width > 0 && r.height >= 43.5 ? 1 : -1; }, k);
@@ -5536,9 +5594,22 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               reach[k] = await seen(k);
             await ztap(cellK);
           }
-          /* `.nu-top`'s two: the ≡ is in the bar (0 taps) and the × is the
-             open sheet's own header (one tap on a viewer, from the ≡). */
+          /* `.nu-top`'s two: the ≡ is in the TOP STRIP (0 taps, 2026-09-06,
+             docs/NAV.md — it was the bar's last button) and the × is the open
+             sheet's own header (one tap on a viewer, from the ≡). */
           reach["menu"] = await seen("menu");
+          reach["toptab-Where"] = await seen("toptab-Where");
+          /* ...AND THE SEED IS ONE TAP FROM REST, which is what *"move the
+             seed out of the bottom nav and into a 'set seed' in the
+             hamburger"* costs and the number this check exists to say out
+             loud: the die was on the glass and is one door in. Nothing is
+             behind two doors and nothing is lost. */
+          await z.evaluate(() => window.__eightMenuOpen(true));
+          await z.waitForTimeout(250);
+          for (const k of ["rewrite", "seedval", "toptab-Band", "logger"])
+            reach[k] = await seen(k);
+          await z.evaluate(() => window.__eightMenuOpen(false));
+          await z.waitForTimeout(200);
           await z.evaluate(() => window.__eightTab("Score"));
           await z.waitForTimeout(600);
           const closeAt = await z.evaluate(() => {

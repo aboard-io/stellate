@@ -904,7 +904,13 @@ function g18() {
   // the tabs landed the same day — the tab row is the second band now, nu.css
   // THE SECOND BAND IS THE TAB ROW — and the heading is still the panel's own
   // first child, which is all this check ever read.)
-  check(after.h2.length >= 1 && /band/i.test(after.h2.join(" ")),
+  /* ...AND THE ONE HEADING LEFT IS `The session` SINCE 2026-09-06 (docs/NAV.md,
+     Paul: *"'session'… that's the new name for the default view"*). It read
+     `/band/i` and the panel's hidden `<h2>` is `panel.band` — the VOCABULARY's
+     name for the surface, which is the word a screen reader hears when it
+     enters `#pan-band`. The ADDRESS did not move (`#pan-band`, `toptab-Band`,
+     `__eightTab("Band")`); the word did, so the pattern does. */
+  check(after.h2.length >= 1 && /session/i.test(after.h2.join(" ")),
     "G8 · the axis headings survived the swap (" +
     after.h2.length + " h2, one per axis section left: " +
     after.h2.slice(0, 6).join(" / ") + ")");

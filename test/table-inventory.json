@@ -1424,34 +1424,36 @@
   "motifs": "2026-09-08 (TABLE.md §10b step 4): the Motifs PANE's own inventory, measured on the rendered `#pan-motif` at 390 across its ten states (the arrival plus one per cell in the bank) before the deletion — nine control families, the fourteen `motifOpsTrayItems` transforms, the ten `motiftab-<name>` rows of the stripe and the tab itself. Two homes: `motifs-row` is the BANK (the row shut is a face; the row open is one line per motif — ui/preview.js's picture, the name as the WRITE, the provenance word, the chairs that read it, and `open`), and `motif-sheet` is one motif OPENED from it (its rename field, clear, play/loop, the written staff, the bench, `+`/`- measure`, the forks and the fourteen transforms). The two are two states of one row, so every reach behind `motif-sheet` names `motifopen|<motif>` as its second tap and every reach behind `motifs-row` names `motifback` — each a no-op in the state that is already right, which is what makes the walk order-independent.",
   "produce": "2026-09-08 (§10b step 5): the Produce PANE became the footer's last merged row and `ui/produce.js mount` did not change a line, so what is filed is what the panel draws at arrival and one tap in — the name plate with its count, the subject tree, its seventeen chips, and the adjective menus a chosen subject offers. The stack's own row controls (more / less / take it off / forget / undo) appear only once a note stands, which is `test/producer.browser.js`'s subject and not this walk's.",
   "chrome": {
-    "what": "THE GUTTER'S OWN CONTROLS, FILED THE DAY IT WAS DELETED (2026-09-09, TABLE.md §10b steps 6 and 7). Every other row in this file is a control the BAND or STRUCTURE pane offered and the TABLE now holds; these six are the ones that were never the table's at all — the transport, the seed, the record's name, the log, and the four viewers — and T7's law is the same one asked of them: nothing is lost, and a thumb can reach it at 320px. Two homes, both outside the table on purpose: THE BAR at the foot of the page (Paul: \"have genre, dice, playstop along the bottom\") and THE HAMBURGER at the top corner (\"a hamburger menu for score, video, screensaver\"). A row with `menu: true` is behind the ≡ and the walk presses it first, which is the same second tap the MIX row's master needed when its home became a tabbed surface. THE FOLD'S DOOR IS OPENED BY ITS `data-k` AND NOT BY ITS id: `#playops` wears `data-k=\"tp.opts\"` — one node, two names, the id for eleven gates and the key for the gutter's own painter — and the first draft of these rows asked for `playops`, found nothing, and reported the mode, the take and the room as 0x0. Measured on the rendered page before it was believed.",
+    "what": "THE GUTTER'S OWN CONTROLS, FILED THE DAY IT WAS DELETED (2026-09-09, TABLE.md §10b steps 6 and 7). Every other row in this file is a control the BAND or STRUCTURE pane offered and the TABLE now holds; these six are the ones that were never the table's at all — the transport, the seed, the record's name, the log, and the four viewers — and T7's law is the same one asked of them: nothing is lost, and a thumb can reach it at 320px. Two homes, both outside the table on purpose: THE BAR at the foot of the page (Paul: \"have genre, dice, playstop along the bottom\") and THE HAMBURGER at the top corner (\"a hamburger menu for score, video, screensaver\"). A row with `menu: true` is behind the ≡ and the walk presses it first, which is the same second tap the MIX row's master needed when its home became a tabbed surface. THE FOLD'S DOOR IS OPENED BY ITS `data-k` AND NOT BY ITS id: `#playops` wears `data-k=\"tp.opts\"` — one node, two names, the id for eleven gates and the key for the gutter's own painter — and the first draft of these rows asked for `playops`, found nothing, and reported the mode, the take and the room as 0x0. Measured on the rendered page before it was believed.  ...AND THE TWO HOMES ARE THE TOP STRIP AND THE BAR SINCE 2026-09-06 (docs/NAV.md, Paul: 'move the view selector into a hamburger on the top right. Consolidate that with the existing bottom right hamburger (which goes away)... So now bottom row is pure play controls and top right is compose arrange controls.'). The law does not move and the addresses do not move; what moves is which band a row is filed under. THE TOP STRIP holds the record's NAME (toptab-Where, the plate the bar carried) and the one ≡; THE HAMBURGER, which hangs from that ≡, holds all SIX views (toptab-Band is a row of it now, printed 'Session'), the SEED ROW (rewrite + seedval, moved out of the bar whole) and the log; THE BAR holds the transport alone — the options' door and its three children, the voicing, and play. A row marked `menu: true` is behind the ≡ and the walk presses it first, which is exactly the second tap a hand makes. THE TAPE IS NOT FILED AS A CONTROL AND THAT IS NOT AN OVERSIGHT: it is a READOUT (position, bars left, the beat countdown it took over from `.nu-count`), it takes no tap, and T7's law is about controls a thumb must be able to reach. What is asserted about it is in test/shell.js A6n and test/table.browser.js T13f.",
     "controls": [
       {
         "k": "toptab-Where",
-        "was": "the gutter foot's permanent genre name plate",
-        "home": "bar",
-        "field": "the genre, first in the bar; it opens WHERE (the globe and the when-slider) as a sheet — a picker, not a place you live",
+        "was": "the gutter foot's permanent genre name plate, then the bar's",
+        "home": "top strip",
+        "field": "the record's NAME at the TOP LEFT (2026-09-06, docs/NAV.md), opposite the ≡; it opens WHERE (the globe and the when-slider) as a sheet and the same press closes it. Paul's *pure play controls* took it out of the bar; the identity of what you are hearing belongs beside the navigation that changes it",
         "reach": "toptab-Where"
       },
       {
         "k": "rewrite",
         "was": "the die in the gutter foot's .nu-seedrow",
-        "home": "bar",
-        "field": "unmoved: the same node, the same id, the same #reading inside it — the row went from a 96px column to the middle of the bar",
-        "reach": "rewrite"
+        "home": "hamburger",
+        "field": "unmoved as a NODE and moved as a home: `.nu-seedrow` was handed to the menu whole (same node, same id, same #reading inside it, same listeners) under the heading *Set seed*. Paul: 'Move the seed out of the bottom nav and into a set seed in the hamburger'",
+        "reach": "rewrite",
+        "menu": true
       },
       {
         "k": "seedval",
         "was": "the number beside the die",
-        "home": "bar",
-        "field": "unmoved, and the two countdowns stand with it: .nu-seedwait (the seed's own) and .nu-count (the general one, which moved here from the head of the tray's foot and still stands down while the seed's is up)",
-        "reach": "seedval"
+        "home": "hamburger",
+        "field": "unmoved beside the die, with `.nu-seedwait` (the seed's own countdown) under them. `.nu-count`, the GENERAL countdown, did NOT come: it is inside the tape in the bar, which is the one readout on this page that is on the screen with the plate shut",
+        "reach": "seedval",
+        "menu": true
       },
       {
         "k": "play",
         "was": "the last mark in the gutter's foot, under a thumb",
         "home": "bar",
-        "field": "the last control in the bar, under a right thumb — the same id and the same one owner of the transport",
+        "field": "the last control of `.nu-bartp`, under a right thumb — the same id and the same one owner of the transport. Since 2026-09-06 the bar is the transport ALONE (docs/NAV.md: 'bottom row is pure play controls')",
         "reach": "play"
       },
       {
@@ -1465,7 +1467,7 @@
         "k": "playops",
         "was": "the fold above #play in the gutter's foot",
         "home": "bar",
-        "field": "the options' door stays with the transport rather than joining the hamburger: its three children are a mode, a take and the room, and all three are facts about the next press of ▶. The hamburger holds things you look at",
+        "field": "the options' door stays with the transport rather than joining the hamburger: its three children are a mode, a take and the room, and all three are facts about the next press of ▶. The hamburger holds things you look at and places you go",
         "reach": "playops"
       },
       {
@@ -1492,6 +1494,14 @@
         "reach": "vol",
         "open": "tp.opts",
         "floor": 40
+      },
+      {
+        "k": "toptab-Band",
+        "was": "(new as a ROW) the table, which was the page and stood in no list at all",
+        "home": "hamburger",
+        "field": "SESSION — the first row of the view list and the view the box opens on (docs/NAV.md, Paul: 'You may need to put session at the top as a nav item and that's the new name for the default view'). The ADDRESS is `Band`, unmoved; the printed word is `glyph.tab.band` = Session",
+        "reach": "toptab-Band",
+        "menu": true
       },
       {
         "k": "toptab-Score",
@@ -1529,15 +1539,15 @@
         "k": "logger",
         "was": "the log mark in the gutter's foot, with its badge",
         "home": "hamburger",
-        "field": "the fifth row of the menu, under a rule — a readout and not a control on the record, which is what the four above it are too. Its BADGE rides the ≡ itself, so the count is on the screen with the menu shut",
+        "field": "the last row of the menu, under the second rule — a readout and not a control on the record. Its BADGE rides the ≡ itself, so the count is on the screen with the plate shut",
         "reach": "logger",
         "menu": true
       },
       {
         "k": "menu",
         "was": "(new) the door the four viewers and the log stand behind",
-        "home": "hamburger",
-        "field": "the ≡ at the top corner, on the screen in every state; it wears the log's count",
+        "home": "top strip",
+        "field": "the ≡ at the TOP RIGHT since 2026-09-06 (docs/NAV.md) — there is ONE hamburger and this is it; on the screen in every state, and it wears the log's count",
         "reach": "menu"
       },
       {

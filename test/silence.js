@@ -196,7 +196,10 @@ function standUpServer() {
        one tap away — read at the address it now has. */
     rulesRow: !!document.querySelector('#pan-band [data-k="trules"]'),
     word: (document.getElementById("play").getAttribute("aria-label") || "").trim(),
-    plate: (() => { const b2 = document.querySelector('#nu-bar [data-k="toptab-Where"] .nu-vh');
+    // the record's name is the TOP STRIP's since 2026-09-06 (docs/NAV.md):
+    // *"bottom row is pure play controls"*, and the plate is the record's
+    // identity, which belongs beside the navigation that changes it
+    plate: (() => { const b2 = document.querySelector('#nu-topstrip [data-k="toptab-Where"] .nu-vh');
       return b2 ? b2.textContent.trim() : null; })() }));
   const want = await p.evaluate((s2) =>
     JSON.stringify(window.NuPrecompose.genreToDocument("dub", s2)), seedShown);

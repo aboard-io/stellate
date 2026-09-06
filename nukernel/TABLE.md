@@ -4080,3 +4080,290 @@ before them.** So the fold takes `.nu-rowjump`'s BOX and not its class
 (`.nu-corner` is named beside it in the stylesheet), and the two selectors that
 exclude `.nu-labelbtn` by name — `test/sheets.js`'s "is a sheet already open"
 and `test/table.browser.js`'s two shut gestures — exclude `.nu-corner` too.
+
+### 16 · Two places, not seven
+
+*(2026-09-06. Paul, verbatim:*
+
+> *"We have too many UX modalities I think. Let's make all the panels into
+> their own views and move the view selector into a hamburger on the top right.
+> Consolidate that with the existing bottom right hamburger (which goes away).
+> Make a play status tape position indicator that incorporates the beat
+> countdown on the bottom right. Put the name of the app at the top of the
+> hamburger. Move the seed out of the bottom nav and into a 'set seed' in the
+> hamburger. Organize the hamburger sensibly. You may need to put 'session' at
+> the top as a nav item and that's the new name for the default view. So now
+> bottom row is pure play controls and top right is compose arrange controls."*
+
+*The contract this round executes is `docs/NAV.md`, approved the same day.)*
+
+**THE LAW: THE TOP IS WHERE YOU GO. THE BOTTOM IS WHAT YOU HEAR.** Two fixed
+bands and nothing else is chrome. The strip at the head holds the record's NAME
+at the start and ONE hamburger at the end; the bar at the foot holds the
+transport and the tape. A modality is a place the box behaves differently, and
+after this round there are two of them — **a view** (you are looking at one,
+chosen from the hamburger) and **a sheet** (a row of the table opened in place,
+§13's law, unchanged).
+
+#### §13a.1 IS AMENDED TO TWO, IN WRITING
+
+§13a.1 reads *"Nothing is fixed but the bottom bar. A thing pins only while you
+are inside it."* **It now reads: nothing is fixed but the bottom bar and the
+top strip, and only these two.** The amendment is not a loosening, because the
+strip it lets back is not the strip §13a.1 deleted:
+
+| | `.nu-top` (deleted 2026-09-05) | `.nu-topstrip` (2026-09-06) |
+|---|---|---|
+| shape | a floating plate at one corner | a full-width band |
+| the page's room | none — it stood OVER the sheet | `body { padding-block-start: var(--top-h) }`, and `.nu-sheetwrap` subtracts it |
+| what it held | a × (for a sheet that has its own) and a ≡ | the record's name and the ONE ≡ — the two controls that must be on the glass in every state |
+| height | `--tap` + two steps + the notch (55.8 measured) | `--tap` + the notch (**44.0 measured**) |
+
+Inside the pane nothing changed at all: one band pins at a time, the sheet's
+owner row is its header, `<tfoot>` pins nothing.
+
+#### WHAT THE BAR SAID BEFORE, MEASURED FIRST
+
+At rest, at 390 and 320 and 1280, on Kingston 1969 and on Coach House, the bar
+held four children — `toptab-Where` (the genre plate), `.nu-seedrow`,
+`.nu-bartp` (the transport) and the `≡` — and **exactly one readout, which said
+`1`**:
+
+- **`#seedval` / `<b id="reading">`** — the record's SEED, 44 × 44, saying `1`.
+  A number about which VERSION of the record you have, not about where the ear
+  is.
+- **`.nu-count`** (`logCountEl`, `data-live="pending"`, inside `.nu-seedrow`) —
+  the general countdown: `<b>N</b><small>beats</small>` until a pending edit
+  lands, off audio/live.js's `pending` feed. **Measured 0 × 0 at rest on every
+  record and every width** (`.nu-count:empty { display: none }`), and it stood
+  down entirely whenever the seed's own wait was up.
+- **`.nu-seedwait`** — the seed's own countdown, same feed, same arithmetic.
+  **Also 0 × 0 at rest.**
+
+So a player looking at the foot of the box while it played was told the seed
+and nothing else: not which bar, not how many were left. That is what the tape
+replaces, and `.nu-count` is not deleted for it — it is the same node with the
+same one writer, moved inside the tape.
+
+#### WHAT THE TWO BANDS HOLD NOW
+
+    ┌──────────────────────────────────────────────┐
+    │  Kingston 1969                            ≡3 │   the top strip
+    └──────────────────────────────────────────────┘
+    ┌──────────────────────────────────────────────┐
+    │  ⚙  ◉ sung  ▶            3 beats  bar 12/76  │   the bar
+    │                          ▓▓▓▓▓░░░░░░░░░░░░░░ │
+    └──────────────────────────────────────────────┘
+
+**THE TOP STRIP** — `toptab-Where` (**135 × 44** on Kingston 1969, **118.5 ×
+44** on Coach House, at 390 and 320 and 1280 alike), then `#burger` (44 × 44,
+the strip's last child). Both are the nodes the bar held yesterday: same ids,
+same addresses, same listeners, same accessible names. The plate is still the
+picker's toggle and still wears `aria-expanded` + `aria-pressed` + the genre's
+own word.
+
+**AND THE PLATE IS AS WIDE AS ITS OWN WORD, WHICH WAS A CORRECTION MADE ON THE
+RENDERED PAGE.** It came over from the bar wearing the bar's own `flex: 1 1
+auto` — the rule that let a genre name take the row's give — and at 1280 that
+drew a **1,200 × 44 plate with "Kingston 1969" floating in the middle of it**
+(measured; 340.4px at 390 and 275 at 320, centred in each). NAV.md says *"THE
+RECORD'S NAME GOES TOP LEFT"*, and a name centred in a plate the width of the
+screen is not at the left of anything. So the plate is `flex: 0 1 auto` with
+`margin-inline-end: auto` — content width, the ≡ held at the far end — and its
+face reads from the start. `min-inline-size: 0` still lets a long name
+ellipsise rather than push the ≡ off a phone, and the 44px floor still stops
+that shrink going under a thumb.
+
+**THE HAMBURGER**, hanging DOWN from that ≡ — measured **305.4 × 443.3 at 320,
+top 47.2, bottom 490.5 of 844**, no inner scroll:
+
+    STELLATE
+    Session ·  Where ·  Score ·  Video ·  Screensaver ·  Export
+    ────────────────────────────────────────────────────────────
+    SET SEED    ⚄  [ 1 ]
+    ────────────────────────────────────────────────────────────
+    ¶ log                                                      3
+
+Three blocks in NAV.md's order: **where you are** (all six views, `Session`
+first and `aria-current="page"` on the one you are on), **what you are making**
+(the seed row, handed over as a NODE — `#rewrite`, `#seedval`, `#seedin`,
+`.nu-seedwait`, unrebuilt), **what the box has done** (the log with its count).
+
+**THE BAR** — three marks and a readout: `#playops` (the fold, holding
+`#playmode`, `#take` and `#vol`), `#voicing`, `#play`, then the TAPE. All three
+marks are facts about the next press of ▶, which is the law's own sentence.
+
+**THE TAPE** — `.nu-tape`, `flex: 1 1 auto`, **246px at 390, 185 at 320, 1136
+at 1280**. Two lines inside the bar's 44px of content: the WORDS
+(`.nu-count` + `.nu-tapesay`, right-aligned, tabular) over a 4px TRACK whose
+fill is `--clock`. At rest it says the record's own length (`76 bars` on
+Kingston, `88 bars` on Coach House — the same reduction the grid's corner
+prints) and draws no fill; playing it says `bar 12/76` and fills.
+
+#### THE NUMBERS
+
+| | before (v297) | after |
+|---|---|---|
+| fixed chrome at the HEAD, all widths, both records | **0** | **44.0px** (`--top-h`, `--tap` + the notch) |
+| fixed chrome at the FOOT | 50.4px | **50.4px** — unmoved |
+| the pane at rest, 390 · 320 · 1280 | **788px** | **744px** (floor `844 − 44 − 50.4 − 8` = 741.6) |
+| where the grid starts inside the pane | 107.3px | **107.3px** — unmoved |
+| the section row's pitch | 67.5px | **67.5px** — unmoved |
+| **sections whole on the glass at rest, Kingston 1969 and Coach House** | **10** | **9** |
+| readouts in the bar at rest | **1** — the seed, `1` | **1** — the tape, `76 bars` / `88 bars` |
+| marks in the bar | 7 (plate · die · number · fold · voicing · play · ≡) | **3** (fold · voicing · play) |
+| the record's name plate, every width | 116–340px in the bar, and centred | **135px (Reggae) / 118.5px (Trip hop) in the strip, reading from the start** |
+| the tape's WORD repaints over 8 bars at 79 BPM | — | **9** (≤ 1 a bar, +1 leaving rest) |
+| the tape's FILL repaints over the same 8 bars | — | **9** (budget ≤ 1 a beat = 32) |
+| page errors, console errors | 0 | **0** |
+| `documentElement.scrollWidth === clientWidth` | yes | **yes**, 390 · 320 · 1280 |
+
+#### THE ONE REGRESSION, AND ITS ARITHMETIC
+
+**The grid loses a section row, and the arithmetic says it cannot be bought
+back inside this round.** At rest the pane is 788px, the grid starts 107.3px
+into it and the rows are 67.5px apart, so ten whole rows need
+`107.3 + 10 × 67.5 = 782.3` — **5.7px of slack in the whole page.** A second
+fixed band cannot be thinner than `--tap`, because it holds two controls and
+DESIGN §1's floor is 44px in both axes and is not negotiable (nu.css's own
+sentence: *"a glyph brings 10-30px, so `←` in a 2px-padded button is a 20px
+target — under half the floor"*). 44 against 5.7 is one row, at every width and
+on both records.
+
+**THE THREE PLACES IT COULD COME FROM WERE MEASURED AND ALL THREE ARE
+REFUSED.** (1) *A shorter strip* — under the tap floor, refused by DESIGN §1.
+(2) *A strip that overlays instead of reserving* — refused by Paul's own
+*"Dont let anything go under it"* and by shell A6i, which is a claim about
+FLOW. (3) *Folding the record row's face into the strip*, which is the only
+exact 44px on the page: at 320 the strip's column is 296px and the plate
+already takes 275 of it, so the record's face (`84 BPM · 4/4 · G♯ natural
+minor`, 121–200px) would cut the record's NAME to a stub — and it would delete
+component 18, which NAV.md's *"what must not change"* does not authorise. So
+the row is **spent, declared and reported** rather than taken quietly out of
+something else; if Paul wants it back the trade to put to him is (3), as its
+own round with §18 reopened.
+
+#### THE DEVIATIONS FROM NAV.md, AND WHY
+
+1. **`Song options` (`tcorner`) STAYS AT THE END OF THE RECORD'S LINE.**
+   NAV.md lists it in the hamburger's second block and, four lines later,
+   writes *"Nothing here writes to the document except `Set seed`"* — and all
+   three of its ops (fill from the genre, re-seed, transpose) rewrite the
+   record. The document's own law decides it. Two more reasons, both
+   measured earlier: its SHEET is drawn as the record row's own next line
+   (§13a.3, §15a) and the `<tbody>` is `hidden` while the grid is folded, so a
+   menu row that opened it would open a sheet behind the plate that opened it —
+   this branch's characteristic bug; and `re-seed` in the menu would be a
+   second door to the die that `Set seed` has just been given one owner of.
+   `tcorner` is untouched — same address, same 44 × 44 box, same three
+   `ttab-*` fields, `test/table-inventory.json` unmoved on it.
+2. **`#playops` AND ITS THREE CHILDREN STAY IN THE BAR.** NAV.md's drawing of
+   the bar shows play, the sung toggle and the tape. A mode, a take and the
+   room are facts about the next press of ▶, which is *"what you hear"*; the
+   hamburger is *"where you go"*. Nothing is lost and nothing moved home.
+3. **THE BAR'S ORDER IS THE TRANSPORT FIRST, THE TAPE LAST** (NAV.md draws
+   `▶ / ■ · ◉ sung · tape`). `#play` is the last child of `.nu-bartp` and
+   `test/gutter.js` T2 has asserted that since the bar landed — the thumb rests
+   at the end of the transport group, not at the end of the row.
+4. **THE TAPE IS TWO LINES, NOT ONE** (NAV.md draws `▓▓▓▓▓░░░░░  3 · bar
+   12/88` side by side). Measured: at 320 the tape has 185px, and a track
+   sharing that with the words cannot show one bar of an 88-bar record moving.
+   Stacked, the track takes the tape's whole width — which is the thing it is
+   for — and both lines fit inside the bar's 44px of content.
+5. **`Where` IS BOTH A ROW OF THE LIST AND THE RECORD'S NAME.** NAV.md's
+   drawing has it in the list and its prose makes the name a door to it. Two
+   doors, one owner: both call `showTab("Where")`. The cost is that
+   `aria-pressed` could no longer say *"which view"* — see below.
+
+#### TWO CHANNELS, TWO JOBS
+
+With six views in the list, one row is always the one you are standing on —
+including `Session`, which is not a "pressed" button and not an open sheet
+either — and `Where` would have been pressed in the list AND pressed on the
+record's name at the same moment. So the page says the two facts in the two
+words that mean them: **`aria-current="page"` says WHICH VIEW YOU ARE ON**
+(exactly one row of `#nu-menu`, always) and **`<mark>` / `aria-pressed` says THE
+PICKER IS OPEN** (the genre plate, the one toggle left in the chrome).
+`test/shell.js` A6c asserts both, each against `__eightTabNow()`.
+
+#### THE SEED'S STAND-DOWN IS RETIRED
+
+`paintCount` drew nothing while `seedWaiting` was up, and that was right when
+`.nu-count` and `.nu-seedwait` were neighbours in one 100px column of the bar:
+two copies of one number at one address read as a defect. They are in two
+places now — the seed's own wait is behind the ≡, the general one is in the
+tape and on the glass in every state — so the guard would have taken the only
+visible countdown off the screen for exactly as long as the wait it reports.
+One feed (`pend`), one arithmetic (audio/live.js's), two readers, neither
+hiding for the other.
+
+#### ONE PLAYHEAD READER, AND A DECLARED REPAINT BUDGET
+
+`paintTape` is called from `markForm` and from nowhere else — the same one call
+the section lamps ride, off the "pos" feed and off stop's `-1`. There is no
+second subscription. §13f's law (*"the text in the motifs section is changing
+rapidly every beat it's too much"*) is about WORDS, so the two halves carry two
+budgets, each memoised on what it draws:
+
+- the WORD (`bar 12/76`) at most **once a bar** — `tapeSaid` holds the string;
+- the FILL at most **once a beat**, and in practice far less — `tapeFill` holds
+  the INTEGER percent, so a record has at most 100 fill writes end to end.
+
+Measured over eight bars of real playback at 79 BPM, counting DOM mutations on
+the rendered nodes: **9 word writes and 9 fill writes** (the ninth of each is
+leaving rest). `test/shell.js` A6n holds it.
+
+When the RECORD moves under the tape — a section added, a link imported — the
+readout follows through `tapeFollow()`, called from `paintChrome`, which is
+`draw()`'s and `showTab`'s and never the clock's. Measured: Kingston prints
+`76 bars` and Coach House `88 bars`, which is what the grid's corner says.
+
+#### THE GATES
+
+`test/shell.js` is rewritten where this round moved something and keeps every
+claim that still holds: **A6** sweeps BOTH bands at eleven stops (the bar's
+bottom is the viewport's, the strip's top is 0, both full width, none of the
+six numbers moves); **A6b** asks both for one row and no sideways scroll;
+**A6c** is the two channels above; **A6d/A6g** read the six views and the log
+off the rendered `#nu-menu > button` (`> button`, because the plate's middle
+block is the seed row and its two controls are not rows of the list) and assert
+the record's name is the strip's FIRST control with the one ≡ at its end and
+nothing at `toptab-Where` in the bar; **A6i** sweeps the top band at scrollY 0
+again, off `#nu-topstrip` where it had kept a deliberate null; **A6m** presses
+the plate at its new address; **A6n** is new and is the tape's; **A7b** is new
+and is `--top-h`'s. `test/table.browser.js` **T13a** asserts the fixed chrome
+is exactly `[nu-topstrip, nu-bar]` with the ≡ as the strip's last button, the
+tape as the bar's last child and the bar's five buttons in order; **T13e**'s
+floor subtracts both bands; **T13l** adds the seed row, `toptab-Band` and the
+log to T7's ≤ 2 taps at 320. `test/table-inventory.json` re-files the chrome's
+homes — the strip, the hamburger, the bar — adds `toptab-Band` as a row, and
+says why the TAPE is not filed as a control (it is a readout and takes no tap).
+`test/gutter.js` T2/T3/T5/T9 (the bar's own inventory, the plate's press, the
+seed row behind the ≡, and "one row" read as one CENTRE LINE — the tape is a
+19px readout among 44px marks, so a top edge stopped being the row), plus
+`test/seed.js`, `test/silence.js`, `test/atlas.js` G8, `test/copy.browser.js`
+and `test/text-diet.test.js`, are re-pointed at the addresses and the words
+that moved.
+
+#### TWO THINGS THE MOVE BROKE, MEASURED AND FIXED
+
+Both were found by driving the rendered page, and both are the same kind of
+fault — a rule that belonged to the surface a control LEFT:
+
+1. **The die came out 44 × 33.7.** `.nu-bar button` declared the 44px floor in
+   both axes and the seed row took it with it; `#nu-menu > button` declares
+   `inline-size: 100%` for the plate's own rows, and the die and the number are
+   nested one level inside `.nu-seedrow` and are neither. `#nu-menu .nu-seedrow
+   button` declares the floor where the row now lives. (This closed
+   `test/gutter.js` T10's standing red on the same line.)
+2. **The plate scrolled inside itself by 45px at 320 × 568.** `#nu-menu`'s
+   ceiling was `min(70vh, 560px)`, argued when it held five rows ("five rows at
+   44px is 220px, so the `max-block-size` is never reached"); it holds nine now
+   and measures 443.3px, against 397.6 of 70vh on that phone. The ceiling is
+   the glass under the strip that opens it — `calc(100dvh - var(--top-h) -
+   var(--s4))`, 511px at 568 and 787 at 844 — so *"menus never scroll inside
+   themselves"* holds again and the plate still lands on the screen.
+
+**AND THE RECORD'S NAME WAS CENTRED IN A 1,200px PLATE AT 1280** until it was
+looked at: `flex: 1 1 auto` came over from the bar with the node. See THE TOP
+STRIP above.

@@ -172,7 +172,7 @@ const COLLECT = function () {
                        `<option>`s, which the tag test above carved out; the
                        strings did not change, the element did. */
                     ".nu-lz, " +
-                    "#nu-bar .nu-sub2, .nu-circ";
+                    "#nu-topstrip .nu-sub2, .nu-circ";
     const isValue = !!(av && slug(av) === slug(text)) ||
                     /^(option|optgroup)$/i.test(el.tagName) ||
                     !!el.closest(DOCFACE);
@@ -573,7 +573,10 @@ function budgetFor(kind) {
     await snap("the transport bar");
     if (await tap("#burger", "the hamburger", 800)) {
       await snap("the hamburger");
-      const decks = await p.$$("#nu-menu button");
+      // `> button` since 2026-09-06 (docs/NAV.md): the plate holds the six
+      // views and the log as direct children, with the seed row nested between
+      // them — a die pressed here would reseed the record mid-sweep.
+      const decks = await p.$$("#nu-menu > button");
       for (let i = 0; i < decks.length && i < 5; i++) {
         const nm = await decks[i].evaluate((e) =>
           (e.getAttribute("aria-label") || e.textContent || "").trim().slice(0, 18))

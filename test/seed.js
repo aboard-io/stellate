@@ -210,12 +210,21 @@ function standUpServer() {
      panel being opened before its field could be typed in. There is no panel;
      the line is not replaced by anything, because the digit is on the page at
      every moment now — which is the point of the round.) */
-  const numRect = async (id) => p4.evaluate((k) => {
+  /* ...AND THE ROW IS BEHIND THE ≡ SINCE 2026-09-06 (docs/NAV.md, Paul:
+     *"Move the seed out of the bottom nav and into a 'set seed' in the
+     hamburger"*). The die and its number are the same nodes with the same ids
+     and the same listeners — `.nu-seedrow` was handed to the menu whole — so
+     what a gate has to add is the tap a HAND now makes first: open the plate.
+     `__eightMenuOpen` is the ≡ pressed, the same call the button's own
+     listener makes; a rect measured with the plate shut is 0x0 and every press
+     below would land at the top corner of the page. */
+  const openMenu4 = () => p4.evaluate(() => window.__eightMenuOpen(true));
+  const numRect = async (id) => (await openMenu4(), p4.evaluate((k) => {
     const n = document.getElementById(k);
     if (!n) return null;
     const r = n.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2,
-             w: +r.width.toFixed(1), h: +r.height.toFixed(1) }; }, id);
+             w: +r.width.toFixed(1), h: +r.height.toFixed(1) }; }, id));
   const at3 = await numRect("seedval");
   await p4.mouse.click(at3.x, at3.y);
   await p4.waitForTimeout(200);
@@ -327,11 +336,14 @@ function standUpServer() {
       const r = v.getBoundingClientRect();
       return { says: v.textContent.trim(), seen: r.width > 2 || r.height > 2 };
     })(),
-    /* THE ROW IS IN THE BAR SINCE 2026-09-09 (TABLE.md §10b step 6). It was
-       `.nu-trayfoot .nu-seedrow`, the gutter's foot; the gutter is deleted and
-       the die, the number, the field and the two countdowns are the middle of
-       `#nu-bar`. Not one id moved. */
-    row: !!document.querySelector("#nu-bar .nu-seedrow #reading") }));
+    /* THE ROW IS A ROW OF THE HAMBURGER SINCE 2026-09-06 (docs/NAV.md). It
+       was `.nu-trayfoot .nu-seedrow` (the gutter's foot), then the middle of
+       `#nu-bar`; Paul: *"Move the seed out of the bottom nav and into a 'set
+       seed' in the hamburger… bottom row is pure play controls."* The general
+       countdown did NOT come with it — `.nu-count` is inside the tape, which
+       is the one readout on this page that is on the screen with the plate
+       shut. Not one id moved, either time. */
+    row: !!document.querySelector("#nu-menu .nu-seedrow #reading") }));
   check(!gone.panel && !gone.slide && !gone.roll && !gone.next && !gone.num &&
         gone.exp === null,
     "S5 · …and the flyout is GONE — no panel, no slider, no roll, no next, " +
@@ -434,6 +446,9 @@ function standUpServer() {
      target into view first (memory: nukernel-deploy-and-probe, four ways the
      harness lies). */
   const tap6 = async (id) => {
+    // the seed row is a row of the hamburger since 2026-09-06 (docs/NAV.md) —
+    // the plate is opened first, which is the tap a hand makes
+    await p6.evaluate(() => window.__eightMenuOpen(true));
     const at = await p6.evaluate((k) => {
       const n = document.getElementById(k);
       if (!n) return null;

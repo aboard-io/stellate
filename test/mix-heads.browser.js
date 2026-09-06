@@ -318,7 +318,7 @@ function standUpServer() {
     return { found: true, said: c ? c.textContent.trim() : "" };
   }, target.id);
   check(jumped.found && /\d/.test(jumped.said || ""),
-    "X5 tapping a row head queues a jump and the gutter's countdown SAYS WHEN " +
+    "X5 tapping a row head queues a jump and the TAPE's countdown SAYS WHEN " +
     "(\"" + (jumped.said || "") + "\") — a queued gesture that says nothing " +
     "for a whole box is a gesture nobody can tell landed",
     JSON.stringify(jumped));

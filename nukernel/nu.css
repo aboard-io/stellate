@@ -679,8 +679,20 @@
      it pays it INSIDE `--bar-h` so nothing can double-count it. */
   --bar-h: calc(var(--tap) + var(--s1) + var(--s1)
                 + env(safe-area-inset-bottom, 0px));
-  --top-h: calc(var(--tap) + var(--s2) + var(--s2)
-                + env(safe-area-inset-top, 0px));
+  /* ===== `--top-h` IS A REAL BAND AGAIN, 2026-09-06 (docs/NAV.md) =======
+     Paul: *"move the view selector into a hamburger on the top right…
+     Consolidate that with the existing bottom right hamburger (which goes
+     away)."* The strip that took the token back holds TWO 44px targets and
+     nothing else — the record's name at the start, the ≡ at the end — so it is
+     `--tap` EXACTLY, with no padding of its own: the token was `--tap + two
+     steps` when the strip was a floating plate with air round it, and a
+     full-width band pays for its air in the row, not in its height.
+     IT PAYS THE NOTCH, WHICH `<body>` USED TO. The strip stands at
+     `inset-block-start: 0`, so the safe area is inside it (its own
+     `padding-block-start`) and inside this token, and <body> reserves the
+     token once. Nothing double-counts it, which is the same discipline
+     `--bar-h` keeps at the other end. */
+  --top-h: calc(var(--tap) + env(safe-area-inset-top, 0px));
 }
 *,*::before,*::after{ box-sizing: border-box; }
 /* ---- NOTHING RUBBER-BANDS (2026-09-06, TABLE.md §15a) ----------------
@@ -773,7 +785,17 @@ body{ margin: 0; background: var(--paper); color: var(--ink);
      arithmetic for anything that still wants it.
      THE SAFE AREA STILL HAS TO BE PAID, and it is paid where it always was for
      the top of the page: `env(safe-area-inset-top)` on <body>, once. */
-  padding-block-start: env(safe-area-inset-top, 0px); }
+  /* ...AND THE TOP STRIP IS RESERVED AGAIN SINCE 2026-09-06 (docs/NAV.md:
+     *"THE TOP IS WHERE YOU GO. THE BOTTOM IS WHAT YOU HEAR."*). There are two
+     fixed bands and only two, and <body> takes the room for both out of the
+     page, which is the whole of *"Dont let anything go under it"* said twice.
+     `--top-h` carries `env(safe-area-inset-top)` inside it — the strip pays
+     the notch as its own padding — so this line replaces the bare `env()` it
+     read from 2026-09-05 to 2026-09-06 rather than adding to it.
+     WHAT IT COSTS, SAID AND NOT HIDDEN: 44px of a 844px phone, which is one
+     section row of the grid at rest (TABLE.md §16 carries the arithmetic and
+     the trade Paul made when he asked for the strip). */
+  padding-block-start: var(--top-h); }
 /* the display weights. (The h1 rule — "the record's name is the h1 and gets
    the 900; font-weight: 900; letter-spacing: -.01em; line-height: 1.05" —
    went on 2026-08-29 with the heading it dressed: Paul, "Get rid of the play
@@ -1377,8 +1399,13 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   inline-size: min(46ch, calc(100vw - 2 * var(--gl)));
   max-block-size: min(60vh, 520px);
   padding: var(--s2) var(--s3); }
-/* WHAT IS LEFT OF THE LOG: where it hangs, how wide, and how tall. */
-.nu-log{ inset-block-end: calc(var(--bar-h) + 4px);
+/* WHAT IS LEFT OF THE LOG: where it hangs, how wide, and how tall.
+   ...AND IT HANGS FROM THE TOP SINCE 2026-09-06 (docs/NAV.md). The log's own
+   mark is the last row of the hamburger and the hamburger is at the top right;
+   a panel that opened at the opposite corner from the button that opened it is
+   the arrangement `#nu-menu`'s own note has already refused once. Same width,
+   same ceiling, same chassis — only the anchor turned over. */
+.nu-log{ inset-block-start: calc(var(--top-h) + 4px);
   inline-size: min(46ch, calc(100vw - 2 * var(--gl)));
   max-block-size: min(60vh, 520px);
   padding: var(--s2) var(--s3); }
@@ -6674,8 +6701,12 @@ table.nu-trims{ color: var(--ink); }
    What is left is the screen minus the bar minus one step of air.
    MEASURED at 390 x 844 on Kingston 1969: the pane was 611px and is 788,
    against §13b's floor of `844 - 50.4 - 0 - 8` = 785.6. */
+/* ...AND THE TOP STRIP IS BACK IN THE ARITHMETIC, 2026-09-06 (docs/NAV.md).
+   The screen minus BOTH bands minus one step of air. Measured at 390 x 844 on
+   Kingston 1969: the pane was 788px and is 744, against a floor of
+   `844 - 44 - 50.4 - 8` = 741.6. */
 .nu-sheetwrap{ display: flex; flex-direction: column; min-inline-size: 0;
-  block-size: calc(100dvh - var(--bar-h) - var(--s2)); }
+  block-size: calc(100dvh - var(--top-h) - var(--bar-h) - var(--s2)); }
 .nu-sheetwrap > .nu-pane[data-pane="table"]{ flex: 1 1 auto; min-block-size: 0;
   overflow: auto; overscroll-behavior: none; }
 /* THE CELL SHEET'S FIRST LINE, WHICH IS WHAT `.nu-formula` BECAME. The address
@@ -7808,6 +7839,53 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    `.nu-top .nu-ic`. Five rules. The plate they wore is `.nu-sheethead`'s now,
    below, at the one place a × still needs one. */
 
+/* ---- THE TOP STRIP: WHERE YOU ARE, AND THE DOOR (2026-09-06) ---------
+   docs/NAV.md, Paul: *"move the view selector into a hamburger on the top
+   right. Consolidate that with the existing bottom right hamburger (which goes
+   away)… So now bottom row is pure play controls and top right is compose
+   arrange controls."*
+
+   IT IS THE SECOND OF EXACTLY TWO FIXED BANDS, and the paragraph above — "the
+   top strip is deleted" — is the state this replaces. What is different from
+   the strip §13a.1 deleted, and why this one is allowed where that one was
+   not: THAT strip was a floating PLATE at one corner, over a page it did not
+   reserve room in, holding a × for a sheet that could close itself; THIS one
+   is a full-width band that <body> takes out of the page (`padding-block-start:
+   var(--top-h)`), holding the two controls that must be on the screen in every
+   state of the box — the record's name and the one door to everywhere else.
+   §13a's law is amended to say two, and TABLE.md §16 is where it is amended.
+
+   IT IS `--tap` TALL AND SPENDS NOTHING ELSE. Two 44px targets at the two ends
+   of one row, the page's own gutters either side, an opaque ground and a rule
+   under it for the same reason the bar has one over it: the page scrolls under
+   it and see-through chrome over moving type is what this page's flat-paint
+   law has never allowed. */
+.nu-topstrip{ position: fixed; z-index: 58;
+  inset-inline: 0; inset-block-start: 0;
+  display: flex; flex-direction: row; align-items: center; flex-wrap: nowrap;
+  gap: var(--s2);
+  block-size: var(--top-h);
+  padding-block-start: env(safe-area-inset-top, 0px);
+  padding-inline: var(--gl) var(--gr);
+  background: var(--panel); color: var(--ink);
+  border-block-end: var(--bw) solid var(--ink); }
+/* THE RECORD'S NAME IS AT THE START AND IS AS WIDE AS ITS OWN WORD — which is
+   a correction to the arrangement it had in the bar, made on the rendered page
+   at 1280. There it was `flex: 1 1 auto` (the bar's own rule, moved with the
+   node) and drew a 1,200px plate with "Kingston 1969" floating in the middle
+   of it: docs/NAV.md says *"THE RECORD'S NAME GOES TOP LEFT"*, and a name
+   centred in a plate the width of the screen is not at the left of anything.
+   So the plate takes its CONTENT's width (`0 1 auto`) and an auto margin
+   holds the ≡ at the far end; `min-inline-size: 0` on the face is what lets a
+   long genre name ellipsise rather than push the ≡ off a phone, and the 44px
+   floor below stops that shrink going under a thumb. */
+.nu-topstrip > button[data-k="toptab-Where"]{ flex: 0 1 auto;
+  min-inline-size: var(--tap); margin-inline-end: auto; }
+.nu-topstrip > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0;
+  justify-content: flex-start; text-align: start; }
+.nu-topstrip > #burger{ flex: 0 0 auto; }
+.nu-topstrip button{ min-inline-size: var(--tap); min-block-size: var(--tap); }
+
 /* ---- A SHEET'S OWN HEADER, AND THE × IS ITS (§13a.1) ------------------
    One line at the top of whichever panel is open: the sheet's NAME at the
    start, its close at the end. It is IN FLOW and not sticky, because §13a's
@@ -7867,12 +7945,25 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    of `.nu-bar` now, so the plate stands directly above the mark that opens it
    and at the same edge. A menu that opened at the far corner from its own
    button is the one arrangement a thumb cannot follow. */
+/* ...AND IT HANGS FROM THE TOP SINCE 2026-09-06 (docs/NAV.md). The ≡ is the
+   last button of `.nu-topstrip` now, so the plate stands directly UNDER the
+   mark that opens it and at the same edge — the same sentence as before,
+   turned over. A menu that opened at the far corner from its own button is
+   the one arrangement a thumb cannot follow. */
 #nu-menu{ position: fixed; z-index: 59;
-  inset-block-end: calc(var(--bar-h) + var(--s1));
+  inset-block-start: calc(var(--top-h) + var(--s1));
   inset-inline-end: calc(var(--s2) + env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; align-items: stretch;
   inline-size: min(30ch, calc(100vw - 2 * var(--s2)));
-  max-block-size: min(70vh, 560px); overflow-y: auto;
+  /* MENUS NEVER SCROLL INSIDE THEMSELVES, and the ceiling is the SCREEN's
+     since 2026-09-06. It was `min(70vh, 560px)` and the plate held five rows;
+     it holds nine now — six views, the seed's heading and its row, the log —
+     which measures 443.3px, and MEASURED at 320 x 568 (test/gutter.js T10's
+     own second phone) 70vh is 397.6 and the plate scrolled inside itself by
+     45px. The ceiling is what is left of the glass under the strip that opens
+     it, so the plate scrolls only when a screen genuinely cannot hold it:
+     511px at 568, 787 at 844. */
+  max-block-size: calc(100dvh - var(--top-h) - var(--s4)); overflow-y: auto;
   overscroll-behavior: contain;
   margin: 0; padding: var(--s2);
   background: var(--panel); color: var(--ink);
@@ -7883,9 +7974,15 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   justify-content: flex-start; text-align: start;
   background: transparent; border-color: transparent; }
 #nu-menu > button:hover{ background: var(--flag-tint); }
-#nu-menu > button[aria-pressed="true"]{ background: var(--hand);
+/* THE VIEW YOU ARE ON IS `aria-current` AND NOT `aria-pressed` (2026-09-06,
+   docs/NAV.md: *"The current view is marked in the list"*). With six views one
+   of them is ALWAYS the one you are standing on, including the table — and
+   `Where` would otherwise have been "pressed" here and "pressed" on the record's
+   name at the same moment, which is one state spelled twice. `aria-pressed`
+   stays where it means something: the genre plate's own toggle. */
+#nu-menu > button[aria-current]{ background: var(--hand);
   color: #FFFFFF; border-color: var(--hand); }
-#nu-menu > button[aria-pressed="true"]:hover{ background: #152F9E; }
+#nu-menu > button[aria-current]:hover{ background: #152F9E; }
 #nu-menu .nu-ic{ display: flex; flex-direction: row; align-items: center;
   gap: var(--s2); text-align: start; }
 /* THE WORDS ARE VISIBLE HERE, which is the one thing the gutter could never
@@ -7903,18 +8000,53 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    giving this file a second copy of the face's markup. */
 #nu-menu .nu-n{ order: 1; margin-inline-start: auto;
   font-variant-numeric: tabular-nums; }
+/* ---- THE PLATE'S THREE BLOCKS (2026-09-06, docs/NAV.md) --------------
+   The app's name over the views, and `Set seed` over the die and its number.
+   Both are HEADINGS and neither is a target: they carry no `--tap` floor and
+   no ground, and the two controls under the second one are the ones that were
+   in the bar this morning. */
+.nu-menuname{ display: block; padding: var(--s2) var(--s3) var(--s3);
+  font: var(--fw-display) var(--t3)/1.1 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .08em; }
+.nu-menusub{ display: block; padding: 0 var(--s3) var(--s1);
+  font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.nu-menuseed{ display: block; padding-block-end: var(--s2); }
+/* THE SEED ROW IN THE PLATE. It is the same `.nu-seedrow` the bar held — same
+   node, same children, same listeners — and what the plate gives it that the
+   bar could not is ROOM: 30ch, so the die, the number and the field stand on
+   one line at every width and the seed's own wait drops under them on its own
+   (the row is `flex-wrap: wrap` and always was). */
+#nu-menu .nu-seedrow{ padding-inline: var(--s3); }
+#nu-menu .nu-seedrow > #seedin{ inline-size: 8ch; }
+/* THE 44px FLOOR IN BOTH AXES, AND IT HAD TO BE RE-DECLARED WHERE THE ROW
+   LANDED. `.nu-bar button` carried it for the die and the number while they
+   stood in the bar; `#nu-menu > button` carries it for the plate's own rows
+   (`inline-size: 100%`), and the seed row's two targets are NEITHER — they are
+   nested one level in. MEASURED the hour the row moved, by test/gutter.js T10:
+   `["rewrite", 44, 33.7]` — a thumb tall and two thirds of a thumb wide, which
+   is the same finding that block already records about this glyph ("a glyph
+   brings 10-30px"). */
+#nu-menu .nu-seedrow button{ min-inline-size: var(--tap);
+  min-block-size: var(--tap); }
 .nu-viewcut{ flex: 0 0 auto; inline-size: 100%;
   border: 0; border-block-start: var(--bw) solid var(--rule);
   margin: var(--s2) 0; }
 
 /* ---- THE BAR ----------------------------------------------------------
-   THE GENRE TAKES THE GIVE AND EVERY CONTROL TAKES ITS OWN WIDTH. The name
-   plate is the one thing in this row whose content has no bound ("Gregorian
-   chant" over "Rome 600"), so it is the `1 1 auto` with `min-inline-size: 0`
-   and an ellipsis; the seed row and the transport are `0 0 auto`, because a
-   die that shrank under a long genre name would be a target that changes size
-   with the record. Measured at 320: the plate gets 116px, the seed row 88, the
-   transport 132 — nothing under the 44px floor and no wrap.
+   THE GENRE TOOK THE GIVE UNTIL 2026-09-06 AND THE TAPE TAKES IT NOW
+   (docs/NAV.md, Paul: *"So now bottom row is pure play controls"*). The
+   paragraph this replaces is kept because it is a measurement of the row it
+   describes: "the name plate is the one thing in this row whose content has no
+   bound ('Gregorian chant' over 'Rome 600'), so it is the `1 1 auto` with
+   `min-inline-size: 0` and an ellipsis; the seed row and the transport are
+   `0 0 auto`… Measured at 320: the plate gets 116px, the seed row 88, the
+   transport 132 — nothing under the 44px floor and no wrap."
+   THE ROW IS THREE MARKS AND A READOUT NOW. The transport is `0 0 auto` at the
+   START (the options' door, the voicing, ▶ — three facts about the next press
+   of ▶, in the order v263 put them and under a thumb), and the TAPE is the
+   `1 1 auto` at the end, because a position indicator is the one thing here
+   that can use whatever width is left and is not a target at all.
    IT IS AN OPAQUE PLATE WITH A RULE ON TOP, not a translucent overlay: the
    page scrolls under it and a see-through bar over moving type is the one
    thing this page's flat-paint law has never allowed. */
@@ -7936,28 +8068,48 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
            calc(var(--s1) + env(safe-area-inset-bottom, 0px)) var(--gl);
   background: var(--panel); color: var(--ink);
   border-block-start: var(--bw) solid var(--ink); }
-/* ...AND THE GENRE PLATE IS THE ONE EXEMPTION, from the other end: it is the
-   `1 1 auto` that takes the row's give, so a 44px FLOOR on it would stop it
-   ever being narrower than a thumb — which is right — while `min-inline-size:
-   0` is what lets a flex item ellipsise instead of overflowing. It gets a
-   `min-inline-size` of its own below the rule above, at the tap floor, so the
-   two say the same thing. */
-.nu-bar > button[data-k="toptab-Where"]{ flex: 1 1 auto;
-  min-inline-size: var(--tap); }
-.nu-bar > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0; }
-/* THE SEED ROW STOPS WRAPPING, and that is the one declaration the move
-   changes about it. `.nu-seedrow` is `flex-wrap: wrap` because the gutter's
-   96px floor could not hold the die and the number side by side; a bar has
-   width and no height to spend, so the row is one line and the number takes
-   its content's width instead of the column's give. Everything else about the
-   row — the die, `#seedval`, the field it becomes, its own wait, and now the
-   general countdown beside them — is unmoved. */
-.nu-bar > .nu-seedrow{ flex: 0 0 auto; flex-wrap: nowrap; }
-.nu-bar > .nu-seedrow > #seedval{ flex: 0 0 auto; }
-.nu-bar > .nu-seedrow > #seedin{ inline-size: 7ch; }
-.nu-bar .nu-count{ padding-block: 0; }
+/* (THE GENRE PLATE'S TWO RULES AND THE SEED ROW'S FOUR STOOD HERE, 2026-09-05
+   to 2026-09-06. The plate is `.nu-topstrip`'s `1 1 auto` now, with the same
+   two declarations at the same two selectors one band up; the seed row is a
+   row of `#nu-menu` and gets its width back, so the `flex-wrap: nowrap` this
+   file gave it for a bar — "a bar has width and no height to spend" — is
+   exactly the declaration it no longer needs. `.nu-count` moved with neither:
+   it is inside the tape, below.) */
 .nu-bar > .nu-bartp{ flex: 0 0 auto; display: flex; flex-direction: row;
   align-items: center; gap: var(--s1); }
+/* ---- THE TAPE (2026-09-06, docs/NAV.md) ------------------------------
+   Paul: *"Make a play status tape position indicator that incorporates the
+   beat countdown on the bottom right."*
+
+   IT IS TWO LINES AND NOT ONE, WHICH IS A MEASUREMENT. Side by side — the
+   drawing's own `▓▓▓▓▓░░░░░░  3 · bar 12/88` — the track and the words share
+   161px at 320 (296 of column, less three 44px marks and three 1px seams), and
+   a track under 70px cannot show a bar of an 88-bar record moving. Stacked,
+   the words take the line and the TRACK TAKES THE TAPE'S WHOLE WIDTH, which is
+   the one thing it is for: how much record is left, read at a glance.
+   Both fit inside the bar's 44px of content — the line is `--t1` over a 4px
+   track with a hair between them — so the tape costs the row no height.
+   NOTHING IN IT IS A TARGET. It is a readout: no `--tap` floor, no ground, no
+   border, and its accessible name is the whole sentence (`tape.aria`). */
+.nu-bar > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: var(--s1); }
+.nu-tapeline{ display: flex; flex-direction: row; align-items: baseline;
+  justify-content: flex-end; gap: var(--s2); min-inline-size: 0; }
+.nu-tapesay{ font: var(--num-fw) var(--t1)/1 var(--mono, monospace);
+  font-variant-numeric: tabular-nums; color: var(--dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* THE COUNTDOWN, INSIDE THE TAPE. It keeps its own two-part face — the number
+   in the machine weight, its unit under it — and lies down into one line here,
+   because the tape's line is a line and not a column. Empty is not drawn,
+   which is `.nu-count`'s own `:empty` rule and the reason there is one state
+   to keep honest instead of two. */
+.nu-bar .nu-tape .nu-count{ flex: 0 0 auto; flex-direction: row;
+  align-items: baseline; gap: var(--s1); padding-block: 0; }
+.nu-tapetrack{ block-size: 4px; inline-size: 100%; min-inline-size: 0;
+  background: var(--well); border-radius: var(--r2); overflow: hidden; }
+.nu-tapefill{ display: block; block-size: 100%; inline-size: 0;
+  background: var(--clock); }
 /* ---- AND AT 320 THE ROW SPENDS ITS AIR RATHER THAN A MARK (2026-09-05) --
    The ≡ joined the bar as its last button (TABLE.md §13a.1) and MEASURED at
    320 x 844 the row wanted 334.4px of a 320px screen: seven marks at the 44px
@@ -7971,15 +8123,16 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    there is nothing else to spend. Measured after: 314px in a 320px row. */
 @media (max-width: 379px){
   .nu-bar{ gap: 1px; }
-  .nu-bar > .nu-seedrow{ gap: 1px; }
   .nu-bar > .nu-bartp{ gap: 1px; }
-  /* ...AND THE NUMBER KEEPS ITS DIGITS AND GIVES UP ITS SIDES. Measured at
-     320 on the BLANK STATE, whose seed is five digits where Kingston's is one:
-     the seed row came to 98.2px against Kingston's 89 and the bar overflowed
-     its own box by 3 (test/shell.js A6b, "323 vs 320"). The 44px floor holds —
-     `.nu-bar button` still declares it — so what is spent is the padding
-     either side of a number that is already as wide as a thumb. */
-  .nu-bar #seedval{ padding-inline: 0; } }
+  .nu-topstrip{ gap: 1px; }
+  /* (`.nu-bar > .nu-seedrow { gap: 1px }` AND `.nu-bar #seedval {
+     padding-inline: 0 }` STOOD HERE, 2026-09-05 to 2026-09-06, and both were
+     about the same 320px arithmetic: "seven marks at the 44px floor is 308,
+     and the six gaps between them were 26.4 of the 12 that were left." The bar
+     holds THREE marks now — the seed row is behind the ≡ and the genre plate
+     is one band up — so 320 has 296 of column against 132 of ink, and the tape
+     takes the 161 that are left. The seam is kept for the three that remain
+     and for the strip, which is two marks and a name with no bound.) */ }
 /* THE 44px FLOOR IS BOTH AXES HERE, AND THE OTHER ONE WAS LOST IN THE MOVE.
    `#nu-tray button, #boardtabs button, .nu-decktabs > button { min-inline-size:
    var(--tap) }` was one rule for three surfaces and the stripe's selector went
@@ -8082,7 +8235,8 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    panel is a SHEET rather than the page — and what it declares is the one
    thing a sheet owes: it fills the screen it opened over, with the chrome's
    two bands reserved by <body> exactly as they are for the table. */
-.nu-pan[data-sheet]{ min-block-size: calc(100dvh - var(--bar-h) - var(--s2)); }
+.nu-pan[data-sheet]{ min-block-size: calc(100dvh - var(--top-h)
+                                          - var(--bar-h) - var(--s2)); }
 
 /* ======================================================================
    THE DESIGN PASS (2026-09-05) — DESIGN.md §1–§2, TABLE.md §11's restyle

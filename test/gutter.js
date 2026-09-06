@@ -278,25 +278,40 @@ function standUpServer() {
     return { tabs: window.__eightTabs(),
              rows: m.rows.map((r) => r.key),
              open: m.open,
-             barWhere: !!document.querySelector('#nu-bar [data-k="toptab-Where"]'),
+             stripWhere: !!document.querySelector(
+               '#nu-topstrip [data-k="toptab-Where"]'),
              menuWhere: !!document.querySelector('#nu-menu [data-k="toptab-Where"]'),
              menuBand: !!document.querySelector('#nu-menu [data-k="toptab-Band"]'),
+             barWhere: !!document.querySelector('#nu-bar [data-k="toptab-Where"]'),
              barBand: !!document.querySelector('#nu-bar [data-k="toptab-Band"]'),
+             barSeed: !!document.querySelector("#nu-bar .nu-seedrow"),
+             menuSeed: !!document.querySelector("#nu-menu .nu-seedrow"),
              tray: [typeof window.__eightTray, typeof window.__eightTree,
                     typeof window.__eightExpand] };
   });
-  const wantRows = t2n.tabs.filter((n) => n !== "Where" && n !== "Band")
-    .map((n) => "toptab-" + n);
+  /* ...AND SINCE 2026-09-06 THE LIST IS ALL SIX (docs/NAV.md). Paul: *"Let's
+     make all the panels into their own views and move the view selector into a
+     hamburger on the top right… You may need to put 'session' at the top as a
+     nav item."* So the §10a division this check asserted — `Where` in the bar,
+     `Band` in neither — is replaced by NAV.md's: the hamburger is the whole of
+     `TABS`, the record's NAME is the top strip's plate (still at
+     `toptab-Where`, an address does not move when a control does), and the BAR
+     is the transport alone. The derivation is what it always was: the rows are
+     `__eightTabs()` and nothing is typed twice. */
+  const wantRows = t2n.tabs.map((n) => "toptab-" + n);
   check(!t2.missing.length && !t2.offscreen.length && !t2.notLast.length,
     "T2 · #play is the last child of #nu-bar .nu-bartp AND on the screen in " +
     "every state this page has (" + JSON.stringify(t2.seen) + " — missing " +
     JSON.stringify(t2.missing) + ", off-screen " + JSON.stringify(t2.offscreen) +
     ", not last " + JSON.stringify(t2.notLast) + ")");
-  check(t2n.barWhere && !t2n.menuWhere && !t2n.menuBand && !t2n.barBand &&
+  check(t2n.stripWhere && t2n.menuWhere && t2n.menuBand &&
+        !t2n.barWhere && !t2n.barBand &&
+        !t2n.barSeed && t2n.menuSeed &&
         JSON.stringify(t2n.rows) === JSON.stringify(wantRows) &&
         t2.last === "play",
-    "T2 · …Where is the BAR's plate, Band is nowhere (it is the page), and " +
-    "the hamburger is the rest of TABS: " + JSON.stringify(t2n.rows) +
+    "T2 · …the record's name is the TOP STRIP's plate, the hamburger is ALL " +
+    "of TABS, the seed row is behind it, and the bar holds neither: " +
+    JSON.stringify(t2n.rows) +
     " for tabs " + JSON.stringify(t2n.tabs) + ", last in the bar " +
     JSON.stringify(t2.last));
   /* AND THE STRIPE'S THREE PROBES ARE GONE, ASSERTED — because "we deleted it"
@@ -360,10 +375,21 @@ function standUpServer() {
      been wrong at every one of the four shapes this transport has had.
      Measured on the rendered page at 390x844 the morning of 2026-09-09:
 
+       (the shape until 2026-09-06, kept because the argument below is about it)
        #nu-bar         > toptab-Where · .nu-seedrow · .nu-bartp
        .nu-seedrow     > #rewrite · #seedval · #seedin · .nu-seedwait · .nu-count
        .nu-bartp       > .nu-baropts · #playops · #voicing · #play
        .nu-baropts     > #playmode · #take · .nu-vs (the room, #vol)
+
+       (and since 2026-09-06, docs/NAV.md — two bands, and the seed behind the ≡)
+       #nu-topstrip    > toptab-Where · #burger
+       #nu-bar         > .nu-bartp · .nu-tape
+       .nu-bartp       > .nu-baropts · #playops · #voicing · #play
+       .nu-baropts     > #playmode · #take · .nu-vs (the room, #vol)
+       .nu-tape        > .nu-tapeline (.nu-count · .nu-tapesay) · .nu-tapetrack
+       #nu-menu        > the six views · .nu-viewcut · .nu-menuseed ·
+                         .nu-viewcut · logger
+       .nu-seedrow     > #rewrite · #seedval · #seedin · .nu-seedwait
 
      — eight controls and a name plate, where the level had five. The two
      non-controls in the seed row are the countdowns (`.nu-seedwait`, the
@@ -420,21 +446,19 @@ function standUpServer() {
     "door says so (" + JSON.stringify({ open: t3.open, expanded: t3.expanded,
                                         inBar: t3.inBar }) + ")");
   /* THE INVENTORY, ASSERTED EXACTLY AND PRINTED EITHER WAY. */
-  /* ...AND THE ≡ IS THE FOURTH THING SINCE 2026-09-05 (TABLE.md §13a.1:
-     *"Nothing is fixed but the bottom bar … the ≡ plate joins it as its last
-     button"*). `.nu-top` held it at the top corner with the ×, over 55.2px of
+  /* ...AND THE BAR IS THE TRANSPORT AND THE TAPE SINCE 2026-09-06 (docs/NAV.md,
+     Paul: *"So now bottom row is pure play controls and top right is compose
+     arrange controls"*). The paragraph this replaces is kept for the ≡'s own
+     history: "`.nu-top` held it at the top corner with the ×, over 55.2px of
      <body> padding reserved for the pair; the strip is deleted, the × belongs
      to the header of the sheet it closes, and the ≡ is at the END of this row
-     because it is the one control on the screen in every state of this page
-     and the end of a row that never wraps is where it cannot shift under a
-     reach. LAST, and asserted as last, which is the same kind of claim T2
-     makes about `#play` being the last child of `.nu-bartp`. */
-  check(JSON.stringify(t3.bar) ===
-          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp",
-                          "burger"]) &&
-        JSON.stringify(t3.seed) ===
-          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait",
-                          "nu-count"]) &&
+     because it is the one control on the screen in every state of this page."
+     The ≡ is still that control and is still at the end of a row that never
+     wraps — the TOP one now. What left the bar is the genre plate (the top
+     strip's) and the seed row (the hamburger's); what joined it is the TAPE,
+     which is not a control at all. */
+  check(JSON.stringify(t3.bar) === JSON.stringify(["nu-bartp", "nu-tape"]) &&
+        t3.seed === null &&
         JSON.stringify(t3.bartp) ===
           JSON.stringify(["nu-baropts", "playops", "voicing", "play"]),
     "T3 · …and the bar holds exactly what it holds and no ninth thing: " +
@@ -790,9 +814,26 @@ function standUpServer() {
      the row is the thing that breaks silently. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
+  // the seed row is behind the ≡ since 2026-09-06 (docs/NAV.md) — the plate is
+  // opened first, which is the tap a hand makes
+  await p.evaluate(() => window.__eightMenuOpen(true));
+  await p.waitForTimeout(200);
+  /* ...AND THE SEED LEFT THE BAR FOR THE HAMBURGER ON 2026-09-06 (docs/NAV.md,
+     Paul: *"Move the seed out of the bottom nav and into a 'set seed' in the
+     hamburger… So now bottom row is pure play controls."*). The ORDER is still
+     what is asserted and it is still an order and not an index arithmetic;
+     what changed is which surface each thing is on. THE BAR is the transport
+     and the tape; THE MENU is the six views, the seed row, the log. The row
+     itself is the SAME NODE with the same five children — it was handed over,
+     not rebuilt — except that `.nu-count` did not come with it: the general
+     countdown is inside the TAPE now, which is the one readout on this page
+     that is on the screen with the plate shut. */
   const t9 = await p.evaluate(() => {
     const bar = document.querySelector("#nu-bar");
+    const strip = document.querySelector("#nu-topstrip");
     const kids = [...bar.children].map((n) =>
+      n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
+    const stripKids = [...strip.children].map((n) =>
       n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
     /* THE SEED IS A ROW OF FIVE SINCE 2026-09-09, and the die is its first
        child. Paul, 2026-09-03: *"Instead of a popup for seed, just get rid of
@@ -804,10 +845,13 @@ function standUpServer() {
        on the number now "because that is where a hand looking at a number
        wants to be told when it will be heard"; it stands down while the seed's
        own wait is up, so exactly one of the two is ever drawn. */
-    const seed = [...bar.querySelector(".nu-seedrow").children].map((n) =>
-      n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
-    return { kids, seed,
+    const seed = [...document.querySelector("#nu-menu .nu-seedrow").children]
+      .map((n) => n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
+    return { kids, stripKids, seed,
              gone: kids.indexOf("explain"),
+             /* THE COUNTDOWN IS THE TAPE'S, and there is exactly one of it. */
+             tapeCount: !!document.querySelector("#nu-bar .nu-tape .nu-count"),
+             counts: document.querySelectorAll(".nu-count").length,
              barLog: !!document.querySelector("#nu-bar [data-k=\"logger\"]"),
              menuLog: !!document.querySelector("#nu-menu [data-k=\"logger\"]"),
              /* AND THE LOG IS THE LAST ROW OF THE MENU, AFTER THE RULE. The
@@ -820,32 +864,38 @@ function standUpServer() {
                return [...m.children].slice(-2).map((n) =>
                  n.dataset.k || n.className || n.tagName.toLowerCase()); })(),
              inFold: !!document.querySelector(".nu-baropts #rewrite"),
+             /* THE TWO TARGETS ARE MEASURED WITH THE PLATE OPEN, because a
+                control behind a shut door has no box — which is the second tap
+                a hand makes and the same one `test/seed.js` makes. */
              tap: +document.getElementById("rewrite")
                     .getBoundingClientRect().height.toFixed(1),
              num: +document.getElementById("seedval")
                     .getBoundingClientRect().height.toFixed(1),
-             reading: !!document.querySelector("#nu-bar .nu-seedrow #seedval #reading") };
+             reading: !!document.querySelector("#nu-menu .nu-seedrow #seedval #reading") };
   });
-  /* ...WITH THE ≡ AT THE END SINCE 2026-09-05 (TABLE.md §13a.1). The row's
-     reading order is unchanged — genre · seed · transport — and the hamburger
-     is the fourth and last thing in it, which is where `.nu-top` used to stand
-     it (at the corner) and where a control that never moves belongs on a row
-     that never wraps. */
-  check(JSON.stringify(t9.kids) ===
-          JSON.stringify(["toptab-Where", "nu-seedrow", "nu-bartp",
-                          "burger"]) &&
+  /* ...AND THE TWO BANDS EACH READ IN THEIR OWN ORDER SINCE 2026-09-06
+     (docs/NAV.md). The strip is the record's NAME then the one ≡ (it was
+     `.nu-top`'s corner, then the bar's last button, and it is the head of the
+     page now); the bar is the transport then the TAPE. The seed row is
+     unchanged as a node and is a row of the plate the ≡ opens. */
+  check(JSON.stringify(t9.stripKids) ===
+          JSON.stringify(["toptab-Where", "burger"]) &&
+        JSON.stringify(t9.kids) ===
+          JSON.stringify(["nu-bartp", "nu-tape"]) &&
         JSON.stringify(t9.seed) ===
-          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait",
-                          "nu-count"]) &&
+          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait"]) &&
         !t9.inFold && t9.gone < 0,
-    "T9 · the bar reads genre · seed · transport and the seed row reads die · " +
-    "number · field · wait · countdown, in that order, with no ? anywhere in " +
-    "it and the die nowhere else — " +
-    JSON.stringify({ bar: t9.kids, seed: t9.seed }));
+    "T9 · the strip reads name · ≡, the bar reads transport · tape, and the " +
+    "seed row — a row of the hamburger now — reads die · number · field · " +
+    "wait, with no ? anywhere in it and the die nowhere else — " +
+    JSON.stringify({ strip: t9.stripKids, bar: t9.kids, seed: t9.seed }));
+  check(t9.tapeCount && t9.counts === 1,
+    "T9 · …and the general countdown is INSIDE the tape, and there is exactly " +
+    "one of it on the page (" + t9.counts + ")");
   check(!t9.barLog && t9.menuLog &&
         JSON.stringify(t9.menuTail) === JSON.stringify(["nu-viewcut", "logger"]),
     "T9 · …and the log left the transport for the hamburger, below the rule " +
-    "that divides the viewers from the readout (in the bar " + t9.barLog +
+    "that divides the seed from the readout (in the bar " + t9.barLog +
     ", in the menu " + t9.menuLog + ", tail " + JSON.stringify(t9.menuTail) + ")");
   check(t9.tap >= 44 && t9.num >= 44 && t9.reading,
     "T9 · …still a thumb TALL (die " + t9.tap + " px, number " + t9.num +
@@ -855,31 +905,42 @@ function standUpServer() {
      reaches. AND IT IS THE SAME TWO READINGS T2 TAKES: the mark is in
      `#nu-bar .nu-seedrow`, and its rect is on the screen. A die under a sheet
      is a die that is not always there, and the DOM cannot tell you that. */
+  /* ...AND THE CLAIM IS ONE TAP, NOT ZERO, SINCE 2026-09-06 (docs/NAV.md).
+     It read "in the bar and on the screen in every state", which was the right
+     claim while the die stood in the bar. Paul moved it: *"Move the seed out
+     of the bottom nav and into a 'set seed' in the hamburger."* So what is
+     driven is the tap a hand now makes — press the ≡, and on EVERY surface the
+     die is in the plate, on the screen and a thumb tall. The ≡ itself is what
+     is always there, and `test/shell.js` A6d asserts that. */
   const t9b = await p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const missing = [], offscreen = [], seen = [];
     const look = (where) => {
-      const b = document.querySelector("#nu-bar .nu-seedrow #rewrite");
+      const b = document.querySelector("#nu-menu .nu-seedrow #rewrite");
       if (!b) { missing.push(where); return; }
       const r = b.getBoundingClientRect();
-      if (!(r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight + 1))
+      if (!(r.height >= 44 && r.top >= 0 && r.bottom <= window.innerHeight + 1))
         offscreen.push([where, +r.top.toFixed(1), +r.bottom.toFixed(1)]);
     };
     for (const name of window.__eightTabs()) {
       window.__eightTab(name); await wait(120);
       seen.push(name);
+      window.__eightMenuOpen(true); await wait(120);
       look(name);
       window.__eightUp(); await wait(60);
     }
     document.getElementById("playops").click(); await wait(150);
+    window.__eightMenuOpen(true); await wait(120);
     look("the fold");
+    window.__eightMenuOpen(false); await wait(60);
     const inFold = [...document.querySelectorAll(".nu-baropts *")]
       .map((n) => n.id).filter((x) => x);
     document.getElementById("playops").click(); await wait(80);
     return { missing, offscreen, seen, inFold };
   });
   check(!t9b.missing.length && !t9b.offscreen.length,
-    "T9 · …in the bar and on the screen in every state, and with the play " +
+    "T9 · …ONE TAP from every surface: the ≡ opens the plate and the die is " +
+    "in it, on the screen and a thumb tall, on all six and with the play " +
     "options unfolded (" + JSON.stringify(t9b.seen) + ", missing " +
     JSON.stringify(t9b.missing) + ", off-screen " +
     JSON.stringify(t9b.offscreen) + ")");
@@ -907,6 +968,9 @@ function standUpServer() {
      it, the accessible name carries the number, and the record starts
      (#rewrite has gone through `startNow` since the day it landed). */
   const t9c = await p.evaluate(async () => {
+    // the plate is opened first — the die is a row of it since 2026-09-06
+    window.__eightMenuOpen(true);
+    await new Promise((r) => setTimeout(r, 150));
     const rd = () => document.getElementById("reading").textContent;
     const was = rd();
     document.getElementById("rewrite").click();       // one press, one roll
@@ -1234,8 +1298,16 @@ function standUpServer() {
        rounded `top`s among them — cheaper and less brittle than comparing the
        row's height to the sum of its parts, which a `gap` and a `padding` both
        lie about. */
-    const tops = new Set([...bar.children]
-      .map((c) => Math.round(c.getBoundingClientRect().top)));
+    /* ...AND IT IS THE CENTRE LINE AND NOT THE TOP EDGE SINCE 2026-09-06
+       (docs/NAV.md). The bar is `align-items: center`, and until this round
+       every child of it was a 44px control, so a top edge WAS the row. The
+       TAPE is a readout of two short lines — 19px measured — so it sits at the
+       same centre and a different top, and the count came back 2 on a bar that
+       had not wrapped. One row is one CENTRE LINE, which is what
+       `align-items: center` means and what a wrapped row would break. */
+    const tops = new Set([...bar.children].map((c) => {
+      const r = c.getBoundingClientRect();
+      return Math.round(r.top + r.height / 2); }));
     const marks = [...bar.querySelectorAll("button")]
       .filter((n) => n.getClientRects().length)
       .map((n) => [n.id || n.dataset.k, +n.getBoundingClientRect().width.toFixed(1),
@@ -1310,8 +1382,14 @@ function standUpServer() {
      mark is what keeps the plate's own listener under test. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
+  /* ...AND THE PLATE IS THE TOP STRIP'S SINCE 2026-09-06 (docs/NAV.md, Paul:
+     *"So now bottom row is pure play controls and top right is compose arrange
+     controls"*). Same node, same address, same listener; the band it stands in
+     changed, and a gate that kept asking the bar for it clicked nothing and
+     then measured a `display: none` globe — which is the exact hazard the
+     paragraph above this one was written about, happening again. */
   await p.evaluate(() => {
-    const b = document.querySelector('#nu-bar [data-k="toptab-Where"]');
+    const b = document.querySelector('#nu-topstrip [data-k="toptab-Where"]');
     if (b) b.click();
   });
   await p.waitForTimeout(600);

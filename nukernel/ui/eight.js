@@ -12283,11 +12283,17 @@ let formCell = [];                   // the bar of the loop, and the section
    and one `-1` from stop clears them all. The labels are built once here rather
    than at each call site, which is also how the stop handler lost its own copy
    of the arithmetic. */
-const markForm = (si) => {
+/* ...AND THE TAPE RIDES IT TOO, 2026-09-06 (docs/NAV.md). The bar's position
+   indicator is a THIRD reader of this one call and installs nothing: same feed,
+   same call, same `-1` from stop. `bar` is the bar WITHIN the sounding box,
+   which the "pos" handler has already read off `passAt` for the changes chart
+   — handed over rather than read a second time. */
+const markForm = (si, bar) => {
   const labels = DOC.form.sections.map((x, i) => String(i + 1));
   mark(formCell, si, labels);
   for (const cells of structCells) mark(cells, si, labels);
   lightSectionRow(si);
+  paintTape(si, bar | 0);
 };
 /* ===== THE WHOLE ROW LIGHTS, NOT THE NUMBER (2026-09-05, TABLE.md §13f) ====
    Paul: *"Really light up the sections as you move through them — not just a
@@ -12646,7 +12652,7 @@ on("pos", (d) => {
   try { inBox = Math.max(0, (passAt(getPosition().now).bar || 1) - 1); } catch (e) {}
   mark(chordCell, chordRow.length
          ? chordRow[inBox % chordRow.length] : -1, chordLabel);
-  markForm(d.si == null ? -1 : d.si);
+  markForm(d.si == null ? -1 : d.si, inBox);
   // (`lightSections(d.si)` STOOD HERE, 2026-09-02 to 2026-09-09 — the same
   //  fact on the stripe's own `secnav<id>` row. There is no stripe; the
   //  sounding section's ROW HEAD is `markForm` one line above, which has lit
@@ -12762,7 +12768,7 @@ on("transport:state", () => {
   clearStepTimers();
   lightStep(-1);
   mark(chordCell, -1, chordLabel);
-  markForm(-1);
+  markForm(-1, 0);
 });
 
 function draw() {
@@ -12973,7 +12979,22 @@ function draw() {
    PAUL'S 2026-08-27 LIST IS STILL THE ONE OWNER OF THE ORDER; this is an
    amendment to it with a date on it, the same way Rules and Structure were
    appended on 2026-09-02 and Video/Screensaver on 2026-09-01. */
+/* ===== AND `Session` IS FIRST, 2026-09-06 (docs/NAV.md) ================
+   Paul: *"You may need to put 'session' at the top as a nav item and that's
+   the new name for the default view."* The table was `Band` and stood second
+   in this list because `Where` was the front door of the scroll; the list is
+   the HAMBURGER's first block now and the hamburger is the whole of "where
+   you go", so the row a hand needs first stands first.
+   THE ADDRESS DOES NOT MOVE AND THE WORD DOES. `Band` is still the tab's key,
+   its host is still `#pan-band`, `toptab-Band` is still the address, and
+   `__eightTab("Band")` is still the door eleven gates drive; what changed is
+   the PRINTED word, which is `glyph.tab.band` = "Session" (ui/glyph.js reads
+   the catalogue, so there is one copy of it). An address is not a name.
+   `openTab` STILL STARTS ON `Where` for the globe's own reason (below) and
+   the boot still lands on the table with `showTab("Band")` — which is what
+   *"the default view"* has meant on this page since the tabs landed. */
 const TABS = [
+  ["Band",    "pan-band"],
   ["Where",   "atlas"],
   /* (`["Rules", "rulesdeck"]` STOOD HERE, 2026-09-02 to 2026-09-06. TABLE.md
      §10b step 2: *"RULES row (ui/rules.js's sheet as chips; a change evolves,
@@ -13003,7 +13024,6 @@ const TABS = [
      fourteen transforms. `#pan-motif` is out of index.html with the tab.
      §10a: "Rules, Time, Motifs, Mix, Produce, Where as PANES are deleted the
      same way, one at a time, as each becomes a row or a sheet.") */
-  ["Band",    "pan-band"],
   /* (`["Mix", "deck"]` STOOD HERE, 2026-08-27 to 2026-09-07. TABLE.md §10b
      step 3: *"MIX row (engineer.js's strips per column, the master in the
      corner, the genre bus's three slots in the master's sheet)."* §10a says
@@ -13386,12 +13406,20 @@ function paintCount(landed) {
      The ARITHMETIC is not duplicated either way: both readers take `least`
      from the same `pend` map, which audio/live.js's feed is the one writer
      of. */
-  if (least != null && !seedWaiting) {
+  /* ...AND THE STAND-DOWN IS RETIRED, 2026-09-06 (docs/NAV.md). The paragraph
+     above is right about two copies of one number IN ONE 100px COLUMN, which
+     is what the bar was: `.nu-count` stood beside `.nu-seedwait` and one of
+     them had to give way. They are in two places now — the seed's own wait is
+     a row of the HAMBURGER, behind a shut door, and this one is in the TAPE,
+     on the screen in every state — so the guard would have meant that pressing
+     the die with the menu open takes the only visible countdown OFF the glass
+     for exactly as long as the wait it is reporting. One feed, one arithmetic
+     (`pend`, audio/live.js's), two readers, and neither hides for the other. */
+  if (least != null) {
     logCountEl.replaceChildren(el("b", String(least)),
                                el("small", least === 1 ? "beat" : "beats"));
     return;
   }
-  if (least != null) { logCountEl.replaceChildren(); return; }
   /* AND ZERO IS SHOWN BEFORE IT IS CLEARED. A countdown that vanished at 1
      would never be seen to arrive, and arriving is the whole thing it is
      reporting — "it is in the sound NOW" is the answer Paul asked the question
@@ -13700,17 +13728,67 @@ window.__nuPending = () => ({ beats: (logCountEl && logCountEl.textContent) || "
    themselves `data-live="pending"`, which is the same exception the gutter's
    foot was granted and for the same reason: a countdown IS the clock speaking.
 */
-const MENUROWS = () => TABS
-  .filter(([name]) => name !== "Where" && name !== "Band")
-  .map(([name]) => {
-    const t = GLYPH.tab[name] || {};
-    return { key: "toptab-" + name, glyph: t.g || "•", word: name,
-             say: t.s, on: name === openTab,
-             act: () => showTab(name) };
-  });
+/* ===== TWO PLACES, NOT SEVEN — 2026-09-06 (docs/NAV.md) ================
+   Paul, verbatim: *"We have too many UX modalities I think. Let's make all
+   the panels into their own views and move the view selector into a hamburger
+   on the top right. Consolidate that with the existing bottom right hamburger
+   (which goes away). Make a play status tape position indicator that
+   incorporates the beat countdown on the bottom right. Put the name of the app
+   at the top of the hamburger. Move the seed out of the bottom nav and into a
+   'set seed' in the hamburger. Organize the hamburger sensibly. You may need
+   to put 'session' at the top as a nav item and that's the new name for the
+   default view. So now bottom row is pure play controls and top right is
+   compose arrange controls."*
+
+   THE LAW: **THE TOP IS WHERE YOU GO. THE BOTTOM IS WHAT YOU HEAR.** Two
+   fixed bands and no third: `.nu-topstrip` (the record's name at the start,
+   the ≡ at the end) and `.nu-bar` (the transport and the tape). Everything
+   that navigates or arranges is behind the ≡; everything that sounds is in the
+   bar. The paragraphs above describe the arrangement this one replaces and are
+   kept because each of them is a measurement.
+
+   WHAT MOVED, AND NOT ONE OF THESE IS A REBUILD:
+     · `whereBtn` — the genre plate — is the TOP LEFT now and is the record's
+       NAME rather than a transport control. Same node, same `toptab-Where`
+       address, same toggle (open the picker / come back to the table), same
+       accessible name. Paul's *"pure play controls"* takes it out of the bar;
+       the identity of what you are hearing belongs beside the navigation that
+       changes it (docs/NAV.md takes this decision and says so).
+     · `menuBtn` — the ≡ — is the TOP RIGHT, opposite it, and the plate hangs
+       DOWN from it (nu.css `#nu-menu`). There is exactly one hamburger.
+     · `.nu-seedrow` — the die, the number, the field it becomes and the seed's
+       own wait — is a ROW OF THE MENU. It is handed over as a NODE, the way
+       the play fold's three are, so it keeps its listeners, its focus and its
+       value for ever: *"one owner, moved, not rebuilt"*.
+     · `.nu-count` — the general countdown, the bare beat readout the bar wore
+       beside the seed — is INSIDE THE TAPE. It is the same node with the same
+       `paintCount` writer; what changed is that it stands in a readout that
+       also says where the playhead is (see `paintTape`).
+   AND WHAT DID NOT MOVE: `#playops` and its three children (a mode, a take
+   and the room) stay in the bar with `#voicing` and `#play`, because all five
+   are facts about the next press of ▶ — which is the bar's whole subject and
+   the law's own sentence. `tcorner` (*"Song options"* — fill from the genre,
+   re-seed, transpose) stays at the end of the RECORD'S LINE where §15a
+   measured it: docs/NAV.md lists it in the menu and also writes *"nothing
+   here writes to the document except Set seed"*, and all three of its ops
+   rewrite the record. A control that writes is not chrome.
+
+   THE MARK AND THE CURRENT VIEW ARE TWO CHANNELS NOW, which is what a list of
+   six needs and a list of four did not. `aria-current="page"` says WHICH VIEW
+   YOU ARE ON — one row of the menu, always, including the table — and
+   `<mark>`/`aria-pressed` is left to the genre plate alone, where it means
+   THE PICKER IS OPEN. Before this round both jobs rode `aria-pressed` and the
+   plate and the menu's own `Where` row would have worn it at once. */
+const MENUROWS = () => TABS.map(([name]) => {
+  const t = GLYPH.tab[name] || {};
+  return { key: "toptab-" + name, glyph: t.g || "•", word: t.w || name,
+           say: t.s, on: name === openTab,
+           act: () => showTab(name) };
+});
 
 let menuOpen = false;
 let menuBox = null, menuBtn = null, closeBtn = null, barEl = null;
+let stripEl = null;
 /* THE OPEN SHEET'S HEADER AND THE `<b>` THAT NAMES IT (2026-09-05, §13a.1).
    One node, moved between panels by `showTab`; `.nu-top` is deleted. */
 let sheetHead = null, sheetName = null;
@@ -13832,6 +13910,110 @@ function nameRecord() {
   whereBtn.setAttribute("aria-expanded", String(isOpen));
 }
 
+/* ===== THE TAPE — WHERE THE PLAYHEAD IS, AND WHAT IS LEFT ==============
+   (2026-09-06, docs/NAV.md.) Paul: *"Make a play status tape position
+   indicator that incorporates the beat countdown on the bottom right."*
+
+   IT SAYS THREE THINGS A PLAYER NEEDS AND NOTHING A COMPOSER NEEDS: where the
+   playhead is (the fill), how much record is left (the track behind it), and
+   what beat is next (`.nu-count`, the bare beat readout the bar wore beside
+   the seed — the SAME NODE with the same `paintCount` writer, enclosed rather
+   than replaced).
+
+   ONE PLAYHEAD READER, AND IT IS THE LAMPS'. `paintTape` is called from
+   `markForm` and from nowhere else — the same one call the section lamps ride,
+   off the "pos" feed and off stop's `-1`. A second subscription would be a
+   second clock, which is the failure `lightSectionRow` was written to avoid.
+
+   THE REPAINT BUDGET, DECLARED AND GATED (T13f in test/table.browser.js).
+   §13f's law — *"the text in the motifs section is changing rapidly every beat
+   it's too much"* — is about WORDS, and a position bar is not a word. So the
+   two halves have two budgets and each is memoised on what it draws:
+     · the WORD (`bar 12/88`) is written at most ONCE A BAR — `tapeSaid` holds
+       the string and a beat that does not change it writes nothing;
+     · the FILL is written at most once a beat and in practice far less —
+       `tapeFill` holds the INTEGER percent, so a record has at most 100 fill
+       writes end to end whatever its tempo.
+   Over eight bars of 4/4 that is ≤ 8 word writes and ≤ 32 fill writes, and the
+   gate measures both by counting mutations on the rendered nodes.
+
+   IT IS OUTSIDE `#app`, so `window.__eightFrozen` never sees it and the
+   frozen-half law is untouched; it declares `data-live="pos"` anyway, because
+   a readout the clock writes says so on this page whether or not a gate is
+   looking. */
+let tapeEl = null, tapeSayEl = null, tapeFillEl = null;
+let tapeSaid = null, tapeFilled = -1;
+/* WHERE THE TAPE LAST HEARD THE PLAYHEAD. It is kept so the tape can be
+   REDRAWN when the RECORD moves under it without a second reader of the feed:
+   a record that grows a section is 88 bars where it was 76, and at rest the
+   tape prints exactly that. See `tapeFollow`. */
+let tapeSi = -1, tapeBar = 0;
+function tapeNode() {
+  tapeEl = el("div", null, "nu-tape");
+  tapeEl.dataset.live = "pos";
+  /* THE GENERAL COUNTDOWN, MOVED IN (it was `.nu-count` in `.nu-seedrow`).
+     Same class, same `data-live="pending"`, same one writer — `paintCount` —
+     and no control inside it. */
+  logCountEl = el("div", null, "nu-count");
+  logCountEl.dataset.live = "pending";
+  tapeSayEl = el("span", "", "nu-tapesay");
+  tapeFillEl = el("i", null, "nu-tapefill");
+  const track = el("div", null, "nu-tapetrack");
+  track.append(tapeFillEl);
+  const line = el("div", null, "nu-tapeline");
+  line.append(logCountEl, tapeSayEl);
+  tapeEl.append(line, track);
+  return tapeEl;
+}
+/* HOW LONG THE RECORD IS AND WHERE IN IT WE ARE, off the document's own
+   `sections[].bars` — the same reduction the grid's corner prints as
+   `14 sections · 88 bars` (src/table/grid.ts `cornerBtn`). No second
+   arithmetic: a bar is a bar. */
+const tapeBars = () => {
+  const secs = (DOC.form && DOC.form.sections) || [];
+  let total = 0; const at = [];
+  for (const x of secs) { at.push(total); total += Math.max(1, x.bars | 0); }
+  return { total, at, secs };
+};
+function paintTape(si, barInBox) {
+  if (!tapeSayEl || !tapeFillEl) return;
+  tapeSi = si; tapeBar = barInBox | 0;
+  const { total, at, secs } = tapeBars();
+  const playing2 = si != null && si >= 0 && secs[si];
+  /* THE BAR THE EAR IS ON, ABSOLUTE. `barInBox` is the bar WITHIN the sounding
+     box, which is what the "pos" handler already reads off `passAt` for the
+     changes chart; the section's own offset makes it a bar of the record. It
+     is clamped to the section it is in for `passAt`'s own reason — the runway
+     runs ahead of the ear and can report bar 5 of a four-bar box. */
+  const within = playing2
+    ? Math.max(0, Math.min(Math.max(1, secs[si].bars | 0) - 1, barInBox | 0)) : 0;
+  const abs = playing2 ? at[si] + within : 0;
+  const say = playing2 && total
+    ? _t("tape.at", { n: abs + 1, total })
+    : (total ? _tn("count.bar", total) : "");
+  if (say !== tapeSaid) { tapeSaid = say; tapeSayEl.textContent = say; }
+  const pct = playing2 && total
+    ? Math.max(0, Math.min(100, Math.round((abs + 1) / total * 100))) : 0;
+  if (pct !== tapeFilled) {
+    tapeFilled = pct;
+    tapeFillEl.style.inlineSize = pct + "%";
+  }
+  /* THE NAME IS THE WHOLE SENTENCE AND IT IS ON THE TAPE, not on a child: a
+     readout with no accessible name is a picture, and this one is the only
+     thing on the page that says how much record is left. */
+  tapeEl.setAttribute("aria-label", playing2 && total
+    ? _t("tape.aria", { n: abs + 1, total }) : say);
+}
+/* THE RECORD MOVED UNDER THE TAPE — the memo is dropped and the same one
+   writer runs again at the same position. It is called from `paintChrome`,
+   which is `draw()`'s and `showTab`'s and never the clock's, so this is a
+   GESTURE redrawing a readout and not a second subscription to the feed. */
+const tapeFollow = () => { tapeSaid = null; tapeFilled = -1;
+                           paintTape(tapeSi, tapeBar); };
+/* THE GATE'S HAND — what the tape says and how often it has said it. */
+window.__eightTape = () => ({ say: tapeSaid, pct: tapeFilled,
+  count: (logCountEl && logCountEl.textContent) || "" });
+
 /* THE CHROME, BUILT ONCE AT BOOT INTO AN EMPTY `<nav>`. `#nu-chrome` ships
    empty from nukernel/index.html for the reason `#nu-tray` did — the page's
    navigation has to READ before the panels it navigates, and the names are
@@ -13882,22 +14064,64 @@ function chromeRow() {
   sheetName = el("b");
   sheetHead.append(sheetName, closeBtn);
 
-  /* THE MENU. Four viewers and the log, built once; `paintChrome` moves the
-     one `<mark>` and never rebuilds a row. */
+  /* ===== THE TOP STRIP: WHERE YOU ARE, AND THE DOOR TO EVERYWHERE ELSE ==
+     (2026-09-06, docs/NAV.md.) The record's NAME at the start and the ≡ at the
+     end — the two ends of one line, and the second of the page's two fixed
+     bands. Both nodes are the ones the bar held yesterday: same ids, same
+     addresses, same listeners. What this strip costs the sheet is written
+     down rather than hidden: `--top-h` is `var(--tap)` exactly (no padding of
+     its own, the safe area paid by <body> as always), <body> reserves it, and
+     `.nu-sheetwrap` subtracts it — 44px, which is one section row at rest.
+     TABLE.md §16 carries the arithmetic and the trade. */
+  stripEl = el("div", null, "nu-topstrip");
+  stripEl.id = "nu-topstrip";
+  stripEl.append(whereBtn, menuBtn);
+  nav.append(stripEl);
+  nameRecord();
+
+  /* THE MENU. THREE BLOCKS, in the order a hand needs them (docs/NAV.md): the
+     app's name, then WHERE YOU ARE (six views), then WHAT YOU ARE MAKING (the
+     seed), then WHAT THE BOX HAS DONE (the log). Built once; `paintChrome`
+     moves `aria-current` and never rebuilds a row. */
   /* NO CLASS: `.nu-menu` is ui/menus.js's chip strip and a second owner of
      that name restyled every chip on the page (nu.css carries the
      measurement). The plate is addressed by its own id. */
   menuBox = el("div");
   menuBox.id = "nu-menu";
   menuBox.hidden = true;
+  /* THE APP'S NAME IS FIRST, and it is a HEADING and not a row: Paul asked for
+     *"the name of the app at the top of the hamburger"*, and a plate of six
+     places needs to say whose places they are. It names the menu for a screen
+     reader too (`aria-labelledby`), which is what a plate of controls owes. */
+  const appName = el("b", _t("burger.app"), "nu-menuname");
+  appName.id = "nu-menuname";
+  menuBox.setAttribute("aria-labelledby", "nu-menuname");
+  menuBox.append(appName);
   menuBtnMap.clear();
   for (const it of MENUROWS()) {
-    const b = icon({ k: it.key, glyph: it.glyph, word: it.word, say: it.say,
-                     on: it.on });
+    const b = icon({ k: it.key, glyph: it.glyph, word: it.word, say: it.say });
     b.addEventListener("click", () => { it.act(); setMenu(false); paintChrome(); });
     menuBox.append(b);
     menuBtnMap.set(it.key, b);
   }
+  menuBox.append(el("hr", null, "nu-viewcut"));
+  /* ===== BLOCK TWO: THE SEED, OUT OF THE BAR (docs/NAV.md) ==============
+     Paul: *"Move the seed out of the bottom nav and into a 'set seed' in the
+     hamburger."* THE ROW IS HANDED OVER, NOT REBUILT — `seedRowEl` is the same
+     `.nu-seedrow` with `#rewrite`, `#seedval`, `#seedin` and `.nu-seedwait`
+     inside it, so the die still rolls what the die rolled and the number is
+     still typed into the field it always was. The label beside it is the
+     block's own heading, not a second control: the two targets in the row are
+     the control, and *"Set seed"* is what they are for.
+     `.nu-count` DOES NOT COME WITH IT. The general countdown is the tape's
+     now (see `paintTape`): it is the one readout on this page a player wants
+     while the menu is shut. */
+  const seedLine = el("div", null, "nu-menuseed");
+  const seedLbl = el("b", _t("burger.seed"), "nu-menusub");
+  seedLbl.id = "nu-menuseedname";
+  seedRowEl.setAttribute("aria-labelledby", "nu-menuseedname");
+  seedLine.append(seedLbl, seedRowEl);
+  menuBox.append(seedLine);
   menuBox.append(el("hr", null, "nu-viewcut"));
   // the face says "log" and the NAME says how many — see `paintBadge`, which
   // is the one writer of both and of the ≡'s own badge
@@ -13911,21 +14135,11 @@ function chromeRow() {
   menuBox.append(logBtn);
   nav.append(menuBox);
 
-  /* THE BAR. */
+  /* THE BAR, AND IT IS THE TRANSPORT AND NOTHING ELSE (docs/NAV.md: *"bottom
+     row is pure play controls"*). Play, the voicing, the options' door — all
+     three facts about the next press of ▶ — and at the end THE TAPE. */
   barEl = el("div", null, "nu-bar");
   barEl.id = "nu-bar";
-  barEl.append(whereBtn);
-  nameRecord();
-  /* THE GENERAL COUNTDOWN IS ON THE NUMBER NOW. It was `.nu-count` at the head
-     of the gutter's foot, three rows above the seed row it stood down for; the
-     row is the whole of that neighbourhood, so it is inside it. One
-     declaration (`data-live="pending"`), no control in it, the same
-     `paintCount` writer, and the same stand-down while `.nu-seedwait` is up —
-     so the two never print two numbers at one address. */
-  logCountEl = el("div", null, "nu-count");
-  logCountEl.dataset.live = "pending";
-  seedRowEl.append(logCountEl);
-  barEl.append(seedRowEl);
   /* THE PLAY OPTIONS UNFOLD ABOVE THEIR OWN DOOR, seated once, in a box that is
      hidden rather than emptied — the same three nodes, keeping their listeners,
      their focus and their value across every repaint. */
@@ -13937,18 +14151,13 @@ function chromeRow() {
   const tp = el("div", null, "nu-bartp");
   tp.append(playOpsBox, playOpsBtn, voicingBtn, playBtn);
   barEl.append(tp);
-  /* ...AND THE ≡ IS THE BAR'S LAST BUTTON (2026-09-05, §13a.1). It is the one
-     control that is on the screen in every state of this page, so it may not
-     shift under a reach — the end of a row that never wraps is the one place
-     on a phone where that is true. The menu plate hangs directly above it
-     (nu.css `#nu-menu`, `inset-block-end`), which is where a door opens from
-     the mark that is its handle. */
-  barEl.append(menuBtn);
+  barEl.append(tapeNode());
   nav.append(barEl);
 
   logPanel = $("nu-log");
   paintChrome();
   paintBadge();
+  paintTape(-1, 0);
 }
 
 /* AND REPAINTED IN PLACE, ALWAYS — there is no shape to rebuild. `paintTray`
@@ -13959,10 +14168,21 @@ function chromeRow() {
    on the TABLE none of them does, which is the honest reading of "where you
    are" on a page whose table is not a view you opened. */
 function paintChrome() {
+  /* THE CURRENT VIEW IS `aria-current`, AND IT IS THE ONE CHANNEL THAT SAYS SO
+     (2026-09-06, docs/NAV.md: *"The current view is marked in the list"*). It
+     was `on:` — `paintIcon`'s `aria-pressed` plus a `<mark>` — and with six
+     views that is the wrong word twice over: `Where` would have been pressed
+     in the list AND pressed on the genre plate at the same moment, and
+     `Session` would have been a pressed button for the page you are simply on.
+     `aria-current="page"` is what a navigation list says about the place you
+     are; `aria-pressed` stays where it means something, which is the genre
+     plate's toggle. */
   for (const it of MENUROWS()) {
     const b = menuBtnMap.get(it.key);
-    if (b) paintIcon(b, { glyph: it.glyph, word: it.word, say: it.say,
-                          on: it.on });
+    if (!b) continue;
+    paintIcon(b, { glyph: it.glyph, word: it.word, say: it.say });
+    if (it.on) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
   }
   if (closeBtn) {
     const shut = openTab === "Band";
@@ -13971,6 +14191,7 @@ function paintChrome() {
       _t("act.closeTab.aria", { name: openTab }));
   }
   nameRecord();
+  tapeFollow();
 }
 /* ===== THE FACETS ARE DELETED, 2026-09-04 (TABLE.md wave 2c) =============
    `FACETS = ["inst", "mix", "plays"]`, `voiceFacet`, `settledFacet` and the
@@ -16458,8 +16679,18 @@ window.__eightRow = (id, want) => {
    three went with it — see THE TRAY IS DELETED. What a gate wants of the
    chrome is smaller by exactly the tree: which viewers there are, which one is
    open, and whether the menu is.) */
+/* ...AND SINCE 2026-09-06 THE ROWS ARE ALL SIX VIEWS (docs/NAV.md). `rows` is
+   `MENUROWS()` and `MENUROWS()` is `TABS` whole — the view SELECTOR is the
+   hamburger's first block, so the list a gate reads and the list a hand reads
+   are the same list with nothing filtered out of either. `on` is
+   `aria-current`'s fact ("this is the view you are on"), which is true of
+   exactly one row at every moment including on the table itself; `seed` and
+   `log` are the other two blocks, named so a gate can say the plate has three
+   of them and not two. */
 window.__eightMenu = () => ({ open: menuOpen,
   rows: MENUROWS().map((r) => ({ key: r.key, word: r.word, on: !!r.on })),
+  seed: !!(seedRowEl && seedRowEl.parentNode &&
+           seedRowEl.closest("#nu-menu")),
   log: !!logOpen });
 window.__eightMenuOpen = (want) => { setMenu(want); paintChrome(); return menuOpen; };
 /* THE CRATE, FOR A GATE THAT HAS TO HOLD IT AGAINST THE ENGINE (2026-09-03).

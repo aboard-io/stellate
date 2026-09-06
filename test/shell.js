@@ -60,7 +60,13 @@
 //       genuinely spills takes the same pane A5 demands of every other table;
 //       what stays banned is a scroller around a grid that cannot scroll,
 //       which is the one Paul reported catching his gestures.)
-//   A6  THERE IS NO STICKY BAND LEFT, AND THE NAVIGATION IS A FIXED BAR
+//   THE PAGE HAS TWO FIXED BANDS SINCE 2026-09-06 (docs/NAV.md, TABLE.md §16),
+//   and every claim below that said "the bar" now says "both bands": the TOP
+//   STRIP (the record's name and the ≡) and the BAR (the transport and the
+//   tape). Paul: *"So now bottom row is pure play controls and top right is
+//   compose arrange controls."* §13a's *"nothing is fixed but the bottom bar"*
+//   is amended in TABLE.md §16 rather than quietly broken here.
+//   A6  THERE IS NO STICKY BAND LEFT, AND THE NAVIGATION IS TWO FIXED BANDS
 //       (rewritten four times, and every rewrite was forced by Paul moving the
 //       navigation, so all of them are kept).
 //       IT FIRST READ: "at scrollY 600/1400/2400 the .nu-bar sits at 0 and
@@ -96,7 +102,14 @@
 //       deletion was made to avoid — so the count is distinct button TOPS.
 //       `.nu-seedrow`'s two targets are one mark and are counted at the row's
 //       own top, which is the 2026-09-03 amendment kept.)
-//   A6c AT MOST ONE `<mark>`, AND IT IS THE OPEN SHEET. It read "exactly one
+//   A6c AT MOST ONE `<mark>`, AND IT IS THE PICKER'S OWN TOGGLE — plus
+//       EXACTLY ONE `aria-current` ROW IN THE HAMBURGER, always, and it is the
+//       view you are on (2026-09-06, docs/NAV.md). Two channels, two jobs: the
+//       list of six says WHERE YOU ARE, the genre plate says THE PICKER IS
+//       OPEN. Before this round both rode `aria-pressed`, and with `Where` in
+//       the list as well as on the plate that is one state spelled twice.
+//       WHAT IT SAID BEFORE: "at most one <mark>, and it is the open sheet".
+//       It read "exactly one
 //       <mark> in the stripe, and its button is the only one with
 //       `aria-pressed="true"`", and EXACTLY was right while the chrome was a
 //       list of PLACES one of which you were always standing in. The table is
@@ -106,10 +119,25 @@
 //       globe was open — and while a SHEET is open exactly one row wears both
 //       channels and both say the same word. `__eightTabNow()` decides which
 //       it should be, so this is a comparison of two readings of one fact.
-//   A6d THE HAMBURGER IS THE FOUR VIEWERS AND THE LOG, in `TABS`' own order,
-//       read off the RENDERED buttons — Paul's list minus `Where` (the bar's
-//       genre plate, a picker) and `Band` (the page). …AND THE GENRE IS A
-//       PLATE IN THE BAR wearing the RECORD's name, not a row in the menu.
+//   A6d THE HAMBURGER IS THE SIX VIEWS AND THE LOG, in `TABS`' own order with
+//       `Session` first, read off the RENDERED buttons. (It read "the four
+//       viewers and the log … Paul's list minus `Where` (the bar's genre
+//       plate, a picker) and `Band` (the page)" until 2026-09-06, docs/NAV.md:
+//       *"Let's make all the panels into their own views and move the view
+//       selector into a hamburger on the top right… put 'session' at the top
+//       as a nav item and that's the new name for the default view."*)
+//       …AND THE RECORD'S NAME IS THE TOP STRIP'S first control with the one ≡
+//       at its end, out of the bar; `Where` is also a row of the list, which
+//       is one view with two doors and one `showTab`.
+//   A6n THE TAPE, AND ITS REPAINT BUDGET (docs/NAV.md). At rest it says how
+//       long the record is; playing it says `bar N/total` and fills. Over
+//       eight bars of real playback the WORD writes at most once a bar and the
+//       FILL at most once a beat, counted as DOM mutations. It holds the one
+//       `.nu-count` on the page — the bare beat readout that stood beside the
+//       seed in the bar.
+//   A7b THE SECOND FIXED BAND, `.nu-topstrip`: exactly one of it, and it is
+//       `--top-h` tall, because `body { padding-block-start }` and
+//       `.nu-sheetwrap`'s own height are arithmetic on that token.
 //   A6g …and every word is still IN the button as a `.nu-vh`, so the menu
 //       reads with the stylesheet off. A6h: no naked glyph, page-wide.
 //   A6i NOTHING GOES UNDER THE CHROME, and it is a layout law rather than a
@@ -263,6 +291,10 @@ const SURVEY = () => {
        layout is arithmetic on that number (`body { padding-block-end }`).
        Filtered by `shown` like everything else here. */
     bars: all(".nu-bar").length,
+    // A7b — the second band (2026-09-06, docs/NAV.md): exactly one, and it is
+    // `--top-h` tall, because `body { padding-block-start }` and
+    // `.nu-sheetwrap`'s height are arithmetic on that token.
+    strips: all(".nu-topstrip").length,
     axes: all(".nu-ax").length,
     panes: all(".nu-pane").length,
     grids: all(".nu-grid").length,
@@ -403,11 +435,17 @@ const SURVEY = () => {
 const BANDS = async () => {
   const raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   const bar = document.getElementById("nu-bar");
-  /* (`const top = document.querySelector(".nu-top")` STOOD HERE and was read by
-     nothing. `.nu-top` is deleted — TABLE.md §13a.1, *"Nothing is fixed but the
-     bottom bar"* — and the sweep below has one band to assert, which is what
-     this check has said since the heading and the old `.nu-bar` went in
-     2026-08-29.) */
+  /* ...AND THERE ARE TWO BANDS AGAIN SINCE 2026-09-06 (docs/NAV.md, TABLE.md
+     §16). The paragraph this replaces recorded the one-band page: "(`const top
+     = document.querySelector('.nu-top')` STOOD HERE and was read by nothing.
+     `.nu-top` is deleted — TABLE.md §13a.1, 'Nothing is fixed but the bottom
+     bar'.)" Paul asked for the second one back — *"move the view selector into
+     a hamburger on the top right"* — and it is a DIFFERENT element with a
+     different law: `.nu-topstrip` is a full-width band that <body> reserves
+     room for, where `.nu-top` was a floating plate at one corner over a page
+     that reserved nothing. The sweep asserts BOTH, at every stop, and the same
+     three numbers about each: the edge it is fixed to, x = 0, full width. */
+  const strip = document.getElementById("nu-topstrip");
   const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
   window.scrollTo(0, 0);
   await raf();
@@ -421,10 +459,14 @@ const BANDS = async () => {
        again would be caught by the same line. `position: fixed` means there is
        no pin point to wait for: every stop is asserted, scrollY 0 included. */
     const r = bar.getBoundingClientRect();
+    const sr = strip ? strip.getBoundingClientRect() : null;
     out.push({ y: window.scrollY,
       barBottom: +r.bottom.toFixed(1),
       barLeft: +r.left.toFixed(1),
       barWidth: +r.width.toFixed(1),
+      stripTop: sr ? +sr.top.toFixed(1) : null,
+      stripLeft: sr ? +sr.left.toFixed(1) : null,
+      stripWidth: sr ? +sr.width.toFixed(1) : null,
       wantBottom: window.innerHeight,
       wantWidth: document.documentElement.clientWidth });
   }
@@ -476,24 +518,52 @@ const BANDS = async () => {
       .map((m) => (m.closest("button").getAttribute("aria-label") || "").trim()),
     pressed: [...document.querySelectorAll('#nu-chrome button[aria-pressed="true"]')]
       .map((b) => (b.getAttribute("aria-label") || "").trim()),
-    /* WHAT THE MARKED MARK SHOULD SAY, if there is one. The open SHEET's own
-       row: `Score` / `Video` / `Screensaver` / `Export` in the hamburger, and
-       WHERE is the bar's genre plate, whose accessible name is the tab's word
-       (its visible word is the record's name — see A6d). */
+    /* ===== TWO CHANNELS, TWO JOBS, SINCE 2026-09-06 (docs/NAV.md) ========
+       A6c read "at most one <mark>, and it is the open sheet", and that was
+       the honest reading while the chrome listed FOUR viewers and the table
+       was in no list at all. The hamburger is the VIEW SELECTOR now and holds
+       all six, so one row is always the one you are on — including `Session`,
+       which is not a "pressed" button and not an open sheet either. So the
+       page says the two facts in the two words that mean them:
+         · `aria-current="page"` — WHICH VIEW YOU ARE ON. Exactly one row of
+           `#nu-menu`, always, and it is `__eightTabNow()`'s own answer.
+         · `<mark>` / `aria-pressed` — THE PICKER IS OPEN. The genre plate is
+           the one toggle left in the chrome, so the mark is there or nowhere.
+       Both are read here and both are compared against `__eightTabNow()`,
+       which keeps this a comparison of two readings of one fact. */
+    current: [...document.querySelectorAll("#nu-menu button[aria-current]")]
+      .map((b) => b.dataset.k),
     open: window.__eightTabNow(),
-    want: (() => {
-      const t = window.__eightTabNow();
-      if (t === "Band") return null;
-      const b = document.querySelector('[data-k="toptab-' + t + '"]');
-      return b ? (b.getAttribute("aria-label") || "").trim() : null;
-    })(),
+    want: window.__eightTabNow() === "Where"
+      ? (() => { const b = document.querySelector(
+                   '#nu-topstrip [data-k="toptab-Where"]');
+                 return b ? (b.getAttribute("aria-label") || "").trim() : null;
+        })()
+      : null,
     barH: +bar.getBoundingClientRect().height.toFixed(1),
-    /* THE TOP STRIP'S HEIGHT IS ZERO BY CONSTRUCTION SINCE 2026-09-05
-       (TABLE.md §13a.1). `.nu-top` is deleted and <body> reserves nothing at
-       the head of the page: the ≡ is the bar's last button and the × is the
-       open sheet's own header. It is reported rather than dropped, because
-       "the second fixed band is 0" is the claim this round makes. */
-    topH: 0,
+    /* THE SECOND BAND, MEASURED (2026-09-06, docs/NAV.md). It was 0 by
+       construction from 2026-09-05 — `.nu-top` deleted, <body> reserving
+       nothing at the head of the page — and it is `.nu-topstrip` now, which is
+       a band the page DOES reserve. What is asserted about the number is A7b:
+       it is `--top-h`, to the half pixel, because `body { padding-block-start
+       }` and `.nu-sheetwrap`'s own height are arithmetic on that token. */
+    topH: strip ? +strip.getBoundingClientRect().height.toFixed(1) : 0,
+    topVar: (() => {
+      const probe = document.createElement("div");
+      probe.style.cssText = "position:absolute;left:-9999px;top:0;" +
+        "inline-size:1px;block-size:var(--top-h);box-sizing:border-box";
+      document.body.appendChild(probe);
+      const h = +probe.getBoundingClientRect().height.toFixed(2);
+      probe.remove();
+      return h;
+    })(),
+    stripRows: strip ? (() => { const tops = new Set();
+      for (const b of strip.querySelectorAll("button")) {
+        if (!b.getClientRects().length) continue;
+        tops.add(Math.round(b.getBoundingClientRect().top));
+      }
+      return tops.size; })() : 0,
+    stripScroll: strip ? [strip.scrollWidth, strip.clientWidth] : [0, 0],
   };
 };
 
@@ -658,7 +728,23 @@ const PAULS_TABS = ["Where", "Band", "Score", "Video",
    bar's genre plate, and minus `Band`, which is the page — and the log under a
    rule. Paul's own sentence for it is *"a hamburger menu for score, video,
    screensaver"*; Export rides with them for the reason Screensaver does. */
-const MENU_ROWS = PAULS_TABS.filter((t) => t !== "Where" && t !== "Band");
+/* ...AND THE SEVENTH AMENDMENT, 2026-09-06 (docs/NAV.md): the hamburger is
+   the VIEW SELECTOR and holds all six. Paul: *"Let's make all the panels into
+   their own views and move the view selector into a hamburger on the top
+   right… You may need to put 'session' at the top as a nav item and that's the
+   new name for the default view."* So `Where` came back into the list (it is
+   still ALSO the record's name at the top left — one view, two doors, one
+   `showTab`) and `Band` joined it, printed `Session`. The ADDRESSES did not
+   move: `toptab-Band` is `toptab-Band` and `__eightTab("Band")` is what every
+   gate in this repo drives.
+   TWO LISTS, BECAUSE THERE ARE TWO CLAIMS. `VIEW_ROWS` is what the plate
+   OFFERS, in `TABS`' own order, and `VIEWERS` is the four that open as SHEETS
+   with a × — Session is the page and Where is the picker, and neither is a
+   viewer, which is what A6j walks. */
+const VIEW_WORDS = { Band: "Session" };
+const VIEW_ROWS = ["Band", "Where", "Score", "Video", "Screensaver", "Export"]
+  .map((t) => VIEW_WORDS[t] || t);
+const VIEWERS = PAULS_TABS.filter((t) => t !== "Where" && t !== "Band");
 // how long a tab is given to settle after it is opened. The Score engraves a
 // whole record on a promise the first time it is asked; everything else is
 // synchronous and the wait is only for layout.
@@ -706,8 +792,13 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     await page.evaluate(() => window.__eightUp());
     await page.click("#burger");
     await page.waitForTimeout(200);
+    /* `#nu-menu > button` AND NOT `#nu-menu button`, SINCE 2026-09-06: the
+       plate has three blocks now and the middle one is the SEED ROW — two
+       controls nested inside `.nu-menuseed > .nu-seedrow`, which are the die
+       and the number and not rows of the list. The direct children are the
+       list: six views, then the log under the second rule. */
     const rowNames = await page.evaluate(() =>
-      [...document.querySelectorAll("#nu-menu button")]
+      [...document.querySelectorAll("#nu-menu > button")]
         /* THE HEAD OF THE ACCESSIBLE NAME, because the log's carries its
            count — one node, two names, and the one this list is about is the
            SUBJECT's. TWO SHAPES SINCE THE TEXT PASS (2026-09-05): the empty
@@ -718,34 +809,52 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
            that reason. Both suffixes come off. */
         .map((b) => (b.getAttribute("aria-label") || "").trim()
                      .replace(/\s*\(\d+\)\s*$/, "").split(/ — |,/)[0].trim()));
-    is(JSON.stringify(rowNames) === JSON.stringify(MENU_ROWS.concat(["log"])),
-      "A6d " + width + " · the hamburger is the four viewers and the log, in "
-      + "TABS' own order — " + JSON.stringify(rowNames));
+    is(JSON.stringify(rowNames) === JSON.stringify(VIEW_ROWS.concat(["log"])),
+      "A6d " + width + " · the hamburger is the SIX VIEWS and the log, in "
+      + "TABS' own order with Session first — " + JSON.stringify(rowNames));
     const rowWords = await page.evaluate(() =>
-      [...document.querySelectorAll("#nu-menu button")]
+      [...document.querySelectorAll("#nu-menu > button")]
         .map((b) => { const v = b.querySelector(".nu-vh, mark .nu-vh");
                       return v ? v.textContent.trim() : null; }));
-    is(JSON.stringify(rowWords) === JSON.stringify(MENU_ROWS.concat(["log"])),
+    is(JSON.stringify(rowWords) === JSON.stringify(VIEW_ROWS.concat(["log"])),
       "A6g " + width + " · and every word is still IN the button, so the menu "
       + "reads with the stylesheet off — " + JSON.stringify(rowWords));
-    /* ...AND THE GENRE IS A PLATE IN THE BAR, WEARING THE RECORD'S NAME. Paul:
-       *"have genre, dice, playstop along the bottom"* and *"The name of the
-       genre should be obvious."* The plate keeps the tab's own address
-       (`toptab-Where`) because an address does not move when a row does, and
-       its WORD is the record's human name rather than the word "Where" —
-       which is the whole point of it being there. It is in the BAR and in
-       neither the menu nor a list, which is what the third field reads. */
+    /* ...AND THE RECORD'S NAME IS THE TOP LEFT, WEARING THE GENRE'S WORD
+       (2026-09-06, docs/NAV.md). It read "…and the genre is a name plate in
+       the BAR, not a row in the hamburger", which was right while the bar
+       mixed transport with composition. Paul: *"So now bottom row is pure play
+       controls and top right is compose arrange controls"* — so the plate is
+       out of the bar and stands at the START of `.nu-topstrip`, opposite the
+       ≡, and NAV.md's own argument for putting it there rather than deleting
+       it is that "the identity of what you are hearing belongs beside the
+       navigation that changes it".
+       THE THIRD FIELD IS NOW ASSERTED TRUE AND THAT IS THE AMENDMENT. `Where`
+       is a row of the view list as well, because the list is all six views;
+       the plate is a second DOOR to one view and not a second owner of it —
+       both call `showTab("Where")` — which is why the row and the plate are
+       both allowed and why the `<mark>` law (A6c) had to stop riding
+       `aria-pressed` on both of them. The plate is out of the BAR, which is
+       the claim that replaces "not in the menu". */
     const plate = await page.evaluate(() => {
-      const b = document.querySelector('#nu-bar [data-k="toptab-Where"]');
+      const b = document.querySelector('#nu-topstrip [data-k="toptab-Where"]');
       if (!b) return null;
       const v = b.querySelector(".nu-vh"), s2 = b.querySelector(".nu-sub2");
+      const strip = document.getElementById("nu-topstrip");
       return { word: v ? v.textContent.trim() : null,
                sub: s2 ? s2.textContent.trim() : null,
-               inMenu: !!document.querySelector('#nu-menu [data-k="toptab-Where"]') };
+               first: strip && strip.firstElementChild === b,
+               inMenu: !!document.querySelector('#nu-menu [data-k="toptab-Where"]'),
+               inBar: !!document.querySelector('#nu-bar [data-k="toptab-Where"]'),
+               burgerLast: (() => { const st = document.getElementById("nu-topstrip");
+                 return !!st && st.lastElementChild &&
+                        st.lastElementChild.id === "burger"; })(),
+               burgers: document.querySelectorAll("#burger").length };
     });
-    is(!!plate && !plate.inMenu && !!plate.word,
-      "A6d " + width + " · …and the genre is a name plate in the BAR, not a "
-      + "row in the hamburger — " + JSON.stringify(plate));
+    is(!!plate && !plate.inBar && plate.inMenu && !!plate.word && plate.first &&
+       plate.burgerLast && plate.burgers === 1,
+      "A6d " + width + " · …and the record's NAME is the top strip's first "
+      + "control with the one ≡ at its end, out of the bar, with `Where` also "
+      + "a row of the list (one view, two doors) — " + JSON.stringify(plate));
     /* ===== A6m — THE GENRE PLATE IS A DOOR, AND A DOOR SHUTS (2026-09-06) ==
        Paul: *"When I tap the button of the bottom left showing the genre close
        the picker and take me back to the compose view."* It called
@@ -766,7 +875,7 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     await page.waitForTimeout(150);
     const docWas = await page.evaluate(() => JSON.stringify(window.__eightDoc()));
     const readPlate = () => page.evaluate(() => {
-      const b = document.querySelector('#nu-bar [data-k="toptab-Where"]');
+      const b = document.querySelector('#nu-topstrip [data-k="toptab-Where"]');
       return { tab: window.__eightTabNow(),
                sheets: document.querySelectorAll(".nu-pan[data-sheet]").length,
                table: document.querySelectorAll("#pan-band table").length,
@@ -776,10 +885,10 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
                label: (b.getAttribute("aria-label") || "").trim(),
                doc: JSON.stringify(window.__eightDoc()) };
     });
-    await page.click('#nu-bar [data-k="toptab-Where"]');
+    await page.click('#nu-topstrip [data-k="toptab-Where"]');
     await page.waitForTimeout(700);
     const opened = await readPlate();
-    await page.click('#nu-bar [data-k="toptab-Where"]');
+    await page.click('#nu-topstrip [data-k="toptab-Where"]');
     await page.waitForTimeout(700);
     const shut = await readPlate();
     is(opened.tab === "Where" && opened.sheets === 1 &&
@@ -796,6 +905,77 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       + ", record " + (shut.doc === docWas ? "byte-identical" : "CHANGED"));
     await page.evaluate(() => window.__eightUp());
     await page.waitForTimeout(150);
+    /* ===== A6n — THE TAPE, AND ITS REPAINT BUDGET (2026-09-06) ==========
+       docs/NAV.md, Paul: *"Make a play status tape position indicator that
+       incorporates the beat countdown on the bottom right."*
+
+       IT IS MEASURED ON THE RENDERED PAGE AND OVER REAL PLAYBACK, at the first
+       width only: a repaint budget is not a fact about a viewport, and eight
+       bars of a record is 24 seconds this gate spends once rather than four
+       times.
+
+       WHAT IS ASSERTED, and the third is the one this check exists for:
+         · AT REST it says how long the record is and draws no fill.
+         · PLAYING it says `bar N/total`, N advances, and the fill follows.
+         · THE BUDGET: TABLE.md §13f's *"the text… is changing rapidly every
+           beat it's too much"* is a law about WORDS, so the tape's word may
+           repaint at most ONCE A BAR (+1 for leaving rest) and its FILL — a
+           bar and not a word — at most once a beat. Both are counted as DOM
+           mutations on the rendered nodes, which is the only honest way to
+           count a repaint.
+         · `.nu-count` — the bare beat readout that stood beside the seed — is
+           INSIDE the tape and there is exactly one of it on the page. */
+    if (width === WIDTHS[0]) {
+      await page.evaluate(() => window.__eightUp());
+      await page.waitForTimeout(200);
+      const tape = await page.evaluate(async () => {
+        const el = document.querySelector("#nu-bar > .nu-tape");
+        const say = el && el.querySelector(".nu-tapesay");
+        const fill = el && el.querySelector(".nu-tapefill");
+        const cnt = el && el.querySelector(".nu-count");
+        if (!el || !say || !fill || !cnt) return { there: false };
+        const rest = window.__eightTape();
+        let nSay = 0, nFill = 0;
+        const o1 = new MutationObserver((ms) => { nSay += ms.length; });
+        const o2 = new MutationObserver((ms) => { nFill += ms.length; });
+        o1.observe(say, { childList: true, characterData: true, subtree: true });
+        o2.observe(fill, { attributes: true });
+        const bpm = window.__eightTime().bpm;
+        const bars = 8;
+        document.getElementById("play").click();
+        await new Promise((r) => setTimeout(r, (60 / bpm) * 4 * bars * 1000 + 400));
+        const end = window.__eightTape();
+        document.getElementById("play").click();
+        await new Promise((r) => setTimeout(r, 400));
+        o1.disconnect(); o2.disconnect();
+        return { there: true, bars, bpm, rest, end, nSay, nFill,
+                 counts: document.querySelectorAll(".nu-count").length,
+                 last: document.getElementById("nu-bar").lastElementChild
+                         === el,
+                 fits: el.getBoundingClientRect().right <=
+                       document.documentElement.clientWidth + 0.5 &&
+                       say.scrollWidth <= say.clientWidth + 1 };
+      });
+      if (!tape.there) fail("A6n " + width + " · there is no tape in the bar");
+      else {
+        is(/\d+ bars?$/.test(tape.rest.say) && tape.rest.pct === 0 &&
+           tape.counts === 1 && tape.last && tape.fits,
+          "A6n " + width + " · the tape is the bar's last child, it says how "
+          + "long the record is at rest with no fill, it holds the ONE "
+          + ".nu-count on the page, and it fits — " + JSON.stringify(tape.rest)
+          + " counts " + tape.counts + " fits " + tape.fits);
+        is(/^bar \d+\/\d+$/.test(tape.end.say) && tape.end.pct > 0,
+          "A6n " + width + " · …and playing it says where the playhead is and "
+          + "how much record is left — " + JSON.stringify(tape.end));
+        is(tape.nSay <= tape.bars + 1 && tape.nFill <= tape.bars * 4 + 1,
+          "A6n " + width + " · …within its repaint budget over " + tape.bars
+          + " bars at " + tape.bpm + " BPM: the WORD wrote " + tape.nSay
+          + " times (≤ " + (tape.bars + 1) + ", once a bar) and the FILL "
+          + tape.nFill + " (≤ " + (tape.bars * 4 + 1) + ", once a beat)");
+      }
+      await page.evaluate(() => window.__eightUp());
+      await page.waitForTimeout(200);
+    }
     // A6h — every glyph on the page is decoration beside a name: a mark with
     // no `aria-label` on its button is the one failure an icon row can hide.
     const nakedGlyphs = await page.evaluate(() =>
@@ -833,7 +1013,7 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       + "the page — " + JSON.stringify(gone));
 
     const sheets = [];
-    for (const word of MENU_ROWS) {
+    for (const word of VIEWERS) {
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(120);
       await page.click("#burger");
@@ -1064,6 +1244,15 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       else is(Math.abs(s.barH - s.barVar) <= 0.5,
         "A7 " + at + " · the bar is " + s.barH + "px, --bar-h resolves to "
         + s.barVar + "px");
+      /* A7b — THE SECOND BAND MAKES THE SAME PROMISE (2026-09-06, docs/NAV.md
+         + TABLE.md §16). `body { padding-block-start: var(--top-h) }` and
+         `.nu-sheetwrap { block-size: calc(100dvh - var(--top-h) - var(--bar-h)
+         - var(--s2)) }` are arithmetic on this token, so a strip a pixel
+         taller than it is a pixel of the page under the strip and a pixel of
+         page scroll nothing declared. There is exactly ONE of it: a second
+         `.nu-topstrip` is the second row A6b forbids by geometry. */
+      if (s.strips !== 1)
+        fail("A7b " + at + " · exactly one .nu-topstrip (found " + s.strips + ")");
       is(s.overflowSins.length === 0,
         "A0 " + at + " · body and #app keep overflow-x: visible"
         + (s.overflowSins.length ? " — " + s.overflowSins.join(", ")
@@ -1086,22 +1275,35 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
          over the whole scroll". */
       const b = await page.evaluate(BANDS);
       const x0 = b.stops[0].barLeft;
+      /* ...AND THE STRIP IS SWEPT WITH IT (2026-09-06, docs/NAV.md). Same
+         three numbers about the other band: it is fixed to the TOP (top 0), it
+         starts at x = 0, and it is the page's own width — at every stop, and
+         none of the three moves. */
       const badBar = b.stops.filter((t) =>
         Math.abs(t.barBottom - t.wantBottom) > 0.5 ||
         Math.abs(t.barLeft - x0) > 0.5 || x0 !== 0 ||
-        Math.abs(t.barWidth - t.wantWidth) > 0.5);
+        Math.abs(t.barWidth - t.wantWidth) > 0.5 ||
+        t.stripTop == null || Math.abs(t.stripTop) > 0.5 ||
+        Math.abs(t.stripLeft) > 0.5 ||
+        Math.abs(t.stripWidth - t.wantWidth) > 0.5);
       const end = b.stops[b.stops.length - 1].y;
       is(badBar.length === 0,
         "A6 " + at + " · over " + b.stops.length + " stops to y=" + end
-        + ": the bar is fixed at the foot, full width (" + b.barH
-        + "px tall, x=" + x0 + ")"
-        + (badBar.length ? " — bar off at " + JSON.stringify(badBar.slice(0, 3)) : ""));
+        + ": the bar is fixed at the foot and the strip at the head, both full "
+        + "width (" + b.barH + "px and " + b.topH + "px tall, x=" + x0 + ")"
+        + (badBar.length ? " — off at " + JSON.stringify(badBar.slice(0, 3)) : ""));
+      is(Math.abs(b.topH - b.topVar) <= 0.5,
+        "A7b " + at + " · the top strip is " + b.topH + "px, --top-h resolves "
+        + "to " + b.topVar + "px");
       is(b.stickyHeads.length === 0,
         "A6 " + at + " · no axis heading is sticky any more — the navigation "
         + "is a fixed bar" + (b.stickyHeads.length ? " — " + b.stickyHeads.join(", ") : ""));
-      is(b.barScroll[0] === b.barScroll[1] && b.barRows === 1,
-        "A6b " + at + " · the bar is ONE row and never scrolls sideways ("
-        + b.barScroll[0] + " vs " + b.barScroll[1] + ", " + b.barRows + " row)");
+      is(b.barScroll[0] === b.barScroll[1] && b.barRows === 1 &&
+         b.stripScroll[0] === b.stripScroll[1] && b.stripRows === 1,
+        "A6b " + at + " · both bands are ONE row and neither scrolls sideways "
+        + "(bar " + b.barScroll[0] + " vs " + b.barScroll[1] + ", "
+        + b.barRows + " row; strip " + b.stripScroll[0] + " vs "
+        + b.stripScroll[1] + ", " + b.stripRows + " row)");
       /* A6c — AT MOST ONE MARK, AND IT IS THE OPEN SHEET. See the note in
          BANDS: "exactly one" was a law about a chrome that was a list of
          places; the table is the page and not one of them, so standing on it
@@ -1113,8 +1315,17 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         "A6c " + at + " · on \"" + b.open + "\" the chrome wears "
         + b.marks.length + " <mark> and " + b.pressed.length
         + " aria-pressed, and they say " + JSON.stringify(b.want)
-        + " (marks " + JSON.stringify(b.marks) + ", pressed "
-        + JSON.stringify(b.pressed) + ")");
+        + " — the picker's own toggle and nothing else (marks "
+        + JSON.stringify(b.marks) + ", pressed " + JSON.stringify(b.pressed) + ")");
+      /* A6c2 — AND EXACTLY ONE ROW OF THE LIST IS `aria-current`, ALWAYS,
+         INCLUDING ON THE TABLE (2026-09-06, docs/NAV.md: *"The current view is
+         marked in the list"*). This is the half `<mark>` used to carry and
+         could not carry honestly once the list held all six: `Session` is not
+         a pressed button, and `Where` would have been pressed twice. */
+      is(b.current.length === 1 && b.current[0] === "toptab-" + b.open,
+        "A6c " + at + " · …and exactly one row of the hamburger is "
+        + "aria-current, and it is the view you are on (" + b.open + " -> "
+        + JSON.stringify(b.current) + ")");
       /* A6i — NOTHING GOES UNDER THE BAR (or under the top strip). Paul,
          2026-08-28: *"Dont let anything go under it."* The sentence is about
          the gutter and it is the same sentence about the bar: the chrome's
@@ -1184,12 +1395,15 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         const max = Math.max(0, document.documentElement.scrollHeight
                                 - window.innerHeight);
         window.scrollTo(0, 0); await raf();
-        /* ONE BAND SINCE 2026-09-05 (TABLE.md §13a.1). `.nu-top` was a fixed
-           plate at the top corner and <body> reserved `--top-h` under it; both
-           are deleted, so the only chrome anything can be under is the bar. The
-           query is kept as a null so the claim reads as "there was a second
-           band and there is not", and it is asserted at zero below. */
-        const top = document.querySelector(".nu-top");
+        /* TWO BANDS AGAIN SINCE 2026-09-06 (docs/NAV.md, TABLE.md §16). This
+           read `document.querySelector(".nu-top")` and kept a null on purpose,
+           because from 2026-09-05 the second band did not exist. It does: the
+           record's name and the ≡ stand in `.nu-topstrip`, and <body> takes its
+           room out of the page with `padding-block-start: var(--top-h)`, which
+           is what makes *"Dont let anything go under it"* a claim about FLOW at
+           the head of the page as well as at its foot. Swept at scrollY 0,
+           which is where a top band's claim is decidable. */
+        const top = document.getElementById("nu-topstrip");
         const badTop = top ? sweep(top.getBoundingClientRect()) : [];
         window.scrollTo(0, max); await raf();
         const barR = document.getElementById("nu-bar").getBoundingClientRect();

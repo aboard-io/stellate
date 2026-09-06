@@ -296,7 +296,10 @@ const MEASURE = () => {
          off: a trailing count in parens, then the em-dash / comma clause. */
       const subject = (b) => (b.getAttribute("aria-label") || "").trim()
         .replace(/\s*\(\d+\)\s*$/, "").split(/ — |,/)[0].trim();
-      const out = [...document.querySelectorAll("#nu-menu button")]
+      /* `> button` SINCE 2026-09-06 (docs/NAV.md): the plate's middle block
+         is the SEED ROW, whose two controls are nested and are not rows of the
+         view list. The direct children are the list. */
+      const out = [...document.querySelectorAll("#nu-menu > button")]
         .map(subject)
         .filter((w) => w !== "log");
       if (window.__eightMenuOpen) window.__eightMenuOpen(false);

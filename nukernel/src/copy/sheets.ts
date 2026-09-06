@@ -81,7 +81,13 @@ export const SHEETS: Table = {
   "chart.join.say": "Take in the chord after this one",
   "chart.join.none": "Nothing after the last chord",
 
-  "panel.band": "The band",
+  /* THE PANEL'S OWN HIDDEN HEADING, AND THE WORD IS `Session` SINCE
+     2026-09-06 (docs/NAV.md: *"'session'… that's the new name for the default
+     view"*). It is the VOCABULARY's name for the surface — what a screen
+     reader hears when it enters the panel — where `glyph.tab.band` is the
+     word on the menu's row; two meanings, spelled apart on purpose so neither
+     has to move when the other does. */
+  "panel.band": "The session",
   "panel.score": "The score",
   /* what the log calls a change it has no better word for. */
   "log.record": "record",
@@ -281,6 +287,15 @@ export const SHEETS: Table = {
   "boardLink.gain": "Record gain — main strip",
 
   /* ===== THE SEED ======================================================= */
+  /* ===== THE TAPE (2026-09-06, docs/NAV.md) =============================
+     Paul: *"Make a play status tape position indicator that incorporates the
+     beat countdown on the bottom right."* The FACE is the bar of the record
+     the ear is on out of the bars there are; the NAME is the same fact said in
+     a sentence, because a reader who cannot see the fill has only the words.
+     At rest the tape says how long the record is (`count.bar`, the one owner
+     of that phrase) and draws no fill. */
+  "tape.at": "bar {n}/{total}",
+  "tape.aria": "Position — bar {n} of {total}",
   "seedRow.type.aria": "Seed — type {min}–{max}, then Enter",
   "seedRow.value.aria": "Seed {n}",
   /* THE FACT LIVES ON THE ARTIFACT. `precompose.js`'s two seed-gated blocks
@@ -295,6 +310,15 @@ export const SHEETS: Table = {
      those two words — `menu` and `log` — are addresses five gates read back
      off the page (glyph.ts's header says which). A capital here reads as a
      second owner of the same name. */
+  /* ===== THE HAMBURGER'S THREE BLOCKS (2026-09-06, docs/NAV.md) =========
+     Paul: *"Put the name of the app at the top of the hamburger… Move the seed
+     out of the bottom nav and into a 'set seed' in the hamburger. Organize the
+     hamburger sensibly."* The name is a HEADING over the plate and the seed's
+     is a heading over the block, so neither is a control's word and neither
+     carries a verb's promise; `Set seed` is the block's subject, and the two
+     targets under it are the die and the number they always were. */
+  "burger.app": "Stellate",
+  "burger.seed": "Set seed",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",

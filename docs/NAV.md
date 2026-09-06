@@ -89,3 +89,46 @@ strip joins it as the second fixed thing, and only these two). Every address in
 `test/table-inventory.json` still resolves, re-filed where a control moved. No
 control loses its written refusal. Nothing here writes to the document except
 `Set seed`, which spends exactly what the die spent.
+
+---
+
+## The outcome (2026-09-06, shipped uncommitted)
+
+Built. The measurements, the deviations and the arithmetic are
+`nukernel/TABLE.md` **§16 · Two places, not seven**; the two new components
+(the top strip, the tape) and the two amended ones (the bar, the hamburger) are
+`nukernel/DESIGN.md` §2.20/21 and §2.12/13.
+
+**WHAT LANDED.** The view selector is one hamburger at the top right, holding
+all six views with `Session` first, then `Set seed` (the seed row moved out of
+the bar as a NODE), then the log with its count. The bottom-right hamburger is
+gone; there is one. The record's name is the top left and opens Where. The bar
+is the transport and the tape. The word `Band` is `Session` everywhere a hand
+reads it; `toptab-Band`, `#pan-band` and `__eightTab("Band")` are unmoved,
+because an address is not a name.
+
+**THE THREE THINGS THIS DOCUMENT DID NOT DECIDE, decided.**
+
+1. **`Song options` stays at the end of the record's line**, against the
+   drawing above — because this document also says *"nothing here writes to the
+   document except Set seed"* and all three of its ops rewrite the record;
+   because its sheet is drawn as the record row's own next line and the grid's
+   `<tbody>` is `hidden` when folded, so a menu row would open a sheet nobody
+   could see; and because `re-seed` in the menu would be a second door to the
+   die `Set seed` has just been given one owner of.
+2. **`#playops` and its three children stay in the bar** — a mode, a take and
+   the room are facts about the next press of ▶, which is what the bottom is
+   for.
+3. **The tape is two lines, not one** — measured: at 320 it has 185px, and a
+   track sharing that with the words cannot show a bar of an 88-bar record
+   moving.
+
+**THE COST, PAID AND DECLARED.** A second fixed band is 44px of an 844px phone
+and the grid had 5.7px of slack, so **the sheet shows nine whole sections at
+rest where it showed ten**, at every width and on both beds. The three ways to
+buy it back were measured and all three are refused inside this round (a
+sub-44px strip breaks DESIGN §1; an overlaying strip breaks *"Dont let anything
+go under it"*; folding the record row's face into the strip cuts the record's
+NAME to a stub at 320 and deletes component 18). TABLE.md §16 carries the
+arithmetic. If the row matters more than the strip, the trade to put to Paul is
+the third one, as its own round.

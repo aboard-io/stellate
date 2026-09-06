@@ -43,7 +43,13 @@ export const GLYPHS: Table = {
      eleven gates — and the printed word is that word again. */
   "glyph.tab.motifs": "Motifs",
   "glyph.tab.motifs.say": "The song's tunes and beats",
-  "glyph.tab.band": "Band",
+  /* `Band` -> `Session`, 2026-09-06 (docs/NAV.md). Paul: *"You may need to
+     put 'session' at the top as a nav item and that's the new name for the
+     default view."* THE ADDRESS DID NOT MOVE — `ui/eight.js` TABS is keyed
+     `Band`, the host is `#pan-band`, `toptab-Band` is the address and eleven
+     gates drive `__eightTab("Band")` — and this is the printed word, which is
+     the only thing a hand reads. */
+  "glyph.tab.band": "Session",
   "glyph.tab.band.say": "Sections down, players across",
   "glyph.tab.mix": "Mix",
   "glyph.tab.mix.say": "Buses: genre effects, delay, reverb, main",
