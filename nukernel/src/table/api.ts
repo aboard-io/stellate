@@ -76,6 +76,40 @@ export interface SayField {
 }
 export interface OpsField { kind: "ops"; label?: string; ops: Op[] }
 export interface NodeField { kind: "node"; label?: string; node: HTMLElement | null }
+/** A FIELD WHOSE VALUE IS A WORD NOBODY OFFERED (2026-09-06, wave C item 8 of
+ *  docs/REDESIGN-SCOPE.md: *"A section has a name. Types only today, so a form
+ *  that plainly has a pre-chorus cannot say so."*).
+ *
+ *  IT IS A FIFTH KIND AND NOT A `StripField` WITH NO OPTIONS, because a strip
+ *  with no options is already a READOUT on this surface (`sheet.ts` draws it
+ *  as `.nu-sheetsay`, which is how a refusal is drawn) and a name a hand types
+ *  is the opposite of a refusal. `avail.js` says which of the two a row is —
+ *  exactly one row of that table declares `text: true` — so the kind is read
+ *  off the model rather than guessed from an empty list.
+ *
+ *  ABSENT IS THE DEFAULT, WHICH IS THE PAGE'S OLDEST LAW SAID FOR A WORD: an
+ *  empty box is not an empty name, it is no name, and what stands in its place
+ *  is the section's TYPE — drawn as the `hint` so the default is on the glass
+ *  before the first keystroke, and restored by clearing the box. */
+export interface TextField {
+  kind: "text";
+  /** the field's address — `shSpec`'s own key, as every other field's is. */
+  key: string;
+  label: string;
+  /** what a hand has written, or "" for nothing. */
+  value: string;
+  /** the word that stands when nothing is written — the type's, drawn as the
+   *  input's placeholder. Null where a field has no default to show. */
+  hint?: string | null;
+  /** how many characters the document will keep (`fields.js SECNAME_MAX`).
+   *  ABSENT rather than a number of this file's own: a second copy of that
+   *  constant is a second owner of what a legal name is. */
+  max?: number | null;
+  why?: string | null;
+  /** ONE WRITE, ON COMMIT. `sheet.ts` calls this on blur or Enter and never on
+   *  a keystroke, so a name is one document write and one undo step. */
+  set?: (v: string) => void;
+}
 /** WHICH GROUP A FIELD STANDS IN (2026-09-05, TABLE.md §11c). Paul: *"just
  *  nicely structure each expanded interface as proper software that's easy to
  *  scan and nicely grouped."* Every field carries the HEADING it stands under
@@ -92,7 +126,8 @@ export interface NodeField { kind: "node"; label?: string; node: HTMLElement | n
  *  wrapper element preserves document order exactly, so `querySelectorAll
  *  (".nu-sheetrow")` reads the same list it always did. */
 export type Grouped = { group?: string | null };
-export type Field = (StripField | SayField | OpsField | NodeField) & Grouped;
+export type Field = (StripField | SayField | OpsField | NodeField |
+                     TextField) & Grouped;
 
 export interface Op {
   k: string;
@@ -124,6 +159,11 @@ export interface Spec {
   why?: string | null;
   options?: { value: unknown; label: string; disabled?: boolean;
               why?: string | null; quiet?: boolean }[];
+  /** THIS ROW IS A FIELD AND NOT A VOCABULARY (2026-09-06, wave C). Exactly
+   *  one row of `avail.js` says so — `form.name` — and it says it rather than
+   *  arriving with an empty option list, which a menu would draw as a menu of
+   *  nothing. Present-only: every other spec is the object it always was. */
+  text?: boolean;
   set: (v: unknown) => void;
 }
 /** ...translated by ui/eight.js `wCell` into what a control needs. */
@@ -131,6 +171,8 @@ export interface WCell {
   key: string; value: unknown; label: string; derived: boolean;
   say?: string; why?: string | null;
   options: Choice[];
+  /** carried through from the spec by `ui/eight.js wCell`; see `Spec.text`. */
+  text?: boolean;
   set: (v: unknown) => void;
 }
 
@@ -184,6 +226,16 @@ export interface TableAPI {
 
   devSheetFor(kind: string): string;
   secName(i: number): string;
+  /** WHAT SECTION `i` CALLS ITSELF, for a surface that draws it in a CELL
+   *  (2026-09-06, wave C item 8): the hand's name if it wrote one, the TYPE's
+   *  word if it did not, and no ordinal — the row head prints the index
+   *  itself. It is a second door beside `roleWord` and not a replacement:
+   *  `roleWord` translates a role KEY into its word, which is what a menu
+   *  needs, and a plate holding that string cannot know whether the section it
+   *  is drawing has a name. `secName` is the same fact for PROSE (an
+   *  accessible name, a sentence, a grip's label) and appends the ordinal.
+   *  All three read one field, so they can never disagree. */
+  secWord(i: number): string;
   roleWord(r: string): string;
   playsWhat(v: Voice): string;
   vpaintOf(vi: number): number | string | null;

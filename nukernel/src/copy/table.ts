@@ -155,6 +155,13 @@ export const TABLE: Table = {
 
   /* ===== THE SECTION SHEET (model.ts rowSheet) ========================== */
   "row.ops": "this section",
+  /* THE ONE FIELD ON THIS SURFACE A HAND TYPES INTO (2026-09-06, wave C item 8
+     of docs/REDESIGN-SCOPE.md: *"A section has a name. Types only today, so a
+     form that plainly has a pre-chorus cannot say so."*). One word, because it
+     is a label beside a box and the box's placeholder already says what stands
+     when it is empty — the section's TYPE, which is the row below it and does
+     not move. */
+  "row.name": "name",
   "row.type": "type",
   "row.bars": "bars",
   "row.noteLimit": "note-length limit",

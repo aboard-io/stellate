@@ -499,8 +499,20 @@ export function columnNames(boxes, laneNames) {
   }
   return out;
 }
+/* ...AND THE HAND'S NAME FOR THE SECTION WINS OVER ITS TYPE (WAVE C,
+   2026-09-06). REDESIGN-SCOPE item 8: a section may be CALLED something now,
+   and a clip dragged out of Live still has to say where it came from — so the
+   first word is what the composer calls that section, and the type is the
+   fallback it always was. The count stays the ROLE's (`box.nth`), so two
+   chairs of one role are still told apart by the number this line has always
+   carried. `export/score.js` is the one place that decides what a box's name
+   IS; this only chooses between the two words the box already holds.
+   A record with no named section is byte-identical: `secname` is absent and
+   the expression is the one it has always been. */
 export const clipNameOf = (box, col) =>
-  (box.role ? box.role + " " + col + " " + (box.nth || 1) : box.name + " " + col);
+  (box.secname ? box.secname + " " + col + " " + (box.nth || 1)
+   : box.role ? box.role + " " + col + " " + (box.nth || 1)
+   : box.name + " " + col);
 /** the nearest power of two — what Live's (and 0x58's) denominator may be.
  *  ONE owner for both exporters; export/smf.js makes the same choice. */
 export const pow2Near = (d) => Math.pow(2, Math.max(0, Math.round(Math.log2(Math.max(1, +d || 1)))));

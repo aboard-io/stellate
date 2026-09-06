@@ -600,6 +600,100 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
         assert.strictEqual(by[d2], n, "lane " + d2 + " rendered " + (by[d2] || 0) +
           " hits, not " + n); }
   });
+  /* ===== G14 · A SECTION HAS A NAME (WAVE C, 2026-09-06) ================
+     REDESIGN-SCOPE item 8: *"A section has a name. Types only today, so a form
+     that plainly has a pre-chorus cannot say so."*
+
+     FOUR THINGS, and the FIRST of them is the one the whole item is gated on:
+     absent is the type, byte for byte. A record written before today must
+     resolve, project and compile exactly as it did — which is why `name` is a
+     ROW field with no record tier and no genre tier, and why `boxesOf` writes
+     it present-only. The other three are the ones a hand notices: it survives
+     a save and a reload, it rides a duplicate and a move, and the door refuses
+     what is not a name. */
+  ok("G14 the default name is the TYPE — an unnamed record's boxes are byte-identical",
+    () => {
+      const d = J(TERMS);
+      const was = JSON.stringify(Doc.boxesOf(d, "g."));
+      assert.strictEqual(Doc.resolveRow(d, 0, "name", GENRES), undefined,
+        "a section that names itself nothing resolved to something");
+      assert.ok(!("secname" in JSON.parse(was)[0]),
+        "an unnamed section stamped a `secname` on its box");
+      // ...and naming one moves ONLY that box, and only by that one key
+      d.form.sections[1].name = "the Coach House break";
+      const now = JSON.parse(JSON.stringify(Doc.boxesOf(d, "g.")));
+      const before = JSON.parse(was);
+      assert.strictEqual(now[1].secname, "the Coach House break");
+      delete now[1].secname;
+      assert.deepStrictEqual(now, before,
+        "naming a section moved something other than its own `secname`");
+    });
+
+  ok("G14b a name survives normalize, a save and a load — and the door cleans it",
+    () => {
+      const d = J(TERMS);
+      d.form.sections[0].name = "  pre-chorus\n  lift  ";  // two lines and padding
+      d.form.sections[1].name = "   ";                  // whitespace is absent
+      d.form.sections[2] && (d.form.sections[2].name = 42);   // a number is not a name
+      d.form.sections[3] && (d.form.sections[3].name = "x".repeat(80));
+      Doc.normalize(d);
+      assert.strictEqual(d.form.sections[0].name, "pre-chorus lift",
+        "the door did not fold the name to one trimmed line");
+      assert.ok(!("name" in d.form.sections[1]), "an empty name did not delete itself");
+      if (d.form.sections[2]) assert.ok(!("name" in d.form.sections[2]),
+        "a number survived the door as a name");
+      if (d.form.sections[3]) assert.strictEqual(d.form.sections[3].name.length, 40,
+        "a long name was not capped at the one owner's cap");
+      // THE ROUND TRIP IS THE SAVE THE PAGE ACTUALLY WRITES: `JSON.stringify(DOC)`
+      // (ui/eight.js songCard) and back through `normalize`, which is the door
+      // the file input reaches.
+      const back = JSON.parse(JSON.stringify(d));
+      Doc.normalize(back);
+      assert.deepStrictEqual(back.form.sections.map((s2) => s2.name || null),
+                             d.form.sections.map((s2) => s2.name || null),
+        "a named section did not survive save -> load");
+      assert.strictEqual(Doc.resolveRow(back, 0, "name", GENRES), "pre-chorus lift");
+    });
+
+  ok("G14c the name rides a duplicate and a move (the page's own two ops)",
+    () => {
+      const d = J(TERMS);
+      d.form.sections[0].name = "the lift";
+      // DUPLICATE, spelled as ui/eight.js `dupSection` spells it: a deep copy
+      // of the row with a fresh id. Every key of the section rides, which is
+      // the whole point of that function being a clone and not a re-typed pair.
+      const copy = JSON.parse(JSON.stringify(d.form.sections[0]));
+      copy.id = "sZ";
+      d.form.sections.splice(1, 0, copy);
+      Doc.normalize(d);
+      assert.strictEqual(d.form.sections[1].name, "the lift",
+        "a duplicated section lost its name");
+      // MOVE is a swap of the two objects (ui/eight.js `moveSection`), so the
+      // name travels with the section and not with the index.
+      const t = d.form.sections[0]; d.form.sections[0] = d.form.sections[2];
+      d.form.sections[2] = t;
+      Doc.normalize(d);
+      assert.strictEqual(d.form.sections[2].name, "the lift",
+        "the name stayed at the index instead of travelling with the section");
+      assert.ok(!("name" in d.form.sections[0]),
+        "the section that moved up grew a name it never had");
+    });
+
+  ok("G14d TIERS declares it at the row, with an address, and putRow is its writer",
+    () => {
+      assert.strictEqual(Doc.TIERS.name.tier, "row");
+      assert.strictEqual(Doc.TIERS.name.at, "form.sections[si].name");
+      const d = J(TERMS);
+      assert.strictEqual(Doc.putRow(d, 0, "name", "the tag"), true);
+      assert.strictEqual(d.form.sections[0].name, "the tag");
+      assert.strictEqual(Doc.putRow(d, 0, "name", ""), true);
+      assert.ok(!("name" in d.form.sections[0]),
+        "the empty write did not delete the override (§2's sparse law)");
+      // ...and a CELL may not say it: the reader is null, so `putCell` refuses.
+      assert.strictEqual(Doc.putCell(d, 0, 0, "name", "mine"), false,
+        "a cell was allowed to name the section it sits in");
+    });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

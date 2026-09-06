@@ -56,7 +56,13 @@
 // which is a committed table; nothing here generates, parses or guesses. And it
 // owns NO TRIGONOMETRY: ui/globe.js is the only file that knows what a sphere
 // is, and atlas.js is the only file that knows where a place is on one.
-import { NuAtlas, NuPrecompose, TERMS } from "./deps.js";
+import { NuAtlas, NuPrecompose, TERMS,
+         /* THE FAMILY A ROW BELONGS TO (WAVE C, 2026-09-06) — the third thing
+            a person searching this index types after a name and a place.
+            `GENRES[gk].family` is the catalogue's own word (`nukernel/genres/`
+            declares it; `FAMILIES` prints it), so the field matches on data
+            this file does not own and never re-derives. */
+         GENRES, FAMILIES } from "./deps.js";
 import { makeGlobe, ARC_MIN, ARC_MAX } from "./globe.js";
 /* THE WORDS COME FROM THE CATALOGUE (TABLE.md §12b, nukernel/src/copy/atlas.ts).
    Nothing on this surface is typed here: a key names a whole sentence and the
@@ -70,7 +76,7 @@ import { t, tn } from "./copy.js";
    data tier, for the dots and the tab order and the labels and the sentence
    together. An unused import is a trap, so it goes rather than sitting here
    looking like the rule still lives on this side. */
-const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS, ALL,
+const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS, ALL, ERAS,
         recordAt, arcFor, atYear, indexOf, eraOf, yearWord, canon } = NuAtlas;
 
 /* THE 760 IS GONE, AND SO IS THE SCALE IT BECAME. — the second reversal of the
@@ -650,7 +656,131 @@ export function mount(parent, ctx) {
     t("atlas.index.aria", { n: ALL.length + ROLES.length }));
   idx.append(idxRows);
 
-  parent.append(say, wrap, idx);
+  /* ===== THE INDEX IS SEARCHABLE (WAVE C, 2026-09-06) ====================
+     REDESIGN-SCOPE item 7, and it is the most expensive gesture the
+     walkthrough measured: *"Reaching the trip-hop row is 19,306 px of
+     scrolling in one chronological list with no search, no year jump, and a
+     globe that eats taps where a filter strip appears to be."* Re-measured on
+     this tree at 390x844 before the strip existed: 479 rows, 25,288 px of
+     list, and the `triphop` row at 19,593 px — twenty-three screenfuls, about
+     thirty flicks of a thumb, to reach a record you already knew the name of.
+
+     THE GLOBE STAYS. It is what this surface IS (Paul, 2026-08-24: *"make the
+     map 3d and zoomable like google earth"*), the chronology under it is the
+     one order the earth cannot show, and neither is deleted or hidden by a
+     search. What is added is the one control a 479-row list has always needed.
+
+     WHERE IT STANDS, AND WHY NOT HIGHER. It is the LIST's own head — under the
+     globe, above the first row, in flow, one line, never floating over
+     anything. The brief asked for "the top of the picker"; the top of the
+     picker is a sentence and a globe, and putting the field above them would
+     have put ~300 px of earth between what you type and what it matches, on a
+     screen 844 px tall. Measured where it stands: the strip's own top is at
+     y=414 at 390x844 and y=357 at 320 — inside the first screenful, with the
+     first results under it — and the list scrolls under a strip that does not
+     move (69 px, two lines: the field and the menu, then the count).
+     (Its position is a decision this file makes for its own surface; the row
+     it produces is `.nu-row`, which nu.css already owns.)
+
+     THE THREE CONTROLS ARE THE THREE WAYS A PERSON ARRIVES:
+       · THE FIELD — you know what you want. It matches the row's NAME (the
+         word actually printed, `NuWiki.name`), its KEY, its PLACE, its YEAR
+         (as printed, so "1991" and "33000 BC" both match), its ERA word and
+         its FAMILY. Every token you type must match, so "bristol 1991" and
+         "club bristol" both narrow.
+       · THE ERA CHIPS — you know roughly WHEN. They are `atlas.js ERAS`, 26
+         words from the old stone age to now, each one a real catalogue year
+         (G5b holds that), so this is a jump by century and by decade with no
+         second table to keep true. They SCROLL; they do not filter — the
+         chronology stays whole and you land in it, which is what a person
+         asking for "the seventies" in a list of everything means. They are
+         chips and not a menu for a reason with a date on it; see below.
+       · THE COUNT — how much of the catalogue you are looking at, which is the
+         one number that makes a filter honest.
+
+     TYPING DOES NOT MOVE THE EARTH, and that is a rule and not an accident.
+     The list is the time instrument (`sweep`, below), so hiding rows would
+     otherwise drag the year — and therefore every mark, the ring, the camera
+     and the sentence — under the finger that is typing. `filtering()` is
+     asked at the top of `sweep`, which is the ONE place the year moves from a
+     scroll. Pressing a row still flies the camera exactly as it always did:
+     `openRow` sets the year and calls `choose`, and a filter has no opinion
+     about it.
+
+     AND CLEARING RESTORES EVERYTHING, which is why the value is the only
+     state: `filter()` reads the field, and an empty field takes the branch
+     that unhides every row. There is no "filtered" flag to get out of step. */
+  const find = el("p", { className: "nu-row", id: "atlasFind" });
+  const qEl = el("input", { type: "search", id: "atlasQ", autocomplete: "off",
+                            spellcheck: false });
+  qEl.setAttribute("aria-label", t("atlas.find.aria"));
+  qEl.setAttribute("aria-controls", "atlasIndexRows");
+  qEl.placeholder = t("atlas.find.hint");
+  /* `enterkeyhint` AND NOT A SUBMIT BUTTON. There is nothing to submit — the
+     list filters as you type — so the phone keyboard's blue key should say
+     what pressing it does, which is "done looking at the keyboard". */
+  qEl.enterKeyHint = "search";
+  /* THE JUMP IS CHIPS AND NOT A MENU, AND THAT IS THIS SURFACE'S OWN LAW
+     TWICE OVER. Paul, 2026-08-24, of this exact section: *"get rid of the era
+     select boxes, the look at select box, the 'nearby' select box"* —
+     test/atlas.js G7 has failed on `#atlasEra` and on ANY `<select>` under
+     `#atlas` ever since, and it is right to: a menu here was deleted by name.
+     And Paul, 2026-09-02, of the whole app: *"make those tables of dropdowns
+     full of tappable grids that change options rather than dropdowns."* So the
+     eras are buttons on ONE LINE that scrolls sideways inside itself — the
+     `overflow-x` net nu.css already puts under a wide strip — and the dead id
+     is not reused: this is `#atlasJump`, a different control answering a
+     different question from the one that was killed. The old one SET a filter
+     ("show me only the seventies"); this one MOVES you ("take me to the
+     seventies") and leaves the chronology whole, which is the difference
+     between the list being a filterable table and the list being a timeline
+     you travel. */
+  const era = el("span", { id: "atlasJump", className: "nu-ixjump" });
+  era.setAttribute("role", "group");
+  era.setAttribute("aria-label", t("atlas.era.aria"));
+  for (const e of ERAS) {
+    const c = el("button", { type: "button", textContent: e.w });
+    c.dataset.y = String(e.y);
+    c.setAttribute("aria-label", t("atlas.era.chip",
+                                   { era: e.w, year: yearWord(e.y) }));
+    era.append(c);
+  }
+  /* THE COUNT IS `aria-live` AND THE FIELD IS NOT. A search field that
+     announced its own value on every keystroke is unusable with a screen
+     reader; what a reader needs told is how many rows are left, once the
+     typing settles, which is exactly what this element says. */
+  const count = el("span", { className: "nu-hint", id: "atlasCount" });
+  count.setAttribute("role", "status");
+  find.append(qEl, era, count);
+  parent.append(say, wrap, find, idx);
+  /* THE TWO LISTENERS, AND NEITHER IS DEBOUNCED. `filter()` is a fold-free
+     `indexOf` over 479 strings already folded at build; measured on the gate's
+     own chromium at 390x844 it is under 2 ms, which is inside one frame — so
+     a debounce would buy nothing and cost the thing a search field is for,
+     which is that the list moves while you type. The number is published on
+     `#atlasFind[data-ms]` so the claim is read off the artifact.
+     `input` AND NOT `keyup`: it fires for a paste, for a dictation, and for
+     the little × a `type=search` field draws, which is the gesture that means
+     "clear it" on a phone. */
+  qEl.addEventListener("input", () => filter());
+  /* THE ERA MENU SCROLLS AND DOES NOT FILTER, and it CLEARS the field on the
+     way, because those are two answers to one question ("show me the
+     seventies" while a search is up would land you in a list the search has
+     already emptied). `scrollToYear` is the list's own read-head inverse — the
+     same one `syncIndex` uses — so the row it lands on is the row the next
+     sweep reads, and the year, the marks and the sentence all follow with no
+     second code path. */
+  /* ONE DELEGATED LISTENER FOR TWENTY-SIX CHIPS, which is the same shape
+     `idxRows` uses for 479 rows and for the same reason. NOTHING IS EVER
+     MARKED "on": a jump is a gesture and not a setting, and a chip left lit
+     would be the box claiming to be showing an era while the reader scrolled
+     four centuries away from it. */
+  era.addEventListener("click", (e) => {
+    const c = e.target.closest ? e.target.closest("button[data-y]") : null;
+    if (!c) return;
+    if (qEl.value) { qEl.value = ""; filter(); }
+    scrollToYear(+c.dataset.y);
+  });
 
   /* ONE ROW PER GENRE, in `ALL`'s order — which is atlas.js's own sort (year
      ascending, then place, then key) and is DERIVED there rather than re-sorted
@@ -870,6 +1000,32 @@ export function mount(parent, ctx) {
       t(roleWhy ? roleWhy + ".aria" : "atlas.noArticle.aria", { name: word }));
     return { plate: null, over: s };
   }
+  /* ---- WHAT A ROW IS SEARCHABLE BY (WAVE C, 2026-09-06) ----------------
+     ACCENT- AND CASE-INSENSITIVE, which is the whole reason this is a function
+     and not a `toLowerCase()` at the call site: this catalogue holds Córdoba,
+     Forró, Guča, Düsseldorf and Bogotá, and a reader who types "cordoba"
+     means Córdoba. NFD splits a letter from its mark and the range strips the
+     marks; it is the same decomposition `wiki-extract.js` uses to turn a title
+     into a path, so the two halves of "what this row is called" agree.
+     THE HAYSTACK IS BUILT ONCE, AT BUILD, AND RIDES THE `<li>`. `buildIndex`
+     already walks all 479 rows once; folding six strings per row there costs
+     one pass, and the alternative — folding them per keystroke — is 479 rows x
+     six strings x every letter typed. `dataset` and not a Map, for the same
+     reason `data-place` and `data-year` ride the li: `sweep` and the filter
+     both walk the children, and one addressing scheme is enough. */
+  const fold = (x) => String(x == null ? "" : x)
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  function hayFor(gk, year, place, word, why) {
+    const g = (GENRES && GENRES[gk]) || null;
+    const fam = g && g.family;
+    return fold([word, gk, place,
+                 year == null ? "" : yearWord(year),
+                 year == null ? "" : eraOf(year),
+                 fam || "", (fam && FAMILIES && FAMILIES[fam]) || "",
+                 // a role and the blank state have no history; what they DO is
+                 // the only thing a reader could be looking for them by
+                 why ? t(why + ".say") : ""].join(" "));
+  }
   function idxRow(year, genre, place, gk, why) {
     const b = el("button", { className: "nu-ixrow", type: "button" });
     b.dataset.gk = gk;
@@ -935,6 +1091,11 @@ export function mount(parent, ctx) {
        fixed middle column as its CE siblings instead of the proportional
        one the shim couldn't give it. */
     if (WHEN[gk] && WHEN[gk].year < 0) li.dataset.bc = "1";
+    /* ...AND WHAT IT ANSWERS TO (wave C). The word is the one the plate
+       PRINTS — `NuWiki.name(gk)`, resolved a dozen lines up as `label` — so a
+       reader searching for what they can see finds it, and the KEY is in there
+       too because that is what the globe's own mark says. */
+    li.dataset.q = hayFor(gk, WHEN[gk] ? WHEN[gk].year : null, place, label, why);
     li.append(b, cell.over);
     return li;
   }
@@ -966,6 +1127,7 @@ export function mount(parent, ctx) {
       f.append(idxRow("—", gk, t("atlas.place.any"), gk, EXCLUDE[gk]));
     idxRows.append(f);
     idxMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
+    filter();                            // …and the count says how many (wave C)
     /* THE COST IS DECLARED ON THE ARTIFACT, not promised in this comment.
        "Permanent" was a decision with a price and the price is a number a gate
        can read back off the rendered page — the same discipline `data-live`
@@ -975,6 +1137,90 @@ export function mount(parent, ctx) {
     syncIndex(true);
     measureRows();
   }
+  /* ---- THE FILTER (WAVE C, 2026-09-06) --------------------------------
+     One function, one piece of state, and the state is the FIELD's own value —
+     there is no "filtered" flag, so "clearing restores the full index" is
+     arithmetic rather than a promise somebody has to keep.
+
+     EVERY TOKEN MUST MATCH, which is what makes a two-word query useful:
+     "bristol 1991" is a place AND a year, "club bristol" is a family AND a
+     place. An OR would have made the second word widen the answer, which is
+     the opposite of what a person typing more means.
+
+     ROWS ARE HIDDEN, NEVER DETACHED. `hidden` keeps every row in the document
+     — so the tab order, `syncIndex`'s `aria-current` walk and `scrollToYear`'s
+     nearest-row search all keep working on the whole catalogue, and clearing
+     the field is one attribute per row rather than a rebuild of 479. The
+     measured cost of a keystroke over all 479 rows is on the artifact
+     (`#atlasFind[data-ms]`), read back by the gate rather than promised here.
+
+     AND IT RE-MEASURES THE ROWS, ONCE, at the END. `tops`/`hs` are the
+     scroller's own geometry cache (see `measureRows`) and a hidden row is
+     zero-tall, so the arrays are stale the instant anything is hidden —
+     `sweep` would then light the wrong places the moment the field is cleared
+     again. It is one pass of `getBoundingClientRect` over rows that have just
+     been laid out anyway; `sweep` itself does not run while a filter is up. */
+  let findMs = 0, restTop = null, restYi = null;
+  const filtering = () => !!(qEl && qEl.value.trim());
+  function filter() {
+    if (!idxBuilt || !qEl) return;
+    const t0 = (typeof performance !== "undefined") ? performance.now() : 0;
+    const want = fold(qEl.value).split(/\s+/).filter(Boolean);
+    /* WHERE YOU WERE STANDING, KEPT ACROSS THE SEARCH (wave C). *"Clearing
+       restores the full index"* has a second half nobody says out loud: it has
+       to restore the PLACE you were at in it. A filtered list is a few rows
+       tall, so its scrollTop collapses to 0, and clearing the field then left
+       the reader at the top of the chronology — and, because the list is the
+       time instrument, dragged the year with it: MEASURED before this, typing
+       "trip" and clearing it again moved the sentence from "600 · Rome" to
+       "33000 BC · Hohle Fels" and turned the earth to a place nobody asked
+       for. The position is taken on the way IN (the first keystroke of a
+       search, while the list is still whole) and put back on the way OUT. */
+    if (want.length) { if (restTop == null) { restTop = idx.scrollTop; restYi = yi; } }
+    const li = idxRows.children;
+    let showing = 0;
+    for (let i = 0; i < li.length; i++) {
+      const n = li[i];
+      const hay = n.dataset.q || "";
+      let on = true;
+      for (const w of want) if (hay.indexOf(w) < 0) { on = false; break; }
+      if (on) showing++;
+      if (n.hidden !== !on) n.hidden = !on;
+    }
+    const total = li.length;
+    /* THE SENTENCE THE COUNT IS. Three of them, and the third is the one the
+       brief asked for by name: *"a search with no results says so in a
+       sentence."* A bare "0" is a number a reader has to interpret. */
+    count.textContent = !want.length ? tn("atlas.find.all", total)
+      : showing ? t("atlas.find.some", { n: showing, of: total })
+      : t("atlas.find.none", { q: qEl.value.trim() });
+    findMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
+    find.dataset.ms = findMs.toFixed(1);
+    find.dataset.showing = String(showing);
+    measureRows();
+    /* …and only now, with the rows back and re-measured, is the scroll
+       meaningful again — AND THE SWEEP IT WOULD FIRE IS SWALLOWED. Putting the
+       reader back where they were is the LAST act of a search, not a new
+       gesture, so it must leave the earth exactly as the search found it. The
+       rule "typing never moves the globe" is only true if it is true of the
+       last keystroke too, and the last keystroke of a search is the one that
+       empties the field.
+       MEASURED, which is why this is here at all (test/atlas.js G24e): without
+       it, clearing a search moved the sentence from "1969 · 120 records" to
+       "600 · 1 record · Rome" — not because anything was wrong with the
+       restore, but because the list had never been swept at all on that boot
+       (the panel opens with `syncIndex` unable to scroll a zero-height box)
+       and the restore was the first scroll event the list had ever seen. A
+       search is not the moment to discover that.
+       THE FLAG IS ONLY ARMED WHEN THE SCROLL ACTUALLY MOVES, so it can never
+       be left standing to swallow a real sweep later. */
+    if (!want.length && restTop != null) {
+      const back = restTop; restTop = null;
+      if (idx.scrollTop !== back) idx.scrollTop = back;   // …and `restYi` is spent by the sweep it fires
+      else restYi = null;                                 // nothing moved, so nothing will sweep
+    }
+  }
+
   /* WHICH ROW IS THE RECORD ON THE PAGE — the list's own version of the globe's
      ring, keyed off the SAME `here`, so the map and the index cannot disagree
      about what is playing. Guarded on `here` so calling it from redraw() (which
@@ -1176,6 +1422,34 @@ export function mount(parent, ctx) {
   function sweep() {
     sweepRaf = 0;
     if (!idxBuilt || !tops.length) return;
+    /* THE EARTH DOES NOT MOVE WHILE YOU ARE TYPING (wave C, 2026-09-06). This
+       function is the ONE place a scroll of the list moves the year, and the
+       year is what decides which marks are drawn, which is lit, where the
+       camera is and what the sentence says. Filtering hides rows, so the row
+       under the read head changes without anybody scrolling — the globe would
+       spin under the finger on the keyboard, which is the thing this surface
+       was already complained about for ("I click on the globe and you scroll
+       me down the page"). A filtered list is a list you are READING, not an
+       instrument you are playing; pressing a row still flies the camera,
+       through `openRow`, exactly as it always has. */
+    if (filtering()) return;
+    /* …AND THE ONE SCROLL A CLEARED SEARCH WRITES IS THE READER BEING PUT
+       BACK, NOT THE READER MOVING. The year the search began on is restored
+       here rather than the sweep being merely skipped, and the difference is
+       measured: the list and the globe can legitimately be out of step when a
+       panel is opened on a record that arrived from somewhere else (the box
+       boots on the table now, so `syncIndex` cannot scroll a zero-height list
+       and never gets a second chance), and a search must not be the thing that
+       discovers it. MEASURED, test/atlas.js G24e: the sentence over the globe
+       read "1969 · 120 records" for the whole of a search and became "600 · 1
+       record · Rome" the instant the field was emptied — a year nobody asked
+       for, arriving as the side effect of being put back where you were.
+       `restYi` is armed only when the restore ACTUALLY MOVES the scroll, so it
+       is always spent by the sweep that move fires and can never be left
+       standing to snap a later gesture back. */
+    if (restYi != null) { const back = restYi; restYi = null;
+                          if (back !== yi) setYear(back); else need();
+                          return; }
     // the rows were measured once; if the box has been re-laid-out (a resize,
     // a font swap) the content is a different height and they are re-read.
     if (idxRows.scrollHeight !== measuredH) measureRows();
@@ -2590,7 +2864,26 @@ export function mount(parent, ctx) {
   if (typeof IntersectionObserver === "function") {
     new IntersectionObserver((es) => {
       onScreen = es[0].isIntersecting;
-      if (onScreen) { if (dirty) { dirty = false; need(); } return; }
+      if (onScreen) {
+        /* ...AND THE INSTRUMENT POINTS AT THE RECORD THE MOMENT YOU CAN SEE IT
+           (WAVE C, 2026-09-06). `syncIndex` already puts the list's read head
+           on the record the page is playing — that is what makes a globe tap,
+           a link and a rewrite leave the chronology pointing at what arrived —
+           and it has one precondition it cannot meet on its own since the box
+           started booting on the TABLE: `scrollToRow` needs a box with a
+           height, and a shut panel is `display: none`, so the scroll is
+           silently declined and never retried. MEASURED: open the picker on a
+           restored record and the sentence said "1969 · 120 records" over a
+           list standing at year 600 — two halves of one surface disagreeing
+           about what year it is, with the disagreement invisible until the
+           first scroll resolved it in the list's favour. The panel becoming
+           visible IS the retry, and this observer is where the page already
+           learns that. `force` because `here` has not changed — what changed
+           is that the list can finally act on it. */
+        syncIndex(true);
+        if (dirty) { dirty = false; need(); }
+        return;
+      }
       /* OFF SCREEN, THE MOTION ENDS — it is not parked and resumed. MEASURED:
          a glide that was still spending its budget when the section scrolled
          away came back to life the moment it scrolled into view again, and

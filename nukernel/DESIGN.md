@@ -108,6 +108,25 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     the record is a drill-down, and the sheet's resting state is one line. It
     replaces four rows above the grid and three below it; the `<tfoot>` then
     holds the MIX strips alone.
+19. **Text field** (TABLE.md §14a, off the review's item 8: *"A section has a
+    name. Types only today, so a form that plainly has a pre-chorus cannot say
+    so."*) — the one control on a sheet that is a KEYBOARD and not a
+    vocabulary, for a value nobody can offer: a single-line
+    `<input type="text">` drawn as an ordinary sheet row (label · box), taking
+    the row's slack, `--tap` tall, its type **≥ 16px** (`--t3`) because mobile
+    Safari zooms the page in on a smaller focused input and does not zoom back
+    out, wearing the same seated hairline every control in a sheet wears
+    (`#pan-band .nu-vsheet`: no box, one `--rule` underline, `--r0`), and
+    carrying the DOCUMENT's own cap as `maxlength` — read from the one owner of
+    that number, never restated. **Blank is the default**: the box is empty
+    when nothing is written, the value that stands in its place is its
+    PLACEHOLDER in `--dim`, and clearing the box deletes the key. **It writes
+    on commit, never on a keystroke** — blur, Enter, or a tap outside commits
+    (once, and only if the value changed); Escape puts the written value back
+    and gives up focus — so one edit is one document write and one undo step.
+    A tap outside is heard on `window` capture, BEFORE the sheet's own
+    close-on-outside listener on `document`, or the sheet takes the focused
+    input off the page and the letters are lost with no `blur`.
 
 ## 3 · Interaction laws
 

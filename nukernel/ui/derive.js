@@ -1234,7 +1234,8 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
       else {
         const b0 = { si, g, barSteps, steps: barSteps, first: true, lead: true,
                      ev: [], ...(sec.lvl ? { lvl: sec.lvl } : {}),
-                     ...(roleOf(sec) ? { role: roleOf(sec) } : {}) };
+                     ...(roleOf(sec) ? { role: roleOf(sec) } : {}),
+                     ...(sec.secname ? { secname: sec.secname } : {}) };
         puOf(barSteps, b0);
         b0.ev.sort((x, y) => x.off - y.off);
         out.push(b0);
@@ -1279,6 +1280,18 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
                     Present-only, exactly like `lvl` above: a roleless section
                     stamps no key. */
                  ...(roleOf(sec) ? { role: roleOf(sec) } : {}),
+                 /* ...AND WHAT THE SECTION IS CALLED, WHEN IT IS CALLED
+                    ANYTHING (WAVE C, 2026-09-06). REDESIGN-SCOPE item 8. The
+                    same sentence the paragraph above makes about `role`, one
+                    field along: this walk is the one that HAS the section, and
+                    an exporter that names a scene "Pre-chorus" can only do it
+                    if the bar carries the word. `role` stays beside it and is
+                    NOT replaced — the counting in export/score.js is by role
+                    ("Verse 1", "Verse 2"), and a named section still belongs
+                    to its type. PRESENT-ONLY, exactly like `role` and `lvl`:
+                    an unnamed section stamps no key and every reader of the
+                    bar list sees the exact object it always saw. */
+                 ...(sec.secname ? { secname: sec.secname } : {}),
                  /* WHICH STATEMENT OF A REPEATED SECTION THIS BAR IS IN, said
                     on the bar because the bar is what every reader downstream
                     holds. Present-only: a section that plays once stamps

@@ -5574,6 +5574,121 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         await zshut();
         await zrec(false);
 
+        /* ---- 14f · A SECTION HAS A NAME, AND THIS IS WHERE IT IS SET ---
+           docs/REDESIGN-SCOPE.md item 8: *"A section has a name. Types only
+           today, so a form that plainly has a pre-chorus cannot say so."* The
+           field is the one control on this surface that is a KEYBOARD and not
+           a vocabulary, so what is asserted is a text field's own four facts,
+           on the rendered page:
+             · it IS an `<input type=text>`, first in the section sheet's Form
+               group, `--tap` tall, its type at least 16px (under which mobile
+               Safari zooms the page in and does not zoom back out), carrying
+               the document's own cap as `maxlength` and the section's TYPE as
+               its placeholder — so the default is on the glass before the
+               first keystroke;
+             · TYPING WRITES NOTHING. The document is byte-identical after ten
+               keystrokes, which is the whole of "one document write" — every
+               write here normalises, recompiles and lands at the next bar, so
+               a write per letter would be eleven recompiles and eleven undo
+               steps for one word;
+             · COMMIT WRITES ONCE and the name reaches the ROW HEAD, which is
+               the plate a hand looks at (it drew the TYPE until this round —
+               `A.roleWord(s.role)` is a string and cannot know whether the
+               section it came out of has a name);
+             · ONE Ctrl-Z PUTS THE WHOLE EDIT BACK, byte for byte, and BLANK
+               returns the head to the type — absent is the default, said for
+               a word. */
+        await zshut();
+        await zrec(false);
+        const sid14 = await z.evaluate(() => {
+          const d = window.__eightDoc();
+          return d.form.sections[0] ? d.form.sections[0].id : null; });
+        const K14 = "form.name|" + sid14;
+        const nameBox = async () => z.evaluate((k) => {
+          const el = document.querySelector(
+            '#pan-band .nu-vsheet [data-k="' + k + '"]');
+          const head = document.querySelector(
+            "#pan-band tbody th.nu-srowh .nu-srowname") ||
+            document.querySelector("#pan-band thead th.nu-colhead .nu-colname");
+          const out = { head: head ? (head.textContent || "").trim() : null };
+          if (!el) return Object.assign(out, { there: false });
+          const r = el.getBoundingClientRect();
+          const grp = el.closest(".nu-sheetgroup");
+          const rows = grp ? [...grp.querySelectorAll(".nu-sheetrow")] : [];
+          return Object.assign(out, { there: true, tag: el.tagName,
+            type: el.type, h: +r.height.toFixed(1), w: +r.width.toFixed(1),
+            font: parseFloat(getComputedStyle(el).fontSize),
+            value: el.value, hint: el.getAttribute("placeholder"),
+            max: el.getAttribute("maxlength"),
+            group: grp ? grp.dataset.group : null,
+            first: rows.length > 0 &&
+                   rows.indexOf(el.closest(".nu-sheetrow")) === 0 }); }, K14);
+        const nameFocus = async () => z.evaluate((k) => { const el =
+          document.querySelector('#pan-band .nu-vsheet [data-k="' + k + '"]');
+          if (!el) return false; el.focus(); el.select(); return true; }, K14);
+        /* the keyboard has to arrive INSIDE the table for `onKey` to hear it,
+           and it must not be the input itself (which onKey lets alone). */
+        const gridFocus = async () => z.evaluate(() => { const el =
+          document.querySelector("#pan-band tbody th.nu-srowh .nu-rowjump") ||
+          document.querySelector("#pan-band .nu-sheetgrid tbody td .nu-wcell");
+          if (el) el.focus(); return !!el; });
+        if (!sid14) check(false, "T14f " + at + " · the record has no section");
+        else {
+          await ztap("trow|" + sid14);
+          const n0 = await nameBox();
+          const doc0 = await z.evaluate(() => JSON.stringify(window.__eightDoc()));
+          await nameFocus();
+          await z.keyboard.type("pre-chorus", { delay: 20 });
+          const midDoc = await z.evaluate(() =>
+            JSON.stringify(window.__eightDoc()));
+          const paneMid = await z.evaluate(() => { const p2 =
+            document.querySelector("#pan-band .nu-pane[data-pane=table]");
+            return p2 ? Math.round(p2.scrollTop) : -1; });
+          await z.keyboard.press("Enter");
+          await z.waitForTimeout(800);
+          const n1 = await nameBox();
+          const doc1 = await z.evaluate(() =>
+            window.__eightDoc().form.sections[0].name || null);
+          /* one Ctrl-Z, one whole edit back */
+          await gridFocus();
+          await z.keyboard.press("Control+z");
+          await z.waitForTimeout(800);
+          const back = await z.evaluate(() => JSON.stringify(window.__eightDoc()));
+          /* ...and blank returns the head to the type */
+          await ztap("trow|" + sid14);
+          await nameFocus();
+          await z.keyboard.type("pre-chorus", { delay: 15 });
+          await z.keyboard.press("Enter");
+          await z.waitForTimeout(800);
+          await nameFocus();
+          await z.keyboard.press("Backspace");
+          await z.keyboard.press("Enter");
+          await z.waitForTimeout(800);
+          const n2 = await nameBox();
+          const gone = await z.evaluate(() =>
+            "name" in window.__eightDoc().form.sections[0]);
+          check(n0.there && n0.tag === "INPUT" && n0.type === "text" &&
+                n0.first && n0.group === "form" &&
+                n0.h >= 44 && n0.font >= 16 && +n0.max > 0 &&
+                n0.value === "" && !!n0.hint && n0.head === n0.hint &&
+                midDoc === doc0 &&
+                doc1 === "pre-chorus" && n1.value === "pre-chorus" &&
+                n1.head === "pre-chorus" &&
+                back === doc0 &&
+                !gone && n2.head === n0.hint,
+            "T14f " + at + " · a section's NAME is editable from its sheet — " +
+            "a text field first in Form, " + n0.h + "px and " + n0.font +
+            "px type, placeholder " + JSON.stringify(n0.hint) + "; typing " +
+            "writes nothing (" + (midDoc === doc0 ? "document unmoved" :
+            "DOCUMENT MOVED") + "), commit writes once and reaches the row " +
+            "head, one Ctrl-Z is the whole edit (" + (back === doc0 ? "back" :
+            "NOT BACK") + "), blank returns to the type — " +
+            JSON.stringify([n0, { v: n1.value, head: n1.head }, doc1,
+                            { blank: n2.head, key: gone }, paneMid]));
+          await zshut();
+          await zrec(false);
+        }
+
         await c13.close();
       }
     }

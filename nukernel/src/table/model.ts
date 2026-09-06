@@ -16,7 +16,7 @@
 // existed (document.js putCell/putRow, eight.js addSection/addVoice/...,
 // push()/commit()/CTX.evolve for the recompile).
 
-import type { TableAPI, Field, StripField, Op, Choice, LaneSpec,
+import type { TableAPI, Field, StripField, TextField, Op, Choice, LaneSpec,
                Section, Voice } from "./api.js";
 import { t, tn } from "../copy/global.js";
 
@@ -163,6 +163,57 @@ export function shField(A: TableAPI, key: string,
     if (kinds.size < 2) return { ...base, node: A.combo(sp) };
   }
   return base;
+}
+
+/* ---- HOW LONG A NAME MAY BE IS `fields.js`'s AND NOT THIS FILE'S ------
+   `SECNAME_MAX` is one number with one owner (`fields.js`, which is also what
+   `document.js normalize` runs at the door), and `src/table` is its own build
+   entry — so it is READ OFF `globalThis`, exactly as `sheet.ts` reads the
+   lozenge field and the marks, and for the same reason an import would be
+   wrong. It answers NULL when the door is not there rather than falling back
+   to a number of its own: a copy of that constant here would be a second owner
+   of what a legal name is, and the box would happily accept a name the
+   document then truncated behind the hand. Without the door the input simply
+   carries no `maxlength` and the DOCUMENT still caps it, which is the honest
+   division — the field is a convenience, the door is the law. */
+interface FieldsDoor { SECNAME_MAX?: number }
+const textMax = (): number | null => {
+  const d = (globalThis as unknown as { NuFields?: FieldsDoor }).NuFields;
+  const n = d && d.SECNAME_MAX;
+  return typeof n === "number" && n > 0 ? n : null;
+};
+
+/** A FIELD A HAND TYPES INTO — the one shape on this surface that is not a
+ *  vocabulary (2026-09-06, wave C item 8: *"A section has a name"*).
+ *
+ *  It is `shField`'s twin and reads the SAME door: `avail.js` owns the label,
+ *  the current value, the write and the refusal, and the one thing this reads
+ *  that `shField` does not is `text: true` — the flag that says this row has
+ *  no menu to draw. A row that has NOT declared it comes back as an ordinary
+ *  field, so a caller cannot turn a vocabulary into a free-text box by asking
+ *  for one; the model decides, never the renderer.
+ *
+ *  `hint` IS THE DEFAULT ON THE GLASS. Blank means absent and absent means the
+ *  type's word, so the type is drawn as the placeholder — the same "blank =
+ *  default, bold = written" reading every cell on this page makes, said for a
+ *  word instead of for a value. */
+export function textField(A: TableAPI, key: string,
+                          scope: Record<string, unknown>,
+                          label: string | null,
+                          hint?: string | null): Field {
+  const sp = A.sh(key, scope, null);
+  if (!sp) return { kind: "say", label: label || key, word: "—",
+                    why: t("sheet.noOwner.why") };
+  if (!sp.text) return shField(A, key, scope, label);
+  const cur = sp.value == null ? "" : String(sp.value);
+  const f: TextField = {
+    kind: "text", key: sp.key, label: label || sp.label,
+    value: cur, hint: hint || null, max: textMax(), why: sp.why || null,
+    /* THE WRITE IS `avail.js`'s OWN, unwrapped and uncounted here: `grid.ts
+       wrapOps` puts every field's `set` through the undo stack, so a name is
+       one snapshot and one Ctrl-Z without this file knowing the stack exists. */
+    ...(sp.why ? {} : { set: (v: string) => sp.set(v) }) };
+  return f;
 }
 
 /** A NUMBER SAID AS WORDS. There is no `<input type=range>` anywhere on this
@@ -458,6 +509,17 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
      menu and on the header buttons too; the formula bar carries them because
      the formula bar is what a phone opens. */
   f.push({ kind: "ops", label: t("row.ops"), ops: rowOps(A, i, s) });
+  /* A NAME IS WHAT A HAND CAME TO SET (2026-09-06, wave C item 8: *"A section
+     has a name. Types only today, so a form that plainly has a pre-chorus
+     cannot say so."*). It stands FIRST in the Form group, above the type,
+     because a section's type is a vocabulary the record already answered and
+     its name is the one thing on this sheet nobody but a composer can write.
+     The TYPE does not move and is not replaced: it is still what the walk, the
+     tempo shaping and the exporter reason about, and the name is only what the
+     section is CALLED — which is why the type's word is the box's placeholder
+     rather than its value. */
+  form.push(textField(A, "form.name", { section: sid }, t("row.name"),
+                      A.roleWord(s.role)));
   form.push(shField(A, "form.role", { section: sid }, t("row.type")));
   form.push(numField(A, "bars|" + sid, t("row.bars"), s.bars, BARSTEPS,
     (v) => A.putRow(i, "bars", +v), false));

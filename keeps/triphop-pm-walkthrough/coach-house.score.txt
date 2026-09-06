@@ -1,0 +1,189 @@
+COACH HOUSE — a trip-hop song made in nukernel, after Bristol 1991
+84 BPM . 4/4 . G#/Ab natural minor . swing light . groove laid back . seed 74
+88 bars . 14 sections . 10 players . 27 motifs
+Read back from the app's own .mid export: MIDI type 1, 480 ppq, tempo 714286 us/quarter = 84 BPM.
+
+FORM AND THE VARIATION PLAN
+  intro 1        bars  1-4   lead OUT, answer OUT, strings fading, drone thinned, no drums, bass the first half
+  verse 2        bars  5-12  hook as written, answer OUT, riff OUT, counter thinned, drone fading, kit halftime
+  verse 3        bars 13-20  hook the first half, answer as written, riff in, drone fading, kit ghosts
+  build 4        bars 21-24  lead reads ANSWER in wider steps, strings climb, counter up a degree, bass eighths, kit s.dens
+  chorus 5       bars 25-32  hook as written +3dB, answer at the fifth, everything in, bass octaves, kit h.dens
+  verse 6        bars 33-40  hook INVERTED, answer OUT, riff OUT, counter thinned, kit halftime
+  build 7        bars 41-44  lead reads ANSWER a beat later, strings climb, bass eighths, kit roll
+  chorus 8       bars 45-48  hook as written +3dB, answer in contrary motion, bass octaves, kit h.dens
+  bridge 9       bars 49-56  PHRYGIAN. lead reads CLIMB, voice reads SKYLINE in retrograde, rhodes reads COUNTER, riff backwards, bass walk, kit tresillo
+  breakdown 10   bars 57-64  lead OUT -6dB, counter OUT, riff OUT, rhodes thinned, drone fading, bass the first half, kit sparse
+  build 11       bars 65-68  hook THE HEAD ONLY, strings climb, bass eighths, kit tomfill
+  chorus 12      bars 69-76  everything in +3dB, bass octaves, kit h.dens
+  chorus 13      bars 77-84  hook UP A DEGREE +6dB, riff filled in, counter in wider steps, bass sixteenths, kit amen
+  outro 14       bars 85-88  TAIL on rhodes, strings and bass; drone fading; kit stickside; fade out
+
+CHORDS (per section chart, aeolian degrees, one bar each)
+  verses      i  i  bVII bVII
+  choruses    i  bVI bVII iv
+  bridge      iv bVI i    bVII   (in phrygian)
+  breakdown   i  i  i    i
+
+THE SIX MOTIFS AS WRITTEN (scale degrees, 2 bars of 16ths each)
+  hook     0(long) . 4(leap of a 5th, accented) . 3 | 2 . #1 . 2 . 0(long)   -- long tones, one leap, a semitone turn
+  answer   7 . 6 . 4 . 3 | 2 . 4 . 2 . 1 . 2                                  -- falls from the octave, ends unresolved
+  bassfig  0 . 0 . b7 . 5 | 0 . 2 . 4 . b7-below                               -- a dub walk, never a pedal
+  skyline  7 . 5 . 6 | 7 . 5 . 4 . 5   (all offbeat entries)                   -- the counter-line, top of the register
+  pad      0 (2 beats) . 2 . 4 . 3                                             -- the chord figure, one tone a half-bar
+  tail     rest for a bar | b6 . b7 . #7 . 0                                   -- the turnaround, chromatic lead-back
+  (+ riff, climb, sparse, counter, topline, verseline, beat -- invented by the box and used as found)
+
+==============================================================================
+vocal  — solo vox      LEAD / hook
+  intro 1           2 notes  B4 A#4
+  verse 2          27 notes  G#4 D#5 C#5 B4 A#4 B4 G#4 D#5 C#5 B4 A#4 B4 G#4 G#4 F#4 C#5 ...
+  verse 3          58 notes  G#4 D#5 G#4 D#5 G#4 D#5 G#4 D#5 G#4 D#5 G#4 D#5 G#4 D#5 G#4 D#5 ...
+  build 4          18 notes  G#5 E5 A#4 F#4 D#4 A#4 D#4 B3 D#4 G#5 E5 A#4 F#4 D#4 A#4 D#4 ...
+  chorus 5         44 notes  G#4 D#5 C#5 B4 A#4 B4 G#4 B4 A4 G4 F#4 G4 E4 E4 F#4 C#4 ...
+  verse 6          37 notes  D#5 G#4 A#4 B4 C#5 B4 D#5 D#5 G#4 A#4 B4 C#5 B4 D#5 C#5 C#5 ...
+  build 7          18 notes  B4 G#5 F#5 D#5 C#5 B4 D#5 B4 A#4 B4 G#5 F#5 D#5 C#5 B4 D#5 ...
+  chorus 8         14 notes  G#4 D#5 C#5 B4 A#4 B4 G#4 E4 B4 A4 G4 F#4 G4 E4
+  bridge 9         50 notes  C#5 C#5 C#5 C#5 E5 G#5 D#6 E4 E4 E4 E4 G4 B4 F#5 G#4 G#4 ...
+  breakdown 10      2 notes  F#4 A#4
+  build 11         15 notes  G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4 G#4
+  chorus 12        52 notes  G#4 D#5 C#5 B4 A#4 B4 G#4 E4 B4 A4 G4 F#4 G4 E4 F#4 F#4 ...
+  chorus 13        41 notes  E4 E4 E4 E4 C4 C4 C4 C4 A3 D5 G#4 F#4 G#4 E4 D5 C#4 ...
+  outro 14          0 notes  
+
+==============================================================================
+piano  — rhodes ep     CHORDS / pad
+  intro 1           6 notes  D#2 G#2 B2 D#2 G#2 B2
+  verse 2          12 notes  D#2 G#2 B2 D#2 G#2 B2 C#2 F#2 A#2 C#2 F#2 A#2
+  verse 3          12 notes  D#2 G#2 B2 D#2 G#2 B2 C#2 F#2 A#2 C#2 F#2 A#2
+  build 4           6 notes  D#2 G#2 B2 D#2 G#2 B2
+  chorus 5         12 notes  D#2 G#2 B2 B1 E2 G#2 C#2 F#2 A#2 G#1 C#2 E2
+  verse 6          12 notes  D#2 G#2 B2 D#2 G#2 B2 C#2 F#2 A#2 C#2 F#2 A#2
+  build 7           6 notes  D#2 G#2 B2 D#2 G#2 B2
+  chorus 8          6 notes  D#2 G#2 B2 B1 E2 G#2
+  bridge 9         12 notes  E2 G#2 C#3 G#2 B2 E3 B2 D#3 G#3 A2 C#3 F#3
+  breakdown 10     12 notes  D#2 G#2 B2 D#2 G#2 B2 D#2 G#2 B2 D#2 G#2 B2
+  build 11          6 notes  D#2 G#2 B2 D#2 G#2 B2
+  chorus 12        12 notes  D#2 G#2 B2 B1 E2 G#2 C#2 F#2 A#2 G#1 C#2 E2
+  chorus 13        12 notes  D#2 G#2 B2 B1 E2 G#2 C#2 F#2 A#2 G#1 C#2 E2
+  outro 14          0 notes  
+
+==============================================================================
+pad2   — warm pad      COUNTER / skyline
+  intro 1           0 notes  
+  verse 2          19 notes  G#3 E3 G#3 D#3 E3 G#3 E3 G#3 D#3 E3 F#3 D3 F#3 C#3 D3 F#3 ...
+  verse 3          10 notes  F#4 F#3 F#3 E4 F#3 F#3 F#3 F#3 F#3 F#3
+  build 4          16 notes  F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3
+  chorus 5          2 notes  B3 A#3
+  verse 6          29 notes  G#3 E3 G#3 D#3 E3 G#3 E3 G#3 D#3 E3 F#4 F#3 D4 F#3 E4 F#3 ...
+  build 7          16 notes  F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3 F#3 G#3
+  chorus 8          0 notes  
+  bridge 9         10 notes  G#3 G#3 B3 G#3 G#3 G#3 G#3 G#3 G#3 G#3
+  breakdown 10      0 notes  
+  build 11          3 notes  D#3 E3 A#3
+  chorus 12        35 notes  G#3 E3 F#3 G#3 E3 D#3 E3 E3 C3 D3 E3 C3 B2 C3 F#4 F#3 ...
+  chorus 13        36 notes  G#3 C#3 E3 G#3 C#3 A#2 C#3 E3 A2 C3 E3 A2 F#2 A2 F#4 F#2 ...
+  outro 14          0 notes  
+
+==============================================================================
+pad    — strings       RIFF / riff, climb
+  intro 1           0 notes  
+  verse 2           0 notes  
+  verse 3           6 notes  F#3 A3 F#3 C#4 F#3 G#3
+  build 4           0 notes  
+  chorus 5          2 notes  G#4 C#4
+  verse 6           0 notes  
+  build 7           0 notes  
+  chorus 8          0 notes  
+  bridge 9          6 notes  F#3 A3 F#3 G#3 F#3 C#4
+  breakdown 10      0 notes  
+  build 11          0 notes  
+  chorus 12         2 notes  G#4 C#4
+  chorus 13        13 notes  G#4 C#4 C#4 C#4 C#4 C#4 C#4 C#4 C#4 C#4 C#4 D#4 C#4
+  outro 14          0 notes  
+
+==============================================================================
+drone  — slow strings  DRONE / sparse
+  intro 1           2 notes  D#3 G#2
+  verse 2          30 notes  D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 ...
+  verse 3          40 notes  D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 ...
+  build 4           0 notes  
+  chorus 5          0 notes  
+  verse 6          40 notes  D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 ...
+  build 7           0 notes  
+  chorus 8          0 notes  
+  bridge 9         10 notes  G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2
+  breakdown 10     28 notes  D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 ...
+  build 11          0 notes  
+  chorus 12        10 notes  F#2 F#2 F#2 F#2 F#2 F#2 F#2 F#2 F#2 F#2
+  chorus 13        19 notes  D#3 G#2 G#2 B2 E2 E2 F#2 C#3 F#2 F#2 F#2 F#2 F#2 F#2 F#2 F#2 ...
+  outro 14         16 notes  D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2 D#2
+
+==============================================================================
+line 7 — fretless bass BASS FIGURE / bassfig
+  intro 1           7 notes  G#2 G#2 G#2 G#2 G#2 G#2 G#2
+  verse 2          23 notes  G#2 G#2 F#3 D#3 G#2 B2 D#3 F#2 F#2 E3 C#3 F#2 A2 C#3 E2 F#2 ...
+  verse 3          34 notes  G#2 G#2 F#3 D#3 G#2 B2 D#3 F#2 F#2 F#2 E3 C#3 F#2 A2 C#3 E2 ...
+  build 4          18 notes  G#2 G#2 G#2 G#2 G#2 F#3 G#2 D#3 G#2 G#2 G#2 G#2 B2 G#2 D#3 G#2 ...
+  chorus 5         23 notes  E2 E2 D3 B2 E2 G2 B2 D2 F#2 E3 C#3 F#2 A2 C#3 E2 F#2 ...
+  verse 6          34 notes  G#2 G#2 F#3 D#3 G#2 B2 D#3 F#2 F#2 F#2 E3 C#3 F#2 A2 C#3 E2 ...
+  build 7          18 notes  G#2 G#2 G#2 G#2 G#2 F#3 G#2 D#3 G#2 G#2 G#2 G#2 B2 G#2 D#3 G#2 ...
+  chorus 8          8 notes  E2 E2 D3 B2 E2 G2 B2 D2
+  bridge 9         34 notes  D2 B2 G2 E2 B2 D3 E2 E2 F#2 D#3 B2 G#2 D#3 F#3 G#2 G#2 ...
+  breakdown 10     21 notes  G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 G#2 ...
+  build 11         15 notes  G#2 G#2 G#2 G#2 G#2 F#3 G#2 D#3 G#2 G#2 G#2 G#2 B2 G#2 D#3
+  chorus 12        31 notes  E2 E2 D3 B2 E2 G2 B2 D2 F#2 F#2 E3 C#3 F#2 A2 C#3 E2 ...
+  chorus 13        33 notes  E2 E2 D3 B2 E2 G2 B2 D2 F#2 F#2 E3 C#3 F#2 A2 C#3 E2 ...
+  outro 14          4 notes  D#2 E2 G2 G#2
+
+==============================================================================
+bass   — acoustic bass PEDAL
+  intro 1           1 notes  C2
+  verse 2           4 notes  C2 C2 C2 C2
+  verse 3           4 notes  C2 C2 C2 C2
+  build 4          32 notes  C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 ...
+  chorus 5          4 notes  C2 E3 F#2 C#3
+  verse 6           4 notes  C2 C2 C2 C2
+  build 7          32 notes  C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 ...
+  chorus 8          2 notes  C2 E3
+  bridge 9         16 notes  C#2 E2 G#2 D#2 E2 B2 G#2 C2 C2 C2 D#2 F2 F#2 C#3 A2 C2
+  breakdown 10      4 notes  C2 C2 C2 C2
+  build 11         32 notes  C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 ...
+  chorus 12         4 notes  C2 E3 F#2 C#3
+  chorus 13       124 notes  C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 ...
+  outro 14          2 notes  C2 C2
+
+==============================================================================
+line 8 — vocal stab    STAB / tail
+  intro 1           0 notes  
+  verse 2           0 notes  
+  verse 3           0 notes  
+  build 4           0 notes  
+  chorus 5         21 notes  F#3 A#3 C#4 F#3 A#3 C#4 F#3 A#3 C#4 F#3 A#3 C#4 E3 G#3 C#4 E3 ...
+  verse 6           0 notes  
+  build 7           0 notes  
+  chorus 8          0 notes  
+  bridge 9          0 notes  
+  breakdown 10      0 notes  
+  build 11          0 notes  
+  chorus 12        18 notes  F#3 A#3 C#4 F#3 A#3 C#4 F#3 A#3 C#4 F#3 A#3 C#4 E3 G#3 C#4 E3 ...
+  chorus 13        21 notes  F#3 A#3 C#4 F#3 A#3 C#4 F#3 A#3 C#4 F#3 A#3 C#4 E3 G#3 C#4 E3 ...
+  outro 14          0 notes  
+
+==============================================================================
+kit    — electronic    BEAT
+  intro 1           6 hits
+  verse 2          69 hits
+  verse 3         136 hits
+  build 4          53 hits
+  chorus 5        105 hits
+  verse 6          63 hits
+  build 7          62 hits
+  chorus 8         56 hits
+  bridge 9         96 hits
+  breakdown 10     49 hits
+  build 11         50 hits
+  chorus 12       100 hits
+  chorus 13       108 hits
+  outro 14         52 hits
+

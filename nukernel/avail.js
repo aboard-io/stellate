@@ -803,6 +803,39 @@
       set: (doc, s, v) => { const c = CHORD(PROGIN(doc, s), s); if (c) c.q = v; } },
 
     /* ---- 4 FORM (one section) ---- */
+    /* THE SECTION'S OWN NAME (WAVE C, 2026-09-06) — REDESIGN-SCOPE item 8:
+       *"A section has a name. Types only today, so a form that plainly has a
+       pre-chorus cannot say so."*
+
+       IT IS THE ONE ROW IN THIS TABLE THAT IS NOT A VOCABULARY, and it says so
+       with `text: true` rather than by having an empty `values` and hoping.
+       Every other sheet here answers "which of these words", and its whole
+       machinery — the gates table, the extractor's per-option rules, the
+       standing-answer rule, the lozenge's families — is about a fixed set. A
+       NAME has no set: `values` is empty on purpose and honestly, and a
+       renderer that meets `text` draws a one-line field instead of a menu.
+       (`ui/eight.js wCell` carries the flag through to whoever draws it;
+       `gates-extract.js` fits no rule on a row with no options, which is the
+       right answer for a field whose values a record invents.)
+
+       ABSENT IS THE TYPE'S WORD, which is why `get` hands back the empty
+       string rather than the role: a field showing "verse" when nothing has
+       been typed would make every unnamed section look named, and the first
+       edit would be a deletion of a word the composer never wrote.
+       `fields.js secNameOf` is the one owner of what a legal name is — the
+       same function `document.js normalize` runs at the door — so the sheet
+       and the record cannot disagree about what was just typed, and an empty
+       one DELETES the key rather than storing "".
+       `NuDocument.putRow` is not called here: this table's contract is that a
+       row's `set` writes the document and `ui/eight.js shSpec` calls
+       `changed()` after it, exactly as `form.role` two rows down does. */
+    "form.name": { get label() { return T("row.name"); }, scope: "section",
+      text: true, local: true,
+      values: () => [],
+      get: (doc, s) => SEC(doc, s).name || "",
+      set: (doc, s, v) => { const x = SEC(doc, s); if (!x.id) return;
+        const nm = NF.secNameOf(v);
+        if (nm) x.name = nm; else delete x.name; } },
     "form.role": { get label() { return T("row.type"); }, scope: "section",
       values: () => opts(Object.keys(ROLES), ROLES),
       get: (doc, s) => SEC(doc, s).role,

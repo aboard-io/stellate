@@ -556,6 +556,36 @@ function shField(A2, key, scope, label) {
   }
   return base;
 }
+var textMax = () => {
+  const d2 = globalThis.NuFields;
+  const n3 = d2 && d2.SECNAME_MAX;
+  return typeof n3 === "number" && n3 > 0 ? n3 : null;
+};
+function textField(A2, key, scope, label, hint) {
+  const sp = A2.sh(key, scope, null);
+  if (!sp) return {
+    kind: "say",
+    label: label || key,
+    word: "—",
+    why: t4("sheet.noOwner.why")
+  };
+  if (!sp.text) return shField(A2, key, scope, label);
+  const cur = sp.value == null ? "" : String(sp.value);
+  const f2 = {
+    kind: "text",
+    key: sp.key,
+    label: label || sp.label,
+    value: cur,
+    hint: hint || null,
+    max: textMax(),
+    why: sp.why || null,
+    /* THE WRITE IS `avail.js`'s OWN, unwrapped and uncounted here: `grid.ts
+       wrapOps` puts every field's `set` through the undo stack, so a name is
+       one snapshot and one Ctrl-Z without this file knowing the stack exists. */
+    ...sp.why ? {} : { set: (v3) => sp.set(v3) }
+  };
+  return f2;
+}
 function numField(A2, key, label, cur, steps, set, clearable, noneWord) {
   const has = cur !== "" && cur != null;
   const list = steps.slice();
@@ -766,6 +796,13 @@ function rowSheet(A2, i5) {
   const f2 = [];
   const form = [], time = [], keyG = [], feel = [], chain = [];
   f2.push({ kind: "ops", label: t4("row.ops"), ops: rowOps(A2, i5, s3) });
+  form.push(textField(
+    A2,
+    "form.name",
+    { section: sid },
+    t4("row.name"),
+    A2.roleWord(s3.role)
+  ));
   form.push(shField(A2, "form.role", { section: sid }, t4("row.type")));
   form.push(numField(
     A2,
@@ -1592,6 +1629,8 @@ function fieldRow(f2, openField, setOpenField, after) {
       ${n3.node ? n3.node : A}
     </div>`;
   }
+  if (f2.kind === "text")
+    return textRow(f2, after);
   if (f2.kind === "say" || !f2.options || !f2.options.length) {
     const s3 = f2;
     return b`<div class="nu-sheetrow">
@@ -1698,6 +1737,76 @@ function fieldRow(f2, openField, setOpenField, after) {
       ${clearBack}
       ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>${open ? pick === "lozenge" ? lozengeFor(sf, write) : chipStrip(sf, write) : A}`;
+}
+var TEXTARMED = false;
+function armText() {
+  if (TEXTARMED || typeof addEventListener !== "function") return;
+  TEXTARMED = true;
+  addEventListener("pointerdown", (e4) => {
+    const el = document.activeElement;
+    if (!el || !el.classList || !el.classList.contains("nu-textbox")) return;
+    const t22 = e4.target;
+    if (t22 && (el === t22 || el.contains(t22))) return;
+    const c3 = el._nuCommit;
+    if (c3) {
+      el._nuCommit = null;
+      c3();
+    }
+  }, true);
+}
+function textRow(tf, after) {
+  const cur = tf.value || "";
+  const commit = (el) => {
+    const v3 = el.value;
+    if (v3.trim() === cur.trim()) {
+      el.value = cur;
+      return;
+    }
+    try {
+      if (tf.set) tf.set(v3);
+    } catch (e4) {
+    }
+    after();
+  };
+  return b`<div class="nu-sheetrow nu-textrow">
+    <b class="nu-sheetlab">${tf.label}</b>
+    <input class=${e3({ "nu-textbox": true, "is-derived": !cur })}
+      type="text" data-k=${tf.key}
+      .value=${cur}
+      maxlength=${o2(tf.max ? String(tf.max) : void 0)}
+      placeholder=${o2(tf.hint || void 0)}
+      ?disabled=${!tf.set}
+      aria-disabled=${o2(tf.set ? void 0 : "true")}
+      data-why=${o2(tf.why || void 0)}
+      title=${o2(tf.why || void 0)}
+      autocomplete="off" autocorrect="off" spellcheck="false"
+      enterkeyhint="done"
+      aria-label=${tf.why ? t4(
+    "sheet.field.refused",
+    { name: tf.label, why: tf.why }
+  ) : tf.label}
+      @focus=${(e4) => {
+    armText();
+    const el = e4.target;
+    el._nuCommit = () => commit(el);
+  }}
+      @keydown=${(e4) => {
+    const el = e4.target;
+    if (e4.key === "Enter") {
+      e4.preventDefault();
+      el.blur();
+    } else if (e4.key === "Escape") {
+      e4.preventDefault();
+      el.value = cur;
+      el.blur();
+    }
+  }}
+      @blur=${(e4) => {
+    const el = e4.target;
+    el._nuCommit = null;
+    commit(el);
+  }} />
+  </div>`;
 }
 function lozengeFor(f2, onWrite) {
   const door = LOZ();
@@ -2558,7 +2667,7 @@ function bandTable(host, A2) {
       e4.preventDefault();
       toggle("row|" + sid, true);
     }}
-        >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}${headWord(A2.roleWord(s3.role))}<span class="nu-colinstr">${tn("count.bar", s3.bars)}</span>${sm ? b`<span class="nu-vh">${sm.w}</span>` : A}</button>
+        >${sm ? b`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : A}${headWord(A2.secWord(i5))}<span class="nu-colinstr">${tn("count.bar", s3.bars)}</span>${sm ? b`<span class="nu-vh">${sm.w}</span>` : A}</button>
       ${grip(sid, "tcol|" + sid, A2.secName(i5))}
     </th>`;
   };
@@ -2673,7 +2782,7 @@ function bandTable(host, A2) {
       toggle("row|" + sid, true);
     }}
         ><span data-live="count"><span>${i5 + 1}</span></span
-        ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span></button>
+        ><span class="nu-srowname"> ${A2.secWord(i5)}</span></button>
       <small> ${tn("count.bar", s3.bars)}</small>
     </th>`;
   };

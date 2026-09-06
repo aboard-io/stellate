@@ -39,7 +39,7 @@ import { html, nothing } from "lit/html.js";
 import type { TemplateResult } from "lit/html.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
-import type { Field, StripField, Choice } from "./api.js";
+import type { Field, StripField, TextField, Choice } from "./api.js";
 import { pickerFor as pick } from "../menus/pick.js";
 import { t, fmt } from "../copy/global.js";
 
@@ -353,6 +353,8 @@ function fieldRow(f: Field, openField: string | null,
       ${n.node ? n.node : nothing}
     </div>`;
   }
+  if ((f as { kind?: string }).kind === "text")
+    return textRow(f as TextField, after);
   if ((f as { kind?: string }).kind === "say" ||
       !(f as StripField).options || !(f as StripField).options!.length) {
     /* A READOUT, AND A REFUSAL IS A READOUT WITH A REASON ON IT. 4's own law:
@@ -481,6 +483,91 @@ function fieldRow(f: Field, openField: string | null,
       ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>${open ? (pick === "lozenge" ? lozengeFor(sf, write)
                                        : chipStrip(sf, write)) : nothing}`;
+}
+
+/* ---- A NAME A HAND TYPES (2026-09-06, wave C item 8) ------------------
+   *"A section has a name. Types only today, so a form that plainly has a
+   pre-chorus cannot say so."* Every other row of every sheet on this surface
+   offers a VOCABULARY; this one offers the keyboard, and it is drawn as one
+   ordinary sheet row — label, control, nothing else — so a section's name
+   reads as a field of the section and not as a special case.
+
+   ===== IT WRITES ON COMMIT AND NEVER ON A KEYSTROKE ====================
+   Every `set` on this page is a document write that normalises, RECOMPILES and
+   lands at the next bar, and `grid.ts wrapOps` puts each one on the undo stack.
+   A write per keystroke would therefore be a recompile per keystroke and
+   "pre-chorus" would be eleven Ctrl-Zs. So the box holds the letters and the
+   document hears one sentence: BLUR or ENTER commits, ESCAPE puts the written
+   name back and gives up focus, and a value equal to what is already there is
+   not a write at all (the same "nothing changed is not an op" the stack keeps).
+
+   ===== A TAP OUTSIDE IS A COMMIT, AND IT HAS TO BE HEARD FIRST =========
+   `grid.ts armOutside` closes an open sheet on a `pointerdown` outside it, in
+   the CAPTURE phase on `document` — and closing the sheet removes this input
+   from the page. Chromium fires no `blur` for a focused element that is
+   removed, so a name typed and then dismissed by tapping the background would
+   have been silently dropped: this repo's characteristic bug ("declared but
+   never arriving"), on the one control where the loss is a person's own words.
+   The commit is therefore armed on `window` — capture on the window runs
+   BEFORE capture on the document, so the letters are in the record before the
+   sheet that held them goes away. One listener for the page, added the first
+   time such a box is focused, reading `document.activeElement` rather than
+   holding a reference to anything. */
+type Committer = HTMLInputElement & { _nuCommit?: (() => void) | null };
+let TEXTARMED = false;
+function armText(): void {
+  if (TEXTARMED || typeof addEventListener !== "function") return;
+  TEXTARMED = true;
+  addEventListener("pointerdown", (e: Event) => {
+    const el = document.activeElement as Committer | null;
+    if (!el || !el.classList || !el.classList.contains("nu-textbox")) return;
+    const t2 = e.target as Node | null;
+    if (t2 && (el === t2 || el.contains(t2))) return;
+    const c = el._nuCommit;
+    if (c) { el._nuCommit = null; c(); }
+  }, true);
+}
+
+function textRow(tf: TextField, after: () => void): TemplateResult {
+  const cur = tf.value || "";
+  const commit = (el: HTMLInputElement) => {
+    const v = el.value;
+    /* NOTHING CHANGED IS NOT A WRITE. Trimmed on both sides because
+       `fields.js secNameOf` trims at the door, so " verse " and "verse" are
+       the same name and only one of them would have made it into the record. */
+    if (v.trim() === cur.trim()) { el.value = cur; return; }
+    try { if (tf.set) tf.set(v); } catch (e) {}
+    after();
+  };
+  return html`<div class="nu-sheetrow nu-textrow">
+    <b class="nu-sheetlab">${tf.label}</b>
+    <input class=${classMap({ "nu-textbox": true, "is-derived": !cur })}
+      type="text" data-k=${tf.key}
+      .value=${cur}
+      maxlength=${ifDefined(tf.max ? String(tf.max) : undefined)}
+      placeholder=${ifDefined(tf.hint || undefined)}
+      ?disabled=${!tf.set}
+      aria-disabled=${ifDefined(tf.set ? undefined : "true")}
+      data-why=${ifDefined(tf.why || undefined)}
+      title=${ifDefined(tf.why || undefined)}
+      autocomplete="off" autocorrect="off" spellcheck="false"
+      enterkeyhint="done"
+      aria-label=${tf.why ? t("sheet.field.refused",
+                              { name: tf.label, why: tf.why })
+                          : tf.label}
+      @focus=${(e: Event) => { armText();
+        const el = e.target as Committer;
+        el._nuCommit = () => commit(el); }}
+      @keydown=${(e: KeyboardEvent) => {
+        const el = e.target as HTMLInputElement;
+        /* ENTER COMMITS THROUGH THE BLUR, so there is ONE committer and not
+           two racing each other on the same keypress. */
+        if (e.key === "Enter") { e.preventDefault(); el.blur(); }
+        else if (e.key === "Escape") { e.preventDefault(); el.value = cur;
+                                       el.blur(); } }}
+      @blur=${(e: Event) => { const el = e.target as Committer;
+        el._nuCommit = null; commit(el); }} />
+  </div>`;
 }
 
 /* ---- THE LOZENGE FIELD, UNDER ITS OWN ROW (2026-09-05) ----------------

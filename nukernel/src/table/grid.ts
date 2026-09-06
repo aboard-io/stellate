@@ -1072,7 +1072,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         data-say=${ifDefined(sm && sm.s ? sm.s : undefined)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
         >${sm ? html`<span class="nu-g" aria-hidden="true">${sm.g}</span>` : nothing
-        }${headWord(A.roleWord(s.role))
+        }${headWord(A.secWord(i))
         }<span class="nu-colinstr">${tn("count.bar", s.bars)}</span>${
         sm ? html`<span class="nu-vh">${sm.w}</span>` : nothing}</button>
       ${grip(sid, "tcol|" + sid, A.secName(i))}
@@ -1253,6 +1253,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      nothing, and the two gates that sweep `button .nu-g` for a name and a
      `.nu-vh` (test/shell.js A6h, test/text-diet.test.js T2) ask about buttons
      that HAVE a mark. */
+  /* ...AND THE PLATE SAYS WHAT THE SECTION CALLS ITSELF (2026-09-06, wave C
+     item 8: *"A section has a name"*). It read `A.roleWord(s.role)` — which is
+     a string, and a string cannot know whether the section it came out of has
+     a name — so a hand that typed `pre-chorus` into the section's own sheet
+     saw it in the accessible name, in the score and in the Live set, and not
+     on the row it had just named. `A.secWord(i)` is the same fact asked of the
+     INDEX and it answers the type's word where nothing is written, so an
+     unnamed record draws byte for byte what it drew before. The two sites are
+     this one and `secHead` (the same plate when the table is turned). */
   const secRowHead = (sid: string) => {
     const i = A.doc().form.sections.findIndex((s) => s.id === sid);
     const s = A.doc().form.sections[i]!;
@@ -1263,7 +1272,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         @click=${() => toggle("row|" + sid)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
         ><span data-live="count"><span>${i + 1}</span></span
-        ><span class="nu-srowname"> ${A.roleWord(s.role)}</span></button>
+        ><span class="nu-srowname"> ${A.secWord(i)}</span></button>
       <small> ${tn("count.bar", s.bars)}</small>
     </th>`;
   };

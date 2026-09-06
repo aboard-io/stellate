@@ -1782,6 +1782,144 @@ function g18() {
     "camera to it, so a far-side place is one Tab away rather than unreachable" +
     (missed.length ? " — missed " + JSON.stringify(missed.slice(0, 4)) : ""));
 
+  /* ===== G24 · THE INDEX IS SEARCHABLE (WAVE C, 2026-09-06) =============
+     docs/REDESIGN-SCOPE.md item 7 and the walkthrough's second friction:
+     *"Reaching the trip-hop row is 19,306 px of scrolling in one chronological
+     list with no search, no year jump, and a globe that eats taps where a
+     filter strip appears to be."*
+
+     THE BEFORE NUMBER IS RE-TAKEN HERE, ON THIS TREE, rather than quoted: the
+     catalogue has grown to 479 rows since the walkthrough and the distance
+     with it. What the gate asserts is the AFTER, and the before is printed
+     beside it so the two are read together.
+
+     SIX CLAIMS, and every one of them is read off the rendered list:
+       a · the field is ONE LINE, in flow, above the rows, and nothing floats
+       b · typing narrows the list, by NAME, PLACE, YEAR, ERA and FAMILY, and
+           the match is accent- and case-insensitive
+       c · the count says how much of the catalogue is showing, and a search
+           with nothing in it says so in a sentence
+       d · TYPING DOES NOT MOVE THE EARTH — the sentence over the globe is the
+           same string before, during and after a search
+       e · clearing restores all 479 rows AND the place in the list you were
+           standing in, which is the same fact said twice
+       f · an era chip JUMPS: the list moves, the year follows it, and the
+           chronology is still whole */
+  {
+    await fresh();
+    /* THE PANEL HAS TO BE OPEN BEFORE ANYTHING IS MEASURED. Since 2026-09-09
+       the box boots on `Where` and then CLOSES it — the table is the page and
+       the picker is a plate on the bar — so every rect inside `#atlas` is 0x0
+       on a page nobody has opened it on. `bring()` is the helper that presses
+       it, exactly as `setYear` and G23 do. (Measured the hard way: the first
+       run of this check reported "top 0 px, strip 0 px" and 0 rows for every
+       search, which is what a `display: none` panel says about itself.) */
+    await bring();
+    await p.waitForTimeout(1200);
+    const box = await p.evaluate(() => {
+      const f = document.getElementById("atlasFind");
+      const q = document.getElementById("atlasQ");
+      const idx = document.getElementById("atlasIndex");
+      const rows = document.getElementById("atlasIndexRows");
+      const base = idx.getBoundingClientRect().top - idx.scrollTop;
+      const th = [...rows.children].find((n) => n.dataset.gk === "triphop");
+      const cs = getComputedStyle(f);
+      return { top: Math.round(f.getBoundingClientRect().top),
+               h: Math.round(f.getBoundingClientRect().height),
+               pos: cs.position, qh: Math.round(q.getBoundingClientRect().height),
+               n: rows.children.length, listH: rows.scrollHeight,
+               triphop: th ? Math.round(th.getBoundingClientRect().top - base) : null,
+               page: document.documentElement.scrollWidth -
+                     document.documentElement.clientWidth };
+    });
+    check(box.pos === "static" && box.top > 0 && box.qh <= 56,
+      "G24a · the field is one line, in flow, at the head of the list — top " +
+      box.top + " px, strip " + box.h + " px, field " + box.qh + " px, position " +
+      box.pos + ", no sideways page scroll (" + box.page + " px)");
+    note("G24 · BEFORE: " + box.n + " rows, " + box.listH +
+         " px of list, and the trip-hop row " + box.triphop + " px down it");
+
+    const find = async (term) => {
+      await p.evaluate((w) => {
+        const q = document.getElementById("atlasQ");
+        q.value = w;
+        q.dispatchEvent(new Event("input", { bubbles: true }));
+      }, term);
+      await p.waitForTimeout(120);
+      return p.evaluate(() => {
+        const rows = document.getElementById("atlasIndexRows");
+        const idx = document.getElementById("atlasIndex");
+        const base = idx.getBoundingClientRect().top - idx.scrollTop;
+        const vis = [...rows.children].filter((n) => !n.hidden &&
+          n.getBoundingClientRect().height > 0);
+        const th = vis.find((n) => n.dataset.gk === "triphop");
+        return { n: vis.length, gk: vis.slice(0, 5).map((x) => x.dataset.gk),
+                 top: th ? Math.round(th.getBoundingClientRect().top - base) : null,
+                 ms: +document.getElementById("atlasFind").dataset.ms,
+                 count: document.getElementById("atlasCount").textContent,
+                 say: document.getElementById("atlasSay").textContent };
+      });
+    };
+    const sayWas = await p.evaluate(() =>
+      document.getElementById("atlasSay").textContent);
+    const r1 = await find("trip");
+    check(r1.gk.indexOf("triphop") >= 0 && r1.top != null && r1.top < 200,
+      "G24b · \"trip\" puts the trip-hop row " + r1.top + " px into the list " +
+      "(from " + box.triphop + "), " + r1.n + " rows showing, " + r1.ms + " ms");
+    const r2 = await find("cordoba");
+    check(r2.n > 0 && r2.n < 20,
+      "G24b · the match is accent-insensitive — \"cordoba\" finds Córdoba (" +
+      r2.n + " rows: " + r2.gk.join(", ") + ")");
+    const r3 = await find("club bristol");
+    check(r3.n > 0 && r3.gk.indexOf("triphop") >= 0,
+      "G24b · every token must match — a FAMILY and a PLACE together (" +
+      r3.n + " rows: " + r3.gk.join(", ") + ")");
+    const r4 = await find("1991");
+    check(r4.n > 0 && r4.gk.indexOf("triphop") >= 0,
+      "G24b · …and a YEAR (" + r4.n + " rows)");
+    const r5 = await find("the seventies");
+    check(r5.n > 10,
+      "G24b · …and an ERA word (" + r5.n + " rows in the seventies)");
+    const r6 = await find("qqzzxx");
+    check(r6.n === 0 && /\S/.test(r6.count) && r6.count.split(/\s+/).length >= 2,
+      "G24c · nothing matched, and it SAYS so in a sentence — " +
+      JSON.stringify(r6.count));
+    check(r1.say === sayWas && r5.say === sayWas && r6.say === sayWas,
+      "G24d · typing never moved the earth — the sentence over the globe is " +
+      JSON.stringify(sayWas) + " before, during and after");
+    const cleared = await find("");
+    check(cleared.n === box.n && cleared.say === sayWas,
+      "G24e · clearing restores all " + cleared.n + " rows and the place you " +
+      "were standing in (the sentence is " + JSON.stringify(cleared.say) + ")");
+
+    const jumped = await p.evaluate(async () => {
+      const chips = [...document.querySelectorAll("#atlasJump button[data-y]")];
+      const c = chips.find((x) => x.dataset.y === "1970") ||
+                chips[chips.length - 1];
+      const idx = document.getElementById("atlasIndex");
+      const was = idx.scrollTop;
+      c.click();
+      await new Promise((r) => setTimeout(r, 400));
+      const rows = document.getElementById("atlasIndexRows");
+      const bx = idx.getBoundingClientRect();
+      const seen = [...rows.children].filter((n) => {
+        const r = n.getBoundingClientRect();
+        return r.bottom > bx.top && r.top < bx.bottom && n.dataset.year;
+      }).map((n) => +n.dataset.year);
+      return { chips: chips.length, was, now: idx.scrollTop, want: +c.dataset.y,
+               seen: seen.length ? [Math.min(...seen), Math.max(...seen)] : [],
+               shown: [...rows.children].filter((n) => !n.hidden).length,
+               say: document.getElementById("atlasSay").textContent };
+    });
+    check(jumped.chips === 26 && jumped.now !== jumped.was &&
+          jumped.seen.length === 2 &&
+          jumped.seen[0] <= jumped.want && jumped.want <= jumped.seen[1] + 12,
+      "G24f · an era chip JUMPS — " + jumped.chips + " chips, " + jumped.was +
+      " px to " + jumped.now + " px, and " + jumped.want + " is on screen (" +
+      jumped.seen.join("–") + "); the chronology is still whole (" +
+      jumped.shown + " rows) and the year followed — " + JSON.stringify(jumped.say));
+  }
+
   /* ---- G11 (last) THE ORDER A READER MEETS IT IN ---------------------- */
   /* DOM ORDER IS READING ORDER IS TAB ORDER, and this is the assertion that
      caught the plan putting the slider UNDER the globe: Tab from the slider
@@ -1792,8 +1930,18 @@ function g18() {
   await p.waitForTimeout(900);
   await setYear(1969);
   await p.waitForTimeout(250);
+  /* AN id-LESS CHILD IS NAMED BY ITS CLASS (2026-09-06). This mapped
+     `tagName + "#" + id` alone, and the sheet chrome that arrived with the
+     §10b round — `DIV.nu-sheethead`, the "Where ×" bar the shell puts on an
+     OPEN sheet — has no id, so this check reported a bare `DIV#` and had been
+     RED on HEAD before wave C touched it (measured on a `git archive HEAD`
+     tree, 2026-09-06: `["DIV#","H2#atlasHead","P#atlasSay","DIV#atlasWrap",
+     "DIV#atlasIndex"]`). A gate whose failure message cannot name the element
+     it is failing on is a gate nobody can act on; the head is a real part of
+     the reading order and is asserted as one. */
   const order = await p.evaluate(() =>
-    [...document.getElementById("atlas").children].map((n) => n.tagName + "#" + n.id));
+    [...document.getElementById("atlas").children]
+      .map((n) => n.tagName + "#" + (n.id || "." + n.className)));
   /* THE LIST OF CHILDREN HAS BEEN FOUR, THEN SIX, AND IS THREE — 2026-08-29 —
      AND THE CLAIM HAS NOT MOVED ONCE. Each rewrite is a control leaving:
        · 2026-08-27, `P#atlasActs` ("another take") went to the transport;
@@ -1810,9 +1958,24 @@ function g18() {
      line said 201 at a 201-row map and the list has never been a subset of
      WHEN, so the number was a snapshot of the catalog, not of this gate.) The places are still ahead of the reader in the tab order
      and never behind them, which is the promise this check exists for. */
+  /* ...AND A FIFTH ARRIVED 2026-09-06, WHICH IS THE LIST'S OWN HEAD (WAVE C,
+     docs/REDESIGN-SCOPE.md item 7): `P#atlasFind` — a search field, 26 era
+     chips and the count of what is showing. It sits BETWEEN the globe and the
+     rows and the claim above is unchanged by it, which is the test this
+     insertion had to pass: the argument was never "nothing may stand here", it
+     was *"a reader must not meet the earth before the control that decides
+     which places are on it"*, and this control decides nothing of the kind —
+     `sweep()` refuses to move the year while a filter is up, precisely so that
+     typing cannot turn the globe. What it IS is the head of the list it
+     filters, in front of the rows and behind the picture, which is where a
+     table's own filter belongs and where a thumb reaches it after the map
+     rather than instead of it. The places are still ahead of the reader in the
+     tab order and never behind them. */
   check(JSON.stringify(order) === JSON.stringify(
-      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWrap", "DIV#atlasIndex"]),
-    "G11 · reading order is heading, sentence, globe, then the genre list — " +
+      ["DIV#.nu-sheethead", "H2#atlasHead", "P#atlasSay", "DIV#atlasWrap",
+       "P#atlasFind", "DIV#atlasIndex"]),
+    "G11 · reading order is the sheet's head, the heading, the sentence, the " +
+    "globe, the list's own head, then the genre list — " +
     JSON.stringify(order));
   /* THE WALK STARTS AT THE GLOBE, NOT AT THE SLIDER (2026-08-29). It focused
      `#atlasYear`, which was the element immediately before the map; the map

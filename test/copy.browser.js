@@ -237,6 +237,23 @@ const VOCAB = function () {
       for (const m of Object.keys((d.material || {}).prov || {})) add(m);
       for (const b of Object.keys(d.bank || {})) add(b);
     } } catch (e) {}
+  /* 3b · THE ATLAS'S OWN NAMES — WHERE AND WHEN, WHICH ARE DATA (WAVE C,
+     2026-09-06). `nukernel/atlas.js` is a committed table of places and of the
+     era words those places' years fall in; `atlas.gate.js` G5b holds every one
+     of those words to a REAL catalogue year, which is exactly the test that
+     makes it data rather than prose. The globe prints the places on its marks,
+     the index prints them in its rows, and the era chips print the era words —
+     three surfaces, one table, and not one of the strings is a sentence about
+     the app.
+     IT WAS ADDED WHEN THE CHIPS ARRIVED and it covers what was already there:
+     before wave C the only atlas words on a sampled surface were places, which
+     rode in on the genres' own `label` ("Bristol 1991"); the chips print the
+     era words on their own and had nowhere to ride. Read off the page's table,
+     never listed here, for the reason the block at the top of `VOCAB` gives. */
+  try { const A = G.NuAtlas || {};
+    for (const n of Object.keys(A.PLACES || {})) add(n);
+    for (const n of Object.keys(A.ALIAS || {})) add(n);
+    for (const e of A.ERAS || []) add(e && e.w); } catch (e) {}
   /* 4 · THE VOCABULARY'S OWN WORDS — every value a menu can offer. They are
      the tables `nukernel/fields.js` exports whose NAME says they are words for
      values (`*LABEL`, `*NAMES`, `*WORDS`, `*CHOICES`): `SWINGLABEL`,

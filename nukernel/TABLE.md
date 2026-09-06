@@ -3542,3 +3542,124 @@ the record is a drill-down, and the sheet's resting state is one line.
 Waves B, C and D are untouched: the 1,378px variation picker, the silent
 refusals, the searchable genre index, the named section, the link that carries
 the song, and the bass that can read a motif.
+
+### 14a · The section's name, and wave C's seams
+
+*(`docs/REDESIGN-SCOPE.md` item 8, 2026-09-06: **"A section has a name. Types
+only today, so a form that plainly has a pre-chorus cannot say so."** The
+engine and data half is `docs/WAVE-C.md` — `document.js` TIERS, `fields.js
+secNameOf`, `avail.js form.name`, `ui/eight.js secName`/`secWord`, and the two
+exporters. What follows is the half that lives in the table's TypeScript and
+in the copy catalogue, which that round could not touch.)*
+
+**THE TIER IS THE ROW.** `form.sections[si].name` is a SECTION-tier field —
+`document.js` `TIERS.name`, `{ tier: "row", at: "form.sections[si].name" }` —
+with four nulls under it: no cell tier (a cell may not rename the section it
+sits in), no record tier and no genre tier (there is no default to inherit and
+no anchor may invent one). **Absent means the type's word**, which is why the
+sheet's box is EMPTY on an unnamed section and prints the type as its
+placeholder rather than as its value: a field showing `verse` when nothing has
+been written would make every unnamed section look named, and the first edit
+would be a deletion of a word the composer never wrote.
+
+**IT IS A FIFTH FIELD KIND** (`src/table/api.ts` `TextField`, `kind: "text"`)
+and not a `StripField` with no options, because a strip with no options is
+already a READOUT on this surface — `sheet.ts` draws one as `.nu-sheetsay`,
+which is how a refusal is drawn, and a name a hand types is the opposite of a
+refusal. Which of the two a row is comes off `avail.js`: exactly one row of
+that table declares `text: true`, `ui/eight.js shSpec`/`wCell` carry the flag
+through, and `model.ts textField()` refuses to draw a free-text box for a row
+that has not declared it. **The model decides, never the renderer.**
+
+**THE WRITE LAW: COMMIT ON BLUR OR ENTER, NEVER ON A KEYSTROKE.** Every `set`
+on this page is a document write that normalises, RECOMPILES and lands at the
+next bar, and `grid.ts wrapOps` puts each one on the undo stack — so a write
+per letter would be eleven recompiles and eleven Ctrl-Zs for `pre-chorus`. The
+box holds the letters and the document hears one sentence:
+
+| gesture | what happens |
+|---|---|
+| typing | **nothing is written.** The document is byte-identical after ten keystrokes (measured). |
+| **Enter** | blurs, which commits — one committer, not two racing on one keypress. |
+| **blur** | commits, unless the value equals what is already there (trimmed both sides, because `fields.js secNameOf` trims at the door). |
+| **a tap outside** | commits, and is heard FIRST — see below. |
+| **Escape** | puts the written name back in the box and gives up focus; nothing is written. |
+| **blank** | deletes the key. `document.js normalize` removes an empty one, and the head goes back to the type. |
+
+**A TAP OUTSIDE IS A COMMIT AND IT HAS TO BE HEARD BEFORE THE SHEET CLOSES.**
+`grid.ts armOutside` closes an open sheet on a `pointerdown` outside it, in the
+CAPTURE phase on `document`, and closing the sheet removes the input from the
+page — and Chromium fires no `blur` for a focused element that is removed. So a
+name typed and then dismissed by tapping the background would have been
+silently dropped: [[declared-but-never-arriving]] on the one control where what
+is lost is a person's own words. The commit is armed on **`window`** instead —
+capture on the window runs before capture on the document — so the letters are
+in the record before the sheet that held them goes away. One listener for the
+page, added the first time such a box is focused, reading `document.activeElement`.
+
+**WHERE IT STANDS AND WHAT IT LOOKS LIKE.** First in the section sheet's **Form**
+group, above the type (`model.ts rowSheet`): a section's type is a vocabulary
+the record already answered, and its name is the one thing on that sheet nobody
+but a composer can write. The type does not move and is not replaced — it is
+still what the walk, the tempo shaping and the exporter reason about.
+
+**THE ROW HEAD SAYS THE NAME.** `grid.ts` drew `A.roleWord(s.role)` on both
+section plates — the row head (`secRowHead`, `.nu-srowname`) and the same plate
+with the table turned (`secHead`) — and a string cannot know whether the
+section it came out of has a name. Both ask `A.secWord(i)` now, which answers
+the type's word where nothing is written, **so an unnamed record draws byte for
+byte what it drew before**. Those are the only two sites: everything else on
+this surface already asked `A.secName(i)`, which is the same fact with the
+ordinal for PROSE (an accessible name, a sentence, a grip's label).
+
+**MEASURED** on the rendered page under `devices["iPhone 14"]`, DPR 3,
+`isMobile`, `hasTouch`, at **390 × 844 and 320 × 844**, on **Coach House**
+loaded through the Export sheet's own `<input type="file">`
+(`scratchpad/design/wave-c-seams/`):
+
+| | 390 | 320 |
+|---|---|---|
+| the field | `<input type="text" class="nu-textbox">`, first row of Form | same |
+| height | **44.0 px** (`--tap`) | **44.0 px** |
+| width | 272.5 px | 202.5 px |
+| type size | **16 px** (`--t3`) | 16 px |
+| `maxlength` | **40** — `fields.js SECNAME_MAX`, read off `globalThis` and never copied | 40 |
+| placeholder | the section's type (`intro`) at `--dim` | same |
+| the pane's `scrollTop` while typing | **0 → 0** | 0 → 0 |
+| under a keyboard (the viewport cut to 844 − 336) | field at **408–452**, the bar's top at 457.6 — **clear** | — |
+| one edit | **one** document write, **one** Ctrl-Z back to byte-identical | same |
+
+**THE TYPE IS 16px ON PURPOSE.** Mobile Safari zooms the whole page in on a
+focused `<input>` whose text is under 16px and does not zoom back out — the
+pane's width thrown away for the rest of the session. It is the one
+measurement that decides a text field's size on a phone.
+
+**THE THREE SURFACES A NAME REACHES**, on Coach House with its second verse
+renamed `pre-chorus`:
+
+| surface | unnamed | named |
+|---|---|---|
+| the row head | `verse` | `pre-chorus` |
+| `export/score.js` | `Verse 1 · Verse 2 · Build 1` | `Verse 1 · pre-chorus · Build 1` |
+| `export/als.js` clip | `verse bass 2` | `pre-chorus bass 2` |
+
+and `boxesOf` on an unnamed record is byte-identical, which is why
+`test/table.test.js` T2 is green **without re-pinning `BASE_SHA`**.
+
+**GATED** by `test/table.browser.js` **T14f** — the field's shape, that typing
+writes nothing, that commit writes once and reaches the row head, that one
+Ctrl-Z is the whole edit, and that blank returns the head to the type — at 390,
+320 and 1280, on all three beds; plus `test/document.test.js` G14–G14d and
+`test/copy.test.js` for the field's own label.
+
+**WAVE C'S NINE WORDS**, added to the catalogue in the same round: the Export
+tab's eight (`exportTab.link.copied` · `.link.hand.say` · `.link.packing` ·
+`.link.carries` · `.link.tooBig.say` · `exportTab.record.back` · `.gone.say` ·
+`.backSaid`) and `row.name`. And one REWRITE: `exportTab.link.sub` said *"Place,
+year, seed and current view"*, which was a true sentence about a RECIPE and a
+false one the moment the fragment started carrying the document. It says **"The
+whole record, in a URL"**; the status line under it says which of the two it is
+carrying this minute. The eight `atlas.*` search keys wave A left PROVISIONAL
+are final as written — the reading that settles them is that the FIELD filters
+and the CHIPS jump, so one is named for what it matches on and the other for
+its verb.

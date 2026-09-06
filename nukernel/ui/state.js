@@ -428,13 +428,84 @@ export function keepGenre(recipe, genre) {
 // name: it names the slot, not the schema; migrate owns versions.
 const STORE = "nukernel.song.v1";
 let saveTimer = null;
+/* ===== THE RECORD ITSELF RIDES THE SAME SLOT (WAVE C, 2026-09-06) ========
+   REDESIGN-SCOPE item 9, third clause: *"Import lands you in the table looking
+   at what you imported, and it survives a reload."*
+
+   WHAT WAS ACTUALLY WRONG, measured before this block existed: the nukernel
+   page WRITES this slot on every edit (through `adoptSong` and `save` below)
+   and READS IT BACK NEVER — `readStore` has no caller on that page. So the
+   store held a projection of the record (the compiled BOXES and the slots the
+   kernel plays) and not the record, the box booted on `silence` every time,
+   and a hand that imported a .song.json, listened to it and closed the tab
+   lost it. The walkthrough's own line: *"Restoring does not persist."*
+
+   ONE WRITER AND ONE KEY, which is why this is here and not a second
+   `localStorage.setItem` in ui/eight.js. `writeStore` is the page's only
+   writer; it grows two fields rather than growing a neighbour:
+
+     doc   THE DOCUMENT ON THE PAGE — `ui/eight.js DOC`, whole, as JSON. It is
+           held by REFERENCE and stringified at write time, so a `setDocument`
+           that replaces the object is picked up by the next write without
+           anybody remembering to re-register it. Absent until a HAND has moved
+           something (ui/eight.js `push` writes it under the same `booted`
+           switch `markLink` uses), so a box nobody has touched still boots on
+           a new seed — Paul's own rule, and the one a session restore would
+           otherwise have broken silently.
+     prev  THE RECORD A LINK DISPLACED. Opening a shared link REPLACES the
+           session rather than merging with it (the walkthrough's item 8: a
+           merge *"produced a third song that never existed"*), and a
+           replacement that cannot be undone is a deletion. So the session
+           that was here is moved aside, once, at the moment a link lands, and
+           the Export tab offers it back.
+
+   THE OLD SLOT IS UNTOUCHED. Every key `readStore`'s existing readers ask for
+   is written exactly as it was, in the same order, so the /daw page reading
+   this same slot sees the same object with two keys it does not ask about —
+   which is what `validateSong` already does with anything it has no field for.
+   A `null` in either is ABSENT: neither key is written when there is nothing
+   in it, so a fresh box's slot is byte-identical to yesterday's. */
+let DOCNOW = null, DOCPREV = null;
+/* THEY ARE SEEDED FROM THE SLOT AT LOAD, AND THAT IS NOT AN OPTIMISATION — it
+   is what stops the boot from deleting the session it is about to restore.
+   `writeStore` rewrites the WHOLE slot, and the boot writes it early and
+   unconditionally (`push(true)` ends in `adoptSong`, which ends in `save()`),
+   so with both starting null the first write of every page load dropped `doc`
+   and `prev` on the floor. MEASURED, test/share.test.js S4: a link opened in a
+   browser holding another record read `prev: none`, because the boot's own
+   250 ms debounce fired before the fragment finished inflating and the record
+   the link displaced had already been erased. Carrying forward what is on disk
+   unless somebody says otherwise is the only correct default for a writer that
+   rewrites everything: absent still means absent, and `stashDoc` below is how
+   a caller says "there is nothing here now". */
+try { const had = JSON.parse(localStorage.getItem(STORE) || "null");
+      if (had) { DOCNOW = had.doc || null; DOCPREV = had.prev || null; } }
+catch (e) { /* private mode, or a slot this build cannot read: start empty */ }
+export function setDoc(d) { DOCNOW = d || null; save(); }
+export function readDoc() { const s = readStore(); return (s && s.doc) || null; }
+export function readPrevDoc() { const s = readStore(); return (s && s.prev) || null; }
+/* MOVE THE STORED SESSION ASIDE — called at the moment a link lands, BEFORE
+   the shared record is adopted, so what is kept is what the reader had and not
+   what the link just wrote over it. It reads the SLOT rather than `DOCNOW`,
+   because at boot `DOCNOW` is still null (nothing has been pushed yet) and the
+   thing being displaced is the one on disk. Idempotent per boot: a second call
+   with nothing stored keeps whatever `prev` already holds. */
+export function stashDoc() {
+  const had = readDoc();
+  if (had) { DOCPREV = had; DOCNOW = null; saveNow(); }
+}
+export function dropPrevDoc() { DOCPREV = null; saveNow(); }
 function writeStore() {
   try {
     localStorage.setItem(STORE, JSON.stringify(
       { v: NuSong.VERSION, slots: SLOTS, song: SONG, master: MASTER,
         buses: BUSES, mix: MIXER, groove: GROOVE, swing: SWING, meter: METER,
         pool: POOL,
-        genres: GENRESET, bpm }));
+        genres: GENRESET, bpm,
+        // present-only: a page that has never held a record writes neither,
+        // and the slot is the object it was before this wave
+        ...(DOCNOW ? { doc: DOCNOW } : {}),
+        ...(DOCPREV ? { prev: DOCPREV } : {}) }));
   } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
 }
 export function saveNow() { clearTimeout(saveTimer); saveTimer = null; writeStore(); }

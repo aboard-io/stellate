@@ -285,6 +285,17 @@ export function scoreOf({ timeline, cast = [], seats = null, sections = null,
       // and every existing Score is the same value.
       boxes.push({ si: bar.si, name: (bar.si + 1) + " " + labelOf(bar),
                    label: labelOf(bar), role: bar.role || null,
+                   /* ...AND WHAT THE SECTION IS CALLED, IF ITS OWN HAND CALLED
+                      IT ANYTHING (WAVE C, 2026-09-06). REDESIGN-SCOPE item 8:
+                      a form with a pre-chorus can say so now, and this is the
+                      export end of that sentence. document.js `boxesOf`
+                      stamps `secname` on the box and ui/derive.js `songBars`
+                      carries it onto every bar of the section; the naming
+                      block below prefers it over the type's title-cased word.
+                      PRESENT-ONLY: an unnamed section writes no key and the
+                      exported set is byte-identical to the one before this
+                      line. */
+                   ...(bar.secname ? { secname: bar.secname } : {}),
                    beat0: bar.beat0, beats: 0, bars: [],
                    ...(bar.lvl ? { lvl: bar.lvl } : {}) });
     const box = boxes[boxes.length - 1];
@@ -301,7 +312,19 @@ export function scoreOf({ timeline, cast = [], seats = null, sections = null,
     for (const b of boxes) {
       if (!b.role) continue;
       b.nth = seen[b.role] = (seen[b.role] || 0) + 1;
-      b.name = titleCase(b.role) + (total[b.role] > 1 ? " " + b.nth : "");
+      /* THE HAND'S NAME WINS OVER THE TYPE'S (WAVE C, 2026-09-06), and the
+         COUNT is still the role's. A record with three verses, the second of
+         which a hand called "pre-chorus", exports Verse 1 / pre-chorus /
+         Verse 2 — the named box keeps its `nth` (it is still the second verse
+         and `als.js` tells two chairs of one role apart by that number), it
+         just stops printing a word its own hand overruled. Uniqueness, which
+         is what gate 1 counts clips by, is the one thing this could cost and
+         does not: `nameScenes` is handed these strings and two sections with
+         one name are two sections a person deliberately called the same
+         thing, which the box number in `label` still separates.
+         NO NAME IS EXACTLY TODAY: the branch is skipped and the role's own
+         title-cased word with its count is what it always was. */
+      b.name = b.secname || (titleCase(b.role) + (total[b.role] > 1 ? " " + b.nth : ""));
     }
   }
   let skipped = 0, folded = 0;

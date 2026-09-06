@@ -78,13 +78,31 @@ export const ATLAS: Table = {
      (2026-09-06. `nukernel/ui/atlas.js` grew a search field and a strip of
      century chips over the chronological index — wave C item 7 of
      docs/REDESIGN-SCOPE.md, off the walkthrough's *"reaching the trip-hop row
-     is 19,306 px of scrolling"*.) THESE EIGHT ARE PROVISIONAL, and the note
-     is the point rather than an apology: the call sites are in a file this
-     round did not own and the catalogue is in a file that round cannot edit,
-     so the words are written here to the voice DESIGN.md §4 sets and are the
-     search's own author's to correct. Every one is inside its budget — a face
-     is six words, an `.aria` is a sentence of twelve — and every placeholder
-     is the name the call site passes. */
+     is 19,306 px of scrolling"*.)
+
+     THE EIGHT WERE MARKED PROVISIONAL FOR ONE DAY, because the call sites and
+     the catalogue were in two hands at once. They are final as written, and
+     the reading that settles them is what each control actually DOES:
+
+       · the FIELD filters and the CHIPS jump, so the field's name says what it
+         matches on (a name or a place — the two things a person arrives
+         knowing) and the chips' says the verb, `Jump`. Two controls over one
+         list must not both be called "find", which is what a shorter name for
+         the chip group would have made them.
+       · the COUNT is one meaning in three forms and not three sentences: the
+         whole catalogue, a part of it, or nothing. `{n} of {of}` is a readout
+         and stays a readout — a number beside a number is what a reader
+         checks a filter against, and a sentence around it would be six words
+         in the way of two.
+       · `atlas.find.none` names WHAT was searched for, because a filter that
+         says only "nothing" leaves a person wondering whether it heard them.
+       · a CHIP prints the era's own word (`the seventies` — atlas.js ERAS,
+         which is data) and its accessible name adds the year it lands on, so
+         the twenty-six chips are told apart by ear as well as by eye.
+
+     Every one is inside its budget — a face is six words, an `.aria` is a
+     sentence of twelve — and every placeholder is the name the call site
+     passes. */
   "atlas.find.aria": "Find a genre by name or place",
   "atlas.find.hint": "Find a genre",
   "atlas.find.all.one": "All {n} record",

@@ -227,11 +227,40 @@ export const SHEETS: Table = {
   "mark.pair": "{a} · {b}",
 
   /* ===== THE EXPORT TAB ================================================= */
-  "exportTab.link.sub": "Place, year, seed and current view",
+  /* THE LINK CARRIES THE RECORD NOW (2026-09-06, wave C item 9 of
+     docs/REDESIGN-SCOPE.md: *"A link carries the song."*). This read "Place,
+     year, seed and current view" — a true sentence about a RECIPE, and a false
+     one the moment the fragment started carrying the document: the walkthrough
+     opened a shared link clean and got *"the untouched genre … NONE of four
+     hours of work"*. The subtitle says what the card is FOR; the status line
+     under it says which of the two it is carrying this minute. */
+  "exportTab.link.sub": "The whole record, in a URL",
   "exportTab.link.aria": "Link to this record",
+  /* WHAT THE LINK IS CARRYING, SAID EVERY TIME. Three states and the card
+     picks one: it is still packing, it holds the record and here is what that
+     costs, or the record is too big for a URL and the JSON card is the door.
+     The third is the reason there is a line at all — a refusal a reader never
+     sees is the friction this wave was written out of. */
+  "exportTab.link.packing": "Packing the record…",
+  "exportTab.link.carries": "Carries the whole record, {kb} KB",
+  "exportTab.link.tooBig.say": "This record is too big for a link — use the JSON below",
+  /* AND THE TWO ENDS OF PRESSING COPY. `navigator.clipboard` is absent on an
+     insecure origin and rejects when the page is not focused, so the refusal
+     hands over a working path — the field is already selected — rather than an
+     apology. */
+  "exportTab.link.copied": "Copied {url}",
+  "exportTab.link.hand.say": "The link is selected — press Ctrl-C to copy it",
   "exportTab.record.sub": "The whole song file",
   "exportTab.record.save": "Save the record",
   "exportTab.record.open": "Open a saved record",
+  /* THE RECORD A SHARED LINK DISPLACED (2026-09-06, wave C item 9). Opening a
+     link never merges and never asks: it lands as the session and the session
+     it replaced is kept and offered back BY NAME. The button is absent, not
+     greyed, when there is nothing to bring back — so its presence is the whole
+     of "something of yours is being held". */
+  "exportTab.record.back": "Bring back the last record",
+  "exportTab.record.gone.say": "That record is no longer here",
+  "exportTab.record.backSaid": "Back — {players} players, {sections} sections",
   "exportTab.wav.sub": "WAV · 44.1 kHz · 16-bit",
   "exportTab.mid.sub": "MIDI type 1 · one track per player",
   "exportTab.als.sub": "One track per player · sections as scenes",

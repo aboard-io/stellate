@@ -189,7 +189,18 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
          // panel is where a tempo map's on/off belongs (COMPOSER.md §2.5).
          RUBATO, setRubato,
          // the session's instrument pool, read live by ENV's getter (2026-09-02)
-         POOL } from "./state.js";
+         POOL,
+         /* THE RECORD'S OWN SLOT (WAVE C, 2026-09-06). REDESIGN-SCOPE item 9:
+            *"Import lands you in the table looking at what you imported, and it
+            survives a reload."* ui/state.js is this page's ONE localStorage
+            writer and it has been writing a projection of the record (the
+            boxes) and never the record; these five are the record's half of
+            the same slot — `setDoc` registers what to write, `readDoc` is what
+            a boot restores, and `stashDoc`/`readPrevDoc`/`dropPrevDoc` are the
+            three halves of "a link never merges destructively": the session a
+            link displaces is moved aside and can be brought back. No second
+            key and no second writer; see the block above `writeStore`. */
+         setDoc, readDoc, readPrevDoc, stashDoc, dropPrevDoc } from "./state.js";
 // THE RENDERED EVENT STREAM, for the console hooks at the foot of this file
 // only. D7's gate has to read what the band actually plays — velocities after
 // the envelope, the intro and the outro have had their say — and that stream
@@ -758,6 +769,30 @@ function push(first) {
      with the record's own name in it. A boot writes nothing at all, because
      nobody did anything. */
   if (!first) logEdit();
+  /* ...AND THE RECORD IS HANDED TO ITS OWN SLOT (WAVE C, 2026-09-06).
+     REDESIGN-SCOPE item 9: *"Import lands you in the table looking at what you
+     imported, and it survives a reload."* Until today ui/state.js's slot held
+     the compiled BOXES and nothing else, so a reload always landed on
+     `silence` — measured by the walkthrough, which lost an imported record to
+     a plain refresh and wrote *"Anyone who imports, listens, and closes the
+     tab loses it."*
+
+     HERE, BECAUSE THIS IS THE ONE FUNCTION EVERY DOCUMENT CHANGE ENDS IN —
+     `changed()` calls it on every edit and `setDocument` calls it on every
+     record that arrives, which is exactly the set of moments the slot is
+     stale. It hands over the OBJECT, not a copy: ui/state.js stringifies at
+     write time on its own debounce, so a fifty-key edit is one write.
+
+     UNDER `booted`, WHICH IS `markLink`'S OWN SWITCH AND MEANS THE SAME THING
+     HERE. Paul: *"Boot up every new session with a new seed unless there's a
+     seed in the URL."* A box that nobody has touched must not write a session,
+     or the next boot would restore the record this one composed at random and
+     "a new seed every session" would be a promise the store quietly broke —
+     the identical trap `writeLink` fell into and climbed out of two screens
+     down. `arriving` is the second half of it: a session or a shared record
+     LANDING is the box becoming itself, not a hand, and it must not re-save
+     what it has just restored. */
+  if (booted && !arriving) setDoc(DOC);
 }
 // which files every motif in the bank would pull to be heard. Pure, and it
 // asks `auditionOf` rather than re-deciding — one answer to "who reads this".
@@ -1626,6 +1661,9 @@ function shSpec(key, scope, label) {
   const r = NuAvail.optionsFor(DOC, scope, key, NuGates, ENV);
   return { key: shKey(key, scope), label: label == null ? row.label : label,
            options: r.options, value: r.value, why: r.why, ungated: r.ungated,
+           // ...and the one row that is a FIELD and not a menu (wave C) — see
+           // avail.js `form.name` and `wCell` below. Present-only.
+           ...(row.text ? { text: true } : {}),
            // ONE OWNER FOR RECOMPILE, and it has survived both reversals:
            // neither widget ever redraws, `changed()` does — exactly as the
            // hand-built `select()` did before either of them existed.
@@ -7087,8 +7125,35 @@ function motifs(parent, deck, si) {
    few small arrays and costs nothing, `renderAbc` is the expensive half, so
    the ABC string is compared before the render is asked for. `repaintScore`
    makes that comparison.) */
+/* ===== WHAT A SECTION IS CALLED — AND IT MAY NOW BE CALLED ANYTHING =====
+   (WAVE C, 2026-09-06. REDESIGN-SCOPE item 8: *"A section has a name. Types
+   only today, so a form that plainly has a pre-chorus cannot say so."* Paul,
+   2026-08-28, already: *"The sections are named so name them."*)
+
+   THE NAME IS THE HAND'S WORD WHEN THERE IS ONE AND `role + ordinal` WHEN
+   THERE IS NOT, and this stays the ONE owner of the question — which is the
+   whole reason the field could be added in one line here rather than in
+   fourteen call sites. Everything that names a section on this page asks this
+   function: the board's automation grid, the deck's "you are writing head 1",
+   the motif bank's "played in" chips, the table's row heads and cell sheets
+   (through the `secName` hook on the table API), the section grips. All of
+   them say "the Coach House break" the moment a hand types it, and every one
+   of them says exactly what it said yesterday when nobody has.
+
+   THE ORDINAL IS NOT APPENDED TO A NAME, and that is a decision rather than an
+   omission: `verse 2` is a name the page COMPUTES (there are two verses, this
+   is the second) and "the Coach House break 9" is a name nobody wrote. A hand
+   that wants a number in its name types one; a hand that does not has said so.
+   The section's POSITION is still on screen beside it either way — the row
+   head prints the index in its own `data-live` count and the sheet prints the
+   type — so nothing is lost but a word the composer overruled.
+
+   THE TYPE DOES NOT MOVE. `s2.role` is still the vocabulary the walk, the
+   tempo shaping and the exporter reason about (`document.js` TIERS `type`);
+   this is only what the section is CALLED. */
 const secName = (i) => { const s2 = DOC.form.sections[i];
-  return s2 ? s2.role + " " + (i + 1) : "section " + (i + 1); };
+  if (!s2) return "section " + (i + 1);
+  return s2.name || (s2.role + " " + (i + 1)); };
 
 /* ---------- THE HOOK AS A GRID -----------------------------------------
    The same sixteen columns as the kit, under the same count, so a step means
@@ -11182,6 +11247,14 @@ function wCell(sp) {
                                                      off: o.disabled,
                                                      why: o.why, quiet: o.quiet,
                                                      g: o.group })),
+           /* ...AND WHETHER THIS SHEET IS A VOCABULARY AT ALL (WAVE C,
+              2026-09-06). Exactly one row of avail.js's table is not — the
+              section's own `form.name` — and it declares that with `text:
+              true` rather than by arriving with an empty option list, which
+              a menu would draw as a menu of nothing. PRESENT-ONLY: every
+              other sheet passes no key and the object a renderer receives is
+              the one it received before this line. */
+           ...(sp.text ? { text: true } : {}),
            set: sp.set };
 }
 
@@ -11517,6 +11590,22 @@ function tableAPI() {
     devSheetFor: (kind) => NuAvail.devSheetFor(kind),
     secName: (i) => secName(i),
     roleWord: (r) => ROLES[r] || r,
+    /* THE WORD ON A SECTION'S PLATE (WAVE C, 2026-09-06) — the hand's name if
+       it wrote one, and the TYPE's word if it did not. It is a second door
+       beside `roleWord` and not a replacement for it, because the two answer
+       different questions: `roleWord` translates a role KEY into its word (the
+       menu's job, and the vocabulary's), and this answers "what does row `i`
+       call itself". A row head that asked `roleWord(s.role)` cannot know
+       whether that section has a name, because it is holding a string and not
+       an index.
+       IT IS NOT `secName`, WHICH APPENDS THE ORDINAL. The plate already prints
+       the index in its own `data-live` count, so "verse 2" beside a 2 would be
+       the number twice; `secName` is for the places that name a section in
+       PROSE (an accessible name, a sentence, a grip's label) and this is for
+       the places that draw it in a cell. Both read the same field, so they can
+       never disagree about whether a section is named. */
+    secWord: (i) => { const s2 = SEC()[i];
+      return s2 ? (s2.name || ROLES[s2.role] || s2.role) : ""; },
     playsWhat: (v) => playsWhat(v),
     vpaintOf: (vi) => vpaintOf(vi),
     editSec: () => editSec(),
@@ -14574,6 +14663,133 @@ function exportBlock(parent) {
 const LINKMS = 250;
 let linkTimer = 0;
 
+/* ===== ...AND THE RECORD, WHICH IS WHAT A LINK IS FOR (WAVE C, 2026-09-06) ==
+   REDESIGN-SCOPE item 9: *"A link carries the song, and never merges
+   destructively over an existing one."*
+
+   THE PARAGRAPH ABOVE IS NOT DELETED, IT IS OVERRULED BY MEASUREMENT — which
+   is this file's own idiom for a decision that met its end condition. "A link
+   is a recipe, not a recording" was a real argument and it named its own cost
+   out loud: *"What a link still cannot carry is a record you built by hand — a
+   hired member, a renamed motif, a section you duplicated."* The walkthrough
+   paid that cost in full and wrote it down as the eighth of ten frictions:
+   four hours of work sent to somebody as a link arrived as *"the untouched
+   genre: 81 BPM, 24 motifs, 8 players … NONE of four hours of work."* A
+   sharing control that silently shares something else is worse than none.
+
+   SO THE FRAGMENT CARRIES BOTH, AND THE RECORDING WINS:
+     at/y/s/r  THE RECIPE, unchanged, still first, still ~40 characters. It is
+               what an older build reads, what a person can read, and what
+               lands when the recording is refused or unreadable.
+     d         THE RECORD — `JSON.stringify(DOC)`, DEFLATE-RAW, base64url. The
+               whole document: the hired member, the renamed motif, the
+               duplicated section, the named one.
+   A reader that understands `d` never composes from `at/y/s`; a reader that
+   does not is exactly where it was yesterday. Both directions are one owner
+   (`packDoc`/`unpackDoc`), and both are gated (test/share.test.js).
+
+   WHY DEFLATE AND WHY IT IS ASYNC. `CompressionStream` is the platform's own
+   deflate — no library, no vendored bytes, nothing fetched, which is the same
+   law that keeps 193 Wikipedia anchors on an offline page. It is a stream, so
+   it is a promise, and this file therefore does NOT make `linkFrag()` async:
+   the fragment is built synchronously out of a CACHE, and the cache is filled
+   a tick later by `packLink()`, which then asks for one more `writeLink()`.
+   Everything that reads the address (the boot, `#sharelink`, the copy button)
+   already refreshes at the moment of the press, so the one observable
+   consequence is that the address bar grows its `d=` about a frame after an
+   edit instead of during it.
+
+   MEASURED, 2026-09-06, on the record the walkthrough built
+   (`keeps/triphop-pm-walkthrough/coach-house.song.json` — 14 sections, 10
+   players, 27 motifs, the biggest hand-built record this box has):
+     the document, pretty-printed as the .song.json card writes it   48,009 B
+     the same document, compact                                      20,069 B
+     deflate-raw                                                      3,017 B
+     ...as base64url, which is what the fragment carries              4,023 chars
+   and over the WHOLE catalogue at seed 1 — 479 anchors, freshly composed —
+   the mean is 1,918 characters and the worst (`dusseldorfschool`) is 2,335. So
+   an ordinary record is a two-kilocharacter link and the hardest one this box
+   has ever been asked to carry is four.
+
+   AND THERE IS A CEILING, AND IT SPEAKS. `LINK_MAX` is 12,000 characters —
+   three Coach Houses, and far inside every browser's fragment limit — and a
+   record that does not fit gets NO `d=` and a SENTENCE in the Export tab
+   saying so and naming the other door (the .song.json card, which has no
+   ceiling). The one thing this must never do is hand back a link that quietly
+   drops half a record, which is the bug it exists to fix. */
+const LINK_MAX = 12000;
+/* base64url BY HAND, over bytes, in both directions — `btoa` is the only
+   encoder a browser ships and it speaks latin-1, so the deflate's bytes go
+   through it one character at a time in chunks small enough not to blow the
+   argument list on a long record (a 3 KB payload is one chunk; the loop is
+   there for the day one is not). The `+/=` are spent for `-_` and nothing,
+   because a `+` in a fragment is a space to somebody's URL parser one day. */
+const B64URL = (bytes) => {
+  let s2 = "";
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    s2 += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s2).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+const UNB64URL = (w) => {
+  const s2 = atob(String(w).replace(/-/g, "+").replace(/_/g, "/"));
+  const out = new Uint8Array(s2.length);
+  for (let i = 0; i < s2.length; i++) out[i] = s2.charCodeAt(i);
+  return out;
+};
+const streamThrough = async (bytes, ctor, how) => {
+  if (typeof ctor !== "function") throw new Error("no " + how);
+  const rs = new Blob([bytes]).stream().pipeThrough(new ctor(how));
+  return new Uint8Array(await new Response(rs).arrayBuffer());
+};
+/** THE DOCUMENT AS A FRAGMENT VALUE, or null when it will not fit or the
+ *  platform has no deflate. Never throws: a link without the record is still a
+ *  link, and the Export tab is where the reason is said out loud. */
+async function packDoc(doc) {
+  try {
+    const bytes = new TextEncoder().encode(JSON.stringify(doc));
+    const wire = B64URL(await streamThrough(bytes,
+      typeof CompressionStream === "function" ? CompressionStream : null,
+      "deflate-raw"));
+    return wire.length > LINK_MAX ? null : wire;
+  } catch (e) { return null; }
+}
+/** ...AND BACK. Null on anything at all going wrong — a truncated paste, a
+ *  fragment from a build that packed differently, a browser with no
+ *  `DecompressionStream` — because the recipe half of the same fragment is
+ *  still standing and the boot falls through to it. */
+async function unpackDoc(wire) {
+  try {
+    const out = await streamThrough(UNB64URL(wire),
+      typeof DecompressionStream === "function" ? DecompressionStream : null,
+      "deflate-raw");
+    const next = JSON.parse(new TextDecoder().decode(out));
+    return (next && typeof next === "object") ? next : null;
+  } catch (e) { return null; }
+}
+/* THE CACHE, AND IT IS KEYED BY THE DOCUMENT'S OWN TEXT. `json` is what was
+   packed, `wire` is what came out (null when it did not fit), and `over` is
+   the one thing the reader has to be told. `linkFrag` compares the live
+   document against `json` rather than trusting a flag, so a fragment can never
+   carry a record that is not the one on the page: a stale cache simply does
+   not contribute a `d=`. */
+let linkPack = { json: null, wire: null, over: false }, packing = 0;
+const docJSON = () => { try { return JSON.stringify(DOC); } catch (e) { return null; } };
+function packLink() {
+  const json = docJSON();
+  if (json == null || json === linkPack.json) return;
+  const seq = ++packing;
+  packDoc(DOC).then((wire) => {
+    if (seq !== packing) return;                 // a later edit already won
+    linkPack = { json, wire, over: !wire && json.length > 0 };
+    /* ONE MORE WRITE, and only when there is something new to say. The
+       address was already written without the record a beat ago; this is what
+       puts the record in it, and it also refreshes `#sharelink`, which is the
+       field a hand actually copies from. */
+    writeLink();
+    sayShare();
+  });
+}
+
 /* THE TAB NAME, BOTH WAYS. `TABS` is the one owner of the nine words (see THE
    NINE TABS) and this only lower-cases them for the wire and matches back
    case-insensitively, so a tab renamed there is renamed in the URL with it and
@@ -14679,6 +14895,14 @@ function linkFrag() {
         rl.map((e) => ({ f: e.f, v: e.v })))));
     } catch (e) { /* an unwritable value is a link without it */ }
   }
+  /* THE RECORD, LAST, AND ONLY WHEN THE CACHE IS THE RECORD ON THE PAGE (wave
+     C). It goes last because it is the long one and everything before it is
+     readable by a person; it is compared against the live document's own text
+     rather than trusted, so a fragment can never claim to carry a record it
+     does not. `packLink` fills the cache and asks for one more write. */
+  const json = docJSON();
+  if (json != null && json === linkPack.json && linkPack.wire)
+    p.push("d=" + linkPack.wire);
   return "#" + p.join("&");
 }
 /* ...AND THE WHOLE URL, which is what a person pastes into a message. Built
@@ -14721,10 +14945,22 @@ function writeLink() {
    something."* A `showTab` from the boot or from a link is the box arriving; a
    tap, a pick, a roll and a slider are a hand, and all four reach this. */
 function markLink() {
-  if (!booted) return;
+  if (!booted || arriving) return;
   clearTimeout(linkTimer);
-  linkTimer = setTimeout(writeLink, LINKMS);
+  /* ...AND THE RECORD IS PACKED ON THE SAME DEBOUNCE (wave C). It is asked for
+     AFTER the synchronous write rather than before it, so the address is
+     always current within the debounce and gains its `d=` a tick later —
+     `packLink` calls `writeLink` again when it lands. Both are no-ops when
+     nothing moved: `writeLink` writes the same string and `packLink` compares
+     the document's text against what it already packed. */
+  linkTimer = setTimeout(() => { writeLink(); packLink(); }, LINKMS);
 }
+/* THE BOX ARRIVING IS NOT A HAND, AND A RESTORE IS THE BOX ARRIVING (wave C).
+   `booted` already says "everything above this line is the page becoming
+   itself"; a session or a shared record landing asynchronously happens AFTER
+   that switch is thrown, so it needs its own. Held for exactly the length of
+   the adopt — the first real gesture after it writes the address as usual. */
+let arriving = false;
 /* READ IT AT LOAD. `URLSearchParams` over the fragment's body is the whole
    parser — it decodes, it tolerates a stray `&`, and it is in every browser
    this page runs in, so no dependency arrives with the feature. An EMPTY
@@ -14740,7 +14976,14 @@ function readLink() {
   try { q = new URLSearchParams(h); } catch (e) { return null; }
   const at = q.get("at"), y = q.get("y"), s = q.get("s"), t = q.get("t");
   const r = q.get("r");
-  if (at == null && y == null && s == null && t == null && r == null) return null;
+  /* THE RECORD (wave C) — read here, spent at the foot of the boot, unpacked
+     there and not here, because unpacking is a promise and this function is
+     what the synchronous half of the boot steers by. Its VALUE is not looked
+     at: base64url is `[A-Za-z0-9_-]` and anything else simply fails to
+     inflate, which is a fall-through to the recipe and not an error. */
+  const d = q.get("d");
+  if (at == null && y == null && s == null && t == null && r == null && d == null)
+    return null;
   /* THE SENTENCES, PARSED HERE AND VALIDATED ELSEWHERE (2026-09-02). This
      turns a string into a list or into null, and it does no more than that on
      purpose: WHICH fields a rule may name and WHAT each may hold are
@@ -14759,9 +15002,105 @@ function readLink() {
      one of Paul's nine words and holds no slash, so everything after the first
      one is the item, whole, however many slashes are in its name. */
   const cut = t == null ? -1 : String(t).indexOf("/");
-  return { at, y, s, rules,
+  return { at, y, s, rules, d,
            t: cut < 0 ? t : String(t).slice(0, cut),
            sub: cut < 0 ? null : String(t).slice(cut + 1) };
+}
+
+/* THE FOUR FIELDS EVERY RECORD ON THIS PAGE HAS, and the ONE owner of the
+   question since wave C (2026-09-06). Not a schema — the shapes are
+   `document.js`'s and `song.js`'s to refuse — but the difference between "a
+   record this build can try to open" and "some other JSON somebody had lying
+   around", which is a question the reader deserves answered by name rather
+   than by a stack trace. It had one caller (the file input); the link now
+   carries a record too and asks the identical question of it, and two copies
+   of a four-name list is exactly how the two doors end up disagreeing about
+   what a record is. Returns the names that are MISSING, so an empty array is
+   "yes" and the caller can print what was wrong. */
+const RECORDISH = (x) => ["basis", "material", "form", "voices"]
+  .filter((k) => !x || typeof x !== "object" || x[k] == null);
+
+/* ===== WHAT THE BOX OPENS ON — AND WHOSE RECORD IT IS (WAVE C) ===========
+   REDESIGN-SCOPE item 9, second clause: *"opening a link must NEVER merge over
+   an existing session destructively. Either it opens the shared record as the
+   session (and the previous session is recoverable — say how), or it asks."*
+
+   THE DECISION IS THE FIRST ONE, AND IT IS MADE HERE. A shared record OPENS AS
+   THE SESSION, and the session it displaced is kept — one copy, in the same
+   slot, under `prev` — and offered back by name in the Export tab. The
+   alternative (asking) was refused for a measured reason: a link is opened by
+   somebody who has just been sent one and wants to hear it, and a modal
+   between them and the music is a tax on the common case to protect the rare
+   one. Keeping the displaced record costs nothing and protects it better than
+   a question does, because a question is answered wrong at speed.
+
+   AND IT IS A REPLACEMENT, WHICH IS THE WHOLE OF THE FIX. The walkthrough's
+   eighth friction was not that the link lost the record — it was that opening
+   one in a browser that already held a song *"produced a third song that never
+   existed — 13 columns … Neither my song nor the genre's."* Nothing here
+   merges: `CTX.setDocument` replaces `DOC` whole and `push` rebuilds every
+   slot, every box and every store from it.
+
+   THE PRECEDENCE, IN ORDER, AND EACH STEP SAYS WHY IT BEATS THE NEXT:
+     1 · A LINK CARRYING A RECORD (`d=`). Somebody sent this. It wins over
+         everything, including the recipe in the same fragment, which is only
+         there so an older build lands somewhere honest.
+     2 · A LINK CARRYING ONLY A RECIPE (`at/y/s/r`). Already landed, above, by
+         `ATLAS.open` — this only records that a visit replaced the session.
+     3 · THE SESSION. The record this box was working on when it was last
+         closed. There is no fourth case: with neither a link nor a session the
+         box opens on the blank state at a new random seed, which is what it
+         has always done and what Paul asked for.
+
+   ASYNC, AND ONLY IN CASE 1, because inflating a fragment is a promise. The
+   session restore is synchronous (a `localStorage` read and a `JSON.parse`),
+   so the common reload has no extra frame in it. */
+function displaced(next) {
+  /* MOVE THE OLD SESSION ASIDE ONLY IF IT IS A DIFFERENT RECORD. Reloading
+     your OWN page is the ordinary case — `markLink` writes the record into the
+     address on every gesture, so a refresh arrives as a link carrying exactly
+     what the session already holds — and stashing there would spend `prev` on
+     a copy of the present and throw away a genuinely older record. */
+  const had = readDoc();
+  try { if (had && JSON.stringify(had) !== JSON.stringify(next)) stashDoc(); }
+  catch (e) { /* an unstringifiable session is one we cannot compare: leave it */ }
+}
+function adoptArrival(next) {
+  /* `arriving` HOLDS FOR THE LENGTH OF THE ADOPT and no longer. It is what
+     stops the restore from writing the address and the slot it has just read —
+     the box becoming itself, which is the same sentence `booted` makes one
+     screen up. The slot is then written EXPLICITLY, because this record is the
+     session from now on. */
+  arriving = true;
+  try { CTX.setDocument(next); } finally { arriving = false; }
+  setDoc(DOC);
+  showTab(LINKTAB || "Band");
+  if (LINKSUB) applySub(LINKSUB);
+}
+function landRecord() {
+  if (LINK && LINK.d) return unpackDoc(LINK.d).then((next) => {
+    if (RECORDISH(next).length) return false;
+    try { NuDocument.normalize(next); } catch (e) { return false; }
+    displaced(next);
+    adoptArrival(next);
+    return true;
+  });
+  if (LINK && (LINK.at != null || LINK.s != null || LINK.rules)) {
+    /* A RECIPE-ONLY LINK IS A VISIT, NOT A SESSION. `ATLAS.open` has already
+       landed the anchor it names, so there is nothing to adopt here; what is
+       left is the promise this function makes to every arrival — the record
+       that was in the slot is moved aside rather than written over. Nothing is
+       written IN its place, because a box nobody has touched still writes
+       nothing (`push`'s own `booted` rule), so the next plain boot opens on
+       the blank state at a new seed, exactly as it always has, and the
+       displaced record is one press away in the Export tab. */
+    displaced(DOC); return null;
+  }
+  const had = readDoc();
+  if (RECORDISH(had).length) return null;
+  try { NuDocument.normalize(had); } catch (e) { return null; }
+  adoptArrival(had);
+  return null;
 }
 
 /* ---------- and the door: copy link ------------------------------------
@@ -14793,21 +15132,66 @@ function shareCard(grid) {
     const b = el("button", _t("exportTab.url.copy"));
     b.type = "button"; b.dataset.k = "deck.exp.copy";
     b.addEventListener("click", () => {
-      // the field is refreshed at the moment of the press, never trusted to be
-      // current: the tab or the slider may have moved since it was drawn
-      f.value = shareUrl();
-      const done = () => expSay("copied — " + f.value);
-      const hand = () => { f.focus(); f.select();
-        expSay("this browser will not copy for us — the link is selected, "
-             + "press Ctrl-C (Cmd-C on a Mac)"); };
-      let p = null;
-      try { p = navigator.clipboard && navigator.clipboard.writeText(f.value); }
-      catch (e) { p = null; }
-      if (p && typeof p.then === "function") p.then(done, hand);
-      else hand();
+      /* THE RECORD IS PACKED BEFORE THE LINK IS COPIED (WAVE C, 2026-09-06).
+         The field is refreshed at the moment of the press — it always was, and
+         for the same reason ("the tab or the slider may have moved since it
+         was drawn") — but the fragment's `d=` comes out of a cache that a
+         promise fills, and a press that arrived inside that window used to
+         copy the recipe alone. So the press WAITS for the pack: one await of
+         work already measured at a few milliseconds on the biggest record this
+         box has, and the alternative is the exact bug this wave exists to fix,
+         handing somebody a link that silently dropped their record.
+         `packDoc` never throws — a browser with no deflate resolves null — so
+         the copy always happens, with or without the record in it. */
+      const finish = () => {
+        f.value = shareUrl();
+        const done = () => expSay(_t("exportTab.link.copied", { url: f.value }));
+        const hand = () => { f.focus(); f.select();
+          expSay(_t("exportTab.link.hand.say")); };
+        let p = null;
+        try { p = navigator.clipboard && navigator.clipboard.writeText(f.value); }
+        catch (e) { p = null; }
+        if (p && typeof p.then === "function") p.then(done, hand);
+        else hand();
+      };
+      const json = docJSON();
+      if (json != null && json === linkPack.json) finish();
+      else packDoc(DOC).then((wire) => {
+        linkPack = { json, wire, over: !wire }; sayShare(); finish(); }, finish);
     });
-    card.append(f, b);
+    /* WHAT THE LINK IS CARRYING, SAID ON THE CARD (WAVE C). Three sentences
+       and the surface picks one: it holds the whole record, it is still
+       packing, or the record is too big for a URL and the .song.json card is
+       the door. The third is the one that matters and it is the whole reason
+       there is a line here at all — REDESIGN-SCOPE item 9: *"if a large record
+       still does not fit, the link says so at share time rather than producing
+       a link that silently drops material."* A refusal a reader never sees is
+       the friction this whole wave was written out of. */
+    const say = el("p", null, "nu-hint");
+    say.id = "sharesay";
+    say.setAttribute("role", "status");
+    card.append(f, b, say);
+    /* THE NODE IS HANDED OVER RATHER THAN LOOKED UP, because at this instant
+       the card is not in the document yet — `exportCard` appends it to the
+       grid after this builder returns, so `getElementById` finds nothing and
+       the line would have shipped blank until the next repaint. (Measured:
+       test/share.test.js S5 read "" off the rendered page.) */
+    sayShare(say);
+    packLink();
   });
+}
+/* THE ONE WRITER OF THAT SENTENCE, and it is safe to call when the card is not
+   on the page (every other tab). It reads the SAME cache `linkFrag` reads, so
+   the line and the link can never disagree about what is in the fragment. */
+function sayShare(node) {
+  const n = node || $("sharesay");
+  if (!n) return;
+  const json = docJSON();
+  const fresh = json != null && json === linkPack.json;
+  n.textContent = !fresh ? _t("exportTab.link.packing")
+    : linkPack.wire ? _t("exportTab.link.carries",
+                         { kb: (json.length / 1024).toFixed(0) })
+    : _t("exportTab.link.tooBig.say");
 }
 
 /* ---------- and the other door: the record as a file --------------------
@@ -14896,13 +15280,9 @@ function songCard(grid) {
         try { next = JSON.parse(text); }
         catch (e) { expSay(file.name + " is not JSON — " +
                       ((e && e.message) || e)); return; }
-        /* THE FOUR FIELDS EVERY RECORD ON THIS PAGE HAS. Not a schema — the
-           shapes are `document.js`'s and `song.js`'s to refuse — but the
-           difference between "a record this build can try to open" and "some
-           other JSON somebody had lying around", which is a question the
-           reader deserves answered by name rather than by a stack trace. */
-        const missing = ["basis", "material", "form", "voices"]
-          .filter((k) => !next || typeof next !== "object" || next[k] == null);
+        /* THE FOUR FIELDS EVERY RECORD ON THIS PAGE HAS — `RECORDISH`, above,
+           since wave C gave the link a second reader of the same question. */
+        const missing = RECORDISH(next);
         if (missing.length) {
           expSay(file.name + " is JSON but not a record — it has no "
             + missing.join(", ") + ".");
@@ -14918,11 +15298,61 @@ function songCard(grid) {
           " player" + (next.voices.length === 1 ? "" : "s") + ", " +
           next.form.sections.length + " section" +
           (next.form.sections.length === 1 ? "" : "s"));
+        /* ...AND YOU ARE LOOKING AT WHAT YOU OPENED (WAVE C, 2026-09-06).
+           REDESIGN-SCOPE item 9: *"Import lands you in the table looking at
+           what you imported."* The walkthrough's tenth friction, verbatim:
+           *"After importing a record the app leaves you on the Export sheet,
+           scrolled past its own ×, with a grey log line as the only
+           confirmation"* — and, worse, wrote "the restore is broken" in its
+           notes and was wrong for half an hour, because the record HAD
+           arrived and the page was showing the wrong surface.
+           `showTab` AND NOT A SCROLL: the Export deck is a TAB, so the way to
+           stop looking at it is to look at something else, and the something
+           else is the one surface that shows the whole record. The sentence
+           above survives the move — `expSay` writes the deck's live line, and
+           a screen reader is told what happened whether or not the deck is the
+           panel on screen. `setDoc` is not called here: `setDocument` ended in
+           `push()`, which writes the slot, so a reload keeps this. */
+        showTab("Band");
       }, (e) => { expSay(file.name + " could not be read — " +
                           ((e && e.message) || e)); });
       f.value = "";      // the same file twice in a row is two gestures
     });
     card.append(b, f);
+    /* ...AND THE RECORD A LINK REPLACED IS OFFERED BACK BY NAME (WAVE C,
+       2026-09-06). This is the "say how" half of REDESIGN-SCOPE item 9's
+       second clause: a shared link opens as the session, and the session it
+       displaced is one press away for as long as it is there.
+
+       IT IS ABSENT AND NOT GREYED when there is nothing to bring back, which
+       is this page's standing law (DESIGN.md: absent, not disabled) and also
+       the honest shape — a control offering a record that does not exist would
+       have to invent a name for it. It is on the RECORD card and not the LINK
+       card because what it hands back is a record, and the file input beside
+       it is the other way of getting one.
+
+       PRESSING IT IS AN ORDINARY ARRIVAL — `setDocument`, the same door the
+       file input and the link both use — and it SPENDS the slot: `prev` holds
+       one record, the one that was displaced, and bringing it back means it is
+       the session again rather than a thing that can be restored twice. */
+    const back = readPrevDoc();
+    if (back && !RECORDISH(back).length) {
+      const r = el("button", _t("exportTab.record.back"));
+      r.type = "button"; r.dataset.k = "deck.exp.songback";
+      r.addEventListener("click", () => {
+        const was = readPrevDoc();
+        if (!was || RECORDISH(was).length) { expSay(_t("exportTab.record.gone.say")); return; }
+        try { NuDocument.normalize(was); }
+        catch (e) { expSay(_t("exportTab.record.gone.say")); return; }
+        dropPrevDoc();
+        CTX.setDocument(was);
+        markLink();
+        expSay(_t("exportTab.record.backSaid",
+                  { players: was.voices.length, sections: was.form.sections.length }));
+        showTab("Band");
+      });
+      card.append(r);
+    }
   });
 }
 
@@ -15786,6 +16216,17 @@ on("transport:state", () => { if (!playing) paintSeedWait(true); });
 
 /* ---------- boot ---------- */
 window.__eightDoc = () => DOC;          // the raw document, for a console
+/* WHAT THE LINK IS CARRYING, AS NUMBERS (WAVE C, 2026-09-06) — the same
+   discipline `#atlasIndex[data-ms]` follows: a surface says what it costs and
+   the gate reads it off the artifact instead of re-deriving it. `doc` is the
+   record's own JSON length, `wire` is what the fragment carries, `fresh` says
+   whether the cache is the record on the page, and `over` is the ceiling
+   having been hit. test/share.test.js waits on `fresh` rather than on a
+   sleep, because the pack rides a promise behind a whole-page redraw. */
+window.__eightLink = () => ({ doc: (docJSON() || "").length,
+  wire: linkPack.wire ? linkPack.wire.length : 0,
+  fresh: linkPack.json != null && linkPack.json === docJSON(),
+  over: !!linkPack.over, max: LINK_MAX });
 // THE FLEET THE CONTROLS WERE DRAWN WITH. `sound.instrument` offers one option
 // per modelled Faust voice and audio/to-engine.js SYNTH is the only table that
 // knows which those are — an ES module the data tier cannot require, which is
@@ -16335,7 +16776,18 @@ if (ATLAS) {
      `readLink`'s parsed `r=`; `ATLAS.open` hands it to `genreToDocument` as
      the third input, so the record the recipient composes is the record the
      sender was listening to and not the anchor as written. */
-  const why = LINK && LINK.at ? ATLAS.open(LINK, undefined, LINK.rules) : false;
+  /* ...AND THE RECIPE IS NOT SPENT WHEN THE FRAGMENT CARRIES THE RECORD
+     (WAVE C, 2026-09-06). `at/y/s/r` and `d` are two halves of one link and
+     the recording wins (see THE ADDRESS): composing the anchor here would be
+     one whole `genreToDocument` thrown away a frame later, and — measured —
+     it is also a RACE, because the compose lands through the same
+     `setDocument` the record is about to arrive through and the two can
+     finish in either order. `landRecord` at the foot of the boot is the one
+     door for a link that carries a record; this branch is what an older
+     build, a hand-typed fragment and a link whose record would not fit still
+     take. */
+  const why = LINK && LINK.at && !LINK.d
+    ? ATLAS.open(LINK, undefined, LINK.rules) : false;
   if (why !== true) {
     /* NO `asked` HERE, AND THAT IS THE WHOLE OF THE SECOND ARGUMENT'S JOB
        (2026-09-05). The two callers above are document SWAPS — a hand chose a
@@ -16367,6 +16819,16 @@ showTab(LINKTAB || "Band");
    `applySub` to know which list to look in. `showTab` has already dropped the
    stripe to that level, so the link lands you among the siblings it named. */
 if (LINKSUB) applySub(LINKSUB);
+/* ...AND THEN THE RECORD YOU WERE ACTUALLY LOOKING AT (WAVE C, 2026-09-06).
+   `landRecord` is the whole of REDESIGN-SCOPE item 9's precedence — a shared
+   record, else a recipe already spent, else the session — and its own block
+   argues each step. It is LAST in the boot for the same reason the link is
+   spent last: everything above it is the page becoming itself, and this is the
+   page finding out whose record it is holding. It returns a promise only in
+   the one case that inflates a fragment; nothing waits on it, because the box
+   is already usable and the record lands a frame later with `setDocument`'s
+   own full redraw behind it. */
+landRecord();
 /* (`writeLink()` STOOD HERE and its argument is quoted and answered at
    `markLink` above: "The address is written once at boot whatever happened: a
    page that opened on its own record still has a URL worth copying, and a link

@@ -277,6 +277,13 @@ var TABLE = {
   "chords.face.long": "{bars} · {harmony}",
   /* ===== THE SECTION SHEET (model.ts rowSheet) ========================== */
   "row.ops": "this section",
+  /* THE ONE FIELD ON THIS SURFACE A HAND TYPES INTO (2026-09-06, wave C item 8
+     of docs/REDESIGN-SCOPE.md: *"A section has a name. Types only today, so a
+     form that plainly has a pre-chorus cannot say so."*). One word, because it
+     is a label beside a box and the box's placeholder already says what stands
+     when it is empty — the section's TYPE, which is the row below it and does
+     not move. */
+  "row.name": "name",
   "row.type": "type",
   "row.bars": "bars",
   "row.noteLimit": "note-length limit",
@@ -635,11 +642,40 @@ var SHEETS = {
      ui/video.js's caption already uses — so a translator orders the pair. */
   "mark.pair": "{a} · {b}",
   /* ===== THE EXPORT TAB ================================================= */
-  "exportTab.link.sub": "Place, year, seed and current view",
+  /* THE LINK CARRIES THE RECORD NOW (2026-09-06, wave C item 9 of
+     docs/REDESIGN-SCOPE.md: *"A link carries the song."*). This read "Place,
+     year, seed and current view" — a true sentence about a RECIPE, and a false
+     one the moment the fragment started carrying the document: the walkthrough
+     opened a shared link clean and got *"the untouched genre … NONE of four
+     hours of work"*. The subtitle says what the card is FOR; the status line
+     under it says which of the two it is carrying this minute. */
+  "exportTab.link.sub": "The whole record, in a URL",
   "exportTab.link.aria": "Link to this record",
+  /* WHAT THE LINK IS CARRYING, SAID EVERY TIME. Three states and the card
+     picks one: it is still packing, it holds the record and here is what that
+     costs, or the record is too big for a URL and the JSON card is the door.
+     The third is the reason there is a line at all — a refusal a reader never
+     sees is the friction this wave was written out of. */
+  "exportTab.link.packing": "Packing the record…",
+  "exportTab.link.carries": "Carries the whole record, {kb} KB",
+  "exportTab.link.tooBig.say": "This record is too big for a link — use the JSON below",
+  /* AND THE TWO ENDS OF PRESSING COPY. `navigator.clipboard` is absent on an
+     insecure origin and rejects when the page is not focused, so the refusal
+     hands over a working path — the field is already selected — rather than an
+     apology. */
+  "exportTab.link.copied": "Copied {url}",
+  "exportTab.link.hand.say": "The link is selected — press Ctrl-C to copy it",
   "exportTab.record.sub": "The whole song file",
   "exportTab.record.save": "Save the record",
   "exportTab.record.open": "Open a saved record",
+  /* THE RECORD A SHARED LINK DISPLACED (2026-09-06, wave C item 9). Opening a
+     link never merges and never asks: it lands as the session and the session
+     it replaced is kept and offered back BY NAME. The button is absent, not
+     greyed, when there is nothing to bring back — so its presence is the whole
+     of "something of yours is being held". */
+  "exportTab.record.back": "Bring back the last record",
+  "exportTab.record.gone.say": "That record is no longer here",
+  "exportTab.record.backSaid": "Back — {players} players, {sections} sections",
   "exportTab.wav.sub": "WAV · 44.1 kHz · 16-bit",
   "exportTab.mid.sub": "MIDI type 1 · one track per player",
   "exportTab.als.sub": "One track per player · sections as scenes",
@@ -1204,16 +1240,34 @@ var ATLAS = {
   "atlas.noRecordAt": "{place} — no record at {year}",
   "atlas.noPlace.say": "{name} has no place on the map",
   /* ===== FINDING A GENRE IN THE INDEX ===================================
-     (2026-09-06. `nukernel/ui/atlas.js` grew a search field and a strip of
-     century chips over the chronological index — wave C item 7 of
-     docs/REDESIGN-SCOPE.md, off the walkthrough's *"reaching the trip-hop row
-     is 19,306 px of scrolling"*.) THESE EIGHT ARE PROVISIONAL, and the note
-     is the point rather than an apology: the call sites are in a file this
-     round did not own and the catalogue is in a file that round cannot edit,
-     so the words are written here to the voice DESIGN.md §4 sets and are the
-     search's own author's to correct. Every one is inside its budget — a face
-     is six words, an `.aria` is a sentence of twelve — and every placeholder
-     is the name the call site passes. */
+       (2026-09-06. `nukernel/ui/atlas.js` grew a search field and a strip of
+       century chips over the chronological index — wave C item 7 of
+       docs/REDESIGN-SCOPE.md, off the walkthrough's *"reaching the trip-hop row
+       is 19,306 px of scrolling"*.)
+  
+       THE EIGHT WERE MARKED PROVISIONAL FOR ONE DAY, because the call sites and
+       the catalogue were in two hands at once. They are final as written, and
+       the reading that settles them is what each control actually DOES:
+  
+         · the FIELD filters and the CHIPS jump, so the field's name says what it
+           matches on (a name or a place — the two things a person arrives
+           knowing) and the chips' says the verb, `Jump`. Two controls over one
+           list must not both be called "find", which is what a shorter name for
+           the chip group would have made them.
+         · the COUNT is one meaning in three forms and not three sentences: the
+           whole catalogue, a part of it, or nothing. `{n} of {of}` is a readout
+           and stays a readout — a number beside a number is what a reader
+           checks a filter against, and a sentence around it would be six words
+           in the way of two.
+         · `atlas.find.none` names WHAT was searched for, because a filter that
+           says only "nothing" leaves a person wondering whether it heard them.
+         · a CHIP prints the era's own word (`the seventies` — atlas.js ERAS,
+           which is data) and its accessible name adds the year it lands on, so
+           the twenty-six chips are told apart by ear as well as by eye.
+  
+       Every one is inside its budget — a face is six words, an `.aria` is a
+       sentence of twelve — and every placeholder is the name the call site
+       passes. */
   "atlas.find.aria": "Find a genre by name or place",
   "atlas.find.hint": "Find a genre",
   "atlas.find.all.one": "All {n} record",
