@@ -2509,26 +2509,39 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         }) };
     });
 
+    /* A SPECIAL ROW BY ITS `data-special`, AND NEVER BY ITS INDEX (2026-09-05,
+       TABLE.md §13f). Paul: *"Put rules above time"* / *"Add chords below
+       time"*. Six checks below read `rows[0]` for TIME and `rows[1]` for
+       RULES, which was the head's order and not its meaning: the moment the
+       order changed, T10c measured the RULES face against the tempo's law and
+       T10i measured TIME's against the rules'. The row is asked for by name
+       now, so the next reordering moves nothing in this file. */
+    const rowOf = async (id) => ((await rowInfo()).rows || [])
+      .find((x) => x.id === id) || {};
+
     /* T10a · A ROW OF THE SAME SHEET, MERGED, ABOVE THE COLUMN HEADS. */
     await shutAll();
     for (const w of [320, 390, 1280]) {
       await wide(w);
       const r = await rowInfo();
-      /* THREE MERGED ROWS ABOVE THE HEADS SINCE 2026-09-08 (§10b step 4) —
-         TIME, RULES, then MOTIFS, in `SPECIALS`' own order, which is §10a's
-         own drawing of the layout. PRODUCE is the fourth merged row on this
-         sheet and is deliberately NOT here: it is in the `<tfoot>`, under the
-         mix, because a row above the column heads is a row above the music and
-         the producer speaks about a record already dealt (T10q reads it). */
-      /* FIVE ROWS SINCE 2026-09-05 (§13e): the grid's own header — SECTIONS,
-         a LABEL and not a special row — stands between MOTIFS and the column
-         heads. It is not in `r.rows` (which filters `.nu-sprow`), because it
-         has no sheet, no `data-k` and no button to measure; T13m is where it
-         is measured. */
+      /* FOUR MERGED ROWS ABOVE THE HEADS SINCE 2026-09-05 (§13f) — RULES,
+         TIME, CHORDS, then MOTIFS, in `SPECIALS`' own order, which is §10a's
+         own drawing of the layout. It was TIME · RULES · MOTIFS until Paul's
+         *"Put rules above time"* and *"Add chords below time and move chord
+         stuff into it"*. PRODUCE is the fifth merged row on this sheet and is
+         deliberately NOT here: it is in the `<tfoot>`, under the mix, because
+         a row above the column heads is a row above the music and the producer
+         speaks about a record already dealt (T10q reads it). */
+      /* AND THE LABEL ROW SINCE 2026-09-05 (§13e): the grid's own header —
+         SECTIONS, a LABEL and not a special row — stands between MOTIFS and
+         the column heads. It is not in `r.rows` (which filters `.nu-sprow`),
+         because it has no sheet, no `data-k` and no button to measure; T13m is
+         where it is measured. */
       const ok = !r.missing &&
-        r.order.length === 5 && r.order[0] === "time" &&
-        r.order[1] === "rules" && r.order[2] === "motifs" &&
-        r.order[3] === "label" && r.order[4] === "heads" &&
+        r.order.length === 6 && r.order[0] === "rules" &&
+        r.order[1] === "time" && r.order[2] === "chords" &&
+        r.order[3] === "motifs" &&
+        r.order[4] === "label" && r.order[5] === "heads" &&
         r.rows.every((x) => x.colspan === r.cols) &&
         r.rows.every((x) => x.h >= 44) &&
         /* WITHIN 12px OF THE PANE, and the 12 is `.nu-trims`' own 3px
@@ -2538,7 +2551,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            measured: pane 1078, row 1068). Both readings are "the row is as wide
            as what a hand can see", which is what §10b asks for. */
         r.rows.every((x) => x.w >= x.paneW - 12 && x.w <= x.paneW + 2);
-      check(ok, "T10a " + w + " · TIME, RULES and MOTIFS are merged rows of the sheet, " +
+      check(ok, "T10a " + w + " · RULES, TIME, CHORDS and MOTIFS are merged rows " +
+        "of the sheet, " +
         "above the SECTIONS label and the column heads, colspan = the whole " +
         "table, 44px, the pane's own width — " + JSON.stringify(r));
       /* T10b · ONE PIN, AND IT IS THE COLUMN HEADS (rewritten 2026-09-05,
@@ -2576,7 +2590,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
     /* T10c · THE FACE IS THE RECORD'S OWN LINE, AND IT FOLLOWS THE RECORD. */
     {
-      const before = (await rowInfo()).rows[0];
+      const before = await rowOf("time");
       const D0 = await doc();
       const said = String(before.face || "");
       const carries = said.indexOf(String(D0.time.bpm)) === 0 ||
@@ -2608,15 +2622,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                cw: document.documentElement.clientWidth };
     });
     {
+      /* TWENTY OF THE TWENTY-FIVE (2026-09-05, §13f). The five that left are
+         the chord families — `sel:alphabet.harmony`, `diatonic`, the changes
+         grid (`prog0d`, `sel:alphabet.quality|bar0`, `prog0i`) and its
+         `prog-add` / `prog-cut` — and they are asserted in T13o, on the CHORDS
+         row, at the same addresses. `goto.board` stays: it is TIME's back
+         matter and its own comment always said it never belonged to the
+         chords. */
       const WANT = ["bpm", "tempo-tap", "tempo-half time", "tempo-double time",
                     "tempo-as written", "tempo-the default speed",
                     "tempo-a little slower", "tempo-a little faster",
                     "tempo-half the tempo", "tempo-twice the tempo",
                     "sel:time.meter", "sel:time.swing", "sel:time.groove",
                     "rubato", "opt|alphabet.key|0", "sel:alphabet.mode",
-                    "sel:alphabet.scale", "sel:alphabet.harmony", "diatonic",
-                    "prog0d", "sel:alphabet.quality|bar0", "prog0i",
-                    "prog-add", "prog-cut", "goto.board"];
+                    "sel:alphabet.scale", "goto.board"];
       const missing = timeKeys ? WANT.filter((k) => !timeKeys.keys.includes(k)) : WANT;
       check(missing.length === 0,
         "T10d 320 · the TIME row holds all " + WANT.length + " control " +
@@ -2639,7 +2658,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         if (!b || b.disabled) return false; b.click(); return true; }, want);
       await p.waitForTimeout(700);
       const now = (await doc()).time.meter;
-      const face = String(((await rowInfo()).rows[0] || {}).face || "");
+      const face = String((await rowOf("time")).face || "");
       check(hit && now === want,
         "T10e a meter chip in the row writes doc.time.meter (" + was + " -> " +
         now + ", asked for " + want + ")");
@@ -2675,15 +2694,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        the real key, which is what "a gate is a hand" means for a keyboard. */
     await shutAll();
     {
-      const was = (await rowInfo()).rows[0].open;
+      const was = (await rowOf("time")).open;
       await p.evaluate(() => {
         document.querySelector('#pan-band [data-k="ttime"]').focus(); });
       await p.keyboard.press("Enter");
       await p.waitForTimeout(600);
-      const isOpen = (await rowInfo()).rows[0].open;
+      const isOpen = (await rowOf("time")).open;
       await p.keyboard.press("Escape");
       await p.waitForTimeout(600);
-      const shut = !(await rowInfo()).rows[0].open;
+      const shut = !(await rowOf("time")).open;
       check(!was && isOpen && shut,
         "T10g Enter on the row opens it and Escape closes it (was " + was +
         ", open " + isOpen + ", then shut " + shut + ")");
@@ -2708,20 +2727,27 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const owners = await p.evaluate(() => ({
         bpm: document.querySelectorAll('[data-k="bpm"]').length,
         meter: document.querySelectorAll('[data-sel="time.meter"]').length,
-        key: document.querySelectorAll('[data-k="opt|alphabet.key|0"]').length,
-        changes: document.querySelectorAll('[data-k="prog0d"]').length }));
-      check(owners.bpm === 1 && owners.meter === 1 && owners.key === 1 &&
-            owners.changes === 1,
-        "T10h …and each fact has exactly ONE control on the whole page — " +
-        JSON.stringify(owners));
+        key: document.querySelectorAll('[data-k="opt|alphabet.key|0"]').length }));
       await tap("ttime");
+      await tap("tchords");
+      /* AND THE CHANGES ARE COUNTED WITH THE CHORDS ROW OPEN (2026-09-05,
+         §13f): the grid moved a row down, so the "exactly ONE control
+         page-wide" reading of it is taken where it is drawn. */
+      const chOwners = await p.evaluate(() => ({
+        changes: document.querySelectorAll('[data-k="prog0d"]').length,
+        harmony: document.querySelectorAll('[data-sel="alphabet.harmony"]').length }));
+      check(owners.bpm === 1 && owners.meter === 1 && owners.key === 1 &&
+            chOwners.changes === 1 && chOwners.harmony === 1,
+        "T10h …and each fact has exactly ONE control on the whole page — " +
+        JSON.stringify(Object.assign({}, owners, chOwners)));
+      await tap("tchords");
     }
 
     /* T10i · THE RULES ROW: the face is the count and the last change, and
        the sheet under it is `ui/rules.js`'s own, two-line rows and all. */
     await shutAll();
     {
-      const face0 = String(((await rowInfo()).rows[1] || {}).face || "");
+      const face0 = String((await rowOf("rules")).face || "");
       check(/nothing written|rule/.test(face0),
         "T10i the RULES face says how many sentences are written — “" +
         face0 + "”");
@@ -2764,8 +2790,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         await p.waitForTimeout(1400);
         const D = await doc();
         const wrote = (D.rules || []).some((e) => e.f === "bpm");
-        const face = String(((await rowInfo()).rows[1] || {}).face || "");
-        const still = (await rowInfo()).rows[1].open;
+        const face = String((await rowOf("rules")).face || "");
+        const still = (await rowOf("rules")).open;
         check(wrote && /1 rule|rules/.test(face) && still,
           "T10j a rule written in the row reaches doc.rules, the face re-reads " +
           "it, and the row is STILL OPEN across the evolve — " +
@@ -3249,6 +3275,120 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         check(words.length > 0 && words.every((w) => lit.bank.indexOf(w) >= 0),
           "T10u …and while the record plays it names a motif of this record's " +
           "own bank — “" + lit.said + "”");
+      }
+
+      /* T10z · THE MOTIFS LINE HOLDS STILL, THE SECTION LIGHTS WHOLE, AND THE
+         ROW HEAD HAS NO MARK (2026-09-05, TABLE.md §13f). Three of Paul's
+         lines, driven on one playback because they are three readings of the
+         same fifteen seconds:
+           *"The text in the motifs section is changing rapidly every beat it's
+           too much."*
+           *"Really light up the sections as you move through them — not just a
+           tiny halo around the number."*
+           *"You don't need to put the little grid icon to the left of each
+           section number."*
+         WHAT IS ASSERTED. The head lamp's sentence is written at most once per
+         SECTION BOUNDARY crossed and never between them (it was rebuilt from
+         the set of players sounding at each event, so it rewrote itself several
+         times a bar); exactly one `tr.is-playing` stands at any instant and it
+         moves with the section; that row's ground differs from a resting row's
+         by at least 3:1; and no section row head draws a `.nu-g`. */
+      {
+        await shutAll();
+        const noMark = await p.evaluate(() => {
+          const ths = [...document.querySelectorAll("#pan-band tbody th.nu-srowh")];
+          return { n: ths.length,
+            marks: ths.filter((th) => th.querySelector(".nu-g")).length,
+            vh: ths.filter((th) => th.querySelector(".nu-vh")).length,
+            named: ths.filter((th) => { const b = th.querySelector("button");
+              return b && (b.getAttribute("aria-label") || "").length > 2; }).length,
+            /* WHAT MUST NOT BE CUT, AND WHAT MAY (§13a.7 asked of the head
+               COLUMN). §13a.7's "never cut mid-word" is a law about the column
+               HEADS, which fall back to a first word and then to a glyph. A
+               row head is the section's NUMBER, its NAME and its bar count in
+               a column that is what the players leave — so the bar count and a
+               one-word name must be whole (the brief's own test, "12 chorus /
+               8 BARS at 320"), and a hand-typed two-word name like "drums &
+               bass" ellipsises, as it did before the mark came off and with
+               one character more room now that it has. */
+            cutBars: ths.filter((th) => [...th.querySelectorAll("small")]
+              .some((n) => n.scrollWidth > n.clientWidth + 1)).length,
+            cutOneWord: ths.map((th) => th.querySelector(".nu-srowname"))
+              .filter((n) => n && !/\s\S+\s/.test(" " + n.textContent.trim() + " ") &&
+                             n.scrollWidth > n.clientWidth + 1)
+              .map((n) => n.textContent.trim()),
+            ellipsised: ths.map((th) => th.querySelector(".nu-srowname"))
+              .filter((n) => n && n.scrollWidth > n.clientWidth + 1)
+              .map((n) => n.textContent.trim()) };
+        });
+        check(noMark.n > 0 && noMark.marks === 0 && noMark.vh === 0 &&
+              noMark.named === noMark.n && noMark.cutBars === 0 &&
+              noMark.cutOneWord.length === 0,
+          "T10z no section row head draws the ▦ — the number, the name and the " +
+          "bar count stand alone, every head still has its accessible name, " +
+          "the bar count is whole and no one-word name is cut — " +
+          JSON.stringify(noMark));
+        /* THE TWO SEQUENCES, COLLECTED ON THE PAGE. A MutationObserver on the
+           lamp (its text is the only thing that changes in it) and a 120ms
+           sampler on the lit row — the sampler is the gate's clock and not the
+           page's, so it cannot miss a write the page made between two of its
+           own ticks any more often than a thumb would. */
+        await p.evaluate(() => {
+          window.__lampSeq = []; window.__rowSeq = []; window.__rowMax = 0;
+          const lamp = document.querySelector("#pan-band .nu-motlamp");
+          window.__mo = new MutationObserver(() => {
+            const t = lamp ? lamp.textContent : "";
+            const q = window.__lampSeq;
+            if (q[q.length - 1] !== t) q.push(t); });
+          if (lamp) window.__mo.observe(lamp,
+            { childList: true, characterData: true, subtree: true });
+          window.__ro = setInterval(() => {
+            const rows = document.querySelectorAll("#pan-band tbody tr.is-playing");
+            window.__rowMax = Math.max(window.__rowMax, rows.length);
+            const id = rows[0] ? rows[0].dataset.row : null;
+            const q = window.__rowSeq;
+            if (q[q.length - 1] !== id) q.push(id); }, 120);
+        });
+        await p.click("#play");
+        await p.waitForFunction(() => window.__eightStep && window.__eightStep() >= 0,
+          null, { timeout: 25000 }).catch(() => {});
+        await p.waitForTimeout(16000);
+        const run = await p.evaluate(() => {
+          const tr = document.querySelector("#pan-band tbody tr.is-playing");
+          const rest = [...document.querySelectorAll("#pan-band tbody tr[data-row]")]
+            .find((x) => !x.classList.contains("is-playing"));
+          const bg = (e) => { const c = e && e.querySelector("th");
+            return c ? getComputedStyle(c).backgroundColor : null; };
+          return { lamp: window.__lampSeq.slice(), rows: window.__rowSeq.slice(),
+                   max: window.__rowMax, on: bg(tr), off: bg(rest) };
+        });
+        await p.evaluate(() => { if (window.__mo) window.__mo.disconnect();
+                                 if (window.__ro) clearInterval(window.__ro); });
+        await p.click("#play");
+        await p.waitForTimeout(800);
+        /* THE FIRST ENTRY OF EACH SEQUENCE IS THE STATE BEFORE THE PRESS, so a
+           BOUNDARY is a change after it. */
+        const bounds = Math.max(0, run.rows.filter((x) => x != null).length - 1);
+        const writes = Math.max(0, run.lamp.length - 1);
+        check(run.rows.length > 1 && run.max === 1 && writes <= bounds,
+          "T10z the MOTIFS head lamp is written at most once per SECTION and " +
+          "never between (" + writes + " writes across " + bounds +
+          " boundaries) and exactly one row is lit at a time (max " + run.max +
+          ") — " + JSON.stringify({ lamp: run.lamp, rows: run.rows }));
+        /* THE CONTRAST, IN THE WCAG ARITHMETIC, because "really light up" is a
+           claim about what a thumb can find at arm's length and a tint that
+           only a pipette can see is the halo again with a wider footprint. */
+        const lumOf = (c) => { const m = String(c).match(/[\d.]+/g) || [];
+          const n = m.slice(0, 3).map(Number);
+          const v = n.map((x) => (x > 1.0001 ? x / 255 : x))
+            .map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)));
+          return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+        const la = lumOf(run.on), lb = lumOf(run.off);
+        const ratio = (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+        check(!!run.on && !!run.off && run.on !== run.off && ratio >= 3,
+          "T10z …and the playing row's ground is " + ratio.toFixed(2) +
+          ":1 against a resting row (≥ 3) — " +
+          JSON.stringify({ on: run.on, off: run.off }));
       }
 
       /* T10v · THE MOTIFS PANE IS GONE, and the editor is drawn once. T7's law
@@ -4201,12 +4341,22 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          scale picker, with the refusals showing. Kingston 1969 swings and is
          not modal, so the two facts that grey a mode are written first through
          the controls on this very sheet — the greyed pill is the subject. */
+      /* THE TWO FACTS ARE WRITTEN FROM THE TWO ROWS THAT OWN THEM (2026-09-05,
+         §13f): the swing is TIME's and the harmony is the CHORDS row's, so
+         the harmony chip is pressed with CHORDS open and the row is shut again
+         before the pickers are measured. One control page-wide, and the gate
+         reaches it where it stands. */
+      await q.evaluate(() => window.__eightRow("chords", true));
+      await q.waitForTimeout(700);
+      await q.evaluate(() => { const e = document.querySelector(
+          '#pan-band [data-k="alphabet.harmony|modal"]'); if (e) e.click(); });
+      await q.waitForTimeout(700);
+      await q.evaluate(() => window.__eightRow("chords", false));
+      await q.waitForTimeout(300);
       await q.evaluate(() => window.__eightRow("time", true));
       await q.waitForTimeout(700);
-      await q.evaluate(() => { const hit = (k) => {
-          const e = document.querySelector('#pan-band [data-k="' + k + '"]');
-          if (e) e.click(); };
-        hit("time.swing|"); hit("alphabet.harmony|modal"); });
+      await q.evaluate(() => { const e = document.querySelector(
+          '#pan-band [data-k="time.swing|"]'); if (e) e.click(); });
       await q.waitForTimeout(900);
       const surfaces = [];
       surfaces.push(["the mode picker", await pmeasure("alphabet.mode")]);
@@ -4363,6 +4513,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             const el = document.querySelector('#pan-band [data-k="' + key + '"]');
             if (!el) return "missing"; el.click(); return "ok"; }, k);
           await z.waitForTimeout(450); return r; };
+        /* ...AND THE ACCORDION'S ONE OPEN HEAD, SHUT — the same gesture
+           `shutAll` makes in the T10 block, in this block's own context. */
+        const zshut = async () => { await z.evaluate(() => {
+            const el = document.querySelector(
+              '#pan-band [aria-expanded="true"].nu-rowjump, ' +
+              '#pan-band [aria-expanded="true"].nu-wcell, ' +
+              '#pan-band [aria-expanded="true"].nu-sphead');
+            if (el) el.click(); }); await z.waitForTimeout(450); };
 
         /* ---- a · THE FIXED CHROME ------------------------------------- */
         const chrome = await z.evaluate(() => {
@@ -4513,8 +4671,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         if (nvoices === 0) {
           for (const k of ["drums", "bass", "line"]) await ztap("tcol-add|" + k);
           await z.evaluate(() => {
+            /* ...AND NOT THE SECTIONS DISCLOSURE (2026-09-05, §13f). This
+               asked for the first `[aria-expanded="true"]` in the panel and
+               clicked it, which was the open column sheet's head until the
+               grid's own header became a fold: the label stands FIRST in the
+               `<thead>`, so the gesture that meant "close what the hire
+               opened" folded the grid instead and eleven checks below went red
+               on a table that was not on the glass. A fold is not a sheet. */
             const o = document.querySelector(
-              '#pan-band [aria-expanded="true"]');
+              '#pan-band [aria-expanded="true"]:not(.nu-labelbtn)');
             if (o) o.click(); });
           await z.waitForTimeout(400);
         }
@@ -4577,9 +4742,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const c = document.querySelector("#pan-band tbody tr[data-row] td .nu-wcell");
           return c ? c.dataset.k : null; });
         const moves = [];
-        for (const [name, k, twice] of [["TIME", "ttime", false],
-                                        ["RULES", "trules", false],
-                                        ["a cell", cellK, true]]) {
+        /* FOUR NOW (2026-09-05, §13f): CHORDS is a special row with a sheet
+           like the other two, so the pin law and the scrollTop law are asked
+           of it by name rather than assumed from its neighbours. */
+        for (const [name, k, twice, sp] of [["RULES", "trules", false, "rules"],
+                                        ["TIME", "ttime", false, "time"],
+                                        ["CHORDS", "tchords", false, "chords"],
+                                        ["a cell", cellK, true, null]]) {
           if (!k) continue;
           await setTop(120);
           const y0 = await topOf();
@@ -4595,8 +4764,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               "pins — its own first line is in flow at its top — " +
               JSON.stringify(open.held));
           else
-            check(open.held.length === 1 && open.held[0].sp ===
-                    (name === "TIME" ? "time" : "rules") &&
+            check(open.held.length === 1 && open.held[0].sp === sp &&
                   open.held[0].top === 0,
               "T13c " + at + " · with " + name + " open its OWN ROW is the " +
               "only pin, at the pane's top edge, as its sheet's header — " +
@@ -4608,12 +4776,19 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           "close of " + moves.map((m) => m.name).join(", ") + " — " +
           JSON.stringify(moves.map((m) => [m.name, m.y0, m.y1, m.y2])));
 
-        /* ---- m · THE GRID'S OWN HEADER (§13e) ------------------------- */
+        /* ---- m · THE GRID'S OWN HEADER (§13e, §13f) ------------------- */
         /* Paul: *"Give the main composer interface its own header call it
-           Sections."* It is a LABEL: one line in the special row's own shape,
-           directly above the column heads, with no button in it and no pin on
-           it — the pane's one pin is spent on the heads (b, above), and a
-           label that pinned would be the second band §13 exists to delete. */
+           Sections."* One line in the special row's own shape, directly above
+           the column heads, with no pin on it — the pane's one pin is spent on
+           the heads (b, above), and a label that pinned would be the second
+           band §13 exists to delete.
+           IT HAS A BUTTON SINCE 2026-09-05 (§13f, Paul: *"Sections should
+           collapse when I touch it."*). This asserted `btns === 0` and no
+           `data-k`, which was true of a label with nothing to do; the line
+           FOLDS the grid now, so what is asserted is the disclosure — exactly
+           one button, the whole line, `aria-expanded` and `aria-controls` on
+           it — and the two things that did NOT change: it is still one `--tap`
+           line above the heads and it still never pins. */
         const lab = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
           const rows = t ? [...t.querySelectorAll("thead > tr")] : [];
@@ -4630,7 +4805,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             pinned: !!(cs && cs.position === "sticky" &&
                        cs.insetBlockStart !== "auto"),
             btns: th ? th.querySelectorAll("button").length : 0,
-            k: th ? th.getAttribute("data-k") : null,
+            k: th ? (th.querySelector("button") || { dataset: {} }).dataset.k || null : null,
+            expanded: th && th.querySelector("button")
+              ? th.querySelector("button").getAttribute("aria-expanded") : null,
+            controls: th && th.querySelector("button")
+              ? th.querySelector("button").getAttribute("aria-controls") : null,
+            body: !!document.getElementById("nu-gridbody"),
             word: word ? (word.textContent || "").trim() : "",
             face: face ? (face.textContent || "").trim() : "",
             upper: word ? getComputedStyle(word).textTransform : null,
@@ -4638,13 +4818,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             right: !!(wr && fr && fr.right > wr.right),
             aboveHeads: rows.indexOf(tr) === rows.length - 2 };
         });
-        check(lab.there && lab.btns === 0 && !lab.k && !lab.pinned &&
+        check(lab.there && lab.btns === 1 && lab.k === "tsections" &&
+              lab.expanded === "true" && lab.controls === "nu-gridbody" &&
+              lab.body && !lab.pinned &&
               lab.h >= 44 && lab.h <= 48 && lab.oneLine && lab.right &&
               lab.aboveHeads && /^sections$/i.test(lab.word) &&
               /section/i.test(lab.face) && /bar/i.test(lab.face),
           "T13m " + at + " · the grid has its own header — the word SECTIONS " +
           "left, its count right, one `--tap` line directly above the column " +
-          "heads, no control in it and no pin on it — " + JSON.stringify(lab));
+          "heads, ONE disclosure button naming the body it folds, and no pin " +
+          "on it — " + JSON.stringify(lab));
 
         /* ---- n · A `+` ADDS. IT DOES NOT ASK (§13e) -------------------- */
         /* Paul, on the ADD sheet that shipped this morning: *"Don't pop up an
@@ -4685,6 +4868,212 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           footK + ") with no sheet drawn and the pane unmoved, the player `+` (" +
           headK2 + ") hiring the kind the band has not got — " +
           JSON.stringify([add0, add1, add2]));
+
+        /* ---- o · RULES ABOVE TIME, AND CHORDS BELOW IT (§13f) --------- */
+        /* Paul, 2026-09-05: *"Put rules above time"* and *"Add chords below
+           time and move chord stuff into it."* Four claims, all off the
+           rendered page: the ORDER at rest and that each of the four is still
+           the one line §13a.2 gives it; that CHORDS opens as its OWN pinned
+           header with the changes grid INSIDE it; that the TIME sheet no
+           longer draws a changes grid or a harmony menu (a move, not a copy);
+           and that the row's FACE says the chain that plays rather than
+           "default" on a record whose chart is entirely dealt. */
+        await zshut();
+        const ord = await z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const rows = t ? [...t.querySelectorAll("thead tr.nu-sprow")] : [];
+          return rows.map((r) => ({ id: r.dataset.special,
+            k: (r.querySelector("button") || { dataset: {} }).dataset.k || null,
+            h: +r.getBoundingClientRect().height.toFixed(1),
+            face: ((r.querySelector(".nu-spface") || {}).textContent || "").trim(),
+            word: ((r.querySelector(".nu-spword") || {}).textContent || "").trim() }));
+        });
+        const ids = ord.map((x) => x.id).join(" ");
+        const offLine = ord.filter((x) => x.h > 52 || x.h < 44);
+        check(ids === "rules time chords motifs" && offLine.length === 0,
+          "T13o " + at + " · the head reads RULES · TIME · CHORDS · MOTIFS at " +
+          "rest, each one `--tap` line — " +
+          JSON.stringify(ord.map((x) => x.id + ":" + x.h)) +
+          (offLine.length ? " OUT OF LINE: " + JSON.stringify(offLine) : ""));
+        /* THE FACE IS THE CHAIN THAT PLAYS. Every record this gate opens has
+           a chart it never wrote; the row still says what sounds — numerals
+           joined by `·`, or the chart's size and what the harmony does with
+           it — and never the word "default". */
+        const cf = (ord.find((x) => x.id === "chords") || {}).face || "";
+        check(cf.length > 0 && !/default/i.test(cf),
+          "T13o " + at + " · …and the CHORDS face is the chain the record " +
+          "PLAYS, never “default” — “" + cf + "”");
+        /* THE SHEETS, EACH OPENED IN TURN. `.nu-changes` is the changes grid
+           (`ui/eight.js changesNode`) and `alphabet.harmony` its menu; both
+           are in CHORDS and neither is in TIME. */
+        await ztap("tchords");
+        const chS = await z.evaluate(() => {
+          const o = document.querySelector("#pan-band thead tr.nu-spopen");
+          const own = document.querySelector('#pan-band [data-k="tchords"]');
+          const th = own && own.closest("tr") &&
+                     own.closest("tr").firstElementChild;
+          const cs = th ? getComputedStyle(th) : null;
+          return { open: !!o,
+            pinned: !!(cs && cs.position === "sticky" &&
+                       cs.insetBlockStart !== "auto" &&
+                       Math.round(parseFloat(cs.insetBlockStart)) === 0),
+            changes: o ? o.querySelectorAll(".nu-changes").length : -1,
+            harmony: o ? o.querySelectorAll('[data-sel="alphabet.harmony"]').length : -1,
+            diatonic: o ? o.querySelectorAll('[data-k^="diatonic"]').length : -1,
+            add: o ? o.querySelectorAll('[data-k="prog-add"]').length : -1,
+            groups: o ? [...o.querySelectorAll(".nu-sheetgroup")]
+              .map((g) => g.dataset.group) : [] };
+        });
+        await ztap("tchords");
+        await ztap("ttime");
+        const tiS = await z.evaluate(() => {
+          const o = document.querySelector("#pan-band thead tr.nu-spopen");
+          return { open: !!o,
+            changes: o ? o.querySelectorAll(".nu-changes").length : -1,
+            harmony: o ? o.querySelectorAll('[data-sel="alphabet.harmony"]').length : -1,
+            diatonic: o ? o.querySelectorAll('[data-k^="diatonic"]').length : -1,
+            bpm: o ? o.querySelectorAll('[data-k="bpm"]').length : -1,
+            gain: o ? o.querySelectorAll('[data-k="goto.board"]').length : -1,
+            groups: o ? [...o.querySelectorAll(".nu-sheetgroup")]
+              .map((g) => g.dataset.group) : [] };
+        });
+        await ztap("ttime");
+        check(chS.open && chS.pinned && chS.changes === 1 &&
+              chS.harmony === 1 && chS.diatonic === 1 && chS.add === 1 &&
+              chS.groups.join(" ") === "chords harmony",
+          "T13o " + at + " · …CHORDS opens as its own pinned header with the " +
+          "changes grid, the harmony and the melody flag inside it, in two " +
+          "groups — " + JSON.stringify(chS));
+        check(tiS.open && tiS.changes === 0 && tiS.harmony === 0 &&
+              tiS.diatonic === 0 && tiS.bpm === 1 && tiS.gain === 1 &&
+              tiS.groups.join(" ") === "tempo meter key",
+          "T13o " + at + " · …and the TIME sheet holds NONE of them — it is " +
+          "TEMPO · METER · KEY with the board pointer last, a MOVE and not a " +
+          "copy — " + JSON.stringify(tiS));
+
+        /* ---- p · SECTIONS FOLDS THE GRID (§13f) ----------------------- */
+        /* Paul, 2026-09-05: *"Sections should collapse when I touch it."* Six
+           claims, all off the rendered page: what hides and what does not; the
+           count is still said; the pane's scrollTop does not move; the grid's
+           own open sheet is closed first and nothing pinned is left behind;
+           the fold is NOT an op (the document is byte-identical and Ctrl-Z
+           does not take it back); and a reload finds it folded, because it is
+           a page preference and not a document fact. It ends EXPANDED, both in
+           the DOM and in `localStorage`, because the checks after it reach
+           controls inside the grid. */
+        await zshut();
+        const foldState = () => z.evaluate(() => {
+          const t = document.querySelector("#pan-band table.nu-sheetgrid");
+          const pane = document.querySelector("#pan-band .nu-pane[data-pane=table]");
+          const btn = document.querySelector('#pan-band [data-k="tsections"]');
+          const body = document.getElementById("nu-gridbody");
+          const heads = t ? [...t.querySelectorAll("thead > tr")].pop() : null;
+          const shown = (e) => !!e && e.getClientRects().length > 0;
+          const held = t ? [...t.querySelectorAll("thead > tr")].filter((tr) => {
+            const c = tr.firstElementChild; if (!c) return false;
+            const cs = getComputedStyle(c);
+            return cs.position === "sticky" && cs.insetBlockStart !== "auto";
+          }).map((tr) => tr.dataset.special || "heads") : [];
+          return {
+            expanded: btn ? btn.getAttribute("aria-expanded") : null,
+            body: shown(body), heads: shown(heads),
+            mix: shown(t && t.querySelector("tfoot tr.nu-mixrow")),
+            master: shown(t && t.querySelector("tfoot tr.nu-masterrow")),
+            produce: shown(t && t.querySelector("tfoot tr.nu-prodrow")),
+            perf: shown(t && t.querySelector("tfoot tr.nu-perfrow")),
+            sprows: t ? t.querySelectorAll("thead tr.nu-sprow").length : 0,
+            label: shown(t && t.querySelector("thead tr.nu-gridlabel")),
+            count: ((t && t.querySelector("tr.nu-gridlabel .nu-spface")
+              || {}).textContent || "").trim(),
+            wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+            held,
+            y: pane ? Math.round(pane.scrollTop) : null,
+            max: pane ? Math.round(pane.scrollHeight - pane.clientHeight) : 0,
+            doc: JSON.stringify(window.__eightDoc()).length,
+            store: (() => { try { return localStorage.getItem("nu.band.grid.v1"); }
+                            catch (e) { return "?"; } })() };
+        });
+        /* THE GRID'S OWN SHEET IS OPEN WHEN THE FOLD ARRIVES, which is the
+           case §13f names: a cell sheet lives in the `<tbody>` that is about
+           to be hidden, so it must be closed through the same door a × is. */
+        const fcell = await z.evaluate(() => {
+          const c = document.querySelector("#pan-band tbody tr[data-row] td .nu-wcell");
+          return c ? c.dataset.k : null; });
+        if (fcell) { await ztap(fcell); await ztap(fcell); }
+        await z.evaluate(() => { const pane = document.querySelector(
+          "#pan-band .nu-pane[data-pane=table]"); if (pane) pane.scrollTop = 90; });
+        await z.waitForTimeout(200);
+        const f0 = await foldState();
+        /* THE FOLD IS THE ONE GESTURE THAT MAY MOVE THE SCROLL, AND ONLY
+           BECAUSE THERE IS LESS TO SCROLL. §13a.3's law is about a sheet:
+           opening one adds content and closing it takes it away, and the pane
+           must not jump either way. A FOLD removes the grid, so a pane parked
+           90px down a table that is now three lines tall has nowhere to be but
+           the top — that is the browser clamping, not the page jumping. So
+           what is asserted is the honest pair: the scrollTop is identical, OR
+           the folded pane has no scroll left to keep it at. */
+        await ztap("tsections");
+        const f1 = await foldState();
+        await z.evaluate(() => { const pane = document.querySelector(
+          "#pan-band .nu-pane[data-pane=table]"); if (pane) pane.focus(); });
+        await z.keyboard.press("Control+z");
+        await z.waitForTimeout(500);
+        const f1z = await foldState();
+        check(f1.expanded === "false" && !f1.body && !f1.heads && !f1.mix &&
+              f1.master && f1.produce && f1.perf && f1.label &&
+              f1.sprows === f0.sprows && f1.count === f0.count,
+          "T13p " + at + " · a tap on SECTIONS folds the grid — the body, the " +
+          "column heads and the mix row go; MASTER, PRODUCE, PERFORMANCE, the " +
+          "four special rows and the count stay — " + JSON.stringify(f1));
+        check(f1.wopen === 0 && f1.held.length === 0 &&
+              (f1.y === f0.y || f1.max <= 0),
+          "T13p " + at + " · …the grid's open sheet is closed with it, nothing " +
+          "is left pinned, and the pane keeps its scrollTop or has none left " +
+          "to keep (" + f0.y + " -> " + f1.y + ", max " + f1.max + ") — " +
+          JSON.stringify({ wopen: f1.wopen, held: f1.held }));
+        /* THE FOLD IS NOT ON THE UNDO STACK, and that is asserted by pressing
+           Ctrl-Z and finding the grid STILL FOLDED — the key went past the
+           fold to the last real op (T13n's add, which is why the document
+           changes here and the fold's own reading does not). */
+        check(f1.doc === f0.doc && f1z.expanded === "false" &&
+              f1.store === "0",
+          "T13p " + at + " · …and the fold is a PAGE preference, not an op: the " +
+          "document is unchanged across it, Ctrl-Z does not take it back, and " +
+          "it is written to localStorage — " +
+          JSON.stringify({ doc: [f0.doc, f1.doc, f1z.doc],
+                           afterUndo: f1z.expanded, store: f1.store }));
+        /* AND IT SURVIVES A RELOAD, which is what "a phone that folded the
+           grid to reach PRODUCE finds it folded" means, driven. */
+        await z.reload({ waitUntil: "domcontentloaded" });
+        await z.waitForTimeout(2600);
+        await z.evaluate(() => window.__eightTab("Band"));
+        await z.waitForTimeout(700);
+        const f2 = await foldState();
+        check(f2.expanded === "false" && !f2.body && !f2.heads,
+          "T13p " + at + " · …and a reload finds it folded — " +
+          JSON.stringify({ expanded: f2.expanded, body: f2.body,
+                           heads: f2.heads, store: f2.store }));
+        /* BACK OPEN, and the grid is whole again — the same tap, the other
+           way, and every row that folded is on the glass. */
+        await ztap("tsections");
+        /* ...AND THE BAND THE RELOAD TOOK IS PUT BACK. The blank state has no
+           players and the f/g block above hires three through the head's own
+           `+`; a reload is a fresh record, so T13l's cell-sheet addresses had
+           no cell to open — measured as `LOST ["taddr","tundo",…]` at 320 on
+           the Silence record. Same three taps, same one button. */
+        if (await z.evaluate(() => window.__eightDoc().voices.length === 0)) {
+          for (const k of ["drums", "bass", "line"]) await ztap("tcol-add|" + k);
+          await z.evaluate(() => { const o = document.querySelector(
+            '#pan-band [aria-expanded="true"]:not(.nu-labelbtn)');
+            if (o) o.click(); });
+          await z.waitForTimeout(400);
+        }
+        const f3 = await foldState();
+        check(f3.expanded === "true" && f3.body && f3.heads && f3.mix &&
+              f3.held.length === 1 && f3.held[0] === "heads" &&
+              f3.store === "1",
+          "T13p " + at + " · …and a second tap puts it all back, with the " +
+          "column heads the pane's one pin again — " + JSON.stringify(f3));
 
         /* ---- l · T7's LAW RE-PROVED, IN TAPS -------------------------- */
         /* Every control the formula bar, the addbars and `.nu-top` offered,

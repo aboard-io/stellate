@@ -26,7 +26,7 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 
 1. **Cell** — a plain value at rest: its GLYPH first, the word only where no honest glyph exists, a number small beside its glyph, tabular. No border, no plate. First tap selects; second tap / Enter / F2 / a printable key edits; Delete clears to default; Escape restores; Tab commits and moves. Range by Shift or drag.
 2. **Head** — a row or column header: glyph first and its word where the column has room for it whole (≥ 9ch; a head is never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that ADDS on the tap (TABLE.md §13e) — a section at the row axis, and at the column axis the one kind the band has not got, in build-the-band's order — never a row of offers and never a sheet asking which. Its accessible name says what a tap will add.
-3. **Special row** — TIME · RULES · MOTIFS above, MIX · PRODUCE · PERFORM below: a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
+3. **Special row** — RULES · TIME · CHORDS · MOTIFS above, MIX · PRODUCE · PERFORM below (TABLE.md §13f, Paul, 2026-09-05: *"Put rules above time"*, *"Add chords below time and move chord stuff into it"*): a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
 4. **Sheet** — a vector as rows (label · value · clear-back), full pane width, wrapping, in flow (never a modal), opened as the next `<tr>` under the row that owns it; its owner row is its header and is the pane's ONE pin while it is open (a cell sheet pins nothing at all — its header is component 5, in flow at its top).
 5. **Cell sheet header** — the first line of the OPEN cell sheet: the address of the selection, then undo · redo · copy · paste. Present only while a cell sheet is open, in flow at its top, never fixed and never sticky. (It was the **formula bar**, a strip above the pane that became a bottom sheet on a phone — 105.8px of a 844px screen at rest, measured — until TABLE.md §13a.6 moved its head into the sheet and found its readout was the sheet's own first group all along. Undo and redo therefore live where the change was made.)
 6. **Pop-up** — what a tap on a cell/field opens: a chip strip (≤ 8 words), a slider (a number), the envelope/curve editor (an envelope, an EQ, a lane), the native picker on a coarse pointer (> 8 words), the typed combo on a fine one. **Dismiss only on tap outside, Escape, or its own close — never on a value tap.** Sits where a keyboard cannot cover it.
@@ -34,7 +34,7 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
 8. **Slider** — for every continuous number: a trough (`--sl-trough`), a line, a cap; the number printed and typeable beside it; `touch-action: none`; arrows/Home/End; a long-press or the clear-back resets (double-tap is not a gesture on touch).
 9. **Curve editor** — one component, modes: ADSR · breakpoint lane · EQ bands · XY pad: a plate (`--r0`), 44px handles clamped inside it, a real curve, values printed beside handles in their units, drag by thumb, keyboard on a focused handle, reset by long-press/clear-back.
 10. **Menu / picker** — one owner (`src/menus pickerFor`): chips ≤ 8 · native `<select>` on coarse > 8 · typed combo on fine; every address byte-identical across widgets.
-11. **Lamp** — a child `<i>` painted `--clock` (scheduled) or `--meter` (measured); never both meanings in one colour.
+11. **Lamp** — a child `<i>` painted `--clock` (scheduled) or `--meter` (measured); never both meanings in one colour. A lamp that says a SENTENCE rather than marking a thing — the MOTIFS row's — names what the current SECTION reads and is written at a section boundary, never per beat (TABLE.md §13f, Paul, 2026-09-05: *"The text in the motifs section is changing rapidly every beat it's too much."*); a lamp that is a dot beside a name may follow the beat. **Sounding row**: the playing section is lit WHOLE — the row head and its cells in a `--clock` ground, ≥ 3:1 against a resting row — by one class on the `<tr>`, toggled once per section by the same writer that marks the number, not a halo around it (Paul: *"Really light up the sections as you move through them — not just a tiny halo around the number."*). A class the clock writes is excluded from the frozen half BY THE PAGE, the way `[data-live]` children are.
 12. **Bar** — fixed at the foot, `--bar-h`: genre plate · die + number (+ countdown) · opts fold · voicing · play. Icons with hidden labels and `data-say`; no visible words except the genre plate (Paul, 2026-09-05).
 13. **Hamburger** — `#burger`, the LAST button of the bar, with the log's badge; its menu plate opens directly above it. A full-height in-flow sheet per viewer (Score · Video · Screensaver · Export), and the close is the **sheet header**'s: one line at the top of the open sheet, its name at the start and the × at the end. (It was a fixed plate at the top corner with the × beside it; TABLE.md §13a.1 deleted that strip — nothing is fixed but the bar.)
 14. **Refusal** — never a missing control: the control drawn disabled with its sentence beside it (no silent grey).
@@ -76,12 +76,23 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     stays only where a vocabulary is long AND flat (a genre list).
 17. **Label row** (TABLE.md §13e, Paul, 2026-09-05: *"Give the main composer
     interface its own header call it Sections"*) — a one-line heading over a
-    block of the table, and the only row that is not a control: the word left
-    in the special row's own style (uppercase, `--fw-block`), its count right,
-    `--tap` tall, a hairline under, no plate — and no button, no address and
-    nothing to open. It is also the one `<thead>` row that NEVER pins: the
-    pane's single pin belongs to the column heads under it. SECTIONS, over the
-    grid, is the only one.
+    block of the table: the word left in the special row's own style
+    (uppercase, `--fw-block`), its count right, `--tap` tall, a hairline under,
+    no plate. It is the one `<thead>` row that NEVER pins: the pane's single
+    pin belongs to the column heads under it. SECTIONS, over the grid, is the
+    only one.
+    **Disclosure state** (TABLE.md §13f, Paul, 2026-09-05: *"Sections should
+    collapse when I touch it."*) — the whole line is one button
+    (`aria-expanded`, `aria-controls` naming the body it folds), and a tap
+    hides the block it heads: the column heads, the grid's rows and the mix row
+    that is aligned to them. The count stays on the right in both states and,
+    folded, is the only thing the block says. It is a PAGE preference — no op,
+    no undo step, no document write, no share-link bit — persisted per browser,
+    so it survives a reload. It closes the block's own open sheet first (one
+    sheet at a time) and, folded, leaves nothing pinned; it never answers the
+    `.nu-sphead` selector, because a fold is not a sheet. (It read *"the only
+    row that is not a control … no button, no address and nothing to open"*
+    until 2026-09-05: there was nothing to OPEN, and there is something to DO.)
 
 ## 3 · Interaction laws
 
@@ -107,6 +118,13 @@ where they mean the performance and the form.)
 
 ## 5 · The composer's order (what a sheet lists first)
 
-Time (tempo · meter · key) → the form (sections) → the players → each
-cell's motif, then its dynamics, then its treatment. In a chair's sheet:
-the instrument, then its envelope, then its tone, then where it sits.
+The rules (what the genre says) → time (tempo · meter · key) → the chords
+(the changes, then what the harmony does with them) → the form (sections) →
+the players → each cell's motif, then its dynamics, then its treatment. In a
+chair's sheet: the instrument, then its envelope, then its tone, then where
+it sits.
+
+(It read *"Time (tempo · meter · key) → the form …"* until 2026-09-05, when
+Paul put the rules over the tempo they set and gave the changes a row of
+their own: TABLE.md §13f. Key, mode and scale are the alphabet and stay in
+TIME; the changes and the harmony are what a record DOES over them.)

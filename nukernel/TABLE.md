@@ -892,8 +892,9 @@ everything in the table and the nav space reclaimed."*
 ### 10a · The layout (phone first; the desktop is the phone given room)
 
     ┌────────────────────────────────────────────────┐  ≡ (score · video ·
-    │ TIME      bpm · tempo map · key · meter        │     screensaver · export)
-    │ RULES     the rule chips, expandable           │
+    │ RULES     the rule chips, expandable           │     screensaver · export)
+    │ TIME      bpm · tempo map · key · meter        │
+    │ CHORDS    the chain the record plays           │
     │ MOTIFS    the bank across, previews+provenance │
     ├──────────┬───────┬───────┬───────┬─────────────┤
     │          │ drums │ bass  │ lead  │ … + player  │  ← voice columns
@@ -906,12 +907,16 @@ everything in the table and the nav space reclaimed."*
     └────────────────────────────────────────────────┘
     [ genre ]            [ 🎲 47101 ]          [ ▶ / ■ ]   ← the bottom bar
 
-- **Special rows** are rows of the same sheet: TIME, RULES, PRODUCE are
+- **Special rows** are rows of the same sheet: RULES, TIME, CHORDS, PRODUCE
+  are
   record-level and MERGED across the columns, expandable, chips inside; MIX
   is ALIGNED — one channel strip per voice column and the master in the
   corner; MOTIFS is the bank across the top with previews and provenance,
   and tapping a motif points the SELECTED cell at it (the formula bar's own
   write). Sections keep their row overrides (key, swing, chain) as today.
+  (The order above is §13f's, 2026-09-05: *"Put rules above time"* and
+  *"Add chords below time and move chord stuff into it"*. It read TIME ·
+  RULES · MOTIFS from 2026-09-06 to then.)
 - **The lamps move onto the headers**: the playing section's row head and
   the sounding players' column heads light (the score deck's join, v263's
   source of truth). The nav tree's levels, indent and colours are retired
@@ -2997,3 +3002,259 @@ inverted with its two exemptions. Four gates that hired through the ADD sheet
 the three kinds, `null` for the section) and deletes the two `tadd|` rows v288
 minted, with the reason in its own `renamed` note: the button is the offer's,
 so it is filed under the offer it fires.
+
+### 13f · Rules above time; the CHORDS row (2026-09-05)
+
+**TWO LINES, VERBATIM:**
+
+> *"Put rules above time"*
+>
+> *"Add chords below time and move chord stuff into it"*
+
+**A · THE ORDER IS RULES · TIME · CHORDS · MOTIFS.** The head of the table read
+TIME · RULES · MOTIFS from §10b step 4. The rules are what the record IS before
+a hand touches a number — the genre's thirty-eight sentences set the tempo the
+TIME row then shows — so they stand over it rather than under it. And the
+changes are their own subject: they read after the meter and the key they are
+counted in, not inside them. `SPECIALS` in `src/table/special.ts` is the ONE
+place that order is stated; `grid.ts specialRows` walks the array, `stick()`
+finds the open row by class (`.nu-spopen`) and the column heads by being LAST,
+so not one offset moved. DESIGN.md §5 and §10a's diagram carry the same order.
+
+**B · WHAT MOVED, AND WHAT DID NOT.** One owner throughout: the same
+`A.changesNode()`, the same seated `alphabet.harmony`, the same `setDiatonic`
+door, at the same addresses. Nothing is drawn twice on the page (T10h counts
+each fact's controls with each row open in turn).
+
+| field | address | was | is | why |
+|---|---|---|---|---|
+| the changes grid | `prog<n>d` · `prog<n>i` · `sel|alphabet.quality|bar<n>` | TIME, group CHORDS | **CHORDS, group `chords`** | the chart IS the chords |
+| `+ bar` / `− bar` | `prog-add` · `prog-cut` | TIME | **CHORDS** | they are the chart's length |
+| harmony | `sel|alphabet.harmony` | TIME, group KEY | **CHORDS, group `harmony`** | `kernel.js chordsOf` reads `g.prog` only under `cycle` — the word decides whether the CHANGES are played at all, which is a fact about them and not about the alphabet |
+| the melody flag | `diatonic` | TIME, group KEY | **CHORDS, group `harmony`** | *"follows the chords"* is a sentence about the chords |
+| key (circle of fifths) | `opt|alphabet.key|<n>` | TIME, group KEY | **TIME, unmoved** | the alphabet a record counts WITH |
+| mode | `sel|alphabet.mode` | TIME | **TIME, unmoved** | same |
+| scale | `sel|alphabet.scale` | TIME | **TIME, unmoved** | same |
+| record gain | `goto.board` | TIME, last under CHORDS | **TIME, last under KEY** | back matter. Its own comment always said it never belonged to the chords; the chords left, so it stands under the last group there IS rather than in a group of one — the same refusal that put it there in 2026-08-29 |
+
+**`alphabet.quality` WAS LOOKED FOR AND IS NOT SEATED ANYWHERE.** It is not a
+field of the TIME sheet and it is not a rule: `avail.js` scopes it `song.bar`
+and the only control on it is a per-bar menu INSIDE `chordGrid`
+(`sel|alphabet.quality|bar<n>`), so it moved the moment the grid did, at the
+address eleven gates already drive. `gates.js` names it in a refusal rule
+(`when alphabet.harmony.cycle`) and that rule is about the kernel, not about a
+row; it did not move either.
+
+**C · THE FACE IS THE CHAIN THAT PLAYS.** `ui/eight.js chordsFace` is its one
+owner and it says what SOUNDS rather than what is stored. On a record whose
+`alphabet.harmony` is `cycle` it is the roman numerals `chordSymbol` prints in
+the grid's own bar rows, joined with `·`; past eight chords it is the chart's
+size and what the harmony does with it (`chords.face.long`, "8 bars · cycle"),
+because half a progression with a dot after it reads as a chain that ends where
+it does not. On a modal or emergent record — where `chordsOf` throws `g.prog`
+away and takes one triad off the mode per bar — it is the harmony's own word,
+because printing the stored numerals there would describe music the box is not
+playing. **It never answers "default"**: a record composed straight off its
+anchor has a chart the kernel plays, and saying what that is is what the row is
+for. `chordName` was a closure inside `chordGrid` and is `chordSymbol` at
+module scope now — two readers, one spelling of figured bass.
+
+**AND THE ROW HAS NO LAMP, WHICH IS A REFUSAL WITH A MEASUREMENT UNDER IT.**
+§13a.2 allows one in the line and MOTIFS has one. CHORDS does not, for two
+reasons that are the same reason twice: the sounding chord is a fact about the
+CHART only on a `cycle` record, so a lamp reading it would light a numeral the
+box is not playing on every modal record; and the registry that does know —
+`chordCell` / `chordRow` / `chordLabel` — is filled by `chordGrid` while the
+grid is DRAWN, which is exactly when the row is open and a lamp is not wanted.
+Lighting it honestly means a second reader of the kernel's harmony inside the
+clock loop; MOTIFS' lamp costs one node that is already registered.
+
+**D · WHAT ELSE THE MOVE TOUCHED.** Four copy keys moved with their control —
+`time.harmony` · `time.melody.chords` · `time.melody.key` · `time.changes`
+became `chords.*` (a key is an address, C1's own law) — and `group.harmony` is
+new, with no `GLYPH.group` mark, so its heading prints its word alone, which is
+that table's own rule for a group it has no honest picture for. `ui/glyph.js`
+was NOT edited (the round was told not to), which is why the second group has
+no mark; the first keeps `chords`' own `⌗`. `changesNode`'s box was
+`.nu-timechanges` and is `.nu-changes`: a class named after the row it used to
+live in is a name that lies, and `nu.css` carries the one rule that styles it.
+
+**THE NUMBERS** (`scratchpad/design/chords-row/probe.cjs`, `devices["iPhone
+14"]`, DPR 3, `isMobile`, `hasTouch`, 390 and 320, on Kingston 1969 and the
+Silence record; before off a `git archive HEAD` of v257 served on its own port
+beside the working tree):
+
+| | before (HEAD) | after |
+|---|---|---|
+| the special rows, in order | `time · rules · motifs` | **`rules · time · chords · motifs`** |
+| their heights at rest, both records, 390 and 320 | 45 · 45 · 45 | **45 · 45 · 45 · 45** |
+| the TIME sheet | **14 fields**, groups `tempo · meter · key · chords` | **11 fields**, groups **`tempo · meter · key`** |
+| …its changes grid / harmony / melody flag / `prog-add` / quality menus | 1 · 1 · 1 · 1 · 4 (Kingston) | **0 · 0 · 0 · 0 · 0** |
+| …its bpm / circle / scale / record gain | 1 · 1 · 1 · 1 | **1 · 1 · 1 · 1** — unmoved |
+| the CHORDS sheet | — | **3 fields**, groups **`chords · harmony`**; changes 1, harmony 1, melody flag 1, `prog-add` 1, quality menus **4** (Kingston) / **1** (Silence) |
+| the CHORDS face, Kingston 1969 | — | **“i · i · iv · v”** |
+| the CHORDS face, the Silence record | — | **“Modal — one mode, no chords”** — the harmony's own word, because that record's chart is not read |
+| the TIME face | `79 BPM · 4/4 · D natural minor` | **unchanged** — it never said the chords |
+| pinned bands with each row open | the owner alone, at 0 | **the owner alone, at 0**, for all four rows |
+| `scrollTop` across open/close, Kingston | 120 · 120 · 120 (three rows) | **120 · 120 · 120** (four rows, CHORDS included) |
+| page errors | none | **none** |
+
+**E · SECTIONS COLLAPSES.** Paul, the same day: *"Sections should collapse when
+I touch it."* §13e made the grid's own header a LABEL and said in three places
+that it had nothing to open; it has something to DO. The line is a disclosure
+now — one button the width of the row (`data-k="tsections"`, `aria-expanded`,
+`aria-controls="nu-gridbody"`), and a tap hides the column heads, the whole
+`<tbody>` (every section row, the orphan sheet and the `+` row) and the MIX
+row, which is the one `<tfoot>` row that is ALIGNED to the columns and is a
+strip of unlabelled faders without them. MASTER, PRODUCE and PERFORMANCE stay,
+because they are merged facts about the record and reaching them is why a hand
+folds the grid. The four special rows above are untouched, and so is the COUNT:
+folded, `13 sections · 76 bars` is the only thing the grid says.
+
+IT IS A PAGE PREFERENCE AND NOT A DOCUMENT FACT — `rubato`'s own distinction.
+No `op()`, so the undo stack does not grow (driven: Ctrl-Z after a fold leaves
+it folded and takes back the previous real op instead); no `changed()`, so
+nothing recompiles; nothing in the share link. It is stored at
+`nu.band.grid.v1`, beside `nu.band.session`, so a phone that folded the grid to
+reach PRODUCE finds it folded on reload. A fold closes the grid's OWN open
+sheet first — a cell's, a section's, a column's — through `toggle`, the same
+door the × is, because a sheet living in a `<tbody>` that is about to be hidden
+cannot stay open.
+
+**AND THREE THINGS THE RENDERED PAGE SAID THAT THE PROPOSAL DID NOT.**
+
+- **A HIDDEN ROW WAS STILL REPORTING ITSELF PINNED.** `nu.css` pins every
+  `thead th` at `inset-block-start: 0` and `stick()`'s job is to say which row
+  keeps it — by writing `auto` on the others. It wrote only on the rows it
+  walked, so the folded column-head row kept the stylesheet's 0 and came back
+  `position: sticky, inset-block-start: 0px` with zero client rects: a pin on a
+  row that is not on the glass, which is §13a.1 broken by an omission. The walk
+  filters the hidden rows out of the MEASUREMENT and writes every row.
+- **THE DISCLOSURE MUST NOT WEAR `.nu-sphead`.** It was given the special row's
+  class for its box, and `[aria-expanded="true"].nu-sphead` is the selector the
+  page's own "shut whatever is open" gesture and three gates use — so every
+  `shutAll()` FOLDED THE GRID and eleven checks about the mix row, the section
+  column and the frozen stack went red on a table that was not on the glass.
+  One box, two classes (`.nu-sphead, .nu-labelbtn`), and the two generic
+  `[aria-expanded="true"]` readers in `test/table.browser.js` and
+  `test/sheets.js` say `:not(.nu-labelbtn)`. A fold is not a sheet.
+- **A FOLD MAY MOVE THE SCROLL, AND ONLY BECAUSE THERE IS LESS TO SCROLL.**
+  §13a.3's law is about a sheet: opening one adds content and closing it takes
+  it away, and the pane must not jump either way. A fold REMOVES the grid, so a
+  pane parked 90px down a table that is now three lines tall has nowhere to be
+  but the top. Measured: 90 → 0 with `scrollHeight - clientHeight` = **0** —
+  the browser clamping, not the page jumping — and 0 → 0 → 0 from rest.
+
+**F · THE MOTIFS LINE HOLDS STILL.** Paul: *"The text in the motifs section is
+changing rapidly every beat it's too much."* `lightMotifs` built the head
+lamp's sentence from the set of players the engine reported SOUNDING at the
+event it had just fired, so a bass resting for two beats took its motif's name
+out of the line and put it back, several times a bar. The head says what the
+CURRENT SECTION READS now — every voice not sitting out, through the same
+`cellAt(src, si)` the instantaneous half uses, memoed on `si` — so it is
+written at a section boundary, at a document write, and at nothing else.
+Measured over sixteen seconds of Kingston 1969: **0 writes across 2 section
+boundaries** on the run where the sentence happened to be the same either side,
+and 1 and 2 writes across 1 and 2 boundaries on the runs where it was not;
+never between them. THE BANK ROWS' `<i>` LAMPS ARE UNTOUCHED and stay
+instantaneous: those are dots beside a name, the mark a column head wears, and
+a dot that follows the beat is what a lamp is for.
+
+**G · NO GRID ICON BESIDE THE SECTION NUMBER.** Paul: *"You don't need to put
+the little grid icon to the left of each section number."* `secRowHead` drew
+`A.rowMark(i)` — the ▦ — on every row of the grid, which is the one place a
+mark says nothing a reader did not already know: the rows of this table ARE the
+sections and the SECTIONS line one row up says so, so thirteen copies of one
+picture stood down the narrowest column on the page. The number, the name and
+the bar count stay; so does the accessible name (`12 chorus, 8 bars`), which
+never came off the mark. Its `.nu-vh` word and its `data-say` go with the
+picture they belonged to — a hidden word for an absent icon is a word about
+nothing. THE MARK ITSELF IS NOT DELETED: `A.rowMark` still draws the section in
+the cell sheet's header and in the provenance words. Measured at 390 on
+Kingston: **13 heads, 0 `.nu-g`, 0 `.nu-vh`, 13 accessible names, the bar count
+whole on every one and no one-word name cut**; the one head that ellipsises is
+a hand-typed two-word name (`drums & bass`, 72/90px), as it did before the mark
+came off and with one character more room now.
+
+**H · THE PLAYING SECTION LIGHTS WHOLE.** Paul: *"Really light up the sections
+as you move through them — not just a tiny halo around the number."* §10a's
+*"the playing section's row head lights"* was a `<mark>` round the section's
+NUMBER — twelve pixels of ring in the narrowest column on a 390px phone, which
+is the halo. The row head AND every cell of the sounding section take a ground
+in `--clock` now (DESIGN.md §1's token for *"scheduled"*; the round's brief
+said `--flag-tint`, and `--flag` is REFUSED on this page, so the semantic-colour
+law wins over the parenthesis), `color-mix(in srgb, var(--clock) 85%,
+var(--panel))`, measured at **3.15:1** against a resting row — a ratio, not an
+impression. It rides the SAME one writer: `markForm`, which is called from the
+"pos" handler and from stop, toggles one class on one `<tr>` and memoes it, so
+it is written once per SECTION and never per beat. Measured: `null → s0 → s1 →
+s2` with **exactly one `tr.is-playing`** at every sample. The `<mark>` round the
+number stays — the same fact at a finger's reading distance.
+
+**AND TWO THINGS THAT ROUND MEASURED TOO.** The ground was first written as
+`.nu-sheetgrid tbody tr.is-playing > th` — higher specificity than the
+`--paper` rule it was aimed at and LOWER than
+`#pan-band .nu-wordgrid tbody th.nu-srowh`, which is id-scoped — so the class
+went on, the memo said it had, and the row drew `rgb(240, 237, 228)`, the
+resting cream, at every width: declared and never arriving, in the round that is
+about being able to SEE the playhead. The light is stated where the ground is
+now, and the 3px `--ground` ring that closes the seam round a row head is
+painted in the light too. And `__eightFrozen` takes the class off for its clone
+— the exclusion is the page's, in the page, exactly as the parked `[data-live]`
+children are — restoring the row's className BYTE FOR BYTE from a WeakMap,
+because lit renders the row as `class="  "` and `classList.add` then `remove`
+leaves `class=""`, which failed test/motif-frozen A3 by exactly those two
+characters. A3 is green: **byte-identical across 2 boundaries** at 390 and 1400.
+
+**GATES.** `test/table.browser.js` grew **T13o** — four claims (the order and
+the four one-line heights; the face is the chain and never "default"; CHORDS
+opens as its own pinned header with the grid, the harmony and the flag in two
+groups; the TIME sheet holds none of them and is TEMPO · METER · KEY with the
+pointer last) in all SIX T13 contexts — and T13c/T13h now walk four rows
+instead of two. T10a asserts the new order, T10d's WANT list drops the five
+chord families to T13o, T10h counts the changes with CHORDS open, and six
+checks that read the head by INDEX (`rows[0]` for TIME, `rows[1]` for RULES)
+read it by `data-special` now, so the next reordering moves nothing in that
+file. **421 ok, 0 failed.** `test/shell.js` **PASS** (24 skipped, 376 ok) with a
+seventh amendment recording the two moves. `test/sheets.js` **ALL PASS (31)**,
+`test/selects.js` **ALL PASS** (its `ROWS` walk is five rows now; check 5b
+opens CHORDS for the harmony and puts TIME back for the circle),
+`test/rules-view.browser.js` **42 ok, 0 failed**, `test/knobs.js` **ALL PASS
+(100)** with gate 8 still counting the nine tempo marks in TIME,
+`node test/copy.test.js` **10 ok, 0 failed** (C4 takes two new same-text pairs,
+`rule.headHarmony`/`group.harmony` and `field.chords`/`special.chords.word`,
+each two meanings the way `rule.headMeter`/`group.meter` are).
+`test/tempo-key.browser.js` — not on the round's list but the gate that drives
+the changes hardest — is **22 ok, 1 failed**, and that one red is HEAD's:
+measured against a `git archive HEAD` served beside the working tree, *"the
+slider and the big readout say the same number"* fails there with the identical
+payload (`{"doc":120,"state":120,"slider":120,"big":"","count":"4 taps"}`). Its
+T4 block opens CHORDS, T5 opens TIME, and T5c — which read a CHORDS control and
+a TIME caption in one `evaluate` — asks each row where it stands.
+`test/table-inventory.json` files the five moved controls under `chords-row`
+with `open: tchords` (time-row 17 → 12), and its new `moved` note says which and
+why.
+
+**AND THE GATES FOR E–H.** `test/table.browser.js` grew **T13p** (five claims,
+all six T13 contexts: what folds and what does not; the grid's own sheet closed
+with it and nothing left pinned; the fold is not an op — the document unchanged
+and Ctrl-Z not taking it back — and it is in `localStorage`; a reload finds it
+folded; a second tap puts it all back with the heads the one pin again) and
+**T10z** (three claims on one sixteen-second playback of Kingston 1969: no row
+head draws a `.nu-g` and the bar count and every one-word name are whole; the
+head lamp is written at most once per section boundary and exactly one
+`tr.is-playing` stands at a time; the playing row's ground is ≥ 3:1 against a
+resting row). **T13m** is rewritten from *"a label with no control in it"* to
+the disclosure it is. `test/table.browser.js` **454 ok, 0 failed**;
+`test/sheets.js` **ALL PASS (31)**, `test/shell.js` **PASS (376 ok, 24
+skipped)**, `test/selects.js` **ALL PASS**, `test/knobs.js` **ALL PASS (100)**,
+`test/rules-view.browser.js` **42 ok, 0 failed**, `test/gutter.js` **ALL PASS
+(51)**, `node test/copy.test.js` **10 ok, 0 failed**, `node test/table.test.js`
+**40 passed, 0 failed** (T2's identity untouched).
+`test/motif-frozen.js` **A3 green at both widths** — *"byte-identical across 2
+boundaries"*, which is the claim H could plausibly have broken — with **A7
+flaky under load and reported as such**: two runs on this tree failed it at
+different widths (1400: 172/106/133 ms at +23s; then 390: 123 ms at +11.9s,
+1400 clean at 95 ms), which is a long-task budget measured on a machine running
+browser gates, not a deterministic red. The screenshots are in
+`scratchpad/design/chords-row/` (`playing-row@390.png` is H).

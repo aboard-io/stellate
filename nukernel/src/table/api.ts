@@ -355,6 +355,19 @@ export interface TableAPI {
   rulesNode(): HTMLElement;
   rulesFace(): string;
 
+  /* ---- THE CHORDS ROW'S OWN DOOR (2026-09-05, TABLE.md §13f) ---------
+     Paul: *"Add chords below time and move chord stuff into it."* The row's
+     SHEET needs nothing new — `changesNode()` above is the changes grid and
+     the harmony and the melody flag come off `sh()` and `setDiatonic` — so
+     the one door this row adds is its collapsed line. */
+  /** the collapsed face: the chain the record PLAYS, in roman numerals off
+   *  the chart's own spelling (`ui/eight.js chordSymbol`, which is what each
+   *  bar row of the changes grid prints), joined with " · "; a chain too long
+   *  for one line says how many bars it is and what the harmony does with
+   *  them instead. A record whose chart is all DEALT still says the chain,
+   *  never "default". */
+  chordsFace(): string;
+
   /* ---- THE MOTIFS ROW'S OWN DOORS (2026-09-08, TABLE.md §10b step 4) --
      §10a: *"MOTIFS is the bank across the top with previews and provenance,
      and tapping a motif points the SELECTED cell at it (the formula bar's own

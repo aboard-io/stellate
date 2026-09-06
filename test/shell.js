@@ -602,8 +602,7 @@ const LANE = async () => {
    each is a merged row at the top of the Band table's own sheet:
      · `Time`   -> the TIME row  (`ttime`):  the tempo and its nine marks, the
                    meter, the swing, the groove, the breathing, the circle of
-                   fifths, the mode, the scale, the harmony, the diatonic line,
-                   the changes, and the pointer to the board.
+                   fifths, the mode, the scale, and the pointer to the board.
      · `Rules`  -> the RULES row (`trules`): `ui/rules.js`'s whole panel — the
                    name plate, the eight axis blocks, every sentence with its
                    control, the palettes and the resets — unchanged, seated.
@@ -626,6 +625,22 @@ const LANE = async () => {
    plates can only be switched from a branch of a tab that no longer exists is
    four plates lost. The 2026-08-27 quotation stays whole; this is the third
    amendment under it. */
+/* ...AND A SEVENTH AMENDMENT, 2026-09-05 (TABLE.md §13f). Two lines of Paul's,
+   and the head of the table reads RULES · TIME · CHORDS · MOTIFS now:
+     · *"Put rules above time"* — the rules are what the record IS before a
+       hand touches a number, so they stand over the tempo they set. Nothing
+       moved but the order: `trules` and `ttime` are the addresses they were,
+       and every walk in this file reads the head by `data-special` or by
+       `data-k` and not by index.
+     · *"Add chords below time and move chord stuff into it"* — a NEW row,
+       `tchords`, holding the changes grid, the harmony cycle and the melody
+       flag, all MOVED out of the TIME sheet at the addresses they already had
+       (`prog<n>d`, `sel|alphabet.quality|bar<n>`, `prog-add`, `prog-cut`,
+       `sel|alphabet.harmony`, `diatonic`). Key, mode and scale stay in TIME —
+       they are the alphabet a record counts WITH — and so does the board
+       pointer, which is TIME's back matter. `test/table-inventory.json` files
+       the five under `chords-row`; T7's own walk reads the `open` each names,
+       so nothing in this file drives them by hand. */
 /* ...AND THE FOURTH AND FIFTH AMENDMENTS, 2026-09-08 (TABLE.md §10b steps 4
    and 5). `Motifs` and `Produce` leave this list the way `Time`, `Rules` and
    `Mix` left it: each is a merged ROW of the Band table now — the bank with

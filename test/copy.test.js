@@ -175,6 +175,20 @@ const SAME_TEXT_OK = [
      (which meter a rule is about); `group.meter` is the heading over the TIME
      row's meter chips and its two numbers. */
   ["rule.headMeter", "group.meter"],
+  /* ...AND TWO MORE OF THE SAME SHAPE, 2026-09-05 (TABLE.md §13f, Paul: *"Add
+     chords below time and move chord stuff into it"*):
+       · `rule.headHarmony` is a COLUMN HEAD in the rules deck (which harmony
+         a rule is about — the same argument `rule.headMeter` makes one line
+         up); `group.harmony` is the heading over the CHORDS sheet's second
+         group, the harmony cycle and the melody flag.
+       · `field.chords` is a FIELD's label — the section row's own chart
+         (`avail.js` keys `prog` to it) and the rules deck's row for it;
+         `special.chords.word` is the WORD ON THE ROW, the record-level
+         subject the whole sheet opens. A translator may spell "the chords of
+         this section" and "CHORDS" differently, and one of the two may not
+         move at all, which is this list's own first entry's test. */
+  ["rule.headHarmony", "group.harmony"],
+  ["field.chords", "special.chords.word"],
   /* ...and `glyph.sec.list` is the WORD ON A MARK (ui/glyph.js `GLYPH.sec.list`
      — the picture for "every section, by name"), while `grid.sections.word` is
      the heading over the grid itself (2026-09-05, TABLE.md §13e). The same

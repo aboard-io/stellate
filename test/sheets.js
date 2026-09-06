@@ -280,7 +280,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      arrival does not close what the first opened. Every `#pan-band` /
      `#rulesdeck` selector below is the same selector inside `#pan-band`. */
   const openTop = async (t) => {
-    if (t === "Time" || t === "Rules") {
+    if (t === "Time" || t === "Rules" || t === "Chords") {
       await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
       await p.waitForTimeout(700); return; }
     await p.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
@@ -841,7 +841,13 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     await p.evaluate(async () => {
       if (!window.__eightDoc) return;
       const D = window.__eightDoc();
-      const open = document.querySelector('#pan-band thead [aria-expanded="true"]');
+      /* ...AND THE SECTIONS DISCLOSURE IS NOT A SHEET (2026-09-05, TABLE.md
+         §13f). The grid's own header carries `aria-expanded` since it became a
+         fold, and it stands FIRST in the `<thead>` — so "is a sheet already
+         open" answered yes on every arrival and this walk stopped opening
+         column sheets at all. */
+      const open = document.querySelector(
+        '#pan-band thead [aria-expanded="true"]:not(.nu-labelbtn)');
       if (open) return;                       // a sheet is already open
       const names = D.voices.map((v) => v.name);
       for (const n of names) {
@@ -1111,8 +1117,12 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   /* ...AND `Key` IS INSIDE `Time` SINCE 2026-09-04 (nukernel/TABLE.md §8:
      *"Tempo and Key fold into one Time structure"*). The Alphabet axis and its
      chord table did not move a line — `#pan-band` holds both axis sections
-     now — so the door is one word different and nothing below it is. */
-  if (REAL) await openTop("Time");
+     now — so the door is one word different and nothing below it is.
+     ...AND THE CHORD TABLE IS `Chords`' SINCE 2026-09-05 (§13f, Paul: *"Add
+     chords below time and move chord stuff into it"*). Same one word again:
+     `alphabet.quality|bar<n>` is the address it always was and the row in
+     front of it is the CHORDS row. */
+  if (REAL) await openTop("Chords");
   const qual = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="alphabet.quality"]');
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));

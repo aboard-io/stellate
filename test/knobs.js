@@ -285,7 +285,7 @@ const J = (x) => JSON.parse(JSON.stringify(x));
      arrival does not close what the first opened. Every `#pan-tempo` /
      `#rulesdeck` selector below is the same selector inside `#pan-band`. */
       const top = async (n) => {
-        if (n === "Time" || n === "Rules") {
+        if (n === "Time" || n === "Rules" || n === "Chords") {
           await p.evaluate((x) => window.__eightRow(x), n.toLowerCase());
           await p.waitForTimeout(700); return; }
         await p.evaluate((x) => window.__eightTab(x), n);

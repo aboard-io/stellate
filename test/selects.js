@@ -536,7 +536,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
    standing on the page the whole time. `ROWS` below is the missing half of the
    walk, and it is spelled as the four row ids rather than as tab words because
    that is what these doors take. */
-  const ROWS = ["time", "rules", "motifs", "produce"];
+/* ...AND FIVE SINCE 2026-09-05 (§13f, Paul: *"Add chords below time and move
+   chord stuff into it"*): `sel|alphabet.harmony` and every `alphabet.quality`
+   cell of the changes grid are behind the CHORDS row now, so a census that
+   walked only the four would drop them out of the survey exactly as it dropped
+   the six above when `Time` stopped being a tab. */
+  const ROWS = ["time", "rules", "chords", "motifs", "produce"];
   const openTop = async (t) => {
     if (!TOPS.length) return;
     if (ROWS.indexOf(String(t).toLowerCase()) >= 0) {
@@ -900,7 +905,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      structure"*). They were `Key`'s from 2026-08-27; the Alphabet axis did not
      move a line — `#pan-band` holds both axis sections now — so checks 4, 5,
      5b, 7 and 9 read them off the same page through a door with one word
-     changed. Nothing between here and check 10 touches the band. */
+     changed. Nothing between here and check 10 touches the band.
+     ...AND THE CHANGES TABLE LEFT `Time` ON 2026-09-05 (§13f, Paul: *"Add
+     chords below time and move chord stuff into it"*), and this door does NOT
+     follow it. Checks 4 and 5 read the `sel` SURVEY collected above — which
+     walks every row, CHORDS included — so what this door decides is only which
+     controls are on the glass for the checks that read the page directly:
+     the circle of fifths (7) and the mode (9), both of them TIME's. 5b is the
+     one that needs the changes on the glass and opens the CHORDS row itself,
+     and puts TIME back after. */
   await openTop("Time");
 
   /* ---- 4 THE CHORD QUALITY IS INSIDE THE CHANGES TABLE, ONE PER BAR ---- */
@@ -1025,6 +1038,11 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      true: test/sheets.js gate 5 drives the same modal record through the
      `avail.js` harness, which this wave did not touch — avail.js goes on
      measuring, and only this grid routes around what it measured. ---- */
+  /* AND THE DOOR IS STATED (2026-09-05, §13f): the harmony menu and the
+     quality cells are both in the CHORDS row's sheet now, one sheet is open at
+     a time, and a check that inherited whichever view the census happened to
+     end on would be measuring the survey's last step. */
+  await openTop("Chords");
   const dark = await p.evaluate(async () => {
     const h = document.querySelector('#app [data-sel="alphabet.harmony"]');
     if (!h) return "no harmony menu";
@@ -1051,6 +1069,11 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   check(dark && dark.n > 0 && dark.off === 0 && dark.said2,
     "a harmony with no changes leaves every quality menu LIT and says what " +
     "editing them will do " + JSON.stringify(dark));
+  /* AND THE ALPHABET'S ROW GOES BACK ON THE GLASS (2026-09-05, §13f). One
+     sheet is open at a time: checks 7 and 9 read the circle of fifths and the
+     mode field, which are TIME's, and leaving CHORDS open under them measured
+     an absent circle and called it a missing control. */
+  await openTop("Time");
 
   /* ---- 6 A SHEET OF ONE OPTION IS A LABEL PRETENDING TO BE A CHOICE ---- */
   const lonely = sheets.filter((s) => s.n <= 1).map((s) => s.key + " n=" + s.n);

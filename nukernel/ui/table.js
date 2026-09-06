@@ -1779,7 +1779,7 @@ function timeSheet(A2) {
     x2.group = g2;
     return x2;
   };
-  const TEMPO = "tempo", METER = "meter", KEY = "key", CHORDS = "chords";
+  const TEMPO = "tempo", METER = "meter", KEY = "key";
   f2.push(G2(TEMPO, { kind: "node", label: t4("field.tempo"), node: A2.bpmNode() }));
   f2.push(G2(TEMPO, { kind: "node", label: t4("time.byHand"), node: A2.tempoNode() }));
   f2.push(G2(METER, seated(A2, "time.meter", t4("noun.meter"))));
@@ -1801,17 +1801,33 @@ function timeSheet(A2) {
   if (cap && mode.key) mode.sub = cap;
   f2.push(G2(KEY, mode));
   f2.push(G2(KEY, seated(A2, "alphabet.scale", t4("field.scale"))));
-  f2.push(G2(KEY, seated(A2, "alphabet.harmony", t4("time.harmony"))));
-  f2.push(G2(KEY, flagField(
+  f2.push(G2(KEY, { kind: "node", label: t4("time.gain"), node: A2.boardNode() }));
+  return f2;
+}
+function chordsFace(A2) {
+  return A2.chordsFace();
+}
+function chordsSheet(A2) {
+  const f2 = [];
+  const G2 = (g2, x2) => {
+    x2.group = g2;
+    return x2;
+  };
+  const CHORDS = "chords", HARMONY = "harmony";
+  f2.push(G2(CHORDS, {
+    kind: "node",
+    label: t4("chords.changes"),
+    node: A2.changesNode()
+  }));
+  f2.push(G2(HARMONY, seated(A2, "alphabet.harmony", t4("chords.harmony"))));
+  f2.push(G2(HARMONY, flagField(
     "diatonic",
     t4("field.melody"),
     !!A2.diatonicOn(),
-    t4("time.melody.chords"),
-    t4("time.melody.key"),
+    t4("chords.melody.chords"),
+    t4("chords.melody.key"),
     (on) => A2.setDiatonic(on)
   )));
-  f2.push(G2(CHORDS, { kind: "node", label: t4("time.changes"), node: A2.changesNode() }));
-  f2.push(G2(CHORDS, { kind: "node", label: t4("time.gain"), node: A2.boardNode() }));
   return f2;
 }
 function rulesFace(A2) {
@@ -1834,6 +1850,18 @@ function produceSheet(A2) {
 }
 var SPECIALS = [
   {
+    k: "trules",
+    id: "rules",
+    get word() {
+      return t4("special.rules.word");
+    },
+    get aria() {
+      return t4("special.rules.aria");
+    },
+    face: rulesFace,
+    sheet: rulesSheet
+  },
+  {
     k: "ttime",
     id: "time",
     get word() {
@@ -1845,17 +1873,27 @@ var SPECIALS = [
     face: timeFace,
     sheet: timeSheet
   },
+  /* AND IT HAS NO `lamp`, WHICH IS A REFUSAL WITH A MEASUREMENT UNDER IT
+     (§13f). The sounding chord is only a fact about the chart on a record
+     whose `alphabet.harmony` is `cycle`: `kernel.js chordsOf` throws `g.prog`
+     away otherwise and asks `harm()` per bar, so a lamp reading the chart
+     would light a numeral the box is not playing on every modal and emergent
+     record. And the registry that DOES know — `chordCell` / `chordRow` /
+     `chordLabel` — is filled by `chordGrid` while the grid is DRAWN, which is
+     exactly when the row is open and the lamp is not wanted. Lighting it
+     honestly means a second reader of the kernel's harmony inside the clock
+     loop; MOTIFS' lamp costs one already-registered node. */
   {
-    k: "trules",
-    id: "rules",
+    k: "tchords",
+    id: "chords",
     get word() {
-      return t4("special.rules.word");
+      return t4("special.chords.word");
     },
     get aria() {
-      return t4("special.rules.aria");
+      return t4("special.chords.aria");
     },
-    face: rulesFace,
-    sheet: rulesSheet
+    face: chordsFace,
+    sheet: chordsSheet
   },
   {
     k: "tmotifs",
@@ -2019,6 +2057,20 @@ var CLIP = null;
 var RO = null;
 var OUT = null;
 var STICK = null;
+var GRIDSTORE = "nu.band.grid.v1";
+var GRIDOPEN = (() => {
+  try {
+    return localStorage.getItem(GRIDSTORE) !== "0";
+  } catch (e4) {
+    return true;
+  }
+})();
+var saveGridOpen = () => {
+  try {
+    localStorage.setItem(GRIDSTORE, GRIDOPEN ? "1" : "0");
+  } catch (e4) {
+  }
+};
 function shapeOf(A2) {
   const doc = A2.doc();
   const secs = (doc.form && doc.form.sections || []).map((s3, i5) => ({ id: s3.id, i: i5 }));
@@ -2113,9 +2165,11 @@ function bandTable(host, A2) {
       "--panew",
       pane2.clientWidth - 6 + "px"
     );
-    const rows = Array.from(t5.querySelectorAll("thead > tr"));
-    const cells = rows.map((tr) => Array.from(tr.children));
-    for (const cs of cells) for (const c3 of cs) c3.style.insetBlockStart = "";
+    const all = Array.from(t5.querySelectorAll("thead > tr"));
+    for (const tr of all)
+      for (const c3 of Array.from(tr.children))
+        c3.style.insetBlockStart = "";
+    const rows = all.filter((tr) => tr.getClientRects().length > 0);
     const tRect = t5.getBoundingClientRect();
     const base = pane2 ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
     const tops = rows.map((tr) => base + (tr.getBoundingClientRect().top - tRect.top));
@@ -2123,11 +2177,13 @@ function bandTable(host, A2) {
     const cellOpen = !!t5.querySelector("tbody > tr.nu-cellopen");
     const owner = spOpen > 0 ? spOpen - 1 : -1;
     const last = rows.length - 1;
-    const pinned = cellOpen ? -1 : owner >= 0 ? owner : last;
-    rows.forEach((_tr, i5) => {
-      for (const c3 of cells[i5])
-        c3.style.insetBlockStart = i5 === pinned ? "0px" : "auto";
-    });
+    const lastRow = last >= 0 ? rows[last] : null;
+    const heads = !!lastRow && !lastRow.dataset.special && !lastRow.classList.contains("nu-gridlabel") && !lastRow.classList.contains("nu-spopen");
+    const pinned = cellOpen ? -1 : owner >= 0 ? owner : heads ? last : -1;
+    const pinRow = pinned >= 0 ? rows[pinned] : null;
+    for (const tr of all)
+      for (const c3 of Array.from(tr.children))
+        c3.style.insetBlockStart = tr === pinRow ? "0px" : "auto";
     void tops;
     const th0 = t5.querySelector("thead th.nu-colhead");
     if (th0) {
@@ -2290,20 +2346,30 @@ function bandTable(host, A2) {
       <th class="nu-spheadcell nu-labelcell" scope="colgroup"
           colspan=${nCols(S2)}>
         <div class="nu-spline">
-          <b class="nu-spword">${t4("grid.sections.word")}</b>
-          <span class="nu-spface">${tn(
+        <button type="button" class="nu-labelbtn" data-k="tsections"
+          aria-expanded=${String(GRIDOPEN)} aria-controls="nu-gridbody"
+          aria-label=${GRIDOPEN ? t4("grid.sections.collapse.aria") : t4("grid.sections.expand.aria")}
+          @click=${foldGrid}
+          ><b class="nu-spword">${t4("grid.sections.word")}</b
+          ><span class="nu-spface">${tn(
       "grid.sections.count",
       secs.length,
       { bars: tn("count.bar", bars) }
-    )}</span>
+    )}</span></button>
         </div>
       </th>
     </tr>`;
   };
+  function foldGrid() {
+    if (GRIDOPEN && OPEN && !SPECIAL(OPEN)) toggle(OPEN);
+    GRIDOPEN = !GRIDOPEN;
+    saveGridOpen();
+    draw();
+  }
   const thead = (S2, cols) => b`<thead>
     ${specialRows(S2)}
     ${gridLabel(S2)}
-    <tr>
+    <tr ?hidden=${!GRIDOPEN}>
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
       ${c2(cols, (c3) => c3, (c3) => S2.across ? secHead(S2, c3) : voiceHead(S2, c3))}
       <th class="nu-plushead" scope="col">${plusBtn(S2, "head")}</th>
@@ -2422,7 +2488,7 @@ function bandTable(host, A2) {
       ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "+"}</span
       ><span class="nu-vh">${o4.word}</span></button>`;
   };
-  const tbody = (S2, rows, cols) => b`<tbody>
+  const tbody = (S2, rows, cols) => b`<tbody id="nu-gridbody" ?hidden=${!GRIDOPEN}>
       ${orphanSheet(S2)}
       ${c2(rows, (r2) => r2, (r2) => bodyRow(S2, r2, cols))}
       <tr class="nu-addrow">
@@ -2479,7 +2545,6 @@ function bandTable(host, A2) {
   const secRowHead = (sid) => {
     const i5 = A2.doc().form.sections.findIndex((s4) => s4.id === sid);
     const s3 = A2.doc().form.sections[i5];
-    const rm = A2.rowMark(i5);
     return b`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
@@ -2489,10 +2554,8 @@ function bandTable(host, A2) {
       e4.preventDefault();
       toggle("row|" + sid, true);
     }}
-        data-say=${o2(rm && rm.s ? rm.s : void 0)}
-        ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i5 + 1}</span></span
-        ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span>${rm ? b`<span class="nu-vh">${rm.w}</span>` : A}</button>
+        ><span class="nu-srowname"> ${A2.roleWord(s3.role)}</span></button>
       <small> ${tn("count.bar", s3.bars)}</small>
     </th>`;
   };
@@ -2614,7 +2677,8 @@ function bandTable(host, A2) {
   const mixRow = (S2, cols) => {
     const master = "mix|master";
     const face2 = masterFace(A2);
-    return b`<tr class="nu-footrow nu-mixrow" data-row="mix">
+    return b`<tr class="nu-footrow nu-mixrow" data-row="mix"
+        ?hidden=${!GRIDOPEN}>
       <th class="nu-srowh" scope="row"><span class="nu-srowname">${t4("special.mix.word")}</span></th>
       ${c2(cols, (c3) => c3, (c3) => mixCell(c3))}
       <td class="nu-addcell"></td>

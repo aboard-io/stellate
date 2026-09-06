@@ -6718,7 +6718,15 @@ table.nu-trims{ color: var(--ink); }
   inline-size: var(--panew, 100%); max-inline-size: 100%;
   position: sticky; inset-inline-start: 0;
   min-block-size: var(--tap); background: var(--paper); }
-.nu-sphead{ display: flex; flex: 1 1 auto; min-inline-size: 0;
+/* ...AND THE SECTIONS DISCLOSURE WEARS THE SAME BOX AND NOT THE SAME CLASS
+   (2026-09-05, TABLE.md §13f). It is a button the width of a special row's
+   line, so it takes `.nu-sphead`'s box; it is NOT a sheet's head, so it must
+   not answer `[aria-expanded="true"].nu-sphead` — the selector three gates and
+   the page's own "shut whatever is open" gesture use. MEASURED the hour it
+   landed: sharing the class made every `shutAll()` FOLD THE GRID, and eleven
+   checks about the mix row, the section column and the frozen stack went red
+   on a table that was not on the glass. One box, two classes. */
+.nu-sphead, .nu-labelbtn{ display: flex; flex: 1 1 auto; min-inline-size: 0;
   align-items: center;
   gap: var(--s3); min-block-size: var(--tap);
   padding: var(--s2) var(--s3); text-align: start;
@@ -6748,28 +6756,53 @@ table.nu-trims{ color: var(--ink); }
   font: var(--num-fw) var(--t3)/1.2 var(--sans, inherit); color: var(--dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ================
+/* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e, §13f) ==========
    Paul: *"Give the main composer interface its own header call it Sections."*
    One line above the column heads, in the special row's own furniture — the
-   word left, the count right, `--tap` tall, a hairline under — and NOT a
-   control: there is no button in it, so the padding `.nu-sphead` would have
-   given the line is given to the two words instead and the line stays exactly
-   one `--tap` high.
+   word left, the count right, `--tap` tall, a hairline under. It said here
+   that it was *"NOT a control: there is no button in it"*; §13f gave it one
+   (*"Sections should collapse when I touch it"*), which is `.nu-labelbtn`
+   above, wearing `.nu-sphead`'s box and not its class.
    IT IS THE ONE `<thead>` ROW THAT IS NOT STICKY, and it says so in the
    stylesheet rather than leaving it to the inline offsets `stick()` writes:
    §13a.1 gives the pane ONE pin and `stick()` spends it on the LAST head row
    (the column heads, directly below this one). A label that pinned would be a
    second band over the grid, which is the whole of the complaint §13 answers. */
 .nu-sheetgrid thead tr.nu-gridlabel > th.nu-labelcell{ position: static; }
-.nu-gridlabel .nu-spword{ padding-inline-start: var(--s3); }
 /* ...AND THE COUNT IS NOT SHOUTED. `.nu-trims thead th` is a dim UPPERCASE
    word — the type a column head wears — and the other special rows escape it
    by putting their face inside a `<button>`, which does not inherit it. This
-   row has no button in it (it is a label), so it drew `13 SECTIONS · 76 BARS`
-   in caps beside three faces in sentence case, measured on the first drawing.
-   The word keeps the uppercase, because that is what a row's word IS here. */
-.nu-gridlabel .nu-spface{ padding-inline-end: var(--s3);
-  text-transform: none; letter-spacing: 0; }
+   row HAS one since 2026-09-05 (§13f: the line folds the grid), so it escapes
+   the same way they do and the padding it used to be given by hand
+   (`.nu-gridlabel .nu-spword{ padding-inline-start: var(--s3) }`) is
+   `.nu-sphead`'s own. The belt stays: a stylesheet that told the truth about
+   this line before the button arrived should not start lying because of it. */
+.nu-gridlabel .nu-spface{ text-transform: none; letter-spacing: 0; }
+
+/* ===== THE PLAYING SECTION, LIT WHOLE (2026-09-05, TABLE.md §13f) ======
+   Paul: *"Really light up the sections as you move through them — not just a
+   tiny halo around the number."* The row head and every cell of the sounding
+   section take a ground in `--clock` — DESIGN.md §1's token for *"scheduled"*,
+   which is what a playhead is — strong enough to find from arm's length on a
+   phone, with the ink left alone so the words on it stay the words. The mix is
+   ONE custom property so the three selectors that spend it cannot drift and so
+   dark mode gets it for free: `--panel` is the ground either way.
+   THE `<mark>` ROUND THE NUMBER STAYS — it is the same fact at the reading
+   distance of a finger, and it is what `markForm` has always written.
+   (The colours are id-scoped, down beside the ground they have to beat: see
+   `#pan-band .nu-wordgrid tbody tr.is-playing` below.) */
+.nu-sheetgrid tbody tr.is-playing{ --lit: color-mix(in srgb, var(--clock) 85%, var(--panel)); }
+.nu-sheetgrid tbody tr.is-playing > th .nu-srowname{ font-weight: var(--fw-block); }
+
+/* ===== A FOLDED GRID (2026-09-05, TABLE.md §13f) =======================
+   Paul: *"Sections should collapse when I touch it."* The rows the disclosure
+   folds carry `hidden`, which is the attribute the platform already means by
+   "not here" — off the glass AND out of the accessibility tree. The UA's own
+   `[hidden]{display:none}` is a `display` declaration and every table part
+   here declares its own display through its element type, so this is stated
+   rather than assumed: a `<tbody hidden>` that a later rule revives is a grid
+   that folds on one browser and not another. */
+.nu-sheetgrid tbody[hidden], .nu-sheetgrid tr[hidden]{ display: none; }
 
 /* ===== THE MOTIFS ROW AND ITS BANK (2026-09-08, TABLE.md §10b step 4) ====
    §10a: *"MOTIFS is the bank across the top with previews and provenance, and
@@ -6878,7 +6911,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-timebpm{ display: flex; flex-direction: column; inline-size: 100%;
   min-inline-size: 0; }
 .nu-timebpm .nu-field{ margin: 0; }
-.nu-timekey, .nu-timechanges, .nu-rulesheet, .nu-timemeter{ inline-size: 100%;
+.nu-timekey, .nu-changes, .nu-rulesheet, .nu-timemeter{ inline-size: 100%;
   min-inline-size: 0; }
 /* THE SIGNATURE'S TWO NUMBERS (2026-09-05, the any-meter round). One
    component per number — the typed field over its slider, DESIGN.md 8 — and
@@ -8671,6 +8704,22 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-wordgrid thead th.nu-cornerh,
 #pan-band .nu-wordgrid tbody th.nu-plusrowh{
   box-shadow: 0 0 0 3px var(--ground); }
+/* ...AND THE PLAYING SECTION'S ROW BEATS BOTH OF THEM (2026-09-05, §13f).
+   MEASURED the hour it landed: the whole-row light was written as
+   `.nu-sheetgrid tbody tr.is-playing > th` — higher specificity than the
+   `--paper` rule it was aimed at and lower than THIS one, which is
+   id-scoped — so the class went on, the memo said it had, and the row drew
+   `rgb(240, 237, 228)`, the resting cream, at every width. A ground that is
+   declared and never arrives is this box's characteristic bug and it does not
+   get to happen in the round that is about being able to SEE the playhead. So
+   the light is stated where the ground is, at the same weight, and the 3px
+   ring the seam-closer paints round the row head is painted in the light too —
+   a cream ring round a lit head is the seam reopened. */
+#pan-band .nu-wordgrid tbody tr.is-playing > th,
+#pan-band .nu-wordgrid tbody tr.is-playing > td{
+  background: var(--lit); color: var(--ink); }
+#pan-band .nu-wordgrid tbody tr.is-playing > th.nu-srowh{
+  box-shadow: 0 0 0 3px var(--lit); }
 /* ...AND THE PLAYHEAD SURVIVES IT. `.nu-colhead.is-sounding` spends its own
    `box-shadow` on the clock's edge bar under a sounding player; the rule above
    is id-scoped and would have outranked it, so the two are ONE list here, the

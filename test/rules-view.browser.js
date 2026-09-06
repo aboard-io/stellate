@@ -160,7 +160,7 @@ function standUpServer() {
      arrival does not close what the first opened. Every `#pan-tempo` /
      `#pan-band` selector below is the same selector inside `#pan-band`. */
   const top = async (t) => {
-    if (t === "Time" || t === "Rules") {
+    if (t === "Time" || t === "Rules" || t === "Chords") {
       await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
       await p.waitForTimeout(900); return; }
     await p.evaluate((n) => window.__eightTab(n), t);

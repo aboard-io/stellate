@@ -41,6 +41,13 @@ export const SHEETS: Table = {
   "group.tempo": "Tempo",
   "group.meter": "Meter",
   "group.chords": "Chords",
+  /* THE CHORDS ROW'S SECOND GROUP (2026-09-05, TABLE.md §13f): what the
+     harmony DOES over the changes — the cycle word and whether the melody
+     follows the chords or stays in the key. `ui/glyph.js GLYPH.group` has no
+     mark for it, so `groupMark` answers null and the heading prints its word
+     alone, which is that table's own rule for a group it has no honest
+     picture for. */
+  "group.harmony": "Harmony",
   /* (`group.band`, `add.players` AND `add.sections` STOOD HERE — the ADD
      sheet's three headings, for one afternoon. TABLE.md §13e, Paul: *"Don't
      pop up an interface when I add a section or a voice. Just add it."* The

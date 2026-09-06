@@ -1,5 +1,5 @@
-// nukernel/src/table/special.ts — THE SPECIAL ROWS: TIME, RULES, MOTIFS,
-// MIX and PRODUCE.
+// nukernel/src/table/special.ts — THE SPECIAL ROWS: RULES, TIME, CHORDS,
+// MOTIFS, MIX and PRODUCE.
 //
 // Paul, 2026-09-05, looking at the nav beside the v271 grid: *"we could
 // integrate rules into a special row, time + key into a special row, then do
@@ -119,15 +119,16 @@ export function timeFace(A: TableAPI): string {
  *  reading order — how fast it counts, then what it counts in. The inventory
  *  that proves the count is `test/table-inventory.json` (home `time-row`). */
 export function timeSheet(A: TableAPI): Field[] {
-  /* ---- FOUR GROUPS, IN THE COMPOSER'S ORDER (2026-09-05, TABLE.md §11c)
-     DESIGN.md §5 opens with this row: *"Time (tempo · meter · key)"*. The
-     fourteen controls were one flat list in `#pan-tempo`'s reading order;
-     they are TEMPO · METER · KEY · CHORDS now, and nothing moved except the
-     board pointer, which stands last under the chords it does not belong to
-     rather than in a fifth group of one. */
+  /* ---- THREE GROUPS, IN THE COMPOSER'S ORDER (2026-09-05, TABLE.md §13f)
+     DESIGN.md §5 opens with this row: *"Time (tempo · meter · key)"*, and
+     that is now the whole of it. It was TEMPO · METER · KEY · CHORDS until
+     Paul's *"Add chords below time and move chord stuff into it"*: the
+     changes, the harmony cycle and the melody flag are `chordsSheet`'s, one
+     row down, and this sheet keeps the ALPHABET — how fast it counts, what it
+     counts in, and which notes it counts with. */
   const f: Field[] = [];
   const G = (g: string, x: Field): Field => { x.group = g; return x; };
-  const TEMPO = "tempo", METER = "meter", KEY = "key", CHORDS = "chords";
+  const TEMPO = "tempo", METER = "meter", KEY = "key";
   /* THE TEMPO, BIG, AT THE TOP, and then the nine marks that move it. Both are
      the pane's own widgets: the `<output class="nu-bpmbig">` with the slider
      under it (`data-k="bpm"`, `BPM_LO..BPM_HI`), and the one row that carries
@@ -175,20 +176,64 @@ export function timeSheet(A: TableAPI): Field[] {
   if (cap && mode.key) mode.sub = cap;
   f.push(G(KEY, mode));
   f.push(G(KEY, seated(A, "alphabet.scale", t("field.scale"))));
-  f.push(G(KEY, seated(A, "alphabet.harmony", t("time.harmony"))));
-  f.push(G(KEY, flagField("diatonic", t("field.melody"), !!A.diatonicOn(),
-    t("time.melody.chords"), t("time.melody.key"),
-    (on) => A.setDiatonic(on))));
+  /* AND THE POINTER STANDS LAST, which is 2026-08-29's measurement and not a
+     habit: reading order is working order, a hand opening TIME came for the
+     tempo, and a cross-reference is back matter. It stood under the CHORDS
+     group until 2026-09-05 with its own comment saying it did not belong to
+     the chords; the chords have left, so it stands under the last group there
+     IS rather than in a fourth group of one — which is the same refusal that
+     put it here in the first place. */
+  f.push(G(KEY, { kind: "node", label: t("time.gain"), node: A.boardNode() }));
+  return f;
+}
+
+/* ===================================================================== */
+/* ---- THE CHORDS ROW (2026-09-05, TABLE.md §13f) ---------------------- */
+//
+// Paul: *"Add chords below time and move chord stuff into it."* It is the
+// third merged row of the head, under TIME, and everything in it MOVED —
+// there is no second changes grid, no second harmony menu and no second
+// melody flag on this page. What did NOT move is the alphabet: key, mode and
+// scale are what the record counts WITH and stay in TIME; the changes are
+// what it DOES over them.
+
+/** the collapsed face: *"the chain the record plays"*, in the shortest honest
+ *  form the box already has. `ui/eight.js chordsFace` is its owner for the
+ *  reason `rulesFace` and `motifsFace` have one — the numerals are
+ *  `chordSymbol`'s, the same spelling the changes grid prints in its own bar
+ *  rows, and a face that spelled a chord a second way would be a second
+ *  owner of figured bass. A record whose chords are all DEALT still says the
+ *  chain that plays; nothing here ever answers "default". */
+export function chordsFace(A: TableAPI): string {
+  return A.chordsFace();
+}
+
+/** the expanded face: the changes first, because that is what a hand opening
+ *  CHORDS came for, then what the harmony DOES with them (DESIGN.md §5). */
+export function chordsSheet(A: TableAPI): Field[] {
+  const f: Field[] = [];
+  const G = (g: string, x: Field): Field => { x.group = g; return x; };
+  const CHORDS = "chords", HARMONY = "harmony";
   /* THE CHANGES, WHOLE. `chordGrid` is a table of its own — a degree slider, a
      quality menu and an inversion slider per bar, `+ bar` and `− bar` — and it
      registers the playhead's own `chordCell` for the bar that is sounding. It
      comes across as one node for exactly the reason the voice's channel strip
-     does: it is not a vector and has no cell. */
-  f.push(G(CHORDS, { kind: "node", label: t("time.changes"), node: A.changesNode() }));
-  /* AND THE POINTER STANDS LAST, which is 2026-08-29's measurement and not a
-     habit: reading order is working order, a hand opening TIME came for the
-     tempo, and a cross-reference is back matter. */
-  f.push(G(CHORDS, { kind: "node", label: t("time.gain"), node: A.boardNode() }));
+     does: it is not a vector and has no cell.
+     `alphabet.quality` RIDES WITH IT and is not a field of this sheet: it is a
+     per-BAR menu inside that grid (`sel|alphabet.quality|bar<n>`), so it moved
+     the moment the grid did, at the address it has always had. */
+  f.push(G(CHORDS, { kind: "node", label: t("chords.changes"),
+                     node: A.changesNode() }));
+  /* AND WHAT THE HARMONY DOES WITH THEM. `alphabet.harmony` is the word that
+     decides whether the kernel READS the chart at all (`chordsOf` takes
+     `g.prog` only under `cycle`), which is a fact about the changes and not
+     about the alphabet — it stood in the KEY group beside the mode until
+     §13f. The melody flag is its neighbour for the same reason: "follows the
+     chords" is a sentence about the chords. */
+  f.push(G(HARMONY, seated(A, "alphabet.harmony", t("chords.harmony"))));
+  f.push(G(HARMONY, flagField("diatonic", t("field.melody"), !!A.diatonicOn(),
+    t("chords.melody.chords"), t("chords.melody.key"),
+    (on) => A.setDiatonic(on))));
   return f;
 }
 
@@ -302,15 +347,38 @@ export interface SpecialRow {
    MODULE EVALUATION would be read once, at import, and a page that changed
    its language would keep the words it booted with. `word` and `aria` are
    looked up the moment `grid.ts` draws the row. */
+/* THE ORDER IS RULES · TIME · CHORDS · MOTIFS (2026-09-05, §13f), and both
+   moves are Paul's own line. *"Put rules above time"*: the rules are what the
+   record IS before a hand touches a number, so the genre's sentences stand
+   over the tempo they set rather than under it. *"Add chords below time and
+   move chord stuff into it"*: the changes are their own subject and they read
+   after the meter and the key they are counted in. DESIGN.md §5 carries the
+   same order. NOTHING READS THIS LIST BY INDEX — `grid.ts specialRows` walks
+   it, `stick()` finds the open row by class and the column heads by being
+   last — so this array is the one place the order is stated. */
 export const SPECIALS: SpecialRow[] = [
-  { k: "ttime", id: "time",
-    get word() { return t("special.time.word"); },
-    get aria() { return t("special.time.aria"); },
-    face: timeFace, sheet: timeSheet },
   { k: "trules", id: "rules",
     get word() { return t("special.rules.word"); },
     get aria() { return t("special.rules.aria"); },
     face: rulesFace, sheet: rulesSheet },
+  { k: "ttime", id: "time",
+    get word() { return t("special.time.word"); },
+    get aria() { return t("special.time.aria"); },
+    face: timeFace, sheet: timeSheet },
+  /* AND IT HAS NO `lamp`, WHICH IS A REFUSAL WITH A MEASUREMENT UNDER IT
+     (§13f). The sounding chord is only a fact about the chart on a record
+     whose `alphabet.harmony` is `cycle`: `kernel.js chordsOf` throws `g.prog`
+     away otherwise and asks `harm()` per bar, so a lamp reading the chart
+     would light a numeral the box is not playing on every modal and emergent
+     record. And the registry that DOES know — `chordCell` / `chordRow` /
+     `chordLabel` — is filled by `chordGrid` while the grid is DRAWN, which is
+     exactly when the row is open and the lamp is not wanted. Lighting it
+     honestly means a second reader of the kernel's harmony inside the clock
+     loop; MOTIFS' lamp costs one already-registered node. */
+  { k: "tchords", id: "chords",
+    get word() { return t("special.chords.word"); },
+    get aria() { return t("special.chords.aria"); },
+    face: chordsFace, sheet: chordsSheet },
   { k: "tmotifs", id: "motifs",
     get word() { return t("special.phrases.word"); },
     get aria() { return t("special.phrases.aria"); },

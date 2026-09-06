@@ -94,6 +94,26 @@ let RO: ResizeObserver | null = null;
 /** the ONE tap-outside closer — see `armOutside`. */
 let OUT: ((e: Event) => void) | null = null;
 let STICK: (() => void) | null = null;
+/* ---- IS THE GRID SHOWING? (2026-09-05, TABLE.md §13f, Paul: *"Sections
+   should collapse when I touch it."*) The SECTIONS label is a disclosure now:
+   folded, the column heads, every section row, the `+` row and the mix row are
+   `hidden`, and what is left above the master is the label's own line with its
+   count still on it.
+
+   IT IS A PAGE PREFERENCE AND NOT A DOCUMENT FACT, which is `rubato`'s own
+   distinction (`ui/state.js setRubato`): no `op()`, so no undo entry; no
+   `changed()`, so no recompile; nothing in the share link. It is stored beside
+   `nu.band.session` — the Band panel's other preference — and read once, at
+   module evaluation, because a page that folded the grid to reach PRODUCE
+   should find it folded on the next load. Every touch of `localStorage` is
+   guarded: a private window throws on the ACCESSOR, not only on the call. */
+const GRIDSTORE = "nu.band.grid.v1";
+let GRIDOPEN = ((): boolean => {
+  try { return localStorage.getItem(GRIDSTORE) !== "0"; } catch (e) { return true; }
+})();
+const saveGridOpen = (): void => {
+  try { localStorage.setItem(GRIDSTORE, GRIDOPEN ? "1" : "0"); } catch (e) { /* private mode */ }
+};
 
 /* ---- what a cell is, in the two directions the table can face -------- */
 interface Shape {
@@ -148,7 +168,9 @@ export interface Grid {
 
 /** WHICH OPEN DOORS SURVIVE A REBUILD, and the test is the same sentence for
  *  both of them: a door whose OWN CONTROLS RECOMPILE would shut under the thumb
- *  that was using it. `sp|` is TIME and RULES (a tempo, a meter word, a rule);
+ *  that was using it. `sp|` is RULES, TIME and CHORDS (a rule, a tempo, a
+ *  meter word, a chord degree — §13f gave the changes their own row and every
+ *  one of its controls recompiles the way TIME's always did);
  *  `mix|` is the mix row (a fader, a send, an insert — every one of them a
  *  `ctx.changed()`). None of the three reasons a column sheet must close is
  *  true of either — `tablePanel` lands an arrival by clicking a COLUMN or a ROW
@@ -182,7 +204,7 @@ export interface Grid {
    a tap OUTSIDE it, Escape, or its own head pressed again. */
 const STICKY = (k: string | null): boolean => !!k && k !== "corner";
 /** ...AND `SPECIAL` IS WHAT `STICKY` USED TO MEAN — a MERGED ROW (TIME, RULES,
- *  MOTIFS, PRODUCE, the mix row's board). Two of `STICKY`'s three callers were
+ *  CHORDS, MOTIFS, PRODUCE, the mix row's board). Two of `STICKY`'s three callers were
  *  never asking about survival at all: one lets the page's landing go when a
  *  merged row opens, and one hands the keyboard to a merged row's chips
  *  instead of to the spreadsheet. Both still mean a merged row and neither
@@ -360,9 +382,19 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        (the pane's scroll origin, which the base below adds back for the case
        where the table is not the first thing in the pane), and the offsets go
        on again — all inside one frame, so nothing paints in between. */
-    const rows = Array.from(t.querySelectorAll<HTMLElement>("thead > tr"));
-    const cells = rows.map((tr) => Array.from(tr.children) as HTMLElement[]);
-    for (const cs of cells) for (const c of cs) c.style.insetBlockStart = "";
+    /* A HIDDEN ROW IS AN ABSENT ROW (2026-09-05, §13f). The SECTIONS
+       disclosure folds the column heads away with the body they head, and a
+       walk that still counted them would spend the pane's ONE pin on a row
+       that is not on the glass — measured as `insetBlockStart: 0` written to a
+       `display: none` `<tr>`, which is a pin that holds nothing and, worse, a
+       pin that is not the heads. So the offsets are CLEARED on every row (a
+       row that is folded must not keep the offset it had when it was shown)
+       and everything below reads only the rows a hand can see. */
+    const all = Array.from(t.querySelectorAll<HTMLElement>("thead > tr"));
+    for (const tr of all)
+      for (const c of Array.from(tr.children) as HTMLElement[])
+        c.style.insetBlockStart = "";
+    const rows = all.filter((tr) => tr.getClientRects().length > 0);
     const tRect = (t as HTMLElement).getBoundingClientRect();
     const base = pane2
       ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
@@ -415,11 +447,29 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const cellOpen = !!t.querySelector("tbody > tr.nu-cellopen");
     const owner = spOpen > 0 ? spOpen - 1 : -1;
     const last = rows.length - 1;
-    const pinned = cellOpen ? -1 : (owner >= 0 ? owner : last);
-    rows.forEach((_tr, i) => {
-      for (const c of cells[i]!)
-        c.style.insetBlockStart = i === pinned ? "0px" : "auto";
-    });
+    /* ...AND THE LAST VISIBLE ROW IS ONLY A PIN WHEN IT IS THE COLUMN HEADS
+       (§13f). With the grid folded the last row left standing is the SECTIONS
+       label, which §13e made the one `<thead>` row that never pins; folding
+       must not promote it. So the fallback is spelled as what it has always
+       MEANT — the heads — rather than as "whatever is last". */
+    const lastRow = last >= 0 ? rows[last]! : null;
+    const heads = !!lastRow && !lastRow.dataset.special &&
+      !lastRow.classList.contains("nu-gridlabel") &&
+      !lastRow.classList.contains("nu-spopen");
+    const pinned = cellOpen ? -1 : (owner >= 0 ? owner : (heads ? last : -1));
+    /* ...AND EVERY ROW IS WRITTEN, INCLUDING THE FOLDED ONES (2026-09-05,
+       §13f). `nu.css` pins every `thead th` at `inset-block-start: 0` and this
+       walk's job is to say which row keeps it — so a row left with NO inline
+       value keeps the stylesheet's 0 and reports itself pinned to anything
+       reading `getComputedStyle`. MEASURED the hour the fold landed: the
+       hidden column-head row came back `position: sticky, inset-block-start:
+       0px` with zero client rects — a pin on a row that is not on the glass,
+       which is the one-pin law broken by an omission. So the loop walks ALL
+       the head's rows and the visible ones only decide WHICH index wins. */
+    const pinRow = pinned >= 0 ? rows[pinned]! : null;
+    for (const tr of all)
+      for (const c of Array.from(tr.children) as HTMLElement[])
+        c.style.insetBlockStart = tr === pinRow ? "0px" : "auto";
     void tops;
 
     /* ---- A CELL IS ITS GLYPH FIRST, ITS WORD WHERE THERE IS ROOM -------
@@ -663,18 +713,27 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      the grid under them — the thing the whole page is for — named nothing,
      and a reader arriving at the column heads had to infer that the rows
      below were the song's sections.
-     IT IS A LABEL AND NOT A ROW WITH A SHEET. No button, no `aria-expanded`,
-     no `data-k`: there is nothing to open, so there is nothing to tap, and a
-     one-line heading that swallowed a thumb would be the fifth surface in a
-     head that §13a spent a round emptying. It wears the special row's own
-     furniture (`.nu-spline`, `.nu-spword`, `.nu-spface`) because it IS that
-     line — the word left, the count right, `--tap` tall, a hairline under —
-     and it is the ONE `<thead>` row that does not pin: `stick()` pins the
-     LAST head row (the column heads) and this stands directly above them, in
-     the flow, scrolling away with the special rows.
+     IT WEARS THE SPECIAL ROW'S OWN FURNITURE (`.nu-spline`, `.nu-spword`,
+     `.nu-spface`) because it IS that line — the word left, the count right,
+     `--tap` tall, a hairline under — and it is the ONE `<thead>` row that does
+     not pin: `stick()` pins the LAST head row (the column heads) and this
+     stands directly above them, in the flow, scrolling away with the special
+     rows.
      ITS COUNT IS THE RECORD'S, NOT THE VIEW'S. Sections and bars are document
      facts, so the line reads the same when §5's transpose turns the grid and
-     the sections are running across it. */
+     the sections are running across it.
+
+     ...AND IT IS A DISCLOSURE SINCE 2026-09-05 (§13f). Paul: *"Sections should
+     collapse when I touch it."* It said here, from 2026-09-05 to 2026-09-05,
+     that it was *"a LABEL and not a row with a sheet — no button, no
+     `aria-expanded`, no `data-k`: there is nothing to open, so there is
+     nothing to tap"*. There is something to do: FOLD. So the line is a button
+     the width of the row, `aria-expanded` says which way it stands and
+     `aria-controls` names the body it folds — and what it opens is not a
+     sheet, which is why the accordion (`OPEN`) does not know about it and one
+     sheet at a time is untouched. The COUNT stays on the right in both states:
+     folded, it is the only thing the grid says, which is the whole reason a
+     hand folds it. */
   const gridLabel = (S: Shape): TemplateResult => {
     const secs = A.doc().form.sections;
     const bars = secs.reduce((n, x) => n + (x.bars || 0), 0);
@@ -682,13 +741,34 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       <th class="nu-spheadcell nu-labelcell" scope="colgroup"
           colspan=${nCols(S)}>
         <div class="nu-spline">
-          <b class="nu-spword">${t("grid.sections.word")}</b>
-          <span class="nu-spface">${tn("grid.sections.count", secs.length,
-            { bars: tn("count.bar", bars) })}</span>
+        <button type="button" class="nu-labelbtn" data-k="tsections"
+          aria-expanded=${String(GRIDOPEN)} aria-controls="nu-gridbody"
+          aria-label=${GRIDOPEN ? t("grid.sections.collapse.aria")
+                                : t("grid.sections.expand.aria")}
+          @click=${foldGrid}
+          ><b class="nu-spword">${t("grid.sections.word")}</b
+          ><span class="nu-spface">${tn("grid.sections.count", secs.length,
+            { bars: tn("count.bar", bars) })}</span></button>
         </div>
       </th>
     </tr>`;
   };
+
+  /* THE FOLD ITSELF, AND IT IS NOT AN OP (§13f). No `op()` wrapper, so the
+     undo stack does not grow; no `changed()`, so nothing recompiles; the
+     document is not read and not written. What it DOES do first is close the
+     grid's own open sheet — a cell's, a section's, a column's, the corner's —
+     through `toggle`, the same door the × and a tap outside use, because a
+     sheet that lives in the `<tbody>` cannot stay open inside a body that is
+     about to be hidden. A SPECIAL ROW'S sheet is not touched: it stands above
+     the grid, it is not folded away, and §13f's own line says the four rows
+     over the label are untouched. */
+  function foldGrid(): void {
+    if (GRIDOPEN && OPEN && !SPECIAL(OPEN)) toggle(OPEN);
+    GRIDOPEN = !GRIDOPEN;
+    saveGridOpen();
+    draw();
+  }
 
   /* ---- THE HEAD ROW, AND ITS LAST CELL IS ONE `+` (§13a.5, §13e) ------
      Paul, on the Silence record at 390: *"three adders (`+ line · + bass · +
@@ -702,10 +782,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      section or a voice. Just add it."* — so each `+` IS its own offer and a
      tap on it writes. The three column widths the adders took stay with the
      players. */
+  /* ...AND THE COLUMN HEADS FOLD WITH THE BODY THEY HEAD (§13f). `hidden` and
+     not a class: it is the attribute the platform already means by "not here",
+     it takes the row out of the accessibility tree as well as off the glass,
+     and `stick()` reads the same absence a hand does (a hidden row reports no
+     client rects, so it cannot be the pane's one pin). */
   const thead = (S: Shape, cols: string[]): TemplateResult => html`<thead>
     ${specialRows(S)}
     ${gridLabel(S)}
-    <tr>
+    <tr ?hidden=${!GRIDOPEN}>
       <th class="nu-cornerh">${cornerBtn(S)}</th>
       ${repeat(cols, (c) => c, (c) => S.across ? secHead(S, c) : voiceHead(S, c))}
       <th class="nu-plushead" scope="col">${plusBtn(S, "head")}</th>
@@ -879,7 +964,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
 
   /* ---- THE BODY ------------------------------------------------------ */
   const tbody = (S: Shape, rows: string[], cols: string[]): TemplateResult =>
-    html`<tbody>
+    html`<tbody id="nu-gridbody" ?hidden=${!GRIDOPEN}>
       ${orphanSheet(S)}
       ${repeat(rows, (r) => r, (r) => bodyRow(S, r, cols))}
       <tr class="nu-addrow">
@@ -958,21 +1043,33 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      inside a `<th>` that is `position: sticky`, which is a containing block,
      so the absolutely-positioned hidden word cannot escape its own head and
      take the page sideways (nu.css `.nu-ic`, and the measurement there). */
+  /* ...AND THE SECTION ROW HEAD HAS NO MARK ON IT (2026-09-05, §13f). Paul:
+     *"You don't need to put the little grid icon to the left of each section
+     number."* It drew `A.rowMark(i)` — the ▦ every section wears — in front of
+     the number, on every row of the grid, which is the one place a mark says
+     nothing a reader did not already know: the rows of this table ARE the
+     sections, the SECTIONS label one line above says so, and thirteen copies
+     of one picture down the left edge is a column of noise in the narrowest
+     column on the page. The number, the name and the bar count stay, and so
+     does the accessible name (`12 chorus, 8 bars`), which never came off the
+     mark. The MARK ITSELF is not deleted: `A.rowMark` still draws the section
+     in the cell sheet's own header and in the provenance words, which is where
+     one ▦ stands for one thing. `.nu-vh` and `data-say` go with the picture
+     they belonged to — a hidden word for an absent icon is a word about
+     nothing, and the two gates that sweep `button .nu-g` for a name and a
+     `.nu-vh` (test/shell.js A6h, test/text-diet.test.js T2) ask about buttons
+     that HAVE a mark. */
   const secRowHead = (sid: string) => {
     const i = A.doc().form.sections.findIndex((s) => s.id === sid);
     const s = A.doc().form.sections[i]!;
-    const rm = A.rowMark(i);
     return html`<th class="nu-srowh" scope="row">
       <button type="button" class="nu-rowjump" data-k=${"trow|" + sid}
         aria-expanded=${String(OPEN === "row|" + sid)}
         aria-label=${tn("head.section", s.bars, { name: A.secName(i) })}
         @click=${() => toggle("row|" + sid)}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle("row|" + sid, true); }}
-        data-say=${ifDefined(rm && rm.s ? rm.s : undefined)}
-        ><span class="nu-g" aria-hidden="true">${rm ? rm.g : ""}</span
         ><span data-live="count"><span>${i + 1}</span></span
-        ><span class="nu-srowname"> ${A.roleWord(s.role)}</span>${
-        rm ? html`<span class="nu-vh">${rm.w}</span>` : nothing}</button>
+        ><span class="nu-srowname"> ${A.roleWord(s.role)}</span></button>
       <small> ${tn("count.bar", s.bars)}</small>
     </th>`;
   };
@@ -1176,7 +1273,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   const mixRow = (S: Shape, cols: string[]): TemplateResult => {
     const master = "mix|master";
     const face = masterFace(A);
-    return html`<tr class="nu-footrow nu-mixrow" data-row="mix">
+    /* THE MIX ROW FOLDS WITH THE GRID (2026-09-05, §13f) and the three rows
+       under it do not. It is the one `<tfoot>` row that is ALIGNED — a cell
+       per COLUMN, standing under that player's own head — so a mix strip with
+       no column head over it is a row of unlabelled faders. MASTER, PRODUCE
+       and PERFORMANCE are merged facts about the record and read the same
+       whether or not the grid is on the glass, which is exactly why a hand
+       folds the grid to reach them. */
+    return html`<tr class="nu-footrow nu-mixrow" data-row="mix"
+        ?hidden=${!GRIDOPEN}>
       <th class="nu-srowh" scope="row"><span class="nu-srowname">${
         t("special.mix.word")}</span></th>
       ${repeat(cols, (c) => c, (c) => mixCell(c))}

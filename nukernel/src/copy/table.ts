@@ -72,6 +72,12 @@ export const TABLE: Table = {
   "special.time.aria": "Time — tempo, meter and key",
   "special.rules.word": "rules",
   "special.rules.aria": "Rules — the genre as editable rules",
+  /* THE CHORDS ROW (2026-09-05, TABLE.md §13f, Paul: *"Add chords below time
+     and move chord stuff into it"*). Its own word and its own sentence,
+     because the changes are their own subject: TIME says how fast and in what
+     alphabet, CHORDS says what the harmony DOES over it. */
+  "special.chords.word": "chords",
+  "special.chords.aria": "Chords — the changes and the harmony",
   /* THE WORD IS `motifs` SINCE 2026-09-05 (TABLE.md §13e, Paul: *"Call
      phrases motifs"*). The KEY does not move — an address does not move when a
      word does — and `motif` was the page's address for this thing all along
@@ -93,6 +99,14 @@ export const TABLE: Table = {
      key with its own plural, and `{bars}` is `count.bar`'s own plural handed
      in as data: two counts in one line, each declined by the catalogue that
      owns it. */
+  /* ...AND ITS TWO NAMES SINCE 2026-09-05 (§13f, Paul: *"Sections should
+     collapse when I touch it."*). The line is a disclosure, so its accessible
+     name says what a tap DOES and not what the row is — the word and the count
+     are already on the glass beside it. Two keys because a disclosure has two
+     states and each is a different sentence, which is `time.rubato.off/on`'s
+     own arrangement. */
+  "grid.sections.collapse.aria": "Hide the sections",
+  "grid.sections.expand.aria": "Show the sections",
   "grid.sections.word": "sections",
   "grid.sections.count.one": "{n} section · {bars}",
   "grid.sections.count.other": "{n} sections · {bars}",
@@ -100,16 +114,28 @@ export const TABLE: Table = {
   /* ===== THE TIME SHEET (special.ts timeSheet) ========================== */
   "time.byHand": "tap tempo",
   "time.signature": "signature",
-  "time.harmony": "harmony",
   "time.rubato": "rubato",
   "time.rubato.off": "on the grid",
   "time.rubato.on": "breathing",
   "time.rubato.sub": "Saved in this browser only",
-  "time.melody.chords": "follows the chords",
-  "time.melody.key": "stays in the key",
-  "time.changes": "changes",
   "time.gain": "record gain",
   "master.buses": "buses",
+
+  /* ===== THE CHORDS SHEET (special.ts chordsSheet) ======================
+     FOUR KEYS THAT MOVED AND DID NOT CHANGE A WORD (2026-09-05, §13f). They
+     read `time.harmony`, `time.melody.chords`, `time.melody.key` and
+     `time.changes` while the changes were a group of the TIME sheet; a key is
+     an address (C1), the surface is the CHORDS row now, so the address moved
+     with the control. Nothing is spelled twice: these are the only four, and
+     `time.*` no longer holds them. */
+  "chords.harmony": "harmony",
+  "chords.melody.chords": "follows the chords",
+  "chords.melody.key": "stays in the key",
+  "chords.changes": "changes",
+  /* the collapsed face when the chain is too long to print: how many bars the
+     chart holds and what the harmony DOES with them. A chain of numerals is
+     data and needs no key; this is the sentence that stands in for it. */
+  "chords.face.long": "{bars} · {harmony}",
 
   /* ===== THE SECTION SHEET (model.ts rowSheet) ========================== */
   "row.ops": "this section",

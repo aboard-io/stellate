@@ -156,7 +156,7 @@ function standUpServer() {
      arrival does not close what the first opened. Every `#pan-band` /
      `#rulesdeck` selector below is the same selector inside `#pan-band`. */
   const top = async (t) => {
-    if (t === "Time" || t === "Rules") {
+    if (t === "Time" || t === "Rules" || t === "Chords") {
       await p.evaluate((x) => window.__eightRow(x), t.toLowerCase());
       await p.waitForTimeout(700); return; }
     await p.evaluate((n) => window.__eightTab(n), t);
@@ -338,7 +338,12 @@ function standUpServer() {
   await pick("form.pace|" + secs[1], "");
 
   /* ================= T4 · THE CYCLE GROWS ============================= */
-  await top("Time");
+  /* THE CHANGES ARE THE CHORDS ROW'S SINCE 2026-09-05 (TABLE.md §13f, Paul:
+     *"Add chords below time and move chord stuff into it"*). Not one address
+     in this block moved — `prog-add`, `prog-cut`, `prog0d` and every
+     `alphabet.quality|bar<n>` are what they were — only the door in front of
+     them. */
+  await top("Chords");
   const p0 = await p.evaluate(() => ({
     doc: window.__eightDoc().alphabet.prog.length,
     add: !!document.querySelector('[data-k="prog-add"]'),
@@ -473,6 +478,11 @@ function standUpServer() {
   }
 
   /* ================= T5 · THE CIRCLE AND A TUNING ===================== */
+  /* AND THE ALPHABET IS TIME'S (§13f): key, mode and scale are what the record
+     counts WITH and did not move; the changes are what it does over them. One
+     sheet is open at a time, so the door is stated here rather than inherited
+     from the block above, which now stands in CHORDS. */
+  await top("Time");
   /* A 12-TET RECORD FIRST, so the reversal is proved to be a NARROWING and not
      a deletion: tapping a relative minor still answers two questions where the
      alphabet has a minor to be in. Pushed to `ionian` first, because a browser
@@ -511,15 +521,23 @@ function standUpServer() {
      `ii` a second time), and the caption must say the period, because a mode
      with its own octave is a thing a composer has to be told. */
   await say("alphabet.mode", "slendro");
+  /* TWO ROWS, TWO READINGS (2026-09-05, §13f). The caption is the MODE's, in
+     TIME; the degree slider is the changes grid's, in CHORDS; one sheet is
+     open at a time, so this asks each where it stands instead of asking one
+     open sheet for both and reporting `max: null` as a five-rung alphabet. */
+  const slenCap = await p.evaluate(() => ({
+    mode: window.__eightDoc().alphabet.mode,
+    cap: (() => { const e2 = document.querySelector(
+            '#pan-band [data-sel="alphabet.mode"]');
+          const r2 = e2 && e2.closest(".nu-sheetrow");
+          const s3 = r2 && r2.querySelector(".nu-sheetsub");
+          return s3 ? [s3.textContent.trim()] : []; })() }));
+  await top("Chords");
   const slen = await p.evaluate(() => {
     const r = document.querySelector('#pan-band input[data-k="prog0d"]');
     return { mode: window.__eightDoc().alphabet.mode,
-             max: r ? +r.max : null,
-             cap: (() => { const e2 = document.querySelector(
-                     '#pan-band [data-sel="alphabet.mode"]');
-                   const r2 = e2 && e2.closest(".nu-sheetrow");
-                   const s3 = r2 && r2.querySelector(".nu-sheetsub");
-                   return s3 ? [s3.textContent.trim()] : []; })() }; });
+             max: r ? +r.max : null }; });
+  slen.cap = slenCap.cap;
   check(slen.mode === "slendro" && slen.max === 4,
     "T5c a five-degree alphabet gives the degree slider four rungs, not six " +
     JSON.stringify(slen));

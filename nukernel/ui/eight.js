@@ -1991,6 +1991,21 @@ const romanTail = (q, num) => {
   if (num.indexOf("+") >= 0 && m[0] === "+") m = m.slice(1);
   return m;
 };
+/* THE WHOLE SYMBOL, AND IT HAS TWO READERS (2026-09-05, TABLE.md §13f): the
+   changes grid's own bar rows and the CHORDS row's collapsed face.
+   THE FIGURE REPLACES THE QUALITY MARK when the chord is inverted, which is
+   how figured bass has always worked: a root-position seventh is V7, its
+   first inversion is V6/5 — you do not write V7 6/5. A SLASH BASS is neither:
+   it is a note that is not in the chord, so it is written the way a chart
+   writes it, after the whole symbol. */
+const chordSymbol = (NUM, c) => {
+  const numeral = (d) => NUM[((d % NUM.length) + NUM.length) % NUM.length];
+  const num = numeralOf(NUM, c.d || 0, c.q);
+  if (c.bass != null) return num + romanTail(c.q, num) + "/" + numeral(c.bass);
+  return num + (c.inv
+    ? (SEVENTHQ(c.q) ? INVFIG7 : INVFIG)[c.inv] || ""
+    : romanTail(c.q, num));
+};
 /* HOW A LENGTH IS SAID. Units after the number (DESIGN §4), and the bar is
    named as a bar rather than as four beats, because that is what a musician
    would say about it. */
@@ -2119,18 +2134,12 @@ function chordGrid(parent, sid) {
   // knowing anything about meter.
   const M = K.metOf({ meter: (DOC.time || {}).meter });
   const BB = Math.max(1, M.num || 4), SP = Math.max(1, M.steps || 16);
-  // THE FIGURE REPLACES THE QUALITY MARK when the chord is inverted, which is
-  // how figured bass has always worked: a root-position seventh is V7, its
-  // first inversion is V6/5 — you do not write V7 6/5. A SLASH BASS is
-  // neither: it is a note that is not in the chord, so it is written the way
-  // a chart writes it, after the whole symbol.
-  const chordName = (c) => {
-    const num = numeralOf(NUM, c.d || 0, c.q);
-    if (c.bass != null) return num + romanTail(c.q, num) + "/" + numeral(c.bass);
-    return num + (c.inv
-      ? (SEVENTHQ(c.q) ? INVFIG7 : INVFIG)[c.inv] || ""
-      : romanTail(c.q, num));
-  };
+  // ONE SPELLING OF A CHORD, AND IT IS `chordSymbol`'S (2026-09-05, §13f).
+  // This was a closure here until the CHORDS row needed the same words for
+  // its collapsed face; a face that spelled a chord a second way would be a
+  // second owner of figured bass, so the function moved up to module scope
+  // and both readers call it.
+  const chordName = (c) => chordSymbol(NUM, c);
   /* ===== EDITING THE CHANGES MAKES THE HARMONY A CYCLE (2026-09-02) =====
      Paul, on the deployed composer: *"I can't change chord quality, it's
      grayed."*
@@ -5505,6 +5514,50 @@ function motifsFace() {
   const shown = names.slice(0, 3).join(", ") +
                 (names.length > 3 ? " +" + (names.length - 3) : "");
   return _tn("bank.face", names.length, { names: shown });
+}
+
+/* THE CHORDS ROW'S COLLAPSED FACE (2026-09-05, TABLE.md §13f) — *"the chain
+   the record plays"*, in the shortest honest form this box already has.
+
+   IT SAYS WHAT SOUNDS AND NOT WHAT IS STORED, which is the whole of the
+   arithmetic below. `kernel.js chordsOf` reads `alphabet.prog` ONLY under
+   `harmony === "cycle"`; on a modal or an emergent record the chart is thrown
+   away and one triad is taken off the mode per bar, so printing the stored
+   numerals there would be a face describing music the box is not playing. On
+   such a record the face is the harmony's own word — the thing that IS
+   happening — read off `alphabet.harmony`'s sheet so a re-worded vocabulary
+   re-words the face by existing.
+
+   AND A DEALT CHART IS STILL A CHAIN. Nothing here ever answers "default":
+   a record composed straight off its anchor has a `prog` the kernel plays,
+   and what this row is for is saying what it is.
+
+   THE NUMERALS ARE `chordSymbol`'S — the same spelling the changes grid
+   prints in its own bar rows, degree case, figure and slash bass and all —
+   because two spellings of one chord is two owners of figured bass. */
+function chordsFace() {
+  const A = DOC.alphabet || {};
+  const harm = () => {
+    try { const c = wCell(shSpec("alphabet.harmony", {}, null));
+          return c && c.label != null ? String(c.label) : ""; }
+    catch (e) { return String(A.harmony || ""); }
+  };
+  if (A.harmony !== "cycle" || !A.prog || !A.prog.length) return harm();
+  const M = K.metOf({ meter: (DOC.time || {}).meter });
+  const BB = Math.max(1, M.num || 4), SP = Math.max(1, M.steps || 16);
+  const NUM = K.romanOf(MODES[A.mode] || MODES.aeolian);
+  const rows = readChanges(A.prog, BB, SP);
+  if (!rows.length) return harm();
+  /* EIGHT IS THE BUDGET AND IT IS A LINE'S, not a chart's: DESIGN §4 gives a
+     face six words, and eight numerals joined by `·` is already the widest
+     thing this row can print at 320 before the ellipsis eats it. Past that
+     the honest short form is the chart's SIZE and what the harmony does with
+     it — "8 bars · cycle" — rather than half a progression with a dot after
+     it, which would read as a chord chain that ends where it does not. */
+  const words = rows.map((r) => chordSymbol(NUM, r.c));
+  if (words.length <= 8) return words.join(" \u00b7 ");
+  return _t("chords.face.long",
+            { bars: _tn("count.bar", A.prog.length), harmony: harm() });
 }
 
 /* THE PRODUCE ROW'S COLLAPSED FACE (2026-09-08, §10b step 5) — the producer's
@@ -11810,6 +11863,9 @@ function tableAPI() {
       const last = rs[rs.length - 1];
       return _tn("rulesRow.face", rs.length, { name: head(last.f) });
     },
+    /* THE CHORDS ROW'S COLLAPSED LINE (2026-09-05, §13f) — the chain the
+       record PLAYS. One owner, above; the row asks and never spells. */
+    chordsFace: () => { try { return chordsFace(); } catch (e) { return ""; } },
     /* "MAKE X Y" AS A COLUMN OP (§5). The verb, the qualities and the note are
        ui/produce.js's — `targets` says which qualities this subject can
        honestly take and WHY the rest cannot, and `say` writes the note into
@@ -11953,6 +12009,14 @@ function tablePanel(host) {
      last wrote and those nodes are gone. */
   motifLamps = [];
   motifLit = "";
+  /* ...AND THE PLAYING ROW'S MEMO, for the same reason: the `<tr>` it named is
+     gone and the new one carries no class, so the next tick must write. */
+  playingRow = null;
+  /* ...AND THE HEAD'S MEMO WITH THEM (2026-09-05, §13f): it is a claim about
+     the NODE it last wrote, and after a rebuild that node is gone. `null`
+     rather than `""`, so the next tick writes even when the sentence has not
+     changed a character. */
+  motifHeadLit = null;
   /* ...AND THE TWO PLAYHEAD REGISTRIES THE MOTIF EDITORS FILL, for the reason
      `materialAxis` used to clear them at the top of the axis: `hookCells` and
      `stepCell` are lists of `<th>`s the clock writes into, and a panel rebuilt
@@ -12117,7 +12181,60 @@ const markForm = (si) => {
   const labels = DOC.form.sections.map((x, i) => String(i + 1));
   mark(formCell, si, labels);
   for (const cells of structCells) mark(cells, si, labels);
+  lightSectionRow(si);
 };
+/* ===== THE WHOLE ROW LIGHTS, NOT THE NUMBER (2026-09-05, TABLE.md §13f) ====
+   Paul: *"Really light up the sections as you move through them — not just a
+   tiny halo around the number."* §10a has said *"the playing section's row
+   head lights"* since the table landed and `markForm` has done it by putting a
+   `<mark>` round the section's NUMBER — 12 pixels of ring in the narrowest
+   column on a 390px phone, which is the halo he is describing.
+
+   IT RIDES THE SAME ONE WRITER. No second reader of the position feed: this is
+   called from `markForm`, which is called from the "pos" handler on a section
+   boundary and from stop with `-1`, so the class is toggled once per SECTION
+   and never per beat. `playingRow` is the memo that makes that true even
+   though `markForm` is called every beat.
+
+   IT IS A CLASS ON THE `<tr>` and the colour is `--clock`'s, which is the
+   token DESIGN.md §1 gives to *"scheduled"* — the playhead's own meaning. (The
+   round's brief said `--flag-tint`; `--flag` is REFUSED/warning on this page
+   and a playing section is not a refusal, so the semantic-colour law wins over
+   the parenthesis.)
+
+   AND `__eightFrozen` TAKES IT OFF, which is the frozen-half law kept rather
+   than bent: a class the clock writes is not part of the editable page, so the
+   probe removes it for the clone exactly as it parks a live element's
+   children, and A3's byte-identity across two boundaries stays true. */
+let playingRow = null;
+/* THE ROW'S CLASS ATTRIBUTE BEFORE THE CLOCK TOUCHED IT, kept off the DOM
+   (a `data-` attribute recording the exclusion would BE a difference). One
+   entry per `<tr>`, dropped with the row when a rebuild throws it away. */
+const PRISTINE = new WeakMap();
+const pristineClass = (tr) => {
+  if (!PRISTINE.has(tr)) PRISTINE.set(tr, tr.className);
+  return PRISTINE.get(tr);
+};
+function lightSectionRow(si) {
+  const g = tableGrid;
+  if (!g || !g.rowHeads) return;
+  const secs = DOC.form.sections;
+  /* §5'S TRANSPOSE TURNS THE GRID and a section is then a COLUMN, not a row —
+     the column heads have their own sounding lamp and this is not it. */
+  const want = tableFacing === "sections" && si != null && si >= 0 && secs[si]
+    ? secs[si].id : null;
+  if (want === playingRow) return;
+  playingRow = want;
+  for (const [rid, h] of g.rowHeads) {
+    const tr = h && h.th ? h.th.closest("tr") : null;
+    if (!tr) continue;
+    const cls = pristineClass(tr);
+    /* ON is the class appended, OFF is the string it had — restored exactly,
+       so a row that has been lit and let go is byte-identical to one that
+       never was. */
+    tr.className = rid === want ? (cls + " is-playing") : cls;
+  }
+}
 function lightStep(abs) {
   atStep = abs;
   // …modulo the record's own bar (2026-08-30, with scoreSPB(): `% 16` walked
@@ -12316,12 +12433,62 @@ function lightBand(abs) {
    is one lamp and it is the head's; with it open there are as many as the bank
    has rows. */
 let motifLit = "";
+/* THE HEAD'S OWN MEMO (2026-09-05, §13f) — which SECTION its sentence was
+   written for, and what it said. Two variables and not one, because "the
+   section has not changed" and "the sentence has not changed" are two
+   different early returns and the first is the one that stops the churn.
+   `null` means "no sentence has been written to these nodes", which is the
+   state a rebuilt row is in. */
+let motifHeadSec = -1;
+let motifHeadLit = null;
 function lightMotifs(voices) {
   if (!motifLamps.length) return;
+  const lead = LINES()[0];
+  const si = Math.max(0, atSec | 0);
+  /* ===== THE HEAD'S SENTENCE IS THE SECTION'S, NOT THIS INSTANT'S =========
+     Paul, 2026-09-05, watching the MOTIFS row play: *"The text in the motifs
+     section is changing rapidly every beat it's too much."*
+
+     WHAT IT WAS DOING, MEASURED IN THIS FUNCTION. `voices` is the set of
+     players the engine reports SOUNDING at the event it just fired, so the
+     head's word list was rebuilt from whoever happened to be playing at that
+     instant: a bass that rests for two beats took its motif's name out of the
+     line and put it back, and the sentence rewrote itself several times a bar.
+     Every one of those writes was honest and none of them was a fact anybody
+     could read.
+
+     SO THE HEAD SAYS WHAT THE SECTION READS. Every voice in the band that is
+     not sitting out, through the same `cellAt(src, si)` the instantaneous
+     half uses — one owner for "which cell does this voice read here" — and it
+     is memoed on `si`, so the line changes at a SECTION BOUNDARY and at a
+     document write and at nothing else. THE BANK ROWS' `<i>` LAMPS ARE
+     UNTOUCHED and stay instantaneous: those are dots beside a name, the same
+     mark a column head wears, and a dot that follows the beat is what a lamp
+     is for. */
+  if (si !== motifHeadSec || motifHeadLit == null) {
+    const secWant = new Set();
+    for (const v of DOC.voices) {
+      if (v.cast && v.cast.on === false) continue;
+      const src = v.kind === "bass" ? lead : v;
+      const name = src ? cellAt(src, si) : null;
+      if (name) secWant.add(name);
+    }
+    const hsig = [...secWant].sort().join(", ");
+    motifHeadSec = si;
+    if (hsig !== motifHeadLit) {
+      motifHeadLit = hsig;
+      for (const L of motifLamps) {
+        /* THE HEAD'S OWN, AND IT IS A WORD. `__eightFrozen` empties a live
+           element's CHILDREN and keeps its attributes, so a text node is the
+           right shape for it and the frozen half of the page stays
+           byte-identical across a section boundary. */
+        if (L.node && L.name === null && L.node.textContent !== hsig)
+          L.node.textContent = hsig;
+      }
+    }
+  }
   const want = new Set();
   if (voices && voices.size) {
-    const lead = LINES()[0];
-    const si = Math.max(0, atSec | 0);
     for (const v of DOC.voices) {
       if (!voices.has(v.name)) continue;
       const src = v.kind === "bass" ? lead : v;
@@ -12333,15 +12500,7 @@ function lightMotifs(voices) {
   if (sig === motifLit) return;
   motifLit = sig;
   for (const L of motifLamps) {
-    if (!L.node) continue;
-    if (L.name === null) {
-      /* THE HEAD'S OWN, AND IT IS A WORD. `__eightFrozen` empties a live
-         element's CHILDREN and keeps its attributes, so a text node is the
-         right shape for it and the frozen half of the page stays
-         byte-identical across a section boundary. */
-      if (L.node.textContent !== sig) L.node.textContent = sig;
-      continue;
-    }
+    if (!L.node || L.name === null) continue;
     /* AND A BANK ROW'S IS THE SAME `<i>` A COLUMN HEAD WEARS, through the
        same one writer (2026-09-09). */
     setSounding(L.node, want.has(L.name));
@@ -14298,7 +14457,12 @@ function keyNode() {
  *  has no cell, so it comes into the row as one node, which is exactly what
  *  the voice's channel strip does in a column sheet. */
 function changesNode(sid) {
-  const box = el("div", null, "nu-timechanges");
+  /* `.nu-timechanges` UNTIL 2026-09-05 (TABLE.md §13f). The grid is the CHORDS
+     row's now and a class named after the row it used to live in is a name
+     that lies; `nu.css` carries the one rule that styles it and moved with it.
+     The section-scoped call (`row.chart`) is unchanged — one editor, two
+     scopes, as it has been since wave 2a. */
+  const box = el("div", null, "nu-changes");
   chordGrid(box, sid);
   return box;
 }
@@ -15669,8 +15833,27 @@ window.__eightFrozen = () => {
     while (n.firstChild) f.append(n.firstChild);
     return f;
   });
+  /* ...AND THE PLAYING ROW'S CLASS COMES OFF WITH THEM (2026-09-05, §13f).
+     `is-playing` is written by the clock — `markForm` -> `lightSectionRow`, on
+     a section boundary — onto a `<tr>` that is not itself a live element,
+     because the light is the whole row and a row full of controls may never be
+     `[data-live]` (test/motif-frozen A1). So the EXCLUSION IS THE PAGE'S, in
+     the page, exactly as the parked children are: what the clock owns is
+     declared here and the gate goes on comparing everything else byte for
+     byte. */
+  const lit = [...app.querySelectorAll("tr.is-playing")]
+    .map((tr) => ({ tr, cls: tr.className }));
+  /* ...AND THE ATTRIBUTE GOES BACK TO ITS EXACT STRING, not to a tidied one.
+     MEASURED the hour this landed: lit renders the row as `class="  "` (two
+     static parts with nothing between them), `classList.add` then `remove`
+     leaves `class=""`, and A3's byte-identity failed by exactly those two
+     characters. `pristine` is the string the row had BEFORE the clock ever
+     touched it, kept off the DOM in a WeakMap so the record of the exclusion
+     is not itself a difference. */
+  for (const x of lit) x.tr.className = pristineClass(x.tr);
   try { return app.cloneNode(true).outerHTML; }
-  finally { live.forEach((n, i) => n.append(parked[i])); }
+  finally { live.forEach((n, i) => n.append(parked[i]));
+            for (const x of lit) x.tr.className = x.cls; }
 };
 /* ---------- THE TAB SHELL, FOR A GATE (2026-08-27) ----------------------
    A gate is a HAND, not a clock: `__eightTab` is the same call the button's
