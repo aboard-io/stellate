@@ -855,6 +855,17 @@
       // and has done since it was written; what was missing was a writer.
       ...(Array.isArray(s2.auto) && s2.auto.length ? { auto: s2.auto } : {}),
       stack: [{ g: pre + i, slots: lines.map((c, v) => v * NS + i) }],
+      /* THE SECTION'S NAME, ONTO THE BOX (WAVE C, 2026-09-06) — under
+         `secname` and not `name`, because `export/score.js` already builds a
+         box of its own with a `name` on it (the exported clip's title) and two
+         different objects in one pipeline wearing one key for two facts is the
+         drift this file spends its length avoiding. PRESENT-ONLY, like `swing`
+         and `groove` below: a section with no name of its own writes no key
+         and the box is byte-identical to the one this line produced before it
+         existed (document.test.js G6). Its readers are downstream:
+         ui/derive.js `songBars` stamps it on every bar of the section, and
+         export/score.js names the clip and the scene with it. */
+      ...(s2.name ? { secname: s2.name } : {}),
       len: s2.bars, role: s2.role, cue: s2.role,
       bassop: wordAt(doc, bass, i) || null,
       // A CONCERN THAT IS OFF CONTRIBUTES NOTHING — the law `toGenre`'s `noKit`
@@ -1113,6 +1124,21 @@
   const TIERS = {
     /* SECTION (a row) — `doc.form.sections[si]`, and `boxesOf` copies each of
        these onto the box the engine reads. */
+    /* THE SECTION'S OWN NAME (WAVE C, 2026-09-06). REDESIGN-SCOPE item 8:
+       *"A section has a name. Types only today, so a form that plainly has a
+       pre-chorus cannot say so."* A ROW field with no tier under it — a name
+       is a fact about ONE section the way its length is, there is no record
+       default to fall back to and no genre may invent one — and ABSENT IS THE
+       TYPE'S WORD, which is what makes every record written before today read
+       exactly as it read yesterday (test/table.test.js T2, unre-pinned).
+       IT IS NOT THE TYPE UNDER ANOTHER NAME. `role` stays the vocabulary the
+       form is COMPOSED in (fifteen words the walk, the tempo shaping and the
+       exporter all reason about); this is the word a hand writes over it, and
+       nothing computes on it. `fields.js secNameOf` is the one owner of what a
+       legal name is (trimmed, one line, capped), shared by `normalize`, the
+       sheet's `set` and the page. */
+    name:   { tier: "row", at: "form.sections[si].name",
+              note: "absent is the type's word; nothing computes on it" },
     type:   { tier: "row", at: "form.sections[si].role" },
     bars:   { tier: "row", at: "form.sections[si].bars" },
     level:  { tier: "row", at: "form.sections[si].lvl" },
@@ -1731,6 +1757,29 @@
        They are ROW-ONLY on purpose. A cell reader would let one chair repeat
        and another not, which is not a form, it is a mistake; `CELLWRITE` is
        derived from the `cell` reader, so leaving it null is the refusal. */
+    /* THE SECTION'S NAME (WAVE C) — ROW-ONLY, for the same reason the four
+       form words below are: a name is a fact about one section, and a cell
+       reader would let one chair call the bridge something the others do not.
+       No record tier and no genre tier: absent resolves to `undefined` and
+       every reader falls back to the TYPE by itself (`ui/eight.js secName`,
+       `export/score.js`), which is the one spelling of "this section has no
+       name of its own". */
+    /* BARS IS WRITABLE BECAUSE A HAND WRITES IT, and until 2026-09-06 it was
+       not. Paul: *"Changing the number of bars just snaps back"* — and it did,
+       exactly: `model.ts` draws the section's bar count as a slider wired to
+       `putRow(i, "bars", n)`, `putRow` refuses any field `ROWWRITE` does not
+       know, and `ROWWRITE` asks THIS table, which had no `bars` row. So the
+       write returned false, the sheet's `slide()` swallowed it (its `catch` is
+       empty by design, for a widget that must not throw under a thumb), the
+       redraw read the document's untouched 2 and the thumb sprang back. §1's
+       TIERS declared the address the whole time; the READER table is the one
+       `putRow` consults, and a field the table draws must be in both.
+       ROW-ONLY, like `repeat` under it: a bar count is not a chair's fact and
+       not the record's, and the genre reader returns `undefined` so a section
+       with no override still counts its own bars through `boxesOf`, which
+       reads `s.bars` directly and always has. */
+    bars:   { cell: null, column: null, row: (s) => s && s.bars,   record: null, genre: () => undefined },
+    name:   { cell: null, column: null, row: (s) => s && s.name,   record: null, genre: () => undefined },
     repeat: { cell: null, column: null, row: (s) => s && s.repeat, record: null, genre: () => undefined },
     ending: { cell: null, column: null, row: (s) => s && s.ending, record: null, genre: () => undefined },
     coda:   { cell: null, column: null, row: (s) => s && s.coda,   record: null, genre: () => undefined },
@@ -1998,6 +2047,19 @@
                            ...(a.curve === "exp" ? { curve: "exp" } : {}),
                            ...(a.in === "bars" ? { in: "bars" } : {}) }));
           if (keep.length) s2.auto = keep; else delete s2.auto;
+          continue;
+        }
+        /* A NAME IS NOT A WORD (WAVE C, 2026-09-06) — so the vocabulary table
+           has no opinion on it, exactly as it has none about `prog`'s array or
+           `auto`'s point list two branches up. What IS checked is the shape,
+           and `fields.js secNameOf` is its one owner: one line, trimmed,
+           capped, and an empty one DELETED so "no name of its own" keeps a
+           single spelling. A file carrying a number or an object here loses
+           the key and the section falls back to its type, which is a record
+           that still plays. */
+        if (f === "name") {
+          const nm = NF.secNameOf(s2.name);
+          if (nm) s2.name = nm; else delete s2.name;
           continue;
         }
         if (f === "fx") {

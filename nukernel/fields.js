@@ -1359,6 +1359,41 @@
     return k === f.neutral ? null : k;         // the neutral word IS absent
   };
 
+  /* ---------- WHAT A SECTION MAY BE CALLED (WAVE C, 2026-09-06) ----------
+     REDESIGN-SCOPE item 8: *"A section has a name. Types only today, so a form
+     that plainly has a pre-chorus cannot say so."* `document.js` files the name
+     on the row (TIERS `name`); this is the ONE owner of what a legal one is,
+     for the same reason `cellVecClean` above is the one owner of a legal cell
+     word — the door (`document.js normalize`), the sheet's `set`
+     (`avail.js form.name`) and the page all ask here, so a name cannot be
+     legal in one of the three and not in the others.
+
+     THE RULES ARE THE FEWEST A NAME NEEDS AND EVERY ONE OF THEM IS MEASURED
+     SOMEWHERE ELSE IN THIS FILE'S IDIOM:
+       · IT IS ONE LINE. A newline or a tab is whitespace a row head cannot
+         draw and a MIDI marker cannot carry, so every run of it collapses to
+         one space rather than being refused — a paste out of a lyric sheet
+         lands as the words it holds.
+       · IT IS TRIMMED, and an empty one is ABSENT. "" and "   " both mean
+         "this section has no name of its own", and absent has exactly one
+         spelling — which is what makes `putRow(…, "name", "")` the DELETE the
+         rest of the table's fields already spell that way.
+       · IT IS CAPPED AT 40 CHARACTERS, which is the widest string the section
+         sheet's own field and a row head can show at 320 px without becoming
+         a paragraph. It is TRUNCATED and not refused: a hand that typed too
+         much gets the beginning of what it typed rather than nothing.
+       · A NON-STRING IS ABSENT. A file somebody hands you may carry a number
+         or an object here; neither is a name, and this is the door.
+     NOTHING COMPUTES ON IT. `role` is still the vocabulary the walk, the tempo
+     shaping and the exporter reason about — this is only what the record is
+     CALLED here, which is why there is no table and no enum. */
+  const SECNAME_MAX = 40;
+  const secNameOf = (v) => {
+    if (typeof v !== "string") return null;
+    const one = v.replace(/\s+/g, " ").trim();
+    return one ? one.slice(0, SECNAME_MAX) : null;
+  };
+
 
   /* ---------- the composition-depth surface ---------- */
   // The P2b round put progression/period/rest/pipes/parts/key in the ALGEBRA;
@@ -3322,6 +3357,7 @@
                 CELLAUTO, CELLAUTOBY, cellAutoOffset, cellAutoClean,
                 cellAutoLanes, LANE_MAXPTS,
                 CELLVEC, CELLVECBY, cellVecClean,
+                SECNAME_MAX, secNameOf,
                 SENDS, SENDLABEL,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,
