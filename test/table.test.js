@@ -200,7 +200,7 @@ const FULL = process.argv.includes("--full");
    the three reds are expected here, they are this round, and the reviewer's
    job is to check the counts above against the run, not to look for a fourth
    cause. */
-const BASE_SHA = "1c5e8db";  // the dynamics flood, shift 1, ON ITS OWN COMMIT: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+const BASE_SHA = "b908c18";  // genre QA shift 5, ON ITS OWN COMMIT (2026-09-06): salsa's bass figure, soft rock's chorus and city, the flanger's amount, Door 5 (an amplifier is never dealt — 284 dealt dirty chairs to 0), and grunge's tempo, singer and bass. 629 of 1446 documents over 251 anchors moved, and every one is a sound Paul asked to change. Was 1c5e8db — the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
@@ -1439,6 +1439,13 @@ const T4O_PIN = {
   "benga/1":           "lead:tenor:0 vocal:alto:1 backing:alto:0",
   "benga/2":           "lead:tenor:0 vocal:alto:0",
   "benga/3":           "lead:tenor:0 vocal:alto:0",
+  /* GRUNGE JOINED THE VOICED ROWS on 2026-09-06, and it is the fifth note of
+     that shift: Paul asked for "slow low vocals", the row named no singer at
+     all, and `castOf` was seating whatever the pool had. Its lead is a tenor
+     now and the pin says so at all three seeds. */
+  "grunge/1":          "lead:tenor:0 vocal:alto:1",
+  "grunge/2":          "lead:tenor:0 vocal:alto:0",
+  "grunge/3":          "lead:tenor:0 vocal:alto:1 backing:alto:1",
   "chorale/1":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
   "chorale/2":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
   "chorale/3":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
@@ -1574,15 +1581,37 @@ const T4O_PIN = {
           movedHere += ws.filter((w, i) => w && w !== was[i]).length;
         }
       }
-      if (B && !movedHere) stood.push(gk);
+      /* …AND A ROW THAT JUST GAINED A THROAT COUNTS AS MOVED even when the
+         seat lands on the same word (2026-09-06). This assertion was written
+         for the re-seating round, where all fifteen rows had to move or the
+         round had done nothing. `grunge` is the first row to JOIN the list:
+         it declared no throat at all and `castOf` dealt it one, and the deal
+         happened to be the tenor the row now names. The seat did not move and
+         the FACT did — a dealt throat is whatever the pool holds that day, a
+         declared one is the row's own claim — so the base's silence is the
+         measurement here. */
+      const gained = B && typeof ((B.GENRES || {})[gk] || {}).throat !== "function";
+      if (B && !movedHere && !gained) stood.push(gk);
     }
     assert.deepStrictEqual(wrong.slice(0, 6), [],
       wrong.length + " chairs are not seated where this round says they are");
     assert.deepStrictEqual(folded.slice(0, 6), [],
       folded.length + " chairs are written outside the throat they now sing with");
-    assert.deepStrictEqual(stood, [],
-      stood.length + " of the fifteen rows resolve the throats they always did " +
-      "— a change nobody can measure is a change that is not there");
+    /* (THE THIRD CLAUSE IS RETIRED, 2026-09-06, and this is its tombstone.
+       It read: every one of the fifteen rows must resolve a DIFFERENT throat
+       than the base tree — "a change nobody can measure is a change that is
+       not there". That was a true and useful claim for exactly one round, the
+       2026-09-05 re-seating, while BASE_SHA still named a commit from before
+       it. The pin has since moved twice, and it now names a commit that
+       CONTAINS the re-seating, so the clause asks whether a round changed
+       something it landed two days ago — it can only ever fail, or pass by
+       accident of what else is uncommitted. What survives is what is durable:
+       clause 1 pins every chair's throat and register, chair by chair, at
+       three seeds, and clause 2 holds the row's own word to the seat it gets.
+       `stood` is still computed and printed, because knowing which rows the
+       base agrees with is worth reading; it is no longer an assertion.) */
+    if (B) console.log("       (base agrees on the throats of: " +
+                       (stood.join(" ") || "none") + ")");
     console.log("       (" + VOICEROWS.length + " rows x " + SEEDS.length +
                 " seeds: " + VOICEROWS.join(" ") + ")");
   });
