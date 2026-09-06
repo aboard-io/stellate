@@ -185,13 +185,32 @@ ok("§C3 the phrase cache tells two figures apart", () => {
    declare no `dyn` at all, so they keep the leaning first note and these
    sixteen hex digits each. If one of them moves, either a machine was given a
    figure or something else in the compiler moved underneath this shift — and
-   the second is worth a failure too. */
+   the second is worth a failure too.
+
+   TWO OF THE FOURTEEN WERE RE-PINNED ON 2026-09-06 (the genre-QA shift), and
+   the alarm above did its job: `techno` and `tromso` moved, nothing was given
+   a figure, and something in the compiler DID move underneath. Paul, on the
+   real app: *"Soft rock ... has a lurch effect on it"* — measured as the
+   record-wide chip landing on the bass and the drum kit, which on a room kit
+   at the chorus's declared amount is 20.0 dB of comb ripple wobbling the
+   rhythm section 1.4 times a second. precompose now keeps a record-wide chip
+   off those two chairs unless the row declares `fxRhythm` (one row does:
+   `minneapolissound`, whose note asked for the exception two rounds early).
+
+   THE ARITHMETIC SAYS IT WAS THAT AND ONLY THAT. Of these fourteen rows, SIX
+   declare an `fx` at all: `electro`, `tapemusic`, `dubstep` and `gqom` declare
+   `echo`, which `precompose soundFxOf` has always filtered out (it became a
+   send), and `techno` and `tromso` declare `sweep`, which it does not. Two
+   rows carry a chip that reaches a chair; exactly those two moved; the other
+   twelve are byte-identical. The new digits are the same measurement as the
+   old — `sha1(JSON.stringify(document.normalize(precompose.genreToDocument(
+   key, 1)))).slice(0, 16)` — taken with the narrowing in place. */
 const FROZEN = {
-  techno: "9fcfbeedd8d51e1c", acid: "79810bb9e20a21a7", house: "5aa405df88fc70e3",
+  techno: "9e621abe83bb4215", acid: "79810bb9e20a21a7", house: "5aa405df88fc70e3",
   trap: "0d3692b201de1516", electro: "f3d0d61db5c6e143", tapemusic: "99777da27cf1a1c7",
   italodisco: "f8de629f00eed78c", miamibass: "ff3b0f736cacfd9c", crunk: "dd253e2ea1ab2d2e",
   grime: "071f5db0a1d194db", dubstep: "b05ff830f6b9d2c8", footwork: "9c7802d431b4c468",
-  gqom: "38e64788f9a34b5a", tromso: "0f31a041bd8dce77",
+  gqom: "38e64788f9a34b5a", tromso: "369ff7ed51cd16fb",
 };
 ok("§D1 the `DYNAMICS: null` machines declare no figure", () => {
   const nulls = Object.keys(DYNAMICS).filter((k) => DYNAMICS[k] === null);
@@ -201,7 +220,7 @@ ok("§D1 the `DYNAMICS: null` machines declare no figure", () => {
   const spoke = nulls.filter((k) => GENRES[k].dyn != null);
   assert.deepStrictEqual(spoke, [], "a machine started breathing: " + spoke.join(","));
 });
-ok("§D2 the machines compose to the same bytes as they did on 0178335", () => {
+ok("§D2 the machines compose to the same bytes as they did at the pin", () => {
   const moved = [];
   for (const k of Object.keys(FROZEN)) {
     const now = fp(k);

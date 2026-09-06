@@ -485,7 +485,46 @@
   const FX = {
     chorus:   { label: "chorus",     params: { rate: 0.7, depth: 0.6, mix: 0.45 } },
     phaser:   { label: "phaser",     params: { rate: 0.35, depth: 0.8, mix: 0.7 } },
-    flanger:  { label: "flanger",    params: { rate: 0.3, depth: 0.9, feedback: 0.6, mix: 0.6 } },
+    /* THE FLANGER CAME DOWN 29 dB, AND IT IS THE ONLY LINE IN THIS TABLE THAT
+       MOVED (2026-09-06, the genre-QA shift). Paul, on the real app: *"The
+       phasers/flangers on Minneapolis 1982 are right but WAY too turned up."*
+       The effect is right; the amount was the whole complaint, and the amount
+       was this line.
+       MEASURED FROM THE SHIPPED DSP, not from taste. engine/faust/dsp/
+       insert_flanger.dsp is `dms = 0.6 + depth*5.0*(0..1)` ms of delay into a
+       feedback comb, summed at `mix`, so the transfer is
+       `(1-mix) + mix*z/(1-fb*z)` and the MODULATION DEPTH a listener hears is
+       how far |H| travels as the delay sweeps, over 40 Hz - 12 kHz:
+         was  depth .9  fb .6  mix .6   -> 37.62 dB of ripple, first notch
+                                           sweeping 98-833 Hz (3.09 octaves)
+         now  depth .4  fb .3  mix .32  ->  8.37 dB, notch 192-833 Hz (2.12)
+       37.6 dB is not an effect on a mix, it is a comb filter the mix is played
+       through — and the feedback is most of it, because `1/(1-|fb|)` at .6 is
+       a 2.5x resonant peak riding on top of the sweep.
+       THE LANDING POINT IS THE TABLE'S OWN SIBLING AND NOT A NUMBER I LIKED.
+       `phaser` one line up is the other modulation chip here and measures
+       7.96 dB in the same algebra; `chorus` one line up from that measures
+       20.00. The flanger was 4.7x its nearest neighbour. 8.37 dB puts it
+       beside the phaser: still unmistakably a flanger — the comb, the
+       feedback colour and a 2.12-octave sweep are all still there — and no
+       longer the loudest thing on the record.
+       IT MOVES EXACTLY ONE RECORD. Censused over all 483 rows: `flanger` is
+       named by `minneapolissound` and by nothing else, and `phaser` is named
+       by NOTHING AT ALL (so the "phasers" in the complaint were this chip
+       both times). That is why the default coming down and the row stating
+       its own amount are, today, the same edit.
+       THE ROW STILL CANNOT STATE AN AMOUNT, and that is a real gap rather
+       than a decision. `fxChainFor` below already resolves a per-seat wet and
+       two face knobs (`fxw<n>`/`fxa<n>`/`fxb<n>`) — the machinery exists — but
+       it reads a DAW part entry, and `document.js boxesOf` returns `parts:
+       null` on all 482 precomposed records, so a genre row reaches the engine
+       only as a bare key through `fxChain(keys)`. Giving the row an amount
+       means letting the key carry one, and that means teaching all six
+       `FX[k]` filters to split it (`fxChain`, `fxChainFor`, `busFxChain`
+       here; `soundFxOf` in precompose; the guard in song.js; and
+       `sectionOf`'s in audio/desk.js). Five of the six are in this layer and
+       one is not, which is why it is written down here rather than half-done. */
+    flanger:  { label: "flanger",    params: { rate: 0.3, depth: 0.4, feedback: 0.3, mix: 0.32 } },
     tremolo:  { label: "tremolo",    params: { rate: 5, depth: 0.8, mix: 0.9 } },
     leslie:   { label: "leslie",     params: { speed: 0.7, depth: 0.85, mix: 0.6 } },
     wah:      { label: "auto-wah",   params: { base: 320, range: 2.2, sens: 0.7, q: 4, mix: 0.9 } },

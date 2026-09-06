@@ -1,5 +1,5 @@
 {
-  "note": "SALSA — New York 1973, and the label says New York because that is\nwhere the tape is: Fania's sessions, made by Puerto Rican and Cuban\nmusicians in Manhattan, and the map should not pretend otherwise. This\nis the round's one anchor whose city and whose music point at\ndifferent continents, and saying so is cheaper than moving the dot.\nTHE YEAR is the Fania All-Stars at the Cheetah on tape and Willie\nColón and Héctor Lavoe at their peak — the moment the word \"salsa\"\nstops being a marketing term and starts naming a sound.\nWHAT IT IS, IN FIELDS: a piano MONTUNO (a two-bar arpeggiated figure\nthat never stops), trombones instead of trumpets, and a minor-side\nharmony — which is the audible difference between this and mambo,\nwhich is a brass band in major sitting on one chord.\n\nLINEAGE: son is the skeleton and mambo is the horn writing; the\nthird parent is the New York end of it — boogaloo and the R&B the\nNuyorican bands grew up on, which `funk` is the nearest anchor to\nand is named at a small weight BECAUSE it is a resemblance and not a\ndescent. `latinpop` (Miami 2001) is this anchor's CHILD and its\nparents line is corrected below.\n\nTHE BELL IS THE HAT LANE — the campana's quarter notes with the\nand-strokes between them, which is what a salsa record is counted by\n— and the congas take the toms. Same compromise as the mambo above,\none lane over.\n\nCLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's\n`closest` column ranks each declared parent against every older row by a FEATURE\nVECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,\ninstrumental, family — and calls a parent sitting in the further half of that\nranking suspect. The vector has no term for the thing a child actually TAKES\nfrom a parent, so an ancestor the record deliberately departs from ranks far by\nconstruction, and the catalogue's trunk rows — funk, jazz, swing, ballad,\nambient, punk, drone, gregorian — rank far from nearly every leaf they grew.\nTHE PARENTS ON THIS ROW STAND. What the vector cannot see: `mambo` is called far and mambo is the ARRANGEMENT — the mambo section itself,\nthe horn shout over the montuno, which is what salsa took and sped up. The vector\nsees a tempo gap and a family label. `reggae` (1969) is offered as nearer on a\nshared offbeat and a shared kit density, which is a coincidence of two islands\nand not a line of descent.\n",
+  "note": "SALSA — New York 1973, and the label says New York because that is\nwhere the tape is: Fania's sessions, made by Puerto Rican and Cuban\nmusicians in Manhattan, and the map should not pretend otherwise. This\nis the round's one anchor whose city and whose music point at\ndifferent continents, and saying so is cheaper than moving the dot.\nTHE YEAR is the Fania All-Stars at the Cheetah on tape and Willie\nColón and Héctor Lavoe at their peak — the moment the word \"salsa\"\nstops being a marketing term and starts naming a sound.\nWHAT IT IS, IN FIELDS: a piano MONTUNO (a two-bar arpeggiated figure\nthat never stops), trombones instead of trumpets, and a minor-side\nharmony — which is the audible difference between this and mambo,\nwhich is a brass band in major sitting on one chord.\n\nLINEAGE: son is the skeleton and mambo is the horn writing; the\nthird parent is the New York end of it — boogaloo and the R&B the\nNuyorican bands grew up on, which `funk` is the nearest anchor to\nand is named at a small weight BECAUSE it is a resemblance and not a\ndescent. `latinpop` (Miami 2001) is this anchor's CHILD and its\nparents line is corrected below.\n\nTHE BELL IS THE HAT LANE — the campana's quarter notes with the\nand-strokes between them, which is what a salsa record is counted by\n— and the congas take the toms. Same compromise as the mambo above,\none lane over.\n\nCLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's\n`closest` column ranks each declared parent against every older row by a FEATURE\nVECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,\ninstrumental, family — and calls a parent sitting in the further half of that\nranking suspect. The vector has no term for the thing a child actually TAKES\nfrom a parent, so an ancestor the record deliberately departs from ranks far by\nconstruction, and the catalogue's trunk rows — funk, jazz, swing, ballad,\nambient, punk, drone, gregorian — rank far from nearly every leaf they grew.\nTHE PARENTS ON THIS ROW STAND. What the vector cannot see: `mambo` is called far and mambo is the ARRANGEMENT — the mambo section itself,\nthe horn shout over the montuno, which is what salsa took and sped up. The vector\nsees a tempo gap and a family label. `reggae` (1969) is offered as nearer on a\nshared offbeat and a shared kit density, which is a coincidence of two islands\nand not a line of descent.\n\nIT SOUNDED VERY LITTLE LIKE SALSA, AND THE FAULT WAS THE BASS (2026-09-06,\nthe genre-QA shift). Paul, on the real app: \"Salsa sounds very little like\nsalsa.\" Measured at seed 1 before anything moved, here is what was already\nRIGHT and should not be re-litigated by the next hand: the 3-2 son clave is\non `p` at steps 0, 3, 6, 10, 12 — one of only seven literal claves in 483\nrows; the campana is on `h` with its and-strokes and its velocity arch; the\ncongas are on the toms. The paragraphs above earned those and they stand.\n\nWHAT WAS WRONG WAS THE TUMBAO, AND IT WAS WRONG BY ACCIDENT RATHER THAN BY\nOMISSION. `bassStyle: \"octaves\"` is not a rhythm — kernel.js STYLEGRID has\nentries for `eighths` and `sixteenths` and for nothing else — so the bass\nfell through to the kernel's last resort, which is `subj.acc`, THE MELODY'S\nOWN ACCENT VECTOR. The kernel's own comment says what that is: \"`subj.acc` is\nnot about the bass at all — it is the MELODY's accents standing in for a bass\npart nobody wrote.\" Measured over the whole record at seed 1, the 236 bass\nnotes landed on EIGHT different steps — 2, 3, 5, 6, 9, 10, 11 and 14 — with\n0% on the downbeat and 47.5% anywhere near a tumbao stroke. That reads as\n\"off the beat\", which is why nobody caught it, and it is not a tumbao. A\ntumbao is TWO strokes and it is the same two every bar.\n\nSO THIS ROW DECLARES A `bassFig`, WHICH NOTHING HAD EVER DONE. kernel.js:3352\nhas read `bassFig` since it was written and its own comment records that\n\"0 of 387 anchors declare a `bassFig` — the successor has no rows, so the\nsupersession was a promise\". `son`'s note, one anchor upstream, is the other\nhalf of the same complaint: \"THE ANTICIPATED BASS is the single most\nidentifying number in this entry and it is written into the KICK rather than\ninto a bass word, because `bassStyle` has no 'arrive early' in it.\" It does\nnow, and it is written where the bass is (`grunge` declared one in the same\nshift and for its own reasons, so the field went from zero rows to two in one\nafternoon; neither row is quoting the other):\n    grid  ........x.....x.      the and-of-2 (step 6) and the 4 (step 12)\n    deg   ..............4.      root on the bombo, fifth on the four\n    acc   ........x.....x.      both of them accented\nNOTHING ON THE DOWNBEAT, on purpose and by declaration rather than by\naccident — that silence is the whole of the feel. `spans()` holds the step-12\nnote ten steps, so the four rings across the barline into the bar it belongs\nto, which is the anticipation as the box can say it.\n\nAND HERE IS WHAT THE BOX STILL CANNOT SAY, named rather than faked. In a real\ntumbao the note on the four belongs to the NEXT chord — it is the bass\narriving before the band. `chordIn` reads the CURRENT bar's chord at step 12\nand the kernel has no lookahead of any kind (its one `eps` argument is a\nfloat-rounding guard, not a feature), so on this vamp's Dm-G alternation the\nfour sounds the current chord's fifth where a bassist would already be on the\nnext chord's root. The RHYTHM of the anticipation is now exact and its PITCH\nis a bar late. That is a kernel limit, not a row's taste, and it is the one\nsentence to hand the next round.\n\nTHE HARMONY IS A TWO-CHORD VAMP AT LAST. `roots` was [0,3,4,0,0,3,4,4] — I IV\nV I over eight bars, which is a SONG FORM and the opposite of a montuno. A\nmontuno is a vamp that does not close, and in dorian the vamp is i-IV: the\nraised sixth over the minor is the whole reason this row is in dorian and the\naudible difference from `mambo`, which is a brass band in major sitting on\none chord. `roots: [0,3,0,3]` with `harmony: \"cycle\"` DECLARED — it was being\ninferred before, and a row this specific should say it. The neighbours agree:\n`descarga` (Havana 1957) is [0,4,0,4] with `harmony: \"cycle\"`, and it is the\nrow whose whole subject is the vamp held open all night.\n\nTHE MONTUNO IS A TWO-BAR FIGURE AND NOW THE `word` KNOWS IT. The note above\nhas said \"a two-bar arpeggiated figure that never stops\" since it was\nwritten, and the old `word` was indexed by VOICE only — it ignored `s`\nentirely, so the piano played the same bar eight times. `word(v, s)` counts\nbars from a chair's own entry, so `s % 2` is literally a two-bar figure, and\n`split(2)` is the kernel's own arpeggiator (\"which is what an arpeggiator\nactually does\", kernel.js:284). The piano now states the figure and restates\nit rotated a beat; `descarga`'s piano is the precedent for stamping a figure\non this chair, though it stamps the clave with `keep(0,3,6,10)` where this\none arpeggiates, because a descarga's piano is comping under a soloist and a\nsalsa record's piano IS the record.\n\nAND THE HORNS ANSWER INSTEAD OF PLAYING. This is the mambo half of the\nlineage and it was the thing most obviously missing: a horn section with no\narrangement in it. `drop(1)` zeroes a chair's gate for a bar — three rows in\nthe table already use it that way — so the trombones answer on the odd bars,\nin the holes the montuno leaves, and the trumpet enters once every four bars\nover the top. MEASURED on eight bars, before -> after: the piano 128 -> 256\nnotes over 16 of 16 half-bars (`split(2)` is the kernel's own arpeggiator and\nthe montuno never stops); the trombones 96 notes over 12 half-bars -> 48 over\n6; the trumpet 44 over 8 -> 11 over 2. One instrument that does not stop and\ntwo that punctuate, which is the shape of the band.\n\nAND THAT MEASUREMENT IS OFF THE LIVE PATH, WHICH IS A FACT ABOUT THE WHOLE\nTABLE AND NOT ABOUT THIS ROW. A row's `word` closure reaches the kernel when\nthe genre is PLAYED — a box on the band page, `K.render(ph, g, bars)`. It\ndoes NOT reach a PRECOMPOSED record: `document.js:555` builds the genre's\nword from the DOCUMENT's own `development` map (`word: (v) => opsOf(wordAt(\ndoc, lines[v], si), scArr)`), and `precompose.js` deals that map from\n`songs.js WORDS` without ever consulting `G.word`. Proved rather than\nassumed: with the new closure in place, this record's precomposed render came\nback byte-identical for both horn chairs — 239 trombone notes over 46 bars,\n294 trumpet notes over 46, exactly as before. Every other field on this row —\n`bassFig`, `roots`, `harmony`, `reg` — reaches both paths, and the two horn\nsentences above are true of one of them. Somebody should decide whether a\nrow's word ought to seed a precomposed record's development; it is a bigger\nquestion than a salsa row.\n\nTHE PIANO CAME UP AN OCTAVE. Its `reg` case at voice 0 was 0, and the `riff`\npart policy centres a chair at -12, so the montuno's median note was MIDI 49\n(C#3) — a left hand alone. A montuno is two hands in the middle of the\nkeyboard. `reg` at 0 is now 1.\n\nSTILL NOT SAID, and worth a round of its own: the clave is quantised. The\nkit's `~p` sidecar takes a signed nudge in ninths of a step and no row in the\ncatalogue has ever written one, so every clave in this table sits exactly on\nthe grid where a claver's second stroke does not. And the bell is still the\nhat lane and the congas are still the toms — the standing twelve-lane\ncompromise `son` names once for the whole region, not a fault of this row.",
   "label": "New York 1973",
   "voices": 3,
   "bars": 8,
@@ -31,7 +31,7 @@
     "cases": [
       {
         "at": 0,
-        "then": 0
+        "then": 1
       },
       {
         "at": 1,
@@ -52,12 +52,8 @@
   "roots": [
     0,
     3,
-    4,
     0,
-    0,
-    3,
-    4,
-    4
+    3
   ],
   "mode": {
     "$src": "MODES.dorian"
@@ -229,29 +225,70 @@
     "verb": 0.22
   },
   "words": [
-    "the piano montuno",
-    "the trombones, in the holes",
-    "the trumpet, on top of them"
+    "the piano montuno — two bars, arpeggiated, and it never stops",
+    "the trombones, answering in the holes",
+    "the trumpet, once every four bars, on top of them"
   ],
   "word": {
-    "kind": "cases",
-    "cases": [
-      {
-        "at": 1,
-        "then": {
-          "$src": "[rotate(4), drop(2)]"
-        }
-      },
-      {
-        "at": 2,
-        "then": {
-          "$src": "[transpose(7), drop(3)]"
-        }
-      }
-    ],
-    "else": {
-      "$src": "[]"
-    }
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? (s % 2 ? [split(2), rotate(4)] : [split(2)])\n                   : v === 1 ? (s % 2 ? [rotate(4), drop(2)] : [drop(1)])\n                   : (s % 4 === 3 ? [transpose(7), drop(3)] : [drop(1)]))"
   },
-  "dyn": "syncope"
+  "dyn": "syncope",
+  "harmony": "cycle",
+  "bassFig": {
+    "grid": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "deg": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0
+    ],
+    "acc": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  }
 }

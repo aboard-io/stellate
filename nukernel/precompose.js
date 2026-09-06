@@ -2719,12 +2719,51 @@
        exactly who `S.fx` reached. A record-wide chip is a record-wide chip;
        what changes is that a hand can now see it on nine strips and pull it
        off one of them. */
+    /* ...AND THE PARAGRAPH ABOVE IS NARROWED (2026-09-06, the genre-QA shift).
+
+       PAUL, on the real app: *"Soft rock is assigned to Lagos and has a lurch
+       effect on it."* MEASURED on `softrock` seed 1 before this line: the row
+       declares `fx: ["chorus"]` and the chip landed on ALL EIGHT chairs — the
+       six lines, the BASS, and the `room` DRUM KIT. A chorus is a modulated
+       delay summed against the dry; at the table's declared amount (depth 0.6,
+       mix 0.45, rate 0.7 Hz) the summed transfer swings 20.0 dB of comb ripple
+       and its first notch sweeps 139-833 Hz, twice a second, computed from
+       engine/faust/dsp/insert_chorus.dsp's own algebra. On a snare and a bass
+       that is not a sheen, it is WOW AND FLUTTER: the rhythm section detunes
+       and re-times 1.4 times a second. That is the lurch, and it is the same
+       defect class Paul already reported on `funkrock` ("the auto-wah was on
+       the kit", 2026-09-03) — one lane over and one chip along.
+
+       SO A RECORD-WIDE CHIP IS A CHIP ON THE RECORD, NOT ON THE CLOCK. It
+       reaches every LINE chair, which is what "record-wide" has always meant
+       to a listener — the guitars, the keys, the voices, the horns — and it
+       stops at the two chairs whose whole job is to say where the beat is.
+       Nothing about the chip's identity, order or amount changes; only who
+       carries it, and the hand can still put it back on a strip.
+
+       THE ROW MAY SAY OTHERWISE, and one row already argued for it in advance.
+       `minneapolissound`'s note, written 2026-09-03: *"HERE IT IS THE POINT:
+       the flange on the LM-1's snare is the single most identifiable sound of
+       these records ... If a later round narrows the chip away from the kit,
+       this row wants it on the kit and this sentence is the argument."* This
+       is that round. `fxRhythm: true` is that row saying so, and it is the
+       only row in the catalogue that says it — declared, never inferred, which
+       is doors 3 and 4's own design ("THE ROW DECLARES IT ... a guess is not
+       allowed to change what the box plays").
+
+       MEASURED AFTER: 27 anchors carry a chip; 25 of them (every `chorus`,
+       `sweep`, `tremolo`, `wah` and `crunch` row) lose it from bass and drums,
+       `minneapolissound` keeps it on both by declaration, and no line chair
+       anywhere gains or loses a stage. */
     const fx = soundFxOf(G);
+    const RHYTHM = { bass: 1, drums: 1 };
+    const fxRhythm = G.fxRhythm === true;
     const seen = {};
     voices.forEach((v, i) => {
       const part = (v.cast && v.cast.part) || v.kind;
       const nth = (seen[part] = (seen[part] || 0) + 1) - 1;
-      const e = deskFor(v, nth, i === lead, fx, G);
+      const mine = (!fxRhythm && RHYTHM[v.kind]) ? [] : fx;
+      const e = deskFor(v, nth, i === lead, mine, G);
       if (e) v.desk = e;
     });
     return voices;
@@ -3580,6 +3619,61 @@
     const ownKinds = ownGuests
       ? Array.from({ length: G.voices || 1 }, (_, v) => ownInstr(v))
       : [];
+    /* DOOR 5 — AN AMPLIFIER IS NEVER DEALT (2026-09-06, the genre-QA shift).
+
+       PAUL, on the real app: *"You use crunchy guitar all over the place and
+       it has to ring a little unless the genre really calls for tiny crunchy
+       notes. It works for Minneapolis for example because prince used that
+       sound. But it's everywhere and it sounds very forced that's not how most
+       music uses guitars."*
+
+       MEASURED, 482 anchors at seed 1, BEFORE this door. The `riff` part-genre
+       hard-codes `instr: "palm_muted_guitar"` and the `solo` part-genre
+       hard-codes `instr: "overdrive_guitar"`, and those two rows are the two
+       commonest guests in the catalogue. So a HARD-CLIPPED ELECTRIC GUITAR sat
+       down on 284 chairs across 198 records — and on 190 of those chairs the
+       HOST ROW ALREADY NAMED A GUITAR OF ITS OWN and was overruled by the
+       guest's. `blues` (which declares `jazz_guitar`) got an overdrive.
+       `skiffle` (steel string) got an overdrive. `afrobeat` (clean) got an
+       overdrive. `latinpop` (nylon) got a palm mute. Thirty-three more records
+       — `funk`, `jazzfunk`, `japanjazz`, `dramascore`, `salsa`, `balkanbrass`
+       — name no guitar at all and were handed a two-stage high-gain amplifier
+       anyway. Against that, `crunch_guitar` is seated on 16 records and every
+       one of the 16 DECLARES it. The complaint is not about the crunch
+       instrument; it is about who was dealt an amplifier.
+
+       AND IT IS ALSO THE RING, in the same measurement and the same line.
+       `palm_muted_guitar` is `ring: 0.23` (instruments.js) against
+       `clean_guitar` 4.0, `jazz_guitar` 3.0 and `crunch_guitar` 5.0 — it is
+       BUILT not to ring, correctly, because that is what a palm mute is. Being
+       dealt to 138 records that never asked for one is what made "it has to
+       ring a little" true of the whole catalogue at once.
+
+       THE RULE, AND IT INFERS NOTHING. A guest arriving on one of the four
+       DIRTY ids takes the host's own first-named guitar; a host that names no
+       guitar gets the CLEAN one. That is the same sentence door 4 makes a row
+       opt into, said here about amplifiers only and said for every row,
+       because an amplifier is a DECISION and a record that made no decision
+       about a guitar did not make that one. Nothing else moves: a row that
+       declares a dirty guitar keeps it (`minneapolissound` declares
+       `crunch_guitar` and stays crunchy, which is the case Paul names as
+       working; `rock` -> crunch, `punk` -> distortion, `deathmetal` ->
+       distortion, `grunge` -> distortion, so every record whose music IS an
+       amplifier still hires one), a guest that is not a dirty guitar is
+       untouched, and the two part-genres keep their own instrument when they
+       are played as records in their own right.
+
+       WHY NOT AN ANCESTRY TEST. It was measured and rejected: "may this record
+       hire an amp if one is in its family" reaches `garagerock` from
+       `chiptune`, `versailles`, `sitcomsting` and `horrorsynth` inside six
+       generations, which is every row in the table and therefore no rule at
+       all. The host's own `instr` is the only evidence that is actually about
+       this record. */
+    const DIRT_GUITAR = { crunch_guitar: 1, overdrive_guitar: 1,
+                          distortion_guitar: 1, palm_muted_guitar: 1 };
+    const GUITARISH = (id) => NC.kindOf(id) === "guitar";
+    const hostGuitars = [].concat(G.instr || []).filter(GUITARISH);
+    const hostAmp = (id) => hostGuitars[0] || "clean_guitar";
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
     const hostYear = NC.genreYear(gk);
     const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];
@@ -4123,6 +4217,11 @@
         const mine = ownKinds.find((id) => NC.kindOf(id) === NC.kindOf(instrument));
         if (mine && mine !== instrument) instrument = mine;
       }
+      // DOOR 5 (2026-09-06) — an amplifier is never dealt. See the door above:
+      // a dirty electric the HOST did not name becomes the host's own guitar,
+      // or the clean one where the host names none.
+      if (DIRT_GUITAR[instrument] && hostGuitars.indexOf(instrument) < 0)
+        instrument = hostAmp(instrument);
       if (isSection(instrument)) {
         // WHICH section it joins, where the record has more than one: the one
         // sitting in the same KIND of chair. `plan.js seatFor` keys a seat on

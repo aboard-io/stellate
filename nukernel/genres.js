@@ -18746,6 +18746,113 @@
     // shared offbeat and a shared kit density, which is a coincidence of two islands
     // and not a line of descent.
     //
+    // IT SOUNDED VERY LITTLE LIKE SALSA, AND THE FAULT WAS THE BASS (2026-09-06,
+    // the genre-QA shift). Paul, on the real app: "Salsa sounds very little like
+    // salsa." Measured at seed 1 before anything moved, here is what was already
+    // RIGHT and should not be re-litigated by the next hand: the 3-2 son clave is
+    // on `p` at steps 0, 3, 6, 10, 12 — one of only seven literal claves in 483
+    // rows; the campana is on `h` with its and-strokes and its velocity arch; the
+    // congas are on the toms. The paragraphs above earned those and they stand.
+    //
+    // WHAT WAS WRONG WAS THE TUMBAO, AND IT WAS WRONG BY ACCIDENT RATHER THAN BY
+    // OMISSION. `bassStyle: "octaves"` is not a rhythm — kernel.js STYLEGRID has
+    // entries for `eighths` and `sixteenths` and for nothing else — so the bass
+    // fell through to the kernel's last resort, which is `subj.acc`, THE MELODY'S
+    // OWN ACCENT VECTOR. The kernel's own comment says what that is: "`subj.acc` is
+    // not about the bass at all — it is the MELODY's accents standing in for a bass
+    // part nobody wrote." Measured over the whole record at seed 1, the 236 bass
+    // notes landed on EIGHT different steps — 2, 3, 5, 6, 9, 10, 11 and 14 — with
+    // 0% on the downbeat and 47.5% anywhere near a tumbao stroke. That reads as
+    // "off the beat", which is why nobody caught it, and it is not a tumbao. A
+    // tumbao is TWO strokes and it is the same two every bar.
+    //
+    // SO THIS ROW DECLARES A `bassFig`, WHICH NOTHING HAD EVER DONE. kernel.js:3352
+    // has read `bassFig` since it was written and its own comment records that
+    // "0 of 387 anchors declare a `bassFig` — the successor has no rows, so the
+    // supersession was a promise". `son`'s note, one anchor upstream, is the other
+    // half of the same complaint: "THE ANTICIPATED BASS is the single most
+    // identifying number in this entry and it is written into the KICK rather than
+    // into a bass word, because `bassStyle` has no 'arrive early' in it." It does
+    // now, and it is written where the bass is (`grunge` declared one in the same
+    // shift and for its own reasons, so the field went from zero rows to two in one
+    // afternoon; neither row is quoting the other):
+    //     grid  ........x.....x.      the and-of-2 (step 6) and the 4 (step 12)
+    //     deg   ..............4.      root on the bombo, fifth on the four
+    //     acc   ........x.....x.      both of them accented
+    // NOTHING ON THE DOWNBEAT, on purpose and by declaration rather than by
+    // accident — that silence is the whole of the feel. `spans()` holds the step-12
+    // note ten steps, so the four rings across the barline into the bar it belongs
+    // to, which is the anticipation as the box can say it.
+    //
+    // AND HERE IS WHAT THE BOX STILL CANNOT SAY, named rather than faked. In a real
+    // tumbao the note on the four belongs to the NEXT chord — it is the bass
+    // arriving before the band. `chordIn` reads the CURRENT bar's chord at step 12
+    // and the kernel has no lookahead of any kind (its one `eps` argument is a
+    // float-rounding guard, not a feature), so on this vamp's Dm-G alternation the
+    // four sounds the current chord's fifth where a bassist would already be on the
+    // next chord's root. The RHYTHM of the anticipation is now exact and its PITCH
+    // is a bar late. That is a kernel limit, not a row's taste, and it is the one
+    // sentence to hand the next round.
+    //
+    // THE HARMONY IS A TWO-CHORD VAMP AT LAST. `roots` was [0,3,4,0,0,3,4,4] — I IV
+    // V I over eight bars, which is a SONG FORM and the opposite of a montuno. A
+    // montuno is a vamp that does not close, and in dorian the vamp is i-IV: the
+    // raised sixth over the minor is the whole reason this row is in dorian and the
+    // audible difference from `mambo`, which is a brass band in major sitting on
+    // one chord. `roots: [0,3,0,3]` with `harmony: "cycle"` DECLARED — it was being
+    // inferred before, and a row this specific should say it. The neighbours agree:
+    // `descarga` (Havana 1957) is [0,4,0,4] with `harmony: "cycle"`, and it is the
+    // row whose whole subject is the vamp held open all night.
+    //
+    // THE MONTUNO IS A TWO-BAR FIGURE AND NOW THE `word` KNOWS IT. The note above
+    // has said "a two-bar arpeggiated figure that never stops" since it was
+    // written, and the old `word` was indexed by VOICE only — it ignored `s`
+    // entirely, so the piano played the same bar eight times. `word(v, s)` counts
+    // bars from a chair's own entry, so `s % 2` is literally a two-bar figure, and
+    // `split(2)` is the kernel's own arpeggiator ("which is what an arpeggiator
+    // actually does", kernel.js:284). The piano now states the figure and restates
+    // it rotated a beat; `descarga`'s piano is the precedent for stamping a figure
+    // on this chair, though it stamps the clave with `keep(0,3,6,10)` where this
+    // one arpeggiates, because a descarga's piano is comping under a soloist and a
+    // salsa record's piano IS the record.
+    //
+    // AND THE HORNS ANSWER INSTEAD OF PLAYING. This is the mambo half of the
+    // lineage and it was the thing most obviously missing: a horn section with no
+    // arrangement in it. `drop(1)` zeroes a chair's gate for a bar — three rows in
+    // the table already use it that way — so the trombones answer on the odd bars,
+    // in the holes the montuno leaves, and the trumpet enters once every four bars
+    // over the top. MEASURED on eight bars, before -> after: the piano 128 -> 256
+    // notes over 16 of 16 half-bars (`split(2)` is the kernel's own arpeggiator and
+    // the montuno never stops); the trombones 96 notes over 12 half-bars -> 48 over
+    // 6; the trumpet 44 over 8 -> 11 over 2. One instrument that does not stop and
+    // two that punctuate, which is the shape of the band.
+    //
+    // AND THAT MEASUREMENT IS OFF THE LIVE PATH, WHICH IS A FACT ABOUT THE WHOLE
+    // TABLE AND NOT ABOUT THIS ROW. A row's `word` closure reaches the kernel when
+    // the genre is PLAYED — a box on the band page, `K.render(ph, g, bars)`. It
+    // does NOT reach a PRECOMPOSED record: `document.js:555` builds the genre's
+    // word from the DOCUMENT's own `development` map (`word: (v) => opsOf(wordAt(
+    // doc, lines[v], si), scArr)`), and `precompose.js` deals that map from
+    // `songs.js WORDS` without ever consulting `G.word`. Proved rather than
+    // assumed: with the new closure in place, this record's precomposed render came
+    // back byte-identical for both horn chairs — 239 trombone notes over 46 bars,
+    // 294 trumpet notes over 46, exactly as before. Every other field on this row —
+    // `bassFig`, `roots`, `harmony`, `reg` — reaches both paths, and the two horn
+    // sentences above are true of one of them. Somebody should decide whether a
+    // row's word ought to seed a precomposed record's development; it is a bigger
+    // question than a salsa row.
+    //
+    // THE PIANO CAME UP AN OCTAVE. Its `reg` case at voice 0 was 0, and the `riff`
+    // part policy centres a chair at -12, so the montuno's median note was MIDI 49
+    // (C#3) — a left hand alone. A montuno is two hands in the middle of the
+    // keyboard. `reg` at 0 is now 1.
+    //
+    // STILL NOT SAID, and worth a round of its own: the clave is quantised. The
+    // kit's `~p` sidecar takes a signed nudge in ninths of a step and no row in the
+    // catalogue has ever written one, so every clave in this table sits exactly on
+    // the grid where a claver's second stroke does not. And the bell is still the
+    // hat lane and the congas are still the toms — the standing twelve-lane
+    // compromise `son` names once for the whole region, not a fault of this row.
     salsa: {
       label: "New York 1973",
       voices: 3,
@@ -18758,10 +18865,10 @@
       instr: ["bright_yamaha_grand", "trombone", "trumpet"],
       drumkit: "acoustic",
       entry: v => v * 2,
-      reg: v => (v === 0 ? 0 : v === 1 ? -1 : 1),
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : 1),
       realize: () => "line",
       part: ["riff", "lead", "counter"],
-      roots: [0, 3, 4, 0, 0, 3, 4, 4],
+      roots: [0, 3, 0, 3],
       mode: MODES.dorian,
       scale: MODES.dorian,
       diatonic: true,
@@ -18787,9 +18894,21 @@
         gain: 0.28,
         verb: 0.22
       },
-      words: ["the piano montuno", "the trombones, in the holes", "the trumpet, on top of them"],
-      word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [transpose(7), drop(3)] : []),
+      words: [
+        "the piano montuno — two bars, arpeggiated, and it never stops",
+        "the trombones, answering in the holes",
+        "the trumpet, once every four bars, on top of them"
+      ],
+      word: (v, s) => (v === 0 ? (s % 2 ? [split(2), rotate(4)] : [split(2)])
+                   : v === 1 ? (s % 2 ? [rotate(4), drop(2)] : [drop(1)])
+                   : (s % 4 === 3 ? [transpose(7), drop(3)] : [drop(1)])),
       dyn: "syncope",
+      harmony: "cycle",
+      bassFig: {
+        grid: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        deg: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0],
+        acc: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
     },
 
     // CUMBIA — Barranquilla 1960. The Discos Fuentes orquesta cumbia: a
@@ -32929,6 +33048,33 @@
     // after it: the figure itself is syncopated, not merely pushed. The
     // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
     // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
+    // THE FLANGER IS THE SAME EFFECT AT A QUARTER OF THE AMOUNT (2026-09-06, the
+    // genre-QA shift). Paul, on the real app: "The phasers/flangers on Minneapolis
+    // 1982 are right but WAY too turned up." Both halves of that are now facts in
+    // the table. RIGHT: `fx: ["flanger"]` stands, and so does the paragraph above
+    // arguing it belongs on the LM-1 — which is why this row now also declares
+    // `fxRhythm: true`, the one row in 483 that does. TOO TURNED UP: the amount was
+    // never this row's to set. It came from fields.js `FX.flanger`, the same
+    // `depth .9 / feedback .6 / mix .6` handed to every row that names the chip,
+    // and computed from engine/faust/dsp/insert_flanger.dsp's own algebra
+    // ((1-mix) + mix*z/(1-fb*z), delay 0.6 + depth*5 ms) that measured 37.62 dB of
+    // comb ripple with the first notch sweeping 98-833 Hz — 4.7x the `phaser` entry
+    // beside it and 1.9x the `chorus`. It is now 8.37 dB, notch 192-833 Hz, which
+    // is the phaser's own 7.96 to within half a decibel. THE CENSUS IS WHY THIS IS
+    // NOT A GLOBAL REBALANCE IN DISGUISE: `flanger` is named by THIS ROW AND NO
+    // OTHER, and `phaser` is named by no row at all — so the table's default and
+    // this record's amount are the same number, and moving one moved exactly one
+    // record. When a row can state its own chip amount (fields.js says what that
+    // takes, and it needs one file this shift did not own), this row's number is
+    // the one to write down here.
+    //
+    // AND THE CHIP STAYS ON THE MACHINE, BY DECLARATION. The narrowing that
+    // paragraph anticipated arrived in the same shift: precompose now keeps a
+    // record-wide chip off the bass and the drums, because on `softrock` a chorus
+    // on the room kit and the bass was heard as a lurch. `fxRhythm: true` is this
+    // row exercising the exception its own note asked for two rounds early. The
+    // flange on the LM-1's snare is still there; it is 29 dB quieter, which is
+    // what Paul asked for and not what he would have got from taking it off.
     minneapolissound: {
       label: "Minneapolis 1982",
       near: "funk",
@@ -33001,6 +33147,7 @@
                     : v === 1 ? [[fill(1)], [rotate(2)], [fill(1)], [drop(2)]][s % 4]
                     : [excerpt(s % 2 ? 8 : 0, 8), transpose(2)]),
       dyn: "syncope",
+      fxRhythm: true,
     },
 
     // YELLOW MAGIC ORCHESTRA — Tokyo 1978. Yellow Magic Orchestra
@@ -35991,8 +36138,71 @@
     // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
     // "arch"` — the line arches up and back down. A studio pop record with a
     // sung line at the top of it.
+    // THE LABEL SAID LAGOS AND THE MUSIC IS NOT FROM LAGOS (2026-09-06, the
+    // genre-QA shift). Paul, on the real app: "Soft rock is assigned to Lagos and
+    // has a lurch effect on it." Two faults in one sentence and they are unrelated;
+    // this paragraph is the first.
+    //
+    // THE ROW'S OWN FIRST WORDS ARE THE EVIDENCE: "WINGS — London 1973, Band on the
+    // Run." The note has said London since it was written. The LABEL said Lagos
+    // because that is where the tape was cut, and the catalogue already has a
+    // ruling against exactly that — the grunge ruling, quoted verbatim in
+    // `bluesrock` and `politicalhiphop`: a label names the room the music came out
+    // of and not the desk it was mixed on. A Lagos studio booking is a desk.
+    //
+    // AND THE YEAR MOVES ONE, WHICH IS WHY THE FAULT SURVIVED THIS LONG. Labels are
+    // UNIQUE on (place, year) across the table, and `London 1973` is held by
+    // `spacerock`. So the honest label was unavailable and the previous hand took
+    // the next true-ish fact about the record instead of the next true one. `London
+    // 1974` was free and is the better year on the record's own terms: Band on the
+    // Run was released 5 December 1973 and is a 1974 record — it reached number one
+    // in the United States in April 1974, "Jet" and the title track were 1974
+    // singles, and it took the Grammy for 1974. Every declared parent stays older
+    // (`beatgroup` Liverpool 1962, `rock` London 1969, `countrypop`), so GENRES.md
+    // §2's `not later` is untouched.
+    //
+    // THE THROAT WAS ALREADY PATCHED AND THE PATCH STANDS. The paragraph above
+    // fixed the SYMPTOM in 2026-09-04 — `throat: const tenor`, because a Lagos
+    // label sent `instruments.js throatOf` to the africa region and handed a Wings
+    // record MOUTHS.mbubestack, a 1939 Zulu male-chorus bass. The cause is fixed
+    // now too, and the chair keeps its tenor: a London 1974 label casts `belter`
+    // off the `studio` family, and this record is a tenor rather than a belter.
+    // Two facts, both said, neither inferred.
+    //
+    // THE LURCH WAS THE CHORUS ON THE DRUM KIT AND THE BASS, and it was the second
+    // half of the same complaint. MEASURED at seed 1: this row declares `fx:
+    // ["chorus"]` and precompose dealt that chip to all eight chairs — the six
+    // lines, the bass, and the `room` kit. Computed from insert_chorus.dsp's own
+    // algebra, the chip's declared amount (depth 0.6, mix 0.45, rate 0.7 Hz) is
+    // 20.0 dB of comb ripple with the first notch sweeping 139-833 Hz 1.4 times a
+    // second. On a guitar that is a sheen. On a snare and a bass it is WOW AND
+    // FLUTTER — the rhythm section detuning and re-timing under the beat, which is
+    // what a lurch is. The fix is not on this row: precompose now keeps a
+    // record-wide chip off the bass and the drums for every row that does not ask
+    // for it, which is 25 of the 26 rows carrying one. The chorus on the guitars,
+    // the piano and the voices is untouched, because that IS the record.
+    //
+    // AND THE GUITAR IS CLEAN NOW, which is this shift's fourth note landing on
+    // this row. Paul: "You use crunchy guitar all over the place and it has to ring
+    // a little unless the genre really calls for tiny crunchy notes." This row
+    // declared `crunch_guitar` and, with the guest, seated THREE chairs of it —
+    // riff, riff2 and solo — on a record whose own `artic: "legato"` and `maxHold:
+    // 5` say the opposite thing about how its notes should end. `clean_guitar`
+    // rings longer (instruments.js `ring` 4.0 against crunch's 5.0 but with no
+    // high-gain stage at all, drive .16 against .26) and is what a mid-seventies
+    // studio pop record's electric actually is. Nothing else about the chair moves.
+    //
+    // WHAT IS LEFT FOR A HUMAN, and it is a genuine question rather than a
+    // leftover: this row is a WINGS row wearing a genre-term key. Soft rock as a
+    // GENRE term is Los Angeles, mid-seventies — the Eagles, Fleetwood Mac, the
+    // Doobie Brothers — and `countrypop` at 0.15 is the only thing in the parents
+    // line pointing that way against `beatgroup` at 0.6. Re-pointing the label at
+    // Los Angeles would orphan every measured sentence above it, which is
+    // re-writing the record rather than fixing a label. The label is now true of
+    // the music the row actually describes; whether the row should describe a
+    // different music is Paul's call.
     softrock: {
-      label: "Lagos 1973",
+      label: "London 1974",
       voices: 3,
       bars: 8,
       near: "beatgroup",
@@ -36000,7 +36210,7 @@
       bpm: 116,
       parents: { beatgroup: 0.6, rock: 0.25, countrypop: 0.15 },
       wants: [],
-      instr: ["solo_vox", "crunch_guitar", "upright_piano"],
+      instr: ["solo_vox", "clean_guitar", "upright_piano"],
       drumkit: "room",
       entry: v => v,
       reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
@@ -44208,14 +44418,19 @@
     // in Chains · Stone Temple Pilots · Smashing Pumpkins). Meter 164 of 166
     // in 4/4. Tempo, tempo-event files only: p10 77 · p25 108 · med 120 ·
     // p75 154 · p90 180; the NIRVANA subset alone medians at exactly 120 and
-    // that is the number this row takes. Swing: median 0.000 — this music
+    // that WAS the number this row took, until 2026-09-06 re-measured it and
+    // refused it — the 120 is a software default with a corpus standing behind
+    // it, and the paragraph headed "OPEN UP THE MOSH PIT" below has the count. Swing: median 0.000 — this music
     // does not lean, and the row says `swing` nowhere. Mode split 86 major /
     // 80 minor, which is the tell: the corpus's second-commonest four-bar
     // cycle is I-bVII-bIII-bVII (52 windows) — a MODAL minor with no leading
     // tone at all, which is why this row is aeolian and not the ionian
     // `emo` and `poppunk` sit in. Held notes: median 2.0 sixteenths, p90 6.
     // Melodic mean pitch 63 (D#4) against poppunk's 71.6 — Cobain sings LOW,
-    // and `reg` says so. Drum lanes, 0-9 over sixteen steps:
+    // and the row says so with a `throat` since 2026-09-06. It did NOT say so
+    // with `reg`, which is what this line used to claim: `reg` is the register
+    // of a chair the row never cast, and until that date this row named no
+    // singer at all. The measurement is below. Drum lanes, 0-9 over sixteen steps:
     //   kick  9151416171713161   snare 4121912251219132
     //   hat   7141914191419141   crash 9020502050104020
     // — the hat is plain eighths (every even step at 9, every odd at 1), the
@@ -44237,18 +44452,231 @@
     //
     // THE GHOST SIXTEENTHS EITHER SIDE OF THE BACKBEAT, measured: the
     // snare histogram reads 2 at step 3 and 5 against 9 at step 4.
+    // ====================================================================
+    // "OPEN UP THE MOSH PIT" (2026-09-06, the genre-QA shift)
+    // ====================================================================
+    // PAUL, listening to the real app, verbatim: "Think harder on grunge. It
+    // should be slow low vocals with bass absolutely opening up and ripping
+    // with tons of pressure. Think sound garden and nirvana. Open up the
+    // mosh pit."
+    //
+    // Four clauses, four different failures, and every number below is off
+    // the rendered record (precompose -> document -> `scoreOf`) at seeds
+    // 1/2/3, or off the corpus, never off memory.
+    //
+    // 1 · SLOW — 120 -> 92, AND THE 120 WAS A SOFTWARE DEFAULT.
+    // The paragraph above takes the corpus median of 120. Re-measured today
+    // over the same acts read with the underscore-folding normaliser (243
+    // files) and again with Mudhoney, the Screaming Trees, the Melvins, Hole,
+    // Temple of the Dog and Mother Love Bone added (333 files, tempo-event
+    // files only): the median is still 120 — and FORTY-EIGHT OF THE 333 READ
+    // EXACTLY 120.000. That is the SMF default a transcriber never changed.
+    // Take that pile out and the 120-129 bin falls from 80 files to 32, level
+    // with its neighbours (110-119: 31 · 130-139: 20), and the median moves
+    // to 117. There is no mode at 120. There is a broad plateau from 70 to
+    // 170 with a stack of defaults standing in the middle of it, and this row
+    // read the stack as the music.
+    //
+    // The plateau is BIMODAL and a row has to pick a half. Slow half (<=110):
+    // n=123, median 87. Fast half: n=210, median 130. Paul named the slow
+    // half twice — "slow", and "Soundgarden" first, whose own six files
+    // median 93 with five of the six under 110 (Black Hole Sun 52, Pretty
+    // Noose 74, Burden in My Hand 93). Stone Temple Pilots median 90; Alice
+    // in Chains p25 70; Nirvana's own slow end is Something in the Way at 58
+    // and In Bloom at 78. 92 is that half.
+    //
+    // It also fixes this row's PLACE IN THE TABLE, which 120 had wrong: the
+    // row was FASTER than its own child `postgrunge` (108) and 12 under
+    // `rock` (132), which made it a rock row wearing a scene word. At 92 it
+    // sits above `heavymetal` (84), `doom` (76) and `sludge` (74), under
+    // `postgrunge` (108) and `shoegaze` (104), and far under `punk` /
+    // `hardcore` / `thrash` (160).
+    //
+    // `rate` STAYS 1, and the refusal is the other half of the decision.
+    // `sludge` (74) and `doom` (76) are the two rows in this catalogue that
+    // take `rate: 0.5`, and half time is THEIR identity: it halves the grid,
+    // so the eighth hats and the ghosted backbeat this row measured off the
+    // corpus would play at half density and grunge would become the row it
+    // is already `near`. The drag comes off the tempo alone. At the seam: a
+    // sixteenth step runs 0.1250 s at 120 and 0.1630 s at 92, so every note
+    // on the record is 30.4% longer in real time and a bar goes 2.00 s ->
+    // 2.61 s. The record's own drawn tempo follows — seeds 1/2/3 come out
+    // 120 / 116 / 123 before and 92 / 88 / 95 after.
+    //
+    // 2 · LOW VOCALS — THE ROW NAMED NO SINGER AT ALL.
+    // Measured before: `instr` was two guitars, `voices` was 2, and every
+    // voice that ever appeared on this record was a GUEST the dice booked. At
+    // seed 1 that guest sang a median of MIDI 71 (B4) — the top of a tenor's
+    // compass — on a row whose own paragraph says Cobain sings low. Re-
+    // measured against the corpus today, the melody track's mean pitch
+    // medians 61.1 over Nirvana's 131 files (mean 62.1), which corroborates
+    // the 63 already written above; the record was singing seven semitones
+    // over its own evidence, and only by luck at all.
+    //
+    // So the row casts its singer: `solo_vox` as chair 2, `voices: 3`, and
+    // `part: ["line", "line", "lead"]` — kernel.js PARTS.lead, "up top,
+    // sings, breathes", maxHold 4 against this row's 3. And a `throat`
+    // closure, which is the field that actually reaches: precompose §7d
+    // SEATS a sung chair at the register its throat sings, so the score and
+    // the sound agree instead of the audio fold quietly correcting an octave.
+    //
+    // `tenor`, AND `bass` WAS MEASURED AND REFUSED. Over seeds 1-3 the
+    // declared chair sings a median of 57 / 59 / 55 on tenor and 45 / 47 / 53
+    // on bass, and the record's WHOLE sung median — every note of every sung
+    // chair over three seeds, 1,148 notes — goes 67 -> 60 on tenor and
+    // 67 -> 54 on bass. Nirvana's own corpus number is 61.1. Tenor lands one
+    // semitone under it and seven under where the record was singing; bass
+    // lands sixteen under, which is Bing Crosby (`MOUTHS.crooning` is the
+    // only bass throat this catalogue casts) and is not what these records
+    // do. The number won.
+    //
+    // WHAT I COULD NOT DO, SAID PLAINLY, TWICE.
+    // (a) The dice still book a SECOND singing guest over the declared one,
+    // and a guest sings with its own row's throat — instruments.js
+    // `throatVoiceOf` reads the owner off the layer, which is RIGHT (a guest
+    // brings its own voice) — so at seed 1 the record has this row's tenor at
+    // 57 and a dealt lead at 69 above it. No field on a row refuses one sung
+    // guest without refusing all of them; `instrumental: true` would make
+    // grunge an instrumental. `numetal` carries the same two-singer shape for
+    // the same reason.
+    // (b) The declared chair reads the SAME CELL as chair 0 and is a unison
+    // with it (225 notes each at seed 1), because a base chair reads slot
+    // `v % slots.length` — precompose `baseKind` — and three chairs over a
+    // two-slot stack fold onto two lines. The row's `word` closure cannot
+    // thin one of them: on a COMPOSED record `document.js toGenre` builds the
+    // kernel's `word` from the DOCUMENT's per-section development words, not
+    // from the row's closure, so a `keep(...)` written here reaches the box
+    // path and not the record. Measured: 238 notes on chair 0 and 238 on
+    // chair 2, with the closure and without it.
+    //
+    // 3 · THE BASS — IT WAS A DOUBLE BASS PLAYING SIX NOTES.
+    // This is the headline and it was worse than "no `bassInstr`". A row that
+    // names none plays `audio/plan.js` castOf's fallback, and that fallback
+    // is `instruments.js BASS_INSTR = "acoustic_bass"` — a SAMPLED UPRIGHT.
+    // Seattle 1991 had a jazz double bass on it. Measured on the rendered
+    // record, seeds 1/2/3, BEFORE: 304 / 256 / 320 notes, MIDI 33..45 /
+    // 34..47 / 31..50 — spans of 12 / 13 / 19 semitones — SIX / FOUR / SIX
+    // distinct notes over the whole record, ZERO accents, ZERO slides, mean
+    // velocity 5.99 / 6.07 / 5.94. Straight eighths on the root, which is
+    // what `bassStyle: "eighths"` says and exactly what it did.
+    //
+    // Four fields, and the third has never been used before:
+    //
+    //   bassInstr: "picked_bass" — the pick. Novoselic and Ben Shepherd both
+    //     play with one and the attack is the whole front of the note.
+    //   bassFig — a bass line WRITTEN OUT rather than described. kernel.js
+    //     :3352 has read this field since the portamento round and its own
+    //     comment measured the consequence: "0 of 387 anchors declare a
+    //     `bassFig` — the successor has no rows, so the supersession was a
+    //     promise and the demotion was its down payment." THIS IS THE FIRST
+    //     ROW TO DECLARE ONE, and it is the figure Paul asked for: a root
+    //     pedal through the first half of the bar, the b3 SLIDING into the
+    //     fifth an octave up on the accent, back down through the b3, then
+    //     the b7 sliding into the octave root. Rendered at seed 1 in A
+    //     aeolian: A1 A1 A1 A1 · C2(sld) · E3! · C2 · A1 · G2(sld) · A2! —
+    //     the two octave leaps are the "opening up" and the three `acc` steps
+    //     are the ripping (kernel: an accented step takes vel + 3).
+    //   bassArtic: "legato" — the bass's OWN gate, 1.0 against the 0.94 the
+    //     kernel hard-codes for every row that says nothing. The note does
+    //     not let go of the one behind it, which is what "pressure" is.
+    //   bassTone: { atk: 0.004, rel: 0.7 } — the pick's attack and a release
+    //     that rings past the gate. TWO FIELDS AND NOT FOUR, on purpose: on a
+    //     SAMPLED bass `atk` and `rel` are the words that reach (`to-engine`
+    //     samplerVox: attack -> sampler n.atk, release -> n.rel), and `cut` /
+    //     `q` are NOT written here because a sampler has no filter in this
+    //     engine — writing them would be this tree's own "declared, costed
+    //     and reaching no sound" bug, in the newest field on the row. `dcy`
+    //     and `sus` do reach the sampled lane and no row in the catalogue
+    //     writes them; they are left alone because nothing here could measure
+    //     them, not because they were considered and rejected.
+    //
+    // MEASURED AFTER, seeds 1/2/3: notes 370 / 320 / 430 (was 304/256/320),
+    // DISTINCT NOTES 17 / 16 / 21 (was 6/4/6), pitch classes 10 / 9 / 11 (was
+    // 5/4/5), range 33..64 / 34..66 / 31..62 — spans of 31 / 32 / 31
+    // semitones against 12/13/19 — accents 111 / 96 / 129 (was 0/0/0), slides
+    // 74 / 64 / 86 (was 0/0/0), mean velocity 6.50 / 6.63 / 6.57 (was
+    // 5.99/6.07/5.94), and the bass's share of the record 19.8% / 21.4% /
+    // 18.8% (was 18.3% / 20.8% / 18.5%).
+    //
+    // `bassStyle: "eighths"` STAYS AND IS NOT DEAD WOOD. kernel.js's own
+    // precedence is `fig.grid || bassGrid || STYLEGRID[bassStyle] ||
+    // subj.acc`, so the figure outranks it — but a hand that clears the
+    // figure in Rules then lands on eighths rather than on the MELODY's
+    // accents, which is the floor this row wants under it.
+    //
+    // 4 · "OPEN UP THE MOSH PIT" = LOUD-QUIET-LOUD, AND THE LADDER WAS
+    // ALREADY HERE. Measured on the document before anything changed:
+    // `family: band` is DEPTH 1.00, the top of compose.js's own table
+    // alongside soul ("a gospel record and a rock record both stop the band
+    // dead before the last chorus"), and the sections already came out
+    // back / norm / back / FWD / norm / back / FWD / back / FWD / FWD / back
+    // at seed 1. The verse already got out of the chorus's way. What this
+    // record had no version of at all was THE HOLE.
+    //
+    // `drops: true` is the hole, and it is compose.js's own gesture rather
+    // than a new one: a two-to-four-bar breakdown spliced in before a chorus,
+    // `kit: "nodrums"`, `bassop: "nobass"`, everything gone but the tune.
+    // MEASURED: it fires at seeds 1 and 3 and not at 2 — the pass is a 0.7
+    // coin, and "every now and then" is the instruction it was written from —
+    // and where it fires the record gains a `breakdown` section at
+    // `lvl: "hush"`. That is the number the clause turns into: the biggest
+    // upward level step on the record goes from back (-3.1 dB) -> fwd
+    // (+2.6 dB) = 5.7 dB to hush (-8.0 dB) -> fwd (+2.6 dB) = 10.6 dB, and it
+    // lands immediately before a chorus. The record's level range goes
+    // -3.1..+2.6 dB to -8.0..+2.6 dB. That is the pit opening.
+    //
+    // `dyn` STAYS `backbeat`, and refusing to move it is the honest half of
+    // this clause. The nine figures in genres-tables.js FIGURES are BAR-scale
+    // — they weight the notes inside one bar — and loud-quiet-loud is a
+    // SECTION fact. `terraced` ("restated a level down") would put a quiet
+    // bar after every loud bar, which is a baroque terrace and not a grunge
+    // chorus; `swell` would crescendo every bar, including the flat ones the
+    // wall is made of. This row's own measured snare histogram is a
+    // two-and-four backbeat with ghost sixteenths either side, and `backbeat`
+    // is what a line over that kit leans on. The section-scale answer is
+    // `drops` plus the level ladder, not a figure.
+    //
+    // THE GUITAR STILL DOES NOT RING, and that is deliberate in the same
+    // shift that made other rows' guitars ring. `distortion_guitar` stays
+    // DECLARED (which is also what keeps the re-seating door off this row —
+    // it only moves guitars a row did not name), `maxHold` stays 3, `artic`
+    // stays normal, and no `crunch_guitar` is added. Grunge is a wall; a wall
+    // does not ring.
+    //
+    // TWO THINGS FOUND HERE THAT ARE NOT THIS ROW'S TO FIX, named rather
+    // than quietly left:
+    //   · THE HOLE REACHES THE DESK AND NOT THE SCORE. precompose writes the
+    //     words correctly — measured, the document's bass voice carries
+    //     `development.s3 = "nobass"` and the drums voice `"nodrums"` at seed
+    //     1 — but `document.js scoreOf` renders straight off `toGenre` and
+    //     never spends the BOX's `bassop` / `kit` words, so the drop bar
+    //     still prints 16 drum hits and 8 bass notes on the staff. A
+    //     document.js fact, true of every row in the catalogue that ever
+    //     takes a breakdown.
+    //   · HALF OF EVERY BASS NOTE IN THIS CATALOGUE CARRIES A `dur` OF NaN.
+    //     kernel.js `bass()` takes `sp = spans(grid)` off a SIXTEEN-slot grid
+    //     and then reads `sp[i]` for `i` up to `N = subj.deg.length`, which
+    //     is 32 on a two-bar cell — so every note in the second bar gets an
+    //     undefined hold. Measured on this row: 152 of 304 bass events at
+    //     seed 1 before the shift, 180 of 370 after, and `rock` and
+    //     `postgrunge` show the same proportion. Not introduced here, not
+    //     fixed here (kernel.js).
     grunge: {
       label: "Seattle 1991",
       near: "sludge",
       plan: "song",
-      bpm: 120,
+      voices: 3,
+      drops: true,
+      bpm: 92,
       parents: { punk: 0.35, heavymetal: 0.3, hardcore: 0.2, psychrock: 0.15 },
       wants: ["the Melvins' Aberdeen sludge, the local band this scene names as its teacher"],
-      instr: ["distortion_guitar", "clean_guitar"],
+      instr: ["distortion_guitar", "clean_guitar", "solo_vox"],
+      part: ["line", "line", "lead"],
       drumkit: "power",
       entry: () => 0,
       reg: v => v - 1,
       realize: () => "line",
+      throat: () => "tenor",
       roots: [0, 6, 2, 6],
       mode: MODES.aeolian,
       scale: MODES.aeolian,
@@ -44256,6 +44684,16 @@
       artic: "normal",
       maxHold: 3,
       bassStyle: "eighths",
+      bassInstr: "picked_bass",
+      bassArtic: "legato",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0],
+        deg: [0, 0, 0, 0, 0, 0, 0, 2, 4, 0, 2, 0, 0, 6, 0, 0],
+        oct: [0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        sld: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0]
+      },
+      bassTone: { atk: 0.004, rel: 0.7 },
       kit: {
         k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -44267,7 +44705,8 @@
       tone: { wave: "sawtooth", cut: 1800, q: 1.8, atk: 0.005, rel: 0.5, gain: 0.3, verb: 0.18 },
       words: [
         "the guitar, the riff, four steps and a fall",
-        "the clean guitar, the quiet half, an octave under"
+        "the clean guitar, the quiet half, an octave under",
+        "the voice, low and slow, inside the wall rather than over it"
       ],
       word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
       fx: ["crunch"],
