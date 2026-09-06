@@ -36,6 +36,8 @@
    through ../copy/global.js — never ../copy/index.js, which would bundle a
    second copy of every string on the page into ui/envelope.js. */
 import { t, fmt } from "../copy/global.js";
+import { html } from "lit/html.js";
+import type { TemplateResult } from "lit/html.js";
 
 /** the handle's radius in CSS px — half of `--tap`. */
 export const R = 22;
@@ -70,6 +72,14 @@ export interface HandleOpts {
   y: number;
   /** dim, undraggable, with the sentence — the no-silent-grey law. */
   why?: string | null;
+  /** WHERE THE REASON IS PRINTED WHEN THIS HANDLE IS TAPPED (§15 B5). The
+   *  PLATE's own address, not the handle's: one say line per plate, under it,
+   *  the way `src/table/sheet.ts` puts one under a sheet row. It cannot be
+   *  derived from `k` — an ADSR handle's key is `<plate>|<seg>` but an EQ
+   *  band's is the caller's own `b|eqlo|<voice>`, which the plate never
+   *  built. Absent falls back to the handle's own key, which is still one
+   *  address and still a real line. */
+  sayK?: string;
 }
 
 /** THE PLATE'S GEOMETRY, ONE ARITHMETIC. A value in the field's own units
@@ -120,7 +130,48 @@ export interface DragHost {
   onDrop(k: string): void;
   /** the long-press reset. */
   onHold(k: string): void;
+  /** A REFUSED HANDLE WAS TAPPED: the reason is already stored (`sayLine`
+   *  reads it), and this is the redraw that puts it on the glass. Optional
+   *  only so a drawing with no refusable handle need not carry the line. */
+  onRefused?(k: string): void;
 }
+
+/* ===== THE REFUSAL SAID OUT LOUD (2026-09-06, TABLE.md §15 B5) ==========
+   B5's law, for the ONE widget its table did not reach: *"a refused control is
+   `aria-disabled` and never `disabled` — a `disabled` button takes no click,
+   so its reason is reachable only through a screen reader, which is the silent
+   grey wearing an accessible name — and a tap on it prints its reason and
+   writes nothing."*
+
+   MEASURED, WHICH IS WHY THIS EXISTS: a refused handle here carried its
+   sentence in `title` and `dataset.why` and in its accessible name, and
+   `handle()` returned before it bound a single listener — so a thumb on it did
+   nothing at all and the sentence never reached the glass. The handle is a
+   `<button>` and was never `disabled`, so half the law was already kept; the
+   half that was missing is the tap.
+
+   ONE OWNER, ONE PLACE PER PLATE. The sentence is the caller's own `why`
+   (avail.js / knobs.js measured it; nothing here derives a second one) and it
+   is printed into `.nu-wsay` — the same class, the same shape and the same
+   `say|<address>` key `src/table/sheet.ts` uses, so the styling in nu.css and
+   the sweep in test/selects.js both already know it. The memory is a module
+   Map keyed by the PLATE's address because every write on this page ends in a
+   redraw, so a sentence held in a local would be gone the moment it was said.
+   `unsay` is the other half: the reason a control gave for refusing is about
+   the answer it refused, and it is stale the moment a different one lands. */
+const SAID = new Map<string, string>();
+
+/** the ONE line, drawn under a plate that can refuse. It reserves its room
+ *  whether or not there is a sentence, for `.nu-wsay`'s own reason: a sentence
+ *  arriving under a thumb must not move the thing the thumb is on. */
+export function sayLine(k: string): TemplateResult {
+  const w = SAID.get(k) || "";
+  return html`<p class="nu-wsay" role="status" aria-live="polite"
+    data-k=${"say|" + k} ?data-said=${!!w}>${w}</p>`;
+}
+
+/** a WRITE clears the plate's sentence. */
+export function unsay(k: string): void { SAID.delete(k); }
 
 /** ONE HANDLE, and it is a `<button>` — not a `<div>` with a listener. A
  *  button is focusable, is in the tab order, answers Enter and Space, is read
@@ -145,14 +196,37 @@ export function handle(o: HandleOpts, host: DragHost): HTMLButtonElement {
     ? t("env.handleWhy", { name: o.label, value: o.say, why: o.why })
     : t("env.handle", { name: o.label, value: o.say }));
   if (o.why) { b.setAttribute("aria-disabled", "true"); b.dataset.why = o.why;
-               b.title = o.why; }
+               /* THE PAGE'S OWN HOLD-TO-LEARN POPOVER (ui/glyph.js `wireSay`,
+                  one delegated pair of listeners over every `[data-say]` on
+                  the page): a mouse hovers it, a thumb holds it. Set only
+                  where there IS a reason, so a handle a hand may drag never
+                  grows a popover that would fight the drag.
+                  AND `title` GOES WITH IT: a native tooltip and this popover
+                  on the same hover is one fact drawn twice, which is the
+                  one-place-per-widget half of §15 B5. The sentence is now in
+                  three places that are three different readers — the
+                  accessible name, the popover, and the say line a tap
+                  prints — and in no two that are the same one. */
+               b.dataset.say = o.why; }
   b.style.left = (o.x - R) + "px";
   b.style.top = (o.y - R) + "px";
   const dot = document.createElement("span");
   dot.className = "nu-envdot";
   b.append(dot);
 
-  if (o.why) return b;
+  if (o.why) {
+    /* THE TAP THAT ASKS (§15 B5). It writes nothing — a refused handle refuses
+       — and it prints the reason under the plate. `click` and not
+       `pointerdown`, so the sentence answers the gesture a hand finished
+       rather than the one it started, and `preventDefault` keeps the button
+       from taking focus out of whatever the thumb came from. */
+    b.addEventListener("click", (e: MouseEvent) => {
+      e.preventDefault(); e.stopPropagation();
+      SAID.set(o.sayK || o.k, o.why as string);
+      if (host.onRefused) host.onRefused(o.k);
+    });
+    return b;
+  }
 
   let held: number | null = null;
   let from: { x: number; y: number } | null = null;

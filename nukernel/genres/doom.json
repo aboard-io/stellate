@@ -1,5 +1,9 @@
 {
-  "note": "DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —\nthe record whose title NAMED the genre, Sabbath's slow half taken\nwhole and played slower. The metal wing this catalog grew in the\ndebts round (nwobhm, thrash, deathmetal, sludge) had no doom row,\nwhich was the wing's most conspicuous hole: sludge (New Orleans\n1991) descends from doom it could not cite.\n\nLINEAGE: heavymetal (Workington 1969), nearly alone — doom is the\ngenre that took ONE parent's slowest idea and made it the whole\naesthetic. nwobhm supplies the operatic vocal register Messiah\nMarcolin actually sang in.",
+  "note": "DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —\nthe record whose title NAMED the genre, Sabbath's slow half taken\nwhole and played slower. The metal wing this catalog grew in the\ndebts round (nwobhm, thrash, deathmetal, sludge) had no doom row,\nwhich was the wing's most conspicuous hole: sludge (New Orleans\n1991) descends from doom it could not cite.\n\nLINEAGE: heavymetal (Workington 1969), nearly alone — doom is the\ngenre that took ONE parent's slowest idea and made it the whole\naesthetic. nwobhm supplies the operatic vocal register Messiah\nMarcolin actually sang in.\n\nREFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair\nis declared \"the same riff an octave down, later\" — and a doubled\nguitar is an amp fact before it is a voicing: `kernel.js chair.fifths`\nstates the engine's own reason, \"a power chord is an amp fact made\npitch ... thirds intermodulate under distortion and fifths do not\".\nRe-choosing that chair's note to break a parallel would be correcting\nthe amplifier.",
+  "copyist": {
+    "refuse": "all",
+    "why": "the second chair is declared \"the same riff an octave down, later\", and under distortion that doubling is the amp sound rather than a voicing."
+  },
   "label": "Stockholm 1986",
   "voices": 2,
   "rate": 0.5,

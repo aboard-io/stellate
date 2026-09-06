@@ -81,7 +81,12 @@ function rowTxt(key, row) {
   let out = noteTxt(row.note, pad);
   out += pad + keyTxt(key) + ": {\n";
   for (const f of Object.keys(row)) {
-    if (f === "note") continue;
+    /* `note` is the row's prose and comes out above the row, not inside it.
+       `copyist` (2026-09-06, THEORY.md §2) is the other field that is ABOUT the
+       row without being ON it: it leaves the module in its own COPYIST table,
+       built by build.js, because a new key on GENRES.punk would move the
+       pinned row-key baseline test/table.test.js T2b holds every anchor to. */
+    if (f === "note" || f === "copyist") continue;
     const head = fpad + keyTxt(f) + ": ";
     const txt = CLOSURES.includes(f)
       ? emitTemplate(row[f])

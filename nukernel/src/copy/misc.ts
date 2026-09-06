@@ -40,6 +40,24 @@ export const MISC: Table = {
   /* ...and when the engine has no port for it, the reason instead. */
   "env.handleWhy": "{name} {value} — {why}",
   "env.clearBack": "Reset {name} to default",
+  /* ===== WHAT A RECORDING CANNOT BE TOLD (2026-09-06) ==================
+     Paul: *"Samples should have full Adsr why don't they"* — and they do now,
+     except for the one stage a recording can genuinely refuse. A sustain is
+     the level a note RESTS at while it is held, and a sample with no loop zone
+     does not rest: it stops when the recording runs out. MEASURED, on a 0.35 s
+     one-shot with the note held 2 s — the sound ends at 0.350 s whatever the
+     four handles say, and a 1.5 s release tail is never heard at all. So the
+     handle is refused rather than drawn live over a level nothing holds, and
+     the sentence NAMES THE DOOR: `looping` is a word on the same sheet, three
+     rows down, and setting it to "loop" gives the recording a zone to sit in.
+     THE KEYS END IN `.why` because that is what test/copy.test.js `budgetOf`
+     reads a sentence-length budget off — a refusal is a sentence beside a
+     control, and this catalogue holds it to twelve words like every other one.
+     (The rest of the plate stays live: the attack, the fall and the tail all
+     shape what IS there — the same probe measured the fall reaching its level
+     at 0.510 s on a longer one-shot.) */
+  "env.noLoop.why": "this recording has no loop zone — looping it gives somewhere to rest",
+  "env.playOnce.why": "set to play once — the note stops when the sample ends",
   /* the breakpoint lane, the same plate with anonymous points. */
   "env.point": "Point {n}",
   "env.pointAt": "{value} at {at}",

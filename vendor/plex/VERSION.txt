@@ -1,0 +1,50 @@
+IBM Plex — vendored for the nukernel song box's TYPE (Paul, 2026-09-06:
+"Make everything the IBM flex Family fonts referring to one style sheet").
+
+family:   IBM Plex Sans (@ibm/plex-sans 1.1.0) · IBM Plex Mono (@ibm/plex-mono 2.5.0)
+license:  SIL Open Font License 1.1 (see ./LICENSE) — © 2017 IBM Corp,
+          Reserved Font Name "Plex"
+source:   https://cdn.jsdelivr.net/npm/@ibm/plex-sans@1.1.0/fonts/split/woff2/
+          https://cdn.jsdelivr.net/npm/@ibm/plex-mono@2.5.0/fonts/split/woff2/
+date:     2026-09-06
+
+NO VARIABLE FILE EXISTS in either npm package (checked: /fonts/complete and
+/fonts/split hold static weights only, no `variable/` directory, no *-Var*.woff2
+— jsDelivr's flat listing of both packages, 2026-09-06). So this is the STATIC
+split set, and the split is what keeps it small: one file per weight per
+Unicode block, with the block declared as the @font-face's `unicode-range`, so
+a browser fetches Latin2 only if a name on the page actually needs it.
+
+WHICH WEIGHTS, AND WHY THESE. Measured off nu.css, not guessed — every
+`font-weight:` and every `font:` shorthand in the four stylesheets, plus the
+five tokens that stand behind most of them:
+  400  --  `.nu-ixw-no`, and every `font-weight: 400` in the sheet
+  500  --  `--fw-body` (and `--btn-fw`, its alias): the body, and every button
+  600  --  `--num-fw`: the machine voice, every value a control prints
+  700  --  `--fw-label`: a label, a row head, a slot number
+  800  --  `--fw-block`  ) NOT SHIPPED, AND NOT AN OVERSIGHT: IBM Plex Sans's
+  900  --  `--fw-display`) weight axis STOPS AT 700 (Thin 100 … Bold 700; there
+           is no ExtraBold and no Black in the family at all). CSS font
+           matching for a desired weight above 500 walks UP first and then
+           DOWN, so 800 and 900 both resolve to Bold 700 — a real face, not a
+           synthesized one. The scale keeps its four names because the names
+           are the design's (DESIGN.md §1); two of them now land on one face.
+  italic 400 + 500 -- `.is-quiet` and `.nu-wchip.is-quiet` are the only italics
+           on the page, and both wear the body weight or Regular. Real italics
+           rather than a synthetic slant, at the two weights that ask.
+
+Mono ships no italic: nothing in the sheets sets `font-style: italic` on a
+`var(--mono)` rule, and a face nothing renders is bytes for nothing.
+
+WHICH BLOCKS. Latin1 + Latin2 + Latin3, and the third one earns its place:
+the catalogue's 483 genre files were read for their codepoints (2026-09-06)
+and they hold Latin-1 supplement (á ä ç é ñ ö ü ß), Latin Extended-A and
+Extended-Additional (ā č đ ğ ī ō ş š ū ž ơ ư ș ə ḥ Ṭ) and VIETNAMESE
+(Ạ ạ ả ầ) — which is Latin3's own range, U+1EA0-1EF9. Greek, Cyrillic and Pi
+are NOT shipped: no genre name, place name or control word on this page needs
+them, and the handful of true SYMBOLS the page draws (♭ ♯ → ≤ ≥ ₄) are not in
+Plex's Latin blocks either way — those fall through to `--sym`, nu.css's
+symbol stack, which is the one face token that is deliberately not Plex.
+
+BYTES: 30 files, 427,628 bytes on disk. A first paint at a Latin1-only record
+fetches 6 of them (sans 400/500/600/700 + mono 500/600 in practice), ~118 KB.

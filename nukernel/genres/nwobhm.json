@@ -1,5 +1,11 @@
 {
-  "note": "NWOBHM — London 1980. Iron Maiden's Iron Maiden, released the\n14th of April 1980: pub-circuit metal played at punk's tempo\nwith twin guitars in harmony — the new wave of British heavy\nmetal, named by Sounds and delivered by a band from Leyton.\n`deathmetal` (Tampa 1990) has wanted \"nwobhm\" by name since its\nlineage was written and takes the parent today.\n\nLINEAGE: `heavymetal` (Workington 1969) is the weight; `punk`\n(New York 1976) the velocity and the self-released 45s — the\ngenre is the first stack multiplied by the second's clock.",
+  "note": "NWOBHM — London 1980. Iron Maiden's Iron Maiden, released the\n14th of April 1980: pub-circuit metal played at punk's tempo\nwith twin guitars in harmony — the new wave of British heavy\nmetal, named by Sounds and delivered by a band from Leyton.\n`deathmetal` (Tampa 1990) has wanted \"nwobhm\" by name since its\nlineage was written and takes the parent today.\n\nLINEAGE: `heavymetal` (Workington 1969) is the weight; `punk`\n(New York 1976) the velocity and the self-released 45s — the\ngenre is the first stack multiplied by the second's clock.\n\nREFUSES THE COPYIST'S `doubling` (2026-09-06, docs/THEORY.md §2), and\nonly that. The pass may change which chord tone a doubling voice\ntakes, and this row's doubling voice is the twin lead — \"the same line\na third up\", which the words above already call \"the row's one\nnon-negotiable\". A third re-chosen to a fourth is a different band.\nRange and doubled-leading-tone repairs are accepted.",
+  "copyist": {
+    "refuse": [
+      "doubling"
+    ],
+    "why": "the twin lead is \"the same line a third up — the twin lead, which is the row's one non-negotiable\", so re-choosing its chord tone is the one repair this row forbids."
+  },
   "label": "London 1980",
   "voices": 2,
   "bars": 8,

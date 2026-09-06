@@ -670,6 +670,17 @@ const GATES = [
     argv: ["test/deck.test.js"], need: ["test/deck.test.js"],
     covers: ["test/deck.test.js", "nukernel/export/wav.js",
              "nukernel/export/score.js", "engine/faust/live/stream-renderer.js"] },
+  /* ONE OPEN THING (2026-09-06, TABLE.md §17). Paul, on four surfaces
+     standing at once: *"It's easy to get into a state like that and hard to
+     get out of it."* The gate drives the box into that exact state and counts
+     what is on the glass, so the law is a measurement and not a promise; it
+     `covers` the one owner (ui/eight.js) and the surface that registers with
+     it from another bundle (src/table/grid.ts and its committed output), so an
+     edit to any of the three selects it in an impacted run. */
+  { name: "oneopen",    wave: 3, kind: "browser",
+    argv: ["test/oneopen.js"], need: ["test/oneopen.js"],
+    covers: ["test/oneopen.js", "nukernel/ui/eight.js",
+             "nukernel/src/table/grid.ts", "nukernel/ui/table.js"] },
   { name: "gutter",     wave: 3, kind: "browser",
     argv: ["test/gutter.js"], need: ["test/gutter.js"],
     /* (`nukernel/ui/explain.js` STOOD IN THIS LIST until 2026-09-02. Paul,
@@ -800,6 +811,15 @@ const GATES = [
   { name: "loop-words", wave: 2, kind: "node",
     argv: ["test/loop-words.test.js"], need: ["test/loop-words.test.js"],
     covers: ["test/loop-words.test.js"] },
+  /* THE SAMPLED LANE'S FOUR STAGES (2026-09-06, TABLE.md §17). Beside its two
+     siblings above and under the same argument: all three measure the SAMPLER
+     on rendered PCM rather than on a wiring read. `covers` names press.js as
+     well as the voice, because S8 is the check that would have caught the
+     press lane lifting the attack and dropping the decay. */
+  { name: "sampler-adsr", wave: 2, kind: "node",
+    argv: ["test/sampler-adsr.test.js"], need: ["test/sampler-adsr.test.js"],
+    covers: ["test/sampler-adsr.test.js", "engine/faust/voices/sampler.js",
+             "engine/faust/press/press.js"] },
   { name: "pace-meter", wave: 2, kind: "node",
     argv: ["test/pace-meter.test.js"], need: ["test/pace-meter.test.js"],
     covers: ["test/pace-meter.test.js"] },

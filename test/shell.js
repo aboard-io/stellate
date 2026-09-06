@@ -792,13 +792,18 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     await page.evaluate(() => window.__eightUp());
     await page.click("#burger");
     await page.waitForTimeout(200);
-    /* `#nu-menu > button` AND NOT `#nu-menu button`, SINCE 2026-09-06: the
-       plate has three blocks now and the middle one is the SEED ROW — two
-       controls nested inside `.nu-menuseed > .nu-seedrow`, which are the die
-       and the number and not rows of the list. The direct children are the
-       list: six views, then the log under the second rule. */
+    /* ...AND THE PLATE IS FOUR BLOCKS SINCE 2026-09-06 (TABLE.md §18). Paul:
+       *"All that stuff at the top? I expected that to live in the hamburger
+       and for the hamburger to be nicely organized."* The record's eight
+       surfaces are a group of their own between the views and the seed, so
+       the VIEW list is asked for by its own addresses (`toptab-*`) rather
+       than by being a direct child of the plate — the six are inside
+       `.nu-menugroup` now, and a selector that still demanded a direct child
+       read the plate as `["log"]` the hour they were grouped. The record's
+       eight are asserted just below, at `burger|*`. */
     const rowNames = await page.evaluate(() =>
-      [...document.querySelectorAll("#nu-menu > button")]
+      [...document.querySelectorAll('#nu-menu [data-k^="toptab-"], ' +
+                                    '#nu-menu [data-k="logger"]')]
         /* THE HEAD OF THE ACCESSIBLE NAME, because the log's carries its
            count — one node, two names, and the one this list is about is the
            SUBJECT's. TWO SHAPES SINCE THE TEXT PASS (2026-09-05): the empty
@@ -813,12 +818,55 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       "A6d " + width + " · the hamburger is the SIX VIEWS and the log, in "
       + "TABS' own order with Session first — " + JSON.stringify(rowNames));
     const rowWords = await page.evaluate(() =>
-      [...document.querySelectorAll("#nu-menu > button")]
+      [...document.querySelectorAll('#nu-menu [data-k^="toptab-"], ' +
+                                    '#nu-menu [data-k="logger"]')]
         .map((b) => { const v = b.querySelector(".nu-vh, mark .nu-vh");
                       return v ? v.textContent.trim() : null; }));
     is(JSON.stringify(rowWords) === JSON.stringify(VIEW_ROWS.concat(["log"])),
       "A6g " + width + " · and every word is still IN the button, so the menu "
       + "reads with the stylesheet off — " + JSON.stringify(rowWords));
+    /* ===== A6o — THE RECORD'S EIGHT ARE ROWS OF THE PLATE (2026-09-06) ===
+       TABLE.md §18. Paul: *"All that stuff at the top? I expected that to
+       live in the hamburger."* The eight that were a disclosure at the top of
+       the session — RULES, TIME, CHORDS, MOTIFS, MASTER, PRODUCE,
+       PERFORMANCE and the song's own options — are a labelled group here, in
+       the order the record is made in, each carrying the address of the head
+       it opens. Every one says a WORD (with the stylesheet off it reads as a
+       word and a sentence in a button) and every one is a thumb tall.
+       AND NOTHING OF THE RECORD IS LEFT ON THE SESSION AT REST: `trecord` is
+       deleted, which is asserted as an absence because a stack that came back
+       would come back silently. */
+    const recRows = await page.evaluate(() =>
+      [...document.querySelectorAll('#nu-menu [data-k^="burger|"]')]
+        .map((b) => ({ k: b.dataset.k,
+                       word: (b.querySelector(".nu-menuword") || {}).textContent,
+                       h: Math.round(b.getBoundingClientRect().height) })));
+    const RECKEYS = ["burger|trules", "burger|ttime", "burger|tchords",
+                     "burger|tmotifs", "burger|tmix", "burger|tproduce",
+                     "burger|tfoot|perf", "burger|tcorner"];
+    const noStack = await page.evaluate(() =>
+      document.querySelectorAll('[data-k="trecord"]').length);
+    is(recRows.length === 8 &&
+       JSON.stringify(recRows.map((r) => r.k)) === JSON.stringify(RECKEYS) &&
+       recRows.every((r) => r.word && r.word.trim() && r.h >= 44) &&
+       noStack === 0,
+      "A6o " + width + " · the record's eight are rows of the hamburger, in "
+      + "the record's own order, each a word and a thumb tall, and the "
+      + "session's own record row is gone — "
+      + JSON.stringify(recRows.map((r) => [r.word, r.h])) + " trecord " + noStack);
+    /* ...AND THE SEED IS TWO DOORS AND ONE OWNER (§18). Paul: *"Move the dice
+       back into the bottom. Leave them with the hamburger too."* The row
+       itself — `#rewrite`, `#seedval`, `#seedin` — is in the BAR, and the
+       plate holds `#seedmenu`, which presses it. */
+    const seedDoors = await page.evaluate(() => ({
+      rowInBar: !!document.querySelector("#nu-bar .nu-seedrow #rewrite"),
+      doorInMenu: !!document.querySelector("#nu-menu #seedmenu"),
+      rows: document.querySelectorAll(".nu-seedrow").length,
+      dice: document.querySelectorAll("#rewrite").length }));
+    is(seedDoors.rowInBar && seedDoors.doorInMenu &&
+       seedDoors.rows === 1 && seedDoors.dice === 1,
+      "A6o " + width + " · the die is in the bar and the plate holds a DOOR to "
+      + "it — one row, one die, two ways in — " + JSON.stringify(seedDoors));
     /* ...AND THE RECORD'S NAME IS THE TOP LEFT, WEARING THE GENRE'S WORD
        (2026-09-06, docs/NAV.md). It read "…and the genre is a name plate in
        the BAR, not a row in the hamburger", which was right while the bar
@@ -929,14 +977,34 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(200);
       const tape = await page.evaluate(async () => {
-        const el = document.querySelector("#nu-bar > .nu-tape");
+        /* THE TAPE IS THE TOP STRIP'S SINCE 2026-09-06 (TABLE.md §18). Paul:
+           *"You could put the playback bar to the right of the genre on top
+           top if you want."* It is a READOUT and not a control, so it stands
+           with identity and navigation; the bar is controls and only controls,
+           which is where the room and the die went. Everything else this check
+           asserts is unchanged, because the component is unchanged: the same
+           node, the same `paintTape`, the same budget. */
+        const el = document.querySelector("#nu-topstrip > .nu-tape");
         const say = el && el.querySelector(".nu-tapesay");
         const fill = el && el.querySelector(".nu-tapefill");
         const cnt = el && el.querySelector(".nu-count");
         if (!el || !say || !fill || !cnt) return { there: false };
         const rest = window.__eightTape();
         let nSay = 0, nFill = 0;
-        const o1 = new MutationObserver((ms) => { nSay += ms.length; });
+        /* WHAT THE WORD'S BUDGET ACTUALLY CLAIMS (2026-09-06). This counted
+           writes against `bars + 1` and read 10 over an 8-bar record — not a
+           flake and not an over-paint: the record LOOPS inside the measured
+           window, so bar 1 comes round a ninth time, and a tenth write is the
+           one that leaves rest. Counting writes against a constant measures
+           the arithmetic of the test window; the claim is that the word is
+           written only when the READING CHANGES. So the sequence is recorded
+           and the assertion is that no two consecutive writes say the same
+           thing — which is what "once a bar" was reaching for, and which a
+           per-beat repaint fails immediately. */
+        const saidSeq = [];
+        const o1 = new MutationObserver((ms) => {
+          nSay += ms.length; saidSeq.push(say.textContent);
+        });
         const o2 = new MutationObserver((ms) => { nFill += ms.length; });
         o1.observe(say, { childList: true, characterData: true, subtree: true });
         o2.observe(fill, { attributes: true });
@@ -948,30 +1016,39 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         document.getElementById("play").click();
         await new Promise((r) => setTimeout(r, 400));
         o1.disconnect(); o2.disconnect();
-        return { there: true, bars, bpm, rest, end, nSay, nFill,
+        const repeats = saidSeq.filter((w, i) => i && w === saidSeq[i - 1]).length;
+        return { there: true, bars, bpm, rest, end, nSay, nFill, repeats,
+                 said: saidSeq.length,
                  counts: document.querySelectorAll(".nu-count").length,
-                 last: document.getElementById("nu-bar").lastElementChild
-                         === el,
+                 /* AND IT STANDS BETWEEN THE NAME AND THE ≡ — the gap the
+                    strip held empty at every width (191px at 390, 121 at
+                    320). "Last" was the bar's law; "between" is the strip's. */
+                 last: (() => { const st = document.getElementById("nu-topstrip");
+                   const k = [...st.children];
+                   return k.length === 3 && k[1] === el &&
+                          k[2].id === "burger"; })(),
                  fits: el.getBoundingClientRect().right <=
                        document.documentElement.clientWidth + 0.5 &&
                        say.scrollWidth <= say.clientWidth + 1 };
       });
-      if (!tape.there) fail("A6n " + width + " · there is no tape in the bar");
+      if (!tape.there) fail("A6n " + width + " · there is no tape in the strip");
       else {
         is(/\d+ bars?$/.test(tape.rest.say) && tape.rest.pct === 0 &&
            tape.counts === 1 && tape.last && tape.fits,
-          "A6n " + width + " · the tape is the bar's last child, it says how "
+          "A6n " + width + " · the tape stands between the record's name and "
+          + "the ≡ in the top strip, it says how "
           + "long the record is at rest with no fill, it holds the ONE "
           + ".nu-count on the page, and it fits — " + JSON.stringify(tape.rest)
           + " counts " + tape.counts + " fits " + tape.fits);
         is(/^bar \d+\/\d+$/.test(tape.end.say) && tape.end.pct > 0,
           "A6n " + width + " · …and playing it says where the playhead is and "
           + "how much record is left — " + JSON.stringify(tape.end));
-        is(tape.nSay <= tape.bars + 1 && tape.nFill <= tape.bars * 4 + 1,
+        is(tape.repeats === 0 && tape.nFill <= tape.bars * 4 + 2,
           "A6n " + width + " · …within its repaint budget over " + tape.bars
           + " bars at " + tape.bpm + " BPM: the WORD wrote " + tape.nSay
-          + " times (≤ " + (tape.bars + 1) + ", once a bar) and the FILL "
-          + tape.nFill + " (≤ " + (tape.bars * 4 + 1) + ", once a beat)");
+          + " times and NEVER SAID THE SAME THING TWICE RUNNING ("
+          + tape.repeats + " repeats), and the FILL wrote " + tape.nFill
+          + " (≤ " + (tape.bars * 4 + 2) + ", once a beat)");
       }
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(200);

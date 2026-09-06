@@ -390,7 +390,20 @@ function detentsOf(field, table, labels, emptyLabel, dfltOverride) {
 // gutter (ui/eight.js, THE FIVE CONTROLS) and it is THIS control stood in a
 // 56px column, not a second one — so the touch law above keeps one owner
 // instead of acquiring a copy that drifts the first time either is fixed.
-export function vchassis(input, frac) {
+/* ...AND IT TURNS NINETY DEGREES ON ASK (2026-09-06, TABLE.md §18). Paul:
+   *"Get rid of the volume options, popping up in the bottom instead integrate
+   them into the bar with only a pop-up."* The room is a control in the bottom
+   bar now — a LINE and not a column, because a bar is 44px tall and 312px
+   wide at 320 — and the alternative was a second pointer law for horizontal
+   sliders, which is exactly what this function exists to prevent. So `wide`
+   is one argument and three lines: the rect is read on the other axis, the
+   pad is the thumb's half-WIDTH, and the fraction runs left to right.
+   EVERYTHING ELSE IS UNTOUCHED, including the two things that make this
+   chassis worth having: the <input> is still the keyboard and screen-reader
+   channel riding inside the track at `opacity: 0`, and the TRACK still owns
+   the pointer through `setPointerCapture`, so a drag on the fader never
+   becomes a scroll of the page. */
+export function vchassis(input, frac, wide) {
   const track = el("span", null, "nu-vs-track");
   const fill = el("i", null, "nu-vs-fill");
   const thumb = el("b", null, "nu-vs-thumb");
@@ -403,9 +416,11 @@ export function vchassis(input, frac) {
   const fromPointer = (e) => {
     const r = track.getBoundingClientRect();
     const min = +input.min, max = +input.max, step = +input.step || 1;
-    const pad = 12;                       // the thumb's half-height
-    const usable = r.height - pad * 2;
-    let f = usable > 0 ? (r.bottom - pad - e.clientY) / usable : 0;
+    const pad = 12;                       // the thumb's half-height (or width)
+    const usable = (wide ? r.width : r.height) - pad * 2;
+    let f = usable > 0
+      ? (wide ? (e.clientX - r.left - pad) : (r.bottom - pad - e.clientY)) / usable
+      : 0;
     f = Math.max(0, Math.min(1, f));
     let val = min + f * (max - min);
     val = Math.max(min, Math.min(max, Math.round(val / step) * step));

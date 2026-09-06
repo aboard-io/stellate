@@ -167,10 +167,23 @@ identifiers, basic aggregate stats only (docs/HOSTING.md "Analytics").
 
 ## Fonts and UI libraries — vendored (self-hosted, no CDN)
 
-The app loads nothing from a third-party origin. These four were the last
+The app loads nothing from a third-party origin. These were the last
 cross-origin subresources and are now committed here, each with its upstream
-license text alongside it:
+license text alongside it. (The last three entries below belong to the retired
+`app/` explorer, whose directory left the tree in 4a4d730; they are kept here
+until the directories themselves are pruned, because a licence note that
+outlives its files is harmless and one that predeceases them is not.)
 
+- `vendor/plex/` — **IBM Plex Sans** (`@ibm/plex-sans` 1.1.0) and **IBM Plex
+  Mono** (`@ibm/plex-mono` 2.5.0), © 2017 IBM Corp with the Reserved Font Name
+  "Plex", under the **SIL Open Font License 1.1** (`vendor/plex/LICENSE`).
+  Thirty unmodified split-subset woff2 files (Latin1/Latin2/Latin3, four
+  weights per family plus two sans italics), taken from the npm packages via
+  jsDelivr on 2026-09-06 and declared by `nukernel/fonts.css`, which is the
+  app's ONE stylesheet of `@font-face` rules. The OFL permits redistribution;
+  the Reserved Font Name means a *modified* copy must be renamed, and these are
+  byte-for-byte upstream. Provenance and the weight/subset argument:
+  `vendor/plex/VERSION.txt`.
 - `vendor/fonts/` — **Orbitron** (v35, © The Orbitron Project Authors) and
   **VT323** (v18, © The VT323 Project Authors), both under the **SIL Open Font
   License 1.1** (`vendor/fonts/LICENSE`), served as woff2 by

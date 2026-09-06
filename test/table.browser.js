@@ -174,17 +174,23 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   const top = async (t) => { await p.evaluate((n) => window.__eightTab(n), t);
     await p.waitForTimeout(600); };
   const doc = () => p.evaluate(() => window.__eightDoc());
-  /* ---- THE RECORD PANEL, OPENED OR SHUT (2026-09-06, TABLE.md §14) ----
-     The seven record-scope surfaces are the sections of ONE row now, so a
-     check that wants RULES, TIME, CHORDS, MOTIFS, MASTER, PRODUCE or
-     PERFORMANCE has to open the panel they live in first. It is IDEMPOTENT
-     for `__eightRow`'s own reason — a gate that opened it twice would have
-     closed it with the second tap — and it reads the disclosure's own
-     `aria-expanded` rather than counting taps. */
-  const rec = async (want = true) => { await p.evaluate((w) => {
-      const b = document.querySelector('#pan-band [data-k="trecord"]');
-      if (b && (b.getAttribute("aria-expanded") === "true") !== w) b.click();
-    }, want); await p.waitForTimeout(420); };
+  /* ---- A RECORD SURFACE IS OPENED FROM THE HAMBURGER (2026-09-06, §18) --
+     THIS WAS `rec()`, WHICH PRESSED `trecord` — the disclosure that stacked
+     the record's seven at the top of the session. Paul deleted it: *"All that
+     stuff at the top? I expected that to live in the hamburger and for the
+     hamburger to be nicely organized."* The eight are rows of the plate now,
+     so reaching TIME is the two taps a thumb makes — the ≡, then `TIME` — and
+     that is what this does. It is IDEMPOTENT for `__eightRow`'s own reason:
+     the menu row calls `land()`, which OPENS and never toggles, so a gate
+     that asked for the same sheet twice still has it open. Closing is the
+     head's own toggle, which is on the glass once the sheet is open. */
+  const recOpen = async (k) => p.evaluate((key) => {
+      const h = document.querySelector('#pan-band [data-k="' + key + '"]');
+      if (h && h.getAttribute("aria-expanded") === "true") { h.click(); return "ok"; }
+      window.__eightMenuOpen(true);
+      const row = document.querySelector('#nu-menu [data-k="burger|' + key + '"]');
+      if (!row) { window.__eightMenuOpen(false); return "missing"; }
+      row.click(); return "ok"; }, k);
 
   /* AND A CONTROL IS TAPPED AT ITS OWN RECT. `page.click()` scrolls its target
      into view first (CenterIfNeeded) and has manufactured scroll "jumps" on
@@ -200,9 +206,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
      are about the DOORS — T13l's tap counts, T14's tap grammar — click the
      buttons themselves and do not come through here. */
   const RECHEADS = ["trules", "ttime", "tchords", "tmotifs", "tmix",
-                    "tproduce", "tfoot|perf"];
+                    "tproduce", "tfoot|perf", "tcorner"];
   const tap = async (k) => {
-    if (RECHEADS.indexOf(k) >= 0) await rec(true);
+    if (RECHEADS.indexOf(k) >= 0) {
+      const rr = await recOpen(k);
+      await p.waitForTimeout(420);
+      return rr;
+    }
     const r = await p.evaluate((key) => {
       const el = document.querySelector('#pan-band [data-k="' + key + '"]');
       if (!el) return "missing";
@@ -2608,57 +2618,66 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const rowOf = async (id) => ((await rowInfo()).rows || [])
       .find((x) => x.id === id) || {};
 
-    /* T10a · A ROW OF THE SAME SHEET, MERGED, ABOVE THE COLUMN HEADS. */
-    await shutAll();
-    /* ...AND THE RECORD PANEL IS OPEN FOR IT (2026-09-06, TABLE.md §14). The
-       seven are the sections of ONE row now, so what "the special rows are
-       merged rows of the sheet, the pane's own width, 44px" is a claim about
-       is the panel with its sections showing. That the panel is ONE LINE when
-       it is shut is T14a's claim, one block down, and is measured there. */
-    await rec(true);
+    /* T10a · A ROW OF THE SAME SHEET, MERGED, ABOVE THE COLUMN HEADS —
+       AND EXACTLY ONE OF THEM AT A TIME (rewritten 2026-09-06, TABLE.md §18).
+
+       IT READ "the record's seven are merged rows under THE RECORD" and
+       walked a fixed order of nine head rows. Paul deleted the stack: *"All
+       that stuff at the top? I expected that to live in the hamburger and for
+       the hamburger to be nicely organized."* So the CLAIM is the same claim
+       about the same eight rows — a merged row of this sheet, the pane's own
+       width, 44px, above the column heads — asked ONE AT A TIME, plus the two
+       halves that are new: at rest there is NO special row at all, and with
+       one open there is exactly ONE.
+
+       THE EIGHTH IS `song` (`tcorner`), which was the gear at the end of the
+       deleted line and is a row of the menu's RECORD group now. */
+    const SCOPES = ["rules", "time", "chords", "motifs",
+                    "master", "produce", "perf", "song"];
     for (const w of [320, 390, 1280]) {
       await wide(w);
-      const r = await rowInfo();
-      /* FOUR MERGED ROWS ABOVE THE HEADS SINCE 2026-09-05 (§13f) — RULES,
-         TIME, CHORDS, then MOTIFS, in `SPECIALS`' own order, which is §10a's
-         own drawing of the layout. It was TIME · RULES · MOTIFS until Paul's
-         *"Put rules above time"* and *"Add chords below time and move chord
-         stuff into it"*. PRODUCE is the fifth merged row on this sheet and is
-         deliberately NOT here: it is in the `<tfoot>`, under the mix, because
-         a row above the column heads is a row above the music and the producer
-         speaks about a record already dealt (T10q reads it). */
-      /* (A LABEL ROW STOOD BETWEEN THE PANEL AND THE HEADS from 2026-09-05 to
-         2026-09-06 — SECTIONS, the grid's own header. §15a deleted it into
-         the head it labelled: *"Get rid of the words 'the record' and the
-         Section header entirely — we can make room."* The head row is the row
-         after the panel now, and the count and the fold are on its corner,
-         where T13m measures them.) */
-      /* ...AND SINCE 2026-09-06 (§14) THE SEVEN ARE THE SECTIONS OF ONE ROW:
-         THE RECORD at the top, then RULES · TIME · CHORDS · MOTIFS (which were
-         above the grid) and MASTER · PRODUCE · PERFORMANCE (which were below
-         it), then the SECTIONS label and the column heads. The three that came
-         up from the `<tfoot>` are here for the reason the four already were:
-         they are merged facts about the RECORD, and after this round they are
-         all one scope in one place. */
-      const ORDER = ["record", "rules", "time", "chords", "motifs",
-                     "master", "produce", "perf", "heads"];
-      const ok = !r.missing &&
-        r.order.length === ORDER.length &&
-        r.order.every((x, i) => x === ORDER[i]) &&
-        r.rows.every((x) => x.colspan === r.cols) &&
-        r.rows.every((x) => x.h >= 44) &&
-        /* WITHIN 12px OF THE PANE, and the 12 is `.nu-trims`' own 3px
-           border-spacing on both sides plus the `<th>`'s padding: `--panew` is
-           the pane's client width less that, and `max-inline-size: 100%` clamps
-           the line to the cell when the table is NARROWER than the pane (1280,
-           measured: pane 1078, row 1068). Both readings are "the row is as wide
-           as what a hand can see", which is what §10b asks for. */
-        r.rows.every((x) => x.w >= x.paneW - 12 && x.w <= x.paneW + 2);
-      check(ok, "T10a " + w + " · the record's seven — RULES, TIME, CHORDS, " +
-        "MOTIFS, MASTER, PRODUCE, PERFORMANCE — are merged rows of the sheet " +
-        "under THE RECORD, above the SECTIONS label and the column heads, " +
-        "colspan = the whole table, 44px, the pane's own width — " +
-        JSON.stringify(r));
+      await shutAll();
+      const rest = await rowInfo();
+      /* ON THE GLASS AND NOT IN THE DOM, which is the difference §18 turns on:
+         the eight heads STAY in the document at their own addresses (a page
+         door presses one by name), and each is `hidden` unless it is the open
+         one. So what is counted is height. */
+      const onGlass = (x) => (x.rows || []).filter((y) => y.h > 0);
+      check(!rest.missing && onGlass(rest).length === 0,
+        "T10a " + w + " · at rest NO record row is on the glass — the eight " +
+        "are the hamburger's (§18) — " +
+        JSON.stringify(onGlass(rest).map((x) => x.id)));
+      const bad = [];
+      for (const id of SCOPES) {
+        const k = { rules: "trules", time: "ttime", chords: "tchords",
+                    motifs: "tmotifs", master: "tmix", produce: "tproduce",
+                    perf: "tfoot|perf", song: "tcorner" }[id];
+        await recOpen(k); await p.waitForTimeout(420);
+        const r = await rowInfo();
+        const rows = (r.rows || []).filter((x) => x.h > 0);
+        const one = rows.length === 1 && rows[0].id === id;
+        const merged = one && rows[0].colspan === r.cols && rows[0].h >= 44 &&
+          /* WITHIN 12px OF THE PANE, and the 12 is `.nu-trims`' own 3px
+             border-spacing on both sides plus the `<th>`'s padding. */
+          rows[0].w >= rows[0].paneW - 12 && rows[0].w <= rows[0].paneW + 2;
+        /* AND IT IS ABOVE THE COLUMN HEADS, which is where a merged fact about
+           the whole record belongs and where the seven have always been. */
+        const above = one && (r.order || []).indexOf(id) >= 0 &&
+          (r.order || []).indexOf(id) < (r.order || []).lastIndexOf("heads");
+        if (!(one && merged && above)) bad.push(id + " " + JSON.stringify(r.order) +
+          " " + JSON.stringify(rows.map((x) => [x.id, x.colspan, x.h, x.w, x.paneW])));
+        await shutAll();
+      }
+      check(!bad.length, "T10a " + w + " · each of the record's eight opens as " +
+        "ONE merged row of the sheet above the column heads — colspan = the " +
+        "whole table, 44px, the pane's own width, and never two at once" +
+        (bad.length ? " — WRONG " + bad.join(" | ") : ""));
+    }
+    /* ...AND T10b BELOW MEASURES THE PINS AT REST, which is why it opens
+       nothing: the head is the column heads alone now. */
+    for (const w of [320, 390, 1280]) {
+      await wide(w);
+      await shutAll();
       /* T10b · ONE PIN, AND IT IS THE COLUMN HEADS (rewritten 2026-09-05,
          TABLE.md §13a.1). It read "the whole head freezes as a STACK — each row
          pinned under the one above it", which was right while the head was
@@ -2798,9 +2817,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        the real key, which is what "a gate is a hand" means for a keyboard. */
     await shutAll();
     {
+      /* ...AND THE KEY IS PRESSED WHERE THE CONTROL IS (2026-09-06, §18). It
+         focused `ttime` on the sheet, which is `hidden` until it is the open
+         one — a hidden button takes no focus, so Enter fell on the floor and
+         the check measured its own keystroke. The row a hand reaches with a
+         keyboard is the hamburger's, so that is the one focused; ESCAPE is
+         then asked of the page, which is where §18 put it (one listener on
+         `document`), and it closes the sheet from anywhere. */
       const was = (await rowOf("time")).open;
-      await p.evaluate(() => {
-        document.querySelector('#pan-band [data-k="ttime"]').focus(); });
+      await p.evaluate(() => { window.__eightMenuOpen(true);
+        document.querySelector('#nu-menu [data-k="burger|ttime"]').focus(); });
       await p.keyboard.press("Enter");
       await p.waitForTimeout(600);
       const isOpen = (await rowOf("time")).open;
@@ -2965,7 +2991,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           master: { k: mb.dataset.k, colspan: mr.querySelector("th").colSpan,
                     word: (mr.querySelector(".nu-spword") || {}).textContent,
                     face: (mr.querySelector(".nu-spface") || {}).textContent,
-                    w: Math.round(mb.getBoundingClientRect().width),
+                    /* THE LINE, NOT THE BUTTON (2026-09-06, §18): the row is
+                       measured in the state it is drawn in — as the OPEN one —
+                       and an open row's line carries the × at its end, so the
+                       button is the line less a `--tap`. `.nu-spline` is the
+                       pane's width either way, which is what "the pane's own
+                       width" has meant here since §13a.2. */
+                    w: (() => { const l = mr.querySelector(".nu-spline");
+                      return Math.round((l || mb).getBoundingClientRect().width);
+                    })(),
+                    btnW: Math.round(mb.getBoundingClientRect().width),
                     paneW: pane ? pane.clientWidth : 0 },
           cols: t.querySelectorAll(":scope > thead > tr > th.nu-colhead," +
                               " :scope > thead > tr > th.nu-cornerh," +
@@ -2974,12 +3009,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
       /* T10l · ALIGNED: one cell per voice column, each under its own head. */
       await shutAll();
-      /* ...AND THE MASTER IS A SECTION OF THE RECORD ROW SINCE 2026-09-06
-         (§14): the row that is ALIGNED stayed in the `<tfoot>` because a fader
-         is the player's, and the merged corner went up with the other six
-         record facts. Its address is still `tmix` and its sheet is still the
-         board; the panel is opened first, the way a hand opens it. */
-      await rec(true);
+      /* ...AND THE MASTER IS THE HAMBURGER'S SINCE 2026-09-06 (§18): the row
+         that is ALIGNED stayed in the `<tfoot>` because a fader is the
+         player's, and the merged corner is a row of the plate's RECORD group.
+         Its address is still `tmix` and its sheet is still the board. Nothing
+         has to be opened for this check — what it measures is the `<tfoot>`
+         row's own cells against the column heads — and the line that opened
+         the deleted panel is gone rather than translated. */
       for (const w of [320, 390, 1280]) {
         await wide(w);
         const m = await mixInfo();
@@ -2995,10 +3031,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           "with its own lamp beside the button — " +
           JSON.stringify({ cells: m.cells, heads: m.heads }));
         /* T10m · the master is a MERGED row, the pane's own width. It stood
-           directly under the seats until 2026-09-06 (§14) and is the record
-           row's own fifth section now; the claim is unchanged and is about
-           the row, not about which end of the sheet it stands at. */
-        const mm = !m.missing && m.master.k === "tmix" &&
+           directly under the seats until 2026-09-06 (§14), was the record
+           row's fifth section for a day, and is a row of the hamburger's
+           RECORD group since §18 — so it is OPENED before it is measured,
+           because a row that is not the open one is not on the glass. The
+           claim is unchanged and is about the row, not about the door. */
+        await recOpen("tmix"); await p.waitForTimeout(420);
+        const m2 = await mixInfo();
+        const mm = !m2.missing && m2.master.k === "tmix" &&
+          m2.master.colspan === m2.cols && m2.master.word === "master" &&
+          !!m2.master.face &&
+          m2.master.w >= m2.master.paneW - 12 &&
+          m2.master.w <= m2.master.paneW + 2;
+        await shutAll();
+        const mmOld = !m.missing && m.master.k === "tmix" &&
           m.master.colspan === m.cols && m.master.word === "master" &&
           !!m.master.face &&
           /* 12 STANDS (2026-09-06). This went to 16 for an afternoon on the
@@ -3010,9 +3056,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
              move. The decoration went and the number came back; a tolerance
              widened to admit a regression is a gate that stops being one. */
           m.master.w >= m.master.paneW - 12 && m.master.w <= m.master.paneW + 2;
+        void mmOld;   // the shut reading, kept for the message below
         check(mm, "T10m " + w + " · the master is a merged row in the record " +
-          "panel, its line the pane's own width, wearing the record's master " +
-          "words — " + JSON.stringify(m.master));
+          "group, its line the pane's own width when it is the open one, wearing " +
+          "the record's master words — " + JSON.stringify(m2 && m2.master));
       }
       await wide(390);
 
@@ -3583,13 +3630,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        `test/producer-eight.test.js`'s, and neither claim is copied here. */
     {
       await shutAll();
-      /* ...AND IT IS A SECTION OF THE RECORD ROW SINCE 2026-09-06 (§14), not a
-         row of the `<tfoot>`. Its address, its face, its sheet and its place
-         UNDER the master are all unmoved; what moved is the end of the page it
-         stands at. So the row is asked for by its class, the panel is opened
-         first the way a hand opens it, and "after the master" is read in the
-         head where both of them now are. */
-      await rec(true);
+      /* ...AND IT IS ONE OF THE RECORD'S EIGHT SINCE 2026-09-06 (§18), opened
+         from the hamburger. Its address, its face, its sheet and its place
+         after the master in the head are all unmoved; what moved is the DOOR.
+         So the row is asked for by its class with the row itself opened —
+         which is the state it is drawn in — and "after the master" is read as
+         DOM order in the head, where both of them stand whether or not either
+         is on the glass. */
+      await tap("tproduce");
       const row = await p.evaluate(() => {
         const t = document.querySelector("#pan-band table.nu-sheetgrid");
         const tr = t && t.querySelector("tr.nu-prodrow");
@@ -3604,6 +3652,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                    " :scope > thead > tr > th.nu-plushead").length : 0,
                  h: b ? Math.round(b.getBoundingClientRect().height) : 0,
                  w: b ? Math.round(b.getBoundingClientRect().width) : 0,
+                 line: (() => { const l = tr && tr.querySelector(".nu-spline");
+                   return l ? Math.round(l.getBoundingClientRect().width) : 0; })(),
                  paneW: pane ? pane.clientWidth : 0,
                  word: (tr && (tr.querySelector(".nu-spword") || {}).textContent),
                  face: (tr && (tr.querySelector(".nu-spface") || {}).textContent),
@@ -3611,10 +3661,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                    x.classList.contains("nu-prodrow")) >
                    foot.findIndex((x) => x.classList.contains("nu-masterrow")) };
       });
+      /* ...AND THE WIDTH IS THE LINE'S, NOT THE BUTTON'S (2026-09-06, §18).
+         The row is measured in the state it is drawn in — as the OPEN one —
+         and an open row's line carries the × at its end, so the button is the
+         line less a `--tap`. `.nu-spline` is the pane's width either way,
+         which is what "the pane's own width" has always meant here (T10a says
+         the same sentence about the same two boxes). */
       check(row.there && row.k === "tproduce" && row.colspan === row.cols &&
-            row.h >= 44 && row.w >= row.paneW - 12 && row.afterMaster &&
+            row.h >= 44 && row.line >= row.paneW - 12 && row.afterMaster &&
             row.word === "produce",
-        "T10w PRODUCE is a merged row of the record panel UNDER the master, " +
+        "T10w PRODUCE is a merged row UNDER the master in the record's own " +
+        "order, " +
         "the pane's own width, 44px — " + JSON.stringify(row));
 
       /* THE FACE IS THE PRODUCER'S OWN LINE, and it is read back off the same
@@ -3632,8 +3689,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         "T10w …and its face is the producer's own line — “" + row.face +
         "” against " + prod0.notes.length + " note(s)");
 
-      /* THE SHEET IS THE PANEL, and a note said in it reaches `doc.produce`. */
-      await tap("tproduce");
+      /* THE SHEET IS THE PANEL, and a note said in it reaches `doc.produce`.
+         (The row is already open — `tap` opened it above, and `land` opens
+         rather than toggles — so nothing is pressed again here.) */
       const panel = await p.evaluate(() => ({
         box: document.querySelectorAll("#pan-band .nu-prodsheet").length,
         ax: document.querySelectorAll("#pan-band #ax-produce").length,
@@ -4176,7 +4234,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           Math.min(320, pane.scrollHeight - pane.clientHeight); });
       await p.waitForTimeout(300);
       const st = await p.evaluate(STACK);
-      check(st.n >= 4 && st.clear === 0,
+      /* ...AND `st.n >= 4` BECAME `>= 1` ON 2026-09-06 (§18). The four was the
+         stack this claim was born to measure — TIME, RULES, MOTIFS and the
+         column heads, with a cell's sheet scrolling under all of them — and
+         §13a took the stack down to one pinned band, §18 took the record's
+         rows off the resting sheet altogether. What the check is FOR is
+         unchanged and is the half that matters: whatever head is frozen is
+         OPAQUE, so nothing scrolls through it. */
+      check(st.n >= 1 && st.clear === 0,
         "T12k at " + W + " every frozen head is opaque in --ground (" +
         st.clear + " of " + st.n + " see-through, want " + st.want + ")");
       check(st.sheet && st.under === 0,
@@ -4740,17 +4805,32 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         /* THE GESTURES, AND THEY ARE A HAND'S: `el.click()` on the button a
            thumb would press, never `page.click()` (which scrolls its target
            into view first and has manufactured "jumps" on this box before). */
-        /* THE RECORD PANEL, OPENED OR SHUT (2026-09-06, §14) — this block's
-           own `rec`, in this block's own context. Idempotent: it reads the
-           disclosure's `aria-expanded` rather than counting taps. */
-        const zrec = async (want = true) => { await z.evaluate((w) => {
-            const b = document.querySelector('#pan-band [data-k="trecord"]');
-            if (b && (b.getAttribute("aria-expanded") === "true") !== w) b.click();
-          }, want); await z.waitForTimeout(450); };
+        /* A RECORD SURFACE, OPENED FROM THE HAMBURGER (2026-09-06, §18) —
+           this block's own copy of the T10 block's `recOpen`, in this block's
+           own context. The eight are rows of the plate now, so opening one is
+           the two taps a thumb makes: the ≡, then the row. Idempotent, because
+           the plate's row calls `land()`, which opens and never toggles; a
+           head that is already open closes by its own second tap. */
         const ZRECHEADS = ["trules", "ttime", "tchords", "tmotifs", "tmix",
-                           "tproduce", "tfoot|perf"];
+                           "tproduce", "tfoot|perf", "tcorner"];
+        const zrecOpen = (k) => z.evaluate((key) => {
+            const h = document.querySelector('#pan-band [data-k="' + key + '"]');
+            if (h && h.getAttribute("aria-expanded") === "true") { h.click(); return "ok"; }
+            window.__eightMenuOpen(true);
+            const row = document.querySelector('#nu-menu [data-k="burger|' + key + '"]');
+            if (!row) { window.__eightMenuOpen(false); return "missing"; }
+            row.click(); return "ok"; }, k);
+        /* ...AND `zrec(false)` IS "LEAVE THE RECORD SHUT", which is now the
+           same gesture as shutting whatever is open: there is no panel to
+           collapse. `zrec(true)` is a no-op, because a caller cannot mean
+           "open the record" any more — it means "open ONE of the eight", and
+           every such caller says which through `ztap`. Kept as a name so the
+           nine call sites below read as what they always meant. */
+        const zrec = async (want = true) => { if (!want) await zshut(); };
         const ztap = async (k) => {
-          if (ZRECHEADS.indexOf(k) >= 0) await zrec(true);
+          if (ZRECHEADS.indexOf(k) >= 0) {
+            const rr = await zrecOpen(k); await z.waitForTimeout(450); return rr;
+          }
           const r = await z.evaluate((key) => {
             const el = document.querySelector('#pan-band [data-k="' + key + '"]');
             if (!el) return "missing"; el.click(); return "ok"; }, k);
@@ -4800,6 +4880,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                      .map((x) => x.id || x.dataset.k) : [],
                    seedInBar: !!document.querySelector("#nu-bar .nu-seedrow"),
                    seedInMenu: !!document.querySelector("#nu-menu .nu-seedrow"),
+                   /* THE TAPE IS THE STRIP'S MIDDLE CHILD SINCE §18. */
+                   tapeInStrip: !!(strip && strip.children[1] &&
+                     strip.children[1].classList.contains("nu-tape")),
                    forms: document.querySelectorAll(".nu-formula").length };
         });
         const chromeH = chrome.boxes.reduce((a, x) => a + x.h, 0);
@@ -4820,10 +4903,21 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            instead. `.nu-top` (the 2026-09-05 plate) and `.nu-formula` are
            still gone; `.nu-topstrip` is a different element with a different
            law, which is the whole of §16. */
-        /* THE FIVE THE BAR HOLDS, IN DOCUMENT ORDER: the three inside the
-           options' fold (a mode, a take — the room is a range and not a
-           button), then the fold's own door, the voicing and ▶. */
-        const wantBar = ["playmode", "take", "playops", "voicing", "play"];
+        /* ...AND THE TWO BANDS TRADED A READOUT FOR TWO CONTROLS ON
+           2026-09-06 (TABLE.md §18). Paul: *"You could put the playback bar to
+           the right of the genre on top top if you want"* and *"Move the dice
+           back into the bottom"* and *"…integrate them into the bar with only
+           a pop-up."* So the law reads: THE TOP STRIP IS IDENTITY, STATUS AND
+           NAVIGATION; THE BOTTOM BAR IS CONTROLS, AND ONLY CONTROLS. The TAPE
+           is the strip's middle child (it never was a control — a thumb never
+           presses it), and the width it leaves in the bar is the ROOM's and
+           the DIE's.
+           WHAT THE BAR HOLDS, IN DOCUMENT ORDER: the two inside the options'
+           fold (a mode, a take), the fold's own door, the voicing, ▶, then the
+           die and its number. The room is a range and not a button, so it is
+           asserted as the bar's last CHILD instead. */
+        const wantBar = ["playmode", "take", "playops", "voicing", "play",
+                         "rewrite", "seedval"];
         check(chrome.boxes.length === 2 &&
               chrome.boxes[0].id === "nu-topstrip" &&
               chrome.boxes[1].id === "nu-bar" &&
@@ -4831,14 +4925,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               chromeH <= 120 && chrome.tops === 0 && chrome.forms === 0 &&
               chrome.strips === 1 && chrome.bars === 1 &&
               chrome.burger && chrome.plate && chrome.stripLast === "burger" &&
-              chrome.barLast === "nu-tape" &&
-              !chrome.seedInBar && chrome.seedInMenu &&
+              chrome.tapeInStrip && /nu-vs/.test(chrome.barLast || "") &&
+              chrome.seedInBar && !chrome.seedInMenu &&
               JSON.stringify(chrome.barBtns) === JSON.stringify(wantBar),
           "T13a " + at + " · the fixed chrome is the STRIP and the BAR and " +
           "nothing else (" + chromeH + "pt of two bands), the ≡ is the " +
-          "strip's last button and the record's name its first, the tape is " +
-          "the bar's last child, and the bar is the transport alone — " +
-          JSON.stringify(chrome));
+          "strip's last button, the record's name its first and the TAPE " +
+          "between them, and the bar is controls alone — the transport, the " +
+          "die and the room — " + JSON.stringify(chrome));
 
         /* ---- b · ONE PINNED BAND, AND IT IS THE HEADS ----------------- */
         const pins = () => z.evaluate(() => {
@@ -4919,20 +5013,34 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const lines = await lineOf();
         const tall = lines.filter((x) => x.h > 52);
         const restIds = lines.map((x) => x.id).join(" ");
-        check(restIds === "record mix" && tall.length === 0,
-          "T13k " + at + " · at rest the sheet shows THE RECORD and the MIX " +
-          "row and nothing else merged, each ONE LINE — " +
+        /* ...AND AT REST THAT IS THE MIX ROW ALONE SINCE 2026-09-06 (§18).
+           THE RECORD's line is deleted with the panel it disclosed — Paul:
+           *"All that stuff at the top? I expected that to live in the
+           hamburger"* — so the only merged row standing on a resting sheet is
+           the one that is ALIGNED, because a fader is the player's. */
+        check(restIds === "mix" && tall.length === 0,
+          "T13k " + at + " · at rest the sheet shows the MIX row and nothing " +
+          "else merged, one line — " +
           JSON.stringify(lines.map((x) => x.id + ":" + x.h)) +
           (tall.length ? " OVER: " + JSON.stringify(tall) : ""));
-        await zrec(true);
-        const lines2 = await lineOf();
-        const tall2 = lines2.filter((x) => x.h > 52);
-        check(lines2.length === 9 && tall2.length === 0,
-          "T13k " + at + " · …and with the record open every one of its seven " +
-          "sections is ONE LINE too — " +
-          JSON.stringify(lines2.map((x) => x.id + ":" + x.h)) +
-          (tall2.length ? " OVER: " + JSON.stringify(tall2) : ""));
-        await zrec(false);
+        /* ...AND EACH OF THE RECORD'S EIGHT IS ONE LINE WHEN IT IS THE OPEN
+           ONE. It was "with the record open every one of its seven sections is
+           ONE LINE too", read off a stack of nine; there is no stack, so the
+           same claim is asked of each row in the state it is drawn in. */
+        const openLines = [];
+        for (const k of ZRECHEADS) {
+          await zrecOpen(k); await z.waitForTimeout(420);
+          const L = await lineOf();
+          const own = L.filter((x) => x.id !== "mix");
+          openLines.push({ k, n: own.length,
+                           h: own.length ? own[0].h : null });
+          await zshut();
+        }
+        const badLines = openLines.filter((x) => x.n !== 1 || x.h > 52);
+        check(!badLines.length,
+          "T13k " + at + " · …and each of the record's eight is ONE LINE when " +
+          "it is the open one, and never two at once — " +
+          JSON.stringify(openLines.map((x) => x.k + ":" + x.n + "@" + x.h)));
 
         /* ---- e · THE PANE GETS THE SCREEN ----------------------------- */
         const geo = await z.evaluate(() => {
@@ -5184,9 +5292,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         check(lab.gridTop == null || lab.gridTop <= 116,
           "T13m " + at + " · …and the grid starts where the label row was — " +
           JSON.stringify({ gridTop: lab.gridTop, was: 155.3 }));
-        /* AND THE PANEL GOES BACK, because the checks after this one reach
-           the record's seven by name. */
-        await zrec(true);
+        /* (`await zrec(true)` STOOD HERE — "the panel goes back, because the
+           checks after this one reach the record's seven by name". There is no
+           panel since §18: every check that wants one of the eight opens it
+           from the hamburger, through `ztap`.) */
 
         /* ---- n · A `+` ADDS. IT DOES NOT ASK (§13e) -------------------- */
         /* Paul, on the ADD sheet that shipped this morning: *"Don't pop up an
@@ -5243,24 +5352,33 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            came up from the `<tfoot>` stand after them. THE RECORD's own row is
            the panel's header and is filtered out here, because what this check
            is about is the order Paul asked for. */
-        await zrec(true);
+        /* ...AND THE ORDER IS READ OFF THE MENU SINCE 2026-09-06 (§18): the
+           eight are the hamburger's rows, in the same order they had on the
+           sheet, and the sheet's own rows are the same eight `<tr>`s drawn one
+           at a time. So the ORDER is asked of the plate (where a hand reads
+           it) and the FACES off the rows (where the words are owned). */
         const ord = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
           const rows = t ? [...t.querySelectorAll("thead tr.nu-scoperow")] : [];
           return rows.map((r) => ({ id: r.dataset.special,
             k: (r.querySelector("button") || { dataset: {} }).dataset.k || null,
-            h: +r.getBoundingClientRect().height.toFixed(1),
             face: ((r.querySelector(".nu-spface") || {}).textContent || "").trim(),
             word: ((r.querySelector(".nu-spword") || {}).textContent || "").trim() }));
         });
+        const menuOrd = await z.evaluate(() => {
+          window.__eightMenuOpen(true);
+          const out = [...document.querySelectorAll('#nu-menu [data-k^="burger|"]')]
+            .map((b) => b.dataset.k.slice(7));
+          window.__eightMenuOpen(false);
+          return out; });
         const ids = ord.map((x) => x.id).join(" ");
-        const offLine = ord.filter((x) => x.h > 52 || x.h < 44);
-        check(ids === "rules time chords motifs master produce perf" &&
-              offLine.length === 0,
-          "T13o " + at + " · the record panel reads RULES · TIME · CHORDS · " +
-          "MOTIFS · MASTER · PRODUCE · PERFORMANCE, each one `--tap` line — " +
-          JSON.stringify(ord.map((x) => x.id + ":" + x.h)) +
-          (offLine.length ? " OUT OF LINE: " + JSON.stringify(offLine) : ""));
+        check(ids === "rules time chords motifs master produce perf song" &&
+              menuOrd.join(" ") === "trules ttime tchords tmotifs tmix " +
+                                    "tproduce tfoot|perf tcorner",
+          "T13o " + at + " · the record's group reads RULES · TIME · CHORDS · " +
+          "MOTIFS · MASTER · PRODUCE · PERFORMANCE · SONG, in the plate and " +
+          "on the sheet — " + JSON.stringify(ids) + " / " +
+          JSON.stringify(menuOrd.join(" ")));
         /* THE FACE IS THE CHAIN THAT PLAYS. Every record this gate opens has
            a chart it never wrote; the row still says what sounds — numerals
            joined by `·`, or the chart's size and what the harmony does with
@@ -5411,12 +5529,21 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            with the count on it — is asserted STILL DRAWN. Folded, that count
            is the only thing the grid says, which is the whole reason a hand
            folds it. */
+        /* ...AND WHAT STAYS IS THE HEAD ITSELF (2026-09-06, §18). The
+           paragraph above is kept because each of its clauses was a
+           measurement: the record talked at both ends of the page, then it was
+           one disclosed row, and now it is a group of the hamburger — so a
+           folded grid leaves the SECTIONS head and its count, and nothing
+           else. `f1.record` is asserted FALSE for the same reason `trecord` is
+           asserted absent everywhere else: a line that came back would come
+           back quietly. */
         check(f1.expanded === "false" && !f1.body && !f1.heads && !f1.mix &&
-              f1.record && f1.label && f1.countShown &&
+              !f1.record && f1.label && f1.countShown &&
               f1.sprows === f0.sprows && f1.count === f0.count,
           "T13p " + at + " · a tap on the SECTION head folds the grid — the " +
-          "body, the player heads and the mix row go; THE RECORD, the head " +
-          "itself and its count stay — " + JSON.stringify(f1));
+          "body, the player heads and the mix row go; the head itself and its " +
+          "count stay, and the record's rows are the hamburger's — " +
+          JSON.stringify(f1));
         check(f1.wopen === 0 && f1.held.length === 0 &&
               (f1.y === f0.y || f1.max <= 0),
           "T13p " + at + " · …the grid's open sheet is closed with it, nothing " +
@@ -5645,111 +5772,81 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         await zshut();
         await zrec(false);
 
-        /* ---- 14a · THE RECORD IS ONE ROW, AND IT OPENS THE PANEL ------- */
-        const recRow = async () => z.evaluate(() => {
+        /* ---- 14a · THE RECORD'S LINE IS GONE, AND ITS EIGHT ARE THE
+           HAMBURGER'S (rewritten 2026-09-06, TABLE.md §18) ---------------
+           It asserted THE RECORD as the sheet's first row: its face the line,
+           one disclosure naming its seven sections, `tcorner` a `--tap` square
+           at the line's end. Paul, on the shipped result: *"All that stuff at
+           the top? I expected that to live in the hamburger and for the
+           hamburger to be nicely organized."* So the claim inverts, and it is
+           asserted as an ABSENCE and a PRESENCE together, because a stack that
+           came back would come back quietly:
+             · NO `tr.nu-recrow` and no `trecord` anywhere on the page;
+             · the sheet's FIRST head row is the column heads;
+             · the plate holds the EIGHT, in the record's own order, each with
+               a word and a face and a thumb of height;
+             · and the face a row carries in the plate is the face the row
+               carries on the sheet — one owner, read twice. */
+        const rec14 = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
-          const tr = t && t.querySelector("thead tr.nu-recrow");
-          const b = tr && tr.querySelector("button");
-          const th = tr && tr.querySelector("th");
           const rows = t ? [...t.querySelectorAll("thead > tr")] : [];
-          const scopes = t ? [...t.querySelectorAll("thead tr.nu-scoperow")] : [];
-          const wr = th ? th.getBoundingClientRect() : null;
-          const word = tr && tr.querySelector(".nu-spword");
-          const face = tr && tr.querySelector(".nu-spface");
-          return {
-            there: !!tr, k: b && b.dataset.k,
-            first: rows.indexOf(tr) === 0,
-            colspan: th ? th.colSpan : 0,
-            cols: t ? t.querySelectorAll("thead th.nu-colhead," +
-              " thead th.nu-cornerh, thead th.nu-plushead").length : 0,
-            h: tr ? +tr.getBoundingClientRect().height.toFixed(1) : 0,
-            expanded: b ? b.getAttribute("aria-expanded") : null,
-            aria: b ? b.getAttribute("aria-label") : null,
-            controls: b ? (b.getAttribute("aria-controls") || "").split(/\s+/).length : 0,
-            btns: th ? th.querySelectorAll("button").length : 0,
-            /* IT IS NOT A `.nu-sphead`, which is the SECTIONS disclosure's own
-               argument: a fold must not answer the selector every "shut
-               whatever is open" gesture uses. */
-            sphead: !!(b && b.classList.contains("nu-sphead")),
-            label: !!(b && b.classList.contains("nu-labelbtn")),
-            word: (word && word.textContent || "").trim(),
-            face: (face && face.textContent || "").trim(),
-            /* THE FACE IS THE LINE SINCE 2026-09-06 (§15a). `oneLine` compared
-               the word's top with the face's; there is no word, so what is
-               asked is that the face fills the button and starts at its
-               leading edge — it IS what the row says, not a value hung off
-               the end of a heading. */
-            faceStart: !!(wr && face &&
-              face.getBoundingClientRect().left < wr.left + 24),
-            faceInk: face ? getComputedStyle(face).color : null,
-            bodyInk: getComputedStyle(document.body).color,
-            /* AND THE TABLE'S OWN OPTIONS RIDE THE END OF THIS LINE (§15a):
-               `tcorner` left the 81.4px corner when the SECTIONS count moved
-               into it. Its address, its key and its sheet did not move. */
-            opts: !!(tr && tr.querySelector('[data-k="tcorner"]')),
-            optsBox: (() => { const o = tr && tr.querySelector('[data-k="tcorner"]');
-              if (!o) return null; const q = o.getBoundingClientRect();
-              return [+q.width.toFixed(1), +q.height.toFixed(1)]; })(),
-            optsLast: !!(tr && tr.querySelector(".nu-spline") &&
-              tr.querySelector(".nu-spline").lastElementChild ===
-              tr.querySelector('[data-k="tcorner"]')),
-            shown: scopes.filter((r) => r.getClientRects().length > 0).length,
-            scopes: scopes.length };
+          const first = rows[0];
+          window.__eightMenuOpen(true);
+          const plate = [...document.querySelectorAll('#nu-menu [data-k^="burger|"]')]
+            .map((b) => ({ k: b.dataset.k.slice(7),
+              word: ((b.querySelector(".nu-menuword") || {}).textContent || "").trim(),
+              face: ((b.querySelector(".nu-menuface") || {}).textContent || "").trim(),
+              h: Math.round(b.getBoundingClientRect().height) }));
+          window.__eightMenuOpen(false);
+          /* THE FIRST ROW ON THE GLASS, not the first in the DOM: the eight
+             heads stand in the document at every moment (an address a page
+             door presses by name has to be there to press) and are `hidden`
+             unless one is the open one, so what a hand sees first at rest is
+             the column heads. */
+          const shown = rows.filter((r) => r.getClientRects().length > 0);
+          return { recrow: t ? t.querySelectorAll("tr.nu-recrow").length : -1,
+                   trecord: document.querySelectorAll('[data-k="trecord"]').length,
+                   firstIsHeads: !!shown[0] &&
+                     shown[0].classList.contains("nu-gridhead"),
+                   shown: shown.length, first: !!first,
+                   plate };
         });
-        const r14a = await recRow();
-        await zrec(true);
-        const r14aOpen = await recRow();
-        /* IT HAS NO WORD SINCE 2026-09-06 (§15a). Paul: *"Get rid of the
-           words 'the record' and the Section header entirely — we can make
-           room."* This asserted `/^the record$/i` on a `.nu-spword` beside the
-           face; the word is DELETED — from the row, from `special.ts RECORD`
-           and from the copy catalogue — so what is asserted is that there is
-           no `.nu-spword` on this line at all, that the face is the line
-           (starting at its leading edge, in the body's own ink and not a
-           face's dim), and that everything the row DID is unchanged: it is
-           still the first row, still one `--tap` line, still a
-           `.nu-labelbtn` and not a `.nu-sphead`, still `aria-controls`-ing its
-           seven, and its accessible name still says what a tap opens.
-           THE SECOND BUTTON IS `tcorner`, which the SECTIONS count displaced
-           out of the grid's corner (§15a): `btns` is 2 and the extra one is
-           named, measured at `--tap`, and standing at the line's end. */
-        check(r14a.there && r14a.first && r14a.k === "trecord" &&
-              r14a.colspan === r14a.cols && r14a.btns === 2 &&
-              r14a.h >= 44 && r14a.h <= 48 && r14a.faceStart &&
-              !r14a.sphead && r14a.label && r14a.word === "" &&
-              r14a.face.length > 0 && r14a.faceInk === r14a.bodyInk &&
-              r14a.opts && r14a.optsLast &&
-              r14a.optsBox[0] >= 44 && r14a.optsBox[1] >= 44 &&
-              /^(show|hide) the record settings$/i.test(r14a.aria || "") &&
-              r14a.expanded === "false" && r14a.shown === 0 &&
-              r14a.scopes === 7 && r14a.controls === 7 &&
-              r14aOpen.expanded === "true" && r14aOpen.shown === 7,
-          "T14a " + at + " · THE RECORD is the sheet's first row and its FACE " +
-          "is the line — no word over it — one disclosure naming its seven " +
-          "sections, with the table's own options a `--tap` square at the " +
-          "line's end, and a tap shows all seven — " +
-          JSON.stringify([r14a, { open: r14aOpen.expanded,
-                                  shown: r14aOpen.shown }]));
-        /* ...AND ITS FACE IS THE TIME ROW'S, one owner and not two. */
+        check(rec14.recrow === 0 && rec14.trecord === 0 && rec14.firstIsHeads &&
+              rec14.plate.length === 8 &&
+              rec14.plate.every((r) => r.word && r.h >= 44),
+          "T14a " + at + " · the record's line is GONE from the session and " +
+          "its eight are rows of the hamburger, each a word and a thumb tall " +
+          "— " + JSON.stringify(rec14.plate.map((r) => r.word + "@" + r.h)) +
+          " recrow " + rec14.recrow + " trecord " + rec14.trecord +
+          " first-on-glass-is-heads " + rec14.firstIsHeads);
+        /* ...AND THE PLATE'S FACE IS THE ROW'S FACE, one owner and not two:
+           TIME says the same sentence in the menu as it says on the sheet. */
+        await ztap("ttime");
         const faces = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
-          const f = (sel) => { const e = t && t.querySelector(sel);
-            return e ? (e.textContent || "").trim() : null; };
-          return { rec: f("tr.nu-recrow .nu-spface"),
-                   time: f('tr[data-special="time"] .nu-spface') }; });
-        check(!!faces.rec && faces.rec === faces.time,
-          "T14a " + at + " · …and the record's face IS the TIME row's — tempo " +
-          "· meter · key, one owner — " + JSON.stringify(faces));
+          const row = t && t.querySelector('tr[data-special="time"] .nu-spface');
+          window.__eightMenuOpen(true);
+          const men = document.querySelector('#nu-menu [data-k="burger|ttime"] .nu-menuface');
+          const out = { row: row ? row.textContent.trim() : null,
+                        menu: men ? men.textContent.trim() : null };
+          window.__eightMenuOpen(false);
+          return out; });
+        check(!!faces.row && faces.row === faces.menu,
+          "T14a " + at + " · …and the TIME face is one sentence with two " +
+          "readers — the plate's row and the sheet's — " + JSON.stringify(faces));
+        await zshut();
 
-        /* ---- 14b · THE SEVEN ADDRESSES RESOLVE INSIDE IT --------------- */
-        /* Every address the seven had before the collapse still opens the
-           sheet it always opened, one at a time, and the pane's scrollTop is
-           unmoved across each open and close (§13a.3's law, asked of the
-           panel). */
+        /* ---- 14b · EVERY ADDRESS STILL RESOLVES ----------------------- */
+        /* Every address the eight had before the collapse — and before the
+           panel that held them for a day — still opens the sheet it always
+           opened, one at a time, each under its own row, with the pane's
+           scrollTop unmoved across the open and the close (§13a.3's law).
+           `tcorner` joins the list here: the song's options are the eighth
+           scope since §18, at the same address they had on the deleted line. */
         const SEVEN = [["trules", "rules"], ["ttime", "time"],
                        ["tchords", "chords"], ["tmotifs", "motifs"],
                        ["tmix", "master"], ["tproduce", "produce"],
-                       ["tfoot|perf", "perf"]];
+                       ["tfoot|perf", "perf"], ["tcorner", "song"]];
         await z.evaluate(() => { const pane = document.querySelector(
           "#pan-band .nu-pane[data-pane=table]"); if (pane) pane.scrollTop = 0; });
         const seven = [];
@@ -5772,8 +5869,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const badSeven = seven.filter((x) => x.sheets !== 1 ||
           x.owner !== x.id || x.body !== 1 || x.y !== 0);
         check(badSeven.length === 0,
-          "T14b " + at + " · all seven record addresses resolve inside the " +
-          "panel — one sheet at a time, each under its own row, the pane " +
+          "T14b " + at + " · all EIGHT record addresses resolve from the " +
+          "hamburger — one sheet at a time, each under its own row, the pane " +
           "unmoved — " + JSON.stringify(seven));
 
         /* ---- 14c · THE FOOT HOLDS NO RECORD ROW ------------------------ */
@@ -5853,9 +5950,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         /* Four scopes, four targets, one grammar. Counted in RAW CLICKS —
            this is the one block that must not go through `ztap`, because the
            number of taps IS the claim. Each target is driven from rest. */
+        /* ...AND THE RECORD'S SCOPE IS TAPPED WHERE IT LIVES (2026-09-06,
+           §18): its target is a row of the hamburger, so the plate is opened
+           first — which is navigation to the surface, exactly as the table
+           being on the glass is for a cell — and the TAP counted is the one on
+           the row. One tap on the row you read opens the sheet it names. */
         const oneTap = async (sel, opened) => {
           await zshut();
-          await zrec(sel === "scope");
+          if (sel === "scope") { await z.evaluate(() => window.__eightMenuOpen(true));
+                                 await z.waitForTimeout(300); }
           for (let n = 1; n <= 3; n++) {
             const hit = await z.evaluate((s) => {
               const el = s === "cell"
@@ -5865,7 +5968,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                 ? document.querySelector("#pan-band tbody th.nu-srowh .nu-rowjump")
                 : s === "col"
                 ? document.querySelector("#pan-band thead th.nu-colhead .nu-colbtn")
-                : document.querySelector('#pan-band [data-k="ttime"]');
+                : document.querySelector('#nu-menu [data-k="burger|ttime"]');
               if (!el) return false; el.click(); return true; }, sel);
             if (!hit) return "missing";
             await z.waitForTimeout(450);
@@ -6097,8 +6200,11 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             .filter((k) => k.indexOf("undefined") < 0);
           const seen = [];
           for (const o of owners) {
-            if (ZRECHEADS.indexOf(o) < 0) await zrec(false);
-            else await zrec(true);
+            /* A RECORD SURFACE IS OPENED FROM THE PLATE (§18) and everything
+               else by its own head; `zopen` then finds the head standing and
+               leaves it alone, because it opens only what is shut. */
+            if (ZRECHEADS.indexOf(o) >= 0) { await zrecOpen(o);
+                                             await z.waitForTimeout(420); }
             if ((await zopen(o)) === "missing") continue;
             const keys = await z.evaluate(() => [...document.querySelectorAll(
               '#pan-band .nu-sheetrow .nu-wcell[aria-expanded]')].map((e) => e.dataset.k));

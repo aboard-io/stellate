@@ -319,9 +319,42 @@
      "this row is sounding" is the clock's fact everywhere else on this page. */
   --row-hi:  rgba(25, 22, 17, .045);   /* the row under the pointer */
   --row-lit: rgba(229, 51, 14, .11);   /* the row that is sounding */
-  /* ---- type: one heavy sans said, one mono counted; no serif ---- */
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* ---- type: one heavy sans said, one mono counted; no serif ------------
+     IBM PLEX, AND ONE STYLESHEET OWNS IT (2026-09-06, Paul: *"Make everything
+     the IBM flex Family fonts referring to one style sheet."*). The FACES are
+     declared in nukernel/fonts.css — thirty `@font-face` rules, nothing else,
+     linked ahead of this file; the FILES are self-hosted at /vendor/plex, with
+     the weight-and-block argument at vendor/plex/VERSION.txt. These three
+     tokens are the only place a family name is written in this stylesheet and
+     the only place any rule may read one from. It said `system-ui` here and,
+     until today, in four rules further down that wanted a symbol and typed a
+     whole stack to get one; those four now read `--sym`.
+
+     THE FALLBACK STACKS ARE HONEST AND THEY ARE NOT DECORATION. A woff2 that
+     has not arrived yet, a browser that refused it, a `unicode-range` this
+     page stepped outside of (Plex's Latin blocks carry no ♭, no ♯, no →) —
+     each of those falls through per CHARACTER, which is why the old
+     system-ui stack is kept behind Plex rather than replaced by a bare
+     `sans-serif`. What changes is which face wins, not what happens when
+     none does.
+
+     NO --serif AND NO --cond, though Plex has both. A token is a promise that
+     something reads it; nothing on this page sets a serif or a condensed face,
+     and two more families would be ~200 KB of woff2 nothing renders. They are
+     one `@font-face` block and one line here away if a round ever wants them. */
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* THE ONE FACE THAT IS DELIBERATELY NOT PLEX, and it is a GLYPH stack, not
+     a type choice. The page draws its marks as characters — ▾ ↕ ↑ ▫ ▪ ⇅ and
+     the rest of ui/glyph.js — and IBM Plex's Latin blocks do not contain them.
+     Naming Plex first here would put every mark one step deeper into a
+     per-character fallback the design cannot see or control, and the reason
+     the four rules that use this were written in the first place still holds
+     verbatim: "a serif ↕ next to a sans ↑ is two different arrows". One stack
+     keeps every row of marks in one hand. So `--sym` is the exception, it is
+     argued here, and it is a TOKEN — the rules that draw marks (`.nu-g`,
+     `.nu-tf`, `.nu-ixgo`, `.nu-combo::after`) point at it and name no face. */
+  --sym: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
   /* ---- chunk: THE SCALE, RETUNED (2026-08-27, Paul: "The enamel-style
      borders and drop shadows are too big. think 1px with shadow of 2px. make
      the button text smaller and not bold. Do this in the css at the highest
@@ -2528,7 +2561,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
   position: absolute; inset-inline-end: var(--s3); inset-block-end: 0;
   block-size: var(--tap); display: flex; align-items: center;
   pointer-events: none; color: var(--dim);
-  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-family: var(--sym);
   font-size: var(--t2); line-height: 1; }
 /* THE DETENT COLOURS. Written on the WRAPPER by `selectField`, on build and on
    every change, from one comparison: the select's value against the option the
@@ -3287,8 +3320,11 @@ table.nu-trims{ color: var(--ink); }
   font-size: 1.2rem; line-height: 1; letter-spacing: -.02em;
   /* the glyphs are geometry, not prose: a serif ↕ next to a sans ↑ is two
      different arrows, and the page's own face is not guaranteed to have any of
-     them. A system-ui stack keeps all three rows in one hand. */
-  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
+     them. `--sym` — nu.css's ONE non-Plex face token, argued at :root — keeps
+     all three rows in one hand. (It read "a system-ui stack" and named that
+     stack inline here until 2026-09-06; the stack is unchanged, its owner
+     moved.) */
+  font-family: var(--sym); }
 /* ===== `.nu-tf-row` IS A DEAD SELECTOR AND ITS RULES ARE GONE (2026-08-29).
    What stood here: `.nu-tf-row{ gap: .3em }` and `.nu-tf-row button{
    min-inline-size: var(--tap); border-width: 2px }`, plus two paragraphs of
@@ -4196,7 +4232,7 @@ table.nu-trims{ color: var(--ink); }
   display: block; block-size: var(--tap); line-height: var(--tap);
   min-inline-size: var(--tap); text-align: center;
   color: var(--ink); text-decoration: none;
-  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
+  font-family: var(--sym); }
 /* `#atlasActs button { min-block-size: var(--tap); margin-inline-end: .4rem }`
    STOOD HERE AND BOTH HALVES ARE GONE (2026-08-26). The tap floor was already
    `button { min-height: var(--tap) }` at the top of this file and had been for
@@ -4847,8 +4883,8 @@ table.nu-trims{ color: var(--ink); }
    for. */
 .nu-laneadd{ display: flex; flex-wrap: wrap; gap: var(--s2);
   margin-block: var(--s3); }/* THE FACE. Same size and same stack as `.nu-tf` and for the same two reasons
-   written there — 1.2rem was measured against the 44px floor, and a system-ui
-   symbol stack keeps every row in one hand rather than letting a serif ↕ sit
+   written there — 1.2rem was measured against the 44px floor, and `--sym`, the
+   symbol stack, keeps every row in one hand rather than letting a serif ↕ sit
    beside a sans ↑. `pointer-events: none` so the picture can never eat the
    press, which is the half-hour the globe round lost to a decorative stroke
    swallowing every tap. */
@@ -4866,7 +4902,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-ic{ display: inline-flex; align-items: center; gap: .06em;
   position: relative; pointer-events: none; }
 .nu-g{ font-size: 1.2rem; line-height: 1; letter-spacing: -.02em;
-  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
+  font-family: var(--sym); }
 /* THE NUMBER, AND IT IS THE ONLY TEXT THAT SHOWS. Paul: "more symbol plus the
    number 2." Smaller than the mark and bolder than the page, so it reads as an
    index on a picture rather than as a word beside one. Tabular figures because
@@ -7879,10 +7915,56 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    holds the ≡ at the far end; `min-inline-size: 0` on the face is what lets a
    long genre name ellipsise rather than push the ≡ off a phone, and the 44px
    floor below stops that shrink going under a thumb. */
+/* (`margin-inline-end: auto` CAME OFF THIS RULE ON 2026-09-06, TABLE.md §18.
+   It held the ≡ at the far end across a dead gap — 191px at 390, 121px at 320
+   — and the gap is the TAPE's now, which is a `1 1 auto` child and does the
+   same job by being there. An auto margin beside a flexible child eats the
+   free space the flexible child was asked to take, and the tape would have
+   been squeezed to its own min-content.) */
 .nu-topstrip > button[data-k="toptab-Where"]{ flex: 0 1 auto;
-  min-inline-size: var(--tap); margin-inline-end: auto; }
+  min-inline-size: var(--tap); }
 .nu-topstrip > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0;
   justify-content: flex-start; text-align: start; }
+/* ---- THE NAME IS A NAME AGAIN (2026-09-06, TABLE.md §18) --------------
+   THE FOUR RULES BELOW WERE `.nu-bar > button[data-k="toptab-Where"]` AND THE
+   BUTTON LEFT THE BAR ON 2026-09-06 (v298). Nothing re-scoped them, so in the
+   strip the plate fell back to `.nu-vh`'s clip — the record's NAME was one
+   clipped pixel and the only word on the glass was `.nu-sub2`, the place and
+   the year. On a record whose sub line is dropped (the plate drops it when it
+   would say the word twice) the top left corner was a bare ⊕: Paul's
+   screenshot, at 390, with no name in it. This is the same four rules at the
+   band the button actually stands in, and the plate reads
+   `Reggae / Kingston 1969` again. */
+.nu-topstrip > button[data-k="toptab-Where"] .nu-ic{
+  display: grid; grid-template-columns: 1.4em minmax(0, 1fr);
+  align-items: center; justify-items: start; column-gap: var(--s1);
+  inline-size: 100%; }
+.nu-topstrip > button[data-k="toptab-Where"] .nu-g{ grid-column: 1;
+  grid-row: 1 / 3; justify-self: center; }
+.nu-topstrip > button[data-k="toptab-Where"] .nu-vh,
+.nu-topstrip > button[data-k="toptab-Where"] .nu-sub2{
+  grid-column: 2; min-inline-size: 0; inline-size: 100%;
+  text-align: start; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; }
+.nu-topstrip > button[data-k="toptab-Where"] .nu-vh{
+  position: static; inline-size: 100%; block-size: auto;
+  clip: auto; clip-path: none; margin: 0; padding: 0;
+  font-size: var(--t2, .82rem); font-weight: var(--fw-label); }
+.nu-topstrip > button[data-k="toptab-Where"] .nu-sub2{ display: block;
+  color: var(--dim); font-size: var(--t1, .72rem); line-height: 1.15;
+  font-weight: 500; }
+.nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"] .nu-sub2{
+  color: #FFFFFF; opacity: .8; }
+/* ---- AND THE TAPE TAKES THE GAP (2026-09-06, TABLE.md §18) -----------
+   Paul: *"You could put the playback bar to the right of the genre on top top
+   if you want."* The tape is a READOUT and not a control, so it belongs with
+   identity and navigation rather than with the transport: the strip is
+   identity · status · navigation, the bar is controls and only controls. It
+   is the same node with the same two lines — the words over a 4px track — and
+   it takes the give the auto margin used to hold empty. */
+.nu-topstrip > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: var(--s1); }
 .nu-topstrip > #burger{ flex: 0 0 auto; }
 .nu-topstrip button{ min-inline-size: var(--tap); min-block-size: var(--tap); }
 
@@ -7965,24 +8047,33 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
      511px at 568, 787 at 844. */
   max-block-size: calc(100dvh - var(--top-h) - var(--s4)); overflow-y: auto;
   overscroll-behavior: contain;
-  margin: 0; padding: var(--s2);
+  /* THE BLOCK PADDING IS A HAIR AND THE INLINE PADDING IS TIGHT (2026-09-06,
+     §18): measured at 390 x 844 the plate's seventeen rows came to 790px
+     against 787.2 of glass and scrolled by three pixels — a scrollbar for
+     nothing. The air a plate owes is between its GROUPS, which is what the
+     headings and their own padding give it. */
+  margin: 0; padding: var(--s1) var(--s2);
   background: var(--panel); color: var(--ink);
   border: var(--bw) solid var(--ink); border-radius: var(--r1);
   box-shadow: var(--shadow); }
 #nu-menu[hidden]{ display: none; }
-#nu-menu > button{ min-block-size: var(--tap); inline-size: 100%;
+/* THE ROWS ARE IN GROUPS SINCE 2026-09-06 (§18), so these read `#nu-menu
+   button` and not `#nu-menu > button`: a view row is a child of
+   `.nu-menugroup` now and a selector that still demanded a direct child would
+   have taken the ground out from under all six on the day they were grouped. */
+#nu-menu button{ min-block-size: var(--tap); inline-size: 100%;
   justify-content: flex-start; text-align: start;
   background: transparent; border-color: transparent; }
-#nu-menu > button:hover{ background: var(--flag-tint); }
+#nu-menu button:hover{ background: var(--flag-tint); }
 /* THE VIEW YOU ARE ON IS `aria-current` AND NOT `aria-pressed` (2026-09-06,
    docs/NAV.md: *"The current view is marked in the list"*). With six views one
    of them is ALWAYS the one you are standing on, including the table — and
    `Where` would otherwise have been "pressed" here and "pressed" on the record's
    name at the same moment, which is one state spelled twice. `aria-pressed`
    stays where it means something: the genre plate's own toggle. */
-#nu-menu > button[aria-current]{ background: var(--hand);
+#nu-menu button[aria-current]{ background: var(--hand);
   color: #FFFFFF; border-color: var(--hand); }
-#nu-menu > button[aria-current]:hover{ background: #152F9E; }
+#nu-menu button[aria-current]:hover{ background: #152F9E; }
 #nu-menu .nu-ic{ display: flex; flex-direction: row; align-items: center;
   gap: var(--s2); text-align: start; }
 /* THE WORDS ARE VISIBLE HERE, which is the one thing the gutter could never
@@ -8012,13 +8103,48 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
   text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
 .nu-menuseed{ display: block; padding-block-end: var(--s2); }
+/* ---- FOUR GROUPS, AND THE HEADINGS STICK (2026-09-06, TABLE.md §18) ---
+   Paul: *"I expected that to live in the hamburger and for the hamburger to be
+   nicely organized."* The plate holds seventeen rows now — six views, the
+   record's eight, the seed's door and the log — which measures taller than a
+   phone, so it scrolls INSIDE ITSELF and each group's heading stays on the
+   glass while its own rows are under the thumb.
+   THE INNER SCROLL IS A NAMED EXEMPTION AND NOT A DRIFT (DESIGN §3): the law
+   it looks like it breaks — *"a field too long for the screen FOLDS … and
+   never goes behind a scroll box"* — is about A FIELD'S OPTIONS, where a hand
+   is choosing one VALUE out of many and folding by cluster is how it keeps its
+   place. This is a NAVIGATION list of seventeen destinations, each of which is
+   its own subject; folding it would put every destination two taps away
+   instead of one, which is the cost the round was called to remove.
+   `position: sticky` needs a scrollport with a real block size, which
+   `#nu-menu`'s `max-block-size` + `overflow-y: auto` already is. */
+.nu-menugroup{ display: flex; flex-direction: column; align-items: stretch; }
+#nu-menu .nu-menusub{ position: sticky; inset-block-start: 0; z-index: 1;
+  background: var(--panel); padding-block: var(--s1); }
+/* A ROW OF THE RECORD'S GROUP: the word left, the row's own sentence right,
+   one line, the sentence ellipsised. It is the special row's resting line
+   (§13a.2) drawn in the plate that now opens it — same two parts, same order,
+   same truncation, so a hand that learned to read RULES · TIME · CHORDS at the
+   top of the session reads the same lines here. */
+.nu-menurow{ display: flex; flex-direction: row; align-items: baseline;
+  gap: var(--s2); min-block-size: var(--tap); inline-size: 100%;
+  padding-inline: var(--s3); min-inline-size: 0; }
+.nu-menuword{ flex: 0 0 auto;
+  font: var(--fw-label) var(--t2, .82rem)/1.2 var(--sans, inherit);
+  text-transform: uppercase; letter-spacing: .04em; }
+.nu-menuface{ flex: 1 1 auto; min-inline-size: 0; text-align: end;
+  color: var(--dim); font-size: var(--t1, .72rem);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* THE SEED ROW IN THE PLATE. It is the same `.nu-seedrow` the bar held — same
    node, same children, same listeners — and what the plate gives it that the
    bar could not is ROOM: 30ch, so the die, the number and the field stand on
    one line at every width and the seed's own wait drops under them on its own
    (the row is `flex-wrap: wrap` and always was). */
-#nu-menu .nu-seedrow{ padding-inline: var(--s3); }
-#nu-menu .nu-seedrow > #seedin{ inline-size: 8ch; }
+/* (`#nu-menu .nu-seedrow`'s TWO RULES STOOD HERE, 2026-09-06 to 2026-09-06.
+   The row is back in the bar — Paul: *"Move the dice back into the bottom"* —
+   and what stands in the plate is `#seedmenu`, a `.nu-menurow` DOOR that
+   presses it. The rule below is kept because the plate would still hold the
+   row honestly if anything ever put it back.) */
 /* THE 44px FLOOR IN BOTH AXES, AND IT HAD TO BE RE-DECLARED WHERE THE ROW
    LANDED. `.nu-bar button` carried it for the die and the number while they
    stood in the bar; `#nu-menu > button` carries it for the plate's own rows
@@ -8077,6 +8203,50 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    it is inside the tape, below.) */
 .nu-bar > .nu-bartp{ flex: 0 0 auto; display: flex; flex-direction: row;
   align-items: center; gap: var(--s1); }
+/* ---- THE DIE AND THE ROOM, IN THE BAR (2026-09-06, TABLE.md §18) ------
+   Paul: *"Move the dice back into the bottom"* and *"…integrate them into the
+   bar with only a pop-up."* The arithmetic, measured on the rendered page at
+   320: the bar's content box is 312px; `.nu-bartp` is three 44px marks and
+   two 1px seams = 134; the seed row is the die (44) and its number (44) = 88;
+   four gaps at 8 (1 below 380) = 4; which leaves 86 for the room. A track of
+   86px reads a percent and takes a thumb, so nothing here needs opening to be
+   set — and the ONE pop-up left in the bar is `#playops`, holding the mode
+   and the take.
+   THE SEED ROW DOES NOT WRAP HERE. In the plate it had 30ch and could spend a
+   line; a bar has width and no height at all, so it is `nowrap` and its two
+   targets keep their 44px floor. */
+.nu-bar > .nu-seedrow{ flex: 0 0 auto; flex-wrap: nowrap; gap: var(--s1); }
+.nu-bar > .nu-seedrow > #seedval{ flex: 0 0 auto; min-inline-size: var(--tap); }
+.nu-bar > .nu-seedrow > #seedin{ flex: 0 0 auto; inline-size: 6ch; }
+.nu-bar > .nu-vs-wide{ flex: 1 1 auto; min-inline-size: 72px; }
+/* ---- THE ROOM, LYING DOWN (2026-09-06, TABLE.md §18) ------------------
+   The same chassis the mix board and the gutter have used since 2026-08-27
+   (`ui/engineer.js vchassis`), turned ninety degrees: the <input> is still the
+   keyboard and screen-reader channel at `opacity: 0`, the TRACK still owns the
+   pointer, and `touch-action: none` is still on the control and only on the
+   control, so a drag on the fader never becomes a scroll of the page. What
+   these rules change is which axis the fill and the thumb run along — and the
+   value's readout, which stands beside the track here rather than under it,
+   because a bar has no second line to give it. */
+.nu-vs-wide{ display: flex; flex-direction: row; align-items: center;
+  gap: var(--s1); min-inline-size: 0; }
+.nu-vs-wide .nu-vs-track{ inline-size: auto; flex: 1 1 auto;
+  min-inline-size: 0; block-size: var(--sl-trough); margin-inline: 12px;
+  margin-block: 0; }
+.nu-vs-wide .nu-vs-track::before{ inset: -14px -10px; }
+.nu-vs-wide .nu-vs-fill{ inset: 0 auto 0 0; block-size: auto;
+  inline-size: calc(10px + (100% - 20px) * var(--v, 0)); }
+.nu-vs-wide .nu-vs-thumb{ inset-block-start: 50%; inset-block-end: auto;
+  left: calc((100% - var(--sl-grab)) * var(--v, 0));
+  transform: translateY(-50%);
+  inline-size: var(--sl-grab); block-size: var(--sl-cap); }
+.nu-vs-wide .nu-vs-thumb::after{ inset: 7px 50% 7px auto;
+  block-size: auto; inline-size: var(--bw-hard);
+  margin-top: 0; margin-inline-end: calc(var(--bw-hard) / -2); }
+.nu-vs-wide .nu-vs-in{ inset: 50% -10px auto -10px;
+  transform: translateY(-50%); inline-size: calc(100% + 20px);
+  block-size: 44px; writing-mode: horizontal-tb; direction: ltr; }
+.nu-vs-wide .nu-vs-val{ flex: 0 0 auto; }
 /* ---- THE TAPE (2026-09-06, docs/NAV.md) ------------------------------
    Paul: *"Make a play status tape position indicator that incorporates the
    beat countdown on the bottom right."*
@@ -8091,9 +8261,10 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    track with a hair between them — so the tape costs the row no height.
    NOTHING IN IT IS A TARGET. It is a readout: no `--tap` floor, no ground, no
    border, and its accessible name is the whole sentence (`tape.aria`). */
-.nu-bar > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
-  display: flex; flex-direction: column; justify-content: center;
-  gap: var(--s1); }
+/* (`.nu-bar > .nu-tape` STOOD HERE — the tape is the top strip's since
+   2026-09-06, §18, and its box rule went up with it. The four rules below are
+   the tape's OWN parts and are unscoped on purpose: they describe a readout,
+   not a place.) */
 .nu-tapeline{ display: flex; flex-direction: row; align-items: baseline;
   justify-content: flex-end; gap: var(--s2); min-inline-size: 0; }
 .nu-tapesay{ font: var(--num-fw) var(--t1)/1 var(--mono, monospace);
@@ -8104,7 +8275,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    because the tape's line is a line and not a column. Empty is not drawn,
    which is `.nu-count`'s own `:empty` rule and the reason there is one state
    to keep honest instead of two. */
-.nu-bar .nu-tape .nu-count{ flex: 0 0 auto; flex-direction: row;
+.nu-tape .nu-count{ flex: 0 0 auto; flex-direction: row;
   align-items: baseline; gap: var(--s1); padding-block: 0; }
 .nu-tapetrack{ block-size: 4px; inline-size: 100%; min-inline-size: 0;
   background: var(--well); border-radius: var(--r2); overflow: hidden; }
@@ -8152,26 +8323,11 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    which is exactly what it read as in the gutter's foot — the same
    `.nu-vh` + `.nu-sub2` pair, the same one writer (`nameRecord`), turned from
    a column into a row that has width to spend. */
-.nu-bar > button[data-k="toptab-Where"] .nu-ic{
-  display: grid; grid-template-columns: 1.4em minmax(0, 1fr);
-  align-items: center; justify-items: start; column-gap: var(--s1);
-  inline-size: 100%; }
-.nu-bar > button[data-k="toptab-Where"] .nu-g{ grid-column: 1; grid-row: 1 / 3;
-  justify-self: center; }
-.nu-bar > button[data-k="toptab-Where"] .nu-vh,
-.nu-bar > button[data-k="toptab-Where"] .nu-sub2{
-  grid-column: 2; min-inline-size: 0; inline-size: 100%;
-  text-align: start; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; }
-.nu-bar > button[data-k="toptab-Where"] .nu-vh{
-  position: static; inline-size: 100%; block-size: auto;
-  clip: auto; clip-path: none; margin: 0; padding: 0;
-  font-size: var(--t2, .82rem); font-weight: var(--fw-label); }
-.nu-bar > button[data-k="toptab-Where"] .nu-sub2{ display: block;
-  color: var(--dim); font-size: var(--t1, .72rem); line-height: 1.15;
-  font-weight: 500; }
-.nu-bar > button[data-k="toptab-Where"][aria-pressed="true"] .nu-sub2{
-  color: #FFFFFF; opacity: .8; }
+/* (THE GENRE PLATE'S SIX RULES STOOD HERE and are `.nu-topstrip`'s now,
+   2026-09-06, §18 — the button left this band on 2026-09-06 and these did
+   not follow it, which is why the record had no name in the corner. A
+   selector left behind is not dead code: it is a control that stops working
+   in a place the file still describes.) */
 /* THE DIE STACKS TIGHT, and this is the rule `#nu-tray #rewrite` was: `#rewrite`
    is the one button in the chrome with a child OUTSIDE its `.nu-ic` — the
    literal space that keeps the accessible name from joining into "rewrite5"
@@ -8197,6 +8353,9 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-baropts[hidden]{ display: none; }
 .nu-bartp{ position: relative; }
 /* the room fader stands up inside the fold, as it did in the gutter */
+/* (THE ROOM LEFT THIS FOLD ON 2026-09-06, §18 — it is `.nu-vs-wide` in the
+   bar itself now. The rule is kept because `.nu-vs-tall` is the chassis's own
+   name and the fold would seat one correctly if it were ever given one.) */
 .nu-baropts .nu-vs-tall{ justify-self: center; align-self: center;
   margin-block: var(--s1); }
 .nu-baropts .nu-vs-val{ font-variant-numeric: tabular-nums; }
@@ -9179,6 +9338,16 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
       attribute and the row overflows at 320. */
 #atlasFind{ margin-block-start: var(--s4); }
 #atlasQ{ flex: 1 1 9ch; min-inline-size: 0; block-size: var(--tap); }
+/* THE CLEAR IS A TAP SQUARE AT THE FIELD'S END (2026-09-06). It is the page's
+   own control and not the platform's: `type="search"` draws a ✕ on desktop
+   Chrome and NOTHING on iOS Safari, which is the device this box is for. It
+   is `hidden` until there is something to clear, so the strip is one field
+   wide at rest and the field never has to make room for an inert square. */
+#atlasClear{ flex: 0 0 auto; inline-size: var(--tap); block-size: var(--tap);
+  display: grid; place-items: center; padding: 0;
+  background: var(--panel); color: var(--dim);
+  border: var(--bw) solid var(--line); border-radius: var(--r1); }
+#atlasClear:hover{ color: var(--ink); background: var(--flag-tint); }
 /* 3 · THE COUNT AND THE ERA CHIPS ARE DELETED (2026-09-06) --------------
       Paul: *"Get rid of the buttons for eras like 'the old Stone Age' those
       all go."* and *"Get rid of 'All 479 records'."* `#atlasJump` (the

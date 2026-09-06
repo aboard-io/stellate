@@ -1,5 +1,9 @@
 {
-  "note": "THE WINCHESTER TROPER — Winchester 1000. Two manuscripts copied\nfor the Old Minster around the millennium, holding about a\nhundred and fifty two-voice organa — the earliest PRACTICAL\ncollection of polyphony anywhere: not a treatise's worked\nexample but a singer's book, a second voice written to be sung\nagainst the chant on the feast days of a named cathedral.\n`organum` (Paris 1200) takes it as a parent today — Notre-Dame\ndid not invent singing in parts, it industrialized a practice\nthis book proves two centuries older (edge closed 2026-08-29).\n\nLINEAGE: chant carrying its own shadow — and the sequence\nrepertory is IN the troper, which is why the edge is real.",
+  "note": "THE WINCHESTER TROPER — Winchester 1000. Two manuscripts copied\nfor the Old Minster around the millennium, holding about a\nhundred and fifty two-voice organa — the earliest PRACTICAL\ncollection of polyphony anywhere: not a treatise's worked\nexample but a singer's book, a second voice written to be sung\nagainst the chant on the feast days of a named cathedral.\n`organum` (Paris 1200) takes it as a parent today — Notre-Dame\ndid not invent singing in parts, it industrialized a practice\nthis book proves two centuries older (edge closed 2026-08-29).\n\nLINEAGE: chant carrying its own shadow — and the sequence\nrepertory is IN the troper, which is why the edge is real.\n\nREFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). `word` transposes\nchair 1 down a fourth against the chant and holds it there, which the\nwords above state as \"below at the fourth, closing to unison\" — the\nearliest written polyphony anywhere, and it is parallel by\nconstruction. A pass that broke those fourths would be correcting the\nmanuscript.",
+  "copyist": {
+    "refuse": "all",
+    "why": "the second voice is \"the vox organalis, below at the fourth, closing to unison\" — parallel organum is what the Troper's hundred and fifty pieces are."
+  },
   "label": "Winchester 1000",
   "voices": 2,
   "bars": 8,

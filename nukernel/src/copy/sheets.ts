@@ -319,6 +319,16 @@ export const SHEETS: Table = {
      targets under it are the die and the number they always were. */
   "burger.app": "Stellate",
   "burger.seed": "Set seed",
+  /* ...AND FOUR BLOCKS SINCE 2026-09-06 (TABLE.md §18). Paul: *"All that
+     stuff at the top? I expected that to live in the hamburger and for the
+     hamburger to be nicely organized."* Two more headings, in the same voice
+     as `Set seed`: each one names WHAT ITS BLOCK IS ABOUT and promises
+     nothing, because a heading is not a control (DESIGN §4). `Where you are`
+     is the six views and is written the way the law says it — the top is
+     where you GO; `The record` is the eight surfaces that belong to the whole
+     song, which is the scope's own name in §14 and on the sheet it left. */
+  "burger.views": "Where you are",
+  "burger.record": "The record",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",

@@ -456,7 +456,7 @@ import { mountRules } from "./rules.js";
    write is avail.js's `set` and the recompile is `changed()`), `loopStrip` for
    the loop points, `vpaintOf` for the player's colour and `playsWhat` for what
    the chair is on. Not one of those four facts is re-derived over there. */
-import { samplesOf, mountSamples, stopSample } from "./samples.js";
+import { samplesOf, mountSamples, stopSample, zonesLoop } from "./samples.js";
 /* THE CATALOGUE (TABLE.md §12b). Every word this file prints is looked up by
    key; `nukernel/src/copy/sheets.ts` is the page that holds them.
    ...AND IT IS HELD UNDER TWO MORE NAMES, which is not a second owner. A dozen
@@ -4621,7 +4621,26 @@ function paints() {
                    without either being told about the other. */
                 cat: [v("--v0", "#1F8FD6"), v("--v1", "#8B5CF6"),
                       v("--v2", "#D6336C"), v("--v3", "#B45309"),
-                      v("--vb", "#7A8188"), v("--drum", "#6B7280")] };
+                      v("--vb", "#7A8188"), v("--drum", "#6B7280")],
+                /* ...AND THE TWO FACES, for exactly the reason the six hues are
+                   here (2026-09-06): a canvas needs a LITERAL where the page
+                   uses a token, and a literal typed at the call site is a
+                   second opinion about what the page's face is. This one read
+                   `"800 12px system-ui, sans-serif"` and `"700 10px
+                   ui-monospace, Menlo, monospace"` at three `ctx.font =` lines
+                   in `rollPaint`, which is how the piano roll came to be the
+                   only surface on the page NOT in IBM Plex the morning nu.css
+                   moved to it. Read off `--sans`/`--mono`, the same one owner
+                   every DOM rule reads, so the roll's section caps and bar
+                   numbers cannot disagree with the table's. THE FALLBACKS ARE
+                   GENERIC KEYWORDS AND NOT A SECOND STACK: `getPropertyValue`
+                   answers "" only before the sheet has parsed, and a face
+                   NAMED here — even a plausible one — would be the fifth
+                   opinion this round exists to delete. `sans-serif` and
+                   `monospace` name no family; they hand the never-taken branch
+                   back to the browser. */
+                sans: v("--sans", "sans-serif"),
+                mono: v("--mono", "monospace") };
   return deckPaint;
 }
 /* WHICH OF THE SIX CATEGORY SLOTS A VOICE SITS IN — the one arithmetic, so
@@ -4868,7 +4887,7 @@ function drawRoll(abs) {
   }
   // bar rules — TIME IS VERTICAL, so a barline is horizontal; a section
   // boundary is a bold rule wearing the section's own name in a flag cap
-  ctx.font = "700 10px ui-monospace, Menlo, monospace";
+  ctx.font = "700 10px " + P.mono;
   const bars = Math.ceil(scoreSteps / scoreSPB());
   for (let b = 0; b <= bars; b++) {
     const st = b * scoreSPB(), y = yAt(st);
@@ -4884,13 +4903,13 @@ function drawRoll(abs) {
     }
     if (secStart && si < DOC.form.sections.length) {
       const nm = secName(si);
-      ctx.font = "800 12px system-ui, sans-serif";
+      ctx.font = "800 12px " + P.sans;
       const wcap = Math.min(w - L - 20, Math.ceil(ctx.measureText(nm).width) + 12);
       ctx.fillStyle = P.flag; ctx.fillRect(L + 2, y + 4, wcap, 20);
       ctx.strokeStyle = P.ink; ctx.lineWidth = 2;
       ctx.strokeRect(L + 2, y + 4, wcap, 20);
       ctx.fillStyle = P.ink; ctx.fillText(nm, L + 8, y + 19);
-      ctx.font = "700 10px ui-monospace, Menlo, monospace";
+      ctx.font = "700 10px " + P.mono;
     }
   }
   // the notes: onset at its time-y, duration DOWNWARD; a note the record has
@@ -9720,6 +9739,46 @@ const SAMPENV = {
 };
 const SAMPKEY = { attack: "atk", decay: "dcy", sustain: "sus", release: "rel" };
 
+/* ---------- THE ONE STAGE A RECORDING CAN REFUSE (2026-09-06) -------------
+   Paul: *"Samples should have full Adsr why don't they"*. They do — the four
+   handles above reach engine/faust/voices/sampler.js's `envAt` on both play
+   paths and in press. But a SUSTAIN is the level a note rests at WHILE IT IS
+   HELD, and a sample with no loop zone does not rest: it stops when the
+   recording runs out. MEASURED (test/sampler-adsr.test.js S5): on a 0.35 s
+   one-shot with the note held 2 s the sound ends at 0.350 s whatever the
+   handles say, and a 1.5 s release is never heard at all.
+
+   So the sustain handle is REFUSED there rather than drawn live over a level
+   nothing holds — and it is refused OUT LOUD: `src/envelope/plate.ts` takes
+   the tap and prints the sentence in the plate's own `.nu-wsay`, which is
+   §15's B5 law reaching the one widget its table had not (a refused handle
+   used to carry its reason in `title` alone, which is the silent grey wearing
+   an accessible name).
+
+   THE OTHER THREE STAY LIVE, because each provably shapes what IS there: the
+   same probe measured the fall reaching its level at 0.510 s on a longer
+   one-shot and a 1 s attack clipping a 0.35 s stab's peak from 0.675 to 0.236.
+
+   THE CHAIR'S OWN WORD OUTRANKS THE ZONES, both ways, because it is what the
+   engine does: `sound.looping` becomes `loopon` and sampler.js `resolveLoop`
+   forces the whole zone into a loop on 1 and forces a one-shot on 2. So a
+   hand that has said "loop" on a stab gets the handle back, and a hand that
+   has said "once" on a bed loses it — and the sentence says which. THE WORD
+   IS RESOLVED THROUGH fields.js VOX, never re-tabulated here.
+   NULL IS NOT NO: `zonesLoop` answers null where the page has not measured
+   (no registry row yet, a Faust model), and nothing is greyed on a fact the
+   box has not got. */
+function sustainWhy(v) {
+  const w = (v.sound || {}).looping;
+  const on = w != null && NuFields.VOX && NuFields.VOX.looping
+    ? NuFields.VOX.looping.t[w] : null;
+  if (on === 1) return null;                       // forced loop: it can rest
+  if (on === 2) return _t("env.playOnce.why");     // forced one-shot: it cannot
+  let loops = null;
+  try { loops = zonesLoop(v.instrument); } catch (e) { loops = null; }
+  return loops === false ? _t("env.noLoop.why") : null;
+}
+
 function envSpecFor(v) {
   const sampled = (() => { try {
     return !!NuAvail.sampledVoice(DOC, { voice: v.name }, ENV); }
@@ -9751,13 +9810,15 @@ function envSpecFor(v) {
     const D = sampledEnvDerived(v);
     const sound = v.sound || {};
     const segs = sampled ? ENVSEGS : ["attack", "release"];
+    const susWhy = sampled ? sustainWhy(v) : null;
     const fields = segs.map((seg) => {
       const B = SAMPENV[seg], k = SAMPKEY[seg];
       const raw = sound[k];
       const val = raw == null ? null : voxSeconds(k, raw);
       return { seg, k: "env|" + v.name + "|" + seg, label: B.label, unit: B.unit,
                min: B.min, max: B.max, step: B.step,
-               value: val, derived: D[seg] };
+               value: val, derived: D[seg],
+               ...(seg === "sustain" && susWhy ? { why: susWhy } : {}) };
     });
     return {
       k: "env|" + v.name, label: _t("env.plate"), fields,
@@ -13322,14 +13383,26 @@ function logRow(L) {
    accessible name is written after the paint). The ≡'s own name keeps the
    count too, for the reason the log's does: a reader who cannot see the badge
    is told it. */
+/* ...AND IT CAME OFF THE ≡ AGAIN, 2026-09-06 (§18), WHICH IS A DECISION AND
+   NOT A REVERT. The paragraph above is right that a count behind a door is a
+   count nobody can see; what it did not measure is what the number READS AS on
+   the one button this app has for navigation. Paul's photograph shows `≡52`
+   in the top right corner of a phone — and 52 beside a hamburger, on a page
+   that is also running an audio engine, reads as fifty-two errors. It is the
+   LOG's line count, and the log's own row inside the plate has printed it all
+   along (`logBtn`, below, badge and accessible name both). So the number lives
+   on the thing it is about, once. The ≡ says what it does: `menu`.
+   THE COST IS NAMED: with the plate shut, the log's count is behind a door.
+   That is the correct place for it — a log line is not a notification, nothing
+   in this box is waiting for the reader, and the one readout a player wants
+   with the plate shut is the tape, which is on the glass at every moment. */
 function paintBadge() {
   const n = logs.length || null;
   if (menuBtn) {
-    paintIcon(menuBtn, { glyph: GLYPH.act.menu.g, num: n,
+    paintIcon(menuBtn, { glyph: GLYPH.act.menu.g,
                          word: GLYPH.act.menu.w, say: GLYPH.act.menu.s });
     menuBtn.setAttribute("aria-expanded", String(menuOpen));
-    menuBtn.setAttribute("aria-label",
-      n ? _tn("burger.menuLog", n) : GLYPH.act.menu.w);
+    menuBtn.setAttribute("aria-label", GLYPH.act.menu.w);
   }
   if (!logBtn) return;
   paintIcon(logBtn, { glyph: GLYPH.log.g, num: n,
@@ -13348,10 +13421,27 @@ function addRow(coalesced) {
   }
 }
 
+/* ...AND IT OPENS WITH A HEADER AND AN × (2026-09-06, §18). Every pop-up on
+   this page closes three ways — a tap outside, Escape, and its own opener
+   pressed again — and the log is the one surface whose opener is BEHIND
+   another door: its row is in the hamburger, and opening the hamburger closes
+   the log (one open thing). So its third way out is the × a sheet's header
+   already carries (§13a.3), in the same shape and with the same word. */
+function logHead() {
+  const head = el("div", null, "nu-sheethead");
+  head.append(el("b", GLYPH.log.w));
+  const x = icon({ k: "logclose", glyph: GLYPH.act.close.g,
+                   word: GLYPH.act.close.w, say: GLYPH.act.close.s });
+  x.setAttribute("aria-label", _t("act.closeTab.aria", { name: GLYPH.log.w }));
+  x.addEventListener("click", () => setLog(false));
+  head.append(x);
+  return head;
+}
 function buildLog() {
   if (!logPanel) return;
   logPanel.textContent = "";
   logList = null;
+  logPanel.append(logHead());
   if (!logs.length) { logPanel.append(el("p", LOG_REST)); return; }
   logList = el("ol");
   for (const L of logs) logList.append(logRow(L));
@@ -13370,6 +13460,10 @@ function setLog(open) {
     logPanel.hidden = !logOpen;
     if (logOpen) buildLog(); else { logPanel.textContent = ""; logList = null; }
   }
+  /* ...AND IT IS THE THIRD SURFACE THE ONE OWNER KNOWS (2026-09-06, §18). A
+     log standing over the table while the menu opened behind it is one of the
+     four boxes in Paul's photograph. */
+  if (NuOpen) { if (logOpen) NuOpen.opened("log"); else NuOpen.closed("log"); }
   paintBadge();
 }
 
@@ -13793,17 +13887,254 @@ let stripEl = null;
    One node, moved between panels by `showTab`; `.nu-top` is deleted. */
 let sheetHead = null, sheetName = null;
 let menuBtnMap = new Map();
+/* THE MENU'S OTHER TWO BLOCKS (2026-09-06, §18): the RECORD's eight surfaces
+   and the seed's one door. `recordBtnMap` is keyed by the scope's OPEN key —
+   `sp|time`, `mix|master`, `corner` — which is the key `land()` takes, so the
+   row and the door it presses are named the same thing in one place. */
+let recordGroup = null, seedMenuBtn = null;
+const recordBtnMap = new Map();
+
+/* A GROUP'S HEADING. The small-caps line v298 drew over the seed row, made
+   into the one shape all four blocks wear — and it carries an id, because a
+   heading that does not name its group is decoration (each group is
+   `aria-labelledby` this). */
+function menuHead(id, word) {
+  const b = el("b", word, "nu-menusub");
+  b.id = "nu-menuh-" + id;
+  return b;
+}
+/* A ROW OF THE RECORD'S GROUP: the WORD left and the row's own SENTENCE right,
+   one line, ellipsised — which is exactly what the row said when it stood at
+   the top of the session (§13a.2's "every special row is ONE LINE at rest").
+   The line moved into the menu; the shape of it did not. */
+/** the word, then its sentence — and never the sentence alone. */
+function menuName(word, aria) {
+  const w = String(word || "").trim();
+  const a = String(aria || "").trim();
+  if (!a) return w;
+  if (!w) return a;
+  return a.toLowerCase().indexOf(w.toLowerCase()) === 0 ? a : w + " — " + a;
+}
+function menuRow(k, key, word, face, aria) {
+  const b = mkBtn("");
+  b.removeAttribute("id");
+  b.className = "nu-menurow";
+  b.dataset.k = "burger|" + k;
+  /* AND IT SAYS WHAT IT IS TO A SCREEN READER, which is the row's own
+     sentence — `special.time.aria` and its siblings, off the same `scopes()`
+     the words come from. THE VISIBLE WORD IS THE HEAD OF IT, which is this
+     page's standing rule for every mark (test/gutter.js T10), so a sentence
+     that does not already begin with the word is PREFIXED by it rather than
+     replaced: seven of the eight say "Time — tempo, meter and key" and begin
+     with their word already; the song's options say "Song options" under a row
+     that says `this song`, and a reader who hears one word on the glass and
+     another in their ear has been given two names for one control. */
+  b.setAttribute("aria-label", menuName(word, aria));
+  b.append(el("b", word, "nu-menuword"), el("span", face || "", "nu-menuface"));
+  b.addEventListener("click", () => {
+    /* THE MENU CLOSES AND ONE SHEET OPENS — never a stack of eight, never two
+       at once. `land()` OPENS and never toggles (src/table/grid.ts says why),
+       and the one owner of "what is open" closes the plate on the way past;
+       `setMenu(false)` here is the same statement said by the surface itself,
+       which is what keeps `aria-expanded` on the ≡ honest. */
+    setMenu(false);
+    if (openTab !== "Band") showTab("Band");
+    paintChrome();
+    try { if (tableGrid && tableGrid.land) tableGrid.land(key); } catch (e) {}
+  });
+  return b;
+}
+/* THE EIGHT, PAINTED OFF THE GRID THAT OWNS THEM. Built on the first paint
+   (the grid does not exist when the plate is built) and repainted every time
+   the plate opens, because a face is a sentence about a record that moves. */
+function paintMenuFaces() {
+  if (!recordGroup) return;
+  let list = [];
+  try { list = tableGrid && tableGrid.scopeMenu ? tableGrid.scopeMenu() : []; }
+  catch (e) { list = []; }
+  if (!list.length) return;
+  const sig = list.map((x) => x.key).join(",");
+  if (sig !== recordGroup.dataset.sig) {
+    recordGroup.textContent = "";
+    recordBtnMap.clear();
+    for (const it of list) {
+      const b = menuRow(it.k, it.key, it.word, it.face, it.aria);
+      recordGroup.append(b);
+      recordBtnMap.set(it.key, b);
+    }
+    recordGroup.dataset.sig = sig;
+    return;
+  }
+  for (const it of list) {
+    const b = recordBtnMap.get(it.key);
+    if (!b) continue;
+    const f = b.querySelector(".nu-menuface");
+    if (f && f.textContent !== (it.face || "")) f.textContent = it.face || "";
+    const w = b.querySelector(".nu-menuword");
+    if (w && w.textContent !== it.word) w.textContent = it.word;
+    const nm = menuName(it.word, it.aria);
+    if (nm && b.getAttribute("aria-label") !== nm) b.setAttribute("aria-label", nm);
+  }
+}
 
 /* THE MENU IS A DOOR AND WEARS `aria-expanded` — the #playops discipline, made
    about the four viewers. It is `hidden` rather than emptied for `.nu-trayopts`'
    own reason: the rows keep their listeners and their focus, and a control
    rebuilt under a thumb is a control that has lost its place. */
+/* ===== ONE OPEN THING, ACROSS THE WHOLE APP (2026-09-06, TABLE.md §18) ===
+   Paul, sending a photograph of his phone with the hamburger, a floating
+   volume panel, a play-options popup AND a section's sheet all standing at
+   once: *"It's easy to get into a state like that and hard to get out of
+   it."*
+
+   THE DISEASE IS OWNERSHIP AND NOT DECORATION. Every surface on this page
+   owned its own openness — `menuOpen` here, `playOpsBox.hidden` in the bar,
+   `logOpen` in the logger, `OPEN` inside src/table/grid.ts — so four of them
+   could be true at the same moment and not one line of code anywhere was
+   wrong. DESIGN.md §3 has said *"one selection; one open pop-up; one owner per
+   fact"* since it was written; this is that sentence made true, in one place,
+   for every surface at once.
+
+   THE LAW, IN THREE LINES.
+     · Every surface REGISTERS a closer under a name, once, and says `opened`
+       when it opens and `closed` when it shuts.
+     · `opened(name)` CLOSES whatever else was standing — that is the whole
+       mechanism, and it is four lines long.
+     · `shut()` closes whatever is open and answers whether it closed
+       anything, which is what Escape and the ways out are built on.
+
+   IT IS PUBLISHED ON `globalThis` because `src/table` is its own bundle and
+   reaches the page the way it reaches `NuGlyph` and `NuLozenge` — by name, at
+   call time, never by import. A surface that has not registered never closes
+   anything, which is the honest failure mode for a page whose bundles load in
+   an order this file does not control.
+
+   THE CLOSER IS CALLED WITH THE NAME ALREADY CLEARED, so a surface whose
+   closer says `closed()` on the way down (all four of them do) cannot loop.
+
+   WHAT IS NOT IN HERE. The explainer (`#nu-say`) is a TOOLTIP — it holds no
+   control, it closes on the next press, on a scroll and on Escape through
+   ui/glyph.js's own listeners, and a hand cannot be stuck in it. And a VIEW is
+   not a pop-up: `showTab` is where you ARE, one of six, and the way out of one
+   is the door you came in by. Escape takes you back to the table from a view
+   anyway (`armEscape`), because a view wears an × and a surface with an × is
+   one a hand expects Escape to shut. */
+const OPENERS = new Map();
+let OPENNOW = null;
+const NuOpen = {
+  register: (name, close) => { OPENERS.set(name, close); },
+  now: () => OPENNOW,
+  /** this surface has just opened: close whatever else was standing. */
+  opened: (name) => {
+    if (OPENNOW && OPENNOW !== name) {
+      const was = OPENNOW;
+      OPENNOW = null;                    // cleared FIRST: no closer can loop
+      const c = OPENERS.get(was);
+      if (c) c();
+    }
+    OPENNOW = name;
+    return OPENNOW;
+  },
+  /** this surface has shut itself. */
+  closed: (name) => { if (OPENNOW === name) OPENNOW = null; return OPENNOW; },
+  /** close whatever is open; true if there was anything to close. */
+  shut: () => {
+    if (!OPENNOW) return false;
+    const was = OPENNOW;
+    OPENNOW = null;
+    const c = OPENERS.get(was);
+    if (c) c();
+    return true;
+  },
+};
+globalThis.NuOpen = NuOpen;
+/* THE GATE'S READER, AND IT IS THE PAGE'S OWN. test/oneopen.js asks the owner
+   what is open rather than counting boxes it thinks it recognises. */
+window.__nuOpen = () => OPENNOW;
+window.__nuShut = () => NuOpen.shut();
+NuOpen.register("menu", () => { setMenu(false); paintChrome(); });
+NuOpen.register("log", () => setLog(false));
+
+/* ===== ALWAYS A WAY OUT (2026-09-06, §18) ==============================
+   Paul's second sentence about the photograph: *"…and hard to get out of
+   it."* Measured on the rendered page before this round, at 390 under iPhone
+   emulation: of the four surfaces standing in that shot, ONE closed on a tap
+   outside (the section sheet, and only where the tap missed every control),
+   ONE closed on Escape (the log), and three closed on their own opener. This
+   installs the two that were missing, once, for every surface at the same
+   time.
+
+   THREE WAYS OUT OF EVERY POP-UP, AND THEY ARE THE SAME THREE EVERYWHERE:
+     · a TAP OUTSIDE it — this listener;
+     · ESCAPE — this listener;
+     · its own OPENER pressed again — each surface's own toggle, unchanged.
+
+   NOTHING DISMISSES UNDER A FINGER THAT IS CHANGING A VALUE (DESIGN §3,
+   unchanged): the tap is only outside if it landed outside the open surface
+   AND outside the control that opens it, so every fader, chip and field
+   INSIDE a pop-up is untouched by this.
+
+   IT IS ONE LISTENER ON `document` AND NOT ONE PER SURFACE. A surface that
+   installs its own is a surface that can forget to remove it — which is the
+   `armOutside` bug src/table/grid.ts writes down at its own closer — and four
+   of them would have been four different ideas of "outside".
+
+   THE GRID KEEPS ITS OWN TAP-OUTSIDE and this one does not fight it: a SHEET
+   is not a pop-up (§13a), it is in flow, and its own closer already refuses a
+   tap that lands on a control ("a control decides for itself"). What this
+   adds for a sheet is Escape from anywhere on the page rather than only from
+   inside the pane, which is where the keydown could reach before. */
+const OUTBOX = { menu: () => menuBox, playops: () => playOpsBox,
+                 log: () => logPanel };
+const OUTOPENER = { menu: () => menuBtn, playops: () => playOpsBtn,
+                    log: () => logBtn };
+document.addEventListener("pointerdown", (e) => {
+  const now = OPENNOW;
+  if (!now || !OUTBOX[now]) return;             // nothing open, or the grid's
+  const box = OUTBOX[now]();
+  const opener = OUTOPENER[now] && OUTOPENER[now]();
+  const t = e.target;
+  if (!t || !t.closest) return;
+  if (box && (t === box || box.contains(t))) return;        // inside it
+  if (opener && (t === opener || opener.contains(t))) return; // its own door
+  NuOpen.shut();
+}, true);
+/* ...AND ESCAPE, WHICH IS THE SAME GESTURE FOR A KEYBOARD. It closes the one
+   open surface; with nothing open it takes a VIEW back to the table, which is
+   what the × in that view's header does. A field or a text box keeps its own
+   Escape — a hand cancelling an edit is not a hand asking to leave the page —
+   and #seedin's own listener is the one that answers there. */
+function armEscape() {
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" && e.key !== "Esc") return;
+    const t = e.target;
+    const tag = t && t.tagName ? t.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if (NuOpen.shut()) { e.preventDefault(); return; }
+    if (openTab !== "Band") { showTab("Band"); e.preventDefault(); }
+  });
+}
+armEscape();
+
+/* ...AND IT IS ONE OF THE FOUR SURFACES THE ONE OWNER KNOWS (2026-09-06,
+   §18). Opening it closes whatever was standing — a sheet, the play fold, the
+   log — and closing it says so, so the next thing to open does not close a
+   menu that is already shut. The FACES of the record's rows are repainted on
+   the way open, because a menu that says `79 BPM · 4/4` is saying what the
+   record says right now and the record moves while the menu is shut. */
 function setMenu(want) {
   const now = want == null ? !menuOpen : !!want;
   if (now === menuOpen) return menuOpen;
   menuOpen = now;
+  if (menuOpen) paintMenuFaces();
   if (menuBox) menuBox.hidden = !menuOpen;
   if (menuBtn) menuBtn.setAttribute("aria-expanded", String(menuOpen));
+  if (menuOpen) NuOpen.opened("menu"); else NuOpen.closed("menu");
+  /* AND IT COMES BACK TO THE TOP EVERY TIME IT OPENS. The plate scrolls
+     inside itself when the list is longer than the phone (§18), and a menu
+     that reopened halfway down would be a list whose first block a hand had to
+     go looking for. */
+  if (menuOpen && menuBox) menuBox.scrollTop = 0;
   return menuOpen;
 }
 
@@ -13821,10 +14152,16 @@ function setMenu(want) {
    analog' etc spinner button to the main area right above play/stop and out of
    opts."* It stands between the door and ▶ in the bar, which is the neighbour
    it had in the gutter's foot.) */
+/* ...AND THERE ARE TWO OF THEM SINCE 2026-09-06 (§18). The ROOM came out of
+   this fold and stands in the bar itself — Paul: *"Get rid of the volume
+   options, popping up in the bottom instead integrate them into the bar with
+   only a pop-up."* What is left is the mode and the take, which are the two
+   facts about the next press of ▶ that a 320px line has no room for; they are
+   this bar's ONE pop-up, and the one owner of "what is open" knows it by
+   name. */
 const playOptItems = () => [
   { key: "tp.mode", node: modeBtn },
   { key: "tp.take", node: takeBtn },
-  { key: "tp.vol", node: volWrap },
 ];
 /* ===== THE GENRE'S NAME, ON THE SCREEN AT EVERY DEPTH ==================
    Paul, 2026-09-02: *"The name of the genre should be obvious."*
@@ -13902,7 +14239,14 @@ whereBtn.addEventListener("click", () =>
 function nameRecord() {
   const gk = DOC.basis;
   const g = GENRES[gk] || {};
-  const word = (NuWiki && NuWiki.name ? NuWiki.name(gk) : null) || g.label || gk;
+  /* ...AND THERE IS ALWAYS A WORD (2026-09-06, §18). The three readers are
+     the wiki, the catalogue and the key, and a record with no basis at all —
+     one built by hand, or arriving from an older save — answered `undefined`
+     to all three and drew a plate with a picture and no name on it. The app's
+     own name is the honest fourth answer: this record is a Stellate record,
+     and the plate is a door to the picker either way. */
+  const word = (NuWiki && NuWiki.name ? NuWiki.name(gk) : null) || g.label || gk
+             || _t("burger.app");
   const sub = g.label && g.label !== word ? g.label : null;
   const isOpen = openTab === "Where";
   paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word, sub,
@@ -14075,7 +14419,21 @@ function chromeRow() {
      TABLE.md §16 carries the arithmetic and the trade. */
   stripEl = el("div", null, "nu-topstrip");
   stripEl.id = "nu-topstrip";
-  stripEl.append(whereBtn, menuBtn);
+  /* ...AND THE TAPE STANDS BETWEEN THEM (2026-09-06, §18). Paul: *"You could
+     put the playback bar to the right of the genre on top top if you want."*
+
+     IT SHARPENS v298'S LAW RATHER THAN BREAKING IT. *"The bottom is what you
+     hear"* was written about CONTROLS, and the tape is the one thing in the
+     bar a thumb never presses — a READOUT. So the law reads, from today: THE
+     TOP STRIP IS IDENTITY, STATUS AND NAVIGATION; THE BOTTOM BAR IS CONTROLS,
+     AND ONLY CONTROLS. The strip had a dead gap between the name and the ≡ at
+     every width (measured: 191px at 390, 121px at 320) and the bar had to
+     find room for the room and the die; moving the readout up pays for both.
+     IT IS THE SAME COMPONENT, MOVED. `tapeNode()` builds it, `paintTape` is
+     its one writer, `markForm` is that writer's one caller, and the repaint
+     budget T13f gates — the word at most once a bar, the fill at most once a
+     beat — is a property of `paintTape` and travels with it. */
+  stripEl.append(whereBtn, tapeNode(), menuBtn);
   nav.append(stripEl);
   nameRecord();
 
@@ -14097,34 +14455,83 @@ function chromeRow() {
   appName.id = "nu-menuname";
   menuBox.setAttribute("aria-labelledby", "nu-menuname");
   menuBox.append(appName);
+  /* ===== FOUR GROUPS, EACH WITH ITS OWN HEADING (2026-09-06, §18) =======
+     Paul: *"All that stuff at the top? I expected that to live in the
+     hamburger and for the hamburger to be nicely organized."* The order is
+     the order a hand needs them in: WHERE YOU ARE (the six views) · THE
+     RECORD (its eight surfaces, which were eight stacked lines at the top of
+     the session until this round) · SET SEED · the log.
+     THE HEADINGS ARE THE `SET SEED` HEADING, SAID FOUR TIMES. `.nu-menusub`
+     is the small-caps line v298 drew over the seed row; nothing new is
+     invented for the other three, and each one is the `aria-labelledby` of
+     the group it heads, so the plate reads as four named lists rather than as
+     seventeen buttons in a box. */
+  menuBox.append(menuHead("views", _t("burger.views")));
   menuBtnMap.clear();
+  const viewGroup = el("div", null, "nu-menugroup");
+  viewGroup.setAttribute("aria-labelledby", "nu-menuh-views");
   for (const it of MENUROWS()) {
     const b = icon({ k: it.key, glyph: it.glyph, word: it.word, say: it.say });
     b.addEventListener("click", () => { it.act(); setMenu(false); paintChrome(); });
-    menuBox.append(b);
+    viewGroup.append(b);
     menuBtnMap.set(it.key, b);
   }
-  menuBox.append(el("hr", null, "nu-viewcut"));
-  /* ===== BLOCK TWO: THE SEED, OUT OF THE BAR (docs/NAV.md) ==============
-     Paul: *"Move the seed out of the bottom nav and into a 'set seed' in the
-     hamburger."* THE ROW IS HANDED OVER, NOT REBUILT — `seedRowEl` is the same
-     `.nu-seedrow` with `#rewrite`, `#seedval`, `#seedin` and `.nu-seedwait`
-     inside it, so the die still rolls what the die rolled and the number is
-     still typed into the field it always was. The label beside it is the
-     block's own heading, not a second control: the two targets in the row are
-     the control, and *"Set seed"* is what they are for.
-     `.nu-count` DOES NOT COME WITH IT. The general countdown is the tape's
-     now (see `paintTape`): it is the one readout on this page a player wants
-     while the menu is shut. */
+  menuBox.append(viewGroup);
+  /* ===== THE RECORD'S OWN SURFACES (2026-09-06, §18) ===================
+     RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE · SONG,
+     in the order the record is made in — which is `scopes()`'s order in
+     src/table/grid.ts, read through `scopeMenu()` and never restated here.
+     The rows are built on the FIRST paint rather than now, because the grid
+     that owns the list is built by `showTab("Band")` a few lines below this
+     function and asking it for the eight before it exists would have been a
+     menu of empty words. `paintMenuFaces` is that paint, and it is called
+     every time the plate opens. */
+  recordGroup = el("div", null, "nu-menugroup");
+  recordGroup.setAttribute("aria-labelledby", "nu-menuh-record");
+  menuBox.append(menuHead("record", _t("burger.record")), recordGroup);
+  /* ===== THE SEED: TWO DOORS, ONE OWNER (2026-09-06, §18) ==============
+     Paul, v298: *"Move the seed out of the bottom nav and into a 'set seed'
+     in the hamburger."* Paul, today: *"Move the dice back into the bottom.
+     Leave them with the hamburger too."*
+
+     TWO PLACES AND ONE CONTROL, WHICH IS A DOOR AND NOT A COPY. `.nu-seedrow`
+     — the die, the number, the field the number becomes and the seed's own
+     wait — is in the BAR, because it is a control and the bar is controls
+     (§18's own sentence). What stands here is ONE row that PRESSES it:
+     `#seedmenu` closes the plate and calls `openSeedEdit()`, which is the
+     same door `#seedval` presses, so a hand that came to the menu to type a
+     number lands in the field with the keypad up. There is no second seed
+     writer, no second reading and no second store: `printReading` is still
+     the one writer of the number and it now paints it in two places, which is
+     this file's own idiom (`#rewrite` has carried the number in its face and
+     in its accessible name since 2026-08-27).
+     `.nu-count` IS NOT HERE EITHER. The general countdown is the tape's (see
+     `paintTape`), and the tape is the top strip's since this round. */
+  /* AND THIS BLOCK HAS NO HEADING, WHICH IS DESIGN §3's OWN RULE: *"a heading
+     whose block can name itself is not drawn"*. The block is ONE row and the
+     row says `Set seed`; a `SET SEED` heading over a `SET SEED` row is the
+     word twice, which is exactly what it drew for an hour. The other two
+     headings stand because their blocks are six rows and eight. */
   const seedLine = el("div", null, "nu-menuseed");
-  const seedLbl = el("b", _t("burger.seed"), "nu-menusub");
-  seedLbl.id = "nu-menuseedname";
-  seedRowEl.setAttribute("aria-labelledby", "nu-menuseedname");
-  seedLine.append(seedLbl, seedRowEl);
+  seedMenuBtn = mkBtn("seedmenu");
+  seedMenuBtn.className = "nu-menurow";
+  seedMenuBtn.addEventListener("click", () => {
+    setMenu(false); paintChrome(); openSeedEdit();
+  });
+  seedLine.append(seedMenuBtn);
   menuBox.append(seedLine);
-  menuBox.append(el("hr", null, "nu-viewcut"));
+  /* AND IT IS NAMED AND FILLED BEFORE ANYTHING PRESSES IT. `printReading` is
+     the one writer of the number and of this row's face, and it has already
+     run for the boot by the time the chrome is built — a row created after it
+     would stand there with no word and no name until the next seed change,
+     which is the shape a screen reader meets on a fresh page. */
+  printReading();
+  /* (AN `<hr class="nu-viewcut">` STOOD HERE. The plate's blocks are told
+     apart by their headings and by the air around them since §18; a rule as
+     well is a second spelling of the same seam, and it is 17px of a plate
+     that measured 33px too tall for a 844px phone.) */
   // the face says "log" and the NAME says how many — see `paintBadge`, which
-  // is the one writer of both and of the ≡'s own badge
+  // is the one writer of both (the ≡'s badge is deleted: §18)
   logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: GLYPH.log.w,
                   say: GLYPH.log.s, on: false });
   logBtn.setAttribute("aria-label",
@@ -14151,7 +14558,20 @@ function chromeRow() {
   const tp = el("div", null, "nu-bartp");
   tp.append(playOpsBox, playOpsBtn, voicingBtn, playBtn);
   barEl.append(tp);
-  barEl.append(tapeNode());
+  /* ===== THE DIE COMES BACK, AND THE ROOM COMES WITH IT (2026-09-06, §18) =
+     Paul: *"Move the dice back into the bottom. Leave them with the hamburger
+     too."* and *"…integrate them into the bar with only a pop-up."*
+
+     THE SAME NODE, MOVED — NOT A SECOND ONE. `seedRowEl` is the `.nu-seedrow`
+     v298 handed to the hamburger: `#rewrite`, `#seedval`, `#seedin` and the
+     seed's own wait, with their listeners, their focus and their value. It is
+     here because it is a CONTROL and the bar is controls; the plate's `set
+     seed` row is a DOOR that presses this one (see `seedMenuBtn`), which is
+     how the die is in two places with one owner.
+     AND THE ROOM IS THE BAR'S FLEXIBLE CHILD, where the tape used to be: it
+     takes whatever the four fixed targets leave, prints its own percent, and
+     needs nothing opened to be set. */
+  barEl.append(seedRowEl, volWrap);
   nav.append(barEl);
 
   logPanel = $("nu-log");
@@ -14192,6 +14612,11 @@ function paintChrome() {
   }
   nameRecord();
   tapeFollow();
+  /* AND THE RECORD'S EIGHT ROWS SAY WHAT THE RECORD SAYS (2026-09-06, §18) —
+     only while the plate is open, because a repaint of eight sentences nobody
+     can see is eight sentences of work per draw. `setMenu` paints them on the
+     way open for the other half of the same rule. */
+  if (menuOpen) paintMenuFaces();
 }
 /* ===== THE FACETS ARE DELETED, 2026-09-04 (TABLE.md wave 2c) =============
    `FACETS = ["inst", "mix", "plays"]`, `voiceFacet`, `settledFacet` and the
@@ -15787,7 +16212,17 @@ const volOut = el("output", "100%", "nu-vs-val");
    through `.nu-baropts .nu-vs-tall`, which is the box that owns the geometry
    rather than a third name for the control. A dead class string is a selector
    somebody will one day write a rule for. */
-const volWrap = el("span", null, "nu-vs nu-vs-tall");
+/* ...AND IT IS A LINE IN THE BAR, NOT A COLUMN IN A POPUP (2026-09-06, §18).
+   Paul: *"Get rid of the volume options, popping up in the bottom instead
+   integrate them into the bar with only a pop-up."* `nu-vs-tall` was the
+   180px column that unfolded above the bar — the floating panel in his
+   photograph — and `nu-vs-wide` is the same chassis turned ninety degrees,
+   standing IN the bar as its flexible child with the level printed at its
+   end. The room is therefore READ at a glance and SET without opening
+   anything, which is what "integrate them into the bar" asks for; the pop-up
+   that is left behind `#playops` holds the two the line cannot hold — the
+   mode and the take. */
+const volWrap = el("span", null, "nu-vs nu-vs-wide");
 /* ===== THE TRANSPORT WEARS MARKS (2026-08-28) ============================
    Paul: *"Please make all the tabs and top buttons into sensible icons to save
    space."*
@@ -15945,7 +16380,13 @@ const setPlayOps = (want) => {
   const open = want == null ? playOpsBox.hidden : !!want;
   playOpsBox.hidden = !open;
   playOpsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  /* THE FOLD IS A POP-UP AND THE ONE OWNER KNOWS IT (2026-09-06, §18). It is
+     the bar's ONE pop-up now — the room came out of it and stands in the bar
+     itself, so what is left behind this door is the mode and the take, the
+     two facts about the next press of ▶ that have no room on a 320px line. */
+  if (open) NuOpen.opened("playops"); else NuOpen.closed("playops");
 };
+NuOpen.register("playops", () => setPlayOps(false));
 playOpsBtn.addEventListener("click", () => setPlayOps());
 on("transport:state", () => say());
 volEl.value = String(vol);
@@ -15981,7 +16422,7 @@ volEl.addEventListener("input", () => { sayVol(); setVol(+volEl.value);
    every mark, so nu.css reveals all of them with one rule and this one needs
    no exception. (With the stylesheet off it is what it always was: a word in
    the DOM beside a slider.) */
-volWrap.append(vchassis(volEl, () => (+volEl.value) / 100).track, volOut,
+volWrap.append(vchassis(volEl, () => (+volEl.value) / 100, true).track, volOut,
                el("span", volEl.getAttribute("aria-label"), "nu-vh"));
 
 /* ---------- THE TWO GESTURES BESIDE PLAY (2026-08-27) -------------------
@@ -16086,6 +16527,20 @@ const printReading = () => {
      on it will do). A screen reader must not be told "4242" and left to guess
      that it is pressable. */
   seedValBtn.setAttribute("aria-label", _t("seedRow.value.aria", { n }));
+  /* ...AND THE MENU'S OWN DOOR TO IT WEARS THE SAME NUMBER (2026-09-06, §18).
+     ONE WRITER, THREE PLACES — the digit in the bar, the die's name, and the
+     plate's `set seed` row — which is this function's shape already. The row
+     is a DOOR and not a second store: pressing it opens the field this same
+     row holds. */
+  if (seedMenuBtn) {
+    seedMenuBtn.replaceChildren(
+      el("b", _t("burger.seed"), "nu-menuword"),
+      el("span", n, "nu-menuface"));
+    /* THE WORD FIRST, THEN THE NUMBER — `#rewrite`'s own shape ("rewrite " +
+       n), for T10's own reason: what a reader hears must begin with what a
+       reader sees. */
+    seedMenuBtn.setAttribute("aria-label", _t("burger.seed") + " " + n);
+  }
 };
 on("box", printReading);
 
@@ -16687,10 +17142,16 @@ window.__eightRow = (id, want) => {
    exactly one row at every moment including on the table itself; `seed` and
    `log` are the other two blocks, named so a gate can say the plate has three
    of them and not two. */
+/* ...AND SINCE 2026-09-06 IT REPORTS THE FOUR BLOCKS (§18). `rows` is still
+   `MENUROWS()` whole; `record` is the eight the plate now opens (the words a
+   hand reads, off the grid that owns them); `seed` is whether the plate holds
+   a DOOR to the die — the row itself is back in the bar, which is what
+   `seedbar` says — and `log` is unchanged. */
 window.__eightMenu = () => ({ open: menuOpen,
   rows: MENUROWS().map((r) => ({ key: r.key, word: r.word, on: !!r.on })),
-  seed: !!(seedRowEl && seedRowEl.parentNode &&
-           seedRowEl.closest("#nu-menu")),
+  record: [...recordBtnMap.keys()],
+  seed: !!(seedMenuBtn && seedMenuBtn.closest("#nu-menu")),
+  seedbar: !!(seedRowEl && seedRowEl.closest("#nu-bar")),
   log: !!logOpen });
 window.__eightMenuOpen = (want) => { setMenu(want); paintChrome(); return menuOpen; };
 /* THE CRATE, FOR A GATE THAT HAS TO HOLD IT AGAINST THE ENGINE (2026-09-03).

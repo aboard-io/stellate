@@ -43,8 +43,29 @@
      disabled the page still reads top to bottom as the same document.
      IN <head>, BEFORE THE SCRIPTS, and not only for the flash: abcjs appends
      two <style> elements of its own at runtime, so a <link> parsed here is
-     what makes nu.css document.styleSheets[0] — the handle the sheets gate
-     and Paul's stylesheet-off check both use. -->
+     what puts nu.css at the head of document.styleSheets — the handle the
+     sheets gate and Paul's stylesheet-off check both use. (It read "what
+     makes nu.css document.styleSheets[0]" until 2026-09-06. There are TWO
+     links now and nu.css is [1]; the sentence is corrected rather than the
+     order, because no caller ever indexed that list — test/sheets.js,
+     test/selects.js and ui/selects.js all ITERATE `document.styleSheets` and
+     disable every one of them, which is the check Paul actually described and
+     is what makes the second link harmless. A gate that wants nu.css by name
+     should read `.href`. And a page whose FACES switch off with its rules is
+     a truer picture of the plain document than one whose type stays dressed.)
+
+     AND THE FACES COME FIRST, IN THEIR OWN SHEET (2026-09-06, Paul: *"Make
+     everything the IBM flex Family fonts referring to one style sheet."*).
+     fonts.css holds thirty `@font-face` rules and nothing else; nu.css holds
+     the three TOKENS that point at them (`--sans --mono --sym`) and, as ever,
+     every rule that uses one. It is linked BEFORE nu.css so a face is known
+     before the rule that asks for it paints — a `@font-face` discovered after
+     first layout is a reflow, and this page measures its own geometry. The
+     woff2 files are SELF-HOSTED at /vendor/plex: a Google Fonts <link> would
+     be a third-party origin on a page that boots with the wire cut, and a
+     subresource with no CORP header under this document's COEP
+     `require-corp`. Both of those are fatal; neither is a style question. -->
+<link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="nu.css">
 <!-- AND NO REQUEST FOR A FAVICON. An empty data: URI, which is the only way to
      tell a browser not to go and ask: every load of this page fetched

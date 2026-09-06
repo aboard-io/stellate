@@ -756,6 +756,16 @@ var SHEETS = {
      targets under it are the die and the number they always were. */
   "burger.app": "Stellate",
   "burger.seed": "Set seed",
+  /* ...AND FOUR BLOCKS SINCE 2026-09-06 (TABLE.md §18). Paul: *"All that
+     stuff at the top? I expected that to live in the hamburger and for the
+     hamburger to be nicely organized."* Two more headings, in the same voice
+     as `Set seed`: each one names WHAT ITS BLOCK IS ABOUT and promises
+     nothing, because a heading is not a control (DESIGN §4). `Where you are`
+     is the six views and is written the way the law says it — the top is
+     where you GO; `The record` is the eight surfaces that belong to the whole
+     song, which is the scope's own name in §14 and on the sheet it left. */
+  "burger.views": "Where you are",
+  "burger.record": "The record",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",
@@ -1305,8 +1315,14 @@ var ATLAS = {
      genre already. */
   /* ===== WRITING A RECORD =============================================== */
   "atlas.writing": "Writing {where}…",
-  "atlas.wrote": "{where} · {name} — {sections}, {voices}, take {take}",
-  "atlas.wroteSeed": "{where} · {name} — {sections}, {voices}, take {take} · seed {seed}",
+  /* (`atlas.wrote` AND `atlas.wroteSeed` STOOD HERE to 2026-09-06. Paul:
+     *"We don't need this with the genre picker at all: 'Bristol 1994 ·
+     noirhop — 14 sections, 9 players, take 0 · seed 28138' stop producing
+     it."* The receipt is deleted with its keys: the place and the genre are
+     the record's name in the top strip, the sections and the players are the
+     grid you land on, and the take and the seed are the seed control's own
+     face. `atlas.writing` and `atlas.cannotWrite` below are the sentences the
+     page cannot otherwise show, and they stay.) */
   "atlas.cannotWrite": "Cannot write {name} yet",
   "atlas.pickPlace": "Pick a place first",
   "atlas.noRecordAt": "{place} — no record at {year}",
@@ -1340,6 +1356,10 @@ var ATLAS = {
        passes. */
   "atlas.find.aria": "Find a genre by name or place",
   "atlas.find.hint": "Find a genre",
+  /* THE CLEAR SAYS WHAT IT UNDOES, not what it is (2026-09-06, Paul: "let me
+     easily dismiss the letters I've entered"). "Clear" alone on a page with a
+     dozen clearable things tells a screen reader nothing about which. */
+  "atlas.find.clear": "Clear the search",
   "atlas.find.none": "Nothing matches {q}",
   /* ===== A SHARE LINK THAT DOES NOT RESOLVE ============================= */
   "atlas.linkNoPlace.say": "{place} is not a place on this globe",
@@ -1569,6 +1589,24 @@ var MISC = {
   /* ...and when the engine has no port for it, the reason instead. */
   "env.handleWhy": "{name} {value} — {why}",
   "env.clearBack": "Reset {name} to default",
+  /* ===== WHAT A RECORDING CANNOT BE TOLD (2026-09-06) ==================
+     Paul: *"Samples should have full Adsr why don't they"* — and they do now,
+     except for the one stage a recording can genuinely refuse. A sustain is
+     the level a note RESTS at while it is held, and a sample with no loop zone
+     does not rest: it stops when the recording runs out. MEASURED, on a 0.35 s
+     one-shot with the note held 2 s — the sound ends at 0.350 s whatever the
+     four handles say, and a 1.5 s release tail is never heard at all. So the
+     handle is refused rather than drawn live over a level nothing holds, and
+     the sentence NAMES THE DOOR: `looping` is a word on the same sheet, three
+     rows down, and setting it to "loop" gives the recording a zone to sit in.
+     THE KEYS END IN `.why` because that is what test/copy.test.js `budgetOf`
+     reads a sentence-length budget off — a refusal is a sentence beside a
+     control, and this catalogue holds it to twelve words like every other one.
+     (The rest of the plate stays live: the attack, the fall and the tail all
+     shape what IS there — the same probe measured the fall reaching its level
+     at 0.510 s on a longer one-shot.) */
+  "env.noLoop.why": "this recording has no loop zone — looping it gives somewhere to rest",
+  "env.playOnce.why": "set to play once — the note stops when the sample ends",
   /* the breakpoint lane, the same plate with anonymous points. */
   "env.point": "Point {n}",
   "env.pointAt": "{value} at {at}",

@@ -3371,6 +3371,21 @@ value and the word measured against its own box:
 stylesheet — it is `--wordw`, measured on the rendered page, and it came out
 at **67px** on both records at both phone widths.)
 
+**AND IT SURVIVED THE FACE CHANGING, WHICH IS THE POINT OF MEASURING IT**
+(2026-09-06, the IBM Plex round — DESIGN.md §1). A floor that is a number in a
+stylesheet is a claim about one font; a floor that is measured is a claim about
+whatever font is on the glass. Re-measured on the artifact with `--sans`/
+`--mono` moved from the system stack to IBM Plex Sans / IBM Plex Mono, at 390
+and 320, on Kingston 1969 and Coach House: **67px per player on Coach House at
+both widths, before and after** — 4 players at 390 and 3 at 320, the section
+column frozen, the same **two** heads ellipsised and no third. What moved is
+the SECTION column, which sizes to its content rather than to the floor: nine
+characters of the cell's sans went 91.63px → 86.41px (Plex Sans is the
+narrower face at 16px/500), so the whole Coach House table is 834px → **830px**
+— four pixels of slack given back, in the direction that costs nothing. No
+element overflows or truncates where it did not: the page-wide census counted
+17 clipped boxes on Kingston and 178 on Coach House at 390, and 17 / 178 after.
+
 **THE DECISION: (ii) — FEWER PLAYER COLUMNS ON SCREEN, WITH A SWIPE, THE
 SECTION COLUMN FROZEN.** The column floor is a WORD (`--wordw`: 9ch in the
 cell's own type plus the cell's own side padding, **measured by `stick()` and
@@ -4367,3 +4382,472 @@ fault — a rule that belonged to the surface a control LEFT:
 **AND THE RECORD'S NAME WAS CENTRED IN A 1,200px PLATE AT 1280** until it was
 looked at: `flex: 1 1 auto` came over from the bar with the node. See THE TOP
 STRIP above.
+
+### 17 · Samples get the whole envelope
+
+**Paul, 2026-09-06:** *"Samples should have full Adsr why don't they"*
+
+§11 gave the sampled lane a `decay` and a `sustain` on 2026-09-05 and said so
+in its own words — *"No genre writes them today, so every record is
+byte-identical: this is the port, and the page's envelope editor is what fills
+it."* The port was real. This round asked whether it **arrived**, which is the
+[[declared-but-never-arriving]] check every capability here runs, and the
+answer was: two of the four stages, on two of the three render lanes.
+
+#### WHAT WAS MEASURED FIRST
+
+Rendered PCM through the shipped `engine/faust/voices/sampler.js mixPCM`, with
+the sample itself a **constant 1** so the output *is* the gain envelope, sample
+for sample. A note held 2 s on a looped zone. (`test/sampler-adsr.test.js`, and
+the probe it was written from.)
+
+**A SAMPLED CHAIR**
+
+| stage | a port in the engine | reachable by a hand | changes the rendered sound |
+|---|---|---|---|
+| attack | yes — `u.sampler.atk`, both play paths **and** press | yes, a plate handle | **yes** — peak moves 0.012 s → 1.000 s |
+| decay | yes — `u.sampler.dcy`, live + stream renderer, **not press** | yes, a plate handle | only paired with a sustain under 1; **never in press** |
+| sustain | yes — `u.sampler.sus`, live + stream renderer, **not press** | yes, a plate handle | **NO on its own** — sus .3 alone rendered ratio **1.0000**; **never in press** |
+| release | yes — `u.sampler.rel`, all three lanes | yes, a plate handle | **yes** — tail moves 0.090 s → 1.500 s |
+
+**A SYNTH (MODELLED) CHAIR** — `nukernel/knobs.js` is itself the measurement
+(the extractor probed the parent's `pitchedUnit` at both ends of every
+candidate key and kept what moved), and `knobsEnvSpec` draws **only** the
+segments the instrument has, so this column is a census and not a claim:
+
+| stage | how many of the 28-voice fleet declare it | drawn on the plate |
+|---|---|---|
+| attack | 18 | yes, on those 18 |
+| decay | **3** (`tb303`, `juno60`, `casiocz`) | yes, on those 3 |
+| sustain | 8 | yes, on those 8 |
+| release | 20 | yes, on those 20 |
+
+So the asymmetry Paul heard was real and it was not the one it looked like: the
+sampled chair was the only chair *offered* all four handles, and two of them
+did nothing.
+
+#### THE TWO GAPS, AND WHY EACH WAS SILENT
+
+**1 · A SUSTAIN WITH NO DECAY WAS SILENCE.** `envAt`'s guard read
+`dcyN > 0 && susL < 1`. The decay's **derived value is 0** and no genre writes
+one, so dragging *only* the sustain handle — the commonest gesture there is on
+this plate — moved a control that changed nothing. Worse, the editor drew the
+cliff it had asked for: `adsr.ts path()` puts a straight `L` to `y(sus)` where
+there is no decay, so the picture and the sound disagreed. **A decay is now the
+LENGTH of the fall and a sustain is WHETHER there is one**; at `dcy 0` the level
+is the sustain from the first sample past the attack, which is what a
+zero-length ramp means and what the drawing already showed. Absent is still
+today, bit for bit: sustain absent leaves `susL` 1 and the guard false.
+
+**2 · PRESS WAS THE FOURTH READER AND THE ONLY DEAF ONE.**
+`engine/faust/press/press.js:299` lifts `u.sampler.atk` and `.rel` onto every
+note; `live.js` and both of `stream-renderer.js`'s call sites carried `dcy`/`sus`
+from the day they existed. So a chair given a fall **heard it live and pressed a
+flat one** — the same fact in four places, three of them updated. The gate that
+holds this now is a source read over `engine/` (S8): every line that lifts
+`u.sampler.atk` must lift all four within the note object it is building, which
+is the check that would have caught this on the day it was written.
+
+#### THE FOUR STAGES, MEASURED AFTER
+
+Same rig, one stage changed each time, `atk .012 · rel .09` where not named:
+
+| what changed | peak | at the sustain level | sustain | tail |
+|---|---|---|---|---|
+| baseline | 0.6750 @ **0.012 s** | 0.012 s | 1.000 of peak | **0.090 s** |
+| **attack 1.0 s** | 0.6750 @ **1.000 s** | 1.000 s | 1.000 | 0.090 s |
+| **decay 0.5 s** (sus .3) | 0.6750 @ 0.012 s | **0.510 s** | **0.300** | 0.090 s |
+| **sustain .3, no decay** | 0.6737 @ 0.012 s | **0.012 s** (instant) | **0.301** | 0.090 s |
+| **release 1.5 s** | 0.6750 @ 0.012 s | 0.012 s | 1.000 | **1.500 s** |
+
+A longer fall lands later (`dcy 1.5` → at the level at 1.506 s) and a second
+level reads back (`sus .7` → 0.7013), so each row is a control and not a
+coincidence.
+
+#### AND THE ONE STAGE A RECORDING CAN REFUSE
+
+A sustain is the level a note rests at **while it is held**, and a sample with
+no loop zone does not rest — it stops when the recording runs out. Measured, on
+a 0.35 s one-shot with the note held 2 s:
+
+| | result |
+|---|---|
+| the sound ends at | **0.350 s**, on every one of the five settings above |
+| a 1.5 s release tail | **0.000 s** — the note was let go at 2 s and there had been no sound since 0.35 s |
+| a 1 s attack | clips the peak from 0.6750 to **0.2362** |
+| a 0.5 s fall (on a longer one-shot) | still reaches its level at **0.510 s** |
+
+So the **sustain handle is refused there and the other three are not**, because
+each of the other three provably shapes what *is* there. **19 of the 131 ids in
+the sampler library have no looped zone, and 11 of those are sampler-routed** —
+`pizzicato_strings steel_drums orchestra_hit timpani xylophone gun_shot
+telephone bird_tweet reverse_cymbal breath_noise fret_noise` — every one of
+them a struck, plucked or one-shot sound. The other eight (`taiko_drum
+woodblock melodic_tom agogo crunch_guitar di_guitar marimba tinker_bell`) are
+one-shots the patch tables send to a Faust **model**, so they never reach the
+sampled branch at all and cannot carry the sentence; counting the registry
+alone would have overstated its reach, and both gates count the routed subset.
+
+**THE CHAIR'S OWN WORD OUTRANKS THE ZONES, BOTH WAYS**, because that is what
+the engine does: `sound.looping` becomes `loopon` and `sampler.js resolveLoop`
+forces the whole zone into a loop on 1 and forces a one-shot on 2. So a hand
+that has said *loop* on a stab **gets the handle back**, and a hand that has
+said *once* on a bed loses it. The sentence names the door either way:
+
+> this recording has no loop zone — looping it gives somewhere to rest
+
+…and where a hand has said *once* on a chair whose zones do loop:
+
+> set to play once — the note stops when the sample ends
+
+Both are held to `test/copy.test.js`'s twelve-word sentence budget, which is
+what the `.why` suffix on the two keys buys: a refusal is a sentence beside a
+control and this catalogue measures it as one.
+
+`null` is not "no": `ui/samples.js zonesLoop` answers `null` where the page has
+not measured (no registry row, a Faust model), and **nothing is greyed on a
+fact the box has not got**.
+
+#### §15 B5 REACHES ITS LAST WIDGET
+
+B5's table listed six widgets and the envelope handle was not among them, and
+it was the one that needed it most: a refused handle carried its sentence in
+`title`, in `dataset.why` and in its accessible name, and `plate.ts handle()`
+**returned before it bound a single listener**. A thumb on it did nothing at
+all. That is the silent grey wearing an accessible name, which is precisely
+what B5 outlawed.
+
+The handle is `aria-disabled` and never `disabled` (it always was), and now
+**a tap on it prints its reason and writes nothing** — into `.nu-wsay`, the
+same class, the same shape and the same `say|<address>` key
+`src/table/sheet.ts` already uses, so nu.css and `test/selects.js` both already
+know it. One line per plate, its room reserved at creation so a sentence
+arriving under a thumb moves nothing. The refused handle also takes
+`data-say`, so `ui/glyph.js wireSay`'s hover-and-hold popover explains it too —
+two affordances, neither of them a gesture the platform swallows.
+
+`src/envelope/bands.ts` is deliberately NOT wired to the same line: no caller
+passes a `why` to an EQ band today, and the XY pad already prints its axis's
+reason permanently under the pad. A say line nothing can print is the bug this
+round is about, pointed the other way.
+
+#### WHAT THIS ROUND DID NOT DO
+
+- **THE CATALOGUE IS UNTOUCHED.** Not one of `nukernel/genres/*.json` writes
+  `dcy` or `sus`, and none was given one — a flood of envelopes over 482 rows
+  is not what "why don't they" asked for, and T2's identity stayed green with
+  **no re-pin of `BASE_SHA`**. The rows whose own instrument obviously wants an
+  envelope are queued and named, not written: the **19 one-shot ids above**
+  want a decay and a short release rather than the lane's 90 ms default
+  (`marimba`, `xylophone`, `pizzicato_strings`, `steel_drums` most audibly),
+  and the sampled string and choir beds want the slow attack `swell` currently
+  spells as a word.
+- **THE BASS AND DRUM CHAIRS STILL HAVE NO ENVELOPE AT ALL**, and this is
+  measured, not assumed: **10 of the 11 `BASSCHOICES` ids route
+  `sampler:<id>`**, `recipeFor("bass", …)` applies `samplerVox` exactly as it
+  does for a line, and the engine port is therefore already open — but
+  `document.js toGenre` carries the `chairs` seam for **`lines` only**, so a
+  bass voice's `sound` never crosses it, and `avail.js`'s `sound.*` rows are
+  all `chair: "line"`. Giving a bass chair its envelope is a document-seam
+  round, not an editor round, and it is symmetric today (a *synth* bass chair
+  has no envelope either), so it is filed rather than smuggled in.
+
+### 18 · One open thing, and always a way out
+
+**Paul, 2026-09-06**, with a photograph of his phone showing the hamburger, a
+floating volume panel, a play-options popup and a section's sheet standing at
+the same moment: *"It's easy to get into a state like that and hard to get out
+of it."*
+
+Then, on a second shot — the record's disclosure expanded, eight lines of
+RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE filling the
+screen with the grid pushed off the bottom: *"All that stuff at the top? I
+expected that to live in the hamburger and for the hamburger to be nicely
+organized."*
+
+And, offered as an option: *"You could put the playback bar to the right of the
+genre on top top if you want."*
+
+(This section is **18** and not 17 because 17 landed the same day, from another
+round — *Samples get the whole envelope*. Two rounds, one afternoon.)
+
+#### 18a · The law
+
+**ONE THING IS OPEN AT A TIME, IN THE WHOLE APP, AND THERE ARE ALWAYS THREE
+WAYS OUT OF IT.**
+
+DESIGN.md §3 has said *"one selection; one open pop-up; one owner per fact"*
+since it was written. It was not true, and no line of code was wrong: every
+surface owned its own openness — `menuOpen` in the chrome, `playOpsBox.hidden`
+in the bar, `logOpen` in the logger, `OPEN` inside `src/table/grid.ts` — so
+four of them could be true at once and each one was locally correct. **A law
+with no owner is a wish.** `globalThis.NuOpen` (ui/eight.js) is the owner:
+every surface registers a closer under a name, says `opened` when it opens and
+`closed` when it shuts, and `opened` closes whatever else was standing. Four
+lines of mechanism.
+
+A **sheet** keeps §13a's law — it is in flow, under the row it belongs to, and
+it is not a pop-up. What is new is that the two directions are closed: opening
+a pop-up shuts an open sheet, and opening a sheet shuts an open pop-up.
+
+**THE TOP STRIP IS IDENTITY, STATUS AND NAVIGATION; THE BOTTOM BAR IS
+CONTROLS, AND ONLY CONTROLS.** This sharpens §16's *"the top is where you go,
+the bottom is what you hear"* rather than replacing it: that sentence was
+written about controls, and the tape is the one thing in the bar a thumb never
+presses. So the readout goes up, and the die and the room come down.
+
+#### 18b · Paul's own state, before and after
+
+Driven on the rendered page under iPhone emulation (`devices['iPhone 14']`,
+DPR 3, `isMobile`, `hasTouch`), 390 × 844 and 320 × 844, on Kingston 1969 —
+open a section's sheet, then the play options, then the hamburger:
+
+| after this step | before | after |
+|---|---|---|
+| a section sheet | 1 surface | **1** |
+| + the play options | 2 | **1** |
+| + the hamburger | **3** | **1** |
+
+And the owner agrees with the glass at every step (`__nuOpen()` names exactly
+what a DOM walk finds open) — a page that BELIEVES one thing is open while two
+are would pass a count and still be the bug. `test/oneopen.js` O1 and O4.
+
+**EVERY PAIR.** For each of the twelve ordered pairs of the four surfaces,
+opening the second closes the first: 12 of 12 at both widths (O2).
+
+#### 18c · The way out — the dismissal matrix
+
+Measured before and after, at 390 and 320. A tap outside lands on the strip's
+own air, never on a control (DESIGN §3: *nothing dismisses under a finger that
+is changing a value*).
+
+| surface | tap outside | Escape | its own close |
+|---|---|---|---|
+| the hamburger | ✗ → **✓** | ✗ → **✓** | ✓ |
+| the play options | ✗ → **✓** | ✗ → **✓** | ✓ |
+| the log | ✗ → **✓** | ✓ | ✓ → **✓** (a × in its header now) |
+| a table sheet | ✓ | ✗ → **✓** | ✓ |
+
+**6 of 12 before, 12 of 12 after** — the before measured on a HEAD overlay of
+the four files this round touches, driven by the same probe. Two listeners on `document` do all of it —
+one `pointerdown` and one `keydown` — because four surfaces with four
+listeners would have been four different ideas of "outside".
+
+**THE LOG'S THIRD WAY OUT IS A ×, NOT ITS OPENER**, and that is a consequence
+of the law rather than an exception to it: the log's opener is a row of the
+hamburger, and opening the hamburger closes the log. So it gets the × a
+sheet's header already carries (§13a.3).
+
+**THE PICKER DOES NOT JOIN THIS LAW, AND HERE IS WHY.** v297 found that Escape
+does not close the Where picker and never did. Where is a **VIEW** — one of
+six, chosen from the menu — and a view is not a pop-up: it has no outside
+inside the pane, and the way out of one is the door you came in by (the plate
+is a toggle since §16). What Escape DOES do, from today, is what the ×
+in a view's own header does: with nothing open, Escape takes a view back to
+the table (O5). A field keeps its own Escape — the seed's number cancels its
+edit and the page does not move (O5b).
+
+#### 18d · The record's eight move into the hamburger
+
+The record's surfaces were a disclosure at the top of the session: a face line
+(`120 BPM · 4/4 · B major`) with a gear, then seven rows. Expanded, that is
+eight lines — about 800px of an 844px phone — with the grid pushed off the
+bottom, which is the same disease as four open panels: **a disclosure that
+expands in place instead of being somewhere.**
+
+They are rows of the hamburger now, in a group of their own, and a tap on one
+**closes the menu and opens that one sheet**. Where the sheet is drawn: **as
+the single open row at the top of the session**, not as a panel over it. Three
+reasons, and the first is the round's own law:
+
+1. §13a.3 already draws a sheet as a row in flow under the head that names it,
+   with that head pinned as its header and the × at its end. A panel over the
+   table would be a THIRD modality on a page that has spent two rounds getting
+   down to two (§16), and a pop-up over the record is the shape Paul
+   photographed.
+2. **Not one address moves.** The eight heads stay in the DOM at `trules`,
+   `ttime`, `tchords`, `tmotifs`, `tmix`, `tproduce`, `tfoot|perf` and
+   `tcorner`, `hidden` unless they are the open one — so `__eightRow("time")`,
+   `__eightMix("master")` and a `land()` off a share link press the same button
+   a thumb presses. `test/table-inventory.json` is a mechanical re-filing: 67
+   rows that read `open: trecord, then: [ttime]` read `open: ttime`.
+3. The × , the tap outside, Escape and the head's own second tap all keep
+   working, because they are the same four doors they were.
+
+**THE GEAR CAME WITH THEM.** `tcorner` — song options: fill from the genre,
+re-seed, transpose — rode the end of the deleted line. It is the EIGHTH scope
+now, drawn by the same builder, and its row in the menu says the word `song`
+where a hand had to know what a gear meant. §16 wrote *"nothing here writes to
+the document except Set seed"*; that is amended here — the menu holds the
+record's own surfaces, and a tap in it OPENS a sheet. The writing is still done
+in the sheet, by a control with a name.
+
+**WHAT THE GRID GETS BACK.** Whole section rows visible at rest, Kingston 1969:
+
+| | 390 × 844 | 320 × 844 |
+|---|---|---|
+| before this round (v298, with the strip) | 9 | 9 |
+| after | **10** | **10** |
+
+Which is the row §16's top strip cost, returned. It does not beat the ten that
+stood before the strip; it equals it — the strip's 44px and the record line's
+44px cancel, and the seven stacked rows were never on the glass at rest.
+
+#### 18e · The hamburger, organized
+
+    ┌────────────────────────────┐
+    │  STELLATE                  │   the app's name
+    │  WHERE YOU ARE             │   ← group heading
+    │    Session · Where ·       │     six views, the current one marked
+    │    Score · Video ·         │
+    │    Screensaver · Export    │
+    │  THE RECORD                │   ← group heading
+    │    RULES     Default rules │     the row's own resting line: the word
+    │    TIME      79 BPM · 4/4… │     left, its sentence right, ellipsised
+    │    CHORDS    i · i · iv · v│
+    │    MOTIFS    10 motifs …   │
+    │    MASTER    soft · worn … │
+    │    PRODUCE   No notes yet  │
+    │    PERFORMANCE stress def… │
+    │    THIS SONG               │
+    │  Set seed              17214│  ← one row, so no heading over it
+    │  log                      3│
+    └────────────────────────────┘
+
+Three headings and seventeen rows. The words and the order are **read off the
+grid** (`Grid.scopeMenu()` → `scopes()`), never restated: a menu with its own
+copy of the eight would be the second owner this round exists to delete. The
+faces are repainted every time the plate opens, and only then.
+
+**MEASURED**, 390 × 844 and 320 × 844: the plate is **785px of content in
+786.8px of glass** — it fits, with nothing to scroll, at both widths. On a
+shorter phone it scrolls **inside itself**, and each group's heading sticks
+while its own rows are under the thumb.
+
+**THE INNER SCROLL IS A NAMED EXEMPTION.** DESIGN §3 says a field too long for
+the screen FOLDS *"and never goes behind a scroll box"*. That law is about a
+FIELD'S OPTIONS — a hand choosing one value out of many, where folding by
+cluster is how it keeps its place. This is a NAVIGATION list of seventeen
+destinations, each its own subject; folding it would put every destination two
+taps away instead of one, which is the cost this round was called to remove.
+§3 now says so in as many words.
+
+**A HEADING WHOSE BLOCK CAN NAME ITSELF IS NOT DRAWN** (§15a) is obeyed: the
+seed's block is ONE row that says `Set seed`, so it lost the `SET SEED` heading
+it wore for an hour, and the log's row says `log`.
+
+#### 18f · The strip and the bar, with the arithmetic
+
+**THE STRIP** — identity, status, navigation — at 390 × 844, 320, 1280:
+
+| | 320 | 390 | 1280 |
+|---|---|---|---|
+| the record's name plate | 116.6 | 116.6 | 116.6 |
+| **the tape** | **157.4** | **218.2** | **1108.2** |
+| the ≡ | 44 | 44 | 44 |
+
+Before, the strip was `[name] … 121px of nothing … [≡]` at 320 and 191px of
+nothing at 390: an auto margin holding the ≡ at the far end. The tape takes
+exactly that gap. It stays **two lines** — the words over a 4px track, both
+inside the strip's 44px — because §16's own measurement holds: a track sharing
+its line with the words cannot show a bar of an 88-bar record moving. It is the
+same node with the same one writer (`paintTape`, called only from `markForm`)
+and the same repaint budget T13f gates: the word at most once a bar, the fill
+at most once a beat.
+
+**THE BAR** — controls, and only controls — at 320, where it is tightest. The
+content box is 312px:
+
+| | width |
+|---|---|
+| `.nu-bartp` — opts, voicing, play (three 44px marks, two 1px seams) | 134 |
+| the seed row — the die and its number | 91.2 |
+| **the room** (`flex: 1 1 auto`) | **92.8** |
+| gaps | ~2 |
+| **total** | **318 of 320, no sideways scroll** |
+
+At 390 the room takes 149.3 and at 1280 it takes 1039.3.
+
+**THE VOLUME IS IN THE BAR AND THERE IS NO VOLUME POP-UP.** Paul: *"Get rid of
+the volume options, popping up in the bottom instead integrate them into the
+bar with only a pop-up."* The floating 180px column is deleted; the same
+chassis (`ui/engineer.js vchassis`, one pointer law, now with an axis) lies
+down in the bar with its percent beside it, so the room is READ at a glance and
+SET without opening anything. The bar's ONE pop-up is `#playops`, and what is
+behind it is the two facts a 312px line cannot hold: the mode and the take.
+
+**THE DIE IS IN TWO PLACES WITH ONE OWNER.** Paul: *"Move the dice back into
+the bottom. Leave them with the hamburger too."* `.nu-seedrow` — the die, the
+number, the field the number becomes, the seed's own wait — is the SAME NODE,
+moved back to the bar. The plate's `Set seed` row is a **door**: it closes the
+menu and calls `openSeedEdit()`, the same door `#seedval` presses, so a hand
+that came to the menu to type a number lands in the field with the keypad up.
+`printReading` is still the one writer of the number and now paints it in three
+places (the digit, the die's name, the plate's row), which is the shape it
+already had.
+
+#### 18g · Two things nobody asked about
+
+**THE RECORD HAD NO NAME IN THE CORNER.** Paul's screenshots show a bare ⊕ at
+the top left at 390, where §16's law says the record's NAME stands. Found on
+the rendered page: the six CSS rules that give that plate its two-line face and
+un-hide its `.nu-vh` word were scoped `.nu-bar > button[data-k="toptab-Where"]`
+— and v298 moved the button out of the bar into the strip without them. In the
+strip the word fell back to the visually-hidden clip, so the only thing on the
+glass was `.nu-sub2` (the place and the year), and on a record whose sub line is
+dropped — the plate drops it when it would say the word twice — the corner was
+a picture and nothing else. The rules are re-scoped to the band the button
+actually stands in, and the plate reads `Reggae / Kingston 1969` again.
+**A selector left behind is not dead code: it is a control that stops working
+in a place the file still describes.** And `nameRecord` now has a fourth
+answer — the app's own name — so a record with no basis at all cannot draw a
+nameless plate.
+
+**THE `52` CAME OFF THE ≡.** The badge on the hamburger was the LOG's line
+count. On the only navigation button this app has, on a phone, `≡52` reads as
+fifty-two errors. It moves to the thing it is about: the log's own row inside
+the plate, which has printed it all along, in its badge and in its accessible
+name. The cost is named — with the plate shut, the count is behind a door — and
+that is the right place for it: a log line is not a notification, nothing in
+this box is waiting for the reader, and the one readout a player wants with the
+plate shut is the tape, which is on the glass at every moment.
+
+#### 18h · The gates
+
+`test/oneopen.js` is new, registered in `test/all.js` (wave 3, browser). Five
+claims, measured at 390 and 320 under iPhone emulation: O1 Paul's own state; O2
+all twelve ordered pairs; O3 the twelve ways out; O4 the owner and the glass
+agree; O5 a view is not a pop-up, and a field keeps its own Escape. **11 ok, 0
+failed.**
+
+Four gates were re-filed rather than softened, and each amendment is a claim
+about the new arrangement in the same words as the old one:
+
+- **`test/shell.js`** — A6d/A6g read the view list by its own addresses (the
+  six are inside `.nu-menugroup` now); **A6o is new**: the record's eight are
+  rows of the plate, in the record's order, each a word and a thumb tall, and
+  `trecord` is asserted ABSENT; the die is in the bar with a door in the plate.
+  A6n follows the tape to the strip. **439 ok, 0 failed, 24 skipped.**
+- **`test/table.browser.js`** — `tap` opens a record surface through the
+  hamburger (the two taps a thumb makes); T10a asks its old question one row at
+  a time and adds "at rest, none"; T13a follows the tape up and the die down;
+  T14a inverts (the line is gone, the eight are the plate's, and the plate's
+  face is the row's face); T14b covers eight addresses where it covered seven;
+  T10g presses Enter where the control now is. **712 ok, 0 failed.**
+- **`test/gutter.js`** — T2/T3/T9 hold the new inventory of both bands, T4
+  drags the fader along its new axis, and T10's badge check is INVERTED: the ≡
+  wears no badge and the log's own row carries the count. **52 ok, 0 failed.**
+- **`test/table-inventory.json`** — 68 rows re-filed, mechanically: `trecord`
+  appears nowhere, and `tcorner` gains a door of its own.
+
+Also run, unchanged and green: `test/sheets.js` (31), `test/selects.js` (all),
+`node test/copy.test.js` (10). `test/atlas.js` is 133 of 134 — G9's "the
+sentence under the globe agrees with `#reading`" is red at HEAD too, on a HEAD
+overlay of this round's four files, so it is not this round's.
+
+**AND THE ROOM ARRIVES**, which is the check this repo has a memory note about
+([[declared-but-never-arriving]]): a real pointer drag along the bar's fader
+moved `#vol` 80 → 24, printed `24%`, and wrote `nukernel.vol.v1 = 24`. The die
+in the bar rolls the seed (1 → 65253) and the plate's row prints the same
+number; the plate's `Set seed` door closes the plate and leaves the keyboard in
+`#seedin`.

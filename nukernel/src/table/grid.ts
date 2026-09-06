@@ -93,6 +93,33 @@ let CLIP: { sec: string; voice: string } | null = null;
 let RO: ResizeObserver | null = null;
 /** the ONE tap-outside closer — see `armOutside`. */
 let OUT: ((e: Event) => void) | null = null;
+/* ===== ONE OPEN THING, ACROSS THE WHOLE APP (2026-09-06, TABLE.md §18) ===
+   Paul, on a phone with a menu, a volume panel, a play popup AND a section
+   sheet standing at once: *"It's easy to get into a state like that and hard
+   to get out of it."*
+
+   THE GRID IS ONE SURFACE AMONG SEVERAL AND IT DOES NOT OWN THE ANSWER. Its
+   own `OPEN` has always been one door at a time INSIDE the table; what it did
+   not know is that the hamburger, the play fold and the log were open behind
+   it. `globalThis.NuOpen` (ui/eight.js) is the one owner of "what is open" in
+   the whole app: every surface REGISTERS a closer under a name, says `opened`
+   when it opens and `closed` when it shuts, and the owner closes whatever
+   else was standing. It is reached through `globalThis` for `NuGlyph`'s own
+   reason — `src/table` is its own bundle and an import of ui/eight.js here
+   would compile the chrome into ui/table.js.
+   A SHEET IS NOT A POP-UP (§13a's law is untouched): it is in flow, under the
+   row it belongs to, and it still closes by a tap outside, by Escape and by
+   its own head. What this adds is that opening a POP-UP closes it, and that
+   opening it closes every pop-up. */
+interface OpenOwner {
+  register(name: string, close: () => void): void;
+  opened(name: string): void;
+  closed(name: string): void;
+}
+const OWNER = (): OpenOwner | null =>
+  (globalThis as unknown as { NuOpen?: OpenOwner }).NuOpen || null;
+/** the name this surface is known by to the one owner. */
+const SHEETNAME = "sheet";
 let STICK: (() => void) | null = null;
 /* ---- IS THE GRID SHOWING? (2026-09-05, TABLE.md §13f, Paul: *"Sections
    should collapse when I touch it."*) The SECTIONS label is a disclosure now:
@@ -107,26 +134,26 @@ let STICK: (() => void) | null = null;
    module evaluation, because a page that folded the grid to reach PRODUCE
    should find it folded on the next load. Every touch of `localStorage` is
    guarded: a private window throws on the ACCESSOR, not only on the call. */
-/* ---- IS THE RECORD PANEL SHOWING? (2026-09-06, TABLE.md §14) ---------
-   The seven record-scope surfaces are one line at rest and their own rows
-   when it is open, which makes this a DISCLOSURE and not a sheet: `OPEN` is
-   still the one open door in the whole grid, and this says whether the seven
-   heads that can BE that door are on the glass.
+/* ---- THE RECORD PANEL IS DELETED, 2026-09-06 (TABLE.md §18) ----------
+   `let RECOPEN = false` STOOD HERE — the disclosure that showed the record's
+   seven surfaces as eight stacked lines at the top of the session. Paul, on
+   the screenshot of it: *"All that stuff at the top? I expected that to live
+   in the hamburger and for the hamburger to be nicely organized."* Measured on
+   that shot: the face line plus seven rows took about 800px of an 844px phone
+   and pushed the grid off the bottom.
 
-   IT IS NOT PERSISTED, AND THAT IS THE DIFFERENCE BETWEEN IT AND `GRIDOPEN`.
-   Folding the grid is a standing preference about a page — a hand that folded
-   it to reach PRODUCE wants it folded next time. Opening the record is a
-   drill-down: you came for the tempo, you set it, and the sheet's resting
-   state is one line. So it starts closed on every load and survives only the
-   rebuilds its own writes cause, which is `OPEN`'s own law.
+   THE SEVEN ARE ROWS OF THE HAMBURGER NOW and a tap on one opens THAT ONE
+   here, as the single open row at the top of the session — §13a.3's law, the
+   sheet in flow under the head that names it, with the head pinned as its
+   header and the × at its end. Nothing about the seven moved: each keeps its
+   `data-k`, its open key, its face and its sheet, and this file draws them
+   from the same four builders. What is deleted is the STACK: a scope's row is
+   on the glass only while it is the open one.
 
-   AND IT IS FORCED OPEN BY ITS CONTENTS. A scope's head keeps its `data-k`
-   in the DOM while the panel is shut (the row is `hidden`, which is the
-   attribute the platform means by "not here"), so a page door that presses
-   one of them by name — `ui/eight.js`'s `__eightRow`, `__eightMix` — lands on
-   the same button a thumb would and the panel opens under it rather than the
-   press falling on the floor. */
-let RECOPEN = false;
+   THE HEADS STAY IN THE DOM, `hidden` WHEN SHUT, for the reason they did
+   under the disclosure: a page door that presses one by name —
+   `ui/eight.js`'s `__eightRow`, `__eightMix`, the hamburger's own rows — lands
+   on the same button a thumb would rather than on the floor. */
 
 const GRIDSTORE = "nu.band.grid.v1";
 let GRIDOPEN = ((): boolean => {
@@ -185,6 +212,14 @@ export interface Grid {
   pointMotif(name: string): boolean;
   /** which motif the bank is armed with, so the button can wear it. */
   armedMotif(): string | null;
+  /** THE RECORD'S OWN SURFACES, FOR THE MENU THAT NOW HOLDS THEM (2026-09-06,
+   *  §18). The hamburger draws a row per scope — the word it says and the
+   *  sentence it is saying today — and opens one with `land()`. It is a READER
+   *  of `scopes()`, which stays the one owner of the list, its order and its
+   *  words: a menu with its own copy of the eight would be the second owner
+   *  the whole round exists to delete. */
+  scopeMenu(): { k: string; key: string; word: string; face: string;
+                 aria: string }[];
 }
 
 /** WHICH OPEN DOORS SURVIVE A REBUILD, and the test is the same sentence for
@@ -289,13 +324,6 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      shut under the thumb that was using it. The open BODY is rebuilt like any
      other; only which row is open is kept. */
   if (!STICKY(OPEN)) { OPEN = null; OPENFIELD = null; }
-  /* ...AND THE PANEL IS OPEN IF ONE OF ITS SEVEN IS (2026-09-06, §14). The
-     seven heads stand in the DOM whether the panel is shown or not, so a
-     press that arrives by name rather than by thumb — `__eightRow("time")`,
-     `__eightMix("master")`, a `land()` off a share link — opens the door and
-     the panel with it. One statement, at the top of the draw, so there is no
-     state in which a sheet is open inside a panel that is not. */
-  if (RECORD_KEY(OPEN)) RECOPEN = true;
   /* THE SELECTION IS PRUNED AGAINST THE RECORD ON EVERY DRAW. A delete, a
      deal-again or a whole new document can take the selected cell away, and a
      selection pointing at a section that is gone is a formula bar showing a
@@ -836,55 +864,38 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         .map((c) => (c as { word?: string | null }).word)
         .filter((w) => w != null && w !== "").join(" \u00b7 "),
       sheet: () => wrapOps([...perfCells(A), ...perfSheet(A)]), lamp: NOLAMP });
+    /* AND THE EIGHTH IS THE SONG'S OWN OPTIONS (2026-09-06, §18) — the gear
+       that rode the end of the record's deleted line. `tcorner`, `corner`,
+       `tableOps`: not one of the three moved. It is drawn by `scopeRows` like
+       the other seven because it IS one of them by scope — fill from the
+       genre, re-seed and transpose are three ways of rewriting the whole
+       record — and being one of them is what puts it in the menu's RECORD
+       group with a word instead of behind a gear nobody could name. It is
+       LAST because it is the only one of the eight whose ops write on the
+       tap, and §9d's forgetting is unchanged: `STICKY` excludes `corner`, so
+       a rebuild closes it and the transpose's own restoring press still
+       lands. */
+    out.push({ k: "tcorner", key: "corner", id: "song", cls: "nu-songrow",
+      word: t("head.song"), aria: t("head.corner.aria"),
+      face: () => "", lamp: NOLAMP,
+      sheet: () => [{ kind: "ops", label: t("head.song"),
+        ops: tableOps(A, A.facing() === "voices").map((x) => x.act
+          ? { ...x, act: () => op(x.word, x.act!) } : x) }] });
     return out;
   };
 
-  /** THE ONE LINE, AND ITS FACE IS THE TIME ROW'S. Asked what a glance needs
-   *  off a record, the walkthrough answered tempo · meter · key; `timeFace`
-   *  has printed exactly that sentence since §10b, off the sheets that own
-   *  the three words. `RECORD.face` IS `timeFace` — one owner, two callers —
-   *  so a re-worded meter re-words this line by existing.
-   *  IT WEARS `.nu-labelbtn` AND NOT `.nu-sphead`, which is the SECTIONS
-   *  disclosure's own argument one row down: it is a button the width of a
-   *  special row's line, so it takes that box, and it is NOT a sheet's head,
-   *  so it must not answer `[aria-expanded="true"].nu-sphead` — the selector
-   *  three gates and this page's own "shut whatever is open" gesture use.
-   *
-   *  ...AND SINCE 2026-09-06 IT HAS NO WORD (TABLE.md §15a). Paul: *"Get rid
-   *  of the words 'the record' and the Section header entirely — we can make
-   *  room."* `THE RECORD` sat to the left of a line that already read
-   *  `84 BPM · 4/4 · G♯ natural minor`, which is a label over the thing it is
-   *  labelling: the row IS its face, and the face is now the line's own words
-   *  and reads from the left at full strength. Nothing is lost to a screen
-   *  reader — the button's accessible name is the disclosure's own sentence
-   *  (*"Show the record settings"*), which says what a tap DOES, and it said
-   *  that before the word went.
-   *
-   *  AND THE TABLE'S OWN OPTIONS RIDE THE END OF THIS LINE (`optsBtn`, below).
-   *  `tcorner` stood in the grid's corner until the SECTIONS label row was
-   *  deleted into that corner, and 81.4px of frozen column does not hold two
-   *  44px targets — the arithmetic is in §15a. Its sheet is *"this song"*:
-   *  fill from the genre, re-seed, transpose. Two of those three rewrite the
-   *  whole record and the third turns the whole table, so the record's line is
-   *  where they belong under DESIGN §3's own law, and it is the same argument
-   *  §14 used to pull MASTER, PRODUCE and PERFORMANCE up out of the foot. */
-  const recordRow = (S: Shape, list: Scope[]): TemplateResult => {
-    let face = "";
-    try { face = RECORD.face(A); } catch (e) { face = ""; }
-    return html`<tr class="nu-sprow nu-recrow" data-special="record">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-labelbtn" data-k=${RECORD.k}
-          aria-expanded=${String(RECOPEN)}
-          aria-controls=${list.map((x) => "nu-scope-" + x.id).join(" ")}
-          aria-label=${RECOPEN ? t("special.record.collapse.aria")
-                               : t("special.record.expand.aria")}
-          @click=${openRecord}
-          ><span class="nu-spface">${face}</span></button>${optsBtn()}
-        </div>
-      </th>
-    </tr>`;
-  };
+  /* (`recordRow` STOOD HERE, 2026-09-06 to 2026-09-06 — THE RECORD's one
+     line: `timeFace`'s sentence, the disclosure that opened the seven, and
+     `optsBtn` at its end. Paul: *"All that stuff at the top? I expected that
+     to live in the hamburger and for the hamburger to be nicely organized."*
+     The seven are the hamburger's own group now and the line has no job left:
+     the record's NAME is the top strip (v298) and its FACTS are what the TIME
+     row says — a face line printing `120 BPM · 4/4 · B major` above a TIME row
+     printing `120 BPM · 4/4 · B major` was the same sentence twice. The gear
+     did not go with it: `tcorner` is the eighth member of `scopes()` below, so
+     song options is a row of the menu's RECORD group and its sheet opens here
+     like the other seven's. `RECORD.face` keeps its one caller in
+     src/table/special.ts, which is the TIME row.) */
 
   /** THE TABLE'S OWN OPTIONS, AT THE END OF THE RECORD'S LINE (2026-09-06,
    *  §15a). Everything about it but WHERE IT STANDS is untouched: the address
@@ -895,29 +906,27 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
    *  already is at the other end of a special row's line — because the line's
    *  words are the record's and a second sentence on it would be a second
    *  subject. */
-  const optsBtn = (): TemplateResult => {
-    const mk = actMark("opts");
-    return html`<button type="button" class="nu-spclose nu-spopts"
-      data-k="tcorner"
-      aria-expanded=${String(OPEN === "corner")}
-      aria-label=${t("head.corner.aria")}
-      @click=${() => toggle("corner")}
-      @contextmenu=${(e: Event) => { e.preventDefault(); toggle("corner", true); }}
-      ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "\u2699"}</span
-      ><span class="nu-vh">${t("head.corner.aria")}</span></button>`;
-  };
+  /* (`optsBtn` STOOD HERE — the gear at the end of the record's line. The
+     line is deleted (above) and the gear is the EIGHTH member of `scopes()`,
+     drawn by `scopeRows` like the other seven: same `tcorner` address, same
+     `corner` open key, same `tableOps` sheet, same §9d forgetting across a
+     rebuild. What it lost is a home on a line that no longer exists; what it
+     gained is a row in the menu's RECORD group that says the word `song`.) */
 
-  /* THE PANEL ITSELF: the seven as sections, one open at a time. "One at a
-     time" costs nothing to enforce — `OPEN` is the grid's one open door and
-     always was, so a second scope opening closes the first by the same
-     `toggle` a cell uses. */
+  /* THE OPEN ONE, AND ONLY THE OPEN ONE (2026-09-06, §18). Every scope's
+     head is in the DOM at every moment — an address a page door presses by
+     name must be there to press — and it is `hidden` unless it is the open
+     one, so what a hand sees at the top of the session is either nothing or
+     ONE row: the head of the sheet standing under it, pinned as its own
+     header by `stick()`, with the × at its end. "One at a time" costs nothing
+     to enforce: `OPEN` is the grid's one open door and always was. */
   const scopeRows = (S: Shape, list: Scope[]): TemplateResult[] => {
     const out: TemplateResult[] = [];
     for (const sc of list) {
       const open = OPEN === sc.key;
       out.push(html`<tr id=${"nu-scope-" + sc.id}
           class=${"nu-sprow nu-scoperow" + (sc.cls ? " " + sc.cls : "")}
-          data-special=${sc.id} ?hidden=${!RECOPEN}>
+          data-special=${sc.id} ?hidden=${!open}>
         <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
           <div class="nu-spline">
           <button type="button" class="nu-sphead" data-k=${sc.k}
@@ -931,23 +940,16 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
           </div>
         </th>
       </tr>`);
-      if (open && RECOPEN)
+      if (open)
         out.push(openRow(S, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen"));
     }
     return out;
   };
 
-  /* THE DISCLOSURE ITSELF, AND IT IS NOT AN OP (the SECTIONS fold's own
-     argument): no `op()`, so the undo stack does not grow; no `changed()`, so
-     nothing recompiles; the document is neither read nor written. Closing it
-     closes the scope standing inside it first, through the same `toggle` the
-     × and a tap outside use — a sheet cannot stay open inside a panel that is
-     about to be hidden. */
-  function openRecord(): void {
-    if (RECOPEN && RECORD_KEY(OPEN)) toggle(OPEN!);
-    RECOPEN = !RECOPEN;
-    draw();
-  }
+  /* (`openRecord` STOOD HERE — the disclosure's own toggle, which closed
+     whichever of the seven was open before hiding them all. There is no
+     panel to disclose: a scope opens from the menu and closes by its head,
+     its ×, a tap outside, or Escape.) */
 
   /* ---- THE GRID'S OWN HEADER IS ITS OWN HEAD (2026-09-06, §15a) ------
      A ROW STOOD HERE FROM 2026-09-05 TO 2026-09-06 — `gridLabel`, the word
@@ -1008,26 +1010,16 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      columns — the table is then one column wide and has nothing to scroll
      sideways. The row is the SAME `<tr>` either way, so `stick()` reads one
      head row in both states and `foldGrid` moves no furniture. */
-  /** THE TABLE'S OWN OPTIONS, AS THE RECORD ROW'S NEXT LINE (2026-09-06,
-   *  §15a). Same key, same fields, same `op()` wrapper as when it was an
-   *  orphan at the top of the `<tbody>`; what changed is that it is drawn
-   *  under the button that opens it, and that it is therefore on the glass
-   *  whether or not the grid is folded. It wears `nu-spopen`, so `stick()`
-   *  pins the record's line as its header the way it pins a scope's. */
-  const cornerSheet = (S: Shape): TemplateResult | typeof nothing => {
-    if (OPEN !== "corner") return nothing;
-    return openRow(S, sheetFor("corner", () => [{ kind: "ops",
-      label: t("head.song"),
-      ops: tableOps(A, S.across).map((x) => x.act
-        ? { ...x, act: () => op(x.word, x.act!) } : x) }]),
-      t("head.song"), "nu-spopen");
-  };
+  /* (`cornerSheet` STOOD HERE — the song options drawn as the record line's
+     own next line. The song is the eighth SCOPE now (`scopes()`), so the row
+     above it is its own head and `scopeRows` draws the sheet under it with
+     the same `sheetFor("corner", …)` fields, the same `op()` wrapper and the
+     same `nu-spopen` class. One builder for eight rows where there were two
+     for seven and one.) */
 
   const thead = (S: Shape, cols: string[]): TemplateResult => {
     const list = scopes();
     return html`<thead>
-    ${recordRow(S, list)}
-    ${cornerSheet(S)}
     ${scopeRows(S, list)}
     <tr class="nu-gridhead">
       <th class="nu-cornerh">${cornerBtn(S)}</th>
@@ -1731,28 +1723,17 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   /** ESCAPE RESTORES: the editor closes, nothing is written, and the ring —
    *  and the focus — go back to the cell you were standing on. */
   function closeEdit(): void {
-    OPEN = null; OPENFIELD = null; SHEETKEY = null; SHEETFIELDS = null;
-    draw();
+    shutSheet();
     if (!SEL) return;
     const b = host.querySelector('[data-k="tcell|' + SEL.voice + "|" + SEL.sec + '"]');
     if (b instanceof HTMLElement) b.focus({ preventScroll: true });
   }
 
   function toggle(key: string, keepOpen = false): void {
-    /* PRESSING A RECORD SCOPE OPENS THE PANEL IT IS IN (2026-09-06, §14), and
-       this line is HERE and not only at the top of `bandTable` because of what
-       `draw()` is: an internal re-render that does NOT re-run this component's
-       constructor. MEASURED the hour the panel landed, by
-       `test/rules-view.browser.js`: `__eightRow("rules")` pressed `trules` by
-       name, `toggle` set `OPEN` to `sp|rules`, the head came back
-       `aria-expanded="true"` — and `RECOPEN` was still false, so the row was
-       `hidden` and its sheet was never drawn. A state that says it is open and
-       does not arrive is this repo's characteristic bug; the two owners of
-       "is the panel showing" are now the same statement, said in the one
-       place every open goes through.
-       IT DOES NOT CLOSE ON THE WAY OUT: shutting TIME is not a claim about
-       leaving the record — the panel closes by its own head. */
-    if (RECORD_KEY(key)) RECOPEN = true;
+    /* (`if (RECORD_KEY(key)) RECOPEN = true` STOOD HERE — the line that
+       forced the record panel open under a scope pressed by name. There is no
+       panel: a scope's row is drawn whenever it is the open one, which is the
+       same statement said once, in `scopeRows`.) */
     /* OPENING A SPECIAL ROW LETS THE PAGE'S LANDING GO — see `leaveLanding`
        in api.ts for the measurement. Only on the way OPEN: shutting TIME is
        not a claim about where you are standing. */
@@ -1766,6 +1747,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     OPEN = (OPEN === key && !keepOpen) ? null : key;
     OPENFIELD = null;
     if (SHEETKEY !== OPEN) { SHEETKEY = null; SHEETFIELDS = null; }
+    /* AND THE ONE OWNER OF "WHAT IS OPEN" IS TOLD (2026-09-06, §18). Opening a
+       sheet closes the hamburger, the play fold and the log — whichever was
+       standing — and closing one tells the owner there is nothing open here,
+       so the next pop-up does not close a sheet that has already gone. The
+       `draw()` is after it, because the owner may close a pop-up that is not
+       this component's business and this component still owes the page a
+       redraw either way. */
+    const own = OWNER();
+    if (own) { if (OPEN) own.opened(SHEETNAME); else own.closed(SHEETNAME); }
     draw();
   }
 
@@ -1978,10 +1968,22 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       if (t.closest("button, a, input, select, textarea, [role=slider], label"))
         return;                                        // a control decides for itself
       if (!host.isConnected) return;
-      OPEN = null; OPENFIELD = null; SHEETKEY = null; SHEETFIELDS = null;
-      draw();
+      shutSheet();
     };
     document.addEventListener("pointerdown", OUT, true);
+  }
+
+  /** THE ONE WAY THIS COMPONENT SHUTS ITS SHEET, and every door uses it: the
+   *  tap outside, Escape, the ×, the host's `close()`, and the one owner of
+   *  "what is open" when a pop-up opens over it. It tells the owner, because
+   *  a surface that closed quietly would leave the owner holding a name for a
+   *  thing that is no longer on the glass. */
+  function shutSheet(): void {
+    if (!OPEN) return;
+    OPEN = null; OPENFIELD = null; SHEETKEY = null; SHEETFIELDS = null;
+    const own = OWNER();
+    if (own) own.closed(SHEETNAME);
+    draw();
   }
 
   /* ---- draw, then hand the host what it has always been handed -------- */
@@ -2014,6 +2016,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   reindex();
   armResize(paneEl);
   armOutside();
+  /* AND THE SHEET REGISTERS WITH THE ONE OWNER (2026-09-06, §18) — re-armed
+     on every rebuild for `armOutside`'s own reason: the closer must belong to
+     the grid that is on the glass, not to one three writes ago. It is a
+     `register` and not an `addEventListener`, so the owner holds exactly one
+     closer per surface however many times this runs. */
+  {
+    const own = OWNER();
+    if (own) own.register(SHEETNAME, () => { if (host.isConnected) shutSheet(); });
+  }
 
   /* WHO IS SOUNDING, DRIVEN BY THE CALLER FROM ITS EXISTING "pos" PATH. This
      component installs no clock and subscribes to nothing — "a view never
@@ -2034,8 +2045,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
 
   return {
     table, pane: paneEl, rowHeads, colHeads, paint,
-    close: () => { OPEN = null; OPENFIELD = null;
-                   SHEETKEY = null; SHEETFIELDS = null; draw(); },
+    close: () => shutSheet(),
     openCorner: () => { toggle("corner"); },
     /* A LANDING ONLY LANDS (2026-09-05). `tablePanel` ends every rebuild by
        opening the head an arrival asked for — the gutter's, the atlas's, a
@@ -2066,6 +2076,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       return false;
     },
     armedMotif: () => ARM,
+    scopeMenu: () => scopes().map((sc) => ({ k: sc.k, key: sc.key,
+      word: sc.word, aria: sc.aria,
+      face: (() => { try { return sc.face(); }
+                     catch (e) { return ""; } })() })),
   };
 }
 

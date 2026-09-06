@@ -1,0 +1,360 @@
+/* fonts.css — THE ONE STYLESHEET THAT OWNS THE FACES, and it holds nothing
+   else: thirty `@font-face` rules and not one selector, not one colour, not
+   one pixel.
+
+   Paul, 2026-09-06: *"Make everything the IBM flex Family fonts referring to
+   one style sheet."* Two sentences in one, and the second is the law that
+   outlives the first. WHICH family is a decision a design can revisit; that
+   there is exactly ONE PLACE a face is named is what stops the page drifting
+   back to four opinions about what a letter looks like. Before this file,
+   `system-ui` was written out longhand in six places — twice as the tokens'
+   own definitions in nu.css and four more times inline, where a rule wanted a
+   symbol and typed a whole stack to get one.
+
+   THE DIVISION OF LABOUR, and it is the DESIGN.md §1 law with one more line
+   in it: this file says what a FACE IS — the family name, the weight, the
+   style, the file, the block of Unicode it answers for. nu.css says what a
+   face is FOR — `--sans`, `--mono`, `--sym`, and every rule points at one of
+   those three tokens and never at a family name. Neither file can do the
+   other's job: an `@font-face` cannot be a token, and a token cannot load a
+   file.
+
+   IT IS LINKED BEFORE nu.css, AND THE INDEX ITSELF MOVED ONE PLACE. A
+   `@font-face` must be known before the rule that asks for it paints, or the
+   first frame is drawn in the fallback and then reflowed — so this file goes
+   first. That makes THIS sheet `document.styleSheets[0]` and nu.css [1],
+   which index.html's own comment used to promise the other way round. The
+   promise was checked before it was broken: nothing in the tree indexes that
+   list. test/sheets.js, test/selects.js and ui/selects.js each ITERATE
+   `document.styleSheets` and disable every entry — which is exactly the
+   stylesheet-off check Paul described, and it works better with two sheets
+   than with one, because a page with its faces switched off as well is a
+   truer picture of the plain document. index.html carries the corrected
+   sentence.
+
+   SELF-HOSTED, NEVER A CDN. This page boots with the wire cut (sw.js, the
+   offline hold), and it is served cross-origin-isolated under COEP
+   `require-corp`. A `fonts.googleapis.com` <link> would fail both: a
+   third-party origin that is not in any cache is a dead network on a train,
+   and a subresource without CORP is a blocked subresource. Same-origin files
+   need no CORP header at all, and the service worker caches them like every
+   other same-origin GET. The files, their licence and the whole of the
+   weight/block argument are at ../vendor/plex/VERSION.txt.
+
+   NO VARIABLE FILE, AND IT WAS LOOKED FOR. Neither `@ibm/plex-sans` nor
+   `@ibm/plex-mono` ships one on npm (checked 2026-09-06 against jsDelivr's
+   flat file listing of both packages: `fonts/complete/` and `fonts/split/`
+   hold static weights only). The split static set is the small answer
+   instead — one file per weight per Unicode block, declared by
+   `unicode-range`, so a record whose names are pure ASCII fetches Latin1 and
+   stops. */
+
+/* ===== IBM PLEX SANS — THE SAID FACE =================================
+   Four weights and no fifth, and they are nu.css's own: 400 (the sheet's
+   bare `font-weight: 400`s), 500 `--fw-body`/`--btn-fw`, 600 `--num-fw`,
+   700 `--fw-label`. `--fw-block` (800) and `--fw-display` (900) name no
+   file because Plex Sans's axis ENDS at Bold — CSS matching walks up, finds
+   nothing, walks down and lands on 700, which is a real face and not a
+   synthetic smear. See ../vendor/plex/VERSION.txt. */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Regular-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Regular-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Regular-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Medium-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Medium-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Medium-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-SemiBold-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-SemiBold-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-SemiBold-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Bold-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Bold-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Bold-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+/* ===== IBM PLEX SANS, ITALIC ========================================
+   `.is-quiet` and `.nu-wchip.is-quiet` are the only italics the page draws,
+   and both sit at the body weight or under it — so two faces, not eight. A
+   real italic rather than the browser's slant: Plex's italic is drawn, and
+   an oblique of a grotesque at .7 opacity is exactly where a fake one
+   shows. */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Italic-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Italic-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-Italic-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-MediumItalic-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-MediumItalic-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexSans-MediumItalic-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+/* ===== IBM PLEX MONO — THE COUNTED FACE ==============================
+   Every value a control prints, every row label, every `<output>`. Same four
+   weights, for the same reason, read off the same shorthands. No italic: no
+   `var(--mono)` rule in any of the four stylesheets sets `font-style`. */
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Regular-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Regular-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Regular-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Medium-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Medium-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Medium-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-SemiBold-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-SemiBold-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-SemiBold-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Bold-Latin1.woff2") format("woff2");
+  unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153,
+                 U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E,
+                 U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+                 U+2122, U+2212, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Bold-Latin2.woff2") format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F,
+                 U+A720-A7FF, U+FB01-FB02;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../vendor/plex/IBMPlexMono-Bold-Latin3.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+1EA0-1EF9, U+20AB;
+}

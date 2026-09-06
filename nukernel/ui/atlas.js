@@ -785,7 +785,44 @@ export function mount(parent, ctx) {
   const none = el("p", { className: "nu-hint", id: "atlasNone" });
   none.setAttribute("role", "status");
   idx.append(none);
-  find.append(qEl);
+  /* ===== AND THE LETTERS COME BACK OFF EASILY (2026-09-06) ==============
+     Paul: *"Let me easily dismiss the letters I've entered in the genre
+     picker."* The field is `type="search"`, which draws a clear ✕ on desktop
+     Chrome and DRAWS NOTHING ON iOS SAFARI — so on the one device this box is
+     designed for, a search could only be undone one backspace at a time, and
+     `atlas.find.hint` ("Find a genre") is nine characters of thumb work to
+     get back to a list of 482.
+
+     SO THE CLEAR IS THIS PAGE'S OWN BUTTON, not the platform's: a `--tap`
+     square at the field's end, and it is only there when there is something to
+     clear — a control that is always present but inert half the time is the
+     silent grey this page legislates against. It restores the list through
+     `filter()`, the same one owner the typing goes through (there is no
+     "filtered" flag to get out of step — the value IS the state), and it puts
+     the caret back in the field, because a hand that cleared a search is a
+     hand about to type a different one.
+
+     ESCAPE IS THE SAME GESTURE FROM THE KEYBOARD and it stops there: it
+     clears the letters and does NOT close the picker. Escape has never closed
+     this sheet (v297 measured that and left it), so making it do two things
+     from one key — empty the field on the first press, dismiss the panel on
+     the second — would be a modal Escape on a page that has no modes. */
+  const clear = el("button", { type: "button", id: "atlasClear",
+                               className: "nu-iconbtn" });
+  clear.dataset.k = "atlas-clear";
+  clear.setAttribute("aria-label", t("atlas.find.clear"));
+  clear.append(el("span", "\u2715"));
+  clear.hidden = true;
+  const showClear = () => { clear.hidden = !qEl.value; };
+  clear.addEventListener("click", () => {
+    qEl.value = ""; showClear(); filter(); qEl.focus();
+  });
+  qEl.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !qEl.value) return;
+    e.preventDefault(); e.stopPropagation();
+    qEl.value = ""; showClear(); filter();
+  });
+  find.append(qEl, clear);
   /* ===== THE GLOBE IS THE HEAD OF THE PICKER (2026-09-06) ===============
      Paul: *"Get rid of 'where' and the line above and the output that goes
      '33000 BC · 1 record within ten years · Hohle Fels'; leave the close icon.
@@ -811,7 +848,7 @@ export function mount(parent, ctx) {
      `input` AND NOT `keyup`: it fires for a paste, for a dictation, and for
      the little × a `type=search` field draws, which is the gesture that means
      "clear it" on a phone. */
-  qEl.addEventListener("input", () => filter());
+  qEl.addEventListener("input", () => { showClear(); filter(); });
   /* (THE ERA STRIP'S DELEGATED LISTENER STOOD HERE. It cleared the field and
      called `scrollToYear`, which is still the list's own read-head inverse and
      is still what `syncIndex` uses — nothing about the list changed, only that
@@ -2311,12 +2348,27 @@ export function mount(parent, ctx) {
       // 2026-08-27: "take" bumps that field, "rewrite" bumps this seed.)
       // TWO KEYS, NOT A SUFFIX: the seed clause is part of the sentence, and a
       // sentence assembled from a tail cannot be reordered in another language.
-      const counted = { where, name: gk,
-        sections: tn("count.section", doc.form.sections.length),
-        voices: tn("count.player", doc.voices.length),
-        take: doc.performance.take, seed };
-      say.textContent = seed > 1 ? t("atlas.wroteSeed", counted)
-                                 : t("atlas.wrote", counted);
+      /* ===== AND IT SAYS NOTHING WHEN IT IS DONE (2026-09-06) ===========
+         Paul: *"We don't need this with the genre picker at all: 'Bristol
+         1994 · noirhop — 14 sections, 9 players, take 0 · seed 28138' stop
+         producing it."*
+
+         THE RECEIPT IS DELETED, AND EVERY WORD OF IT IS ALREADY SOMEWHERE A
+         HAND CAN SEE. The place and the genre are the record's own name in
+         the top strip; the sections and the players are the grid, which is
+         what you land on; the take and the seed are the seed control, which
+         has one owner and a number on its face. A sentence restating four
+         facts the page already draws is a receipt for a purchase you are
+         holding, and it printed on top of the list at the exact moment a hand
+         was leaving for the table.
+
+         `say` KEEPS ITS OTHER JOBS — `atlas.writing` while a record composes,
+         `atlas.cannotWrite` when one throws, `atlas.noRecordAt` and the link
+         refusals — because those are things the page cannot otherwise show.
+         It is emptied here rather than left holding the last write, so the
+         live region does not re-announce a stale sentence on the next move,
+         and nu.css gives an empty one no box at all. */
+      say.textContent = "";
       /* THE SEED MOVED EVEN WHEN THE YEAR DID NOT. `setYear` announces most of
          this, through `showing()`; a rewrite of a ROLE genre never reaches it
          (`showing` returns early — "a role has a job, not a history"), and a

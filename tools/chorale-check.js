@@ -20,33 +20,30 @@
  * LilyPond by hand and reasoning about it in your head.
  *
  * WHAT IT DOES NOT DO. It has no opinion about whether the music is any good,
- * and it does not pretend to: the rules below are the ones a first-year
- * harmony class is marked on and the benchmark names. A chorale can pass every
- * one of them and be dull. It cannot fail one of them and be Bach.
+ * and it does not pretend to: the rules it runs (now `Theory.faults`, see
+ * below) are the ones a first-year harmony class is marked on and the
+ * benchmark names. A chorale can pass every one of them and be dull. It
+ * cannot fail one of them and be Bach.
  */
 "use strict";
 const fs = require("fs");
+const Theory = require("./theory.js");
 
-/* ---- THE VOICES, AND THE RANGES THEY ACTUALLY SING ---------------------
-   Bach's chorale voices sit inside these; the numbers are the conservative
-   union of what the 371 do, not the extremes a single tenor once reached.
-   MIDI, middle C = 60. */
-const VOICE = [
-  { k: "S", name: "soprano", lo: 60, hi: 79 },   // c'  – g''
-  { k: "A", name: "alto",    lo: 55, hi: 74 },   // g   – d''
-  { k: "T", name: "tenor",   lo: 48, hi: 69 },   // c   – a'
-  { k: "B", name: "bass",    lo: 40, hi: 62 },   // e,  – d'
-];
+/* ---- THE RULES LIVE IN tools/theory.js NOW (2026-09-06) -----------------
+   Nine rules, moved not rewritten, because docs/THEORY.md §1 says the
+   checker and the generation pass must read ONE copy of them or they will
+   drift: the box would repair a parallel the checker never saw, or the
+   checker would report one the box was never told about. What is left in
+   this file is what only this file knows — the score's on-disk shape, the
+   beat/bar names it prints, and the two engravings.
 
-/* THE CHORDS THIS CHECKER KNOWS, as pitch-class sets over a tonic. A chord is
-   named in the score and the checker asks two things of it: every sounding
-   note belongs to it, and its third is present. Nothing here is about taste;
-   a triad missing its third is the "conflicting notes within chords" the
-   benchmark names, said the other way round. */
-const QUAL = {
-  min:  [0, 3, 7], maj: [0, 4, 7], dim: [0, 3, 6], dom7: [0, 4, 7, 10],
-  min7: [0, 3, 7, 10], halfdim: [0, 3, 6, 10],
-};
+   THE VOICES AND THE CHORD WORDS moved with them (`Theory.CHORALE_VOICES`,
+   `Theory.CHORALE_QUAL`), so a chorale's ranges are stated once. The
+   printed output of this command is unchanged and gated on the committed
+   chorale; the fault TEXTS now come from theory.js and are the same strings
+   they were, which is the whole point of a move rather than a rewrite. */
+const VOICE = Theory.CHORALE_VOICES;
+const QUAL = Theory.CHORALE_QUAL;
 const pc = (n) => ((n % 12) + 12) % 12;
 
 function chordTones(ch) {
@@ -55,113 +52,40 @@ function chordTones(ch) {
   return q.map((iv) => pc(ch.root + iv));
 }
 
-/* ---- THE RULES ---------------------------------------------------------- */
-function check(score) {
-  const V = score.voices;                 // [S, A, T, B] arrays of MIDI
-  const n = V[0].length;
-  const out = [];
-  const bad = (where, what) => out.push({ where, what });
+/* ---- THE RUN OF THE RULES, AND WHERE EACH FAULT HAPPENED -----------------
+   theory.js answers WHAT is wrong and between which columns; the location
+   string is this file's, because only this file knows the score has bars
+   and beats. Three shapes, exactly as before: a single column names its
+   chord, a parallel names both bars, and the melodic rules name the beats
+   alone — a parallel is worth a bar number to go and look at, a leap is
+   not. */
+function whereOf(score, f) {
   const beatName = (i) => {
     const c = score.chords[i];
     return "beat " + (i + 1) + " (bar " + c.bar + ", " + c.name + ")";
   };
+  if (f.at.j == null) return beatName(f.at.i);
+  const beats = "beats " + (f.at.i + 1) + "\u2013" + (f.at.j + 1);
+  if (f.code === "parallel5" || f.code === "parallel8")
+    return beats + " (bars " + score.chords[f.at.i].bar + "\u2013" +
+           score.chords[f.at.j].bar + ")";
+  return beats;
+}
 
-  for (let i = 0; i < n; i++) {
-    const col = V.map((v) => v[i]);
-    /* 1 · RANGE. */
-    col.forEach((p, vi) => {
-      const R = VOICE[vi];
-      if (p < R.lo || p > R.hi)
-        bad(beatName(i), R.name + " sings " + p + ", outside " + R.lo + "–" + R.hi);
-    });
-    /* 2 · CROSSING, and the order is the definition of the voices. */
-    for (let vi = 0; vi < 3; vi++)
-      if (col[vi] < col[vi + 1])
-        bad(beatName(i), VOICE[vi].name + " is below the " + VOICE[vi + 1].name);
-    /* 3 · SPACING. More than an octave between two UPPER voices is the gap
-       that makes a chorale stop sounding like one; tenor to bass may open. */
-    if (col[0] - col[1] > 12) bad(beatName(i), "soprano and alto are more than an octave apart");
-    if (col[1] - col[2] > 12) bad(beatName(i), "alto and tenor are more than an octave apart");
-    /* 4 · EVERY NOTE BELONGS TO THE CHORD, and the third is there. */
-    const ch = score.chords[i], tones = chordTones(ch);
-    col.forEach((p, vi) => {
-      if (tones.indexOf(pc(p)) < 0)
-        bad(beatName(i), VOICE[vi].name + "'s " + pc(p) + " is not in the chord");
-    });
-    const third = pc(ch.root + (QUAL[ch.qual][1]));
-    if (!col.some((p) => pc(p) === third)) bad(beatName(i), "the chord has no third");
-    /* 5 · THE LEADING TONE IS NOT DOUBLED. */
-    if (score.leadingTone != null) {
-      const lt = col.filter((p) => pc(p) === pc(score.leadingTone)).length;
-      if (lt > 1) bad(beatName(i), "the leading tone is doubled");
-    }
-  }
-
-  /* 6 · PARALLEL PERFECT FIFTHS AND OCTAVES, between every pair, and the
-     definition is strict: both voices move, in the same direction, and the
-     interval class is the same perfect one on both sides. A perfect interval
-     kept by OBLIQUE motion (one voice holding) is not a parallel and is not
-     flagged — that is a rule about similar motion, and calling a held note a
-     parallel is how a checker cries wolf. */
-  const perfect = (a, b) => { const d = Math.abs(a - b) % 12; return d === 0 ? 8 : (d === 7 ? 5 : 0); };
-  for (let i = 0; i + 1 < n; i++) {
-    for (let x = 0; x < 4; x++) for (let y = x + 1; y < 4; y++) {
-      const a1 = V[x][i], b1 = V[y][i], a2 = V[x][i + 1], b2 = V[y][i + 1];
-      if (a1 === a2 || b1 === b2) continue;                 // oblique: not a parallel
-      if ((a2 - a1) * (b2 - b1) < 0) continue;              // contrary: not a parallel
-      const p1 = perfect(a1, b1), p2 = perfect(a2, b2);
-      if (p1 && p1 === p2)
-        bad("beats " + (i + 1) + "–" + (i + 2) + " (bars " + score.chords[i].bar +
-            "–" + score.chords[i + 1].bar + ")",
-            "parallel " + (p1 === 8 ? "octaves" : "fifths") + " between " +
-            VOICE[x].name + " and " + VOICE[y].name);
-    }
-  }
-
-  /* 7 · DIRECT (HIDDEN) OCTAVES AND FIFTHS IN THE OUTER VOICES: soprano and
-     bass arriving at a perfect fifth or octave by similar motion with the
-     soprano LEAPING. Bach does this constantly between inner voices and
-     rarely on the outside, which is why the rule is outer-voice only here. */
-  for (let i = 0; i + 1 < n; i++) {
-    const s1 = V[0][i], b1 = V[3][i], s2 = V[0][i + 1], b2 = V[3][i + 1];
-    if ((s2 - s1) * (b2 - b1) <= 0) continue;
-    if (Math.abs(s2 - s1) <= 2) continue;                   // stepwise soprano: allowed
-    const p = perfect(s2, b2);
-    if (p) bad("beats " + (i + 1) + "–" + (i + 2),
-               "direct " + (p === 8 ? "octave" : "fifth") + " into the outer voices, soprano leaping");
-  }
-
-  /* 8 · MELODIC RULES, the two that are not taste: no leap wider than an
-     octave, and no augmented second — the interval a harmonic minor invites
-     between its sixth and seventh degrees and the one thing a chorale never
-     writes melodically. */
-  for (let vi = 0; vi < 4; vi++) {
-    for (let i = 0; i + 1 < n; i++) {
-      const d = V[vi][i + 1] - V[vi][i], a = Math.abs(d);
-      if (a > 12) bad("beats " + (i + 1) + "–" + (i + 2), VOICE[vi].name + " leaps " + a + " semitones");
-      if (a === 3 && score.aug2 !== false) {
-        const lo = pc(Math.min(V[vi][i], V[vi][i + 1])), hi = pc(Math.max(V[vi][i], V[vi][i + 1]));
-        if (score.aug2Pair && lo === pc(score.aug2Pair[0]) && hi === pc(score.aug2Pair[1]))
-          bad("beats " + (i + 1) + "–" + (i + 2), VOICE[vi].name + " leaps an augmented second");
-      }
-    }
-  }
-
-  /* 9 · THE LEADING TONE RESOLVES when it is in an outer voice. Inside, Bach
-     frustrates it freely (the "frustrated leading tone"), so the rule is
-     outer-voice only and says so rather than pretending to a stricter one. */
-  if (score.leadingTone != null && score.tonic != null) {
-    for (const vi of [0, 3]) {
-      for (let i = 0; i + 1 < n; i++) {
-        if (pc(V[vi][i]) !== pc(score.leadingTone)) continue;
-        if (pc(V[vi][i + 1]) === pc(score.leadingTone)) continue;
-        if (pc(V[vi][i + 1]) !== pc(score.tonic))
-          bad("beats " + (i + 1) + "–" + (i + 2),
-              VOICE[vi].name + "'s leading tone does not rise to the tonic");
-      }
-    }
-  }
-  return out;
+function check(score) {
+  const V = score.voices;
+  const voices = VOICE.map((r, vi) => ({ name: r.name, lo: r.lo, hi: r.hi, notes: V[vi] }));
+  const chords = score.chords.map((ch) => {
+    const tones = chordTones(ch);
+    return { pcs: tones, rootPc: pc(ch.root), thirdPc: pc(ch.root + QUAL[ch.qual][1]) };
+  });
+  return Theory.faults(voices, {
+    chords,
+    leadingTone: score.leadingTone,
+    tonic: score.tonic,
+    aug2Pair: score.aug2Pair,
+    aug2: score.aug2 !== false,
+  }).map((f) => ({ where: whereOf(score, f), what: f.text }));
 }
 
 /* ---- THE ENGRAVING, PRINTED FROM THE SAME TABLE ------------------------- */

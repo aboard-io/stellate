@@ -1,5 +1,11 @@
 {
-  "note": "DUNSTAPLE — London 1420: the Old Hall Manuscript, compiled for the\nroyal household chapel around 1420 — the first big surviving\nEnglish polyphonic collection, and the book the contenance\nangloise lived in before the continent had a name for it: full\ntriads, thirds and sixths sung as CONSONANCE while Paris still\nfiled them as spice. Named for Dunstaple because the continent\nnamed the sound for him (Martin le Franc's poem is the citation\nisorhythm's own row has carried as a want since it was written; isorhythm\ntakes this row as a parent today).\n\nLINEAGE: organum is the held-tenor practice every Old Hall mass\nmovement still stands on; the English discant that filled it\nwith thirds has no earlier datable anchor and is the residue.\n\nIONIAN ON PURPOSE, and it is the whole claim: the contenance\nangloise is the major third sung sweet, and this is the oldest\nrow in the catalog whose alphabet is the modern major.",
+  "note": "DUNSTAPLE — London 1420: the Old Hall Manuscript, compiled for the\nroyal household chapel around 1420 — the first big surviving\nEnglish polyphonic collection, and the book the contenance\nangloise lived in before the continent had a name for it: full\ntriads, thirds and sixths sung as CONSONANCE while Paris still\nfiled them as spice. Named for Dunstaple because the continent\nnamed the sound for him (Martin le Franc's poem is the citation\nisorhythm's own row has carried as a want since it was written; isorhythm\ntakes this row as a parent today).\n\nLINEAGE: organum is the held-tenor practice every Old Hall mass\nmovement still stands on; the English discant that filled it\nwith thirds has no earlier datable anchor and is the residue.\n\nIONIAN ON PURPOSE, and it is the whole claim: the contenance\nangloise is the major third sung sweet, and this is the oldest\nrow in the catalog whose alphabet is the modern major.\n\nREFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this\nrow is `harmony: \"emergent\"`, so a chord tone cannot be missing from a\nharmony no hand voiced.",
+  "copyist": {
+    "refuse": [
+      "missing"
+    ],
+    "why": "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there is no voiced harmony for a chord tone to be missing from."
+  },
   "label": "London 1420",
   "voices": 3,
   "rate": 0.5,

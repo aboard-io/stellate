@@ -10,8 +10,12 @@
 //   SF2 coarse/fine tune folded in by the extractor)
 //   looped zones sustain under the gate (AudioBufferSourceNode loopStart/End
 //   live; wrapped linear-interp read in mixPCM); unlooped zones one-shot.
-//   gain envelope: linear attack + release declick ramps (recipe attack/
-//   release honored via the unit spec).
+//   gain envelope: a full ADSR — linear attack, a fall over `dcy` to the level
+//   `sus` (a decay of 0 is an instant fall; a sustain of 1 is no fall at all,
+//   which is the A-H-R this lane was until 2026-09-05), then the release
+//   declick ramp. All four ride the unit spec (state-engine samplerUnit's
+//   atk/rel/dcy/sus, from a chair's `voice.sound` or a genre's tone block),
+//   and all four are honoured on BOTH play paths and in press.
 //   SWELL (per note, optional): {swell:true} — x²-shaped crescendo attack
 //   instead of the linear declick ramp (sampled-strings pads; attack may run
 //   seconds past the loop start — looped zones sustain under it). Both paths
@@ -774,19 +778,35 @@
       //   dcy   how long the fall from the peak takes, in seconds
       //   sus   where it rests, 0..1 of the note's own gain
       //
-      // ABSENT IS TODAY, BIT FOR BIT. `shaped` is false unless a decay AND a
-      // sustain under 1 are both present, and with it false `envAt` returns
-      // exactly what the two lines it replaced returned: the attack ramp
-      // below atkN, 1 through the hold, the release ramp past it. The three
-      // read loops (mellotron, granular, plain) all called those two lines and
-      // all three call this instead, so there is ONE envelope on this lane.
+      // ABSENT IS TODAY, BIT FOR BIT. `shaped` is false unless a SUSTAIN under
+      // 1 is present, and with it false `envAt` returns exactly what the two
+      // lines it replaced returned: the attack ramp below atkN, 1 through the
+      // hold, the release ramp past it. The three read loops (mellotron,
+      // granular, plain) all called those two lines and all three call this
+      // instead, so there is ONE envelope on this lane.
+      //
+      // A SUSTAIN WITH NO DECAY IS AN INSTANT FALL, AND IT USED TO BE SILENCE
+      // (2026-09-06, Paul: *"Samples should have full Adsr why don't they"*).
+      // `shaped` read `dcyN > 0 && susL < 1` for its first day, so a hand that
+      // dragged ONLY the sustain handle — the decay's derived value is 0, and
+      // no genre writes one — moved a control that changed nothing: MEASURED
+      // through this very function, sus 0.3 alone rendered susRatio 1.0000,
+      // byte-identical to the baseline. The editor meanwhile drew the cliff
+      // it asked for (adsr.ts's `path` puts an `L` to `y(sus)` when there is
+      // no decay), so the picture and the sound disagreed, which is this
+      // repo's characteristic bug with a curve on top of it. The decay is now
+      // the LENGTH of the fall and the sustain is WHETHER there is one: at
+      // dcyN 0 the level is susL from the first sample past the attack, which
+      // is what a zero-length ramp means and what the drawing already showed.
+      // Absent is still today — sus absent leaves susL 1 and `shaped` false.
       const dcyN = Math.max(0, Math.floor((n.dcy || 0) * sr));
       const susL = (n.sus != null && n.sus >= 0 && n.sus < 1) ? n.sus : 1;
-      const shaped = dcyN > 0 && susL < 1;
+      const shaped = susL < 1;
       const envAt = (i, hold) => {
         if (i < atkN) { const a = i / atkN; return n.swell ? a * a : a; }
         const lv = !shaped ? 1
-          : (i >= atkN + dcyN ? susL : 1 + (susL - 1) * ((i - atkN) / dcyN));
+          : (dcyN <= 0 || i >= atkN + dcyN ? susL
+             : 1 + (susL - 1) * ((i - atkN) / dcyN));
         // a note let go mid-fall keeps falling AND releases, which is what the
         // level at that instant already is — one arithmetic, no second case.
         if (i > hold) return lv * Math.max(0, 1 - (i - hold) / relN);
@@ -1499,10 +1519,18 @@
          loop does too. */
       const dcy = Math.max(0, f.dcy || 0);
       const sus = (f.sus != null && f.sus >= 0 && f.sus < 1) ? f.sus : 1;
-      if (dcy > 0 && sus < 1) {
+      if (sus < 1) {
         const susG = gain * sus;
-        if (atk + dcy < hold) { g.linearRampToValueAtTime(susG, when + atk + dcy);
-                                g.setValueAtTime(susG, when + hold); }
+        /* A SUSTAIN WITH NO DECAY IS AN INSTANT FALL — the same amendment
+           `envAt` above carries, said in AudioParam ramps. The guard read
+           `dcy > 0 && sus < 1` for its first day and a hand that dragged only
+           the sustain handle moved nothing (measured offline through the
+           twin: susRatio 1.0000). `setValueAtTime` at the end of the attack
+           is a zero-length ramp, which is what a decay of 0 means. */
+        if (dcy <= 0) { g.setValueAtTime(susG, when + atk);
+                        g.setValueAtTime(susG, when + hold); }
+        else if (atk + dcy < hold) { g.linearRampToValueAtTime(susG, when + atk + dcy);
+                                     g.setValueAtTime(susG, when + hold); }
         else g.linearRampToValueAtTime(
           gain + (susG - gain) * ((hold - atk) / dcy), when + hold);
       } else g.setValueAtTime(gain, when + hold);

@@ -1,7 +1,7 @@
 {
   "what": "T7, TABLE.md §6 ¶A and §7 — the inventory of every control the Band pane and the Structure pane offered at HEAD (v265, 3ce6125), with the home each one has in the Band table. Paul, 2026-09-03: 'get rid of everything it replaces. Move things around as needed. Don't lose unreplaced options. Find places for things and keep discoverability high.'",
   "how": "MEASURED, not read off the source: test/table-inventory.probe.js walked the rendered DOM of #pan-band and #pan-structure through all 36 states the two panes have (the roster, the crate, each voice x each of its four facets, the section list, each section's own questions, performance) at 390x844 and collected every button/select/input/[data-k]/[data-sel] in each. 72 control families, plus the two panes' own nav-tree children, which are controls too.",
-  "law": "A home is (tier, where) — tier is row | column | cell | footer | table | elsewhere, and `reach` is the data-k the gate must find on the rendered table at 320px, tappable, at least 44px. `open` is what has to be tapped first to reach it (the sheet it lives in). A control with no home fails T7; so does a home that is not tap-reachable at 320.  ...AND `then` IS A LIST SINCE 2026-09-06 (TABLE.md §14). The seven record-scope surfaces are sections of ONE row now, so a control inside TIME is behind two doors and one inside the board's automation plate is behind three: `open` is the door a hand presses from rest and `then` is every door after it, in order. It was a single string for the one case that had two (the board's plates); a list is the same law counted honestly rather than a second field.",
+  "law": "A home is (tier, where) — tier is row | column | cell | footer | table | elsewhere, and `reach` is the data-k the gate must find on the rendered table at 320px, tappable, at least 44px. `open` is what has to be tapped first to reach it (the sheet it lives in). A control with no home fails T7; so does a home that is not tap-reachable at 320.  ...AND `then` IS A LIST SINCE 2026-09-06 (TABLE.md §14). The seven record-scope surfaces are sections of ONE row now, so a control inside TIME is behind two doors and one inside the board's automation plate is behind three: `open` is the door a hand presses from rest and `then` is every door after it, in order. It was a single string for the one case that had two (the board's plates); a list is the same law counted honestly rather than a second field.  ...AND `trecord` IS GONE FROM EVERY ROW, 2026-09-06 (TABLE.md §18). Paul: 'All that stuff at the top? I expected that to live in the hamburger and for the hamburger to be nicely organized.' The record's eight surfaces — RULES, TIME, CHORDS, MOTIFS, MASTER, PRODUCE, PERFORMANCE and SONG — are rows of the hamburger now, and the disclosure that stacked them at the top of the session is deleted. Not one ADDRESS moved: `ttime`, `trules`, `tchords`, `tmotifs`, `tmix`, `tproduce`, `tfoot|perf` and `tcorner` are the same heads on the same rows, drawn when they are the open one. So the re-filing is mechanical and it is the whole of the change: where a row read `open: trecord, then: [ttime]` it reads `open: ttime`, and where it read `open: trecord` with no `then` its `open` is the head it reaches. test/table.browser.js `tap` presses a record head THROUGH THE MENU — ≡, then the row — which is the two taps a thumb makes and the same shape `rec()` had when the door was a disclosure. 67 rows re-filed.",
   "unmoved": "2026-09-05 (TABLE.md §13a.2): the three performance controls keep their addresses and move one door in — the PERFORM row is ONE LINE now (it was a row head beside a wrapping three-line strip of word plates, measured 92px on the Silence record at 390) and its three words are its FACE, so `performance.stress|phrase|orn` are in the sheet the row opens, with take, humanize and on time. Nothing is lost: `footCell` set `OPENFIELD` to an address the sheet it opened did not contain, so those three strips could not be opened at all.  2026-09-04 (wave 2c): the three performance sheets keep the address they had — `performance.stress|phrase|orn` — because an address does not move when a row does and three gates drive them by name. Wave 2b's first draft re-keyed them `tperf|<short>` for uniqueness inside the table; `tperf|` is gone from the page with that draft; the footer's other three fields (take, humanize, on time) already carried their own names.",
   "renamed": "2026-09-04 (wave 2c): the Motif tab is `Motifs` (TABLE.md §8), so `tray-new`'s reach is `toptab-Motifs`. The HOME did not move — the bank still owns a motif's own editor — only the door's word; an inventory row is edited when its address is renamed and never when a control is lost.  ...AND TEN CONTROLS ARRIVED WITH THE SONIC SPREADSHEET (2026-09-05, TABLE.md §9a): the formula bar's head (taddr · tundo · tredo · tcopy · tpaste), the two clipboard verbs on the cell's own op bar, the column grip, and the two axis offers — which keep build-the-band's own addresses (tcol-add|line and trow-add), so the nine nav ops filed above still land on the controls they were filed onto.  ...AND THE NAV'S OP CHILDREN ARE GONE (2026-09-05, TABLE.md 9a: 'NO OP LIVES IN THE NAV: the tray keeps the Band tab and, at most, jump links'). addvoice/addbass/adddrums/addsec/secup/secdown/secdup/secdrop/dropvoice were all still drawn as tray rows beside the table homes filed here; the tray rows are deleted and the homes are unchanged, which is why not one `reach` in this file moved. What the stripe keeps is the JUMP: tab<voice> opens tcol|<voice> and secnav<id> opens trow|<id>, and neither has children. test/shell.js A6l and test/gutter.js shorten() drove the deleted branches by name and read the table's own ops in the same edit.  ...AND THE TWO `tadd|` ADDRESSES LASTED ONE AFTERNOON (2026-09-05, TABLE.md 13e). v288 filed `tadd|head` and `tadd|foot` as new — the two `+` cells, each opening an ADD sheet. Paul: \"Don't pop up an interface when I add a section or a voice. Just add it.\" So a `+` now CARRIES the address of the op it fires (`tcol-add|<the first kind the band has not got>` at the head, `trow-add` at the foot) and writes on the tap; the two rows are deleted rather than re-pointed, because the button they filed is the button the offer's own row already files. NOTHING IS LOST AND NOTHING MOVED HOME: the four offers are at the addresses build-the-band minted, the three player kinds are all in every column head's sheet (`colOps`), and the `+` reaches the next of them the moment the one it offers exists.",
   "moved": "2026-09-05 (TABLE.md §13f). Paul: 'Add chords below time and move chord stuff into it.' FIVE ROWS CHANGED HOME AND NOT ONE CHANGED ADDRESS: sel|alphabet.harmony, diatonic, the changes grid (prog<n>d / prog<n>i / sel|alphabet.quality|bar<n>), prog-add and prog-cut were filed under time-row and are filed under chords-row, behind `open: tchords` instead of `open: ttime`. Nothing is lost and nothing is duplicated: time-row goes from 17 rows to 12 and chords-row holds the 5, the TIME sheet no longer draws a changes grid or a harmony menu, and `goto.board` (record gain) stays in TIME as its back matter. Key, mode and scale stay in TIME because they are the alphabet a record counts WITH; the changes are what it does OVER them.",
@@ -261,7 +261,7 @@
       "home": "motifs-row",
       "field": "the MOTIFS row's bank — `+ motif` under its list, at the same `addcell` address. The 'elsewhere: Motifs' home this row carried was true while Motifs was a pane; the bank is a row of this same table since 2026-09-08, so the home is no longer elsewhere and the reach is the row's own head.",
       "reach": "tmotifs",
-      "open": "trecord",
+      "open": "tmotifs",
       "note": "TABLE.md §8 wave 2: 'Motif becomes Motifs and stays.' ...AND §10b step 4, 2026-09-08: it stays, as a row. The address moved because the DOOR moved; the control did not."
     },
     {
@@ -469,10 +469,7 @@
       "home": "footer",
       "field": "the performance row of the footer — a RECORD fact, drawn under the sections",
       "reach": "performance.stress",
-      "open": "trecord",
-      "then": [
-        "tfoot|perf"
-      ]
+      "open": "tfoot|perf"
     },
     {
       "k": "sel:performance.phrase",
@@ -481,10 +478,7 @@
       "home": "footer",
       "field": "the performance row",
       "reach": "performance.phrase",
-      "open": "trecord",
-      "then": [
-        "tfoot|perf"
-      ]
+      "open": "tfoot|perf"
     },
     {
       "k": "sel:performance.orn",
@@ -493,10 +487,7 @@
       "home": "footer",
       "field": "the performance row",
       "reach": "performance.orn",
-      "open": "trecord",
-      "then": [
-        "tfoot|perf"
-      ]
+      "open": "tfoot|perf"
     },
     {
       "k": "take",
@@ -505,10 +496,7 @@
       "home": "footer",
       "field": "take, as chips, in the performance row's own sheet",
       "reach": "take",
-      "open": "trecord",
-      "then": [
-        "tfoot|perf"
-      ]
+      "open": "tfoot|perf"
     },
     {
       "k": "humanize",
@@ -517,10 +505,7 @@
       "home": "footer",
       "field": "humanize, as chips",
       "reach": "humanize",
-      "open": "trecord",
-      "then": [
-        "tfoot|perf"
-      ]
+      "open": "tfoot|perf"
     },
     {
       "k": "ontime",
@@ -529,10 +514,7 @@
       "home": "footer",
       "field": "on time, as chips",
       "reach": "ontime",
-      "open": "trecord",
-      "then": [
-        "tfoot|perf"
-      ]
+      "open": "tfoot|perf"
     },
     {
       "k": "tabperformance",
@@ -541,7 +523,7 @@
       "home": "footer",
       "field": "the performance row of the footer",
       "reach": "tfoot|perf",
-      "open": "trecord"
+      "open": "tfoot|perf"
     },
     {
       "k": "bandroster",
@@ -550,7 +532,8 @@
       "home": "table",
       "field": "the table IS the roster: every player is a column head with its name and its instrument on it",
       "reach": "tcorner",
-      "open": null
+      "open": "tcorner",
+      "note": "...AND ITS DOOR IS ITSELF SINCE 2026-09-06 (TABLE.md §18): the gear stood on the record's line, which is deleted; `tcorner` is the EIGHTH record scope, a row of the hamburger's RECORD group, and its head is on the glass when it is the open one. `open: tcorner` is therefore the ≡ and then the row, which is what `tap` does for every record head."
     },
     {
       "k": "bandsamples",
@@ -586,10 +569,7 @@
       "home": "time-row",
       "field": "tempo — the same <output class=nu-bpmbig> and the same slider, writing DOC.time.bpm on change",
       "reach": "bpm",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "tempo-tap",
@@ -598,10 +578,7 @@
       "home": "time-row",
       "field": "by hand — first of the nine marks, the only one that MEASURES",
       "reach": "tempo-tap",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "tempo-<word>",
@@ -610,10 +587,7 @@
       "home": "time-row",
       "field": "by hand — the same TEMPOS table, the same eight data-k, the same measured refusals",
       "reach": "tempo-half time",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "sel|time.meter",
@@ -622,10 +596,7 @@
       "home": "time-row",
       "field": "meter — selects.js's own widget, SEATED (data-sel does not move)",
       "reach": "sel|time.meter",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "sel|time.swing",
@@ -634,10 +605,7 @@
       "home": "time-row",
       "field": "swing — seated",
       "reach": "sel|time.swing",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "sel|time.groove",
@@ -646,10 +614,7 @@
       "home": "time-row",
       "field": "groove — seated",
       "reach": "sel|time.groove",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "rubato",
@@ -658,10 +623,7 @@
       "home": "time-row",
       "field": "the breathing — a two-word chip strip at the same data-k; still sticky, still no document change",
       "reach": "rubato",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "goto.board",
@@ -670,10 +632,7 @@
       "home": "time-row",
       "field": "record gain — the same .nu-routelink, last in the sheet; it opened the Mix tab and opens the MIX row's master (`openMixRow(\"master\")`) since 2026-09-07, the tab being deleted",
       "reach": "goto.board",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "opt|alphabet.key|<n> (the circle of fifths)",
@@ -682,10 +641,7 @@
       "home": "time-row",
       "field": "key — ui/selects.js keyCircle whole, same spec, same twenty-four addresses. The REACH is the widget's own `data-circ`, because the twenty-four radios are visually clipped by design and the LABEL is the target (shell.js A3 measures those at 24px); the circle itself is the 44px control a thumb lands on.",
       "reach": "alphabet.key",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "sel|alphabet.mode",
@@ -694,10 +650,7 @@
       "home": "time-row",
       "field": "mode — seated, and tuningSay rides as the row's own sub",
       "reach": "sel|alphabet.mode",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "sel|alphabet.scale",
@@ -706,10 +659,7 @@
       "home": "time-row",
       "field": "scale — seated",
       "reach": "sel|alphabet.scale",
-      "open": "trecord",
-      "then": [
-        "ttime"
-      ]
+      "open": "ttime"
     },
     {
       "k": "sel|alphabet.harmony",
@@ -718,10 +668,7 @@
       "home": "chords-row",
       "field": "harmony — seated",
       "reach": "sel|alphabet.harmony",
-      "open": "trecord",
-      "then": [
-        "tchords"
-      ]
+      "open": "tchords"
     },
     {
       "k": "diatonic",
@@ -730,10 +677,7 @@
       "home": "chords-row",
       "field": "the line — a two-word chip strip at the same data-k",
       "reach": "diatonic",
-      "open": "trecord",
-      "then": [
-        "tchords"
-      ]
+      "open": "tchords"
     },
     {
       "k": "prog<n>d / prog<n>i / sel|alphabet.quality|bar<n>",
@@ -742,10 +686,7 @@
       "home": "chords-row",
       "field": "the changes — ui/eight.js chordGrid whole, chordCell playhead included",
       "reach": "prog0d",
-      "open": "trecord",
-      "then": [
-        "tchords"
-      ]
+      "open": "tchords"
     },
     {
       "k": "prog-add",
@@ -754,10 +695,7 @@
       "home": "chords-row",
       "field": "the changes — unchanged",
       "reach": "prog-add",
-      "open": "trecord",
-      "then": [
-        "tchords"
-      ]
+      "open": "tchords"
     },
     {
       "k": "prog-cut",
@@ -766,10 +704,7 @@
       "home": "chords-row",
       "field": "the changes — unchanged",
       "reach": "prog-cut",
-      "open": "trecord",
-      "then": [
-        "tchords"
-      ]
+      "open": "tchords"
     },
     {
       "k": "toptab-Time",
@@ -778,7 +713,7 @@
       "home": "time-row",
       "field": "the row's own head, which is the first line of the sheet at every width",
       "reach": "ttime",
-      "open": "trecord"
+      "open": "ttime"
     },
     {
       "k": "rules.name",
@@ -787,10 +722,7 @@
       "home": "rules-row",
       "field": "the RULES sheet's own first line — ui/rules.js draws it unchanged",
       "reach": "rules.name",
-      "open": "trecord",
-      "then": [
-        "trules"
-      ]
+      "open": "trules"
     },
     {
       "k": "rule|<field>",
@@ -799,10 +731,7 @@
       "home": "rules-row",
       "field": "the sentence with its value on line one and the control under it — the two-line row, unchanged. Its `reset` is drawn on the same row the moment a hand writes the rule (`rule-reset|<field>`), which is why it has no row of its own here: it has no address until then.",
       "reach": "rule|bpm",
-      "open": "trecord",
-      "then": [
-        "trules"
-      ]
+      "open": "trules"
     },
     {
       "k": "sel|rule.<field>",
@@ -811,10 +740,7 @@
       "home": "rules-row",
       "field": "the same menus, built by the same selectField into the same sentence",
       "reach": "sel|rule.rate",
-      "open": "trecord",
-      "then": [
-        "trules"
-      ]
+      "open": "trules"
     },
     {
       "k": "rule-add|<axis>",
@@ -823,10 +749,7 @@
       "home": "rules-row",
       "field": "unchanged, at the foot of each axis block inside the row",
       "reach": "rule-add|Time",
-      "open": "trecord",
-      "then": [
-        "trules"
-      ]
+      "open": "trules"
     },
     {
       "k": "toptab-Rules",
@@ -835,7 +758,7 @@
       "home": "rules-row",
       "field": "the row's own head; the face says how many sentences are written and which moved last",
       "reach": "trules",
-      "open": "trecord"
+      "open": "trules"
     },
     {
       "k": "rulax-<axis>",
@@ -844,7 +767,7 @@
       "home": "rules-row",
       "field": "the eight axis blocks are inside the one row, one tap from the top of the sheet; a jump into a row you have already opened is the scroll you are already doing",
       "reach": "trules",
-      "open": "trecord"
+      "open": "trules"
     },
     {
       "k": "bus|<bus>|<field>",
@@ -853,11 +776,8 @@
       "home": "mix-master",
       "field": "the plates are unchanged and are drawn where the pane drew them — inside #boardpanel, which ui/engineer.js `mount` still builds; what changed is that `mount` is called from the MIX row's master sheet and not from a tab",
       "reach": "bus|genre|fx1",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|genre"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|genre"
     },
     {
       "k": "sel|bus|<bus>|<field>",
@@ -866,11 +786,8 @@
       "home": "mix-master",
       "field": "the same menus on the same plates",
       "reach": "sel|bus|genre|name",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|genre"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|genre"
     },
     {
       "k": "master|<key>",
@@ -879,11 +796,8 @@
       "home": "mix-master",
       "field": "the main plate, in the master row's sheet. THIS IS ALSO WHERE `tmaster|<key>` WENT: the table's old footer row wrote the same seven values through the same NuDeskDoc.writeMaster, so the second control is deleted rather than moved (TABLE.md §10b step 3, \"exactly ONE control page-wide\")",
       "reach": "master|drive",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|main"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|main"
     },
     {
       "k": "level",
@@ -892,11 +806,8 @@
       "home": "mix-master",
       "field": "the main plate, unchanged; the TIME row's `goto.board` pointer opens it",
       "reach": "level",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|main"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|main"
     },
     {
       "k": "grain",
@@ -905,11 +816,8 @@
       "home": "mix-master",
       "field": "the main plate, unchanged",
       "reach": "grain",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|main"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|main"
     },
     {
       "k": "m|listening",
@@ -918,11 +826,8 @@
       "home": "mix-master",
       "field": "the main plate, unchanged",
       "reach": "m|listening",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|main"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|main"
     },
     {
       "k": "t|<voice>|<section>",
@@ -931,11 +836,8 @@
       "home": "mix-master",
       "field": "the automation plate, the fifth stage of the board's own row",
       "reach": "t|<voice>|<section>",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|auto|auto"
-      ]
+      "open": "tmix",
+      "then": "boardtab|auto|auto"
     },
     {
       "k": "col|<voice>",
@@ -944,11 +846,8 @@
       "home": "mix-master",
       "field": "the automation plate, unchanged",
       "reach": "col|<voice>",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|auto|auto"
-      ]
+      "open": "tmix",
+      "then": "boardtab|auto|auto"
     },
     {
       "k": "row|<section>",
@@ -957,11 +856,8 @@
       "home": "mix-master",
       "field": "the automation plate, unchanged",
       "reach": "row|<section>",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|auto|auto"
-      ]
+      "open": "tmix",
+      "then": "boardtab|auto|auto"
     },
     {
       "k": "boardtab|<kind>|<key>",
@@ -970,10 +866,7 @@
       "home": "mix-master",
       "field": "the board's OWN row again (`#boardtabs`, restored in ui/engineer.js `mount`), at the same five addresses. It was an in-panel row until 2026-09-02 and a tray branch until 2026-09-07; the tab it hung under is deleted, and a board whose plates can only be switched from a branch that does not exist is four plates lost",
       "reach": "boardtab|bus|genre",
-      "open": "trecord",
-      "then": [
-        "tmix"
-      ]
+      "open": "tmix"
     },
     {
       "k": "toptab-Mix",
@@ -982,7 +875,7 @@
       "home": "mix-master",
       "field": "the MIX row's master, `tmix` — one merged row in the table's footer, under the row of seats",
       "reach": "tmix",
-      "open": "trecord"
+      "open": "tmix"
     },
     {
       "k": "toptab-Motifs",
@@ -991,7 +884,7 @@
       "home": "motifs-row",
       "field": "the merged MOTIFS row of the sheet, above the column heads with TIME and RULES; its face says how big the bank is and which motif you are standing in",
       "reach": "tmotifs",
-      "open": "trecord"
+      "open": "tmotifs"
     },
     {
       "k": "motiftab-<name>",
@@ -1000,11 +893,8 @@
       "home": "motifs-row",
       "field": "one BANK ROW per motif, with the two facts a 136px column could not carry: ui/preview.js's picture of the cell and its provenance word. `open` is the tap that goes in",
       "reach": "motifopen|<motif>",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifback"
-      ]
+      "open": "tmotifs",
+      "then": "motifback"
     },
     {
       "k": "addcell",
@@ -1013,11 +903,8 @@
       "home": "motifs-row",
       "field": "under the bank's list, at the same address",
       "reach": "addcell",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifback"
-      ]
+      "open": "tmotifs",
+      "then": "motifback"
     },
     {
       "k": "adddrumcell",
@@ -1026,11 +913,8 @@
       "home": "motifs-row",
       "field": "under the bank's list, at the same address",
       "reach": "adddrumcell",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifback"
-      ]
+      "open": "tmotifs",
+      "then": "motifback"
     },
     {
       "k": "readby|<cell>|<voice>",
@@ -1039,11 +923,8 @@
       "home": "motifs-row",
       "field": "under every BANK row, so the whole bank says who plays what without opening one; `motifs()` draws the same strip inside an opened motif",
       "reach": "readby|<motif>|<voice>",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifback"
-      ]
+      "open": "tmotifs",
+      "then": "motifback"
     },
     {
       "k": "motif-name|<cell>",
@@ -1052,11 +933,8 @@
       "home": "motif-sheet",
       "field": "the first line of the opened motif's sheet",
       "reach": "motif-name|<motif>",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "motifclear-<cell>",
@@ -1065,11 +943,8 @@
       "home": "motif-sheet",
       "field": "beside the name, unchanged",
       "reach": "motifclear-<motif>",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "motifplay-<cell>",
@@ -1078,11 +953,8 @@
       "home": "motif-sheet",
       "field": "under the name, unchanged",
       "reach": "motifplay-<motif>",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "g<seq><cell>play<n>{n,h,r}",
@@ -1091,11 +963,8 @@
       "home": "motif-sheet",
       "field": "the bench, drawn by the same `hookGrid` with the same registry; test/bench.test.js owns its geometry and drives it here",
       "reach": "g1-<motif>play0n",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ],
+      "open": "tmotifs",
+      "then": "motifopen|<motif>",
       "floor": 40,
       "note": "THE FLOOR IS THE BENCH'S OWN AND IT IS NOT 44. Paul, 2026-08-27: the step row is \"play/hold/rest, pitch offset -12 to 12, velocity 0 to 7, tightened to one line\" — the ROW is 52px and test/bench.test.js B3 asserts exactly that (\"sixteen 52px lines\"), which is the tap target a thumb has; the three kind buttons inside it are 40 and the two bars 30, by that instruction, and were 40 and 30 in the pane this row replaced. A second 44px demand here would be a second owner contradicting B3 about a geometry nothing in this round touched."
     },
@@ -1106,11 +975,8 @@
       "home": "motif-sheet",
       "field": "the bench, unchanged",
       "reach": "g1-<motif>deg0",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ],
+      "open": "tmotifs",
+      "then": "motifopen|<motif>",
       "floor": 30
     },
     {
@@ -1120,11 +986,8 @@
       "home": "motif-sheet",
       "field": "the bench, unchanged",
       "reach": "g1-<motif>vel0",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ],
+      "open": "tmotifs",
+      "then": "motifopen|<motif>",
       "floor": 30
     },
     {
@@ -1134,11 +997,8 @@
       "home": "motif-sheet",
       "field": "under the bench, unchanged",
       "reach": "g1-<motif>-addbar",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "g<seq><cell>-cutbar",
@@ -1147,11 +1007,8 @@
       "home": "motif-sheet",
       "field": "under the bench, unchanged",
       "reach": "g1-<motif>-cutbar",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "panel-addcell",
@@ -1160,11 +1017,8 @@
       "home": "motif-sheet",
       "field": "under the bench, unchanged",
       "reach": "panel-addcell",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "fork|<cell>|<voice>",
@@ -1173,11 +1027,8 @@
       "home": "motif-sheet",
       "field": "at the foot of the opened motif, unchanged",
       "reach": "fork|<motif>|<forker>",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "motifop-<word>",
@@ -1186,11 +1037,8 @@
       "home": "motif-sheet",
       "field": "one line at the foot of the opened motif's sheet, back under the tune they rewrite (where they stood until 2026-08-28); the addresses did not move",
       "reach": "motifop-backwards",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "motiftime-<word>",
@@ -1199,11 +1047,8 @@
       "home": "motif-sheet",
       "field": "the same line, in the same order",
       "reach": "motiftime-off the beat",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     },
     {
       "k": "toptab-Produce",
@@ -1212,7 +1057,7 @@
       "home": "produce-row",
       "field": "the footer's last merged row, under the mix — the producer speaks about a record that has already been dealt",
       "reach": "tproduce",
-      "open": "trecord"
+      "open": "tproduce"
     },
     {
       "k": "prod.name",
@@ -1221,12 +1066,9 @@
       "home": "produce-row",
       "field": "the first line of the row's sheet, unchanged",
       "reach": "prod.name",
-      "open": "trecord",
+      "open": "tproduce",
       "floor": 1,
-      "note": "IT IS A PLATE AND NOT A TAP TARGET, AND IT ONLY EVER MET THE 44px FLOOR BY ACCIDENT (measured 2026-09-09). `prod.name` is the producer's own `<h3 class=\"nu-namebar nu-prodplate\">` — a READOUT saying how many of the ten have been said — with a `data-k` so this inventory can find it. Nothing presses it. Until the gutter was deleted the content column at 320px was 320 − 96 = 224px, which WRAPPED the plate onto two lines: measured against HEAD's stylesheet, 185.2 x 48.5. With the column at its full 320 the same plate is one line, 264.6 x 27.8, and T7 reported it SHORT — a heading failing a TAP floor because it stopped being squeezed. The floor is 1 here and the reason is written down, which is the same discipline the BENCH's step row got when test/bench.test.js B3 was named as the owner of ITS geometry: a second 44px demand on a box no thumb reaches is a gate asserting the wrong thing about the right control.",
-      "then": [
-        "tproduce"
-      ]
+      "note": "IT IS A PLATE AND NOT A TAP TARGET, AND IT ONLY EVER MET THE 44px FLOOR BY ACCIDENT (measured 2026-09-09). `prod.name` is the producer's own `<h3 class=\"nu-namebar nu-prodplate\">` — a READOUT saying how many of the ten have been said — with a `data-k` so this inventory can find it. Nothing presses it. Until the gutter was deleted the content column at 320px was 320 − 96 = 224px, which WRAPPED the plate onto two lines: measured against HEAD's stylesheet, 185.2 x 48.5. With the column at its full 320 the same plate is one line, 264.6 x 27.8, and T7 reported it SHORT — a heading failing a TAP floor because it stopped being squeezed. The floor is 1 here and the reason is written down, which is the same discipline the BENCH's step row got when test/bench.test.js B3 was named as the owner of ITS geometry: a second 44px demand on a box no thumb reaches is a gate asserting the wrong thing about the right control."
     },
     {
       "k": "prod.cast",
@@ -1235,10 +1077,7 @@
       "home": "produce-row",
       "field": "unchanged",
       "reach": "prod.cast",
-      "open": "trecord",
-      "then": [
-        "tproduce"
-      ]
+      "open": "tproduce"
     },
     {
       "k": "cast|<who>",
@@ -1247,10 +1086,7 @@
       "home": "produce-row",
       "field": "unchanged",
       "reach": "cast|record",
-      "open": "trecord",
-      "then": [
-        "tproduce"
-      ]
+      "open": "tproduce"
     },
     {
       "k": "sel|prod.<field>",
@@ -1259,11 +1095,8 @@
       "home": "produce-row",
       "field": "unchanged; the subject's own chip is the tap that opens it",
       "reach": "sel|prod.word",
-      "open": "trecord",
-      "then": [
-        "tproduce",
-        "cast|record"
-      ]
+      "open": "tproduce",
+      "then": "cast|record"
     }
   ],
   "new": [
@@ -1315,11 +1148,8 @@
     {
       "reach": "master|drive",
       "why": "§1: the master is the table's footer row — and since 2026-09-07 it is the MIX row's MASTER, whose sheet is the board. The seven `tmaster|<key>` cells are DELETED rather than moved: ui/engineer.js's main plate draws `master|<key>` for every one of them through the same NuDeskDoc.writeMaster, so the table's footer copy was the second control for one fact and this round picked the board's.",
-      "open": "trecord",
-      "then": [
-        "tmix",
-        "boardtab|bus|main"
-      ]
+      "open": "tmix",
+      "then": "boardtab|bus|main"
     },
     {
       "reach": "ttab-fill",
@@ -1404,20 +1234,14 @@
     {
       "reach": "motifpoint|<motif>",
       "why": "§10a: *\"tapping a motif points the SELECTED cell at it (the formula bar's own write)\"*. NEW, and it is the reason the bank is in the table at all: in the pane a motif's name was a label and pointing a chair at it meant finding that chair's cell. The write is `avail.js`'s own `material.cell` sheet — the same door the cell sheet's `motifs` row writes through — so the bank and the sheet cannot point a cell two ways. With no cell selected it ARMS the next cell tap and wears `aria-pressed` until it is spent.",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifback"
-      ]
+      "open": "tmotifs",
+      "then": "motifback"
     },
     {
       "reach": "motifback",
       "why": "the way out of one motif and back to the bank — the `↑` the stripe's motifops level carried, said as a word because there is no tree to climb: the bank and the motif are two states of one row.",
-      "open": "trecord",
-      "then": [
-        "tmotifs",
-        "motifopen|<motif>"
-      ]
+      "open": "tmotifs",
+      "then": "motifopen|<motif>"
     }
   ],
   "specialrows": "2026-09-06, TABLE.md 10b steps 1 and 2. Two more panes are DELETED and their controls are MERGED ROWS of the same sheet: #pan-tempo (the Time tab, timeAxis + alphaAxis) is the TIME row at `ttime`, and #rulesdeck (the Rules tab, ui/rules.js) is the RULES row at `trules`. The twenty-four rows appended below were MEASURED the way the first seventy-six were: the rendered DOM of each pane was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion (22 control families in #pan-tempo, 9 in #rulesdeck, plus the two tab rows and the eight Rules axis jumps on the stripe), and every one of them is filed with the row it is reachable in. `open` is the row's own head — one tap at 320px. test/table.browser.js T10d reads the whole `time-row` list back off the rendered sheet at 320 and T10i/T10k read the `rules-row` list; T10h and T10k are the absence half (no host, no tab, no tray row, and exactly ONE control page-wide for each fact). NOTHING IN THIS FILE MOVED: the seventy-six earlier rows keep their reaches, because a special row is a row of the same sheet and adds no address to any of them.  ...AND THE MIX ROW, 2026-09-07 (§10b step 3). A third pane is DELETED: #deck (the Mix tab, ui/engineer.js `mount`) is the MIX row, which is the one special row that is NOT merged — §10a: *\"MIX is ALIGNED — one channel strip per voice column and the master in the corner.\"* The twelve rows appended below were MEASURED the way the others were: the rendered DOM of #deck was walked at 390x844 on Kingston 1969 at reading 1 BEFORE the deletion, in all six states the pane has (arrival plus the five plates), and it holds 10 control families plus the five tray children and the tab row. Every one of them is reachable through `tmix`, the master's own head, which is one tap at 320. TWO ROWS ALREADY IN THIS FILE CHANGED HOME rather than being added — `ins|<voice>|<n>` and `b|<voice>|<bus>`, the strip, from `column` to `mix-row` — because §10a gives the strip a row of its own and the column sheet's `seat` field is deleted with a pointer left in its place. ONE CONTROL IS DELETED AND NOT MOVED, with its measurement: the footer's seven `tmaster|<key>` cells wrote the same values through the same door as the main plate's own seven menus, and two controls for one fact is what the \"exactly ONE control page-wide\" law forbids.  T7 LEARNED A SECOND TAP IN THE SAME EDIT (`then`): the master's sheet is the BOARD, which has always been one panel holding one of five plates, so a walk that pressed only the row's head would report four plates' worth of controls missing and be right. `then` names the stage button — `boardtab|<kind>|<key>`, the same address nukernel/desk-gate.js presses. ONE THING THE PROBE FOUND IS NOT FILED AS A CONTROL: `board.legend`, the board's `dim is derived · bright is set · green is measured` line. It is a `<p class=\"nu-hint\">` and 185x34, and filing prose as a control is how a 44px floor becomes a lie; it travels with the board it captions.",

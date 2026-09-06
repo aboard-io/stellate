@@ -27,7 +27,7 @@ import { html, render, svg, nothing } from "lit/html.js";
 import type { TemplateResult } from "lit/html.js";
 import type { EnvSpec, EnvField, Seg, Editor } from "./api.js";
 import { ISLEVEL } from "./api.js";
-import { R, handle, keyStep, quantise, say, scaleOf } from "./plate.js";
+import { R, handle, keyStep, quantise, say, sayLine, scaleOf, unsay } from "./plate.js";
 import type { DragHost } from "./plate.js";
 /* THE WORDS ARE THE CATALOGUE'S (TABLE.md §12b). `../copy/global.js`, never
    `../copy/index.js`: this is its own build entry, and importing the catalogue
@@ -206,6 +206,7 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
       if (v == null) { draw(); return; }
       /* ONE WRITE, ON RELEASE. `spec.set` is the caller's own door and it is
          what lands the change at the next bar. */
+      unsay(spec.k);
       spec.set(seg, v);
       draw();
     },
@@ -214,9 +215,13 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
          and the spike measured it at four gaps (plate.ts finding #2). */
       const seg = k.split("|").pop() as Seg;
       LIVE = {}; GRAB = {};
+      unsay(spec.k);
       spec.clear(seg);
       draw();
     },
+    /* A TAP ON A REFUSED HANDLE (§15 B5): plate.ts has already stored the
+       reason under this plate's address; this is the redraw that prints it. */
+    onRefused() { draw(); },
   };
 
   const plateWidth = (): number => {
@@ -267,7 +272,7 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
             k: spec.k + "|" + s, label: segWord(s), value: v,
             min: f.min, max: f.max, step: f.step,
             say: say(v, f.unit), axis: ISLEVEL[s] ? "y" : "x",
-            x: pos.x, y: pos.y, why: f.why || null }, dragHost);
+            x: pos.x, y: pos.y, why: f.why || null, sayK: spec.k }, dragHost);
           b.addEventListener("keydown", (e: KeyboardEvent) => {
             const nv = keyStep(e, valOf(f), f.min, f.max, f.step,
                                ISLEVEL[s] ? "y" : "x");
@@ -299,9 +304,13 @@ export function adsrEditor(host: HTMLElement, spec0: EnvSpec): Editor {
             set ? html` <button type="button" class="nu-clearback"
               data-k=${"clear|" + spec.k + "|" + s}
               aria-label=${t("env.clearBack", { name: segWord(s) })}
-              @click=${() => { spec.clear(s); draw(); }}>${t("act.clear")}</button>` : nothing
+              @click=${() => { unsay(spec.k); spec.clear(s); draw(); }}>${t("act.clear")}</button>` : nothing
           }</span>`; })}
-      </div>`;
+      </div>
+      ${/* THE REFUSAL SAID OUT LOUD (§15 B5) — one line per plate, under it.
+            The room is reserved whether or not there is a sentence, so a
+            reason arriving under a thumb moves nothing. */
+        sayLine(spec.k)}`;
   };
 
   /* THE LIVE FRAME: the same arithmetic `view()` uses, written onto the nodes

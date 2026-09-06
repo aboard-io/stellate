@@ -1967,6 +1967,55 @@ function g18() {
     const r5 = await find("the seventies");
     check(r5.n > 10,
       "G24b · …and an ERA word (" + r5.n + " rows in the seventies)");
+    /* ===== G25 · THE LETTERS COME OFF EASILY (2026-09-06) ================
+       Paul: *"Let me easily dismiss the letters I've entered in the genre
+       picker."* `type="search"` draws a clear ✕ on desktop Chrome and NONE on
+       iOS Safari, so this asserts THIS PAGE'S OWN button, on the phone: it is
+       absent while there is nothing to clear, it is a full tap square when
+       there is, it restores every row, it leaves the caret where a hand is
+       about to type again, and Escape does the same from a keyboard WITHOUT
+       closing the picker (Escape has never closed this sheet — v297 measured
+       that and left it, and one key doing two things would be a mode). */
+    const clearAt = async (q) => {
+      await p.evaluate((v) => { const f = document.getElementById("atlasQ");
+        f.value = v; f.dispatchEvent(new Event("input", { bubbles: true })); }, q);
+      await p.waitForTimeout(120);
+      return p.evaluate(() => { const c = document.getElementById("atlasClear");
+        const r = c.getBoundingClientRect();
+        return { hidden: c.hidden, w: Math.round(r.width), h: Math.round(r.height),
+                 n: [...document.querySelectorAll("#atlasIndexRows > li")]
+                      .filter((li) => !li.hidden).length }; });
+    };
+    const cRest = await clearAt("");
+    const cOn = await clearAt("trip");
+    check(cRest.hidden && !cOn.hidden && cOn.w >= 44 && cOn.h >= 44,
+      "G25 · the clear is absent at rest and a " + cOn.w + "x" + cOn.h +
+      " tap square once " + cOn.n + " row(s) are showing");
+    const cAfter = await p.evaluate(() => {
+      document.getElementById("atlasClear").click();
+      return { v: document.getElementById("atlasQ").value,
+               hidden: document.getElementById("atlasClear").hidden,
+               focus: document.activeElement && document.activeElement.id,
+               n: [...document.querySelectorAll("#atlasIndexRows > li")]
+                    .filter((li) => !li.hidden).length };
+    });
+    check(cAfter.v === "" && cAfter.hidden && cAfter.focus === "atlasQ" &&
+          cAfter.n === box.n,
+      "G25 · one tap empties the field, hides itself, keeps the caret in the " +
+      "field and puts all " + cAfter.n + " rows back");
+    await clearAt("dub");
+    const cEsc = await p.evaluate(() => {
+      const f = document.getElementById("atlasQ");
+      f.focus();
+      f.dispatchEvent(new KeyboardEvent("keydown",
+        { key: "Escape", bubbles: true, cancelable: true }));
+      return { v: f.value, open: !document.getElementById("atlas").hidden,
+               n: [...document.querySelectorAll("#atlasIndexRows > li")]
+                    .filter((li) => !li.hidden).length };
+    });
+    check(cEsc.v === "" && cEsc.open && cEsc.n === box.n,
+      "G25 · Escape clears the letters and leaves the picker open (" +
+      cEsc.n + " rows back)");
     const r6 = await find("qqzzxx");
     check(r6.n === 0 && /\S/.test(r6.none) && r6.none.split(/\s+/).length >= 2 &&
           r6.none.indexOf("qqzzxx") >= 0 && r6.noneIn && r6.noneH > 0,

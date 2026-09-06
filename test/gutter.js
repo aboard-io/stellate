@@ -286,6 +286,8 @@ function standUpServer() {
              barBand: !!document.querySelector('#nu-bar [data-k="toptab-Band"]'),
              barSeed: !!document.querySelector("#nu-bar .nu-seedrow"),
              menuSeed: !!document.querySelector("#nu-menu .nu-seedrow"),
+             menuSeedDoor: !!document.querySelector("#nu-menu #seedmenu"),
+             seedRows: document.querySelectorAll(".nu-seedrow").length,
              tray: [typeof window.__eightTray, typeof window.__eightTree,
                     typeof window.__eightExpand] };
   });
@@ -304,13 +306,19 @@ function standUpServer() {
     "every state this page has (" + JSON.stringify(t2.seen) + " — missing " +
     JSON.stringify(t2.missing) + ", off-screen " + JSON.stringify(t2.offscreen) +
     ", not last " + JSON.stringify(t2.notLast) + ")");
+  /* ...AND THE SEED CAME BACK DOWN, 2026-09-06 (TABLE.md §18). Paul: *"Move
+     the dice back into the bottom. Leave them with the hamburger too."* So the
+     ROW is the bar's again — the same node, with `#rewrite`, `#seedval` and
+     `#seedin` inside it — and what the plate holds is `#seedmenu`, a DOOR that
+     presses it. Two ways in, one owner, one writer; a second `.nu-seedrow`
+     anywhere would be the copy this check exists to catch. */
   check(t2n.stripWhere && t2n.menuWhere && t2n.menuBand &&
         !t2n.barWhere && !t2n.barBand &&
-        !t2n.barSeed && t2n.menuSeed &&
+        t2n.barSeed && !t2n.menuSeed && t2n.menuSeedDoor && t2n.seedRows === 1 &&
         JSON.stringify(t2n.rows) === JSON.stringify(wantRows) &&
         t2.last === "play",
     "T2 · …the record's name is the TOP STRIP's plate, the hamburger is ALL " +
-    "of TABS, the seed row is behind it, and the bar holds neither: " +
+    "of TABS, the seed ROW is in the bar with a DOOR to it in the plate: " +
     JSON.stringify(t2n.rows) +
     " for tabs " + JSON.stringify(t2n.tabs) + ", last in the bar " +
     JSON.stringify(t2.last));
@@ -423,6 +431,8 @@ function standUpServer() {
              bars: document.querySelectorAll(".nu-bar").length,
              /* THE INVENTORY, OFF THE RENDERED TREE. */
              bar: kids("#nu-bar"), seed: kids("#nu-bar .nu-seedrow"),
+             /* THE ROOM IS THE BAR'S OWN CHILD SINCE §18 — not the fold's. */
+             roomInBar: !!document.querySelector("#nu-bar > .nu-vs-wide #vol"),
              bartp: kids("#nu-bar .nu-bartp"),
              /* AND THE BAR'S BOX IS THE TOKEN. `--bar-h` is a PROMISE the
                 body's own `padding-block-end` is arithmetic on (nu.css: "a bar
@@ -457,8 +467,25 @@ function standUpServer() {
      wraps — the TOP one now. What left the bar is the genre plate (the top
      strip's) and the seed row (the hamburger's); what joined it is the TAPE,
      which is not a control at all. */
-  check(JSON.stringify(t3.bar) === JSON.stringify(["nu-bartp", "nu-tape"]) &&
-        t3.seed === null &&
+  /* ...AND THE INVENTORY MOVED AGAIN ON 2026-09-06 (TABLE.md §18), which is
+     what an exact list is for. The bar is CONTROLS AND ONLY CONTROLS:
+
+       #nu-topstrip  > toptab-Where · .nu-tape · #burger
+       #nu-bar       > .nu-bartp · .nu-seedrow · .nu-vs (the room, #vol)
+       .nu-bartp     > .nu-baropts · #playops · #voicing · #play
+       .nu-baropts   > #playmode · #take
+       .nu-seedrow   > #rewrite · #seedval · #seedin · .nu-seedwait
+
+     THE TAPE WENT UP (Paul: *"You could put the playback bar to the right of
+     the genre on top top if you want"*) — a readout, not a control — and the
+     ROOM and the DIE came down into the width it left. The room is in the bar
+     ITSELF and not behind the door (*"Get rid of the volume options, popping
+     up in the bottom instead integrate them into the bar with only a
+     pop-up"*), so the fold holds two and not three. */
+  check(JSON.stringify(t3.bar) ===
+          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
+        JSON.stringify(t3.seed) ===
+          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait"]) &&
         JSON.stringify(t3.bartp) ===
           JSON.stringify(["nu-baropts", "playops", "voicing", "play"]),
     "T3 · …and the bar holds exactly what it holds and no ninth thing: " +
@@ -469,11 +496,16 @@ function standUpServer() {
      right above play/stop and out of opts."* — so the fold holds the mode, the
      take and the fader, and `#voicing` being absent from it is half the ask.
      The other half is T3c below: where it stands instead. */
-  check(["playmode", "take"].every((id) =>
-          t3.opts.some((c) => c === id || /nu-vs/.test(c))) &&
-        !t3.opts.includes("voicing"),
-    "T3 · …and the three controls are IN the fold, the voicing OUT of it: " +
-    JSON.stringify(t3.opts));
+  /* TWO IN THE FOLD SINCE 2026-09-06 (§18): the mode and the take. The ROOM
+     left it — it is the bar's own flexible child, read and set without opening
+     anything — and `#voicing` was asserted out of it in 2026-09-03. The fold
+     is the bar's ONE pop-up, and what is behind it is what a 312px line at 320
+     genuinely cannot hold. */
+  check(["playmode", "take"].every((id) => t3.opts.includes(id)) &&
+        !t3.opts.includes("voicing") &&
+        !t3.opts.some((c) => /nu-vs/.test(c)) && t3.roomInBar,
+    "T3 · …and the two controls are IN the fold, the voicing and the ROOM " +
+    "OUT of it: " + JSON.stringify(t3.opts));
   /* T3c — THE VOICING STANDS DIRECTLY BESIDE PLAY/STOP, on the artifact and in
      two ways that cannot both be a coincidence: DOM order (it is #play's
      immediately preceding sibling, in the same box) and GEOMETRY (its trailing
@@ -561,6 +593,15 @@ function standUpServer() {
      of the fold. The stripe could get one of those wrong; the chrome can get
      four. */
   const t3b = await p.evaluate(async () => {
+    /* THE FOLD IS OPENED FIRST, AND IDEMPOTENTLY (2026-09-06, TABLE.md §18).
+       It was left open by the checks above until the one-open law landed: a
+       real pointer press ANYWHERE outside an open pop-up closes it, and T3c's
+       voicing press is exactly that. So this block opens the door it is about
+       rather than inheriting it — which is what every other check in this file
+       does with the surface it measures, and what a hand does. */
+    if (document.querySelector(".nu-baropts[hidden]"))
+      document.getElementById("playops").click();
+    await new Promise((r) => setTimeout(r, 250));
     const shape = () => JSON.stringify([window.__eightTabNow(),
       window.__eightMenu(),
       [...document.querySelectorAll(".nu-baropts *")].map((n) => n.id)
@@ -699,9 +740,11 @@ function standUpServer() {
      is the point of it; an unconditional click would therefore CLOSE the fold
      this check needs open. The gate asks the page whether it is open, exactly
      as a hand would look. */
-  await p.evaluate(() => { const box = document.querySelector(".nu-baropts");
-    if (box && box.hidden) document.getElementById("playops").click(); });
-  await p.waitForTimeout(300);
+  /* (THE FOLD NO LONGER HAS TO BE OPENED FOR THIS CHECK, 2026-09-06, §18: the
+     room is the BAR's own child and is on the glass at every moment. The two
+     lines that opened `#playops` are kept as a comment because the rest of
+     this file still opens it for the mode and the take.) */
+  await p.waitForTimeout(200);
   /* `.nu-trayvol .nu-vs-track` STOOD HERE. nu.css deleted the `.nu-trayvol`
      rule with the other forty, and for an afternoon ui/eight.js still WORE the
      class (`el("span", null, "nu-vs nu-vs-tall nu-trayvol")`) — a name that
@@ -711,35 +754,43 @@ function standUpServer() {
      IN, which is what a thumb reaches and what nu.css actually styles
      (`.nu-baropts .nu-vs-tall`): a gate that asked for a dead class would be
      asserting the gutter one more time. */
+  /* ...AND THE FADER LIES DOWN IN THE BAR SINCE 2026-09-06 (§18). Paul: *"Get
+     rid of the volume options, popping up in the bottom instead integrate them
+     into the bar with only a pop-up."* Same chassis, same pointer law, same
+     `#vol`; what changed is the AXIS, so the drag below runs left to right and
+     the check reads the same three facts — the value moved, the page did not,
+     and the readout says so. */
   const room = await p.evaluate(() => {
-    const t = document.querySelector(".nu-baropts .nu-vs-track");
+    const t = document.querySelector("#nu-bar .nu-vs-wide .nu-vs-track");
     if (!t) return null;
     const r = t.getBoundingClientRect();
-    return { x: r.x + r.width / 2, top: r.y + 8, bot: r.y + r.height - 8,
+    return { x: r.x + r.width / 2, y0: r.y + r.height / 2,
+             left: r.x + 8, right: r.x + r.width - 8,
+             top: r.y + 8, bot: r.y + r.height - 8,
              scrollable: document.documentElement.scrollHeight - window.innerHeight,
              y: window.scrollY, v: +document.getElementById("vol").value };
   });
-  if (!room) check(false, "T4 · there is no fader inside the .nu-baropts fold");
+  if (!room) check(false, "T4 · there is no fader in the bar");
   else {
     const cdp = await p.context().newCDPSession(p);
-    const touch = (type, y) => cdp.send("Input.dispatchTouchEvent", {
+    const touch = (type, x) => cdp.send("Input.dispatchTouchEvent", {
       type, touchPoints: type === "touchEnd" ? []
-        : [{ x: room.x, y, radiusX: 8, radiusY: 8 }] });
-    await touch("touchStart", room.top);
+        : [{ x, y: room.y0, radiusX: 8, radiusY: 8 }] });
+    await touch("touchStart", room.right);
     for (let i = 1; i <= 14; i++)
-      await touch("touchMove", room.top + i * (room.bot - room.top) / 14);
-    await touch("touchEnd", room.bot);
+      await touch("touchMove", room.right - i * (room.right - room.left) / 14);
+    await touch("touchEnd", room.left);
     await p.waitForTimeout(300);
     const after = await p.evaluate(() => ({
       v: +document.getElementById("vol").value, y: window.scrollY,
-      out: (document.querySelector(".nu-baropts .nu-vs-val") || {}).textContent }));
+      out: (document.querySelector("#nu-bar .nu-vs-val") || {}).textContent }));
     check(room.scrollable > 0 && room.y > 0,
       "T4 · the page CAN scroll and is scrolled before the drag — the " +
       JSON.stringify(deepest.name) + " tab is the deepest at 390x844 (" +
       deepest.over + " px of overflow) and the window is at " + room.y +
       " — otherwise the second half of this check would be vacuous");
     check(after.v !== room.v && after.v <= 5,
-      "T4 · a real touch drag DOWN the fader moves the room: " + room.v +
+      "T4 · a real touch drag ALONG the fader moves the room: " + room.v +
       " -> " + after.v + " (" + JSON.stringify(after.out) + ")");
     check(after.y === room.y,
       "T4 · …and the page does not move a pixel under it: scrollY " + room.y +
@@ -845,12 +896,16 @@ function standUpServer() {
        on the number now "because that is where a hand looking at a number
        wants to be told when it will be heard"; it stands down while the seed's
        own wait is up, so exactly one of the two is ever drawn. */
-    const seed = [...document.querySelector("#nu-menu .nu-seedrow").children]
+    /* ...AND THE ROW IS THE BAR'S AGAIN SINCE 2026-09-06 (TABLE.md §18).
+       Paul: *"Move the dice back into the bottom. Leave them with the
+       hamburger too."* Same node, same four children; what the plate holds is
+       `#seedmenu`, a DOOR that presses it. */
+    const seed = [...document.querySelector("#nu-bar .nu-seedrow").children]
       .map((n) => n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
     return { kids, stripKids, seed,
              gone: kids.indexOf("explain"),
              /* THE COUNTDOWN IS THE TAPE'S, and there is exactly one of it. */
-             tapeCount: !!document.querySelector("#nu-bar .nu-tape .nu-count"),
+             tapeCount: !!document.querySelector("#nu-topstrip .nu-tape .nu-count"),
              counts: document.querySelectorAll(".nu-count").length,
              barLog: !!document.querySelector("#nu-bar [data-k=\"logger\"]"),
              menuLog: !!document.querySelector("#nu-menu [data-k=\"logger\"]"),
@@ -871,32 +926,44 @@ function standUpServer() {
                     .getBoundingClientRect().height.toFixed(1),
              num: +document.getElementById("seedval")
                     .getBoundingClientRect().height.toFixed(1),
-             reading: !!document.querySelector("#nu-menu .nu-seedrow #seedval #reading") };
+             reading: !!document.querySelector("#nu-bar .nu-seedrow #seedval #reading"),
+             /* AND THE PLATE'S DOOR TO IT, which is the other half of "two
+                doors, one owner" (§18). */
+             menuDoor: !!document.querySelector("#nu-menu #seedmenu") };
   });
   /* ...AND THE TWO BANDS EACH READ IN THEIR OWN ORDER SINCE 2026-09-06
      (docs/NAV.md). The strip is the record's NAME then the one ≡ (it was
      `.nu-top`'s corner, then the bar's last button, and it is the head of the
      page now); the bar is the transport then the TAPE. The seed row is
      unchanged as a node and is a row of the plate the ≡ opens. */
+  /* ...AND THE TWO BANDS TRADED AGAIN ON 2026-09-06 (TABLE.md §18): the TAPE
+     is a readout and went up into the strip's dead gap; the ROOM and the DIE
+     are controls and came down into the width it left. The strip reads name ·
+     tape · ≡ and the bar reads transport · die · room. */
   check(JSON.stringify(t9.stripKids) ===
-          JSON.stringify(["toptab-Where", "burger"]) &&
+          JSON.stringify(["toptab-Where", "nu-tape", "burger"]) &&
         JSON.stringify(t9.kids) ===
-          JSON.stringify(["nu-bartp", "nu-tape"]) &&
+          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t9.seed) ===
           JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait"]) &&
         !t9.inFold && t9.gone < 0,
-    "T9 · the strip reads name · ≡, the bar reads transport · tape, and the " +
-    "seed row — a row of the hamburger now — reads die · number · field · " +
-    "wait, with no ? anywhere in it and the die nowhere else — " +
+    "T9 · the strip reads name · tape · ≡, the bar reads transport · die · " +
+    "room, and the seed row reads die · number · field · wait, with no ? " +
+    "anywhere in it and the die nowhere else — " +
     JSON.stringify({ strip: t9.stripKids, bar: t9.kids, seed: t9.seed }));
   check(t9.tapeCount && t9.counts === 1,
     "T9 · …and the general countdown is INSIDE the tape, and there is exactly " +
     "one of it on the page (" + t9.counts + ")");
-  check(!t9.barLog && t9.menuLog &&
-        JSON.stringify(t9.menuTail) === JSON.stringify(["nu-viewcut", "logger"]),
-    "T9 · …and the log left the transport for the hamburger, below the rule " +
-    "that divides the seed from the readout (in the bar " + t9.barLog +
-    ", in the menu " + t9.menuLog + ", tail " + JSON.stringify(t9.menuTail) + ")");
+  /* ...AND THE TAIL IS THE SEED'S BLOCK THEN THE LOG SINCE 2026-09-06 (§18).
+     The `<hr class="nu-viewcut">` between them is deleted: the plate's blocks
+     are told apart by their HEADINGS and the air around them now, and a rule
+     as well was a second spelling of one seam — 17px of a plate that measured
+     33px too tall for an 844px phone. */
+  check(!t9.barLog && t9.menuLog && t9.menuDoor &&
+        JSON.stringify(t9.menuTail) === JSON.stringify(["nu-menuseed", "logger"]),
+    "T9 · …and the log is the plate's last row, after the seed's own block " +
+    "(in the bar " + t9.barLog + ", in the menu " + t9.menuLog + ", tail " +
+    JSON.stringify(t9.menuTail) + ")");
   check(t9.tap >= 44 && t9.num >= 44 && t9.reading,
     "T9 · …still a thumb TALL (die " + t9.tap + " px, number " + t9.num +
     " px) and still carrying #reading, which is the number's own target now");
@@ -905,18 +972,20 @@ function standUpServer() {
      reaches. AND IT IS THE SAME TWO READINGS T2 TAKES: the mark is in
      `#nu-bar .nu-seedrow`, and its rect is on the screen. A die under a sheet
      is a die that is not always there, and the DOM cannot tell you that. */
-  /* ...AND THE CLAIM IS ONE TAP, NOT ZERO, SINCE 2026-09-06 (docs/NAV.md).
-     It read "in the bar and on the screen in every state", which was the right
-     claim while the die stood in the bar. Paul moved it: *"Move the seed out
-     of the bottom nav and into a 'set seed' in the hamburger."* So what is
-     driven is the tap a hand now makes — press the ≡, and on EVERY surface the
-     die is in the plate, on the screen and a thumb tall. The ≡ itself is what
-     is always there, and `test/shell.js` A6d asserts that. */
+  /* ...AND THE CLAIM IS BACK TO ZERO TAPS, 2026-09-06 (TABLE.md §18). It was
+     "in the bar and on the screen in every state" until v298 put the seed
+     behind the ≡, and it was "ONE TAP from every surface" for a day. Paul:
+     *"Move the dice back into the bottom. Leave them with the hamburger
+     too."* So the die is in the BAR again — on the screen in every state,
+     which is what the walk below drives — and the plate holds a door to it,
+     which T9 above asserts. The menu is still opened at each stop, because
+     the plate must not COVER the die: a control behind another surface is a
+     control that is not there. */
   const t9b = await p.evaluate(async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const missing = [], offscreen = [], seen = [];
     const look = (where) => {
-      const b = document.querySelector("#nu-menu .nu-seedrow #rewrite");
+      const b = document.querySelector("#nu-bar .nu-seedrow #rewrite");
       if (!b) { missing.push(where); return; }
       const r = b.getBoundingClientRect();
       if (!(r.height >= 44 && r.top >= 0 && r.bottom <= window.innerHeight + 1))
@@ -925,23 +994,20 @@ function standUpServer() {
     for (const name of window.__eightTabs()) {
       window.__eightTab(name); await wait(120);
       seen.push(name);
-      window.__eightMenuOpen(true); await wait(120);
       look(name);
       window.__eightUp(); await wait(60);
     }
     document.getElementById("playops").click(); await wait(150);
-    window.__eightMenuOpen(true); await wait(120);
     look("the fold");
-    window.__eightMenuOpen(false); await wait(60);
     const inFold = [...document.querySelectorAll(".nu-baropts *")]
       .map((n) => n.id).filter((x) => x);
     document.getElementById("playops").click(); await wait(80);
     return { missing, offscreen, seen, inFold };
   });
   check(!t9b.missing.length && !t9b.offscreen.length,
-    "T9 · …ONE TAP from every surface: the ≡ opens the plate and the die is " +
-    "in it, on the screen and a thumb tall, on all six and with the play " +
-    "options unfolded (" + JSON.stringify(t9b.seen) + ", missing " +
+    "T9 · …the die is in the bar, on the screen and a thumb tall, on all six " +
+    "surfaces and with the play options unfolded — no tap needed (" +
+    JSON.stringify(t9b.seen) + ", missing " +
     JSON.stringify(t9b.missing) + ", off-screen " +
     JSON.stringify(t9b.offscreen) + ")");
   /* `items.indexOf("tp.rewrite") < 0 && items.indexOf("tp.mode") === 0` STOOD
@@ -1070,7 +1136,15 @@ function standUpServer() {
            The sweep opens each of the three below and measures them there,
            which is where a thumb meets them. */
         if (!b.getClientRects().length) continue;
-        const v = b.querySelector(".nu-vh");
+        /* ...OR ITS OWN VISIBLE WORD, WHICH IS THE SAME CLAIM (2026-09-06,
+           TABLE.md §18). `.nu-vh` is HOW a mark whose face is a picture keeps
+           its word in the DOM; the plate's record rows are not pictures —
+           `.nu-menuword` IS the word, in flow, on the glass, at the head of
+           the row's accessible sentence — so asking them for a hidden span as
+           well would be asking for a second copy of the word this file exists
+           to keep single. Everything below is measured on whichever element
+           carries it. */
+        const v = b.querySelector(".nu-vh") || b.querySelector(".nu-menuword");
         const k = b.id || b.dataset.k || "?";
         const br = b.getBoundingClientRect();
         const name = (b.getAttribute("aria-label") || "").trim();
@@ -1165,7 +1239,11 @@ function standUpServer() {
        fader is the one thing in the fold that is not a button, so it is scoped
        by the chassis it IS (`.nu-vs`, ui/engineer.js `vchassis`) and not by the
        box it sits in. */
-    const room = document.querySelector(".nu-baropts .nu-vs .nu-vh");
+    /* ...AND THE FADER IS THE BAR'S OWN SINCE 2026-09-06 (TABLE.md §18): it
+       came out of the fold and lies down in the bar itself, so it is scoped by
+       the chassis it IS (`.nu-vs`) inside the band it stands in. The argument
+       above is unchanged and is why this is not `.nu-bar .nu-vh`. */
+    const room = document.querySelector("#nu-bar .nu-vs .nu-vh");
     const out = { bad, wide, small, shown, hidden,
       room: room ? room.textContent : null,
       roomName: document.getElementById("vol").getAttribute("aria-label"),
@@ -1177,6 +1255,8 @@ function standUpServer() {
          extraction law above passes on it for the same reason `#rewrite`'s
          would if it still had a visible word. */
       burgerBadge: !!document.querySelector("#burger .nu-n"),
+      /* ...AND THE LOG'S OWN ROW, WHICH IS WHERE THE COUNT LIVES SINCE §18. */
+      logBadge: !!document.querySelector('#nu-menu [data-k="logger"] .nu-n'),
       logs: window.__nuLog().length,
       burgerName: (document.getElementById("burger") ||
         { getAttribute: () => null }).getAttribute("aria-label"),
@@ -1237,12 +1317,23 @@ function standUpServer() {
      would go red on a page nobody had made a sound on. By the time this runs
      the box has played, stopped and reseeded, so the honest form is the
      BICONDITIONAL: a badge exactly when there are lines. */
-  check(t10.burgerBadge === (t10.logs > 0) &&
-        /^menu/.test(String(t10.burgerName || "")),
-    "T10 · …and the ≡ carries the log's badge, so the count is on the screen " +
-    "with the menu shut, while its NAME still begins with its own word (" +
-    JSON.stringify(t10.burgerName) + ", badge " + t10.burgerBadge + " for " +
-    t10.logs + " lines)");
+  /* ...AND THE BADGE CAME OFF THE ≡ ON 2026-09-06 (TABLE.md §18), WHICH IS A
+     DECISION AND IS ASSERTED AS ONE. The paragraph above is right that a count
+     behind a door is a count nobody can see; what it did not measure is what
+     the number READS AS. Paul's own screenshot shows `≡52` in the corner of a
+     phone — the log's line count, on the only navigation button this app has,
+     over a running audio engine — and 52 there reads as fifty-two errors. So
+     the number lives on the thing it is about: the log's own row inside the
+     plate, which has printed it in its badge and in its accessible name all
+     along. What is asserted is the pair: NO badge on the ≡ at any log length,
+     and the count on the log's row whenever there is one. */
+  check(!t10.burgerBadge && t10.logBadge === (t10.logs > 0) &&
+        /^menu$/.test(String(t10.burgerName || "").trim()),
+    "T10 · …and the ≡ wears NO badge — a log count on the app's one " +
+    "navigation button reads as errors (§18) — while the log's own row in " +
+    "the plate carries it (" + JSON.stringify(t10.burgerName) +
+    ", ≡ badge " + t10.burgerBadge + ", log badge " + t10.logBadge +
+    " for " + t10.logs + " lines)");
 
   /* ===== T10b IS RETIRED WITH THE COLUMN IT WAS ARITHMETIC ABOUT ========
      (2026-09-09, TABLE.md §10b steps 6 and 7.)

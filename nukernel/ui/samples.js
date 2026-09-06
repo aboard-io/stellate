@@ -164,6 +164,33 @@ function foundKind(id) {
      ELSE       instrument menu is already drawn in (avail.js instrOptions sets
                 `group: familyOf(n)`), so a swap offers the words that were
                 already standing next to each other. */
+/* ---------- CAN THIS RECORDING HOLD A NOTE? (2026-09-06) ------------------
+   Paul: *"Samples should have full Adsr why don't they"*. Three of the four
+   stages shape any recording; the SUSTAIN is the one a recording can refuse,
+   because a sustain is the level a note rests at while it is held and a sample
+   with no loop zone does not rest — it stops when the recording runs out.
+   MEASURED (test/sampler-adsr.test.js S5, and the scratchpad probe it came
+   from): on a 0.35 s one-shot with the note held 2 s the sound ends at 0.350 s
+   whatever the four handles say, and a 1.5 s release tail is never heard.
+
+   IT LIVES HERE because this file is already the one place on the page that
+   reads a sampled id's ZONES off the registry — `REG("SAMPLERS")[id].zones`,
+   the same read `samplesOf` lists a chair's files with, and the same
+   `sampledId` predicate the loop strip and `avail.js sampledVoice` are drawn
+   behind. A second reader in `ui/eight.js` would be the registry consulted
+   twice about one fact.
+
+   THREE ANSWERS, NOT TWO. `null` is "this page cannot say" — an id with no
+   registry row, a Faust model, a synth — and a refusal is never printed on a
+   `null`: the box does not grey a control on a fact it has not measured. */
+export function zonesLoop(id) {
+  if (!id || !(NI().sampledId && NI().sampledId(id))) return null;
+  const S = REG("SAMPLERS")[id];
+  const zs = (S && S.zones) || null;
+  if (!zs || !zs.length) return null;
+  return zs.some((z) => !!z.loop);
+}
+
 export function classOf(id, kind) {
   const s = String(id || "");
   if (!s) return null;

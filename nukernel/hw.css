@@ -101,9 +101,17 @@
   --row-hi:rgba(0,0,0,.045);    /* the row under the pointer */
   --row-lit:rgba(255,90,31,.11);/* the row that is sounding */
 
-  /* ---- TYPE — two stacks, no webfont, five sizes ---- */
-  --f-ui:ui-sans-serif,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --f-num:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+  /* ---- TYPE — two stacks, five sizes ----
+     IBM PLEX FIRST, 2026-09-06 (Paul: "Make everything the IBM flex Family
+     fonts"). This file is UNLINKED — no page loads it, and PROGRAM.md says so
+     twice — so nothing here renders and nothing here was measured for this
+     round. The two stacks are pointed at Plex anyway, because the day this
+     sheet IS linked it must not be the one surface still wearing the system
+     face, and because a leftover stack in a file is how a face comes back.
+     The faces themselves are nukernel/fonts.css's, as everywhere: whichever
+     page links this sheet has to link that one too. */
+  --f-ui:"IBM Plex Sans",ui-sans-serif,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
   --t-xs:12px;                  /* a label under a control */
   --t-sm:13.5px;                /* a secondary value */
   --t-md:15px;                  /* body, and most values */

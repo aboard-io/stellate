@@ -287,6 +287,15 @@ function say(v2, unit) {
   if (unit === "Hz" && v2 >= 1e3) return fmt(v2 / 1e3, "kHz");
   return fmt(v2, unit);
 }
+var SAID = /* @__PURE__ */ new Map();
+function sayLine(k2) {
+  const w2 = SAID.get(k2) || "";
+  return b`<p class="nu-wsay" role="status" aria-live="polite"
+    data-k=${"say|" + k2} ?data-said=${!!w2}>${w2}</p>`;
+}
+function unsay(k2) {
+  SAID.delete(k2);
+}
 function handle(o2, host) {
   const b2 = document.createElement("button");
   b2.type = "button";
@@ -302,14 +311,22 @@ function handle(o2, host) {
   if (o2.why) {
     b2.setAttribute("aria-disabled", "true");
     b2.dataset.why = o2.why;
-    b2.title = o2.why;
+    b2.dataset.say = o2.why;
   }
   b2.style.left = o2.x - R2 + "px";
   b2.style.top = o2.y - R2 + "px";
   const dot = document.createElement("span");
   dot.className = "nu-envdot";
   b2.append(dot);
-  if (o2.why) return b2;
+  if (o2.why) {
+    b2.addEventListener("click", (e2) => {
+      e2.preventDefault();
+      e2.stopPropagation();
+      SAID.set(o2.sayK || o2.k, o2.why);
+      if (host.onRefused) host.onRefused(o2.k);
+    });
+    return b2;
+  }
   let held = null;
   let from = null;
   let moved = false;
@@ -488,6 +505,7 @@ function adsrEditor(host, spec0) {
         draw();
         return;
       }
+      unsay(spec.k);
       spec.set(seg, v2);
       draw();
     },
@@ -495,7 +513,13 @@ function adsrEditor(host, spec0) {
       const seg = k2.split("|").pop();
       LIVE = {};
       GRAB = {};
+      unsay(spec.k);
       spec.clear(seg);
+      draw();
+    },
+    /* A TAP ON A REFUSED HANDLE (§15 B5): plate.ts has already stored the
+       reason under this plate's address; this is the redraw that prints it. */
+    onRefused() {
       draw();
     }
   };
@@ -550,7 +574,8 @@ function adsrEditor(host, spec0) {
         axis: ISLEVEL[s2] ? "y" : "x",
         x: pos.x,
         y: pos.y,
-        why: f2.why || null
+        why: f2.why || null,
+        sayK: spec.k
       }, dragHost);
       b2.addEventListener("keydown", (e2) => {
         const nv = keyStep(
@@ -591,11 +616,16 @@ function adsrEditor(host, spec0) {
               data-k=${"clear|" + spec.k + "|" + s2}
               aria-label=${t2("env.clearBack", { name: segWord(s2) })}
               @click=${() => {
+        unsay(spec.k);
         spec.clear(s2);
         draw();
       }}>${t2("act.clear")}</button>` : A}</span>`;
     })}
-      </div>`;
+      </div>
+      ${/* THE REFUSAL SAID OUT LOUD (§15 B5) — one line per plate, under it.
+        The room is reserved whether or not there is a sentence, so a
+        reason arriving under a thumb moves nothing. */
+    sayLine(spec.k)}`;
   };
   const paintLive = () => {
     const w2 = plateWidth();

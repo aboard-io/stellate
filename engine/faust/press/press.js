@@ -297,6 +297,15 @@ async function assemble(state, sched, env, opts) {
         // (ENGINE-AUDIT Tier 2).
         vel: SP.selVelOf(e),
         atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
+        // ...AND THE MIDDLE OF THE ENVELOPE (2026-09-06). `dcy`/`sus` are the
+        // sampler's decay and sustain (sampler.js `envAt`), and this line is
+        // the FOURTH consumer of `u.sampler` — live.js and the stream
+        // renderer's two call sites carried them from the day they existed and
+        // press did not, so a record whose chair had been given a fall heard
+        // it live and rendered a flat one. Measured: envAt with sus 0.3 lands
+        // susRatio 0.3000 and press was handing it no `sus` at all. Absent
+        // keys stay absent, so every existing record presses byte for byte.
+        dcy: u.sampler.dcy, sus: u.sampler.sus,
         swell: !!u.sampler.swell,
         mello: u.sampler.mello || null,   // MELLOTRON: LFO phase off note tSec (deterministic)
         bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,

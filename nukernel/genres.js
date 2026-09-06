@@ -1448,6 +1448,14 @@
     // it and the line has it, which is the flood's whole point.
     //
     // ...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the second guitar, the chords an octave down" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     guitarrock: {
       label: "Guitar rock",
       voices: 2,
@@ -1641,6 +1649,10 @@
     // hairpin — the restatement is the level change. The `vox` cluster takes
     // `agogic`; the anchor's own evidence outranks it, which is the flood's
     // rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     fugue: {
       organic: true,
       label: "Leipzig 1725",
@@ -2211,6 +2223,14 @@
     // hand comes off the hats and down the toms, and the cymbal lands on the
     // last sixteenth to hand the loop back to bar 1.
     // bar 8: the turnaround
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "riff an octave up, thinned on odd bars" — and a doubled
+    // guitar is an amp fact before it is a voicing: `kernel.js chair.fifths`
+    // states the engine's own reason, "a power chord is an amp fact made
+    // pitch ... thirds intermodulate under distortion and fifths do not".
+    // Re-choosing that chair's note to break a parallel would be correcting
+    // the amplifier.
     rock: {
       label: "London 1969",
       bars: 8,
@@ -2291,6 +2311,12 @@
     // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
     // cluster takes `agogic`; the anchor's own evidence outranks it, which is
     // the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). This row's whole
+    // texture is the men-and-boys octave doubling named above: no word, no
+    // development, `reg: v => -v`, so every bar is a parallel octave and the
+    // fault census will say so about all of them. The doubling is the
+    // schola, not a slip.
     gregorian: {
       label: "Rome 600",
       rate: 0.5,
@@ -2497,6 +2523,13 @@
     // modulus, bottom to top — bass, tenor, alto, soprano — which is written
     // as a formula for the same reason `reg` is: eight cases saying `v % 4`
     // the long way round would obscure the one fact the line carries.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). Eight chairs
+    // carrying eight fixed transpositions of one line are eight voices in
+    // permanent parallel, which is exactly what the paragraph above calls
+    // the wave rather than any line in it. Repairing those intervals would
+    // re-voice a forty-part motet into a chorale, so the pass is refused
+    // whole.
     polychoral: {
       label: "London 1570",
       rate: 0.5,
@@ -2657,6 +2690,10 @@
     // hairpin — the restatement is the level change. The `vox` cluster takes
     // `agogic`; the anchor's own evidence outranks it, which is the flood's
     // rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     counterpoint: {
       organic: true,
       label: "Vienna 1725",
@@ -2834,6 +2871,14 @@
     // Eyehategod is a punk band playing at doom tempo with a blues hand;
     // the missing link between them is Sabbath, the doom that showed rock
     // where the bottom was.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the riff an octave under, thinned" — and a doubled guitar
+    // is an amp fact before it is a voicing: `kernel.js chair.fifths` states
+    // the engine's own reason, "a power chord is an amp fact made pitch ...
+    // thirds intermodulate under distortion and fifths do not". Re-choosing
+    // that chair's note to break a parallel would be correcting the
+    // amplifier.
     sludge: {
       label: "New Orleans 1991",
       rate: 0.5,
@@ -2975,6 +3020,13 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.45, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: punk .55→.40, rock .45→.30, nwobhm .25→.15, thrash .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the same riff an octave under, as written" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     deathmetal: {
       label: "Tampa 1990",
       bars: 8,
@@ -6209,6 +6261,13 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.35, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: rock .45→.35, beatgroup .40→.30, rocknroll .15→.10, garagerock .25→.20, girlgroup .10→.05. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the same riff, an octave under, as written" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     punk: {
       label: "New York 1976",
       near: "rock",
@@ -9249,6 +9308,14 @@
     // the song discipline underneath are rock's; the wash the loud chorus
     // opens into is shoegaze's blur, thinned to a backbeat. Midwest emo's
     // own tapped-arpeggio guitar language is still uncredited.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the second guitar, an octave under, doubling in the loud
+    // half" — and a doubled guitar is an amp fact before it is a voicing:
+    // `kernel.js chair.fifths` states the engine's own reason, "a power
+    // chord is an amp fact made pitch ... thirds intermodulate under
+    // distortion and fifths do not". Re-choosing that chair's note to break
+    // a parallel would be correcting the amplifier.
     emo: {
       label: "Chicago 1999",
       near: "punk",
@@ -13798,6 +13865,14 @@
     // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
     // cluster takes `agogic`; the anchor's own evidence outranks it, which is
     // the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The pass repairs
+    // parallel fifths and octaves, and this row's two upper voices are
+    // nothing else: the word is `[transpose(4)]` and `[transpose(3)]` over a
+    // held tenor, which the words above call "a fifth above, moving with it"
+    // and "the third voice, a fourth up". Every parallel the census finds
+    // here is the thing Notre-Dame invented, so the whole pass is refused by
+    // name rather than any one fault of it.
     organum: {
       label: "Paris 1200",
       rate: 0.5,
@@ -14030,6 +14105,10 @@
     // hairpin — the restatement is the level change. The `vox` cluster takes
     // `agogic`; the anchor's own evidence outranks it, which is the flood's
     // rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     arsnova: {
       label: "Reims 1360",
       voices: 3,
@@ -16210,6 +16289,13 @@
     // across the bar rather than leaning on any note in it. The `roots`
     // cluster takes `lean`; the anchor's own evidence outranks it, which is
     // the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The words above
+    // put it in capitals: the strings are "ON THE VOICE'S OWN LINE an octave
+    // below it — not an accompaniment", and the cello sits second with a
+    // `transpose(-7)`. Every one of those is a parallel the pass would
+    // break, and breaking it turns Puccini's unison strings back into an
+    // accompaniment.
     verismo: {
       label: "Rome 1890",
       near: "belcanto",
@@ -23481,6 +23567,14 @@
     // — the book's own four parts, top to bottom. THE TUNE STAYS IN THE
     // TENOR, which is this row's whole point; what changes is that the bass
     // is sung by a bass and the treble by a treble.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The paragraph
+    // above already says what the pass would take: "open fourths and fifths
+    // everywhere", and "the chords come out in open fourths and fifths
+    // rather than in triads" because the tune is in the tenor with a part
+    // above it. Both of the pass's harmonic repairs — the parallel and the
+    // missing chord tone — would be spent turning this book's sound into
+    // triads.
     sacredharp: {
       label: "Philadelphia 1844",
       voices: 4,
@@ -24552,6 +24646,10 @@
     // chromaticism pushed until the key stopped meaning anything;
     // `counterpoint` is the technique the row forms come from wholesale;
     // `classical` is the Suite's own dance-movement frame.
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     serial: {
       instrumental: true,
       label: "Vienna 1923",
@@ -27653,6 +27751,10 @@
     // hairpin — the restatement is the level change. The `vox` cluster takes
     // `agogic`; the anchor's own evidence outranks it, which is the flood's
     // rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     isorhythm: {
       label: "Florence 1436",
       voices: 4,
@@ -30467,6 +30569,13 @@
     //
     // LINEAGE: chant carrying its own shadow — and the sequence
     // repertory is IN the troper, which is why the edge is real.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). `word` transposes
+    // chair 1 down a fourth against the chant and holds it there, which the
+    // words above state as "below at the fourth, closing to unison" — the
+    // earliest written polyphony anywhere, and it is parallel by
+    // construction. A pass that broke those fourths would be correcting the
+    // manuscript.
     winchester: {
       label: "Winchester 1000",
       voices: 2,
@@ -30605,6 +30714,10 @@
     // hairpin — the restatement is the level change. The `vox` cluster takes
     // `agogic`; the anchor's own evidence outranks it, which is the flood's
     // rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     francoflemish: {
       label: "Venice 1502",
       voices: 4,
@@ -31368,6 +31481,10 @@
     // an edge instead of a want at last. The distinction this row's
     // comment argues (synthesis vs recording) stays true and stays
     // written; the sampling round simply made the OTHER half sayable.
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     cologneschool: {
       label: "Cologne 1956",
       voices: 2,
@@ -31844,6 +31961,9 @@
     // sum to 0.90 and the row keeps a tenth of itself, which is right for a place whose
     // whole claim is that nobody had done it in a club before.
     //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     zodiak: {
       label: "Berlin 1968",
       voices: 2,
@@ -32053,6 +32173,14 @@
     // the exact score the debts round called "arguable and REMAINS
     // THE NEXT ASK" — and the band named after a horror bill takes
     // the edge to the scores that filled the bill.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the second guitar, doubling an octave down" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     heavymetal: {
       label: "Workington 1969",
       voices: 2,
@@ -33240,6 +33368,13 @@
     // LINEAGE: `heavymetal` (Workington 1969) is the weight; `punk`
     // (New York 1976) the velocity and the self-released 45s — the
     // genre is the first stack multiplied by the second's clock.
+    //
+    // REFUSES THE COPYIST'S `doubling` (2026-09-06, docs/THEORY.md §2), and
+    // only that. The pass may change which chord tone a doubling voice
+    // takes, and this row's doubling voice is the twin lead — "the same line
+    // a third up", which the words above already call "the row's one
+    // non-negotiable". A third re-chosen to a fourth is a different band.
+    // Range and doubled-leading-tone repairs are accepted.
     nwobhm: {
       label: "London 1980",
       voices: 2,
@@ -33301,6 +33436,14 @@
     // measurement is on the hardcore row itself) and the accelerator
     // is the same scene either way. punk stays: the downstroke
     // discipline predates the acceleration.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the rhythm guitar doubling at the octave, zero swing" —
+    // and a doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     thrash: {
       label: "San Francisco 1983",
       voices: 2,
@@ -33411,6 +33554,12 @@
     // 0.20 that is the row's own is the thing none of those four does: half
     // of this music is in a MAJOR key, with a chorus written to be sung by a
     // hall, at a chord count nobody else in the metal wing gets near.
+    //
+    // REFUSES THE COPYIST'S `doubling` (2026-09-06, docs/THEORY.md §2), for
+    // its parent's reason and in its parent's words: the second chair is
+    // "nwobhm's twin lead, kept", so the one repair that re-picks a doubling
+    // voice's chord tone is the one this row cannot take. Everything else
+    // the pass does is accepted.
     powermetal: {
       label: "Hamburg 1985",
       near: "nwobhm",
@@ -36691,6 +36840,14 @@
     // genre that took ONE parent's slowest idea and made it the whole
     // aesthetic. nwobhm supplies the operatic vocal register Messiah
     // Marcolin actually sang in.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the same riff an octave down, later" — and a doubled
+    // guitar is an amp fact before it is a voicing: `kernel.js chair.fifths`
+    // states the engine's own reason, "a power chord is an amp fact made
+    // pitch ... thirds intermodulate under distortion and fifths do not".
+    // Re-choosing that chair's note to break a parallel would be correcting
+    // the amplifier.
     doom: {
       label: "Stockholm 1986",
       voices: 2,
@@ -36804,6 +36961,10 @@
     // IONIAN ON PURPOSE, and it is the whole claim: the contenance
     // angloise is the major third sung sweet, and this is the oldest
     // row in the catalog whose alphabet is the modern major.
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     contenanceangloise: {
       label: "London 1420",
       voices: 3,
@@ -39740,6 +39901,10 @@
     // high lead keeps the countertenor, the second voice is a tenor, and the
     // bani — the ground — is a bass, which is the part the octave spread was
     // already describing and no throat was singing.
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     georgian: {
       label: "Tbilisi 1966",
       voices: 3,
@@ -42810,6 +42975,14 @@
     // under .2 is a music whose discipline is not leaning. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The pass's
+    // cheapest repair is to move a note by an octave, and this row has no
+    // octave to move it by: `MODES.slendro = tuned([...], 12.08)` makes the
+    // period 1208 cents, so a twelve-semitone shift is a quarter-tone out of
+    // the gamelan. The `cannot` above already refused to state the doubling
+    // relation between chairs for the same reason; this is that refusal
+    // reaching the copyist.
     gamelan: {
       instrumental: true,
       label: "Surakarta 1956",
@@ -42976,6 +43149,10 @@
     // //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
     // //   the choice belongs. The engine path stays wired and gated;
     // //   what leaves is the ROW declaring it for you.
+    //
+    // REFUSES THE COPYIST'S `missing` (2026-09-06, docs/THEORY.md §2): this
+    // row is `harmony: "emergent"`, so a chord tone cannot be missing from a
+    // harmony no hand voiced.
     tapemusic: {
       organic: true,
       instrumental: true,
@@ -44661,6 +44838,14 @@
     //     seed 1 before the shift, 180 of 370 after, and `rock` and
     //     `postgrunge` show the same proportion. Not introduced here, not
     //     fixed here (kernel.js).
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the clean guitar, the quiet half, an octave under" — and
+    // a doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     grunge: {
       label: "Seattle 1991",
       near: "sludge",
@@ -44739,6 +44924,14 @@
     // dynamic this music sells, arriving four years early and by the
     // radio rather than by the scene. Nothing is missing: this is grunge
     // being produced.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the clean guitar, the verse, a fifth under" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     postgrunge: {
       label: "Seattle 1995",
       near: "grunge",
@@ -44956,6 +45149,14 @@
     //
     // THE SKATE BEAT, second grid: the snare on every even step, which is
     // the measured chorus and the one thing punk's own row never does.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the second guitar, the same four an octave down" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     poppunk: {
       label: "Berkeley 1994",
       near: "punk",
@@ -45334,6 +45535,14 @@
     // metal row here: no bottom, all treble, and a room the size of a
     // church. `cut` is the highest in the metal wing and `verb` is nearly
     // half wet on a music that is otherwise all attack.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the second guitar, the same line a fifth under" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     blackmetal: {
       label: "Oslo 1993",
       near: "deathmetal",
@@ -46955,6 +47164,14 @@
     // band bass is played with a pick, and the mouth is `merseystack` with
     // the wobble halved and the blend opened: an American band imitating a
     // Liverpool one gets it slightly wrong, and slightly wrong is the sound.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the second guitar, the chords, an octave down" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     powerpop: {
       label: "Memphis 1972",
       near: "merseybeat",
@@ -47084,6 +47301,14 @@
     // with the vibrato at 0.05 and the air at 0.10 — the tightest, driest,
     // straightest harmony in this table, which is what four people shouting
     // in tune at a skate park sounds like.
+    //
+    // REFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair
+    // is declared "the rhythm guitar, the chords, an octave down" — and a
+    // doubled guitar is an amp fact before it is a voicing: `kernel.js
+    // chair.fifths` states the engine's own reason, "a power chord is an amp
+    // fact made pitch ... thirds intermodulate under distortion and fifths
+    // do not". Re-choosing that chair's note to break a parallel would be
+    // correcting the amplifier.
     skatepunk: {
       label: "Los Angeles 1988",
       near: "hardcore",
@@ -47267,6 +47492,198 @@
       ],
       word: v => (v === 2 ? [rotate(3), drop(2)] : []),
       dyn: "arch",
+    },
+  };
+
+  // WHO REFUSES THE COPYIST (docs/THEORY.md §2, 2026-09-06). The
+  // part-writing pass repairs parallels, ranges, doublings and missing
+  // chord tones on the RENDER — and "a genre may refuse the pass by name:
+  // a punk record does not want its parallel fifths corrected, and neither
+  // does an organum, whose whole music IS parallel motion". `refuse` is
+  // "all" or a list drawn from parallel/range/doubling/missing, and `why`
+  // is the row's own evidence. Each refusal is written in the row's JSON;
+  // this table is collected out of them, and the argument is in the row's
+  // note above. NOT a field on the row: see GENRES.md §2 `copyist`.
+  const COPYIST = {
+    guitarrock: {
+      refuse: "all",
+      why: "the second chair is declared \"the second guitar, the chords an octave down\", and " +
+      "under distortion that doubling is the amp sound rather than a voicing."
+    },
+    fugue: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    rock: {
+      refuse: "all",
+      why: "the second chair is declared \"riff an octave up, thinned on odd bars\", and under " +
+      "distortion that doubling is the amp sound rather than a voicing."
+    },
+    gregorian: {
+      refuse: "all",
+      why: "\"the same line an octave below\" with `word: () => []` and `reg: v => -v` — two " +
+      "voices, one melody, an octave apart in every bar."
+    },
+    polychoral: {
+      refuse: "all",
+      why: "eight choirs each a fixed transposition of one point — `transpose([0, 4, 2, -3, 3, " +
+      "-2, 5, 1][v % 8])` — so the parallels between them are Tallis's architecture."
+    },
+    counterpoint: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    sludge: {
+      refuse: "all",
+      why: "the second chair is declared \"the riff an octave under, thinned\", and under " +
+      "distortion that doubling is the amp sound rather than a voicing."
+    },
+    deathmetal: {
+      refuse: "all",
+      why: "the second chair is declared \"the same riff an octave under, as written\", and " +
+      "under distortion that doubling is the amp sound rather than a voicing."
+    },
+    punk: {
+      refuse: "all",
+      why: "the second chair is declared \"the same riff, an octave under, as written\", and " +
+      "under distortion that doubling is the amp sound rather than a voicing."
+    },
+    emo: {
+      refuse: "all",
+      why: "the second chair is declared \"the second guitar, an octave under, doubling in the " +
+      "loud half\", and under distortion that doubling is the amp sound rather than a " +
+      "voicing."
+    },
+    organum: {
+      refuse: "all",
+      why: "the vox organalis moves \"a fifth above, moving with it\" and the third voice " +
+      "arrives \"a fourth up\" — the parallel motion IS the record, and correcting it " +
+      "deletes the music."
+    },
+    arsnova: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    verismo: {
+      refuse: "all",
+      why: "the third chair is \"the strings, ON THE VOICE'S OWN LINE an octave below it — not " +
+      "an accompaniment\", which is the row shouting that the doubling IS the arrangement."
+    },
+    sacredharp: {
+      refuse: "all",
+      why: "\"open fourths and fifths everywhere ... the chords come out in open fourths and " +
+      "fifths rather than in triads\" — filling them in makes the record something other " +
+      "than shape-note singing."
+    },
+    serial: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    isorhythm: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    winchester: {
+      refuse: "all",
+      why: "the second voice is \"the vox organalis, below at the fourth, closing to unison\" " +
+      "— parallel organum is what the Troper's hundred and fifty pieces are."
+    },
+    francoflemish: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    cologneschool: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    zodiak: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    heavymetal: {
+      refuse: "all",
+      why: "the riff itself is \"root, octave, the flat fifth held\" and the second chair is " +
+      "\"doubling an octave down\" — the parallel is the power chord."
+    },
+    nwobhm: {
+      refuse: ["doubling"],
+      why: "the twin lead is \"the same line a third up — the twin lead, which is the row's " +
+      "one non-negotiable\", so re-choosing its chord tone is the one repair this row " +
+      "forbids."
+    },
+    thrash: {
+      refuse: "all",
+      why: "the second chair is declared \"the rhythm guitar doubling at the octave, zero " +
+      "swing\", and under distortion that doubling is the amp sound rather than a voicing."
+    },
+    powermetal: {
+      refuse: ["doubling"],
+      why: "the second chair is \"the same line a third up — nwobhm's twin lead, kept\", and " +
+      "the twin lead is a doubling voice whose interval cannot be re-chosen."
+    },
+    doom: {
+      refuse: "all",
+      why: "the second chair is declared \"the same riff an octave down, later\", and under " +
+      "distortion that doubling is the amp sound rather than a voicing."
+    },
+    contenanceangloise: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    georgian: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    gamelan: {
+      refuse: "all",
+      why: "slendro's octave is 1208 cents (`MODES.slendro = tuned([...], 12.08)`), so a " +
+      "copyist's octave repair lands out of tune, and the row's own `cannot` already says " +
+      "\"no operator states the doubling RELATION between chairs\"."
+    },
+    tapemusic: {
+      refuse: ["missing"],
+      why: "`harmony: \"emergent\"` — nobody wrote the chords down, the voices did, so there " +
+      "is no voiced harmony for a chord tone to be missing from."
+    },
+    grunge: {
+      refuse: "all",
+      why: "the second chair is declared \"the clean guitar, the quiet half, an octave " +
+      "under\", and under distortion that doubling is the amp sound rather than a voicing."
+    },
+    postgrunge: {
+      refuse: "all",
+      why: "the second chair is declared \"the clean guitar, the verse, a fifth under\", and " +
+      "under distortion that doubling is the amp sound rather than a voicing."
+    },
+    poppunk: {
+      refuse: "all",
+      why: "the second chair is declared \"the second guitar, the same four an octave down\", " +
+      "and under distortion that doubling is the amp sound rather than a voicing."
+    },
+    blackmetal: {
+      refuse: "all",
+      why: "the second guitar is \"the same line a fifth under\" — a bare fifth under " +
+      "distortion, which `kernel.js chair.fifths` calls an amp fact made pitch."
+    },
+    powerpop: {
+      refuse: "all",
+      why: "the second chair is declared \"the second guitar, the chords, an octave down\", " +
+      "and under distortion that doubling is the amp sound rather than a voicing."
+    },
+    skatepunk: {
+      refuse: "all",
+      why: "the second chair is declared \"the rhythm guitar, the chords, an octave down\", " +
+      "and under distortion that doubling is the amp sound rather than a voicing."
     },
   };
 
@@ -48938,7 +49355,7 @@
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
                 HARMONYLABEL, tuned, SCALEFAMILY, MODEFAMILY, FAMILYLABEL,
                 MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT,
-                FIGURES };
+                FIGURES, COPYIST };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

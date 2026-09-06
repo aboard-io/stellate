@@ -2112,11 +2112,6 @@ var SPECIALS = [
     lamp: (A2) => A2.motifLamp()
   }
 ];
-var RECORD = {
-  k: "trecord",
-  id: "record",
-  face: timeFace
-};
 var PRODUCE = {
   k: "tproduce",
   id: "produce",
@@ -2264,8 +2259,9 @@ var WIDTH = /* @__PURE__ */ new Map();
 var CLIP = null;
 var RO = null;
 var OUT = null;
+var OWNER = () => globalThis.NuOpen || null;
+var SHEETNAME = "sheet";
 var STICK = null;
-var RECOPEN = false;
 var GRIDSTORE = "nu.band.grid.v1";
 var GRIDOPEN = (() => {
   try {
@@ -2318,7 +2314,6 @@ function bandTable(host, A2) {
     OPEN = null;
     OPENFIELD = null;
   }
-  if (RECORD_KEY(OPEN)) RECOPEN = true;
   const sh0 = shapeOf(A2);
   if (SEL && !sh0.at()) {
     SEL = null;
@@ -2605,41 +2600,22 @@ function bandTable(host, A2) {
       sheet: () => wrapOps([...perfCells(A2), ...perfSheet(A2)]),
       lamp: NOLAMP
     });
+    out.push({
+      k: "tcorner",
+      key: "corner",
+      id: "song",
+      cls: "nu-songrow",
+      word: t4("head.song"),
+      aria: t4("head.corner.aria"),
+      face: () => "",
+      lamp: NOLAMP,
+      sheet: () => [{
+        kind: "ops",
+        label: t4("head.song"),
+        ops: tableOps(A2, A2.facing() === "voices").map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
+      }]
+    });
     return out;
-  };
-  const recordRow = (S2, list) => {
-    let face2 = "";
-    try {
-      face2 = RECORD.face(A2);
-    } catch (e4) {
-      face2 = "";
-    }
-    return b`<tr class="nu-sprow nu-recrow" data-special="record">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-labelbtn" data-k=${RECORD.k}
-          aria-expanded=${String(RECOPEN)}
-          aria-controls=${list.map((x2) => "nu-scope-" + x2.id).join(" ")}
-          aria-label=${RECOPEN ? t4("special.record.collapse.aria") : t4("special.record.expand.aria")}
-          @click=${openRecord}
-          ><span class="nu-spface">${face2}</span></button>${optsBtn()}
-        </div>
-      </th>
-    </tr>`;
-  };
-  const optsBtn = () => {
-    const mk = actMark("opts");
-    return b`<button type="button" class="nu-spclose nu-spopts"
-      data-k="tcorner"
-      aria-expanded=${String(OPEN === "corner")}
-      aria-label=${t4("head.corner.aria")}
-      @click=${() => toggle("corner")}
-      @contextmenu=${(e4) => {
-      e4.preventDefault();
-      toggle("corner", true);
-    }}
-      ><span class="nu-g" aria-hidden="true">${mk ? mk.g : "⚙"}</span
-      ><span class="nu-vh">${t4("head.corner.aria")}</span></button>`;
   };
   const scopeRows = (S2, list) => {
     const out = [];
@@ -2647,7 +2623,7 @@ function bandTable(host, A2) {
       const open = OPEN === sc.key;
       out.push(b`<tr id=${"nu-scope-" + sc.id}
           class=${"nu-sprow nu-scoperow" + (sc.cls ? " " + sc.cls : "")}
-          data-special=${sc.id} ?hidden=${!RECOPEN}>
+          data-special=${sc.id} ?hidden=${!open}>
         <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
           <div class="nu-spline">
           <button type="button" class="nu-sphead" data-k=${sc.k}
@@ -2663,40 +2639,20 @@ function bandTable(host, A2) {
           </div>
         </th>
       </tr>`);
-      if (open && RECOPEN)
+      if (open)
         out.push(openRow(S2, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen"));
     }
     return out;
   };
-  function openRecord() {
-    if (RECOPEN && RECORD_KEY(OPEN)) toggle(OPEN);
-    RECOPEN = !RECOPEN;
-    draw();
-  }
   function foldGrid() {
     if (GRIDOPEN && OPEN && !RECORD_KEY(OPEN)) toggle(OPEN);
     GRIDOPEN = !GRIDOPEN;
     saveGridOpen();
     draw();
   }
-  const cornerSheet = (S2) => {
-    if (OPEN !== "corner") return A;
-    return openRow(
-      S2,
-      sheetFor("corner", () => [{
-        kind: "ops",
-        label: t4("head.song"),
-        ops: tableOps(A2, S2.across).map((x2) => x2.act ? { ...x2, act: () => op(x2.word, x2.act) } : x2)
-      }]),
-      t4("head.song"),
-      "nu-spopen"
-    );
-  };
   const thead = (S2, cols) => {
     const list = scopes();
     return b`<thead>
-    ${recordRow(S2, list)}
-    ${cornerSheet(S2)}
     ${scopeRows(S2, list)}
     <tr class="nu-gridhead">
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
@@ -3099,17 +3055,12 @@ function bandTable(host, A2) {
     if (first instanceof HTMLElement) first.focus({ preventScroll: true });
   }
   function closeEdit() {
-    OPEN = null;
-    OPENFIELD = null;
-    SHEETKEY = null;
-    SHEETFIELDS = null;
-    draw();
+    shutSheet();
     if (!SEL) return;
     const b2 = host.querySelector('[data-k="tcell|' + SEL.voice + "|" + SEL.sec + '"]');
     if (b2 instanceof HTMLElement) b2.focus({ preventScroll: true });
   }
   function toggle(key, keepOpen = false) {
-    if (RECORD_KEY(key)) RECOPEN = true;
     if (SPECIAL(key) && (OPEN !== key || keepOpen)) {
       try {
         A2.leaveLanding();
@@ -3125,6 +3076,11 @@ function bandTable(host, A2) {
     if (SHEETKEY !== OPEN) {
       SHEETKEY = null;
       SHEETFIELDS = null;
+    }
+    const own = OWNER();
+    if (own) {
+      if (OPEN) own.opened(SHEETNAME);
+      else own.closed(SHEETNAME);
     }
     draw();
   }
@@ -3344,13 +3300,19 @@ function bandTable(host, A2) {
       if (t5.closest("button, a, input, select, textarea, [role=slider], label"))
         return;
       if (!host.isConnected) return;
-      OPEN = null;
-      OPENFIELD = null;
-      SHEETKEY = null;
-      SHEETFIELDS = null;
-      draw();
+      shutSheet();
     };
     document.addEventListener("pointerdown", OUT, true);
+  }
+  function shutSheet() {
+    if (!OPEN) return;
+    OPEN = null;
+    OPENFIELD = null;
+    SHEETKEY = null;
+    SHEETFIELDS = null;
+    const own = OWNER();
+    if (own) own.closed(SHEETNAME);
+    draw();
   }
   draw();
   const table = host.querySelector("table.nu-wordgrid");
@@ -3387,6 +3349,12 @@ function bandTable(host, A2) {
   reindex();
   armResize(paneEl);
   armOutside();
+  {
+    const own = OWNER();
+    if (own) own.register(SHEETNAME, () => {
+      if (host.isConnected) shutSheet();
+    });
+  }
   let litRow = null, litCols = "";
   const paint = (nowRowId, soundingColIds) => {
     if (nowRowId !== litRow) {
@@ -3406,13 +3374,7 @@ function bandTable(host, A2) {
     rowHeads,
     colHeads,
     paint,
-    close: () => {
-      OPEN = null;
-      OPENFIELD = null;
-      SHEETKEY = null;
-      SHEETFIELDS = null;
-      draw();
-    },
+    close: () => shutSheet(),
     openCorner: () => {
       toggle("corner");
     },
@@ -3450,7 +3412,20 @@ function bandTable(host, A2) {
       ARM = name;
       return false;
     },
-    armedMotif: () => ARM
+    armedMotif: () => ARM,
+    scopeMenu: () => scopes().map((sc) => ({
+      k: sc.k,
+      key: sc.key,
+      word: sc.word,
+      aria: sc.aria,
+      face: (() => {
+        try {
+          return sc.face();
+        } catch (e4) {
+          return "";
+        }
+      })()
+    }))
   };
 }
 export {

@@ -39,6 +39,15 @@
  *       beside the printed number both return the field to ABSENT (the key
  *       deleted, not set to a default). Double-tap is NOT offered and must not
  *       be: the spike measured zero `dblclick` events at four touch gaps.
+ *   E8  A RECORDING THAT CANNOT REST SAYS SO (2026-09-06). Paul: *"Samples
+ *       should have full Adsr why don't they"*. They do — and the one stage a
+ *       recording can refuse is the SUSTAIN, because a sample with no loop
+ *       zone does not rest, it stops when the recording runs out (measured on
+ *       PCM in test/sampler-adsr.test.js S5). On a chair seated with a
+ *       one-shot the sustain handle is `aria-disabled` and NEVER `disabled`,
+ *       the other three stay live, A TAP PRINTS THE REASON on the glass and
+ *       names the loop zone, and the tap writes nothing — §15 B5's law
+ *       reaching the one widget its own table did not.
  *   E7  NOTHING OVERHANGS AND NOTHING SCROLLS SIDEWAYS at 320, 390 and 1280.
  *       A 44px handle at a plate's edge overhangs by 22 — measured on AUX's
  *       own chart — so every handle's box must be inside the plate's box.
@@ -341,6 +350,98 @@ function standUpServer() {
         await p.screenshot({ path: path.join(SHOTS, "envelope-" + W + ".png"),
                              fullPage: false }); }
     }
+
+    /* ---- E8 · A RECORDING THAT CANNOT REST SAYS SO (2026-09-06) --------
+       Paul: *"Samples should have full Adsr why don't they"*. They do — and
+       the ONE stage a recording can refuse is the sustain, because a sustain
+       is the level a note rests at while it is HELD and a sample with no loop
+       zone does not rest: it stops when the recording runs out. Measured in
+       test/sampler-adsr.test.js S5 on rendered PCM (a 0.35 s one-shot held for
+       2 s ends at 0.350 s whatever the four handles say, and a 1.5 s release
+       tail is never heard at all).
+
+       So this is §15 B5's law — *"a refused control is `aria-disabled` and
+       never `disabled` … and a tap on it prints its reason and writes
+       nothing"* — reaching the one widget B5's own table did not: an envelope
+       handle. It carried its sentence in `title` and in its accessible name
+       and bound no listener at all, which is the silent grey wearing an
+       accessible name.
+
+       THE CHAIR IS PICKED BY THE FACT, NOT BY NAME. `__oneShot` asks the
+       page's own registry which offered id has zones and none of them looped —
+       the same read `ui/samples.js zonesLoop` makes — because a fixture that
+       names an instrument measures "the menu does not offer it" and reports a
+       round unmeasurable (this file has already paid for that once). */
+    const shot = await p.evaluate(async () => {
+      /* AND IT MUST BE A CHAIR THE SAMPLER PLAYS. 19 ids in the registry have
+         no looped zone and only 11 of them are sampler-routed — `marimba`,
+         `woodblock`, `taiko_drum`, `agogo`, `crunch_guitar`, `di_guitar`,
+         `melodic_tom` and `tinker_bell` resolve to a Faust MODEL through
+         instruments.js's patch tables, and a model chair draws no sustain
+         handle at all (it has no port for one). `sampledId` is the page's own
+         predicate for the routing — the same one avail.js `sampledVoice` and
+         ui/samples.js `zonesLoop` are drawn behind. */
+      window.__oneShot = (offers) => offers.find((id) => {
+        const NI = window.NuInstruments || {};
+        if (!(NI.sampledId && NI.sampledId(id))) return false;
+        const S = (window.__REGISTRY || {}).SAMPLERS || {};
+        const z = ((S[id] || {}).zones) || [];
+        return z.length > 0 && !z.some((x) => x.loop); }) || null;
+      const D = window.__eightDoc();
+      const v = D.voices.find((x) => x.kind === "line") || D.voices[0];
+      const id = await window.__seat(v.name, (offers) => window.__oneShot(offers));
+      if (!id) return { none: true, name: v.name };
+      const box = document.querySelector("#pan-band .nu-seatenv");
+      if (!box) return { none: true, name: v.name, id };
+      const hOf = (seg) => box.querySelector(
+        '.nu-envh[data-k="env|' + v.name + '|' + seg + '"]');
+      const sus = hOf("sustain");
+      if (!sus) return { none: true, name: v.name, id, nosus: true };
+      const line = box.querySelector('.nu-wsay[data-k="say|env|' + v.name + '"]');
+      const before = line ? line.textContent.trim() : null;
+      const others = ["attack", "decay", "release"].map((seg) => {
+        const h = hOf(seg);
+        return { seg, there: !!h,
+                 refused: !!h && h.getAttribute("aria-disabled") === "true" }; });
+      sus.click();
+      await window.__nap(400);
+      const line2 = box.querySelector('.nu-wsay[data-k="say|env|' + v.name + '"]');
+      const D2 = window.__eightDoc();
+      const v2 = D2.voices.find((x) => x.name === v.name) || {};
+      return { id, name: v.name,
+               ariaDisabled: sus.getAttribute("aria-disabled"),
+               reallyDisabled: !!sus.disabled,
+               lineThere: !!line, before,
+               after: line2 ? line2.textContent.trim() : null,
+               said: line2 ? line2.hasAttribute("data-said") : false,
+               others,
+               wrote: (v2.sound || {}).sus };
+    });
+    if (shot.none) {
+      check(false, W + " · E8 no one-shot chair could be seated on this record" +
+        (shot.nosus ? " (seated " + shot.id + ", no sustain handle)" : ""));
+    } else {
+      check(shot.ariaDisabled === "true" && shot.reallyDisabled === false,
+        W + " · E8 the sustain handle on a one-shot (" + shot.id + ") is " +
+        "`aria-disabled` and NEVER `disabled` — " +
+        JSON.stringify({ aria: shot.ariaDisabled, disabled: shot.reallyDisabled }));
+      check(shot.others.every((o) => o.there && !o.refused),
+        W + " · E8 …and the other three stay live, because each still shapes " +
+        "what IS there — " + JSON.stringify(shot.others));
+      check(shot.lineThere && !shot.before && !!shot.after && shot.said &&
+            /loop/i.test(shot.after),
+        W + " · E8 …a TAP prints the reason on the glass, and it names the " +
+        "loop zone — " + JSON.stringify({ before: shot.before, after: shot.after }));
+      check(shot.wrote === undefined,
+        W + " · E8 …and the tap wrote nothing (sound.sus is " +
+        JSON.stringify(shot.wrote) + ")");
+    }
+    /* back onto the looped recording the rest of this file is written against. */
+    await p.evaluate(async () => {
+      const D = window.__eightDoc();
+      const v = D.voices.find((x) => x.kind === "line") || D.voices[0];
+      await window.__seat(v.name, () => "sea_shore");
+    });
 
     /* ---- E7 · nothing scrolls sideways -------------------------------- */
     const side = await p.evaluate(() => document.documentElement.scrollWidth -

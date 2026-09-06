@@ -270,6 +270,73 @@ The build **refuses a `dyn` no figure answers to** (§6 G2): a name nobody wrote
 would compose a record with no per-note dynamics and no error, which is this
 repo's characteristic bug.
 
+### `copyist` — the row refusing the part-writing pass
+
+**2026-09-06, the theory layer** (`docs/THEORY.md` §2). The generation pass
+repairs part-writing faults in the RENDERED score — parallel fifths and
+octaves, a note outside its chair's compass, a doubled leading tone, a chord
+tone missing from a voiced harmony — and its law is that *"a genre may refuse
+the pass by name: a punk record does not want its parallel fifths corrected,
+and neither does an organum, whose whole music IS parallel motion."*
+
+**A refusal is data on the row, never a list inside the engine**, for the same
+reason `dyn` is: the row is where the evidence is, and a name list in a pass is
+a second copy of the catalogue that drifts from it.
+
+```json
+  "copyist": { "refuse": "all",         "why": "…one sentence, in the row's own words" }
+  "copyist": { "refuse": ["doubling"],  "why": "…" }
+```
+
+| `refuse` | what is refused |
+|---|---|
+| `"all"` | the whole pass |
+| `"parallel"` | parallel fifths and octaves |
+| `"range"` | a note outside the chair's compass |
+| `"doubling"` | a doubled leading tone, or a re-chosen doubling note |
+| `"missing"` | a chord tone missing from a voiced harmony |
+
+`refuse` is the string `"all"` or a **non-empty array of those four codes and
+nothing else**, and `why` is a non-empty string. The build **throws by row
+name** on anything else (§6 G2): a refusal spelled `"parallels"` would name
+nothing, be repaired anyway, and report nothing about it — the *declared but
+never arriving* failure this repo keeps meeting.
+
+**It is emitted into its own `COPYIST` table and NOT onto the row.** `emit.js
+rowTxt` skips it beside `note`, and `build.js` collects every row's refusal
+into one const after `GENRES` and before the `FOOT` region, in `_order.json`
+order, exported beside `DYNAMICS` and `FIGURES`:
+
+```js
+  const COPYIST = {
+    organum: { refuse: "all", why: "the vox organalis moves \"a fifth above, …" },
+    fugue:   { refuse: ["missing"], why: "`harmony: \"emergent\"` — nobody wrote …" },
+  };
+```
+
+**Why off the row, said plainly.** `test/table.test.js` **T2b** compares
+`Object.keys(toGenre(anchor))` for every anchor against a **pinned baseline
+worktree**, and that pin is a commit rather than a list a round may edit. A
+`copyist` key on `GENRES.punk` would turn T2b red for every refusing row at
+once. It belongs off the row on its own merits anyway: a refusal is a fact
+*about* a row, not a field *of* one — nothing that composes a record reads it,
+only the copyist pass does, and that pass is handed the table the way
+`precompose` is handed `FIGURES`.
+
+**35 rows refuse today** (2026-09-06): 22 refuse `"all"` — the five whose music
+IS parallel motion (`organum`, `winchester`, `gregorian`, `polychoral`,
+`sacredharp`), the fifteen driven-guitar rows whose declared octave or fifth
+doubling is an amp fact and not a voicing (`kernel.js chair.fifths`: *"a power
+chord is an amp fact made pitch … thirds intermodulate under distortion and
+fifths do not"*), and two whose doubling is the arrangement (`verismo`'s
+strings on the voice's own line, `gamelan`, whose slendro octave is 1208 cents
+so a copyist's octave move is out of tune). `nwobhm` and `powermetal` refuse
+only `["doubling"]` — the twin lead is a doubling voice and re-choosing its
+chord tone unmakes it. Eleven `harmony: "emergent"` rows refuse only
+`["missing"]`: nobody wrote their chords down, so there is no voiced harmony
+for a chord tone to be missing from. **Every refusal's argument is in the row's
+own `note`.**
+
 ---
 
 ## 3 · The closure grammar
@@ -477,6 +544,10 @@ Adding a genre: write `nukernel/genres/<key>.json`, add the key to
     (2026-09-06, the dynamics flood). `tools/genres/build.js` requires the
     vocabulary and throws by name, which is why FIGURES lives in the `HEAD`
     region: `FOOT` is spliced inside `stamp(GENRES)` and cannot be required.
+  - a `copyist`, where present, is `{ refuse, why }` and nothing else, with
+    `refuse` the string `"all"` or a non-empty array of `parallel` / `range` /
+    `doubling` / `missing`, and `why` a non-empty string (2026-09-06, the
+    theory layer). A refusal that would silently do nothing cannot ship.
   - a `note` is a string with no `*/` in it, so it survives the trip out.
 - **G3** the closure round trip: every template `emit()`ed, `eval`ed back into a
   function, and called over **v = 0..8 × s = 0..7** against the closure the

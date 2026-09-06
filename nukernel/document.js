@@ -2323,30 +2323,39 @@
      its bounds in played bars and `t0` is where it starts in steps, for a
      caller that wants to re-base. An event may sit BEFORE `t0` and that is not
      a bug: it is the window's first section's pickup, which belongs to it. */
-  function scoreOf(doc, GENRES, fleet, win = null) {
-    const secs = doc.form.sections, lines = LINES(doc), out = [];
-    /* THE FORM IS WALKED, NOT THE SECTION LIST (2026-09-05, the review's item
-       9). `formWalk` says what the record PLAYS — how many times each section
-       is stated, how many bars come off the last statement for a second
-       ending, which sections the coda jump goes over. A record that says none
-       of it walks `plays: 1, cut: 0, skip: false` on every section, which is
-       `secs.forEach` to the bit and is every record in the catalogue. */
-    /* PASS ONE — WHERE EVERY STATEMENT LANDS, and nothing else. The bar
-       arithmetic needs the genre (a section with no `bars` of its own takes
-       the genre's), so the genre is resolved here and handed to pass two
-       rather than resolved twice; the KERNEL work — render, drums, bass — is
-       what pass two does and what a window skips.
+  /* PASS ONE — WHERE EVERY STATEMENT LANDS, and nothing else. The bar
+     arithmetic needs the genre (a section with no `bars` of its own takes the
+     genre's), so the genre is resolved here and handed to pass two rather than
+     resolved twice; the KERNEL work — render, drums, bass — is what pass two
+     does and what a window skips.
 
-       THE OFFSET IS A TIME, NOT A BAR COUNT (TABLE.md wave 4, 2026-09-04).
-       This read `t0 = bar * barSteps` with THIS section's `barSteps` — which is
-       exact for as long as every section counts its bar the same way, and that
-       was true while `rate` was the RECORD's alone. A row may halve or double
-       its own section now, so the sections after it would have been placed with
-       the wrong bar length. Accumulating the time each section actually takes
-       is the same number for a record whose rows say nothing (uniform
-       `barSteps` makes the sum `bar * barSteps` again, to the bit) and the
-       right one for a record whose rows do. */
-    const plan = [];
+     THE FORM IS WALKED, NOT THE SECTION LIST (2026-09-05, the review's item
+     9). `formWalk` says what the record PLAYS — how many times each section is
+     stated, how many bars come off the last statement for a second ending,
+     which sections the coda jump goes over. A record that says none of it
+     walks `plays: 1, cut: 0, skip: false` on every section, which is
+     `secs.forEach` to the bit and is every record in the catalogue.
+
+     THE OFFSET IS A TIME, NOT A BAR COUNT (TABLE.md wave 4, 2026-09-04). This
+     read `t0 = bar * barSteps` with THIS section's `barSteps` — which is exact
+     for as long as every section counts its bar the same way, and that was
+     true while `rate` was the RECORD's alone. A row may halve or double its
+     own section now, so the sections after it would have been placed with the
+     wrong bar length. Accumulating the time each section actually takes is the
+     same number for a record whose rows say nothing (uniform `barSteps` makes
+     the sum `bar * barSteps` again, to the bit) and the right one for a record
+     whose rows do.
+
+     IT IS ITS OWN FUNCTION SINCE 2026-09-06 (the theory round, docs/THEORY.md
+     §2) because a SECOND reader appeared: `chordsIn` below answers "what
+     harmony is sounding at step t", which the copyist pass and the fault
+     census both have to ask, and which is a question about the plan and not
+     about the notes. One owner rather than a second copy of the walk — the
+     law every table in this box is exported under. */
+  const pcw = (n) => ((n % 12) + 12) % 12;
+
+  function planOf(doc, GENRES, fleet) {
+    const secs = doc.form.sections, plan = [];
     let bar = 0, t0 = 0;
     for (const w of formWalk(doc)) {
       if (w.skip) continue;
@@ -2365,6 +2374,116 @@
       plan.push({ si: i, id: s2.id, g, barSteps, total,
                   bar0: stmts[0].bar0, bar1: bar, t0: stmts[0].t0, stmts });
     }
+    return { plan, bar };
+  }
+
+  /* THE HARMONY THE RECORD PLAYS, AS A TIMELINE (2026-09-06, docs/THEORY.md
+     §2). `scoreOf` answers what SOUNDS; this answers what the record says is
+     sounding — one entry per chord window per statement, in the same absolute
+     STEP units the events carry, so a caller can ask "which chord is under
+     this note" with one lookup and no second walk of the form.
+
+     WHY IT IS HERE AND NOT IN THE TOOL THAT WANTED IT. The census
+     (`tools/theory-census.js`) and the copyist pass both need it, and both
+     would otherwise have re-derived the statement plan, the per-section
+     genre, the lead phrase and `stepsIn(g) / g.rate` for themselves — four
+     facts this file already owns and two of which (the form walk, the row's
+     own rate) have each been got wrong once in a second copy. It reads the
+     kernel's `chordsOf`, which is the ONE owner of what a bar's chords are.
+
+     THE LEAD PHRASE IS THE SUBJECT, exactly as in `scoreOf`: `chordsOf` reads
+     it for the phrase length and, on a `harmony: "modal"` row with no written
+     progression, for `harm()`'s own walk. Handing it a different phrase would
+     answer a different record's harmony. */
+  /* ONE STATEMENT'S CHORDS, IN ITS OWN STEP UNITS — the arithmetic `render`
+     does per voice, done once and handed to whoever asks. Two callers:
+     `chordsIn` below (which offsets these onto the record's own clock) and
+     the copyist pass inside `scoreOf` (which wants them exactly as they are,
+     beside the events of the statement it is repairing). It was written twice
+     for one afternoon and the two copies disagreed about `hbOf`, which is the
+     reason it is a function.
+
+     THE HARMONIC BAR IS THE KERNEL'S, NOT THE SECTION'S — `render`'s own
+     `hbOf`: a chair whose cell is a different number of bars from the
+     record's reference length still takes the reference bar's chord, or the
+     band is in two keys. Said the same way here, off the same two fields, so
+     the chord this reports is the chord the notes were voiced against. */
+  function barChords(lead, g, total) {
+    const N = lead.deg.length, key = g.key | 0, out = [];
+    const nbars = Math.max(1, Math.round(N / stepsIn(g)));
+    const refBars = Math.max(0, g.cellBars | 0);
+    const hbOf = (refBars && refBars !== nbars)
+      ? (b) => Math.floor((b * nbars) / refBars) : (b) => b;
+    for (let b = 0; b < total; b++)
+      for (const c of K.chordsOf(lead, g, hbOf(b))) {
+        const from = (b * N + c.start) / g.rate;
+        out.push({ bar: b, from, to: from + c.len / g.rate,
+                   deg: c.deg, q: c.q, inv: c.inv, held: !!c.held,
+                   rootPc: pcw(c.rootPc + key), bassPc: pcw(c.bassPc + key),
+                   pcs: [...new Set(c.pcs.map((n) => pcw(n + key)))] });
+      }
+    return out;
+  }
+
+  /* THE HARMONY THE RECORD PLAYS, AS A TIMELINE (2026-09-06, docs/THEORY.md
+     §2). `scoreOf` answers what SOUNDS; this answers what the record says is
+     sounding — one entry per chord window per statement, in the same absolute
+     STEP units the events carry, so a caller can ask "which chord is under
+     this note" with one lookup and no second walk of the form.
+
+     WHY IT IS HERE AND NOT IN THE TOOL THAT WANTED IT. The census
+     (`tools/theory-census.js`) and the copyist pass both need it, and both
+     would otherwise have re-derived the statement plan, the per-section
+     genre, the lead phrase and `stepsIn(g) / g.rate` for themselves — four
+     facts this file already owns and two of which (the form walk, the row's
+     own rate) have each been got wrong once in a second copy. It reads the
+     kernel's `chordsOf`, which is the ONE owner of what a bar's chords are.
+
+     THE LEAD PHRASE IS THE SUBJECT, exactly as in `scoreOf`: `chordsOf` reads
+     it for the phrase length and, on a `harmony: "modal"` row with no written
+     progression, for `harm()`'s own walk. Handing it a different phrase would
+     answer a different record's harmony. */
+  function chordsIn(doc, GENRES, fleet, win = null) {
+    const { plan, bar } = planOf(doc, GENRES, fleet);
+    const lines = LINES(doc), out = [];
+    const W = (() => {
+      if (win == null) return { from: 0, to: bar };
+      const q = (typeof win === "object") ? win : { section: win };
+      if (q.section != null) {
+        const p = plan.find((p2) => p2.si === q.section || p2.id === q.section);
+        return p ? { from: p.bar0, to: p.bar1 } : { from: 0, to: 0 };
+      }
+      const from = Math.max(0, Math.min(bar, Math.floor(q.from == null ? 0 : q.from)));
+      const to = Math.max(from, Math.min(bar, Math.ceil(q.to == null ? bar : q.to)));
+      return { from, to };
+    })();
+    for (const p of plan) {
+      if (p.bar1 <= W.from || p.bar0 >= W.to) continue;
+      const lead = lines.length
+        ? toPhrase(doc, materialAt(lines[0], SECID(doc, p.si))) : NuSong.blank();
+      const cs = barChords(lead, p.g, p.total);
+      for (const st of p.stmts) {
+        if (st.bar0 + st.played <= W.from || st.bar0 >= W.to) continue;
+        for (const c of cs) {
+          if (c.bar >= st.played) continue;
+          const b = st.bar0 + c.bar;
+          if (b < W.from || b >= W.to) continue;
+          out.push({ ...c, sec: p.si, bar: b,
+                     from: st.t0 + c.from, to: st.t0 + c.to });
+        }
+      }
+    }
+    out.sort((a, b) => a.from - b.from);
+    return { bars: W.to - W.from, chords: out, from: W.from, to: W.to };
+  }
+
+  function scoreOf(doc, GENRES, fleet, win = null) {
+    const secs = doc.form.sections, lines = LINES(doc), out = [];
+    /* PASS ONE is `planOf`, just above — extracted 2026-09-06 (the theory
+       round) so that the HARMONY the record plays can be asked for without
+       rendering it. It was this function's own first twenty lines and it is
+       unchanged; `scoreOf`'s events are byte-identical across the move. */
+    const { plan, bar } = planOf(doc, GENRES, fleet);
     /* THE WINDOW, RESOLVED AGAINST THE WALK'S OWN NUMBERS — never against
        `secs[i].bars`, because a repeated section is several statements and a
        skipped one is none, and a caller naming a section means the bars the
@@ -2451,6 +2570,14 @@
   }
 
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
+           /* THE PLAN AND THE HARMONY (2026-09-06, docs/THEORY.md §2).
+              `planOf` is `scoreOf`'s own pass one, extracted so that
+              `chordsIn` — what chord the record says is sounding at a
+              given step — can be asked without rendering a note. Both
+              leave the module because the copyist pass and the fault
+              census ask them from outside, and the alternative was a
+              second copy of the form walk. */
+           planOf, chordsIn,
            /* THE FORM WALK (2026-09-05, item 9): what the record PLAYS —
               repeats, the second ending's cut, the coda and the jump. One
               owner; the score, the walk and the gates all ask it. */

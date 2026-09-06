@@ -82,8 +82,14 @@ export const ATLAS: Table = {
 
   /* ===== WRITING A RECORD =============================================== */
   "atlas.writing": "Writing {where}…",
-  "atlas.wrote": "{where} · {name} — {sections}, {voices}, take {take}",
-  "atlas.wroteSeed": "{where} · {name} — {sections}, {voices}, take {take} · seed {seed}",
+  /* (`atlas.wrote` AND `atlas.wroteSeed` STOOD HERE to 2026-09-06. Paul:
+     *"We don't need this with the genre picker at all: 'Bristol 1994 ·
+     noirhop — 14 sections, 9 players, take 0 · seed 28138' stop producing
+     it."* The receipt is deleted with its keys: the place and the genre are
+     the record's name in the top strip, the sections and the players are the
+     grid you land on, and the take and the seed are the seed control's own
+     face. `atlas.writing` and `atlas.cannotWrite` below are the sentences the
+     page cannot otherwise show, and they stay.) */
   "atlas.cannotWrite": "Cannot write {name} yet",
   "atlas.pickPlace": "Pick a place first",
   "atlas.noRecordAt": "{place} — no record at {year}",
@@ -118,6 +124,10 @@ export const ATLAS: Table = {
      passes. */
   "atlas.find.aria": "Find a genre by name or place",
   "atlas.find.hint": "Find a genre",
+  /* THE CLEAR SAYS WHAT IT UNDOES, not what it is (2026-09-06, Paul: "let me
+     easily dismiss the letters I've entered"). "Clear" alone on a page with a
+     dozen clearable things tells a screen reader nothing about which. */
+  "atlas.find.clear": "Clear the search",
   "atlas.find.none": "Nothing matches {q}",
 
   /* ===== A SHARE LINK THAT DOES NOT RESOLVE ============================= */

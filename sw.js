@@ -22,10 +22,27 @@
 //     immutable — cache-first served those recompiles stale until the next bump.
 //
 // Cross-origin requests are passed through untouched, but there are none left
-// to speak of: preact/htm and the two webfonts are vendored, and
-// found sound resolves only to local files. Everything the app needs to boot is
-// same-origin and therefore cacheable, which is what makes offline boot work at
-// all — a cross-origin dependency here would be uncacheable and fatal.
+// to speak of: the TYPE is vendored (vendor/plex/*.woff2, thirty split IBM
+// Plex subsets declared by nukernel/fonts.css — 2026-09-06; the sentence used
+// to name "preact/htm and the two webfonts", which were the old explorer's),
+// and found sound resolves only to local files. Everything the app needs to
+// boot is same-origin and therefore cacheable, which is what makes offline
+// boot work at all — a cross-origin dependency here would be uncacheable and
+// fatal, and a fonts.googleapis.com <link> is exactly that shape of mistake.
+//
+// THE FONTS NEED NO LINE OF THEIR OWN HERE, AND THAT WAS MEASURED, NOT
+// ASSUMED (2026-09-06). This worker has no precache manifest at all — by
+// design: nukernel/audio/offline.js `warmShell` walks
+// `performance.getEntriesByType("resource")` and re-fetches every same-origin
+// url the page actually pulled, THROUGH this worker, so what the shell holds
+// is what the shell used ("No hand-written manifest: a list of files to keep
+// in sync is a list that rots"). A woff2 pulled by an `@font-face` the page
+// paints with is a resource entry like any other, so the warm takes it for
+// free. Measured on the artifact at 390/320/1280, on Kingston 1969 and Coach
+// House: every woff2 the first paint fetched came back out of
+// `stellate-app-v298` on the same load. A hand-typed path here would be a
+// second list to keep in sync with fonts.css, which is the rot the design
+// already refused.
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
 //
@@ -40,7 +57,7 @@
 // nukernel/audio/offline.js's hold work at all: what the PAGE warms is what the
 // WORKER's own fetch finds, and no request has to be routed or proxied.
 
-const VERSION = "v298";                       // bump every deploy that must reach users
+const VERSION = "v299";                       // bump every deploy that must reach users
 const APP_PREFIX = "stellate-app-";
 const APP_CACHE = APP_PREFIX + VERSION;
 const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above
