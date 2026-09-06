@@ -1,0 +1,131 @@
+{
+  "note": "GUITAR ROCK — A STARTING POINT, NOT A RECORD (2026-09-06). Paul: \"Add a few\nsimple genres at the top: dance, rock, pop — really basic starting points to\ngo with silent.\"\n\nAND THE KEY IS NOT `rock`, WHICH IS SAID HERE RATHER THAN DISCOVERED LATER.\n`rock` in this table is London 1969 — a riff doubled at the octave over a\nbackbeat, four declared parents, a tom fill in bar 8 — and it has been that\nkey in every saved session and every share link this box has ever written.\nFreeing the word by renaming that row would not be a rename, it would be a\nLIE: the two alias doors (document.js `OLDKEYS`, song.js `migrate()`) fold an\nOLD key onto a NEW one, and folding `rock` onto anything hands every saved\n`rock` session a different record without saying so. The record keeps its\nword; the starting point takes the one that is free and true of it — guitar,\nbass, drums, three chords.\n\nWHAT THIS ROW IS. Anchored to nothing, like `silence` and for the same reason,\nand therefore an `EXCLUDE` row with no place on the map: there is no city and\nno year at which rock-in-general was played. It declares no parents because it\nis not the residue of anything, and genres-build G2's law — a label is a\n\"Place Year\" IF AND ONLY IF the row declares `parents` — is what lets it say\nso honestly instead of inventing an address. What it seats is a small working\nband, two guitars over a bass and a kit, so a hand that taps it hears rock in\nthe first bar and then changes it.\n\nTHE NUMBERS ARE THE CATALOGUE'S OWN, NOT TASTE. 120 is the MEDIAN bpm of the\nsixty-seven rows in the `band` family, and heartlandrock, southernrock and\nprogrock each land on it by themselves. The kit is the plainest backbeat the\nsix lanes can say — kick on one and three, snare on two and four, hats in\neighths — which is garagerock's and poppunk's lane shape with the\nfour-to-the-bar kick thinned to two, because two is what a hand plays before\nanybody has told it anything. `drumkit` is \"room\", an acoustic kit in a room,\nthe word garagerock, britpop, powerpop and rocknroll all take; \"power\" is a\nproduction decision and this row makes none.\n\nI IV V I in ionian is the sentence \"three chords\" means, and the bass walks\neighths under it, which is garagerock's and poppunk's `bassStyle` both.\n\n`dyn: \"backbeat\"` because it is this music's own figure and six of its\nneighbours already say so — and FIGURES' own note names `rock` as the row\nwhose comment claimed the backbeat when only its KIT had one. Here the kit has\nit and the line has it, which is the flood's whole point.\n\n...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.",
+  "label": "Guitar rock",
+  "voices": 2,
+  "bars": 4,
+  "plan": "song",
+  "bpm": 120,
+  "jitter": 0,
+  "instr": [
+    "crunch_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "family": "kernel",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "chord"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "bassStyle": "eighths",
+  "bassInstr": "picked_bass",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1900,
+    "q": 1.5,
+    "atk": 0.004,
+    "rel": 0.7,
+    "gain": 0.3,
+    "verb": 0.12
+  },
+  "words": [
+    "the riff, as written",
+    "the second guitar, the chords an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 4, 8, 12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "dyn": "backbeat"
+}

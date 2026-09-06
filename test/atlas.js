@@ -610,10 +610,12 @@ function g18() {
       .filter((x) => x.getAttribute("d")).length;
     const marks = [...document.querySelectorAll("#atlasMarks .place")];
     const L = (window.NuAtlasLand || {}).LAND || {};
-    /* THE BOOT YEAR IS READ OFF #atlasSay, NOT OFF A SLIDER (2026-08-29 — the
-       when-slider is deleted). The sentence's first word IS the year and
-       always was; `#atlasYear.value` was a rank index into YEARS that this
-       line then had to translate back. One fewer indirection, same fact. */
+    /* THE BOOT YEAR IS READ OFF THE ARTIFACT, NOT OFF A SLIDER (2026-08-29 —
+       the when-slider is deleted; 2026-09-06 — so is the sentence that briefly
+       replaced it as the printed year). `#atlasMap[data-year]` is what the
+       page declares about itself and `setYear` is its one writer;
+       `#atlasYear.value` was a rank index into YEARS that this line then had
+       to translate back. One fewer indirection, same fact. */
     const Y = +(document.getElementById("atlasMap").dataset.year);
     return {
       marks: marks.length,
@@ -630,7 +632,13 @@ function g18() {
       arc: +document.getElementById("atlasMap").dataset.arc,
       section: document.getElementById("atlas").tagName,
       head: (document.getElementById("atlasHead") || {}).textContent,
-      dead: ["atlasCtl", "atlasEra", "atlasView", "atlasList", "atlasPlace", "atlasHome"]
+      /* THE DEAD ARE DELETED, NEVER HIDDEN, and this list only ever grows.
+         `atlasJump` and `atlasCount` joined it on 2026-09-06 — the era chips
+         and the resting count, which shipped that morning and were deleted
+         that afternoon (Paul: *"Get rid of the buttons for eras like 'the old
+         Stone Age' those all go."*, *"Get rid of 'All 479 records'."*). */
+      dead: ["atlasCtl", "atlasEra", "atlasView", "atlasList", "atlasPlace",
+             "atlasHome", "atlasJump", "atlasCount"]
         .filter((i) => document.getElementById(i)),
       selects: document.querySelectorAll("#atlas select").length,
     };
@@ -765,6 +773,50 @@ function g18() {
   check(wiki.inDom > 0 && !wiki.inApp,
     "G7 · " + wiki.inDom + " wikipedia href(s) in the DOM, none of them inside " +
     "#app, and " + foreign.length + " requests left " + HOST);
+
+  /* ---- G7b THE FOUR PINNED ROWS, READ OFF THE RENDERED LIST -----------
+     2026-09-06. Paul: *"Add a few simple genres at the top: dance, rock, pop —
+     really basic starting points to go with silent."* `silence` has been the
+     one pinned row since 2026-09-02 and it is four now, so the fact worth
+     checking moved from "silence is first" to "the pin is a LIST, in order,
+     at the top, and nothing else is up there".
+
+     READ OFF THE PAGE AND NOT OFF `PINNED`, which is the whole point: the
+     constant is in `ui/atlas.js` and the rows are drawn by a loop over it, so
+     a gate that asked the constant would agree with itself while the list
+     rendered in any order at all. It asks the four <li>s the browser actually
+     laid out — their keys, their order, their year cell (an em dash, because
+     none of them is anywhere in time) and the sentence each prints, which for
+     the three starting points is the copy key `atlas.starter` and NOT
+     `atlas.role`: they are not roles and the list must not call them one. */
+  const pinned = await p.evaluate(() => {
+    const li = [...document.querySelectorAll("#atlasIndexRows > li")];
+    const first = li.slice(0, 4).map((x) => ({
+      gk: x.dataset.gk,
+      year: (x.querySelector(".nu-ixy") || {}).textContent,
+      say: (x.querySelector("[data-say]") || {}).dataset ?
+           x.querySelector("[data-say]").dataset.say : null,
+      placed: !!(x.dataset.place || x.dataset.year),
+    }));
+    return { first, total: li.length,
+             // where the four keys are in the whole list, to prove nothing
+             // else drifted above them
+             at: ["silence", "dance", "guitarrock", "pop"]
+                   .map((k) => li.findIndex((x) => x.dataset.gk === k)) };
+  });
+  check(pinned.first.map((r) => r.gk).join(" ") === "silence dance guitarrock pop",
+    "G7b · the four pinned rows are the first four of the index, in order — " +
+    pinned.first.map((r) => r.gk).join(" ") + " (of " + pinned.total + " rows)");
+  check(pinned.at.join(",") === "0,1,2,3",
+    "G7b · and nowhere else: their indices are " + pinned.at.join(", "));
+  check(pinned.first.every((r) => r.year === "\u2014" && !r.placed),
+    "G7b · none of them is anywhere in time — every year cell is an em dash " +
+    "and no row carries a place or a year for sweep() to move on");
+  check(pinned.first.slice(1).every((r) => r.say && /starting point/i.test(r.say)) &&
+        !/starting point/i.test(pinned.first[0].say || ""),
+    "G7b · the three starting points say what they are and the blank state " +
+    "keeps its own sentence — " +
+    JSON.stringify(pinned.first.map((r) => r.say)));
 
   /* ---- G8 SCROLL TO 1969, TAP KINGSTON, GET A REGGAE RECORD ----------- */
   const out69 = await setYear(1969);
@@ -1793,18 +1845,30 @@ function g18() {
      with it. What the gate asserts is the AFTER, and the before is printed
      beside it so the two are read together.
 
+     REWRITTEN THE NEXT DAY, AND ONLY WHERE THE SURFACE MOVED (2026-09-06,
+     second shift). Paul read the shipped strip: *"Get rid of the buttons for
+     eras like 'the old Stone Age' those all go."* and *"Get rid of 'All 479
+     records'."* So `f` is a different claim about the same need (a hand reaches
+     a century by TYPING it, which the field already matched on), `c` is the
+     one half of the count that survived it, and `d` is measured against a
+     stronger witness than the deleted sentence. Everything b proves is
+     untouched, and the rule the whole strip is built around — THE EARTH DOES
+     NOT MOVE WHILE YOU TYPE — is asserted harder than it was.
+
      SIX CLAIMS, and every one of them is read off the rendered list:
        a · the field is ONE LINE, in flow, above the rows, and nothing floats
        b · typing narrows the list, by NAME, PLACE, YEAR, ERA and FAMILY, and
            the match is accent- and case-insensitive
-       c · the count says how much of the catalogue is showing, and a search
-           with nothing in it says so in a sentence
-       d · TYPING DOES NOT MOVE THE EARTH — the sentence over the globe is the
-           same string before, during and after a search
+       c · a search that matches NOTHING says so in a sentence, drawn inside
+           the list's own box — and there is no resting count row anywhere
+       d · TYPING DOES NOT MOVE THE EARTH — the year the globe is drawing is
+           the same number before, during and after a search, on the artifact
+           (`#atlasMap[data-year]`) AND in the ink stamped on the globe
        e · clearing restores all 479 rows AND the place in the list you were
            standing in, which is the same fact said twice
-       f · an era chip JUMPS: the list moves, the year follows it, and the
-           chronology is still whole */
+       f · the FIELD is how a hand reaches a century now: `the seventies` is a
+           query, the two deleted controls are gone from the page, and the
+           chronology the chips used to move you through is still whole */
   {
     await fresh();
     /* THE PANEL HAS TO BE OPEN BEFORE ANYTHING IS MEASURED. Since 2026-09-09
@@ -1832,13 +1896,26 @@ function g18() {
                page: document.documentElement.scrollWidth -
                      document.documentElement.clientWidth };
     });
-    check(box.pos === "static" && box.top > 0 && box.qh <= 56,
+    /* THE STRIP IS THE FIELD AND NOTHING ELSE SINCE THE CHIPS WENT, so its own
+       height is the field's: it was 118 px (field, count and 26 chips) and it
+       is one tap target now. The check keeps its old shape and gains that
+       number, because "one line" was always the claim and was never true of a
+       strip that wrapped to three. */
+    check(box.pos === "static" && box.top > 0 && box.qh <= 56 && box.h <= 56,
       "G24a · the field is one line, in flow, at the head of the list — top " +
-      box.top + " px, strip " + box.h + " px, field " + box.qh + " px, position " +
-      box.pos + ", no sideways page scroll (" + box.page + " px)");
+      box.top + " px, strip " + box.h + " px (118 with the chips), field " +
+      box.qh + " px, position " + box.pos + ", no sideways page scroll (" +
+      box.page + " px)");
     note("G24 · BEFORE: " + box.n + " rows, " + box.listH +
          " px of list, and the trip-hop row " + box.triphop + " px down it");
 
+    /* WHAT THE PROBE READS BACK, AND THE TWO THAT MOVED. `count` was
+       `#atlasCount`, which is deleted; the empty answer is `#atlasNone`, which
+       is EMPTY (not absent, not hidden) except when a search matches nothing,
+       so the probe returns its text and the gate holds it blank the rest of the
+       time. `say` was #atlasSay's sentence, which is deleted; what the earth is
+       showing is `#atlasMap[data-year]` — the artifact's own declaration, which
+       the year stamp inside the globe must equal. */
     const find = async (term) => {
       await p.evaluate((w) => {
         const q = document.getElementById("atlasQ");
@@ -1853,15 +1930,19 @@ function g18() {
         const vis = [...rows.children].filter((n) => !n.hidden &&
           n.getBoundingClientRect().height > 0);
         const th = vis.find((n) => n.dataset.gk === "triphop");
+        const nn = document.getElementById("atlasNone");
         return { n: vis.length, gk: vis.slice(0, 5).map((x) => x.dataset.gk),
                  top: th ? Math.round(th.getBoundingClientRect().top - base) : null,
                  ms: +document.getElementById("atlasFind").dataset.ms,
-                 count: document.getElementById("atlasCount").textContent,
-                 say: document.getElementById("atlasSay").textContent };
+                 none: nn.textContent,
+                 noneH: Math.round(nn.getBoundingClientRect().height),
+                 noneIn: document.getElementById("atlasIndex").contains(nn),
+                 year: document.getElementById("atlasMap").dataset.year,
+                 stamp: document.getElementById("atlasYearMark").textContent };
       });
     };
-    const sayWas = await p.evaluate(() =>
-      document.getElementById("atlasSay").textContent);
+    const yearWas = await p.evaluate(() =>
+      document.getElementById("atlasMap").dataset.year);
     const r1 = await find("trip");
     check(r1.gk.indexOf("triphop") >= 0 && r1.top != null && r1.top < 200,
       "G24b · \"trip\" puts the trip-hop row " + r1.top + " px into the list " +
@@ -1881,43 +1962,62 @@ function g18() {
     check(r5.n > 10,
       "G24b · …and an ERA word (" + r5.n + " rows in the seventies)");
     const r6 = await find("qqzzxx");
-    check(r6.n === 0 && /\S/.test(r6.count) && r6.count.split(/\s+/).length >= 2,
-      "G24c · nothing matched, and it SAYS so in a sentence — " +
-      JSON.stringify(r6.count));
-    check(r1.say === sayWas && r5.say === sayWas && r6.say === sayWas,
-      "G24d · typing never moved the earth — the sentence over the globe is " +
-      JSON.stringify(sayWas) + " before, during and after");
+    check(r6.n === 0 && /\S/.test(r6.none) && r6.none.split(/\s+/).length >= 2 &&
+          r6.none.indexOf("qqzzxx") >= 0 && r6.noneIn && r6.noneH > 0,
+      "G24c · nothing matched, and it SAYS so in a sentence, where the rows " +
+      "would be (" + r6.noneH + " px inside #atlasIndex) — " +
+      JSON.stringify(r6.none));
+    check(!r1.none && !r5.none && r1.noneH === 0,
+      "G24c · …and it is silent and takes no box the rest of the time (" +
+      JSON.stringify(r1.none) + ", " + r1.noneH + " px on a search with " +
+      r1.n + " results)");
+    check(r1.year === yearWas && r5.year === yearWas && r6.year === yearWas &&
+          r1.stamp === r1.year && r6.stamp === r6.year,
+      "G24d · typing never moved the earth — the year the globe draws is " +
+      JSON.stringify(yearWas) + " before, during and after, and the stamp on " +
+      "the globe says the same (" + JSON.stringify(r6.stamp) + ")");
     const cleared = await find("");
-    check(cleared.n === box.n && cleared.say === sayWas,
+    check(cleared.n === box.n && cleared.year === yearWas && !cleared.none,
       "G24e · clearing restores all " + cleared.n + " rows and the place you " +
-      "were standing in (the sentence is " + JSON.stringify(cleared.say) + ")");
+      "were standing in (the year is still " + JSON.stringify(cleared.year) + ")");
 
-    const jumped = await p.evaluate(async () => {
-      const chips = [...document.querySelectorAll("#atlasJump button[data-y]")];
-      const c = chips.find((x) => x.dataset.y === "1970") ||
-                chips[chips.length - 1];
-      const idx = document.getElementById("atlasIndex");
-      const was = idx.scrollTop;
-      c.click();
-      await new Promise((r) => setTimeout(r, 400));
+    /* ---- G24f · THE CHIPS ARE GONE AND THE FIELD DOES THEIR JOB --------
+       Paul, 2026-09-06: *"Get rid of the buttons for eras like 'the old Stone
+       Age' those all go."* and *"Get rid of 'All 479 records'."* This check
+       READ "an era chip JUMPS"; it holds the same need against the control
+       that remains, and it holds the deletion itself, because a control
+       deleted from a design and left in the DOM is the drift this file exists
+       to catch. Typing an era does not merely FILTER to it: the rows left are
+       exactly that era's, which is what "take me to the seventies" asked for,
+       and pressing one still opens its record. */
+    const era = await p.evaluate(async () => {
+      const q = document.getElementById("atlasQ");
+      q.value = "the seventies";
+      q.dispatchEvent(new Event("input", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 200));
       const rows = document.getElementById("atlasIndexRows");
-      const bx = idx.getBoundingClientRect();
-      const seen = [...rows.children].filter((n) => {
-        const r = n.getBoundingClientRect();
-        return r.bottom > bx.top && r.top < bx.bottom && n.dataset.year;
-      }).map((n) => +n.dataset.year);
-      return { chips: chips.length, was, now: idx.scrollTop, want: +c.dataset.y,
-               seen: seen.length ? [Math.min(...seen), Math.max(...seen)] : [],
-               shown: [...rows.children].filter((n) => !n.hidden).length,
-               say: document.getElementById("atlasSay").textContent };
+      const vis = [...rows.children].filter((n) => !n.hidden && n.dataset.year);
+      const ys = vis.map((n) => +n.dataset.year);
+      q.value = "";
+      q.dispatchEvent(new Event("input", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 200));
+      return { n: vis.length, lo: Math.min(...ys), hi: Math.max(...ys),
+               whole: [...rows.children].filter((n) => !n.hidden).length,
+               jump: !!document.getElementById("atlasJump"),
+               chips: document.querySelectorAll("#atlasJump button").length,
+               count: !!document.getElementById("atlasCount"),
+               year: document.getElementById("atlasMap").dataset.year };
     });
-    check(jumped.chips === 26 && jumped.now !== jumped.was &&
-          jumped.seen.length === 2 &&
-          jumped.seen[0] <= jumped.want && jumped.want <= jumped.seen[1] + 12,
-      "G24f · an era chip JUMPS — " + jumped.chips + " chips, " + jumped.was +
-      " px to " + jumped.now + " px, and " + jumped.want + " is on screen (" +
-      jumped.seen.join("–") + "); the chronology is still whole (" +
-      jumped.shown + " rows) and the year followed — " + JSON.stringify(jumped.say));
+    check(!era.jump && era.chips === 0 && !era.count,
+      "G24f · the era chips and the resting count are DELETED, not hidden — " +
+      "#atlasJump " + era.jump + " (" + era.chips + " chips), #atlasCount " +
+      era.count);
+    check(era.n > 10 && era.lo >= 1970 && era.hi <= 1979 &&
+          era.whole === box.n && era.year === yearWas,
+      "G24f · …and the field reaches the century instead: \"the seventies\" is " +
+      era.n + " rows, " + era.lo + "–" + era.hi + ", the chronology is still " +
+      "whole when it clears (" + era.whole + " rows) and the earth never moved " +
+      "(" + era.year + ")");
   }
 
   /* ---- G11 (last) THE ORDER A READER MEETS IT IN ---------------------- */
@@ -1959,24 +2059,58 @@ function g18() {
      WHEN, so the number was a snapshot of the catalog, not of this gate.) The places are still ahead of the reader in the tab order
      and never behind them, which is the promise this check exists for. */
   /* ...AND A FIFTH ARRIVED 2026-09-06, WHICH IS THE LIST'S OWN HEAD (WAVE C,
-     docs/REDESIGN-SCOPE.md item 7): `P#atlasFind` — a search field, 26 era
-     chips and the count of what is showing. It sits BETWEEN the globe and the
-     rows and the claim above is unchanged by it, which is the test this
-     insertion had to pass: the argument was never "nothing may stand here", it
-     was *"a reader must not meet the earth before the control that decides
-     which places are on it"*, and this control decides nothing of the kind —
-     `sweep()` refuses to move the year while a filter is up, precisely so that
-     typing cannot turn the globe. What it IS is the head of the list it
-     filters, in front of the rows and behind the picture, which is where a
-     table's own filter belongs and where a thumb reaches it after the map
-     rather than instead of it. The places are still ahead of the reader in the
-     tab order and never behind them. */
+     docs/REDESIGN-SCOPE.md item 7): `P#atlasFind`, the search field. It sits
+     BETWEEN the globe and the rows and the claim above is unchanged by it,
+     which is the test this insertion had to pass: the argument was never
+     "nothing may stand here", it was *"a reader must not meet the earth before
+     the control that decides which places are on it"*, and this control
+     decides nothing of the kind — `sweep()` refuses to move the year while a
+     filter is up, precisely so that typing cannot turn the globe. What it IS
+     is the head of the list it filters, in front of the rows and behind the
+     picture, which is where a table's own filter belongs and where a thumb
+     reaches it after the map rather than instead of it. The places are still
+     ahead of the reader in the tab order and never behind them. */
+  /* ...AND THE GLOBE MOVED TO THE FRONT OF IT LATER THE SAME DAY. Paul: *"Get
+     rid of 'where' and the line above and the output that goes '33000 BC · 1
+     record within ten years · Hohle Fels'; leave the close icon. Use the new
+     space to move the globe up."* Two things move in this list and both are
+     deletions wearing a different hat:
+       · `DIV#.nu-sheethead` is still first and is still the way out, but it
+         holds ONLY the ×. The sheet's visible name is deleted, so the head
+         that names this panel to a screen reader is `H2#atlasHead` alone —
+         which is why the assertion below reads the head's own children as well
+         as the panel's, and why `#atlasHead` staying in this list matters more
+         than it did when there was a visible word beside it.
+       · `P#atlasSay` is BEHIND the globe now. It no longer carries the year
+         (that is stamped inside the drawing) and is empty except while the box
+         is announcing something it just did, so a reader meets the earth
+         first and the announcement under the thing that caused it. */
+  const head = await p.evaluate(() => {
+    const h = document.querySelector("#atlas > .nu-sheethead");
+    const b = h.querySelector("b"), x = h.querySelector("button");
+    const cs = getComputedStyle(h);
+    return { kids: [...h.children].map((n) => n.tagName + "#" + (n.id || "")),
+             name: b ? b.textContent : null,
+             nameShown: b ? b.offsetParent !== null : false,
+             rule: cs.borderBlockEndWidth,
+             h2: (document.getElementById("atlasHead") || {}).textContent,
+             xw: x ? Math.round(x.getBoundingClientRect().width) : 0,
+             xh: x ? Math.round(x.getBoundingClientRect().height) : 0,
+             xlabel: x ? x.getAttribute("aria-label") : null };
+  });
   check(JSON.stringify(order) === JSON.stringify(
-      ["DIV#.nu-sheethead", "H2#atlasHead", "P#atlasSay", "DIV#atlasWrap",
+      ["DIV#.nu-sheethead", "H2#atlasHead", "DIV#atlasWrap", "P#atlasSay",
        "P#atlasFind", "DIV#atlasIndex"]),
-    "G11 · reading order is the sheet's head, the heading, the sentence, the " +
-    "globe, the list's own head, then the genre list — " +
+    "G11 · reading order is the sheet's head, the heading, the globe, the " +
+    "status line, the list's own head, then the genre list — " +
     JSON.stringify(order));
+  check(!head.nameShown && head.rule === "0px" && head.h2 === "Where & when" &&
+        head.xw >= 44 && head.xh >= 44,
+    "G11 · the picker's header is the × and nothing else — the name is not " +
+    "drawn (" + JSON.stringify(head.name) + "), no rule under it (" +
+    head.rule + "), the sheet is still named by its <h2> (" +
+    JSON.stringify(head.h2) + ") and the close is " + head.xw + "x" + head.xh +
+    " — " + JSON.stringify(head.xlabel));
   /* THE WALK STARTS AT THE GLOBE, NOT AT THE SLIDER (2026-08-29). It focused
      `#atlasYear`, which was the element immediately before the map; the map
      itself is now the first control in this section, and Tab from it is the
@@ -2041,9 +2175,21 @@ function g18() {
      THIS GATE READS THE RENDERED PAGE, not the table, because the table was
      never wrong: atYear() has answered this correctly the whole time and the
      marks simply did not obey it. So the number on the earth is COUNTED off
-     the DOM, the number in the sentence is PARSED out of #atlasSay's own text,
-     and the two are compared — which is the "test the artifact" law applied to
-     the one defect a data gate structurally cannot see.
+     the DOM and held against the number the catalogue holds — which is the
+     "test the artifact" law applied to the one defect a data gate structurally
+     cannot see.
+
+     THE OTHER HALF OF THE COMPARISON MOVED, 2026-09-06. It was PARSED out of
+     #atlasSay's own text ("600 · 1 record within ten years · Rome"), and Paul
+     deleted that line by quoting it. A page cannot be checked against a
+     sentence it no longer prints, so the earth is now held against
+     `NuAtlas.atYear(Y)` — the function the marks are drawn from, asked
+     independently in the page — and against the one thing the deleted line
+     said that nothing else did: WHICH YEAR, which is stamped inside the globe
+     now (`#atlasYearMark`) and declared on `#atlasMap[data-year]`. The claim
+     is the one it always was and it is one step closer to the source: what is
+     on the earth is what the catalogue says is at this year, and the earth
+     says which year it is.
 
      THREE YEARS: 600 (Paul's, and the thinnest — one place), 1969 (the one the
      rest of this file is written at), and the last stop (the far end of the
@@ -2057,26 +2203,14 @@ function g18() {
     const g = await p.evaluate(() => {
       const marks = [...document.querySelectorAll("#atlasMarks .place")];
       const on = marks.filter((m) => m.getAttribute("data-when") === "1");
-      const say = document.getElementById("atlasSay").textContent || "";
-      /* THE SENTENCE COMPRESSED 2026-08-27 (FUTURE.md §5: "600 · 1 record
-         within ten years · Rome" — keep the data, drop the tour guide), and
-         the parse moved with it. It read `/— (\d+) places? on the globe/`;
-         the place COUNT left the words and became the list itself, so the
-         number to hold against the earth is now the list: the named places
-         plus the "+N more" tail sum to atYear's place count, and that sum is
-         what `said` carries. The claim is unchanged — the earth and the
-         sentence are the same fact, read off the artifact. */
-      // the year's two printed shapes since the deep-time round (2026-08-30):
-      // "600 · …" and "2500 BC · …" — this loop's three years are all CE, but
-      // the parse states the sentence's real grammar, not this loop's slice
-      const m = say.match(/^(?:\d{1,5} BC|\d+) · \d+ records? within ten years · (.+)$/);
-      let said = -1;
-      if (m) {
-        const parts = m[1].split(", ");
-        const plus = /^\+(\d+) more$/.exec(parts[parts.length - 1] || "");
-        said = plus ? (parts.length - 1) + (+plus[1]) : parts.length;
-      }
-      return {
+      /* THE CATALOGUE'S OWN ANSWER, ASKED HERE AND NOT IN NODE, because the
+         page is the thing that has to obey it and `window.NuAtlas` is the same
+         table ui/atlas.js draws from. `shown` is the map of place -> record
+         that `scope()` reads; its size is how many marks this year may draw. */
+      const Y = +document.getElementById("atlasMap").dataset.year;
+      const said = window.NuAtlas.atYear(Y).shown.size;
+      const stamp = (document.getElementById("atlasYearMark") || {}).textContent;
+      return { year: Y, stamp,
         drawn: on.length,
         tabbable: marks.filter((m2) => m2.getAttribute("tabindex") === "0").length,
         /* THE NEAR SIDE ONLY, and the first draft of this line failed on it,
@@ -2098,12 +2232,16 @@ function g18() {
           && m2.getBoundingClientRect().width > 0).length,
         ghosts: marks.filter((m2) => /nothing near/
           .test(m2.getAttribute("aria-label") || "")).length,
-        said, say,
+        said,
       };
     });
     check(g.drawn === g.said,
-      "G22 · " + Y + ": the earth and the sentence are the same fact — " + g.drawn +
-      " marks drawn, the sentence says " + g.said + ". " + JSON.stringify(g.say));
+      "G22 · " + Y + ": the earth and the catalogue are the same fact — " + g.drawn +
+      " marks drawn, atYear(" + Y + ") holds " + g.said);
+    check(g.year === Y && g.stamp === String(Y).replace(/^-(\d+)$/, "$1 BC"),
+      "G22 · " + Y + ": …and the earth says which year it is, in its own ink — " +
+      JSON.stringify(g.stamp) + " stamped on the globe, " + g.year +
+      " declared on #atlasMap[data-year]");
     check(g.ghosts === 0,
       "G22 · " + Y + ": no accessible name says \"nothing near\" (" + g.ghosts +
       " of " + (g.drawn + g.hidden) + " marks) — the disclaimer is gone because " +
@@ -2201,12 +2339,13 @@ function g18() {
     return { when: g.getAttribute("data-when"), cur: g.getAttribute("aria-current"),
              ring: g.querySelector(".ring").getAttribute("opacity"),
              year: document.getElementById("atlasMap").dataset.year,
-             say: document.getElementById("atlasSay").textContent };
+             stamp: document.getElementById("atlasYearMark").textContent };
   });
-  check(back.year === "1969" && back.when === "1" && back.cur === "true" && back.ring === "1",
-    "G22 · showing(\"reggae\") from 600 turns the globe back to the record: the sentence " +
-    "reads " + back.year + ", Kingston is drawn (" + JSON.stringify(back.when) +
-    "), current and ringed. " + JSON.stringify(back.say.slice(0, 60)));
+  check(back.year === "1969" && back.when === "1" && back.cur === "true" &&
+        back.ring === "1" && back.stamp === "1969",
+    "G22 · showing(\"reggae\") from 600 turns the globe back to the record: the " +
+    "earth is stamped " + JSON.stringify(back.stamp) + ", Kingston is drawn (" +
+    JSON.stringify(back.when) + "), current and ringed");
 
   /* ---- G23 THE GENRE UNDER THE PLACE, AND THE CHRONOLOGY --------------
      Paul, 2026-08-28, two sentences: *"Put the names of the genres under the

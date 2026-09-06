@@ -943,8 +943,15 @@ function sectionEvents(doc, i) {
      and the composer is in the MIDI TEXT EVENTS, where a byte grep finds six
      of him. Paul: "Figure out what happened to grand opera."
      The literal stays a literal for the reason :649 gives. */
-  ok("G0 the catalog is 479 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 479,
+  /* 479 -> 482, 2026-09-06: the three STARTING POINTS (`dance`, `guitarrock`,
+     `pop`). Paul: "Add a few simple genres at the top: dance, rock, pop —
+     really basic starting points to go with silent." They are anchors to this
+     gate like any other row — they compose, they seat a band, they render —
+     and they are NOT anchors to the atlas, which is the distinction `EXCLUDE`
+     draws and which G0 has never been about. The literal stays a literal for
+     the reason :649 gives. */
+  ok("G0 the catalog is 482 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 482,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

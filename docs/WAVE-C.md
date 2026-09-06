@@ -17,6 +17,13 @@ served from a local tree. Screenshots are in `scratchpad/design/wave-c/`.
 
 ## C1 · THE GENRE INDEX IS SEARCHABLE
 
+> **SUPERSEDED IN PART, FOUR HOURS LATER — see the last section of this file.**
+> Paul read the strip this section shipped and deleted two of its three
+> controls: the era chips and the resting count. What is written below about
+> the FIELD, and about the globe not moving while you type, is unchanged and
+> still the law; the chips and the count are history now, and the argument for
+> deleting them is in *THE SAME DAY, FOUR HOURS LATER*.
+
 **Before** (this tree, 2026-09-06, 390×844): the WHERE picker is a sentence, a
 globe and 479 rows in one chronological column — **25,288 px of list**, with
 the `triphop` row **19,593 px** down it. No field, no jump, no count. (The
@@ -350,3 +357,228 @@ its class and asserts the head, and wave C's `P#atlasFind` is in the expected
 order with the argument for why it may stand there (it decides nothing about
 which places are on the earth — that is exactly what `sweep()`'s filter guard
 guarantees).
+
+---
+
+# THE SAME DAY, FOUR HOURS LATER · PAUL READS THE STRIP
+
+*(2026-09-06, second shift. C1 above shipped the search strip in v294; this is
+what Paul said when he opened it, verbatim, and what was done about each line.
+Everything below is measured on the RENDERED page under iPhone emulation —
+playwright chromium, iPhone 14, DPR 3, `isMobile`, `hasTouch`, at 390×844 and
+320×844, plus 1280 — served from a local tree. Screenshots are in
+`scratchpad/design/picker-strip/`.)*
+
+> 1. *"Get rid of 'where' and the line above and the output that goes '33000 BC
+>    · 1 record within ten years · Hohle Fels'; leave the close icon. Use the
+>    new space to move the globe up."*
+> 2. *"Get rid of the buttons for eras like 'the old Stone Age' those all go."*
+> 3. *"Get rid of 'All 479 records'."*
+> 4. *"When I tap the button of the bottom left showing the genre close the
+>    picker and take me back to the compose view."*
+
+Three deletions and a toggle. Two of the three deleted things had shipped four
+hours earlier in the wave above, which is the honest way to read this: the
+strip was three controls answering one question, and one of them was enough.
+
+## A · THE PICKER'S HEAD IS THE GLOBE
+
+**Deleted.** The sheet header's visible name (`Where`, `sheetName` in
+`ui/eight.js`), the hairline rule under it (`.nu-sheethead`'s
+`border-block-end` and the gap under that — scoped to `#atlas`, since the four
+viewers behind the ≡ keep both), and the live sentence over the map
+(`sentence()` in `ui/atlas.js`, `atlas.yearSay`).
+
+**Kept.** The ×, at 44×44, at the inline end (`.nu-sheethead` is
+`space-between`, and with the name hidden that put the close at the START,
+x=13, under a left thumb — `flex-end` is what "its close at the end" means when
+there is no name). And `#atlasHead`, index.html's own visually-hidden
+`<h2>Where & when</h2>`, which is what names the panel to a screen reader now
+that no word is drawn.
+
+**Measured, before → after:**
+
+| | 390×844 | 320×844 | 1280×844 |
+|---|---|---|---|
+| sheet header | y=13, **45 px tall → 44** (the rule) | same | same |
+| the deleted sentence | y=71, 19 px + 13 px of gap → gone | same | same |
+| **globe top** | **y=103 → y=57** | **y=103 → y=57** | **y=103 → y=57** |
+| globe size | 364×298 → **unchanged** | 294×241 → **unchanged** | 1254×523 → unchanged |
+| the search strip | y=414, 118 px → **y=368, 44 px** | y=357 → y=311 | y=639 → y=593 |
+| **the list's top** | **y=545 → y=424** | y=488 → y=367 | y=770 → y=649 |
+| the list on the first screenful (to the bar at y=794) | 249 px → **370 px** | 306 → 427 | 24 → 145 |
+| the × | 44×44 at x=333 → unchanged | 44×44 at x=263 | 44×44 |
+| sideways page scroll | 0 px → 0 px | 0 → 0 | 0 → 0 |
+
+**The globe gains 46 px of top — the whole of what the three deleted things
+occupied** (1 px of rule + 13 px of the header's own gap + 19 px of sentence +
+13 px of the gap under it) — and it is the first thing under the top edge at
+every width.
+
+**IT DOES NOT GROW, AND THAT IS A CHOICE WITH A NUMBER BEHIND IT.** The box is
+`min(width × 0.82, 62vh)` and stayed there. Growing it was the other reading of
+"use the new space", and the space is not the globe's to take: the chips going
+freed 74 px more, so the LIST's own top rose 121 px, from y=545 to y=424: the
+catalogue on the first screenful goes from **249 px to 370 px**, which at a
+51.4 px row is **four rows to seven**. The list is the only way
+to reach a genre now that the chips are deleted, and a bigger earth would have
+been paid for out of it. The globe's tap boxes are unchanged, so G12 and G15
+are the same measurements they were.
+
+**WHAT SAYS THE YEAR: the earth itself.** The deleted sentence carried one fact
+nothing else on the surface carried — WHICH YEAR the globe is drawing, which is
+what decides how many marks are on it (at 33000 BC, one). So the year is
+stamped INSIDE the drawing: `#atlasYearMark`, an SVG `<text>` in the globe's own
+ink at 45% (`--ink`), 15 CSS px, in the start-bottom corner of the globe's own
+box — outside the sphere at the whole earth, over it when you are zoomed in,
+which is why it wears the same `paint-order: stroke` halo the place names wear.
+Its size, position and stroke-width are written in CSS px through the
+renderer's own units-per-pixel, like every other measurement in `ui/atlas.js`.
+
+It is `aria-hidden`, and nothing is lost by that: the year is already spoken by
+every mark (`atlas.mark.aria` — "Kingston 1969, reggae"), by every index row
+(`atlas.row.aria`), and declared on `#atlasMap[data-year]`, which is what the
+gates read. A fourth announcement on every scroll is exactly the live region
+that was just deleted.
+
+**#atlasSay IS NOT DELETED — IT MOVED AND WENT QUIET.** It is the atlas's one
+status line and it says four things nothing else says: *"Writing Kingston
+1969…"*, the record that was written (`atlas.wrote` / `.wroteSeed` — the line
+`test/atlas.js` G9 joins against `#reading`), *"Cannot write X yet"*, and every
+refusal a share link or a role can earn. It now stands **under** the globe, is
+EMPTY at rest, and an empty one has no box at all (0 px, measured) — but it is
+never `display: none` and never `hidden`, because a live region removed from the
+accessibility tree and put back does not announce. `stampYear()` clears it when
+the year moves, which is the same "the reader is browsing again" moment the old
+sentence used to overwrite it on.
+
+*What it costs while it stands*: a written record's line is two lines at 390
+(38 px + 13 px of gap) and it pushes the field and the list down by that much.
+That shift is not new and is smaller than it was — the line used to sit ABOVE
+the globe, so the same wrap pushed the EARTH down — and it only ever happens on
+a pick, which already flies the camera and re-scrolls the list to the record it
+just landed on (`syncIndex`). One re-orientation, caused by one tap.
+
+## B · THE ERA CHIPS GO
+
+`#atlasJump`, its 26 chips, its delegated listener, its two CSS rules and the
+keys `atlas.era.aria` / `atlas.era.chip` are **deleted**. `ERAS` is no longer
+imported by `ui/atlas.js` (the file's own law: an unused import is a trap).
+
+**The field already did the job, and does it better.** The era word is one of
+the six things a row is matched on — measured: `the seventies` narrows the list
+to **67 rows, 1970–1979**, `1991` to 9, `bristol 1991` to 1. The chips SCROLLED
+you into a chronology and told you nothing on arrival; typing an era leaves you
+holding exactly that era. `scrollToYear` is untouched — `syncIndex` is still its
+caller, so opening the picker still lands you on the record you are holding.
+
+## C · THE COUNT GOES
+
+`#atlasCount` and the keys `atlas.find.all.one` / `.other` and
+`atlas.find.some` are **deleted**. `All 479 records` was a row of chrome that
+said "479" for every second except the ones a hand was typing.
+
+**The one thing kept is the empty answer.** `atlas.find.none` — *"Nothing
+matches {q}"* — survives, and it is drawn WHERE THE LIST WOULD BE: `#atlasNone`,
+a `role="status"` line INSIDE `#atlasIndex`, the last child of the list's own
+box — a filter that matches nothing leaves no row above it, so it is the only
+thing in the box and stands at its top. Measured
+at 390: a search for `qqzzxx` leaves 0 rows and prints `Nothing matches qqzzxx`
+19 px tall at y=433, inside the list's box whose top is y=424; on a search with
+results it is empty and **0 px tall**. It names what was searched for, because a
+filter that says only "nothing" leaves a person wondering whether it heard them.
+Gated: `test/atlas.js` G24c, both halves.
+
+## D · THE GENRE BUTTON CLOSES THE PICKER
+
+`whereBtn` in `ui/eight.js` called `showTab("Where")` unconditionally: pressing
+the button that had just opened the picker did nothing, and the only way back
+was the × at the far corner of the glass from the thumb that opened it. It is
+`showTab(openTab === "Where" ? "Band" : "Where")` now — the same door the ×
+presses, so "back to the compose view" is one behaviour with two ways in.
+
+**The two states, read off the artifact:**
+
+| | closed | open |
+|---|---|---|
+| `aria-expanded` | `false` | `true` |
+| `aria-controls` | `atlas` | `atlas` |
+| `aria-pressed` | `false` | `true` |
+| accessible name | the genre — `Silence`, `Gregorian chant` | the same |
+| `data-say` | `Place and year` | the same |
+
+`aria-expanded` is what says **what the next press will do**; the NAME stays the
+record's own word, because that is Paul's other sentence about this plate
+(*"The name of the genre should be obvious"*) and because `paintIcon`'s own law
+is that an accessible name is a name and not a name that grew a description.
+`aria-pressed` says what the button IS (the open tab) and is also what draws the
+`<mark>`; both are written by `nameRecord`, the one painter of this button.
+
+**Closing writes nothing.** It is a `showTab` and nothing else: measured, the
+document is byte-identical across open → close (`test/shell.js` A6m reads
+`window.__eightDoc()` on both sides, at all five widths), and the LOG — where
+every edit this box makes announces itself, `logPut` being the one door — does
+not gain a line across the round trip, so nothing was logged, nothing was
+undoable and no slot was spent. *(The one line the log does grow on a quiet
+page is `held — plays offline`, which arrives a few seconds after boot with no
+gesture at all — measured, at t=7.6 s on a page nobody touched. It is the
+service worker, not the picker, and chasing it is how this measurement was
+made honest.)*
+
+**THE OTHER WAYS OUT, CHECKED:** the × still lands on `Band` with the table
+drawn (unchanged, and `test/shell.js` A6j drives it for all four viewers).
+There IS no backdrop — the picker is a full-viewport in-flow sheet, so there is
+nothing behind it to tap. **Escape does not close it, and did not before this
+round**: the page's only Escape listeners shut the LOG and the die's popover
+(`ui/eight.js`). Left as found rather than added on the way past — it is a real
+gap and it belongs to whoever writes the sheets' keyboard round, not to a
+deletion brief.
+
+## WHAT MOVED IN THE GATES
+
+`test/atlas.js` keeps every claim that still holds and rewrites the four that
+read a deleted surface:
+
+* **G7** — the dead-id list grows `atlasJump` and `atlasCount`. Deleted, never
+  hidden.
+* **G11** — the reading order is now `.nu-sheethead · #atlasHead · #atlasWrap ·
+  #atlasSay · #atlasFind · #atlasIndex` (the globe moved in front of the status
+  line), plus a new check that the picker's header is the × ALONE: the name is
+  not drawn, there is no rule under it, the `<h2>` still names the panel and the
+  close is ≥ 44×44.
+* **G22** — *"the earth and the sentence are the same fact"* becomes **the earth
+  and the CATALOGUE are the same fact**: the drawn marks are held against
+  `NuAtlas.atYear(Y).shown.size`, asked independently in the page, which is one
+  step closer to the source than a string the page printed about itself. A
+  second half asserts the earth says WHICH year, in its own ink, and that the
+  stamp equals `#atlasMap[data-year]`.
+* **G24** — a/b/e unchanged (including **"typing never moves the earth"**, which
+  is now measured against `#atlasMap[data-year]` and the stamp rather than
+  against the deleted sentence — a stronger witness, and asserted at three
+  points of a search instead of one). c gains the second half (the line is
+  silent and 0 px when there ARE results). f is a different claim about the same
+  need: the two controls are gone from the DOM, and the field reaches the
+  century instead.
+
+`test/shell.js` gains **A6m**: the plate opens the picker, the same press
+closes it back to the table, the record is byte-identical, and both states'
+attributes are read off the button.
+
+**Gate results, this shift:**
+
+| gate | result |
+|---|---|
+| `test/atlas.js` | **ALL PASS (127 checks)** — 121 before; G7/G11/G22/G24 rewritten, three checks added |
+| `test/shell.js` | **PASS — every shell assertion holds** (380 ok, 24 skipped), A6m new at all five widths |
+| `test/sheets.js` | **ALL PASS (31 checks)** |
+| `node test/table.test.js` | **40 passed, 0 failed** — T2 identity green, `BASE_SHA` untouched |
+| `node test/copy.test.js` | **10 ok, 0 failed** (1058 keys, six deleted) |
+| `node tools/ui/build.js --check` | **ui-build ok 5 entries** · `npx tsc --noEmit` clean |
+
+### FILES TOUCHED
+
+`nukernel/ui/atlas.js` (the picker), `nukernel/ui/eight.js` (the sheet header
+and the bar's genre plate), `nukernel/nu.css`, `nukernel/src/copy/atlas.ts`
+(→ `nukernel/ui/copy.js`, generated), `nukernel/DESIGN.md` §2 items 12 and 13,
+one stale sentence in `nukernel/TABLE.md` §15a naming `#atlasJump`, and the two
+gates. `nukernel/genres/*.json` and `genres.js` untouched, as the brief said.

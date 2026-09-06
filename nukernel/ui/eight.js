@@ -13765,7 +13765,37 @@ const playOptItems = () => [
 const whereBtn = icon({ k: "toptab-Where", glyph: GLYPH.tab.Where.g,
                         word: GLYPH.tab.Where.w, say: GLYPH.tab.Where.s,
                         on: true });
-whereBtn.addEventListener("click", () => showTab("Where"));
+/* ===== AND IT IS A DOOR, WHICH MEANS IT IS A TOGGLE (2026-09-06) ========
+   Paul: *"When I tap the button of the bottom left showing the genre close the
+   picker and take me back to the compose view."*
+
+   It called `showTab("Where")` unconditionally, so pressing the button you had
+   just pressed re-opened the sheet that was already open — a no-op that looks
+   like a broken button, and the only way back was the × at the far corner of
+   the screen from the thumb that had opened it. A control that opens something
+   is the control that shuts it; that is the same sentence the ≡ and the log
+   already obey ("the way back out of a branch is the mark you opened it with"),
+   and it is why the × in the sheet's header keeps working exactly as it did.
+
+   IT IS A `showTab` AND NOTHING ELSE, so closing writes nothing: the record is
+   not touched, no slot is spent, `push()` is not called and the undo stack does
+   not move. `showTab("Band")` is the same door the × presses, which is what
+   makes "back to the compose view" one behaviour with two ways in rather than
+   two behaviours that have to be kept in step.
+
+   AND THE STATE IS ON THE BUTTON, TWICE, HONESTLY. `aria-expanded` says what
+   the next press will DO (this is the #playops discipline the ≡ already wears,
+   and the picker is a disclosure: one control, one region, `aria-controls`
+   naming it). `aria-pressed` — which `paintIcon` writes from `on`, and which
+   also decides whether the face is a <mark> — says what the button IS: the
+   open tab. The NAME stays the genre's own word, because that is Paul's other
+   sentence about this plate (*"The name of the genre should be obvious"*) and
+   because `paintIcon`'s own law is that an accessible name is a name and not a
+   name that grew a description. Both attributes are written by `nameRecord`,
+   which is the one painter of this button. */
+whereBtn.setAttribute("aria-controls", "atlas");
+whereBtn.addEventListener("click", () =>
+  showTab(openTab === "Where" ? "Band" : "Where"));
 /* ...AND THE ROW'S OWN `label` STANDS BETWEEN THE ARTICLE AND THE KEY
    (2026-09-02). The rule was "the wiki title, else the key", and the probe of
    that morning found where it breaks: *"The blank state's plate says the key:
@@ -13796,8 +13826,10 @@ function nameRecord() {
   const g = GENRES[gk] || {};
   const word = (NuWiki && NuWiki.name ? NuWiki.name(gk) : null) || g.label || gk;
   const sub = g.label && g.label !== word ? g.label : null;
+  const isOpen = openTab === "Where";
   paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word, sub,
-                        say: GLYPH.tab.Where.s, on: openTab === "Where" });
+                        say: GLYPH.tab.Where.s, on: isOpen });
+  whereBtn.setAttribute("aria-expanded", String(isOpen));
 }
 
 /* THE CHROME, BUILT ONCE AT BOOT INTO AN EMPTY `<nav>`. `#nu-chrome` ships
@@ -14159,8 +14191,24 @@ function showTab(name) {
     const h = name === "Band" ? null : hostOf(name);
     if (!h) { if (sheetHead.parentNode) sheetHead.remove(); }
     else {
-      if (sheetName) sheetName.textContent =
-        (GLYPH.tab[name] && GLYPH.tab[name].w) || name;
+      /* THE PICKER'S HEADER IS THE × ALONE (2026-09-06). Paul: *"Get rid of
+         'where' and the line above … leave the close icon. Use the new space
+         to move the globe up."* The name is HIDDEN and not emptied, so the
+         node is the same node with the same parent for every sheet and the
+         one header is still one header; nu.css takes the rule under it away
+         for `#atlas` in the same breath. Nothing is lost to a screen reader:
+         `#atlasHead` is index.html's own visually-hidden <h2> ("Where & when")
+         and it is what names this panel, which is why it is the one child
+         ui/atlas.js's `mount` refuses to destroy. The four viewers behind the
+         ≡ keep their titles — a sheet you opened from a menu of five has to
+         say which of the five it is; the picker was opened by pressing the
+         genre, which is the only thing this sheet holds. */
+      const bare = name === "Where";
+      if (sheetName) {
+        sheetName.hidden = bare;
+        sheetName.textContent =
+          bare ? "" : ((GLYPH.tab[name] && GLYPH.tab[name].w) || name);
+      }
       if (h.firstChild !== sheetHead) h.insertBefore(sheetHead, h.firstChild);
     }
   }

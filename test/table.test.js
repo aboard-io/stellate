@@ -522,10 +522,34 @@ const portrait = (g, nv, sung, voiced) => {
   return JSON.stringify(o);
 };
 
+/* THE ROWS THE BASE HAS TOO, AND ONLY THOSE (2026-09-06, the three starting
+   points). T2a-c walk `ANCHORS` — this tree's catalogue — through BOTH trees,
+   which was exact for as long as every round that added a row also moved
+   BASE_SHA. A round that only ADDS rows must not: nothing existing moved, so
+   the pin is still the right pin, and re-pinning it would quietly re-baseline
+   478 records that nobody re-argued. What it must do instead is not ask the
+   base a question the base cannot answer — `B.P.genreToDocument("dance", 1)`
+   in a tree with no `dance` row is not a difference, it is a throw.
+
+   SO THE COMPARISON IS THE INTERSECTION, said out loud on the artifact: the
+   count and the names of the rows this run could NOT compare are printed, so
+   "T2 is green" can never quietly mean "T2 compared nothing". A row that is
+   new here is held instead by the gates that ask what it IS —
+   test/document.test.js G16/G16b compile all three and read the notes back —
+   and by the next round that moves this pin for its own reasons, when they
+   join the identity like every other row. */
+const BASEHAS = B ? ANCHORS.filter((gk) => !!B.GENRES[gk]) : ANCHORS;
+if (B && BASEHAS.length !== ANCHORS.length) {
+  const added = ANCHORS.filter((gk) => !B.GENRES[gk]);
+  console.log("  T2 compares " + BASEHAS.length + " of " + ANCHORS.length +
+              " anchors: " + added.length + " row(s) do not exist at " + BASE_SHA +
+              " and cannot have moved — " + added.join(" "));
+}
+
 if (B) {
   ok("T2a every anchor's DOCUMENT is the pinned base's, once the base's own strip set is applied", () => {
     const bad = [];
-    for (const gk of ANCHORS) for (const s of SEEDS) {
+    for (const gk of BASEHAS) for (const s of SEEDS) {
       const mine = maskSungReg(stripRows(D.normalize(P.genreToDocument(gk, s))));
       assert.ok(mine.material.prov, gk + "/" + s + ": no provenance map was stamped");
       // ...AND THE MAP IS COMPARED NOW, not deleted. Wave 1 deleted it here
@@ -537,12 +561,12 @@ if (B) {
       if (JSON.stringify(mine) !== JSON.stringify(theirs)) bad.push(gk + "/" + s);
     }
     assert.deepStrictEqual(bad.slice(0, 8), [],
-      bad.length + " of " + (ANCHORS.length * SEEDS.length) + " documents moved");
+      bad.length + " of " + (BASEHAS.length * SEEDS.length) + " documents moved");
   });
 
   ok("T2b every section's compiled GENRE is the base's, closures and all, once stripped", () => {
     const bad = [];
-    for (const gk of ANCHORS) for (const s of SEEDS) {
+    for (const gk of BASEHAS) for (const s of SEEDS) {
       const mine = stripRows(D.normalize(P.genreToDocument(gk, s)));
       const theirs = B.D.normalize(B.P.genreToDocument(gk, s));
       const ml = mine.voices.filter((v) => v.kind === "line");
@@ -565,16 +589,16 @@ if (B) {
      motif (the only records this wave writes anything unusual on) plus an even
      stride across the catalogue. */
   ok("T2c the rendered EVENTS are the base's once stripped (the sung lanes are T4j's)", () => {
-    const withGuest = ANCHORS.filter((gk) => {
+    const withGuest = BASEHAS.filter((gk) => {
       try {
         const d = D.normalize(P.genreToDocument(gk, 1));
         return Object.keys(d.material.cells)
           .some((n) => D.provOf(d, n).p === "guest");
       } catch (e) { return false; }
     });
-    const stride = Math.max(1, Math.round(ANCHORS.length / 45));
-    const sample = FULL ? ANCHORS
-      : [...new Set([...withGuest, ...ANCHORS.filter((_, i) => i % stride === 0)])];
+    const stride = Math.max(1, Math.round(BASEHAS.length / 45));
+    const sample = FULL ? BASEHAS
+      : [...new Set([...withGuest, ...BASEHAS.filter((_, i) => i % stride === 0)])];
     const bad = [];
     for (const gk of sample) for (const s of SEEDS) {
       const md = stripRows(D.normalize(P.genreToDocument(gk, s)));
@@ -593,7 +617,7 @@ if (B) {
     }
     console.log("       (" + sample.length + " anchors x " + SEEDS.length +
                 " seeds rendered" + (FULL ? ", --full" : ", --full for all " +
-                ANCHORS.length) + ")");
+                BASEHAS.length) + ")");
     assert.deepStrictEqual(bad.slice(0, 8), [], bad.length + " records render differently");
   });
 
@@ -966,7 +990,13 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
   /* T4c — `intro` AND `outro` REPLACE THE FIRST AND LAST BARS OF THE SECTION
      THEY ARE ON. Read off the rendered bars, per anchor, against the same
      record with the two fields stripped. */
-  ok("T4c the carried intro and outro change the rendered bars, and 478 of 479 records move", () => {
+  /* THE COUNT IN THIS TITLE IS DERIVED (2026-09-06, the three starting points),
+     for the reason test/genres-build.test.js G3's is: a literal here read
+     "478 of 479" and the catalogue is 482. The ASSERTION was never the literal
+     — it is `moved > 450` and the real pair is printed below it — so the title
+     reads the catalogue rather than remembering it. */
+  ok("T4c the carried intro and outro change the rendered bars, and nearly all " +
+     ANCHORS.length + " records move", () => {
     let moved = 0, added = 0, removed = 0;
     let silenced = 0;
     const biggest = [];

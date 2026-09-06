@@ -1308,6 +1308,248 @@
       word: () => [],
     },
 
+    // DANCE — A STARTING POINT, NOT A RECORD (2026-09-06). Paul: "Add a few simple
+    // genres at the top: dance, rock, pop — really basic starting points to go with
+    // silent."
+    //
+    // WHAT THIS ROW IS. The other 479 rows are anchored: a place, a year, a record
+    // somebody made, and a written claim about it. This one is anchored to NOTHING
+    // and that is the whole design. It is the plainest true version of the word —
+    // four on the floor, a clap on two and four, an open hat on the offbeat, one
+    // bass figure on the root, a four-bar minor loop — so a hand that taps it hears
+    // dance in the first bar and then changes it. `silence` seats nobody; this seats
+    // a small band and hands over the controls. A cast of two on purpose: a canvas,
+    // not an arrangement.
+    //
+    // SO IT IS AN `EXCLUDE` ROW, EXACTLY AS `silence` IS, AND FOR ITS REASON. It has
+    // no place on the map because nothing has been chosen: there is no city and no
+    // year at which dance-in-general was played, and pinning a made-up one on it
+    // would be this catalogue's first lie. The schema does not ask for one and never
+    // did — genres-build G2 holds that a label is a "Place Year" IF AND ONLY IF the
+    // row declares `parents`, so a row with no history takes a plain word and the
+    // law holds itself. It declares no parents because it has none: it is not the
+    // residue of anything, it is where a hand starts.
+    //
+    // THE NUMBERS ARE THE CATALOGUE'S OWN, NOT TASTE. 124 is the MEDIAN bpm of the
+    // sixteen `club` rows that actually play a four-on-the-floor kick (tromso 104,
+    // kwaito 105, italodisco 118, nujazz 120, house 122, synthduo 122, coupedecale
+    // 122, acid 124, bleeptechno 124, indiedance 124, kpop 128, bigroom 128, techno
+    // 132, eurodance 132, ebm 134, trance 138). The kit is house's own lane shape —
+    // kick on every quarter, clap on two and four, open hat on the offbeat eighths —
+    // with house's piano, its swing and its Chicago taken off. `drumkit` is
+    // "electronic" and not "tr909" because a 909 is a machine somebody bought in
+    // 1983; "electronic" is the word eurodance, clubpop and teenpop already use for
+    // a kit with no address.
+    //
+    // i VII VI VII in aeolian is the plainest minor loop there is, and no neighbour
+    // holds it (eurodance is 2 3 5 0, indiedance 0 3 4 0, house 1 4 0 5). The bass
+    // is `pedal`, the root under the loop, which is what "one bass figure on the
+    // root" means.
+    //
+    // `dyn: "flat"` IS A DECISION AND NOT A NULL. The fourteen `DYNAMICS: null`
+    // machines are frozen byte-for-byte and test/dynfigure.test.js D1 holds the SIZE
+    // of that null set, so a fifteenth null would not join them — it would break
+    // them. A null would also be the wrong claim: the family here is `kernel`, the
+    // zero of the table where `simple` and `silence` already sit, because a starting
+    // point belongs to no tradition, and DYN_FAMILY.kernel's modest hand is honestly
+    // what a person tapping this row is holding. What is MACHINE about it is the
+    // FIGURE, and `flat` says precisely that — every note the same level, no accent
+    // — which FIGURES reserves for the sequenced floors that were never frozen.
+    //
+    // AND `guests: "native"` BECAUSE THE MEASUREMENT SAID SO. Composed once without
+    // it, at seed 1, this row seated a sampled HARPSICHORD on its counter-line and a
+    // sampled string section on its drone — which is precisely the fault door 3 was
+    // written for ("a 909 record with a harpsichord counter-line is not a cross, it
+    // is a chair nobody asked for"), and which acid, electro, trance, synthpop and
+    // thirteen more already answer with this one word. A guest brings its LINE and
+    // the fleet plays it. The singer is untouched by the door, which is right: a
+    // dance record with a voice on it is a dance record.
+    //
+    // ...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.
+    dance: {
+      label: "Dance",
+      voices: 2,
+      bars: 4,
+      plan: "dance",
+      bpm: 124,
+      jitter: 0,
+      instr: ["saw_wave", "polysynth"],
+      drumkit: "electronic",
+      guests: "native",
+      family: "kernel",
+      entry: () => 0,
+      reg: v => -v,
+      realize: v => (v === 0 ? "line" : "chord"),
+      roots: [0, 6, 5, 6],
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        o: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+      },
+      mode: MODES.aeolian,
+      scale: MODES.aeolian,
+      diatonic: true,
+      bassStyle: "pedal",
+      bassInstr: "synth_bass_1",
+      tone: {
+        wave: "sawtooth",
+        cut: 2400,
+        q: 1.5,
+        atk: 0.004,
+        rel: 0.5,
+        gain: 0.28,
+        verb: 0.22
+      },
+      words: ["the riff, as written", "the pad, two chords a bar under it"],
+      word: v => (v === 1 ? [keep(0, 8)] : []),
+      dyn: "flat",
+    },
+
+    // GUITAR ROCK — A STARTING POINT, NOT A RECORD (2026-09-06). Paul: "Add a few
+    // simple genres at the top: dance, rock, pop — really basic starting points to
+    // go with silent."
+    //
+    // AND THE KEY IS NOT `rock`, WHICH IS SAID HERE RATHER THAN DISCOVERED LATER.
+    // `rock` in this table is London 1969 — a riff doubled at the octave over a
+    // backbeat, four declared parents, a tom fill in bar 8 — and it has been that
+    // key in every saved session and every share link this box has ever written.
+    // Freeing the word by renaming that row would not be a rename, it would be a
+    // LIE: the two alias doors (document.js `OLDKEYS`, song.js `migrate()`) fold an
+    // OLD key onto a NEW one, and folding `rock` onto anything hands every saved
+    // `rock` session a different record without saying so. The record keeps its
+    // word; the starting point takes the one that is free and true of it — guitar,
+    // bass, drums, three chords.
+    //
+    // WHAT THIS ROW IS. Anchored to nothing, like `silence` and for the same reason,
+    // and therefore an `EXCLUDE` row with no place on the map: there is no city and
+    // no year at which rock-in-general was played. It declares no parents because it
+    // is not the residue of anything, and genres-build G2's law — a label is a
+    // "Place Year" IF AND ONLY IF the row declares `parents` — is what lets it say
+    // so honestly instead of inventing an address. What it seats is a small working
+    // band, two guitars over a bass and a kit, so a hand that taps it hears rock in
+    // the first bar and then changes it.
+    //
+    // THE NUMBERS ARE THE CATALOGUE'S OWN, NOT TASTE. 120 is the MEDIAN bpm of the
+    // sixty-seven rows in the `band` family, and heartlandrock, southernrock and
+    // progrock each land on it by themselves. The kit is the plainest backbeat the
+    // six lanes can say — kick on one and three, snare on two and four, hats in
+    // eighths — which is garagerock's and poppunk's lane shape with the
+    // four-to-the-bar kick thinned to two, because two is what a hand plays before
+    // anybody has told it anything. `drumkit` is "room", an acoustic kit in a room,
+    // the word garagerock, britpop, powerpop and rocknroll all take; "power" is a
+    // production decision and this row makes none.
+    //
+    // I IV V I in ionian is the sentence "three chords" means, and the bass walks
+    // eighths under it, which is garagerock's and poppunk's `bassStyle` both.
+    //
+    // `dyn: "backbeat"` because it is this music's own figure and six of its
+    // neighbours already say so — and FIGURES' own note names `rock` as the row
+    // whose comment claimed the backbeat when only its KIT had one. Here the kit has
+    // it and the line has it, which is the flood's whole point.
+    //
+    // ...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.
+    guitarrock: {
+      label: "Guitar rock",
+      voices: 2,
+      bars: 4,
+      plan: "song",
+      bpm: 120,
+      jitter: 0,
+      instr: ["crunch_guitar", "clean_guitar"],
+      drumkit: "room",
+      family: "kernel",
+      entry: () => 0,
+      reg: v => -v,
+      realize: v => (v === 0 ? "line" : "chord"),
+      roots: [0, 3, 4, 0],
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      bassStyle: "eighths",
+      bassInstr: "picked_bass",
+      tone: { wave: "sawtooth", cut: 1900, q: 1.5, atk: 0.004, rel: 0.7, gain: 0.3, verb: 0.12 },
+      words: ["the riff, as written", "the second guitar, the chords an octave down"],
+      word: v => (v === 1 ? [keep(0, 4, 8, 12)] : []),
+      dyn: "backbeat",
+    },
+
+    // POP — A STARTING POINT, NOT A RECORD (2026-09-06). Paul: "Add a few simple
+    // genres at the top: dance, rock, pop — really basic starting points to go with
+    // silent."
+    //
+    // WHAT THIS ROW IS. Anchored to nothing, like `silence`, and an `EXCLUDE` row
+    // for the same reason: there is no city and no year at which pop-in-general was
+    // made, and a made-up one would be this catalogue's first invented address. No
+    // parents, therefore a plain label — which is not an exemption but the schema's
+    // own law read forwards (genres-build G2: a "Place Year" label IF AND ONLY IF
+    // the row declares `parents`). What it seats is a voice, a pad, a bass and a
+    // light kit: enough to hear pop in the first bar, small enough to rearrange.
+    //
+    // THE NUMBERS ARE THE CATALOGUE'S OWN, NOT TASTE. 108 is the MEDIAN bpm of the
+    // thirty-three rows whose key ends in `pop` (ambientpop 84 up to hyperpop 160),
+    // and citypop, chamberpop, baroquepop and artpop all sit on 108 exactly. The kit
+    // is the light programmed one its neighbours have — kick on one and three, snare
+    // on two and four, a sixteenth hat — and that hat is teenpop's, and is also the
+    // one thing that keeps this row from rendering like `guitarrock`, whose hat is
+    // eighths at 120 in a room.
+    //
+    // I V vi IV in ionian is the honest cliché, and the catalogue does not already
+    // hold it: the nearest are clubpop and newpop at 0 5 3 4 and electropop at
+    // 0 3 5 4. The lead is a singer — solo_vox on `MOUTHS.poplead` — over a poly pad
+    // an octave down, and the bass walks eighths.
+    //
+    // `dyn: "arch"`, up to the middle of the bar and back down, which FIGURES calls
+    // the sung line's own shape and which every pop neighbour with a voice in the
+    // chairs already takes (teenpop, newpop, electropop, synthpop). NOT "backbeat",
+    // and the reason is the flood's own law: a row's figure must be its OWN music's.
+    // The backbeat here belongs to the drummer, who has one; the melody is sung, and
+    // a sung line arches.
+    //
+    // ...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.
+    pop: {
+      label: "Pop",
+      voices: 2,
+      bars: 4,
+      plan: "song",
+      bpm: 108,
+      jitter: 0,
+      instr: ["solo_vox", "polysynth"],
+      drumkit: "electronic",
+      family: "kernel",
+      entry: () => 0,
+      reg: v => -v,
+      realize: v => (v === 0 ? "line" : "chord"),
+      roots: [0, 4, 5, 3],
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      },
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      bassStyle: "eighths",
+      bassInstr: "pop_bass",
+      tone: {
+        wave: "sawtooth",
+        cut: 2700,
+        q: 1.3,
+        atk: 0.004,
+        rel: 0.5,
+        gain: 0.28,
+        verb: 0.24,
+        mouth: MOUTHS.poplead
+      },
+      words: ["the voice, the hook, as written", "the pad, two chords a bar under it"],
+      word: v => (v === 1 ? [keep(0, 8)] : []),
+      dyn: "arch",
+    },
+
     // SIMPLE — the phrase and nothing else. One voice, one bar, no kit, no bass,
     // no harmonic motion, no operator word: the sixteen steps played as written
     // and looped. It is the zero of the genre table, and the useful kind of zero

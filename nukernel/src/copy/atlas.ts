@@ -58,12 +58,27 @@ export const ATLAS: Table = {
   "atlas.role.aria": "{name} — a part, not a genre",
   "atlas.silence.say": "Empty — nothing chosen yet",
   "atlas.silence.aria": "{name} — nothing chosen yet",
+  /* A STARTING POINT (2026-09-06). Paul: *"Add a few simple genres at the top:
+     dance, rock, pop — really basic starting points to go with silent."* Three
+     rows that are neither a role nor a record: a small band already seated, in
+     no city and no year, waiting to be changed. The word had to exist because
+     they were printing "a role" and they are not one. */
+  "atlas.starter.say": "A starting point — a plain band to change",
+  "atlas.starter.aria": "{name} — a starting point to change",
 
-  /* ===== THE YEAR, IN WORDS ============================================= */
-  "atlas.yearSay": "{year} · {records} within ten years · {places}",
-  "atlas.record.one": "{n} record",
-  "atlas.record.other": "{n} records",
-  "atlas.places.more": "{places}, +{n} more",
+  /* ===== THE YEAR, IN WORDS — DELETED 2026-09-06 ========================
+     Paul, of the line over the globe: *"Get rid of 'where' and the line above
+     and the output that goes '33000 BC · 1 record within ten years · Hohle
+     Fels'."* Four keys went with it — `atlas.yearSay` and the three it
+     assembled itself from (`atlas.record.one` / `.other`, `atlas.places.more`)
+     — and nothing else on the page had ever asked for them.
+     WHERE THE FACTS WENT, because a deleted sentence has to say that. The YEAR
+     is stamped inside the globe's own drawing (`ui/atlas.js stampYear`), where
+     it is DATA — `yearWord(Y)` — and needs no key. The RECORD COUNT is the
+     marks themselves, which is what the sentence existed to be checked
+     against. The PLACES are each mark's own `atlas.mark.aria`, and the index
+     row's `atlas.row.aria`, both of which name the place, the year and the
+     genre already. */
 
   /* ===== WRITING A RECORD =============================================== */
   "atlas.writing": "Writing {where}…",
@@ -80,37 +95,30 @@ export const ATLAS: Table = {
      docs/REDESIGN-SCOPE.md, off the walkthrough's *"reaching the trip-hop row
      is 19,306 px of scrolling"*.)
 
-     THE EIGHT WERE MARKED PROVISIONAL FOR ONE DAY, because the call sites and
-     the catalogue were in two hands at once. They are final as written, and
-     the reading that settles them is what each control actually DOES:
+     THREE OF THE EIGHT ARE LEFT, ONE DAY LATER. Paul read the shipped strip
+     and deleted two of its three controls — *"Get rid of the buttons for eras
+     like 'the old Stone Age' those all go."* and *"Get rid of 'All 479
+     records'."* — so `atlas.era.aria`, `atlas.era.chip`, `atlas.find.all.one`
+     / `.other` and `atlas.find.some` are deleted here with them. There is no
+     chip group to name and no resting count to print.
 
-       · the FIELD filters and the CHIPS jump, so the field's name says what it
-         matches on (a name or a place — the two things a person arrives
-         knowing) and the chips' says the verb, `Jump`. Two controls over one
-         list must not both be called "find", which is what a shorter name for
-         the chip group would have made them.
-       · the COUNT is one meaning in three forms and not three sentences: the
-         whole catalogue, a part of it, or nothing. `{n} of {of}` is a readout
-         and stays a readout — a number beside a number is what a reader
-         checks a filter against, and a sentence around it would be six words
-         in the way of two.
+     WHAT THE THREE SURVIVORS DO:
+       · the FIELD is the only control over the list, so its name says what it
+         matches on — a name or a place, the two things a person arrives
+         knowing. It also matches the era word, which is how a hand reaches a
+         century now that the chips are gone: `the seventies` is a query.
        · `atlas.find.none` names WHAT was searched for, because a filter that
          says only "nothing" leaves a person wondering whether it heard them.
-       · a CHIP prints the era's own word (`the seventies` — atlas.js ERAS,
-         which is data) and its accessible name adds the year it lands on, so
-         the twenty-six chips are told apart by ear as well as by eye.
+         It is the ONE thing kept out of the deleted count, and it is drawn
+         where the rows would be rather than in a permanent row above them: a
+         search that matches nothing must still say why.
 
      Every one is inside its budget — a face is six words, an `.aria` is a
      sentence of twelve — and every placeholder is the name the call site
      passes. */
   "atlas.find.aria": "Find a genre by name or place",
   "atlas.find.hint": "Find a genre",
-  "atlas.find.all.one": "All {n} record",
-  "atlas.find.all.other": "All {n} records",
-  "atlas.find.some": "{n} of {of}",
   "atlas.find.none": "Nothing matches {q}",
-  "atlas.era.aria": "Jump to a century",
-  "atlas.era.chip": "{era}, from {year}",
 
   /* ===== A SHARE LINK THAT DOES NOT RESOLVE ============================= */
   "atlas.linkNoPlace.say": "{place} is not a place on this globe",

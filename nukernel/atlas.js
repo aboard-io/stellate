@@ -1285,6 +1285,27 @@
        Six of the seven share one sentence because they are one fact; `silence`
        is the seventh kind of not-a-place and keeps its own. */
     silence: "atlas.silence",
+    /* ...AND THE THREE STARTING POINTS, WHICH ARE THE EIGHTH, NINTH AND TENTH
+       KIND OF NOT-A-PLACE (2026-09-06). Paul: "Add a few simple genres at the
+       top: dance, rock, pop — really basic starting points to go with silent."
+       They are here on `silence`'s own argument, one step further along: a
+       blank state is where the box starts with nobody playing, and these are
+       where it starts with a small band already seated. Neither is a role and
+       neither is a record — there is no city and no year at which
+       dance-in-general, rock-in-general or pop-in-general was played, and
+       inventing one would be this table's first lie. The rows themselves say
+       so the same way (`nukernel/genres/dance.json` and its two siblings), and
+       genres-build G2 is what lets them: a "Place Year" label IF AND ONLY IF
+       the row declares parents, so a row with no history takes a plain word.
+       `guitarrock` and not `rock` because `rock` is London 1969 and has been
+       that key in every saved session this box has written; the reason is
+       argued in full in that row's own note.
+       The gate's assertion below is rewritten in place — "six roles and the
+       blank state" becomes "...and the three starting points" — rather than
+       loosened, because the number is still the point. */
+    dance:      "atlas.starter",
+    guitarrock: "atlas.starter",
+    pop:        "atlas.starter",
     simple:  "atlas.role",
     solo:    "atlas.role",
     vocal:   "atlas.role",

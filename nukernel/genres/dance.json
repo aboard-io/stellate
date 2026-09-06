@@ -1,0 +1,132 @@
+{
+  "note": "DANCE — A STARTING POINT, NOT A RECORD (2026-09-06). Paul: \"Add a few simple\ngenres at the top: dance, rock, pop — really basic starting points to go with\nsilent.\"\n\nWHAT THIS ROW IS. The other 479 rows are anchored: a place, a year, a record\nsomebody made, and a written claim about it. This one is anchored to NOTHING\nand that is the whole design. It is the plainest true version of the word —\nfour on the floor, a clap on two and four, an open hat on the offbeat, one\nbass figure on the root, a four-bar minor loop — so a hand that taps it hears\ndance in the first bar and then changes it. `silence` seats nobody; this seats\na small band and hands over the controls. A cast of two on purpose: a canvas,\nnot an arrangement.\n\nSO IT IS AN `EXCLUDE` ROW, EXACTLY AS `silence` IS, AND FOR ITS REASON. It has\nno place on the map because nothing has been chosen: there is no city and no\nyear at which dance-in-general was played, and pinning a made-up one on it\nwould be this catalogue's first lie. The schema does not ask for one and never\ndid — genres-build G2 holds that a label is a \"Place Year\" IF AND ONLY IF the\nrow declares `parents`, so a row with no history takes a plain word and the\nlaw holds itself. It declares no parents because it has none: it is not the\nresidue of anything, it is where a hand starts.\n\nTHE NUMBERS ARE THE CATALOGUE'S OWN, NOT TASTE. 124 is the MEDIAN bpm of the\nsixteen `club` rows that actually play a four-on-the-floor kick (tromso 104,\nkwaito 105, italodisco 118, nujazz 120, house 122, synthduo 122, coupedecale\n122, acid 124, bleeptechno 124, indiedance 124, kpop 128, bigroom 128, techno\n132, eurodance 132, ebm 134, trance 138). The kit is house's own lane shape —\nkick on every quarter, clap on two and four, open hat on the offbeat eighths —\nwith house's piano, its swing and its Chicago taken off. `drumkit` is\n\"electronic\" and not \"tr909\" because a 909 is a machine somebody bought in\n1983; \"electronic\" is the word eurodance, clubpop and teenpop already use for\na kit with no address.\n\ni VII VI VII in aeolian is the plainest minor loop there is, and no neighbour\nholds it (eurodance is 2 3 5 0, indiedance 0 3 4 0, house 1 4 0 5). The bass\nis `pedal`, the root under the loop, which is what \"one bass figure on the\nroot\" means.\n\n`dyn: \"flat\"` IS A DECISION AND NOT A NULL. The fourteen `DYNAMICS: null`\nmachines are frozen byte-for-byte and test/dynfigure.test.js D1 holds the SIZE\nof that null set, so a fifteenth null would not join them — it would break\nthem. A null would also be the wrong claim: the family here is `kernel`, the\nzero of the table where `simple` and `silence` already sit, because a starting\npoint belongs to no tradition, and DYN_FAMILY.kernel's modest hand is honestly\nwhat a person tapping this row is holding. What is MACHINE about it is the\nFIGURE, and `flat` says precisely that — every note the same level, no accent\n— which FIGURES reserves for the sequenced floors that were never frozen.\n\nAND `guests: \"native\"` BECAUSE THE MEASUREMENT SAID SO. Composed once without\nit, at seed 1, this row seated a sampled HARPSICHORD on its counter-line and a\nsampled string section on its drone — which is precisely the fault door 3 was\nwritten for (\"a 909 record with a harpsichord counter-line is not a cross, it\nis a chair nobody asked for\"), and which acid, electro, trance, synthpop and\nthirteen more already answer with this one word. A guest brings its LINE and\nthe fleet plays it. The singer is untouched by the door, which is right: a\ndance record with a voice on it is a dance record.\n\n...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.",
+  "label": "Dance",
+  "voices": 2,
+  "bars": 4,
+  "plan": "dance",
+  "bpm": 124,
+  "jitter": 0,
+  "instr": [
+    "saw_wave",
+    "polysynth"
+  ],
+  "drumkit": "electronic",
+  "guests": "native",
+  "family": "kernel",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "chord"
+  },
+  "roots": [
+    0,
+    6,
+    5,
+    6
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "bassStyle": "pedal",
+  "bassInstr": "synth_bass_1",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.5,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.22
+  },
+  "words": [
+    "the riff, as written",
+    "the pad, two chords a bar under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "dyn": "flat"
+}

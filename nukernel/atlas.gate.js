@@ -137,8 +137,16 @@ ok("every anchor is placed or excluded", true,
      What changed is that there are seven things that are not places now. Paul,
      2026-09-01: "Add a 'silence' genre at the top of the genre list. This is a
      blank state." A blank state has no city and no year, and it is not a role
-     either, so it is named beside them and counted with them. */
-  ok("EXCLUDE is the six roles and the blank state", Object.keys(A.EXCLUDE).length === 7, Object.keys(A.EXCLUDE).join(" "));
+     either, so it is named beside them and counted with them.
+     ...AND THREE STARTING POINTS, 2026-09-06. Paul: "Add a few simple genres
+     at the top: dance, rock, pop — really basic starting points to go with
+     silent." Ten things that are not places now, and the assertion is
+     rewritten in place again rather than loosened: the number is the point, and
+     a starting point is a third kind of not-a-place — not a job (a role) and
+     not an empty page (the blank state), but the box with a small band already
+     in it and no address. */
+  ok("EXCLUDE is the six roles, the blank state and the three starting points",
+     Object.keys(A.EXCLUDE).length === 10, Object.keys(A.EXCLUDE).join(" "));
   ok("no genre in both", both.length === 0, both.join(" ") || "none");
   ok("no genre in neither", neither.length === 0,
      neither.length ? neither.join(" ") + "  <- give it a \"City Year\" label or an EXCLUDE reason"

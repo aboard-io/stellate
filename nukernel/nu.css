@@ -3843,6 +3843,24 @@ table.nu-trims{ color: var(--ink); }
    currently answering, and the lighter face is the one that changes. */
 #atlasMap text.gname{ font-weight: var(--fw-body); }
 
+/* ---------- THE YEAR, STAMPED ON THE EARTH (2026-09-06) -----------------
+   Paul: *"Get rid of 'where' and the line above and the output that goes
+   '33000 BC · 1 record within ten years · Hohle Fels'."* The line went; the
+   one fact in it that nothing else on this surface carried — WHICH YEAR the
+   globe is drawing, which is what decides how many marks are on it — moved
+   INTO the picture. It is the globe's own ink at half strength, in the
+   start-bottom corner of its own box (outside the sphere at the whole earth,
+   over it when you are close), and it wears `text.name`'s halo because of
+   that second case. `aria-hidden` in ui/atlas.js: the year is already spoken
+   by every mark, by every index row and by `#atlasMap[data-year]`, and a
+   fourth announcement on every scroll is the live region that was just
+   deleted. Its size and its stroke-width are written by ui/atlas.js in the
+   renderer's own units-per-pixel; only the ink is here. */
+#atlasMap text.nu-globeyear{ fill: var(--ink); opacity: .45;
+  font-weight: var(--fw-label); font-variant-numeric: tabular-nums;
+  letter-spacing: .04em; paint-order: stroke; stroke: var(--paper);
+  stroke-linejoin: round; stroke-linecap: round; }
+
 /* ---------- THE INDEX: EVERY GENRE, OLDEST FIRST ------------------------
    Paul, 2026-08-28: *"Let me click to see a big list of all the genres in
    chronological order."*  And, 2026-08-29, three sentences that change what
@@ -7807,6 +7825,24 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   background: transparent; border-color: transparent; box-shadow: none; }
 .nu-sheethead > button:hover{ background: var(--flag-tint); }
 .nu-sheethead > button[hidden]{ display: none; }
+.nu-sheethead > b[hidden]{ display: none; }
+/* ---- …AND THE PICKER'S HEADER IS THE × AND NOTHING ELSE (2026-09-06) ---
+   Paul: *"Get rid of 'where' and the line above and the output that goes
+   '33000 BC · 1 record within ten years · Hohle Fels'; leave the close icon.
+   Use the new space to move the globe up."* The NAME is hidden by ui/eight.js
+   (`sheetName.hidden` — the panel keeps index.html's own visually-hidden <h2>,
+   so the sheet is still named for a screen reader), and THE LINE is this rule:
+   the header's own bottom border, plus the gap under it, so the globe starts
+   directly beneath the ×. It is scoped to `#atlas` because the four viewers
+   behind the ≡ are titled sheets and keep both.
+
+   AND THE × KEEPS THE FAR CORNER. `.nu-sheethead` is `space-between`, which
+   with the name hidden leaves ONE child and puts it at the START — measured,
+   the close landed at x=13 under the reader's left thumb and where the name
+   had been. `flex-end` is what "the name at the start, its close at the end"
+   means when there is no name. */
+#atlas > .nu-sheethead{ border-block-end: 0; margin-block-end: 0;
+  justify-content: flex-end; }
 .nu-sheethead .nu-ic{ display: flex; flex-direction: row; align-items: center;
   justify-content: center; gap: var(--s1); }
 
@@ -8956,16 +8992,22 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    ======================================================================
    docs/REDESIGN-SCOPE.md item 7, and docs/WAVE-C.md carries the numbers.
    APPENDED AS ONE BLOCK, AT THE END, DELIBERATELY: this wave ran beside
-   another hand working in this stylesheet, so it adds and never rewrites —
-   four rules, no existing selector touched. Fold it into the atlas section
-   (beside `#atlasIndex`, ~3851) when the two hands meet.
+   another hand working in this stylesheet, so it adds and never rewrites.
+   Fold it into the atlas section (beside `#atlasIndex`, ~3851) when the two
+   hands meet.
+   IT WAS FOUR RULES AND IS FOUR STILL, but two of them are different rules:
+   the era strip's pair went with the chips on 2026-09-06 (Paul: *"Get rid of
+   the buttons for eras like 'the old Stone Age' those all go."*) and the
+   empty answer's pair arrived in their place. The block below is the whole
+   of what the search strip needs.
 
    THE STRIP ITSELF NEEDS NO RULE. It is a `<p class="nu-row">` — the flex
    row nu.css has owned since the tempo verbs — so the gap, the wrap and the
    vertical centring are already right. What is left is the three things
    `.nu-row` cannot know: which child takes the slack, that a hidden row in a
-   `display: grid` list has to be told to go away, and that the count is a
-   caption rather than a control. */
+   `display: grid` list has to be told to go away, and — since 2026-09-06,
+   which is when two of the strip's three controls were deleted — that a status
+   line nobody is talking to may take no box at all. */
 
 /* 1 · A HIDDEN ROW IS HIDDEN. `.nu-ixli` sets `display: grid`, and an author
       rule beats the UA sheet's `[hidden]{ display: none }` — so without this
@@ -8976,30 +9018,29 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
       attributes.) */
 .nu-ixli[hidden]{ display: none !important; }
 
-/* 2 · THE FIELD TAKES THE SLACK AND THE MENU DOES NOT. `min-inline-size: 0`
+/* 2 · THE FIELD TAKES THE SLACK, AND SINCE 2026-09-06 IT IS THE WHOLE ROW.
+      `min-inline-size: 0`
       is the flex-child law this sheet applies everywhere a text control sits
       in a row: without it an <input>'s intrinsic width is its `size`
       attribute and the row overflows at 320. */
 #atlasFind{ margin-block-start: var(--s4); }
 #atlasQ{ flex: 1 1 9ch; min-inline-size: 0; block-size: var(--tap); }
-/*    THE ERA CHIPS ARE ONE LINE THAT SCROLLS SIDEWAYS, which is the `#atlasWrap`
-      net applied to a strip instead of a map: 26 words cannot fit a phone and
-      must not become six rows of buttons above a list. `flex-basis: 100%` puts
-      them on their own line under the field at every width, because a strip
-      that scrolls has to own its line or the field's own width fights it. */
-/* THE ERA STRIP IS THE OTHER SURFACE A THUMB DRAGS SIDEWAYS, so it takes the
-   same `none` the table's pane takes (§15a): a strip that rubber-bands under a
-   flick is the same wobble in a smaller box. */
-#atlasJump{ flex: 1 0 100%; display: flex; gap: var(--s2);
-            overflow-x: auto; overscroll-behavior: none;
-            -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-#atlasJump > button{ flex: 0 0 auto; white-space: nowrap;
-                     min-block-size: var(--tap); }
+/* 3 · THE COUNT AND THE ERA CHIPS ARE DELETED (2026-09-06) --------------
+      Paul: *"Get rid of the buttons for eras like 'the old Stone Age' those
+      all go."* and *"Get rid of 'All 479 records'."* `#atlasJump` (the
+      sideways strip and its chips) and `#atlasCount` (the caption that rode
+      the field's line) went with the controls, so the strip is ONE line of 44
+      px — the field — against the 118 it cost yesterday.
 
-/* 3 · THE COUNT RIDES THE FIELD'S OWN LINE. "479 records" is four words and
-      it belongs beside the thing it is counting, not under it — and the strip
-      is two lines at every width this way (the field and its count, then the
-      era chips), which is 89 px at 390 against the 118 a third line cost.
-      `flex-shrink: 0` on the caption and the slack on the field, because the
-      number must never be the thing that wraps. */
-#atlasCount{ flex: 0 0 auto; margin: 0; }
+      WHAT KEPT ONE RULE: the empty answer. A search that matches nothing says
+      so in `#atlasNone`, inside the list's own box, where the rows would be. It
+      is a live region, so it is never `display: none` and never `hidden` — a
+      status removed from the accessibility tree and put back does not announce
+      — it is EMPTY at rest and an empty one has no box: no height, no margin,
+      nothing to see, and still in the tree. `#atlasSay` takes the same rule for
+      the same reason (it is the atlas's status line — "Writing Kingston 1969…",
+      the record it wrote, every refusal a link can earn — and it is blank
+      almost always). */
+#atlasNone{ margin: var(--s3); }
+#atlasSay:empty, #atlasNone:empty{ display: block; block-size: 0;
+  margin-block: 0; padding: 0; overflow: hidden; }

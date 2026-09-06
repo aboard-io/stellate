@@ -746,6 +746,54 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     is(!!plate && !plate.inMenu && !!plate.word,
       "A6d " + width + " · …and the genre is a name plate in the BAR, not a "
       + "row in the hamburger — " + JSON.stringify(plate));
+    /* ===== A6m — THE GENRE PLATE IS A DOOR, AND A DOOR SHUTS (2026-09-06) ==
+       Paul: *"When I tap the button of the bottom left showing the genre close
+       the picker and take me back to the compose view."* It called
+       `showTab("Where")` unconditionally, so the second press of the button
+       that had just opened the picker did nothing at all and the only way back
+       was the × at the far corner of the glass.
+       THREE THINGS ARE ASSERTED AND THE THIRD IS THE ONE THAT MATTERS. The
+       press OPENS (the picker is the one `[data-sheet]` on the page); the same
+       press CLOSES (back on `Band`, no sheet, the table drawn — the same
+       landing `A6j` demands of every viewer's ×); and CLOSING WRITES NOTHING —
+       the record is byte-identical across the round trip, because a way out of
+       a picker that spent a slot would be a picker you could not leave without
+       paying for it. The button's own state is read off the artifact in both
+       halves: `aria-expanded` says what the next press will do, and the
+       accessible name stays the record's own word, which is what makes the
+       plate worth having in the bar at all (A6d, just above). */
+    await page.evaluate(() => window.__eightUp());
+    await page.waitForTimeout(150);
+    const docWas = await page.evaluate(() => JSON.stringify(window.__eightDoc()));
+    const readPlate = () => page.evaluate(() => {
+      const b = document.querySelector('#nu-bar [data-k="toptab-Where"]');
+      return { tab: window.__eightTabNow(),
+               sheets: document.querySelectorAll(".nu-pan[data-sheet]").length,
+               table: document.querySelectorAll("#pan-band table").length,
+               expanded: b.getAttribute("aria-expanded"),
+               controls: b.getAttribute("aria-controls"),
+               pressed: b.getAttribute("aria-pressed"),
+               label: (b.getAttribute("aria-label") || "").trim(),
+               doc: JSON.stringify(window.__eightDoc()) };
+    });
+    await page.click('#nu-bar [data-k="toptab-Where"]');
+    await page.waitForTimeout(700);
+    const opened = await readPlate();
+    await page.click('#nu-bar [data-k="toptab-Where"]');
+    await page.waitForTimeout(700);
+    const shut = await readPlate();
+    is(opened.tab === "Where" && opened.sheets === 1 &&
+       opened.expanded === "true" && opened.pressed === "true" &&
+       opened.controls === "atlas" && opened.label === plate.word &&
+       shut.tab === "Band" && shut.sheets === 0 && shut.table === 1 &&
+       shut.expanded === "false" && shut.pressed === "false" &&
+       shut.label === plate.word && shut.doc === docWas,
+      "A6m " + width + " · the genre plate opens the picker and the SAME press "
+      + "closes it back to the table, with the record untouched — open "
+      + JSON.stringify(opened.tab) + "/expanded " + opened.expanded
+      + ", shut " + JSON.stringify(shut.tab) + "/expanded " + shut.expanded
+      + ", " + shut.table + " table, name " + JSON.stringify(shut.label)
+      + ", record " + (shut.doc === docWas ? "byte-identical" : "CHANGED"));
     await page.evaluate(() => window.__eightUp());
     await page.waitForTimeout(150);
     // A6h — every glyph on the page is decoration beside a name: a mark with

@@ -218,8 +218,11 @@ const shape = (r) => JSON.stringify(Array.isArray(r) ? r.map(applied) : applied(
 // new anchors landed and nobody was reading the title. It is not asserted on
 // — G3's own report prints the real call count below — so it is corrected
 // here rather than turned into a second copy of a number `_order.json`
-// already owns.
-ok("479 rows x 4 closures x v 0..8 x s 0..7", () => {
+// already owns. ...AND IT IS NOT A LITERAL ANY MORE (2026-09-06, the three
+// starting points): `KEYS` is the set this file already built from
+// `_order.json`, so the title reads the catalogue instead of remembering it
+// and the next round has nothing to correct.
+ok(KEYS.size + " rows x 4 closures x v 0..8 x s 0..7", () => {
   const K = require(R + "/nukernel/kernel.js");
   /* the same names `genres-tables.js` destructures for the rows, and it has
      to be the same LIST: a row that says a word this scope has not got fails

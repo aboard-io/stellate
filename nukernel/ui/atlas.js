@@ -76,7 +76,7 @@ import { t, tn } from "./copy.js";
    data tier, for the dots and the tab order and the labels and the sentence
    together. An unused import is a trap, so it goes rather than sitting here
    looking like the rule still lives on this side. */
-const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS, ALL, ERAS,
+const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS, ALL,
         recordAt, arcFor, atYear, indexOf, eraOf, yearWord, canon } = NuAtlas;
 
 /* THE 760 IS GONE, AND SO IS THE SCALE IT BECAME. — the second reversal of the
@@ -244,6 +244,10 @@ const ARRIVE = 20;
           and erase the coastline behind the whole word. That is a label PLATE:
           a different design, and it hides the thing the label points at. */
 const LABEL_PX = 13, HALO_PX = 2.6;
+/* AND THE YEAR STAMPED ON THE EARTH (2026-09-06) — bigger than a place name,
+   because it is the one number the picture is of, and haloed in the same
+   proportion so it stays legible when a close arc fills the box with land. */
+const YEAR_PX = 15, YEAR_HALO_PX = +(HALO_PX * YEAR_PX / LABEL_PX).toFixed(2);
 /* AND THE GENRE'S OWN LINE, 2026-08-28. Paul: *"Put the names of the genres
    under the locations on the map."* 11.5 px against the place's 13, and the
    hierarchy is not decoration: the place name is the MARK'S OWN NAME and does
@@ -448,7 +452,33 @@ export function mount(parent, ctx) {
      9,283 attributes before and 10,441 after (median of five), and the drag's
      p50 frame gap went 19.9 ms -> 16.9 ms, i.e. the write is inside the noise
      of the frame it rides in. */
-  svg.append(gNames, gMarks);
+  /* ===== THE YEAR IS ON THE EARTH NOW (2026-09-06) ======================
+     Paul: *"Get rid of 'where' and the line above and the output that goes
+     '33000 BC · 1 record within ten years · Hohle Fels'."*
+
+     The deleted line carried one fact nothing else on this surface carried:
+     WHICH YEAR the globe is drawing. Every mark is filtered by it (`data-when`)
+     so at 33000 BC the earth holds one dot, and a single dot on an unlabelled
+     world is a puzzle rather than a picture. The fact does not go back into a
+     line of chrome above the map — it goes INTO the drawing, in the globe's own
+     ink, at the corner of its own box, where it is read with the earth and not
+     instead of it.
+
+     IT IS `aria-hidden` AND NOTHING IS LOST BY THAT. The year reaches a screen
+     reader three other ways that are all more use than a stamp: every row of
+     the index prints its own year (`atlas.row.aria` — "Play reggae — Kingston,
+     1969"), every mark on the earth says it (`atlas.mark.aria`), and the
+     artifact declares it on `#atlasMap[data-year]`, which is what the gates
+     read. A decorative echo of a fact that is already spoken three times is a
+     fourth announcement on every scroll, which is what the deleted live region
+     was doing.
+
+     IT IS THE LAST CHILD, so it paints over the land, and it wears the same
+     halo the place names wear (`paint-order: stroke` in nu.css) because at a
+     close arc the sphere fills the whole box and there is no paper under it. */
+  const yearTx = S("text", { id: "atlasYearMark", class: "nu-globeyear",
+                             "aria-hidden": "true" });
+  svg.append(gNames, gMarks, yearTx);
 
   /* ===== THE WHEN SLIDER IS GONE, 2026-08-29 ============================
      Paul: *"Get rid of the time slider. Make the genre list permanent and
@@ -643,8 +673,18 @@ export function mount(parent, ctx) {
      `ROLES` KEEPS ALL SEVEN so the list's own accessible name still counts
      every row it draws without arithmetic; `LISTROLES` is what the closing
      loop walks. One number, one derivation, no `+ 1` anywhere. */
-  const PINNED = "silence";
-  const LISTROLES = ROLES.filter((k) => k !== PINNED);
+  /* ...AND THREE STARTING POINTS JOINED IT (2026-09-06). Paul: *"Add a few
+     simple genres at the top: dance, rock, pop — really basic starting points
+     to go with silent."* They are `silence`'s argument one step on — no city,
+     no year, nothing chosen, except that a small band is already seated — so
+     they are `EXCLUDE` rows too and they pin beside it rather than closing the
+     list. THE CONSTANT IS AN ORDERED LIST NOW AND NOT A STRING, which is the
+     whole of the change here: `LISTROLES` still subtracts whatever is pinned,
+     `ROLES` still counts all ten, and the pinning loop below walks this array
+     in the order Paul said the words. No `+ 3` anywhere, and a fifth pin costs
+     one entry. */
+  const PINNED = ["silence", "dance", "guitarrock", "pop"];
+  const LISTROLES = ROLES.filter((k) => !PINNED.includes(k));
   const idx = el("div", { id: "atlasIndex" });
   const idxRows = el("ol", { id: "atlasIndexRows", className: "nu-ix" });
   /* THE COUNT IS DERIVED, NOT TYPED, for the same reason every other number on
@@ -673,37 +713,30 @@ export function mount(parent, ctx) {
      WHERE IT STANDS, AND WHY NOT HIGHER. It is the LIST's own head — under the
      globe, above the first row, in flow, one line, never floating over
      anything. The brief asked for "the top of the picker"; the top of the
-     picker is a sentence and a globe, and putting the field above them would
-     have put ~300 px of earth between what you type and what it matches, on a
-     screen 844 px tall. Measured where it stands: the strip's own top is at
-     y=414 at 390x844 and y=357 at 320 — inside the first screenful, with the
-     first results under it — and the list scrolls under a strip that does not
-     move (69 px, two lines: the field and the menu, then the count).
+     picker is the globe, and putting the field above it would have put ~300 px
+     of earth between what you type and what it matches, on a screen 844 px
+     tall. Measured where it stands, 2026-09-06 with the head, the sentence and
+     the chips deleted: the strip's own top is y=368 at 390x844 (from 414) and
+     y=311 at 320 (from 357) — inside the first screenful, with the first
+     results under it — and it is ONE line of 44 px against the 118 it was.
      (Its position is a decision this file makes for its own surface; the row
      it produces is `.nu-row`, which nu.css already owns.)
 
-     THE THREE CONTROLS ARE THE THREE WAYS A PERSON ARRIVES:
-       · THE FIELD — you know what you want. It matches the row's NAME (the
-         word actually printed, `NuWiki.name`), its KEY, its PLACE, its YEAR
-         (as printed, so "1991" and "33000 BC" both match), its ERA word and
-         its FAMILY. Every token you type must match, so "bristol 1991" and
-         "club bristol" both narrow.
-       · THE ERA CHIPS — you know roughly WHEN. They are `atlas.js ERAS`, 26
-         words from the old stone age to now, each one a real catalogue year
-         (G5b holds that), so this is a jump by century and by decade with no
-         second table to keep true. They SCROLL; they do not filter — the
-         chronology stays whole and you land in it, which is what a person
-         asking for "the seventies" in a list of everything means. They are
-         chips and not a menu for a reason with a date on it; see below.
-       · THE COUNT — how much of the catalogue you are looking at, which is the
-         one number that makes a filter honest.
+     IT IS THE ONE CONTROL, AND IT IS EVERY WAY A PERSON ARRIVES. It matches
+     the row's NAME (the word actually printed, `NuWiki.name`), its KEY, its
+     PLACE, its YEAR (as printed, so "1991" and "33000 BC" both match), its ERA
+     word and its FAMILY. Every token you type must match, so "bristol 1991"
+     and "club bristol" both narrow. The era word being one of the six is what
+     lets a hand reach a century by typing `the seventies` — which is the job
+     the deleted chip strip was doing, done by the control that was already
+     there (see the deletion note below).
 
      TYPING DOES NOT MOVE THE EARTH, and that is a rule and not an accident.
      The list is the time instrument (`sweep`, below), so hiding rows would
      otherwise drag the year — and therefore every mark, the ring, the camera
-     and the sentence — under the finger that is typing. `filtering()` is
-     asked at the top of `sweep`, which is the ONE place the year moves from a
-     scroll. Pressing a row still flies the camera exactly as it always did:
+     and the stamp on the globe — under the finger that is typing.
+     `filtering()` is asked at the top of `sweep`, which is the ONE place the
+     year moves from a scroll. Pressing a row still flies the camera exactly as it always did:
      `openRow` sets the year and calls `choose`, and a filter has no opinion
      about it.
 
@@ -720,39 +753,55 @@ export function mount(parent, ctx) {
      list filters as you type — so the phone keyboard's blue key should say
      what pressing it does, which is "done looking at the keyboard". */
   qEl.enterKeyHint = "search";
-  /* THE JUMP IS CHIPS AND NOT A MENU, AND THAT IS THIS SURFACE'S OWN LAW
-     TWICE OVER. Paul, 2026-08-24, of this exact section: *"get rid of the era
-     select boxes, the look at select box, the 'nearby' select box"* —
-     test/atlas.js G7 has failed on `#atlasEra` and on ANY `<select>` under
-     `#atlas` ever since, and it is right to: a menu here was deleted by name.
-     And Paul, 2026-09-02, of the whole app: *"make those tables of dropdowns
-     full of tappable grids that change options rather than dropdowns."* So the
-     eras are buttons on ONE LINE that scrolls sideways inside itself — the
-     `overflow-x` net nu.css already puts under a wide strip — and the dead id
-     is not reused: this is `#atlasJump`, a different control answering a
-     different question from the one that was killed. The old one SET a filter
-     ("show me only the seventies"); this one MOVES you ("take me to the
-     seventies") and leaves the chronology whole, which is the difference
-     between the list being a filterable table and the list being a timeline
-     you travel. */
-  const era = el("span", { id: "atlasJump", className: "nu-ixjump" });
-  era.setAttribute("role", "group");
-  era.setAttribute("aria-label", t("atlas.era.aria"));
-  for (const e of ERAS) {
-    const c = el("button", { type: "button", textContent: e.w });
-    c.dataset.y = String(e.y);
-    c.setAttribute("aria-label", t("atlas.era.chip",
-                                   { era: e.w, year: yearWord(e.y) }));
-    era.append(c);
-  }
-  /* THE COUNT IS `aria-live` AND THE FIELD IS NOT. A search field that
+  /* ===== THE ERA CHIPS AND THE COUNT ARE DELETED (2026-09-06) ===========
+     Paul, of the strip that shipped four hours earlier: *"Get rid of the
+     buttons for eras like 'the old Stone Age' those all go."* and *"Get rid of
+     'All 479 records'."*
+
+     WHAT WENT AND WHAT DOES ITS JOB. `#atlasJump` was 26 era buttons that
+     SCROLLED the list to a century; `#atlasCount` was the resting readout of
+     how much of the catalogue was showing. The field answers both, and it
+     already did on the day they shipped: the era word is one of the six things
+     a row is matched on, so `the seventies` narrows the list to the 67 rows of
+     that era and `1991` to the 9 of that year — which is a jump you can also
+     read, against a chip strip that landed you in a chronology and told you
+     nothing. And the count's one irreplaceable case — a search that matches
+     NOTHING — is not a count at all: it is a sentence, `atlas.find.none`,
+     and it is drawn WHERE THE LIST WOULD BE (`#atlasNone`, inside
+     `#atlasIndex`) rather than as a permanent row above it. A number that is
+     "479" for all but the seconds a hand is typing is a row of chrome paying
+     rent on a phone.
+     THE DEAD IDS ARE NOT REUSED and the keys go with the controls:
+     `atlas.era.aria`, `atlas.era.chip`, `atlas.find.all.one` / `.other` and
+     `atlas.find.some` are deleted from src/copy/atlas.ts, and `.nu-ixjump` and
+     `#atlasCount` from nu.css. `atlas.find.none` is the one survivor. */
+  /* THE EMPTY ANSWER IS A SENTENCE AND IT STANDS IN THE LIST'S OWN BOX. It is
+     `role="status"` for the reason the deleted count was: a search field that
      announced its own value on every keystroke is unusable with a screen
-     reader; what a reader needs told is how many rows are left, once the
-     typing settles, which is exactly what this element says. */
-  const count = el("span", { className: "nu-hint", id: "atlasCount" });
-  count.setAttribute("role", "status");
-  find.append(qEl, era, count);
-  parent.append(say, wrap, find, idx);
+     reader, and what a reader needs told is that the answer is empty. It is
+     never `hidden` and never `display: none` — a live region removed from the
+     accessibility tree and put back is a live region that does not announce —
+     so it is EMPTY at rest and nu.css gives an empty one no box at all. */
+  const none = el("p", { className: "nu-hint", id: "atlasNone" });
+  none.setAttribute("role", "status");
+  idx.append(none);
+  find.append(qEl);
+  /* ===== THE GLOBE IS THE HEAD OF THE PICKER (2026-09-06) ===============
+     Paul: *"Get rid of 'where' and the line above and the output that goes
+     '33000 BC · 1 record within ten years · Hohle Fels'; leave the close icon.
+     Use the new space to move the globe up."*
+
+     So `wrap` IS FIRST and `say` follows it. The status line kept its job (see
+     `stampYear`) and lost its place: over the globe it was 32 px of chrome on
+     every screen for a line that is blank almost always, and it pushed the
+     earth down when it was not. Under the globe it stands where the gesture
+     that writes it happened — you tapped a mark or a row, and the box says
+     what it is doing about it directly beneath the thing you tapped.
+     THE HEADING ABOVE THEM IS `#atlasHead`, which mount() does not build and
+     does not destroy: it is index.html's own visually-hidden <h2>, and it is
+     what names this sheet to a screen reader now that the visible word in the
+     sheet's header is deleted. */
+  parent.append(wrap, say, find, idx);
   /* THE TWO LISTENERS, AND NEITHER IS DEBOUNCED. `filter()` is a fold-free
      `indexOf` over 479 strings already folded at build; measured on the gate's
      own chromium at 390x844 it is under 2 ms, which is inside one frame — so
@@ -763,24 +812,10 @@ export function mount(parent, ctx) {
      the little × a `type=search` field draws, which is the gesture that means
      "clear it" on a phone. */
   qEl.addEventListener("input", () => filter());
-  /* THE ERA MENU SCROLLS AND DOES NOT FILTER, and it CLEARS the field on the
-     way, because those are two answers to one question ("show me the
-     seventies" while a search is up would land you in a list the search has
-     already emptied). `scrollToYear` is the list's own read-head inverse — the
-     same one `syncIndex` uses — so the row it lands on is the row the next
-     sweep reads, and the year, the marks and the sentence all follow with no
-     second code path. */
-  /* ONE DELEGATED LISTENER FOR TWENTY-SIX CHIPS, which is the same shape
-     `idxRows` uses for 479 rows and for the same reason. NOTHING IS EVER
-     MARKED "on": a jump is a gesture and not a setting, and a chip left lit
-     would be the box claiming to be showing an era while the reader scrolled
-     four centuries away from it. */
-  era.addEventListener("click", (e) => {
-    const c = e.target.closest ? e.target.closest("button[data-y]") : null;
-    if (!c) return;
-    if (qEl.value) { qEl.value = ""; filter(); }
-    scrollToYear(+c.dataset.y);
-  });
+  /* (THE ERA STRIP'S DELEGATED LISTENER STOOD HERE. It cleared the field and
+     called `scrollToYear`, which is still the list's own read-head inverse and
+     is still what `syncIndex` uses — nothing about the list changed, only that
+     no chip asks it to move any more.) */
 
   /* ONE ROW PER GENRE, in `ALL`'s order — which is atlas.js's own sort (year
      ascending, then place, then key) and is DERIVED there rather than re-sorted
@@ -1121,13 +1156,14 @@ export function mount(parent, ctx) {
        at the top of a chronology. Its plate PLAYS through `openRow`'s role
        branch, which already calls `pick(gk, playNow)` for a placeless key —
        no new door. */
-    f.append(idxRow("—", PINNED, t("atlas.place.none"), PINNED, EXCLUDE[PINNED]));
+    for (const gk of PINNED)
+      f.append(idxRow("—", gk, t("atlas.place.none"), gk, EXCLUDE[gk]));
     for (const r of ALL) f.append(idxRow(yearWord(r.year), r.gk, r.place, r.gk, null));
     for (const gk of LISTROLES)
       f.append(idxRow("—", gk, t("atlas.place.any"), gk, EXCLUDE[gk]));
     idxRows.append(f);
     idxMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
-    filter();                            // …and the count says how many (wave C)
+    filter();                            // …and an empty answer says so (wave C)
     /* THE COST IS DECLARED ON THE ARTIFACT, not promised in this comment.
        "Permanent" was a decision with a price and the price is a number a gate
        can read back off the rendered page — the same discipline `data-live`
@@ -1187,13 +1223,23 @@ export function mount(parent, ctx) {
       if (on) showing++;
       if (n.hidden !== !on) n.hidden = !on;
     }
-    const total = li.length;
-    /* THE SENTENCE THE COUNT IS. Three of them, and the third is the one the
-       brief asked for by name: *"a search with no results says so in a
-       sentence."* A bare "0" is a number a reader has to interpret. */
-    count.textContent = !want.length ? tn("atlas.find.all", total)
-      : showing ? t("atlas.find.some", { n: showing, of: total })
-      : t("atlas.find.none", { q: qEl.value.trim() });
+    /* (`const total = li.length` STOOD HERE for the deleted count, which was
+       the only reader of it. `showing` is what the strip publishes now,
+       on `#atlasFind[data-showing]`, and the gate counts the rendered rows.) */
+    /* THE ONE SENTENCE LEFT (2026-09-06). It was three — the whole catalogue,
+       a part of it, or nothing — and Paul deleted the resting one by quoting
+       it: *"Get rid of 'All 479 records'."* The other two went with it, because
+       "{n} of {of}" is the same readout wearing a filter, and the row it stood
+       in was chrome at rest.
+       WHAT COULD NOT GO IS THE EMPTY ANSWER. A search that matches nothing has
+       to say so — a list that simply goes blank is a box that might not have
+       heard you — and `atlas.find.none` NAMES what was searched for, which is
+       the half that says it heard. It is drawn where the rows would be, so the
+       answer is in the place the reader is already looking.
+       IT IS WRITTEN ONLY WHEN IT CHANGES: this runs on every keystroke, and a
+       `role="status"` re-announces text that is re-set to the same string. */
+    const nowt = want.length && !showing ? t("atlas.find.none", { q: qEl.value.trim() }) : "";
+    if (none.textContent !== nowt) none.textContent = nowt;
     findMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
     find.dataset.ms = findMs.toFixed(1);
     find.dataset.showing = String(showing);
@@ -1639,6 +1685,20 @@ export function mount(parent, ctx) {
     lastW = w; lastH = h;
     globe.fit(w, h);
     svg.style.blockSize = h + "px";
+    /* AND THE YEAR STAMP IS PLACED IN THE SAME UNITS EVERYTHING ELSE IN THIS
+       FILE IS STATED IN: CSS px, converted through the renderer's own
+       units-per-pixel (`u`), so the stamp is 15 px tall and 12 px in from the
+       corner on every glass. The corner is the start-bottom one — outside the
+       sphere at the whole earth, over it when you are close, which is what the
+       halo is for. */
+    const g = globe.get(), u = g.u;
+    yearTx.setAttribute("x", (12 * u).toFixed(1));
+    yearTx.setAttribute("y", (g.VH - 12 * u).toFixed(1));
+    yearTx.setAttribute("font-size", (YEAR_PX * u).toFixed(1));
+    /* THE HALO'S WIDTH IS WRITTEN HERE FOR THE REASON THE LABELS' IS (see
+       HALO_PX): a `stroke-width` declared in nu.css would be in USER units and
+       this viewBox is 1000 units across whatever the column happens to be. */
+    yearTx.setAttribute("stroke-width", (YEAR_HALO_PX * u).toFixed(2));
     return true;
   }
 
@@ -1673,7 +1733,11 @@ export function mount(parent, ctx) {
      shape: the old loop asked the catalog 62 questions on every frame of a
      drag, and the answer cannot change while a finger is down — only the
      camera can. */
-  let shown = new Map(), atNow = atYear(YEARS[0]);
+  /* (`atNow` STOOD BESIDE `shown` and held the whole of `atYear(Y)` — the
+     exact set, the near set and the places — for ONE reader, `sentence()`,
+     which is deleted 2026-09-06 with the line it wrote. `shown` is what the
+     marks are drawn from and is the only half anything still asks for.) */
+  let shown = new Map();
   /* ...AND THE ANSWER IS REMEMBERED PER YEAR (2026-08-29). `atYear` walks
      every row in WHEN and then asks `recordAt` once per place it found — 201
      rows plus 62 lookups — and that was paid once per tick of a slider a thumb
@@ -1692,7 +1756,7 @@ export function mount(parent, ctx) {
     const Y = YEARS[yi];
     let v = yearScope.get(Y);
     if (!v) { v = atYear(Y); yearScope.set(Y, v); }
-    atNow = v; shown = v.shown;
+    shown = v.shown;
   };
 
   /* WRITE ONLY WHAT CHANGED, AND THIS IS A MEASUREMENT, NOT TIDINESS. The first
@@ -2131,50 +2195,42 @@ export function mount(parent, ctx) {
     return p.z > 0.15 && p.x > 40 && p.x < g.VB - 40 && p.y > 40 && p.y < g.VH - 40;
   }
 
-  /* ---------- the sentence, which is the globe in words -----------------
-     AND IT NOW COUNTS THE DOTS, WHICH IS THE POINT. It read "1969 — the
-     sixties — 2 records here, 32 in the decade around it: New York, London, …"
-     and that was two numbers about RECORDS printed above a picture of PLACES —
-     34 against 19 — with 43 further marks drawn that neither number counted.
-     Paul read the picture, not the sentence: "Don't show ghost genres when the
-     time isn't right."
+  /* ---------- the year, stamped on the earth ----------------------------
+     WHAT STOOD HERE, AND WHY IT IS DELETED (2026-09-06). `sentence()` wrote
+     the line over the globe — "600 · 1 record within ten years · Rome" — and
+     Paul deleted it by quoting it: *"Get rid of 'where' and the line above and
+     the output that goes '33000 BC · 1 record within ten years · Hohle Fels'."*
+     It carried three facts and each of them is still on the page, said by the
+     surface that owns it rather than by a line of chrome above the picture:
 
-     So the FIRST number is now the number of marks on the earth, because the
-     sentence and the marks are the same fact and a reader has to be able to
-     check one against the other by eye (test/atlas.js G22 checks it by
-     machine, on the rendered page, at 600 / 1969 / the last stop). Both of
-     Paul's original numbers survive behind it, in the clause that says what a
-     place is doing there: made this year, or made within ten. */
-  function sentence() {
-    const Y = YEARS[yi], at = atNow;   // scope() ran first: see setYear()
-    /* ORDERED BY HOW MUCH IS THERE, then by name — the six loudest places of
-       the year, which is what a one-line summary of a map can carry. */
-    const rows = [...at.places.entries()]
-      .sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1));
-    const six = rows.slice(0, 6).map((r) => r[0]);
-    const more = rows.length - six.length;
-    /* COMPRESSED 2026-08-27 per FUTURE.md §5's own example — it read
-       "600 — the six-hundreds — 1 place on the globe: 1 record made this
-       year, none more within ten years. Rome." and the row's target is
-       "600 · 1 record within ten years · Rome" ("keep the data, drop the
-       tour guide"). The data survives whole: the record count is exact+near
-       (made this year + within ten), and the PLACE COUNT is still in the
-       sentence as the list itself — six names plus "+N more" sums to
-       at.places.size, which is what G22 (test/atlas.js) now parses to hold
-       "the earth and the sentence are the same fact". The era word left with
-       the dashes; eraOf stays exported by atlas.js for whoever needs an
-       era's name. */
-    const nR = at.exact.size + at.near.size;
-    /* A COUNT PICKS A KEY (TABLE.md §12b): `nR === 1 ? "" : "s"` is a rule
-       about English that a second table cannot be taught, so the plural is
-       `atlas.record.one` / `.other` and `tn` chooses. The place list itself is
-       DATA — names joined by the page's own comma — and it enters the sentence
-       as one placeholder. */
-    const places = more > 0
-      ? t("atlas.places.more", { places: six.join(", "), n: more })
-      : six.join(", ");
-    say.textContent = t("atlas.yearSay",
-      { year: yearWord(Y), records: tn("atlas.record", nR), places });
+       · THE YEAR — stamped INSIDE the drawing now (`yearTx`, built with the
+         layers above), which is this function, and declared on the artifact as
+         `#atlasMap[data-year]` exactly as it already was.
+       · HOW MANY RECORDS THE YEAR HOLDS — the marks themselves. The sentence
+         existed to be checked against them by eye ("the earth and the sentence
+         are the same fact"); with the sentence gone the earth IS the fact, and
+         test/atlas.js G22 holds it against `NuAtlas.atYear()` instead of
+         against a string the page printed about itself.
+       · WHICH PLACES — every drawn mark names its own place, its year and its
+         genre (`atlas.mark.aria`), and the index row under the read head
+         prints all three in ink.
+
+     `atlas.yearSay`, `atlas.record.one` / `.other` and `atlas.places.more` are
+     deleted from src/copy/atlas.ts with the line: no other surface asked for
+     them, and a key with no caller is an orphan the copy gate now fails on.
+
+     AND IT CLEARS #atlasSay, WHICH IS THE OTHER HALF OF WHAT THAT LINE WAS.
+     `say` is still here and is still the atlas's one status line — "Writing
+     Kingston 1969…", the record that was written, and every refusal a link or
+     a role can earn — but it is EMPTY at rest, takes no space when it is
+     (nu.css), and stands under the globe rather than over it, so the picture is
+     the first thing under the top edge. The year moving is the reader browsing
+     again, which makes whatever the last gesture announced stale: this is the
+     one line that clears it, in the one place the year moves. */
+  function stampYear() {
+    const Y = YEARS[yi];
+    yearTx.textContent = yearWord(Y);
+    if (say.textContent) say.textContent = "";
   }
 
   /* ---------- the tap that composes ------------------------------------ */
@@ -2777,27 +2833,30 @@ export function mount(parent, ctx) {
     yi = Math.max(0, Math.min(YEARS.length - 1, i | 0));
     /* `year.value = String(yi); yOut.textContent = String(YEARS[yi]);` STOOD
        HERE and went with the slider (2026-08-29). The year is state, not a
-       control, and its READOUT is `sentence()` below — "1969 · 32 records
-       within ten years · New York, London, …", which begins with the year and
-       is on the screen above the globe at every moment. One owner, one place
-       it is printed, and no widget to keep in step. */
+       control, and its READOUT was `sentence()` below — the line over the
+       globe. That line is deleted too (2026-09-06, Paul's own quotation of
+       it): the readout is `stampYear()`, which puts the year INSIDE the
+       drawing. One owner, one place it is printed, and no widget to keep in
+       step. */
     /* AND THE YEAR IS DECLARED ON THE ARTIFACT (2026-08-29). `#atlasMap`
        already carries `data-arc` — how far away the camera is standing — for
        exactly this reason: a gate reads what the page SAYS about itself rather
        than reverse-engineering it. The year used to have a control with a
        `<output>` beside it, and every gate read that; with the slider gone the
-       only printed year is inside #atlasSay's sentence, which pick() OVERWRITES
+       only printed year was inside #atlasSay's sentence, which pick() OVERWROTE
        with the record's own line ("Kingston 1969 · reggae — 13 sections…").
        Measured: two checks in test/atlas.js parsed "Kingston" as a year off
        exactly that. So the fact is published where the other fact about what
        the globe is showing already lives. It is written by `setYear` and by
-       nothing else — one owner, one writer. */
+       nothing else — one owner, one writer. (It matters more since the
+       sentence went: the stamp on the earth is a picture, and this is the
+       machine-readable half of the same one number.) */
     svg.dataset.year = String(YEARS[yi]);
-    /* SCOPE FIRST, THEN SAY IT, THEN DRAW IT — in that order, because all
-       three are the same fact and the sentence must never be able to describe a
-       set the next paint has not adopted yet. */
+    /* SCOPE FIRST, THEN STAMP IT, THEN DRAW IT — in that order, because all
+       three are the same fact and the stamp must never be able to name a year
+       the next paint has not adopted yet. */
     scope();
-    sentence();
+    stampYear();
     redraw();
     /* AND THE ADDRESS FOLLOWS THE SLIDER. Every path that moves the year ends
        here — the slider's own `input`, `showing()` after a document swap, and
@@ -2819,8 +2878,9 @@ export function mount(parent, ctx) {
      booted on a real year (600, Rome) with `“silence” has no place on the
      map` printed above the map, so #atlasSay was refusing a request nobody had
      made and the one fact the pane had — the year — was nowhere on the page.
-     Unasked, the pane says what it says about any year with no record chosen:
-     `sentence()`, its own line, the same one the sweep writes. */
+     Unasked, the pane says nothing at all and leaves the year stamped on the
+     earth where every other year lives (`stampYear()`, which also clears
+     whatever the last gesture announced). */
   function showing(gk, asked) {
     here = WHEN[gk] ? gk : null;
     if (!WHEN[gk]) {
@@ -2828,7 +2888,7 @@ export function mount(parent, ctx) {
       // has a job, not a history"). Clear the ring and say so — or, when
       // nobody asked, say what the year holds.
       redraw();
-      if (!asked) { sentence(); return; }
+      if (!asked) { stampYear(); return; }
       /* ONE SENTENCE FOR BOTH BRANCHES (2026-09-05). It used to splice
          EXCLUDE's paragraph onto the end and wrap the key in curly quotes —
          a quoted string is one of the audit's banned families, and the two
@@ -2995,10 +3055,13 @@ export function mount(parent, ctx) {
      WHY THE REASON COMES BACK AS WELL AS GOING INTO #atlasSay, which looks
      like saying it twice and is not. MEASURED: the line was written here, the
      caller then fell back to its own record through `showing()`, and
-     `showing()` -> `setYear()` -> `sentence()` overwrote it on the next
-     statement — the refusal was on the page for less than a frame and the
+     `showing()` -> `setYear()` -> the year's own readout overwrote it on the
+     next statement — the refusal was on the page for less than a frame and the
      recipient saw an ordinary "600 · 1 record within ten years · Rome" with no
-     hint that their link had been thrown away. So the string is handed back
+     hint that their link had been thrown away. (The readout is `stampYear()`
+     since 2026-09-06 and it CLEARS this line rather than overwriting it, which
+     is the same race with a blank at the end of it: the reason still has to
+     come back, and the caller still has to print it last.) So the string is handed back
      for the caller to print AFTER its fallback has finished writing, and
      `note()` below is the door it prints through. The write here stays, for
      the caller that lands nothing at all.

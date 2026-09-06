@@ -820,6 +820,80 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
       assert.notStrictEqual("inverted + the first half", "as written");
     });
 
+  /* ===== G16 — THE THREE STARTING POINTS ARE PLAYABLE ====================
+     2026-09-06. Paul: *"Add a few simple genres at the top: dance, rock, pop —
+     really basic starting points to go with silent."* `silence` seats nobody
+     on purpose; these three are the opposite claim and it has to be checked
+     the way this file checks everything else — ON THE RENDER, not on the JSON.
+     A row can declare a kit, a bass and two chairs and reach no sound at all;
+     that is this repo's characteristic bug ("declared but never arriving"),
+     and a starting point that arrives silent is worse than no starting point.
+
+     THREE QUESTIONS, and the third is the one the JSON cannot answer:
+       a  each compiles to a record with notes in it, a drummer and a bass;
+       b  each carries the figure it declares (`flat`, `backbeat`, `arch` are
+          three different velocity alphabets, which is what the flood is FOR);
+       c  the three render DIFFERENTLY FROM EACH OTHER. Three generic rows are
+          exactly the case where one could quietly become another. */
+  ok("G16 dance, guitarrock and pop each compile to a playable record", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const seen = new Map();
+    for (const gk of ["dance", "guitarrock", "pop"]) {
+      const d = Doc.normalize(P2.genreToDocument(gk, 1));
+      const ev = Doc.scoreOf(d, GENRES, FLEET).events;
+      assert.ok(ev.length > 100, gk + " renders " + ev.length + " events");
+      assert.ok(d.voices.some((v) => v.kind === "drums"), gk + " seats no kit");
+      assert.ok(d.voices.some((v) => v.kind === "bass"), gk + " seats no bass");
+      assert.ok(d.voices.filter((v) => v.kind === "line").length >= 2,
+        gk + " seats fewer than two lines");
+      assert.ok(d.form.sections.length >= 3, gk + " has no form");
+      seen.set(gk, JSON.stringify(ev));
+    }
+    const keys = [...seen.keys()];
+    for (let i = 0; i < keys.length; i++)
+      for (let j = i + 1; j < keys.length; j++)
+        assert.notStrictEqual(seen.get(keys[i]), seen.get(keys[j]),
+          keys[i] + " and " + keys[j] + " render the same score");
+    console.log("       " + keys.map((k) =>
+      k + " " + JSON.parse(seen.get(k)).length + " events").join(" · "));
+  });
+
+  /* ...AND THE FIGURE EACH ONE DECLARES IS IN THE NOTES. `flat` means every
+     note the same level and no accent; `backbeat` and `arch` both widen the
+     alphabet and both put their accents somewhere. Read off the composed
+     phrases rather than off `dyn`, because `dyn` is the claim and this is the
+     arrival. */
+  ok("G16b each starting point's declared figure reaches the notes", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const read = (gk) => {
+      const d = Doc.normalize(P2.genreToDocument(gk, 1));
+      const vel = new Set(); let acc = 0, notes = 0;
+      for (const c of d.voices.filter((v) => v.kind === "line"))
+        for (const s of d.form.sections) {
+          const ph = Doc.toPhrase(d, Doc.materialAt(c, s.id));
+          if (!ph || !ph.gate) continue;
+          for (let i = 0; i < ph.gate.length; i++) if (ph.gate[i]) {
+            notes++;
+            if (ph.vel) vel.add(ph.vel[i]);
+            if (ph.acc && ph.acc[i]) acc++;
+          }
+        }
+      return { notes, vel: [...vel].sort((a, b) => a - b), acc };
+    };
+    const dance = read("dance"), rock = read("guitarrock"), pop = read("pop");
+    for (const [gk, m] of [["dance", dance], ["guitarrock", rock], ["pop", pop]])
+      assert.ok(m.notes > 200, gk + " composes " + m.notes + " notes");
+    assert.deepStrictEqual(dance.vel, [6], "`flat` is one level; dance has " + dance.vel);
+    assert.strictEqual(dance.acc, 0, "`flat` accents nothing; dance has " + dance.acc);
+    assert.ok(rock.vel.length >= 3, "`backbeat` widens the alphabet: " + rock.vel);
+    assert.ok(rock.acc > 0, "`backbeat` accents two and four; guitarrock has none");
+    assert.ok(pop.vel.length >= 3, "`arch` widens the alphabet: " + pop.vel);
+    assert.ok(pop.acc > 0, "`arch` accents the arrival; pop has none");
+    console.log("       dance vel " + JSON.stringify(dance.vel) + " acc " + dance.acc +
+                " · guitarrock vel " + JSON.stringify(rock.vel) + " acc " + rock.acc +
+                " · pop vel " + JSON.stringify(pop.vel) + " acc " + pop.acc);
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

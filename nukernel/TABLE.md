@@ -4021,7 +4021,10 @@ the fixed parts"*. `html` was at `auto`, so the document could bounce too, and
 on iOS Safari a document bounce visibly shifts `position: fixed` chrome — our
 bottom bar. **`overscroll-behavior: none`** on `.nu-pane` (both axes; the pane
 scrolls both), on `.nu-sheetwrap`'s table pane, on `#atlasJump` (the other
-strip a thumb drags sideways) and on `html, body`. The vertical-only scrollers
+strip a thumb drags sideways — that strip is deleted on 2026-09-06, Paul: *"Get
+rid of the buttons for eras like 'the old Stone Age' those all go"*, and the
+rule went with it; nothing else in the picker scrolls sideways) and on
+`html, body`. The vertical-only scrollers
 — the sheet wrap's own boxes, `#nu-menu`, `.nu-strip-out` — keep `contain`:
 they were not what a hand drags sideways and nothing measured says they bounce.
 

@@ -1,0 +1,134 @@
+{
+  "note": "POP — A STARTING POINT, NOT A RECORD (2026-09-06). Paul: \"Add a few simple\ngenres at the top: dance, rock, pop — really basic starting points to go with\nsilent.\"\n\nWHAT THIS ROW IS. Anchored to nothing, like `silence`, and an `EXCLUDE` row\nfor the same reason: there is no city and no year at which pop-in-general was\nmade, and a made-up one would be this catalogue's first invented address. No\nparents, therefore a plain label — which is not an exemption but the schema's\nown law read forwards (genres-build G2: a \"Place Year\" label IF AND ONLY IF\nthe row declares `parents`). What it seats is a voice, a pad, a bass and a\nlight kit: enough to hear pop in the first bar, small enough to rearrange.\n\nTHE NUMBERS ARE THE CATALOGUE'S OWN, NOT TASTE. 108 is the MEDIAN bpm of the\nthirty-three rows whose key ends in `pop` (ambientpop 84 up to hyperpop 160),\nand citypop, chamberpop, baroquepop and artpop all sit on 108 exactly. The kit\nis the light programmed one its neighbours have — kick on one and three, snare\non two and four, a sixteenth hat — and that hat is teenpop's, and is also the\none thing that keeps this row from rendering like `guitarrock`, whose hat is\neighths at 120 in a room.\n\nI V vi IV in ionian is the honest cliché, and the catalogue does not already\nhold it: the nearest are clubpop and newpop at 0 5 3 4 and electropop at\n0 3 5 4. The lead is a singer — solo_vox on `MOUTHS.poplead` — over a poly pad\nan octave down, and the bass walks eighths.\n\n`dyn: \"arch\"`, up to the middle of the bar and back down, which FIGURES calls\nthe sung line's own shape and which every pop neighbour with a voice in the\nchairs already takes (teenpop, newpop, electropop, synthpop). NOT \"backbeat\",\nand the reason is the flood's own law: a row's figure must be its OWN music's.\nThe backbeat here belongs to the drummer, who has one; the melody is sung, and\na sung line arches.\n\n...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.",
+  "label": "Pop",
+  "voices": 2,
+  "bars": 4,
+  "plan": "song",
+  "bpm": 108,
+  "jitter": 0,
+  "instr": [
+    "solo_vox",
+    "polysynth"
+  ],
+  "drumkit": "electronic",
+  "family": "kernel",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "chord"
+  },
+  "roots": [
+    0,
+    4,
+    5,
+    3
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "bassStyle": "eighths",
+  "bassInstr": "pop_bass",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1.3,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.24,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the voice, the hook, as written",
+    "the pad, two chords a bar under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "dyn": "arch"
+}
