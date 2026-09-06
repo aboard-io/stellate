@@ -83,5 +83,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [spread(3)], [reverse()], [invert(2)]][s % 4]\n                    : [keep(0, 8), transpose(-4)])"
-  }
+  },
+  "dyn": "swell"
 }

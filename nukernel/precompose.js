@@ -94,7 +94,11 @@
 })(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong, NuRules, ND, NK) {
   "use strict";
 
-  const { GENRES, MODES, SCALES } = NG;
+  // FIGURES (2026-09-06, the dynamics flood shift 1) is the catalogue's
+  // vocabulary of per-note dynamic SHAPES — genres-tables.js HEAD, quoted by a
+  // row's `dyn`. This file is the only place that knows which row is being
+  // composed, so it is the only place that can resolve the name.
+  const { GENRES, MODES, SCALES, FIGURES } = NG;
   const { compose, ihash, rng } = NC;
   const { LENGTHS, REG } = Id;
   const { stepsIn } = K;
@@ -1457,6 +1461,29 @@
        So `seq` alone takes its cell back from the reading. Every other kind
        still bands exactly as before. */
     if (kind === "seq" && KINDS.seq && KINDS.seq.cell) m.cell = KINDS.seq.cell;
+    /* THE ROW'S OWN DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1;
+       docs/DYNAMICS-FLOOD.md). Until today this file and `ideas-kit.js` held
+       one hard-coded line each — 8/5/6 on the levels there, an accent on the
+       downbeat below — and the census measured the result: the whole dynamic
+       alphabet of 3,991 composed cells was {5, 6, 8} and 2,651 of 2,672
+       accents were on a barline, on every genre in the catalogue. A funk
+       record and a chant played the SAME FIGURE and differed only in the
+       performance layer laid over it.
+         So the shape is DATA now. A row names one of `genres-tables.js`'s
+       FIGURES in `dyn` and the generator quotes it by name; the figure lands
+       in two places, each exactly where the line it replaces used to be — the
+       LEVEL inside the phrase (ideas-kit's own onset loop, so a phrase caches
+       under its figure's name) and the ACCENT at the bottom of this function,
+       after `develop` has moved the notes, which is where the accent has
+       always been decided. A row that names nothing hands down no figure and
+       ideas-kit takes its own fallback, which is the same arithmetic in the
+       same place: absent is byte-identical, and 479 rows were fingerprinted
+       before and after the seam landed to prove it. */
+    const dyn = G && G.dyn ? FIGURES[G.dyn] : null;
+    if (G && G.dyn && !dyn)
+      throw new Error(`precompose: anchor "${G.label || ""}" names a dynamic ` +
+        `figure no FIGURES key answers to: "${G.dyn}"`);
+    if (dyn) m.dyn = dyn;
     let ph = Id.toPhrase(m, null);                // ideas-kit.js:425, pure, cached
     // THE DEVICE LANDS ON THE PHRASE, NOT ON THE THEME. `Id.develop` is pure
     // and returns the phrase object itself for `same`, so a cell nobody
@@ -1491,12 +1518,37 @@
       const want = RELEASE[dv.rel].last(pulse);
       L[L.length - 1] = Math.max(1, Math.min(L[L.length - 1], want));
     }
+    /* THE BAR EACH ONSET BELONGS TO, where it sits among that bar's own
+       onsets, and the bar's whole onset list — the four facts a figure is a
+       function OF (genres-tables.js FIGURES), and the four this loop never had
+       to compute while the answer was "the top of a bar". Counted once here
+       rather than searched per note. `atOf` is the SAME array `ideas-kit`
+       hands the level half of the figure, one step-space down: steps within
+       the bar, in order. */
+    const inBar = on.map((i) => Math.floor(i / steps));
+    const jOf = [], nOf = [], atOf = [];
+    const bars = [];
+    for (let k = 0; k < on.length; k++) {
+      const b = inBar[k];
+      jOf[k] = k && inBar[k - 1] === b ? jOf[k - 1] + 1 : 0;
+      if (!bars[b]) bars[b] = [];
+      bars[b].push(on[k] % steps);
+    }
+    for (let k = on.length - 1; k >= 0; k--)
+      nOf[k] = k + 1 < on.length && inBar[k + 1] === inBar[k] ? nOf[k + 1] : jOf[k] + 1;
+    for (let k = 0; k < on.length; k++) atOf[k] = bars[inBar[k]];
     on.forEach((i, j) => {
       play[i] = "n";
       for (let k = 1; k < L[j]; k++) play[i + k] = "h";
-      // AN ACCENT WHERE AN ACCENT MEANS SOMETHING — the top of a bar, which
-      // is compose.js:424's own rule and what kernel.bass reads.
-      if (i % steps === 0) acc[i] = 1;
+      // AN ACCENT WHERE AN ACCENT MEANS SOMETHING — and WHERE is the FIGURE's
+      // to say since 2026-09-06. It used to be "the top of a bar" for all 479
+      // rows (compose.js:424's own rule, and what kernel.bass reads), which
+      // is `FIGURES.lean.acc` written down: a row naming no figure takes the
+      // same branch below with the same answer. A backbeat row puts it on two
+      // and four, a funk row on the and, a chant on the last note of the
+      // phrase, and a machine that says `flat` puts it nowhere at all.
+      if (dyn ? dyn.acc(jOf[j], nOf[j], i % steps, inBar[j], steps, atOf[j])
+              : i % steps === 0) acc[i] = 1;
     });
     return { cell: { kind: "line", deg, play, vel, acc }, ph };
   }

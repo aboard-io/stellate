@@ -1,5 +1,5 @@
 {
-  "note": "NORTEÑA — Monterrey 1955. A conjunto norteño is two men: a diatonic\nbutton accordion and a BAJO SEXTO, a twelve-string bass guitar that\nplays the chords and the bass at once. The repertory is corridos and\nrancheras over a polka the German and Czech settlers of the border\nleft behind, which is why the rhythm below is a polka and says so.\nTHE YEAR is Los Alegres de Terán's Falcon and RCA sides, when the\naccordion-and-bajo duet becomes the border's standard record.\n`corridotumbado` DECLARED `wants: [\"banda\", \"norteño\"]` AND NOW HAS\nBOTH — its parents line, which named `worldfolk` (Johannesburg 1986)\nat 0.30 because nothing nearer existed, is rewritten below. That edge\nis one of the two WORLD.md §4 caught running.\n\n\"bohemian polka\" PAID 2026-08-30, the folk-floor round:\n`polka` (Prague 1837) is the ballroom the conjunto's oom-pah\nwalked out of.\n\nA POLKA, WRITTEN AS ONE: kick on the beat, snare on the off-beat,\nnothing clever. The tololoche's oom-pah is in `bassStyle: \"fifths\"`\none line up, which is the only place in this catalog that word\nmeans what it means in a brass band.",
+  "note": "NORTEÑA — Monterrey 1955. A conjunto norteño is two men: a diatonic\nbutton accordion and a BAJO SEXTO, a twelve-string bass guitar that\nplays the chords and the bass at once. The repertory is corridos and\nrancheras over a polka the German and Czech settlers of the border\nleft behind, which is why the rhythm below is a polka and says so.\nTHE YEAR is Los Alegres de Terán's Falcon and RCA sides, when the\naccordion-and-bajo duet becomes the border's standard record.\n`corridotumbado` DECLARED `wants: [\"banda\", \"norteño\"]` AND NOW HAS\nBOTH — its parents line, which named `worldfolk` (Johannesburg 1986)\nat 0.30 because nothing nearer existed, is rewritten below. That edge\nis one of the two WORLD.md §4 caught running.\n\n\"bohemian polka\" PAID 2026-08-30, the folk-floor round:\n`polka` (Prague 1837) is the ballroom the conjunto's oom-pah\nwalked out of.\n\nA POLKA, WRITTEN AS ONE: kick on the beat, snare on the off-beat,\nnothing clever. The tololoche's oom-pah is in `bassStyle: \"fifths\"`\none line up, which is the only place in this catalog that word\nmeans what it means in a brass band.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"backbeat\"` — the line leans on two and four. The row's own kit hits two\nand four, so the line leans where the snare does. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Monterrey 1955",
   "voices": 3,
   "near": "vallenato",
@@ -186,5 +186,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "backbeat"
 }

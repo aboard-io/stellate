@@ -29,6 +29,7 @@
      }
     ],
     "diatonic": true,
+    "dyn": "agogic",
     "family": "vox",
     "fill": null,
     "ghost": null,
@@ -463,6 +464,7 @@
      }
     ],
     "diatonic": true,
+    "dyn": "agogic",
     "family": "vox",
     "fill": null,
     "ghost": null,
@@ -897,6 +899,7 @@
      }
     ],
     "diatonic": true,
+    "dyn": "agogic",
     "family": "vox",
     "fill": null,
     "ghost": null,
@@ -1331,6 +1334,7 @@
      }
     ],
     "diatonic": true,
+    "dyn": "agogic",
     "family": "vox",
     "fill": null,
     "ghost": null,
@@ -1765,6 +1769,7 @@
      }
     ],
     "diatonic": true,
+    "dyn": "agogic",
     "family": "vox",
     "fill": null,
     "ghost": null,

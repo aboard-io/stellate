@@ -1,5 +1,5 @@
 {
-  "note": "LAMB — Manchester 1996. Lamb (Fontana, 30 September 1996):\nAndy Barlow's fractured jungle programming under Lou Rhodes's\ntorch line — \"Górecki\" names a living composer in a love song\n— the row where this wing touches `dnb` instead of dub. The\nbreaks are dnb's, the tempo is a ballad's: half-time song over\ndouble-time drums, which no other row in the table says.\n\nLINEAGE: the ZIM's own three — trip hop, drum and bass and\njazz: `triphop` (Bristol 1991) the singer-over-loop deal,\n`dnb` (London 1994) the kit language, `jazz` (New York 1945)\nthe upright bass and the harmony under the torch line.\n\nWHO SINGS: Rhodes's folk quaver, close and plain.",
+  "note": "LAMB — Manchester 1996. Lamb (Fontana, 30 September 1996):\nAndy Barlow's fractured jungle programming under Lou Rhodes's\ntorch line — \"Górecki\" names a living composer in a love song\n— the row where this wing touches `dnb` instead of dub. The\nbreaks are dnb's, the tempo is a ballad's: half-time song over\ndouble-time drums, which no other row in the table says.\n\nLINEAGE: the ZIM's own three — trip hop, drum and bass and\njazz: `triphop` (Bristol 1991) the singer-over-loop deal,\n`dnb` (London 1994) the kit language, `jazz` (New York 1945)\nthe upright bass and the harmony under the torch line.\n\nWHO SINGS: Rhodes's folk quaver, close and plain.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"flat\"` — the line every note the same. A club floor whose hand is under\n.02 of a step is the machine keeping time.",
   "label": "Manchester 1996",
   "voices": 2,
   "bars": 8,
@@ -153,5 +153,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], []][s % 4]\n                    : [[rotate(4)], [split(2)], [rotate(4)], [fill(2)]][s % 4])"
-  }
+  },
+  "dyn": "flat"
 }

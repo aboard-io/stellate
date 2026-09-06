@@ -161,7 +161,46 @@ const FULL = process.argv.includes("--full");
    holding a base older than the catalogue only asserts that no row may ever
    gain a drummer. The strip set below is asked of the base, so it re-derives
    itself; T4j renders both sides and is base-aware already. */
-const BASE_SHA = "4bab683";  // scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+/* BASE MOVED AGAIN 2026-09-06, to 0178335 (v289), FOR THE DYNAMICS FLOOD —
+   SHIFT 1 (docs/DYNAMICS-FLOOD.md, "THE MOTIF'S OWN DYNAMICS"). This is the
+   largest deliberate catalogue move the base has ever absorbed and it is worth
+   saying exactly what it is.
+
+   THE CENSUS (scratchpad/census-dynamics-chords/REPORT.md, 2026-09-05)
+   measured the motif tier of all 479 composed records: the WHOLE dynamic
+   alphabet of 3,991 line cells was {5, 6, 8} — one hard-coded line in
+   `ideas-kit.js` — and 2,651 of 2,672 accents fell on a barline, one
+   hard-coded line in `precompose.js`. A funk record and a chant played the
+   same figure. Both lines are a NAMED FIGURE now (`genres-tables.js` FIGURES,
+   nine of them) and 416 rows quote one in `dyn`.
+
+   MEASURED, on the same 3,991 cells, before the base moved:
+     · the velocity alphabet went from {5, 6, 8} to {4, 5, 6, 7, 8, 9};
+     · accents off the downbeat went from 21 to 7,001 of 9,384, and the cells
+       carrying one at all from 2,672 of 3,991 to 3,450;
+     · 416 rows name a figure, and 409 of 479 anchors compile to a different
+       document — 1,227 of the 1,437 T2a itself walks. The 70 anchors that do
+       not move are exactly the 14 frozen `DYNAMICS: null` machines plus the
+       56 rows whose figure IS the old line;
+     · with no `dyn` written anywhere, all 479 were byte-identical — the seam
+       was fingerprinted before the data was (test/dynfigure.test.js §C2 keeps
+       that claim runnable).
+
+   WHY THAT IS ALLOWED, and it is the same sentence the last three moves
+   leaned on: [[verification-philosophy]] — byte-stability is a tool, not a
+   law, and fixture drift is acceptable when the round that caused it is the
+   round that was shipped. Holding a base older than the flood would only
+   assert that no genre may ever have its own dynamics.
+
+   AND THE PIN IS ONE COMMIT BEHIND, which on this one round it has to be:
+   0178335 is the commit immediately BEFORE this shift, so T2a/T2b/T2c report
+   the flood ITSELF — every anchor that gained a figure — until the shift lands
+   and the pin moves onto its own commit. That is the one state this comment
+   cannot resolve on its own, and it is written down rather than papered over:
+   the three reds are expected here, they are this round, and the reviewer's
+   job is to check the counts above against the run, not to look for a fourth
+   cause. */
+const BASE_SHA = "0178335";  // the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). Was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override

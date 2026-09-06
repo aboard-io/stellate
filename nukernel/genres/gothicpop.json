@@ -172,5 +172,6 @@
   },
   "fx": [
     "chorus"
-  ]
+  ],
+  "dyn": "backbeat"
 }

@@ -181,9 +181,9 @@
   "tone": {
     "wave": "triangle",
     "cut": 2400,
-    "q": 1.0,
+    "q": 1,
     "atk": 0.01,
-    "rel": 1.0,
+    "rel": 1,
     "gain": 0.27,
     "verb": 0.2
   },
@@ -211,5 +211,6 @@
     "else": {
       "$src": "[only(\"gate\", drop(2))]"
     }
-  }
+  },
+  "dyn": "backbeat"
 }

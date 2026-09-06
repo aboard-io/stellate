@@ -1,5 +1,5 @@
 {
-  "note": "THE MARCH — Washington 1889. Sousa's \"The Washington Post\",\npremiered on the Smithsonian grounds on the 15th of June 1889\nwith the Marine Band under the composer — the named record of\nthe concert-march form at its height. TWO rows have wanted it:\n`ragtime` (Sedalia 1899), whose left hand IS the march bass\nsyncopated (\"march\" on its books since its lineage was\nwritten), and `newsfanfare` (London 1970), whose \"military\nmarch\" want is this form in a television blazer. Both take the\nparent today.\n\nthe Marine Band on the Smithsonian grounds; a concert march sings nothing\n\nLINEAGE: a declared root — the military band trade behind it\n(the Ottoman mehter that gave Europe its percussion, the\nCivil War brass bands) is real and unanchored; named below.\n\nAABBCC(trio) — strains restated, the trio brighter: the form\nragtime lifted whole.",
+  "note": "THE MARCH — Washington 1889. Sousa's \"The Washington Post\",\npremiered on the Smithsonian grounds on the 15th of June 1889\nwith the Marine Band under the composer — the named record of\nthe concert-march form at its height. TWO rows have wanted it:\n`ragtime` (Sedalia 1899), whose left hand IS the march bass\nsyncopated (\"march\" on its books since its lineage was\nwritten), and `newsfanfare` (London 1970), whose \"military\nmarch\" want is this form in a television blazer. Both take the\nparent today.\n\nthe Marine Band on the Smithsonian grounds; a concert march sings nothing\n\nLINEAGE: a declared root — the military band trade behind it\n(the Ottoman mehter that gave Europe its percussion, the\nCivil War brass bands) is real and unanchored; named below.\n\nAABBCC(trio) — strains restated, the trio brighter: the form\nragtime lifted whole.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"lean\"` — the line leans on its first note. A march leans on ONE — the\nkit's two and four are the answering stroke, not the weight. The `roots`\ncluster takes `lean`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Washington 1889",
   "voices": 3,
@@ -143,5 +143,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2), fill(1)]][s % 4]\n                    : v === 1 ? [[drop(12)], [drop(12)], [fill(1), transpose(4)], [fill(1), transpose(4)]][s % 4]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
-  }
+  },
+  "dyn": "lean"
 }

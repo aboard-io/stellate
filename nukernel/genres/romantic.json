@@ -1,5 +1,5 @@
 {
-  "note": "ROMANTIC — Vienna 1876, the orchestra: the body of strings, the tune in\nthe CELLO (the romantic register), horns answering at bar 5, and the\ntremolo arriving last — which is how a climax is built. No fx block:\nthe era law (compose.js FX_YEAR) is right that 1876 has no filter\nsweep, and the swell lives in the entries instead. Timpani exist in the\nregistry but the kit has twelve fixed lanes and no timpani file;\ncasting one as a pitched voice would make it melodic, so it waits for a\nPERC lane rather than being faked.",
+  "note": "ROMANTIC — Vienna 1876, the orchestra: the body of strings, the tune in\nthe CELLO (the romantic register), horns answering at bar 5, and the\ntremolo arriving last — which is how a climax is built. No fx block:\nthe era law (compose.js FX_YEAR) is right that 1876 has no filter\nsweep, and the swell lives in the entries instead. Timpani exist in the\nregistry but the kit has twelve fixed lanes and no timpani file;\ncasting one as a pitched voice would make it melodic, so it waits for a\nPERC lane rather than being faked.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"swell\"` — the line crescendos across the bar. The romantic line builds\nacross the bar rather than leaning on any note in it. The `roots`\ncluster takes `lean`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Vienna 1876",
   "voices": 4,
   "bars": 8,
@@ -104,5 +104,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "swell"
 }

@@ -223,7 +223,7 @@
   "tone": {
     "wave": "triangle",
     "cut": 2800,
-    "q": 1.0,
+    "q": 1,
     "atk": 0.005,
     "rel": 0.45,
     "gain": 0.28,
@@ -240,5 +240,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 1 ? [keep(4, 12)]\n                    : v === 2 ? [drop(2)]\n                    : [[], [fill(2)], [rotate(2)]][s % 3])"
-  }
+  },
+  "dyn": "backbeat"
 }

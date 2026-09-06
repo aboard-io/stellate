@@ -1,5 +1,5 @@
 {
-  "note": "SCHÜTZ — Dresden 1636. The Musikalische Exequien, published in\nDresden in the middle of the Thirty Years' War: a German\nfuneral mass for a named patron (Heinrich Posthumus of Reuss,\nwho chose his own burial texts), Monteverdi's concerted style\ncarried over the Alps and set on the chorale's own tongue. With\n`secondapratica` above it closes the 1610-1660 gap from the German\nside — the bridge on which Lutheran music walks from `chorale`\n(Nuremberg 1586) to `fugue` (Leipzig 1725).\n\nLINEAGE: he studied with Giovanni Gabrieli in Venice and\nvisited Monteverdi in 1628; the chorale is the congregation\nhe wrote for. Gabrieli is the missing teacher, named below.",
+  "note": "SCHÜTZ — Dresden 1636. The Musikalische Exequien, published in\nDresden in the middle of the Thirty Years' War: a German\nfuneral mass for a named patron (Heinrich Posthumus of Reuss,\nwho chose his own burial texts), Monteverdi's concerted style\ncarried over the Alps and set on the chorale's own tongue. With\n`secondapratica` above it closes the 1610-1660 gap from the German\nside — the bridge on which Lutheran music walks from `chorale`\n(Nuremberg 1586) to `fugue` (Leipzig 1725).\n\nLINEAGE: he studied with Giovanni Gabrieli in Venice and\nvisited Monteverdi in 1628; the chorale is the congregation\nhe wrote for. Gabrieli is the missing teacher, named below.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"terraced\"` — the line restated a level down. Baroque dynamics have no\nhairpin — the restatement is the level change. The `vox` cluster takes\n`agogic`; the anchor's own evidence outranks it, which is the flood's\nrule (docs/DYNAMICS-FLOOD.md).",
   "label": "Dresden 1636",
   "voices": 3,
   "bars": 8,
@@ -97,5 +97,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)]][s % 3]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : [keep(0, 8), transpose(-3)])"
-  }
+  },
+  "dyn": "terraced"
 }

@@ -148,5 +148,6 @@
   },
   "fx": [
     "chorus"
-  ]
+  ],
+  "dyn": "backbeat"
 }

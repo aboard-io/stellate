@@ -1,5 +1,5 @@
 {
-  "note": "DANZÓN — Matanzas 1879. Miguel Faílde's \"Las alturas de Simpson\",\npremiered at the Liceo de Matanzas on the FIRST OF JANUARY 1879 —\none of the few genres anywhere with a birthday — the habanera's\ncell slowed to a stroll under an orquesta típica of cornets,\nclarinets and violins, with the paseo built in so the dancers\ncould fan themselves between strains. `son` and `mambo` have both\nwanted it by name since the world round: the danzón is son's\nballroom uncle and the mambo was BORN as a danzón section —\nOrestes López's 1938 \"Mambo\" is a danzón's final strain.\n\nan orquesta típica under dancers — the danzón is played, not sung\n\nLINEAGE: `habanera` (Havana 1860) at real weight — the baqueteo\nunder a danzón is the habanera cell ornamented — and the rest\nis the creole contradanza line named below.\nPAID 2026-08-29, the debts round: \"the cuban contradanza\n(saumell)\" moved into the parents (Havana 1803).\n\nthe baqueteo on the timbal, said on the p lane; the güiro's\nscrape is the h lane's even eighths.",
+  "note": "DANZÓN — Matanzas 1879. Miguel Faílde's \"Las alturas de Simpson\",\npremiered at the Liceo de Matanzas on the FIRST OF JANUARY 1879 —\none of the few genres anywhere with a birthday — the habanera's\ncell slowed to a stroll under an orquesta típica of cornets,\nclarinets and violins, with the paseo built in so the dancers\ncould fan themselves between strains. `son` and `mambo` have both\nwanted it by name since the world round: the danzón is son's\nballroom uncle and the mambo was BORN as a danzón section —\nOrestes López's 1938 \"Mambo\" is a danzón's final strain.\n\nan orquesta típica under dancers — the danzón is played, not sung\n\nLINEAGE: `habanera` (Havana 1860) at real weight — the baqueteo\nunder a danzón is the habanera cell ornamented — and the rest\nis the creole contradanza line named below.\nPAID 2026-08-29, the debts round: \"the cuban contradanza\n(saumell)\" moved into the parents (Havana 1803).\n\nthe baqueteo on the timbal, said on the p lane; the güiro's\nscrape is the h lane's even eighths.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"syncope\"` — the line leans off the beat. The one-and, and everything\nafter it: the figure itself is syncopated, not merely pushed. The\n`roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Matanzas 1879",
   "voices": 3,
@@ -142,5 +142,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2), fill(2)]][s % 3]\n                    : v === 1 ? [transpose(-3), rotate(4)]\n                    : [transpose(-5), drop(2)])"
-  }
+  },
+  "dyn": "syncope"
 }

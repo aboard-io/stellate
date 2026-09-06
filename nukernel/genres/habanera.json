@@ -1,5 +1,5 @@
 {
-  "note": "HABANERA — Havana 1860. Sebastián Iradier's \"La Paloma\", written\nafter his Havana visit around 1860 and published in Madrid — the\nmost travelled song of its century, and the cell under it (DUM,\nga-DUM-DUM: dotted eighth, sixteenth, two eighths) is the most\ntravelled BASS LINE in this whole table: Bizet lifted Iradier's\n\"El Arreglito\" wholesale in 1875, the tango took the cell south,\nand W.C. Handy put it inside the St. Louis Blues. `tango` (Buenos\nAires 1935) has wanted this row by name since its lineage was\nwritten, and `danzon` below is built directly on it.\n\nLINEAGE: a declared root here — the contradanza it walked out\nof is a danced European form creolized in Cuba across a century\nwith no single named record to stand on.\nPAID 2026-08-29, the debts round: \"the cuban contradanza\n(saumell)\" is `contradanza` (Havana 1803) — the habanera IS the\ncontradanza's bass gone to song.\n\nTHE CELL, on the kick: dotted-eighth sixteenth, two eighths —\nsteps 0, 3, 4, 6 of an eight-step half bar, twice a bar. It is\nthe one fact this row exists to carry.",
+  "note": "HABANERA — Havana 1860. Sebastián Iradier's \"La Paloma\", written\nafter his Havana visit around 1860 and published in Madrid — the\nmost travelled song of its century, and the cell under it (DUM,\nga-DUM-DUM: dotted eighth, sixteenth, two eighths) is the most\ntravelled BASS LINE in this whole table: Bizet lifted Iradier's\n\"El Arreglito\" wholesale in 1875, the tango took the cell south,\nand W.C. Handy put it inside the St. Louis Blues. `tango` (Buenos\nAires 1935) has wanted this row by name since its lineage was\nwritten, and `danzon` below is built directly on it.\n\nLINEAGE: a declared root here — the contradanza it walked out\nof is a danced European form creolized in Cuba across a century\nwith no single named record to stand on.\nPAID 2026-08-29, the debts round: \"the cuban contradanza\n(saumell)\" is `contradanza` (Havana 1803) — the habanera IS the\ncontradanza's bass gone to song.\n\nTHE CELL, on the kick: dotted-eighth sixteenth, two eighths —\nsteps 0, 3, 4, 6 of an eight-step half bar, twice a bar. It is\nthe one fact this row exists to carry.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"syncope\"` — the line leans off the beat. The one-and, and everything\nafter it: the figure itself is syncopated, not merely pushed. The\n`roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Havana 1860",
   "voices": 2,
   "bars": 8,
@@ -135,5 +135,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)]][s % 3]\n                    : [transpose(-3), drop(2)])"
-  }
+  },
+  "dyn": "syncope"
 }

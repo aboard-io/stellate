@@ -583,6 +583,13 @@
                 // ...and the base octave map, present-only like the rest: an
                 // unmarked theme adds an empty pair of braces and nothing else
                 "|" + (m.octs ? JSON.stringify(m.octs) : "") +
+                // ...and the DYNAMIC FIGURE by its own name (2026-09-06): two
+                // records with the same contour and different figures are two
+                // different phrases, and a cache that could not tell them
+                // apart would hand the second one the first one's levels.
+                // Absent adds an empty field, like `wrote` and `octs` above,
+                // so every key written before the flood is unchanged.
+                "|" + (m.dyn ? m.dyn.k : "") +
                 "|" + NOF(m) + ":" + metOf(m).pulse;
     let hit = PHCACHE.get(key);
     if (hit) return hit;
@@ -648,8 +655,24 @@
         deg[at] = con.f(j, inBar.length);
         // the register is the GENRE's (`reg`), not the phrase's — writing it
         // in both places put every tune an octave higher than it was asked
-        // for; the phrase leans on its first note and gives back going out
-        vel[at] = j === 0 ? 8 : (j === inBar.length - 1 ? 5 : 6);
+        // for.
+        //
+        // THE LEVEL IS THE FIGURE'S, NOT THIS FILE'S (2026-09-06, the dynamics
+        // flood, shift 1). This line used to BE the catalogue's whole dynamic
+        // vocabulary — `j === 0 ? 8 : (j === last ? 5 : 6)`, measured across
+        // 3,991 composed cells as the alphabet {5, 6, 8} and nothing else, on
+        // every one of 479 genres. It is a shape with a name now (`lean`,
+        // genres-tables.js FIGURES) and a record may quote a different one:
+        // `precompose.js cellOf` resolves the row's `dyn` and hands the figure
+        // down on the model, where it enters the memo key by name. A model
+        // that names none — every caller outside precompose, and every record
+        // before this round — takes the fallback below, which is the same
+        // arithmetic in the same place and therefore the same bytes.
+        // (`test/dynfigure.test.js` §C holds the two to agreeing on every
+        // (j, n) a bar of this box can have, so the pair cannot drift.)
+        const fig = m.dyn || null;
+        vel[at] = fig ? fig.vel(j, inBar.length, i, b, N, inBar)
+                      : j === 0 ? 8 : (j === inBar.length - 1 ? 5 : 6);
         // a hand-marked hold rides with the note it was written on — an
         // onset a role MOVED leaves its tie behind (the tie belongs to the
         // place, and a restated ending is a new ending)

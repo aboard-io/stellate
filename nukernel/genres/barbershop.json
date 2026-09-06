@@ -133,5 +133,6 @@
     "else": {
       "$src": "[spread(0), keep(0, 4, 8, 12), drop(2)]"
     }
-  }
+  },
+  "dyn": "agogic"
 }

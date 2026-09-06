@@ -1,5 +1,5 @@
 {
-  "note": "FAIRUZ — Beirut 1957, the Baalbeck years. Her own article gives the\ngenres as Arabic music, Lebanese music and TARAB, and years active from\n1950 — so `tarab` (Cairo 1934) is a parent the record itself names, not\none I inferred. The row is the Rahbani arrangement: a tarab voice over a\nwritten, orchestrated backing rather than a takht improvising under her,\nwhich is the whole difference between this and its parent.\n\n`nylon_string_guitar` IS THE OUD HERE, and it is not my improvisation:\ntarab, muwashshah, taqsim and qiyan all seat the same id for the same\ninstrument, so the proxy is the catalogue's own and this row does not\nget a private one. `oud` is not an id in this box — I wrote it, the\ncheck caught it, and the convention was already decided.",
+  "note": "FAIRUZ — Beirut 1957, the Baalbeck years. Her own article gives the\ngenres as Arabic music, Lebanese music and TARAB, and years active from\n1950 — so `tarab` (Cairo 1934) is a parent the record itself names, not\none I inferred. The row is the Rahbani arrangement: a tarab voice over a\nwritten, orchestrated backing rather than a takht improvising under her,\nwhich is the whole difference between this and its parent.\n\n`nylon_string_guitar` IS THE OUD HERE, and it is not my improvisation:\ntarab, muwashshah, taqsim and qiyan all seat the same id for the same\ninstrument, so the proxy is the catalogue's own and this row does not\nget a private one. `oud` is not an id in this box — I wrote it, the\ncheck caught it, and the convention was already decided.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"agogic\"` — the line leans on its last note. A takht waits for the\nsinger, and the singer arrives at the last note.",
   "label": "Beirut 1957",
   "voices": 3,
   "bars": 8,
@@ -125,5 +125,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [], [rotate(2)]][s % 4]\n                    : v === 1 ? [drop(8)] : [keep(0, 4, 8)])"
-  }
+  },
+  "dyn": "agogic"
 }

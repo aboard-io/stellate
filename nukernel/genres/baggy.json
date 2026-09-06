@@ -1,5 +1,5 @@
 {
-  "note": "THE STONE ROSES — Manchester 1989, the debut (2 May 1989, per its own\narticle). IT SHIPS BECAUSE IT IS EARLIER THAN THE ROOM IT MADE: madchester\nis Manchester 1990 in this table, and the maringa precedent says an\nancestor must be measurably earlier. It is, by a year — so this is the\nrecord and that is the scene, and the edge runs the right way.",
+  "note": "THE STONE ROSES — Manchester 1989, the debut (2 May 1989, per its own\narticle). IT SHIPS BECAUSE IT IS EARLIER THAN THE ROOM IT MADE: madchester\nis Manchester 1990 in this table, and the maringa precedent says an\nancestor must be measurably earlier. It is, by a year — so this is the\nrecord and that is the scene, and the edge runs the right way.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"backbeat\"` — the line leans on two and four. A guitar band with a\ndrummer behind it.",
   "label": "Manchester 1988",
   "voices": 3,
   "bars": 8,
@@ -137,5 +137,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [keep(0, 8)], [], [transpose(2)]][s % 4]\n                    : v === 1 ? [fill(2)] : [[rotate(2)], [], [drop(3)], []][s % 4])"
-  }
+  },
+  "dyn": "backbeat"
 }

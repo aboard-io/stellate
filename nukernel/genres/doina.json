@@ -1,5 +1,5 @@
 {
-  "note": "THE DOINA — Maramureș 1912. \"Béla Bartók discovered the doina in\nNorthern Transylvania in 1912\" — the ZIM's own sentence, and the\ncylinders he cut there are the named dated collection this\npayment stands on (published as his Maramureș volume). One\nfree-rhythm, melismatic, improvised line — the ZIM compares it\nto the taksim by name, which is why `near` says taqsim and the\nfamily is vox, on ottoman's own argument. Pays `taraf`'s want\n(\"the doina\"); klezmer's doyne is the same object one migration\nnorth, carried by its own row's parents.",
+  "note": "THE DOINA — Maramureș 1912. \"Béla Bartók discovered the doina in\nNorthern Transylvania in 1912\" — the ZIM's own sentence, and the\ncylinders he cut there are the named dated collection this\npayment stands on (published as his Maramureș volume). One\nfree-rhythm, melismatic, improvised line — the ZIM compares it\nto the taksim by name, which is why `near` says taqsim and the\nfamily is vox, on ottoman's own argument. Pays `taraf`'s want\n(\"the doina\"); klezmer's doyne is the same object one migration\nnorth, carried by its own row's parents.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"agogic\"` — the line leans on its last note. The stamped pair (stress ≤\n.12, phrase ≥ .8) says this line has no bar to lean on. The `vox`\ncluster takes `agogic`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Maramureș 1912",
   "voices": 1,
   "bars": 8,
@@ -57,5 +57,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => [[], [transpose(-2)], [fill(1), drop(2)], [rotate(2)]][s % 4]"
-  }
+  },
+  "dyn": "agogic"
 }

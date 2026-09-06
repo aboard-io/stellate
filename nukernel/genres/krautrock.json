@@ -156,5 +156,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(1)], [], [rotate(2)]][s % 4]\n                    : [transpose(-3), keep(2, 6, 10, 14)])"
-  }
+  },
+  "dyn": "syncope"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "CHAZZANUT — New York 1912. Yossele Rosenblatt arrives at the\nOhab Zedek congregation, Harlem — the ZIM dates the post — and\nthe 78s that follow made him the most famous cantor on record\n(\"since the 78 RPM era, Rosenblatt's recordings have been\nre-issued many times\"). The cantorial nusach is `klezmer`'s own\nnamed want: the prayer modes the bands borrowed for the bandstand\n— and the row says that kinship as an ALPHABET, because the\nAhavah Rabbah steyger IS this table's hijaz row, the flat second\nunder the natural third, note for note. One ornamented voice\nover a congregation's hum; the vox family's long varying line,\nthe dastgah/khyal argument one liturgy west.\n\n70 is compose.js's floor (the seannos ruling); the davenen is\nslower than any metronome word for it and maxHold carries that.",
+  "note": "CHAZZANUT — New York 1912. Yossele Rosenblatt arrives at the\nOhab Zedek congregation, Harlem — the ZIM dates the post — and\nthe 78s that follow made him the most famous cantor on record\n(\"since the 78 RPM era, Rosenblatt's recordings have been\nre-issued many times\"). The cantorial nusach is `klezmer`'s own\nnamed want: the prayer modes the bands borrowed for the bandstand\n— and the row says that kinship as an ALPHABET, because the\nAhavah Rabbah steyger IS this table's hijaz row, the flat second\nunder the natural third, note for note. One ornamented voice\nover a congregation's hum; the vox family's long varying line,\nthe dastgah/khyal argument one liturgy west.\n\n70 is compose.js's floor (the seannos ruling); the davenen is\nslower than any metronome word for it and maxHold carries that.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"agogic\"` — the line leans on its last note. The stamped pair (stress ≤\n.12, phrase ≥ .8) says this line has no bar to lean on. The `vox`\ncluster takes `agogic`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "New York 1912",
   "voices": 2,
   "bars": 8,
@@ -77,5 +77,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [fill(1)], [rotate(2)]][s % 4]\n                    : [keep(0), drop(10)])"
-  }
+  },
+  "dyn": "agogic"
 }

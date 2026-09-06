@@ -1,5 +1,5 @@
 {
-  "note": "SKOKIAAN — Bulawayo 1947. August Musarurwa's \"Skokiaan\", cut by\nthe African Dance Band of the Cold Storage Commission of\nSouthern Rhodesia (Gallotone): a sax-band tune in the\ntsaba-tsaba style the article says SUCCEEDED MARABI, named for\nthe illegal shebeen liquor, and later carried around the world\nby everyone from Bulawayo to Satchmo. THE WINSTONS RULING: the\nhonest row is the record — tsaba-tsaba has no article of its\nown in this ZIM and the record is as datable as mbube — and\nMusarurwa's own later band was named the Bulawayo Sweet Rhythm\nBand, which settles the dot.\n\na Bulawayo sax band\n\nLINEAGE: `marabi` (Johannesburg 1935) is the cyclic harmony\ntsaba-tsaba grew straight out of — the article's own verb —\nand `swing` (Kansas City 1938) is the big-band instrumentation\nthe Cold Storage Commission's band wore it in.",
+  "note": "SKOKIAAN — Bulawayo 1947. August Musarurwa's \"Skokiaan\", cut by\nthe African Dance Band of the Cold Storage Commission of\nSouthern Rhodesia (Gallotone): a sax-band tune in the\ntsaba-tsaba style the article says SUCCEEDED MARABI, named for\nthe illegal shebeen liquor, and later carried around the world\nby everyone from Bulawayo to Satchmo. THE WINSTONS RULING: the\nhonest row is the record — tsaba-tsaba has no article of its\nown in this ZIM and the record is as datable as mbube — and\nMusarurwa's own later band was named the Bulawayo Sweet Rhythm\nBand, which settles the dot.\n\na Bulawayo sax band\n\nLINEAGE: `marabi` (Johannesburg 1935) is the cyclic harmony\ntsaba-tsaba grew straight out of — the article's own verb —\nand `swing` (Kansas City 1938) is the big-band instrumentation\nthe Cold Storage Commission's band wore it in.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"backbeat\"` — the line leans on two and four. The row's own kit hits two\nand four, so the line leans where the snare does. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Bulawayo 1947",
   "voices": 3,
@@ -153,5 +153,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]\n                    : v === 1 ? [drop(2), transpose(-3)]\n                    : [keep(0, 4, 8, 12)])"
-  }
+  },
+  "dyn": "backbeat"
 }

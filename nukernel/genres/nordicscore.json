@@ -1,5 +1,5 @@
 {
-  "note": "THE NORDIC DRONE SCORE — Reykjavík 2015. The string-cluster school:\na chamber section played at the edge of tone, processed until the\nroom is the instrument, scoring prestige pictures from a Reykjavík\nthat had spent two decades exporting exactly this weather. The\nparents put drone (New York 1964) FIRST at 0.35, over the suspense\ndesk it ends up hired for — the idiom is minimalist texture that\ntook a scoring job, not a score that discovered texture. The\nfour-bar filter open (fx: sweep, measured arriving as\ninsert_filtersweep) IS the form; the kit is a thump a bar and its\necho half a bar later, nothing else.\n\nthe picture breathes; the score holds it\n\n70, not the 66 this round's spec asked for: compose.js fences bpm\nto 70..160 and 66 fails the gate by name (measured 2026-09-01,\nprecompose G6a). 70 is the floor and the floor is the point.",
+  "note": "THE NORDIC DRONE SCORE — Reykjavík 2015. The string-cluster school:\na chamber section played at the edge of tone, processed until the\nroom is the instrument, scoring prestige pictures from a Reykjavík\nthat had spent two decades exporting exactly this weather. The\nparents put drone (New York 1964) FIRST at 0.35, over the suspense\ndesk it ends up hired for — the idiom is minimalist texture that\ntook a scoring job, not a score that discovered texture. The\nfour-bar filter open (fx: sweep, measured arriving as\ninsert_filtersweep) IS the form; the kit is a thump a bar and its\necho half a bar later, nothing else.\n\nthe picture breathes; the score holds it\n\n70, not the 66 this round's spec asked for: compose.js fences bpm\nto 70..160 and 66 fails the gate by name (measured 2026-09-01,\nprecompose G6a). 70 is the floor and the floor is the point.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"swell\"` — the line crescendos across the bar. A cue's whole job is the\nbuild, and the build is a bar-long crescendo. The `studio` cluster takes\n`arch`; the anchor's own evidence outranks it, which is the flood's rule\n(docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Reykjavík 2015",
   "voices": 4,
@@ -150,5 +150,6 @@
     "else": {
       "$src": "[drop(9)]"
     }
-  }
+  },
+  "dyn": "swell"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "AL-JIL — Cairo 1988. Egyptian synth pop: shaabi's rhythm section on a\ndrum machine, a sequenced bass, a synthesised horn line and a smooth\nvoice — the sound of the Cairo cassette industry at its commercial\nheight, and the direct middle rung between shaabi and mahraganat.\nTHE YEAR is the Hamid El Shaeri / Ehab Tawfik era.\nWHAT SEPARATES IT FROM `raï`, its exact contemporary one Mediterranean\ncoast west: raï is a drum machine plus an ACCORDION and a trumpet, in\nphrygian, at 116, and its identity is the Oranese vocal. This is a\ndrum machine plus a SEQUENCER, in harmonic minor for the augmented\nsecond that names hijaz-kar, at 104, and its identity is the\nproduction. They are cousins and they are not the same record.",
+  "note": "AL-JIL — Cairo 1988. Egyptian synth pop: shaabi's rhythm section on a\ndrum machine, a sequenced bass, a synthesised horn line and a smooth\nvoice — the sound of the Cairo cassette industry at its commercial\nheight, and the direct middle rung between shaabi and mahraganat.\nTHE YEAR is the Hamid El Shaeri / Ehab Tawfik era.\nWHAT SEPARATES IT FROM `raï`, its exact contemporary one Mediterranean\ncoast west: raï is a drum machine plus an ACCORDION and a trumpet, in\nphrygian, at 116, and its identity is the Oranese vocal. This is a\ndrum machine plus a SEQUENCER, in harmonic minor for the augmented\nsecond that names hijaz-kar, at 104, and its identity is the\nproduction. They are cousins and they are not the same record.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"syncope\"` — the line leans off the beat. A club floor with a real hand\non it is a hand playing off the beat.",
   "label": "Cairo 1988",
   "voices": 3,
   "near": "rai",
@@ -212,5 +212,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "syncope"
 }

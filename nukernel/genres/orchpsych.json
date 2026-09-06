@@ -175,5 +175,6 @@
   "fx": [
     "echo",
     "sweep"
-  ]
+  ],
+  "dyn": "arch"
 }

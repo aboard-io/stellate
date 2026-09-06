@@ -1,5 +1,5 @@
 {
-  "note": "LUK THUNG — Bangkok 1970. Thai country song: a rural voice with a very\nwide, very slow vibrato, a small Western band behind it, and a khaen\nor a phin somewhere in the arrangement. It is the music of the Isan\nmigration to Bangkok and it is the biggest popular form in Thailand.\nTHE YEAR is the Suraphon-to-Phumphuang transition and the decade luk\nthung is named as a genre rather than described as \"songs from the\nfields\".\nTHE TUNING NEEDS A SENTENCE. Thai CLASSICAL music is seven equal\nsteps to the octave — genuinely not 12-TET and genuinely a wall — but\nluk thung is played on Western instruments in Western temperament,\nwhich is why it and not the piphat ensemble is what ships. The claim\nthis anchor makes is exactly that: the popular form, on a guitar band.\n\nWHO SINGS: the widest, latest wobble in the table, which is\nwhat a luk thung singer's ûan actually is",
+  "note": "LUK THUNG — Bangkok 1970. Thai country song: a rural voice with a very\nwide, very slow vibrato, a small Western band behind it, and a khaen\nor a phin somewhere in the arrangement. It is the music of the Isan\nmigration to Bangkok and it is the biggest popular form in Thailand.\nTHE YEAR is the Suraphon-to-Phumphuang transition and the decade luk\nthung is named as a genre rather than described as \"songs from the\nfields\".\nTHE TUNING NEEDS A SENTENCE. Thai CLASSICAL music is seven equal\nsteps to the octave — genuinely not 12-TET and genuinely a wall — but\nluk thung is played on Western instruments in Western temperament,\nwhich is why it and not the piphat ensemble is what ships. The claim\nthis anchor makes is exactly that: the popular form, on a guitar band.\n\nWHO SINGS: the widest, latest wobble in the table, which is\nwhat a luk thung singer's ûan actually is\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"backbeat\"` — the line leans on two and four. The row's own kit hits two\nand four, so the line leans where the snare does. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Bangkok 1970",
   "voices": 3,
   "near": "countrypop",
@@ -190,5 +190,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "backbeat"
 }

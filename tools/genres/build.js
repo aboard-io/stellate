@@ -27,6 +27,13 @@ const fs = require("fs");
 const path = require("path");
 const { rowTxt } = require("./emit.js");
 const { validate } = require("./grammar.js");
+/* THE FIGURE VOCABULARY, for the schema check below. `dyn` is a row naming a
+ * shape from `genres-tables.js FIGURES` (GENRES.md §2, the dynamics flood
+ * 2026-09-06), and a name nobody wrote would compose a record with no per-note
+ * dynamics and no error — the "declared but never arriving" failure this repo
+ * keeps meeting. So the build refuses it, at the same moment it refuses a
+ * closure that is not one of the nine kinds. */
+const { FIGURES } = require("../../nukernel/genres-tables.js");
 
 const ROOT = path.resolve(__dirname, "../..");
 const ROWS = path.join(ROOT, "nukernel/genres");
@@ -62,6 +69,9 @@ function readRows() {
   return order.map((k) => {
     const row = JSON.parse(fs.readFileSync(path.join(ROWS, k + ".json"), "utf8"));
     for (const f of CLOSURES) if (row[f]) validate(row[f], k + "." + f);
+    if (row.dyn != null && !Object.prototype.hasOwnProperty.call(FIGURES, row.dyn))
+      throw new Error(k + '.dyn names no figure: "' + row.dyn + '" (genres-tables.js FIGURES has ' +
+        Object.keys(FIGURES).join(", ") + ")");
     return [k, row];
   });
 }
@@ -105,7 +115,12 @@ function build() {
   // list. They are spliced like every other table; only this line has to say
   // they leave the module.
   out += "                HARMONYLABEL, tuned, SCALEFAMILY, MODEFAMILY, FAMILYLABEL,\n";
-  out += "                MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };\n";
+  // FIGURES joined 2026-09-06 with the dynamics flood (shift 1): the
+  // vocabulary of per-note dynamic shapes a row quotes by name in `dyn`.
+  // `precompose.js` resolves it off this export, so it has to leave the
+  // module the way DYNAMICS and ORNAMENT do.
+  out += "                MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT,\n";
+  out += "                FIGURES };\n";
   out += "  if (typeof module !== \"undefined\" && module.exports) module.exports = api;\n";
   out += "  else root.NuGenres = api;\n";
   out += "})(typeof window !== \"undefined\" ? window : globalThis);\n";

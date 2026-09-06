@@ -1,5 +1,5 @@
 {
-  "note": "TROT — Seoul 1965, and it gives the catalog a Korean record\nforty-seven years older than the one it had. The Korean ballad in\nduple time with a hard two-beat lilt, a minor pentatonic melody and a\ntrumpet or an accordion answering the singer.\nTHE YEAR is the mid-sixties, when trot is the dominant Korean popular\nform and the recording industry is domestic.\nWHAT SEPARATES IT FROM ENKA, which is a fair question and a\nhistorically loaded one: the two forms grew up beside each other under\nthe same colonial recording industry and share the yonanuki scale.\nIn fields they differ in TEMPO and in FEEL — trot is 108 with a hard\ntwo-beat bounce (the swing dial at a third, which is what this file has\nfor a lilt) where enka is 72 and rubato-leaning with a string pad; and\ntrot's cast is a horn where enka's is a shamisen.",
+  "note": "TROT — Seoul 1965, and it gives the catalog a Korean record\nforty-seven years older than the one it had. The Korean ballad in\nduple time with a hard two-beat lilt, a minor pentatonic melody and a\ntrumpet or an accordion answering the singer.\nTHE YEAR is the mid-sixties, when trot is the dominant Korean popular\nform and the recording industry is domestic.\nWHAT SEPARATES IT FROM ENKA, which is a fair question and a\nhistorically loaded one: the two forms grew up beside each other under\nthe same colonial recording industry and share the yonanuki scale.\nIn fields they differ in TEMPO and in FEEL — trot is 108 with a hard\ntwo-beat bounce (the swing dial at a third, which is what this file has\nfor a lilt) where enka is 72 and rubato-leaning with a string pad; and\ntrot's cast is a horn where enka's is a shamisen.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Seoul 1965",
   "voices": 3,
   "near": "enka",
@@ -213,5 +213,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "anacrusis"
 }

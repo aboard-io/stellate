@@ -148,5 +148,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [] : [only(\"gate\", rotate(6))])"
-  }
+  },
+  "dyn": "arch"
 }

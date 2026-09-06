@@ -1,5 +1,5 @@
 {
-  "note": "THE CARPENTER SCORE — Los Angeles 1978. HALLOWEEN, scored by the\ndirector in days at Sound Arts on rented synthesizers: the piano\nostinato, the held stinger, the fog pad. PAYS TWO STANDING DEBTS\nBY NAME — deathrock's \"the horror film score\" and synthwave's\n\"horrorsynth's film scores\" — which makes this the round's most\nstructural row: Pomona 1982 and Paris 2010 both named it before it\nexisted. The lineage is Berlin running through a grindhouse:\nberlinschool's sequenced pulse, suspensescore's suspense grammar,\nkrautrock's refusal to swing.\n\nthe scream is on the picture, not the score\n\n\"the hammer horror scores (james bernard's dracula)\" PAID\n2026-08-30 (Bray 1958) — the want named the record and the\nledger round landed it; the edge is smaller than suspensescore's\nbecause Carpenter's economy is Herrmann's and only the dread\nis Bernard's.",
+  "note": "THE CARPENTER SCORE — Los Angeles 1978. HALLOWEEN, scored by the\ndirector in days at Sound Arts on rented synthesizers: the piano\nostinato, the held stinger, the fog pad. PAYS TWO STANDING DEBTS\nBY NAME — deathrock's \"the horror film score\" and synthwave's\n\"horrorsynth's film scores\" — which makes this the round's most\nstructural row: Pomona 1982 and Paris 2010 both named it before it\nexisted. The lineage is Berlin running through a grindhouse:\nberlinschool's sequenced pulse, suspensescore's suspense grammar,\nkrautrock's refusal to swing.\n\nthe scream is on the picture, not the score\n\n\"the hammer horror scores (james bernard's dracula)\" PAID\n2026-08-30 (Bray 1958) — the want named the record and the\nledger round landed it; the edge is smaller than suspensescore's\nbecause Carpenter's economy is Herrmann's and only the dread\nis Bernard's.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"flat\"` — the line every note the same. A hand under .015 with a phrase\nunder .2 is a music whose discipline is not leaning. The `studio`\ncluster takes `arch`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Los Angeles 1978",
   "voices": 3,
@@ -140,5 +140,6 @@
     "else": {
       "$src": "[drop(9)]"
     }
-  }
+  },
+  "dyn": "flat"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "JAPANESE JAZZ — Tokyo 1974. The Tsuyoshi Yamamoto Trio,\nMidnight Sugar (Three Blind Mice): a slow blues cut direct to\naudiophile tape for the label founded in June 1970 as a\nshowcase for Japan's emerging jazz players — the article's own\nsentence — at the peak of the kissa decade, when Tokyo's jazz\ncafés were the densest listening culture the music had\nanywhere. The genre's article is Japanese jazz; the row is the\ntrio's reading of it: piano deep in the keys, brushes, a walk.\n\na Tokyo piano trio\n\nLINEAGE: `jazz` at dominant weight — the idiom is bebop's\nballad book, mastered from records an ocean away; `blues` is\nwhat Midnight Sugar literally is, twelve bars at midnight.\n\nthe twelve bars themselves, blues' own cycle — the record is a\nslow blues and the row says so with the parent's exact roots.",
+  "note": "JAPANESE JAZZ — Tokyo 1974. The Tsuyoshi Yamamoto Trio,\nMidnight Sugar (Three Blind Mice): a slow blues cut direct to\naudiophile tape for the label founded in June 1970 as a\nshowcase for Japan's emerging jazz players — the article's own\nsentence — at the peak of the kissa decade, when Tokyo's jazz\ncafés were the densest listening culture the music had\nanywhere. The genre's article is Japanese jazz; the row is the\ntrio's reading of it: piano deep in the keys, brushes, a walk.\n\na Tokyo piano trio\n\nLINEAGE: `jazz` at dominant weight — the idiom is bebop's\nballad book, mastered from records an ocean away; `blues` is\nwhat Midnight Sugar literally is, twelve bars at midnight.\n\nthe twelve bars themselves, blues' own cycle — the record is a\nslow blues and the row says so with the parent's exact roots.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Tokyo 1974",
   "voices": 2,
@@ -139,5 +139,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], [rotate(2)]][s % 4]\n                    : [drop(6)])"
-  }
+  },
+  "dyn": "anacrusis"
 }

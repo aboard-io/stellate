@@ -63,5 +63,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => [transpose([0, 4, 2, -3, 3, -2, 5, 1][v % 8]),\n                       ...(s % 2 ? [rotate(2)] : [])]"
-  }
+  },
+  "dyn": "agogic"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "THE SITCOM STING — Los Angeles 1989. Jonathan Wolff's SEINFELD\nmusic: a sampled slap bass and mouth pops, re-improvised around\nJerry's monologue for every episode, played from a keyboard in a\nBurbank studio — the theme reduced to a TRANSITION, which is what\nhappened to the commission between 1982 and 1989 (breakingnews's\nown arc, run on the comedy side). One player, one sampler, no\ntune to hum on purpose.\n\nthe comedian is the vocalist and he is not on the record\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nJonathan Wolff's slap-bass sting, Los Angeles 1989 — this row's own record.\nA sting has no progression to be the seventh of (`harmony: \"modal\"`), and\nBLUES [0,3,5,6,7,10] has a MINOR third, which mixolydian is not. Full ruling\nat `holler`.",
+  "note": "THE SITCOM STING — Los Angeles 1989. Jonathan Wolff's SEINFELD\nmusic: a sampled slap bass and mouth pops, re-improvised around\nJerry's monologue for every episode, played from a keyboard in a\nBurbank studio — the theme reduced to a TRANSITION, which is what\nhappened to the commission between 1982 and 1989 (breakingnews's\nown arc, run on the comedy side). One player, one sampler, no\ntune to hum on purpose.\n\nthe comedian is the vocalist and he is not on the record\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nJonathan Wolff's slap-bass sting, Los Angeles 1989 — this row's own record.\nA sting has no progression to be the seventh of (`harmony: \"modal\"`), and\nBLUES [0,3,5,6,7,10] has a MINOR third, which mixolydian is not. Full ruling\nat `holler`.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `studio`\ncluster takes `arch`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Los Angeles 1989",
   "voices": 2,
@@ -141,5 +141,6 @@
     "else": {
       "$src": "[fill(4), rotate(3), drop(2)]"
     }
-  }
+  },
+  "dyn": "anacrusis"
 }

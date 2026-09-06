@@ -149,5 +149,6 @@
     "else": {
       "$src": "[keep(0, 4, 8, 12), transpose(-7)]"
     }
-  }
+  },
+  "dyn": "agogic"
 }

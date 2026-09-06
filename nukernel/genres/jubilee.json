@@ -1,5 +1,5 @@
 {
-  "note": "THE JUBILEE QUARTET — Nashville 1909. The Fisk Jubilee Singers'\nquartet recording of \"Swing Low, Sweet Chariot\" (Victor, 1909) —\nthe record the Library of Congress added to the National\nRecording Registry, per the ZIM's own first paragraph. Four\ntrained voices singing the spirituals repertory in close,\nprecise harmony: the school `doowop` and `barbershop` both want\nby the same name (\"jubilee quartets\"), and the dated artifact\nthe debts round's barbershop paragraph said this shift lacked.\n1909 sits one year before barbershop's own Victor record, so\nboth edges point backward, as the maringa rule requires.",
+  "note": "THE JUBILEE QUARTET — Nashville 1909. The Fisk Jubilee Singers'\nquartet recording of \"Swing Low, Sweet Chariot\" (Victor, 1909) —\nthe record the Library of Congress added to the National\nRecording Registry, per the ZIM's own first paragraph. Four\ntrained voices singing the spirituals repertory in close,\nprecise harmony: the school `doowop` and `barbershop` both want\nby the same name (\"jubilee quartets\"), and the dated artifact\nthe debts round's barbershop paragraph said this shift lacked.\n1909 sits one year before barbershop's own Victor record, so\nboth edges point backward, as the maringa rule requires.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"swell\"` — the line crescendos across the bar. The church build: the\nline rises into the arrival and the room rises with it. The `vox`\ncluster takes `agogic`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Nashville 1909",
   "voices": 4,
   "bars": 8,
@@ -104,5 +104,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], []][s % 4]\n                    : v === 1 ? [drop(4), transpose(2)]\n                    : v === 2 ? [drop(6)]\n                    : [drop(8), transpose(-5)])"
-  }
+  },
+  "dyn": "swell"
 }

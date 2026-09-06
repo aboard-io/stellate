@@ -171,5 +171,6 @@
   },
   "fx": [
     "crunch"
-  ]
+  ],
+  "dyn": "backbeat"
 }

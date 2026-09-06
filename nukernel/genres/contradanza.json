@@ -1,5 +1,5 @@
 {
-  "note": "CONTRADANZA — Havana 1803. \"San Pascual Bailón\", the earliest\nsurviving dated Cuban contradanza — anonymous, printed in\nHavana, already carrying the tango-congo lilt in the bass that\nthe whole Caribbean would inherit. TWO rows have wanted \"the\ncuban contradanza (saumell)\" since their lineages were written —\n`habanera` (Havana 1860) and `danzon` (Matanzas 1879) — and\nManuel Saumell (1818-1870), the want's own parenthesis, is the\nform's master: fifty-odd contradanzas that are the first\ngenuinely creole art music in Cuba. Both rows take the parent\ntoday; the date is the anonymous print's, because the table\ndates by document.\n\nSaumell's contradanzas are danced piano pieces — no singer\n\nLINEAGE: a declared root. The French contredanse arrived with\nthe Saint-Domingue refugees and the Spanish country dance\nbefore them — a ballroom trade, not an anchored music; named\nbelow, not invented.\n\nTHE FORM IS TWO STRAINS SAID TWICE — AABB, the dance's own law.",
+  "note": "CONTRADANZA — Havana 1803. \"San Pascual Bailón\", the earliest\nsurviving dated Cuban contradanza — anonymous, printed in\nHavana, already carrying the tango-congo lilt in the bass that\nthe whole Caribbean would inherit. TWO rows have wanted \"the\ncuban contradanza (saumell)\" since their lineages were written —\n`habanera` (Havana 1860) and `danzon` (Matanzas 1879) — and\nManuel Saumell (1818-1870), the want's own parenthesis, is the\nform's master: fifty-odd contradanzas that are the first\ngenuinely creole art music in Cuba. Both rows take the parent\ntoday; the date is the anonymous print's, because the table\ndates by document.\n\nSaumell's contradanzas are danced piano pieces — no singer\n\nLINEAGE: a declared root. The French contredanse arrived with\nthe Saint-Domingue refugees and the Spanish country dance\nbefore them — a ballroom trade, not an anchored music; named\nbelow, not invented.\n\nTHE FORM IS TWO STRAINS SAID TWICE — AABB, the dance's own law.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"syncope\"` — the line leans off the beat. The one-and, and everything\nafter it: the figure itself is syncopated, not merely pushed. The\n`roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Havana 1803",
   "voices": 2,
@@ -109,5 +109,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2)]][s % 4]\n                    : [rotate(2), transpose(2)])"
-  }
+  },
+  "dyn": "syncope"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "RIFF. The part that ANSWERS, and answering is a TWO-BAR shape: the figure\non the offbeats, then the phrase's own rhythm coming back at it a step\nunder. `only(\"gate\", offbeats(4))` is the figure — an absolute grid rather\nthan the phrase's own, so it lands between the downbeats instead of\ndoubling them — and the bar after it is deliberately NOT that, because a\nriff whose every bar is the same absolute grid has stopped reading the\nphrase at all: hand it any tune and it plays the identical four notes.\nLow, short (the two-step hold is what makes it a stab rather than a pad),\nand it does not develop — a riff that develops is a solo.\n\nan arc, like every FUNCTION genre; 112 because a riff is a mid-tempo\nthing\n\na riff that walks away is not a riff\na riff does not fade in",
+  "note": "RIFF. The part that ANSWERS, and answering is a TWO-BAR shape: the figure\non the offbeats, then the phrase's own rhythm coming back at it a step\nunder. `only(\"gate\", offbeats(4))` is the figure — an absolute grid rather\nthan the phrase's own, so it lands between the downbeats instead of\ndoubling them — and the bar after it is deliberately NOT that, because a\nriff whose every bar is the same absolute grid has stopped reading the\nphrase at all: hand it any tune and it plays the identical four notes.\nLow, short (the two-step hold is what makes it a stab rather than a pad),\nand it does not develop — a riff that develops is a solo.\n\nan arc, like every FUNCTION genre; 112 because a riff is a mid-tempo\nthing\n\na riff that walks away is not a riff\na riff does not fade in\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"lean\"` — the line leans on its first note. A riff is the part that is\nNOT expressive — it states its first note and that is the whole job.",
   "label": "Riff",
   "bars": 2,
   "voices": 1,
@@ -45,5 +45,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (s % 2 ? [drop(3), transpose(-1)]\n                             : [only(\"gate\", offbeats(4))])"
-  }
+  },
+  "dyn": "lean"
 }

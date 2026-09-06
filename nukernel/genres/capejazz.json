@@ -1,5 +1,5 @@
 {
-  "note": "CAPE JAZZ — Cape Town 1974. Abdullah Ibrahim (Dollar Brand),\n\"Mannenberg\", recorded 1974 with Rashid Vally producing — the\narticle files the song as Cape jazz itself, and the genre's own\narticle says Cape Town, late 1950s, with marabi in its topics\nlist. A hymn-simple two-chord vamp rolling under saxophone\nchoruses: American jazz harmony played like a church organ in a\ndance hall, and the record apartheid's townships took as an\nanthem.\n\nIbrahim's Cape hymn-vamp is a piano trio's\n\nLINEAGE: `marabi` (Johannesburg 1935) is the cyclical\nthree-chord shebeen music this row's vamp descends from —\nthe Johannesburg-vs-Cape split the round DECLINED to blur\n(see the header); `jazz` is Ibrahim's own schooling (the\narticle lists him bebop first); `mbaqanga` the township\ngroove alongside. The Cape's own carnival beat is the want.",
+  "note": "CAPE JAZZ — Cape Town 1974. Abdullah Ibrahim (Dollar Brand),\n\"Mannenberg\", recorded 1974 with Rashid Vally producing — the\narticle files the song as Cape jazz itself, and the genre's own\narticle says Cape Town, late 1950s, with marabi in its topics\nlist. A hymn-simple two-chord vamp rolling under saxophone\nchoruses: American jazz harmony played like a church organ in a\ndance hall, and the record apartheid's townships took as an\nanthem.\n\nIbrahim's Cape hymn-vamp is a piano trio's\n\nLINEAGE: `marabi` (Johannesburg 1935) is the cyclical\nthree-chord shebeen music this row's vamp descends from —\nthe Johannesburg-vs-Cape split the round DECLINED to blur\n(see the header); `jazz` is Ibrahim's own schooling (the\narticle lists him bebop first); `mbaqanga` the township\ngroove alongside. The Cape's own carnival beat is the want.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. A jazz row phrases\ninto the bar like the parent it names; the ride's two and four is what\nthe horn plays across. The `roots` cluster takes `lean`; the anchor's\nown evidence outranks it, which is the flood's rule\n(docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Cape Town 1974",
   "voices": 3,
@@ -143,5 +143,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [keep(0, 4, 8, 12)]\n                    : v === 1 ? [[], [fill(2)], [transpose(2)], [rotate(2)]][s % 4]\n                    : [drop(6)])"
-  }
+  },
+  "dyn": "anacrusis"
 }

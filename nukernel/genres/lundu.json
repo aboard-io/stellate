@@ -1,5 +1,5 @@
 {
-  "note": "LUNDU — Lisbon 1798. The dance-song half of the Caldas Barbosa\npair: his Viola de Lereno (volume one printed at Lisbon, 1798) is\nthe first PUBLICATION carrying lundus under the name — the Afro-\nBrazilian dance-song, syncopated where the modinha sighs, that\n`samba` and `choro` both want and that carried the batuque's\nrhythmic cell into the Brazilian salon. One author, two anchors,\nand that is the argument rather than a duplication: the modinha\nand the lundu are the sentimental and the danced HALVES of the\nsame songbook, and the tradition itself always named them as two.\n\nLINEAGE: a declared root; its Angolan sources are a danced,\ndrummed tradition with no named dated record to anchor.\n\nthe viola's thumb keeps the low pulse, the fingers cut across\nit — said as a hand-drum lane and a shaker lane, the syncope on\nthe p lane's and-of-two that the maxixe and the samba inherit.",
+  "note": "LUNDU — Lisbon 1798. The dance-song half of the Caldas Barbosa\npair: his Viola de Lereno (volume one printed at Lisbon, 1798) is\nthe first PUBLICATION carrying lundus under the name — the Afro-\nBrazilian dance-song, syncopated where the modinha sighs, that\n`samba` and `choro` both want and that carried the batuque's\nrhythmic cell into the Brazilian salon. One author, two anchors,\nand that is the argument rather than a duplication: the modinha\nand the lundu are the sentimental and the danced HALVES of the\nsame songbook, and the tradition itself always named them as two.\n\nLINEAGE: a declared root; its Angolan sources are a danced,\ndrummed tradition with no named dated record to anchor.\n\nthe viola's thumb keeps the low pulse, the fingers cut across\nit — said as a hand-drum lane and a shaker lane, the syncope on\nthe p lane's and-of-two that the maxixe and the samba inherit.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Lisbon 1798",
   "voices": 2,
   "bars": 8,
@@ -139,5 +139,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)]][s % 3]\n                    : [transpose(-5), keep(0, 3, 6, 8, 11, 14)])"
-  }
+  },
+  "dyn": "anacrusis"
 }

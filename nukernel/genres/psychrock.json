@@ -125,5 +125,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [spread(2)], [invert(3)], [fill(2)], []][s % 6]\n                    : [drop(9)])"
-  }
+  },
+  "dyn": "backbeat"
 }

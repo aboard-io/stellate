@@ -307,5 +307,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? (s % 2 ? [fill(2)] : [])\n                     : v === 1 ? [only(\"gate\", complement(\"gate\")), transpose(2)]\n                               : [rotate(8), drop(2)])"
-  }
+  },
+  "dyn": "syncope"
 }

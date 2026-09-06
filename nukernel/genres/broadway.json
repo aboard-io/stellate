@@ -1,5 +1,5 @@
 {
-  "note": "BROADWAY — New York 1927. Show Boat at the Ziegfeld, the 27th\nof December 1927: Kern and Hammerstein bolting song to story —\n\"Ol' Man River\" is a character's grievance, not an interpolated\nnumber — the night musical comedy became the book musical.\n`powerballad` (Los Angeles 1991) has wanted \"broadway\" since\nits lineage was written — the key-change-and-belt machinery is\nthis stage's — and takes the parent today.\n\nLINEAGE: `operetta` (London 1878) is the form's parent trade;\n`tinpanalley` (New York 1924) the song factory next door that\nstaffed it.",
+  "note": "BROADWAY — New York 1927. Show Boat at the Ziegfeld, the 27th\nof December 1927: Kern and Hammerstein bolting song to story —\n\"Ol' Man River\" is a character's grievance, not an interpolated\nnumber — the night musical comedy became the book musical.\n`powerballad` (Los Angeles 1991) has wanted \"broadway\" since\nits lineage was written — the key-change-and-belt machinery is\nthis stage's — and takes the parent today.\n\nLINEAGE: `operetta` (London 1878) is the form's parent trade;\n`tinpanalley` (New York 1924) the song factory next door that\nstaffed it.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"arch\"` — the line arches up and back down. One voice shaping one line:\nup to the middle and back. The `roots` cluster takes `lean`; the\nanchor's own evidence outranks it, which is the flood's rule\n(docs/DYNAMICS-FLOOD.md).",
   "label": "New York 1927",
   "voices": 3,
   "bars": 8,
@@ -99,5 +99,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
-  }
+  },
+  "dyn": "arch"
 }

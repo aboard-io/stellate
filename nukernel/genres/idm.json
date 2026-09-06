@@ -151,5 +151,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [split(2)], [rotate(5), fill(2)]][s % 4]\n                    : v === 1 ? [only(\"gate\", rotate(2)), drop(2)]\n                    : [drop(10)])"
-  }
+  },
+  "dyn": "swell"
 }

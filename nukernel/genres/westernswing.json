@@ -1,5 +1,5 @@
 {
-  "note": "WESTERN SWING — Tulsa 1940: Bob Wills and His Texas Playboys,\nresident at Cain's Ballroom, record \"New San Antonio Rose\" in 1940\n— the fiddle band that hired a horn section and swung like Basie,\nbecause that is who the dancers were listening to on the radio.\n\nLINEAGE: a string band playing a swing band's book — the two\nhalves are the name, and mariachi's borderland fiddle thirds are\nreal but a different row's claim. The residue is the dance hall.\nTHE STRING-BAND HALF IS `oldtime` AND NOT `countrypop` (2026-09-02,\nthe catalogue round). \"New San Antonio Rose\" was cut for Okeh in\nDallas in April 1940; `countrypop` is Nashville 1945 — Earl Scruggs's\nroll at the Ryman, FIVE YEARS AFTER this record — so this row was\ndeclared a child of its own descendant. The string band Wills\nactually led is the fiddle-convention band his father played in, and\nthat is `oldtime` (Galax 1935), five years the other way.",
+  "note": "WESTERN SWING — Tulsa 1940: Bob Wills and His Texas Playboys,\nresident at Cain's Ballroom, record \"New San Antonio Rose\" in 1940\n— the fiddle band that hired a horn section and swung like Basie,\nbecause that is who the dancers were listening to on the radio.\n\nLINEAGE: a string band playing a swing band's book — the two\nhalves are the name, and mariachi's borderland fiddle thirds are\nreal but a different row's claim. The residue is the dance hall.\nTHE STRING-BAND HALF IS `oldtime` AND NOT `countrypop` (2026-09-02,\nthe catalogue round). \"New San Antonio Rose\" was cut for Okeh in\nDallas in April 1940; `countrypop` is Nashville 1945 — Earl Scruggs's\nroll at the Ryman, FIVE YEARS AFTER this record — so this row was\ndeclared a child of its own descendant. The string band Wills\nactually led is the fiddle-convention band his father played in, and\nthat is `oldtime` (Galax 1935), five years the other way.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Tulsa 1940",
   "voices": 3,
   "near": "swing",
@@ -136,5 +136,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : [drop(8), transpose(-2)])"
-  }
+  },
+  "dyn": "anacrusis"
 }

@@ -102,5 +102,6 @@
     "else": {
       "$src": "[spread(0), keep(0, 8), drop(2)]"
     }
-  }
+  },
+  "dyn": "arch"
 }

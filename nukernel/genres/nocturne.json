@@ -1,5 +1,5 @@
 {
-  "note": "NOCTURNE — Paris 1835, Chopin: a bel-canto line (monody's thread, kept\nin the lineage) over a widespread left hand. This is the romantic piano\nminiature `neoclassical` has wanted since its own anchor was written —\nthe debt is paid here and neoclassical's `wants` can empty the day its\ncomment is next touched. Melodic minor because it is the minor that can\nstill make a real dominant AND sing a major sixth on the way up, which\nis what a nocturne's fioritura does.\n\n...and \"bel canto opera\" was PAID 2026-08-29 by `belcanto` (Milan\n1831), four years before this row's label. Chopin said outright that\nhe was writing Bellini for the piano, which makes this the least\narguable parent edge added that day.",
+  "note": "NOCTURNE — Paris 1835, Chopin: a bel-canto line (monody's thread, kept\nin the lineage) over a widespread left hand. This is the romantic piano\nminiature `neoclassical` has wanted since its own anchor was written —\nthe debt is paid here and neoclassical's `wants` can empty the day its\ncomment is next touched. Melodic minor because it is the minor that can\nstill make a real dominant AND sing a major sixth on the way up, which\nis what a nocturne's fioritura does.\n\n...and \"bel canto opera\" was PAID 2026-08-29 by `belcanto` (Milan\n1831), four years before this row's label. Chopin said outright that\nhe was writing Bellini for the piano, which makes this the least\narguable parent edge added that day.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"swell\"` — the line crescendos across the bar. The romantic line builds\nacross the bar rather than leaning on any note in it. The `roots`\ncluster takes `lean`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Paris 1835",
   "rate": 0.5,
   "bars": 8,
@@ -88,5 +88,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "swell"
 }

@@ -293,5 +293,6 @@
   },
   "period": {
     "$src": "(v, s) => {\n        if (v !== 0) return [];\n        const b = s % 8;\n        return b === 7 ? [spread(0), drop(2)]\n                       : [transpose([-3, -2, 1, 1, 1, 0, 2][b])];\n      }"
-  }
+  },
+  "dyn": "arch"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "---- THE COMMISSIONED SCREEN — the news pair's law, widened ---------\n\nPHOTOPLAY MUSIC — Cleveland 1913. J. S. Zamecnik's SAM FOX MOVING\nPICTURE MUSIC, vol. 1 (Sam Fox Publishing, Cleveland, 1913): the\nfirst widely-sold book of cues written FOR the screen — \"Hurry\",\n\"Mysterioso\", \"Indian Music\" — a mood per page, played by whoever\nthe theatre could afford. This is the stock-music tradition at its\nroot: music as a CATALOG of feelings, sold by the situation, which\nis what KPM was still selling in 1970 — so `newsfanfare` gains this\nrow as a parent today and its \"library music\" want is PAID. The\nlibrary cluster now reads photoplay 1913 -> newsfanfare 1970 ->\nbreakingnews 2006: three desks, one job.\n\na cue book — the picture does the talking",
+  "note": "---- THE COMMISSIONED SCREEN — the news pair's law, widened ---------\n\nPHOTOPLAY MUSIC — Cleveland 1913. J. S. Zamecnik's SAM FOX MOVING\nPICTURE MUSIC, vol. 1 (Sam Fox Publishing, Cleveland, 1913): the\nfirst widely-sold book of cues written FOR the screen — \"Hurry\",\n\"Mysterioso\", \"Indian Music\" — a mood per page, played by whoever\nthe theatre could afford. This is the stock-music tradition at its\nroot: music as a CATALOG of feelings, sold by the situation, which\nis what KPM was still selling in 1970 — so `newsfanfare` gains this\nrow as a parent today and its \"library music\" want is PAID. The\nlibrary cluster now reads photoplay 1913 -> newsfanfare 1970 ->\nbreakingnews 2006: three desks, one job.\n\na cue book — the picture does the talking\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"swell\"` — the line crescendos across the bar. A cue's whole job is the\nbuild, and the build is a bar-long crescendo. The `studio` cluster takes\n`arch`; the anchor's own evidence outranks it, which is the flood's rule\n(docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Cleveland 1913",
   "voices": 3,
@@ -133,5 +133,6 @@
     "else": {
       "$src": "[drop(2), transpose(-3)]"
     }
-  }
+  },
+  "dyn": "swell"
 }

@@ -236,6 +236,40 @@ a time no recipe could name. `glide == 0` still *is* that slew, bit-identical
 portamento.
 
 
+### `dyn` — the row's own dynamic figure
+
+**2026-09-06, the dynamics flood, shift 1** (`docs/DYNAMICS-FLOOD.md`). One
+lowercase word naming a shape in `genres-tables.js` **`FIGURES`**:
+
+```json
+  "dyn": "backbeat"
+```
+
+The census of 2026-09-05 measured the motif tier of all 479 composed records
+and found the whole dynamic alphabet of 3,991 line cells to be `{5, 6, 8}` and
+2,651 of 2,672 accents to be downbeat-only — one hard-coded line in
+`ideas-kit.js` and one in `precompose.js`, for every genre in the catalogue. A
+funk record and a chant played **the same figure**; what distinguished them was
+the performance layer laid over it.
+
+`dyn` is that fixed. A figure is two pure functions over one bar's own onsets —
+`vel(j, n, i, b, N, at)` and `acc(…)`, documented at the table — and the
+generator quotes the row's by name at the two places those two lines used to
+sit. Nine words today: `lean` `backbeat` `agogic` `terraced` `swell` `arch`
+`anacrusis` `syncope` `flat`.
+
+**Absent is `lean`, which is the line that was there,** so a row that says
+nothing renders byte for byte what it rendered before the field existed —
+proved on all 479 rows (`test/dynfigure.test.js` §C2) before any row was
+written. 408 rows name a figure; 57 keep the lean by saying nothing, and the
+**fourteen `DYNAMICS: null` machines** say nothing on purpose and are held to
+HEAD's own bytes by fingerprint (§D). `tools/genres/dyn.js` is the assignment —
+hand, then measured, then family — and it is rerunnable.
+
+The build **refuses a `dyn` no figure answers to** (§6 G2): a name nobody wrote
+would compose a record with no per-note dynamics and no error, which is this
+repo's characteristic bug.
+
 ---
 
 ## 3 · The closure grammar
@@ -439,6 +473,10 @@ Adding a genre: write `nukernel/genres/<key>.json`, add the key to
     Measured 2026-09-03: 373 rows carry parents, 195 sum to exactly 1, none
     sum to more.
   - every closure is one of the nine template kinds, or a formula with a `src`.
+  - a `dyn`, where present, names a figure `genres-tables.js FIGURES` holds
+    (2026-09-06, the dynamics flood). `tools/genres/build.js` requires the
+    vocabulary and throws by name, which is why FIGURES lives in the `HEAD`
+    region: `FOOT` is spliced inside `stamp(GENRES)` and cannot be required.
   - a `note` is a string with no `*/` in it, so it survives the trip out.
 - **G3** the closure round trip: every template `emit()`ed, `eval`ed back into a
   function, and called over **v = 0..8 × s = 0..7** against the closure the

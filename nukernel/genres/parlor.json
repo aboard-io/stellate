@@ -1,5 +1,5 @@
 {
-  "note": "PARLOR — New York 1892, the hinge into the existing catalog: the\nhymnal's four-part habit sold as sheet music for the home piano. Its\nI-vi-IV-V IS \"the doo-wop changes\" sixty years early, which stitches\nthis whole slate onto the catalog's 1950s front edge — hence\n`near: \"doowop\"`, a claim about the future rather than the past.\n\n\"ragtime\" came off `wants` 2026-08-29 unpaid and BACKWARDS: `ragtime`\nis Sedalia 1899, seven years after this row, and the syncopation ran\nfrom the rag into the parlor song rather than the other way. The\ndebt is `tinpanalley`'s, which now declares it.\n\nthe fifties changes, at home in 1892\n\nWHO SINGS: the hymnal mouth, out of church and into the front room",
+  "note": "PARLOR — New York 1892, the hinge into the existing catalog: the\nhymnal's four-part habit sold as sheet music for the home piano. Its\nI-vi-IV-V IS \"the doo-wop changes\" sixty years early, which stitches\nthis whole slate onto the catalog's 1950s front edge — hence\n`near: \"doowop\"`, a claim about the future rather than the past.\n\n\"ragtime\" came off `wants` 2026-08-29 unpaid and BACKWARDS: `ragtime`\nis Sedalia 1899, seven years after this row, and the syncopation ran\nfrom the rag into the parlor song rather than the other way. The\ndebt is `tinpanalley`'s, which now declares it.\n\nthe fifties changes, at home in 1892\n\nWHO SINGS: the hymnal mouth, out of church and into the front room\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"arch\"` — the line arches up and back down. One voice shaping one line:\nup to the middle and back. The `roots` cluster takes `lean`; the\nanchor's own evidence outranks it, which is the flood's rule\n(docs/DYNAMICS-FLOOD.md).",
   "label": "New York 1892",
   "plan": "song",
   "bpm": 96,
@@ -77,5 +77,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "arch"
 }

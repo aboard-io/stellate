@@ -1050,6 +1050,209 @@
   // record and the argument are the point of a comment — but every KEY and
   // every rendered surface is genre-only.
 
+  // ---- FIGURES — THE SHAPES A PHRASE TAKES ---------------------------------
+  // (2026-09-06, the dynamics flood, shift 1. docs/DYNAMICS-FLOOD.md.)
+  //
+  // WHAT THIS TABLE IS FOR. The census of 2026-09-05 measured the motif tier
+  // of all 479 composed records and found the whole dynamic alphabet of 3,991
+  // line cells to be `{5, 6, 8}` — one line of `ideas-kit.js`, first note of a
+  // bar 8, last 5, middle 6, for every genre in the catalogue — and 2,651 of
+  // 2,672 accents to be downbeat-only, one line of `precompose.js`. Not one
+  // row wrote a per-note `vel` or `acc`. What distinguished a funk record from
+  // a chant was the performance layer laid OVER an identical figure, never the
+  // figure. This is the vocabulary that fixes it, and the flood is DATA: a row
+  // names a figure by name (`dyn`, GENRES.md §2) and the generator quotes it.
+  // No new fallback — an absent `dyn` is `lean`, which is the line that was
+  // there, so a row that says nothing renders byte-for-byte what it rendered.
+  //
+  // WHY IT IS IN `HEAD` AND NOT BESIDE `DYN_FAMILY`/`DYNAMICS` DOWN IN `FOOT`,
+  // which is where its neighbours by subject are. FOOT is spliced INSIDE
+  // `stamp(GENRES)` in this file, so a const declared there is local to a
+  // function; HEAD is module scope in this file AND in the generated
+  // `genres.js`. `tools/genres/build.js` has to be able to `require` this
+  // vocabulary to refuse a row that names a figure nobody wrote (the schema
+  // check, GENRES.md §6 G2), and only HEAD can be required. The two DYN tables
+  // are also a different KIND of thing: they STAMP a row after it exists, and
+  // this one is QUOTED by a row, so it has to exist first.
+  //
+  // A FIGURE IS TWO PURE FUNCTIONS over one bar's own onsets, and nothing else
+  // — no state, no seed, no clock, so the same bar is always shaped the same
+  // way and the fingerprints stay meaningful:
+  //     vel(j, n, i, b, N, at) -> 0..9   the level of this note
+  //     acc(j, n, i, b, N, at) -> 0 | 1  whether it is accented
+  //   j   which onset this is among THIS BAR's onsets (0-based)
+  //   n   how many onsets the bar has
+  //   i   which step of the bar it lands on (0..N-1)
+  //   b   which bar of the phrase this is
+  //   N   steps in the bar — 16 on most anchors, 12 on a 3/4, and never
+  //       assumed: every position below is computed as a FRACTION of N, so a
+  //       figure means the same thing in 7/8 as in 4/4.
+  //   at  the steps THIS BAR's onsets fall on, in order (`at[j] === i`)
+  //
+  // AND `at` IS THERE BECAUSE THE FIRST DRAFT DECLARED AND NEVER ARRIVED —
+  // the box's characteristic bug, caught by measuring instead of trusting.
+  // Written without it, `backbeat` weighted the note that lands exactly on the
+  // second quarter and `syncope` the note exactly on the and; measured on the
+  // composed records, `rock`'s own hook has onsets at steps 0, 3 and 5 and
+  // `funk`'s at 7, 8 and 12, so BOTH figures fell through to their "everything
+  // else" branch and rendered a flatter line than the one they replaced, with
+  // no accent anywhere. A figure has to be a claim about the notes the bar
+  // HAS, not about the notes a grid would like it to have. So the two figures
+  // that are about metrical PLACE take the bar's onset list and weight the
+  // first note in the region they care about, which always exists.
+  //
+  // TWO CALLERS, EACH WHERE THE OLD HARD-CODED LINE WAS. `ideas-kit.js`
+  // phraseNow asks for `vel` while it is laying out the bar's onsets, and
+  // `precompose.js` cellOf asks for `acc` after the development device has
+  // moved the notes — that is exactly where each of the two lines this table
+  // replaces used to sit, so the byte-identity of the absent case is a fact
+  // about WHERE the call is and not only about what it returns.
+  const FIGURES = {
+    // THE LEANING FIRST NOTE, and it is the whole catalogue as it stood on
+    // 2026-09-05: the phrase leans on its first note and gives back going out.
+    // Kept as a NAMED figure so that the flood cannot regress it by accident —
+    // absent means this, `test/dynfigure.test.js` §C holds the two to being
+    // the same bytes, and a row may still quote it on purpose where its family
+    // took something else (march, waltz, polka, musette, riff do). It is not a
+    // nothing: a downbeat-heavy phrase that decays is the ordinary shape of a
+    // folk tune, a fiddle reel and a raga line, which is why it survived being
+    // the only one for so long.
+    //   IT IS ALSO THE ONE FIGURE HERE WHOSE ACCENT ASKS FOR A STEP RATHER
+    // THAN AN ONSET (`i === 0`, the top of the bar, and nothing if the bar
+    // does not start with a note). That is not an oversight, it is the
+    // byte-identity: it is precisely what `precompose.js` asserted for all 479
+    // rows until today, and 1,319 of the 3,991 composed cells carried no
+    // accent at all because of it.
+    lean: { w: "leans on its first note",
+            vel: (j, n) => (j === 0 ? 8 : j === n - 1 ? 5 : 6),
+            acc: (j, n, i) => (i === 0 ? 1 : 0) },
+    // BACKBEAT WEIGHT — two and four carry the level. The single most
+    // consequential fact about American popular music after 1945 and the one
+    // thing the box could not say in a melody: a soul, r&b or rock line does
+    // not lean on the barline, it leans where the snare is. `rock`'s own note
+    // in this catalogue says the backbeat is "what carries the genre" and it
+    // was true only of its KIT. The quarters are found as a fraction of the
+    // bar, so "two and four" is the second and fourth quarter of any meter,
+    // and the weight goes to the FIRST note in each of those quarters —
+    // whether or not anything lands on the beat itself.
+    backbeat: { w: "leans on two and four",
+                vel: (j, n, i, b, N, at) => (Q(i, N) % 2 ? (first(at, N, j) ? 8 : 7)
+                  : j === 0 ? 6 : 5),
+                acc: (j, n, i, b, N, at) => (Q(i, N) % 2 && first(at, N, j) ? 1 : 0) },
+    // THE AGOGIC CLOSE — the last note of the phrase leans and lengthens.
+    // Chant's own shape (the syllable the neume opens out on), and the same
+    // shape a ballad's line and a romantic melody end with. It is the exact
+    // OPPOSITE of `lean` and that is the point: for a music with no barline to
+    // stress, weight is a thing you arrive at rather than depart from. The
+    // length half of "and lengthens" is already the box's — `precompose`'s
+    // RELEASE `ring` runs the last note to the barline on 84.7% of cells — so
+    // this figure only has to supply the weight the length was missing.
+    agogic: { w: "leans on its last note",
+              vel: (j, n) => (j === n - 1 ? 8 : j === 0 ? 6 : 5),
+              acc: (j, n) => (j === n - 1 ? 1 : 0) },
+    // TERRACED — the figure is restated a level down. Baroque dynamics have no
+    // hairpin: an organ or a harpsichord changes loudness by changing manual,
+    // and a concerto grosso alternates tutti and concertino bar by bar. The
+    // same device is minimalism's, three hundred years later and for a
+    // different reason (a process is legible only if a repeat is marked), and
+    // it is the one figure in this table that reads `b` — the terrace is a
+    // fact about WHICH BAR, not about which note.
+    terraced: { w: "restated a level down",
+                vel: (j, n, i, b) => Math.max(2, (j === 0 ? 8 : 6) - (b % 2 ? 2 : 0)),
+                acc: (j, n, i, b) => (j === 0 && b % 2 === 0 ? 1 : 0) },
+    // THE SWELL — a crescendo across the whole bar into the next downbeat.
+    // Romantic, film and gospel all build the same way and none of them could
+    // say it: this is the figure that actually widens the alphabet, because it
+    // gives a bar as many levels as it has notes (4 through 9 on a six-note
+    // bar) rather than three. The accent stays on the bar's FIRST note on
+    // purpose — that is the arrival the previous bar's swell was aimed at.
+    swell: { w: "crescendos across the bar",
+             vel: (j, n) => 4 + Math.round(5 * j / Math.max(1, n - 1)),
+             acc: (j) => (j === 0 ? 1 : 0) },
+    // THE ARCH — up to the middle of the bar and back down. The sung line's
+    // own shape and the one every singing teacher draws in the air; it is what
+    // `phrase` (the genre-tier agogic arch, kernel.js:1867) does across a
+    // SECTION, said at the scale of the bar, where the notes are. A studio pop
+    // record and an opera aria are both arches; the difference between them is
+    // the touch on top, which is what that layer is for.
+    arch: { w: "arches up and back down",
+            vel: (j, n) => 8 - Math.round(3 * Math.abs(2 * j / Math.max(1, n - 1) - 1)),
+            acc: (j) => (j === 0 ? 1 : 0) },
+    // THE ANACRUSIS PUSH — the pickup crescendos into the bar. Swing and big
+    // band phrasing in one line: the tail of the bar is not the end of this
+    // bar, it is the run-up to the next one, and it gets louder every note of
+    // the way (7, 8, 9) while the bar it leaves sits flat under it. This is
+    // what a horn section plays and the reason a big band chart is full of
+    // notes tied over the barline.
+    //   THE PICKUP IS THE LAST THREE NOTES, NOT THE LAST QUARTER, for the
+    // reason `at` exists at all: a bar with nothing in its final quarter has
+    // no pickup to crescendo and the figure would do nothing. Three is the
+    // pickup every method book writes (a triplet of eighths into one), and a
+    // bar with fewer notes than that is all pickup, which is also true.
+    anacrusis: { w: "pushes into the next bar",
+                 vel: (j, n) => { const t = Math.min(3, n);
+                   return j >= n - t ? 7 + Math.round(2 * (j - n + t) / Math.max(1, t - 1))
+                                     : j === 0 ? 6 : 5; },
+                 acc: (j) => (j === 0 ? 1 : 0) },
+    // SYNCOPATED DISPLACEMENT — the weight is off the beat. Funk, afrobeat and
+    // ska are all one idea said three ways: the beat is where the weight is
+    // NOT. Read as METRICAL STRENGTH rather than as a list of legal steps — a
+    // note on a quarter gives way (5), a note on the and takes the most (9),
+    // and a sixteenth between them takes nearly as much (8) — because that is
+    // what makes it work on `funk`'s own hook, whose onsets are at 7, 8 and 12
+    // and would have missed a table of exact positions entirely. The accent
+    // goes to the first off-beat note in each quarter.
+    //   The census measured funk rendering 161 of 168 notes off the grid where
+    // techno renders none. That is the TOUCH pushing an unsyncopated figure
+    // around; this is the figure itself finally being syncopated.
+    syncope: { w: "leans off the beat",
+               vel: (j, n, i, b, N) => [5, 9, 8][S(i, N)],
+               acc: (j, n, i, b, N, at) => (S(i, N) && firstOff(at, N, j) ? 1 : 0) },
+    // FLAT BY CONVICTION — every note the same level, and it MEANS it. Not an
+    // absence of a figure: a claim, and the machines' own. A Kling Klang line
+    // "does not arch, it recurs" (this file's own words about
+    // `dusseldorfschool`), a motorik pulse's whole discipline is that it does
+    // not lean, and a phase piece that leans anywhere has a downbeat, which is
+    // the thing it was written to dissolve. NO ACCENT EITHER, and that is the
+    // half that matters: an accent is a weight, and a music that refuses to
+    // weight one note over another cannot keep one on the barline. Everything
+    // a sequencer wants to say about weight is already in `kitVel`.
+    //   THE FOURTEEN FROZEN MACHINES DO NOT TAKE IT. techno, acid, house,
+    // trap, electro, tapemusic and the eight later `DYNAMICS: null` rows say
+    // `dyn` NOTHING, so they keep `lean` and render byte-for-byte what they
+    // rendered on 2026-09-05 — held to it by `test/dynfigure.test.js` §D. That
+    // is deliberate and it is the flood's own law read strictly: this shift
+    // may widen the catalogue but it may not move a machine, and `flat` is not
+    // byte-identical to `lean`. The rows that take `flat` are the machine wing
+    // that was never frozen — the Düsseldorf line, the sequenced floors, the
+    // process pieces — where a level change is a change somebody may hear and
+    // argue with.
+    flat: { w: "every note the same", vel: () => 6, acc: () => 0 },
+  };
+  /* the three questions a figure asks about a step, said once. `Q` is which
+     QUARTER of the bar a step falls in (0..3 in any meter); `S` is metrical
+     STRENGTH — 0 on a quarter, 1 on an eighth-and, 2 on anything finer; and
+     `first`/`firstOff` answer "is this the first onset of the bar in its
+     quarter" and "…the first OFF-BEAT onset in its quarter", which is how a
+     figure weights a region rather than a grid position. */
+  function Q(i, N) { return Math.floor(i * 4 / N); }
+  function S(i, N) { return i * 4 % N === 0 ? 0 : i * 8 % N === 0 ? 1 : 2; }
+  function first(at, N, j) {
+    for (let x = 0; x < j; x++) if (Q(at[x], N) === Q(at[j], N)) return false;
+    return true;
+  }
+  function firstOff(at, N, j) {
+    for (let x = 0; x < j; x++)
+      if (Q(at[x], N) === Q(at[j], N) && S(at[x], N)) return false;
+    return true;
+  }
+  // EACH FIGURE KNOWS ITS OWN NAME, stamped rather than typed twice — the
+  // `family` and `orn` passes below do the same thing for the same reason.
+  // `ideas-kit.js` memoises a phrase by a string key and a figure is part of
+  // what makes the phrase, so the key has to be able to say WHICH figure
+  // without a second map from function to word.
+  for (const k of Object.keys(FIGURES)) FIGURES[k].k = k;
+
   const GENRES = {
     // SILENCE — THE BLANK STATE, AND IT IS A ROW LIKE ANY OTHER (2026-09-01).
     // Paul: "Add a 'silence' genre at the top of the genre list. This is a
@@ -1190,6 +1393,12 @@
     // over half the time. Declared only where identity demands it: a fugue
     // that does not begin with the subject alone is not a fugue. Absent =
     // the family's own leaning, exactly as before the field existed.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     fugue: {
       organic: true,
       label: "Leipzig 1725",
@@ -1222,6 +1431,7 @@
         [[reverse()], [invert(2)], [transpose(3), rotate(2)]][s % 3],
         [[transpose(-3)], [reverse(), transpose(3)], [invert(4)]][s % 3],
       ][v],
+      dyn: "terraced",
     },
 
     // A sequencer, not a restatement. Voice 0 never varies for the whole track;
@@ -1435,6 +1645,7 @@
       },
       words: ["the hook, clipped", "the answer, a bar late and thinned"],
       word: (v, s2) => (v === 0 ? [] : [only("gate", rotate(4)), drop(3)]),
+      dyn: "backbeat",
     },
 
     // The inverted pipeline: the chord loop is the material and the phrase
@@ -1571,6 +1782,7 @@
         "the sea, looped under the record"
       ],
       word: (v, s) => [excerpt((s * 4) % 16, 8)],
+      dyn: "swell",
     },
 
     // The first genre whose SCALE is not the default, and the first whose form
@@ -1671,6 +1883,12 @@
     // carry the same hand as the ride above; the beat-4 tom does not, because
     // it is on the beat.
     // bar 12: the turnaround
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     blues: {
       label: "Chicago 1952",
       bars: 12,
@@ -1717,6 +1935,7 @@
       },
       words: ["subject", "answer — only(gate, rotate 8)"],
       word: (v, s) => (v === 0 ? [] : [only("gate", rotate(8))]),
+      dyn: "anacrusis",
     },
 
     // ROCK. The riff does not develop — restatement rate ~1, like acid — so what
@@ -1779,6 +1998,7 @@
       tone: { wave: "sawtooth", cut: 1800, q: 1.6, atk: 0.003, rel: 0.8, gain: 0.3, verb: 0.1 },
       words: ["riff", "riff an octave up, thinned on odd bars"],
       word: (v, s) => (v === 1 && s % 2 ? [drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // ---- THE VOICES ------------------------------------------------------
@@ -1823,6 +2043,12 @@
     // sixth, and DIATONIC flattens exactly that sixth. So the alphabet is the mode.
     //
     // WHO SINGS: a hall of monks on one line: no vibrato at all, which is what makes it
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     gregorian: {
       label: "Rome 600",
       rate: 0.5,
@@ -1854,6 +2080,7 @@
       },
       words: ["the chant", "the same line an octave below"],
       word: () => [],
+      dyn: "agogic",
     },
 
     // BULGARIAN. Le Mystère des Voix Bulgares, and the two things that make it
@@ -1909,6 +2136,7 @@
       },
       words: ["the melody", "a second above it, and staying there"],
       word: v => (v === 0 ? [] : [transpose(1)]),
+      dyn: "agogic",
     },
 
     // SPEM IN ALIUM — Tallis, forty voices in eight choirs, and the thing it is
@@ -2070,6 +2298,7 @@
       ],
       word: (v, s) => [transpose([0, 4, 2, -3, 3, -2, 5, 1][v % 8]),
                        ...(s % 2 ? [rotate(2)] : [])],
+      dyn: "agogic",
     },
 
     // COUNTERPOINT — the species exercise, and deliberately NOT the fugue. A
@@ -2180,6 +2409,12 @@
     // which is what first-species contrary motion is supposed to sound like.
     // Written as two inversions rather than an inversion plus a transpose
     // because the sum is the only thing that was ever doing any work.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     counterpoint: {
       organic: true,
       label: "Vienna 1725",
@@ -2203,6 +2438,7 @@
         "the species: one voice added by rule, in contrary motion"
       ],
       word: (v, s) => (v === 0 ? [] : [invert(s % 2 ? 0 : 5)]),
+      dyn: "terraced",
     },
 
     // ---- THE SLOW ONES ---------------------------------------------------
@@ -2272,6 +2508,7 @@
       ],
       word: v => (v === 2 ? [transpose(2)] : []),
       fx: ["chorus"],
+      dyn: "swell",
     },
 
     // DRONE. The genre that is a refusal: rate 0.25, so one loop of the phrase
@@ -2335,6 +2572,7 @@
       words: ["the drone", "a line that barely moves"],
       word: v => (v === 1 ? [drop(2)] : []),
       fx: ["sweep"],
+      dyn: "swell",
     },
 
     // SLUDGE. Half the speed of everything else, tuned into the floor (reg -3
@@ -2380,6 +2618,7 @@
       words: ["the riff", "the riff an octave under, thinned"],
       word: v => (v === 1 ? [drop(2)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // TANGO. Two facts and the rest follows. The first is the RHYTHM: 3-3-2,
@@ -2420,6 +2659,12 @@
     // 3-3-2, twice
     //
     // the bass IS the 3-3-2
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     tango: {
       label: "Buenos Aires 1935",
       voices: 3,
@@ -2451,6 +2696,7 @@
         "the bandoneón answering, from bar 3"
       ],
       word: (v, s) => (v === 2 ? [transpose(-2), drop(2)] : []),
+      dyn: "agogic",
     },
 
     // DEATH METAL. The genre is two techniques, and both of them are operators
@@ -2519,6 +2765,7 @@
       ],
       word: v => (v === 0 ? [only("gate", fill(1))] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // EURYTHMICS. A sequencer and a drum machine and nothing else in the room.
@@ -2616,6 +2863,7 @@
         "the answer, a bar late and off the beat"
       ],
       word: (v, s) => (v === 0 ? [] : [only("gate", rotate(6))]),
+      dyn: "arch",
     },
 
     // THE ISLEY BROTHERS. The arrangement IS the group: a Rhodes laying down
@@ -2652,6 +2900,12 @@
     // the guitar sings, and singers breathe
     //
     // syncopated, never on 3
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     psychsoul: {
       label: "Teaneck 1973",
       bars: 8,
@@ -2697,6 +2951,7 @@
       ],
       word: (v, s) => (v === 2 ? [drop(2), transpose(-2)] : []),
       fx: ["chorus"],
+      dyn: "anacrusis",
     },
 
     // PSYCHEDELIC SOUL #2 — Detroit 1968. The Temptations, "Cloud Nine"
@@ -2810,6 +3065,7 @@
         "the horns, arriving late and leaving early"
       ],
       word: v => (v === 1 ? [drop(8)] : v === 2 ? [keep(4, 12), transpose(-3)] : []),
+      dyn: "backbeat",
     },
 
     // ---- THE STUDIO ------------------------------------------------------
@@ -2922,6 +3178,7 @@
       ],
       word: v => (v === 2 ? [transpose(2), drop(2)] : []),
       fx: ["chorus"],
+      dyn: "arch",
     },
 
     // NEW JACK SWING #2 — Charlotte 1991. JODECI. New jack swing,
@@ -3011,6 +3268,12 @@
     // is document.test.js G10b.
     //
     // WHO SINGS: the bed of voices under the Rhodes, barely articulated
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     newjackswing2: {
       bassInstr: "bass_lead",
       label: "Charlotte 1991",
@@ -3052,6 +3315,7 @@
       words: ["the vocal stack, one chord a bar", "the Rhodes, playing around it"],
       word: () => [],
       fx: ["chorus"],
+      dyn: "anacrusis",
     },
 
     // HIP-HOP SOUL — New York 1992. Mary J. Blige, What's the 411?
@@ -3187,6 +3451,7 @@
         "the Rhodes, two chords under the loop"
       ],
       word: v => (v === 1 ? [drop(8)] : []),
+      dyn: "backbeat",
     },
 
     // THE BEATLES. Two things, and the second is the one nobody expects a
@@ -3291,6 +3556,7 @@
       },
       words: ["the tune", "the harmony, a third above, all the way"],
       word: v => (v === 1 ? [transpose(2)] : []),
+      dyn: "arch",
     },
 
     // STEELY DAN. Dorian, and specifically dorian's MAJOR fourth — the one
@@ -3313,6 +3579,12 @@
     // Chess. The band format and the session polish barely move.
     //
     // i IV v III
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     jazzrock: {
       label: "Los Angeles 1977",
       bars: 8,
@@ -3347,6 +3619,7 @@
       ],
       word: v => (v === 2 ? [drop(2), transpose(-2)] : []),
       fx: ["chorus"],
+      dyn: "anacrusis",
     },
 
     // POST ROCK. The genre is a SHAPE, not a harmony: one figure, arriving one
@@ -3423,6 +3696,7 @@
       words: ["the strings, holding", "the first guitar", "the second, from bar 5"],
       word: v => (v === 2 ? [rotate(4), drop(2)] : []),
       fx: ["echo"],
+      dyn: "swell",
     },
 
     // ---- THE RADIO DIAL ----------------------------------------------------
@@ -3497,6 +3771,9 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: psychsoul .35→.30, funk .30→.25. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     boombap: {
       label: "New York 1994",
       swing: 0.2,
@@ -3534,6 +3811,7 @@
         "the horn, answering from bar 3"
       ],
       word: v => (v === 0 ? [excerpt(0, 8)] : [only("gate", rotate(8))]),
+      dyn: "syncope",
     },
 
     // POLITICAL HIP HOP — Long Island 1988. Public Enemy, It Takes a Nation of
@@ -3633,6 +3911,10 @@
     // what it already said. The row now says what it plays. Only two rows in the
     // catalogue were under the floor; `northernsoul` is the other and is retired
     // the same day.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     politicalhiphop: {
       label: "Long Island 1988",
       voices: 3,
@@ -3693,6 +3975,7 @@
       word: (v, s) => (v === 0 ? [only("gate", rotate(4))]
                     : v === 1 ? [[excerpt(0, 4)], [excerpt(4, 4)], [rotate(2), excerpt(0, 6)]][s % 3]
                     : [drop(6), transpose(7)]),
+      dyn: "syncope",
     },
 
     // ALTERNATIVE HIP HOP — South Central 1992. The Pharcyde, Bizarre Ride II
@@ -3753,6 +4036,10 @@
     // (nine of them are) — but this record is the ANSWER to that one and not
     // its child, and a parent share is a claim about explanation, not about
     // proximity.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     althiphop: {
       label: "South Central 1992",
       voices: 3,
@@ -3797,6 +4084,7 @@
       word: (v, s) => (v === 0 ? [excerpt(0, 8)]
                     : v === 1 ? [[], [fill(2)], [rotate(2)], [transpose(2)]][s % 4]
                     : [rotate(4), drop(4)]),
+      dyn: "syncope",
     },
 
     // JAZZ RAP — Brooklyn 1993. Digable Planets, Reachin' (A New Refutation of
@@ -3857,6 +4145,10 @@
     // hip-hop subgenre") and the year before; `blockparty` (Bronx 1973) is the
     // loop craft, taken direct because boombap is younger than this record;
     // `funk` (Cincinnati 1967) is the drums under the Blakey.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     jazzrap: {
       label: "Brooklyn 1993",
       voices: 2,
@@ -3907,6 +4199,7 @@
         "the guitar, comping the two chords behind it"
       ],
       word: v => (v === 1 ? [drop(6)] : [excerpt(0, 8)]),
+      dyn: "syncope",
     },
 
     // TRAP [deathmetal] — and the neighbour is not a joke: both are minor,
@@ -4141,6 +4434,10 @@
     // are the same every time you press play and different every bar.
     //
     // WHO SINGS: the diva sample the genre is built on, breathy and up top
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     garage: {
       bassInstr: "bass_lead",
       label: "London 1999",
@@ -4182,6 +4479,7 @@
       },
       words: ["the chopped vocal", "the answer, shuffled off the beat"],
       word: v => (v === 0 ? [] : [only("gate", rotate(3)), drop(3)]),
+      dyn: "syncope",
     },
 
     // DRUM & BASS [house]. The founding move is the BREAK, and a break is two
@@ -4248,6 +4546,9 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: hardcorerave .40→.35, dub .30→.25, funk .15→.10, techno .15→.10, amenbreak .20→.15. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning.
     dnb: {
       bassInstr: "bass_lead",
       label: "London 1994",
@@ -4288,6 +4589,7 @@
       tone: { wave: "sawtooth", cut: 1200, q: 3, atk: 0.003, rel: 0.5, gain: 0.28, verb: 0.16 },
       words: ["the reese line, tied", "the pads drifting over the break"],
       word: (v, s) => (v === 0 ? [] : [rotate(8), drop(2)]),
+      dyn: "flat",
     },
 
     // DISCO [newwave]. Both are bright four-square pop machines; what
@@ -4348,6 +4650,7 @@
       },
       words: ["the string stabs", "the guitar, answering"],
       word: v => (v === 1 ? [only("gate", rotate(4))] : []),
+      dyn: "backbeat",
     },
 
     // FUNK [psychsoul]. Soul with the harmony taken away: MODAL, one dorian chord
@@ -4376,6 +4679,12 @@
     // its own now that highlife, marabi and rumba have stopped hanging off
     // American anchors. See blues' own `wants`, which is where the debt is
     // now named in its own words.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The `soul`
+    // cluster takes `backbeat`; the anchor's own evidence outranks it, which
+    // is the flood's rule (docs/DYNAMICS-FLOOD.md).
     funk: {
       label: "Cincinnati 1967",
       swing: 0.12,
@@ -4406,6 +4715,7 @@
       tone: { wave: "square", cut: 2200, q: 2.2, atk: 0.003, rel: 0.3, gain: 0.28, verb: 0.14 },
       words: ["the clavinet, chopped", "the horns, rotated off the beat"],
       word: v => (v === 1 ? [only("gate", rotate(2)), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // MOTOWN [beatgroup]. Both are bright sixties three-minute machines; the
@@ -4473,6 +4783,7 @@
       tone: { wave: "triangle", cut: 2600, q: 1, atk: 0.005, rel: 0.6, gain: 0.28, verb: 0.26 },
       words: ["the piano, stabbing the changes", "the horn line over it"],
       word: () => [],
+      dyn: "backbeat",
     },
 
     // NORTHERN SOUL — Manchester 1970. Gloria Jones, "Tainted Love" (Champion Records,
@@ -4614,6 +4925,7 @@
       word: (v, s) => (v === 1 ? [keep(4, 12)]
                     : v === 2 ? [drop(2)]
                     : [[], [fill(2)], [rotate(2)]][s % 3]),
+      dyn: "backbeat",
     },
 
     // PROGRESSIVE SOUL — Detroit 1971. Marvin Gaye, What's Going On (Hitsville
@@ -4736,6 +5048,7 @@
                     : v === 2 ? [drop(4)]
                     : v === 3 ? [drop(8), transpose(-5)]
                     : [[], [fill(1)], [rotate(4)]][s % 3]),
+      dyn: "backbeat",
     },
 
     // R&B [newjackswing2]. Jodeci is new jack — swung, triadic, a drum machine
@@ -4842,6 +5155,7 @@
       },
       words: ["the EP, holding the sevenths", "the melisma, with its rests"],
       word: () => [],
+      dyn: "backbeat",
     },
 
     // GOSPEL [detroitsoul]. Same church, one street over — and the field that
@@ -4930,6 +5244,12 @@
     // only two rows — politicalhiphop and northernsoul — have a declared swing
     // that moves nothing whatever at seed 1. Those are reported, not touched:
     // this round's fence is this row.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The church build: the
+    // line rises into the arrival and the room rises with it. The `soul`
+    // cluster takes `backbeat`; the anchor's own evidence outranks it, which
+    // is the flood's rule (docs/DYNAMICS-FLOOD.md).
     gospel: {
       label: "Chicago 1932",
       voices: 3,
@@ -4978,6 +5298,7 @@
         "the choir, answering a third up from bar 5"
       ],
       word: v => (v === 2 ? [transpose(2), drop(2)] : []),
+      dyn: "swell",
     },
 
     // REGGAE [dub]. The pair share the one-drop; what separates THIS one is
@@ -5035,6 +5356,7 @@
       tone: { wave: "triangle", cut: 2000, q: 1.2, atk: 0.008, rel: 0.7, gain: 0.27, verb: 0.3 },
       words: ["the skank, offbeats only", "the melodica line, long notes"],
       word: v => (v === 0 ? [offbeats(4)] : []),
+      dyn: "syncope",
     },
 
     // DUB [reggae]. Same one-drop, same skank — the difference is REFUSAL:
@@ -5083,6 +5405,7 @@
       word: (v, s) => (v === 0 ? [offbeats(4), drop(2)]
                               : [drop(2), ...(s % 2 ? [drop(3)] : [])]),
       fx: ["echo"],
+      dyn: "syncope",
     },
 
     // SKA [reggae]. The same offbeat chop played at twice the density and
@@ -5151,6 +5474,7 @@
       tone: { wave: "square", cut: 2600, q: 1.6, atk: 0.003, rel: 0.3, gain: 0.27, verb: 0.18 },
       words: ["the double skank", "the horn line"],
       word: v => (v === 0 ? [offbeats(2)] : []),
+      dyn: "syncope",
     },
 
     // AFROBEAT [funk]. Both are modal dorian groove machines; the field that
@@ -5242,6 +5566,7 @@
         "the horns, further out of phase"
       ],
       word: (v, s) => [[], [rotate(4), drop(2)], [rotate(8), drop(3)]][v],
+      dyn: "syncope",
     },
 
     // BOSSA NOVA [jazzrock]. Both live on sevenths and understatement; the
@@ -5331,6 +5656,7 @@
       tone: { wave: "triangle", cut: 2400, q: 0.8, atk: 0.008, rel: 0.8, gain: 0.26, verb: 0.3 },
       words: ["the guitar, rolling the sevenths", "the flute, saying very little"],
       word: () => [],
+      dyn: "syncope",
     },
 
     // COUNTRY [beatgroup]. Both are I-loving guitar pop; the fields that
@@ -5473,6 +5799,7 @@
       words: ["the stab, on the tune's rhythm", "the hook, re-pitched every other bar"],
       word: (v, s) => (v === 1 && s % 2 ? [only("deg", rotate(4))] : []),
       fx: ["chorus"],
+      dyn: "arch",
     },
 
     // SHOEGAZE [postrock]. Post rock is patience — half speed, staggered
@@ -5547,6 +5874,7 @@
       words: ["the tune", "the same tune a second up — the blur"],
       word: v => (v === 1 ? [transpose(1)] : []),
       fx: ["crunch", "chorus"],
+      dyn: "swell",
     },
 
     // CITY POP [aor]. Session players either side of the Pacific; the field
@@ -5599,6 +5927,7 @@
       tone: { wave: "triangle", cut: 2800, q: 1, atk: 0.005, rel: 0.6, gain: 0.27, verb: 0.3 },
       words: ["the EP, stabbing the royal road", "the guitar, gliding over it"],
       word: () => [],
+      dyn: "arch",
     },
 
     // PUNK [rock]. Rock develops a riff; punk REFUSES to — the whole guitar
@@ -5666,6 +5995,7 @@
       tone: { wave: "sawtooth", cut: 2000, q: 1.8, atk: 0.002, rel: 0.3, gain: 0.3, verb: 0.1 },
       words: ["every eighth, downstrokes", "the same riff, an octave under, as written"],
       word: v => (v === 0 ? [only("gate", fill(2))] : []),
+      dyn: "backbeat",
     },
 
     // AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the
@@ -5733,6 +6063,7 @@
       words: ["the pad, two bars to the chord", "a line that surfaces from bar 5"],
       word: v => (v === 1 ? [drop(2)] : []),
       fx: ["echo", "sweep"],
+      dyn: "swell",
     },
 
     // TECHNO [acid]. Both are modal machines on a four; the field that
@@ -5997,6 +6328,12 @@
     // charleston cell with an answer, which is what a comping hand plays and
     // is nothing anyone had to hand-draw. The trumpet takes the odd bars
     // half off: two horns on one line is a texture, not a doubling machine.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     jazz: {
       label: "New York 1945",
       bars: 8,
@@ -6061,6 +6398,7 @@
       ],
       word: (v, s) => (v === 0 ? [only("gate", rotate(6)), drop(2), drop(3)]
                      : v === 2 && s % 2 ? [drop(2)] : []),
+      dyn: "anacrusis",
     },
 
     // BO DIDDLEY. The genre is a RHYTHM, and that is the reason it earns a row
@@ -6135,6 +6473,12 @@
     // by luck.
     //
     // the DeArmond Trem-Trol — Mona's amp, and the table's first
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The `band`
+    // cluster takes `backbeat`; the anchor's own evidence outranks it, which
+    // is the flood's rule (docs/DYNAMICS-FLOOD.md).
     hambone: {
       label: "Chicago 1955",
       swing: 0.12,
@@ -6172,6 +6516,7 @@
       words: ["the guitar, masked to the clave", "the harp, answering in the holes from bar 3"],
       word: v => (v === 0 ? [breath([1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0])] : [breath([0,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,1,1]), transpose(2)]),
       fx: ["tremolo"],
+      dyn: "syncope",
     },
 
     // CHUCK BERRY [rock]. The double stop is the whole idea, and it costs two
@@ -6256,6 +6601,12 @@
     // THE CHESS SLAPBACK: one short tape repeat over the band, which is not
     // reverb and not a decoration — 2120 Michigan Avenue is a dry room and
     // an echo chamber down the hall, and that pair IS the 1955 record.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     rocknroll: {
       label: "St. Louis 1955",
       bars: 12,
@@ -6320,6 +6671,7 @@
       ],
       word: v => (v === 1 ? [transpose(3)] : v === 2 ? [only("gate", drop(2))] : []),
       fx: ["echo"],
+      dyn: "anacrusis",
     },
 
     // ROCKABILLY — Memphis 1954. Sun Records, 706 Union Avenue: Elvis
@@ -6415,6 +6767,12 @@
     // saying so here is cheaper than letting somebody discover it and think
     // the row was careless: it is in the tempo, the pentatonic, the missing
     // piano and the empty hat.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     rockabilly: {
       label: "Memphis 1954",
       near: "rocknroll",
@@ -6479,6 +6837,7 @@
       words: ["the hollow-body, the Sun lead", "the acoustic rhythm, all downstrokes"],
       word: v => (v === 1 ? [keep(0, 4, 8, 12)] : []),
       fx: ["echo"],
+      dyn: "anacrusis",
     },
 
     // DOO-WOP [detroitsoul]. The table's first vocal-group anchor, and the one with
@@ -6585,7 +6944,6 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 6 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: gospel .45→.35, blues .20→.15, jumpblues .20→.15, tinpanalley .15→.10, barbershop .15→.10, jubilee .15→.10. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
-    //
     // THE LEAD IS THE HIGH ONE (2026-09-04). Paul: "Fix doowop too, high
     // tenor not baritone -- check for singer register throughout." Measured
     // at the precompose -> toGenre -> render seam, seeds 1-3, this row's lead
@@ -6624,6 +6982,12 @@
     // He takes the bass throat; the stab (the group singing the chord) and
     // the lead keep the countertenor they have, stated here rather than left
     // to the mouth so the row says its whole cast out loud.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     doowop: {
       label: "Harlem 1955",
       bars: 8,
@@ -6693,6 +7057,7 @@
       word: (v, s) => (v === 0 ? [breath([1,0,0,1, 0,0,0,0, 1,0,0,1, 0,0,0,0])]
         : v === 1 ? [breath([1,0,0,1, 0,0,1,0, 1,0,0,0, 0,0,1,0])]
         : [breath(SUNG)]),
+      dyn: "anacrusis",
     },
 
     // SKIFFLE [countrypop] — the genre with NO INSTRUMENTS, and every field
@@ -6820,6 +7185,11 @@
     // and a shared acoustic band, and a Kansas City dance orchestra is not a London
     // skiffle group's ancestor.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     skiffle: {
       label: "London 1956",
       bars: 8,
@@ -6878,6 +7248,7 @@
         "the banjo roll, from bar 3 — a three grinding against the two"
       ],
       word: v => [[fill(1), drop(2)], [], [fill(3), transpose(2)]][v],
+      dyn: "anacrusis",
     },
 
     // MINIMALISM. Two mechanisms, and both of them are `period` — the bar
@@ -6986,6 +7357,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.35, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: drone .55→.40, counterpoint .45→.35, modaljazz .20→.15, tapemusic .15→.10. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. A variation set and a
+    // phase piece are both a figure restated a level away. The `drift` cluster
+    // takes `swell`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     minimalism: {
       label: "New York 1967",
       bars: 8,
@@ -7039,6 +7415,7 @@
         : v === 2 ? (s < 2 ? [excerpt(0, 4)] : s < 4 ? [excerpt(0, 8)]
                      : s < 6 ? [excerpt(0, 12)] : [])
         : []),
+      dyn: "terraced",
     },
 
     // KRAFTWERK [synthpop]. The catalog's most-wanted ancestor — four children
@@ -7206,6 +7583,12 @@
     // knob a third of the way up. Nothing here changed. It is named in
     // GENRES.md as the worked example because it is the only one that was
     // right.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A Kling Klang line does not
+    // arch, it recurs — this file's own words about the row next door. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     dusseldorfschool: {
       bassInstr: "bass_lead",
       label: "Düsseldorf 1977",
@@ -7284,6 +7667,7 @@
       ],
       word: (v, s) => (v === 1 && s % 2 ? [transpose(2)] : []),
       fx: ["echo"],
+      dyn: "flat",
     },
 
     // ELECTRO [trap] — and the neighbour is measured, not a joke: it is the
@@ -7615,6 +7999,7 @@
         "the bass, the octave and the root"
       ],
       word: v => (v === 0 ? [] : [transpose([0, -2, -4, -7][v])]),
+      dyn: "agogic",
     },
 
     // CROONER. A solo voice out front of a dance orchestra, at ballad tempo
@@ -7674,6 +8059,12 @@
     // The 0.15 is arriving exactly where this row's own first paragraph puts it —
     // on the singer, at half the band's rate, phrasing across the bar the way a
     // horn section never would. Kept as declared; the kit is honest.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     crooner: {
       label: "Los Angeles 1931",
       rate: 0.5,
@@ -7716,6 +8107,7 @@
       },
       words: ["the voice, held over the changes", "the strings, one wash under it"],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "arch",
     },
 
     // YULETIDE. Crooner in its December coat — the one place this table
@@ -7844,6 +8236,7 @@
         "the harmony, a third above — answering the handclap hook"
       ],
       word: v => (v === 0 ? [] : [transpose(2), only("gate", offbeats(4))]),
+      dyn: "arch",
     },
 
     // PSYCH POP [beatgroup]. The same songwriter, further out: an eight-bar
@@ -7917,6 +8310,7 @@
         "the choir, arriving at the vamp — na na na, a third up"
       ],
       word: v => (v === 1 ? [transpose(2), only("gate", offbeats(2))] : []),
+      dyn: "arch",
     },
 
     // BIG BEAT [techno]. The rave floor played by a punk band — techno's
@@ -7976,6 +8370,9 @@
     // Chemical Brothers the vector has no column for. `miamibass` (1986) is offered as
     // nearer on an 808 and a tempo; a shared machine is not a shared parent.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     bigbeat: {
       bassInstr: "bass_lead",
       label: "Essex 1997",
@@ -8005,6 +8402,7 @@
       tone: { wave: "sawtooth", cut: 1000, q: 3.5, atk: 0.002, rel: 0.4, gain: 0.3, verb: 0.15 },
       words: ["the guitar stab, breaking the grid", "the synth hook, an octave under"],
       word: v => (v === 0 ? [only("gate", rotate(3))] : [drop(2)]),
+      dyn: "syncope",
     },
 
     // DRILL [trap]. Trap's half-time snare and tied 808 kept, the major
@@ -8041,6 +8439,10 @@
     // 6 March 2012): the drums are the 808's own kick, clap and hat, voiced
     // per hit by the engine, and `electronic` is a sampled kit standing in
     // for exactly that machine.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     drill: {
       bassInstr: "bass_lead",
       label: "Chicago 2012",
@@ -8069,6 +8471,7 @@
       tone: { wave: "square", cut: 1800, q: 2, atk: 0.003, rel: 0.5, gain: 0.28, verb: 0.25 },
       words: ["the piano loop, dark and minor", "the sub, sliding under it"],
       word: v => (v === 0 ? [only("gate", rotate(5))] : [drop(3)]),
+      dyn: "flat",
     },
 
     // CLUB POP [disco]. Same floor, four years later, with a SONG on top of
@@ -8117,6 +8520,12 @@
     // instrument) and the line keeps the ensemble. `synth_voice` was cast on
     // twelve genres at once; it keeps the seven that really are vocoder
     // records and gives back the five, of which this is one, that are not.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     clubpop: {
       label: "New York 1983",
       swing: 0.28,
@@ -8155,6 +8564,7 @@
       },
       words: ["the vocal hook, on the tune's rhythm", "the synth strings, answering"],
       word: v => (v === 1 ? [only("gate", rotate(4))] : []),
+      dyn: "anacrusis",
     },
 
     // POWER BALLAD [crooner]. A ballad that WAITS — the verse a crooner's
@@ -8196,6 +8606,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: gospel .40→.35, crooner .35→.30, rock .25→.20, broadway .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The church build: the
+    // line rises into the arrival and the room rises with it. The `band`
+    // cluster takes `backbeat`; the anchor's own evidence outranks it, which
+    // is the flood's rule (docs/DYNAMICS-FLOOD.md).
     powerballad: {
       label: "Los Angeles 1991",
       bars: 8,
@@ -8250,6 +8665,7 @@
         "the strings and the band, quiet then huge"
       ],
       word: () => [],
+      dyn: "swell",
     },
 
     // RETRO FUNK POP [funk]. Funk's clavinet-and-horns groove wired to a
@@ -8300,6 +8716,7 @@
         "the horns, answering — the phrase's own gate, complemented"
       ],
       word: v => (v === 1 ? [only("gate", complement("gate"))] : []),
+      dyn: "backbeat",
     },
 
     // REGGAETON [reggae]. The one-drop's Caribbean cousin, played with a
@@ -8359,6 +8776,7 @@
         "the guitar, answering — the phrase's own gate, untouched"
       ],
       word: v => (v === 0 ? [only("gate", excerpt(0, 8))] : []),
+      dyn: "syncope",
     },
 
     // LATIN POP [bossa]. A rock band's instrumentation carrying Latin
@@ -8430,6 +8848,7 @@
       },
       words: ["the guitar, the hook", "the electric guitar, doubling an octave down"],
       word: v => (v === 1 ? [drop(2), transpose(-7)] : []),
+      dyn: "syncope",
     },
 
     // K-POP [synthpop]. A pop-song chassis built from three different
@@ -8466,6 +8885,11 @@
     // holding the chorus chord and a bright square hook riding it. Both are
     // machines, which is the honest description of a genre that is a
     // production method — and neither is the choir patch it used to lead on.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. A produced pop record with
+    // a hand on it, not a machine: the club rule's .02 threshold caught a
+    // song, and its four parents are all songs.
     kpop: {
       bassInstr: "bass_lead",
       label: "Seoul 2012",
@@ -8506,6 +8930,7 @@
       },
       words: ["the vocal hook, stabbing the changes", "the synth line, answering an octave up"],
       word: v => (v === 1 ? [only("gate", rotate(4)), transpose(2)] : []),
+      dyn: "backbeat",
     },
 
     // BOY BAND [doowop]. Doo-wop's group-blend arithmetic (a lead and two
@@ -8566,6 +8991,7 @@
         "the EP, holding the changes"
       ],
       word: () => [],
+      dyn: "backbeat",
     },
 
     // EMO [punk]. Punk's downstroked directness with the dynamics power
@@ -8633,6 +9059,7 @@
         "the second guitar, an octave under, doubling in the loud half"
       ],
       word: v => (v === 1 ? [drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // SCREAMO [emo]. Emo's dynamics pushed past the point of song into the
@@ -8713,6 +9140,7 @@
       ],
       word: v => (v === 0 ? [only("gate", fill(1))] : [excerpt(8, 8), transpose(-1)]),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // CONFESSIONAL POP [countrypop]. Country's fifths bass and storytelling
@@ -8816,6 +9244,7 @@
         "the voice, singing the story with the guitar"
       ],
       word: v => (v === 1 ? [transpose(3)] : []),
+      dyn: "arch",
     },
 
     // DARK R&B [rnb]. R&B's maj7 ballad harmony traded for a moody dorian
@@ -8909,6 +9338,7 @@
       },
       words: ["the falsetto, held over the changes", "the pad, drifting under it"],
       word: v => (v === 1 ? [drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // BIG ROOM [techno]. An EDM drop written as `kits`' own alternation —
@@ -8944,6 +9374,10 @@
     // held riser (hats alone, half the density), an odd bar is the floor
     // landing — which is also what makes the closing fill bar read as an
     // arrival rather than just one more bar of the same kit.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     bigroom: {
       bassInstr: "bass_lead",
       label: "Las Vegas 2012",
@@ -9000,6 +9434,7 @@
       tone: { wave: "sawtooth", cut: 2200, q: 2.4, atk: 0.003, rel: 0.4, gain: 0.29, verb: 0.2 },
       words: ["the stab, huge, on the drop", "the lead, an octave up, riding the build"],
       word: v => (v === 1 ? [transpose(2)] : []),
+      dyn: "flat",
     },
 
     // BLUE-EYED SOUL [detroitsoul]. Motown's changes and stab-and-lead scheme
@@ -9041,6 +9476,7 @@
       tone: { wave: "triangle", cut: 2400, q: 1, atk: 0.006, rel: 0.7, gain: 0.27, verb: 0.28 },
       words: ["the EP, comping the changes", "the guitar, doubling the hook an octave up"],
       word: v => (v === 1 ? [transpose(7)] : []),
+      dyn: "backbeat",
     },
 
     // FOLK DUO [skiffle]. Two voices in close harmony over one acoustic
@@ -9214,6 +9650,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: blues .40→.30, rock .35→.25, jazz .25→.20, psychrock .30→.25. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     jamband: {
       label: "San Francisco 1972",
       bars: 12,
@@ -9247,6 +9688,7 @@
         "the second guitar, answering — rotated a different amount every chorus"
       ],
       word: (v, s) => (v === 0 ? [] : [rotate((s % 4) + 2)]),
+      dyn: "anacrusis",
     },
 
     // SOPHISTI-ROCK [jazzrock]. Steely's jazz-schooled changes and walking
@@ -9293,6 +9735,11 @@
     // song against a dance music will always call it far. `acidrock` (1967) is offered
     // as nearer on a shared guitar and a shared studio.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     sophistirock: {
       label: "London 1986",
       bars: 8,
@@ -9323,6 +9770,7 @@
       tone: { wave: "square", cut: 2000, q: 1.4, atk: 0.008, rel: 0.8, gain: 0.28, verb: 0.26 },
       words: ["the organ, swirling through the changes", "the guitar, doubling low"],
       word: v => (v === 1 ? [drop(2), transpose(-7)] : []),
+      dyn: "anacrusis",
     },
 
     // MOTORIK [dusseldorfschool]. Kraftwerk's own machine pulse, before the pop
@@ -9393,6 +9841,11 @@
     // with a drummer. `spyscore` (1962) is offered as nearer on tempo and a driving
     // bass, which is a coincidence between a Bond chase and a Neu! record.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A Kling Klang line does not
+    // arch, it recurs — this file's own words about the row next door. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     motorik: {
       bassInstr: "finger_bass",
       instrumental: true,
@@ -9449,6 +9902,7 @@
         "the second line, entering from bar 5 — the one change in eight bars"
       ],
       word: () => [],
+      dyn: "flat",
     },
 
     // ROBOTIC POP [dusseldorfschool]. Motorik's mechanical pulse folded back into
@@ -9501,6 +9955,12 @@
     // A CALL AND AN ANSWER, not the same hook twice: `complement("gate")`
     // fires the sequence exactly where the vocoder is silent, so an octave
     // doubling never lands on the SAME step as the line it doubles.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A Kling Klang line does not
+    // arch, it recurs — this file's own words about the row next door. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     roboticpop: {
       bassInstr: "bass_lead",
       label: "Düsseldorf 1978",
@@ -9551,6 +10011,7 @@
         "the sequence, answering an octave under — the phrase's own gate, complemented"
       ],
       word: v => (v === 1 ? [only("gate", complement("gate")), transpose(-7)] : []),
+      dyn: "flat",
     },
 
     // WAX TRAX! [the label]. THE ROOM THAT MADE THE RECORDS, and it ships
@@ -9704,6 +10165,7 @@
       ],
       word: v => (v === 1 ? [rotate(2)] : []),
       fx: [],
+      dyn: "arch",
     },
 
     // INDUSTRIAL METAL [deathmetal]. Death metal's chromatic riff wall and
@@ -9795,6 +10257,7 @@
       ],
       word: v => (v === 0 ? [only("gate", fill(1))] : [transpose(-7)]),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // EBM [techno]. Electronic Body Music: techno's kick-driven floor and
@@ -9873,6 +10336,9 @@
     // (1986) is offered as nearer on a shared 808 and tempo, which every club row of
     // the decade shares.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning.
     ebm: {
       bassInstr: "bass_lead",
       label: "Chicago 1989",
@@ -9923,6 +10389,7 @@
         "the vocal chant, the phrase's own rhythm ANDed with the offbeat"
       ],
       word: v => (v === 0 ? [only("gate", fill(1))] : [breath([0, 0, 1, 0])]),
+      dyn: "flat",
     },
 
     // SYNTH DUO [synthpop]. Two people and a rack of machines, but LEGATO
@@ -9959,6 +10426,10 @@
     // to-engine.js plays on the parent's `solina`, so the wash under the
     // hook is an ARP ensemble and not a section). Vince Clarke's whole
     // discography is this one machine legato over a dance floor.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     synthduo: {
       bassInstr: "bass_lead",
       label: "London 1985",
@@ -10010,6 +10481,7 @@
       tone: { wave: "triangle", cut: 2600, q: 1.6, atk: 0.01, rel: 1, gain: 0.27, verb: 0.32 },
       words: ["the voice, deadpan over the changes", "the strings, sweeping in a wash above"],
       word: v => (v === 1 ? [drop(2)] : []),
+      dyn: "flat",
     },
 
     // ---- TWENTY-THREE MORE ROOMS ------------------------------
@@ -10086,6 +10558,7 @@
       tone: { wave: "triangle", cut: 2200, q: 1, atk: 0.006, rel: 0.5, gain: 0.27, verb: 0.22 },
       words: ["the piano, the vaudeville turn", "the guitar, doubling the hook an octave under"],
       word: v => (v === 1 ? [rotate(2), drop(2), transpose(-12)] : []),
+      dyn: "backbeat",
     },
 
     // ORCHESTRAL PSYCH [Flaming Lips]. A pop song dressed in a string
@@ -10152,6 +10625,7 @@
       ],
       word: v => (v === 2 ? [rotate(3), drop(2), transpose(12)] : []),
       fx: ["echo", "sweep"],
+      dyn: "arch",
     },
 
     // ALT-COUNTRY [Wilco]. Country-pop's bright twang and rock's distorted
@@ -10180,6 +10654,12 @@
     // V` (x1,964). Corpus silent. Wilco, "Misunderstood"/*Being There*,
     // Reprise, Chicago, 29 October 1996: the twang is bright and the
     // dominant is major.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     altcountry: {
       label: "Chicago 1996",
       bars: 8,
@@ -10209,6 +10689,7 @@
       tone: { wave: "sawtooth", cut: 1800, q: 1.4, atk: 0.01, rel: 0.8, gain: 0.26, verb: 0.3 },
       words: ["the guitar, the song", "the fiddle, the twang, an octave over"],
       word: v => (v === 1 ? [rotate(2), drop(2), transpose(12)] : []),
+      dyn: "backbeat",
     },
 
     // YACHT SOUL [Boz Scaggs]. Isley's Rhodes-and-groove chassis, funk's
@@ -10264,6 +10745,7 @@
       tone: { wave: "triangle", cut: 2200, q: 1, atk: 0.008, rel: 0.7, gain: 0.26, verb: 0.3 },
       words: ["the Rhodes, comping the changes", "the guitar, the hook, up top"],
       word: v => (v === 1 ? [transpose(7)] : []),
+      dyn: "arch",
     },
 
     // YACHT ROCK [Christopher Cross]. Toto and Steely's session-band
@@ -10308,6 +10790,7 @@
       tone: { wave: "triangle", cut: 2000, q: 1, atk: 0.01, rel: 0.9, gain: 0.25, verb: 0.3 },
       words: ["the EP, comping", "the guitar, the hook, an octave up"],
       word: v => (v === 1 ? [transpose(12), drop(3)] : []),
+      dyn: "arch",
     },
 
     // SONGWRITER PIANO [Carole King]. Motown's Brill Building changes, sung
@@ -10327,6 +10810,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.25, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: detroitsoul .40→.30, gospel .30→.25, crooner .30→.25, girlgroup .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     songwriterpiano: {
       label: "New York 1971",
       bars: 8,
@@ -10368,6 +10856,7 @@
         "the voice, wordless, a third above"
       ],
       word: v => (v === 1 ? [transpose(4)] : []),
+      dyn: "backbeat",
     },
 
     // SOFT FOLK [James Taylor]. A folk duo's two-voice discipline thinned to
@@ -10408,6 +10897,12 @@
     // THE CHANGES THE CORPUS FOUND: Imaj7 - vi7 - IVmaj7 - V7, four bars,
     // three sevenths in it. `harmony` is a cycle now and `prog` is what it
     // cycles; the tune above them stays major-pentatonic.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     softfolk: {
       label: "Chapel Hill 1970",
       bars: 8,
@@ -10438,6 +10933,7 @@
       tone: { wave: "triangle", cut: 2000, q: 0.8, atk: 0.01, rel: 1, gain: 0.22, verb: 0.32 },
       words: ["the guitar, fingerpicked, the tune", "the second guitar, a third under"],
       word: v => (v === 1 ? [transpose(-4)] : []),
+      dyn: "backbeat",
     },
 
     // SINGER-SONGWRITER [Carly Simon]. A crooner's plain, direct vocal
@@ -10477,6 +10973,11 @@
     // acoustic song against a dance music will always call that far. `mento` (1952) is
     // offered as nearer on tempo, an acoustic band and a major mode.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     singersongwriter: {
       label: "New York 1972",
       near: "yachtsoul",
@@ -10513,6 +11014,7 @@
       },
       words: ["the EP, the vamp", "the guitar, the answer, up top"],
       word: v => (v === 1 ? [transpose(7), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // COAST ROCK [Fleetwood Mac]. A rock band's format carrying Motown's
@@ -10560,6 +11062,7 @@
       tone: { wave: "sawtooth", cut: 2000, q: 1.2, atk: 0.01, rel: 0.8, gain: 0.27, verb: 0.26 },
       words: ["the guitar, fingerpicked, the hook", "the piano, holding the changes"],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "arch",
     },
 
     // ===================================================================
@@ -10723,6 +11226,7 @@
         "the three-part harmony, entering late"
       ],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "backbeat",
     },
 
     // COUNTRY ROCK — Nashville 1968. The Byrds again, three years and one
@@ -10807,6 +11311,7 @@
         "the piano, the session hand's fills"
       ],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "backbeat",
     },
 
     // HEARTLAND ROCK — Asbury Park 1975. Bruce Springsteen, BORN TO RUN,
@@ -10903,6 +11408,7 @@
         "the tenor, entering for the last chorus"
       ],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "backbeat",
     },
 
     // SOUTHERN ROCK — Macon 1969. THE ALLMAN BROTHERS BAND, the debut,
@@ -11066,6 +11572,7 @@
         "the Hammond, holding under both"
       ],
       word: v => (v === 1 ? [transpose(2)] : v === 2 ? [only("gate", drop(4))] : []),
+      dyn: "backbeat",
     },
 
     // ROOTS ROCK — Berkeley 1969. Creedence Clearwater Revival, GREEN
@@ -11213,6 +11720,7 @@
       },
       words: ["the lead, the swamp riff", "the rhythm guitar, all downstrokes"],
       word: v => (v === 0 ? [] : [transpose(-5), keep(0, 4, 8, 12)]),
+      dyn: "backbeat",
     },
 
     // CHAMBER POP — Boston 1994. Cardinal, CARDINAL (Flydaddy) — Richard
@@ -11318,6 +11826,7 @@
         "the trumpet, one phrase, late"
       ],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "arch",
     },
 
     // SPACE ROCK [Pink Floyd]. An arc, not a song — one held drone under a
@@ -11373,6 +11882,7 @@
       ],
       word: v => (v === 1 ? [drop(3)] : []),
       fx: ["echo", "sweep"],
+      dyn: "swell",
     },
 
     // GREBO [Ned's Atomic Dustbin]. THE JOKE IS LITERAL: two bass voices,
@@ -11424,6 +11934,7 @@
       ],
       word: v => (v === 1 ? [only("gate", rotate(2))] : v === 2 ? [invert(0), rotate(5)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // MELODIC TECHNO [Orbital]. THE FILTER IS THE MELODY: one analog pad
@@ -11469,6 +11980,9 @@
     // `electro` (1982) is offered instead on a shared 4/4 machine, which is what every
     // club row for thirty years has in common.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     melodictechno: {
       bassInstr: "bass_lead",
       label: "Kent 1991",
@@ -11508,6 +12022,7 @@
       words: ["the pad, the chord, opening across the section", "the line, riding above it"],
       word: v => (v === 1 ? [drop(2)] : []),
       fx: ["sweep"],
+      dyn: "flat",
     },
 
     // BLEEP TECHNO [808 State]. NO SAMPLED INSTRUMENT ANYWHERE: one `tb303`
@@ -11556,6 +12071,9 @@
     //
     // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section — on the one row in this table whose own first sentence is NO SAMPLED INSTRUMENT ANYWHERE. The row said it; the guest list did not read it. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning.
     bleeptechno: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -11589,6 +12107,7 @@
       tone: { wave: "square", cut: 1800, q: 3, atk: 0.002, rel: 0.2, gain: 0.28, verb: 0.1 },
       words: ["the bleep, up high", "the sub, an octave and a half under"],
       word: v => (v === 1 ? [rotate(3)] : []),
+      dyn: "flat",
     },
 
     // INDUSTRIAL BREAKS [Meat Beat Manifesto, Storm the Studio]. A broken kit
@@ -11747,6 +12266,10 @@
     // replacement lowpass with no mix at all (fields.js: "a swept resonant
     // lowpass is a REPLACEMENT, not a blend"). Taking the sweep off is what
     // lets the crunch on the drums become audible.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     industrialbreaks: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -11784,6 +12307,7 @@
       words: ["the fuzz line, the machine's own grid", "the pad, underneath, doubling low"],
       word: v => (v === 0 ? [] : [rotate(2), transpose(-7)]),
       fx: ["crunch"],
+      dyn: "syncope",
     },
 
     // INDUSTRIAL ROCK [Nine Inch Nails, Pretty Hate Machine]. REWRITTEN FROM
@@ -12022,6 +12546,7 @@
       ],
       word: v => (v === 0 ? [only("gate", fill(1))] : [rotate(3), transpose(-7)]),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // ANALOG SYNTH POP [Depeche Mode, Speak & Spell era]. THE FILTER IS
@@ -12117,6 +12642,7 @@
         "the strings, a wash answering underneath"
       ],
       word: v => (v === 1 ? [drop(2)] : []),
+      dyn: "arch",
     },
 
     // GOTH SYNTH [Depeche Mode, Violator era]. The same Basildon band nine
@@ -12244,6 +12770,7 @@
         "the bass synth, the real resonant low end"
       ],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "arch",
     },
 
     // GOTHIC POP [The Cure]. Shoegaze's wall of reverbed guitar thinned
@@ -12293,6 +12820,7 @@
       words: ["the guitar, chorused, the hook", "the strings, a wash underneath"],
       word: v => (v === 0 ? [] : [drop(2)]),
       fx: ["chorus"],
+      dyn: "backbeat",
     },
 
     // POST-PUNK [Joy Division]. Punk's raw directness under dusseldorfschool's
@@ -12346,6 +12874,7 @@
       words: ["the guitar, the line", "the synth, a tenth under, its own countermelody"],
       word: v => (v === 1 ? [rotate(5), transpose(-9)] : []),
       fx: ["echo"],
+      dyn: "backbeat",
     },
 
     // DANCE POST-PUNK [New Order]. Post-punk's own machine chassis, sent
@@ -12399,6 +12928,7 @@
       words: ["the sequence, the sequence, unchanged", "the lead, riding above it"],
       word: v => (v === 1 ? [drop(2)] : []),
       fx: ["echo"],
+      dyn: "arch",
     },
 
     // MADCHESTER [Happy Mondays]. House's dance-floor discipline and
@@ -12435,6 +12965,10 @@
     // moves to the flat seventh the row was always claiming — Happy
     // Mondays, "Step On" (Factory FAC 272, Manchester, March 1990), whose
     // sway is exactly that. Corpus silent.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     madchester: {
       bassInstr: "finger_bass",
       label: "Manchester 1990",
@@ -12465,6 +12999,7 @@
       tone: { wave: "triangle", cut: 2000, q: 1.2, atk: 0.01, rel: 0.75, gain: 0.27, verb: 0.3 },
       words: ["the guitar, the baggy hook", "the organ, swirling underneath"],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "syncope",
     },
 
     // JANGLE POP [The Smiths]. Motown's melodic, singing bassline under two
@@ -12499,6 +13034,11 @@
     // `rocknroll` (1955) is offered as nearer on tempo and major mode, which is what
     // every guitar pop record shares.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     janglepop: {
       label: "Manchester 1984",
       swing: 1/3,
@@ -12529,6 +13069,7 @@
       words: ["the first guitar, the chime", "the second, interlocking, a third above"],
       word: v => (v === 1 ? [rotate(2), transpose(4), drop(2)] : []),
       fx: ["chorus"],
+      dyn: "anacrusis",
     },
 
     // INDIE DANCE [Soup Dragons]. Madchester's baggy sway sent all the way
@@ -12560,6 +13101,10 @@
     // instead: The Soup Dragons, "I'm Free" (Raw TV Products, Glasgow,
     // 1990), house discipline under an ordinary major rock song. Corpus
     // silent.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     indiedance: {
       bassInstr: "finger_bass",
       label: "Glasgow 1990",
@@ -12598,6 +13143,7 @@
       },
       words: ["the guitar, the hook", "the strings, a wash underneath"],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "syncope",
     },
 
     // ---- THE FUNCTION GENRES ---------------------------------------------
@@ -12685,6 +13231,10 @@
     // KIT — `solo` is stacked on a host and the host's drummer is the one playing;
     // what this row owns is the soloist, and 0.16 is the soloist's own lilt. Kept
     // as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A soloist builds — that
+    // is what a solo is for.
     solo: {
       label: "Solo",
       bars: 8,
@@ -12710,6 +13260,7 @@
       words: ["the break: subdivide, fill in, subdivide again, take it up"],
       word: (v, s) => [[split(2)], [only("gate", fill(2))], [split(3)],
                        [split(4), transpose(2)]][s % 4],
+      dyn: "swell",
     },
 
     // VOCAL. A sung topline, and the whole of what makes it one is WHERE IT
@@ -12749,6 +13300,10 @@
     // a singer's range is two rungs, not seven
     //
     // WHO SINGS: the layer you stack on anything, so it is the plain modern lead
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. The singer is the most
+    // phrase and the least metre of anything in the table.
     vocal: {
       label: "Vocal",
       rate: 0.5,
@@ -12783,6 +13338,7 @@
       },
       words: ["the topline: two phrases and two breaths"],
       word: () => [spread(0.5), breath(SUNG)],
+      dyn: "arch",
     },
 
     // BACKING VOCALS. The other half of a vocal arrangement, and it is not a
@@ -12805,6 +13361,10 @@
     // a choir sings the mode, not the pentatonic
     //
     // WHO SINGS: this whole genre IS the backing vocal, so it says so
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The part stacked UNDER
+    // something keeps the weight where the drummer put it.
     backing: {
       label: "Backing vocals",
       rate: 0.5,
@@ -12839,6 +13399,7 @@
       },
       words: ["the stack: the line, and a third over it"],
       word: () => [breath(SUNG), drop(3)],
+      dyn: "backbeat",
     },
 
     // RIFF. The part that ANSWERS, and answering is a TWO-BAR shape: the figure
@@ -12856,6 +13417,10 @@
     //
     // a riff that walks away is not a riff
     // a riff does not fade in
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. A riff is the part that is
+    // NOT expressive — it states its first note and that is the whole job.
     riff: {
       label: "Riff",
       bars: 2,
@@ -12888,6 +13453,7 @@
       words: ["the figure on the offbeats, then the answer a step under"],
       word: (v, s) => (s % 2 ? [drop(3), transpose(-1)]
                              : [only("gate", offbeats(4))]),
+      dyn: "lean",
     },
 
     // PAD. A wash, and the reason it is worth a genre of its own is the one
@@ -12907,6 +13473,10 @@
     // choose between padin and padin. Measured: `pad` opened identically at
     // all eight seeds, which is precisely the failure the intro vocabulary
     // was rewritten to end.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A pad has no metre and
+    // barely a hand; what is left is the slow level move.
     pad: {
       label: "Pad",
       rate: 0.5,
@@ -12926,6 +13496,7 @@
       tone: { wave: "triangle", cut: 1600, q: 0.7, atk: 0.4, rel: 2.6, gain: 0.22, verb: 0.78 },
       words: ["the chord, held, one voicing a bar"],
       word: () => [],
+      dyn: "swell",
     },
 
     // ---- THE OLD WORLD (2026-08-21) --------------------------------------
@@ -12979,6 +13550,12 @@
     // so it takes the same alphabet — measured decorative before this change.
     //
     // WHO SINGS: the same monks as gregorian — no vibrato at all
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     organum: {
       label: "Paris 1200",
       rate: 0.5,
@@ -13016,6 +13593,7 @@
         "the third voice, a fourth up, from bar 5"
       ],
       word: v => (v === 0 ? [drop(2)] : v === 1 ? [transpose(4)] : [transpose(3)]),
+      dyn: "agogic",
     },
 
     // TROUBADOUR. A chant-trained voice singing its OWN words for a court —
@@ -13065,6 +13643,12 @@
     // trained voice and a lute in a Provençal hall: there was no drummer in the
     // room and none is seated here. The triplet lilt is the singer's, on a canso
     // strophe long enough to need one. Kept as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     troubadour: {
       label: "Provence 1210",
       bars: 8,
@@ -13098,6 +13682,7 @@
       },
       words: ["the canso, one voice", "the lute, holding the bordun"],
       word: () => [],
+      dyn: "anacrusis",
     },
 
     // ESTAMPIE — the first DRUM in the catalog's history: the one pre-1500
@@ -13197,6 +13782,12 @@
     // default (detached) reading, not a tied line
     //
     // WHO SINGS: the motet mouth — polychoral's own, two centuries early
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     arsnova: {
       label: "Reims 1360",
       voices: 3,
@@ -13229,6 +13820,7 @@
       word: (v, s) => (v === 0 ? [rotate(3 * s), drop(2)]
                     : v === 1 ? [transpose(2)]
                     : [transpose(4), rotate(5 * s)]),
+      dyn: "terraced",
     },
 
     // PAVANE — Susato's Danserye: the consort plays for DANCING. The lines
@@ -13302,6 +13894,12 @@
     // the lamento tetrachord
     //
     // WHO SINGS: the ornament arrives late in the note
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `roots` cluster takes
+    // `lean`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     continuo: {
       label: "Florence 1602",
       rate: 0.5,
@@ -13334,6 +13932,7 @@
       },
       words: ["the voice, held over the descent", "the harpsichord, realizing the figures"],
       word: v => (v === 0 ? [] : [drop(2)]),
+      dyn: "terraced",
     },
 
     // CONCERTO — Venice 1725, the high-Baroque BAND (fugue already owns the
@@ -13361,6 +13960,12 @@
     // is not a baroque violin and must not stand in for one.
     //
     // tutti / solo / continuo
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `roots` cluster takes
+    // `lean`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     concerto: {
       organic: true,
       label: "Venice 1725",
@@ -13385,6 +13990,7 @@
       tone: { wave: "sawtooth", cut: 2600, q: 1, atk: 0.01, rel: 0.6, gain: 0.24, verb: 0.35 },
       words: ["the ritornello, tutti", "the solo, sequencing away from it", "the continuo"],
       word: (v, s) => (v === 1 ? [transpose(-(s % 3)), ...(s % 2 ? [rotate(2)] : [])] : []),
+      dyn: "terraced",
     },
 
     // ORATORIO — Dublin 1742. Handel, MESSIAH, first performed at Neale's
@@ -13447,6 +14053,12 @@
     // IS THE ROOM: a charity concert in a music hall, in English, for people
     // who bought tickets — a public that had not existed for sacred music
     // before this and was the whole commercial reason the genre took.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `vox` cluster
+    // takes `agogic`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     oratorio: {
       label: "Dublin 1742",
       near: "sacredconcerto",
@@ -13498,6 +14110,7 @@
         "the continuo, walking"
       ],
       word: v => (v === 1 ? [transpose(-5)] : v === 3 ? [transpose(-12), fill(2)] : []),
+      dyn: "swell",
     },
 
     // CLASSICAL — Vienna 1785, the galant reaction: the concerto's clarity,
@@ -13964,6 +14577,12 @@
     // THAT IT IS UNFINISHED: a requiem mass with a hole in the middle of it,
     // which is not a stylistic fact and is the single most famous thing about
     // this record.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `vox` cluster
+    // takes `agogic`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     requiem: {
       label: "Vienna 1791",
       near: "sacredconcerto",
@@ -14025,6 +14644,7 @@
         "the strings, holding the suspension until it has to move"
       ],
       word: v => (v === 1 ? [transpose(12), drop(3)] : v === 2 ? [transpose(-12)] : []),
+      dyn: "swell",
     },
 
     // NOCTURNE — Paris 1835, Chopin: a bel-canto line (monody's thread, kept
@@ -14039,6 +14659,12 @@
     // 1831), four years before this row's label. Chopin said outright that
     // he was writing Bellini for the piano, which makes this the least
     // arguable parent edge added that day.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     nocturne: {
       label: "Paris 1835",
       rate: 0.5,
@@ -14064,6 +14690,7 @@
       tone: { wave: "triangle", cut: 2600, q: 0.8, atk: 0.01, rel: 2, gain: 0.26, verb: 0.5 },
       words: ["the song, up high, taking its time", "the left hand, wide and low"],
       word: v => (v === 1 ? [drop(2)] : []),
+      dyn: "swell",
     },
 
     // ETUDE — Paris 1833. Chopin, DOUZE GRANDES ETUDES op. 10, published by
@@ -14335,6 +14962,12 @@
     // single-movement orchestral piece that is ABOUT something, written for a
     // concert and not a theatre, which is the door `symphonicpoem` (Weimar
     // 1854) walks through twenty-eight years later and takes as its parent.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     concertoverture: {
       organic: true,
       instrumental: true,
@@ -14380,6 +15013,7 @@
       word: (v, s) => (v === 1 ? [fill(2), ...(s % 2 ? [rotate(3)] : [])]
         : v === 3 ? [transpose(-7), keep(0, 8)]
         : []),
+      dyn: "swell",
     },
 
     // ROMANTIC — Vienna 1876, the orchestra: the body of strings, the tune in
@@ -14390,6 +15024,12 @@
     // registry but the kit has twelve fixed lanes and no timpani file;
     // casting one as a pitched voice would make it melodic, so it waits for a
     // PERC lane rather than being faked.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     romantic: {
       label: "Vienna 1876",
       voices: 4,
@@ -14417,6 +15057,7 @@
         "tremolo, underneath, late"
       ],
       word: v => (v === 2 ? [transpose(-3)] : v === 3 ? [drop(2)] : []),
+      dyn: "swell",
     },
 
     // VARIATIONS — Vienna 1873. Brahms, VARIATIONS ON A THEME BY HAYDN,
@@ -14499,6 +15140,12 @@
     // DO IT AT ALL: a variation set for orchestra, standing alone, not inside a
     // symphony and not at a keyboard, which nobody had published before this
     // one.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. A variation set and a
+    // phase piece are both a figure restated a level away. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     variations: {
       organic: true,
       instrumental: true,
@@ -14548,6 +15195,7 @@
         : v === 1 ? [transpose(-7), drop(3)]
         : [[], [rotate(2)], [invert(4)], [reverse()],
            [drop(2)], [split(2)], [transpose(-12)], [fill(2)]][s % 8]),
+      dyn: "terraced",
     },
 
     // SYMPHONIC POEM — Weimar 1854. Liszt, LES PRELUDES, first performed at
@@ -14611,6 +15259,12 @@
     // RESIDUE IS 0.2 AND IT IS THE PROGRAMME: a piece whose form is decided by
     // a poem outside it. The row can transform a theme; it cannot mean
     // anything by it, and that is the half of the genre no engine gets.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     symphonicpoem: {
       organic: true,
       instrumental: true,
@@ -14667,6 +15321,7 @@
         : v === 3 ? []
         : [[], [spread(2)], [spread(0.5), fill(2)], [invert(4)],
            [transpose(-12)], [rotate(2)], [], [spread(2), drop(3)]][s % 8]),
+      dyn: "swell",
     },
 
     // GRAND OPERA — Paris 1831. Meyerbeer, ROBERT LE DIABLE, first performed at
@@ -14802,6 +15457,12 @@
     // four hours, the ballet at the top of act 2, Cicerian dioramas, gas light,
     // a volcano, a shipwreck, and a chorus of eighty who act. Every one of
     // those is a fact about a building, and this box has no building.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     grandopera: {
       label: "Paris 1831",
       near: "belcanto",
@@ -14874,6 +15535,7 @@
         "the pit, holding"
       ],
       word: v => (v === 1 ? [keep(0, 4, 8, 12), transpose(-7)] : v === 2 ? [transpose(-7)] : []),
+      dyn: "swell",
     },
 
     // MUSIC DRAMA — Munich 1865. Wagner, TRISTAN UND ISOLDE, first performed
@@ -14938,6 +15600,12 @@
     // in themes that return when the drama needs them. This box transforms one
     // phrase per section, which is the technique's SHAPE with none of its
     // dramaturgy, and that is written in `cannot` as well as here.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     musicdrama: {
       label: "Munich 1865",
       near: "romantic",
@@ -15003,6 +15671,7 @@
         : v === 1 ? [transpose(-12), spread(2)]
         : v === 2 ? [[], [invert(4)], [rotate(3)], [spread(2)]][s % 4]
         : (s % 2 ? [spread(2)] : [])),
+      dyn: "swell",
     },
 
     // MUSICAL NATIONALISM — Prague 1874. Smetana, VLTAVA, the second poem of
@@ -15058,6 +15727,12 @@
     // POLITICS: writing in a language the Habsburg court did not use, for an
     // audience that heard the tune as a claim. That is not a musical fact and
     // it is the reason the genre has a name.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     nationalism: {
       organic: true,
       instrumental: true,
@@ -15107,6 +15782,7 @@
         : v === 3 ? [transpose(-7), keep(0, 6)]
         : v === 2 ? []
         : (s % 2 ? [rotate(2)] : [])),
+      dyn: "swell",
     },
 
     // BALLET — Moscow 1877. Tchaikovsky, SWAN LAKE, op. 20, first performed at
@@ -15158,6 +15834,12 @@
     // for a ballerina is. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE
     // DANCER: music whose bar lengths, tempos and repeats are decided by what a
     // body can do, which is the one collaborator this box will never have.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     ballet: {
       organic: true,
       instrumental: true,
@@ -15204,6 +15886,7 @@
         "the body of strings, holding"
       ],
       word: v => (v === 1 ? [fill(2), transpose(-12)] : v === 2 ? [keep(0, 4, 8, 12), transpose(-7)] : []),
+      dyn: "swell",
     },
 
     // VERISMO — Rome 1890. Mascagni, CAVALLERIA RUSTICANA, first performed at
@@ -15279,6 +15962,12 @@
     // people, in the present day, killing each other over ordinary things. That
     // is a literary decision imported from Verga and Zola, it is what the word
     // means, and no engine has a field for it.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The romantic line builds
+    // across the bar rather than leaning on any note in it. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     verismo: {
       label: "Rome 1890",
       near: "belcanto",
@@ -15345,6 +16034,7 @@
         "the strings, ON THE VOICE'S OWN LINE an octave below it — not an accompaniment"
       ],
       word: v => (v === 1 ? [transpose(-7), drop(2)] : []),
+      dyn: "swell",
     },
 
     // IMPRESSIONISM — Paris 1894. Debussy, PRELUDE A L'APRES-MIDI D'UN FAUNE,
@@ -15528,6 +16218,12 @@
     // belongs to the LINE by construction — a salon trio has no kit to carry it.
     // Kept as declared, and it is the one row whose swing must survive the census
     // unexamined.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     barcarolle: {
       label: "Paris 1881",
       voices: 3,
@@ -15563,6 +16259,7 @@
       },
       words: ["the song, rocking on the tide", "the harp, rolling under it", "the cello line"],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [invert(5)] : []),
+      dyn: "arch",
     },
 
     // PARLOR — New York 1892, the hinge into the existing catalog: the
@@ -15579,6 +16276,12 @@
     // the fifties changes, at home in 1892
     //
     // WHO SINGS: the hymnal mouth, out of church and into the front room
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     parlor: {
       label: "New York 1892",
       plan: "song",
@@ -15609,6 +16312,7 @@
       },
       words: ["the song, sentimental on purpose", "the upright, oom and chord"],
       word: v => (v === 1 ? [rotate(1)] : []),
+      dyn: "arch",
     },
 
     // ======================================================================
@@ -15677,6 +16381,10 @@
     // densest hand-percussion lane in the catalog — 10 hits of 16, where
     // afrobeat's own is 6 and the 23-anchor median is 4. Take the shaker out
     // and the same chords are a deep house record.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     amapiano: {
       label: "Johannesburg 2020",
       near: "house",
@@ -15711,6 +16419,7 @@
         "the pad, an octave under, moving only when the chord does"
       ],
       word: v => (v === 1 ? [drop(2)] : []),
+      dyn: "syncope",
     },
 
     // AFROBEATS — Lagos 2021, and the plural matters: `afrobeat` (Lagos 1971)
@@ -15792,6 +16501,7 @@
         "the guitar, answering — the phrase's own gate, complemented"
       ],
       word: v => (v === 1 ? [only("gate", complement("gate")), transpose(-5)] : []),
+      dyn: "syncope",
     },
 
     // HYPERPOP — London 2021. Pop's own materials taken past the point where
@@ -15825,6 +16535,10 @@
     //
     // THE HAT IS NOT STEADY, which is trap's inheritance and drill's
     // neighbour: the holes are where the roll starts, and they move.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning.
     hyperpop: {
       bassInstr: "bass_lead",
       label: "London 2021",
@@ -15868,6 +16582,7 @@
         "the voice, pitched up an octave over it"
       ],
       word: v => (v === 1 ? [transpose(12), only("gate", rotate(2))] : []),
+      dyn: "flat",
     },
 
     // BAILE FUNK — Rio de Janeiro 2022. The TAMBORZÃO, which is a samba
@@ -15923,6 +16638,9 @@
     // 1958 bossa against a 2008 club record on tempo and kit density. Rio is the claim
     // and Rio has no column.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     bailefunk: {
       bassInstr: "bass_lead",
       label: "Rio de Janeiro 2022",
@@ -15955,6 +16673,7 @@
         "the stab, one note, answering the snare"
       ],
       word: v => (v === 1 ? [only("gate", rotate(2)), excerpt(0, 8)] : []),
+      dyn: "flat",
     },
 
     // CORRIDO TUMBADO — Guadalajara 2023, and the shortest description of it
@@ -16110,6 +16829,7 @@
       },
       words: ["the vocal, on the one vamp", "the shehnai, answering it an octave up"],
       word: v => (v === 1 ? [transpose(12), only("gate", rotate(4))] : []),
+      dyn: "syncope",
     },
 
     // MAHRAGANAT — Cairo 2021. Egyptian street-wedding music made on a
@@ -16153,6 +16873,10 @@
     // THE MAQSOUM: dum on 1, dum on the and-of-2, taks filling the rest.
     // Written on a machine kit because that is what plays it — the point of
     // the genre is that nobody is holding a drum.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     mahraganat: {
       label: "Cairo 2021",
       near: "electro",
@@ -16185,6 +16909,7 @@
         "the vocal, doubling it a fourth under"
       ],
       word: v => (v === 1 ? [transpose(-5)] : []),
+      dyn: "syncope",
     },
 
     // BEDROOM POP — Los Angeles 2020. The decade's quietest record and its
@@ -16257,6 +16982,7 @@
       tone: { wave: "triangle", cut: 1800, q: 0.7, atk: 0.02, rel: 1.8, gain: 0.22, verb: 0.48 },
       words: ["the voice, close and almost spoken", "the felt piano, under it, an octave down"],
       word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
+      dyn: "backbeat",
     },
 
     // ======================================================================
@@ -16387,6 +17113,12 @@
     // that makes plainchant not opera, taken further down and given
     // two beats a syllable, because a mələkkət sign stretches one
     // syllable across a whole formula
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     zema: {
       label: "Aksum 540",
       rate: 0.5,
@@ -16419,6 +17151,7 @@
       },
       words: ["the first half-choir", "the second, answering two bars later"],
       word: () => [],
+      dyn: "agogic",
     },
 
     // HIGHLIFE — Accra 1957, and it pays three debts this file had already
@@ -16512,6 +17245,7 @@
         "the tenor, answering late"
       ],
       word: v => (v === 1 ? [transpose(2)] : v === 2 ? [rotate(4), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // MARABI — Johannesburg 1935. The shebeen keyboard music of the
@@ -16588,6 +17322,11 @@
     // claim. The vector reads a congregational song against a shebeen band on kit
     // density. `polka` (1837) is offered as nearer on a shared duple lift.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     marabi: {
       label: "Johannesburg 1935",
       voices: 3,
@@ -16624,6 +17363,7 @@
         "the pennywhistle, an octave up and late"
       ],
       word: v => (v === 1 ? [rotate(2)] : v === 2 ? [transpose(7), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // MBUBE — Johannesburg 1939. Solomon Linda's Original Evening Birds cut
@@ -16715,6 +17455,7 @@
         "the bass singers, who are the bass"
       ],
       word: v => (v === 0 ? [] : [transpose([0, -2, -4, -7][v]), drop(2)]),
+      dyn: "agogic",
     },
 
     // ETHIO-JAZZ — Addis Ababa 1969. Mulatu Astatke's vibraphone over a
@@ -16826,6 +17567,7 @@
         "the tenor, doubling the head an octave down"
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(-5)] : []),
+      dyn: "syncope",
     },
 
     // CONGOLESE RUMBA — Kinshasa 1960. Two electric guitars interlocking over
@@ -16929,6 +17671,7 @@
       word: (v, s) => (v === 0 ? (s % 2 ? [fill(2)] : [])
                      : v === 1 ? [only("gate", complement("gate")), transpose(2)]
                                : [rotate(8), drop(2)]),
+      dyn: "syncope",
     },
 
     // KWAITO — Johannesburg 1994, and it pays a debt the file booked in its
@@ -16965,6 +17708,10 @@
     // I–IV–I–V exactly; the mode is dorian instead of ionian. Sixty years
     // and one mode apart, which is a more useful thing for the fit tool to
     // measure than a sentence claiming influence.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     kwaito: {
       label: "Johannesburg 1994",
       near: "house",
@@ -16996,6 +17743,7 @@
       tone: { wave: "sawtooth", cut: 2000, q: 1.4, atk: 0.01, rel: 0.7, gain: 0.28, verb: 0.24 },
       words: ["the stab, on the cycle", "the lead, chanted over it"],
       word: v => (v === 1 ? [drop(2), rotate(2)] : []),
+      dyn: "syncope",
     },
 
     // MANDE GUITAR — Bamako 1970. The Rail Band at the Buffet Hôtel de la
@@ -17073,6 +17821,7 @@
         "the trumpet, the praise line"
       ],
       word: v => (v === 1 ? [rotate(6)] : v === 2 ? [transpose(2), drop(3)] : []),
+      dyn: "syncope",
     },
 
     // RAÏ — Oran 1985. Pop-raï: a cheap drum machine, a synth, an accordion
@@ -17179,6 +17928,7 @@
         "the trumpet, answering an octave up"
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(7), rotate(4), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // ====================================================================
@@ -17477,6 +18227,12 @@
     // and the same reasoning as Accra 1957 one ocean east, which took the
     // figure from the Cuban 78s in the first place. `h` is the bongó's
     // martillo, and the two `s` strokes are the bongosero's slap.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. Clave, not backbeat: the
+    // weight is the off-beat stroke and the kit rule found the wrong quarter.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     son: {
       label: "Havana 1928",
       voices: 3,
@@ -17526,6 +18282,7 @@
         "the guitar, filling behind it"
       ],
       word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [transpose(-3)] : []),
+      dyn: "syncope",
     },
 
     // BOLERO — Havana 1948. The Latin American love song, and the one form
@@ -17562,6 +18319,13 @@
     // two traditions learned it from the same decade of radio —
     // but with more breath in it and one syllable a beat, because
     // a bolero is a POEM sung slowly and the diction is the point.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. A bolero is a SONG at the
+    // front of a Cuban band: the singer arrives at the phrase and the clave is
+    // behind her, not in the tune. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     bolero: {
       label: "Havana 1948",
       voices: 3,
@@ -17603,6 +18367,7 @@
         "the rhythm guitar, holding the chord"
       ],
       word: v => (v === 1 ? [transpose(5), rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "agogic",
     },
 
     // MAMBO — Mexico City 1950. Pérez Prado's RCA sessions: a big band with
@@ -17645,6 +18410,12 @@
     // abanico and the bell-driven mambo section go to the high and mid
     // toms, and what is lost is that a timbalero is playing METAL — the
     // shell and the cha-cha bell — where a tom is a head.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. Clave, not backbeat: the
+    // weight is the off-beat stroke and the kit rule found the wrong quarter.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     mambo: {
       instrumental: true,
       label: "Mexico City 1950",
@@ -17691,6 +18462,7 @@
         "the trumpet, screaming over the top"
       ],
       word: v => (v === 1 ? [rotate(8), transpose(-5)] : v === 2 ? [transpose(12), drop(3)] : []),
+      dyn: "syncope",
     },
 
     // SALSA — New York 1973, and the label says New York because that is
@@ -17775,6 +18547,7 @@
       },
       words: ["the piano montuno", "the trombones, in the holes", "the trumpet, on top of them"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [transpose(7), drop(3)] : []),
+      dyn: "syncope",
     },
 
     // CUMBIA — Barranquilla 1960. The Discos Fuentes orquesta cumbia: a
@@ -17843,6 +18616,7 @@
         "the guitar, on the off-beat with the llamador"
       ],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [only("acc", rotate(2))] : []),
+      dyn: "syncope",
     },
 
     // VALLENATO — Valledupar 1975. The other Colombian accordion music, and
@@ -17872,6 +18646,11 @@
     // trio on kit density and instrumentation. `singersongwriter` (1972) is offered as
     // nearer on tempo and a solo singer, which is a resemblance of format.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     vallenato: {
       label: "Valledupar 1975",
       voices: 2,
@@ -17911,6 +18690,7 @@
         "the guitar, doubling the run an octave down"
       ],
       word: v => (v === 1 ? [transpose(-12), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // SAMBA — Rio de Janeiro 1939. Estácio samba: the surdo on the second
@@ -17987,6 +18767,7 @@
         "the seven-string, walking under it"
       ],
       word: v => (v === 1 ? [only("acc", rotate(3))] : v === 2 ? [transpose(-12), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // CHORO — Rio de Janeiro 1900, and it is now the oldest record in the
@@ -18150,6 +18931,7 @@
         "the left hand, holding the chord under it"
       ],
       word: v => (v === 1 ? [drop(4)] : []),
+      dyn: "syncope",
     },
 
     // MERENGUE — Santo Domingo 1955. The fastest thing in this batch and one
@@ -18234,6 +19016,7 @@
         "the accordion, from the típico band"
       ],
       word: v => (v === 1 ? [transpose(5), drop(2)] : v === 2 ? [rotate(4)] : []),
+      dyn: "syncope",
     },
 
     // BACHATA — Santo Domingo 1992. The same island forty years later and a
@@ -18291,6 +19074,7 @@
       },
       words: ["the requinto, between the lines", "the segunda, answering it", "the singer"],
       word: v => (v === 1 ? [rotate(4), transpose(-5)] : v === 2 ? [drop(2)] : []),
+      dyn: "syncope",
     },
 
     // CALYPSO — Port of Spain 1956. The calypsonian's verse-and-refrain over
@@ -18353,6 +19137,7 @@
       tone: { wave: "triangle", cut: 2800, q: 1, atk: 0.004, rel: 0.55, gain: 0.27, verb: 0.3 },
       words: ["the calypsonian", "the pan, answering the line", "the trumpet, on the refrain"],
       word: v => (v === 1 ? [transpose(12), rotate(4), drop(2)] : v === 2 ? [drop(3)] : []),
+      dyn: "syncope",
     },
 
     // SOCA — Port of Spain 1979. Lord Shorty's "soul of calypso": the same
@@ -18423,6 +19208,7 @@
         "the synth, holding the pad"
       ],
       word: v => (v === 1 ? [only("acc", rotate(2))] : v === 2 ? [drop(4)] : []),
+      dyn: "syncope",
     },
 
     // MENTO — Kingston 1952. Jamaica's own country music, and the rung
@@ -18455,6 +19241,12 @@
     // Jamaican quadrille and the Cuban contradanza are SIBLINGS off the shared
     // French and English contredanse — which is `contradanza`'s own missing want —
     // and mento's identity is the accent on beat four, not the habanera cell.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     mento: {
       label: "Kingston 1952",
       voices: 3,
@@ -18505,6 +19297,7 @@
         "the singer, telling the story"
       ],
       word: v => (v === 1 ? [drop(2), transpose(-5)] : v === 2 ? [rotate(8)] : []),
+      dyn: "backbeat",
     },
 
     // ROCKSTEADY — Kingston 1966, and it is the rung the catalog was missing
@@ -18566,6 +19359,7 @@
         "the trombone, on the head"
       ],
       word: v => (v === 1 ? [drop(4)] : v === 2 ? [transpose(-5), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // DANCEHALL — Kingston 1985, and it is the rung `reggaeton` and
@@ -18581,6 +19375,10 @@
     // honest reading of a form where fifty singers voice the same two-bar
     // loop: nothing modulates, because the backing track does not know which
     // song it is under.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning.
     dancehall: {
       label: "Kingston 1985",
       voices: 2,
@@ -18613,6 +19411,7 @@
       tone: { wave: "square", cut: 2400, q: 2.2, atk: 0.003, rel: 0.3, gain: 0.28, verb: 0.2 },
       words: ["the bass line, which is the riddim", "the melody preset over the top of it"],
       word: v => (v === 1 ? [transpose(12), drop(2)] : []),
+      dyn: "flat",
     },
 
     // HUAYNO — Cusco 1965. The Andes' own song and dance, and the only
@@ -18750,6 +19549,12 @@
     // nothing clever. The tololoche's oom-pah is in `bassStyle: "fifths"`
     // one line up, which is the only place in this catalog that word
     // means what it means in a brass band.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     nortena: {
       label: "Monterrey 1955",
       voices: 3,
@@ -18797,6 +19602,7 @@
         "the second voice, a third under the first"
       ],
       word: v => (v === 1 ? [drop(3), transpose(-12)] : v === 2 ? [transpose(-3)] : []),
+      dyn: "backbeat",
     },
 
     // BANDA — Mazatlán 1938. A Sinaloan brass band: clarinets on the tune,
@@ -18835,6 +19641,12 @@
     //
     // THE TAMBORA IS A KICK AND A LOW TOM AT ONCE — one drum, two heads,
     // one player hitting both — and the tarola's press roll is the snare.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     banda: {
       label: "Mazatlán 1938",
       voices: 3,
@@ -18871,6 +19683,7 @@
         "the tuba, on its feet"
       ],
       word: v => (v === 1 ? [rotate(8), transpose(-5)] : v === 2 ? [drop(4), transpose(-12)] : []),
+      dyn: "backbeat",
     },
 
     // TROPICÁLIA — São Paulo 1968. Bossa nova's harmony, an electric rock
@@ -18938,6 +19751,7 @@
         "the strings, the arranger's half"
       ],
       word: v => (v === 1 ? [transpose(-12), only("acc", rotate(2))] : v === 2 ? [drop(4)] : []),
+      dyn: "arch",
     },
 
     // ROCK EN ESPAÑOL — Buenos Aires 1967. Los Gatos, "La balsa" b/w "Ayer
@@ -19082,6 +19896,7 @@
         "the singer, a syllable and a quarter a note"
       ],
       word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(2)] : []),
+      dyn: "backbeat",
     },
 
     // NUEVA CANCIÓN — Santiago 1966. Violeta Parra, LAS ÚLTIMAS COMPOSICIONES
@@ -19309,6 +20124,12 @@
     // hat lane with the rest of this file's scrapers; the bottle struck
     // with a nail is `p`. There is no kick and no snare, because there is
     // no drummer — that is the whole texture.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     palmwine: {
       label: "Freetown 1950",
       voices: 2,
@@ -19346,6 +20167,7 @@
       },
       words: ["the guitar, two fingers and no plectrum", "the singer, over the top of it"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+      dyn: "anacrusis",
     },
 
     // KWELA — Johannesburg 1955, and it pays marabi's `wants` line. Township
@@ -19410,6 +20232,7 @@
         "the second guitar, in the holes"
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [rotate(4), transpose(-5), drop(3)] : []),
+      dyn: "syncope",
     },
 
     // MBAQANGA — Johannesburg 1964, and it is the rung TWO anchors have been
@@ -19473,6 +20296,7 @@
         "the chorus behind the groaner"
       ],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "syncope",
     },
 
     // SOUKOUS — Kinshasa 1985. Congolese rumba with the rumba taken out and
@@ -19531,6 +20355,7 @@
         "the rhythm guitar, in what is left"
       ],
       word: v => (v === 1 ? [transpose(-3), rotate(2)] : v === 2 ? [drop(2), rotate(6)] : []),
+      dyn: "syncope",
     },
 
     // BENGA — Nairobi 1972. Luo guitar music from western Kenya on Nairobi
@@ -19613,6 +20438,7 @@
         "the singer, over both"
       ],
       word: v => (v === 1 ? [transpose(4), drop(2)] : v === 2 ? [drop(3), rotate(8)] : []),
+      dyn: "syncope",
     },
 
     // MAKOSSA — Douala 1972. Cameroon's own dance music, and the record that
@@ -19677,6 +20503,7 @@
         "the horns, on the turnaround"
       ],
       word: v => (v === 1 ? [only("acc", rotate(2)), drop(2)] : v === 2 ? [rotate(12), drop(3)] : []),
+      dyn: "syncope",
     },
 
     // HIPLIFE — Accra 1998. Highlife's own grandchild: Reggie Rockstone
@@ -19728,6 +20555,7 @@
       tone: { wave: "triangle", cut: 2500, q: 1.1, atk: 0.006, rel: 0.5, gain: 0.27, verb: 0.3 },
       words: ["the guitar, highlife's own figure", "the pad, under the rap"],
       word: v => (v === 1 ? [drop(4)] : []),
+      dyn: "syncope",
     },
 
     // KIZOMBA — Luanda 1995. Angola's slow couple dance: semba's language at
@@ -19781,6 +20609,7 @@
       tone: { wave: "triangle", cut: 2300, q: 1, atk: 0.01, rel: 0.8, gain: 0.26, verb: 0.4 },
       words: ["the guitar, picking the cycle", "the synth pad under it", "the singer"],
       word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(4), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // COUPÉ-DÉCALÉ — Abidjan 2003. Ivorian club music made in the Paris
@@ -19791,6 +20620,10 @@
     // THE YEAR is the Jet Set's first records and the coining of the name in
     // 2002-03. Abidjan is the dot because that is where it landed and became
     // a national music, and the comment is where the Paris half belongs.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     coupedecale: {
       label: "Abidjan 2003",
       voices: 2,
@@ -19831,6 +20664,7 @@
       },
       words: ["the synth stab", "the guitar, ndombolo's own figure"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // ---- EAST ASIA -----------------------------------------------------
@@ -19894,6 +20728,12 @@
     // American belter of the same decade, and the row that gets
     // closest is the Bulgarian one for the same reason: no wobble,
     // very little air, and the tone pressed rather than floated.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     shidaiqu: {
       label: "Shanghai 1940",
       voices: 3,
@@ -19938,6 +20778,7 @@
       },
       words: ["the singer", "the sax, answering the phrase", "the guitar, comping"],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(3)] : []),
+      dyn: "anacrusis",
     },
 
     // ENKA — Tokyo 1969. The Japanese sentimental ballad: a minor
@@ -19979,6 +20820,12 @@
     // frequency cannot do that — it can only get to the note. Two different
     // gestures, and buying one is not buying the other. Written down here so
     // nobody reads the new field as having paid that debt.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     enka: {
       label: "Tokyo 1969",
       voices: 3,
@@ -20024,6 +20871,7 @@
       },
       words: ["the singer", "the shamisen, answering the line", "the strings, underneath"],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "backbeat",
     },
 
     // TROT — Seoul 1965, and it gives the catalog a Korean record
@@ -20039,6 +20887,12 @@
     // two-beat bounce (the swing dial at a third, which is what this file has
     // for a lilt) where enka is 72 and rubato-leaning with a string pad; and
     // trot's cast is a horn where enka's is a shamisen.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     trot: {
       label: "Seoul 1965",
       voices: 3,
@@ -20087,6 +20941,7 @@
       },
       words: ["the singer", "the trumpet, answering", "the accordion, holding the two-beat"],
       word: v => (v === 1 ? [rotate(8), drop(3)] : v === 2 ? [drop(2)] : []),
+      dyn: "anacrusis",
     },
 
     // CANTOPOP — Hong Kong 1984. The Cantonese ballad and mid-tempo pop of
@@ -20157,6 +21012,7 @@
       },
       words: ["the singer", "the synth, answering the line", "the pad, holding the chord"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "arch",
     },
 
     // MANDOPOP — Taipei 2003. The Jay Chou moment: R&B phrasing and a hip-hop
@@ -20226,6 +21082,7 @@
       },
       words: ["the singer", "the zither hook", "the electric piano, under the verse"],
       word: v => (v === 1 ? [transpose(12), drop(3)] : v === 2 ? [drop(4)] : []),
+      dyn: "arch",
     },
 
     // ---- SOUTHEAST ASIA ------------------------------------------------
@@ -20378,6 +21235,7 @@
       },
       words: ["the singer", "the suling, curling round the vocal", "the guitar, on the cycle"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(3)] : []),
+      dyn: "syncope",
     },
 
     // LUK THUNG — Bangkok 1970. Thai country song: a rural voice with a very
@@ -20395,6 +21253,12 @@
     //
     // WHO SINGS: the widest, latest wobble in the table, which is
     // what a luk thung singer's ûan actually is
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     lukthung: {
       label: "Bangkok 1970",
       voices: 3,
@@ -20439,6 +21303,7 @@
       },
       words: ["the singer", "the guitar, on the cycle", "the horns, answering the line"],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [rotate(8), drop(3)] : []),
+      dyn: "backbeat",
     },
 
     // MANILA SOUND — Manila 1976. Filipino soft rock and disco-pop sung in
@@ -20506,6 +21371,7 @@
       },
       words: ["the lead voice", "the guitar, clean and high", "the Rhodes, under both"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "arch",
     },
 
     // NHẠC VÀNG — Ho Chi Minh City 1968. "Golden music": the Vietnamese
@@ -20626,6 +21492,7 @@
         "the singer"
       ],
       word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(8), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // ---- SOUTH ASIA ----------------------------------------------------
@@ -20718,6 +21585,12 @@
     // this record, and GENRES.md's law is that no parent may be later than its
     // child — the practice is centuries older than this row and the table's date
     // is a recording's.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     filmi: {
       label: "Mumbai 1960",
       voices: 4,
@@ -20770,6 +21643,7 @@
         "the harmonium, holding the drone"
       ],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : v === 3 ? [drop(8)] : []),
+      dyn: "agogic",
     },
 
     // QAWWALI — Faisalabad 1988. Sufi devotional song: a lead voice, a party
@@ -20820,6 +21694,12 @@
     // steps travel, so the reed organ's drone and the chorus stay put.
     // (The two `cannot`s above are untouched and still true: this buys the
     // SLIDE, not the improvised sargam run and not the accelerando.)
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     qawwali: {
       label: "Faisalabad 1988",
       voices: 3,
@@ -20872,6 +21752,7 @@
         "the harmonium, under both"
       ],
       word: v => (v === 1 ? [drop(2), transpose(-5)] : v === 2 ? [drop(8)] : []),
+      dyn: "agogic",
     },
 
     // BHANGRA — Jalandhar 1972, and it pays `punjabipop`'s own `wants` line.
@@ -20971,6 +21852,7 @@
         "the tumbi's figure, on one steel string"
       ],
       word: v => (v === 1 ? [drop(8)] : v === 2 ? [transpose(12), split(2), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // ---- THE MIDDLE EAST, NORTH AFRICA AND CENTRAL ASIA ----------------
@@ -21093,6 +21975,7 @@
       },
       words: ["the singer", "the accordion, answering the phrase", "the horns, on the refrain"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : v === 2 ? [drop(3)] : []),
+      dyn: "syncope",
     },
 
     // AL-JIL — Cairo 1988. Egyptian synth pop: shaabi's rhythm section on a
@@ -21106,6 +21989,10 @@
     // drum machine plus a SEQUENCER, in harmonic minor for the augmented
     // second that names hijaz-kar, at 104, and its identity is the
     // production. They are cousins and they are not the same record.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     aljil: {
       label: "Cairo 1988",
       voices: 3,
@@ -21152,6 +22039,7 @@
       },
       words: ["the singer", "the synth, on the hook", "the sequenced pad under it"],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "syncope",
     },
 
     // ARABESK — Istanbul 1980. Turkey's great disreputable popular music: a
@@ -21180,6 +22068,12 @@
     // THE DÜYEK, VOICED ACROSS THREE LANES: düm on 1 and the and-of-2, tek
     // on 2 and 4, and the darbuka's fill between. The same one-player-two-
     // strokes compromise raï makes for its derbouka, said again.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     arabesk: {
       label: "Istanbul 1980",
       voices: 3,
@@ -21231,6 +22125,7 @@
         "the guitar, on the off-beat"
       ],
       word: v => (v === 1 ? [drop(4)] : v === 2 ? [only("acc", rotate(2)), drop(2)] : []),
+      dyn: "agogic",
     },
 
     // ANADOLU ROCK — Istanbul 1972. Turkish psychedelia: a fuzz guitar and a
@@ -21304,6 +22199,7 @@
         "the singer"
       ],
       word: v => (v === 1 ? [drop(8)] : v === 2 ? [rotate(8), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // IRANPOP — Tehran 1974. Pre-revolutionary Iranian pop: a Persian melody
@@ -21397,6 +22293,7 @@
       },
       words: ["the singer", "the strings, underneath", "the guitar, answering the phrase"],
       word: v => (v === 1 ? [drop(4)] : v === 2 ? [rotate(8), drop(2)] : []),
+      dyn: "arch",
     },
 
     // KABUL POP — Kabul 1972, and it is the catalog's only Central Asian
@@ -21419,6 +22316,12 @@
     // label, so it is not named; the Persian side of this music reaches
     // the record through the language and the poetry, which no anchor
     // carries.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The oldest sung lines in
+    // the table have no bar to lean on, and the Roman ode that quotes them
+    // says so. The `roots` cluster takes `lean`; the anchor's own evidence
+    // outranks it, which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     kabulpop: {
       label: "Kabul 1972",
       voices: 3,
@@ -21469,6 +22372,7 @@
         "the rubab's figure, on a steel string"
       ],
       word: v => (v === 1 ? [drop(8)] : v === 2 ? [split(2), drop(2)] : []),
+      dyn: "agogic",
     },
 
     // ---- EUROPE, THE VERNACULAR HALF -----------------------------------
@@ -21510,6 +22414,12 @@
     // instruments and a voice — the rhythm is in the strumming hand and
     // in a set of worry beads — so `kit` is empty and the pulse is the
     // bouzouki's own, which is what `artic: staccato` at `maxHold: 2` says.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     rebetiko: {
       label: "Piraeus 1935",
       voices: 3,
@@ -21553,6 +22463,7 @@
         "the baglamas, an octave down"
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [transpose(-12), split(2)] : []),
+      dyn: "agogic",
     },
 
     // FADO — Lisbon 1955. The Portuguese song of saudade: one voice, a
@@ -21578,6 +22489,12 @@
     // "moorish andalusi song" PAID 2026-08-30 (`zajal`, Córdoba 1150)
     // — the twelfth-century music of al-Andalus itself, which the nuba
     // row's comment always said its Maghribi codification was not.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     fado: {
       label: "Lisbon 1955",
       voices: 3,
@@ -21620,6 +22537,7 @@
         "the viola, holding the chord"
       ],
       word: v => (v === 1 ? [transpose(12), rotate(8), drop(2)] : v === 2 ? [drop(4)] : []),
+      dyn: "arch",
     },
 
     // RUMBA CATALANA — Barcelona 1970. The Catalan Roma rumba: a nylon
@@ -21685,6 +22603,7 @@
       },
       words: ["the guitar, the ventilador", "the singer, over the palmas"],
       word: v => (v === 1 ? [rotate(4), drop(2)] : []),
+      dyn: "syncope",
     },
 
     // IRISH TRAD — Dublin 1963. The session repertory as the ballad revival
@@ -21831,6 +22750,11 @@
     // of tempo and kit cannot hold. `tarantella` (1959) is offered as nearer — two fast
     // duple village dances, one Balkan and one Neapolitan, no contact.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     balkanbrass: {
       label: "Guča 1985",
       voices: 3,
@@ -21884,6 +22808,7 @@
         "the tuba, on the two"
       ],
       word: v => (v === 1 ? [rotate(2), transpose(-5)] : v === 2 ? [drop(4), transpose(-12)] : []),
+      dyn: "backbeat",
     },
 
     // ---- NORTH AMERICA, THE FIVE RUNGS THE GENEALOGY ASKED FOR ---------
@@ -21932,6 +22857,12 @@
     // music that instrument is a recording OF.
     // THE LEFT HAND IS THE BASS AND IT MARCHES: root on the beat, chord on
     // the off-beat, which is `fifths` said for a piano instead of a tuba.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     ragtime: {
       instrumental: true,
       label: "Sedalia 1899",
@@ -21958,6 +22889,7 @@
       tone: { wave: "triangle", cut: 2700, q: 0.9, atk: 0.003, rel: 0.5, gain: 0.27, verb: 0.3 },
       words: ["the right hand, the strain", "the left hand, marching under it"],
       word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
+      dyn: "syncope",
     },
 
     // SWING — Kansas City 1938, and it pays a debt TWO anchors have been
@@ -22003,6 +22935,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: boogiewoogie .35→.30, neworleans .25→.20, territoryband .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     swing: {
       label: "Kansas City 1938",
       voices: 3,
@@ -22050,6 +22987,7 @@
         "the guitar, four to the bar"
       ],
       word: v => (v === 1 ? [only("acc", rotate(4)), drop(2)] : v === 2 ? [split(2), drop(1)] : []),
+      dyn: "anacrusis",
     },
 
     // BLUEGRASS — Nashville 1946. The Anglo-Celtic string band at speed: a
@@ -22216,6 +23154,7 @@
       },
       words: ["the tenor, who has the tune", "the treble, above it", "the alto", "the bass"],
       word: v => (v === 0 ? [] : [transpose([0, 5, -4, -9][v]), drop(3)]),
+      dyn: "agogic",
     },
 
     // ZYDECO — Lafayette 1955. Louisiana Creole dance music: a piano
@@ -22292,6 +23231,7 @@
       },
       words: ["the accordion", "the harmonica, answering it", "the guitar, chopping"],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [only("acc", rotate(2))] : []),
+      dyn: "syncope",
     },
 
     // ======================================================================
@@ -22536,6 +23476,7 @@
         return b === 7 ? [spread(0), drop(2)]
                        : [transpose([-3, -2, 1, 1, 1, 0, 2][b])];
       },
+      dyn: "arch",
     },
 
     // BREAKING NEWS — New York 2006. The same job two generations on, and the
@@ -22619,6 +23560,12 @@
     // eighths, and the low tom carries the processed-timpani weight on 1 and
     // the and-of-3. The fill bar is the sting arriving — the crash on the
     // downbeat and the tom closing into it.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     breakingnews: {
       instrumental: true,
       label: "New York 2006",
@@ -22683,6 +23630,7 @@
         "the pad, holding the whole thing together"
       ],
       word: v => (v === 0 ? [fill(4), rotate(3), drop(2)] : v === 1 ? [excerpt(0, 4), fill(2)] : v === 2 ? [spread(0), fill(8), rotate(7), drop(2)] : [drop(2)]),
+      dyn: "flat",
     },
 
     // ====================================================================
@@ -22833,6 +23781,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: swing .50→.40, deltablues .35→.30, boogiewoogie .15→.10, territoryband .20→.15. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `band` cluster takes `backbeat`; the anchor's own evidence outranks
+    // it, which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     jumpblues: {
       label: "Los Angeles 1946",
       voices: 4,
@@ -22887,6 +23840,7 @@
         [[fill(1), drop(2)], [fill(1)], [fill(1), rotate(3)]][s % 3],
         [[keep(0, 4, 8, 12)], [keep(0, 4, 8, 12)], [fill(4)]][s % 3],
       ][v],
+      dyn: "anacrusis",
     },
 
     // TIN PAN ALLEY — New York 1924. West 28th Street between Fifth and
@@ -22935,6 +23889,12 @@
     // cubicle on West 28th Street held a plugger and an upright piano and nothing
     // else; the row seats what the business had. The 0.15 is the song's — a
     // thirty-two bar chorus sung and played with a lift. Kept as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     tinpanalley: {
       label: "New York 1924",
       voices: 2,
@@ -22992,6 +23952,7 @@
       word: (v, s) => (v === 0
         ? [[], [transpose(1)], [transpose(-1), rotate(2)]][s % 3]
         : [[drop(2)], [drop(2), fill(2)], [drop(2)]][s % 3]),
+      dyn: "anacrusis",
     },
 
     // CHORALE — Nuremberg 1586. Lucas Osiander's *Fünfftzig geistliche
@@ -23112,6 +24073,7 @@
         "the bass, walking the cadence"
       ],
       word: v => (v === 0 ? [] : v === 1 ? [transpose(-2)] : v === 2 ? [transpose(-4), drop(2)] : [keep(0, 4, 8, 12), transpose(-7)]),
+      dyn: "agogic",
     },
 
     // BEL CANTO — Milan 1831. Bellini's *Norma* opened at La Scala on 26
@@ -23144,6 +24106,12 @@
     // late wobble and very little air in the tone. It is the
     // only row in MOUTHS written for a voice that is meant to
     // fill a hall without help.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     belcanto: {
       label: "Milan 1831",
       voices: 3,
@@ -23194,6 +24162,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [fill(2), keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "arch",
     },
 
     // SERIAL — Vienna 1923. Schoenberg's Suite für Klavier op. 25, written
@@ -23354,6 +24323,12 @@
     // Cents landed that morning — MODES.rast says the neutral degrees
     // as numbers and `tarab` (Cairo 1934) plays them. What stays true
     // of THIS row is only the smaller fact below.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     taqsim: {
       instrumental: true,
       label: "Cairo 1932",
@@ -23396,6 +24371,7 @@
         ? [[drop(2)], [transpose(2), fill(2)], [transpose(4), fill(2), rotate(3)],
            [transpose(2), reverse()]][s % 4]
         : [drop(12)]),
+      dyn: "agogic",
     },
 
     // FIRQA — Cairo 1964. "Enta Omri", Umm Kulthum's first record with
@@ -23445,6 +24421,11 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: tarab .40→.35, taqsim .30→.25, romantic .30→.25. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     firqa: {
       label: "Cairo 1964",
       voices: 4,
@@ -23505,6 +24486,7 @@
                     : v === 1 ? [transpose(7), drop(2)]
                     : v === 2 ? [rotate(8), drop(4)]
                     : [drop(8)]),
+      dyn: "agogic",
     },
 
     // NUBA — Tetouan 1790. Muhammad al-Ha'ik's *kunnash*, the songbook
@@ -23563,6 +24545,12 @@
     // The row was written for Provence 1210 and the joke is that
     // it is right here for a reason: that is the direction the
     // borrowing actually ran.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The Arab court line arrives
+    // at its phrase end, ancestor and descendant alike. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     nuba: {
       label: "Tetouan 1790",
       voices: 4,
@@ -23617,6 +24605,7 @@
         "the qanun, holding the mode"
       ],
       word: v => (v === 0 ? [] : v === 1 ? [transpose(7)] : v === 2 ? [fill(2), drop(2)] : [drop(8)]),
+      dyn: "agogic",
     },
 
     // YAYUE — Suizhou 433 BC. The record is an EXCAVATION, which is this
@@ -23781,6 +24770,7 @@
           ? [[keep(0, 4, 8, 12)], [keep(0, 4, 8, 12), rotate(4)], [keep(0, 8)]][s % 3]
         : v === 1 ? [keep(0, 8), transpose(12)]
         : [drop(12), transpose(-12)]),
+      dyn: "swell",
     },
 
     // KUNQU — Suzhou 1598. The record is a play and its year: Tang Xianzu's
@@ -24283,6 +25273,12 @@
     // it — the nearest anchors by SOUND are European chant and a drone,
     // and naming either as a parent would be the conscription WORLD.md
     // §4 caught `worldfolk` in.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     guqin: {
       organic: true,
       instrumental: true,
@@ -24336,6 +25332,7 @@
       word: (v, s) => (v === 0
         ? [[drop(2)], [drop(2), rotate(3)], [drop(4)], [drop(2), reverse()]][s % 4]
         : [drop(8), transpose(7)]),
+      dyn: "agogic",
     },
 
     // PIPAQU — Wuxi 1819. The record is a printed book and it is the first
@@ -24786,6 +25783,12 @@
     // same number to a decimal place as Thanjavur/Chennai, which this table
     // declared and kept the night before. The atlas PLACES ledger carries
     // the full run.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     dhrupad: {
       label: "Gwalior 1501",
       voices: 3,
@@ -24848,6 +25851,7 @@
           ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]
         : v === 1 ? [drop(4), transpose(-3)]
         : [drop(12)]),
+      dyn: "agogic",
     },
 
     // BADA KHYAL — Delhi 1740. Not a recording; there could not be one. The
@@ -24969,6 +25973,12 @@
     // the tanpura where dhrupad's gambhir voice works below it. That
     // difference is the reason `dhrupad` KEEPS its bass in the same round
     // and this row does not.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     badakhyal: {
       label: "Delhi 1740",
       voices: 2,
@@ -25038,6 +26048,7 @@
       word: (v, s) => (v === 0
           ? [[drop(6)], [drop(4), transpose(2)], [drop(2), transpose(5)], [fill(2), transpose(7)]][s % 4]
         : [drop(12)]),
+      dyn: "agogic",
     },
 
     // TAPPA — Lucknow 1780. The record is a court appointment: "The tappa
@@ -25459,6 +26470,13 @@
     // finger-counts, then a clap and a wave, then a clap and a wave — and the
     // audience counts with the player. `c` on steps 0, 8 and 12 is that hand, and
     // it is the one thing in the kit that is not a drum.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. The tala's sam is the weight
+    // and a mridangam is not a snare — the kit rule read a South Indian
+    // drummer as a backbeat. The `roots` cluster takes `lean`; the anchor's
+    // own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     kriti: {
       label: "Thanjavur 1810",
       voices: 3,
@@ -25527,6 +26545,7 @@
           ? [[], [transpose(5)], [transpose(5), fill(2)], [fill(2), rotate(2)]][s % 4]
         : v === 1 ? [drop(2), transpose(-7)]
         : [drop(12)]),
+      dyn: "lean",
     },
 
     // VARNAM — Thanjavur 1830. The record is four brothers and an order of
@@ -25603,6 +26622,13 @@
     // 2000s filmi and devotional sides in `I IV V I` and `I vi IV V`, which is a
     // chord cycle and not a varnam. `bpm: 92` is a choice between `carnatic`'s
     // 96 and `kriti`'s 84 and is marked as one.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. The tala's sam is the weight
+    // and a mridangam is not a snare — the kit rule read a South Indian
+    // drummer as a backbeat. The `roots` cluster takes `lean`; the anchor's
+    // own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     varnam: {
       label: "Thanjavur 1830",
       voices: 3,
@@ -25671,6 +26697,7 @@
         "the tanpura"
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(2), transpose(12)] : v === 2 ? [drop(12)] : []),
+      dyn: "lean",
     },
 
     // CARNATIC — Chennai 1935. Not a record but a FORM, and it has an
@@ -26045,6 +27072,12 @@
     // and natural sixth. The row's year is the Todai-ji Great Buddha eye-opening
     // ceremony (Nara, 752), the dated performance the anchor is written from. The
     // row named ritsu and then sang a flat sixth ritsu does not have.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `drift`
+    // cluster takes `swell`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     gagaku: {
       organic: true,
       instrumental: true,
@@ -26093,6 +27126,7 @@
           ? [[], [fill(2)], [transpose(1), fill(2)]][s % 3]
         : v === 1 ? [drop(12)]
         : [keep(0, 8), transpose(-2)]),
+      dyn: "agogic",
     },
 
     // ZIRYAB — Córdoba 822. Abu l-Hasan Ali ibn Nafi, called Ziryab,
@@ -26155,6 +27189,12 @@
     //
     // WHO SINGS: melisma — one syllable across many notes is
     // the Andalusi line's whole surface.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The Arab court line arrives
+    // at its phrase end, ancestor and descendant alike. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     andalusi: {
       label: "Córdoba 822",
       voices: 2,
@@ -26201,6 +27241,7 @@
       word: (v, s) => (v === 0
         ? [[], [fill(2)], [transpose(2), fill(2)], [reverse()]][s % 4]
         : [transpose(-5), drop(2)]),
+      dyn: "agogic",
     },
 
     // DU FAY — Florence 1436. "Nuper rosarum flores", sung at the
@@ -26245,6 +27286,12 @@
     // in the later sense — said out loud rather than smuggled — but it does
     // have a lowest voice, and this table's job is to name a throat for the
     // line it WRITES.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     isorhythm: {
       label: "Florence 1436",
       voices: 4,
@@ -26293,6 +27340,7 @@
                     : v === 1 ? [[rotate(2)], [invert(3)], [fill(2)]][s % 3]
                     : v === 2 ? [keep(0, 4, 8, 12)]
                     : [keep(0, 8), transpose(-3)]),
+      dyn: "terraced",
     },
 
     // BALLAD — London 1666. Samuel Pepys, the second of January 1666:
@@ -26325,6 +27373,12 @@
     //
     // WHO SINGS: trobar — the solo narrative tenor, which is
     // exactly what a ballad singer is.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     ballad: {
       label: "London 1666",
       voices: 1,
@@ -26364,6 +27418,7 @@
       },
       words: ["the ballad, verse on verse, the tune unbroken"],
       word: (v, s) => [[], [], [fill(1)], []][s % 4],
+      dyn: "agogic",
     },
 
     // OPERA SERIA — London 1724. Handel's Giulio Cesare, first night at
@@ -26387,6 +27442,12 @@
     // but Venice 1725 postdates this label by a year, so the debt is
     // carried in wants as the practice rather than claimed as the
     // anchor: an edge may not run backwards.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `roots` cluster takes
+    // `lean`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     operaseria: {
       label: "London 1724",
       voices: 3,
@@ -26451,6 +27512,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4)]][s % 4]
                     : v === 1 ? [drop(8)]
                     : [keep(0, 4, 8, 12), transpose(-7)]),
+      dyn: "terraced",
     },
 
     // MODINHA — Lisbon 1775. Domingos Caldas Barbosa, the Rio-born son
@@ -26538,6 +27600,12 @@
     // the viola's thumb keeps the low pulse, the fingers cut across
     // it — said as a hand-drum lane and a shaker lane, the syncope on
     // the p lane's and-of-two that the maxixe and the samba inherit.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     lundu: {
       label: "Lisbon 1798",
       voices: 2,
@@ -26584,6 +27652,7 @@
       words: ["the lundu, teasing", "the viola, thumb and fingers"],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)]][s % 3]
                     : [transpose(-5), keep(0, 3, 6, 8, 11, 14)]),
+      dyn: "anacrusis",
     },
 
     // LIED — Vienna 1814. Schubert, seventeen years old, sets Goethe's
@@ -26623,6 +27692,11 @@
     // singer against an 1815 voice-and-piano on kit density and plan, and hears a piano
     // as a distance. `concerto` (1725) is offered as nearer on a shared arc.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     lied: {
       label: "Vienna 1814",
       voices: 2,
@@ -26673,6 +27747,7 @@
       words: ["the song, rising each strophe", "the piano figure, the wheel that never stops"],
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [transpose(2), fill(2)], [transpose(1)]][s % 4]
                     : [keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "arch",
     },
 
     // HABANERA — Havana 1860. Sebastián Iradier's "La Paloma", written
@@ -26695,6 +27770,12 @@
     // THE CELL, on the kick: dotted-eighth sixteenth, two eighths —
     // steps 0, 3, 4, 6 of an eight-step half bar, twice a bar. It is
     // the one fact this row exists to carry.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     habanera: {
       label: "Havana 1860",
       voices: 2,
@@ -26735,6 +27816,7 @@
       words: ["the song, over the cell", "the guitar, answering the verse"],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)]][s % 3]
                     : [transpose(-3), drop(2)]),
+      dyn: "syncope",
     },
 
     // SPIRITUALS — Nashville 1871. The Fisk Jubilee Singers left Fisk
@@ -26777,6 +27859,13 @@
     // this row seated all four of its chairs on one `MOUTHS.hymnal` alto
     // while spreading them three octaves apart with `reg: v => 1 - v`. SATB
     // by chair, in the order the row already ranks them.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. A spiritual arrives where
+    // the hymn, the shape note and the holler it comes from arrive; the BUILD
+    // is gospel's invention a generation later. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     spirituals: {
       label: "Nashville 1871",
       voices: 4,
@@ -26827,6 +27916,7 @@
         "the bass, the rock"
       ],
       word: v => (v === 0 ? [] : v === 1 ? [transpose(-2)] : v === 2 ? [transpose(-4), drop(2)] : [keep(0, 4, 8, 12), transpose(-7)]),
+      dyn: "agogic",
     },
 
     // DANZÓN — Matanzas 1879. Miguel Faílde's "Las alturas de Simpson",
@@ -26849,6 +27939,12 @@
     //
     // the baqueteo on the timbal, said on the p lane; the güiro's
     // scrape is the h lane's even eighths.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     danzon: {
       instrumental: true,
       label: "Matanzas 1879",
@@ -26893,6 +27989,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(2), fill(2)]][s % 3]
                     : v === 1 ? [transpose(-3), rotate(4)]
                     : [transpose(-5), drop(2)]),
+      dyn: "syncope",
     },
 
     // MAXIXE — Rio de Janeiro 1895. Chiquinha Gonzaga's "Corta-Jaca",
@@ -26910,6 +28007,12 @@
     // wearing a polka's clothes, and the polka is named below.
     // "the polka, as rio danced it" PAID 2026-08-30, the folk-floor
     // round: `polka` (Prague 1837) — the clothes now have an owner.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     maxixe: {
       instrumental: true,
       label: "Rio de Janeiro 1895",
@@ -26950,6 +28053,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(4), fill(2)]][s % 3]
                     : v === 1 ? [transpose(-5), rotate(2)]
                     : [transpose(-3), keep(2, 6, 10, 14)]),
+      dyn: "syncope",
     },
 
     // CEMIL BEY — Istanbul 1910. Tanburi Cemil Bey's 78s for Orfeon,
@@ -26989,6 +28093,12 @@
     // (Constantinople 843) was weighed and declined: Marmarinos's EISAGOGI
     // (Constantinople, 1749) documents shared 18th-century practice between the
     // two, which is exchange and not descent.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     ottoman: {
       instrumental: true,
       label: "Istanbul 1910",
@@ -27028,6 +28138,7 @@
         ? [[drop(2)], [transpose(2), fill(2)], [transpose(4), fill(2), rotate(3)],
            [reverse(), transpose(2)]][s % 4]
         : [drop(12)]),
+      dyn: "agogic",
     },
 
     // NEW ORLEANS — New Orleans 1923. King Oliver's Creole Jazz Band —
@@ -27081,6 +28192,11 @@
     // brass band. `musette` (1880) is offered as nearer on tempo and a wind-led band,
     // and Paris did not teach Storyville how to play.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     neworleans: {
       instrumental: true,
       label: "New Orleans 1923",
@@ -27132,6 +28248,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)]][s % 3]
                     : v === 1 ? [transpose(3), fill(2), rotate(4)]
                     : [transpose(-4), keep(0, 3, 6, 8, 11, 14)]),
+      dyn: "anacrusis",
     },
 
     // BOOGIE-WOOGIE — Chicago 1928. Clarence "Pine Top" Smith cut
@@ -27172,6 +28289,12 @@
     // answers it, which is exactly why three rows want this one by name. A boogie
     // pianist is his own drummer, so the shuffle has to live in the line, and the
     // measurement finds it there. Kept as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     boogiewoogie: {
       instrumental: true,
       label: "Chicago 1928",
@@ -27210,6 +28333,7 @@
       words: ["the right hand, breaks and rolls", "the left hand, eight to the bar"],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)], [rotate(2), fill(2)]][s % 4]
                     : [transpose(-7), keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "anacrusis",
     },
 
     // DELTA BLUES — Clarksdale 1929. Charley Patton's "Pony Blues",
@@ -27283,6 +28407,12 @@
     // the slide is the horn section, and Patton had no band to swing. `hard`
     // (0.42) is the deepest lean in the table and it belongs entirely to the hand
     // and the voice. Kept as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     deltablues: {
       label: "Clarksdale 1929",
       voices: 2,
@@ -27328,6 +28458,7 @@
       words: ["the voice, calling", "the guitar, answering every line"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(1)]][s % 3]
                     : [transpose(-3), rotate(4), drop(2)]),
+      dyn: "anacrusis",
     },
 
     // BLUES ROCK — West Hampstead 1966. John Mayall with Eric Clapton,
@@ -27484,6 +28615,7 @@
         "the harp, answering in the holes"
       ],
       word: v => (v === 1 ? [only("gate", drop(4))] : v === 2 ? [rotate(8), transpose(2)] : []),
+      dyn: "backbeat",
     },
 
     // HENDRIX — London 1967. "Purple Haze", cut at De Lane Lea and
@@ -27551,6 +28683,7 @@
       words: ["the lead, singing through the fuzz", "the riff, the E7#9 chop under it"],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)], [reverse()]][s % 4]
                     : [transpose(-5), keep(0, 3, 6, 8, 11, 14)]),
+      dyn: "backbeat",
     },
 
     // GLAM — London 1971. T. Rex's "Get It On", Trident Studios, July
@@ -27591,6 +28724,12 @@
     // 20,551 line events do (2,814 of 10,194; 2,892 of 15,125). The 0.15 is
     // Bolan's own lurch over the top of a stomp that must not lurch, and that is
     // where the measurement finds it. Kept as declared; the kit is honest.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `band` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     glam: {
       label: "London 1971",
       voices: 3,
@@ -27640,6 +28779,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [transpose(-3), keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "anacrusis",
     },
 
     // KRAUTROCK — Cologne 1971. Can's "Halleluhwah" on Tago Mago,
@@ -27722,6 +28862,7 @@
       words: ["the guitar, one cell, barely moving", "the organ, stabbing the offbeat"],
       word: (v, s) => (v === 0 ? [[], [rotate(1)], [], [rotate(2)]][s % 4]
                     : [transpose(-3), keep(2, 6, 10, 14)]),
+      dyn: "syncope",
     },
 
     // BERLIN SCHOOL — Berlin 1972. Klaus Schulze's "Irrlicht", recorded
@@ -27779,6 +28920,7 @@
       words: ["the sequence, circling as the filter opens", "the pad, the cathedral behind it"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [rotate(4)]][s % 4]
                     : [drop(10)]),
+      dyn: "swell",
     },
 
     // PHILLY SOUL — Philadelphia 1972. The O'Jays' "Back Stabbers",
@@ -27864,6 +29006,7 @@
       word: (v, s) => (v === 0 ? [drop(8)]
                     : v === 1 ? [[], [fill(2)], [rotate(2)]][s % 3]
                     : [keep(4, 12), transpose(-2)]),
+      dyn: "backbeat",
     },
 
     // QUIET STORM — Los Angeles 1975. Smokey Robinson's "A Quiet
@@ -27945,6 +29088,7 @@
       word: (v, s) => (v === 0 ? [transpose(-3), drop(2)]
                     : v === 1 ? [[], [fill(1)], [rotate(2)]][s % 3]
                     : [drop(10)]),
+      dyn: "backbeat",
     },
 
     // MORODER — Munich 1977. "I Feel Love", Musicland Studios: Giorgio
@@ -28031,6 +29175,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [], [rotate(4)]][s % 4]
                     : v === 1 ? [[fill(1)], [drop(2)], [fill(1), transpose(1)]][s % 3]
                     : [drop(8)]),
+      dyn: "arch",
     },
 
     // GOTHIC ROCK — Northampton 1979. Bauhaus, "Bela Lugosi's Dead":
@@ -28090,6 +29235,7 @@
       words: ["the guitar, harmonics through the echo", "the drone under the crypt"],
       word: (v, s) => (v === 0 ? [[], [rotate(3)], [invert(2)], [fill(2)]][s % 4]
                     : [drop(10)]),
+      dyn: "backbeat",
     },
 
     // ITALO DISCO — Milan 1982. Klein & M.B.O.'s "Dirty Talk", cut at
@@ -28249,6 +29395,10 @@
     // dorian, a legato choir over a TR-808. One is the technique being invented,
     // the other is the technique taken to church and slowed down. The `near`
     // follows the key.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     newjackswing: {
       label: "New York 1987",
       voices: 3,
@@ -28302,6 +29452,7 @@
       word: (v, s) => (v === 0 ? [drop(4)]
                     : v === 1 ? [[], [fill(2)], [rotate(2), fill(2)]][s % 3]
                     : [transpose(-3), keep(2, 6, 10, 14)]),
+      dyn: "syncope",
     },
 
     // HARDCORE RAVE — Essex 1991. The Prodigy's "Charly" (XL, August
@@ -28365,6 +29516,9 @@
     //
     // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.05, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: acid .35→.30. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     hardcorerave: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -28407,6 +29561,7 @@
       words: ["the riff, rushing", "the orchestra hit, stabbing the drop"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2), rotate(4)]][s % 3]
                     : [keep(0, 6, 8, 14), transpose(-2)]),
+      dyn: "flat",
     },
 
     // G-FUNK — Los Angeles 1992. "Nuthin' but a 'G' Thang" (The
@@ -28476,6 +29631,10 @@
     // players over a machine programmed to be exact, and the exactness is half the
     // sound. The 0.15 is the whine's and the vocal's, and that is where the
     // measurement finds it. Kept as declared; the kit is honest.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     gfunk: {
       label: "Los Angeles 1992",
       voices: 3,
@@ -28523,6 +29682,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [transpose(-4), drop(2)]),
+      dyn: "syncope",
     },
 
     // CRUNK — Memphis 1997. Three 6 Mafia's "Tear da Club Up '97":
@@ -28762,6 +29922,12 @@
     //
     // WHO SINGS: andalusi's own melisma — the student carried
     // the master's line to Córdoba, so the mouth is shared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The Arab court line arrives
+    // at its phrase end, ancestor and descendant alike. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     abbasid: {
       label: "Baghdad 800",
       voices: 2,
@@ -28805,6 +29971,7 @@
       words: ["the singer, the qasida line ornamented", "the oud, shadowing and answering"],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [rotate(2)]][s % 4]
                     : [keep(0, 4, 8, 12), transpose(-2)]),
+      dyn: "agogic",
     },
 
     // KASSIA — Constantinople 843. The Hymn of Kassiani, sung at
@@ -28867,6 +30034,7 @@
       },
       words: ["the sticheron, one line, melismatic at the cadence"],
       word: (v, s) => [[], [fill(2)], [transpose(-1)], [fill(2), transpose(1)]][s % 4],
+      dyn: "agogic",
     },
 
     // THE SEQUENCE — St. Gallen 884. Notker Balbulus's Liber Hymnorum,
@@ -28923,6 +30091,7 @@
       },
       words: ["the sequence, each phrase said twice, aa bb cc"],
       word: (v, s) => [[], [], [transpose(2)], [transpose(2)]][s % 4],
+      dyn: "agogic",
     },
 
     // THE WINCHESTER TROPER — Winchester 1000. Two manuscripts copied
@@ -28978,6 +30147,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [fill(2)]][s % 2]
                     : [transpose(-3), keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "agogic",
     },
 
     // HILDEGARD — Bingen 1151. The Ordo Virtutum, the earliest
@@ -29038,6 +30208,7 @@
       },
       words: ["the antiphon, leaping a fifth where the psalter steps"],
       word: (v, s) => [[], [transpose(4)], [fill(2)], [transpose(-4), fill(2)]][s % 4],
+      dyn: "agogic",
     },
 
     // JOSQUIN — Venice 1502. Ottaviano Petrucci's Misse Josquin, the
@@ -29067,6 +30238,12 @@
     // So the two upper parts KEEP the countertenor they had and the two
     // lower ones stop borrowing it — tenor on the tenor, bass on the bassus,
     // which is where this row's `reg` was already writing them.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     francoflemish: {
       label: "Venice 1502",
       voices: 4,
@@ -29113,6 +30290,7 @@
                     : v === 1 ? [transpose(3)]
                     : v === 2 ? [keep(0, 4, 8, 12)]
                     : [invert(3), transpose(-3)]),
+      dyn: "terraced",
     },
 
     // MONTEVERDI — Venice 1610. The Vespro della Beata Vergine,
@@ -29131,6 +30309,12 @@
     //
     // WHO SINGS: monody — the continuo row's own mouth,
     // because the seconda pratica is the same voice grown up.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     secondapratica: {
       label: "Venice 1610",
       voices: 3,
@@ -29176,6 +30360,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]
                     : v === 1 ? [keep(0, 8)]
                     : [keep(0, 4, 8, 12), transpose(-3)]),
+      dyn: "terraced",
     },
 
     // SCHÜTZ — Dresden 1636. The Musikalische Exequien, published in
@@ -29190,6 +30375,12 @@
     // LINEAGE: he studied with Giovanni Gabrieli in Venice and
     // visited Monteverdi in 1628; the chorale is the congregation
     // he wrote for. Gabrieli is the missing teacher, named below.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. Baroque dynamics have no
+    // hairpin — the restatement is the level change. The `vox` cluster takes
+    // `agogic`; the anchor's own evidence outranks it, which is the flood's
+    // rule (docs/DYNAMICS-FLOOD.md).
     sacredconcerto: {
       label: "Dresden 1636",
       voices: 3,
@@ -29229,6 +30420,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)]][s % 3]
                     : v === 1 ? [keep(0, 4, 8, 12)]
                     : [keep(0, 8), transpose(-3)]),
+      dyn: "terraced",
     },
 
     // CONTRADANZA — Havana 1803. "San Pascual Bailón", the earliest
@@ -29251,6 +30443,12 @@
     // below, not invented.
     //
     // THE FORM IS TWO STRAINS SAID TWICE — AABB, the dance's own law.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     contradanza: {
       instrumental: true,
       label: "Havana 1803",
@@ -29282,6 +30480,7 @@
       words: ["the piano, the eight-bar strain", "the violin, doubling and turning above"],
       word: (v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2)]][s % 4]
                     : [rotate(2), transpose(2)]),
+      dyn: "syncope",
     },
 
     // THE FIELD HOLLER — South Carolina 1853. Frederick Law Olmsted,
@@ -29362,6 +30561,7 @@
       },
       words: ["the holler — rise, hang, fall, break"],
       word: (v, s) => [[], [transpose(3)], [fill(2)], [transpose(-2)]][s % 4],
+      dyn: "agogic",
     },
 
     // OPERETTA — London 1878. H.M.S. Pinafore at the Opera Comique,
@@ -29396,6 +30596,11 @@
     // takes it; until then the want is the honest answer and the shopping order keeps
     // its entry.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     operetta: {
       label: "London 1878",
       voices: 3,
@@ -29434,6 +30639,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(1)], [fill(1), rotate(2)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [keep(0, 4, 8, 12), transpose(-3)]),
+      dyn: "arch",
     },
 
     // MUSIC HALL — London 1892. Marie Lloyd singing "Oh! Mr Porter" —
@@ -29470,6 +30676,12 @@
     // chairman, a house pianist and a room that already knows the chorus — the
     // halls kept no kit and this row seats none. The 0.12 is Marie Lloyd's, in the
     // timing of a wink. Kept as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     musichall: {
       label: "London 1892",
       voices: 2,
@@ -29504,6 +30716,7 @@
       words: ["the turn, verse to the room, chorus WITH it", "the piano, oom-pah and fills"],
       word: (v, s) => (v === 0 ? [[], [fill(1)], [], [fill(1), transpose(2)]][s % 4]
                     : [keep(0, 4, 8, 12), transpose(-3)]),
+      dyn: "arch",
     },
 
     // SATIE — Paris 1888. The Trois Gymnopédies, completed in Paris
@@ -29540,6 +30753,11 @@
     // density, which is the one comparison that cannot carry a claim about attention.
     // `belcanto` (1831) is offered as nearer on a shared arc plan.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "terraced"` — the line restated a level down. A variation set and a
+    // phase piece are both a figure restated a level away. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     furnituremusic: {
       instrumental: true,
       label: "Paris 1888",
@@ -29568,6 +30786,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [], [rotate(2)], []][s % 4]
                     : [keep(0, 8), transpose(-3)]),
+      dyn: "terraced",
     },
 
     // THE MARCH — Washington 1889. Sousa's "The Washington Post",
@@ -29588,6 +30807,12 @@
     //
     // AABBCC(trio) — strains restated, the trio brighter: the form
     // ragtime lifted whole.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. A march leans on ONE — the
+    // kit's two and four are the answering stroke, not the weight. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     march: {
       instrumental: true,
       label: "Washington 1889",
@@ -29624,6 +30849,7 @@
       word: (v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2), fill(1)]][s % 4]
                     : v === 1 ? [[drop(12)], [drop(12)], [fill(1), transpose(4)], [fill(1), transpose(4)]][s % 4]
                     : [keep(0, 4, 8, 12), transpose(-3)]),
+      dyn: "lean",
     },
 
     // BROADWAY — New York 1927. Show Boat at the Ziegfeld, the 27th
@@ -29637,6 +30863,12 @@
     // LINEAGE: `operetta` (London 1878) is the form's parent trade;
     // `tinpanalley` (New York 1924) the song factory next door that
     // staffed it.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     broadway: {
       label: "New York 1927",
       voices: 3,
@@ -29676,6 +30908,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [keep(0, 4, 8, 12), transpose(-3)]),
+      dyn: "arch",
     },
 
     // THE TERRITORY BAND — Kansas City 1932. "Moten Swing", Bennie
@@ -29705,6 +30938,12 @@
     //
     // HEAD ARRANGEMENT: the riff repeats and RISES, the answer
     // varies — a band remembering together, nobody reading.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     territoryband: {
       label: "Kansas City 1932",
       voices: 3,
@@ -29742,6 +30981,7 @@
       word: (v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2)]][s % 4]
                     : v === 1 ? [[rotate(4)], [rotate(4), transpose(2)], [fill(2)]][s % 3]
                     : [keep(0, 4, 8, 12), transpose(-3)]),
+      dyn: "anacrusis",
     },
 
     // STOCKHAUSEN — Cologne 1956. Gesang der Jünglinge, premiered in
@@ -29800,6 +31040,7 @@
       words: ["the sine points, scattered, registers apart", "the tone clouds, swelling under"],
       word: (v, s) => (v === 0 ? [[], [invert(4)], [spread(3)], [reverse()]][s % 4]
                     : [drop(10)]),
+      dyn: "swell",
     },
 
     // MODAL JAZZ — New York 1959. Kind of Blue, Columbia's 30th
@@ -29830,6 +31071,12 @@
     // eight, and the whole point of that session was that the band was
     // handed a SCALE instead of changes. This row IS that scale, so it is
     // the one thing the row has to actually play.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     modaljazz: {
       instrumental: true,
       label: "New York 1959",
@@ -29866,6 +31113,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2)], [drop(10)]][s % 4]
                     : v === 1 ? [[fill(2)], [fill(2), transpose(-2)]][s % 2]
                     : [keep(0, 6, 8, 14)]),
+      dyn: "anacrusis",
     },
 
     // THE BRILL BUILDING — New York 1960. "Will You Love Me Tomorrow",
@@ -29952,6 +31200,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)]][s % 3]
                     : v === 1 ? [keep(0, 4, 8, 12)]
                     : [drop(8)]),
+      dyn: "backbeat",
     },
 
     // GARAGE ROCK — Portland 1963. The Kingsmen's "Louie Louie", cut
@@ -30006,6 +31255,7 @@
       words: ["the riff, three chords, no apology", "the organ, cheap and proud of it"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [], [fill(1)]][s % 4]
                     : [transpose(-2), keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "backbeat",
     },
 
     // THE BEACH BOYS — Los Angeles 1966. Pet Sounds, released the
@@ -30068,6 +31318,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [keep(0, 4, 8, 12), transpose(2)]),
+      dyn: "arch",
     },
 
     // PSYCHEDELIC ROCK — San Francisco 1966. The Trips Festival,
@@ -30134,6 +31385,7 @@
       words: ["the guitar, the tune leaving home", "the organ, holding the mode open"],
       word: (v, s) => (v === 0 ? [[], [rotate(3)], [spread(2)], [invert(3)], [fill(2)], []][s % 6]
                     : [drop(9)]),
+      dyn: "backbeat",
     },
 
     // THE VELVET UNDERGROUND — New York 1966. The Velvet Underground
@@ -30202,6 +31454,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [], [rotate(2)]][s % 4]
                     : v === 1 ? [keep(0), spread(4)]
                     : [[], [fill(1)]][s % 2]),
+      dyn: "backbeat",
     },
 
     // THE ZODIAK — Berlin 1968. The Zodiak Free Arts Lab, opened at
@@ -30264,6 +31517,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [spread(3)], [reverse()], [invert(2)]][s % 4]
                     : [keep(0, 8), transpose(-4)]),
+      dyn: "swell",
     },
 
     // THE WINSTONS — Washington 1969. "Amen, Brother", the B-side of
@@ -30326,6 +31580,7 @@
       word: (v, s) => (s % 4 === 2 ? [drop(1)]
                     : v === 0 ? [[], [transpose(2)], [], [fill(1)]][s % 4]
                     : [[fill(2)], [fill(2), transpose(2)]][s % 2]),
+      dyn: "backbeat",
     },
 
     // PROGRESSIVE ROCK — Isle of Wight 1970. Emerson, Lake & Palmer's
@@ -30403,6 +31658,7 @@
       word: (v, s) => (v === 0 ? [[], [transpose(4)], [invert(3)], []][s % 4]
                     : v === 1 ? [[rotate(4)], [reverse()], [split(2)], [transpose(4)]][s % 4]
                     : [[fill(2)], [fill(2), invert(2)], [spread(2)], [fill(2)]][s % 4]),
+      dyn: "backbeat",
     },
 
     // BLACK SABBATH — Workington 1969. The band's first show under
@@ -30469,6 +31725,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [keep(0, 4, 8, 12)], [transpose(1)], []][s % 4]
                     : [transpose(-5)]),
+      dyn: "backbeat",
     },
 
     // THE BLOCK PARTY — Bronx 1973. 1520 Sedgwick Avenue, the rec
@@ -30534,6 +31791,10 @@
     // THE MERRY-GO-ROUND AS A SCHEDULE: the same bar, again, again
     // — then the other record's bar, then back. Repetition IS the
     // development, which no other row in the table gets to say.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     blockparty: {
       label: "Bronx 1973",
       voices: 2,
@@ -30575,6 +31836,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [], [rotate(4)], []][s % 4]
                     : [[drop(1)], [drop(1)], [fill(2)], [fill(2)]][s % 4]),
+      dyn: "syncope",
     },
 
     // P-FUNK — Detroit 1975. Mothership Connection, cut at United
@@ -30601,6 +31863,12 @@
     // Full ruling at `holler`.
     //
     // WHO SINGS: the gospel choir aboard the mothership.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     psychfunk: {
       label: "Detroit 1975",
       voices: 3,
@@ -30646,6 +31914,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(2)]][s % 4]
                     : v === 1 ? [[drop(4)], [fill(2)]][s % 2]
                     : [keep(0, 8), transpose(2)]),
+      dyn: "anacrusis",
     },
 
     // NEW ORLEANS FUNK — New Orleans 1969. The Meters, "Cissy Strut" (cut at Cosimo
@@ -30733,6 +32002,12 @@
     // which is the good mix name the round's rule asks for: a plate must name a
     // genre, and the genre this record is has a name even though the encyclopaedia
     // has no page for it.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     neworleansfunk: {
       instrumental: true,
       label: "New Orleans 1969",
@@ -30779,6 +32054,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(4)]][s % 4]
                     : [drop(2), transpose(-3)]),
+      dyn: "anacrusis",
     },
 
     // DEEP FUNK — Cincinnati 1970. James Brown, "Get Up (I Feel Like Being a) Sex
@@ -30887,6 +32163,7 @@
         "the horns, a stab and then nothing"
       ],
       word: v => (v === 1 ? [only("gate", rotate(4)), drop(4)] : [fill(1)]),
+      dyn: "backbeat",
     },
 
     // JAZZ-FUNK — San Francisco 1973. Herbie Hancock, Head Hunters (Wally Heider
@@ -31016,6 +32293,7 @@
       word: (v, s) => (v === 0 ? [drop(4)]
                     : v === 1 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]
                     : [keep(0, 3, 6, 8, 11, 14), transpose(-4)]),
+      dyn: "backbeat",
     },
 
     // GO-GO — Washington 1978. Chuck Brown & the Soul Searchers, "Bustin' Loose"
@@ -31092,6 +32370,12 @@
     // ("originated by African-American musicians in Washington, D.C.") and whose
     // description paragraph is this row's kit. Not `Go-go dancing`, not the
     // disambiguation page.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     gogo: {
       label: "Washington 1978",
       swing: 0.25,
@@ -31146,6 +32430,7 @@
       word: (v, s) => (v === 0 ? [breath([1,1,1,1, 1,1,1,1, 0,0,0,0, 0,0,0,0])]
                     : v === 1 ? [breath([0,0,0,0, 0,0,0,0, 1,1,1,1, 1,1,1,1]), transpose(2)]
                     : [only("gate", rotate(6)), drop(4)]),
+      dyn: "anacrusis",
     },
 
     // BOOGIE — New York 1981. D-Train, "You're the One for Me" (Prelude Records,
@@ -31228,6 +32513,12 @@
     // THE ARTICLE: `Boogie (genre)` — the parenthetical, and its own hatnote says why
     // ("Not to be confused with Boogie rock or Boogie-woogie", and `boogiewoogie`
     // Chicago 1928 is this table's row for the second of those).
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     boogie: {
       label: "New York 1981",
       near: "disco",
@@ -31290,6 +32581,7 @@
         "the synth brass, the hook up top"
       ],
       word: v => (v === 1 ? [drop(8)] : v === 2 ? [only("gate", rotate(4)), transpose(2)] : [fill(2)]),
+      dyn: "syncope",
     },
 
     // MINNEAPOLIS SOUND — Minneapolis 1982. Prince, 1999 (his own Kiowa Trail home
@@ -31389,6 +32681,12 @@
     // record did not sample. Written down here rather than left for the next hand to
     // find at the top of a list, which is the `synthpop`/`baroquepop` precedent the
     // gate's own comment sets.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     minneapolissound: {
       label: "Minneapolis 1982",
       near: "funk",
@@ -31460,6 +32758,7 @@
       word: (v, s) => (v === 0 ? [only("gate", rotate(4))]
                     : v === 1 ? [[fill(1)], [rotate(2)], [fill(1)], [drop(2)]][s % 4]
                     : [excerpt(s % 2 ? 8 : 0, 8), transpose(2)]),
+      dyn: "syncope",
     },
 
     // YELLOW MAGIC ORCHESTRA — Tokyo 1978. Yellow Magic Orchestra
@@ -31501,6 +32800,11 @@
     // `beatgroup` (1962) is offered as nearer on tempo and major mode; YMO covered
     // Martin Denny, not the Beatles.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A Kling Klang line does not
+    // arch, it recurs — this file's own words about the row next door. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     technopop: {
       bassInstr: "bass_lead",
       label: "Tokyo 1978",
@@ -31534,6 +32838,7 @@
       words: ["the melody, sequenced, grinning", "the keys, sevenths the machines were denied"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [rotate(2)], [transpose(2)]][s % 4]
                     : [keep(0, 4, 8, 12)]),
+      dyn: "flat",
     },
 
     // NWOBHM — London 1980. Iron Maiden's Iron Maiden, released the
@@ -31580,6 +32885,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]
                     : [transpose(2)]),
+      dyn: "backbeat",
     },
 
     // THRASH — San Francisco 1983. Metallica's Kill 'Em All, released
@@ -31647,6 +32953,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(1)], [rotate(4), transpose(1)]][s % 4]
                     : [transpose(-5), fill(2)]),
+      dyn: "backbeat",
     },
 
     // POWER METAL — Hamburg 1985. Helloween, WALLS OF JERICHO (Noise Records,
@@ -31766,6 +33073,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]
                     : v === 1 ? [transpose(3)]
                     : [drop(6)]),
+      dyn: "backbeat",
     },
 
     // METALCORE — Westfield 2002. Killswitch Engage, ALIVE OR JUST BREATHING
@@ -31897,6 +33205,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [invert(2)]][s % 4]
                     : v === 1 ? [transpose(-12), keep(0, 3, 6, 8)]
                     : [drop(4)]),
+      dyn: "backbeat",
     },
 
     // TRIP HOP — Bristol 1991. Massive Attack's Blue Lines, cut at
@@ -31944,6 +33253,9 @@
     // already named in prose and not in keys. 0.2 rather than more because what Bristol
     // took is the break and the pause, not New York's rapping. Shares now sum to 0.95.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     triphop: {
       label: "Bristol 1991",
       voices: 3,
@@ -31990,6 +33302,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)]][s % 3]
                     : v === 1 ? [drop(8)]
                     : [keep(0, 8)]),
+      dyn: "syncope",
     },
 
     // CHOPPED AND SCREWED — Houston 1995. DJ Screw's 3 'N the Mornin'
@@ -32030,6 +33343,10 @@
     // //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
     // //   the choice belongs. The engine path stays wired and gated;
     // //   what leaves is the ROW declaring it for you.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     chopped: {
       label: "Houston 1995",
       voices: 2,
@@ -32069,6 +33386,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(-2)], [transpose(-2)], [rotate(-2)]][s % 4]
                     : [drop(10)]),
+      dyn: "syncope",
     },
 
     // SYNTHWAVE — Paris 2010. Kavinsky's "Nightcall", produced with
@@ -32145,6 +33463,7 @@
       words: ["the arpeggio, headlights on wet asphalt", "the pad, the city sliding past"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(-2)], [rotate(2)]][s % 4]
                     : [drop(9)]),
+      dyn: "arch",
     },
 
     // FOOTWORK — Chicago 2013. DJ Rashad's Double Cup, Hyperdub,
@@ -32736,6 +34055,12 @@
     // ancient Greek row asserts the one thing the source does not say — and the
     // row is `harmony: "modal"`, so it did not even sound it. The field now names
     // the alphabet the row plays and claims nothing about the tonos.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The oldest sung lines in
+    // the table have no bar to lean on, and the Roman ode that quotes them
+    // says so. The `roots` cluster takes `lean`; the anchor's own evidence
+    // outranks it, which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     delphic: {
       label: "Delphi 128 BC",
       voices: 2,
@@ -32782,6 +34107,7 @@
       word: (v, s) => (v === 0
         ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
         : [fill(2), transpose(4)]),
+      dyn: "agogic",
     },
 
     // CARMEN SAECULARE — Rome 17 BC, Ancient Rome asked for by name. A
@@ -32873,6 +34199,7 @@
       },
       words: ["the twenty-seven boys", "the twenty-seven girls, answering"],
       word: (v, s) => [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4],
+      dyn: "agogic",
     },
 
     // THE SEIKILOS EPITAPH — Tralles 100. A marble stele from Tralles in
@@ -32901,6 +34228,12 @@
     // names no percussion and this row seats none. The 0.2 is the singer's reading
     // of those signs — which is the only performer the evidence has. Kept as
     // declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `vox` cluster
+    // takes `agogic`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     skolion: {
       label: "Tralles 100",
       voices: 1,
@@ -32942,6 +34275,7 @@
       },
       words: ["one voice: while you live, shine"],
       word: (v, s) => [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4],
+      dyn: "anacrusis",
     },
 
     // THE OXYRHYNCHUS HYMN — Oxyrhynchus 300. Papyrus Oxyrhynchus XV
@@ -33015,6 +34349,7 @@
       },
       words: ["the hymn, syllabic, an octave's compass"],
       word: (v, s) => [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4],
+      dyn: "agogic",
     },
 
     // =====================================================================
@@ -33078,6 +34413,7 @@
       tone: { wave: "sawtooth", cut: 2400, q: 1.4, atk: 0.002, rel: 0.2, gain: 0.3, verb: 0.12 },
       words: ["the riff, downstroked flat out"],
       word: (v, s) => [[], [rotate(2)], [transpose(1)], [rotate(2)]][s % 4],
+      dyn: "backbeat",
     },
 
     // HONKY TONK — Fort Worth 1941: Ernest Tubb records "Walking the
@@ -33109,6 +34445,12 @@
     // root-and-fifth, the two-beat country floor — "roots" is not a vocabulary word (measured, G1)
     //
     // countrypop's own hammer-on row
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     honkytonk: {
       label: "Fort Worth 1941",
       voices: 2,
@@ -33149,6 +34491,7 @@
       words: ["the barroom lead, electric", "the rhythm guitar under it"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]
                     : [keep(0, 4, 8, 12)]),
+      dyn: "backbeat",
     },
 
     // WESTERN SWING — Tulsa 1940: Bob Wills and His Texas Playboys,
@@ -33166,6 +34509,12 @@
     // declared a child of its own descendant. The string band Wills
     // actually led is the fiddle-convention band his father played in, and
     // that is `oldtime` (Galax 1935), five years the other way.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     westernswing: {
       label: "Tulsa 1940",
       voices: 3,
@@ -33203,6 +34552,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]
                     : v === 1 ? [keep(0, 4, 8, 12)]
                     : [drop(8), transpose(-2)]),
+      dyn: "anacrusis",
     },
 
     // NASHVILLE SOUND — Nashville 1957. Jim Reeves cuts "Four Walls" for
@@ -33294,6 +34644,12 @@
     // and gets the right recording (`countryrock`'s ruling). Its child
     // `outlawcountry` (Austin 1973) DOES declare one, and the difference
     // between the two lines is the argument of both rows.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     nashvillesound: {
       label: "Nashville 1957",
       near: "countrypop",
@@ -33352,6 +34708,7 @@
         "the quartet, the oohs behind the singer"
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [only("gate", drop(4))] : []),
+      dyn: "anacrusis",
     },
 
     // OUTLAW COUNTRY — Austin 1973. Willie Nelson, SHOTGUN WILLIE, cut at
@@ -33487,6 +34844,7 @@
         "the piano, the gospel left hand"
       ],
       word: v => (v === 0 ? [] : v === 1 ? [rotate(8)] : [only("gate", drop(2))]),
+      dyn: "backbeat",
     },
 
     // DREAM POP — London 1984: Cocteau Twins, Treasure, on 4AD — the
@@ -33550,6 +34908,7 @@
       words: ["the voice, syllables not words", "the guitar, as weather"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]
                     : [drop(10)]),
+      dyn: "swell",
     },
 
     // GALAXIE 500 — Boston 1989, On Fire. Paul, 2026-08-31, the shift after
@@ -33639,6 +34998,10 @@
     //
     // BROKAW'S JOKE, MADE LITERAL: one kick, one snare, a whole bar between
     // them, and no hat lane at all — the sparsest kit in the guitar wing.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The slow build is the
+    // whole record.
     slowcore: {
       label: "Boston 1989",
       voices: 2,
@@ -33691,6 +35054,7 @@
       words: ["the voice, close and short of words", "the guitar, one snaking line"],
       word: (v, s) => (v === 0 ? [[], [transpose(-2)], [], [drop(8)]][s % 4]
                     : [keep(0, 6, 12)]),
+      dyn: "swell",
     },
 
     // SLOWDIVE — Sutton Courtenay 1993, Souvlaki. The other half of Paul's
@@ -33792,6 +35156,10 @@
     //
     // crunch keeps the shoegaze inheritance audible; echo is the album's own
     // most-quoted property, "the deepest delayed guitar sounds around".
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. A studio pop record with a
+    // sung line at the top of it.
     ambientpop: {
       label: "Sutton Courtenay 1993",
       voices: 3,
@@ -33847,6 +35215,7 @@
       word: (v, s) => (v === 0 ? [[], [transpose(-2)], [fill(2)], [transpose(3)]][s % 4]
                     : v === 1 ? [rotate(4)]
                     : [drop(12)]),
+      dyn: "arch",
     },
 
     // YOUNG GALAXY — Montreal 2011, Shapeshifting. Paul asked for the band
@@ -34150,6 +35519,10 @@
     // the long notes and leaves the busy ones to the lead,
     // which is what a doubling does and what "aaaalwaaaays"
     // sounds like against a rhythmic lyric
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. A studio pop record with a
+    // sung line at the top of it.
     balearic: {
       label: "Montreal 2011",
       voices: 5,
@@ -34219,6 +35592,7 @@
                     : v === 3 ? [[keep(0, 8)], [keep(0, 8)], [keep(0, 4, 8)], [keep(0, 8)]][s % 4]
                     : [[split(4), fill(1)], [split(4), fill(1)],
                        [split(2), fill(1)], [split(4), fill(1)]][s % 4]),
+      dyn: "arch",
     },
 
     // ==================================================================
@@ -34263,6 +35637,10 @@
     // changing the changes changes the record, and the Creep-era files and
     // the OK Computer-era files disagree about them; the tempo is the one
     // number the whole set agrees on.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. A guitar band with a
+    // drummer behind it.
     artrock: {
       label: "Oxford 1997",
       voices: 3,
@@ -34299,6 +35677,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
                     : v === 1 ? [[], [rotate(2)], [], [drop(3)]][s % 4] : [drop(8)]),
+      dyn: "backbeat",
     },
 
     // THE STONE ROSES — Manchester 1989, the debut (2 May 1989, per its own
@@ -34306,6 +35685,10 @@
     // is Manchester 1990 in this table, and the maringa precedent says an
     // ancestor must be measurably earlier. It is, by a year — so this is the
     // record and that is the scene, and the edge runs the right way.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. A guitar band with a
+    // drummer behind it.
     baggy: {
       label: "Manchester 1988",
       voices: 3,
@@ -34342,6 +35725,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [], [transpose(2)]][s % 4]
                     : v === 1 ? [fill(2)] : [[rotate(2)], [], [drop(3)], []][s % 4]),
+      dyn: "backbeat",
     },
 
     // WINGS — London 1973, Band on the Run. The row exists because `beatgroup`
@@ -34361,6 +35745,10 @@
     // said on the CHAIR rather than by adding a rule to the cast, because
     // the cast is not wrong in general — a Lagos record usually is a Lagos
     // record, and this one is a London band on tour.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. A studio pop record with a
+    // sung line at the top of it.
     softrock: {
       label: "Lagos 1973",
       voices: 3,
@@ -34393,6 +35781,7 @@
       words: ["the voice", "the guitar figure", "the piano under it"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [], [keep(0, 8)]][s % 4]
                     : v === 1 ? [[], [rotate(2)], [], []][s % 4] : [drop(4)]),
+      dyn: "arch",
     },
 
     // SKINNY PUPPY — Vancouver 1986, Mind: The Perpetual Intercourse. NOT a
@@ -34430,6 +35819,9 @@
     //
     // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. Skinny Puppy's bass is a sequenced sub under the sampler. Vancouver 1986 had a Prophet and an 808 in the room and no double bass in it.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A sequencer and a distortion
+    // pedal, and neither of them leans.
     electroindustrial: {
       bassInstr: "bass_lead",
       label: "Vancouver 1986",
@@ -34465,6 +35857,7 @@
       words: ["the machine line", "the metal pad over it", "the voice, cut up"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [drop(3)], []][s % 4]
                     : v === 1 ? [drop(8)] : [keep(0, 8)]),
+      dyn: "flat",
     },
 
     // MINISTRY, THE FIRST ERA — Chicago 1983, With Sympathy. Paul: "all the
@@ -34479,6 +35872,9 @@
     //
     // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. With Sympathy is sequencers end to end; Ministry's first era has no bass player on it.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. A studio pop record with a
+    // sung line at the top of it.
     electropop: {
       bassInstr: "bass_lead",
       label: "Chicago 1983",
@@ -34516,6 +35912,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
                     : v === 1 ? [drop(8)] : [fill(2)]),
+      dyn: "arch",
     },
 
     // KATE BUSH — London 1985, Hounds of Love (16 September 1985). The row is
@@ -34525,6 +35922,10 @@
     // side-two texture and `glam` for the theatre, which are the two ancestors
     // this catalogue actually holds — it has no `artrock` row to point at,
     // and that absence is named rather than papered over.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. A studio pop record with a
+    // sung line at the top of it.
     artpop: {
       label: "Kent 1985",
       voices: 3,
@@ -34566,6 +35967,7 @@
       words: ["the voice, at the top of its range", "the pad under it", "the choir, answering"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [keep(0, 4, 8)], []][s % 4]
                     : v === 1 ? [drop(8)] : [keep(0, 8)]),
+      dyn: "arch",
     },
 
     // PETER GABRIEL — London 1986, So (19 May 1986). "All the eras" is two
@@ -34620,6 +36022,10 @@
     // even step, right through the record, and the loudest
     // non-kit lane in the fifteen files. The anchor is named for
     // this layer and had no channel for it until now.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The groove is the point and it
+    // is not on the beat.
     worldbeat: {
       label: "London 1977",
       voices: 3,
@@ -34653,6 +36059,7 @@
       words: ["the voice", "the poly pad", "the bass figure"],
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
                     : v === 1 ? [drop(8)] : [[], [rotate(2)], [], [drop(3)]][s % 4]),
+      dyn: "syncope",
     },
 
     // FAIRUZ — Beirut 1957, the Baalbeck years. Her own article gives the
@@ -34667,6 +36074,10 @@
     // instrument, so the proxy is the catalogue's own and this row does not
     // get a private one. `oud` is not an id in this box — I wrote it, the
     // check caught it, and the convention was already decided.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. A takht waits for the
+    // singer, and the singer arrives at the last note.
     beiruttarab: {
       label: "Beirut 1957",
       voices: 3,
@@ -34705,6 +36116,7 @@
       words: ["the voice, ornamented", "the strings, written", "the oud, answering the line"],
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [], [rotate(2)]][s % 4]
                     : v === 1 ? [drop(8)] : [keep(0, 4, 8)]),
+      dyn: "agogic",
     },
 
     // BRONSKI BEAT — London 1984, The Age of Consent. The article puts the
@@ -34722,6 +36134,10 @@
     // gesture; a scoop into it is how a falsetto gets there. Per-note
     // (`slide`, not `glide`), so the saw riff underneath keeps hitting its
     // sixteenths square while the voice travels.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The groove is the point and it
+    // is not on the beat.
     hinrg: {
       bassInstr: "bass_lead",
       label: "Brixton 1984",
@@ -34765,6 +36181,7 @@
       words: ["the falsetto", "the pad", "the sequencer"],
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
                     : v === 1 ? [drop(8)] : [fill(2)]),
+      dyn: "syncope",
     },
 
     // OMD — Liverpool 1980, Organisation. The article's origin is MEOLS on
@@ -34773,6 +36190,10 @@
     // catalogue was missing between `dusseldorfschool` and `synthpop`: a band who
     // took the German machine and wrote pop songs on it a year before
     // Basildon did.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. A studio pop record with a
+    // sung line at the top of it.
     newpop: {
       label: "Liverpool 1980",
       voices: 3,
@@ -34804,6 +36225,7 @@
       words: ["the voice, plain and northern", "the pad", "the machine line"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [], [keep(0, 8)]][s % 4]
                     : v === 1 ? [drop(8)] : [fill(2)]),
+      dyn: "arch",
     },
 
     // DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —
@@ -34852,6 +36274,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [transpose(-1)]][s % 4]
                     : [drop(4)]),
+      dyn: "backbeat",
     },
 
     // J-POP — Tokyo 1999: Utada Hikaru, First Love — the best-selling
@@ -34866,6 +36289,10 @@
     // contemporary R&B the production language First Love actually
     // speaks. kpop (one seat over) took this row's own formula and
     // industrialized it a decade later.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     jpop: {
       label: "Tokyo 1999",
       voices: 2,
@@ -34905,6 +36332,7 @@
       words: ["the melody, R&B melisma in Japanese", "the pad, ninths under it"],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
                     : [drop(10)]),
+      dyn: "syncope",
     },
 
     // DUNSTAPLE — London 1420: the Old Hall Manuscript, compiled for the
@@ -34960,6 +36388,7 @@
       words: ["the triplum", "the mean, a third under", "the tenor, holding"],
       word: (v, s) => (v < 2 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
                     : [drop(12)]),
+      dyn: "agogic",
     },
 
     // ================================================================
@@ -35068,6 +36497,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(3)], [invert(2)], [fill(2)]][s % 4]
                     : [transpose(-5), keep(0, 4, 8, 12)]),
+      dyn: "backbeat",
     },
 
     // THE BATCAVE — London 1982. The club-night at 69 Dean Street,
@@ -35126,6 +36556,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [reverse()]][s % 4]
                     : [drop(8)]),
+      dyn: "backbeat",
     },
 
     // COLD WAVE — Rennes 1979. Marquis de Sade, Dantzig Twist: the
@@ -35174,6 +36605,7 @@
       words: ["the guitar, dry ice on the strings", "the synth, one cold line, no vibrato"],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-1)], [fill(1)]][s % 4]
                     : [transpose(-9), keep(0, 4, 8, 12)]),
+      dyn: "backbeat",
     },
 
     // THE SISTERS OF MERCY — York 1981. An artist row, the heavymetal
@@ -35251,6 +36683,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(-1)]][s % 4]
                     : [drop(4), transpose(-5)]),
+      dyn: "backbeat",
     },
 
     // GOTHIC METAL — Halifax 1991. Paradise Lost, Gothic (Peaceville,
@@ -35302,6 +36735,7 @@
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [invert(2)]][s % 4]
                     : v === 1 ? [drop(8)]
                     : [drop(10), transpose(7)]),
+      dyn: "backbeat",
     },
 
     // SYMPHONIC METAL — Kitee 1997. Nightwish, ANGELS FALL FIRST — the debut,
@@ -35428,6 +36862,7 @@
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [invert(2)]][s % 4]
                     : v === 1 ? [drop(6), transpose(12)]
                     : [rotate(2)]),
+      dyn: "backbeat",
     },
 
     // DUNGEON SYNTH — Notodden 1994. Mortiis, Født til å Herske
@@ -35476,6 +36911,7 @@
       words: ["the fake flute, a fanfare down a corridor", "the pad, torchlight on wet stone"],
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [rotate(3)], [transpose(-2)]][s % 4]
                     : [drop(10)]),
+      dyn: "swell",
     },
 
     // WITCH HOUSE — Traverse City 2010. Salem, King Night (Iamsound,
@@ -35514,6 +36950,9 @@
     // row a long way from a 2010 record. `tromso` (2001) is offered as nearer — an
     // ambient-techno row that shares a slow tempo and a cold pad and no history.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     witchhouse: {
       label: "Traverse City 2010",
       voices: 2,
@@ -35558,6 +36997,7 @@
       ],
       word: (v, s) => (v === 0 ? [drop(10)]
                     : [[], [transpose(-2)], [rotate(2)], [spread(2)]][s % 4]),
+      dyn: "syncope",
     },
 
     // GYPSY JAZZ — Paris 1934. The Quintette du Hot Club de France,
@@ -35608,6 +37048,12 @@
     // the kit's whole job" — and la pompe is a LINE in this box, so the 0.3
     // reaches it as it should. The Quintette is the cleanest case in the census of
     // a swing that is honestly nobody's but the players'. Kept as declared.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     gypsyjazz: {
       instrumental: true,
       label: "Paris 1934",
@@ -35642,6 +37088,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]
                     : v === 1 ? [[drop(2)], [drop(2), transpose(5)]][s % 2]
                     : [keep(0, 4, 8, 12)]),
+      dyn: "anacrusis",
     },
 
     // LATIN JAZZ — New York 1947. "Manteca", co-written by Dizzy
@@ -35681,6 +37128,13 @@
     //
     // the tumbao is the bassGrid — "Manteca" is the bass riff — and
     // the congas live on the toms, the ethiojazz precedent.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A jazz row phrases
+    // into the bar like the parent it names; the ride's two and four is what
+    // the horn plays across. The `roots` cluster takes `lean`; the anchor's
+    // own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     latinjazz: {
       instrumental: true,
       label: "New York 1947",
@@ -35720,6 +37174,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [rotate(4)]][s % 4]
                     : v === 1 ? [keep(0, 3, 6, 10)]
                     : [drop(4), transpose(-3)]),
+      dyn: "anacrusis",
     },
 
     // DESCARGA — Havana 1957. Cachao's Panart jam sessions — the
@@ -35753,6 +37208,11 @@
     // `ragtime` (1899) is offered as nearer on a shared syncopation, which is where two
     // musics of the Americas start rather than where they meet.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. Clave, not backbeat: the
+    // weight is the off-beat stroke and the kit rule found the wrong quarter.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     descarga: {
       instrumental: true,
       label: "Havana 1957",
@@ -35792,6 +37252,7 @@
       word: (v, s) => (v === 0 ? [keep(0, 3, 6, 10)]
                     : v === 1 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]
                     : [drop(6), transpose(-3)]),
+      dyn: "syncope",
     },
 
     // CAPE JAZZ — Cape Town 1974. Abdullah Ibrahim (Dollar Brand),
@@ -35811,6 +37272,13 @@
     // (see the header); `jazz` is Ibrahim's own schooling (the
     // article lists him bebop first); `mbaqanga` the township
     // groove alongside. The Cape's own carnival beat is the want.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A jazz row phrases
+    // into the bar like the parent it names; the ride's two and four is what
+    // the horn plays across. The `roots` cluster takes `lean`; the anchor's
+    // own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     capejazz: {
       instrumental: true,
       label: "Cape Town 1974",
@@ -35850,6 +37318,7 @@
       word: (v, s) => (v === 0 ? [keep(0, 4, 8, 12)]
                     : v === 1 ? [[], [fill(2)], [transpose(2)], [rotate(2)]][s % 4]
                     : [drop(6)]),
+      dyn: "anacrusis",
     },
 
     // TRAD JAZZ — London 1954. The Chris Barber Band, New Orleans
@@ -35866,6 +37335,12 @@
     // LINEAGE: `neworleans` (New Orleans 1923) at dominant weight —
     // the revival is that record shelf replayed note-for-loving-
     // note; `musichall` is the British room it was replayed in.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     tradjazz: {
       instrumental: true,
       label: "London 1954",
@@ -35905,6 +37380,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [reverse()]][s % 4]
                     : v === 1 ? [fill(1), transpose(5)]
                     : [drop(4), transpose(-7)]),
+      dyn: "anacrusis",
     },
 
     // INDO JAZZ — London 1966. The Joe Harriott-John Mayer double
@@ -35930,6 +37406,13 @@
     // and sixty-five; the raga discipline, the drone and the long line
     // Mayer brought to Harriott's bandstand are the elder form's whether
     // its label dates a court or a tape.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A jazz row phrases
+    // into the bar like the parent it names; the ride's two and four is what
+    // the horn plays across. The `roots` cluster takes `lean`; the anchor's
+    // own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     indojazz: {
       instrumental: true,
       label: "London 1966",
@@ -35968,6 +37451,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]
                     : v === 1 ? [[drop(2)], [drop(2), rotate(4)]][s % 2]
                     : [drop(8)]),
+      dyn: "anacrusis",
     },
 
     // JAPANESE JAZZ — Tokyo 1974. The Tsuyoshi Yamamoto Trio,
@@ -35987,6 +37471,12 @@
     //
     // the twelve bars themselves, blues' own cycle — the record is a
     // slow blues and the row says so with the parent's exact roots.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     japanjazz: {
       instrumental: true,
       label: "Tokyo 1974",
@@ -36028,6 +37518,7 @@
       words: ["the piano, a blues hit hard and slow", "the vibraphone, late-night answers"],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], [rotate(2)]][s % 4]
                     : [drop(6)]),
+      dyn: "anacrusis",
     },
 
     // NORDIC JAZZ — Oslo 1970. The Jan Garbarek Quartet, Afric
@@ -36073,6 +37564,12 @@
     // call against a piano trio. `indojazz` (1966) is offered as nearer, which is two
     // hybrids of the same decade meeting at the same tempo.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A jazz row phrases
+    // into the bar like the parent it names; the ride's two and four is what
+    // the horn plays across. The `roots` cluster takes `lean`; the anchor's
+    // own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     nordicjazz: {
       instrumental: true,
       label: "Oslo 1970",
@@ -36105,6 +37602,7 @@
       words: ["the tenor, a fjord with a reed in it", "the drone, the room saying nothing back"],
       word: (v, s) => (v === 0 ? [[], [spread(2)], [transpose(2)], [reverse()]][s % 4]
                     : [drop(10)]),
+      dyn: "anacrusis",
     },
 
     // SKOKIAAN — Bulawayo 1947. August Musarurwa's "Skokiaan", cut by
@@ -36124,6 +37622,12 @@
     // tsaba-tsaba grew straight out of — the article's own verb —
     // and `swing` (Kansas City 1938) is the big-band instrumentation
     // the Cold Storage Commission's band wore it in.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     tsabatsaba: {
       instrumental: true,
       label: "Bulawayo 1947",
@@ -36162,6 +37666,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]
                     : v === 1 ? [drop(2), transpose(-3)]
                     : [keep(0, 4, 8, 12)]),
+      dyn: "backbeat",
     },
 
     // ================================================================
@@ -36268,6 +37773,11 @@
     // and a vector that averages tempo and kit density will read the middle of two
     // things as far from each.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `soul` cluster
+    // takes `backbeat`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     acidjazz: {
       label: "London 1988",
       voices: 3,
@@ -36305,6 +37815,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2)], [fill(2)]][s % 4]
                     : v === 1 ? [keep(0, 4, 8, 12), transpose(-3)]
                     : [[drop(2)], [drop(2)], [fill(2)], [drop(2)]][s % 4]),
+      dyn: "anacrusis",
     },
 
     // KRUDER & DORFMEISTER — Vienna 1993. G-Stoned (G-Stone, 1993;
@@ -36379,6 +37890,10 @@
     // 768 of 1,792 hits move when `swing` is forced to 0 (864 of 2,016; 720 of
     // 1,680), which is the hat's odd half plus every rim, where before the fix it
     // was 0 of 0.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     viennadownbeat: {
       label: "Vienna 1993",
       voices: 2,
@@ -36412,6 +37927,7 @@
       words: ["the trumpet, muted, in no hurry, in smoke", "the pad, the room after midnight"],
       word: (v, s) => (v === 0 ? [[], [spread(2)], [transpose(-2)], [rotate(3)]][s % 4]
                     : [drop(8)]),
+      dyn: "syncope",
     },
 
     // PORTISHEAD — Bristol 1994. Dummy (Go! Beat, 22 August 1994):
@@ -36515,6 +38031,10 @@
     // to lean, which is what a beat cut to lacquer and scratched back sounds like:
     // the hiss moves and the grid does not. The 0.15 is Gibbons's, a foot from the
     // mic, and Utley's guitar behind her. Kept as declared; the kit is honest.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     noirhop: {
       label: "Bristol 1994",
       voices: 3,
@@ -36569,6 +38089,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], []][s % 4]
                     : v === 1 ? [[rotate(4)], [reverse()], [rotate(4)], [transpose(1)]][s % 4]
                     : [drop(8)]),
+      dyn: "syncope",
     },
 
     // TRICKY — Bristol 1995. Maxinquaye (4th & B'way, 20 February
@@ -36612,6 +38133,10 @@
     //
     // WHO SINGS: Topley-Bird's side of the pair — level,
     // unimpressed, no belt anywhere in it.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     knowlewest: {
       label: "Bristol 1995",
       voices: 2,
@@ -36661,6 +38186,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [transpose(-1)], [rotate(2)], [transpose(-1)]][s % 4]
                     : [[fill(2)], [fill(2), transpose(1)], [reverse()], [fill(2)]][s % 4]),
+      dyn: "syncope",
     },
 
     // MORCHEEBA — London 1996. Who Can You Trust? (Indochina, 1 April
@@ -36697,6 +38223,10 @@
     // and a straight machine under a slide guitar is not the porch this row's own
     // lineage argues for. FIXED in the grid: the hat plays the beat and the swung
     // "a" (`h: 1001100110011001`), eight hits a bar before and eight after.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     chillout: {
       label: "London 1996",
       voices: 3,
@@ -36743,6 +38273,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], []][s % 4]
                     : v === 1 ? [[rotate(3)], [spread(2)], [rotate(3)], [reverse()]][s % 4]
                     : [drop(8)]),
+      dyn: "syncope",
     },
 
     // LAMB — Manchester 1996. Lamb (Fontana, 30 September 1996):
@@ -36758,6 +38289,10 @@
     // the upright bass and the harmony under the torch line.
     //
     // WHO SINGS: Rhodes's folk quaver, close and plain.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     torchbreaks: {
       label: "Manchester 1996",
       voices: 2,
@@ -36802,6 +38337,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], []][s % 4]
                     : [[rotate(4)], [split(2)], [rotate(4)], [fill(2)]][s % 4]),
+      dyn: "flat",
     },
 
     // DJ SHADOW — San Francisco 1996. Endtroducing..... (Mo' Wax,
@@ -36901,6 +38437,9 @@
     // the library-music shelf beside it, same argument. `chillout` (1996) is offered as
     // nearer and is the same year, the same shelf and a sibling, not an ancestor.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     instrumentalhiphop: {
       instrumental: true,
       label: "San Francisco 1996",
@@ -36945,6 +38484,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(4)]][s % 4]
                     : v === 2 ? [[], [rotate(4)], [drop(2)], [rotate(4)]][s % 4]
                     : [drop(8), keep(0, 8)]),
+      dyn: "syncope",
     },
 
     // THIEVERY CORPORATION — Washington 1996. Sounds from the
@@ -36970,6 +38510,12 @@
     // 1996) — this row's own record. Sitar and Rhodes over a dub bass that sits on
     // the tonic: `harmony: "modal"`, no chord cycle, so dorian's natural sixth had
     // no root to arrive on. MEASURED decorative; the field now names what plays.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `groove`
+    // cluster takes `syncope`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     downtempo: {
       label: "Washington 1996",
       voices: 3,
@@ -37008,6 +38554,7 @@
       word: (v, s) => (v === 0 ? [[], [spread(2)], [transpose(2)], [rotate(3)]][s % 4]
                     : v === 1 ? [[fill(2)], [fill(2)], [rotate(2)], [fill(2)]][s % 4]
                     : [drop(10)]),
+      dyn: "anacrusis",
     },
 
     // AIR — Versailles 1998. Moon Safari (Source/Virgin, 16 January
@@ -37080,6 +38627,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], []][s % 4]
                     : v === 1 ? [[rotate(2)], [spread(2)], [rotate(2)], [transpose(-2)]][s % 4]
                     : [drop(8)]),
+      dyn: "arch",
     },
 
     // MASSIVE ATTACK — Bristol 1998. Mezzanine (Circa/Virgin, 20
@@ -37137,6 +38685,11 @@
     //
     // WHO SINGS: the head voice held nearly straight —
     // Fraser's "Teardrop" register, not a belt.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A sampled break with a hand in
+    // the loop, like the two parents it names — the club rule's .02 threshold
+    // read an editor as a sequencer.
     bristolsound: {
       label: "Bristol 1998",
       voices: 3,
@@ -37182,6 +38735,7 @@
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-1)], []][s % 4]
                     : v === 1 ? [keep(0, 4, 8, 12), transpose(-5)]
                     : [drop(10)]),
+      dyn: "syncope",
     },
 
     // ST GERMAIN — Paris 2000. Tourist (Blue Note, 2000): Ludovic
@@ -37215,6 +38769,10 @@
     // the one thing Navarre would not slow down — and the 0.1 belongs to the live
     // horns and the guitar soloing over it, which is the whole trick of a jazz
     // label signing a house producer. Kept as declared; the kit is honest.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     nujazz: {
       instrumental: true,
       label: "Paris 2000",
@@ -37251,6 +38809,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]
                     : [[rotate(2)], [rotate(2)], [fill(2)], [rotate(2)]][s % 4]),
+      dyn: "syncope",
     },
 
     // RÖYKSOPP — Tromsø 2001. Melody A.M. (Wall of Sound, 13
@@ -37478,6 +39037,7 @@
       },
       words: ["the shantyman, calling the verse", "the watch, answering on the pull"],
       word: v => (v === 0 ? [fill(1), keep(0, 2, 4, 6)] : [fill(1), keep(8, 10, 12, 14), drop(2)]),
+      dyn: "agogic",
     },
 
     // APPALACHIAN BALLADRY — Hot Springs 1916. Cecil Sharp and Maud
@@ -37519,6 +39079,11 @@
     // and mode cannot see a repertory. `doina` (1912) is offered as nearer on a free
     // modal line, which two mountain musics can arrive at without meeting.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     appalachia: {
       label: "Hot Springs 1916",
       voices: 1,
@@ -37553,6 +39118,7 @@
       },
       words: ["the ballad, high and lonesome, verse on verse"],
       word: (v, s) => [[], [transpose(2)], [fill(1), drop(2)], []][s % 4],
+      dyn: "agogic",
     },
 
     // OLD-TIME STRING BAND — Galax 1935. The first Old Fiddlers'
@@ -37766,6 +39332,7 @@
         "the bass, the ground the other two stand on"
       ],
       word: v => (v === 2 ? [spread(0), drop(2)] : v === 1 ? [transpose(-2)] : []),
+      dyn: "agogic",
     },
 
     // NORDIC FOLK SONG — Oslo 1853. Ludvig Mathias Lindeman's AELDRE OG
@@ -37792,6 +39359,12 @@
     // to listen to its own fiddlers, which is the edge.
     // KULNING STAYS OWED, re-probed and re-closed at the ledger block
     // above: the article still dates nothing at all.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     nordicfolk: {
       label: "Oslo 1853",
       voices: 1,
@@ -37825,6 +39398,7 @@
       },
       words: ["the ballad, slow and grave, the mountain holding the echo"],
       word: (v, s) => [[], [drop(2)], [transpose(-2)], []][s % 4],
+      dyn: "agogic",
     },
 
     // CHANSON RÉALISTE — Paris 1936. Piaf's first Polydor sides (cut
@@ -37841,6 +39415,12 @@
     //
     // WHO SINGS: the belter — the voice that carried a story
     // over a room with no microphone worth trusting.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "arch"` — the line arches up and back down. One voice shaping one line:
+    // up to the middle and back. The `roots` cluster takes `lean`; the
+    // anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     chanson: {
       label: "Paris 1936",
       voices: 2,
@@ -37889,6 +39469,7 @@
         "the accordion, the street the story happens on"
       ],
       word: v => (v === 0 ? [] : [drop(9)]),
+      dyn: "arch",
     },
 
     // THE LAUTARI TARAF — Clejani 1986. The village string band of
@@ -38070,6 +39651,7 @@
         "the fourth, closing the circle"
       ],
       word: v => (v === 0 ? [fill(1), keep(0, 4, 8, 12)] : v === 1 ? [fill(1), keep(2, 6, 10, 14)] : v === 2 ? [fill(1), keep(1, 5, 9, 13)] : [fill(1), keep(3, 7, 11, 15)]),
+      dyn: "agogic",
     },
 
     // NURSERY RHYME — London 1744. TOMMY THUMB'S PRETTY SONG BOOK, Mary
@@ -38114,6 +39696,7 @@
       },
       words: ["the rhyme, four bars, said twice, sleep at the end of it"],
       word: (v, s) => [[], [], [transpose(2)], [drop(2)]][s % 4],
+      dyn: "agogic",
     },
 
     // POLKA — Prague 1837. The Bohemian couple dance arrives in Prague's
@@ -38126,6 +39709,12 @@
     // declared bloodline) and maxixe's "the polka, as rio danced it".
     //
     // a ballroom dance — the band plays, the room does the talking
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. The bar IS the genre: a
+    // waltz and a polka lean on the downbeat, and the second beat is the lift.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     polka: {
       instrumental: true,
       label: "Prague 1837",
@@ -38161,6 +39750,7 @@
         "the tuba, the oom the pah answers"
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(2), rotate(2)] : [keep(0, 4, 8, 12), drop(2)]),
+      dyn: "lean",
     },
 
     // CAJUN — New Orleans 1928. Joe Falcon and Cléoma Breaux cut ALLONS
@@ -38221,6 +39811,12 @@
     // tarantata cell is a two-chord i-bVII oscillation, a NATURAL-MINOR figure:
     // the raised sixth that would make it dorian is not the pizzica's note, and
     // the row is modal, so it never sounded one either way.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     tarantella: {
       label: "Galatina 1959",
       voices: 3,
@@ -38259,6 +39855,7 @@
         "the guitar, strumming the wheel around — the tamburello never stops"
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(2)] : [fill(1), keep(0, 3, 6, 8, 11, 14), drop(2)]),
+      dyn: "anacrusis",
     },
 
     // SEAN-NÓS — Carna 1957. Seosamh Ó hÉanaí (Joe Heaney), Connemara's
@@ -38288,6 +39885,12 @@
     // stepping. 110 ms on the marked steps. With a single chair on this row
     // there is no other instrument for the number to spill onto, which makes
     // it the cleanest case in the round.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     seannos: {
       label: "Carna 1957",
       voices: 1,
@@ -38323,6 +39926,7 @@
       },
       words: ["the old style: one voice, no bar line, the turns doing the harmony's work"],
       word: (v, s) => [[], [transpose(-2)], [fill(1), drop(2)], []][s % 4],
+      dyn: "agogic",
     },
 
     // BARBERSHOP — New York 1910. The American Quartet's PLAY THAT
@@ -38392,6 +39996,7 @@
         "the bass, walking the sevenths home"
       ],
       word: v => (v === 0 ? [] : v === 1 ? [transpose(2), drop(2)] : v === 2 ? [transpose(-3), drop(2)] : [spread(0), keep(0, 4, 8, 12), drop(2)]),
+      dyn: "agogic",
     },
 
     // ---- THE COMMISSIONED SCREEN — the news pair's law, widened ---------
@@ -38408,6 +40013,12 @@
     // breakingnews 2006: three desks, one job.
     //
     // a cue book — the picture does the talking
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     photoplay: {
       instrumental: true,
       label: "Cleveland 1913",
@@ -38453,6 +40064,7 @@
         "the cello, the villain's own register"
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(9)] : [drop(2), transpose(-3)]),
+      dyn: "swell",
     },
 
     // THE GOLDEN-AGE SCORE — Los Angeles 1938. Korngold's THE ADVENTURES
@@ -38479,6 +40091,12 @@
     // there is no model of a room full of people.
     //
     // a picture score — the dialogue is the singer
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     goldenagescore: {
       organic: true,
       instrumental: true,
@@ -38526,6 +40144,7 @@
         "the low strings, the forest under all of it"
       ],
       word: v => (v === 0 ? [fill(4)] : v === 1 ? [fill(2), transpose(2)] : v === 2 ? [drop(2), rotate(3)] : [drop(9)]),
+      dyn: "swell",
     },
 
     // THE HERRMANN STRING SCORE — Los Angeles 1960. PSYCHO: strings
@@ -38591,6 +40210,7 @@
         "the basses, the dread held under everything"
       ],
       word: v => (v === 0 ? [fill(4), rotate(3), drop(2)] : v === 1 ? [excerpt(0, 2), fill(2)] : v === 2 ? [transpose(-3), drop(2)] : [spread(0), keep(0, 8), drop(2)]),
+      dyn: "arch",
     },
 
     // THE MORRICONE WESTERN — Rome 1966. IL BUONO, IL BRUTTO, IL CATTIVO,
@@ -38641,6 +40261,7 @@
         "the soprano, wordless, scored like a violin"
       ],
       word: v => (v === 0 ? [excerpt(0, 2), fill(4)] : v === 1 ? [fill(2), drop(2)] : v === 2 ? [drop(2), rotate(2)] : [drop(9)]),
+      dyn: "arch",
     },
 
     // THE BARRY SPY SCORE — London 1962. THE JAMES BOND THEME, CTS
@@ -38685,6 +40306,12 @@
     // than crime jazz's 0.2, which is the difference between a title theme and a
     // narcotics picture — but the PATTERN belongs to the ride and not to the row.
     // Eight hits a bar before and eight after.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     spyscore: {
       instrumental: true,
       label: "London 1962",
@@ -38720,6 +40347,7 @@
         "the strings, the chromatic slink between"
       ],
       word: v => (v === 0 ? [excerpt(0, 4), fill(2)] : v === 1 ? [fill(4), rotate(3), drop(2)] : [drop(2), transpose(-2)]),
+      dyn: "anacrusis",
     },
 
     // THE CARPENTER SCORE — Los Angeles 1978. HALLOWEEN, scored by the
@@ -38739,6 +40367,12 @@
     // ledger round landed it; the edge is smaller than suspensescore's
     // because Carpenter's economy is Herrmann's and only the dread
     // is Bernard's.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     horrorsynth: {
       instrumental: true,
       label: "Los Angeles 1978",
@@ -38778,6 +40412,7 @@
         "the pad, the street at night holding still"
       ],
       word: v => (v === 0 ? [fill(1), keep(0, 2, 4, 6, 8, 10, 12, 14)] : v === 1 ? [spread(0), keep(0, 8), drop(2)] : [drop(9)]),
+      dyn: "flat",
     },
 
     // THE MANN/HAMMER MOOD SYNTH — Miami 1984. Jan Hammer scoring MIAMI
@@ -38845,6 +40480,7 @@
         "the pad, the ocean at 3 a.m."
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(2), rotate(2)] : [drop(9)]),
+      dyn: "arch",
     },
 
     // THE SITCOM THEME — Los Angeles 1983. "Where Everybody Knows Your
@@ -38925,6 +40561,7 @@
         "the strings, the lamplight"
       ],
       word: v => (v === 0 ? [] : v === 1 ? [fill(2), drop(2)] : [drop(9)]),
+      dyn: "arch",
     },
 
     // THE SITCOM STING — Los Angeles 1989. Jonathan Wolff's SEINFELD
@@ -38943,6 +40580,12 @@
     // A sting has no progression to be the seventh of (`harmony: "modal"`), and
     // BLUES [0,3,5,6,7,10] has a MINOR third, which mixolydian is not. Full ruling
     // at `holler`.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     sitcomsting: {
       instrumental: true,
       label: "Los Angeles 1989",
@@ -38978,6 +40621,7 @@
       tone: { wave: "square", cut: 2200, q: 1.2, atk: 0.004, rel: 0.25, gain: 0.27, verb: 0.18 },
       words: ["the slap bass, talking over the applause", "the synth brass, the punchline hit"],
       word: v => (v === 0 ? [fill(2), drop(2)] : [fill(4), rotate(3), drop(2)]),
+      dyn: "anacrusis",
     },
 
     // =====================================================================
@@ -39030,6 +40674,12 @@
     // a picture score — the crawl is the singer
     //
     // the roll into the landing — newsfanfare's fill bar, verbatim
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     spaceopera: {
       instrumental: true,
       label: "Los Angeles 1979",
@@ -39085,6 +40735,7 @@
         "the timpani, the empire underneath"
       ],
       word: v => (v === 0 ? [fill(4), rotate(3)] : v === 1 ? [fill(2), transpose(-3)] : v === 2 ? [spread(0.5), fill(1)] : [spread(0), fill(4), rotate(3)]),
+      dyn: "swell",
     },
 
     // THE EPIC HYBRID SCORE — Santa Monica 2010, THE BRAAAM. The label is
@@ -39186,6 +40837,12 @@
     // `cases` and an s-schedule cannot be said in that grammar (it emits
     // `v => …`), so it is a formula now, which is what 190 of the
     // catalogue's 421 words are.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     epichybrid: {
       instrumental: true,
       label: "Santa Monica 2010",
@@ -39249,6 +40906,7 @@
                     : v === 4 ? [spread(0.5), keep(0, 4, 12),
                                  transpose([0, 0, 1, 1, 2, 2][s % 6])]
                     : [drop(9)]),
+      dyn: "swell",
     },
 
     // TRAILER MUSIC — Los Angeles 2012. The trailer houses' library albums
@@ -39271,6 +40929,12 @@
     // spyscore's door-kick
     //
     // horrorsynth's stinger
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     trailerscore: {
       instrumental: true,
       label: "Los Angeles 2012",
@@ -39315,6 +40979,7 @@
         "the choir, vowels the size of the screen"
       ],
       word: v => (v === 0 ? [fill(4), rotate(3), drop(2)] : v === 1 ? [spread(0.5), fill(1)] : v === 2 ? [spread(0), keep(0, 8), drop(2)] : [drop(2)]),
+      dyn: "swell",
     },
 
     // CRIME JAZZ — Los Angeles 1955, the year the big band walked into the
@@ -39374,6 +41039,12 @@
     // since it was written (`r: 1001100110011001`) and the same figure `gospel`'s
     // hat took last year. Eight hits a bar before, eight after — the FEEL moves
     // and the density does not.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. A horn section phrases
+    // into the bar, which is what a chart's ties across the barline are for.
+    // The `studio` cluster takes `arch`; the anchor's own evidence outranks
+    // it, which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     crimejazz: {
       instrumental: true,
       label: "Los Angeles 1955",
@@ -39418,6 +41089,7 @@
         "the vibes, neon through the blinds"
       ],
       word: v => (v === 0 ? [excerpt(0, 4), fill(2)] : v === 1 ? [transpose(-3), fill(2)] : v === 2 ? [fill(4), rotate(3), drop(3)] : [drop(9)]),
+      dyn: "anacrusis",
     },
 
     // THE FANTASY EPIC SCORE — Wellington 2001, the year the biggest
@@ -39446,6 +41118,11 @@
     // against an orchestra. `copshowsynth` (1984) is offered as nearer, which is two
     // screen musics sharing an arc plan and nothing else.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     fantasyscore: {
       instrumental: true,
       label: "Wellington 2001",
@@ -39480,6 +41157,7 @@
         "the low strings, the mountains"
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [fill(2), transpose(-3)] : v === 2 ? [drop(2)] : [drop(9)]),
+      dyn: "swell",
     },
 
     // THE NORDIC DRONE SCORE — Reykjavík 2015. The string-cluster school:
@@ -39498,6 +41176,12 @@
     // 70, not the 66 this round's spec asked for: compose.js fences bpm
     // to 70..160 and 66 fails the gate by name (measured 2026-09-01,
     // precompose G6a). 70 is the floor and the floor is the point.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     nordicscore: {
       instrumental: true,
       label: "Reykjavík 2015",
@@ -39539,6 +41223,7 @@
         "the pad, the coastline"
       ],
       word: v => (v === 0 ? [spread(0.5), fill(2)] : v === 1 ? [spread(0), fill(2)] : v === 2 ? [spread(0), keep(0, 8)] : [drop(9)]),
+      dyn: "swell",
     },
 
     // THE PRESTIGE-DRAMA UNDERSCORE — Los Angeles 1999, the suburban-
@@ -39567,6 +41252,11 @@
     // of tempo and kit. `crimejazz` (1955) is offered as nearer because both are
     // orchestras written to picture; that is a job the two share, not a descent.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     dramascore: {
       instrumental: true,
       label: "Los Angeles 1999",
@@ -39605,6 +41295,7 @@
         "the pad, the lawn at dusk"
       ],
       word: v => (v === 0 ? [excerpt(0, 4), fill(2)] : v === 1 ? [drop(2), rotate(2)] : [drop(9)]),
+      dyn: "swell",
     },
 
     // THE BIG-SKY WESTERN SCORE — Los Angeles 1958, the year the
@@ -39621,6 +41312,12 @@
     // a main title — the territory is the singer
     //
     // the gallop — 3-3-2 under the tune, the low tom agreeing
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     frontierscore: {
       instrumental: true,
       label: "Los Angeles 1958",
@@ -39659,6 +41356,7 @@
         "the harp, the river glinting"
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [fill(2), transpose(-3)] : v === 2 ? [spread(0.5), fill(2)] : [drop(3), rotate(1)]),
+      dyn: "swell",
     },
 
     // =====================================================================
@@ -39722,6 +41420,12 @@
     // rather than conscripted.
     //
     // the oom: the bass says beat one alone, twelve steps a bar
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. The bar IS the genre: a
+    // waltz and a polka lean on the downbeat, and the second beat is the lift.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     waltz: {
       instrumental: true,
       label: "Vienna 1867",
@@ -39770,6 +41474,7 @@
           ? [[], [fill(2)], [transpose(2)], [fill(2), rotate(3)]][s % 4]
         : v === 1 ? [keep(4, 8)]
         : [transpose(-5), drop(4)]),
+      dyn: "lean",
     },
 
     // BAL-MUSETTE — Paris 1880. The article's own dating: "a style of
@@ -39793,6 +41498,12 @@
     // arrived in Paris (1867 < 1880, the edge checked); the Auvergnat
     // half — the bourrée rooms the cabrette ran — has no anchor and is
     // owed by name.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "lean"` — the line leans on its first note. The bar IS the genre: a
+    // waltz and a polka lean on the downbeat, and the second beat is the lift.
+    // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     musette: {
       instrumental: true,
       label: "Paris 1880",
@@ -39835,6 +41546,7 @@
       word: (v, s) => (v === 0
           ? [[], [fill(2)], [rotate(3)], [fill(2), transpose(2)]][s % 4]
         : [keep(4, 8), drop(2)]),
+      dyn: "lean",
     },
 
     // SCHLAGER — Hamburg 1960. Freddy Quinn, "Irgendwann gibt's ein
@@ -39917,6 +41629,12 @@
     // `MOUTHS.crooning` on purpose, so that the one thing they genuinely share
     // — a man at a microphone selling a refrain — is held constant and the
     // mode is where the ear hears the difference.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     schlager: {
       label: "Hamburg 1960",
       near: "operetta",
@@ -39963,6 +41681,7 @@
         "the accordion, the dance floor this came off"
       ],
       word: v => (v === 1 ? [drop(8)] : v === 2 ? [rotate(4), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // ISKELMÄ — Helsinki 1955. Olavi Virta on Rytmi, Helsinki, in the years
@@ -40059,6 +41778,12 @@
     // on a piano accordion and never took the bandoneon, and the two rows
     // would otherwise be one object with different labels. The violin is the
     // pavilion orchestra's lead; the singer is the record.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     iskelma: {
       label: "Helsinki 1955",
       near: "tango",
@@ -40105,6 +41830,7 @@
         "the violin, the pavilion orchestra's lead"
       ],
       word: v => (v === 1 ? [transpose(-12), drop(4)] : v === 2 ? [drop(9)] : []),
+      dyn: "backbeat",
     },
 
     // TARAB — Cairo 1934. "In 1934, Umm Kulthum sang for the inaugural
@@ -40154,6 +41880,12 @@
     // Per-note (`slide`), so the qanun-standing harp and the wahda are not
     // dragged with it. None of the four `cannot`s above move: this is the
     // slide, not heterophony, not the room, and not a floating third.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. Rubato is the signature:
+    // the line stretches and the band waits for the last note. The `roots`
+    // cluster takes `lean`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     tarab: {
       label: "Cairo 1934",
       voices: 4,
@@ -40218,6 +41950,7 @@
                     : v === 1 ? [transpose(7), drop(2)]
                     : v === 2 ? [rotate(8), drop(4)]
                     : [drop(8)]),
+      dyn: "agogic",
     },
 
     // DASTGAH — Tehran 1925. Qamar-ol-Moluk Vaziri's first sides: the
@@ -40251,6 +41984,12 @@
     // this parent would assert a descent the tradition does not claim.
     // The two rows are SIBLINGS, and the catalog can say that by leaving
     // the edge unwritten and saying so here.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     dastgah: {
       label: "Tehran 1925",
       voices: 2,
@@ -40306,6 +42045,7 @@
           ? [[drop(2)], [transpose(2), fill(2)], [transpose(4), fill(2), rotate(3)],
              [transpose(2), reverse()]][s % 4]
         : [transpose(-5), drop(2)]),
+      dyn: "agogic",
     },
 
     // JINGJU — Beijing 1918. "The Hegemon-King Bids His Lady Farewell"
@@ -40497,6 +42237,12 @@
     // as an argument: this record is mostly the Delhi court form, and what
     // it inherits THROUGH that form is a gravity that is four and a half
     // centuries older than the paragraph above could say.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     khyal: {
       label: "Mumbai 1965",
       voices: 3,
@@ -40570,6 +42316,7 @@
           ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]
         : v === 1 ? [drop(4), transpose(-3)]
         : [drop(12)]),
+      dyn: "agogic",
     },
 
     // GAMELAN — Surakarta 1956. Lokananta — "gamelan from heaven" —
@@ -40605,6 +42352,12 @@
     // the kotekan fact as operators: v1 fires exactly where v0 does not
     // (complement of the gate), which is interlocking said in this
     // file's own vocabulary
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A hand under .015 with a phrase
+    // under .2 is a music whose discipline is not leaning. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     gamelan: {
       instrumental: true,
       label: "Surakarta 1956",
@@ -40659,6 +42412,7 @@
                     : v === 1 ? [complementOf(0), transpose(12)]
                     : v === 2 ? [keep(0, 4, 8, 12), transpose(-12)]
                     : [keep(0), drop(12)]),
+      dyn: "flat",
     },
 
     // TAPEMUSIC — Paris 1948. Pierre Schaeffer's "Cinq études de bruits",
@@ -41008,6 +42762,12 @@
     // seating a sampled upright by accident.
     // THIS ROW: James Bernard, *Dracula* (Hammer, Bray Studios, 1958) — a brass
     // section and a tubular bell struck by a hand.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. A cue's whole job is the
+    // build, and the build is a bar-long crescendo. The `studio` cluster takes
+    // `arch`; the anchor's own evidence outranks it, which is the flood's rule
+    // (docs/DYNAMICS-FLOOD.md).
     horrorscore: {
       organic: true,
       instrumental: true,
@@ -41045,6 +42805,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(-1)]][s % 4]
                     : v === 1 ? [keep(0, 2, 4), transpose(-2)]
                     : [keep(0), drop(8)]),
+      dyn: "swell",
     },
 
     // IDM — Sheffield 1992. ARTIFICIAL INTELLIGENCE (Warp): the ZIM's
@@ -41105,6 +42866,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(3)], [split(2)], [rotate(5), fill(2)]][s % 4]
                     : v === 1 ? [only("gate", rotate(2)), drop(2)]
                     : [drop(10)]),
+      dyn: "swell",
     },
 
     // EXOTICA — Honolulu 1957. Martin Denny's EXOTICA (Liberty,
@@ -41173,6 +42935,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2)], [spread(2)]][s % 4]
                     : v === 1 ? [rotate(8), drop(2)]
                     : [drop(10)]),
+      dyn: "arch",
     },
 
     // MUWASHSHAH — Cairo 1200. Ibn Sanā' al-Mulk's DĀR AṬ-ṬIRĀZ, "the
@@ -41194,6 +42957,12 @@
     // major Andalusi innovation in Arabic poetry... sung and
     // performed musically"), so the edge points at the Cordoban
     // school that raised the musicians who sang it.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The Arab court line arrives
+    // at its phrase end, ancestor and descendant alike. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     muwashshah: {
       label: "Cairo 1200",
       voices: 3,
@@ -41241,6 +43010,7 @@
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [fill(2)]][s % 4]
                     : v === 1 ? [transpose(-4), drop(2)]
                     : [rotate(8), drop(4)]),
+      dyn: "agogic",
     },
 
     // ZAJAL — Córdoba 1150. The dīwān of Ibn Quzman (1087-1160), "the
@@ -41261,6 +43031,12 @@
     // strophe-and-refrain from exactly this music is the oldest
     // open argument in the field, and the cast states the kinship
     // without ruling on the direction.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The Arab court line arrives
+    // at its phrase end, ancestor and descendant alike. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     zajal: {
       label: "Córdoba 1150",
       voices: 2,
@@ -41305,6 +43081,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(2), fill(2)]][s % 4]
                     : [keep(0, 4, 8, 12), drop(2)]),
+      dyn: "agogic",
     },
 
     // THE SOUND SYSTEM — Kingston 1950. Tom the Great Sebastian, "the
@@ -41342,6 +43119,12 @@
     // arrives with `ska` (Kingston 1962) and `rocksteady` (Kingston 1966), both of
     // which write straight eighths and declare NO swing at all — which is the
     // distinction this edit protects rather than erases.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "anacrusis"` — the line pushes into the next bar. The row's own swing (≥
+    // .15) makes the last quarter a run-up, not an ending. The `groove`
+    // cluster takes `syncope`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     soundsystem: {
       label: "Kingston 1950",
       voices: 2,
@@ -41387,6 +43170,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [excerpt(0, 8)], [rotate(2)]][s % 4]
                     : [keep(0, 3, 6), drop(3)]),
+      dyn: "anacrusis",
     },
 
     // THE JUBILEE QUARTET — Nashville 1909. The Fisk Jubilee Singers'
@@ -41399,6 +43183,12 @@
     // the debts round's barbershop paragraph said this shift lacked.
     // 1909 sits one year before barbershop's own Victor record, so
     // both edges point backward, as the maringa rule requires.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The church build: the
+    // line rises into the arrival and the room rises with it. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     jubilee: {
       label: "Nashville 1909",
       voices: 4,
@@ -41443,6 +43233,7 @@
                     : v === 1 ? [drop(4), transpose(2)]
                     : v === 2 ? [drop(6)]
                     : [drop(8), transpose(-5)]),
+      dyn: "swell",
     },
 
     // RUMBA — Matanzas 1956. Los Muñequitos de Matanzas (then Conjunto
@@ -41597,6 +43388,12 @@
     // family is vox, on ottoman's own argument. Pays `taraf`'s want
     // ("the doina"); klezmer's doyne is the same object one migration
     // north, carried by its own row's parents.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     doina: {
       label: "Maramureș 1912",
       voices: 1,
@@ -41635,6 +43432,7 @@
       },
       words: ["one voice on the mountain, no bar line, the turns doing the grieving"],
       word: (v, s) => [[], [transpose(-2)], [fill(1), drop(2)], [rotate(2)]][s % 4],
+      dyn: "agogic",
     },
 
     // CHAZZANUT — New York 1912. Yossele Rosenblatt arrives at the
@@ -41651,6 +43449,12 @@
     //
     // 70 is compose.js's floor (the seannos ruling); the davenen is
     // slower than any metronome word for it and maxHold carries that.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The stamped pair (stress ≤
+    // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
+    // cluster takes `agogic`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     chazzanut: {
       label: "New York 1912",
       voices: 2,
@@ -41696,6 +43500,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [fill(1)], [rotate(2)]][s % 4]
                     : [keep(0), drop(10)]),
+      dyn: "agogic",
     },
 
     // =====================================================================
@@ -41769,6 +43574,12 @@
     //
     // WHO SINGS: melisma — the ornamented line both descendants
     // inherited. Said here first, a century before Baghdad.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "agogic"` — the line leans on its last note. The Arab court line arrives
+    // at its phrase end, ancestor and descendant alike. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     qiyan: {
       label: "Medina 705",
       voices: 2,
@@ -41824,6 +43635,7 @@
       ],
       word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)], [rotate(3)]][s % 4]
                     : [transpose(-5), drop(3)]),
+      dyn: "agogic",
     },
 
     // THE HARDINGFELE SLÅTT — Oslo 1849. "Bull endeavored to make a
@@ -42217,6 +44029,7 @@
       ],
       word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // POST-GRUNGE [grunge] — Seattle 1995. Foo Fighters, "Foo Fighters"
@@ -42277,6 +44090,7 @@
       ],
       word: v => (v === 1 ? [transpose(-5)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // BRITPOP [beatgroup] — Manchester 1994. Oasis, "Definitely Maybe"
@@ -42363,6 +44177,7 @@
       ],
       word: v => (v === 1 ? [fill(2), transpose(-12)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // POST-BRITPOP [britpop] — London 2000. Coldplay, "Parachutes"
@@ -42417,6 +44232,7 @@
       words: ["the guitar, two notes a bar, falling", "the piano, holding the chord under it"],
       word: v => (v === 1 ? [keep(0, 8)] : []),
       fx: ["echo"],
+      dyn: "backbeat",
     },
 
     // POP-PUNK [punk] — Berkeley 1994. Green Day, "Dookie" (Fantasy
@@ -42512,6 +44328,7 @@
       ],
       word: v => (v === 1 ? [transpose(-12)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // NU METAL [industrialmetal] — Los Angeles 2000. Linkin Park, "Hybrid
@@ -42596,6 +44413,7 @@
       ],
       word: v => (v === 0 ? [only("gate", fill(1))] : v === 1 ? [keep(0, 8), transpose(1)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // GLAM METAL [nwobhm] — Los Angeles 1987. Guns N' Roses, "Appetite for
@@ -42674,6 +44492,7 @@
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [keep(0, 8)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // FUNK ROCK [funk] — Los Angeles 1984. The Red Hot Chili Peppers, "The
@@ -42753,6 +44572,11 @@
     // cause was worth 5.56 dB, so no lift was added on top of it, and the wah still
     // plays on every pitched chair the row wanted it on.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. The one-and, and everything
+    // after it: the figure itself is syncopated, not merely pushed. The `band`
+    // cluster takes `backbeat`; the anchor's own evidence outranks it, which
+    // is the flood's rule (docs/DYNAMICS-FLOOD.md).
     funkrock: {
       label: "Los Angeles 1984",
       near: "psychfunk",
@@ -42795,6 +44619,7 @@
       ],
       word: v => (v === 1 ? [only("gate", rotate(2))] : [fill(1)]),
       fx: ["wah"],
+      dyn: "syncope",
     },
 
     // BLACK METAL [deathmetal] — Oslo 1993. Darkthrone, "Transilvanian
@@ -42873,6 +44698,7 @@
       ],
       word: v => (v === 1 ? [transpose(-7)] : [fill(1)]),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // SKA PUNK [ska] — Long Beach 1996. Sublime, "Sublime" (MCA, 30 July
@@ -42940,6 +44766,7 @@
         "the trombone, a third under the tenor"
       ],
       word: v => (v === 0 ? [only("gate", rotate(2))] : v === 2 ? [transpose(-3)] : []),
+      dyn: "backbeat",
     },
 
     // COLLEGE ROCK [janglepop] — Athens 1983. R.E.M., "Murmur" (I.R.S., 12
@@ -43018,6 +44845,7 @@
       ],
       word: v => (v === 1 ? [rotate(2), transpose(2)] : []),
       fx: ["chorus"],
+      dyn: "backbeat",
     },
 
     // RAP ROCK [blockparty] — New York 1986. Beastie Boys, "Licensed to
@@ -43090,6 +44918,7 @@
       ],
       word: v => (v === 1 ? [keep(0, 12)] : [only("gate", fill(2))]),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // SOUTHERN HIP HOP [boombap] — Atlanta 1996. OutKast, "ATLiens"
@@ -43129,6 +44958,9 @@
     // shared swung sixteenth; New Jack is New York's, and this row's argument is that
     // the South did not learn its bounce there.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     southernhiphop: {
       label: "Atlanta 1996",
       near: "boombap",
@@ -43172,6 +45004,7 @@
         "the strings, holding the second chord"
       ],
       word: v => (v === 1 ? [keep(0, 8)] : []),
+      dyn: "syncope",
     },
 
     // CONTEMPORARY R&B [newjackswing] — Virginia Beach 1997. Missy Elliott,
@@ -43278,6 +45111,7 @@
       },
       words: ["the synth, the hook, off the beat and back", "the vocal chop, answering it"],
       word: v => (v === 1 ? [only("gate", rotate(4))] : []),
+      dyn: "backbeat",
     },
 
     // TRANCE [techno] — Berlin 1994. Paul van Dyk, "45 RPM" (MFS, Berlin,
@@ -43315,6 +45149,10 @@
     // accident, at the fixed ~96 ms every module in the fleet has always
     // had (`si.smoo`, see state-engine GLIDE_MAP). 50 ms is that accident
     // NAMED and pulled in a little, so the figure lands on the beat.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A club floor whose hand is under
+    // .02 of a step is the machine keeping time.
     trance: {
       bassInstr: "bass_lead",
       label: "Berlin 1994",
@@ -43370,6 +45208,7 @@
       ],
       word: v => (v === 1 ? [keep(0, 8)] : [fill(1)]),
       fx: ["sweep"],
+      dyn: "flat",
     },
 
     // EURODANCE [italodisco] — Milan 1993. Corona, "The Rhythm of the
@@ -43404,6 +45243,10 @@
     // only where the phrase's own `sld` column is marked (the seed phrase
     // marks four of sixteen), so the sung lead scoops into a quarter of its
     // notes the way a belter does and the stab keeps its edge.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "syncope"` — the line leans off the beat. A club floor with a real hand
+    // on it is a hand playing off the beat.
     eurodance: {
       label: "Milan 1993",
       near: "hinrg",
@@ -43450,6 +45293,7 @@
         "the voice, the chorus, arriving on the tonic"
       ],
       word: v => (v === 1 ? [keep(0, 4, 8, 12)] : v === 2 ? [transpose(12)] : []),
+      dyn: "syncope",
     },
 
     // TEEN POP [boyband] — Stockholm 1998. Britney Spears, "…Baby One More
@@ -43524,6 +45368,7 @@
         "the voice, the hook, over the loop"
       ],
       word: v => (v === 1 ? [keep(0, 8)] : []),
+      dyn: "arch",
     },
 
     // RETRO SOUL [detroitsoul] — London 2006. Amy Winehouse, "Back to
@@ -43619,6 +45464,7 @@
         "the voice, the tune, falling to the third"
       ],
       word: v => (v === 1 ? [only("gate", rotate(8))] : []),
+      dyn: "backbeat",
     },
 
     // NEOTRADITIONAL COUNTRY [countrypop] — Nashville 1990. Garth Brooks,
@@ -43644,6 +45490,12 @@
     //
     // THE TRAIN BEAT, measured: a rim click either side of every
     // beat, which is the lane the 1945 row has no drummer for.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     neotraditional: {
       label: "Nashville 1990",
       near: "countrypop",
@@ -43677,6 +45529,7 @@
         "the fiddle, answering it a third up"
       ],
       word: v => (v === 1 ? [only("gate", rotate(8)), transpose(2)] : []),
+      dyn: "backbeat",
     },
 
     // SMOOTH JAZZ [jazzrock] — Los Angeles 1986. Kenny G, "Duotones"
@@ -43733,6 +45586,7 @@
       ],
       word: v => (v === 1 ? [keep(0, 8)] : []),
       fx: ["chorus"],
+      dyn: "arch",
     },
 
     // CHIPTUNE [technopop] — Kyoto 1985. Koji Kondo, "Super Mario Bros."
@@ -43846,6 +45700,11 @@
     //
     // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. A five-channel chip record has no bass player and no bass recording: its low voice is a pulse channel, one oscillator among the five. `bass_lead` is the nearest thing the fleet models — a mono synth with a filter — and it is a great deal nearer than a microphone in front of a double bass. NAMED AS THE COMPROMISE IT IS: the honest id would be a square wave with no filter at all, and BASSCHOICES has no such entry today.
     //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "flat"` — the line every note the same. A Kling Klang line does not
+    // arch, it recurs — this file's own words about the row next door. The
+    // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
+    // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
     chiptune: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -43894,6 +45753,7 @@
         "the third channel, an octave down — the bass line doing the drumming"
       ],
       word: v => (v === 1 ? [transpose(-4)] : v === 2 ? [fill(1), transpose(-12)] : []),
+      dyn: "flat",
     },
 
     // ===================================================================
@@ -44005,6 +45865,12 @@
     // seat the sampled double bass. The kit is `room` with a plain eighth
     // hat: this is a pop record made by people who wanted it to sound
     // like one.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The church build: the
+    // line rises into the arrival and the room rises with it. The `studio`
+    // cluster takes `arch`; the anchor's own evidence outranks it, which is
+    // the flood's rule (docs/DYNAMICS-FLOOD.md).
     ccm: {
       label: "Nashville 1978",
       near: "singersongwriter",
@@ -44049,6 +45915,7 @@
         "the piano, the pad, an octave down"
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [drop(4), transpose(-12)] : []),
+      dyn: "swell",
     },
 
     // CONTEMPORARY WORSHIP MUSIC — Sydney 1993. Darlene Zschech, "Shout to
@@ -44136,6 +46003,12 @@
     // the hymnal's, opened out: `blend: 0.9`, looser than `hymn`'s pew,
     // because an amplified crowd agrees with itself less than a choir
     // does, not more.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "swell"` — the line crescendos across the bar. The church build: the
+    // line rises into the arrival and the room rises with it. The `band`
+    // cluster takes `backbeat`; the anchor's own evidence outranks it, which
+    // is the flood's rule (docs/DYNAMICS-FLOOD.md).
     worship: {
       label: "Sydney 1993",
       near: "ccm",
@@ -44183,6 +46056,7 @@
       ],
       word: v => (v === 1 ? [drop(3)] : []),
       fx: ["echo"],
+      dyn: "swell",
     },
 
     // INDIE FOLK — London 2009. Mumford & Sons, SIGH NO MORE (Eastcote
@@ -44262,6 +46136,12 @@
     // it knowingly — the roll is the sound and the box has no modelled
     // banjo. `intro: "solo"` because the record opens with one instrument
     // and no drums, and the gallop cell in precompose is the roll itself.
+    //
+    // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
+    // "backbeat"` — the line leans on two and four. The row's own kit hits two
+    // and four, so the line leans where the snare does. The `roots` cluster
+    // takes `lean`; the anchor's own evidence outranks it, which is the
+    // flood's rule (docs/DYNAMICS-FLOOD.md).
     indiefolk: {
       label: "London 2009",
       near: "folkrock",
@@ -44306,6 +46186,7 @@
         "the shout, a third above, second half"
       ],
       word: v => (v === 1 ? [rotate(2)] : v === 2 ? [transpose(4), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // POWER POP — Memphis 1972. Big Star, #1 RECORD (Ardent Studios,
@@ -44440,6 +46321,7 @@
         "the harmony, a third above, thinned"
       ],
       word: v => (v === 2 ? [transpose(2), drop(2)] : []),
+      dyn: "backbeat",
     },
 
     // SKATE PUNK — Los Angeles 1988. Bad Religion, SUFFER (Westbeach
@@ -44568,6 +46450,7 @@
       ],
       word: v => (v === 1 ? [transpose(-12)] : v === 2 ? [transpose(4), drop(2)] : []),
       fx: ["crunch"],
+      dyn: "backbeat",
     },
 
     // INDIETRONICA — Seattle 2003. The Postal Service, GIVE UP (Sub Pop, 19
@@ -44702,6 +46585,7 @@
         "the bell figure, the tune rotated"
       ],
       word: v => (v === 2 ? [rotate(3), drop(2)] : []),
+      dyn: "arch",
     },
   };
 
@@ -46372,7 +48256,8 @@
 
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
                 HARMONYLABEL, tuned, SCALEFAMILY, MODEFAMILY, FAMILYLABEL,
-                MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT };
+                MOUTHS, PROGS, FAMILIES, DYNAMICS, DYN_FAMILY, ORNAMENT,
+                FIGURES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

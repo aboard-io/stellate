@@ -1,5 +1,5 @@
 {
-  "note": "BAL-MUSETTE — Paris 1880. The article's own dating: \"a style of\nFrench instrumental music and dance that first became popular in\nParis in the 1880s\" — the Auvergnat bals of the rue de Lappe, dance\nrooms named for the musette, the cabrette bagpipe that ran them\nbefore \"the accordion, on which a variety of waltzes, polkas, and\nother dance styles were played\" replaced it (the article's sentence;\nthe row casts the instrument the bal KEPT, and the cabrette is in the\n`cannot` where an absent instrument belongs). Émile Vacher and\nCharles Péguri are the players the article names for the era.\nTHE AXES: TIME again — the valse musette counts in three — plus\nSOUND: the musette accordion is two reeds tuned apart, beating, and\nthe chorus insert is the honest proxy for that céleste shimmer\n(dbl's own argument in fields.js: a detuned second pass IS what\ndouble-reeding is).\n\na dance room; the accordion is the singer\n\nLINEAGE: the valse half of the bal's floor is the Viennese waltz\narrived in Paris (1867 < 1880, the edge checked); the Auvergnat\nhalf — the bourrée rooms the cabrette ran — has no anchor and is\nowed by name.",
+  "note": "BAL-MUSETTE — Paris 1880. The article's own dating: \"a style of\nFrench instrumental music and dance that first became popular in\nParis in the 1880s\" — the Auvergnat bals of the rue de Lappe, dance\nrooms named for the musette, the cabrette bagpipe that ran them\nbefore \"the accordion, on which a variety of waltzes, polkas, and\nother dance styles were played\" replaced it (the article's sentence;\nthe row casts the instrument the bal KEPT, and the cabrette is in the\n`cannot` where an absent instrument belongs). Émile Vacher and\nCharles Péguri are the players the article names for the era.\nTHE AXES: TIME again — the valse musette counts in three — plus\nSOUND: the musette accordion is two reeds tuned apart, beating, and\nthe chorus insert is the honest proxy for that céleste shimmer\n(dbl's own argument in fields.js: a detuned second pass IS what\ndouble-reeding is).\n\na dance room; the accordion is the singer\n\nLINEAGE: the valse half of the bal's floor is the Viennese waltz\narrived in Paris (1867 < 1880, the edge checked); the Auvergnat\nhalf — the bourrée rooms the cabrette ran — has no anchor and is\nowed by name.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"lean\"` — the line leans on its first note. The bar IS the genre: a\nwaltz and a polka lean on the downbeat, and the second beat is the lift.\nThe `roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Paris 1880",
   "voices": 2,
@@ -111,5 +111,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0\n          ? [[], [fill(2)], [rotate(3)], [fill(2), transpose(2)]][s % 4]\n        : [keep(4, 8), drop(2)])"
-  }
+  },
+  "dyn": "lean"
 }

@@ -1062,6 +1062,209 @@
   // share links keep playing. COMMENTS keep the historical names — the
   // record and the argument are the point of a comment — but every KEY and
   // every rendered surface is genre-only.
+
+  // ---- FIGURES — THE SHAPES A PHRASE TAKES ---------------------------------
+  // (2026-09-06, the dynamics flood, shift 1. docs/DYNAMICS-FLOOD.md.)
+  //
+  // WHAT THIS TABLE IS FOR. The census of 2026-09-05 measured the motif tier
+  // of all 479 composed records and found the whole dynamic alphabet of 3,991
+  // line cells to be `{5, 6, 8}` — one line of `ideas-kit.js`, first note of a
+  // bar 8, last 5, middle 6, for every genre in the catalogue — and 2,651 of
+  // 2,672 accents to be downbeat-only, one line of `precompose.js`. Not one
+  // row wrote a per-note `vel` or `acc`. What distinguished a funk record from
+  // a chant was the performance layer laid OVER an identical figure, never the
+  // figure. This is the vocabulary that fixes it, and the flood is DATA: a row
+  // names a figure by name (`dyn`, GENRES.md §2) and the generator quotes it.
+  // No new fallback — an absent `dyn` is `lean`, which is the line that was
+  // there, so a row that says nothing renders byte-for-byte what it rendered.
+  //
+  // WHY IT IS IN `HEAD` AND NOT BESIDE `DYN_FAMILY`/`DYNAMICS` DOWN IN `FOOT`,
+  // which is where its neighbours by subject are. FOOT is spliced INSIDE
+  // `stamp(GENRES)` in this file, so a const declared there is local to a
+  // function; HEAD is module scope in this file AND in the generated
+  // `genres.js`. `tools/genres/build.js` has to be able to `require` this
+  // vocabulary to refuse a row that names a figure nobody wrote (the schema
+  // check, GENRES.md §6 G2), and only HEAD can be required. The two DYN tables
+  // are also a different KIND of thing: they STAMP a row after it exists, and
+  // this one is QUOTED by a row, so it has to exist first.
+  //
+  // A FIGURE IS TWO PURE FUNCTIONS over one bar's own onsets, and nothing else
+  // — no state, no seed, no clock, so the same bar is always shaped the same
+  // way and the fingerprints stay meaningful:
+  //     vel(j, n, i, b, N, at) -> 0..9   the level of this note
+  //     acc(j, n, i, b, N, at) -> 0 | 1  whether it is accented
+  //   j   which onset this is among THIS BAR's onsets (0-based)
+  //   n   how many onsets the bar has
+  //   i   which step of the bar it lands on (0..N-1)
+  //   b   which bar of the phrase this is
+  //   N   steps in the bar — 16 on most anchors, 12 on a 3/4, and never
+  //       assumed: every position below is computed as a FRACTION of N, so a
+  //       figure means the same thing in 7/8 as in 4/4.
+  //   at  the steps THIS BAR's onsets fall on, in order (`at[j] === i`)
+  //
+  // AND `at` IS THERE BECAUSE THE FIRST DRAFT DECLARED AND NEVER ARRIVED —
+  // the box's characteristic bug, caught by measuring instead of trusting.
+  // Written without it, `backbeat` weighted the note that lands exactly on the
+  // second quarter and `syncope` the note exactly on the and; measured on the
+  // composed records, `rock`'s own hook has onsets at steps 0, 3 and 5 and
+  // `funk`'s at 7, 8 and 12, so BOTH figures fell through to their "everything
+  // else" branch and rendered a flatter line than the one they replaced, with
+  // no accent anywhere. A figure has to be a claim about the notes the bar
+  // HAS, not about the notes a grid would like it to have. So the two figures
+  // that are about metrical PLACE take the bar's onset list and weight the
+  // first note in the region they care about, which always exists.
+  //
+  // TWO CALLERS, EACH WHERE THE OLD HARD-CODED LINE WAS. `ideas-kit.js`
+  // phraseNow asks for `vel` while it is laying out the bar's onsets, and
+  // `precompose.js` cellOf asks for `acc` after the development device has
+  // moved the notes — that is exactly where each of the two lines this table
+  // replaces used to sit, so the byte-identity of the absent case is a fact
+  // about WHERE the call is and not only about what it returns.
+  const FIGURES = {
+    // THE LEANING FIRST NOTE, and it is the whole catalogue as it stood on
+    // 2026-09-05: the phrase leans on its first note and gives back going out.
+    // Kept as a NAMED figure so that the flood cannot regress it by accident —
+    // absent means this, `test/dynfigure.test.js` §C holds the two to being
+    // the same bytes, and a row may still quote it on purpose where its family
+    // took something else (march, waltz, polka, musette, riff do). It is not a
+    // nothing: a downbeat-heavy phrase that decays is the ordinary shape of a
+    // folk tune, a fiddle reel and a raga line, which is why it survived being
+    // the only one for so long.
+    //   IT IS ALSO THE ONE FIGURE HERE WHOSE ACCENT ASKS FOR A STEP RATHER
+    // THAN AN ONSET (`i === 0`, the top of the bar, and nothing if the bar
+    // does not start with a note). That is not an oversight, it is the
+    // byte-identity: it is precisely what `precompose.js` asserted for all 479
+    // rows until today, and 1,319 of the 3,991 composed cells carried no
+    // accent at all because of it.
+    lean: { w: "leans on its first note",
+            vel: (j, n) => (j === 0 ? 8 : j === n - 1 ? 5 : 6),
+            acc: (j, n, i) => (i === 0 ? 1 : 0) },
+    // BACKBEAT WEIGHT — two and four carry the level. The single most
+    // consequential fact about American popular music after 1945 and the one
+    // thing the box could not say in a melody: a soul, r&b or rock line does
+    // not lean on the barline, it leans where the snare is. `rock`'s own note
+    // in this catalogue says the backbeat is "what carries the genre" and it
+    // was true only of its KIT. The quarters are found as a fraction of the
+    // bar, so "two and four" is the second and fourth quarter of any meter,
+    // and the weight goes to the FIRST note in each of those quarters —
+    // whether or not anything lands on the beat itself.
+    backbeat: { w: "leans on two and four",
+                vel: (j, n, i, b, N, at) => (Q(i, N) % 2 ? (first(at, N, j) ? 8 : 7)
+                  : j === 0 ? 6 : 5),
+                acc: (j, n, i, b, N, at) => (Q(i, N) % 2 && first(at, N, j) ? 1 : 0) },
+    // THE AGOGIC CLOSE — the last note of the phrase leans and lengthens.
+    // Chant's own shape (the syllable the neume opens out on), and the same
+    // shape a ballad's line and a romantic melody end with. It is the exact
+    // OPPOSITE of `lean` and that is the point: for a music with no barline to
+    // stress, weight is a thing you arrive at rather than depart from. The
+    // length half of "and lengthens" is already the box's — `precompose`'s
+    // RELEASE `ring` runs the last note to the barline on 84.7% of cells — so
+    // this figure only has to supply the weight the length was missing.
+    agogic: { w: "leans on its last note",
+              vel: (j, n) => (j === n - 1 ? 8 : j === 0 ? 6 : 5),
+              acc: (j, n) => (j === n - 1 ? 1 : 0) },
+    // TERRACED — the figure is restated a level down. Baroque dynamics have no
+    // hairpin: an organ or a harpsichord changes loudness by changing manual,
+    // and a concerto grosso alternates tutti and concertino bar by bar. The
+    // same device is minimalism's, three hundred years later and for a
+    // different reason (a process is legible only if a repeat is marked), and
+    // it is the one figure in this table that reads `b` — the terrace is a
+    // fact about WHICH BAR, not about which note.
+    terraced: { w: "restated a level down",
+                vel: (j, n, i, b) => Math.max(2, (j === 0 ? 8 : 6) - (b % 2 ? 2 : 0)),
+                acc: (j, n, i, b) => (j === 0 && b % 2 === 0 ? 1 : 0) },
+    // THE SWELL — a crescendo across the whole bar into the next downbeat.
+    // Romantic, film and gospel all build the same way and none of them could
+    // say it: this is the figure that actually widens the alphabet, because it
+    // gives a bar as many levels as it has notes (4 through 9 on a six-note
+    // bar) rather than three. The accent stays on the bar's FIRST note on
+    // purpose — that is the arrival the previous bar's swell was aimed at.
+    swell: { w: "crescendos across the bar",
+             vel: (j, n) => 4 + Math.round(5 * j / Math.max(1, n - 1)),
+             acc: (j) => (j === 0 ? 1 : 0) },
+    // THE ARCH — up to the middle of the bar and back down. The sung line's
+    // own shape and the one every singing teacher draws in the air; it is what
+    // `phrase` (the genre-tier agogic arch, kernel.js:1867) does across a
+    // SECTION, said at the scale of the bar, where the notes are. A studio pop
+    // record and an opera aria are both arches; the difference between them is
+    // the touch on top, which is what that layer is for.
+    arch: { w: "arches up and back down",
+            vel: (j, n) => 8 - Math.round(3 * Math.abs(2 * j / Math.max(1, n - 1) - 1)),
+            acc: (j) => (j === 0 ? 1 : 0) },
+    // THE ANACRUSIS PUSH — the pickup crescendos into the bar. Swing and big
+    // band phrasing in one line: the tail of the bar is not the end of this
+    // bar, it is the run-up to the next one, and it gets louder every note of
+    // the way (7, 8, 9) while the bar it leaves sits flat under it. This is
+    // what a horn section plays and the reason a big band chart is full of
+    // notes tied over the barline.
+    //   THE PICKUP IS THE LAST THREE NOTES, NOT THE LAST QUARTER, for the
+    // reason `at` exists at all: a bar with nothing in its final quarter has
+    // no pickup to crescendo and the figure would do nothing. Three is the
+    // pickup every method book writes (a triplet of eighths into one), and a
+    // bar with fewer notes than that is all pickup, which is also true.
+    anacrusis: { w: "pushes into the next bar",
+                 vel: (j, n) => { const t = Math.min(3, n);
+                   return j >= n - t ? 7 + Math.round(2 * (j - n + t) / Math.max(1, t - 1))
+                                     : j === 0 ? 6 : 5; },
+                 acc: (j) => (j === 0 ? 1 : 0) },
+    // SYNCOPATED DISPLACEMENT — the weight is off the beat. Funk, afrobeat and
+    // ska are all one idea said three ways: the beat is where the weight is
+    // NOT. Read as METRICAL STRENGTH rather than as a list of legal steps — a
+    // note on a quarter gives way (5), a note on the and takes the most (9),
+    // and a sixteenth between them takes nearly as much (8) — because that is
+    // what makes it work on `funk`'s own hook, whose onsets are at 7, 8 and 12
+    // and would have missed a table of exact positions entirely. The accent
+    // goes to the first off-beat note in each quarter.
+    //   The census measured funk rendering 161 of 168 notes off the grid where
+    // techno renders none. That is the TOUCH pushing an unsyncopated figure
+    // around; this is the figure itself finally being syncopated.
+    syncope: { w: "leans off the beat",
+               vel: (j, n, i, b, N) => [5, 9, 8][S(i, N)],
+               acc: (j, n, i, b, N, at) => (S(i, N) && firstOff(at, N, j) ? 1 : 0) },
+    // FLAT BY CONVICTION — every note the same level, and it MEANS it. Not an
+    // absence of a figure: a claim, and the machines' own. A Kling Klang line
+    // "does not arch, it recurs" (this file's own words about
+    // `dusseldorfschool`), a motorik pulse's whole discipline is that it does
+    // not lean, and a phase piece that leans anywhere has a downbeat, which is
+    // the thing it was written to dissolve. NO ACCENT EITHER, and that is the
+    // half that matters: an accent is a weight, and a music that refuses to
+    // weight one note over another cannot keep one on the barline. Everything
+    // a sequencer wants to say about weight is already in `kitVel`.
+    //   THE FOURTEEN FROZEN MACHINES DO NOT TAKE IT. techno, acid, house,
+    // trap, electro, tapemusic and the eight later `DYNAMICS: null` rows say
+    // `dyn` NOTHING, so they keep `lean` and render byte-for-byte what they
+    // rendered on 2026-09-05 — held to it by `test/dynfigure.test.js` §D. That
+    // is deliberate and it is the flood's own law read strictly: this shift
+    // may widen the catalogue but it may not move a machine, and `flat` is not
+    // byte-identical to `lean`. The rows that take `flat` are the machine wing
+    // that was never frozen — the Düsseldorf line, the sequenced floors, the
+    // process pieces — where a level change is a change somebody may hear and
+    // argue with.
+    flat: { w: "every note the same", vel: () => 6, acc: () => 0 },
+  };
+  /* the three questions a figure asks about a step, said once. `Q` is which
+     QUARTER of the bar a step falls in (0..3 in any meter); `S` is metrical
+     STRENGTH — 0 on a quarter, 1 on an eighth-and, 2 on anything finer; and
+     `first`/`firstOff` answer "is this the first onset of the bar in its
+     quarter" and "…the first OFF-BEAT onset in its quarter", which is how a
+     figure weights a region rather than a grid position. */
+  function Q(i, N) { return Math.floor(i * 4 / N); }
+  function S(i, N) { return i * 4 % N === 0 ? 0 : i * 8 % N === 0 ? 1 : 2; }
+  function first(at, N, j) {
+    for (let x = 0; x < j; x++) if (Q(at[x], N) === Q(at[j], N)) return false;
+    return true;
+  }
+  function firstOff(at, N, j) {
+    for (let x = 0; x < j; x++)
+      if (Q(at[x], N) === Q(at[j], N) && S(at[x], N)) return false;
+    return true;
+  }
+  // EACH FIGURE KNOWS ITS OWN NAME, stamped rather than typed twice — the
+  // `family` and `orn` passes below do the same thing for the same reason.
+  // `ideas-kit.js` memoises a phrase by a string key and a figure is part of
+  // what makes the phrase, so the key has to be able to say WHICH figure
+  // without a second map from function to word.
+  for (const k of Object.keys(FIGURES)) FIGURES[k].k = k;
 /*#endregion HEAD*/
 
   /* the four stamp passes, and the tables they are made of. Called on the
@@ -2738,8 +2941,11 @@
     return { DRUMNAME, DEFAULTS, FAMILIES, DYN_FAMILY, DYNAMICS, ORNAMENT, HARMONYLABEL };
   }
 
+  // FIGURES leaves the module because `tools/genres/build.js` refuses a row
+  // whose `dyn` names a figure nobody wrote (GENRES.md §6 G2) — the schema
+  // check needs the vocabulary, and the vocabulary is declared once.
   const api = { BLUES, DIATONIC, MODES, MODELABEL, tuned, SCALES, SCALELABEL,
-                SCALEFAMILY, MODEFAMILY, FAMILYLABEL,
+                SCALEFAMILY, MODEFAMILY, FAMILYLABEL, FIGURES,
                 MOUTHS, PROGS, offbeats, breath, SUNG, DEFAULT, stamp };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenreTables = api;

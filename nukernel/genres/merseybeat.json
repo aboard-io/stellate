@@ -163,5 +163,6 @@
     "else": {
       "$src": "[transpose(2), only(\"gate\", offbeats(4))]"
     }
-  }
+  },
+  "dyn": "arch"
 }

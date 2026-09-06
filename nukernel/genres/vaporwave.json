@@ -145,5 +145,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => [excerpt((s * 4) % 16, 8)]"
-  }
+  },
+  "dyn": "swell"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "STEELY DAN. Dorian, and specifically dorian's MAJOR fourth — the one\nbright chord in a minor key, which is the sound of half their catalogue\nand is a mode fact rather than a chord substitution. Add the relative\nmajor at the end of the form and you have i - IV - v - III, which turns\nover forever and never resolves anywhere emphatic, which is the point. A\nRhodes, a jazz guitar over it, a walking bass, and a shuffle small enough\nthat it reads as feel rather than as swing.\n\nnamed \"Los Angeles 1977\" — Aja: the Rhodes/jazz-guitar/walking-bass\nsession polish is the LA years, not the NY bar band of 1972.\n\nLINEAGE: a rock band's format carrying blues changes dressed in\nMotown's session polish — but the dorian IV7, the walking bass and\nthe shuffle all pointed at the catalog's one great hole: jazz. It is\nfilled, and jazz takes the largest single share almost entirely out of\nBLUES (0.35 -> 0.10) — that is the honest bookkeeping, since all three\nof those things arrive here through 52nd Street rather than through\nChess. The band format and the session polish barely move.\n\ni IV v III",
+  "note": "STEELY DAN. Dorian, and specifically dorian's MAJOR fourth — the one\nbright chord in a minor key, which is the sound of half their catalogue\nand is a mode fact rather than a chord substitution. Add the relative\nmajor at the end of the form and you have i - IV - v - III, which turns\nover forever and never resolves anywhere emphatic, which is the point. A\nRhodes, a jazz guitar over it, a walking bass, and a shuffle small enough\nthat it reads as feel rather than as swing.\n\nnamed \"Los Angeles 1977\" — Aja: the Rhodes/jazz-guitar/walking-bass\nsession polish is the LA years, not the NY bar band of 1972.\n\nLINEAGE: a rock band's format carrying blues changes dressed in\nMotown's session polish — but the dorian IV7, the walking bass and\nthe shuffle all pointed at the catalog's one great hole: jazz. It is\nfilled, and jazz takes the largest single share almost entirely out of\nBLUES (0.35 -> 0.10) — that is the honest bookkeeping, since all three\nof those things arrive here through 52nd Street rather than through\nChess. The band format and the session polish barely move.\n\ni IV v III\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `studio`\ncluster takes `arch`; the anchor's own evidence outranks it, which is\nthe flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Los Angeles 1977",
   "bars": 8,
   "voices": 3,
@@ -178,5 +178,6 @@
   },
   "fx": [
     "chorus"
-  ]
+  ],
+  "dyn": "anacrusis"
 }

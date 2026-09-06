@@ -1,5 +1,5 @@
 {
-  "note": "THE BIG-SKY WESTERN SCORE — Los Angeles 1958, the year the\nbig-country main-title grammar was set: open fifths, the gallop, the\nhorizon tune — the American answer Rome 1966 later talked back to\n(which is why `near` points at spaghettiwestern while the parents do not:\nproximity is not lineage, and Rome is eight years downstream).\nMIXOLYDIAN because the flat seven is the prairie — the hoedown's own\nmode, appalachia's at 0.2 saying where the tune actually comes from.\nThe gallop is the kick's 3-3-2 with the low tom doubling it, said\nagain by the low brass at spread(0.5) — the same figure at two\nheights, which is what a western main title IS.\n\na main title — the territory is the singer\n\nthe gallop — 3-3-2 under the tune, the low tom agreeing",
+  "note": "THE BIG-SKY WESTERN SCORE — Los Angeles 1958, the year the\nbig-country main-title grammar was set: open fifths, the gallop, the\nhorizon tune — the American answer Rome 1966 later talked back to\n(which is why `near` points at spaghettiwestern while the parents do not:\nproximity is not lineage, and Rome is eight years downstream).\nMIXOLYDIAN because the flat seven is the prairie — the hoedown's own\nmode, appalachia's at 0.2 saying where the tune actually comes from.\nThe gallop is the kick's 3-3-2 with the low tom doubling it, said\nagain by the low brass at spread(0.5) — the same figure at two\nheights, which is what a western main title IS.\n\na main title — the territory is the singer\n\nthe gallop — 3-3-2 under the tune, the low tom agreeing\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"swell\"` — the line crescendos across the bar. A cue's whole job is the\nbuild, and the build is a bar-long crescendo. The `studio` cluster takes\n`arch`; the anchor's own evidence outranks it, which is the flood's rule\n(docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Los Angeles 1958",
   "voices": 4,
@@ -186,5 +186,6 @@
     "else": {
       "$src": "[drop(3), rotate(1)]"
     }
-  }
+  },
+  "dyn": "swell"
 }

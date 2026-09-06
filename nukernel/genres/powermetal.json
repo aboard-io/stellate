@@ -203,5 +203,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]\n                    : v === 1 ? [transpose(3)]\n                    : [drop(6)])"
-  }
+  },
+  "dyn": "backbeat"
 }

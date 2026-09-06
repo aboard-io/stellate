@@ -1,5 +1,5 @@
 {
-  "note": "DANCEHALL — Kingston 1985, and it is the rung `reggaeton` and\n`afrobeats` have BOTH declared `wants: [\"dancehall\"]` for.\nTHE YEAR is \"Under Mi Sleng Teng\": Wayne Smith and Noel Davey over a\npreset from a Casio MT-40 keyboard, King Jammy's, 1985. It is the most\nprecisely dated record in this batch and arguably in the catalog — one\nriddim, one machine, one afternoon, and Jamaican music is digital from\nthen on. THE MACHINE IS THE ANCHOR'S IDENTITY, which is why the tone\nblock is a cheap square lead and the kit is `electronic`: the whole\npoint of Sleng Teng is that it sounds like a toy.\nA RIDDIM IS ONE CHORD AND EVERYBODY'S SONG. `harmony: \"modal\"` is the\nhonest reading of a form where fifty singers voice the same two-bar\nloop: nothing modulates, because the backing track does not know which\nsong it is under.",
+  "note": "DANCEHALL — Kingston 1985, and it is the rung `reggaeton` and\n`afrobeats` have BOTH declared `wants: [\"dancehall\"]` for.\nTHE YEAR is \"Under Mi Sleng Teng\": Wayne Smith and Noel Davey over a\npreset from a Casio MT-40 keyboard, King Jammy's, 1985. It is the most\nprecisely dated record in this batch and arguably in the catalog — one\nriddim, one machine, one afternoon, and Jamaican music is digital from\nthen on. THE MACHINE IS THE ANCHOR'S IDENTITY, which is why the tone\nblock is a cheap square lead and the kit is `electronic`: the whole\npoint of Sleng Teng is that it sounds like a toy.\nA RIDDIM IS ONE CHORD AND EVERYBODY'S SONG. `harmony: \"modal\"` is the\nhonest reading of a form where fifty singers voice the same two-bar\nloop: nothing modulates, because the backing track does not know which\nsong it is under.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"flat\"` — the line every note the same. A hand under .015 with a phrase\nunder .2 is a music whose discipline is not leaning.",
   "label": "Kingston 1985",
   "voices": 2,
   "near": "electro",
@@ -188,5 +188,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "flat"
 }

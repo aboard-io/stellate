@@ -105,5 +105,6 @@
     "else": {
       "$src": "[transpose([0, 5, -4, -9][v]), drop(3)]"
     }
-  }
+  },
+  "dyn": "agogic"
 }

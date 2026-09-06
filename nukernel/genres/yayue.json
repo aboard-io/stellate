@@ -138,5 +138,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0\n          ? [[keep(0, 4, 8, 12)], [keep(0, 4, 8, 12), rotate(4)], [keep(0, 8)]][s % 3]\n        : v === 1 ? [keep(0, 8), transpose(12)]\n        : [drop(12), transpose(-12)])"
-  }
+  },
+  "dyn": "swell"
 }

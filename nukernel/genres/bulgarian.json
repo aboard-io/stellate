@@ -116,5 +116,6 @@
     "else": {
       "$src": "[transpose(1)]"
     }
-  }
+  },
+  "dyn": "agogic"
 }

@@ -1,5 +1,5 @@
 {
-  "note": "KABUL POP — Kabul 1972, and it is the catalog's only Central Asian\nrecord. Ahmad Zahir's era: a harmonium and a rubab beside an electric\norgan and a drum kit, a Persian-language ghazal sung as a pop song, and\nan audience that included both the radio and the street.\nTHE YEAR is Zahir's peak, a decade before the recording industry it\nbelonged to ended.\nWHY IT IS HERE WHEN GHAZAL IS TIER 2, which looks like a contradiction\nand is the primary-fact rule again: the classical ghazal's identity is\nthe setting of the couplet's prosody, and that does not ship. What this\nanchor claims is a POP RECORD whose lyric happens to be a ghazal —\nstrophic, in four, with a band — and whose primary facts are the\nharmonium, the tabla and the song form. Those are all sayable.\n\nLINEAGE: `filmi` UNDER PROTEST and alone. Mumbai 1960 is the\narrangement, the harmonium and the song form, and it is genuinely a\ndocumented debt — Zahir covered Hindi film songs. Tehran 1974 would\nbe the natural second parent and it is TWO YEARS LATER than this\nlabel, so it is not named; the Persian side of this music reaches\nthe record through the language and the poetry, which no anchor\ncarries.",
+  "note": "KABUL POP — Kabul 1972, and it is the catalog's only Central Asian\nrecord. Ahmad Zahir's era: a harmonium and a rubab beside an electric\norgan and a drum kit, a Persian-language ghazal sung as a pop song, and\nan audience that included both the radio and the street.\nTHE YEAR is Zahir's peak, a decade before the recording industry it\nbelonged to ended.\nWHY IT IS HERE WHEN GHAZAL IS TIER 2, which looks like a contradiction\nand is the primary-fact rule again: the classical ghazal's identity is\nthe setting of the couplet's prosody, and that does not ship. What this\nanchor claims is a POP RECORD whose lyric happens to be a ghazal —\nstrophic, in four, with a band — and whose primary facts are the\nharmonium, the tabla and the song form. Those are all sayable.\n\nLINEAGE: `filmi` UNDER PROTEST and alone. Mumbai 1960 is the\narrangement, the harmonium and the song form, and it is genuinely a\ndocumented debt — Zahir covered Hindi film songs. Tehran 1974 would\nbe the natural second parent and it is TWO YEARS LATER than this\nlabel, so it is not named; the Persian side of this music reaches\nthe record through the language and the poetry, which no anchor\ncarries.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"agogic\"` — the line leans on its last note. The oldest sung lines in\nthe table have no bar to lean on, and the Roman ode that quotes them\nsays so. The `roots` cluster takes `lean`; the anchor's own evidence\noutranks it, which is the flood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Kabul 1972",
   "voices": 3,
   "near": "filmi",
@@ -203,5 +203,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "agogic"
 }

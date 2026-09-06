@@ -1,5 +1,5 @@
 {
-  "note": "ARS NOVA — Machaut: organum's tenor made RHYTHMIC, the trouvère line on\ntop. The talea is genuinely rotate() — the same material re-entering\nagainst itself one notch further round each section, cyclic rather than\nreflective, which is exactly the operator the fugue's mirror grammar\nnever uses. This is the kernel expressing the history, not\napproximating it.\n\ntenor / motetus / triplum\n\nNOT legato: hocket — the ars nova's signature articulation is the\nnote CUT so the other voice can strike between, which is the\ndefault (detached) reading, not a tied line\n\nWHO SINGS: the motet mouth — polychoral's own, two centuries early",
+  "note": "ARS NOVA — Machaut: organum's tenor made RHYTHMIC, the trouvère line on\ntop. The talea is genuinely rotate() — the same material re-entering\nagainst itself one notch further round each section, cyclic rather than\nreflective, which is exactly the operator the fugue's mirror grammar\nnever uses. This is the kernel expressing the history, not\napproximating it.\n\ntenor / motetus / triplum\n\nNOT legato: hocket — the ars nova's signature articulation is the\nnote CUT so the other voice can strike between, which is the\ndefault (detached) reading, not a tied line\n\nWHO SINGS: the motet mouth — polychoral's own, two centuries early\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"terraced\"` — the line restated a level down. Baroque dynamics have no\nhairpin — the restatement is the level change. The `vox` cluster takes\n`agogic`; the anchor's own evidence outranks it, which is the flood's\nrule (docs/DYNAMICS-FLOOD.md).",
   "label": "Reims 1360",
   "voices": 3,
   "bars": 8,
@@ -67,5 +67,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [rotate(3 * s), drop(2)]\n                    : v === 1 ? [transpose(2)]\n                    : [transpose(4), rotate(5 * s)])"
-  }
+  },
+  "dyn": "terraced"
 }

@@ -98,6 +98,22 @@
 // row of all five sections is character for character what it was. The proof
 // is the diff — 20 inserted lines, 5 sections x 4 lines of one new key, 0
 // deletions, 0 changes — and G1 passing on everything that was left.
+// AND A FIFTH TIME (2026-09-06, the dynamics flood shift 1), for one added
+// field and nothing else — the `parents` precedent of 2026-08-30, repeated
+// exactly. Every anchor may now name its own per-note dynamic FIGURE in `dyn`
+// (GENRES.md §2, genres-tables.js FIGURES), `gregorian` names `agogic` — the
+// chant leans on the note it arrives at, which is what a neume opens out on —
+// and `document.js toGenre` spreads the row, so the word appears in the
+// portrait's `fields`. THE CHANT DID NOT MOVE at this seam: `dyn` is read by
+// `precompose.js` when a record is COMPOSED, never by `toGenre` or by the
+// kernel, and the proof is the diff — one inserted line in each of the five
+// sections, 0 deletions, 0 changes — plus a deep-equal of the whole portrait
+// against a freshly built one with only that key added, which is how the
+// insertion was derived rather than typed (the CLI half still cannot re-run,
+// for the reason written above).
+//   THE CHANT'S NOTES DID MOVE, and that is this round and not this fixture:
+// its composed cells carry the agogic close now instead of the leaning first
+// note. That is `test/table.test.js`'s BASE_SHA to record, and it does.
 "use strict";
 const fs = require("fs");
 const path = require("path");

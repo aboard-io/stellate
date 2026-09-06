@@ -217,5 +217,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 1 && s % 2 ? [drop(2)] : [])"
-  }
+  },
+  "dyn": "backbeat"
 }

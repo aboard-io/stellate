@@ -62,5 +62,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)]][s % 2]\n                    : [transpose(-3), keep(0, 2, 4, 6, 8, 10, 12, 14)])"
-  }
+  },
+  "dyn": "agogic"
 }

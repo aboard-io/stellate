@@ -1,5 +1,5 @@
 {
-  "note": "PIZZICA TARANTATA — Galatina 1959. Ernesto de Martino's équipe —\nDiego Carpitella on the tape machine — recording the tarantate at\nGalatina, June 1959 (LA TERRA DEL RIMORSO, 1961): the healing\ndance of Salento on field reels, violin circling one figure over a\ntambourine that does not stop. The compound whirl is said as a\nhard shuffle on sixteen places — the barcarolle's own 6/8\nadmission, at trance tempo.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nDiego Carpitella and Ernesto de Martino's field recordings of the\npizzica-tarantata at Galatina, June 1959, published in LA TERRA DEL RIMORSO\n(Il Saggiatore, Milan, 1961) — this row's own place, month and year. The\ntarantata cell is a two-chord i-bVII oscillation, a NATURAL-MINOR figure:\nthe raised sixth that would make it dorian is not the pizzica's note, and\nthe row is modal, so it never sounded one either way.",
+  "note": "PIZZICA TARANTATA — Galatina 1959. Ernesto de Martino's équipe —\nDiego Carpitella on the tape machine — recording the tarantate at\nGalatina, June 1959 (LA TERRA DEL RIMORSO, 1961): the healing\ndance of Salento on field reels, violin circling one figure over a\ntambourine that does not stop. The compound whirl is said as a\nhard shuffle on sixteen places — the barcarolle's own 6/8\nadmission, at trance tempo.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nDiego Carpitella and Ernesto de Martino's field recordings of the\npizzica-tarantata at Galatina, June 1959, published in LA TERRA DEL RIMORSO\n(Il Saggiatore, Milan, 1961) — this row's own place, month and year. The\ntarantata cell is a two-chord i-bVII oscillation, a NATURAL-MINOR figure:\nthe raised sixth that would make it dorian is not the pizzica's note, and\nthe row is modal, so it never sounded one either way.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. The row's own swing (≥\n.15) makes the last quarter a run-up, not an ending. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Galatina 1959",
   "voices": 3,
   "bars": 4,
@@ -123,5 +123,6 @@
     "else": {
       "$src": "[fill(1), keep(0, 3, 6, 8, 11, 14), drop(2)]"
     }
-  }
+  },
+  "dyn": "anacrusis"
 }

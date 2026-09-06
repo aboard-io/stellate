@@ -1,5 +1,5 @@
 {
-  "note": "MONTEVERDI — Venice 1610. The Vespro della Beata Vergine,\nprinted in Venice with a dedication to Pope Paul V: psalm\nsettings over the chant held in long notes, solo voices\nornamenting against a walking bass, the prima pratica and the\nseconda in one binding — the exact hinge of the 1610-1660\nhalf-century the catalogue named as its thinnest Western\nstretch. `continuo` (Florence 1602) is eight years older and\none city over; this is what the new practice sounded like at\nfull cathedral scale.\n\nLINEAGE: the two praticas by name — `francoflemish` (Venice 1502)\nis the polyphony the collection still writes, `continuo`\n(Florence 1602) the monody it puts over the bass.\n\nWHO SINGS: monody — the continuo row's own mouth,\nbecause the seconda pratica is the same voice grown up.",
+  "note": "MONTEVERDI — Venice 1610. The Vespro della Beata Vergine,\nprinted in Venice with a dedication to Pope Paul V: psalm\nsettings over the chant held in long notes, solo voices\nornamenting against a walking bass, the prima pratica and the\nseconda in one binding — the exact hinge of the 1610-1660\nhalf-century the catalogue named as its thinnest Western\nstretch. `continuo` (Florence 1602) is eight years older and\none city over; this is what the new practice sounded like at\nfull cathedral scale.\n\nLINEAGE: the two praticas by name — `francoflemish` (Venice 1502)\nis the polyphony the collection still writes, `continuo`\n(Florence 1602) the monody it puts over the bass.\n\nWHO SINGS: monody — the continuo row's own mouth,\nbecause the seconda pratica is the same voice grown up.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"terraced\"` — the line restated a level down. Baroque dynamics have no\nhairpin — the restatement is the level change. The `vox` cluster takes\n`agogic`; the anchor's own evidence outranks it, which is the flood's\nrule (docs/DYNAMICS-FLOOD.md).",
   "label": "Venice 1610",
   "voices": 3,
   "bars": 8,
@@ -103,5 +103,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]\n                    : v === 1 ? [keep(0, 8)]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
-  }
+  },
+  "dyn": "terraced"
 }

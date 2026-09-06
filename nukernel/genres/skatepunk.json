@@ -192,5 +192,6 @@
   },
   "fx": [
     "crunch"
-  ]
+  ],
+  "dyn": "backbeat"
 }

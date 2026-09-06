@@ -152,5 +152,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [keep(0, 4, 8, 12), transpose(2)])"
-  }
+  },
+  "dyn": "arch"
 }

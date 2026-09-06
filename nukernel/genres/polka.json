@@ -1,5 +1,5 @@
 {
-  "note": "POLKA — Prague 1837. The Bohemian couple dance arrives in Prague's\nballrooms (1837 is the year the city's own dancing masters date the\ncraze; Paris follows in 1840 and the world within the decade). In\n2/4 with the oom on the beat and the pah answering — the one\nnineteenth-century ballroom dance the sixteen-place bar can say\nWHOLE, which is exactly why it is here and the waltz still is not.\nPAYS TWO DEBTS: nortena's \"bohemian polka\" (the conjunto's own\ndeclared bloodline) and maxixe's \"the polka, as rio danced it\".\n\na ballroom dance — the band plays, the room does the talking",
+  "note": "POLKA — Prague 1837. The Bohemian couple dance arrives in Prague's\nballrooms (1837 is the year the city's own dancing masters date the\ncraze; Paris follows in 1840 and the world within the decade). In\n2/4 with the oom on the beat and the pah answering — the one\nnineteenth-century ballroom dance the sixteen-place bar can say\nWHOLE, which is exactly why it is here and the waltz still is not.\nPAYS TWO DEBTS: nortena's \"bohemian polka\" (the conjunto's own\ndeclared bloodline) and maxixe's \"the polka, as rio danced it\".\n\na ballroom dance — the band plays, the room does the talking\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"lean\"` — the line leans on its first note. The bar IS the genre: a\nwaltz and a polka lean on the downbeat, and the second beat is the lift.\nThe `roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).",
   "instrumental": true,
   "label": "Prague 1837",
   "voices": 3,
@@ -131,5 +131,6 @@
     "else": {
       "$src": "[keep(0, 4, 8, 12), drop(2)]"
     }
-  }
+  },
+  "dyn": "lean"
 }

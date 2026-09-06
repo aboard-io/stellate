@@ -56,5 +56,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => [[], [], [transpose(2)], [drop(2)]][s % 4]"
-  }
+  },
+  "dyn": "agogic"
 }

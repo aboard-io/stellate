@@ -163,5 +163,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)], [reverse()]][s % 4]\n                    : [transpose(-5), keep(0, 3, 6, 8, 11, 14)])"
-  }
+  },
+  "dyn": "backbeat"
 }

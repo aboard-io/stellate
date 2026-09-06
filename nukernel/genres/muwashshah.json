@@ -1,5 +1,5 @@
 {
-  "note": "MUWASHSHAH — Cairo 1200. Ibn Sanā' al-Mulk's DĀR AṬ-ṬIRĀZ, \"the\nmost complete contemporary description of the genre\" (the ZIM's\nown words): an anthology of 34 Andalusi and Maghribi muwaššaḥāt\nwith the theory of the form, by \"the first person in the Mashriq\nto compose muwaššaḥāt\". The genealogy round declined this row\nbecause \"no named dated source predates its dependents\" — and\nthat sentence is DEFEATED by this book, not argued around: the\ntreatise is dated six centuries before `nuba` (Tetouan 1790),\nseven before `tarab` and `firqa`, and it is the same species of\nsource as the Kitab al-Aghani that anchors `abbasid`. Three rows\nwanted this by name — the census's only ×3 — and all three take\nthe edge today. The OTHER half of the old decline (the aksak\nmetres) was true and stays true: it lives in the cannot now,\nwhere a wall belongs once the room is built.\n\nLINEAGE: the form is al-Andalus's own invention (the ZIM: \"the\nmajor Andalusi innovation in Arabic poetry... sung and\nperformed musically\"), so the edge points at the Cordoban\nschool that raised the musicians who sang it.",
+  "note": "MUWASHSHAH — Cairo 1200. Ibn Sanā' al-Mulk's DĀR AṬ-ṬIRĀZ, \"the\nmost complete contemporary description of the genre\" (the ZIM's\nown words): an anthology of 34 Andalusi and Maghribi muwaššaḥāt\nwith the theory of the form, by \"the first person in the Mashriq\nto compose muwaššaḥāt\". The genealogy round declined this row\nbecause \"no named dated source predates its dependents\" — and\nthat sentence is DEFEATED by this book, not argued around: the\ntreatise is dated six centuries before `nuba` (Tetouan 1790),\nseven before `tarab` and `firqa`, and it is the same species of\nsource as the Kitab al-Aghani that anchors `abbasid`. Three rows\nwanted this by name — the census's only ×3 — and all three take\nthe edge today. The OTHER half of the old decline (the aksak\nmetres) was true and stays true: it lives in the cannot now,\nwhere a wall belongs once the room is built.\n\nLINEAGE: the form is al-Andalus's own invention (the ZIM: \"the\nmajor Andalusi innovation in Arabic poetry... sung and\nperformed musically\"), so the edge points at the Cordoban\nschool that raised the musicians who sang it.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"agogic\"` — the line leans on its last note. The Arab court line arrives\nat its phrase end, ancestor and descendant alike. The `roots` cluster\ntakes `lean`; the anchor's own evidence outranks it, which is the\nflood's rule (docs/DYNAMICS-FLOOD.md).",
   "label": "Cairo 1200",
   "voices": 3,
   "bars": 8,
@@ -94,5 +94,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [fill(2)]][s % 4]\n                    : v === 1 ? [transpose(-4), drop(2)]\n                    : [rotate(8), drop(4)])"
-  }
+  },
+  "dyn": "agogic"
 }

@@ -171,7 +171,7 @@
   "tone": {
     "wave": "triangle",
     "cut": 2600,
-    "q": 1.0,
+    "q": 1,
     "atk": 0.005,
     "rel": 0.8,
     "gain": 0.28,
@@ -198,5 +198,6 @@
     "else": {
       "$src": "[]"
     }
-  }
+  },
+  "dyn": "backbeat"
 }

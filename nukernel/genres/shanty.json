@@ -80,5 +80,6 @@
     "else": {
       "$src": "[fill(1), keep(8, 10, 12, 14), drop(2)]"
     }
-  }
+  },
+  "dyn": "agogic"
 }

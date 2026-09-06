@@ -1,5 +1,5 @@
 {
-  "note": "J-POP — Tokyo 1999: Utada Hikaru, First Love — the best-selling\nJapanese album there has ever been, and the record where J-pop's\n1990s (the term is J-WAVE radio's, coined for exactly this\ndomestic-international pop) meets American R&B production sung in\nJapanese with English hooks. `citypop` (Tokyo 1984) is fifteen\nyears upstream on the same dot; the year separates them, the\nRome/Cairo rule again.\n\nLINEAGE: city pop's session polish is the domestic inheritance,\ncontemporary R&B the production language First Love actually\nspeaks. kpop (one seat over) took this row's own formula and\nindustrialized it a decade later.",
+  "note": "J-POP — Tokyo 1999: Utada Hikaru, First Love — the best-selling\nJapanese album there has ever been, and the record where J-pop's\n1990s (the term is J-WAVE radio's, coined for exactly this\ndomestic-international pop) meets American R&B production sung in\nJapanese with English hooks. `citypop` (Tokyo 1984) is fifteen\nyears upstream on the same dot; the year separates them, the\nRome/Cairo rule again.\n\nLINEAGE: city pop's session polish is the domestic inheritance,\ncontemporary R&B the production language First Love actually\nspeaks. kpop (one seat over) took this row's own formula and\nindustrialized it a decade later.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"syncope\"` — the line leans off the beat. A club floor with a real hand\non it is a hand playing off the beat.",
   "label": "Tokyo 1999",
   "voices": 2,
   "bars": 8,
@@ -133,5 +133,6 @@
   "word": {
     "kind": "formula",
     "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]\n                    : [drop(10)])"
-  }
+  },
+  "dyn": "syncope"
 }
