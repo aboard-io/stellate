@@ -200,7 +200,7 @@ const FULL = process.argv.includes("--full");
    the three reds are expected here, they are this round, and the reviewer's
    job is to check the counts above against the run, not to look for a fourth
    cause. */
-const BASE_SHA = "0178335";  // the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). Was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+const BASE_SHA = "1c5e8db";  // the dynamics flood, shift 1, ON ITS OWN COMMIT: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
