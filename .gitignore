@@ -52,3 +52,6 @@ scratchpad/
 # a 6 MB rendered mp3 is a derived artifact; the record, its .mid and its score are the keep
 keeps/**/*.mp3
 tools/genre-qa/*.db
+
+# the remix tool writes demo rows here; they are derived, not catalogue
+tools/remix-out/

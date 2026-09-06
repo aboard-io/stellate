@@ -132,3 +132,44 @@ go under it"*; folding the record row's face into the strip cuts the record's
 NAME to a stub at 320 and deletes component 18). TABLE.md §16 carries the
 arithmetic. If the row matters more than the strip, the trade to put to Paul is
 the third one, as its own round.
+
+---
+
+## AMENDED THE SAME DAY (2026-09-06) — nukernel/TABLE.md §18
+
+Paul, on a photograph of the shipped page: *"It's easy to get into a state like
+that and hard to get out of it."* · *"All that stuff at the top? I expected
+that to live in the hamburger and for the hamburger to be nicely organized."* ·
+*"You could put the playback bar to the right of the genre on top top if you
+want."*
+
+Three sentences of this document are amended, and the law it states is
+sharpened rather than reversed.
+
+1. **THE DRAWING OF THE BOTTOM BAR IS WRONG NOW.** The tape is NOT at the
+   bottom right: it is in the TOP STRIP, between the record's name and the ≡,
+   where it takes a gap the strip held empty at every width (191px at 390,
+   121px at 320). The law reads: **the top strip is identity, status and
+   navigation; the bottom bar is controls, and only controls.** *"The bottom is
+   what you hear"* was written about CONTROLS, and the tape is the one thing in
+   the bar a thumb never presses. The bar holds, left to right: the play
+   options' door, the voicing, play/stop, the die and its number, and the room
+   — which is set in the bar itself, with no pop-up.
+
+2. **`Set seed` IS A DOOR, NOT THE ROW.** *"Move the seed out of the bottom nav
+   and into a 'set seed' in the hamburger"* was built; Paul then asked for the
+   die back — *"Move the dice back into the bottom. Leave them with the
+   hamburger too."* So `.nu-seedrow` is the bar's again (the same node) and the
+   plate's `Set seed` row presses it. Two doors, one owner, one writer.
+
+3. **THE MENU HOLDS THE RECORD'S OWN SURFACES, AND SO IT DOES WRITE — ONCE
+   REMOVED.** This document says *"nothing here writes to the document except
+   Set seed"*, and used that to keep `Song options` on the record's line. The
+   record's line is deleted (§18d): its eight surfaces — RULES, TIME, CHORDS,
+   MOTIFS, MASTER, PRODUCE, PERFORMANCE and SONG — are the hamburger's second
+   block, and a tap on one CLOSES THE MENU AND OPENS THAT SHEET. The writing is
+   still done in the sheet, by a control with a name; the menu itself writes
+   nothing.
+
+The rest stands: two modalities (a view and a sheet), one hamburger at the top
+right, `Session` first, and every address unmoved.

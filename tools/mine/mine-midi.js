@@ -48,6 +48,15 @@ function parseSmf(buf) {
   const ppq = div || 480;
   p += hlen - 6;
   const tempoMap = [], timeSigs = [], keySigs = [], trackNames = [], notes = [];
+  // PROGRAM CHANGES, added 2026-09-06 for tools/remix.js. The 0xc0 branch below
+  // already had to read the byte to advance the cursor; this keeps it instead of
+  // throwing it away. Nothing that existed before reads `programs`, so every
+  // caller of parseSmf sees the object it always saw — and the caveat that
+  // belongs beside it is that a GM program number is the TRANSCRIBER's choice of
+  // patch, not a fact about the record (this trove is largely piano
+  // transcriptions), which is why remix.js reads only the 16 GM FAMILIES off it
+  // and says so in the row it writes.
+  const programs = [];
   for (let t = 0; t < ntrk && p < buf.length; t++) {
     while (p + 8 <= buf.length && String.fromCharCode(buf[p], buf[p + 1], buf[p + 2], buf[p + 3]) !== "MTrk") p++;
     if (p + 8 > buf.length) break;
@@ -68,7 +77,7 @@ function parseSmf(buf) {
       } else if (st === 0xf0 || st === 0xf7) { p += vlq(); }  // sysex
       else {
         const hi = st & 0xf0, ch = st & 0x0f;
-        if (hi === 0xc0 || hi === 0xd0) { p += 1; continue; }
+        if (hi === 0xc0 || hi === 0xd0) { if (hi === 0xc0) programs.push({ tick, ch, pgm: buf[p] }); p += 1; continue; }
         const a = buf[p++], b = buf[p++];
         if (hi === 0x90 && b > 0) (open[ch * 128 + a] = open[ch * 128 + a] || []).push({ tick, vel: b });
         else if (hi === 0x80 || (hi === 0x90 && b === 0)) {
@@ -85,7 +94,8 @@ function parseSmf(buf) {
   for (const n of notes) { n.beat = n.tick / ppq; n.dur = Math.max(1, n.offTick - n.tick) / ppq; delete n.offTick; }
   tempoMap.sort((a, b) => a.tick - b.tick); timeSigs.sort((a, b) => a.tick - b.tick);
   const totalBeats = notes.length ? Math.max(1, Math.max(...notes.map(n => n.beat + n.dur)) - Math.min(...notes.map(n => n.beat))) : 1;
-  return { format, ppq, ntrk, tempoMap, timeSigs, keySigs, trackNames, notes, totalBeats };
+  programs.sort((a, b) => a.tick - b.tick);
+  return { format, ppq, ntrk, tempoMap, timeSigs, keySigs, trackNames, programs, notes, totalBeats };
 }
 
 // GM percussion (ch 10) -> the engine's drum lane names. CORE (kick/snare/hat/
@@ -360,7 +370,12 @@ function cliCalibrate(genre, dir, argv) {
   return verdicts;
 }
 
-const api = { parseSmf, laneFor, featuresOf, detectKey, chordsOf, scanDir, distTable, keySigTonic, MEASURABLE, PCN };
+// `bpmOf`, `median` and `CORE` leave the module 2026-09-06 for tools/remix.js:
+// the remix pipeline asks the SAME beat-span-weighted median this file asks,
+// and a second copy of that arithmetic is the drift this repo legislates
+// against. Nothing about the existing exports moved.
+const api = { parseSmf, laneFor, featuresOf, detectKey, chordsOf, scanDir, distTable, keySigTonic,
+              bpmOf, median, pctl, interlock, CORE, MEASURABLE, PCN };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 
 if (require.main === module) {

@@ -31,6 +31,75 @@
 const C = require("./corpus-db.js");
 const Mine = require("./mine-midi.js");
 
+/* ---- THE THREE PIECES, LIFTED OUT OF main() 2026-09-06 --------------------
+   `tools/remix.js` slices ONE file the way this script slices a whole rip, and
+   a second copy of the window/skyline/medoid arithmetic would be exactly the
+   drift this repo has a law against. So the three steps of the method above —
+   (2) window and skyline, (4) the interval-character medoid, and the interval
+   statistics both of them read — are functions now, `main()` calls them, and
+   the CLI's output is byte-identical (the `--prove` of this move is that the
+   three bodies were CUT and PASTED, not retyped). `win` is a parameter rather
+   than the literal 8 for the one reason remix needs: a 3/4 or 7/8 record's bar
+   is not two beats of four, and a window that straddles the barline is not a
+   phrase. Everything else defaults to what this file always did. */
+
+/** onset-signature -> [window], where a window is [{o, pitch, dur}] with one
+ *  note per onset slot (the skyline within the window). */
+function windowsOf(line, { win = 8, minNotes = 4, maxNotes = 16, into = null } = {}) {
+  const sigWindows = into || new Map();
+  const byWin = new Map();
+  for (const n of line) {
+    const o = Math.round(n.beat * 4) / 4;
+    const w = Math.floor(o / win);
+    (byWin.get(w) || byWin.set(w, []).get(w)).push({ o: o - w * win, pitch: n.pitch, dur: n.dur, vel: n.vel });
+  }
+  for (const [wi, w] of byWin) {
+    if (w.length < minNotes || w.length > maxNotes) continue;
+    w.sort((a, b) => a.o - b.o || a.pitch - b.pitch);
+    const dedup = [];   // one note per onset slot (skyline within the window)
+    for (const n of w) { const last = dedup[dedup.length - 1]; if (last && last.o === n.o) { if (n.pitch > last.pitch) { last.pitch = n.pitch; last.dur = n.dur; last.vel = n.vel; } } else dedup.push({ ...n }); }
+    if (dedup.length < minNotes) continue;
+    const sig = dedup.map(n => n.o).join(",");
+    const ps = dedup.map(n => n.pitch), lo = Math.min(...ps), hi = Math.max(...ps);
+    if (hi === lo) continue;
+    dedup._win = wi;                     // which window of the line it was
+    (sigWindows.get(sig) || sigWindows.set(sig, []).get(sig)).push(dedup);
+  }
+  return sigWindows;
+}
+
+/** a window's interval character: step fraction, rising fraction, range. */
+function winStats(w) {
+  const iv = []; for (let i = 0; i + 1 < w.length; i++) iv.push(w[i + 1].pitch - w[i].pitch);
+  const abs = iv.map(Math.abs);
+  return { step: abs.filter(a => a >= 1 && a <= 2).length / iv.length,
+           up: iv.filter(v => v > 0).length / Math.max(1, iv.filter(v => v !== 0).length),
+           range: Math.max(...w.map(n => n.pitch)) - Math.min(...w.map(n => n.pitch)) };
+}
+
+/** THE MEDOID: the window most typical of the corpus's interval character;
+ *  deterministic tiebreak = first in iteration order. */
+function medoid(wins, stepMed) {
+  let best = null, bestD = Infinity;
+  for (const w of wins) {
+    const s = winStats(w);
+    const d = Math.abs(s.step - stepMed) + 0.5 * Math.abs(s.up - 0.5) + (s.range > 24 ? 1 : 0);
+    if (d < bestD) { bestD = d; best = w; }
+  }
+  return best;
+}
+
+/** the medoid mapped onto the 8 voicing slots — MEL_PHRASES 4-tuples. */
+function melPhrase(best, win = 8) {
+  const lo = Math.min(...best.map(n => n.pitch)), hi = Math.max(...best.map(n => n.pitch));
+  return best.map((n, i) => {
+    const tone = Math.round(((n.pitch - lo) / (hi - lo)) * 7);   // 0..7 -> (idx, oct)
+    const gap = (i + 1 < best.length ? best[i + 1].o : win) - n.o;
+    const d = Math.max(0.25, Math.min(2, Math.round(Math.min(n.dur, gap) * 4) / 4));
+    return [n.o, d, tone % 4, tone >> 2];
+  });
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const rip = argv[0];
@@ -52,23 +121,7 @@ function main() {
     const line = C.unpackNotes(r.blob, r.ppq);
     const ms = C.melodyStats(line);
     if (ms) { fp.sync16.push(ms.sync16); fp.stepFrac.push(ms.stepFrac); }
-    const byWin = new Map();
-    for (const n of line) {
-      const o = Math.round(n.beat * 4) / 4;
-      const w = Math.floor(o / 8);
-      (byWin.get(w) || byWin.set(w, []).get(w)).push({ o: o - w * 8, pitch: n.pitch, dur: n.dur });
-    }
-    for (const win of byWin.values()) {
-      if (win.length < 4 || win.length > maxNotes) continue;
-      win.sort((a, b) => a.o - b.o || a.pitch - b.pitch);
-      const dedup = [];   // one note per onset slot (skyline within the window)
-      for (const n of win) { const last = dedup[dedup.length - 1]; if (last && last.o === n.o) { if (n.pitch > last.pitch) { last.pitch = n.pitch; last.dur = n.dur; } } else dedup.push({ ...n }); }
-      if (dedup.length < 4) continue;
-      const sig = dedup.map(n => n.o).join(",");
-      const ps = dedup.map(n => n.pitch), lo = Math.min(...ps), hi = Math.max(...ps);
-      if (hi === lo) continue;
-      (sigWindows.get(sig) || sigWindows.set(sig, []).get(sig)).push(dedup);
-    }
+    windowsOf(line, { win: 8, minNotes: 4, maxNotes, into: sigWindows });
   }
   const med = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[s.length >> 1] : 0; };
   console.log(`corpus melody fingerprint: sync16 ${med(fp.sync16).toFixed(3)}  stepFrac ${med(fp.stepFrac).toFixed(3)}  (medians over trusted lines)`);
@@ -78,30 +131,7 @@ function main() {
   if (ranked.length < 2) { console.error("not enough recurring 8-beat rhythms — corpus too small or too free"); process.exit(2); }
 
   const stepMed = med(fp.stepFrac);
-  const winStats = (w) => {
-    const iv = []; for (let i = 0; i + 1 < w.length; i++) iv.push(w[i + 1].pitch - w[i].pitch);
-    const abs = iv.map(Math.abs);
-    return { step: abs.filter(a => a >= 1 && a <= 2).length / iv.length,
-             up: iv.filter(v => v > 0).length / Math.max(1, iv.filter(v => v !== 0).length),
-             range: Math.max(...w.map(n => n.pitch)) - Math.min(...w.map(n => n.pitch)) };
-  };
-  const emit = (sig, wins) => {
-    // MEDOID: the window most typical of the corpus's interval character;
-    // deterministic tiebreak = first in file order (DB iteration is id-ordered)
-    let best = null, bestD = Infinity;
-    for (const w of wins) {
-      const s = winStats(w);
-      const d = Math.abs(s.step - stepMed) + 0.5 * Math.abs(s.up - 0.5) + (s.range > 24 ? 1 : 0);
-      if (d < bestD) { bestD = d; best = w; }
-    }
-    const lo = Math.min(...best.map(n => n.pitch)), hi = Math.max(...best.map(n => n.pitch));
-    return best.map((n, i) => {
-      const tone = Math.round(((n.pitch - lo) / (hi - lo)) * 7);   // 0..7 -> (idx, oct)
-      const gap = (i + 1 < best.length ? best[i + 1].o : 8) - n.o;
-      const d = Math.max(0.25, Math.min(2, Math.round(Math.min(n.dur, gap) * 4) / 4));
-      return [n.o, d, tone % 4, tone >> 2];
-    });
-  };
+  const emit = (sig, wins) => melPhrase(medoid(wins, stepMed), 8);
   const A = emit(ranked[0][0], ranked[0][1]), B = emit(ranked[1][0], ranked[1][1]);
   const js = (cell) => "[" + cell.map(n => `[${n.join(",")}]`).join(",") + "]";
   console.log(`\nA (modal rhythm, ${ranked[0][1].length} windows):  ${name}:  ${js(A)},`);
@@ -109,4 +139,6 @@ function main() {
   const sync = (cell) => cell.filter(([o]) => Math.abs(o - Math.round(o)) > 0.01).length / cell.length;
   console.log(`cell onset-sync (off-beat fraction): A ${sync(A).toFixed(2)}  B ${sync(B).toFixed(2)}`);
 }
-main();
+
+module.exports = { windowsOf, winStats, medoid, melPhrase };
+if (require.main === module) main();
