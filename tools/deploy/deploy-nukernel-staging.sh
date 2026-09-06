@@ -59,7 +59,18 @@ git -C "$REPO" worktree add --detach "$TMP/tree" HEAD >/dev/null
 
 echo "deploying $(git -C "$REPO" rev-parse --short HEAD) · sw.js $(grep -oE 'v[0-9]+' "$TMP/tree/sw.js" | head -1) -> $DEST"
 cd "$TMP/tree"
-rsync -a \
+# A DEPLOY MUST NOT BE VISIBLE HALF-DONE (2026-09-06). Paul, mid-round:
+#   "Nothings loading it's just a blank screen" ... then "It's back".
+# Both rsyncs write file by file straight into the LIVE web root, and the tree
+# is ~7 MB with a 2.5 MB genres.js copied TWICE (once under /nukernel/, once at
+# the root). A page loaded inside that window gets a new index.html beside a
+# half-written script, or an old ui/table.js beside a new nu.css, and boots to
+# nothing. `--delay-updates` is the fix rsync ships for exactly this: every
+# updated file lands in a holding directory and they are renamed into place at
+# the END of the transfer, so the window is a rename per file rather than a
+# multi-second copy. It is not a transaction across the two rsyncs and does not
+# claim to be; it removes the half-written FILE, which is what was measured.
+rsync -a --delay-updates \
   --exclude '.git' \
   --exclude 'node_modules' \
   --exclude '*.wav' \
@@ -79,7 +90,7 @@ rsync -a \
 #       resolve to /engine there. So the tree's CONTENTS go to the root too —
 #       the trailing slash is the whole difference — with no --delete, for the
 #       same reason as above.
-rsync -a \
+rsync -a --delay-updates \
   --exclude '.git' \
   --exclude 'node_modules' \
   --exclude '*.wav' \
