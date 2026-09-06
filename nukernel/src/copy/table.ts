@@ -92,6 +92,22 @@ export const TABLE: Table = {
   "special.master.aria": "Master: {face} — and the buses",
   "special.perf.word": "performance",
 
+  /* ===== THE RECORD ROW (2026-09-06, TABLE.md §14, the sorted-by-scope
+     round) ===============================================================
+     The seven keys above are one scope — RULES, TIME, CHORDS, MOTIFS,
+     MASTER, PRODUCE, PERFORMANCE all say something about the whole record —
+     and until this round they were seven lines at both ends of the page.
+     They are one line now, and this is its word. THE FACE IS `timeFace`'s
+     and has no key of its own: tempo, meter and key are already spelled by
+     the sheets that own them, and a second spelling here would be a second
+     owner of the same three facts.
+     TWO ARIA KEYS BECAUSE IT IS A DISCLOSURE, which is `grid.sections`' own
+     arrangement one row down: the accessible name says what a tap DOES, and
+     a disclosure does two different things depending on which way it stands. */
+  "special.record.word": "the record",
+  "special.record.collapse.aria": "Hide the record settings",
+  "special.record.expand.aria": "Show the record settings",
+
   /* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ==============
      Paul: *"Give the main composer interface its own header call it
      Sections."* It is a LABEL and not a control — no sheet, no tap, no pin —

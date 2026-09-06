@@ -58,7 +58,7 @@ import { rowSheet, colSheet, cellSheet, perfSheet,
          perfCells, tableOps, nextPlayerOffer, sectionOffer,
          rowOps, colOps, cellOps } from "./model.js";
 import { sheetBody, onRedraw } from "./sheet.js";
-import { SPECIALS, PRODUCE, mixSheet, masterFace,
+import { SPECIALS, PRODUCE, RECORD, mixSheet, masterFace,
          masterMixSheet } from "./special.js";
 import { undoStack } from "./undo.js";
 import type { DocUndo } from "./undo.js";
@@ -107,6 +107,27 @@ let STICK: (() => void) | null = null;
    module evaluation, because a page that folded the grid to reach PRODUCE
    should find it folded on the next load. Every touch of `localStorage` is
    guarded: a private window throws on the ACCESSOR, not only on the call. */
+/* ---- IS THE RECORD PANEL SHOWING? (2026-09-06, TABLE.md §14) ---------
+   The seven record-scope surfaces are one line at rest and their own rows
+   when it is open, which makes this a DISCLOSURE and not a sheet: `OPEN` is
+   still the one open door in the whole grid, and this says whether the seven
+   heads that can BE that door are on the glass.
+
+   IT IS NOT PERSISTED, AND THAT IS THE DIFFERENCE BETWEEN IT AND `GRIDOPEN`.
+   Folding the grid is a standing preference about a page — a hand that folded
+   it to reach PRODUCE wants it folded next time. Opening the record is a
+   drill-down: you came for the tempo, you set it, and the sheet's resting
+   state is one line. So it starts closed on every load and survives only the
+   rebuilds its own writes cause, which is `OPEN`'s own law.
+
+   AND IT IS FORCED OPEN BY ITS CONTENTS. A scope's head keeps its `data-k`
+   in the DOM while the panel is shut (the row is `hidden`, which is the
+   attribute the platform means by "not here"), so a page door that presses
+   one of them by name — `ui/eight.js`'s `__eightRow`, `__eightMix` — lands on
+   the same button a thumb would and the panel opens under it rather than the
+   press falling on the floor. */
+let RECOPEN = false;
+
 const GRIDSTORE = "nu.band.grid.v1";
 let GRIDOPEN = ((): boolean => {
   try { return localStorage.getItem(GRIDSTORE) !== "0"; } catch (e) { return true; }
@@ -211,7 +232,18 @@ const STICKY = (k: string | null): boolean => !!k && k !== "corner";
  *  means "any open door", which is what `STICKY` means since the tap-outside
  *  ruling. Splitting them is the whole of that change's blast radius. */
 const SPECIAL = (k: string | null): boolean => !!k &&
-  (k.indexOf("sp|") === 0 || k.indexOf("mix|") === 0);
+  (k.indexOf("sp|") === 0 || k.indexOf("mix|") === 0 ||
+   k.indexOf("foot|") === 0);
+
+/** ...AND `RECORD_KEY` IS THE SEVEN THAT ARE THE RECORD'S (2026-09-06, §14).
+ *  `SPECIAL` means "a merged row"; the mix row's per-voice seats are merged
+ *  rows and are the PLAYER's, so they are not this. What this decides is two
+ *  things and both are about the panel: which open door forces it open, and
+ *  which open door a fold of the grid must leave alone. */
+const RECORD_KEYS = ["sp|rules", "sp|time", "sp|chords", "sp|motifs",
+                     "mix|master", "sp|produce", "foot|perf"];
+const RECORD_KEY = (k: string | null): boolean =>
+  !!k && RECORD_KEYS.indexOf(k) >= 0;
 
 /* (`ADDHEAD` AND `ADDFOOT` STOOD HERE — the ADD sheet's two open keys, for
    one afternoon. 2026-09-05, TABLE.md §13e, Paul: *"Don't pop up an interface
@@ -257,6 +289,13 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      shut under the thumb that was using it. The open BODY is rebuilt like any
      other; only which row is open is kept. */
   if (!STICKY(OPEN)) { OPEN = null; OPENFIELD = null; }
+  /* ...AND THE PANEL IS OPEN IF ONE OF ITS SEVEN IS (2026-09-06, §14). The
+     seven heads stand in the DOM whether the panel is shown or not, so a
+     press that arrives by name rather than by thumb — `__eightRow("time")`,
+     `__eightMix("master")`, a `land()` off a share link — opens the door and
+     the panel with it. One statement, at the top of the draw, so there is no
+     state in which a sheet is open inside a panel that is not. */
+  if (RECORD_KEY(OPEN)) RECOPEN = true;
   /* THE SELECTION IS PRUNED AGAINST THE RECORD ON EVERY DRAW. A delete, a
      deal-again or a whole new document can take the selected cell away, and a
      selection pointing at a section that is gone is a formula bar showing a
@@ -472,39 +511,76 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         c.style.insetBlockStart = tr === pinRow ? "0px" : "auto";
     void tops;
 
-    /* ---- A CELL IS ITS GLYPH FIRST, ITS WORD WHERE THERE IS ROOM -------
-       (§13a.7.) MEASURED on v287 at 390 on Kingston 1969: seven player
-       columns of 35.6px each holding a `.nu-cellword` with `min-inline-size:
-       56px`, which is SIX overlapping cell pairs in the first section row —
-       the pile Paul photographed. The width is the stylesheet's now (a column
-       is never narrower than a glyph and two `--s2`, never wider than the
-       pane divided among the players); what a measurement still has to
-       decide is the WORD, because "does this word fit" is not a question a
-       stylesheet can ask about text it is not allowed to clip mid-syllable.
+    /* ---- A CELL SAYS A WORD AT EVERY WIDTH (2026-09-06, §14 item 2) ---
+       WHAT STOOD HERE was §13a.7's rule — *"a cell is its glyph first, its
+       word where there is room"*, with the room measured as a 9ch probe in
+       the HEAD's type against the width a player column came out. Its own
+       paragraph recorded the loss and left it: *"a cell at 390 is a glyph and
+       not a word, on a record with seven players."*
 
-       ONE MEASUREMENT FOR THE WHOLE TABLE, taken in the head's own type: a
-       9ch probe, once, against the width a player column actually came out.
-       Above it the words are drawn; below it the marks stand alone and the
-       `.nu-vh` word and the accessible name carry the meaning, which is the
-       icon round's own law. Then, inside that, one pass per head: a name that
-       still does not fit falls back to its FIRST WORD, and a first word that
-       does not fit falls back to the glyph — so no head is ever cut in the
-       middle of a word, at any width, on any record. */
-    const th0 = t.querySelector<HTMLElement>("thead th.nu-colhead");
-    if (th0) {
+       THE WALKTHROUGH MEASURED WHAT THAT COST. On the Coach House record (ten
+       players, fourteen sections) at 390: all 140 cells drew one identical
+       dot and all ten column heads a bare glyph, while the SAME TABLE at 1280
+       printed every motif name and every instrument. *"A spreadsheet where
+       every cell says 'inherited' is a spreadsheet with no data in it."*
+
+       AND THE ARITHMETIC SAYS WHY NO ARRANGEMENT OF LINES FIXES IT. At 390 the
+       pane is 364.4px; the frozen section column, the `+` and the ten gaps
+       take 163 of it, so ten players share 217px — 21.7px each, three
+       characters of the cell's own 11.52px mono. A word does not fit across a
+       phone ten times, on one line or on two.
+
+       SO THE COLUMN IS SIZED TO A WORD AND THE PANE SCROLLS, which is the
+       gesture every spreadsheet on a phone already has: the section column is
+       frozen at the left edge and a swipe brings the next players under it.
+       Two numbers are MEASURED here because only the DOM knows them, and both
+       are read in the CELL's own type rather than the head's:
+         `--wordw`  the floor a column is given — 9ch and the cell's own side
+                    padding — which `nu.css` takes as `--cellmin`. It is
+                    written BEFORE the width is read back, so the class below
+                    is decided on the layout this measurement causes and not
+                    on the one before it.
+         `is-stack` whether the glyph and the word still fit on one line. Where
+                    they do not the face stacks — the mark over the word — which
+                    buys the word the whole column for no extra height (the row
+                    is `--tap` either way, measured 44px in both states).
+       THE HEAD'S OWN CHAIN IS UNCHANGED and is what keeps `has-words` honest:
+       a name that does not fit falls back to its first word, a first word that
+       does not fit to the glyph, and the instrument line is dropped rather
+       than cut. The gate `has-words` now answers is the CELL's — can a word be
+       printed at all — because that is the claim §14 makes. */
+    const cell0 = t.querySelector<HTMLElement>(
+      "tbody > tr[data-row] > td > .nu-cellword, tfoot td.nu-mixcell > .nu-cellword");
+    if (cell0) {
+      const cs = getComputedStyle(cell0);
+      const pad = (parseFloat(cs.paddingInlineStart) || 0) +
+                  (parseFloat(cs.paddingInlineEnd) || 0);
       const probe = document.createElement("span");
       probe.style.cssText = "position:absolute;visibility:hidden;inline-size:9ch";
-      th0.appendChild(probe);
+      cell0.appendChild(probe);
       const nine = probe.getBoundingClientRect().width;
       probe.remove();
-      const wide = th0.getBoundingClientRect().width >= nine;
-      (t as HTMLElement).classList.toggle("has-words", wide);
+      const ic = cell0.querySelector<HTMLElement>(".nu-ic");
+      const g = cell0.querySelector<HTMLElement>(".nu-g");
+      const gw = g ? g.getBoundingClientRect().width : 0;
+      const gap = ic ? (parseFloat(getComputedStyle(ic).columnGap) || 0) : 0;
+      (t as HTMLElement).style.setProperty("--wordw",
+        Math.ceil(nine + pad) + "px");
+      /* READ BACK AFTER THE WRITE. `--cellmin` is this number, so the width a
+         column comes out is a consequence of the line above; reading it first
+         would decide the stack on the layout the floor has just replaced. */
+      const colw = cell0.getBoundingClientRect().width;
+      (t as HTMLElement).classList.toggle("is-stack",
+        colw < nine + gw + gap + pad - 0.5);
+      (t as HTMLElement).classList.toggle("has-words", colw >= nine + pad - 0.5);
+    }
+    const th0 = t.querySelector<HTMLElement>("thead th.nu-colhead");
+    if (th0) {
       const over = (e: HTMLElement | null): boolean =>
         !!e && e.scrollWidth > e.clientWidth + 1;
       for (const b of Array.from(
              t.querySelectorAll<HTMLElement>("thead th.nu-colhead .nu-colbtn"))) {
         b.classList.remove("is-first", "is-glyphonly", "is-noinstr");
-        if (!wide) continue;
         const n = b.querySelector<HTMLElement>(".nu-colname");
         if (over(n)) b.classList.add("is-first");
         if (over(n)) b.classList.add("is-glyphonly");
@@ -663,49 +739,156 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      has pushed down, exactly as a section's sheet pushes the grid down. So the
      open sheet is a `<tr class="nu-wopen nu-spopen">` of the `<thead>`,
      immediately after its own row, and `stick()` releases the pins below it. */
-  const specialRows = (S: Shape): TemplateResult[] => {
+  /* ---- THE RECORD IS ONE ROW (2026-09-06, TABLE.md §14) --------------
+     THE REDESIGN'S FIRST SENTENCE (docs/REDESIGN-SCOPE.md, off the Coach
+     House walkthrough): *"The page is sorted by age, not by scope."* Seven
+     surfaces on this sheet say something about the whole RECORD — RULES,
+     TIME, CHORDS and MOTIFS above the grid, MASTER, PRODUCE and PERFORMANCE
+     below it — and walking the page they made the scope change nine times,
+     with `Master` and `Time` eight screens apart and the same kind of thing.
+
+     THEY ARE ONE LINE NOW, AND NOT ONE SHEET. The seven keep their own
+     heads, their own `data-k`, their own open keys and their own sheets,
+     drawn by the same four builders they always were (`SPECIALS`, `PRODUCE`,
+     `masterMixSheet`, `perfCells`/`perfSheet`); what changed is where they
+     STAND — behind one disclosure at the top, in the order the record is
+     made in. Not one sheet was rebuilt and not one address moved, which is
+     what makes `test/table-inventory.json` a re-filing rather than a rewrite.
+
+     AND THEIR ROWS ARE ALWAYS IN THE DOM, `hidden` WHEN THE PANEL IS SHUT.
+     `hidden` is what the platform already means by "not here" — off the
+     glass and out of the accessibility tree — and it leaves the seven
+     addresses where the page's own doors expect them: `__eightRow("time")`
+     presses `ttime` by name, and `toggle` opens the panel under it (see
+     `RECOPEN` above). A row that was not rendered at all would have made
+     those doors a second implementation of the accordion. */
+  interface Scope {
+    /** the `data-k` on the head — unchanged, all seven. */
+    k: string;
+    /** the `OPEN` key — unchanged, all seven. */
+    key: string;
+    /** the `data-special`, and the tail of the row's id. */
+    id: string;
+    /** the class the row wore in the footer, kept so a walk that knows the
+     *  master by name still finds it (it is no longer a `.nu-footrow`). */
+    cls: string;
+    word: string;
+    aria: string;
+    face(): string;
+    sheet(): Field[];
+    lamp(): HTMLElement | typeof nothing;
+  }
+  const NOLAMP = (): typeof nothing => nothing;
+
+  /* THE SEVEN, IN THE ORDER THE RECORD IS MADE IN: the four that were the
+     head's, then the three that were the foot's. `SPECIALS` is still the one
+     place the first four's order is stated (§13f); the last three are
+     appended here because that is where they were appended to the page. */
+  const scopes = (): Scope[] => {
+    const out: Scope[] = SPECIALS.map((sp) => ({
+      k: sp.k, key: "sp|" + sp.id, id: sp.id, cls: "",
+      word: sp.word, aria: sp.aria,
+      face: () => { try { return sp.face(A); } catch (e) { return ""; } },
+      sheet: () => wrapOps(sp.sheet(A)),
+      lamp: () => spLamp(sp),
+    }));
+    /* THE MASTER, WHOSE HEAD WAS THE MIX ROW'S CORNER. Its address is `tmix`
+       and its key is `mix|master` wherever the button stands (§10a's own
+       sentence: "an address does not move when a row does"), so
+       `openMixRow("master")` still presses it by name. What stays in the
+       `<tfoot>` is the ALIGNED strip row — a fader is the player's. */
+    out.push({ k: "tmix", key: "mix|master", id: "master", cls: "nu-masterrow",
+      word: t("special.master.word"),
+      aria: t("special.master.aria", { face: masterFace(A) }),
+      face: () => masterFace(A),
+      sheet: () => wrapOps(masterMixSheet(A)), lamp: NOLAMP });
+    out.push({ k: PRODUCE.k, key: "sp|" + PRODUCE.id, id: PRODUCE.id,
+      cls: "nu-prodrow", word: PRODUCE.word, aria: PRODUCE.aria,
+      face: () => { try { return PRODUCE.face(A); } catch (e) { return ""; } },
+      sheet: () => wrapOps(PRODUCE.sheet(A)), lamp: NOLAMP });
+    /* PERFORMANCE, WHOSE FACE IS ITS OWN THREE WORDS and whose sheet is
+       `perfCells` then `perfSheet` — the pair §13a.2 made one sheet, moved
+       here whole rather than rebuilt. */
+    out.push({ k: "tfoot|perf", key: "foot|perf", id: "perf",
+      cls: "nu-perfrow", word: t("special.perf.word"),
+      aria: t("axis.performance"),
+      face: () => perfCells(A)
+        .map((c) => (c as { word?: string | null }).word)
+        .filter((w) => w != null && w !== "").join(" \u00b7 "),
+      sheet: () => wrapOps([...perfCells(A), ...perfSheet(A)]), lamp: NOLAMP });
+    return out;
+  };
+
+  /** THE ONE LINE, AND ITS FACE IS THE TIME ROW'S. Asked what a glance needs
+   *  off a record, the walkthrough answered tempo · meter · key; `timeFace`
+   *  has printed exactly that sentence since §10b, off the sheets that own
+   *  the three words. `RECORD.face` IS `timeFace` — one owner, two callers —
+   *  so a re-worded meter re-words this line by existing.
+   *  IT WEARS `.nu-labelbtn` AND NOT `.nu-sphead`, which is the SECTIONS
+   *  disclosure's own argument one row down: it is a button the width of a
+   *  special row's line, so it takes that box, and it is NOT a sheet's head,
+   *  so it must not answer `[aria-expanded="true"].nu-sphead` — the selector
+   *  three gates and this page's own "shut whatever is open" gesture use. */
+  const recordRow = (S: Shape, list: Scope[]): TemplateResult => {
+    let face = "";
+    try { face = RECORD.face(A); } catch (e) { face = ""; }
+    return html`<tr class="nu-sprow nu-recrow" data-special="record">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
+        <div class="nu-spline">
+        <button type="button" class="nu-labelbtn" data-k=${RECORD.k}
+          aria-expanded=${String(RECOPEN)}
+          aria-controls=${list.map((x) => "nu-scope-" + x.id).join(" ")}
+          aria-label=${RECOPEN ? t("special.record.collapse.aria")
+                               : t("special.record.expand.aria")}
+          @click=${openRecord}
+          ><b class="nu-spword">${RECORD.word}</b
+          ><span class="nu-spface">${face}</span></button>
+        </div>
+      </th>
+    </tr>`;
+  };
+
+  /* THE PANEL ITSELF: the seven as sections, one open at a time. "One at a
+     time" costs nothing to enforce — `OPEN` is the grid's one open door and
+     always was, so a second scope opening closes the first by the same
+     `toggle` a cell uses. */
+  const scopeRows = (S: Shape, list: Scope[]): TemplateResult[] => {
     const out: TemplateResult[] = [];
-    for (const sp of SPECIALS) {
-      const openKey = "sp|" + sp.id;
-      const open = OPEN === openKey;
-      let face = "";
-      try { face = sp.face(A); } catch (e) { face = ""; }
-      /* ONE LINE, AND THE LAMP IS IN IT (§13a.2, 2026-09-05). Paul, with the
-         Silence record on his iPhone: *"it's all jammed up."* MEASURED on
-         v287 at 390: TIME 45px, RULES 45px and PHRASES 61.1 — the extra
-         16.1 is `.nu-motlamp`, a sticky BLOCK under the button, which made
-         the one row carrying a lamp a two-line row. §13a.2: *"no lamp on a
-         second line (the MOTIF lamp draws inside the PHRASES row's own line
-         or not at all)"*. So the `<th>`'s content is one sticky LINE —
-         `--panew` wide, pinned to the pane's left edge, which is the job
-         `.nu-sphead` was doing alone — with the button taking the give and
-         the lamp standing at its end. The lamp is still a SIBLING of the
-         button and never a child (`[data-live]` is a surface the clock
-         writes and a control inside one is what test/motif-frozen A1
-         forbids), and its line is still RESERVED whether or not the clock
-         has written in it — but the reservation costs nothing now, because
-         the line is 44px of thumb either way and a lamp that arrives cannot
-         change the row's height. */
-      out.push(html`<tr class="nu-sprow" data-special=${sp.id}>
+    for (const sc of list) {
+      const open = OPEN === sc.key;
+      out.push(html`<tr id=${"nu-scope-" + sc.id}
+          class=${"nu-sprow nu-scoperow" + (sc.cls ? " " + sc.cls : "")}
+          data-special=${sc.id} ?hidden=${!RECOPEN}>
         <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
           <div class="nu-spline">
-          <button type="button" class="nu-sphead" data-k=${sp.k}
+          <button type="button" class="nu-sphead" data-k=${sc.k}
             aria-expanded=${String(open)}
-            aria-label=${sp.aria}
-            @click=${() => toggle(openKey)}
-            @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
-            ><b class="nu-spword">${sp.word}</b
-            ><span class="nu-spface">${face}</span></button>${spLamp(sp)
-          }${spClose(openKey, open, sp.word)}
+            aria-label=${sc.aria}
+            @click=${() => toggle(sc.key)}
+            @contextmenu=${(e: Event) => { e.preventDefault(); toggle(sc.key, true); }}
+            ><b class="nu-spword">${sc.word}</b
+            ><span class="nu-spface">${sc.face()}</span></button>${sc.lamp()
+          }${spClose(sc.key, open, sc.word)}
           </div>
         </th>
       </tr>`);
-      if (open)
-        out.push(openRow(S, sheetFor(openKey, () => wrapOps(sp.sheet(A))),
-                         sp.word, "nu-spopen"));
+      if (open && RECOPEN)
+        out.push(openRow(S, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen"));
     }
     return out;
   };
+
+  /* THE DISCLOSURE ITSELF, AND IT IS NOT AN OP (the SECTIONS fold's own
+     argument): no `op()`, so the undo stack does not grow; no `changed()`, so
+     nothing recompiles; the document is neither read nor written. Closing it
+     closes the scope standing inside it first, through the same `toggle` the
+     × and a tap outside use — a sheet cannot stay open inside a panel that is
+     about to be hidden. */
+  function openRecord(): void {
+    if (RECOPEN && RECORD_KEY(OPEN)) toggle(OPEN!);
+    RECOPEN = !RECOPEN;
+    draw();
+  }
 
   /* ---- THE GRID'S OWN HEADER (2026-09-05, §13e) -----------------------
      Paul: *"Give the main composer interface its own header call it
@@ -764,7 +947,14 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      the grid, it is not folded away, and §13f's own line says the four rows
      over the label are untouched. */
   function foldGrid(): void {
-    if (GRIDOPEN && OPEN && !SPECIAL(OPEN)) toggle(OPEN);
+    /* ...AND WHAT IT LEAVES ALONE IS THE RECORD'S SEVEN AND NOT "ANY MERGED
+       ROW" (2026-09-06, §14). It read `!SPECIAL(OPEN)`, which was the same
+       set while every merged row stood above the grid; the MIX row's own
+       per-voice seats are merged rows too, they stand in the `<tfoot>` and
+       they are hidden by this fold, so a seat sheet left open by it was a
+       sheet with no strip over it. The seven the panel holds are the ones
+       that must survive, and they are named. */
+    if (GRIDOPEN && OPEN && !RECORD_KEY(OPEN)) toggle(OPEN);
     GRIDOPEN = !GRIDOPEN;
     saveGridOpen();
     draw();
@@ -787,8 +977,11 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      it takes the row out of the accessibility tree as well as off the glass,
      and `stick()` reads the same absence a hand does (a hidden row reports no
      client rects, so it cannot be the pane's one pin). */
-  const thead = (S: Shape, cols: string[]): TemplateResult => html`<thead>
-    ${specialRows(S)}
+  const thead = (S: Shape, cols: string[]): TemplateResult => {
+    const list = scopes();
+    return html`<thead>
+    ${recordRow(S, list)}
+    ${scopeRows(S, list)}
     ${gridLabel(S)}
     <tr ?hidden=${!GRIDOPEN}>
       <th class="nu-cornerh">${cornerBtn(S)}</th>
@@ -796,6 +989,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       <th class="nu-plushead" scope="col">${plusBtn(S, "head")}</th>
     </tr>
   </thead>`;
+  };
 
   /** THE HEAD'S WORD, TWICE: the whole name and its first word. Which of the
    *  two is drawn — or neither — is `stick()`'s measurement (§13a.7), because
@@ -1131,14 +1325,29 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
    *  only deviations", which is what makes eighty cells readable), the ring is
    *  the selection and dashed is still a refusal.
    *
-   *  AND THE FIRST TAP OPENS NOTHING BUT THE RING. A spreadsheet's first tap
-   *  SELECTS; the second one edits. Before this round one tap did both — it
-   *  selected the cell AND unfolded the whole eighteen-field accordion under
-   *  the row, measured at 15 sheet rows for a hand that only wanted to see
-   *  where it was standing. Now: tap once to stand on it (the formula bar
-   *  names it), tap the SAME cell again — or press Enter, F2, or any printable
-   *  key — to edit. `is-sel` is the state the second tap reads, so the two taps
-   *  are the same button and neither is a mode. */
+   *  AND ONE TAP OPENS WHAT YOU TAPPED (2026-09-06, TABLE.md §14, item 3).
+   *  THIS COMMENT SAID, from 2026-09-05: *"the first tap opens nothing but the
+   *  ring. A spreadsheet's first tap SELECTS; the second one edits … tap once
+   *  to stand on it (the formula bar names it), tap the SAME cell again to
+   *  edit."* That decision was made for a page that HAD a formula bar: the
+   *  first tap paid for itself by filling a readout above the grid, and the
+   *  second one opened the vector. §13a.6 deleted the formula bar and moved
+   *  its head INTO the cell sheet, so from that day the first tap bought
+   *  nothing but an outline — and the Coach House walkthrough measured what
+   *  that cost on a phone: *"A cell needs two taps to open, a section row one,
+   *  a column header two — and the first tap on a cell does nothing but draw a
+   *  ring … I lost ~20 taps to this in the first ten minutes."* Measured on
+   *  v290 at 390 and 320, both records: a CELL took 2 taps to open and a row
+   *  head, a column head and a special row took 1. Three targets, two tap
+   *  counts, and nothing on the glass saying which.
+   *  SO THE GRAMMAR IS ONE SENTENCE: a tap opens what you tapped, at its own
+   *  scope. The SELECTION follows the opening rather than preceding it —
+   *  `toggle` writes `SEL` from the key, so the ring lands on the cell whose
+   *  sheet is now under it. Nothing is lost from the two-tap law: a range is
+   *  still SHIFT-tap (which selects and opens nothing), the keyboard still
+   *  moves the ring with the arrows and opens with Enter, and copy/paste are
+   *  where §13a.6 put them, on the open sheet's own op row — so the gesture
+   *  that reaches them is the tap that opens it. */
   const bodyCell = (S: Shape, rid: string, cid: string): TemplateResult => {
     const sid = S.across ? cid : rid;
     const name = S.across ? rid : cid;
@@ -1175,8 +1384,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
                      SEL = { sec: sid, voice: name }; ANCHOR = null;
                      A.pointCell(i, vi, m); return; }
           ANCHOR = null;
-          /* FIRST TAP SELECTS ONLY; THE SECOND EDITS (§11). */
-          if (!sel) { select(sid, name); return; }
+          /* ONE TAP OPENS THE CELL (§14). `toggle` sets `SEL` off the key on
+             its way in, so the ring and the sheet arrive together; a second
+             tap on the same cell closes it, which is what every other head on
+             this surface already does. */
           toggle(openKey); }}
         @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
         >${face(mark, word === "\u2014" ? null : word)}</button>
@@ -1196,51 +1407,19 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      READ — `masterFace` says what the record is standing on — and the board,
      which is what the row opens. `masterCells` and `masterSheet` went with the
      row; `model.ts` carries the tombstone. */
+  /* ---- THE FOOTER HOLDS THE MIX AND NOTHING ELSE (2026-09-06, §14) ---
+     It held four rows: the mix strip, the master, PRODUCE and PERFORMANCE.
+     Three of those are the RECORD's and they are one line at the top now —
+     §14, off the walkthrough's *"`Master` and `Time` are eight screens apart
+     and are the same kind of thing"*. What is left is the one row that is
+     ALIGNED: a FADER is the bass's fader, so the strips stand under the
+     players' own heads and stay exactly where they were.
+     (`produceRow` and `perfRow` STOOD BELOW. Both are entries of `scopes()`
+     now, drawn by `scopeRows` from the same `PRODUCE.face`/`PRODUCE.sheet`
+     and the same `perfCells`/`perfSheet` — moved, not rebuilt.) */
   const tfoot = (S: Shape, cols: string[]): TemplateResult => html`<tfoot>
     ${mixRow(S, cols)}
-    ${produceRow(S)}
-    ${perfRow(S)}
   </tfoot>`;
-
-  /* ---- THE PERFORM ROW IS ONE LINE TOO (2026-09-05, §13a.2) ------------
-     *"Every special row is ONE LINE at rest — TIME, RULES, PHRASES, MIX,
-     MASTER, PRODUCE, PERFORM: `var(--tap)` tall, the word left, the sentence
-     or the count right."* MEASURED on v287 at 390 on the Silence record: 92px
-     — a row head reading "performance" beside a wrapping strip of three word
-     plates (`push · phrasing · ornament`) in a spanning cell, three lines
-     deep, which is what `.nu-footcells` is.
-     SO IT WEARS THE MERGED ROW'S OWN FURNITURE and its three words are its
-     FACE. Nothing is lost: the three cells and the three fields the sheet
-     already held are ONE sheet now — which is more than the row offered, not
-     less, because `footCell` set `OPENFIELD` to a `data-k` the perform sheet
-     did not contain and no strip could open on it. Both lists come from
-     `model.ts` unchanged (`perfCells` and `perfSheet`), in that order. */
-  const perfRow = (S: Shape): TemplateResult => {
-    const openKey = "foot|perf";
-    const cells = perfCells(A);
-    const face = cells
-      .map((c) => (c as { word?: string | null }).word)
-      .filter((w) => w != null && w !== "").join(" \u00b7 ");
-    return html`<tr class="nu-footrow nu-perfrow" data-row="perf">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-sphead" data-k="tfoot|perf"
-          aria-expanded=${String(OPEN === openKey)}
-          aria-label=${t("axis.performance")}
-          @click=${() => toggle(openKey)}
-          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
-          ><b class="nu-spword">${t("special.perf.word")}</b
-          ><span class="nu-spface">${face}</span></button>${
-          spClose(openKey, OPEN === openKey, t("special.perf.word"))}
-        </div>
-      </th>
-    </tr>
-    ${OPEN === openKey
-      ? openRow(S, sheetFor(openKey,
-          () => wrapOps([...perfCells(A), ...perfSheet(A)])),
-          t("special.perf.word"))
-      : nothing}`;
-  };
 
   /* ---- THE MIX ROW (§10a: "MIX is ALIGNED") --------------------------
      One cell per voice column, each carrying that seat's own level word and
@@ -1271,15 +1450,15 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      320. The address did not move: `tmix` is on the master's button wherever
      the button stands, and `openMixRow("master")` presses it by that name. */
   const mixRow = (S: Shape, cols: string[]): TemplateResult => {
-    const master = "mix|master";
-    const face = masterFace(A);
-    /* THE MIX ROW FOLDS WITH THE GRID (2026-09-05, §13f) and the three rows
-       under it do not. It is the one `<tfoot>` row that is ALIGNED — a cell
-       per COLUMN, standing under that player's own head — so a mix strip with
-       no column head over it is a row of unlabelled faders. MASTER, PRODUCE
-       and PERFORMANCE are merged facts about the record and read the same
-       whether or not the grid is on the glass, which is exactly why a hand
-       folds the grid to reach them. */
+    /* THE MIX ROW FOLDS WITH THE GRID (2026-09-05, §13f), and since 2026-09-06
+       (§14) it is the whole of the `<tfoot>`. It is the one row down here that
+       is ALIGNED — a cell per COLUMN, standing under that player's own head —
+       so a mix strip with no column head over it is a row of unlabelled
+       faders, which is why it folds with the heads. The MASTER, PRODUCE and
+       PERFORMANCE rows that stood under it are merged facts about the RECORD
+       and are the record row's own sections now: they are not "what a hand
+       folds the grid to reach" any more, because they are one tap from the
+       top of the page whether the grid is folded or not. */
     return html`<tr class="nu-footrow nu-mixrow" data-row="mix"
         ?hidden=${!GRIDOPEN}>
       <th class="nu-srowh" scope="row"><span class="nu-srowname">${
@@ -1287,58 +1466,9 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       ${repeat(cols, (c) => c, (c) => mixCell(c))}
       <td class="nu-addcell"></td>
     </tr>
-    <tr class="nu-footrow nu-masterrow" data-row="master">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-sphead" data-k="tmix"
-          aria-expanded=${String(OPEN === master)}
-          aria-label=${t("special.master.aria", { face })}
-          @click=${() => toggle(master)}
-          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(master, true); }}
-          ><b class="nu-spword">${t("special.master.word")}</b
-          ><span class="nu-spface">${face}</span></button>${
-          spClose(master, OPEN === master, t("special.master.word"))}
-        </div>
-      </th>
-    </tr>
-    ${OPEN === master
-      ? openRow(S, sheetFor(master, () => wrapOps(masterMixSheet(A))),
-                t("special.master.word"))
-      : nothing}
     ${cols.map((c) => OPEN === "mix|" + c
       ? openRow(S, sheetFor(OPEN!, () => wrapOps(mixSheet(A, c))), c)
       : nothing)}`;
-  };
-
-  /* ---- THE PRODUCE ROW (§10b step 5) ---------------------------------
-     §10a: *"│ MIX │ strip │ strip │ master │ / │ PRODUCE │ the producer's
-     deals and notes │ (merged, expandable)"*. It is the same merged row the
-     master is, one line under it, wearing the same `.nu-sphead` so its face
-     ellipsises against the pane's own left-pinned width and reads whole at
-     320. It is drawn HERE and not in `SPECIALS` because `SPECIALS` is the
-     HEAD's list: a row above the column heads is a row above the music, and
-     the producer speaks about a record that has already been dealt. */
-  const produceRow = (S: Shape): TemplateResult => {
-    const openKey = "sp|" + PRODUCE.id;
-    let face = "";
-    try { face = PRODUCE.face(A); } catch (e) { face = ""; }
-    return html`<tr class="nu-footrow nu-prodrow" data-row="produce">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
-          aria-expanded=${String(OPEN === openKey)}
-          aria-label=${PRODUCE.aria}
-          @click=${() => toggle(openKey)}
-          @contextmenu=${(e: Event) => { e.preventDefault(); toggle(openKey, true); }}
-          ><b class="nu-spword">${PRODUCE.word}</b
-          ><span class="nu-spface">${face}</span></button>${
-          spClose(openKey, OPEN === openKey, PRODUCE.word)}
-        </div>
-      </th>
-    </tr>
-    ${OPEN === openKey
-      ? openRow(S, sheetFor(openKey, () => wrapOps(PRODUCE.sheet(A))), PRODUCE.word)
-      : nothing}`;
   };
 
   /** ONE SEAT, COLLAPSED. The word is the strip's own reading of the fader and
@@ -1491,6 +1621,20 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   }
 
   function toggle(key: string, keepOpen = false): void {
+    /* PRESSING A RECORD SCOPE OPENS THE PANEL IT IS IN (2026-09-06, §14), and
+       this line is HERE and not only at the top of `bandTable` because of what
+       `draw()` is: an internal re-render that does NOT re-run this component's
+       constructor. MEASURED the hour the panel landed, by
+       `test/rules-view.browser.js`: `__eightRow("rules")` pressed `trules` by
+       name, `toggle` set `OPEN` to `sp|rules`, the head came back
+       `aria-expanded="true"` — and `RECOPEN` was still false, so the row was
+       `hidden` and its sheet was never drawn. A state that says it is open and
+       does not arrive is this repo's characteristic bug; the two owners of
+       "is the panel showing" are now the same statement, said in the one
+       place every open goes through.
+       IT DOES NOT CLOSE ON THE WAY OUT: shutting TIME is not a claim about
+       leaving the record — the panel closes by its own head. */
+    if (RECORD_KEY(key)) RECOPEN = true;
     /* OPENING A SPECIAL ROW LETS THE PAGE'S LANDING GO — see `leaveLanding`
        in api.ts for the measurement. Only on the way OPEN: shutting TIME is
        not a claim about where you are standing. */

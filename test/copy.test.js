@@ -196,6 +196,15 @@ const SAME_TEXT_OK = [
      a heading over a block of the table, and a translator may not spell them
      the same. */
   ["glyph.sec.list", "grid.sections.word"],
+  /* ...and the same shape once more, 2026-09-06 (TABLE.md §14): the record
+     collapses to one row and its word is `special.record.word`, the heading
+     over the seven surfaces that say something about the whole song.
+     `exportTab.json.what` is the Export card's SUBTITLE — what a `.song.json`
+     file holds, under the word JSON — which is a description of a file's
+     contents and not a heading over a panel. A translator may spell "the whole
+     record, as a file" and "THE RECORD" differently, and one of the two may
+     not move at all: this list's own first entry's test. */
+  ["exportTab.json.what", "special.record.word"],
 ];
 
 async function run() {

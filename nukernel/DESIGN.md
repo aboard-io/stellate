@@ -24,9 +24,9 @@ musician uses.
 
 States every component may wear: **rest · derived (quiet, inherited/default) · written (bold, a hand set it) · selected (ring in --hand) · editing (the control popped up) · refused (dashed, with its sentence) · sounding (lamp in --clock) · measured (--meter)**. A state is a class the gates can read; a live state writes CHILDREN only.
 
-1. **Cell** — a plain value at rest: its GLYPH first, the word only where no honest glyph exists, a number small beside its glyph, tabular. No border, no plate. First tap selects; second tap / Enter / F2 / a printable key edits; Delete clears to default; Escape restores; Tab commits and moves. Range by Shift or drag.
-2. **Head** — a row or column header: glyph first and its word where the column has room for it whole (≥ 9ch; a head is never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that ADDS on the tap (TABLE.md §13e) — a section at the row axis, and at the column axis the one kind the band has not got, in build-the-band's order — never a row of offers and never a sheet asking which. Its accessible name says what a tap will add.
-3. **Special row** — RULES · TIME · CHORDS · MOTIFS above, MIX · PRODUCE · PERFORM below (TABLE.md §13f, Paul, 2026-09-05: *"Put rules above time"*, *"Add chords below time and move chord stuff into it"*): a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
+1. **Cell** — a plain value at rest: its GLYPH and its WORD, a number small beside its glyph, tabular. No border, no plate. **It says a word at every width** (TABLE.md §14): a player column is never narrower than a word (9ch in the cell's own type plus its padding, measured), the mark stacks over the word where the two will not share a line, and where a record has more players than a phone has room for the PANE scrolls sideways with the section column frozen — never a grid of identical dots. **ONE TAP OPENS IT**; a second tap on the same cell shuts it; Enter / F2 / a printable key opens from the keyboard; Delete clears to default; Escape restores; Tab commits and moves. Range by Shift or drag. (It read *"first tap selects; second tap edits"* until 2026-09-06 — right while the formula bar stood above the grid and the first tap filled it, and empty from the day §13a.6 deleted that bar.)
+2. **Head** — a row or column header: glyph first and its NAME, which the column is now wide enough to hold because the cells under it are (TABLE.md §14; a head is still never cut mid-word — the whole name, else its first word, else the glyph alone), sticky on its axis, the corner pinned both ways; carries its lamp on its own edge; its menu on long-press / right-click. Its `+` at the end of the axis is ONE `--tap` cell that ADDS on the tap (TABLE.md §13e) — a section at the row axis, and at the column axis the one kind the band has not got, in build-the-band's order — never a row of offers and never a sheet asking which. Its accessible name says what a tap will add.
+3. **Special row** — the RECORD's seven (RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE), which are the sections of component 18 since 2026-09-06 (TABLE.md §14), and MIX, which is not one of them because a fader is the player's: a merged row, ONE LINE at rest and `--tap` tall (the word left, the sentence or the count right, ellipsised and never wrapped, a hairline under, no plate and no tint, no chips or lozenges inline, and a lamp inside that line or not at all); expanded = its sheet; keeps its open state across a recompile. It does NOT pin at rest — it scrolls out of the way — and pins only as the HEADER of its own open sheet, at the pane's top edge, carrying the × at its right end (TABLE.md §13a).
 4. **Sheet** — a vector as rows (label · value · clear-back), full pane width, wrapping, in flow (never a modal), opened as the next `<tr>` under the row that owns it; its owner row is its header and is the pane's ONE pin while it is open (a cell sheet pins nothing at all — its header is component 5, in flow at its top).
 5. **Cell sheet header** — the first line of the OPEN cell sheet: the address of the selection, then undo · redo · copy · paste. Present only while a cell sheet is open, in flow at its top, never fixed and never sticky. (It was the **formula bar**, a strip above the pane that became a bottom sheet on a phone — 105.8px of a 844px screen at rest, measured — until TABLE.md §13a.6 moved its head into the sheet and found its readout was the sheet's own first group all along. Undo and redo therefore live where the change was made.)
 6. **Pop-up** — what a tap on a cell/field opens: a chip strip (≤ 8 words), a slider (a number), the envelope/curve editor (an envelope, an EQ, a lane), the native picker on a coarse pointer (> 8 words), the typed combo on a fine one. **Dismiss only on tap outside, Escape, or its own close — never on a value tap.** Sits where a keyboard cannot cover it.
@@ -93,16 +93,33 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     `.nu-sphead` selector, because a fold is not a sheet. (It read *"the only
     row that is not a control … no button, no address and nothing to open"*
     until 2026-09-05: there was nothing to OPEN, and there is something to DO.)
+18. **Record row** (TABLE.md §14, off the Coach House walkthrough: *"the page
+    is sorted by age, not by scope"*) — the sheet's FIRST row and the one
+    place the record talks: `THE RECORD`, one `--tap` line at rest, the word
+    left and the face right (**tempo · meter · key**, which is the TIME row's
+    own face and not a second reading of it), a hairline under, no plate. A
+    tap discloses its SEVEN SECTIONS — RULES · TIME · CHORDS · MOTIFS ·
+    MASTER · PRODUCE · PERFORMANCE — each a special row (component 3) opening
+    its own sheet, ONE at a time; every address is the one it had before the
+    collapse. It wears the label row's box and not `.nu-sphead`'s class, for
+    the disclosure's own measured reason (sharing it makes every "shut
+    whatever is open" gesture fold the panel away). Unlike the SECTIONS fold
+    it is NOT persisted: folding the grid is a standing preference, opening
+    the record is a drill-down, and the sheet's resting state is one line. It
+    replaces four rows above the grid and three below it; the `<tfoot>` then
+    holds the MIX strips alone.
 
 ## 3 · Interaction laws
 
 - Tap-first; the desktop is the phone given room. No pointer-only control.
+- **ONE TAP OPENS WHAT YOU TAPPED, AT ITS OWN SCOPE** (TABLE.md §14): a cell opens the cell's editor, a row head the section, a column head the player, a record row its sheet. The SELECTION follows the opening rather than preceding it — the ring lands on the thing whose sheet is now under it — and a second tap on the same target shuts it. A range is Shift-tap, which selects and opens nothing. (A cell took two taps from 2026-09-05 to 2026-09-06: the first filled the formula bar, and it went on costing a tap after §13a.6 deleted that bar.)
+- **Sorted by scope, not by age** (TABLE.md §14): a song has four scopes — record · section · player · cell — and every control belongs to exactly one. The record is ONE row at the top of the sheet; the sections are the grid's rows; the players are its columns and their mix strips; a cell is one player in one section. Nothing that belongs to the record stands at the foot of the page.
 - One selection; one open pop-up; one owner per fact.
 - A change lands at the next bar while playing (evolve); undo/redo at the document level, every op.
 - Blank = default (inherited); bold = written; delete = back to default.
 - Nothing dismisses under a finger that is changing a value.
 - Nothing scrolls sideways at the page level; the pane is the scrollport.
-- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell is its glyph first and its word where the column has room. Opening or closing a sheet leaves the pane's `scrollTop` identical.
+- One scroll, one pin (TABLE.md §13): nothing is fixed but the bottom bar; inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell says a WORD at every width — the column is sized to one and the pane scrolls sideways with the section column frozen, rather than the cells falling back to a grid of identical marks (§14). Opening or closing a sheet leaves the pane's `scrollTop` identical.
 
 ## 4 · Copy (the voice)
 
@@ -128,3 +145,12 @@ it sits.
 Paul put the rules over the tempo they set and gave the changes a row of
 their own: TABLE.md §13f. Key, mode and scale are the alphabet and stay in
 TIME; the changes and the harmony are what a record DOES over them.)
+
+...AND SINCE 2026-09-06 THE FIRST FOUR READ WITH THE LAST THREE OF THE
+RECORD'S (TABLE.md §14). The order above is unchanged and is now the order of
+the record row's own sections: rules → time → chords → motifs → master →
+produce → performance, then the form (the grid), then the players and their
+mix strips, then each cell. What moved is not the order but the END OF THE
+PAGE the last three stood at: master, produce and performance are facts about
+the whole record, so they read with the other four rather than eight screens
+below them.

@@ -1909,6 +1909,14 @@ var SPECIALS = [
     lamp: (A2) => A2.motifLamp()
   }
 ];
+var RECORD = {
+  k: "trecord",
+  id: "record",
+  get word() {
+    return t4("special.record.word");
+  },
+  face: timeFace
+};
 var PRODUCE = {
   k: "tproduce",
   id: "produce",
@@ -2057,6 +2065,7 @@ var CLIP = null;
 var RO = null;
 var OUT = null;
 var STICK = null;
+var RECOPEN = false;
 var GRIDSTORE = "nu.band.grid.v1";
 var GRIDOPEN = (() => {
   try {
@@ -2088,7 +2097,17 @@ function shapeOf(A2) {
   };
 }
 var STICKY = (k2) => !!k2 && k2 !== "corner";
-var SPECIAL = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0);
+var SPECIAL = (k2) => !!k2 && (k2.indexOf("sp|") === 0 || k2.indexOf("mix|") === 0 || k2.indexOf("foot|") === 0);
+var RECORD_KEYS = [
+  "sp|rules",
+  "sp|time",
+  "sp|chords",
+  "sp|motifs",
+  "mix|master",
+  "sp|produce",
+  "foot|perf"
+];
+var RECORD_KEY = (k2) => !!k2 && RECORD_KEYS.indexOf(k2) >= 0;
 var actMark = (k2) => {
   const d2 = globalThis.NuGlyph;
   return d2 && d2.GLYPH && d2.GLYPH.act && d2.GLYPH.act[k2] || null;
@@ -2099,6 +2118,7 @@ function bandTable(host, A2) {
     OPEN = null;
     OPENFIELD = null;
   }
+  if (RECORD_KEY(OPEN)) RECOPEN = true;
   const sh0 = shapeOf(A2);
   if (SEL && !sh0.at()) {
     SEL = null;
@@ -2185,21 +2205,39 @@ function bandTable(host, A2) {
       for (const c3 of Array.from(tr.children))
         c3.style.insetBlockStart = tr === pinRow ? "0px" : "auto";
     void tops;
-    const th0 = t5.querySelector("thead th.nu-colhead");
-    if (th0) {
+    const cell0 = t5.querySelector(
+      "tbody > tr[data-row] > td > .nu-cellword, tfoot td.nu-mixcell > .nu-cellword"
+    );
+    if (cell0) {
+      const cs = getComputedStyle(cell0);
+      const pad = (parseFloat(cs.paddingInlineStart) || 0) + (parseFloat(cs.paddingInlineEnd) || 0);
       const probe = document.createElement("span");
       probe.style.cssText = "position:absolute;visibility:hidden;inline-size:9ch";
-      th0.appendChild(probe);
+      cell0.appendChild(probe);
       const nine = probe.getBoundingClientRect().width;
       probe.remove();
-      const wide = th0.getBoundingClientRect().width >= nine;
-      t5.classList.toggle("has-words", wide);
+      const ic = cell0.querySelector(".nu-ic");
+      const g2 = cell0.querySelector(".nu-g");
+      const gw = g2 ? g2.getBoundingClientRect().width : 0;
+      const gap = ic ? parseFloat(getComputedStyle(ic).columnGap) || 0 : 0;
+      t5.style.setProperty(
+        "--wordw",
+        Math.ceil(nine + pad) + "px"
+      );
+      const colw = cell0.getBoundingClientRect().width;
+      t5.classList.toggle(
+        "is-stack",
+        colw < nine + gw + gap + pad - 0.5
+      );
+      t5.classList.toggle("has-words", colw >= nine + pad - 0.5);
+    }
+    const th0 = t5.querySelector("thead th.nu-colhead");
+    if (th0) {
       const over = (e4) => !!e4 && e4.scrollWidth > e4.clientWidth + 1;
       for (const b2 of Array.from(
         t5.querySelectorAll("thead th.nu-colhead .nu-colbtn")
       )) {
         b2.classList.remove("is-first", "is-glyphonly", "is-noinstr");
-        if (!wide) continue;
         const n3 = b2.querySelector(".nu-colname");
         if (over(n3)) b2.classList.add("is-first");
         if (over(n3)) b2.classList.add("is-glyphonly");
@@ -2302,43 +2340,119 @@ function bandTable(host, A2) {
     </div>`;
   };
   const nCols = (S2) => (S2.across ? S2.secs.length : S2.voices.length) + 2;
-  const specialRows = (S2) => {
+  const NOLAMP = () => A;
+  const scopes = () => {
+    const out = SPECIALS.map((sp) => ({
+      k: sp.k,
+      key: "sp|" + sp.id,
+      id: sp.id,
+      cls: "",
+      word: sp.word,
+      aria: sp.aria,
+      face: () => {
+        try {
+          return sp.face(A2);
+        } catch (e4) {
+          return "";
+        }
+      },
+      sheet: () => wrapOps(sp.sheet(A2)),
+      lamp: () => spLamp(sp)
+    }));
+    out.push({
+      k: "tmix",
+      key: "mix|master",
+      id: "master",
+      cls: "nu-masterrow",
+      word: t4("special.master.word"),
+      aria: t4("special.master.aria", { face: masterFace(A2) }),
+      face: () => masterFace(A2),
+      sheet: () => wrapOps(masterMixSheet(A2)),
+      lamp: NOLAMP
+    });
+    out.push({
+      k: PRODUCE.k,
+      key: "sp|" + PRODUCE.id,
+      id: PRODUCE.id,
+      cls: "nu-prodrow",
+      word: PRODUCE.word,
+      aria: PRODUCE.aria,
+      face: () => {
+        try {
+          return PRODUCE.face(A2);
+        } catch (e4) {
+          return "";
+        }
+      },
+      sheet: () => wrapOps(PRODUCE.sheet(A2)),
+      lamp: NOLAMP
+    });
+    out.push({
+      k: "tfoot|perf",
+      key: "foot|perf",
+      id: "perf",
+      cls: "nu-perfrow",
+      word: t4("special.perf.word"),
+      aria: t4("axis.performance"),
+      face: () => perfCells(A2).map((c3) => c3.word).filter((w2) => w2 != null && w2 !== "").join(" · "),
+      sheet: () => wrapOps([...perfCells(A2), ...perfSheet(A2)]),
+      lamp: NOLAMP
+    });
+    return out;
+  };
+  const recordRow = (S2, list) => {
+    let face2 = "";
+    try {
+      face2 = RECORD.face(A2);
+    } catch (e4) {
+      face2 = "";
+    }
+    return b`<tr class="nu-sprow nu-recrow" data-special="record">
+      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
+        <div class="nu-spline">
+        <button type="button" class="nu-labelbtn" data-k=${RECORD.k}
+          aria-expanded=${String(RECOPEN)}
+          aria-controls=${list.map((x2) => "nu-scope-" + x2.id).join(" ")}
+          aria-label=${RECOPEN ? t4("special.record.collapse.aria") : t4("special.record.expand.aria")}
+          @click=${openRecord}
+          ><b class="nu-spword">${RECORD.word}</b
+          ><span class="nu-spface">${face2}</span></button>
+        </div>
+      </th>
+    </tr>`;
+  };
+  const scopeRows = (S2, list) => {
     const out = [];
-    for (const sp of SPECIALS) {
-      const openKey = "sp|" + sp.id;
-      const open = OPEN === openKey;
-      let face2 = "";
-      try {
-        face2 = sp.face(A2);
-      } catch (e4) {
-        face2 = "";
-      }
-      out.push(b`<tr class="nu-sprow" data-special=${sp.id}>
+    for (const sc of list) {
+      const open = OPEN === sc.key;
+      out.push(b`<tr id=${"nu-scope-" + sc.id}
+          class=${"nu-sprow nu-scoperow" + (sc.cls ? " " + sc.cls : "")}
+          data-special=${sc.id} ?hidden=${!RECOPEN}>
         <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
           <div class="nu-spline">
-          <button type="button" class="nu-sphead" data-k=${sp.k}
+          <button type="button" class="nu-sphead" data-k=${sc.k}
             aria-expanded=${String(open)}
-            aria-label=${sp.aria}
-            @click=${() => toggle(openKey)}
+            aria-label=${sc.aria}
+            @click=${() => toggle(sc.key)}
             @contextmenu=${(e4) => {
         e4.preventDefault();
-        toggle(openKey, true);
+        toggle(sc.key, true);
       }}
-            ><b class="nu-spword">${sp.word}</b
-            ><span class="nu-spface">${face2}</span></button>${spLamp(sp)}${spClose(openKey, open, sp.word)}
+            ><b class="nu-spword">${sc.word}</b
+            ><span class="nu-spface">${sc.face()}</span></button>${sc.lamp()}${spClose(sc.key, open, sc.word)}
           </div>
         </th>
       </tr>`);
-      if (open)
-        out.push(openRow(
-          S2,
-          sheetFor(openKey, () => wrapOps(sp.sheet(A2))),
-          sp.word,
-          "nu-spopen"
-        ));
+      if (open && RECOPEN)
+        out.push(openRow(S2, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen"));
     }
     return out;
   };
+  function openRecord() {
+    if (RECOPEN && RECORD_KEY(OPEN)) toggle(OPEN);
+    RECOPEN = !RECOPEN;
+    draw();
+  }
   const gridLabel = (S2) => {
     const secs = A2.doc().form.sections;
     const bars = secs.reduce((n3, x2) => n3 + (x2.bars || 0), 0);
@@ -2361,13 +2475,16 @@ function bandTable(host, A2) {
     </tr>`;
   };
   function foldGrid() {
-    if (GRIDOPEN && OPEN && !SPECIAL(OPEN)) toggle(OPEN);
+    if (GRIDOPEN && OPEN && !RECORD_KEY(OPEN)) toggle(OPEN);
     GRIDOPEN = !GRIDOPEN;
     saveGridOpen();
     draw();
   }
-  const thead = (S2, cols) => b`<thead>
-    ${specialRows(S2)}
+  const thead = (S2, cols) => {
+    const list = scopes();
+    return b`<thead>
+    ${recordRow(S2, list)}
+    ${scopeRows(S2, list)}
     ${gridLabel(S2)}
     <tr ?hidden=${!GRIDOPEN}>
       <th class="nu-cornerh">${cornerBtn(S2)}</th>
@@ -2375,6 +2492,7 @@ function bandTable(host, A2) {
       <th class="nu-plushead" scope="col">${plusBtn(S2, "head")}</th>
     </tr>
   </thead>`;
+  };
   const spClose = (openKey, open, name) => {
     if (!open) return A;
     const mk = actMark("close");
@@ -2627,10 +2745,6 @@ function bandTable(host, A2) {
         return;
       }
       ANCHOR = null;
-      if (!sel) {
-        select(sid, name);
-        return;
-      }
       toggle(openKey);
     }}
         @contextmenu=${(e4) => {
@@ -2642,95 +2756,15 @@ function bandTable(host, A2) {
   };
   const tfoot = (S2, cols) => b`<tfoot>
     ${mixRow(S2, cols)}
-    ${produceRow(S2)}
-    ${perfRow(S2)}
   </tfoot>`;
-  const perfRow = (S2) => {
-    const openKey = "foot|perf";
-    const cells = perfCells(A2);
-    const face2 = cells.map((c3) => c3.word).filter((w2) => w2 != null && w2 !== "").join(" · ");
-    return b`<tr class="nu-footrow nu-perfrow" data-row="perf">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-sphead" data-k="tfoot|perf"
-          aria-expanded=${String(OPEN === openKey)}
-          aria-label=${t4("axis.performance")}
-          @click=${() => toggle(openKey)}
-          @contextmenu=${(e4) => {
-      e4.preventDefault();
-      toggle(openKey, true);
-    }}
-          ><b class="nu-spword">${t4("special.perf.word")}</b
-          ><span class="nu-spface">${face2}</span></button>${spClose(openKey, OPEN === openKey, t4("special.perf.word"))}
-        </div>
-      </th>
-    </tr>
-    ${OPEN === openKey ? openRow(
-      S2,
-      sheetFor(
-        openKey,
-        () => wrapOps([...perfCells(A2), ...perfSheet(A2)])
-      ),
-      t4("special.perf.word")
-    ) : A}`;
-  };
   const mixRow = (S2, cols) => {
-    const master = "mix|master";
-    const face2 = masterFace(A2);
     return b`<tr class="nu-footrow nu-mixrow" data-row="mix"
         ?hidden=${!GRIDOPEN}>
       <th class="nu-srowh" scope="row"><span class="nu-srowname">${t4("special.mix.word")}</span></th>
       ${c2(cols, (c3) => c3, (c3) => mixCell(c3))}
       <td class="nu-addcell"></td>
     </tr>
-    <tr class="nu-footrow nu-masterrow" data-row="master">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-sphead" data-k="tmix"
-          aria-expanded=${String(OPEN === master)}
-          aria-label=${t4("special.master.aria", { face: face2 })}
-          @click=${() => toggle(master)}
-          @contextmenu=${(e4) => {
-      e4.preventDefault();
-      toggle(master, true);
-    }}
-          ><b class="nu-spword">${t4("special.master.word")}</b
-          ><span class="nu-spface">${face2}</span></button>${spClose(master, OPEN === master, t4("special.master.word"))}
-        </div>
-      </th>
-    </tr>
-    ${OPEN === master ? openRow(
-      S2,
-      sheetFor(master, () => wrapOps(masterMixSheet(A2))),
-      t4("special.master.word")
-    ) : A}
     ${cols.map((c3) => OPEN === "mix|" + c3 ? openRow(S2, sheetFor(OPEN, () => wrapOps(mixSheet(A2, c3))), c3) : A)}`;
-  };
-  const produceRow = (S2) => {
-    const openKey = "sp|" + PRODUCE.id;
-    let face2 = "";
-    try {
-      face2 = PRODUCE.face(A2);
-    } catch (e4) {
-      face2 = "";
-    }
-    return b`<tr class="nu-footrow nu-prodrow" data-row="produce">
-      <th class="nu-spheadcell" scope="row" colspan=${nCols(S2)}>
-        <div class="nu-spline">
-        <button type="button" class="nu-sphead" data-k=${PRODUCE.k}
-          aria-expanded=${String(OPEN === openKey)}
-          aria-label=${PRODUCE.aria}
-          @click=${() => toggle(openKey)}
-          @contextmenu=${(e4) => {
-      e4.preventDefault();
-      toggle(openKey, true);
-    }}
-          ><b class="nu-spword">${PRODUCE.word}</b
-          ><span class="nu-spface">${face2}</span></button>${spClose(openKey, OPEN === openKey, PRODUCE.word)}
-        </div>
-      </th>
-    </tr>
-    ${OPEN === openKey ? openRow(S2, sheetFor(openKey, () => wrapOps(PRODUCE.sheet(A2))), PRODUCE.word) : A}`;
   };
   const mixCell = (name) => {
     const openKey = "mix|" + name;
@@ -2856,6 +2890,7 @@ function bandTable(host, A2) {
     if (b2 instanceof HTMLElement) b2.focus({ preventScroll: true });
   }
   function toggle(key, keepOpen = false) {
+    if (RECORD_KEY(key)) RECOPEN = true;
     if (SPECIAL(key) && (OPEN !== key || keepOpen)) {
       try {
         A2.leaveLanding();

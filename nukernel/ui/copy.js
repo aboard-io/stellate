@@ -218,6 +218,21 @@ var TABLE = {
   "special.master.word": "master",
   "special.master.aria": "Master: {face} — and the buses",
   "special.perf.word": "performance",
+  /* ===== THE RECORD ROW (2026-09-06, TABLE.md §14, the sorted-by-scope
+     round) ===============================================================
+     The seven keys above are one scope — RULES, TIME, CHORDS, MOTIFS,
+     MASTER, PRODUCE, PERFORMANCE all say something about the whole record —
+     and until this round they were seven lines at both ends of the page.
+     They are one line now, and this is its word. THE FACE IS `timeFace`'s
+     and has no key of its own: tempo, meter and key are already spelled by
+     the sheets that own them, and a second spelling here would be a second
+     owner of the same three facts.
+     TWO ARIA KEYS BECAUSE IT IS A DISCLOSURE, which is `grid.sections`' own
+     arrangement one row down: the accessible name says what a tap DOES, and
+     a disclosure does two different things depending on which way it stands. */
+  "special.record.word": "the record",
+  "special.record.collapse.aria": "Hide the record settings",
+  "special.record.expand.aria": "Show the record settings",
   /* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e) ==============
      Paul: *"Give the main composer interface its own header call it
      Sections."* It is a LABEL and not a control — no sheet, no tap, no pin —
@@ -1188,6 +1203,25 @@ var ATLAS = {
   "atlas.pickPlace": "Pick a place first",
   "atlas.noRecordAt": "{place} — no record at {year}",
   "atlas.noPlace.say": "{name} has no place on the map",
+  /* ===== FINDING A GENRE IN THE INDEX ===================================
+     (2026-09-06. `nukernel/ui/atlas.js` grew a search field and a strip of
+     century chips over the chronological index — wave C item 7 of
+     docs/REDESIGN-SCOPE.md, off the walkthrough's *"reaching the trip-hop row
+     is 19,306 px of scrolling"*.) THESE EIGHT ARE PROVISIONAL, and the note
+     is the point rather than an apology: the call sites are in a file this
+     round did not own and the catalogue is in a file that round cannot edit,
+     so the words are written here to the voice DESIGN.md §4 sets and are the
+     search's own author's to correct. Every one is inside its budget — a face
+     is six words, an `.aria` is a sentence of twelve — and every placeholder
+     is the name the call site passes. */
+  "atlas.find.aria": "Find a genre by name or place",
+  "atlas.find.hint": "Find a genre",
+  "atlas.find.all.one": "All {n} record",
+  "atlas.find.all.other": "All {n} records",
+  "atlas.find.some": "{n} of {of}",
+  "atlas.find.none": "Nothing matches {q}",
+  "atlas.era.aria": "Jump to a century",
+  "atlas.era.chip": "{era}, from {year}",
   /* ===== A SHARE LINK THAT DOES NOT RESOLVE ============================= */
   "atlas.linkNoPlace.say": "{place} is not a place on this globe",
   "atlas.linkBlank.say": "That link names no place on this globe",

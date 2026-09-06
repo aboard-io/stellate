@@ -6460,7 +6460,10 @@ table.nu-trims{ color: var(--ink); }
    pane) — and both are written up at `grid.ts mixRow`. It does NOT freeze
    vertically: `stick()` walks `thead > tr` and this is in the `<tfoot>`, which
    is where a master strip belongs on a desk. */
-.nu-masterrow > th.nu-spheadcell{ border-block-end: 0; }
+/* (IT READ `border-block-end: 0` UNTIL 2026-09-06. The master was the middle
+   of three merged rows in the `<tfoot>` and gave up its hairline to the
+   PRODUCE row under it; it is a section of the RECORD panel now, one of seven
+   lines that each end in the same hairline, so it keeps its own.) */
 /* A SEAT'S CELL IS A BODY CELL WITH A LAMP UNDER IT. The lamp is the column
    head's own `.nu-scollamp`, built a second time (one node has one parent), so
    a player that is sounding lights at BOTH ends of its column — which is what
@@ -6755,6 +6758,43 @@ table.nu-trims{ color: var(--ink); }
 .nu-spface{ flex: 1 1 auto; min-inline-size: 0; text-align: end;
   font: var(--num-fw) var(--t3)/1.2 var(--sans, inherit); color: var(--dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== THE RECORD ROW AND ITS PANEL (2026-09-06, TABLE.md §14) =========
+   *"The page is sorted by age, not by scope."* The seven record-scope
+   surfaces — RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE
+   — were four rows above the grid and three below it; they are ONE LINE at
+   the top now, `THE RECORD`, whose face is the time row's own tempo · meter ·
+   key, and whose tap discloses the seven as its sections.
+
+   IT WEARS `.nu-labelbtn`, WHICH IS THE SECTIONS DISCLOSURE'S OWN BOX AND NOT
+   `.nu-sphead`'s CLASS, for the reason stated where that class is defined: a
+   disclosure must not answer `[aria-expanded="true"].nu-sphead`, the selector
+   three gates and this page's own "shut whatever is open" gesture use. Sharing
+   the class would make every `shutAll()` fold the record away.
+
+   THE SEVEN ROWS INSIDE IT ARE THE ROWS THEY ALWAYS WERE — `.nu-sprow`, the
+   merged `<th colspan>`, the `.nu-spline` pinned to the pane's left edge, the
+   `.nu-sphead` with its word and its face, the × while it is open — plus one
+   class saying which panel they belong to and one hairline down their inside
+   edge saying it on the glass. `hidden` is what closes them, which is the
+   attribute the platform already means by "not here". */
+/* ...AND THE INDENT IS A HAIRLINE AND NOT A PADDING, which is a measurement
+   and not a taste. The first drawing indented the line by `--s2`; a `.nu-spline`
+   is `--panew` wide with `box-sizing: border-box`, so the padding does not
+   move the LINE — it takes 3.47px off the BUTTON inside it, and the button is
+   what T10m measures against the pane ("the row's line is as wide as what a
+   hand can see"). MEASURED at 1280: the line 1242 either way, the button
+   1242.1 without the padding and 1238.6 with it, against a check that allows
+   12px of a 1254px pane. A decoration that costs a row 3.5px of its own
+   readable width when a hairline says the same thing for nothing is the wrong
+   half of the trade. */
+.nu-sheetgrid tr.nu-scoperow > th.nu-spheadcell > .nu-spline{
+  box-shadow: inset var(--bw-hard) 0 0 var(--rule); }
+/* THE RECORD'S OWN LINE IS THE PANEL'S HEADER AND READS AS ONE: the word at
+   full strength, the face beside it, and — while the panel is open — the same
+   hairline the sections under it hang off. */
+.nu-sheetgrid tr.nu-recrow > th.nu-spheadcell{
+  border-block-end: var(--bw) solid var(--rule); }
 
 /* ===== THE GRID'S OWN HEADER (2026-09-05, TABLE.md §13e, §13f) ==========
    Paul: *"Give the main composer interface its own header call it Sections."*
@@ -8135,8 +8175,21 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    is the bigger number the columns fill the pane and nothing scrolls sideways;
    where it is not, every column stands at the floor and the pane scrolls, and
    in neither case does a cell overlap its neighbour. */
+/* ...AND SINCE 2026-09-06 THE FLOOR IS A WORD AND NOT A GLYPH (TABLE.md §14
+   item 2). The Coach House walkthrough measured the old floor's cost: ten
+   players at 390 drew 140 identical dots while the same table at 1280 printed
+   every name. The arithmetic that decides it is in `src/table/grid.ts
+   stick()`: ten players share 217px of a 364px pane, which is three
+   characters each, so no arrangement of lines fits ten words across a phone.
+   The column is sized to a WORD instead and the pane scrolls sideways with
+   the section column frozen — the gesture every spreadsheet on a phone has.
+   `--wordw` is MEASURED (9ch in the CELL's own type plus the cell's own side
+   padding) and written onto the table by `stick()`, because only the DOM
+   knows what a character of that font is; the glyph floor stays as the other
+   half of the `max()`, for the pathological case where a word is narrower
+   than the mark beside it. */
 #pan-band .nu-wordgrid{ --headbase: 8ch;
-  --cellmin: calc(1.15rem + 2 * var(--s2));
+  --cellmin: max(calc(1.15rem + 2 * var(--s2)), var(--wordw, 0px));
   /* THE GAPS ARE PART OF THE WIDTH AND THEY ARE NOT SMALL. `.nu-trims` is
      `border-collapse: separate; border-spacing: 3px`, so a table of nine
      columns carries TEN 3px gaps — 30px, measured, which is 8% of a 390px
@@ -8242,6 +8295,36 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-sheetgrid:not(.has-words) tbody > tr > td > .nu-cellword .nu-w,
 #pan-band .nu-sheetgrid:not(.has-words) tfoot td.nu-mixcell .nu-w{
   display: none; }
+/* ---- AND WHERE THE GLYPH AND THE WORD WILL NOT SHARE A LINE, THEY STACK
+   (2026-09-06, TABLE.md §14 item 2). `stick()` measures both in the cell's own
+   type and writes `.is-stack` on the table: the mark over the word, the word
+   with the WHOLE column to ellipsise against instead of the column less the
+   mark and the gap. MEASURED on Coach House at 390: 20px of word per cell,
+   which is the difference between 99 of 140 cells printing a whole word and
+   138 of them. IT COSTS NO HEIGHT — the row is `--tap` in both states, because
+   the mark's line and the word's line together are 30px inside a 44px floor —
+   so nothing is traded for it but the mark's size, which comes down to the
+   head's 1rem for the same reason a head's is smaller than a cell's: it is
+   the second voice in the cell now, not the first. */
+#pan-band .nu-sheetgrid.is-stack .nu-cellword .nu-ic{
+  flex-direction: column; align-items: stretch; gap: 0; }
+#pan-band .nu-sheetgrid.is-stack .nu-cellword .nu-g{ font-size: 1rem;
+  line-height: 1; }
+#pan-band .nu-sheetgrid.is-stack .nu-cellword .nu-w{ text-align: center;
+  inline-size: 100%; }
+/* ---- AND THE SWIPE IS NOT SNAPPED, WHICH IS A REFUSAL WITH A MEASUREMENT
+   UNDER IT (2026-09-06, §14 item 2). A table a phone reads a few players at a
+   time wants its swipe to land a whole column, so this block held
+   `scroll-snap-type: x proximity` on the pane and `scroll-snap-align: start`
+   with `scroll-margin-inline-start: var(--headw)` on the column heads.
+   MEASURED on Coach House at 390, at rest, before a hand had touched it: the
+   pane opened at `scrollLeft: 40` — the browser re-snaps a snapport when its
+   content is re-laid-out, and `stick()`'s own widening (the `--wordw` write)
+   IS that re-layout, so the first player was pushed half off the left edge of
+   a table nobody had scrolled. With the snap off, the same measurement reads
+   `scrollLeft: 0`. A table that opens on a column it has hidden is a worse
+   fault than a swipe that stops between two, so the snap is refused and the
+   pane's own free scroll (§11c) stands. */
 #pan-band .nu-rowjump{ font: var(--fw-label) var(--t2)/1.2 var(--sans, inherit);
   overflow: hidden; text-overflow: ellipsis; }
 /* AND THE NAME GETS THE LINE. The mark and the section's number are inline
@@ -8743,3 +8826,53 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    declared); the sheet takes 0, which is under both and still above the
    grid's own cells. */
 #pan-band .nu-vsheet{ z-index: 0; }
+
+/* ======================================================================
+   WAVE C · THE GENRE INDEX IS SEARCHABLE (2026-09-06)
+   ======================================================================
+   docs/REDESIGN-SCOPE.md item 7, and docs/WAVE-C.md carries the numbers.
+   APPENDED AS ONE BLOCK, AT THE END, DELIBERATELY: this wave ran beside
+   another hand working in this stylesheet, so it adds and never rewrites —
+   four rules, no existing selector touched. Fold it into the atlas section
+   (beside `#atlasIndex`, ~3851) when the two hands meet.
+
+   THE STRIP ITSELF NEEDS NO RULE. It is a `<p class="nu-row">` — the flex
+   row nu.css has owned since the tempo verbs — so the gap, the wrap and the
+   vertical centring are already right. What is left is the three things
+   `.nu-row` cannot know: which child takes the slack, that a hidden row in a
+   `display: grid` list has to be told to go away, and that the count is a
+   caption rather than a control. */
+
+/* 1 · A HIDDEN ROW IS HIDDEN. `.nu-ixli` sets `display: grid`, and an author
+      rule beats the UA sheet's `[hidden]{ display: none }` — so without this
+      line every filtered-out row stayed on screen and the filter did nothing
+      visible at all. (It is the whole feature in one declaration, which is
+      exactly the kind of rule that is easy to leave out and impossible to
+      miss once it is measured: the gate counts rendered rows, not
+      attributes.) */
+.nu-ixli[hidden]{ display: none !important; }
+
+/* 2 · THE FIELD TAKES THE SLACK AND THE MENU DOES NOT. `min-inline-size: 0`
+      is the flex-child law this sheet applies everywhere a text control sits
+      in a row: without it an <input>'s intrinsic width is its `size`
+      attribute and the row overflows at 320. */
+#atlasFind{ margin-block-start: var(--s4); }
+#atlasQ{ flex: 1 1 9ch; min-inline-size: 0; block-size: var(--tap); }
+/*    THE ERA CHIPS ARE ONE LINE THAT SCROLLS SIDEWAYS, which is the `#atlasWrap`
+      net applied to a strip instead of a map: 26 words cannot fit a phone and
+      must not become six rows of buttons above a list. `flex-basis: 100%` puts
+      them on their own line under the field at every width, because a strip
+      that scrolls has to own its line or the field's own width fights it. */
+#atlasJump{ flex: 1 0 100%; display: flex; gap: var(--s2);
+            overflow-x: auto; overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+#atlasJump > button{ flex: 0 0 auto; white-space: nowrap;
+                     min-block-size: var(--tap); }
+
+/* 3 · THE COUNT RIDES THE FIELD'S OWN LINE. "479 records" is four words and
+      it belongs beside the thing it is counting, not under it — and the strip
+      is two lines at every width this way (the field and its count, then the
+      era chips), which is 89 px at 390 against the 118 a third line cost.
+      `flex-shrink: 0` on the caption and the slack on the field, because the
+      number must never be the thing that wraps. */
+#atlasCount{ flex: 0 0 auto; margin: 0; }

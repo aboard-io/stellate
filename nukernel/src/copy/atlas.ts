@@ -74,6 +74,26 @@ export const ATLAS: Table = {
   "atlas.noRecordAt": "{place} — no record at {year}",
   "atlas.noPlace.say": "{name} has no place on the map",
 
+  /* ===== FINDING A GENRE IN THE INDEX ===================================
+     (2026-09-06. `nukernel/ui/atlas.js` grew a search field and a strip of
+     century chips over the chronological index — wave C item 7 of
+     docs/REDESIGN-SCOPE.md, off the walkthrough's *"reaching the trip-hop row
+     is 19,306 px of scrolling"*.) THESE EIGHT ARE PROVISIONAL, and the note
+     is the point rather than an apology: the call sites are in a file this
+     round did not own and the catalogue is in a file that round cannot edit,
+     so the words are written here to the voice DESIGN.md §4 sets and are the
+     search's own author's to correct. Every one is inside its budget — a face
+     is six words, an `.aria` is a sentence of twelve — and every placeholder
+     is the name the call site passes. */
+  "atlas.find.aria": "Find a genre by name or place",
+  "atlas.find.hint": "Find a genre",
+  "atlas.find.all.one": "All {n} record",
+  "atlas.find.all.other": "All {n} records",
+  "atlas.find.some": "{n} of {of}",
+  "atlas.find.none": "Nothing matches {q}",
+  "atlas.era.aria": "Jump to a century",
+  "atlas.era.chip": "{era}, from {year}",
+
   /* ===== A SHARE LINK THAT DOES NOT RESOLVE ============================= */
   "atlas.linkNoPlace.say": "{place} is not a place on this globe",
   "atlas.linkBlank.say": "That link names no place on this globe",

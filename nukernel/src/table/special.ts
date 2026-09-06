@@ -386,6 +386,35 @@ export const SPECIALS: SpecialRow[] = [
     lamp: (A) => A.motifLamp() },
 ];
 
+/* ===================================================================== */
+/* ---- THE RECORD ROW (2026-09-06, TABLE.md §14) ----------------------- */
+//
+// THE REDESIGN'S FIRST SENTENCE: *"The page is sorted by age, not by scope."*
+// A song here has four scopes — record, section, player, cell — and the
+// RECORD talked at both ends of the page: RULES, TIME, CHORDS and MOTIFS
+// above the grid, MASTER, PRODUCE and PERFORMANCE below it, with the grid
+// (the only surface that shows the whole song) getting what was left. Walking
+// the sheet, the scope changed nine times.
+//
+// So the seven are ONE LINE at the top — `THE RECORD` — and a tap on it
+// discloses them as its sections. Nothing about any of the seven moved: each
+// keeps its own `data-k`, its own open key, its own face and its own sheet,
+// and `grid.ts` draws them from `SPECIALS`, `PRODUCE`, `masterMixSheet` and
+// `perfCells`/`perfSheet` exactly as it drew them before.
+
+/** THE COLLAPSED FACE IS `timeFace`, AND IT IS NOT RE-DERIVED HERE. Asked
+ *  what a glance needs off a record, the walkthrough answered tempo, meter and
+ *  key — which is the sentence the TIME row has printed since §10b, off the
+ *  sheets that own those three words. A second reader of the same three facts
+ *  is what this file's own header forbids, so the record's face IS the time
+ *  row's face, one function, two callers. */
+export const RECORD: { k: string; id: string; word: string;
+                       face(A: TableAPI): string } = {
+  k: "trecord", id: "record",
+  get word() { return t("special.record.word"); },
+  face: timeFace,
+};
+
 /** THE FOOTER'S OWN MERGED ROW, WHICH IS NOT IN `SPECIALS` and says so here
  *  rather than in a comment three files away: `SPECIALS` is the HEAD's list
  *  and `grid.ts thead` draws every member of it above the column heads.

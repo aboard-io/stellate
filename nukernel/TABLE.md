@@ -3258,3 +3258,287 @@ different widths (1400: 172/106/133 ms at +23s; then 390: 123 ms at +11.9s,
 1400 clean at 95 ms), which is a long-task budget measured on a machine running
 browser gates, not a deterministic red. The screenshots are in
 `scratchpad/design/chords-row/` (`playing-row@390.png` is H).
+
+### 14 · Sorted by scope — wave A (APPROVED 2026-09-06: *"Can you redesign based on the feedback you provided and address what's missing?"*)
+
+**THE CONTRACT IS `docs/REDESIGN-SCOPE.md`** and its thesis is one line:
+
+> **The page is sorted by age, not by scope.**
+
+The review that asked for it is the Coach House walkthrough
+(`scratchpad/pm-walkthrough/NOTES.md`) — a fourteen-section trip-hop record
+built in the box on a phone, with every friction logged and the record kept at
+`keeps/triphop-pm-walkthrough/`. A song has four scopes — **record · section ·
+player · cell** — and every control belongs to exactly one. Walking the sheet
+at v290 the scope changed **nine times**, and the record talked at both ends of
+the page: RULES · TIME · CHORDS · MOTIFS above the grid, MASTER · PRODUCE ·
+PERFORMANCE below it, with `Master` and `Time` eight screens apart and the same
+kind of thing. Wave A is the three items that fix the SHEET.
+
+**EVERYTHING BELOW IS MEASURED** under `devices["iPhone 14"]`, DPR 3,
+`isMobile`, `hasTouch`, at 390 × 844 and 320 × 844, plus 1280 for the desktop,
+on **Kingston 1969** (7 players, 13 sections) AND on **Coach House**
+(10 players, 14 sections), which is loaded the way the app loads a record —
+the Export sheet's own `<input type="file">`. The probe is
+`scratchpad/design/wave-a/probe.cjs` (with `geo.cjs` and `shots.cjs` beside
+it), the before side served off a `git archive HEAD` of v290 on its own port.
+
+#### A1 · THE RECORD COLLAPSES TO ONE ROW
+
+The seven record-scope surfaces are **one line at the top** — `THE RECORD`,
+one `--tap` line at rest per §13a.2, its face **tempo · meter · key**. A tap
+opens a SCOPE PANEL whose sections are the seven, each opening its existing
+sheet, one at a time.
+
+**THE FACE IS `timeFace` AND IS NOT RE-DERIVED.** Asked what a glance needs off
+a record, the walkthrough answered tempo, meter and key — the sentence the TIME
+row has printed since §10b, off the sheets that own those three words.
+`RECORD.face` **is** `timeFace`: one function, two callers, so a re-worded
+meter re-words the record's line by existing.
+
+**NOTHING WAS REBUILT AND NO ADDRESS MOVED.** The seven keep their `data-k`
+(`trules` · `ttime` · `tchords` · `tmotifs` · `tmix` · `tproduce` ·
+`tfoot|perf`), their open keys (`sp|rules` · `sp|time` · `sp|chords` ·
+`sp|motifs` · `mix|master` · `sp|produce` · `foot|perf`), their faces and their
+sheet builders (`SPECIALS`, `PRODUCE`, `masterMixSheet`, `perfCells` +
+`perfSheet`). `grid.ts scopes()` is the one place the seven are listed;
+`specialRows`, `produceRow` and `perfRow` are deleted into it.
+
+**AND THEIR ROWS ARE ALWAYS IN THE DOM, `hidden` WHEN THE PANEL IS SHUT** —
+which is a decision with a seam under it. `ui/eight.js` reaches these rows BY
+NAME (`__eightRow("time")` presses `ttime`, `__eightMix("master")` presses
+`tmix`), and that file is another agent's this round. A row that was not
+rendered would have made those doors a second implementation of the accordion.
+Rendered-and-`hidden`, the press lands on the button a thumb would press and
+**`RECORD_KEY(OPEN)` opens the panel under it**, one statement at the top of
+the draw. **`ui/eight.js` needs no change for wave A.**
+
+**MIX KEEPS ITS STRIPS.** A fader is the player's, so the aligned per-column
+row stays in the `<tfoot>` under its own heads, and `tmix|<voice>` is still one
+door. What left the foot is the three merged rows that are the record's.
+
+| | before (v290) | after |
+|---|---|---|
+| head rows at rest, both records, 390 and 320 | **6** — rules · time · chords · motifs · label · heads | **3** — **record** · label · heads |
+| `<tfoot>` rows at rest | **4** — mix · master · produce · perf | **1** — mix |
+| the record's face | — | `84 BPM · 4/4 · G♯/A♭ n…` (Coach House), `79 BPM · 4/4 · D natural minor` (Kingston) |
+| where the grid STARTS inside the pane | **291px** | **155.3px** — the grid begins **136px higher** |
+| sections on the glass at rest, 390 and 320 | **7** of 14 | **9** of 14 |
+| the seven addresses, driven one at a time | 7 resolve | **7 resolve**, each opening its own sheet, one open at a time |
+| pinned band with a scope open | the owner row alone | **the owner row alone** (measured: `time`) |
+| pane height at rest | 788px | **788px** — unmoved |
+| `scrollTop` across open and close | identical | **identical** |
+| page errors, console errors | 0 | **0** |
+
+**WHAT IT COSTS, SAID PLAINLY.** A record-scope control is **two doors** from
+rest where it was one, and the board's five plates are **three** where they
+were two. `test/table-inventory.json` files the cost rather than hiding it:
+fifty-nine rows changed `open` to `trecord` and took their old door as the
+first entry of `then`, which is a LIST now for exactly this reason. Nothing is
+lost — T7 drives all fifty-nine — and the trade is the table above: the head
+goes from five lines to two, the foot from four to one, and the grid, the one
+surface that shows the whole song, gets 136px of a phone back.
+
+#### A2 · THE PHONE GETS ITS WORDS BACK
+
+**WHAT WAS MEASURED.** On Coach House at 390 and at 320, v290: **0 of 140
+cells** printed a word and **0 of 10** column heads printed a name — 140
+identical dots — while the SAME table at 1280 printed every one of them.
+§13a.7's rule (word at ≥ 9ch, glyph below) is the cause, and §13d recorded the
+loss and left it.
+
+**THE ARITHMETIC THAT DECIDES IT.** At 390 the pane is 364.4px. The frozen
+section column (8ch), the `+` (44px) and the eleven 3px gaps take 163 of it, so
+ten players share **217px — 21.7px each**, three characters of the cell's
+11.52px mono. A word does not fit across a phone ten times, on one line or on
+two. Measured, on Coach House at 390, with the column floor forced to each
+value and the word measured against its own box:
+
+| column floor | cells printing a WHOLE word (of 140) | players fully on screen, 390 | 320 |
+|---|---|---|---|
+| 29.6px (v290's glyph floor) | **0** — the word is not drawn at all | 8 | 6 |
+| 44px, one line | 13 | 5 | 4 |
+| 44px, stacked | 63 | 5 | 4 |
+| 52px, stacked | 99 | 5 | 3 |
+| 60px, stacked | 138 | 4 | 3 |
+| **67px, stacked — SHIPPED** | **140** | **4** | **3** |
+| 68px, one line | 99 | 3 | 2 |
+| 68px, stacked | 139 | 3 | 2 |
+| 80px, one line | 138 | 3 | 2 |
+| 92px, one line | 140 | 2 | 2 |
+
+(The trial floors are typed px; the shipped one is not a number in a
+stylesheet — it is `--wordw`, measured on the rendered page, and it came out
+at **67px** on both records at both phone widths.)
+
+**THE DECISION: (ii) — FEWER PLAYER COLUMNS ON SCREEN, WITH A SWIPE, THE
+SECTION COLUMN FROZEN.** The column floor is a WORD (`--wordw`: 9ch in the
+cell's own type plus the cell's own side padding, **measured by `stick()` and
+written onto the table**, because only the DOM knows what a character of that
+font is), the pane scrolls sideways as it always has (§11c), and the section
+column is frozen at its left edge as it always has been. Shipped: **67px**
+per player, **4 players on a 390 screen and 3 on a 320**, and every cell says
+a word.
+
+**THE TWO THAT WERE REJECTED, WITH THE NUMBER THAT REJECTED THEM.**
+
+- **(i) TWO-LINE CELLS WITH THE ROW TALLER, ALL TEN PLAYERS STILL ON SCREEN.**
+  Refused by the arithmetic above: ten players on a 390 screen is 21.7px each,
+  which is three characters whether the word has one line or two. It also buys
+  a taller row, and the row is the thing there is least of — 7 sections were on
+  the glass at v290 and the fix has to give sections back, not take more.
+  **WHAT IS KEPT FROM IT** is the cell's internal layout, because it costs
+  nothing: the mark stacks over the word where the two will not share a line
+  (`.is-stack`, decided by the same `stick()` measurement), which buys the word
+  **20px of every column** — the difference between 99 and 138 cells printing
+  whole at a 60px floor — and **no height at all**, since the mark's line and
+  the word's line together are 30px inside a 44px floor. Measured: the row is
+  **44px in both states**, at 390 and at 320.
+- **(iii) A PER-RECORD COLUMN BUDGET — the widest N players show words, the
+  rest are glyph-only with the word in their head.** It buys exactly the same
+  first screen as (ii) — **4 speaking players at 390 and 3 at 320**, measured —
+  and then stops: the other six or seven columns of Coach House are a wall of
+  dots for ever, because a budget is not a swipe. It is the complaint with a
+  smaller number on it, and the cells it leaves mute are chosen by an accident
+  of where a player stands in the band rather than by what a hand is reading.
+
+**AND ONE BUG THE GATES CAUGHT, WHICH IS WORTH WRITING DOWN BECAUSE IT IS THIS
+REPO'S CHARACTERISTIC ONE.** `RECOPEN` — is the panel showing — was set at the
+top of `bandTable`, which is the component's constructor and runs on a REBUILD.
+`toggle()` ends in `draw()`, which is an internal re-render and does not.
+Measured by `test/rules-view.browser.js` within the hour: `__eightRow("rules")`
+pressed `trules` by name, `OPEN` became `sp|rules`, the head came back
+`aria-expanded="true"` — and the row was still `hidden`, so the rules deck was
+never drawn. Twelve checks red, all of them downstream of a state that said it
+was open and did not arrive ([[declared-but-never-arriving]]). The line is in
+`toggle()` now, which is the one place every open goes through.
+
+**AND THE PANEL'S INDENT IS A HAIRLINE AND NOT A PADDING, which the gate
+found and is the second measurement of the same shape.** The scope rows were
+given `padding-inline-start: var(--s2)` to say they belong to the panel. A
+`.nu-spline` is `--panew` wide with `box-sizing: border-box`, so that padding
+does not move the LINE — it takes 3.47px off the BUTTON inside it, and the
+button is what T10m measures against the pane. MEASURED at 1280 on Kingston:
+the line 1242 either way, the button **1242.1 without it and 1238.6 with it**,
+against a check that allows 12px of a 1254px pane. The tolerance was widened to
+16 for an afternoon on the reading that the gap was natural; it is back at 12
+and the padding is gone, because a hairline down the rows' inside edge says the
+same thing for nothing and a tolerance widened to admit a regression is a gate
+that has stopped being one.
+
+**AND THE SNAP IS REFUSED, WITH THE MEASUREMENT UNDER IT.** A table a phone
+reads a few players at a time wants its swipe to land a whole column, so the
+first drawing carried `scroll-snap-type: x proximity` on the pane and
+`scroll-snap-align: start` with `scroll-margin-inline-start: var(--headw)` on
+the column heads. MEASURED on Coach House at 390, at rest, before a hand had
+touched it: the pane opened at **`scrollLeft: 40`** — a browser re-snaps a
+snapport when its content is re-laid-out, and `stick()`'s own `--wordw` write
+IS that re-layout — so the first player was half off the left edge of a table
+nobody had scrolled. With the snap off the same measurement reads
+**`scrollLeft: 0`**. A table that opens on a column it has hidden is worse
+than a swipe that stops between two.
+
+| | before (v290) | after |
+|---|---|---|
+| cells printing a word, Coach House @ 390 and @ 320 | **0 of 140** | **140 of 140** |
+| cells printing a word, Kingston @ 390 and @ 320 | 0 of 91 | **87 of 91** (the other four have no value to print) |
+| column heads printing a name, Coach House @ 390 / 320 | **0 of 10** | **10 of 10** |
+| a player column | 29.6px | **67px** |
+| a grid row | 44px | **44px** — unmoved |
+| players fully on a 390 screen (Coach House) | 8, all mute | **4, all speaking** |
+| players fully on a 320 screen | 6, all mute | **3, all speaking** |
+| overlapping cell pairs, every section row, every record, 390 · 320 · 1280 | 0 | **0** |
+| the pinned band (the column heads) on a phone | 45px — a MARK, one line | **53.3px** — the same TWO-LINE head the desktop always drew (the name over what they are playing). §13b's own budget was 47 (`--tap` + the 3px of `border-spacing`) and it was a budget for a head with no words in it; T13b's phone ceiling is 56 and the claim it makes — exactly ONE band is pinned, and it is the heads — is unchanged |
+| the page's own sideways scroll, 390 / 320 | 390 / 320 (none) | **390 / 320 (none)** — the PANE scrolls |
+| 1280 | 108.3px columns, every word | **unchanged** |
+
+#### A3 · ONE TAP MEANS ONE THING
+
+**WHAT WAS MEASURED**, on v290, both records, 390 and 320: a **cell** took
+**2** taps to open, a **section row head** 1, a **column head** 1, a **special
+row** 1. (The walkthrough logged the column head at two; on v290 it is one, and
+this is the rendered page's number, not the note's.) Three targets, two counts,
+nothing on the glass saying which — *"I lost ~20 taps to this in the first ten
+minutes."*
+
+**THE OLD DECISION, AND WHY IT EXPIRED.** `grid.ts bodyCell` carried it in
+prose: *"tap once to stand on it (the formula bar names it), tap the SAME cell
+again … to edit."* That was right for a page that HAD a formula bar — the first
+tap paid for itself by filling a readout above the grid. §13a.6 deleted the
+formula bar and moved its head INTO the cell sheet, and from that day the first
+tap bought nothing but an outline. The comment is replaced, in place, with the
+new law and this paragraph.
+
+**THE GRAMMAR, IN ONE SENTENCE: a tap opens what you tapped, at its own
+scope.** Cell → the cell's editor. Row head → the section. Column head → the
+player. A special row → its sheet. THE SELECTION FOLLOWS THE OPENING rather
+than preceding it: `toggle` writes `SEL` off the key on its way in, so the ring
+lands on the cell whose sheet is now under it.
+
+**NO DISTINCT "SELECT WITHOUT OPENING" GESTURE IS NEEDED, and that is a
+finding rather than an omission.** The two things the first tap used to be for
+are already elsewhere: **copy and paste** are on the open sheet's own op row
+since §13a.6 (`tcell-copy|…`, `tcell-paste|…`), so the gesture that reaches
+them IS the tap that opens it; and a **range** is SHIFT-tap, which sets the
+anchor and opens nothing. The long press keeps what §13a.6 gave it — it opens
+the cell's sheet and does not toggle it shut — which is now the same
+destination as a tap, and is left alone rather than re-pointed at a state the
+page no longer has a use for. The keyboard is untouched: arrows move the ring,
+Enter/F2/a printable key opens, Escape closes, Delete clears a range.
+
+| | before (v290) | after |
+|---|---|---|
+| taps to open a CELL | **2** | **1** |
+| taps to open a SECTION (row head) | 1 | **1** |
+| taps to open a PLAYER (column head) | 1 | **1** |
+| taps to open a record scope (its own head) | 1 | **1** (the panel is one tap above it) |
+| what the first tap on a cell draws | a ring, and nothing else | **the ring and the cell's sheet** |
+
+#### THE GATES, AND WHAT WAS TOLD WHERE A CONTROL WENT
+
+`test/table.browser.js` grew **T14** — five claims (a…e), run in NINE fresh
+contexts: `devices["iPhone 14"]` at 390 and at 320 with DPR 3, `isMobile` and
+`hasTouch`, plus 1280, on Kingston 1969, on the Silence record AND on **Coach
+House**, a third bed added this round because §14 item 2's constraint is
+stated on ten players by name and neither of the other two beds has ten of
+anything. It is imported through the Export sheet's own file input, which is
+the door a person uses.
+
+  a  THE RECORD is the sheet's first row, one `--tap` line at rest with its
+     face beside its word, one disclosure button (not a `.nu-sphead`) naming
+     its seven sections — and its face IS the TIME row's
+  b  all seven addresses resolve inside the panel, one sheet at a time, each
+     under its own row, with the pane's `scrollTop` unmoved
+  c  the `<tfoot>` holds no record row: the grid ends at the `+` row and MIX,
+     whose strips are still one per player
+  d  every cell with a value SAYS it, every head is named, no cell overlaps,
+     the row is one line and the PAGE does not scroll sideways
+  e  ONE TAP opens each of the four scopes — cell, section row, player column,
+     record scope
+
+**AND SIX GATES WERE TOLD WHERE A CONTROL WENT**, which is the other half of
+T7's law. `test/table-inventory.json` re-files 67 rows behind `trecord` (59
+that had a record-scope `open`, and 8 whose `reach` IS a scope head) and turns
+`then` into a LIST, because a control inside the board is three doors deep now.
+`test/table.browser.js`'s own `tap()` opens the record panel before pressing
+one of the seven — the same gesture the page asks of a thumb — and T5a, T9a,
+T9b, T9b2, T10a, T10l/m, T10w, T12m, T13b, T13d, T13k, T13o and T13p were told
+what moved. `test/copy.test.js` exempts one same-text pair (`exportTab.json.what`
+is a file's contents, `special.record.word` is a heading over a panel).
+**`ui/eight.js`, `song.js`, `document.js` and `fields.js` were not touched and
+need no change**: `__eightRow`, `__eightMix` and `__eightMotif` press these
+heads BY NAME, the rows stand in the DOM `hidden` rather than absent, and
+`toggle()` opens the panel under the press.
+
+#### WHAT WAVE A DID NOT DO
+
+The record panel's own header is a disclosure and NOT a sheet, so it does not
+answer `[aria-expanded="true"].nu-sphead` — the SECTIONS label's own argument,
+and for the same measured reason (sharing the class makes every "shut whatever
+is open" gesture fold the panel away). It is **not persisted**, unlike the
+SECTIONS fold: folding the grid is a standing preference about a page, opening
+the record is a drill-down, and the sheet's resting state is one line.
+
+Waves B, C and D are untouched: the 1,378px variation picker, the silent
+refusals, the searchable genre index, the named section, the link that carries
+the song, and the bass that can read a motif.
