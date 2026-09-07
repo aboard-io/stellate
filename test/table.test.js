@@ -200,7 +200,7 @@ const FULL = process.argv.includes("--full");
    the three reds are expected here, they are this round, and the reviewer's
    job is to check the counts above against the run, not to look for a fourth
    cause. */
-const BASE_SHA = "652c3a0";  // taqsim takes the oud, ON ITS OWN COMMIT (2026-09-07): the row whose own refusal said a fretless neck is most of what an oud is, playing a fretted guitar while it said so. Was the twelve questions + swing + the oud: the groove word now describes the kit (0 of 500 print a word their kit does not play, was 40), swing lost its singers and gained a clarinet and a twelve-bar blues, six rows declare the disco octave, fifths is a two-beat, exotica takes its 1957 strings, and eight rows play a Faust oud instead of a nylon guitar. 890 documents. Was the four engine faults: walk and octaves reached no grid (2.05 to 4.00 notes a bar over 106 rows), a concert grand and a harpsichord were being lent to anybody (door 6), 377 records swung on one coin salted by the seed rather than the genre, and a gesture now has a date. 862 of 1500 documents move and every one is a sound the audit argued for. Was the genre audit: nine rows corrected after reading all 500 descriptions — a Hammond off a 1932 record, a TR-808 off 1978, a TB-303 off 1980, hymn's alto given back its own line, tango's rim moved onto the marcato. 18 of 1500 documents over six rows. Was the three starting points: dance, guitarrock and pop said `realize: "chord"`, a word the engine has never had, so their second chair played a line and stamped a part PARTS does not hold. Three rows move and each now sounds like its own note. Was 039c766 — wave D + eighteen rows: the bass reads its own cell and 39,215 of 92,219 bass events stopped carrying dur:NaN — 83 of 177 sampled records render differently and every differing note was a 10 ms click that is now its written length. Eighteen new rows ride with it. Was b908c18 — genre QA shift 5: salsa's bass figure, soft rock's chorus and city, the flanger's amount, Door 5 (an amplifier is never dealt — 284 dealt dirty chairs to 0), and grunge's tempo, singer and bass. 629 of 1446 documents over 251 anchors moved, and every one is a sound Paul asked to change. Was 1c5e8db — the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+const BASE_SHA = "3f42fb9";  // melody, the crash and the laws, ON THEIR OWN COMMIT (2026-09-07): every contour in ideas-kit walked the scale, so 78% of all melodic motion was a step or a repeat and the seed changed the notes but never the KIND of line — 1,420 of 1,506 documents move and each is a tune with a shape. The crash defers instead of writing 9. Twelve rows had a progression pasted from a neighbour. Was 652c3a0. taqsim takes the oud, ON ITS OWN COMMIT (2026-09-07): the row whose own refusal said a fretless neck is most of what an oud is, playing a fretted guitar while it said so. Was the twelve questions + swing + the oud: the groove word now describes the kit (0 of 500 print a word their kit does not play, was 40), swing lost its singers and gained a clarinet and a twelve-bar blues, six rows declare the disco octave, fifths is a two-beat, exotica takes its 1957 strings, and eight rows play a Faust oud instead of a nylon guitar. 890 documents. Was the four engine faults: walk and octaves reached no grid (2.05 to 4.00 notes a bar over 106 rows), a concert grand and a harpsichord were being lent to anybody (door 6), 377 records swung on one coin salted by the seed rather than the genre, and a gesture now has a date. 862 of 1500 documents move and every one is a sound the audit argued for. Was the genre audit: nine rows corrected after reading all 500 descriptions — a Hammond off a 1932 record, a TR-808 off 1978, a TB-303 off 1980, hymn's alto given back its own line, tango's rim moved onto the marcato. 18 of 1500 documents over six rows. Was the three starting points: dance, guitarrock and pop said `realize: "chord"`, a word the engine has never had, so their second chair played a line and stamped a part PARTS does not hold. Three rows move and each now sounds like its own note. Was 039c766 — wave D + eighteen rows: the bass reads its own cell and 39,215 of 92,219 bass events stopped carrying dur:NaN — 83 of 177 sampled records render differently and every differing note was a 10 ms click that is now its written length. Eighteen new rows ride with it. Was b908c18 — genre QA shift 5: salsa's bass figure, soft rock's chorus and city, the flanger's amount, Door 5 (an amplifier is never dealt — 284 dealt dirty chairs to 0), and grunge's tempo, singer and bass. 629 of 1446 documents over 251 anchors moved, and every one is a sound Paul asked to change. Was 1c5e8db — the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
@@ -1465,6 +1465,13 @@ const T4O_PIN = {
   "benga/1":           "lead:tenor:0 vocal:alto:1 backing:alto:0",
   "benga/2":           "lead:tenor:0 vocal:alto:0",
   "benga/3":           "lead:tenor:0 vocal:alto:0",
+  /* NINE REGISTERS MOVED WITH THE MELODY ROUND (2026-09-07) and not one
+     THROAT did: a seat follows the line it holds, and the lines changed
+     shape when contours gained a manner. `doowop`'s bass riff, `mbube`'s
+     top voice and `chorale`'s soprano and bass each sit an octave from
+     where they sat, because their tunes now leap where they used to step.
+     The throats are the rows' own, unmoved — which is exactly what this
+     check exists to hold. */
   /* TWO OF THE EIGHTEEN ROWS ARE VOICED (2026-09-07): gospelpop declares a
      soprano over a stack and mountaincountry a soprano over close harmony,
      so both join the list the moment they land. VOICEROWS is derived from
@@ -1475,20 +1482,20 @@ const T4O_PIN = {
   "gospelpop/3":       "lead:soprano:1 pad:alto:0 vocal:alto:1",
   "mountaincountry/1": "lead:soprano:1 vocal:alto:0 backing:alto:1",
   "mountaincountry/2": "lead:soprano:1 vocal:alto:0 backing:alto:0",
-  "mountaincountry/3": "lead:soprano:1 vocal:alto:1",
+  "mountaincountry/3": "lead:soprano:1 vocal:alto:0",
   /* GRUNGE JOINED THE VOICED ROWS on 2026-09-06, and it is the fifth note of
      that shift: Paul asked for "slow low vocals", the row named no singer at
      all, and `castOf` was seating whatever the pool had. Its lead is a tenor
      now and the pin says so at all three seeds. */
-  "grunge/1":          "lead:tenor:0 vocal:alto:1",
+  "grunge/1":          "lead:tenor:0 vocal:alto:0",
   "grunge/2":          "lead:tenor:0 vocal:alto:0",
   "grunge/3":          "lead:tenor:0 vocal:alto:1 backing:alto:1",
-  "chorale/1":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "chorale/1":         "voice:soprano:2 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
   "chorale/2":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
-  "chorale/3":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:1",
-  "doowop/1":          "stab:countertenor:0 riff:bass:0 lead:countertenor:1 vocal:alto:0 backing:alto:1",
-  "doowop/2":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:1 vocal:alto:1 backing:alto:1",
-  "doowop/3":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:0 backing:alto:0 vocal:alto:0",
+  "chorale/3":         "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
+  "doowop/1":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:1 vocal:alto:0 backing:alto:1",
+  "doowop/2":          "stab:countertenor:0 riff:bass:-1 lead:countertenor:1 vocal:alto:0 backing:alto:1",
+  "doowop/3":          "stab:countertenor:0 riff:bass:0 lead:countertenor:0 backing:alto:0 vocal:alto:0",
   "francoflemish/1":   "voice:countertenor:1 voice2:countertenor:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
   "francoflemish/2":   "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
   "francoflemish/3":   "voice:countertenor:0 voice2:countertenor:0 voice3:tenor:-1 voice4:bass:-1 vocal:alto:0",
@@ -1509,7 +1516,7 @@ const T4O_PIN = {
   "kizomba/3":         "lead:tenor:0 vocal:alto:0",
   "mbube/1":           "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:1",
   "mbube/2":           "voice:countertenor:1 voice2:tenor:0 voice3:bass:0 voice4:bass:-1 vocal:alto:0",
-  "mbube/3":           "voice:countertenor:1 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:0",
+  "mbube/3":           "voice:countertenor:0 voice2:tenor:0 voice3:bass:-1 voice4:bass:-1 vocal:alto:0",
   "polychoral/1":      "voice:bass:0 voice2:tenor:0 voice3:alto:1 voice4:soprano:1 voice5:bass:0 voice6:tenor:0 voice7:alto:1 voice8:soprano:1",
   "polychoral/2":      "voice:bass:-1 voice2:tenor:0 voice3:alto:0 voice4:soprano:1 voice5:bass:-1 voice6:tenor:0 voice7:alto:0 voice8:soprano:1",
   "polychoral/3":      "voice:bass:-1 voice2:tenor:-1 voice3:alto:0 voice4:soprano:1 voice5:bass:-1 voice6:tenor:-1 voice7:alto:0 voice8:soprano:1",
@@ -1524,7 +1531,7 @@ const T4O_PIN = {
   "softrock/3":        "lead:tenor:0 vocal:alto:1",
   "spirituals/1":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
   "spirituals/2":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
-  "spirituals/3":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:-1 vocal:alto:0",
+  "spirituals/3":      "voice:soprano:1 voice2:alto:1 voice3:tenor:0 voice4:bass:0 vocal:alto:1",
 };
   ok("T4o the fifteen voiced rows seat the throats and registers they declare", () => {
     const midiOfHz = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
