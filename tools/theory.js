@@ -645,11 +645,23 @@
     // the lowest pitch class instead of the bass read every viio7 in G minor
     // as "ivo4/3". The bass is the convention every analyst uses to break
     // that tie, so the bass goes first and the others follow.
+    /* AND THE ROOT LOOP IS THE OUTER ONE, which is the whole of the tie-break
+       and was the whole of a bug (found 2026-09-06 by test/theory.test.js §B2,
+       which is the entire reason that gate exists). With the QUALITY loop
+       outside, the bass was only consulted between roots of the SAME quality,
+       so a quality earlier in the order won on any root at all: `[48, 64, 67,
+       69]` — a C major sixth with C in the bass — came back `vi6/5`, because
+       `m7` is asked about before `6` and A minor seventh reproduces those
+       four pitch classes just as exactly. Sixty-three of the catalogue's
+       chords read as their own relative minor.
+       Bass first ACROSS qualities is the convention every analyst uses, it is
+       what the paragraph above always claimed, and this is the loop order
+       that means it. */
     const rootsToTry = [bassPc].concat(pcs.filter((p) => p !== bassPc));
-    for (const q of ANALYSIS_ORDER) {
-      const ivs = qualPcs(q);
-      if (!ivs || ivs.length !== pcs.length) continue;
-      for (const r of rootsToTry) {
+    for (const r of rootsToTry) {
+      for (const q of ANALYSIS_ORDER) {
+        const ivs = qualPcs(q);
+        if (!ivs || ivs.length !== pcs.length) continue;
         const set = ivs.map((o) => pcOf(r + o)).sort((a, b) => a - b);
         if (setEq(set, pcs)) { hit = { rootPc: r, quality: q, ivs }; break; }
       }
@@ -1412,12 +1424,20 @@
 
     /* 3 · THE DOUBLED LEADING TONE. Two voices on the seventh degree pull to
        the same tonic and one of them has to give: the box does not choose,
-       because nothing in it knows the other chairs exist. The one that gives
-       is a VOICED chair's note (never a written line, never the bottom of a
-       voicing) and it takes the nearest chord tone that is not already
-       doubled. Where both leading tones are written lines, nothing moves and
-       it is counted — a hand wrote both and this pass does not outrank a
-       hand. */
+       because nothing in it knows the other chairs exist.
+
+       AND UNDER THE NO-TRADE LAW ALMOST NOBODY CAN GIVE, which is the honest
+       finding rather than a gap. The classical fix is to let the chord's
+       filler take the root instead of the leading tone — but here a voiced
+       chair spells its chord EXACTLY (`kernel.js voiceLead`, one voice per
+       chord tone), so taking the leading tone out of a pad leaves the pad
+       without that tone: a hole bought with a doubling, which is the trade
+       rule 4's own comment refuses. The repair therefore fires only where a
+       voice can leave WITHOUT COST — where its own chair still sounds the
+       pitch class after it goes, meaning the chair was doubling it inside
+       itself. Everywhere else the doubling stands and is counted, with the
+       reason recorded, and the count is what a later round would argue with.
+       A written line is never the one that gives, ever: a hand wrote it. */
     if (may("doubling") && o.leadingTone != null) {
       const lt = pcOf(o.leadingTone);
       chords = chordsAt(V.times, o.chords);
@@ -1425,9 +1445,14 @@
         const on = V.voices.filter((v) => v.notes[i] != null && pcOf(v.notes[i]) === lt);
         if (on.length < 2) continue;
         const ch = chords[i];
-        const movable = on.filter((v) => v.width > 1 && v.rank < v.width - 1);
-        if (!movable.length || !ch || !ch.pcs) {
-          cant("doubling", "both leading tones are written lines");
+        if (!ch || !ch.pcs) { cant("doubling", "no chord is written here to re-choose within"); continue; }
+        const movable = on.filter((v) => v.width > 1 && v.rank < v.width - 1 &&
+          V.voices.some((w) => w !== v && w.chair === v.chair &&
+                               w.notes[i] != null && pcOf(w.notes[i]) === lt));
+        if (!movable.length) {
+          cant("doubling", on.every((v) => v.width === 1)
+            ? "both leading tones are written lines"
+            : "no voice can leave the leading tone without putting a hole in its own chord");
           continue;
         }
         const v = movable[0], e = v.events[i], was = e.n;
@@ -1443,51 +1468,72 @@
 
     /* 4 · PARALLEL FIFTHS AND OCTAVES. Detected exactly as the chorale
        checker detects them — both voices move, in the same direction, and the
-       interval class is the same perfect one on both sides — and repaired
-       only where a VOICED chair is on one side of it, for the reason the
-       header gives: the detection is octave-invariant, so an octave move
-       cannot undo one, and re-choosing a written line's note is composing.
-       The repair re-voices the SECOND column, because the first is where the
-       ear has already arrived. */
+       interval class is the same perfect one on both sides.
+
+       AND REPAIRED BY RE-VOICING, WHICH IS THE ONLY REPAIR THERE IS. Two
+       facts corner this one. The detection is on the interval CLASS
+       (`|a-b| % 12`), so it is octave-invariant and moving a note by an
+       octave cannot undo the parallel it is in. And a voiced chair here
+       spells its chord EXACTLY — `kernel.js voiceLead` realizes one voice per
+       chord tone — so there is no spare note to re-choose: measured over six
+       records, every chord-tone substitution the first draft tried took the
+       third out of the voicing to buy a fifth, opening 11 holes to close 49
+       parallels. That is trading a fault, not repairing one.
+       What is left is the repair THEORY.md actually names: A DIFFERENT
+       INVERSION OF THE VOICED CHORD. Move one note of the voicing by an
+       octave; the chair's pitch classes are untouched, so no hole can open,
+       but the notes RE-RANK — the voice that was on top is now underneath —
+       and the interval classes between chairs change with them. The move is
+       kept only if the record's whole parallel count strictly falls and the
+       note stays inside its chair's compass, so a repair can never be a
+       trade.
+
+       ATTEMPTS ARE CAPPED PER SECTION, at `tries`. Each attempt re-reads the
+       score to score itself, which is the expensive thing this file does; a
+       section that would need hundreds is a section whose parallels are its
+       music, and the cap says so in the count rather than by grinding. */
     if (may("parallel") && period === 12) {
       chords = chordsAt(V.times, o.chords);
-      const perfect = (a, b) => { const d = Math.abs(a - b) % 12; return d === 0 ? 8 : d === 7 ? 5 : 0; };
-      for (let i = 0; i + 1 < V.times.length; i++) {
-        const ch = chords[i + 1];
-        for (let x = 0; x < V.voices.length; x++)
-          for (let y = x + 1; y < V.voices.length; y++) {
-            const A = V.voices[x], B = V.voices[y];
-            const a1 = A.notes[i], b1 = B.notes[i], a2 = A.notes[i + 1], b2 = B.notes[i + 1];
-            if (a1 == null || b1 == null || a2 == null || b2 == null) continue;
-            if (a1 === a2 || b1 === b2) continue;              // oblique
-            if ((a2 - a1) * (b2 - b1) < 0) continue;           // contrary
-            const p1 = perfect(a1, b1), p2 = perfect(a2, b2);
-            if (!p1 || p1 !== p2) continue;
-            const code = p1 === 8 ? "parallel8" : "parallel5";
-            const movable = [A, B].filter((v) => v.width > 1 && v.rank < v.width - 1 &&
-                                                 v.events[i + 1]);
-            if (!movable.length || !ch || !ch.pcs) {
-              cant(code, "both voices are written lines"); continue;
+      let budget = o.tries == null ? 24 : o.tries;
+      const scan = (W) => {
+        const hits = [];
+        for (let i = 0; i + 1 < W.times.length; i++)
+          for (let x = 0; x < W.voices.length; x++)
+            for (let y = x + 1; y < W.voices.length; y++) {
+              const A = W.voices[x], B = W.voices[y];
+              const a1 = A.notes[i], b1 = B.notes[i], a2 = A.notes[i + 1], b2 = B.notes[i + 1];
+              if (a1 == null || b1 == null || a2 == null || b2 == null) continue;
+              if (a1 === a2 || b1 === b2) continue;              // oblique
+              if ((a2 - a1) * (b2 - b1) < 0) continue;           // contrary
+              const p1 = perfectClass(a1, b1), p2 = perfectClass(a2, b2);
+              if (p1 && p1 === p2) hits.push({ i, x, y, p: p1 });
             }
-            const v = movable[0], other = v === A ? b2 : a2, e = v.events[i + 1], was = e.n;
-            const here = new Set(V.voices.filter((w) => w !== v && w.notes[i + 1] != null)
-                                         .map((w) => pcOf(w.notes[i + 1])));
-            /* THE CANDIDATE MUST FIX IT WITHOUT COSTING ANYTHING: another
-               tone of the chord, not perfect against the voice it was
-               parallel with, not a pitch class the chair would then be
-               missing, and the nearest such realization to where the note
-               already was. */
-            const cands = ch.pcs.map(pcOf)
-              .filter((p) => p !== pcOf(was))
-              .map((p) => nearestPc(was, p))
-              .filter((n) => !perfect(n, other))
-              .sort((m, n) => Math.abs(m - was) - Math.abs(n - was));
-            if (!cands.length) { cant(code, "no chord tone escapes the parallel"); continue; }
-            e.n = cands[0];
-            note(code, e, was, "parallel " + (p1 === 8 ? "octaves" : "fifths") +
-                               " with " + (v === A ? B.name : A.name));
-            V = voicesOf(out, o);                 // the column moved; re-read it
+        return hits;
+      };
+      let hits = scan(V);
+      for (const h of hits) {
+        if (budget <= 0) { cant("parallel", "the section's attempt budget ran out"); break; }
+        const code = h.p === 8 ? "parallel8" : "parallel5";
+        const pick = [V.voices[h.x], V.voices[h.y]]
+          .filter((v) => v.width > 1 && v.events[h.i + 1]);
+        if (!pick.length) { cant(code, "both voices are written lines"); continue; }
+        const v = pick[0], e = v.events[h.i + 1], was = e.n;
+        const room = (n) => (v.lo == null || n >= v.lo) && (v.hi == null || n <= v.hi);
+        let done = false;
+        for (const d of [12, -12, 24, -24]) {
+          if (!room(was + d)) continue;
+          budget--;
+          e.n = was + d;
+          const W = voicesOf(out, o);
+          if (scan(W).length < hits.length) {
+            note(code, e, was, "parallel " + (h.p === 8 ? "octaves" : "fifths") +
+                               ", re-voiced by an octave");
+            V = W; hits = scan(W); done = true; break;
           }
+          e.n = was;                                  // it did not help: put it back
+          if (budget <= 0) break;
+        }
+        if (!done) cant(code, "no octave of this voicing removes it");
       }
     }
     return { events: out, repairs, refused };

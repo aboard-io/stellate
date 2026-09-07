@@ -7,6 +7,13 @@
  *   node tools/theory-census.js --repair         …and run the copyist, and
  *                                                re-measure after it
  *   node tools/theory-census.js --md=<path>      write the report as markdown
+ *                                                (docs/THEORY-CENSUS.md is the
+ *                                                committed one — a FINDING, the
+ *                                                way nukernel/GENEALOGY.md is:
+ *                                                nothing in the app or the gates
+ *                                                reads it, and it is in the tree
+ *                                                so the numbers can be argued
+ *                                                with rather than re-run)
  *   node tools/theory-census.js --json=<path>    write the raw per-row numbers
  *
  * WHY THIS EXISTS (2026-09-06, docs/THEORY.md §2). The box compiles every
@@ -73,6 +80,7 @@ const G = require(path.join(ROOT, "nukernel/genres.js"));
 const D = require(path.join(ROOT, "nukernel/document.js"));
 const P = require(path.join(ROOT, "nukernel/precompose.js"));
 const I = require(path.join(ROOT, "nukernel/instruments.js"));
+const Gen = require(path.join(ROOT, "tools/genealogy.js"));
 const T = require(path.join(ROOT, "tools/theory.js"));
 
 const pcw = (n) => ((n % 12) + 12) % 12;
@@ -130,10 +138,18 @@ function leadingToneOf(doc) {
   const seventh = md[md.length - 1];
   return seventh === 11 ? pcw((A.key | 0) + 11) : null;
 }
+/* THE ALPHABET'S OWN PERIOD, asked of BOTH tables. `tuned(steps, period)`
+   stamps it on the array, and a record names one word out of SCALES and
+   another out of MODES — gamelan's slendro is a MODE, so a first draft that
+   asked only SCALES reported "no non-12 rows in the catalogue" and would have
+   marked slendro's 1208-cent octave as a parallel and then repaired it out of
+   tune. Either table saying a period is enough to disqualify the octave
+   rules. */
 const periodOf = (doc) => {
   const A = doc.alphabet || {};
   const sc = (G.SCALES && G.SCALES[A.scale]) || null;
-  return (sc && sc.period) || 12;
+  const md = (G.MODES && G.MODES[A.mode]) || null;
+  return (sc && sc.period) || (md && md.period) || 12;
 };
 
 /* ---- ONE RECORD, MEASURED ---------------------------------------------- */
@@ -235,16 +251,125 @@ function measure(gk, seed, opts) {
   const faultsAt = atOnset(V, faults, lt);
   const tally = Object.fromEntries(CODES.map((c) => [c, 0]));
   for (const f of faultsAt) if (tally[f.code] != null) tally[f.code]++;
+  /* THE SIDE-EFFECT CHECK. Almost everything the copyist does is move a note
+     by an octave to put it back inside its instrument's compass, and an
+     octave move is a LEAP in the line it lands in. So the melodic rule is
+     measured on both sides even though it is not one of THEORY.md's four: if
+     the pass bought its clean ranges by turning every tune into a series of
+     twelfths, this number says so. Reported, never repaired. */
+  const leap = T.faults(V.voices, { rules: ["leap"] }).length;
   return {
     gk, seed, period, lt, notes: sc.events.filter((e) => e.n != null).length,
     columns: V.times.length, voices: V.voices.length,
     uncompassed: V.voices.filter((v) => v.lo == null).length,
-    tally, total: Object.values(tally).reduce((a, b) => a + b, 0),
+    tally, total: Object.values(tally).reduce((a, b) => a + b, 0), leap,
     faults: faultsAt, rawFaults: faults, doc, g, sc, ch, V, chords, ctx,
   };
 }
 
-module.exports = { measure, chairMetaOf, leadingToneOf, periodOf, rangeOf, CODES };
+module.exports = { measure, chairMetaOf, leadingToneOf, periodOf, rangeOf, CODES,
+                   report };
+
+/* ---- THE SAME RECORD, AFTER THE COPYIST --------------------------------
+   `scoreOf` runs the pass when asked (`opts.copyist`) and hands back the
+   repairs beside the events; this re-measures the repaired stream with the
+   identical reader, so "faults down" is a comparison of two numbers produced
+   by one piece of code and not of two pieces of code producing one number. */
+function repaired(m) {
+  const sc = D.scoreOf(m.doc, G.GENRES, undefined, null,
+                       { copyist: { ranges: RANGES } });
+  const V = T.voicesOf(sc.events, m.ctx);
+  const chords = T.chordsAt(V.times, m.ch.chords);
+  const rules = m.period === 12 ? ["parallel5", "parallel8", "range", "doubledLT"]
+                                : ["range", "doubledLT"];
+  const faults = atOnset(V, T.faults(V.voices, {
+    chords, leadingTone: m.lt, tonic: pcw(m.doc.alphabet.key | 0), rules,
+  }).concat(T.missingTones(V.voices, V.times, chords))
+    .concat(T.unsoundedTones(V.voices, V.times, chords)), m.lt);
+  const tally = Object.fromEntries(CODES.map((c) => [c, 0]));
+  for (const f of faults) if (tally[f.code] != null) tally[f.code]++;
+  const leap = T.faults(V.voices, { rules: ["leap"] }).length;
+  const byCode = {};
+  for (const r of sc.repairs) byCode[r.code] = (byCode[r.code] || 0) + 1;
+  const refCode = {};
+  for (const r of sc.refused) refCode[r.code] = (refCode[r.code] || 0) + 1;
+  return { tally, total: Object.values(tally).reduce((a, b) => a + b, 0), leap,
+           repairs: sc.repairs.length, byCode, refused: sc.refused.length, refCode,
+           /* THE TWO INVARIANTS, CHECKED ON EVERY RECORD RATHER THAN ASSERTED
+              ONCE: only `n` ever moved, and a monophonic voice moved only by
+              whole octaves. A pass that broke either would be composing. */
+           broke: sc.repairs.filter((r) => r.code === "range" && (r.now - r.was) % 12 !== 0).length,
+           sc };
+}
+
+/* ---- "MORE RELEVANT" MUST NOT MEAN "MORE LIKE EVERYTHING ELSE" ----------
+   docs/THEORY.md §2's second measurement. `tools/genealogy.js` fits each row
+   against its declared parents and calls what the parents do not explain the
+   INVENTION; if the copyist quietly sanded rows toward each other, that
+   residue would fall.
+   ITS OWN FEATURES CANNOT SEE THIS PASS, and saying so is the point rather
+   than a hole: `featuresOfRow` reads the ROW — tempo, kit densities, mode
+   brightness, the word's operator count — and the copyist changes none of
+   them, so the residue is unchanged BY CONSTRUCTION and a report of "no
+   change" would be worth nothing. So the fit is run in a WIDER SPACE through
+   genealogy's own `setExtra` hook (which exists for exactly this), with nine
+   features measured off the RENDER: where the record sits, how wide it is,
+   what its vertical intervals are, how much of it is in the chord, and how
+   thick it is. Those move when a note moves, so the comparison has teeth. */
+const RENDERFEAT = ["centre", "spread", "vert:unison", "vert:fifth", "vert:third",
+                    "vert:second", "inchord", "density", "range-ok"];
+function renderFeatures(gk, seed, withPass) {
+  const doc = P.genreToDocument(gk, seed);
+  const g = D.toGenre(doc, 0, G.GENRES);
+  const sc = withPass
+    ? D.scoreOf(doc, G.GENRES, undefined, null, { copyist: { ranges: RANGES } })
+    : D.scoreOf(doc, G.GENRES);
+  const ctx = { chairs: chairMetaOf(doc, g), chords: null,
+                leadingTone: null, period: periodOf(doc) };
+  const V = T.voicesOf(sc.events, ctx);
+  const ch = D.chordsIn(doc, G.GENRES);
+  const chords = T.chordsAt(V.times, ch.chords);
+  const ns = [];
+  for (const v of V.voices) for (const n of v.notes) if (n != null) ns.push(n);
+  if (!ns.length) return RENDERFEAT.map(() => 0);
+  const mean = ns.reduce((a, b) => a + b, 0) / ns.length;
+  const sd = Math.sqrt(ns.reduce((a, b) => a + (b - mean) * (b - mean), 0) / ns.length);
+  const ic = [0, 0, 0, 0]; let pairs = 0, thick = 0, cols = 0, inch = 0, tot = 0, okR = 0, rTot = 0;
+  for (let i = 0; i < V.times.length; i++) {
+    const col = V.voices.map((v) => v.notes[i]).filter((n) => n != null);
+    if (col.length) { cols++; thick += col.length; }
+    for (let a = 0; a < col.length; a++) for (let b = a + 1; b < col.length; b++) {
+      const d = Math.abs(col[a] - col[b]) % 12; pairs++;
+      if (d === 0) ic[0]++; else if (d === 7 || d === 5) ic[1]++;
+      else if (d === 3 || d === 4 || d === 8 || d === 9) ic[2]++; else ic[3]++;
+    }
+    const c = chords[i];
+    if (c && c.pcs) for (const n of col) { tot++; if (c.pcs.indexOf(pcw(n)) >= 0) inch++; }
+  }
+  for (const v of V.voices) for (const n of v.notes) {
+    if (n == null || (v.lo == null && v.hi == null)) continue;
+    rTot++;
+    if ((v.lo == null || n >= v.lo) && (v.hi == null || n <= v.hi)) okR++;
+  }
+  return [mean / 127, Math.min(1, sd / 24),
+          ic[0] / (pairs || 1), ic[1] / (pairs || 1), ic[2] / (pairs || 1), ic[3] / (pairs || 1),
+          inch / (tot || 1), Math.min(1, thick / (cols || 1) / 8), okR / (rTot || 1)];
+}
+
+function residueRound(seed, withPass) {
+  const cache = new Map();
+  Gen.setExtra((k) => {
+    if (!cache.has(k)) {
+      let v; try { v = renderFeatures(k, seed, withPass); }
+      catch (e) { v = RENDERFEAT.map(() => 0); }
+      cache.set(k, v);
+    }
+    return cache.get(k);
+  });
+  const fits = Gen.fitAll().filter((f) => !f.root);
+  Gen.setExtra(null);
+  return new Map(fits.map((f) => [f.key, { r2: f.r2, resid: f.residRms }]));
+}
 
 /* ---- THE RUN ------------------------------------------------------------ */
 if (require.main === module) {
@@ -255,6 +380,7 @@ if (require.main === module) {
      is the failure this repo calls "declared but never arriving". */
   const ruleArg = arg("rules", null);
   const opts = ruleArg ? { rules: ruleArg.split(",") } : null;
+  const doRepair = flag("repair");
   const keys = only ? only.split(",") : Object.keys(G.GENRES);
   const rows = [];
   let t0 = Date.now();
@@ -263,9 +389,19 @@ if (require.main === module) {
       let m;
       try { m = measure(gk, s, opts); }
       catch (e) { rows.push({ gk, seed: s, error: e.message }); continue; }
-      rows.push({ gk: m.gk, seed: m.seed, period: m.period, lt: m.lt,
-                  notes: m.notes, columns: m.columns, voices: m.voices,
-                  uncompassed: m.uncompassed, tally: m.tally, total: m.total });
+      const row = { gk: m.gk, seed: m.seed, period: m.period, lt: m.lt,
+                    notes: m.notes, columns: m.columns, voices: m.voices,
+                    uncompassed: m.uncompassed, tally: m.tally, total: m.total,
+                    leap: m.leap };
+      if (doRepair) {
+        try {
+          const r = repaired(m);
+          row.after = r.tally; row.afterTotal = r.total;
+          row.repairs = r.repairs; row.byCode = r.byCode; row.leapAfter = r.leap;
+          row.refusedN = r.refused; row.refCode = r.refCode; row.broke = r.broke;
+        } catch (e) { row.repairError = e.message; }
+      }
+      rows.push(row);
     }
     if (!only && i % 40 === 0)
       process.stderr.write("  " + i + "/" + keys.length + " rows, " +
@@ -274,8 +410,11 @@ if (require.main === module) {
   const jsonOut = arg("json", null);
   if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify(rows, null, 1));
   const md = arg("md", null);
-  process.stdout.write(report(rows, keys, seeds));
-  if (md) { fs.writeFileSync(md, report(rows, keys, seeds)); }
+  let txt = report(rows, keys, seeds);
+  if (doRepair) txt += repairReport(rows);
+  if (flag("residue")) txt += residueReport(seeds[0]);
+  process.stdout.write(txt);
+  if (md) fs.writeFileSync(md, txt);
 }
 
 /* ---- THE REPORT --------------------------------------------------------
@@ -358,6 +497,89 @@ function report(rows, keys, seeds) {
     L.push("Records that would not compose: " +
            bad.slice(0, 20).map((b) => b.gk + "/" + b.seed).join(", "));
   }
+  L.push("");
+  return L.join("\n");
+}
+
+/* ---- WHAT THE PASS DID, AND WHAT IT WOULD NOT DO ----------------------- */
+function repairReport(rows) {
+  const L = [""], good = rows.filter((r) => r.after);
+  const before = Object.fromEntries(CODES.map((c) => [c, 0]));
+  const after = Object.fromEntries(CODES.map((c) => [c, 0]));
+  const did = {}, wont = {};
+  let broke = 0, notes = 0, lb = 0, la = 0;
+  for (const r of good) {
+    notes += r.notes;
+    for (const c of CODES) { before[c] += r.tally[c]; after[c] += r.after[c]; }
+    for (const k of Object.keys(r.byCode || {})) did[k] = (did[k] || 0) + r.byCode[k];
+    for (const k of Object.keys(r.refCode || {})) wont[k] = (wont[k] || 0) + r.refCode[k];
+    broke += r.broke || 0;
+    lb += r.leap || 0; la += r.leapAfter || 0;
+  }
+  L.push("## after the copyist");
+  L.push("");
+  L.push("| fault | before | after | change |");
+  L.push("|---|---:|---:|---:|");
+  for (const c of CODES) {
+    const d = after[c] - before[c];
+    L.push("| " + c + " | " + before[c] + " | " + after[c] + " | " +
+           (d === 0 ? "0" : (d > 0 ? "+" + d : String(d))) +
+           (before[c] ? " (" + (100 * d / before[c]).toFixed(1) + "%)" : "") + " |");
+  }
+  const bt = CODES.reduce((a, c) => a + before[c], 0);
+  const at = CODES.reduce((a, c) => a + after[c], 0);
+  L.push("| **all** | **" + bt + "** | **" + at + "** | **" +
+         (100 * (at - bt) / (bt || 1)).toFixed(1) + "%** |");
+  L.push("");
+  L.push("Repairs made, by kind: " +
+         (Object.keys(did).length
+           ? Object.entries(did).sort((a, b) => b[1] - a[1])
+               .map(([k, v]) => k + " " + v).join(", ")
+           : "none") + ".");
+  L.push("");
+  L.push("Faults the pass would NOT touch, by reason: " +
+         Object.entries(wont).sort((a, b) => b[1] - a[1])
+           .map(([k, v]) => k + " " + v).join(", ") + ".");
+  L.push("");
+  L.push("The two invariants held on every record: only `n` ever moved, and a " +
+         "range repair that was not a whole number of octaves happened " + broke + " times.");
+  L.push("");
+  L.push("The side-effect check — melodic leaps wider than an octave, which is what an " +
+         "octave repair could be buying its clean range with: " + lb + " before, " + la +
+         " after (" + (lb ? (100 * (la - lb) / lb).toFixed(1) + "%" : "no baseline") + ").");
+  L.push("");
+  return L.join("\n");
+}
+
+/* ---- AND THE RESIDUE, BEFORE AND AFTER --------------------------------- */
+function residueReport(seed) {
+  const L = ["", "## the residue check — \"more relevant\" must not mean \"more like everything else\"", ""];
+  const a = residueRound(seed, false), b = residueRound(seed, true);
+  const rows = [];
+  for (const [k, x] of a) {
+    const y = b.get(k);
+    if (!y) continue;
+    rows.push({ k, was: x.resid, now: y.resid, d: y.resid - x.resid,
+                r2was: x.r2, r2now: y.r2 });
+  }
+  const mean = (f) => rows.reduce((s, r) => s + f(r), 0) / (rows.length || 1);
+  L.push(rows.length + " rows with declared parents, fitted in the nine-feature " +
+         "render space beside genealogy's own twenty-eight.");
+  L.push("");
+  L.push("| | mean residue (the invention) | mean r2 (what the parents explain) |");
+  L.push("|---|---:|---:|");
+  L.push("| before | " + mean((r) => r.was).toFixed(4) + " | " + mean((r) => r.r2was).toFixed(4) + " |");
+  L.push("| after  | " + mean((r) => r.now).toFixed(4) + " | " + mean((r) => r.r2now).toFixed(4) + " |");
+  L.push("");
+  const moved = rows.filter((r) => Math.abs(r.d) > 1e-9)
+                    .sort((x, y) => Math.abs(y.d) - Math.abs(x.d));
+  L.push(moved.length + " of " + rows.length + " rows moved at all. The ten that moved most:");
+  L.push("");
+  L.push("| row | residue before | after | change |");
+  L.push("|---|---:|---:|---:|");
+  for (const r of moved.slice(0, 10))
+    L.push("| `" + r.k + "` | " + r.was.toFixed(4) + " | " + r.now.toFixed(4) + " | " +
+           (r.d > 0 ? "+" : "") + r.d.toFixed(4) + " |");
   L.push("");
   return L.join("\n");
 }

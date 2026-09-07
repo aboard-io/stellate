@@ -376,6 +376,18 @@ const GATES = [
     argv: ["test/chords.test.js"],
     need: ["test/chords.test.js", "nukernel/kernel.js", "nukernel/genres.js"],
     covers: ["test/chords.test.js"] },
+  /* THE THEORY LAYER (2026-09-06, docs/THEORY.md): the Augmented Fifth
+     publication's own benchmarks, turned round on our output — a figured bass
+     realised against its figures, roman numerals against the hand-written
+     analysis beside the committed chorale and against the catalogue's own
+     declared progressions, chord spelling that keeps its triple sharps, and
+     the planted-parallel benchmark the publication's best model scores 65% on
+     and which this checker has to find whole. */
+  { name: "theory", wave: 2, kind: "node",
+    argv: ["test/theory.test.js"],
+    need: ["test/theory.test.js", "tools/theory.js", "tools/chorale-check.js",
+           "keeps/bach-benchmark/chorale-gminor.json"],
+    covers: ["test/theory.test.js", "tools/theory.js"] },
   /* THE EXPORTED TEMPO MAP (2026-08-30, the five-walls follow-up): a paced
      record's .mid carries set-tempo metas at the section doors and a metered
      record says 3/4 or 6/8 outright; the .als writes the same map into the

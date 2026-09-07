@@ -29,10 +29,22 @@
     isNode ? require("./genres.js") : root.NuGenres,
     isNode ? require("./fields.js") : root.NuFields,
     isNode ? require("./song.js")   : root.NuSong,
-    isNode ? require("./songs.js")  : root.NuSongs);
+    isNode ? require("./songs.js")  : root.NuSongs,
+    /* THE THEORY MODULE (2026-09-06, docs/THEORY.md §1) — the ONE owner of
+       part-writing, resolved the way every other dependency here is and
+       ALLOWED TO BE ABSENT. In node it is `tools/theory.js`; in the browser
+       it is whatever has registered `window.NuTheory`, which today is
+       nothing, because `nukernel/index.html` belongs to another round and
+       this one does not edit it. An absent module means the copyist pass
+       below cannot run and `scoreOf` behaves exactly as it always has —
+       which is also what happens when nobody asks for the pass, so the
+       degraded case and the default case are the same case and there is no
+       second code path to rot. */
+    isNode ? (() => { try { return require("../tools/theory.js"); }
+                      catch (e) { return null; } })() : root.NuTheory);
   if (isNode) module.exports = api;
   else root.NuDocument = api;
-})(typeof self !== "undefined" ? self : this, function (K, NG, NF, NuSong, NuSongs) {
+})(typeof self !== "undefined" ? self : this, function (K, NG, NF, NuSong, NuSongs, Th) {
   "use strict";
 
   const { MODES, SCALES } = NG;
@@ -2477,13 +2489,90 @@
     return { bars: W.to - W.from, chords: out, from: W.from, to: W.to };
   }
 
-  function scoreOf(doc, GENRES, fleet, win = null) {
+  /* ---- THE COPYIST PASS, ASKED FOR OR NOT (2026-09-06, docs/THEORY.md §2)
+     The box compiles every voice INDEPENDENTLY, so nothing prevents two
+     lines in parallel octaves for eight bars or a pad doubling the leading
+     tone. `tools/theory.js copyist` repairs what is safe to repair; this is
+     the ONE place it is wired in, because this is the one place the whole
+     band's notes and the record's own harmony exist together.
+
+     IT IS OFF UNLESS A CALLER ASKS, AND THAT IS A DECISION, NOT A DEFAULT.
+     `test/table.test.js` T2 holds every anchor's compiled document, genre and
+     rendered events to a PINNED COMMIT, and a pass that repaired by default
+     would move the render of most of the catalogue — a change that has to be
+     argued record by record and pinned by the round that argues it. Off, and
+     `scoreOf` returns the same events it always has, to the bit; on, and a
+     caller gets the repairs listed beside them. `tools/theory-census.js`
+     measures both sides.
+
+     THE REFUSAL COMES OFF THE ROW, never off a list in here: a row's own
+     `copyist` declaration (`nukernel/genres/<key>.json`, emitted into
+     `genres.js COPYIST`) says `"all"` or names the rules it will not take.
+     Organum's whole music IS parallel motion; punk does not want its fifths
+     corrected. `doc.basis` is the row the record was composed from.
+
+     RANGES ARE THE CALLER'S TO SUPPLY. A chair's compass lives in
+     `nukernel/instruments.js RANGES`, which this file does not import and
+     must not start importing for one optional pass — so `opts.copyist.ranges`
+     is an instrument -> [lo, hi] map and an absent one simply means no range
+     repair. The alternative was a new dependency in the compiler for a
+     feature that is off by default. */
+  const LTOF = (doc) => {
+    /* THE LEADING TONE, AND ONLY WHERE THERE IS ONE. A row in aeolian,
+       dorian, mixolydian or any pentatonic has a SUBTONIC a whole tone under
+       the tonic, and doubling that is not a fault, it is the mode. So the
+       seventh degree has to be eleven semitones up before this answers. */
+    const A = doc.alphabet || {};
+    const md = NG.MODES && NG.MODES[A.mode];
+    if (!md || !md.length) return null;
+    return md[md.length - 1] === 11 ? pcw((A.key | 0) + 11) : null;
+  };
+  function copyistCtx(doc, opts) {
+    const q = opts && opts.copyist;
+    if (!q || !Th || typeof Th.copyist !== "function") return null;
+    const ranges = (typeof q === "object" && q.ranges) || null;
+    const refuse = (NG.COPYIST && NG.COPYIST[doc.basis] && NG.COPYIST[doc.basis].refuse) ||
+                   null;
+    const A = doc.alphabet || {};
+    const sc = NG.SCALES && NG.SCALES[A.scale];
+    return {
+      ranges, refuse, leadingTone: LTOF(doc),
+      period: (sc && sc.period) || 12,
+      why: (NG.COPYIST && NG.COPYIST[doc.basis] && NG.COPYIST[doc.basis].why) || null,
+      repairs: [], refused: [],
+    };
+  }
+  /* WHICH CHAIR IS WHICH, for the pass: `voicesOf` keys a line by its KERNEL
+     voice index and the document deals its line columns round that index
+     (`for (let v = pi; v < g.voices; v += nP)` in the render), so the chair a
+     kernel voice belongs to is `v % nP` — said here once rather than guessed
+     twice. The bass carries no instrument in the document; the bass is the
+     genre's. */
+  function chairMeta(lines, g, ranges) {
+    const out = {}, nP = Math.max(1, lines.length);
+    const win = (instr) => {
+      const r = ranges && instr ? ranges[instr] : null;
+      return Array.isArray(r) ? { lo: r[0], hi: r[1] } : { lo: null, hi: null };
+    };
+    for (let v = 0; v < Math.max(nP, g.voices | 0); v++) {
+      const c = lines[v % nP], instr = c && c.instrument;
+      out["v" + v] = { name: "chair " + v + (instr ? " (" + instr + ")" : ""),
+                       instr: instr || null,
+                       part: (c && c.cast && c.cast.part) || null, ...win(instr) };
+    }
+    out.bass = { name: "bass" + (g.bassInstr ? " (" + g.bassInstr + ")" : ""),
+                 instr: g.bassInstr || null, part: "bass", ...win(g.bassInstr) };
+    return out;
+  }
+
+  function scoreOf(doc, GENRES, fleet, win = null, opts = null) {
     const secs = doc.form.sections, lines = LINES(doc), out = [];
     /* PASS ONE is `planOf`, just above — extracted 2026-09-06 (the theory
        round) so that the HARMONY the record plays can be asked for without
        rendering it. It was this function's own first twenty lines and it is
        unchanged; `scoreOf`'s events are byte-identical across the move. */
     const { plan, bar } = planOf(doc, GENRES, fleet);
+    const CP = copyistCtx(doc, opts);
     /* THE WINDOW, RESOLVED AGAINST THE WALK'S OWN NUMBERS — never against
        `secs[i].bars`, because a repeated section is several statements and a
        skipped one is none, and a caller naming a section means the bars the
@@ -2517,6 +2606,25 @@
           for (const e of evs) if (e.v === v)
             lineEv.push({ ...e, kind: "line", lv: v, sec: i });
       });
+      /* ---- THE COPYIST, ONCE PER SECTION AND BEFORE THE STATEMENTS -------
+         Here because here is where the whole band's notes for one section
+         exist together with the harmony they were voiced against — the pass
+         needs both and nothing downstream has both. ONCE per section rather
+         than once per statement: a repeat is the same music stated again, so
+         repairing it twice would be repairing it twice.
+         The events are this loop's own copies (`{...e}` above) and the pass
+         only ever changes `n`, so nothing upstream of here can see it.
+         Absent `opts.copyist` this whole block is skipped and the render is
+         the one it has always been, to the bit. */
+      if (CP) {
+        const r = Th.copyist(lineEv.concat(bassEv), {
+          chairs: chairMeta(lines, g, CP.ranges), chords: barChords(lead, g, total),
+          leadingTone: CP.leadingTone, period: CP.period,
+          refuse: CP.refuse, why: CP.why,
+        });
+        for (const x of r.repairs) CP.repairs.push({ ...x, sec: i });
+        for (const x of r.refused) CP.refused.push({ ...x, sec: i });
+      }
       for (const st of p.stmts) {
         if (st.bar0 + st.played <= W.from || st.bar0 >= W.to) continue;
         /* THE CUT LAW, IN ONE SENTENCE: a statement ends at its own last bar
@@ -2565,8 +2673,14 @@
        the window leaves out — the same arithmetic `keep` does, said once. */
     const head = plan.find((p) => p.bar1 > W.from && p.bar0 < W.to);
     const wt0 = head ? head.t0 + (W.from - head.bar0) * head.barSteps : 0;
-    return { bars: W.to - W.from, events: out,
-             from: W.from, to: W.to, t0: wt0 };
+    /* THE REPAIRS RIDE BACK WITH THE SCORE, and ONLY when somebody asked for
+       them: a caller who did not ask gets the object it has always got, key
+       for key, which is what `test/table.test.js` T2c compares. */
+    return CP
+      ? { bars: W.to - W.from, events: out, from: W.from, to: W.to, t0: wt0,
+          repairs: CP.repairs, refused: CP.refused }
+      : { bars: W.to - W.from, events: out,
+          from: W.from, to: W.to, t0: wt0 };
   }
 
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,

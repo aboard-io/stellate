@@ -78,3 +78,73 @@ numerals matched to a known analysis, a planted-parallel score found in full,
 and chord spelling that keeps its enharmonics honest. What the author scores
 by hand — "inventive", "no human keyboardist would realize a figured bass in
 this way" — stays unmeasured and is quoted rather than pretended at.
+
+---
+
+# WHAT SHIPPED (2026-09-06) — PARTS 1, 2 AND 4
+
+Part 3, the manual transforms in the motif editor, is not in this round. The
+operations it asks for are all here (`transpose`, `invert`, `retrograde`,
+`retrogradeInversion`, `augment`, `diminish`, `rotate`, `sequence`); what is
+missing is the editor's own tap-and-undo, which belongs to the round that owns
+`nukernel/ui/`.
+
+## The files
+
+| file | what it is |
+|---|---|
+| `tools/theory.js` | §1's one owner. UMD, zero dependencies, node and browser. |
+| `tools/chorale-check.js` | keeps its command line; its nine rules now come from there. |
+| `tools/theory-census.js` | §2's measurement, over 482 rows at three seeds. |
+| `docs/THEORY-CENSUS.md` | the census itself — a finding, committed like `GENEALOGY.md`. |
+| `test/theory.test.js` | §4's gates. |
+| `nukernel/document.js` | `planOf`, `chordsIn`, and the pass's one wiring point. |
+| `nukernel/genres/*.json` | 35 rows declare a `copyist` refusal in their own data. |
+
+## THE PASS IS OFF UNLESS A CALLER ASKS, AND THAT IS THE DECISION
+
+`scoreOf(doc, GENRES, fleet, win, { copyist: { ranges } })` runs it; nothing
+else does. `test/table.test.js` T2 holds every anchor's document, compiled
+genre and rendered events to a PINNED COMMIT, and repairing by default would
+move most of the catalogue's render — a change that has to be argued record by
+record and pinned by the round that argues it. This round could not pin
+anything: it commits nothing. Off, `scoreOf` returns the events it always has,
+proven byte-for-byte over 363 renders against the pre-round file, and T2 is
+green without its pin moving.
+
+The refusals are declared anyway, and that is not wasted work: they are what a
+later round needs in place BEFORE it can turn the pass on.
+
+## FOUR THINGS THE MEASUREMENT SETTLED THAT THE PLAN DID NOT KNOW
+
+1. **An octave move cannot undo a parallel.** A parallel is detected on the
+   interval CLASS, which is what makes the detection octave-invariant, so the
+   one repair that is always legal on a written line is the one repair that can
+   never remove a fifth. What removes one is RE-VOICING a chord — moving a
+   note of a voicing by an octave so the voices RE-RANK — and that only exists
+   where a chair is voicing a chord. A parallel between two written lines is
+   unrepairable, and the pass counts it rather than reaching for the melody.
+2. **A repair may not pay for itself with a hole.** The first draft substituted
+   chord tones to break parallels and spent the third of the chord to buy a
+   fifth. The law now is that a note may only leave if its pitch class is still
+   sounded, by its own chair and by the band. An unrepaired fault is an honest
+   number; a traded one is not.
+3. **The box's voicings are exactly spelled**, because `kernel.js voiceLead`
+   realizes one voice per chord tone. So there is no spare note to re-choose,
+   which is why a doubled leading tone is very nearly unrepairable here and why
+   "a chord tone missing from a voiced harmony" is nearly zero. Both facts are
+   findings about the generator, not gaps in the checker.
+4. **The phrase "chord tones missing from a voiced harmony" carries two
+   readings** and they answer very differently: whether the CHAIR voicing the
+   chord spells it, and whether ANYBODY plays each tone. Both are counted
+   (`missing`, `unsounded`); only the first is repairable.
+
+## AND ONE THING §1 ASKS FOR THAT THIS ROUND DID NOT DO
+
+*"`tools/remix.js` stops estimating chords its own way and asks this instead."*
+It still asks `tools/mine/mine-midi.js`, whose estimator is a salience-weighted
+root search over a bar of a performance — a different job from naming a
+simultaneity in a known key, and one whose output decides what a mined row's
+`prog` says. Rewiring it moves the miner's decisions, and `test/remix.test.js`
+is a green gate this round has to keep. It wants its own round, with the mined
+catalogue re-measured on both sides.
