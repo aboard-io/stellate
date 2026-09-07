@@ -62,8 +62,8 @@
     },
     "padRoom": true,
     "parents": {
-        "oxyrhynchus": 0.25
-      },
+     "oxyrhynchus": 0.25
+    },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -112,7 +112,22 @@
     "words": [
      "the chant",
      "the same line an octave below"
-    ]
+    ],
+    "line": {
+     "w": "steps, and a leap is an event",
+     "hat": {
+      "step": 14,
+      "gapfill": 2,
+      "sequence": 2,
+      "chord": 0,
+      "pivot": 2
+     },
+     "cad": "open"
+    },
+    "syllab": {
+     "w": "aeoiu",
+     "syll": 2
+    }
    },
    "calls": {
     "cell": [
@@ -497,8 +512,8 @@
     },
     "padRoom": true,
     "parents": {
-        "oxyrhynchus": 0.25
-      },
+     "oxyrhynchus": 0.25
+    },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -547,7 +562,22 @@
     "words": [
      "the chant",
      "the same line an octave below"
-    ]
+    ],
+    "line": {
+     "w": "steps, and a leap is an event",
+     "hat": {
+      "step": 14,
+      "gapfill": 2,
+      "sequence": 2,
+      "chord": 0,
+      "pivot": 2
+     },
+     "cad": "open"
+    },
+    "syllab": {
+     "w": "aeoiu",
+     "syll": 2
+    }
    },
    "calls": {
     "cell": [
@@ -932,8 +962,8 @@
     },
     "padRoom": true,
     "parents": {
-        "oxyrhynchus": 0.25
-      },
+     "oxyrhynchus": 0.25
+    },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -982,7 +1012,22 @@
     "words": [
      "the chant",
      "the same line an octave below"
-    ]
+    ],
+    "line": {
+     "w": "steps, and a leap is an event",
+     "hat": {
+      "step": 14,
+      "gapfill": 2,
+      "sequence": 2,
+      "chord": 0,
+      "pivot": 2
+     },
+     "cad": "open"
+    },
+    "syllab": {
+     "w": "aeoiu",
+     "syll": 2
+    }
    },
    "calls": {
     "cell": [
@@ -1367,8 +1412,8 @@
     },
     "padRoom": true,
     "parents": {
-        "oxyrhynchus": 0.25
-      },
+     "oxyrhynchus": 0.25
+    },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -1417,7 +1462,22 @@
     "words": [
      "the chant",
      "the same line an octave below"
-    ]
+    ],
+    "line": {
+     "w": "steps, and a leap is an event",
+     "hat": {
+      "step": 14,
+      "gapfill": 2,
+      "sequence": 2,
+      "chord": 0,
+      "pivot": 2
+     },
+     "cad": "open"
+    },
+    "syllab": {
+     "w": "aeoiu",
+     "syll": 2
+    }
    },
    "calls": {
     "cell": [
@@ -1802,8 +1862,8 @@
     },
     "padRoom": true,
     "parents": {
-        "oxyrhynchus": 0.25
-      },
+     "oxyrhynchus": 0.25
+    },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -1852,7 +1912,22 @@
     "words": [
      "the chant",
      "the same line an octave below"
-    ]
+    ],
+    "line": {
+     "w": "steps, and a leap is an event",
+     "hat": {
+      "step": 14,
+      "gapfill": 2,
+      "sequence": 2,
+      "chord": 0,
+      "pivot": 2
+     },
+     "cad": "open"
+    },
+    "syllab": {
+     "w": "aeoiu",
+     "syll": 2
+    }
    },
    "calls": {
     "cell": [

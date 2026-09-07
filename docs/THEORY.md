@@ -27,8 +27,17 @@ things this repo keeps re-deriving in different places:
 | what cadence a pair of chords makes | analysis and the form reader |
 
 `tools/chorale-check.js` keeps its command line and its rules MOVE here, so
-the checker and the engine cannot drift apart. `tools/remix.js` stops
-estimating chords its own way and asks this instead.
+the checker and the engine cannot drift apart.
+
+**`tools/remix.js` STOPS ESTIMATING CHORDS ITS OWN WAY AND ASKS THIS INSTEAD —
+AND THIS IS THE ONE PROMISE IN §1 THAT IS UNPAID (measured 2026-09-07).**
+`tools/remix.js` still opens `changes()` with `const { bars } =
+Mine.chordsOf(R.parsed)`, so the miner's own salience-weighted root search
+still decides what a mined row's `prog` says. The section *"AND ONE THING §1
+ASKS FOR THAT THIS ROUND DID NOT DO"* below carries the reason and the cost;
+it is stated here too because a promise that is only disclaimed at the foot of
+a document is a promise the header keeps making. Everything else in the table
+above is wired.
 
 ## 2 · THE GENERATION PASS — "MORE RELEVANT"
 

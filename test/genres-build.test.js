@@ -13,7 +13,7 @@
 // the browser needs no build step, and a gate holds the committed bytes to
 // being byte-for-byte what the source says. Edit the artifact and this fails.
 //
-// FOUR LAWS, in the order they are worth:
+// FIVE LAWS, in the order they are worth:
 //
 //   G1  the shipped nukernel/genres.js equals a fresh build, byte for byte.
 //   G2  every row file validates the row grammar. The two throw-by-name laws
@@ -33,6 +33,11 @@
 //       lesson test/document.test.js's portrait() already learned).
 //   G4  the tables file is still the shape the builder splices: three regions,
 //       and it loads as a module on its own.
+//   G5  the PROGS law, which genres-tables.js has claimed as "(gated)" since
+//       the named progressions landed and which nothing read until 2026-09-07:
+//       a row carrying BOTH `prog` and `roots` must have the prog's first-chord
+//       degrees equal the roots, bar for bar. Eleven shipped anchors were
+//       breaking it — twelve by the cyclic reading below.
 //
 // Pure node: no DOM, no window, no audio, no render.
 "use strict";
@@ -280,6 +285,74 @@ ok("the grammar's kinds are the ones the emitter writes", () => {
     ["entry", "reg", "realize", "word", "throat"]
       .filter((f) => r[f]).map((f) => r[f].kind)));
   for (const kind of used) assert(KINDS.includes(kind), "unknown kind in use: " + kind);
+});
+
+/* ========================================================================
+   G5 · the PROGS law
+   =====================================================================
+   genres-tables.js's own words above PROGS: "THE LAW for a genre carrying
+   both `prog` and `roots`: the prog's first-chord degrees must equal the
+   roots bar for bar." It called itself "(gated)" and was not. The only
+   assertion anywhere (test/remix.test.js:319) walks `tools/remix-out/` —
+   twelve demo rows — and never opens `nukernel/genres/`, so the TOOL
+   enforced on new rows (tools/remix.js:1280, "prog and roots disagree at
+   bar N — the PROGS law") what the shipped CATALOGUE broke in twelve
+   places. This is that gate, and it reads all of the rows.
+
+   WHY THE LAW IS WORTH GATING RATHER THAN DELETING. On a `cycle` row that
+   names a prog the two fields are not redundant, they are read by DIFFERENT
+   readers, and a disagreement is heard as a contradiction rather than as an
+   error: kernel.js chordsOf takes the prog and never calls harm(), so the
+   CHORDS are the prog's — while rules.js's two lines print both ("chords"
+   from `prog`, "head roots" from `roots`) so the READER is told two
+   different progressions about one record; ornAlphabet (kernel.js:1458)
+   builds a non-diatonic row's ornament alphabet on `harm()`, i.e. on the
+   ROOTS, so the ornaments decorate a chord the band is not playing; and
+   tools/genealogy.js computes `harmrate` — a feature every parent fit is
+   measured against — off the roots alone. One record, four readers, two
+   progressions.
+
+   IT IS READ CYCLICALLY, WHICH IS STRICTER THAN THE TOOL. kernel.js's `at`
+   (:98) wraps BOTH arrays, so a 4-bar prog under an 8-bar roots is legal
+   and sounds exactly as written (`crooner` does this and is correct), while
+   a 12-bar prog under an 8-bar roots is a rotating disagreement that never
+   comes back into phase (three rows did this). So the comparison runs over
+   lcm(|prog|, |roots|) bars with both indices wrapped. remix.js's loop —
+   `i < row.prog.length` against a raw `row.roots[i]` — is wrong in both
+   directions: it misses the length mismatch that matters and it would
+   false-positive on a bar written as a LIST of chords (bossa, gospel and
+   doowop each hold a ii-V inside one bar). "First-chord degrees" is the
+   law's own wording and the list's first chord is what it means.
+   ===================================================================== */
+console.log("G5  the PROGS law: prog and roots say the same changes");
+const firstDeg = (slot) => {
+  const c = Array.isArray(slot) ? slot[0] : slot;
+  return (c && c.d) || 0;                 // chordsOf's own `c.d || 0`
+};
+ok("every row's prog agrees with its roots, bar for bar", () => {
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  let checked = 0, bars = 0;
+  const bad = [];
+  for (const [k, g] of Object.entries(GENRES)) {
+    if (!Array.isArray(g.prog) || !Array.isArray(g.roots)) continue;
+    if (!g.prog.length || !g.roots.length) continue;
+    checked++;
+    const n = (g.prog.length / gcd(g.prog.length, g.roots.length)) * g.roots.length;
+    bars += n;
+    for (let i = 0; i < n; i++) {
+      const d = firstDeg(g.prog[i % g.prog.length]), r = g.roots[i % g.roots.length];
+      if (d !== r) {
+        bad.push(k + " bar " + i + ": prog says " + d + ", roots says " + r +
+                 "  (prog " + g.prog.map(firstDeg).join(" ") +
+                 " | roots " + g.roots.join(" ") + ")");
+        break;
+      }
+    }
+  }
+  assert(!bad.length, bad.length + " row(s) break the PROGS law\n         " +
+         bad.join("\n         "));
+  console.log("       " + checked + " rows carry both prog and roots; " +
+              bars + " bars compared");
 });
 
 console.log("\n" + (fail ? "FAIL" : "PASS") + "  " + pass + " ok, " + fail + " failed");

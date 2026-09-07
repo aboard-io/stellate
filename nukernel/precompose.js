@@ -1241,6 +1241,27 @@
       if (!NuSongs.WORDS[w]) throw new Error(`precompose: SAY.${op} = "${w}" is not a songs.js WORD`);
     for (const k of Object.keys(IDIOM_ANCHOR))
       if (!GENRES[k]) throw new Error(`precompose: IDIOM_ANCHOR names no such anchor "${k}"`);
+    /* …AND EVERY ROW'S OWN LINE DISTRIBUTION (2026-09-07, §6d). The name is
+       checked where it is resolved (genres-tables.js stamps `line` and throws
+       on a word no row answers to); what is checked HERE is the other half —
+       that the manners a distribution deals and the cadence it names are
+       words `ideas-kit.js` actually has. A hat with a typo in it would draw a
+       manner `inManner` does not know, get its own contour handed back, and
+       render a stepwise catalogue in silence: the exact failure this whole
+       round is fixing, reintroduced as a spelling mistake. */
+    const seen = new Set();
+    for (const k of Object.keys(GENRES)) {
+      const L = GENRES[k] && GENRES[k].line;
+      if (!L || seen.has(L)) continue;
+      seen.add(L);
+      for (const man of Object.keys(L.hat || {}))
+        if (!Id.SHAPES[man])
+          throw new Error(`precompose: LINES."${L.w}" deals a manner ideas-kit ` +
+            `does not have: "${man}" (${Id.MANNERS.join(", ")})`);
+      if (L.cad && !Id.CADENCES[L.cad])
+        throw new Error(`precompose: LINES."${L.w}" names a cadence ideas-kit ` +
+          `does not have: "${L.cad}" (${Object.keys(Id.CADENCES).join(", ")})`);
+    }
   }
   assertTables();
 
@@ -1336,7 +1357,14 @@
      passes fire once per CELL bar, so a two-bar cell halves the fill rate.
      That is a genre fact — a bossa does not fill every four bars — which is
      why `len` lives in IDIOM and is not a knob. */
-  // THE CEILING IS ONE BAR, AND IT IS A MEASUREMENT, NOT A PREFERENCE.
+  // THE CEILING IS TWO BARS, AND IT IS A MEASUREMENT, NOT A PREFERENCE.
+  // (HEADING REWRITTEN 2026-09-07. It read "THE CEILING IS ONE BAR" and was
+  // true until the raise 24 lines below took it to two on 2026-09-01 —
+  // `CELL_BAR_CEILING = 2` at the foot of this block is the number. Only the
+  // number moved: "a measurement, not a preference" is the whole argument for
+  // there being a ceiling at all, it is unchanged, and the raise's own
+  // reasoning is unchanged under it. What follows is the ONE-BAR case exactly
+  // as it was argued, kept whole because it is why the constant exists:)
   // A first cut of this file shipped two- and four-bar cells (238 of 366
   // records) and 23 sections came out WHOLLY SILENT. The cause is that
   // songs.js WORDS is written in ABSOLUTE STEPS of a sixteen-step bar —
@@ -1403,7 +1431,7 @@
   // phrase (so the figure that gets measured out into `play` is already the
   // developed one), and `rel` names the RELEASE, which is length arithmetic and
   // therefore belongs at the bottom of this function beside the cap.
-  function cellOf(row, kind, cb, G, steps, rd, dv) {
+  function cellOf(row, kind, cb, G, steps, rd, dv, sh) {
     /* A ROW MAY NAME ITS OWN ARPEGGIO (2026-08-31). `seqArp` on the anchor
        overrides the sequencer part's contour and nothing else — the part still
        owns its cell, its register and its sentence, because those are what
@@ -1453,6 +1481,21 @@
     })();
     const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(arpOf || {}), ...(soloOf || {}), ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
+    /* THE MANNER, AND THE CADENCE (2026-09-07, the melody round; §6d above).
+       LAST, after every other word has had its say, because the manner is a
+       function OF the contour those words settled on: `inManner` keeps the
+       gesture the kind, the anchor, the solo draw and the reading agreed and
+       changes only HOW the line gets there. A record whose row hands down no
+       manner — every caller outside this file — takes neither branch and
+       comes out byte-identical to the day before this existed.
+         THE SAME FENCE ANSWERS BOTH. `inManner` returns its argument
+       unchanged for the drone and for every arpeggio, and the cadence asks
+       the same question of the same table before it writes anything: a
+       sequencer does not close a phrase, it stops when the record does. */
+    if (sh) m.contour = Id.inManner(m.contour, sh);
+    const gest = Id.GESTURE[m.contour];
+    const cad = G && G.line && G.line.cad;
+    if (cad && cad !== "open" && gest !== "still" && gest !== "machine") m.cad = cad;
     /* A SEQUENCER'S DENSITY IS NOT A BAND (2026-09-01). Paul: "in sixteenth
        notes ... from the first to last measure ... for every young galaxy
        song." Measured across five seeds, the arp came out as SIXTEENTHS on
@@ -1501,6 +1544,34 @@
     const play = new Array(n).fill("r"), acc = new Array(n).fill(0);
     const on = [];
     for (let i = 0; i < n; i++) if (ph.gate[i]) on.push(i);
+    /* THE SINGABILITY LAW (2026-09-07, the melody round): NO MELODIC MOVE
+       WIDER THAN AN OCTAVE. `tools/theory.js faults` calls that one of the two
+       melodic rules "that are not taste", and the box has been breaking it
+       since it was written — measured over 502 rows x seeds 1-3 BEFORE this
+       round, 392 moves of nine degrees or more, the widest of them fifteen, on
+       `beatgroup`. It is not the contours: it is the DEVELOPMENT device `wide`
+       (songs.js "in wider steps", `spread(2)`), which doubles every interval
+       of a figure that has already been written, so a line that leapt a fifth
+       comes back leaping a ninth. Giving the generator real leaps made the
+       existing hole bigger (392 -> 962), which is how it was found.
+         THE NOTE IS MOVED, NOT THE FIGURE. A degree is octave-free — `deg` is
+       signed and alphabet-free (kernel.js:8) and seven degrees is one octave
+       in every scale this box has — so pulling the offending note back by
+       sevens keeps the SAME scale degree and only changes which octave a
+       singer takes it in, which is exactly what a singer does with a line
+       written out of their compass. Forward, cascading, so moving one note
+       cannot open a wider gap behind it.
+         IT RUNS AFTER `develop`, because `wide` is what makes the wide moves,
+       and on the sliced COPY of the phrase — `ph.deg` itself is memoised and
+       shared, and writing through it would hand the next caller a repaired
+       phrase it never asked for. */
+    for (let j = 1; j < on.length; j++) {
+      const a = deg[on[j - 1]];
+      let b = deg[on[j]];
+      while (b - a > 7) b -= 7;
+      while (a - b > 7) b += 7;
+      deg[on[j]] = b;
+    }
     // A WRITTEN LENGTH BEATS NOTHING HERE. ideas-kit's own `hold` is the
     // sentence's tie across a barline; the gap to the next onset is the
     // default; and the anchor's articulation caps both, which is the only
@@ -1961,6 +2032,103 @@
     }
     const key = KEYSHIFT[Math.floor(r() * KEYSHIFT.length) % KEYSHIFT.length];
     return { cells: Object.keys(cells).length ? cells : null, key };
+  }
+
+  /* ======================================================================
+     6d · WHAT KIND OF LINE — the manner, drawn per part (2026-09-07)
+     ======================================================================
+     Paul, on a share link to `sophistirock`: *"the motifs have a real
+     sameness to them. We need novel melodies and motifs every single time.
+     Seeds should be DIFFERENT — why does the system keep bringing us back
+     here?"*
+
+     MEASURED FIRST, all 502 rows x seeds 1-3, off the rendered documents —
+     18,685 line cells, 149,868 melodic moves:
+
+       +1 33.1%  -1 27.3%  0 17.6%   |   a fifth 0.7%   an octave 0.3%
+
+     78% of every melodic move in the catalogue was a step or a repeat, and on
+     the row behind his link, 86%. §6b above opened the FIGURE and the KEY to
+     the seed and left the one axis he is complaining about shut, because
+     `VARIES.contour` is `pin` and every KIND states a contour: a pad holds, a
+     counter drops, an answer rises, a topline arches — pinned, always, "or
+     the slots stop being different parts". That law is right and is NOT
+     reversed here.
+
+     WHAT WAS WRONG IS THAT A CONTOUR SAID TWO THINGS AT ONCE. Where a line
+     GOES (its gesture) and HOW it gets there (its manner) were one word, so
+     pinning the first pinned the second, and the second had exactly one
+     value in the whole table: by steps. `ideas-kit.js` §2b names the two
+     halves and grows the four manners that were missing — a leap then filled
+     the other way, a figure said again a step along, a line through the
+     chord, a note held as an axis — and this draws one MANNER per part.
+
+     THE GESTURE IS UNTOUCHED, to the letter: `Id.inManner` keeps the pinned
+     contour's gesture and only changes the manner, refuses the drone
+     (`hold`) and refuses every arpeggio, so a pad still holds, a 303 still
+     runs its own broken chord, and the six rows that say "a drone is a
+     drone" render what they always did.
+
+     THE HAT IS THE ROW'S, NEVER THIS FILE'S — `genres-tables.js LINES`,
+     resolved per row through its family and stamped on the row as `line`
+     (GENRES.md; the `dyn`/FIGURES arrangement one table over). A chant is
+     stepwise by nature and its hat says so with a zero; a bebop head is not.
+     One new default here would have made 502 rows alike a second way, which
+     is docs/DYNAMICS-FLOOD.md's whole law.
+
+     AND IT MOVES AT EVERY SEED, INCLUDING THE FIRST. §6b froze reading 1
+     because a hand landing on an anchor should find the record it has always
+     been; that argument protected the record Paul is complaining ABOUT.
+     Seed 1 is where "why does the system keep bringing us back here" points,
+     so this is the round where it moves — every document in the catalogue
+     changes, `test/table.test.js` T2 re-pins, and that is the deliverable.
+
+     ITS OWN STREAM, genre-salted, one draw per kind in KIND_OF order whether
+     or not the record deals that slot — the same discipline §6b and §6c keep,
+     so a record that gains a slot at a later seed does not renumber the draws
+     of the slots beside it, and nothing §6b or §6c draws moves by one. */
+  const shapeStream = (gk, seed) => rng(ihash(gk + "/manner/" + seed));
+  // the hat as tickets, built once per distinct distribution rather than per
+  // record: `LINES` has eleven rows and 502 anchors, and the array is pure.
+  const HATS = new Map();
+  function hatOf(line) {
+    const h = (line && line.hat) || { step: 1 };
+    let hit = HATS.get(h);
+    if (hit) return hit;
+    hit = [];
+    for (const [m, n] of Object.entries(h)) for (let i = 0; i < (n | 0); i++) hit.push(m);
+    if (!hit.length) hit = ["step"];
+    HATS.set(h, hit);
+    return hit;
+  }
+  /* THE RECORD HAS ITS OWN HAND, and this is the draw that makes the seed
+     change the CHARACTER rather than only the spelling. Measured with one
+     independent draw per part, two seeds of a row came out 0.235 apart on
+     their interval histograms (total-variation, 0 = the same distribution)
+     against 0.205 before the round — because nine independent draws from one
+     hat average back to the hat, and the aggregate of nine parts is the hat
+     twice over. That is a fairer coin, not a different record.
+       A RECORD IS WRITTEN BY ONE HAND. The parts of one record share a
+     melodic idiom — a band writes a tune and the counter-lines answer it in
+     its own terms — so the reading draws the record's OWN manner first and
+     that manner's tickets are doubled for the parts. Over many seeds the
+     row's declared distribution is what comes out (the lead is drawn FROM the
+     hat, so the expectation is the hat); over ONE seed the record leans, and
+     the next seed leans somewhere else. A part still disagrees about half the
+     time, which is what keeps the slots from becoming one line nine deep.
+       THE LEAD IS DRAWN FIRST AND ALWAYS, before the per-kind draws, so
+     adding or retiring it cannot renumber a single part's draw. */
+  function manners(gk, G, seed, kinds) {
+    const r = shapeStream(gk, seed);
+    const hat = hatOf(G && G.line);
+    const lead = hat[Math.floor(r() * hat.length) % hat.length];
+    const bag = hat.length > 1 ? hat.concat(new Array(hat.length).fill(lead)) : hat;
+    const out = {};
+    for (const k of KIND_OF) {
+      const u = r();                                // ALWAYS, dealt or not
+      if (kinds.has(k)) out[k] = bag[Math.floor(u * bag.length) % bag.length];
+    }
+    return out;
   }
 
   /* ======================================================================
@@ -2715,13 +2883,28 @@
   // was naming a role nobody played. chairsOf now reads `cast.part` too, so
   // the two walks group by the same fact and Kingston's board says `lead2`.
   const CHAIRPAN = ["hl", "hr"];
-  // A DRUM MACHINE HAS NO ROOM. `room` is bus 3 and bus 3 folds into bus 1
+  // A DRUM MACHINE HAS NO ROOM, AND `MACHINEKIT` IS A LIST AND NOT A COUNT.
+  // `room` is bus 3 and bus 3 folds into bus 1
   // (audio/desk.js:908), so this is the kit asking for a little more of the
   // same return — written only where the anchor named an ACOUSTIC kit, which
-  // is the anchor saying the drums were in a room to begin with. The four
-  // machines are the exception and they are listed rather than the other five,
+  // is the anchor saying the drums were in a room to begin with. The
+  // machines are the exception and they are LISTED rather than the kits,
   // because a drumkit added to fields.js DRUMKITS is far more likely to be a
   // kit than a box.
+  //
+  // AND THE LIST HAS A HOLE IN IT, NAMED 2026-09-07. The header read "The four
+  // machines are the exception and they are listed rather than the other five"
+  // — two numbers frozen against a five-kit table, which is why it is a list
+  // and not a count now. fields.js DRUMKITS holds TEN kits today (acoustic,
+  // brush, electronic, jazz, power, room, tr808, tr909, tr606, cr78) and
+  // `tr606` — a Roland box — is NOT in the list below, so an anchor that named
+  // it would take `e.room = "touch"` in `deskFor` and be handed a room a drum
+  // machine does not have. LATENT: 0 of the catalogue's rows declare `tr606`
+  // (`test/genres-build.test.js` prints the live row count), so nothing sounds
+  // wrong today and no code moves in a comment round. It is exactly the failure
+  // the sentence above predicted, which is why that sentence stays as it is —
+  // it earned its place, and the one time a new kit WAS a box, this list did
+  // not learn.
   const MACHINEKIT = ["tr909", "tr808", "cr78", "electronic"];
   // HOW WET THE ECHO SEND IS: not invented, and not a fifth spelling of "some".
   // It is the echo chip's OWN declared mix (fields.js fxMix, FX.echo.params.mix
@@ -3990,10 +4173,14 @@
     // below passes `undefined` as its seventh argument, which is the day before
     // this existed.
     const dv = developOf(gk, G, s, kindAt, NSEC, !!NC.STEADY[gk]);
+    // ...AND WHAT KIND OF LINE EACH PART PLAYS (§6d), on its own stream, after
+    // the development and before the cells: the reading says what the figure
+    // IS, the deal says what happens to it, and this says how the line moves.
+    const sh = manners(gk, G, s, usedKinds);
     const readOf = (k) => rd && rd.cells && rd.cells[k];
     for (const k of KIND_OF) if (usedKinds.has(k)) {
       const rel = dv && dv.rel[k];
-      const made = cellOf(row, k, cb, G, steps, readOf(k), rel ? { rel } : null);
+      const made = cellOf(row, k, cb, G, steps, readOf(k), rel ? { rel } : null, sh[k]);
       cells[k] = made.cell; phraseOf[k] = made.ph;
     }
     /* ---- ...AND THE FIGURE AS IT COMES BACK (§6c) ------------------------
@@ -4011,7 +4198,7 @@
       const name = k + " " + Id.DEVELOP[d].w;
       if (!(name in cells)) {
         const made = cellOf(row, k, cb, G, steps, readOf(k),
-                            { rel: dv.rel[k], dev: d });
+                            { rel: dv.rel[k], dev: d }, sh[k]);
         if (keepsIts(made.cell, cells[k])) {
           cells[name] = made.cell; phraseOf[name] = made.ph;
         } else cells[name] = null;                 // remembered as refused
@@ -4659,6 +4846,15 @@
 
   return { genreToDocument, anchors, idiomOf, cellBarsOf, cellOf, CELL_BAR_CEILING,
            IDIOM, IDIOM_ANCHOR, KINDS, KIND_OF, SAY, HOLDCAP, capOf, progOf,
+           /* §6d THE MANNER DEAL, exported on the same law `RELEASE` is: it is
+              a new AXIS of a composed cell, and the mirror in
+              test/precompose.test.js G6g re-derives a record's cells through
+              `cellOf` and must be handed every word the record was composed
+              with, or it compares a record against a re-derivation of a
+              DIFFERENT record and reports its own gap as a drift. That mirror
+              has been taught the meter and the cell-bar count for exactly this
+              reason and each time by the same argument. */
+           mannersOf: manners,
            // §6c THE DEVELOPMENT DEAL and its three tables, exported on the law
            // compose.js exports `DEALS`/`formOf` under: "a policy the suite
            // cannot read is a policy the suite can only measure indirectly."

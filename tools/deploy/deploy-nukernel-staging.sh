@@ -78,6 +78,41 @@ rsync -a --delay-updates \
   --exclude 'nukernel/genres/' \
   nukernel engine vendor sw.js "$DEST"
 
+# THE EIGHT PIPELINE FILES, AND ONLY THE EIGHT (2026-09-07, the design-system
+# round's MIDI door).
+#
+# THE BLOCKER, SAID PLAINLY: the rsync above ships `nukernel engine vendor
+# sw.js` and `tools/` is not on that list, so `tools/remix.js` and the seven
+# modules under it are a 404 on the server. The `.mid` door in the Export view
+# loads them by URL, so a door that worked on a laptop would have failed on the
+# phone it was built for — the same failure as no door at all.
+#
+# WHY THE FILES STAY IN `tools/` RATHER THAN MOVING UNDER `nukernel/`, which
+# was the other candidate and looked like the tidier one:
+#   · `/tools/…` IS ALREADY THE WRITTEN SEAM. `test/remix.browser.js` PIPE
+#     loads exactly these eight paths off a server rooted at the repo, and
+#     `docs/REMIX.md` records them as the load order. Moving the files would
+#     make the browser gate's paths, the CLI's `require`s and the deployed URLs
+#     three different answers to one question.
+#   · `nukernel/export/package.json` DECLARES `"type": "module"`. The eight are
+#     CommonJS/UMD with `require.main === module` CLIs; under that marker node
+#     would refuse them, and `node tools/remix.js` and `test/remix.test.js`
+#     would both break. The obvious home is the one home they cannot have.
+#   · HALF OF `tools/` GENUINELY IS BUILD-TIME. So `tools` as a whole does NOT
+#     go on the list above: `-R` (relative) ships these eight paths and nothing
+#     else — not `tools/ableton` (752 KB), not `tools/remix-out` (396 KB), not
+#     `tools/genre-qa`. 231 KB, named one by one, so a ninth file added to the
+#     pipeline has to be added here on purpose rather than arriving as a side
+#     effect of living in a directory.
+# It is a THIRD rsync rather than more sources on the first, because the first
+# one's cwd-relative sources land at `$DEST/<name>` and these have to keep their
+# `tools/` prefix — which is what `-R` is for.
+rsync -aR --delay-updates \
+  tools/theory.js tools/genealogy.js \
+  tools/mine/mine-midi.js tools/mine/mine-melody.js tools/mine/mine-groove.js \
+  tools/genres/grammar.js tools/genres/emit.js \
+  tools/remix.js "$DEST"
+
 #   5 · nukernel/genres/ (the 2.5 MB of JSON rows genres.js is built from,
 #       2026-09-03) is source, not shipped: the browser loads the generated
 #       genres.js. Excluded from both rsyncs.

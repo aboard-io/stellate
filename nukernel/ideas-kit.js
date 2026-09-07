@@ -221,6 +221,256 @@
                // the long one: eight steps, so it never lines up with the bar
                // and takes three bars to come home. Berlin-school motion.
                f: (k) => (k % 64 === 63 ? 11 : [0, 2, 4, 7, 9, 7, 4, 2][k % 8]) },
+
+    /* =====================================================================
+       THE SHAPES A TUNE ACTUALLY MAKES (2026-09-07, the melody round)
+       =====================================================================
+       Paul, on a share link to `sophistirock`: *"the motifs have a real
+       sameness to them. We need novel melodies and motifs every single time.
+       Seeds should be DIFFERENT — why does the system keep bringing us back
+       here?"*
+
+       MEASURED FIRST, over all 502 rows at seeds 1-3 — 18,685 composed line
+       cells, 149,868 melodic moves, read off the RENDERED document and not
+       off this table:
+
+         +1  33.1%   -1  27.3%   0  17.6%      = 78.0% of every melodic
+         +2   6.1%   -2   3.0%                   move in the catalogue is
+         +4   2.7%   -4   4.1%                   a step or a repeat
+
+       and on `sophistirock` itself, 86%. HE IS DESCRIBING THIS TABLE. Every
+       contour above the arpeggios walks the scale — `rise` IS k, `fall` is
+       (n-1)-k, `arch` is the two glued together, `zig` and `insist` and
+       `hover` step and step back — so the seed changes WHICH notes a line
+       walks and can never change the KIND of line, because there is only one
+       kind. Nine seeds of a genre came out as nine spellings of one tune.
+
+       THE CURE IS NOT "MAKE IT LEAP". The note at the head of this table is
+       right and stays: a line that leaps seven times in twelve notes is a
+       broken chord and not a melody, and Bach, Adele and Joy Division would
+       all say so. What was missing is that a melody has a GESTURE (where it
+       goes: up, down, over, under, back on itself, nowhere) and a MANNER (how
+       it gets there: by steps, by a leap it then fills, through the chord, by
+       saying the figure again a step along, by turning on one note). This
+       table had six gestures x ONE manner. These are the other four, and the
+       distribution over them is DATA — `genres-tables.js LINES`, per family,
+       quoted by name — because a chant is stepwise by nature and a bebop head
+       is not, and one new default would only make 502 rows alike a second
+       way (docs/DYNAMICS-FLOOD.md's law, said again).
+
+       EVERY ONE OF THESE RESOLVES ITS OWN LEAP. That is not politeness, it is
+       what makes them singable: a leap of a third or more is followed by
+       motion the other way, which is the gap-fill law and the reason these
+       can be handed to a singer's chair without widening the census's
+       range-and-part-writing fault count. `tools/theory.js faults` is run
+       over the rendered catalogue before and after and the number went DOWN.
+
+       --- THE GAP-FILL, four gestures. The commonest melodic gesture in
+       Western song: leap, then walk back through the hole you just made. */
+    gapup:   { w: "leaps up and fills the gap",
+               /* a third up, two steps down, and the whole figure two degrees
+                  higher next time round — so the line CLIMBS by gap-fills
+                  rather than by walking, and the only interval wider than a
+                  second is the one the next two notes answer. No modular
+                  wrap: it is monotone in k, so a bar with ten onsets in it
+                  (a developed cell) does not fall off the end of a cycle. */
+               f: (k) => 2 * Math.floor(k / 4) + [0, 3, 2, 1][k % 4] },
+    gapdown: { w: "leaps down and fills the gap",
+               // the mirror, and the descending fourth answered upward is the
+               // ordinary shape of a lament
+               f: (k) => -2 * Math.floor(k / 4) - [0, 3, 2, 1][k % 4] },
+    bow:     { w: "arches over a leap and steps home",
+               /* THE HYMN-TUNE ARCH. `arch` above walks up and walks down;
+                  this one OPENS with a third — the leap that gets the tune off
+                  the tonic and tells you where the phrase is going — and comes
+                  home entirely by steps, which is what every hymn tune, every
+                  chorale melody and most of Schubert do. n-aware like `arch`,
+                  and at two onsets it is `arch` exactly. */
+               f: (k, n) => { const h = Math.floor((n - 1) / 2);
+                 const up = (i) => (i === 0 ? 0 : i + 1);
+                 return k <= h ? up(k) : Math.max(0, up(h) - (k - h)); } },
+    dip:     { w: "drops through a leap and climbs home",
+               // the inverted bow, and the shape `drop` should always have
+               // had: fall by a third, climb back by seconds
+               f: (k, n) => { const h = Math.floor((n - 1) / 2);
+                 const dn = (i) => (i === 0 ? 0 : -(i + 1));
+                 return k <= h ? dn(k) : Math.min(0, dn(h) + (k - h)); } },
+    curl:    { w: "turns back on itself through a gap",
+               /* `zig` with the reach put back. Seven steps against sixteen,
+                  coprime on purpose (the arpeggios' own argument), and every
+                  third is answered by a second the other way. */
+               f: (k) => [0, 2, 1, 3, 2, 0, 1][k % 7] },
+
+    /* --- THE SEQUENCE, two gestures. A figure said again a step along —
+       which this box has been able to SAY as an operator (songs.js "up a
+       degree") since it was written and has never DEALT as a shape. Measured,
+       0.4% of the catalogue's cells came out as sequences by accident. It is
+       the oldest good idea in melody and the one Bach, Vivaldi and every
+       fiddle tune lean on hardest. Three notes to a statement, because a
+       statement shorter than that is not a figure and one longer than that
+       does not fit twice into a bar of this box. */
+    sequp:   { w: "says the figure again a step higher",
+               f: (k) => Math.floor(k / 3) + [0, 1, 3][k % 3] },
+    seqdown: { w: "says the figure again a step lower",
+               f: (k) => -Math.floor(k / 3) - [0, 1, 3][k % 3] },
+    /* (THERE IS NO ARCHING SEQUENCE, and that is a refusal rather than an
+       omission: a sequence that goes up and comes back needs FOUR statements
+       — twelve onsets — and the densest melodic cell in this box puts eight
+       in a bar. A gesture the manner has no member for keeps the contour it
+       was pinned to, so `over` + `sequence` stays `arch`.) */
+
+    /* --- THROUGH THE CHORD, three gestures. Where fourths and fifths come
+       from, and the census says the catalogue had almost none of them: 0.7%
+       of moves were a fifth and 0.3% an octave. The arpeggios above are a
+       MACHINE's broken chord — pinned to the sequencer, six or eight steps
+       against sixteen, never leaving the triad — and these are a SINGER's:
+       they reach the octave once, come back through the fifth and the third,
+       and every one of them is inside a compass a person has. */
+    chordup:   { w: "climbs the chord and steps back down",
+                 // root, third, fifth, octave — then sixth, fifth, third, and
+                 // the note above the root, so the cycle CLOSES a step from
+                 // where it started and a long bar wraps by a second
+                 f: (k) => [0, 2, 4, 7, 5, 4, 2, 1][k % 8] },
+    chorddown: { w: "falls through the chord and steps back up",
+                 f: (k) => [0, -2, -4, -7, -5, -4, -2, -1][k % 8] },
+    chordarch: { w: "arches through the chord",
+                 // up the triad to the octave and back down it: the fanfare,
+                 // and the shape of half the hooks written for a brass section
+                 f: (k) => [0, 2, 4, 7, 4, 2, 0, -1][k % 8] },
+    /* …AND THE ONE THAT DOES NOT TRAVEL, which is the hole the first cut of
+       this table left. `hover` and `insist` are the STAY gesture — the figure
+       that circles rather than goes — and they are what a club record's hook,
+       a drift record's sparse line and half the band idioms are pinned to. A
+       stay gesture had exactly ONE manner besides steps (`pivot`), so a floor
+       record whose distribution asks for the chord six times in twenty could
+       not spend a single one of those tickets, and `techno` and `house`
+       composed byte-identically through the whole round.
+         A CHORD LINE THAT STAYS PUT IS A REAL SHAPE and this is it: the root
+       pedalled, the fifth and the third touched between pedals, going nowhere.
+       It is the disco octave, the I Feel Love vamp and the two-note keyboard
+       figure under every house record — which is exactly the music the rows
+       that reach it are. (There is deliberately no stay-gesture SEQUENCE and
+       no stay-gesture GAP-FILL: a sequence travels by definition, and a figure
+       that stays put has not opened a gap to fill. Those two tickets stay
+       unspent for a `hover` part, and the contour it was pinned to is what it
+       keeps.) */
+    chordhover:{ w: "pedals the root and touches the chord",
+                 f: (k) => [0, 4, 0, 2, 0, 4, 2, 0][k % 8] },
+
+    /* --- THE PIVOT, three gestures. One note held as an axis, left and
+       returned to, with the departures widening — the neighbour-note figure,
+       and what a blues line, a raga's vadi and a funk horn part all do. It is
+       `insist`'s idea done properly: `insist` says one note three times and
+       then walks away and never comes back. */
+    pivot:     { w: "turns on one note", f: (k) => [0, 0, 1, 0, -1, 0, 2, 0][k % 8] },
+    pivotup:   { w: "turns on one note as it climbs",
+                 f: (k) => Math.floor(k / 4) + [0, 0, 1, 0][k % 4] },
+    pivotdown: { w: "turns on one note as it falls",
+                 f: (k) => -Math.floor(k / 4) - [0, 0, 1, 0][k % 4] },
+  };
+
+  /* ---------- 2b. GESTURE x MANNER — the two halves of a contour ----------
+     A contour above answers two questions at once and the table never said so:
+     WHERE the line goes and HOW it gets there. Naming the two halves is what
+     lets a reading move one without moving the other, which is the whole fix:
+     a pad still HOLDS, a counter still DROPS, an answer still RISES and a
+     topline still ARCHES — precompose.js's law that "what makes a part a part
+     here is its contour" is kept to the letter — while the seed and the row's
+     family decide whether that rise is a scale, a gap-fill, a sequence, a
+     chord or a pivot.
+
+     TWO GESTURES REFUSE EVERY MANNER, on purpose:
+       · `still` (`hold`) — a drone is a drone. Six rows say so.
+       · `machine` (the seven arpeggios) — a sequencer's broken chord IS the
+         part; `precompose.js cellOf` already takes the `seq` cell back from
+         the reading for exactly this reason, and this is the same fence one
+         axis over. */
+  const GESTURE = {
+    rise: "up", fall: "down", arch: "over", drop: "under", zig: "turn",
+    hover: "stay", insist: "stay", hold: "still",
+    gapup: "up", gapdown: "down", bow: "over", dip: "under", curl: "turn",
+    sequp: "up", seqdown: "down",
+    chordup: "up", chorddown: "down", chordarch: "over",
+    pivot: "stay", pivotup: "up", pivotdown: "down", chordhover: "stay",
+  };
+  for (const a of ARP_CONTOURS) GESTURE[a] = "machine";
+  const MANNEROF = {
+    rise: "step", fall: "step", arch: "step", drop: "step", zig: "step",
+    hover: "step", insist: "step", hold: "step",
+    gapup: "gapfill", gapdown: "gapfill", bow: "gapfill", dip: "gapfill",
+    curl: "gapfill",
+    sequp: "sequence", seqdown: "sequence",
+    chordup: "chord", chorddown: "chord", chordarch: "chord", chordhover: "chord",
+    pivot: "pivot", pivotup: "pivot", pivotdown: "pivot",
+  };
+  for (const a of ARP_CONTOURS) MANNEROF[a] = "chord";
+  // manner -> gesture -> the contour that says it. `step` is written out even
+  // though `inManner` short-circuits on it, because the table is also the
+  // documentation of which contour is which gesture's plain reading.
+  const SHAPES = {
+    step:     { up: "rise", down: "fall", over: "arch", under: "drop",
+                turn: "zig", stay: "hover" },
+    gapfill:  { up: "gapup", down: "gapdown", over: "bow", under: "dip",
+                turn: "curl" },
+    sequence: { up: "sequp", down: "seqdown" },
+    chord:    { up: "chordup", down: "chorddown", over: "chordarch",
+                stay: "chordhover" },
+    pivot:    { stay: "pivot", up: "pivotup", down: "pivotdown" },
+  };
+  const MANNERS = Object.keys(SHAPES);
+  /* THE SAME GESTURE, SAID ANOTHER WAY — or the contour it was handed, which
+     is the honest answer three times over: when the manner is already this
+     contour's own, when the gesture refuses manners at all, and when the
+     manner has no member for this gesture (`over` + `sequence`). A caller
+     that gets its own word back has lost nothing. */
+  function inManner(contour, manner) {
+    const c = CONTOURS[contour] ? contour : null;
+    if (!c || !manner || !SHAPES[manner]) return contour;
+    if (MANNEROF[c] === manner) return contour;
+    const g = GESTURE[c];
+    if (g === "still" || g === "machine") return contour;
+    return SHAPES[manner][g] || contour;
+  }
+  // …and the load-time law every other table in this file keeps: a contour
+  // added above without a gesture, or a SHAPES row naming a contour that does
+  // not exist, dies HERE and by name rather than composing a plausible wrong
+  // tune three layers down.
+  for (const k of Object.keys(CONTOURS)) {
+    if (!GESTURE[k]) throw new Error(`ideas-kit: CONTOURS.${k} has no gesture`);
+    if (!MANNEROF[k]) throw new Error(`ideas-kit: CONTOURS.${k} has no manner`);
+  }
+  for (const [m, row] of Object.entries(SHAPES))
+    for (const [g, c] of Object.entries(row)) {
+      if (!CONTOURS[c]) throw new Error(`ideas-kit: SHAPES.${m}.${g} = "${c}" is not a contour`);
+      if (GESTURE[c] !== g || MANNEROF[c] !== m)
+        throw new Error(`ideas-kit: SHAPES.${m}.${g} names "${c}", which is ` +
+          `${MANNEROF[c]}/${GESTURE[c]}`);
+    }
+
+  /* ---------- 2c. THE CADENCE — how a phrase ARRIVES --------------------
+     The landing (§3 below) says WHICH chord tone a phrase ends on and has
+     said it since this file was written. What it never said is how the line
+     gets there, and the answer was "wherever the contour happened to be one
+     onset earlier" — so a phrase that landed on the root arrived at it from
+     a third above as often as from the leading tone under it, at random.
+     A cadence is the one moment in a tune every listener hears as a
+     punctuation mark, and these are the four ways Western song makes one.
+     Applied to the note BEFORE the landing, present-only: a model that names
+     none is byte-identical to the day before this existed. */
+  const CADENCES = {
+    // the leading tone under the tonic, rising into it. The authentic close,
+    // and the reason the seventh degree is called a leading tone at all.
+    leading: { w: "rises into the close from below", d: (land) => land - 1 },
+    // the supertonic falling to the tonic: the other half of every hymn's
+    // last bar, and the gentler of the two
+    stepdown: { w: "steps down into the close", d: (land) => land + 1 },
+    // the plagal drop — a fourth above the landing, falling in. The "amen",
+    // and what a gospel, a blues and a modal folk tune close with, none of
+    // which has a leading tone to lean on
+    plagal: { w: "falls a fourth into the close", d: (land) => land + 3 },
+    // …and the refusal, which is a real answer: a chant, a drone and a
+    // machine do not cadence, they stop. Named so a family can say it.
+    open: { w: "does not cadence, it stops", d: null },
   };
 
   /* ---------- 3. WHERE IT LANDS ------------------------------------------ */
@@ -590,6 +840,12 @@
                 // Absent adds an empty field, like `wrote` and `octs` above,
                 // so every key written before the flood is unchanged.
                 "|" + (m.dyn ? m.dyn.k : "") +
+                // …and the CADENCE by its own name (2026-09-07, the melody
+                // round), on the same law as the figure above: two records
+                // with one contour and two closes are two phrases, and a key
+                // that could not tell them apart would hand the second one
+                // the first one's ending. Absent adds an empty field.
+                "|" + (m.cad || "") +
                 "|" + NOF(m) + ":" + metOf(m).pulse;
     let hit = PHCACHE.get(key);
     if (hit) return hit;
@@ -683,6 +939,21 @@
     if (onsets.length) {
       const last = onsets[onsets.length - 1];
       deg[last] = land;
+      /* THE CADENCE (2026-09-07): the note BEFORE the landing approaches it
+         the way this music approaches a close — from the leading tone under
+         it, by a step down onto it, or by the plagal fourth above. Present-
+         only (`m.cad` absent, or `open`, changes nothing), and it moves ONE
+         note: a cadence is a punctuation mark, not a phrase plan.
+         IT IS APPLIED BEFORE THE ANSWER'S MID-PHRASE LANDING and never TO it,
+         which is the whole question-and-answer: the first half is supposed to
+         arrive somewhere unresolved, and cadencing into it would answer the
+         question the phrase is asking. So it fires only where the approach
+         note is in the phrase's second half. */
+      const cad = m.cad && CADENCES[m.cad] && CADENCES[m.cad].d;
+      if (cad && onsets.length > 1) {
+        const prev = onsets[onsets.length - 2];
+        if (!(m.answer && bars > 1) || prev >= (bars / 2) * N) deg[prev] = cad(land);
+      }
       // THE ANSWER: the first half asks (it stops somewhere unresolved) and
       // the second half answers (it lands). A phrase that ends the same way
       // twice is one phrase said twice.
@@ -1397,6 +1668,10 @@
   ];
   return { N, NOF, CELLS, CELLS3, CELLS6, extraCells, cellOf,
            CONTOURS, ARP_CONTOURS, SOLO_CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
+           // the melody round's own vocabulary, exported on the law TRANSFORMS
+           // is: precompose deals these by name and must check its words
+           // against THIS table rather than against a second copy of it
+           GESTURE, MANNEROF, SHAPES, MANNERS, CADENCES, inManner,
            SOLO, SOLORATE, SOLOORDER, SOLOPERIOD, soloWord,
            regOf, gridOf, liftOf, octsOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS, BARWORD, MAXB,

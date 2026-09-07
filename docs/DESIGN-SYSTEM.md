@@ -27,9 +27,25 @@ places — Lit templates under `nukernel/src/**`, hand-written DOM in
 paragraph in DESIGN.md, a `mkBtn` in eight.js, an `icon()` beside it, a
 `.nu-trimbtn` in the stylesheet and a `html\`<button>\`` in a Lit file.
 
-**The port is: one Lit element per component, one CSS file per component, and
-every call site in the app using them.** DESIGN.md stops describing components
+**The port is: one Lit element per component, ONE CSS BLOCK for all of them
+(per the shipped decision), and every call site in the app using them — and
+the call sites are STEP 4, UNSTARTED.** DESIGN.md stops describing components
 and starts pointing at them.
+
+*(This sentence read* **"one Lit element per component, one CSS file per
+component, and every call site in the app using them"** *until 2026-09-07, and
+it was wrong on two of its three halves the day the first elements shipped.
+One CSS FILE PER COMPONENT was never built and was decided against: all element
+CSS is one appended block in `nukernel/nu.css` — `THE ELEMENTS` — because that
+is what keeps `nu.css` in charge of the look, which is §1a's whole
+requirement. `nukernel/DESIGN.md` §2a states that decision as law and this
+file's own STEP 1 AND STEP 3 note below records it as what shipped, so the
+sentence above was the only place in the repo still asking for the other
+thing. EVERY CALL SITE IN THE APP is not done and is not claimed: `grep -c`
+for the seven `<nu-*>` tags across `nukernel/ui/eight.js`, `nukernel/src/table/**`
+and `nukernel/index.html` returns 0, and `index.html` does not load
+`ui/ui.js`. The elements are declared, gated on their own gallery, and not yet
+wired to the app — §5 step 4 is the round that wires them.)*
 
 ## 0 · THE NORTH STAR: THE STELLATE, 1988
 
@@ -100,11 +116,67 @@ system, and one focus treatment, and they are different from each other and
 from hover. A lit element is lit the way a channel is lit: the legend brightens
 and the lamp comes on.
 
+## 1a · A SKIN IS A STYLESHEET (APPROVED 2026-09-07)
+
+Paul: *"I really want us to be able to skin the app via css rather than
+customizing objects."*
+
+This is the acceptance test for every element in the system, and it outranks
+convenience. Someone must be able to change the entire look — colour, weight,
+density, radius, the lot — by replacing `tokens.css` and adding rules that
+target the elements. No `.ts` edited. No attribute passed. No build run.
+
+So an element carries STRUCTURE and STATE and never appearance:
+
+- no `style=` written by a component, ever;
+- no class computed to mean a colour or a size;
+- no `css\`\`` block — the palette lives in CSS or it is not skinnable. **The
+  OWNER of this one clause is `nukernel/DESIGN.md` §2a** (*"No `css``` block
+  anywhere in `src/ui`"*, beside the light-DOM decision that gives it its
+  reason); this is the fourth statement of it in the tree, so read it as a
+  pointer and argue it there;
+- no reading a token in JavaScript in order to draw with it (the one exception
+  is a canvas instrument like the globe, which cannot be styled by a rule; it
+  reads its tokens off `getComputedStyle` at paint and says so);
+- a state is an attribute on the host — `[selected]`, `[open]`, `[refused]`,
+  `[busy]` — and the stylesheet decides what that looks like.
+
+**AND IT IS PROVEN BY A SECOND SKIN, NOT BY INTENTION — AND THAT PROOF IS NOT
+BUILT YET (measured 2026-09-07).** The system is to ship an alternate skin in
+one file that turns the deck into something visibly other — a light paper
+panel, a different accent, a different density — loaded with no other change
+to the app. If writing that file requires touching an element, the element is
+wrong. The gate loads it and checks that nothing from the default palette
+survives.
+
+**Say it plainly: no such file and no such check exists today.** `ls
+nukernel/*.css` is band, drums, fonts, hw, nu, tokens — there is no alternate
+skin — and `grep -n skin test/design-system.js` returns nothing across the
+gate's 464 lines. The five sub-rules above ARE measured and green (D2, D4a,
+D4b, D4c, D12), but they are the five things a skinnable element must not do;
+this is the one thing that would show a skin actually works. **Until it is
+written the SKIN law is unproven as a whole**, and it is the outstanding
+acceptance test of this document — not a decoration on the end of a law that
+is otherwise finished. It is the right shape for a law precisely because it
+names the test that can fail it, and a named test nobody has run is still a
+debt.
+
+The `[data-theme]` daylight block step 1 shipped is the weak form of this: a
+second look inside the same file. The strong form is a separate stylesheet
+that overrides nothing but tokens and element rules, and that is what "skin"
+means here.
+
 ## 2 · THE ELEMENTS
 
 Every component in DESIGN.md §2 becomes a `<nu-*>` custom element, defined
-once, with its own CSS file and its own states written down. The list is taken
-from the app as it stands rather than invented: button, icon button, spinner,
+once, with its own states written down (the CSS is one block, not one file
+each — see the amendment at the head of this document). **THIRTY ARE NAMED
+BELOW AND SEVEN ARE BUILT** (`nukernel/src/ui/api.ts` declares `nu-button`,
+`nu-icon-button`, `nu-lamp`, `nu-legend`, `nu-value`, `nu-rail`, `nu-spinner`;
+this file's own shipped note calls them *"the first SEVEN"*). Read the count
+off `api.ts`'s `SPEC`, which is where it is a fact rather than a paragraph.
+The list is taken from the app as it stands rather than invented: button, icon
+button, spinner,
 segmented rail, lozenge, lozenge field, slider, number field, text field,
 select, toggle, sheet row, sheet group, table cell, column head, row head,
 label row, plate, menu row, tape, lamp, badge, say line, curve editor, XY pad,
@@ -113,8 +185,19 @@ level meter, fader, strip, disclosure, close.
 **CAREFULLY DEFINED** means: a documented attribute surface, states for
 rest / hover / focus / selected / open / refused / busy, keyboard behaviour,
 an accessible name that comes from the copy catalogue, and a refusal that is
-reachable by a thumb (§15's law). A component that cannot say why it is
-disabled is not finished.
+reachable by a thumb (§15's law). The refusal law's OWNER is
+`nukernel/PROGRAM.md` §2.3's `why` clause — required whenever `disabled` or
+`quiet` is set, with `sheets.js` throwing at build time without it, because a
+silent grey is the bug this design exists to prevent — and this document does
+not restate it.
+
+**WHAT THIS DOCUMENT ADDS IS THE MEASUREMENT, AND IT IS NOT A DUPLICATE.**
+`test/design-system.js` D3b/D3c/D3e assert, on the rendered gallery, that not
+one refused example carries the native `disabled`, that every one prints its
+reason on a tap in a say line a thumb can see, and that the reason is **≤ 12
+words** (9 in the longest). A length gate is the one thing a build-time throw
+cannot check: `why` being present is the owner's job, `why` being SHORT ENOUGH
+TO READ is this one's.
 
 **STYLES STAY IN CSS.** No `css\`\`` blocks inside components carrying the
 palette; components carry structure, the stylesheet carries the look. Elements
@@ -133,8 +216,19 @@ the fastest gate we have: a screenshot of that page is the whole system.
 
 "Squeeze things as much as possible. There's weird spacing everywhere." The
 spacing scale is a geometric ramp of five steps and nothing may use a value
-off it. The round MEASURES the waste before it changes anything: every gap,
-padding and margin the app actually renders, counted, with the outliers named.
+off it. **THE RAMP IS PROVEN ON `nukernel/design.html`, WHICH IS NOT THE APP.**
+`test/design-system.js` D5 drives the GALLERY and finds every one of 1,576
+rendered spacing values on the ramp, 0 off; the app's own census, three
+sections below in this file, finds **410 of 426** rendered declarations off it
+at 320. Both numbers are true and they are about two different pages.
+
+**So the ramp is a BUDGET the app overspends, and step 5 owns closing it** —
+not a law the app is already keeping. The gallery proves the ramp is
+expressible; the census prices what it costs to reach. Any claim that the app
+is on the ramp must name `index.html` and a gate that walks it, and no such
+gate exists today. The round MEASURES the waste before it changes anything:
+every gap, padding and margin the app actually renders, counted, with the
+outliers named.
 Then it tightens — and the number that proves it is how much MORE of the record
 is on the glass at 390×844 afterwards, on the same three records.
 
@@ -307,17 +401,29 @@ and the number the page prints equals the number measured; nothing scrolls
 sideways, every control clears 44px, and the three sheets are in cascade order.
 
 The existing suite did not move: `shell` PASS 459 ok, `sheets` 31, `selects`
-ALL PASS, `oneopen` 11, `gutter` 52, `seed` 36, `atlas` 134 of 135 (G9 the
+ALL PASS, `oneopen` 11, `gutter` 52 (**the gate is named for a surface that no
+longer exists — the gutter `#nu-tray` was deleted 2026-08-28 and
+`test/shell.js` A6j asserts the absence of the whole apparatus. `test/gutter.js`
+keeps the name on purpose, and says so in its own header: every check in it is
+about the same SUBJECT — where a thumb finds the transport — and renaming the
+file would lose eleven rounds of argument to a `git log --follow` nobody
+runs**), `seed` 36, `atlas` 134 of 135 (G9 the
 known standing red), `table.browser` 793, `copy` 10, `ui-build --check` green
 over six entries, `tsc --noEmit` clean. Every browser gate was run TWICE — once
 on the palette flip, and again on the finished tree — because the element and
 gallery blocks were appended to nu.css after the first pass.
 
-`test/table.test.js` reports **36 of 40**, and the four are NOT this round's:
-T2a, T2b, T2c and T4j compare every compiled document, genre and event to the
-pin at `ac13270`, and `nukernel/compose.js`, `nukernel/kernel.js` and
-`nukernel/precompose.js` are modified in the working tree by the engine-audit
-round running beside this one (772 of 1500 documents moved, on rows this round
-never opened). `node test/closure.js test/table.test.js` names 41 files and not
-one of them is a file this round touched — no `tokens.css`, no `nu.css`, no
-`design.html`, no `src/ui`. The pin is that round's to re-take.
+**HISTORY, AND IT CLOSED (written 2026-09-07 in flight; resolved 2026-09-07).**
+`test/table.test.js` reported **36 of 40** while this round was landing, and
+the four were NOT this round's: T2a, T2b, T2c and T4j compare every compiled
+document, genre and event to the pin at `ac13270`, and `nukernel/compose.js`,
+`nukernel/kernel.js` and `nukernel/precompose.js` were modified in the working
+tree by the engine-audit round running beside this one (772 of 1500 documents
+moved, on rows this round never opened). `node test/closure.js
+test/table.test.js` named 41 files and not one of them was a file this round
+touched — no `tokens.css`, no `nu.css`, no `design.html`, no `src/ui`. The pin
+was that round's to re-take, **and it re-took it: `table.test` is 40/40
+today.** The paragraph is kept because the ARGUMENT is the reusable part — a
+red gate is read by asking whose closure the red file is in, not by whose diff
+is on the screen — and the number is dated so nobody quotes it as a standing
+state.

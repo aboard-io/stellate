@@ -1,5 +1,5 @@
 {
-  "note": "GLAM METAL [nwobhm] — Los Angeles 1987. Guns N' Roses, \"Appetite for\nDestruction\" (Rumbo Recorders, Canoga Park; Geffen, 21 July 1987).\nMEASURED over 153 files (Bon Jovi · Aerosmith · Scorpions · Van Halen\n· Poison · Mötley Crüe · Guns N' Roses · Whitesnake · Def Leppard).\nTempo (n=153): p10 70 · p25 88 · med 110 · p75 126 · p90 137. Mode 99\nmajor / 54 minor. Meter 146 of 153 in 4/4. Melodic mean pitch 76.0 —\nthe HIGHEST of every rock row measured this round (grunge 63, poppunk\n71.6, britpop 73.8), which is the scream, and it is why `reg` puts the\nlead a whole octave over the riff. Seventh fraction 0.30 against\npoppunk's 0.12: these are dominant-seventh blues chords, not triads.\nCycles: I-V-IV-IV (30) and I-V-I-V (27), the plainest changes in the\nround, under the fastest hand.\n  kick  9122223171422131   snare 1111911131229112\n  hat   8272927392729263  — eighths with a sixteenth under every one\n\nLINEAGE: `nwobhm` (London 1980) is the twin-guitar harmony and the\ngallop; `glam` (London 1971) is the boot, the clothes and the\nchorus everybody shouts; `heavymetal` (Workington 1969) is the\nancestor of both; `aor` (Los Angeles 1982) is the studio polish and\nthe radio, in this row's own city five years before it.\n\nWHO SINGS: the gang chorus, everybody on the last word",
+  "note": "GLAM METAL [nwobhm] — Los Angeles 1987. Guns N' Roses, \"Appetite for\nDestruction\" (Rumbo Recorders, Canoga Park; Geffen, 21 July 1987).\nMEASURED over 153 files (Bon Jovi · Aerosmith · Scorpions · Van Halen\n· Poison · Mötley Crüe · Guns N' Roses · Whitesnake · Def Leppard).\nTempo (n=153): p10 70 · p25 88 · med 110 · p75 126 · p90 137. Mode 99\nmajor / 54 minor. Meter 146 of 153 in 4/4. Melodic mean pitch 76.0 —\nthe HIGHEST of every rock row measured this round (grunge 63, poppunk\n71.6, britpop 73.8), which is the scream, and it is why `reg` puts the\nlead a whole octave over the riff. Seventh fraction 0.30 against\npoppunk's 0.12: these are dominant-seventh blues chords, not triads.\nCycles: I-V-IV-IV (30) and I-V-I-V (27), the plainest changes in the\nround, under the fastest hand.\n  kick  9122223171422131   snare 1111911131229112\n  hat   8272927392729263  — eighths with a sixteenth under every one\n\nLINEAGE: `nwobhm` (London 1980) is the twin-guitar harmony and the\ngallop; `glam` (London 1971) is the boot, the clothes and the\nchorus everybody shouts; `heavymetal` (Workington 1969) is the\nancestor of both; `aor` (Los Angeles 1982) is the studio polish and\nthe radio, in this row's own city five years before it.\n\nWHO SINGS: the gang chorus, everybody on the last word\n\nTHE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:\n\"The crash cymbal should usually be about half as loud unless you're using\nit for effect. For example it eats west coast rock alive.\" The `crash` and\n`crashback` kit words wrote a hard velocity 9 and 8, so every row in the\ncatalogue crashed at the top of the scale — measured on the compile path,\nseeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)\nwere at velocity 9, with the INVERSION that the rows crashing RARELY crashed\nHARDEST (bossa's six in 224 bars are every one of them the loudest drum amp\nthe box can make; punk's median is 0.3733). Those two words now write 1 —\nplay, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which\nis -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in\nits own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always\nbeen (36 rows write one) and which no row had claimed. WHY THIS ROW: `kit.x` is [9,0,...]: the row wrote its own crash at 9 on every downbeat.",
   "label": "Los Angeles 1987",
   "near": "nwobhm",
   "plan": "song",
@@ -163,6 +163,26 @@
       0,
       0,
       0
+    ]
+  },
+  "kitVel": {
+    "x": [
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9
     ]
   },
   "fill": {

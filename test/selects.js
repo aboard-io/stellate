@@ -1067,17 +1067,59 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     "5a NO SILENT GREY, REACHED BY A THUMB — a tap on a refused option prints " +
     "its own reason on the page (" + reach.said.length + " of " + reach.tried +
     " driven) " + JSON.stringify(reach.silent.slice(0, 3)));
-  /* ...AND A REFUSED OPTION IS `aria-disabled` AND NOT `disabled`, which is the
-     mechanism the check above rests on: a `disabled` button takes no click, so
-     its reason is reachable only through a screen reader — the silent grey
-     wearing an accessible name (src/lozenge/field.ts law 6, now sheet.ts's
-     too). The NATIVE `<option>` is the one exception and is asked separately. */
-  const hardGrey = await p.evaluate(() => [...document.querySelectorAll(
-    "#app .nu-lz[disabled], #app .nu-wchip[disabled], #app .nu-opbtn[disabled]")]
-    .map((e) => e.dataset.k || e.className).slice(0, 6));
-  check(!hardGrey.length,
-    "5a …and not one of them is `disabled`, which would swallow the tap that " +
-    "asks " + JSON.stringify(hardGrey));
+  /* ...AND A REFUSED CONTROL IS `aria-disabled` AND NOT `disabled`, which is
+     the mechanism the check above rests on: a `disabled` element takes no
+     click, so its reason is reachable only through a screen reader — the
+     silent grey wearing an accessible name (src/lozenge/field.ts law 6, now
+     sheet.ts's too). The NATIVE `<option>` is the one exception and is asked
+     separately.
+
+     ===== IT NAMED THREE CLASSES AND THEREFORE MISSED THE TWELFTH ONE ====
+     REWRITTEN 2026-09-07 (the design-system round's law audit). This check
+     used to read exactly `.nu-lz[disabled], .nu-wchip[disabled],
+     .nu-opbtn[disabled]` — the three controls that were breaking the law on
+     the day it was written — and it therefore said ALL PASS while
+     `src/table/sheet.ts`'s name box, `.nu-textbox`, carried `?disabled` AND
+     `aria-disabled` on the same tag for a version and a half. A gate that
+     enumerates its subjects can only ever catch the bugs that already
+     existed; the law is about `disabled` ANYWHERE a refusal is drawn, so the
+     sweep is now the law's own shape.
+
+     WHAT IT SWEEPS, and why each clause is there:
+       · anything inside #app carrying BOTH `disabled` and a refusal's own
+         spelling (`aria-disabled` or `data-why`) — a control saying "I refuse,
+         and here is why" through a mechanism that swallows the question;
+       · plus EVERY `disabled` control in #app at all, so a refusal that
+         forgot its `data-why` is not exempted by the forgetting. That second
+         list is where the exemptions live and they are named, not silent:
+         `<option>` and `<optgroup>` inside a native `<select>`, which the
+         BROWSER enforces on its own wheel and where the reason rides in the
+         option's own words (sheet.ts:174), and `<select>` itself for the same
+         reason.
+     Both report the element's address, so a failure names the widget rather
+     than a count. */
+  const NATIVE_OK = "option, optgroup, select";
+  const hardGrey = await p.evaluate((nativeOk) => {
+    const addr = (e) => (e.dataset && e.dataset.k) ||
+      (e.getAttribute && e.getAttribute("aria-label")) ||
+      (e.tagName.toLowerCase() + "." +
+       String(e.className || "").trim().split(/\s+/)[0]);
+    const all = [...document.querySelectorAll("#app [disabled]")]
+      .filter((e) => !e.matches(nativeOk));
+    return {
+      /* the exact bug: a refusal spelled twice, one of the spellings mute */
+      both: all.filter((e) => e.hasAttribute("aria-disabled") ||
+                              e.hasAttribute("data-why")).map(addr).slice(0, 8),
+      /* and every other hard-disabled control, exemptions already removed */
+      any: all.map(addr).slice(0, 8),
+    };
+  }, NATIVE_OK);
+  check(!hardGrey.both.length,
+    "5a …and not one refusal is `disabled`, which would swallow the tap that " +
+    "asks " + JSON.stringify(hardGrey.both));
+  check(!hardGrey.any.length,
+    "5a2 …and no control in the app is `disabled` at all, outside the native " +
+    "wheel the browser enforces itself " + JSON.stringify(hardGrey.any));
 
   const sawWhy = new Set(sel.filter((s) => s.saidWhy && s.why).map((s) => s.why));
   const said = [...new Set(sel.filter((s) => s.disabled && s.why &&

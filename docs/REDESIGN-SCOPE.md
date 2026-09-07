@@ -24,11 +24,28 @@ the walkthrough measured the cost.
 
 ## Wave A · THE SHEET IS THE GRID
 
-1. **The record collapses to one row.** RULES · TIME · CHORDS · MOTIFS ·
-   MASTER · PRODUCE · PERFORMANCE become ONE line at the top — `THE RECORD`,
-   with the face saying what a glance needs (tempo · meter · key) — which opens
-   into the seven as a scope panel. The foot of the page empties; MIX keeps its
-   strips because a fader is the player's, not the record's.
+1. **The record collapses to ONE PLACE, and that place is the hamburger.**
+   RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE become ONE
+   line at the top — `THE RECORD`, with the face saying what a glance needs
+   (tempo · meter · key) — which opens into the seven as a scope panel. The
+   foot of the page empties; MIX keeps its strips because a fader is the
+   player's, not the record's.
+
+   **THE ONE LINE IS RETIRED, THE SAME DAY IT WAS BUILT (2026-09-06).** The
+   header read *"The record collapses to one row"* and the clause read
+   *"become ONE line at the top — `THE RECORD`"*. It was built and deleted
+   inside a single day; `nukernel/src/table/grid.ts` carries the tombstone
+   (*"`recordRow` STOOD HERE, 2026-09-06 to 2026-09-06"*) and
+   `test/table.browser.js` T14c reads it off the artifact — the `<tfoot>`
+   holds no record row. Paul: *"All that stuff at the top? I expected that to
+   live in the hamburger and for the hamburger to be nicely organized."*
+   **The argument above is not reversed, it is PAID:** the record does
+   collapse to one place, the scope panel does exist, and the foot did empty.
+   What changed is WHICH place. The eight surfaces — the seven above plus
+   SONG — are the hamburger's FIRST block; read `docs/NAV.md` §20 and
+   `nukernel/TABLE.md` §18d for the shape and the argument, and
+   `table.browser` T14b for the proof that all eight addresses resolve from
+   the hamburger.
 2. **The phone gets its words back.** With seven players every cell drew one
    identical dot (140 of them on Coach House), so the densest surface in the
    app was the least readable, while the desktop showed every name. A cell says
@@ -44,8 +61,11 @@ the walkthrough measured the cost.
    on an 844 px screen, which is how the walkthrough typed *a beat later* where
    it meant *filled in*. An editor is a scope-locked panel that fits, with the
    current value pinned in view and the vocabulary grouped.
-5. **Refusals are said out loud.** Every disabled control already carries a
-   written reason — the best writing in the product, shown to nobody. Show it.
+5. **Refusals are said out loud** — the law's OWNER is `nukernel/PROGRAM.md`
+   §2.3's `why` clause (`sheets.js` throws at build time without one, because a
+   silent grey is the bug this design exists to prevent). This is a wave, not
+   a second copy: every disabled control already carries a written reason —
+   the best writing in the product, shown to nobody. Show it.
 6. **A variation is a chain** (the queued round folds in here): pick several,
    in order, for a line and for the drums.
 
@@ -62,15 +82,39 @@ the walkthrough measured the cost.
 
 ## Wave D · THE BASS HOLDS A LINE
 
-10. **The bass can read a motif.** Both compilers hand `K.bass` the first
-    line's compiled phrase, so a bass cell that named a motif named it into
-    nothing — the sheet says so honestly today, which is the right refusal for
-    a wrong architecture. Either the kernel lets a bass read its own material,
-    or the column says where the choice would be. This is an engine round and
-    it is its own wave.
+10. **The bass READS a motif — the kernel was the half that moved.** Both
+    compilers handed `K.bass` the first line's compiled phrase, so a bass cell
+    that named a motif named it into nothing — the sheet said so honestly,
+    which was the right refusal for a wrong architecture. Either the kernel
+    lets a bass read its own material, or the column says where the choice
+    would be. This is an engine round and it is its own wave.
+
+    **THE ALTERNATIVE IS SPENT AND THE WAVE IS PAID (2026-09-07, commit
+    `b12da62`).** The clause read *"Either the kernel lets a bass read its own
+    material, or the column says where the choice would be"* — a fork, written
+    because this document could not know which half was affordable. The first
+    half was bought: `kernel.js` now declares `function bass(subj, g, bars,
+    own)` and takes the bass's own compiled cell as a fourth argument, read as
+    a figure over the record's own harmony. `document.js` carries the law
+    under the heading *"...AND THE BASS READS ITS OWN (WAVE D, 2026-09-07)"*,
+    including its three refusals (a bass that names nothing, a name not in the
+    bank, and a drum cell each answer null) and why the pin does not move for
+    it. The second half — *"the column says where the choice would be"* — was
+    never needed and is not owed.
 
 ## The laws this program inherits
 
 Measure the RENDERED artifact, never the intention. Any phone claim is measured
-under iPhone emulation. One owner per fact; move code, never copy it. Nothing is
-fixed but the bottom bar (§13). Every wave lands gated, on staging, on its own.
+under iPhone emulation. One owner per fact; move code, never copy it. **Two
+fixed CHROME bands and only these two** — the OWNER of that law is
+`nukernel/TABLE.md` §16 (*"§13a.1 IS AMENDED TO TWO, IN WRITING"*), which
+carries the four-row comparison of the band that was deleted against the band
+that came back; read it there and do not restate it here. Every wave lands
+gated, on staging, on its own.
+
+*(This line read* **"Nothing is fixed but the bottom bar (§13)"** *until
+2026-09-07. It was FALSE from the day the top strip landed: `test/shell.js`
+A6/A7b measure two fixed bands at every width — the bar at 50.39px and the
+strip at 44px — and §16 wrote the amendment properly on 2026-09-06 without it
+travelling here. It was the SIXTH copy of a law amended in one place, which is
+why this one is a pointer and not a wording.)*

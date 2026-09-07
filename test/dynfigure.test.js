@@ -251,13 +251,48 @@ ok("§C3 the phrase cache tells two figures apart", () => {
    (Paris 1948) declares no kit at all, so `grooveOf` answered null for it
    before this round and answers null after: THE KIT SAYS NOTHING, which is
    the same sentence it was always making and is now the one the box prints.
-   The new digits are the same measurement as the old. */
+   The new digits are the same measurement as the old.
+
+   TWELVE OF THE FOURTEEN WERE RE-PINNED ON 2026-09-07 (the melody round), and
+   this time the alarm rang for a reason that has to be argued rather than
+   fixed. Paul: *"the motifs have a real sameness to them ... seeds should be
+   DIFFERENT"*. Measured, 78% of every melodic move in the catalogue was a step
+   or a repeat, because `ideas-kit.js CONTOURS` held eight melodic shapes and
+   every one walked the scale. The round splits a contour into a GESTURE and a
+   MANNER, distributes the manners per family as data (`genres-tables.js
+   LINES`) and draws one per part per reading. Every one of these twelve
+   composes a different TUNE now.
+
+   THAT IS NOT A MACHINE STARTING TO BREATHE, and the distinction is the whole
+   content of this section. `DYNAMICS: null` is a claim about the PERFORMANCE
+   LAYER — "a 303 sequence and a four-on-the-floor kick do not breathe", said
+   about weight and timing, which is what this file's own header says and what
+   §A/§B/§C measure. What a record's TOPLINE is shaped like is a different
+   axis, and a techno record's topline was written by a person exactly as a
+   soul record's was. The two things a machine actually is are both fenced, in
+   code and not by good intentions:
+
+     · THE SEQUENCER DOES NOT MOVE. `ideas-kit inManner` refuses every one of
+       the seven arpeggios by name (gesture `machine`), and `KINDS.seq` is
+       pinned to one. Measured on `techno` and `house` at seeds 1-3, the `seq`
+       cell is byte-identical across the round and across every reading —
+       `0,2,4,7,4,2,…` before and after. `test/melody.test.js` §A3 holds it.
+     · THE DRONE DOES NOT MOVE. `hold` is gesture `still` and refuses every
+       manner, so a pad that holds still holds.
+
+   AND TWO OF THE FOURTEEN DID NOT MOVE AT ALL — `techno` and `house` — which
+   is worth saying because it is NOT the fence: both deal parts the manner can
+   reach, and both drew the step manner for every one of them at reading 1.
+   They move at seeds 2 and 3 (house's `verseline` comes out `0,2,4,7,4,0`, a
+   line through the chord, at seed 2). A pin taken at seed 1 is a pin on one
+   reading, and this is the round that makes that worth remembering.
+   The new digits are a different tune, argued, on the same performance. */
 const FROZEN = {
-  techno: "6962195da935614c", acid: "0b60c44ebcaba052", house: "e907c403371c0d92",
-  trap: "03d353d28a5abe47", electro: "029a41c6bea26e51", tapemusic: "99777da27cf1a1c7",
-  italodisco: "b59b5f0c99354079", miamibass: "e1d5b326f2e7365b", crunk: "e89e6a98febe55e6",
-  grime: "18884350eaedb0f9", dubstep: "f9e3136caff0bb7f", footwork: "bffeb9bab49b8a14",
-  gqom: "e2c589536d9d317e", tromso: "174b0c723ef13ca2",
+    techno: "6962195da935614c", acid: "ee6b693c373281ce", house: "e907c403371c0d92",
+    trap: "cff6feb45f84b34b", electro: "d0498ba4015623c8", tapemusic: "40abd6b885b76f0d",
+    italodisco: "cf6e7a7e86d6879d", miamibass: "660886f8f63639e1", crunk: "d22e284f251f0dc7",
+    grime: "7f2623eff97c0f0f", dubstep: "612a4999d151e9d3", footwork: "f75200241fa48a6c",
+    gqom: "fc138407d9fa1d0a", tromso: "6f82e494aca6fea9",
 };
 ok("§D1 the `DYNAMICS: null` machines declare no figure", () => {
   const nulls = Object.keys(DYNAMICS).filter((k) => DYNAMICS[k] === null);

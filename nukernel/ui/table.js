@@ -2011,6 +2011,7 @@ function armText() {
 }
 function textRow(tf, after) {
   const cur = tf.value || "";
+  const refused = !tf.set;
   const commit = (el) => {
     const v3 = el.value;
     if (v3.trim() === cur.trim()) {
@@ -2030,17 +2031,23 @@ function textRow(tf, after) {
       .value=${cur}
       maxlength=${o2(tf.max ? String(tf.max) : void 0)}
       placeholder=${o2(tf.hint || void 0)}
-      ?disabled=${!tf.set}
-      aria-disabled=${o2(tf.set ? void 0 : "true")}
+      ?readonly=${refused}
+      aria-disabled=${o2(refused ? "true" : void 0)}
       data-why=${o2(tf.why || void 0)}
-      title=${o2(tf.why || void 0)}
       autocomplete="off" autocorrect="off" spellcheck="false"
       enterkeyhint="done"
       aria-label=${tf.why ? t4(
     "sheet.field.refused",
     { name: tf.label, why: tf.why }
   ) : tf.label}
+      @pointerdown=${() => {
+    if (refused) say(tf.key, tf.why || tf.label);
+  }}
       @focus=${(e4) => {
+    if (refused) {
+      say(tf.key, tf.why || tf.label);
+      return;
+    }
     armText();
     const el = e4.target;
     el._nuCommit = () => commit(el);
@@ -2061,6 +2068,7 @@ function textRow(tf, after) {
     el._nuCommit = null;
     commit(el);
   }} />
+    ${sayLine(tf.key)}
   </div>`;
 }
 function lozengeFor(f2, onWrite, after) {

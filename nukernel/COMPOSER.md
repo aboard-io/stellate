@@ -54,7 +54,7 @@ achieve the dream."*
 ### 2.1 The nav is a tree, and it is the spine
 
 The gutter (`#nu-tray`, built by `trayRow`/`paintTray` in `ui/eight.js`)
-becomes ONE TREE. This reverses three dated laws, each named here so the
+**became** ONE TREE. This reverses three dated laws, each named here so the
 reversal is on the record:
 
 - **2026-08-28 "one vertical stripe max with an 'up' icon"** → REVERSED by B5:
@@ -150,6 +150,30 @@ that thing; children are what today's levels already build):
   `boardtab|bus|<k>` and `boardtab|auto|auto`) — the five sub-icons (B11).
 - Produce / Score / Video / Screensaver / Export → Score keeps its two views;
   the rest have none.
+
+**AND THE GUTTER ITSELF IS GONE (2026-08-28, `test/gutter.js`'s own header;
+`nukernel/TABLE.md` §10b steps 6 and 7).** This section is written in the
+present tense about a surface that no longer exists, and the tense is corrected
+here rather than the section deleted. Paul, looking at the nav beside the v271
+grid: *"…then have a hamburger menu for score, video, screensaver, and have
+genre, dice, playstop along the bottom — a real mobile app now with everything
+in the table and the nav space reclaimed."* `#nu-tray`, its list, its foot, its
+cut, its `--tray-w` column and the whole tree behind it — the levels, `TABKIDS`,
+`TABSUB`, `paintTray`, `trayRow`, `trayNow`, `tapNode`, `expanded`/`chain` and
+the three probes `__eightTray` / `__eightTree` / `__eightExpand` — are deleted
+from `ui/eight.js` and `nu.css`. `--tray-w` is declared **zero** times in any
+stylesheet in the tree; every remaining mention of it is prose. `test/shell.js`
+A6j asserts the ABSENCE of the whole apparatus — no `↑`, no `#nu-tray`, no
+`.nu-traylist`, no `.nu-trayfoot`, nothing at a `[data-depth]` — because a
+deletion that left one of the five behind would be a second navigation standing
+beside the first.
+
+**WHAT REPLACED IT, and the law this section was reaching for survives in it:**
+two fixed chrome bands and only these two (`nukernel/TABLE.md` §16 owns that
+law), with navigation in ONE hamburger at the top right and the transport in
+the bar at the foot — `docs/NAV.md` is the contract. **B5's "there is no ↑
+anywhere, ever" is still true and still gated**, and it outlived the tree it
+was written about, which is the part of this section worth keeping.
 
 ### 2.2 The seed
 
@@ -468,6 +492,16 @@ same commit. What lands:
   `.nu-explain`, `.nu-say`: fixed, anchored at `--tray-w`, panel plate, `--bw`
   ink, `--shadow`, own scroll, `[hidden]`. Used by the seed flyout and any
   future strip (B14). Nothing may overhang the gutter (shell A6i).
+  **AMENDED 2026-09-07: THERE IS NO GUTTER TO OVERHANG.** The anchor and the
+  clause both dated from the tray, which was deleted 2026-08-28 (§2.1's
+  tombstone); `--tray-w` is declared zero times in any stylesheet now. The
+  CHASSIS itself survived the surface it was anchored to and is the part that
+  mattered: `.nu-strip-out` is still the one flyout body, still with its own
+  scroll and its `max-block-size: min(70vh, 560px)`, and it is one of the two
+  surfaces that legitimately scroll inside themselves (`nukernel/DESIGN.md` §3
+  owns that count). What replaced the anchor is the two fixed chrome bands —
+  `test/shell.js` A6i measures the overhang against THEM, and A6j asserts the
+  tray's total absence.
 - **`.nu-preview`** — the small picture-of-the-thing tile: a 16-step gate
   block thumbnail (`<svg>`, one rect per step, velocity as height) used for
   motif chips in the tray, the roster, and the Motif nav sub-line.
@@ -583,10 +617,16 @@ carrying exactly that lands in wave 1a so it stops being an incantation.
   its slice ONCE; a red is fixed or its assertion rewritten IN PLACE with the
   old sentence kept above the new one and Paul's 2026-09-01 sentence cited.
   Never loosened, never deleted.
-- Three gates are RED ON HEAD before this round and are not this round's:
+- Three gates **were** RED ON HEAD before this round and were not this round's:
   `test/gutter.js` T2 (`tabs === 9`) and T5 (reads `a.nu-ixw`), and the two
   misdeclared `kind:"node"` rows for `bench`/`text-diet` in `test/all.js`.
-  Wave 1a fixes all three as part of its rewrite.
+  Wave 1a fixed all three as part of its rewrite. *(The FILE `test/gutter.js`
+  is still called that and there is still no gutter — it was deleted
+  2026-08-28, §2.1's tombstone. The gate's own header says why the name is
+  kept: every check in it is about the same SUBJECT, which is where a thumb
+  finds the transport, and renaming the file would lose eleven rounds of
+  argument to a `git log --follow` nobody runs. So this citation resolves; it
+  is the surface behind it that does not.)*
 - The typed quotations (`PAULS_TABS` in shell.js, `TABS`/`HEADINGS` in
   text-diet, `EXCLUDE is the six roles`, G0's 395) move ONLY with Paul's
   sentences from §1 quoted beside them.
@@ -615,14 +655,17 @@ of them inside gates that already existed rather than as files of their own.
 | seed | `test/seed.js` (227) | `seed` |
 | silence | `test/silence.js` (206) | `silence` |
 | rules | `test/rules.test.js` (403, node) **and** `test/rules-view.browser.js` (307) | `rules`, `rules-view` |
-| structure-grid | `test/structure.browser.js` (375) | `structure` |
+| structure-grid | `test/table.browser.js` T8c–T8g (`table-page`) | *(was `test/structure.browser.js`, deleted with its subject 2026-09-04 — the five section-automation grids became the table's ROW and CELL sheets, and its `avail.js`/`fields.js` coverage moved with them; `test/all.js` carries the tombstone)* |
 | meter | `test/meter-reach.browser.js` (213) | `meter-reach` |
 | produce | **no new file** — the two producer gates were rewritten in place instead (`test/producer-eight.test.js` +146, `test/producer.browser.js` +137): "only `make`" is P0's `verbAny === "absent"` and G-plan's one-verb walk, "old notes fold" is the alias door's own node check | `producer`, `producer-ui` |
 | dancers | **no new file** — `test/screensaver-lazy.js` +120, where S6's offline regex and S7's swiftshader launch already lived | `screensaver-lazy` |
 
 …and three the plan did not name, each registered by the wave-2 slice that
 needed it: `tempo-key` (`test/tempo-key.browser.js`, 358 — 2a), `band`
-(`test/band.browser.js`, 428 — 2c), `mix-heads` (`test/mix-heads.browser.js`,
+(`test/table.browser.js` T8a/T8b, `table-page` — 2c; **`test/band.browser.js`
+was deleted 2026-09-04 with its subject**, the roster having become the table's
+header row, and what it proved that `table-page` did not is folded in as those
+two checks), `mix-heads` (`test/mix-heads.browser.js`,
 352 — 2e). Every one of the eleven carries `covers`, so `--impacted` selects it.
 
 Two of the eight are gates inside gates, and that is a decision rather than a

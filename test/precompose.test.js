@@ -1110,13 +1110,34 @@ function sectionEvents(doc, i) {
       assert.strictEqual(TUNED.length - anyMoved.filter((g) => !GENRES[g].silent).length, 0,
         TUNED.filter((g) => !anyMoved.includes(g)).slice(0, 8).join(" ")));
   }
-  /* G6g READING 1 IS TODAY. The atlas opens every anchor at seed 1, so the
-     record a hand LANDS on may not move when the reading machinery lands —
-     only pressing rewrite may. Asserted against the frozen fixture rather than
-     against a rerun of the same code, which would only prove the code equals
-     itself: `cellOf` with no reading is what reading 1 composes. */
-  ok("G6g reading 1 composes the cells `cellOf` composes with no reading at " +
-     "all — absent is today, on every anchor", () => {
+  /* G6g THE DOCUMENT'S CELLS ARE WHAT `cellOf` COMPOSES, on every anchor —
+     no drift between the record and the engine that wrote it. The mirror
+     re-derives every line cell of the seed-1 record through `cellOf` and
+     demands the bytes back.
+
+     IT WAS "READING 1 IS TODAY" UNTIL 2026-09-07, and that half of the claim
+     is RETIRED here rather than quietly weakened. It said: the atlas opens
+     every anchor at seed 1, so the record a hand lands on may not move when
+     the reading machinery lands; only pressing rewrite may. That was the
+     right law for §6b, whose whole subject was what REWRITE does.
+       The melody round's subject is the opposite one. Paul, on a share link:
+     *"the motifs have a real sameness to them ... why does the system keep
+     bringing us back here?"* — and "here" is the record seed 1 composes.
+     Measured, 78% of every melodic move in the catalogue was a step or a
+     repeat on every reading, seed 1 included, because `ideas-kit CONTOURS`
+     had one manner. §6d draws a MANNER per part at every seed including the
+     first, deliberately and with the argument written at the seam, so the
+     frozen reading is exactly the thing that moves.
+       WHAT THE MIRROR STILL PROVES IS THE PART THAT WAS ALWAYS LOAD-BEARING:
+     a record's cells are a pure function of the words the record was composed
+     with, and nothing between `cellOf` and the document rewrites a note. So
+     the mirror is handed §6d's draw the same way it is already handed the
+     meter and the cell-bar count — both of them mirror repairs made for this
+     same reason, and both argued in this same block. What it may NOT be
+     handed is `rd`: a reading's own words are §6b's, reading 1 draws none,
+     and passing one would make this gate prove the code equals itself. */
+  ok("G6g the seed-1 record's cells are exactly what `cellOf` composes from " +
+     "that record's own words — no drift, on every anchor", () => {
     const bad = [];
     for (const gk of ANCHORS) {
       const G = GENRES[gk];
@@ -1159,6 +1180,10 @@ function sectionEvents(doc, i) {
          of steps, and gate.length / steps-per-bar is a fact the document
          states rather than one this gate assumes. */
       const spb = met ? met.steps : 16;
+      // §6d's own draw for this record, over exactly the kinds it deals — the
+      // same call `genreToDocument` makes, so the mirror cannot hold a second
+      // copy of how a manner is chosen.
+      const sh = P.mannersOf(gk, G, 1, new Set(Object.keys(cells)));
       for (const k of Object.keys(cells)) {
         if (cells[k].kind !== "line") continue;          // `beat` is the kit
         // `play` is the cell's onset vector (spaceopera at cb 2: 32 entries,
@@ -1167,7 +1192,11 @@ function sectionEvents(doc, i) {
         const pl = cells[k].play;
         const plen = Array.isArray(pl) ? pl.length : String(pl || "").length;
         const cb1 = Math.max(1, Math.round((plen || spb) / spb));
-        const made = P.cellOf(row, k, cb1, G, spb);  // no sixth argument
+        // no sixth or seventh argument — the READING and the DEVELOPMENT are
+        // what this mirror is measuring the absence of. The EIGHTH is §6d's
+        // manner, which reading 1 does draw (see the block above), so it is
+        // asked for by name off the same function the composer calls.
+        const made = P.cellOf(row, k, cb1, G, spb, null, null, sh[k]);
         if (JSON.stringify(made.cell) !== JSON.stringify(cells[k])) bad.push(gk + "." + k);
       }
     }

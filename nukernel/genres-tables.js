@@ -925,10 +925,43 @@
   // named so the composer can deal a DIFFERENT one per section role — the
   // thing that makes a chorus harmonically different from a verse. THE LAW for
   // a genre carrying both `prog` and `roots`: the prog's first-chord degrees
-  // must equal the roots bar for bar (gated). `roots` stays the skeleton the
-  // layers and the emergent machinery read; `prog` is what the pad, the bass
-  // and the ramp actually voice. A prog without a genre is inert data — that
-  // is the point, it is a vocabulary the arranger quotes by name.
+  // must equal the roots bar for bar ~~(gated)~~ **(gated 2026-09-07 by
+  // test/genres-build.test.js G5, and it was NOT before)**. `roots` stays the
+  // skeleton the layers and the emergent machinery read; `prog` is what the
+  // pad, the bass and the ramp actually voice. A prog without a genre is inert
+  // data — that is the point, it is a vocabulary the arranger quotes by name.
+  //
+  // WHY THE WORD CHANGED (2026-09-07). The claim was false the day it was
+  // written. The only assertion in the repo (test/remix.test.js:319) walked
+  // `tools/remix-out/` — twelve demo rows — and never opened
+  // `nukernel/genres/`, so tools/remix.js:1280 refused to MINT a row that
+  // broke the law while the shipped catalogue broke it in TWELVE places, and
+  // had since these tables landed. Eleven were the shared entries below
+  // pasted onto rows whose changes are not theirs: `soul7` (whose degrees are
+  // exactly psychsoul's and yachtsoul's roots) sat on seven rows that play
+  // I-vi-IV-V — girlgroup's "Will You Love Me Tomorrow", broadway's show
+  // turnaround, baroquepop's Pet Sounds — and made all seven play a I-IV-V
+  // blues; `jack7`, which the comment beside it says is "the newjackswing2
+  // cycle", sat on `newjackswing`, whose roots are a different progression;
+  // `blues12`, a TWELVE-bar form, sat on three EIGHT-bar rows. The twelfth,
+  // `territoryband`, the audit missed because the tool's own loop misses it.
+  // Fixed by taking the ROOTS in eleven cases — each row's `note` argues its
+  // roots by name and three cite them in a ruling another gate holds
+  // (precompose G14b, "the roots are degrees 0, 3 and 4, never 6") — and
+  // rewriting the prog as that row's own roots wearing the quality the shared
+  // entry brought, which is the half of the paste that was right. `symphony`
+  // went the other way: its prog is inline, and its note argues it in the
+  // prose ("drive it to the dominant with a real V-of-V, `prog` bar 3, a dom7
+  // on degree 1"), so bar 3 of the ROOTS was the drift and moved 4 -> 1.
+  //
+  // AND THE GATE READS IT CYCLICALLY, WHICH THE TOOL DOES NOT. kernel.js's
+  // `at` (:98) wraps both arrays, so a 4-bar prog under an 8-bar roots is
+  // legal and sounds as written (`crooner`), while a 12-bar prog under an
+  // 8-bar roots is a disagreement that rotates and never comes back into
+  // phase. G5 compares over lcm(|prog|, |roots|) bars with both wrapped, and
+  // takes a bar written as a LIST of chords by its FIRST — which is what the
+  // law's own wording says, and what remix.js's `row.prog[i].d` cannot do
+  // (bossa, gospel and doowop each hold a ii-V inside one bar).
   const PROGS = {
     /* COUNTRY ROCK'S TURNAROUND (2026-09-02). The census's own fingerprint
        for the label: major II — V of V — at 1.37x lift with `II V I IV` on 346
@@ -1265,6 +1298,204 @@
   // what makes the phrase, so the key has to be able to say WHICH figure
   // without a second map from function to word.
   for (const k of Object.keys(FIGURES)) FIGURES[k].k = k;
+
+  // ---- LINES — WHAT KIND OF TUNE THIS MUSIC WRITES -------------------------
+  // (2026-09-07, the melody round. Paul, on a share link to `sophistirock`:
+  // *"the motifs have a real sameness to them. We need novel melodies and
+  // motifs every single time. Seeds should be DIFFERENT — why does the system
+  // keep bringing us back here?"*)
+  //
+  // MEASURED FIRST, all 502 rows x seeds 1-3, off the rendered documents:
+  // 78% of every melodic move in the catalogue was one scale step or a
+  // repeated note, a fifth happened 0.7% of the time and an octave 0.3%. The
+  // cause is `ideas-kit.js CONTOURS`: eight melodic shapes, every one of them
+  // a walk along the scale. The seed changed WHICH notes a line walked and
+  // could never change the KIND of line.
+  //
+  // `ideas-kit.js` grew the missing kinds — the MANNERS: a leap filled in the
+  // other direction, a figure said again a step along, a line through the
+  // chord, a note held as an axis — and THIS is where the catalogue says how
+  // much of each its own music has. It is data quoting a vocabulary by name,
+  // which is `PROGS`' law and `FIGURES`' law and docs/DYNAMICS-FLOOD.md's:
+  // one new global default would only have made 502 rows alike a second way.
+  //
+  // A DISTRIBUTION IS A HAT, NOT A SWITCH. The weights are how many tickets
+  // each manner has; `precompose.js` §6d draws one per PART per reading, on
+  // its own stream, so two seeds of one row differ in the KIND of line each
+  // chair plays and not only in its spelling. Weight 0 means a music that
+  // does not do that at all, and it is a real claim: plainchant does not
+  // arpeggiate.
+  //
+  // THE GESTURE IS NOT IN THIS TABLE and that is the fence that keeps a part
+  // a part. A pad still holds, a counter still drops, an answer still rises —
+  // the manner only says how. `ideas-kit inManner` refuses the drone and the
+  // sequencer outright, so the six rows that say "a drone is a drone" and
+  // every 303 in the catalogue are untouched by every line below.
+  //
+  //   cad   which cadence closes a phrase — ideas-kit CADENCES, by name.
+  //         `open` is the refusal and means it: a chant does not cadence, it
+  //         stops, and neither does a machine.
+  const LINES = {
+    // THE ZERO OF THE TABLE. Mostly steps, a leap and a fill now and then,
+    // a sequence now and then — which is roughly what a corpus of Western
+    // song measures at, and what the box should do when nobody has said.
+    plain:     { w: "moves by steps, and leaps on purpose",
+                 hat: { step: 8, gapfill: 3, sequence: 2, chord: 2, pivot: 2 },
+                 cad: "stepdown" },
+    // CHANT AND POLYPHONY. A psalm tone moves by seconds and a third is an
+    // event; the whole point of `vox` is that it is the one family in the
+    // catalogue whose music is stepwise BY NATURE, and this round must not
+    // take that away from it. No chord manner at all — a plainchant does not
+    // arpeggiate, and neither does an organum — and no cadence in the
+    // functional sense: a modal line arrives, it does not resolve.
+    chantwise: { w: "steps, and a leap is an event",
+                 hat: { step: 14, gapfill: 2, sequence: 2, chord: 0, pivot: 2 },
+                 cad: "open" },
+    // THE HYMN TUNE AND THE FOLK TUNE. An arch with one leap in it, closing
+    // by step onto the tonic — and the triad, because a fiddle tune, a bugle
+    // call and a shape-note treble all climb one. This is the family with the
+    // widest spread on purpose: `roots` holds 146 rows and covers the fiddle,
+    // the banjo, the raga and the corrido.
+    tunewise:  { w: "arches, leaps once, and knows the triad",
+                 hat: { step: 8, gapfill: 4, sequence: 3, chord: 3, pivot: 2 },
+                 cad: "stepdown" },
+    // THE BAND. A rock hook is a riff on the pentatonic and its fourths are
+    // the guitar's own shape; the pivot is high because a riff INSISTS — it
+    // says one note and pushes off it. The plagal close is the rock cadence
+    // (IV-I), and it is what a modal tune with no leading tone actually does.
+    riffwise:  { w: "pushes off one note and reaches for the fourth",
+                 hat: { step: 6, gapfill: 4, sequence: 2, chord: 4, pivot: 4 },
+                 cad: "plagal" },
+    // THE STUDIO TOPLINE. A pop hook leaps to its high note and fills back
+    // down — that IS the modern topline, and the sequence is the pre-chorus
+    // climbing a step at a time. The most gap-fill of any row here.
+    hookwise:  { w: "leaps to the hook note and fills back down",
+                 hat: { step: 6, gapfill: 5, sequence: 3, chord: 3, pivot: 2 },
+                 cad: "leading" },
+    // SOUL AND GOSPEL. The melisma is stepwise — that is what a run IS — and
+    // the PHRASE opens with a leap and comes home. The pivot is the held
+    // note a singer worries before moving off it.
+    singwise:  { w: "opens with a leap and runs home by steps",
+                 hat: { step: 8, gapfill: 4, sequence: 2, chord: 2, pivot: 3 },
+                 cad: "leading" },
+    // FUNK AND THE GROOVE FAMILY. A funk line is a RHYTHM with pitches on it:
+    // one note worried, a stab through the chord, and very little travel.
+    // The highest pivot weight in the table and the lowest step count that is
+    // still a melody.
+    hornwise:  { w: "worries one note and stabs the chord",
+                 hat: { step: 5, gapfill: 3, sequence: 2, chord: 4, pivot: 6 },
+                 cad: "plagal" },
+    // THE FLOOR. A house riff is an arpeggio played by a person and a rave
+    // stab is a chord; the machine's own parts are fenced off from this table
+    // entirely (a `seq` chair keeps its arpeggio), so what this row shapes is
+    // the SUNG and PLAYED lines over the machine, which is exactly where a
+    // club record's tune lives.
+    stabwise:  { w: "arpeggiates, and repeats itself",
+                 hat: { step: 5, gapfill: 2, sequence: 4, chord: 6, pivot: 3 },
+                 cad: "open" },
+    // AMBIENT AND DOWNTEMPO. A drifting line circles: high pivot, low
+    // everything that travels, and no cadence — a drift record does not
+    // close, it fades. (The `hold` contour refuses every manner anyway, so
+    // this row speaks for the drift family's lines that DO move.)
+    driftwise: { w: "circles, and does not close",
+                 hat: { step: 9, gapfill: 2, sequence: 2, chord: 3, pivot: 5 },
+                 cad: "open" },
+    // THE HEAD. Bebop, and every music whose tune is written by an
+    // improviser: the widest intervals in the table, arpeggios through
+    // extended chords, and the leading tone under every close. No family
+    // takes this by default — it is quoted by the rows that mean it, which
+    // is the door a row uses when its family is not what its music is.
+    bopwise:   { w: "runs the changes, and lands on the leading tone",
+                 hat: { step: 5, gapfill: 4, sequence: 3, chord: 6, pivot: 2 },
+                 cad: "leading" },
+    // …AND THE REFUSAL. A row that says `line: "flat"` keeps the contour it
+    // was pinned to at every seed — the manner never moves. It is the one
+    // spelling of "this music has exactly one kind of line" and it exists so
+    // that a row can say so rather than being given a hat it does not want.
+    flat:      { w: "one kind of line, always",
+                 hat: { step: 1 }, cad: "open" },
+  };
+  // ---- SYLLABLES — WHAT A SINGER NOBODY CAST ACTUALLY SINGS ---------------
+  // (2026-09-07, the melody round. Paul, of the same London 1986 record:
+  // *"the vocals are do dooo doooo"*.)
+  //
+  // MEASURED FIRST. 319 of the 502 rows declare no `tone.mouth`, so their
+  // singer is CAST — `instruments.js throatOf` picks a MOUTHS row from the
+  // record's place, year and family, which is a good rule and gives sixteen
+  // different throats. What it cannot give is a different WORD: a MOUTHS row
+  // carries two or three vowels, walked at a constant rate for the length of
+  // the record, so the top bucket of the catalogue is
+  //
+  //     eao / half a beat / tenor      90 rows      (`skiffler`)
+  //     aei / half a beat / alto       49 rows      (`poplead`)
+  //
+  // — ninety records singing e-a-o, e-a-o, e-a-o. That is his three
+  // syllables, exactly, and it is a FALLBACK rather than a claim: every one
+  // of those rows is a row that said nothing.
+  //
+  // SO THE THROAT STAYS CAST AND THE WORD BECOMES THE FAMILY'S. Who is
+  // singing is a fact about where and when the record is (the cast rule is
+  // untouched); WHAT they sing is a fact about the kind of music, and this is
+  // where the catalogue says it. A row that states its own `mouth` — 183 of
+  // them — is not reached by any of this and renders byte for byte.
+  //
+  // EVERY WORD IS FIVE OR SEVEN VOWELS LONG, and that is the arithmetic
+  // rather than the taste: `to-engine.js` walks the word one vowel per
+  // syllable at a constant `syll`, so a word whose length divides the bar
+  // says the same syllable on the same beat forever. Five and seven are
+  // coprime with two and four, so the singer arrives at a different vowel on
+  // each repeat of the figure — which is what "not do dooo doooo" means when
+  // you write it down. (The alphabet is the tract's own five: i e a o u.)
+  const SYLLABLES = {
+    // the neutral word, and the one a family with no row takes
+    plain:    { w: "aeiou", syll: 1 },
+    // CHANT AND POLYPHONY. Latin's five vowels, open, two beats each: a psalm
+    // tone holds a syllable across a whole neume and that is what makes it
+    // chant rather than singing.
+    psalmody: { w: "aeoiu", syll: 2 },
+    // THE ROOTS FAMILY. Open and forward — a holler, a field song, a fiddle
+    // tune's mouth music — one syllable a beat, which is how a strophic verse
+    // scans.
+    holler:   { w: "aoiea", syll: 1 },
+    // THE BAND. Seven syllables at an eighth apiece, which is a beat group
+    // singing over the top of itself and never landing on the same vowel two
+    // bars running.
+    shout:    { w: "eaoieau", syll: 0.5 },
+    // THE STUDIO. A crooner, and then a belter: the vowel changes on the beat
+    // because the line is written to the lyric, and the darker vowels lead.
+    croon:    { w: "ouaeo", syll: 1 },
+    // SOUL AND GOSPEL. The run is the point — seven vowels at an eighth is a
+    // melisma with its own shape rather than a held note with a wobble on it.
+    runs:     { w: "aeiaoue", syll: 0.5 },
+    // THE FLOOR AND THE GROOVE. A hook, chopped: seven vowels, fast, and the
+    // word turns over against the bar the way a sampled phrase does.
+    vamp:     { w: "eaoiuae", syll: 0.5 },
+    // DRIFT. Slow, closed, and mostly behind the band — two beats a syllable
+    // and the dark end of the alphabet.
+    murmur:   { w: "uoaei", syll: 2 },
+  };
+  // WHICH WORD A FAMILY SINGS when its rows say nothing. Same shape as
+  // LINE_FAMILY above, and the same law: it is reached only where the row
+  // itself is silent.
+  const SYLL_FAMILY = {
+    kernel: "plain",  vox:    "psalmody", roots:  "holler",
+    band:   "shout",  studio: "croon",    soul:   "runs",
+    groove: "vamp",   club:   "vamp",     drift:  "murmur",
+    // a FUNCTION genre is a part stacked over somebody else's track, and what
+    // it sings is whatever the track is: the neutral word
+    parts:  "plain",
+  };
+
+  // WHICH DISTRIBUTION A FAMILY TAKES when its rows say nothing. Ten families
+  // and eleven distributions: `bopwise` is quoted, never defaulted to.
+  const LINE_FAMILY = {
+    kernel: "plain",   vox:    "chantwise", roots:  "tunewise",
+    band:   "riffwise", studio: "hookwise", soul:   "singwise",
+    groove: "hornwise", club:   "stabwise", drift:  "driftwise",
+    // a FUNCTION genre is the player stacked over a track, and what a player
+    // stacked over a track plays is a head
+    parts:  "bopwise",
+  };
 /*#endregion HEAD*/
 
   /* the four stamp passes, and the tables they are made of. Called on the
@@ -2790,6 +3021,32 @@
     GENRES[k].stress = d.stress; GENRES[k].phrase = d.phrase; GENRES[k].touch = d.touch;
   }
 
+  // ---- WHAT KIND OF TUNE EACH ROW WRITES (2026-09-07, the melody round) ----
+  // The row's own word if it has one, else its family's, else `plain`. Stamped
+  // rather than exported for the reason `family` is stamped two passes up: the
+  // resolution is a fact about the ROW, and precompose reads rows.
+  //   THE WORD IS CHECKED BY NAME, HERE, AT LOAD. A `line` no distribution
+  // answers to would otherwise fall through to a default and compose a
+  // plausible wrong tune in silence, which is exactly the failure the `dyn`
+  // check at the top of this file exists to prevent — said again one table
+  // over. (`tools/genres/build.js` cannot make this check: `line` resolves
+  // through `family`, and `family` is stamped by the pass above, inside this
+  // function, after the build has written the file.)
+  for (const k of Object.keys(GENRES)) {
+    const G = GENRES[k];
+    if (G.line != null && !Object.prototype.hasOwnProperty.call(LINES, G.line))
+      throw new Error(`genres: ${k}.line names no distribution: "${G.line}" ` +
+        `(genres-tables.js LINES has ${Object.keys(LINES).join(", ")})`);
+    G.line = LINES[G.line || LINE_FAMILY[G.family] || "plain"];
+    // …and the SYLLABLE a cast singer sings, on the same law and checked the
+    // same way. It is read by `instruments.js throatOf` and ONLY there, which
+    // is the one path a row with no `mouth` of its own takes.
+    if (G.syllab != null && !Object.prototype.hasOwnProperty.call(SYLLABLES, G.syllab))
+      throw new Error(`genres: ${k}.syllab names no word: "${G.syllab}" ` +
+        `(genres-tables.js SYLLABLES has ${Object.keys(SYLLABLES).join(", ")})`);
+    G.syllab = SYLLABLES[G.syllab || SYLL_FAMILY[G.family] || "plain"];
+  }
+
   // ---- ORNAMENTS — what a style adds to a line it has already written ------
   // kernel.js's ninth type (ORNAMENTS) reads exactly one field, `g.orn`, and a
   // genre that does not appear in this table has none: no default, no family
@@ -2955,7 +3212,8 @@
   // whose `dyn` names a figure nobody wrote (GENRES.md §6 G2) — the schema
   // check needs the vocabulary, and the vocabulary is declared once.
   const api = { BLUES, DIATONIC, MODES, MODELABEL, tuned, SCALES, SCALELABEL,
-                SCALEFAMILY, MODEFAMILY, FAMILYLABEL, FIGURES,
+                SCALEFAMILY, MODEFAMILY, FAMILYLABEL, FIGURES, LINES, LINE_FAMILY,
+                SYLLABLES, SYLL_FAMILY,
                 MOUTHS, PROGS, offbeats, breath, SUNG, DEFAULT, stamp };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenreTables = api;

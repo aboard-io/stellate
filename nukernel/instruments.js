@@ -231,6 +231,8 @@
     // borrowed value must not drift). Nothing exists under the open string to
     // be stopped, so the floor is a real floor and not a taste: a sizhu line
     // that goes there is folded back up, in key, exactly as a guitar's low E is.
+    // (KERNEL.md gives the borrowed-value law a prose home; this row stays its
+    // owner. Pointer added 2026-09-07.)
     erhu: [62, 105],
     // plucked + fretted (guitar tops around E6)
     nylon_string_guitar: [40, 88], steel_string_guitar: [40, 88],
@@ -454,7 +456,11 @@
   // readers of these tables.
   //
   // ---- THE TONE BLOCK IS A SYNTHESISER, and it always was ---------------------
-  // Every one of the 110 genres carries a `tone` block, and under nukernel's own
+  // EVERY genre row carries a `tone` block — every one of them, which has never
+  // stopped being true. (This read "every one of the 110 genres" until
+  // 2026-09-07: the RULE held and only the arithmetic drifted, so no new number
+  // is frozen in its place — `test/genres-build.test.js` prints the live one,
+  // "N row files, N rows in GENRES".) Under nukernel's own
   // WebAudio voice that block WAS the sound: two oscillators of `wave`, detuned a
   // few cents, into a resonant lowpass that opened at cut x 3.4 and shut to `cut`
   // across the note, under an atk/rel envelope at `gain`. A subtractive synth,
@@ -1541,9 +1547,29 @@
   };
   // ...and the ROW itself, which is what a tone block wants. genres.js MOUTHS is
   // the one owner of what a throat IS; this file only says which one.
+  /* …AND WHAT THEY SING, WHICH IS THE ROW'S FAMILY'S (2026-09-07, the melody
+     round). Paul, of a London 1986 record: *"the vocals are do dooo doooo"*.
+     Measured: 319 of 502 rows declare no `tone.mouth`, this function casts
+     them one of sixteen MOUTHS rows from place/year/family — and a MOUTHS row
+     carries two or three vowels walked at a constant rate, so 90 of those
+     rows sing `eao` at an eighth apiece for the length of the record and 49
+     sing `aei`. He is describing a FALLBACK, and a fallback is exactly where
+     the catalogue should have been speaking.
+       WHO is singing stays the cast's — a Lagos record and a Nashville record
+     do not have the same throat, and that rule is untouched. WHAT they sing
+     comes from the family (`genres-tables.js SYLLABLES`, stamped on the row
+     as `syllab`): five or seven vowels rather than two or three, at the rate
+     that music scans at. Five and seven are coprime with the bar, so the
+     singer does not arrive on the same vowel on the same beat forever.
+       A ROW THAT STATES ITS OWN `mouth` NEVER REACHES THIS LINE — audio/plan.js
+     asks for a cast only where `tone.mouth` is absent — so all 183 of them,
+     and every chair a band page has voiced by hand, are byte-identical. */
   const throatOf = (gk, id) => {
     const k = throatKeyOf(gk, id);
-    return (k && NG.MOUTHS && NG.MOUTHS[k]) ? NG.MOUTHS[k] : null;
+    const row = (k && NG.MOUTHS && NG.MOUTHS[k]) ? NG.MOUTHS[k] : null;
+    if (!row) return null;
+    const sy = (GENRES[gk] || {}).syllab;
+    return sy ? { ...row, vowels: sy.w, syll: sy.syll } : row;
   };
 
   /* ---------- AND A CHAIR MAY NAME ITS OWN THROAT (2026-09-04) ------------

@@ -1,5 +1,5 @@
 {
-  "note": "EMO [punk]. Punk's downstroked directness with the dynamics power\nballad already proved: `kits` alternates a quiet, arpeggiated verse\nagainst a loud, crashing chorus — the field that actually separates\nthis from punk, which refuses to develop AT ALL. Confessional means\nlegato where punk is staccato: a chord let ring instead of chopped.\n\n148: rushes the way punk and skiffle already do\n\nLINEAGE: the format (guitar/bass/drums, verse-chorus, three minutes)\nand the raw energy are punk's; the major-key-read vi-IV-I-V loop and\nthe song discipline underneath are rock's; the wash the loud chorus\nopens into is shoegaze's blur, thinned to a backbeat. Midwest emo's\nown tapped-arpeggio guitar language is still uncredited.\n\nREFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair\nis declared \"the second guitar, an octave under, doubling in the loud\nhalf\" — and a doubled guitar is an amp fact before it is a voicing:\n`kernel.js chair.fifths` states the engine's own reason, \"a power\nchord is an amp fact made pitch ... thirds intermodulate under\ndistortion and fifths do not\". Re-choosing that chair's note to break\na parallel would be correcting the amplifier.",
+  "note": "EMO [punk]. Punk's downstroked directness with the dynamics power\nballad already proved: `kits` alternates a quiet, arpeggiated verse\nagainst a loud, crashing chorus — the field that actually separates\nthis from punk, which refuses to develop AT ALL. Confessional means\nlegato where punk is staccato: a chord let ring instead of chopped.\n\n148: rushes the way punk and skiffle already do\n\nLINEAGE: the format (guitar/bass/drums, verse-chorus, three minutes)\nand the raw energy are punk's; the major-key-read vi-IV-I-V loop and\nthe song discipline underneath are rock's; the wash the loud chorus\nopens into is shoegaze's blur, thinned to a backbeat. Midwest emo's\nown tapped-arpeggio guitar language is still uncredited.\n\nREFUSES THE COPYIST (2026-09-06, docs/THEORY.md §2). The second chair\nis declared \"the second guitar, an octave under, doubling in the loud\nhalf\" — and a doubled guitar is an amp fact before it is a voicing:\n`kernel.js chair.fifths` states the engine's own reason, \"a power\nchord is an amp fact made pitch ... thirds intermodulate under\ndistortion and fifths do not\". Re-choosing that chair's note to break\na parallel would be correcting the amplifier.\n\nTHE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:\n\"The crash cymbal should usually be about half as loud unless you're using\nit for effect. For example it eats west coast rock alive.\" The `crash` and\n`crashback` kit words wrote a hard velocity 9 and 8, so every row in the\ncatalogue crashed at the top of the scale — measured on the compile path,\nseeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)\nwere at velocity 9, with the INVERSION that the rows crashing RARELY crashed\nHARDEST (bossa's six in 224 bars are every one of them the loudest drum amp\nthe box can make; punk's median is 0.3733). Those two words now write 1 —\nplay, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which\nis -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in\nits own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always\nbeen (36 rows write one) and which no row had claimed. WHY THIS ROW: `kits[1].x` is [9,0,...,8,...] — the loud kit is a written second kit, not a\ndealt one.",
   "copyist": {
     "refuse": "all",
     "why": "the second chair is declared \"the second guitar, an octave under, doubling in the loud half\", and under distortion that doubling is the amp sound rather than a voicing."
@@ -236,6 +236,26 @@
       ]
     }
   ],
+  "kitVel": {
+    "x": [
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9
+    ]
+  },
   "fill": {
     "s": [
       0,

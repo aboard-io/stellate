@@ -2671,7 +2671,8 @@
   // FOUR VECTORS PER LANE, ONE ALPHABET. A kit is key -> sixteen integers; the
   // key says which of four things those integers are.
   //
-  //   d    LEVEL   0 silent · 1 play (defer to kitVel, then to the phrase's own
+  //   d    LEVEL   0 silent · 1 play (defer to kitVel, then to the hand, then
+  //                to the lane's own weight, then to the phrase's own
   //                velocity) · 2..9 play at exactly this velocity. 1 IS the old
   //                binary "on", which is why the widening costs nothing: every
   //                kit ever written is already in the new alphabet.
@@ -2699,6 +2700,8 @@
   // have to be identical. So every draw is a pure hash of WHERE it was asked:
   // seed, bar, step, lane, and a salt that keeps the chance draw, the timing
   // draw and the velocity draw from being the same number three times.
+  // (KERNEL.md gives this law a prose home; the code here stays its owner.
+  // Pointer added 2026-09-07.)
   const rollAt = (seed, bar, i, lane, salt) => {
     let h = ((seed | 0) ^ 0x9E3779B9) >>> 0;
     h = Math.imul(h ^ (bar + 0x85EBCA6B), 0xC2B2AE35);
@@ -2863,10 +2866,35 @@
     // CRASH ON ONE — the cymbal that says a new phrase starts here, which is
     // the one drum idea that is about FORM rather than groove. A writer, like
     // `four`, and for the same reason.
-    crash:    k => ({ ...cp(k), x: vec16(i => (i === 0 ? 9 : 0)) }),
+    //
+    // ...AND IT DEFERS ITS WEIGHT (2026-09-07. Paul, listening: *"The crash
+    // cymbal should usually be about half as loud unless you're using it for
+    // effect. For example it eats west coast rock alive."*)
+    //
+    // THIS WROTE A HARD `9`, which is the top of the velocity scale, on the one
+    // step of the bar a phrase's own accent already sits on — so the amp handed
+    // to the engine was 0.5888, the loudest drum amplitude the box can make.
+    // MEASURED on the compile path, every anchor, seeds 1-3: 462 of 502 rows
+    // carry a crash, 5,646 events, and 2,443 of them (43%) came out at velocity
+    // 9. THE INVERSION IS THE FINDING and it is the whole argument for this
+    // line: the rows that crash RARELY crash HARDEST, because a rare crash only
+    // ever arrives from THIS operator being dealt as a section's kit word or an
+    // outro. bossa's six crashes in 224 bars are all 0.5888. jazz's eight are
+    // all 0.5888. indiefolk's five are all 0.5888. punk — which crashes twice a
+    // bar and writes its own `x` lane — has a MEDIAN of 0.3733. A cymbal a
+    // record reaches for once should not be the loudest thing on it.
+    //
+    // SO IT WRITES `1` — PLAY, DEFER — which is the spelling `four`,
+    // `backbeat`, `opens`, `pedal` and `onthree` have always used, and which
+    // seventeen rows already use in their own `kit.x`. WHERE the crash lands is
+    // this operator's business; HOW HARD it is hit is the row's, and the row
+    // says so in `kitVel.x` (see CRASH_VEL below for what happens when it does
+    // not). Nothing here decides the catalogue's cymbal weight any more.
+    crash:    k => ({ ...cp(k), x: vec16(i => (i === 0 ? 1 : 0)) }),
     // and the other placement worth having: the crash lands with the backbeat
     // instead of the downbeat — the eighties record, the gated snare's twin.
-    crashback: k => ({ ...cp(k), x: vec16(i => (i === 4 || i === 12 ? 8 : 0)) }),
+    // It wrote an 8 and defers for the same reason its twin above does.
+    crashback: k => ({ ...cp(k), x: vec16(i => (i === 4 || i === 12 ? 1 : 0)) }),
 
     // ---- THE SNARE HAND ----
     // The backbeat, said out loud: whatever the snare was doing, it is now on
@@ -3161,10 +3189,20 @@
   // and rim on an acoustic kit landed at one loudness. An acoustic kit is
   // played by a HAND by default now: a per-lane accent contour (downbeats
   // lean, offbeats breathe, the backbeat cracks) plus the humanize jitter the
-  // four genres that declared one already had. Machine kits (tr808/909,
-  // cr78, electronic) are untouched — a machine's exactness is its identity,
-  // and the MACHINE fingerprint gates pin it. An anchor opts out of the hand
+  // four genres that declared one already had. Machine kits are untouched —
+  // a machine's exactness is its identity, and the MACHINE fingerprint gates
+  // pin it. THE MACHINES ARE WHATEVER IS NOT IN `HAND_KITS`, WHICH IS THE
+  // LIST DIRECTLY BELOW, and that is deliberate: the hand names the five kits
+  // a person plays and everything else is a box. (This sentence read
+  // "(tr808/909, cr78, electronic)" until 2026-09-07. The law never moved —
+  // `tr606` arrived in DRUMKITS afterwards and correctly gets no hand,
+  // because it is not in HAND_KITS — but the parenthesis went stale and read
+  // as the definition. It is the same `tr606` blind spot precompose.js's
+  // MACHINEKIT has, at a second site, and there the omission IS a bug.)
+  // An anchor opts out of the hand
   // with `hand: "exact"`; a declared kitVel or step level still outranks it.
+  // (KERNEL.md gives this law a prose home; the code here stays its owner.
+  // Pointer added 2026-09-07.)
   const HAND_KITS = { room: 1, jazz: 1, power: 1, acoustic: 1, brush: 1 };
   const HAND_VEL = {
     k: [9,5,7,5, 8,5,7,5, 9,5,7,6, 8,5,7,5],
@@ -3175,6 +3213,42 @@
     p: [6,4,5,4, 6,4,5,5, 6,4,5,4, 6,5,5,4],
     t: [7,5,6,5, 7,5,6,6, 7,5,6,5, 8,6,7,6],
   };
+  // THE CRASH'S WRITTEN WEIGHT, and the only lane in the kit that needs one.
+  // (2026-09-07, the crash round — read the argument on the `crash` KITOP
+  // above first; this is its other half.)
+  //
+  // A LANE THAT DEFERS HAS TO DEFER TO SOMETHING. `HAND_VEL` answers for the
+  // seven lanes a hand plays time on and has never held a cymbal, so a
+  // deferring `x` fell all the way through to `vel(subj, i)` — the MELODY's
+  // velocity — which is the loudness-by-accident this whole three-layer
+  // resolution was built to end. Measured, that is not theoretical: heavymetal
+  // and grandopera both write `kit.x: [1,0,...]` and both took their cymbal
+  // weight off the tune, scattered from 0.2347 to 0.5888 with no drummer
+  // anywhere in it.
+  //
+  // FOUR OF NINE, and here is the defence of the number rather than a round
+  // one. The engine's drum amp is `0.12 + 0.52·v/9` (audio/to-engine.js
+  // `drumAmp`), so the whole velocity scale spans 14.5 dB and "half as loud"
+  // is five and a half steps of nine, not four and a half. Against the 9 this
+  // lane was written at, 4 is −5.2 dB accented (0.5888 -> 0.3230) and −4.4 dB
+  // plain (0.5120 -> 0.2809) — an amplitude ratio of 0.55, which is the "about
+  // half" Paul asked for, landing one step short of a literal 6 dB on purpose:
+  // 3 is what the `soft` operator writes, and a crash that marks a phrase is a
+  // struck cymbal and not a ghost. It reads QUIETER than the backbeat snare
+  // (HAND_VEL `s` is 8 and 9 there) and that is correct rather than timid —
+  // measured at the ring, one crash at velocity 9 peaks WITHIN 3 dB of the
+  // whole record's peak on coastrock and 4 dB ABOVE powerballad's entire snare
+  // part, because the recording is longer, wetter and bigger than a snare's at
+  // equal velocity.
+  //
+  // IT IS ONE NUMBER AND NOT A CONTOUR, unlike every row of HAND_VEL, because
+  // a crash fires once or twice a bar: WHERE it lands is the gesture and the
+  // sixteen slots would be fifteen zeroes and a lie. A row that wants a shape,
+  // or wants the old weight back, writes `kitVel.x` — which outranks this, is
+  // the same door `kitVel.k` has always been (36 rows write one), and was
+  // completely unclaimed until this round.
+  const CRASH_VEL = 4;
+  const LANE_VEL = { x: CRASH_VEL };
   const HAND_HUM = 0.03;              // gentler than blues' own 0.05
   function drums(subj, g, bars) {
     if (subj && subj.kind === "drum") return drumPattern(subj, g, bars);
@@ -3234,15 +3308,20 @@
           // rollAt) rather than of how many draws came before it.
           if (ch) { const odds = at(ch, i) / 9;
                     if (odds < 1 && rollAt(seed, b, i, d, 0) >= odds) continue; }
-          // KIT DYNAMICS, now in three layers: the LEVEL written on the step
+          // KIT DYNAMICS, now in FOUR layers: the LEVEL written on the step
           // itself (2..9 — how an operator says "ghost" or "accent"), then
-          // `g.kitVel`'s per-lane hand, then the melody's own velocity, which
-          // is where the kick's loudness used to come from by accident. A
-          // level of 1 is the old binary "on" and defers, so every kit ever
-          // written renders exactly as before.
+          // `g.kitVel`'s per-lane hand, then the hand law's own contour, then
+          // the LANE's written weight (LANE_VEL — the crash, and only the
+          // crash), and only then the melody's own velocity, which is where
+          // the kick's loudness used to come from by accident. A level of 1 is
+          // the old binary "on" and defers, so every kit ever written renders
+          // exactly as before.
+          // ...and, for the one lane no hand keeps time on, the lane's own
+          // written weight before the melody's (LANE_VEL, the crash round).
           const v0 = cell > 1 ? cell
             : g.kitVel && g.kitVel[d] ? at(g.kitVel[d], i)
             : handed && HAND_VEL[d] ? at(HAND_VEL[d], i)
+            : LANE_VEL[d] != null ? LANE_VEL[d]
             : vel(subj, i);
           // NUDGE: the baked hand (ninths of a step) plus the per-bar drift of
           // g.humanize. Both move the hit and neither adds or removes one.
@@ -3898,6 +3977,35 @@
   // one drum event, written in the same shape drums() emits
   const D = (t, d, acc, v) => ({ t, d, acc: !!acc, vel: v, kind: "hit", fill: true });
 
+  // HOW HARD THIS SECTION HITS ITS CYMBAL, read off the section's own music.
+  // (2026-09-07, the crash round — the KITOPS' half of the argument is beside
+  // `crash` above and the number is CRASH_VEL beside HAND_VEL.)
+  //
+  // The six gestures below — the fill's landing, the roll's, the tom fill's,
+  // `crash` itself, the hush's, and the intro's downbeat — each wrote a hard
+  // `D(..., "x", 1, 9)`: velocity 9 AND the accent flag, which is amp 0.5888,
+  // the single loudest drum event the box can make. MEASURED: on the rows that
+  // never write a cymbal of their own that gesture is the ONLY crash on the
+  // record, so a bebop record's three crashes, a bossa's six in 224 bars and an
+  // indie folk record's five were every one of them at the top of the machine —
+  // and jazz's peaked 0.24 dB ABOVE its own snare, which hits thirty times.
+  //
+  // AND IT CANNOT BE ASKED OF THE ROW, because these are events and not kit
+  // cells: `edges` is handed (ev, intro, outro, span, bars, meter) by
+  // ui/derive.js and no genre travels with it. So it is asked of THE MUSIC,
+  // which is better evidence anyway and needs nobody's signature to change: the
+  // loudest crash the section already plays IS this row's crash, and the
+  // landing matches it. punk, grunge, numetal and the rest that write `kit.x`
+  // at 9 land their fills at 9 exactly as before; a row that has no cymbal
+  // anywhere gets CRASH_VEL, the written default, and the accent flag still
+  // marks the landing as a landing. Pure function of the events, like
+  // everything else in here.
+  const xVelOf = (ev) => {
+    let v = 0;
+    for (const e of ev) if (e && e.kind === "hit" && e.d === "x" && e.vel > v) v = e.vel;
+    return v || CRASH_VEL;
+  };
+
   function intro(ev, kind, span, bs, met) {
     if (!kind || !bs) return ev;
     const M = barMet(met), NS = M.n, PU = M.p, u = bs / NS;
@@ -3991,7 +4099,7 @@
       // single commonest near-empty bar in the catalogue (150 of them). A hit
       // marks the downbeat and then the section ARRIVES: the band is back on
       // beat 2, which is what everybody actually plays.
-      return [D(0, "k", 1, 9), D(0, "x", 1, 9),
+      return [D(0, "k", 1, 9), D(0, "x", 1, xVelOf(ev)),
               ...bar.filter(e => e.t >= PU * u - 1e-9), ...rest].sort((a, b) => a.t - b.t);
     }
     // SOLO MEANS ONE VOICE. It used to keep the whole pitched layer, which on
@@ -4036,6 +4144,8 @@
     const inBar = e => e.t >= from, rest = ev.filter(e => !inBar(e));
     const bar = ev.filter(inBar);
     const keepLines = bar.filter(e => e.kind !== "hit");
+    // the row's own cymbal weight, read off the section (xVelOf, the crash round)
+    const xv = xVelOf(ev);
     if (kind === "fill") {
       // THE FILL. Eighths for the first half of the bar, sixteenths for the
       // second, accented on the beat — the standard shape, played as real snare
@@ -4050,7 +4160,7 @@
       for (let s = half; s < NS; s++) fs.push(s);
       for (const s of fs)
         out.push(D(from + s * u, "s", s % PU === 0, s < half ? 6 : 7 + (s % 2)));
-      out.push(D(from + (NS - 1) * u, "x", 1, 9));
+      out.push(D(from + (NS - 1) * u, "x", 1, xv));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "roll") {
@@ -4063,7 +4173,7 @@
       for (let s = Math.round(NS * 3 / 4); s < NS; s++) steps.push(s);
       const out = [...rest, ...keepLines];
       steps.forEach((s, i) => out.push(D(from + s * u, "s", i > 4, 4 + i)));
-      out.push(D(from + bs, "x", 1, 9));
+      out.push(D(from + bs, "x", 1, xv));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "crash") {
@@ -4088,7 +4198,7 @@
       }
       const land = [...first.values()].map(e => ({ ...e, t: from, dur: 0.9 * bs, sld: 0,
                                                    vel: Math.max(6, e.vel == null ? 5 : e.vel) }));
-      return [...rest, ...land, D(from, "x", 1, 9), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
+      return [...rest, ...land, D(from, "x", 1, xv), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
     }
     // ---- THE FILLS THAT ARE NOT A SNARE FILL --------------------------------
     // Every outro above is the same gesture at three densities, which is why
@@ -4111,7 +4221,7 @@
       for (let k = 0; k < PU; k++)
         run.push([NS - PU + k, tail[k % 4], tv[k % 4]]);
       for (const [s, d, v] of run) out.push(D(from + s * u, d, s % PU === 0, v));
-      out.push(D(from + bs, "x", 1, 9));
+      out.push(D(from + bs, "x", 1, xv));
       return out.sort((a, b) => a.t - b.t);
     }
     if (kind === "hatrun") {
@@ -4141,7 +4251,7 @@
         return { ...e, vel: Math.max(1, Math.round((e.vel == null ? 5 : e.vel) * (1 - 0.55 * x))) };
       };
       return [...rest, ...bar.filter(e => e.t < half - 1e-9).map(fall),
-              D(from + (NS - 1) * u, "x", 1, 9)].sort((a, b) => a.t - b.t);
+              D(from + (NS - 1) * u, "x", 1, xv)].sort((a, b) => a.t - b.t);
     }
     if (kind === "doubles") {
       // the kick-and-snare double-time bar: no acceleration, no cymbal, just

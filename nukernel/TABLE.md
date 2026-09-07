@@ -221,7 +221,9 @@ Per-cell mix automation shipped 2026-09-04. Four things worth writing down:
   is measured to reach modelled and sampled chairs alike (BOARD_EQ at 7200 Hz,
   desk-gate G8), and moves in BOTH directions — which a lowpass laid on a unit
   that has none does not. "Brighter" that brightened nothing would have been
-  the declared-but-never-arriving bug drawn on purpose.
+  the declared-but-never-arriving bug drawn on purpose — **that law's owner is
+  `PROGRAM.md`**, written there beside "test the artifact" (2026-09-07); §7's
+  T6 below is its short form. This line cites it and does not define it.
 - **THERE IS ONE DESK SITE AND IT IS NOT `laneAt`.** `laneAt` evaluates a lane
   at a beat and holds no unit and no channel; the place the walk reads a lane
   FOR A UNIT is `deskUnits`' own loop, where the board's mix-offset layer
@@ -435,9 +437,13 @@ from `mot`) and the desk's shade is per seat per section (desk.js shade). A
 level / pan / send / cutoff lane per voice per section is new. The shape
 exists at the far end — the Live export already writes per-track envelopes
 from the section lanes (export/live-devices.js) — so the work is the desk
-reading a cell lane and the walk applying it at the bar line. This is wave 3
-and the table draws the field greyed with its reason until then (the refused
-control law: no silent grey).
+reading a cell lane and the walk applying it at the bar line. This read *"This
+is wave 3 and the table draws the field greyed with its reason until then (the
+refused control law: no silent grey)"* until 2026-09-07. **SHIPPED 2026-09-04
+as wave 3: see §8 wave 3** — *"desk + walk read row lane + cell offset; the Live
+export writes the sum per track once; the greyed field lights."* The greying was
+temporary and is over; the refused-control law it invoked is not this file's
+(owner: `PROGRAM.md` §2.3's `why` clause).
 
 Per-cell artic / oct / rate / scale / clamp were per box. SHIPPED 2026-09-04
 as wave 4 — and the migration this paragraph promised was NOT needed, which is
@@ -516,7 +522,11 @@ children (indented and coloured by level, 2026-09-03).
   the rendered page and finds each one reachable by tap at 320px.
 - **T6 the sound**: a cell edit reaches the mix (the declared-but-never-
   arriving law): change a cell's motif, register and level and read each off
-  the rendered output.
+  the rendered output. (**This sentence is the law's short form and is kept
+  as one**; the law itself is OWNED by `PROGRAM.md`, written down there beside
+  "test the artifact" on 2026-09-07, after being cited six times across four
+  documents and defined nowhere. Everywhere else in this file the phrase is a
+  citation.)
 - **Wave 4's own two** (2026-09-04). `test/table.test.js` **T4m**: each of the
   five cell words moves ONE key in the document, moves that chair in that
   section on the RENDERED `ui/derive.js` path and no other cell of the record,
@@ -723,6 +733,19 @@ named rather than left to be found: ~~the ops still have their tray branch~~
 both drove by name, and all three moved in the same edit); and formulas, which
 §9a itself defers.
 
+> **THERE IS NO GUTTER, AND `test/gutter.js` IS A FILENAME THAT OUTLIVED IT
+> (noted 2026-09-07, at this file's first mention of the name).** The vertical
+> nav column — `#nu-tray`, `.nu-traylist`, `.nu-trayfoot`, its `--tray-w`
+> column, its levels and the whole tree behind them — **was deleted with §10b
+> steps 6 and 7**; §10f is the deletion record, `nu.css` lost 41 rules and
+> `--tray-w` is declared in no stylesheet, and `test/shell.js` asserts its
+> total absence at every width. The gate file kept its old name on purpose so
+> the assertions in it could keep their history, and its own header says so:
+> *"THE FILE IS STILL CALLED gutter.js AND THERE IS NO GUTTER."* **Every
+> `test/gutter.js` in the pages below is the gate, not the thing.** Sentences
+> that describe the gutter as standing are dated records of the rounds that
+> ran before it went, and are marked where they are not obviously past.
+
 **THE UNDO IS A STACK OF DOCUMENTS AND IT ADDS NO WRITE PATH.** `snapshot()` is
 a read and putting one back is `CTX.evolve` — the door the seed strip and the
 atlas have handed this page a whole new document through since the composer
@@ -889,7 +912,12 @@ produce -- then have a hamburger menu for score, video, screensaver, and have
 genre, dice, playstop along the bottom — a real mobile app now with
 everything in the table and the nav space reclaimed."*
 
-### 10a · The layout (phone first; the desktop is the phone given room)
+### 10a · The layout (DESIGN §3 bullet 1 owns the law this draws)
+
+*This heading read "(phone first; the desktop is the phone given room)" until
+2026-09-07, which is DESIGN §3 bullet 1 word for word — **that bullet is the
+owner** and this section is the drawing, not a second statement of it.*
+
 
     ┌────────────────────────────────────────────────┐  ≡ (score · video ·
     │ RULES     the rule chips, expandable           │     screensaver · export)
@@ -1380,16 +1408,22 @@ walk and neither is this round's to fix:
     address; N8 counts the depths it finds rather than three named rows, so it
     reads a third the moment one exists.
   · **THE OUTSTANDING RED IS `N8 390 · the indent is not what clipped
-    anything`, AND IT IS WAVE 2c's.** At 390 the gutter's word box is 67px
-    against a 7px `--nu-indent`, and that one step of indent is what clips four
+    anything`, AND IT WAS WAVE 2c's.** At 390 the gutter's word box **was** 67px
+    against a 7px `--nu-indent`, and that one step of indent **was** what
+    clipped four
     SECTION labels (`groove 2`, `chorus 6`, `chorus 9`, `outro 13`) — and
-    `notation` on the Score branch, which clips at 7px and fits at 6px, so it
-    is not an artifact of which branch the gate now drives. The section rows
+    `notation` on the Score branch, which clipped at 7px and fitted at 6px, so it
+    **was** not an artifact of which branch the gate then drove. The section rows
     entered the stripe in wave 2c and N8 never saw them because it always drove
-    the Motifs branch. The fix is a decision about the 96px gutter's word box
-    against the tap floor — the same arithmetic `gutter.js` T10b owns — and it
-    is deliberately not made in a round that deletes the tray two steps later
-    (§10b step 7). Green at 1280.
+    the Motifs branch. The fix **would have been** a decision about the 96px
+    gutter's word box
+    against the tap floor — the same arithmetic `gutter.js` T10b owned — and it
+    **was** deliberately not made in a round that deleted the tray two steps
+    later (§10b step 7). Green at 1280. **ANSWERED BY THE DELETION (§10f):**
+    there is no gutter and no `--nu-indent`, `test/nav-tree.js` is retired into
+    a tombstone, and `gutter.js` T10b is retired with a tombstone carrying the
+    96px column's arithmetic. *(Re-tensed 2026-09-07: this paragraph read in
+    the present tense about a control that no longer exists.)*
 
 **AND ONE SELECTOR BROKE BECAUSE A PANE BECAME A `<td>`.**
 `test/producer.browser.js` read `t.querySelectorAll("td button")` on the
@@ -1708,12 +1742,17 @@ restyle round (§11 order, last) does this pass over every surface.
 
 ### 11d · The lozenge field (DESIGN.md component 16)
 
-For the long vocabularies — the drum ops, the qualities, the scales, the
-transformations, the instruments — every option visible as a tight lozenge,
-clustered semantically under small headings, one hue per cluster, the hot
-ones filled, multi-select where the field allows it with the chain's order
-kept. Built in the restyle round; the drums' does-sheet and the chord
-quality picker are its first two surfaces.
+**DESIGN.md component 16 IS THE OWNER, and this heading has said so since it
+was written.** A four-line paraphrase of it stood here until 2026-09-07 —
+*"every option visible as a tight lozenge, clustered semantically under small
+headings, one hue per cluster, the hot ones filled, multi-select where the
+field allows it with the chain's order kept"* — which is component 16's forty
+lines shortened until the laws inside it (law 1's "EVERY option visible at
+once", the fold, the chain's order) could not be checked against anything.
+Read component 16. What is this section's own and is kept: **this field was
+built in the restyle round, and the drums' does-sheet and the chord quality
+picker are its first two surfaces.** §19b turns it ninety degrees when the
+vocabulary is too tall to wrap.
 
 ### (former 11a, kept for the record)
 
@@ -1876,16 +1915,27 @@ DESIGN.md §2 component 2 (*"sticky on its axis at every width, the corner
 pinned both ways"*) and §3 (*"the pane is the scrollport; heads stick"*) are
 the spec this satisfies.
 
-**THE CAP IS THE WRAP'S, NOT THE PANE'S**, and that is arithmetic. The brief
-said "100dvh minus `--top-h` minus `--bar-h`"; the pane is not the only thing
-between them. Measured at 320: the strip ends at 55.2 (`body`'s
-`padding-block-start`), `.nu-pan` pays `--s4` above the wrap, `body` reserves
-`calc(var(--bar-h) + var(--s3))` below for the foot bar, and the FORMULA BAR is
-106px inside the wrap at phone width. Cap the pane alone and the formula bar
-hands 106px of page scroll straight back. So `.nu-sheetwrap` takes the band,
-the formula bar keeps its natural size inside it, and the pane is the flex
-child (`min-block-size: 0` — without it a flex item's `auto` minimum is its
-content and the cap does nothing at all) that takes what is left and scrolls.
+**THE CAP IS THE WRAP'S, NOT THE PANE'S**, and that is arithmetic. **THE LAW
+AND ITS FINDING STAND; THE ARITHMETIC BELOW IS THE REASONING OF THE DAY.** The
+`.nu-sheetwrap` takes the band and the pane is the flex child with
+`min-block-size: 0` — *without it a flex item's `auto` minimum is its content
+and the cap does nothing at all* — and that is still exactly what nu.css does.
+What has moved is the WORKED EXAMPLE: it is measured against `.nu-formula`,
+which **§13a.6 deleted the same day (2026-09-05)**. Read it as the day's
+measurement, not as a description of the tree:
+
+> The brief said "100dvh minus `--top-h` minus `--bar-h`"; the pane is not the
+> only thing between them. Measured at 320: the strip ends at 55.2 (`body`'s
+> `padding-block-start`), `.nu-pan` pays `--s4` above the wrap, `body` reserves
+> `calc(var(--bar-h) + var(--s3))` below for the foot bar, and the FORMULA BAR
+> is 106px inside the wrap at phone width. Cap the pane alone and the formula
+> bar hands 106px of page scroll straight back. So `.nu-sheetwrap` takes the
+> band, the formula bar keeps its natural size inside it, and the pane is the
+> flex child that takes what is left and scrolls.
+
+The reason the conclusion survived the component it was argued from is that
+the wrap is the band-holder whatever it holds — a second child of the wrap
+would have cost the same 106px under any name.
 
 **AND `stick()` WAS SUMMING HEIGHTS, WHICH IS NOT WHERE A ROW IS.** It read
 `y += tr.height` — every row's height and none of the space between them, and
@@ -1919,7 +1969,9 @@ remembers the door this panel last landed on; `openVoice` and `openSection`
 re-arm it, so asking for the same player twice still opens their sheet.
 
 **A LANDING ONLY LANDS.** `tablePanel` ends every rebuild by CLICKING the head
-it wants open — the arrival door for the gutter, the atlas and a link — and
+it wants open — the arrival door, which on 2026-09-05 served the gutter, the
+atlas and a link, and which serves the hamburger, the atlas and a link since
+the gutter went (§10f) — and
 every door on this table is a TOGGLE. That was safe while a rebuild closed
 everything; the moment a sheet survives its own write, the landing click CLOSED
 it, once per write. Measured as "the sheet is open and its strip of words is
@@ -2632,26 +2684,48 @@ pinned, and pinning is the disease.
 
 ### 13a · The law
 
-**Nothing is fixed but the bottom bar. A thing pins only while you are inside
-it.** In full:
+**Nothing is fixed but the bottom bar AND THE TOP STRIP, and only these two
+CHROME bands. A thing pins only while you are inside it.** *(Amended
+2026-09-06 by §16, which is the OWNER of this sentence and carries the
+four-row comparison table that argues it — read "§13a.1 IS AMENDED TO TWO, IN
+WRITING". It read "**Nothing is fixed but the bottom bar.**" from 2026-09-05
+until then. The word CHROME is load-bearing and was added 2026-09-07: the
+pop-ups — `.nu-log`, `.nu-say`, `.nu-explain`, `.nu-strip-out` — and the plate
+`#nu-menu` are `position: fixed` and are NOT chrome, so a law that counts
+`position: fixed` rules is false of the stylesheet by a grep. The two chrome
+bands are `.nu-topstrip` and `.nu-bar`, and `test/shell.js` A6/A7b measure two
+at every width.)* In full:
 
-1. **One pin at a time.** The `.nu-bar` is the only `position: fixed` chrome
-   on the sheet (the ≡ plate joins it as its last button; `.nu-top` goes, the
-   × that closes a sheet is the sheet header's own). Inside the pane exactly
+1. **One pin at a time.** The two fixed CHROME bands are `.nu-topstrip` and
+   `.nu-bar`, and only these two (**amended 2026-09-06 by §16 — the owner**;
+   this clause read *"The `.nu-bar` is the only `position: fixed` chrome on the
+   sheet"* until then, and §16's table says why the strip it lets back is not
+   the `.nu-top` this clause deleted). The ≡ rode in the bar as its last button
+   under the original law and moved back to the strip in §16; the × that closes
+   a sheet is the sheet header's own. **AND THE ≡'s REFUSAL IS RECONCILED AT
+   §20b, NOT HERE (2026-09-07):** what this clause refused was a × in the top
+   corner for a sheet that has its own header — *"the ≡ NEVER OPENED A SHEET"*,
+   so the ≡ becoming the PLATE's dismiss is not a reversal of it. Read §20b's
+   *"AND THIS IS NOT WHAT §13a.1 REFUSED"* before citing this clause against
+   anything. Inside the pane exactly
    one band may be stuck at any moment: the grid's column heads while a
    section row is under them and no sheet is open, OR the owner row of the
    open sheet. Never both. `stick()` already releases rows at and after
    `.nu-spopen`; it now releases the column heads for a CELL sheet too, and
    pins nothing in `<tfoot>` ever.
-2. **Every special row is ONE LINE at rest** — TIME, RULES, MOTIFS, MIX,
-   MASTER, PRODUCE, PERFORM (the row was PHRASES for a day; §13e): `var(--tap)`
-   tall, the word left, the sentence or
-   the count right, a hairline under. No plate, no tint, no chips or lozenges
-   inline, no lamp on a second line (the MOTIF lamp draws inside the MOTIFS
-   row's own line or not at all). The sentence is the one the row already
-   says (`TIME  79 BPM · 4/4 · D natural minor`; `MOTIFS  3 motifs`;
-   `PERFORM  push · phrasing · ornament`); it is truncated with an ellipsis,
-   never wrapped.
+2. **Every special row is ONE LINE at rest** — **OWNER: DESIGN component 3**,
+   which carries this clause whole and adds what it did not have (the row does
+   not pin at rest, it scrolls out of the way, and it keeps its open state
+   across a recompile). This clause spelled out the geometry until 2026-09-07 —
+   `var(--tap)` tall, the word left, the sentence or the count right, a hairline
+   under, no plate, no tint, no chips or lozenges inline, no lamp on a second
+   line — and component 3 now says all of it. What is kept here because DESIGN
+   does not carry it: the ROSTER as this round drew it (TIME, RULES, MOTIFS,
+   MIX, MASTER, PRODUCE, PERFORM — the row was PHRASES for a day; §13e), the
+   rule that the MOTIF lamp draws inside the MOTIFS row's own line or not at
+   all, and the sentences themselves, which are the row's own words and not a
+   caption: `TIME  79 BPM · 4/4 · D natural minor`; `MOTIFS  3 motifs`;
+   `PERFORM  push · phrasing · ornament`.
 3. **Tap a row and it pins as the HEADER of its own sheet.** The row sticks to
    the pane's top edge, the sheet opens in the next `<tr>` (§10c's placement,
    unchanged) and scrolls under it; the header carries the × at its right
@@ -2661,8 +2735,13 @@ it.** In full:
    close (v287's T12n law, now for the row).
 4. **The column heads pin only within the grid.** They stick while the grid
    is under the thumb and no sheet is open. The section column sticks left
-   while players scroll sideways, as now (§11c's horizontal law stands:
-   nothing scrolls sideways at the page level).
+   while players scroll sideways, as now. (This clause ended *"§11c's
+   horizontal law stands: nothing scrolls sideways at the page level"* until
+   2026-09-07, which was the third copy of that law in this file. **OWNER:
+   DESIGN §3** — the PAGE's own inline axis never scrolls, gated by
+   `test/bench.test.js` B12, and the scrollports that DO are named there. The
+   clause this section needs is the one above it: the section column is frozen
+   INSIDE the pane, which is one of those named scrollports.)
 5. **Adders are a sheet, not columns.** The head row ends in ONE `+` cell,
    `var(--tap)` wide, and the grid ends in ONE `+` row, one line tall. Either
    opens the ADD sheet, whose body is the same `playerOffers`/`sectionOffer`
@@ -2683,30 +2762,51 @@ it.** In full:
    therefore live where the change was made. The `undoStack` and every write
    door are untouched: this moves a header, not a path. A long press on a cell
    offers copy/paste the way iOS does, through the same two ops.
-7. **Cells are glyphs first, words when there is room.** A player column is
-   never narrower than its glyph plus `--s2` each side, and never wider than
-   the pane divided among the players present; the word (`.nu-cellword`)
-   shows when the column measures ≥ 9ch and hides otherwise. Cells therefore
-   never overlap at any width and the head is never cut mid-word: a head too
-   long for its column shows the glyph and its first word.
+7. **A CELL SAYS A WORD AT EVERY WIDTH — THE MECHANISM BELOW STAYED AND THE
+   POLICY INVERTED (2026-09-06, §14 A2; see DESIGN component 1, which is the
+   OWNER).** This clause read *"**Cells are glyphs first, words when there is
+   room.**"* from 2026-09-05 until 2026-09-07, and as a design intent it is now
+   the exact opposite of what the box does: component 1 says *"It says a word
+   at every width … never a grid of identical dots"*, and the code follows it
+   by SIZING the grid so the ≥ 9ch test always passes — `calc(13ch + var(--cols,1)
+   * 9ch)` — and letting the pane scroll sideways with the section column
+   frozen rather than dropping the words. **What survives unchanged is the
+   machinery**, and it is worth keeping because it is the net under the sizing:
+   a player column is never narrower than its glyph plus `--s2` each side and
+   never wider than the pane divided among the players present; the word
+   (`.nu-cellword`) shows when the column measures ≥ 9ch and hides otherwise
+   (`has-words`, still in the tree at `grid.ts`); cells therefore never overlap
+   at any width and a head too long for its column shows the glyph and its
+   first word. The toggle is an unlabelled fallback now, not the intent —
+   **the intent is the word.**
 
 ### 13b · The budget this buys (the gate's own numbers)
 
+**THIS IS A MEASUREMENT OF A MOMENT, NOT A STANDING LAW** (labelled 2026-09-07).
+It records what T13 measured on 2026-09-05, before and after one round, and
+three of its rows have since been overtaken — the fixed-chrome row by §16's top
+strip, the formula-bar rows by §13a.6's deletion of `.nu-formula`, the adder row
+by §13e. **Read a row of this table as a number that was true on a date, never
+as a contract a future round must hold.** Where a claim here is still the law,
+its owner is named in the row. (Half the drift in this file has come from
+measurement tables read as contracts; where you find another, label it the same
+way.)
+
 At 390 × 844 under iPhone emulation (test-the-artifact law: `devices['iPhone
 14']`, DPR 3, `isMobile`, `hasTouch`), on Kingston 1969 and on the Silence
-record, T13 measures:
+record, T13 measured:
 
-| | before (v287) | after (must hold) |
+| | before (v287) | after, as measured 2026-09-05 |
 |---|---|---|
-| fixed chrome, at rest | ≡ plate + formula bar + bar | **the bar alone**, ≤ 72pt + safe area |
+| fixed chrome, at rest | ≡ plate + formula bar + bar | **the bar alone**, ≤ 72pt + safe area — *superseded 2026-09-06: TWO chrome bands, `.nu-topstrip` + `.nu-bar`; owner §16* |
 | pinned bands inside the pane, at rest, grid under the thumb | 3 special rows + heads | **the heads alone** (≤ 1 × `--tap` + 3px) |
 | pinned bands, a special sheet open | the whole stack | **the owner row alone** |
-| pinned bands, a cell sheet open | the stack + formula bar | **none** (the sheet's own header line is in flow at its top) |
+| pinned bands, a cell sheet open | the stack + formula bar | **none** (the sheet's own header line is in flow at its top) — *the "formula bar" of the before column was deleted the same day, §13a.6* |
 | pane height at rest | ~200pt | **≥ 844 − bar − safe area − 8** |
 | overlapping cell pairs, Silence, section row | 3 of 3 | **0** |
 | head text cut mid-word | "…he ntl" | **0 heads** |
 | `scrollTop` across open/close of TIME, RULES, a cell | moved | **identical** |
-| adders in the head row | 3 buttons, 22ch | **1 cell, `--tap`** |
+| adders in the head row | 3 buttons, 22ch | **1 cell, `--tap`** — *the cell and its `--tap` stand; the SHEET behind it was superseded the same day, §13e* |
 | `<tfoot>` rows sticky | yes | **none** |
 
 Plus T7's law re-proved on the rendered page: every control the formula bar,
@@ -2715,17 +2815,37 @@ the addbars and `.nu-top` offered is reachable in ≤ 2 taps from rest at 320
 the phone given room: at 1280 the same laws hold, the heads pin the same way,
 and nothing that was one line at 390 becomes a plate again.
 
-### 13c · What is kept, and what is not
+### 13c · What is kept, and what is not — **RETIRED 2026-09-07**
 
-KEPT: the vertical table; the row order (§10a); the special rows as rows;
-one sheet at a time and §10c's placement; dismiss-outside; the pane as the
-scrollport and the sticky section column; every write door, the undo stack,
-the lozenge field and its clusters; the bottom bar's genre · die · play.
+**THIS SECTION IS RETIRED. IT WAS A SNAPSHOT OF ONE AFTERNOON PRESENTED AS A
+CONTRACT, AND EVERY LINE OF IT HAS MOVED.** It is kept here unedited, because a
+contract you can no longer read as it was written is a contract nobody can
+check a reversal against — but **do not cite it.** What it read, on 2026-09-05:
 
-GONE: `.nu-top` (the ≡ moves into the bar), `.nu-formula`, the plates and
-inline chips on special rows, the three addbars, every `<tfoot>` pin. NOT
-DONE HERE: §12's music items, the phase-0 tape, the lozenge's remaining
-residue (the say line growing at 320).
+> KEPT: the vertical table; the row order (§10a); the special rows as rows;
+> one sheet at a time and §10c's placement; dismiss-outside; the pane as the
+> scrollport and the sticky section column; every write door, the undo stack,
+> the lozenge field and its clusters; the bottom bar's genre · die · play.
+>
+> GONE: `.nu-top` (the ≡ moves into the bar), `.nu-formula`, the plates and
+> inline chips on special rows, the three addbars, every `<tfoot>` pin. NOT
+> DONE HERE: §12's music items, the phase-0 tape, the lozenge's remaining
+> residue (the say line growing at 320).
+
+**WHERE EACH LINE WENT:**
+
+| the line | where it lives now |
+|---|---|
+| *"one sheet at a time"* | **§18a's ONE OPEN THING**, which is larger than a sheet: `globalThis.NuOpen` owns openness for the whole app, a sheet is one of three registered surfaces, and the two directions are closed. DESIGN §3 carries it too. |
+| *"the bottom bar's genre · die · play"* | false three ways since §16 and §20c: the genre plate went to the TOP STRIP (§16); the die stayed and is now the countdown itself (§20 message 4); play is there. **Owner: §20c** for the bar's inventory. |
+| *"GONE: `.nu-top` (the ≡ moves into the bar)"* | the ≡ moved back OUT of the bar in §16 and stands in `.nu-topstrip`. `.nu-top` — the floating corner plate — is still deleted; the strip that replaced it is a different thing, and §16's four-row table says how. |
+| *"the pane as the scrollport"* | **§11c**, unmoved and still true. |
+| *"dismiss-outside"* | **§18c's dismissal matrix**, which made it one of three ways out and measured all three. |
+| *"NOT DONE HERE"* | a round's to-do list, spent. |
+
+The replacement for this section as a whole is **§16's "two places, not
+seven"** (what is chrome and where) and **§18a's one-open law** (what may
+stand at once). Neither is a snapshot; both name an owner.
 
 ### 13d · What landed, and what it measured
 
@@ -2735,7 +2855,11 @@ row), `src/table/sheet.ts` (`offerLozenge`, the one door to the lozenge
 component), `src/copy/sheets.ts` and `src/copy/glyph.ts` (the ADD sheet's five
 words and the `+`'s), `ui/glyph.js` (`GLYPH.act.add`), `ui/eight.js` (the ≡ into
 the bar, the × into the sheet's own header) and `nu.css`. `node tools/ui/build.js
---check` says **ui-build ok 5 entries** and `npx tsc --noEmit` is clean.
+--check` was green and `npx tsc --noEmit` clean. *(This said "ui-build ok 5
+entries" until 2026-09-07, when the builder said six. It reads the entry count
+off the tree — `tools/ui/build.js:78-79` — so any number written in prose is
+behind the next directory somebody adds. Record that the check was GREEN, not
+what it counted; the same correction is at DESIGN.md §2a.)*
 
 **§13b'S TABLE, MEASURED** — `devices["iPhone 14"]`, DPR 3, `isMobile`,
 `hasTouch`, 390 x 844 on Kingston 1969 at reading 1, before off a `git archive`
@@ -2840,8 +2964,8 @@ kept, with its four screenshots):
 | `tcol-add|line` `|bass` `|drums` | three `.nu-addbtn`s in a 22ch head cell | the ADD sheet's lozenge field at `tcol-add` — one tap on either `+` |
 | `trow-add` | a `.nu-addbtn` under the last section | the ADD sheet's op row |
 | `tadd|head` `tadd|foot` | — | NEW: the two `+`s, one `--tap` cell each |
-| `menu` (the ≡) | `.nu-top`, fixed at the top corner | the LAST button of `.nu-bar`; `#nu-menu` opens above it |
-| `sheet-close` (the ×) | `.nu-top`, beside the ≡ | `.nu-sheethead`, the first line of the open viewer sheet, with the sheet's name |
+| `menu` (the ≡) | `.nu-top`, fixed at the top corner | the LAST button of `.nu-bar`; `#nu-menu` opens above it — *and back to `.nu-topstrip` on 2026-09-06 (§16); it is the plate's DISMISS as well as its opener since 2026-09-07 (§20b), which §20b shows is not a reversal of §13a.1* |
+| `sheet-close` (the ×) | `.nu-top`, beside the ≡ | `.nu-sheethead`, the first line of the open viewer sheet, with the sheet's name — *unmoved; **this** is what §13a.1 refused, and §20b's "AND THIS IS NOT WHAT §13a.1 REFUSED" is the reconciliation* |
 | `tfoot|perf` | a row head beside a three-line strip of word plates | a merged one-line row; its sheet is `perfCells` + `perfSheet`, which is more than the row held (`footCell` set `OPENFIELD` to an address the sheet it opened did not contain) |
 
 **WHAT IS DELETED.** `.nu-top` and its five rules; `.nu-formula`, `.nu-fvec`
@@ -3197,7 +3321,9 @@ number stays — the same fact at a finger's reading distance.
 `#pan-band .nu-wordgrid tbody th.nu-srowh`, which is id-scoped — so the class
 went on, the memo said it had, and the row drew `rgb(240, 237, 228)`, the
 resting cream, at every width: declared and never arriving, in the round that is
-about being able to SEE the playhead. The light is stated where the ground is
+about being able to SEE the playhead. (The **declared-but-never-arriving law**
+is owned by `PROGRAM.md`, beside "test the artifact", from 2026-09-07; this is
+a citation of it, not a second copy.) The light is stated where the ground is
 now, and the 3px `--ground` ring that closes the seam round a row head is
 painted in the light too. And `__eightFrozen` takes the class off for its clone
 — the exclusion is the page's, in the page, exactly as the parked `[data-live]`
@@ -3488,7 +3614,12 @@ new law and this paragraph.
 scope.** Cell → the cell's editor. Row head → the section. Column head → the
 player. A special row → its sheet. THE SELECTION FOLLOWS THE OPENING rather
 than preceding it: `toggle` writes `SEL` off the key on its way in, so the ring
-lands on the cell whose sheet is now under it.
+lands on the cell whose sheet is now under it. *(**OWNER OF THE LAW: DESIGN §3's
+"ONE TAP OPENS WHAT YOU TAPPED, AT ITS OWN SCOPE"**, which cites this section
+and carries the Shift-tap and second-tap clauses beside it. This section is the
+MEASUREMENT and the argument — the tap counts, why the old decision expired,
+and the finding that no separate select gesture is needed — and none of that is
+shortened.)*
 
 **NO DISTINCT "SELECT WITHOUT OPENING" GESTURE IS NEEDED, and that is a
 finding rather than an omission.** The two things the first tap used to be for
@@ -3787,18 +3918,22 @@ of its own to mark, the head above it still prints the word, and T15a REPORTS
 that case rather than failing on it: it is a fact about the record, not about
 the fold, and it is the same one whether the field is folded or open.
 
-#### B5 · A REFUSAL IS SAID OUT LOUD
+#### B5 · A REFUSAL IS SAID OUT LOUD — **the law's owner is `PROGRAM.md` §5**
 
-The law `src/lozenge/field.ts` law 6 has stated since v287, now for **every
-widget a sheet can draw**: a refused control is **`aria-disabled` and never
-`disabled`** — a `disabled` button takes no click, so its reason is reachable
-only through a screen reader, which is the silent grey wearing an accessible
-name — and **a tap on it prints its reason and writes nothing**.
+**THE LAW IS NOT THIS SECTION'S. OWNER: `PROGRAM.md` §2.3's `why` clause** —
+*"`why`, **required** whenever `disabled` or `quiet` is set: `sheets.js` THROWS
+without it, because a silent grey is the bug this design exists to prevent"* —
+which is the oldest statement of it, the best argued, and the only one that is
+a BUILD-TIME THROW rather than a sentence. This section carried a seventh
+wording of it until 2026-09-07 (*"a refused control is `aria-disabled` and never
+`disabled` … a tap on it prints its reason and writes nothing"*, with *"ONE
+OWNER FOR THE SENTENCE: the `why` the field or the option already carries"*),
+and a law with seven wordings has none. Deleted, not reversed: **what B5 did is
+carry that law to every widget a sheet can draw**, and that is the record below.
 
-ONE OWNER FOR THE SENTENCE: the `why` the field or the option already carries
-(avail.js / gates.js measured it; nothing derives a second one). ONE PLACE PER
-WIDGET: `.nu-lzsay` inside a lozenge field, `.nu-wsay` everywhere else, keyed by
-the field's own address and held across the redraw every write causes. Where it
+Kept here because `PROGRAM.md` does not carry it — **ONE PLACE PER WIDGET**:
+`.nu-lzsay` inside a lozenge field, `.nu-wsay` everywhere else, keyed by the
+field's own address and held across the redraw every write causes. Where it
 landed, and what was silent before:
 
 | widget | before | now |
@@ -3997,7 +4132,11 @@ nothing to scroll sideways — `scrollWidth 364 = clientWidth 364` at 390.
 
 #### THE NUMBERS
 
-| | before (v295) | after |
+*A MEASUREMENT OF A MOMENT, NOT A STANDING LAW (labelled 2026-09-07): what this
+round measured on v295 and immediately after it. A later round moving one of
+these numbers is not breaking a contract.*
+
+| | before (v295) | after (measured 2026-09-06) |
 |---|---|---|
 | head rows at rest, all three records | **3** — record · SECTIONS label · heads | **2** — record · heads |
 | where the grid STARTS inside the pane, Kingston / Coach, 390 · 320 · 1280 | **155.3px** | **107.3px** — 48px higher |
@@ -4016,6 +4155,13 @@ nothing to scroll sideways — `scrollWidth 364 = clientWidth 364` at 390.
 | page errors, console errors | 0 | **0** |
 
 #### NOTHING RUBBER-BANDS
+
+**OPEN QUESTION, ASSIGNED (2026-09-07):** the two sideways scrollers built
+after this law — the sheet track (`nu.css:8501`) and `.nu-lztrack`
+(`nu.css:8830`) — declare `overscroll-behavior-inline: contain`, which the law
+below names as the wrong choice by name. Whether the tracks are exempt or the
+rules are wrong is **not settled here**; it is the live design-system round's
+to answer. The law and its reasoning stand as written until it does.
 
 > *"In the song section area I can drag it too far right and then the whole
 > thing moves including the fixed parts. So it all feels reel wobbly."*
@@ -4137,6 +4283,14 @@ strip it lets back is not the strip §13a.1 deleted:
 Inside the pane nothing changed at all: one band pins at a time, the sheet's
 owner row is its header, `<tfoot>` pins nothing.
 
+*(**This block is the OWNER of the fixed-chrome sentence.** It was written here
+on 2026-09-06 and did not travel: §13a's header, §13a.1 and
+§13b's budget row all went on carrying the unamended law until 2026-09-07, when
+each was amended in place with a pointer back to this heading. The word CHROME
+is the part the other copies most need: pop-ups and `#nu-menu` are
+`position: fixed` and are not chrome, so the law is about BANDS, not about a
+count of `position: fixed` rules.)*
+
 #### WHAT THE BAR SAID BEFORE, MEASURED FIRST
 
 At rest, at 390 and 320 and 1280, on Kingston 1969 and on Coach House, the bar
@@ -4217,7 +4371,13 @@ prints) and draws no fill; playing it says `bar 12/76` and fills.
 
 #### THE NUMBERS
 
-| | before (v297) | after |
+*A MEASUREMENT OF A MOMENT, NOT A STANDING LAW (labelled 2026-09-07): what this
+round measured on v297 and immediately after it. Two rows have since moved on
+purpose — the bar's marks and its fold went in §20 — and that is a later round
+doing its job, not a broken contract. The standing laws of this round are the
+ALL-CAPS headings above, not this table.*
+
+| | before (v297) | after (measured 2026-09-06) |
 |---|---|---|
 | fixed chrome at the HEAD, all widths, both records | **0** | **44.0px** (`--top-h`, `--tap` + the notch) |
 | fixed chrome at the FOOT | 50.4px | **50.4px** — unmoved |
@@ -4629,9 +4789,21 @@ is changing a value*).
 | a table sheet | ✓ | ✗ → **✓** | ✓ |
 
 **6 of 12 before, 12 of 12 after** — the before measured on a HEAD overlay of
-the four files this round touches, driven by the same probe. Two listeners on `document` do all of it —
-one `pointerdown` and one `keydown` — because four surfaces with four
-listeners would have been four different ideas of "outside".
+the four files this round touches, driven by the same probe.
+
+**"OUTSIDE" HAS EXACTLY ONE DEFINITION, AND IT IS TWO LISTENERS ON `document`
+— ONE `pointerdown` AND ONE `keydown` (2026-09-07, written as a rule).** A
+surface that joins the dismissal law does NOT add a listener of its own; it
+registers with the owner and is dismissed by the two that already exist. The
+reason is the failure this round measured: four surfaces with four listeners
+would have been four different ideas of "outside", each locally correct, and
+the disagreement between them is invisible to every gate that tests one surface
+at a time — the same disease as `menuOpen` / `playOpsBox.hidden` / `logOpen` /
+`OPEN` in §18a, one axis over. *(This was stated as a fact about this round
+until 2026-09-07; it is a rule for the next one. It is the companion of §18a's
+one-open law: `globalThis.NuOpen` owns WHAT is open, and these two listeners own
+WHERE outside is. A fifth surface adds a row to the matrix above and no
+listener.)*
 
 **THE LOG'S THIRD WAY OUT IS A ×, NOT ITS OPENER**, and that is a consequence
 of the law rather than an exception to it: the log's opener is a row of the
@@ -4921,9 +5093,22 @@ the sheet so a picker never opens inside a scrollport. Which sheets is decided
 from the DATA (how many groups the model declared) and not from a flag a caller
 passes.
 
-**THE TRACK IS THE ONLY THING THAT SCROLLS SIDEWAYS.** `overflow-x` on the
-track, `overscroll-behavior-inline: contain` on it, and the PAGE's own inline
-axis untouched — §11c's law is about the page and is unchanged.
+**THE TRACK SCROLLS SIDEWAYS AND THE PAGE DOES NOT — AND THE TRACK IS NOT THE
+ONLY ONE.** This read *"**THE TRACK IS THE ONLY THING THAT SCROLLS SIDEWAYS**"*
+until 2026-09-07, which was false by three: `overflow-x: auto` stands on
+`.nu-pane`, on `#atlasWrap`, on the sheet track and on `.nu-lztrack`. **OWNER
+OF THE HORIZONTAL-SCROLL LAW: DESIGN §3** — the PAGE's own inline axis never
+scrolls, which is the claim that is actually true and actually gated
+(`test/bench.test.js` B12 measures `documentElement.scrollWidth −
+window.innerWidth` at 390), and the four scrollports that DO scroll sideways
+are named there.
+
+What is this section's own, and is why the track exists at all: `overflow-x` on
+the track and `overscroll-behavior-inline: contain` on it — a vocabulary too
+tall to wrap is turned ninety degrees so the columns run off the SIDE, where
+there is no bottom to fall off, and nothing is hidden. The page is untouched by
+that, which is the whole point of putting the scroll on the track and not on
+the page. (The `contain` is the open question flagged at §15a.)
 
 **A STATE IS ONE CONTROL THAT STEPS.** A row the player is IN one of, of at most
 five positions, is a spinner: the word, a step each side, the position printed.
@@ -4949,7 +5134,9 @@ and the fifth picker), `src/table/sheet.ts` (the sheet track, the spinner, the
 exclusive rail, the compound mark), `src/table/model.ts` (which rows are
 states, and the op bar split in two), `src/table/api.ts` (`cycle`, `compact`),
 `src/copy/table.ts` (four keys) and `nu.css`. `node tools/ui/build.js --check`
-says **ui-build ok 5 entries** and `npx tsc --noEmit` is clean.
+was green and `npx tsc --noEmit` clean. *(It said "ui-build ok 5 entries" here
+until 2026-09-07; the builder counts the entries off the tree, so the prose can
+only ever be behind — see §13d.)*
 
 **THE NUMBERS** (`scratchpad/design/instrument-table/probe.cjs`,
 `devices["iPhone 14"]`, DPR 3, `isMobile`, `hasTouch`, 390 and 320, on
@@ -5116,7 +5303,10 @@ its caption now — which is the same treatment §13e gave T8a.
 > 5. *"Get rid of the dismiss x about the globe and expand the globe
 >    accordingly"*
 
-**THIS ROUND IS STRUCTURE AND NOT SURFACE, ON PURPOSE.** Paul has already
+*This round's scope, which is a note about a round and not a law of the system
+— it stood as an ALL-CAPS law here, "**THIS ROUND IS STRUCTURE AND NOT SURFACE,
+ON PURPOSE**", until 2026-09-07, and is demoted rather than kept as ceremony.*
+Paul has already
 described the design system that comes next — *"this should look like a mixing
 board/LED with musical aesthetics and green phosphor/vector vibes. Light retro
 circa 1998"*, and *"squeeze things as much as possible… tighten things up"* —

@@ -895,8 +895,32 @@ function armText(): void {
   }, true);
 }
 
+/* ===== READONLY, NEVER DISABLED (2026-09-07, the law audit) ============
+   THE TWELFTH COPY OF A LAW WRITTEN ELEVEN TIMES ELSEWHERE, and the one place
+   in the tree that was still breaking it. This row carried BOTH `?disabled`
+   AND `aria-disabled` — and `disabled` is what this file's own header at :158
+   forbids by name, for exactly the reason it gives there: a `disabled` input
+   takes no tap, no focus and no pointer event, so the `why` beside it reaches
+   nobody with a thumb. It was the silent grey wearing the accessible name of
+   the law written to abolish it, and `title=` was the whole of its reach — a
+   tooltip, on a phone, which is no reach at all.
+
+   `readonly` IS THE RIGHT SPELLING FOR A TEXT BOX, and it is not the trade a
+   button makes. A readonly input is focusable, tappable, selectable and
+   copyable, and it refuses the one thing it has to refuse: a keystroke
+   reaching the record. So the tap lands, the row's own say line prints the
+   reason where a thumb already is, and the letters still cannot move. (A
+   button has no `readonly`, which is why every OTHER refusal on this sheet is
+   `aria-disabled` plus a handler that spends the press.)
+
+   AND THE ROW GETS A SAY LINE, which it did not have. Every other widget on
+   this sheet draws `sayLine(key)`; this one printed its reason into a `title`
+   and an `aria-label` and nowhere a thumb could see. The line is the same
+   line, keyed the same way, with its room reserved whether or not there is a
+   sentence — so a reason arriving under a thumb moves nothing. */
 function textRow(tf: TextField, after: () => void): TemplateResult {
   const cur = tf.value || "";
+  const refused = !tf.set;
   const commit = (el: HTMLInputElement) => {
     const v = el.value;
     /* NOTHING CHANGED IS NOT A WRITE. Trimmed on both sides because
@@ -913,16 +937,18 @@ function textRow(tf: TextField, after: () => void): TemplateResult {
       .value=${cur}
       maxlength=${ifDefined(tf.max ? String(tf.max) : undefined)}
       placeholder=${ifDefined(tf.hint || undefined)}
-      ?disabled=${!tf.set}
-      aria-disabled=${ifDefined(tf.set ? undefined : "true")}
+      ?readonly=${refused}
+      aria-disabled=${ifDefined(refused ? "true" : undefined)}
       data-why=${ifDefined(tf.why || undefined)}
-      title=${ifDefined(tf.why || undefined)}
       autocomplete="off" autocorrect="off" spellcheck="false"
       enterkeyhint="done"
       aria-label=${tf.why ? t("sheet.field.refused",
                               { name: tf.label, why: tf.why })
                           : tf.label}
-      @focus=${(e: Event) => { armText();
+      @pointerdown=${() => { if (refused) say(tf.key, tf.why || tf.label); }}
+      @focus=${(e: Event) => {
+        if (refused) { say(tf.key, tf.why || tf.label); return; }
+        armText();
         const el = e.target as Committer;
         el._nuCommit = () => commit(el); }}
       @keydown=${(e: KeyboardEvent) => {
@@ -934,6 +960,7 @@ function textRow(tf: TextField, after: () => void): TemplateResult {
                                        el.blur(); } }}
       @blur=${(e: Event) => { const el = e.target as Committer;
         el._nuCommit = null; commit(el); }} />
+    ${sayLine(tf.key)}
   </div>`;
 }
 

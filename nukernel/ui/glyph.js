@@ -916,7 +916,22 @@ export function paintIcon(b, opts) {
   const why = opts.why == null ? "" : String(opts.why).trim();
   b.setAttribute("aria-label",
                  why ? t("glyph.icon.refused", { word, why }) : word);
-  if (why) { b.disabled = true; b.setAttribute("aria-disabled", "true");
+  /* ===== `aria-disabled` AND NEVER `disabled` (2026-09-07) =============
+     THE FIRST BULLET ABOVE WAS WRONG FROM THE DAY IT WAS WRITTEN, and it said
+     so in its own words: *"`disabled` + `aria-disabled`, so the browser
+     refuses the press"*. A browser that refuses the press refuses the QUESTION
+     — no `click`, no `pointerdown`, no `pointerover` — so the three careful
+     answers underneath it (`data-why`, the joined accessible name, the
+     explainer a hold opens) reached nobody holding a phone. It was the silent
+     grey with a paragraph behind a door that does not open, on every refused
+     mark in the chrome; found by the design-system round's law audit when
+     `test/selects.js` 5a was widened past the three class names it used to
+     enumerate, and it fell out at once as `tempo-half time`.
+     THE LAW IS ELEVEN PLACES OLD (`src/lozenge/field.ts` law 6,
+     `src/table/sheet.ts`:158, `DESIGN.md` component 14): a refused control is
+     `aria-disabled` and NEVER `disabled`, so a tap still lands and still gets
+     an answer. `refuseTap` below is what spends that tap. */
+  if (why) { b.disabled = false; b.setAttribute("aria-disabled", "true");
              b.dataset.why = why; }
   else { b.disabled = false; b.removeAttribute("aria-disabled");
          delete b.dataset.why; }
@@ -1073,10 +1088,12 @@ function place(el2) {
   n.style.top = y + "px";
 }
 
-export function showSay(el2) {
+export function showSay(el2, text) {
   const n = box();
-  if (!n || !el2 || !el2.dataset.say) return;
-  n.textContent = el2.dataset.say;
+  const words = text == null ? (el2 && el2.dataset ? el2.dataset.say : null)
+                             : String(text);
+  if (!n || !el2 || !words) return;
+  n.textContent = words;
   place(el2);
   el2.setAttribute("aria-describedby", "nu-say");
   openOn = el2;
@@ -1154,6 +1171,37 @@ export function wireSay() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && openOn) hideSay();
   });
+  /* ===== A REFUSED MARK TAKES THE TAP AND ANSWERS IT (2026-09-07) ========
+     THE OTHER HALF OF DROPPING `disabled` IN `paintIcon`. A mark that cannot
+     be pressed is now pressABLE — it has to be, or its reason reaches nobody
+     with a thumb — so the press has to be SPENT here rather than reaching the
+     row's own handler and doing the thing the refusal refuses. Capture phase,
+     for the same reason the long-press swallow above is: the row's listener
+     must never run.
+
+     WHAT IT PRINTS is the sentence the caller already measured — `data-say`,
+     which for a refused mark is built through `tempoOp.sayWhy` and carries the
+     word AND the reason — falling back to the bare `data-why` for a caller
+     that set one and no say line. It opens the SAME explainer a hold opens,
+     because a page with two ways of saying one thing is the thing this file
+     was extracted to stop. One gesture, one answer, and the popover closes on
+     the next press wherever it lands (the `pointerdown` handler above).
+
+     IT IS SCOPED TO `[data-face]`, WHICH IS THIS FILE'S OWN SIGNATURE and
+     therefore means "a mark `paintIcon` drew". A lozenge and a chip are
+     `aria-disabled` with a `data-why` too and they answer in their OWN say
+     line (`.nu-lzsay`, `.nu-wsay`) — one place per widget, which is the law
+     `src/table/sheet.ts`:167 states. Swallowing their press here would move
+     their sentence into a popover and give the page two answers for one
+     question, so the selector says which widgets this handler owns. */
+  document.addEventListener("click", (e) => {
+    const t = e.target && e.target.closest
+      ? e.target.closest('[data-face][aria-disabled="true"][data-why]') : null;
+    if (!t) return;
+    e.preventDefault(); e.stopPropagation();
+    armed = null;
+    showSay(t, t.dataset.say || t.dataset.why);
+  }, true);
   /* A SCROLL MOVES THE CONTROL AND THE POPOVER IS FIXED, so it would sit over
      the wrong thing. It closes rather than chases: a box that follows a scroll
      is a box that is still moving after the gesture, and this page has spent

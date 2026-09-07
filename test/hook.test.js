@@ -457,6 +457,27 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
        drawing `fall` or `hover`, and this still fails that. The list is
        ideas-kit's own export, not a copy — the fence cannot drift from the
        vocabulary it fences. */
+    /* ...AND THE MANNER IS AN AXIS OF THE GESTURE (2026-09-07, the melody
+       round; precompose §6d). A contour said two things at once until today —
+       WHERE the line goes and HOW it gets there — so pinning `contour: "fall"`
+       pinned both, and the box had exactly one manner: by steps. Measured, 78%
+       of every melodic move in the catalogue was a step or a repeat. The round
+       splits the two and deals a MANNER per part per reading, out of the
+       distribution the row's family declares (`genres-tables.js LINES`).
+         SO A PINNED CONTOUR ADMITS ITS OWN GESTURE'S MEMBERS, in the manners
+       THIS ROW actually deals, and nothing else. That is the same widening
+       `seq` and `climb` already have one line up and it is the same argument:
+       the pin exists so that "a pad stays a pad", every member here keeps the
+       gesture (`Id.inManner` is total on that — test/melody.test.js §A2 holds
+       it), and what would still break the pin is `fall` coming back `rise`.
+       The list is ideas-kit's own function over the row's own hat, not a copy,
+       so the fence cannot drift from the vocabulary it fences. */
+    const manners = Object.keys((G.line && G.line.hat) || {});
+    const withManners = (list) => {
+      const out = new Set(list);
+      for (const c of list) for (const m of manners) out.add(Id.inManner(c, m));
+      return [...out];
+    };
     const pool = (f, all) => f === "cell" ? cellPool(g, k)
       : (k === "seq" && f === "contour") ? Id.ARP_CONTOURS
       /* ...and the SOLO'S GESTURE IS A BAND TOO (2026-09-01, "Art rock has
@@ -485,7 +506,7 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
     const RELS = [null].concat(Object.keys(P.RELEASE).map((w) => ({ rel: w })));
     for (const cb of CBS)
       for (const c of pool("cell", CELLS))
-        for (const ct of pool("contour", CONT))
+        for (const ct of withManners(pool("contour", CONT)))
           for (const l of pool("land", LAND))
             for (const rl of RELS)
               legal.add(J(P.cellOf(row, k, cb, G, stepsOf(G),

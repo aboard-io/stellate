@@ -1,5 +1,5 @@
 {
-  "note": "BARBERSHOP — New York 1910. The American Quartet's PLAY THAT\nBARBER SHOP CHORD (Victor, 1910): the named, dated record the\ndebts round said it could not find, found — the year the ringing\nchord got its own hit. The debts-round decline is therefore\nOVERTURNED on its own terms, not argued around. Four unaccompanied\nvoices, the lead inside the stack, every chord bent toward a\ndominant seventh; the historians' half of the story (Abbott 1992:\nthe practice is African-American recreational singing before it is\nanything else) is carried by the `spirituals` parent.\n\n\"jubilee quartets\" PAID 2026-08-30 (Nashville 1909) — one year\nthis row's senior, so the edge points backward as the maringa\nrule requires; Abbott 1992's half of the story (the practice is\nAfrican-American recreational singing first) now has an anchor\nto stand on instead of only the spirituals edge.\n\nWHO SINGS: the doowop stack's own blend, forty-five years\nearlier — the corner the corner learned from.",
+  "note": "BARBERSHOP — New York 1910. The American Quartet's PLAY THAT\nBARBER SHOP CHORD (Victor, 1910): the named, dated record the\ndebts round said it could not find, found — the year the ringing\nchord got its own hit. The debts-round decline is therefore\nOVERTURNED on its own terms, not argued around. Four unaccompanied\nvoices, the lead inside the stack, every chord bent toward a\ndominant seventh; the historians' half of the story (Abbott 1992:\nthe practice is African-American recreational singing before it is\nanything else) is carried by the `spirituals` parent.\n\n\"jubilee quartets\" PAID 2026-08-30 (Nashville 1909) — one year\nthis row's senior, so the edge points backward as the maringa\nrule requires; Abbott 1992's half of the story (the practice is\nAfrican-American recreational singing first) now has an anchor\nto stand on instead of only the spirituals edge.\n\nWHO SINGS: the doowop stack's own blend, forty-five years\nearlier — the corner the corner learned from.\nTHE QUARTET SINGS A SONG, NOT A PSALM (2026-09-07, the melody round).\nThis row sits in `vox` for its four unaccompanied voices, and inherits\n`chantwise` with it — a stepwise distribution with no chord in it, on the\none idiom in the family whose entire craft is finding the chord under a\npopular melody. `tunewise` is the nearest true word: an arch, one leap, and\nthe triad.",
   "label": "New York 1910",
   "voices": 4,
   "bars": 8,
@@ -134,5 +134,6 @@
       "$src": "[spread(0), keep(0, 4, 8, 12), drop(2)]"
     }
   },
-  "dyn": "agogic"
+  "dyn": "agogic",
+  "line": "tunewise"
 }

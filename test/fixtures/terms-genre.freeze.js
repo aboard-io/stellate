@@ -114,6 +114,29 @@
 //   THE CHANT'S NOTES DID MOVE, and that is this round and not this fixture:
 // its composed cells carry the agogic close now instead of the leaning first
 // note. That is `test/table.test.js`'s BASE_SHA to record, and it does.
+// AND A SIXTH TIME (2026-09-07, the melody round), for two added fields and
+// nothing else — the `dyn` precedent directly above, repeated twice. Every row
+// now resolves what KIND of tune it writes (`line`, a distribution over
+// ideas-kit's melodic manners plus the cadence that closes a phrase) and what
+// a singer nobody cast SINGS (`syllab`, a syllable word and a rate);
+// `genres-tables.js` stamps both onto the row the way it stamps `family`, and
+// `document.js toGenre` spreads the row, so the two appear in the portrait's
+// `fields`. `gregorian` takes `vox`'s own distribution — `chantwise`, which
+// gives the chord manner ZERO tickets because a plainchant does not
+// arpeggiate, and the cadence `open` because a modal line arrives rather than
+// resolves — and the psalmody word.
+//   THE CHANT DID NOT MOVE AT THIS SEAM: both fields are read where a record
+// is COMPOSED (`precompose.js` §6d) or where a chair is CAST
+// (`instruments.js throatOf`), never by `toGenre` or by the kernel, and the
+// proof is the diff — the two keys inserted in each of the five sections, 0
+// deletions beyond the comma the insertion moves, 0 changes — derived by
+// deep-equalling the whole portrait against a freshly built one with only
+// those two keys removed (the CLI half still cannot re-run, for the reason
+// written above).
+//   THE CHANT'S NOTES DID MOVE, and that is this round and not this fixture:
+// its lines take the manner the seed draws from `chantwise` — still stepwise
+// by nature, and now able to leap once on purpose. `test/table.test.js`'s
+// BASE_SHA records it.
 "use strict";
 const fs = require("fs");
 const path = require("path");

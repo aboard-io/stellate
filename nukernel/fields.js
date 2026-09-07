@@ -410,7 +410,9 @@
      and multiplied into bar seconds by audio/plan.js PACE_RATE. The record has
      been playing these words for two days with no control anywhere: it was
      display-only text in the engineer's trim grid, which is the
-     "declared but never arriving" bug read from the other end.
+     "declared but never arriving" bug read from the other end (PROGRAM.md §1,
+     the declared-but-never-arriving law, which owns that sentence — this file
+     only cites it; pointer written 2026-09-07).
 
      THE WORDS MOVE DOWN HERE RATHER THAN BEING COPIED. compose.js declared
      them inside `dealPaces`'s closure; the UI may not read a musical table
@@ -486,7 +488,8 @@
   // difference between playing a beat and playing it on somebody else's drums.
   // An id added here must be a directory on disk or a row in MACHINE_KIT —
   // there is no third kind of kit, and the browser gate (nukernel-drums (M))
-  // holds the two lists together.
+  // holds the two lists together. (KERNEL.md gives this law a prose home;
+  // the code here stays its owner. Pointer added 2026-09-07.)
   const DRUMKITS = { acoustic: "acoustic", brush: "brushes", electronic: "electronic",
                      jazz: "jazz", power: "power", room: "room",
                      tr808: "TR-808", tr909: "TR-909", tr606: "TR-606",
@@ -528,7 +531,10 @@
        beside the phaser: still unmistakably a flanger — the comb, the
        feedback colour and a 2.12-octave sweep are all still there — and no
        longer the loudest thing on the record.
-       IT MOVES EXACTLY ONE RECORD. Censused over all 483 rows: `flanger` is
+       IT MOVES EXACTLY ONE RECORD. Censused over the whole catalogue (it said
+       "all 483 rows" until 2026-09-07; the census still holds row for row and
+       the number is not frozen again — `test/genres-build.test.js` prints the
+       live one): `flanger` is
        named by `minneapolissound` and by nothing else, and `phaser` is named
        by NOTHING AT ALL (so the "phasers" in the complaint were this chip
        both times). That is why the default coming down and the row stating
@@ -537,7 +543,8 @@
        than a decision. `fxChainFor` below already resolves a per-seat wet and
        two face knobs (`fxw<n>`/`fxa<n>`/`fxb<n>`) — the machinery exists — but
        it reads a DAW part entry, and `document.js boxesOf` returns `parts:
-       null` on all 482 precomposed records, so a genre row reaches the engine
+       null` on EVERY precomposed record (said "all 482" until 2026-09-07 — same
+       drifted arithmetic, same live source), so a genre row reaches the engine
        only as a bare key through `fxChain(keys)`. Giving the row an amount
        means letting the key carry one, and that means teaching all six
        `FX[k]` filters to split it (`fxChain`, `fxChainFor`, `busFxChain`
@@ -639,6 +646,13 @@
   // reversal is written there); these tables are the "wet dry mix and its own
   // settings" half of the sentence, said as detents because every value on
   // this machine is a word or a detent from this file.
+  //
+  // THIS BLOCK AND PARTMIX `fx` ARE THE PRIMARY SOURCE FOR THAT REVERSAL, and
+  // they RETIRE PROGRAM.md's PAUL'S EARS 3 ("`fx` back on a track — ANSWERED,
+  // 2026-08-26, and the answer was no"), which still forbids per-voice effects
+  // and was never rewritten when Paul reversed himself the following day. Noted
+  // here 2026-09-07 so the next reader finds BOTH ends of the reversal from
+  // either end; Paul's sentence above is quoted verbatim and is not edited.
   //
   // THE WET IS THE CHIP'S OWN `mix` PARAM, SURFACED — engine/faust/dist
   // insert_*-meta.json declares `mix` on ten of the eleven modules and
@@ -856,7 +870,9 @@
      (engine sampler.js BOARD_EQ, 7200 Hz, +/-12 dB, desk-gate G8), and BOTH its
      directions move, which a lowpass ceiling laid on a unit that has none does
      not. "Brighter" that brightens nothing would be this repo's own
-     characteristic bug drawn on purpose (memory: declared-but-never-arriving).
+     characteristic bug drawn on purpose (PROGRAM.md §1, the
+     declared-but-never-arriving law — the pointer replaced a bare "memory:"
+     note on 2026-09-07, when the law was written down where it can be read).
 
      THE SHAPE THE DESK IS HANDED IS THE MIX-OFFSET LAYER'S, verbatim
      (ui/state.js MIXER: `{fader, pan, rev, del, eq}`) — because that layer is
@@ -1788,11 +1804,28 @@
   // levels and five places. A mixer whose channel strip speaks a different
   // language from the master strip is two things to learn.
   //
-  // A TRACK HAS FOUR SENDS AND NO INSERTS ("get rid of inserts, reverb, and
- // echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17;
-  // and, settling it, "Don't let me add effects to instruments. That's bus and
-  // board stuff. But let me have up to four buses and a way to direct them to
-  // each other", 2026-08-26). It said THREE until that second sentence.
+  // A TRACK HAS FIVE SENDS AND AN INSERT CHAIN OF UP TO MAX_FX SLOTS.
+  // (HEADER REWRITTEN 2026-09-07. It read "A TRACK HAS FOUR SENDS AND NO
+  // INSERTS" and BOTH halves had been reversed underneath it without the
+  // loudest sentence in the block ever being touched — the reversals were
+  // dated correctly in the body below, at the `genre` send and at the `fx`
+  // slot, and only this line still argued against the shipped machine.)
+  // WHAT IS TRUE TODAY: the sends are `rev`, `echo`, `room`, `aux` and
+  // `genre` — five, the fifth appended 2026-08-27 in the series-bus round —
+  // and `fx` is a LIVE PER-VOICE INSERT CHAIN of up to MAX_FX slots, with the
+  // nine `fxw<n>`/`fxa<n>`/`fxb<n>` knobs under it (2026-08-27, Paul: "Add
+  // per voice effects, up to three"; the reversal is written in full at the
+  // `fx` slot below and the tombstone of the removal is kept beneath it).
+  //
+  // THE PARAGRAPH THAT FOLLOWS IS THE 2026-08-17/26 ARGUMENT THAT MADE IT
+  // FOUR-AND-NONE, KEPT WHOLE — it is why sends were the shape, and its
+  // measurement is still the reason a send is cheaper than an insert:
+  //
+  //   "A TRACK HAS FOUR SENDS AND NO INSERTS ("get rid of inserts, reverb, and
+  //   echo — let me send to bus 1, bus 2, and bus 3 instead", Paul, 2026-08-17;
+  //   and, settling it, "Don't let me add effects to instruments. That's bus and
+  //   board stuff. But let me have up to four buses and a way to direct them to
+  //   each other", 2026-08-26). It said THREE until that second sentence."
   // The four sends ARE the four buses — `rev`, `echo`, `room`, `aux` keep their
   // saved names and are what BUS_FIELDS names bus 1 through bus 4 — so a
   // song written before this loads with its reverb and echo intact and simply
@@ -2349,8 +2382,14 @@
   //   echo.time -> state.delay.beats (a fraction of a BAR here, beats there)
   //   echo.fb   -> state.delay.feedback
   //   echo.tone -> state.delay.cutoff
-  // TWO OF THE FOUR BUSES HAVE AN ENGINE BUS OF THEIR OWN AND TWO DO NOT, and
-  // that is the whole shape of this table. `engine` says which — it is the name
+  // THREE OF THE FIVE BUSES HAVE AN ENGINE BUS OF THEIR OWN AND TWO DO NOT, and
+  // that is the whole shape of this table. (HEADER REWRITTEN 2026-09-07: it
+  // read "TWO OF THE FOUR BUSES … AND TWO DO NOT", which was true until the
+  // genre bus was APPENDED to BUSROWS on 2026-08-27 as a fifth row carrying an
+  // `engine` of its own. That reversal is written at the row and was never
+  // carried up to the heading. The three with an engine are `rev`, `del` — the
+  // echo row — and `genre`; `room` and `aux` are the two groups, exactly as the
+  // rest of this paragraph says.) `engine` says which — it is the name
   // of the accumulator engine/faust/press/render-core.js:113 destructures and
   // engine/faust/dsp/fx_bus.dsp takes as an input — and a row without one is a
   // GROUP: a place to gather sends whose feed is summed into another bus, with
@@ -2449,7 +2488,11 @@
     // null and `busRoute` resolves null to bus 1.
     // BUS 3 KEEPS THE NAME `room` and this is not sentiment. Its SECTION lane
     // still is the kit's ambience — audio/desk.js scopes `sec.room` to the drums
-    // and says why — and 139 shipped records read that word on their send rows.
+    // and says why — and EVERY shipped record reads that word on its send rows.
+    // (This said "139 shipped records" until 2026-09-07. The RULE never moved;
+    // the arithmetic did. A new number is deliberately NOT frozen here — the
+    // live count is printed by `test/genres-build.test.js`, which asserts the
+    // row files against `GENRES` and says "N row files, N rows in GENRES".)
     // What changed is not what bus 3 carries, it is that where it lands stopped
     // being a constant. Bus 4 is new and has no such history, so it is called
     // what it is.
@@ -2471,7 +2514,9 @@
     // below: a group aimed "at the genre bus" would be a route the engine
     // does not have (groups fold to rev/del), and the four buses keep their
     // positional names. APPENDED last for the same reason: "bus 1".."bus 4"
-    // are printed on 139 shipped records' boards and must not renumber.
+    // are printed on EVERY shipped record's board and must not renumber (this
+    // said "139 shipped records'" until 2026-09-07 — see the count note on bus 3
+    // above; `test/genres-build.test.js` prints the live number).
     // Absent everything = the stage never runs = byte-identical.
     { bus: "genre", label: "genre fx", engine: "genre",
       feed: "fed by the strips' genre sends; its return sums into the delay bus",

@@ -5997,6 +5997,17 @@ table.nu-trims{ color: var(--ink); }
   background: var(--panel); color: var(--ink); padding-inline: .5ch; }
 .nu-textbox.is-derived{ font-weight: var(--fw-body); }
 .nu-textbox::placeholder{ color: var(--dim); opacity: 1; }
+/* A REFUSED NAME BOX IS READONLY AND SAYS SO (2026-09-07, the law audit).
+   It was `disabled`, which the browser paints grey and which takes no tap —
+   the silent grey `src/table/sheet.ts`:158 forbids by name. It is `readonly`
+   now: focusable, tappable, copyable, and unable to reach the record. So the
+   REFUSED REGISTER has to be drawn here rather than borrowed from the user
+   agent, and it is the register every other refusal on this page already
+   wears — a dashed edge and the quiet ink, never a fill and never a fade so
+   deep the word goes. The dashed edge is what carries the refusal (component
+   14's own design); the sentence in the row's say line is what explains it. */
+.nu-textbox[readonly]{ border-style: dashed; color: var(--dim);
+  cursor: default; }
 /* THE CLEAR-BACK (TABLE.md §2), and it is drawn only where there is something
    to clear — so its presence is itself the reading "a hand wrote here". */
 .nu-clearback{ flex: 0 0 auto; min-block-size: var(--tap);
@@ -8487,9 +8498,14 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    of 20rem boxes that reflow into a tall stack on a phone and becomes a TRACK
    of subject columns a thumb pushes sideways — the same shape the instrument
    picker takes one tier down, which is what "the same treatment" means.
-   `overflow-x` is on the TRACK and never on the sheet or the pane:
-   `overscroll-behavior-inline: contain` keeps the gesture inside it, so the
-   page's own sideways axis is untouched (§11c). */
+   `overflow-x` is on the TRACK and never on the sheet or the pane, and the
+   gesture STOPS DEAD at the track's ends: `overscroll-behavior-inline: none`
+   and not `contain`. TABLE.md §15a settled this on 2026-09-07 (the
+   design-system round it was assigned to): `contain` stops the flick CHAINING
+   to the pane behind and still lets the track rubber-band inside itself, and a
+   bounce translates the sticky heads with it — which is the whole of Paul's
+   *"it all feels reel wobbly"*. `none` is what the pane and the page already
+   carry (§11c) and this is the same law on the same axis. */
 #pan-band .nu-vsheet.is-table{ display: block; }
 #pan-band .nu-sheettrack{ display: flex; align-items: flex-start;
   /* DESIGN.md §1's space law, on the axis the subjects now stand on:
@@ -8498,7 +8514,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
      gap rather than a block margin — the same number, the same law, turned
      with the sheet. */
   gap: var(--s5); overflow-x: auto; overflow-y: hidden;
-  overscroll-behavior-inline: contain;
+  overscroll-behavior-inline: none;
   padding-block-end: var(--s2); scrollbar-width: thin; }
 /* A SUBJECT COLUMN IS ITS OWN STACK, and it is as wide as a setting needs and
    no wider: 22ch holds "double-tracked" and a label on one line at every
@@ -8822,12 +8838,15 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    THING THAT SCROLLS. `overflow-x` on the TRACK and not on the field, because
    the field's say line has to stay outside the scrollport (it sticks to the
    foot and a sentence that scrolled sideways away from the word it is about
-   is a sentence nobody reads). `overscroll-behavior-inline: contain` keeps a
-   sideways gesture inside the track rather than handing it to the pane under
-   it, which is the same law §11c gave the pane and the page. */
+   is a sentence nobody reads). `overscroll-behavior-inline: none` — NOT
+   `contain`, which is the value TABLE.md §15a forbids by name: `contain` stops
+   the gesture chaining to the pane under it and still lets the track
+   rubber-band inside itself, and a bounce translates the column heads with it.
+   `none` stops the gesture at the track's ends and hands it to nobody, which
+   is the same law §11c gave the pane and the page. Settled 2026-09-07. */
 .nu-lztrack{ display: flex; align-items: flex-start; gap: var(--s3);
   overflow-x: auto; overflow-y: hidden;
-  overscroll-behavior-inline: contain;
+  overscroll-behavior-inline: none;
   padding-block-end: var(--s2);
   /* the scrollbar is a thin one where the platform draws one at all; a phone
      draws none and the track is scrolled by the thumb that is on it. */
@@ -9487,10 +9506,17 @@ nu-spinner[busy] > .nu-elspin{
   letter-spacing: .08em; font-size: var(--t1); font-weight: var(--fw-label); }
 .dg-laws dd{ margin: 0; color: var(--legend); }
 
-/* AT 320 AND 390 THE TABLES ARE THE ONLY THING THAT SCROLLS, AND THEY CONTAIN
-   IT. `overscroll-behavior-inline: contain` and not the page's `none`,
-   because a table is a scroller a thumb is meant to drag; what may not happen
-   is the gesture chaining out to the document (§15a's law). */
+/* AT 320 AND 390 THE TABLES FIT RATHER THAN SCROLL, and this comment used to
+   claim otherwise. It named an `overscroll-behavior-inline: contain` that the
+   rule below never declared — the tree's characteristic bug ([[declared but
+   never arriving]]), found by the 2026-09-07 law audit in the design system's
+   own stylesheet. THE TRUTH, MEASURED: both tables are `inline-size: 100%`
+   with `table-layout` left to the browser and a `word-break` on the note
+   column, so at 320 they wrap instead of overflowing and `test/design-system.js`
+   D7 finds 0px of sideways scroll at the page level. Nothing here scrolls
+   sideways, so nothing here needs the law §15a wrote for the things that do —
+   and if a future column makes one of them overflow, it takes
+   `overscroll-behavior-inline: none`, which is the value that law names. */
 .dg-matrix, .dg-attrs{ display: table; }
 .dg-sec > .dg-matrix, .dg-el > .dg-attrs{ inline-size: 100%; }
 @media (max-width: 460px){

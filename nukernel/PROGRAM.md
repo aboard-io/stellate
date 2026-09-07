@@ -58,6 +58,94 @@ hand**, **keep like with like**, and **test the artifact** — gates read the
 RENDERED output, because three features have already shipped broken here while
 every check passed.
 
+### 1.0 · THE CONVENTIONS THIS FILE IS WRITTEN UNDER
+
+**ADDED 2026-09-07 by the law audit.** Six rules the tree follows with real
+discipline and had never written down. They are here because a survey of 348
+written laws found that most of them are TRUE and what rots is the loudest
+sentence: **an ALL-CAPS header survives a reversal that is correctly documented
+in the body three lines below it**, so a document argues against the shipped
+behaviour in its own voice while quietly agreeing with it underneath. Every one
+of those was a failure to follow the amend-in-place sentence four paragraphs
+up, which has been in this file since 2026-08-26 and which nobody followed.
+
+1. **AMEND IN PLACE** — *reversals are rewritten, not deleted* (above). A
+   superseded law keeps a parenthesis quoting **what it read**, **when it
+   changed**, and **why**. `DESIGN.md` components 1, 5, 7, 12, 16 and 18 and
+   `index.html:47-56` are the standard; `index.html`'s is the highest — when a
+   third stylesheet link made an old note wrong, the note was corrected in
+   place and the load order was left alone, with the reason given.
+2. **A TOMBSTONE, NOT A DELETION.** A deleted control leaves a named, dated
+   block saying WHAT IT WAS, what it held **when it was measured**, WHY it went,
+   and where **each of its jobs** landed. `TABLE.md` §13a.5 and
+   `ui/eight.js:16523` (`#playops`) are the shape to copy. It is enforced in
+   exactly one place in the tree — `test/atlas.js` G7's dead-id list, the only
+   gate that checks a tombstone — and followed in dozens more. A clean file is
+   worth less than a file that says what stood there.
+3. **A LAW STATES ITS OWN MEASUREMENT.** The good laws here carry a number and
+   where it was taken: 44.0 measured, 891 in 785, 9 and 9 over eight bars, 404
+   of 426, 12 of 12. The bad ones assert. And a number typed into prose is
+   stale the week after it is typed (the header above is the standing example),
+   so where a gate prints the count, **cite the gate and not the number**.
+4. **CITE A SECTION, NOT A LINE — AND A GATE THAT EXISTS.** A `file.js:N`
+   citation is a number about somebody else's layout and it rots the moment
+   they add a paragraph: the audit found 311 of them in comments and seven
+   pointing past end-of-file, and three of the four documents citing THIS one by
+   line went stale within an hour of it being amended. `GENRES.md` learned the
+   same lesson from the other end and dropped `src_line` — *"a row's address is
+   its FILE."* Cite a §, a named block, or a quoted sentence. Where a line
+   number is genuinely the clearest thing (a single statement inside a long
+   source file), quote enough of the sentence that a grep finds it when the
+   number is wrong.
+
+   And **A LAW MUST CITE A GATE THAT EXISTS.** The convention — a law names the
+   check that proves it — is followed almost everywhere and was stated nowhere,
+   so nothing caught the six cited `test/*.js` paths that had rotted, or the one
+   law that said *"(gated)"* of a gate reading twelve demo files instead of 502
+   anchors. If you write *(gated)*, name the file, and run it.
+5. **DECLARED BUT NEVER ARRIVING** — *the characteristic bug of this box, and
+   the law against it.* **A parameter is not shipped when it is declared, named,
+   costed, drawn and stored. It is shipped when it can be MEASURED OFF THE
+   RENDERED OUTPUT.** Six params have gone the whole distance here — into the
+   vocabulary, onto a control, into the document, through the cost model — and
+   reached no sound, and every check passed while they did. So: change the
+   value, render, and read the change back off the score, the timeline or the
+   pixels. Never trust a slider. This is the parent of **test the artifact**
+   above, it is why every browser gate reads the DOM and not the source, and it
+   was cited six times across four documents and one source file
+   (`fields.js:413`, `:859`, `GENRES.md`, `STATE.md`, `TABLE.md` §7's T6) and
+   defined none of them until now. `REMIX.md`'s *"IT MUST PLAY"* is this law
+   applied correctly and by name.
+6. **THE WIRE, NOT THE FETCH** — the offline law, in the one wording that is
+   true. The page is **origin-closed**: nothing it loads and nothing it calls
+   may leave `localhost`/the deploy host, and a gate aborts every non-same-origin
+   request (`test/atlas.js` G7, G14). It is **not** "no `fetch`" — there are
+   seven live `fetch(` call sites and all seven are same-origin (`audio/fonts.js`,
+   `ui/samples.js`, `audio/audition.js`, `audio/offline.js` ×3, `desk-gate.js`).
+   Six to eight code comments state it as "no fetch" and are wrong in a way that
+   will one day make somebody delete a legal call; `ui/screensaver.js:33` states
+   it right — *"the law was always about THE WIRE."* **This paragraph is the
+   owner.** (The mis-worded copies are in files this round did not hold:
+   `atlas-land.js`, `wiki-extract.js`, `ui/glyph.js`, `ui/video.js`,
+   `ui/deps.js`, `fonts.css`, `index.html`, `export/drumrack-extract.js`.)
+
+**AND ONE OWNER PER LAW.** `TABLE.md` §18a already named the disease — *"A law
+with no owner is a wish"* — and the audit counted the cost: the refusal law at
+eleven sites in ten wordings, *"nothing is fixed but the bottom bar"* at seven
+with two right, *"menus never scroll inside themselves"* at nine with one right.
+A law with three wordings has no owner, and that is itself against this rule.
+Where this round found copies it left ONE owner and made every other site a
+one-line pointer. The four owners it named: the refusal law is **§2.3's `why`
+clause below**; the fixed-chrome law is **`TABLE.md` §16**; the menu-scroll law
+is **`DESIGN.md` §3**; the horizontal-scroll law is **`DESIGN.md` §3**.
+
+**AND THE ENGINE HAS A DOCUMENT NOW.** `DESIGN.md` and `TABLE.md` govern the
+GLASS. The laws that decide what the box actually PLAYS lived exclusively in
+code comments and were cited by no document, which is why a reader could audit
+the interface in an afternoon and not the engine. They are written down at
+**`nukernel/KERNEL.md`** (2026-09-07), which points at the code rather than
+copying it.
+
 ---
 
 ## 1 · THE BRIEF, AS NINE DELIVERABLES
@@ -262,6 +350,32 @@ full rebuild by `data-k` (`eight.js:1156`) · `null`/`""`/`false`/`[]` **deletes
 the key, because absent is the only spelling of a default
 (`main:nukernel/ui/mixtbl.js:351`).
 
+*(TWO CORRECTIONS, 2026-09-07, from the law audit — the rules stand, the first
+sentence and the third are incomplete as written.*
+
+*THE SOLE READER IS NOT SOLE. Measured: `ui/atlas.js` reads `window.NuWiki`;
+`ui/samples.js` reads `window.GenreKernel`, `window.NuInstruments` and
+`window.__REGISTRY`; `ui/glyph.js` reads `window.__eightTab`. Four live
+violations, and `deps.js:1` still claims sole readership. **A header that lies
+is worse than no header.** No gate exists for this one — it is the only rule of
+the four with no check behind it — so it is a rule kept by hand until somebody
+either fixes the four reads or rewrites the header. Named as open work here so
+the next reader does not take the claim at face value.*
+
+*THE `data-k` LAW HAS A SHAPE, AND IT WAS WRITTEN ONCE IN PASSING.* The
+uniqueness half above is gated (`desk-gate`: *"no two tabs draw the same
+`data-k`, so focus restoration and this gate's own drives can never land on the
+wrong voice"*). The SHAPE is **`<field>|<value>`**, scope-qualified as
+`key|voice` or `key|voice|sectionId` — stated at `TABLE.md:2811` and nowhere
+else, while eight gates walk it, `DESIGN.md` component 23's spinner depends on
+it (`prev|<key>`, `next|<key>`, `clear|<key>`, `num|<key>`) and component 24's
+compound count is MEASURED off it. **It is this page's addressing scheme and it
+is stated here now.** One known hole: `src/menus/index.ts:241`'s `address()`
+also stamps `data-widget` and `src/lozenge/field.ts:425-428` does not, so a gate
+selecting `[data-widget]` misses every lozenge field — `src/lozenge/api.ts:29`'s
+claim that the two match *"byte for byte"* is true of the per-lozenge half only.
+The `src/**` fix belongs to the design-system round.*)*
+
 ### 2.3 `nukernel/ui/sheets.js` — the API, fixed
 
 Verbatim from design 02, with one change made here and stated: **the class
@@ -293,6 +407,35 @@ here; choosable, class only) · `why`, **required** whenever `disabled` or
 `quiet` is set: `sheets.js` THROWS without it, because a silent grey is the bug
 this design exists to prevent.
 
+> ### THE REFUSAL LAW, AND THIS SENTENCE IS ITS OWNER (named 2026-09-07)
+>
+> **A REFUSED CONTROL SAYS WHY, OUT LOUD, WHERE A THUMB CAN REACH IT.** The
+> `why` above is the whole law and the oldest statement of it in the tree
+> (2026-08-24), and it is the only one enforced by a **throw at build time**
+> (`ui/sheets.js:151`) rather than argued in prose. Its three clauses:
+> **(a)** a reason is REQUIRED — no `disabled`, no `quiet`, without a `why`;
+> **(b)** the reason is on the GLASS, in one place per widget (`.nu-wsay` /
+> `.nu-lzsay`), never only in a `title` and never only for a screen reader —
+> `ui/glyph.js:39` records that `title` never fires on touch; **(c)** a refused
+> control is **`aria-disabled` and NEVER the native `disabled`**, because a
+> `disabled` input takes no tap and a reason nobody can tap is not said out
+> loud. The refused thing stays VISIBLE and greyed: *hiding destroys the shape
+> of the possible* (§5's whole-sheet-off clause, the ancestor of `DESIGN.md`
+> component 16's law 1).
+>
+> The audit found this law stated at **eleven sites in ten wordings** — the
+> ownerless law at its worst — while this, the best-argued and least cited of
+> them, sat here unread. The other ten are one-line pointers to this paragraph
+> now. Gated at `test/sheets.js` (*"NO SILENT GREY"*, 31/31), `test/design-system.js`
+> D3b/D3c/D3e (*"not one of them is `disabled`"*, and the reason is ≤ 12 words,
+> 9 longest), and `desk-gate` (*"all 5 disabled controls carry `data-why` AND
+> print their reason"*).
+>
+> **AND IT IS BROKEN AT ONE SITE, KNOWINGLY.** `src/table/sheet.ts:916` sets
+> BOTH `?disabled` and `aria-disabled` on the text field — a silent grey in the
+> file whose own header (`:158`) states clause (c). Found 2026-09-07, assigned
+> to the design-system round, recorded here so it is not rediscovered.
+
 The DOM it emits:
 
 ```html
@@ -320,6 +463,12 @@ Behaviour, fixed: `set` on `change` only · zero options ⇒ legend plus
 `<p class="nu-why">nothing to choose here</p>`, never an empty fieldset ·
 duplicate `key` ⇒ `console.error` and a `#2` suffix · `<label>` over a
 visually-hidden-but-focusable `<input>` (clip, **never** `display:none`) ·
+*(THE DOM ABOVE IS LARGELY RETIRED, 2026-09-07 — THE THROW IS WHAT SURVIVES.
+`test/sheets.js` reports "Still drawn as single-choice sheets: []": every
+single-choice control is a combo now (§2.4.1's `.nu-combo`, 2026-09-02) and
+`ui/sheets.js` has exactly one importer left, `ui/selects.js:36`. What did not
+retire is the `why`-or-throw above, which is the refusal law's owner and is
+enforced on every path that still reaches this file.)* ·
 `sheetRow` returns a `<div>`, because `<fieldset disabled>` disables everything
 nested.
 
@@ -329,7 +478,22 @@ STANDING ANSWER IS ALWAYS OFFERED — you can always see the word you are on."*
 appends *", and it is what the record says"*. Without it a loaded document is
 un-editable at exactly the moment it matters.
 
-### 2.4 THE DESIGN SYSTEM — one owner, `nukernel/nu.css`
+### 2.4 THE DESIGN SYSTEM — one owner, ~~`nukernel/nu.css`~~ `nukernel/tokens.css`
+
+> **THE OWNER MOVED, 2026-09-07, AND THIS HEADING DID NOT NOTICE FOR A DAY.**
+> It read *"one owner, `nukernel/nu.css`"* from 2026-08-26, and everything below
+> was written under that. The tokens came OUT of `nu.css` on 2026-09-07:
+> `index.html:82-84` links **three** stylesheets — `fonts.css`, `tokens.css`,
+> `nu.css` — and `DESIGN.md:10` names `tokens.css` as the owner of the system,
+> with `test/design-system.js` D4c ENFORCING that `nu.css` declares nothing at
+> `:root` and types no literal colour. `nu.css:213` named THIS SECTION as its
+> own drift-detector — *"PROGRAM.md §2.4 carries the same table and the two must
+> not drift"* — and the detector was never run; this paragraph is it, run late.
+> The ONE-OWNER rule the old heading was making is unchanged and is still the
+> point: **anything a slice needs is added to the system, not declared in a
+> stylesheet of its own.** What moved is which file holds the tokens.
+> `DESIGN.md` is the contract for the component vocabulary now; this section is
+> kept as the argument that produced it.
 
 Paul, 2026-08-26: *"Create a simple design system and use plain HTML buttons
 where appropriate but bring more consistency."*
@@ -383,8 +547,19 @@ border and the face) or the `min-height: auto` a control gets for being a flex
 item, which is the same 26×26 box by another name. **Seven kinds, each one look
 plus its states.**
 
-**SEVEN KINDS OF CONTROL AND THAT IS ALL THE PAGE NEEDS.** Nothing here is a
-new widget; this is what already exists, reduced, with what each is FOR.
+**~~SEVEN KINDS OF CONTROL AND THAT IS ALL THE PAGE NEEDS.~~ — RETIRED
+2026-09-07, REPLACED BY `DESIGN.md` §2.** It was true and useful for two weeks
+and it is now the smaller of two vocabularies: `DESIGN.md` §2 enumerates
+twenty-four components and `docs/DESIGN-SYSTEM.md` §2 the elements they are
+built from, and a control that is not one of those *"is a spec change first and
+code second."* The table below is kept because the REDUCTION is the argument —
+292 interactive elements measured on the rendered page, collapsed to seven kinds
+each with one look plus its states — and because §2's twenty-four are these
+seven grown, not a different idea. Read it as the census that produced the
+system, not as the list of what the page may contain.
+
+Nothing here is a new widget; this is what already exists, reduced, with what
+each is FOR.
 
 | # | kind | what it is | what it is for |
 |---|---|---|---|
@@ -400,7 +575,23 @@ new widget; this is what already exists, reduced, with what each is FOR.
 2026-08-26 the page had none of. A link is the only element here that LEAVES the
 page, so it is the only one that keeps an underline (`.nu-wiki`).
 
-**FOUR STATES, and any kind may wear them.** They are adjectives, not widgets:
+**FOUR STATES, and any kind may wear them — AND THERE ARE THREE STATE
+VOCABULARIES IN THIS SYSTEM, AT THREE LAYERS (named 2026-09-07).** The audit
+found this list, `DESIGN.md` §2's eight (*rest · derived · written · selected ·
+editing · refused · sounding · measured*) and `DESIGN.md` §2a's seven
+(`[selected] [open] [refused] [busy]` plus hover, focus and rest) all declared as
+"the states", overlapping in three, in two documents, with **the code following
+all three**. They are not rivals; they are LAYERS, and nothing said so:
+**(1) the PAGE's classes — this list** — `.is-on` / `.is-off` / `.is-quiet` /
+`<mark>`, still live in `nu.css` and `ui/sheets.js`, worn by anything;
+**(2) the TABLE's classes** — `.is-derived`, `.is-refused` and their family,
+written by the grid onto cells (`nu.css:5809-5813`), which is `DESIGN.md` §2's
+list; **(3) the ELEMENTS' attributes** — `[selected] [open] [refused] [busy]` on
+a custom-element host, which is `DESIGN.md` §2a's list and the one the SKIN law
+depends on, because a stylesheet can reach an attribute. A state belongs to
+exactly one layer. `DESIGN.md` §2 carries this same framing and owns it; this
+paragraph is layer 1's own statement of it. The four below are adjectives, not
+widgets:
 `.is-on` / `:checked` chosen · `.is-off` / `:disabled` refused (**greyed, never
 hidden, reason printed**) · `.is-quiet` inert (`knobs.js`'s `quiet`) ·
 `<mark>` / `.is-now` **THE ONE** — the browser's own highlight, reserved for the
@@ -410,18 +601,32 @@ row and not a tint.
 **HOW TO ADD SOMETHING.** If it is one of the seven, use the seven. If it is
 not, the burden is to say which of the seven it could have been and why that was
 worse, in prose, in `nu.css` — the way every other decision in this codebase is
-written down. A slice may not carry its own look; there is no second stylesheet.
+written down. **A slice may not carry its own look** — and the sentence that
+used to finish this one, *"there is no second stylesheet"*, is **FALSE since
+2026-09-07**: `index.html:82-84` links three (`fonts.css`, `tokens.css`,
+`nu.css`), `test/design-system.js` D7c asserts their cascade order, and the
+split is the SKIN law's foundation (`docs/DESIGN-SYSTEM.md` §1a — a look must be
+changeable by replacing `tokens.css` alone). The RULE survives the sentence: the
+three are one system with one owner apiece — faces, tokens, rules — and what a
+slice may not do is grow a fourth.
 
 #### 2.4.1 THE CLASS VOCABULARY
 
 Verbatim from design 08, plus the names later rounds add. Two state classes are
-`is-` prefixed; everything else is `nu-`. **Anything a slice needs that is not on
-this list gets added HERE, not declared in a second stylesheet.**
+`is-` prefixed; everything else is `nu-`. ~~**Anything a slice needs that is not
+on this list gets added HERE, not declared in a second stylesheet.**~~
+**RETIRED 2026-09-07 AS A CONTRACT, KEPT AS A RECORD.** `DESIGN.md` §2 is the
+class and component contract now, and it is enforced at boot — `src/ui/index.ts`
+throws if the tag table and the declaration disagree — where this table was only
+argued. The ONE-OWNER half of the sentence did not retire and is restated at
+`nu.css`'s own header: anything a slice needs is ADDED to the system, not
+declared beside itself. What follows is the vocabulary as it stood, with its
+reasons, and several of its rows are now tombstones.
 
 | class | owner of the inside | what `nu.css` guarantees |
 |---|---|---|
-| `.nu-tray` `.nu-trayhead` `.nu-traylist` `.nu-trayfoot` | shell | **THE CHROME, AND THERE IS ONE OF IT — a fixed gutter down the leading edge, not a band across the top.** `position: fixed`, `inset-block: 0`, `inset-inline-start: 0`, z 40, `inline-size: var(--tray-w)` (`calc(56px + env(safe-area-inset-left, 0px))`), opaque, ruled on the side facing the page. **One per page**, at every level, and nothing goes under it — that is arithmetic and not a z-index: `body { padding-inline: calc(var(--gl) + var(--tray-w)) var(--gr) }` takes the gutter out of the content column. The head carries `#play` **permanently**, built once and never repainted, above the `↑`; the list is the only part that scrolls; the foot is the log. **One column, never sideways.** |
-| ~~`.nu-bar`~~ ~~`.nu-tabs`~~ | *reversed* | **BOTH BANDS ARE GONE.** `.nu-bar` SAID: *"sticky `top:0`, z 30, ≥52px, opaque, safe-area padded. One per page, and it is never inside a tab: play / rewrite / take / room reach the record from all nine panels (2026-08-27)."* `.nu-tabs` SAID: *"THE SECOND STICKY BAND, since 2026-08-27 … a `.nu-row` of nine plain buttons at `top: var(--bar-h)`, z 25 … It wraps and never scrolls sideways."* The tab row went first — Paul, 2026-08-28: *"Come up with a strategy for running the nav icons for a given modality down the right of the interface … There should be one vertical stripe max"* / *"Make it a fixed gutter"* / *"Dont let anything go under it"* / *"Move the right nav to the left so it doesn't interfere with the scroll on the right"* — and became `.nu-tray` above. The transport band went on **2026-08-29**: *"Get rid of the play buttons and the title of the song"* / *"Add a permanent play button to the top of the nav. When I tap it the nav is taken over by play options. The volume slider is now vertical."* `#play` is in `.nu-trayhead` at every level and its four partners (`#rewrite`, `#take`, `#voicing`, `#vol`) are the gutter's own `play` level. `<h1 id="title">` went with it and **the record names the page through `document.title`** instead. Tombstones with the full argument: `index.html` (both), `nu.css` *THE .nu-bar IS GONE*. `--bar-h` no longer measures anything on the page; `--tray-w` is the number the layout is arithmetic on. |
+| ~~`.nu-tray`~~ ~~`.nu-trayhead`~~ ~~`.nu-traylist`~~ ~~`.nu-trayfoot`~~ | *deleted* | **TOMBSTONE: THE GUTTER (2026-08-28 to 2026-08-31), struck 2026-09-07.** IT SAID: *"**THE CHROME, AND THERE IS ONE OF IT — a fixed gutter down the leading edge, not a band across the top.** `position: fixed`, `inset-block: 0`, `inset-inline-start: 0`, z 40, `inline-size: var(--tray-w)` (`calc(56px + env(safe-area-inset-left, 0px))`), opaque, ruled on the side facing the page. **One per page**, at every level, and nothing goes under it — that is arithmetic and not a z-index: `body { padding-inline: calc(var(--gl) + var(--tray-w)) var(--gr) }` takes the gutter out of the content column. The head carried `#play` **permanently**, built once and never repainted, above the `↑`; the list was the only part that scrolled; the foot was the log. **One column, never sideways.**"* WHY IT WENT: it was Paul's answer to a nine-tab row that wrapped (*"Come up with a strategy for running the nav icons for a given modality down the right of the interface … There should be one vertical stripe max"* / *"Make it a fixed gutter"*), and it spent 56–96px of a 390px glass on chrome that named a level rather than a place. WHERE ITS JOBS WENT: the levels became VIEWS behind one hamburger (`docs/NAV.md`, `TABLE.md` §16/§20a); `#play` and the transport became `.nu-bar`, the fixed bottom band; the log became `.nu-log`, a `.nu-strip-out` flyout; the `↑` is gone with the one-scroll page. **NOTHING IS LEFT:** forty-one rules were removed from `nu.css`, `--tray-w` is declared **zero** times in any stylesheet, and `test/shell.js:1207` asserts the absence by name — *"no ↑, no `#nu-tray`, no `.nu-traylist`, no `.nu-trayfoot`"*. The gate that watched it is still called `test/gutter.js`, whose own first law reads *"THE FILE IS STILL CALLED gutter.js AND THERE IS NO GUTTER."* |
+| ~~`.nu-tabs`~~ · **`.nu-bar` — REVERSED BACK, 2026-09-06** | shell | **THIS TOMBSTONE IS ITSELF REVERSED, AND THE CORRECTION IS THE FIRST THING TO READ (2026-09-07).** `.nu-bar` IS BACK. It is the page's fixed bottom band — `nu.css:7747`, built at `ui/eight.js:14684`, measured by `test/shell.js` A7 at **50.39px** against `--bar-h`, holding the transport and only the transport (the voicing · play · the die · the room, `DESIGN.md` component 12). The NAME was reused for a different band than the one buried below: the dead `.nu-bar` was a *sticky top* band carrying play/rewrite/take/room over nine panels; the live one is a *fixed bottom* band carrying the transport under six views. `.nu-tabs` stays dead. And the count is **two fixed chrome bands and only these two** — `.nu-topstrip` and `.nu-bar` — which `TABLE.md` §16 owns and argues in a four-row table. What follows is the 2026-08-29 tombstone, unedited, because it is the record of what the names meant then. IT SAID: **BOTH BANDS ARE GONE.** `.nu-bar` SAID: *"sticky `top:0`, z 30, ≥52px, opaque, safe-area padded. One per page, and it is never inside a tab: play / rewrite / take / room reach the record from all nine panels (2026-08-27)."* `.nu-tabs` SAID: *"THE SECOND STICKY BAND, since 2026-08-27 … a `.nu-row` of nine plain buttons at `top: var(--bar-h)`, z 25 … It wraps and never scrolls sideways."* The tab row went first — Paul, 2026-08-28: *"Come up with a strategy for running the nav icons for a given modality down the right of the interface … There should be one vertical stripe max"* / *"Make it a fixed gutter"* / *"Dont let anything go under it"* / *"Move the right nav to the left so it doesn't interfere with the scroll on the right"* — and became `.nu-tray` above. The transport band went on **2026-08-29**: *"Get rid of the play buttons and the title of the song"* / *"Add a permanent play button to the top of the nav. When I tap it the nav is taken over by play options. The volume slider is now vertical."* `#play` is in `.nu-trayhead` at every level and its four partners (`#rewrite`, `#take`, `#voicing`, `#vol`) are the gutter's own `play` level. `<h1 id="title">` went with it and **the record names the page through `document.title`** instead. Tombstones with the full argument: `index.html` (both), `nu.css` *THE .nu-bar IS GONE*. `--bar-h` no longer measures anything on the page; `--tray-w` is the number the layout is arithmetic on. |
 | `.nu-pan` | shell | one of the nine panels, in Paul's order in `index.html`. `[data-off]` shuts it — **a class rule, never the `hidden` attribute**, so with the stylesheet off the page is one document again; `inert` (set by `ui/eight.js showTab`) is what keeps a shut panel out of the tab order. Carries the `--sec` ordinal for §2.4.2's wash. |
 | `.nu-ax` | shell | the containing block for its `> h2`. **The heading is `.nu-vh` since 2026-08-27** — in the DOM, announced, printed with the stylesheet off, invisible with it on, because the tab row is the panel's visible name and one owner per fact. It was `position: sticky; top: var(--bar-h); z 20`, the second band, from 08-shell R12 until the tabs landed. |
 | `.nu-pane` | any | horizontal scroll for exactly ONE table, edge shadows, focusable. **Never nest; never put a sticky heading inside one** — its `overflow-y` computes to `auto`. |
@@ -431,11 +636,11 @@ this list gets added HERE, not declared in a second stylesheet.**
 | `.nu-sel` `.nu-sels` | selects (D2) | a labelled `<select>` and a heading over a row of them — the settled-parameter widget beside the sheet. Added 2026-08-24 (Paul: "We can return some things to select menus … in general where there is ONE option a dropdown is preferred"); it needs almost no rule, because `select{min-height:var(--tap)}` and `label{min-block-size:var(--tap)}` already size and target it. *(Its `> label` is a `.nu-field` since 2026-09-02 — see the row below — and its `<select>` is inside a `.nu-combo`.)* |
 | `.nu-field` | shell | **THE EVEN-ROW PRIMITIVE (2026-09-02).** Paul, 2026-09-01: *"things are uneven based on how text wraps."* Two `--tap` rows and no third: the question on line one at a fixed 44px with `white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-inline-size:0` (`.nu-ixli`'s proven recipe — measured 44.00px, every row, at 320/375/390/430/1280), the control on line two, 88px always. The whole question string stays in the DOM, so nothing is lost to a reader or a gate. Named in `nu.css` since 2026-08-25 and never defined until now; `.nu-sel > label` is the same rule, because it is one question. Two exemptions, both older: `.nu-plate .nu-sel` (the 108px gear grid keeps its own wrap) and `.nu-circ .nu-opt` (26px on the ring). |
 | `.nu-combo` `.nu-combo-filter` `.is-seated` `.is-said` | selects (D2) | **THE COMBO BOX (2026-09-02).** Paul, 2026-09-01: *"Things like select boxes are very plain and could be combo boxes."* A `<span>` around the `<select>`, built by `ui/selects.js selectField` and **at no other call site** — `selectEl` stays bare because it goes into a `<td>` capped at 9em. `appearance:none` plus a `::after` ▾; `.is-seated` (dim, standing at the table's default detent) / `.is-said` (hand, you moved it) written on the WRAPPER on build and on `change`, and **neither class when the table declares no default**, because "you set this" is a fact a control may not guess. Over 24 options a `.nu-combo-filter` (`<input type=search>`, 44px, 16px, `aria-label` "filter <question>") hides non-matching `<option>`s with `hidden` — it never hides the selected one, and it cannot enter a value that is not in the table. **Still a `<select>`**: the 2026-08-25 single-choice law and every menu-counting gate are untouched. |
-| `.nu-strip-out` | shell | **THE FLYOUT CHASSIS (2026-09-02).** Paul, 2026-09-01: *"strips that fly out to give us access to all options, like MacOS system settings used to."* The six declarations `.nu-log`, `.nu-explain` and `.nu-say` had each arrived at independently: `position:fixed`, `inset-inline-start: var(--tray-w)`, the `--panel` plate, `--bw` ink, `--r1`, `--shadow`, its own scroll, and `[hidden]{display:none}`. A new strip wears the class and owes three things the chassis cannot supply: a block anchor, a width in the `min(<n>ch, calc(100vw - var(--tray-w) - 12px))` shape, and a `max-block-size` argued at the strip (MENUS NEVER SCROLL INSIDE THEMSELVES is the law; a strip is the standing exception). Nothing may overhang the gutter — shell A6i. |
+| `.nu-strip-out` | shell | **THE FLYOUT CHASSIS (2026-09-02).** Paul, 2026-09-01: *"strips that fly out to give us access to all options, like MacOS system settings used to."* The six declarations `.nu-log`, `.nu-explain` and `.nu-say` had each arrived at independently: `position:fixed`, `inset-inline-start: var(--tray-w)`, the `--panel` plate, `--bw` ink, `--r1`, `--shadow`, its own scroll, and `[hidden]{display:none}`. A new strip wears the class and owes three things the chassis cannot supply: a block anchor, a width in the `min(<n>ch, calc(100vw - var(--tray-w) - 12px))` shape, and a `max-block-size` argued at the strip. *(This read "MENUS NEVER SCROLL INSIDE THEMSELVES is the law; a strip is the standing exception" until 2026-09-07. The law is real and **`DESIGN.md` §3 owns it**; the sentence was wrong to say a strip is THE exception, because there are two — the strip family here at `min(70vh, 560px)`, and the hamburger plate, measured at 891px of content in 785 of glass. Two documents each named a different one as the only one. §3 now names both, with both measurements.)* ~~Nothing may overhang the gutter — shell A6i.~~ *(The gutter went 2026-08-31; A6i measures the two bands now.)* |
 | `.nu-namebar` `.nu-namebar-sub` | shell | **THE INK PLATE THAT NAMES A BLOCK (2026-09-02).** `ideal/design-system.html:101-105`'s `section > h2`, which `.nu-busname` has been on one surface since the board was built; generalised for the Rules view (*"The name of the genre should be obvious"*), the Band roster, Structure and Produce. `--t4`/`--fw-block` caps, white on `--ink`, `--r1`, with an optional dim `.nu-namebar-sub` second line. **It does not reinstate the hidden `<h2>`**: a namebar names something INSIDE a panel, which the tab's word does not say. |
 | `.nu-preview` `.nu-preview-rest` `.nu-preview-hold` | shell | **A PICTURE OF THE THING (2026-09-02).** Paul: *"lots of previews, small widgets"* / *"the motif editor should show me previews of the instruments using the motif."* An inline `<svg>` in an **N x 8** viewBox, `--pv-base` (4ch, or a call site's own size) x 1.2em on the text baseline: one rect per step, height = velocity, `.nu-preview-rest` a `--faint` 1px floor, `.nu-preview-hold` .45 opacity. **N is the CELL's step count, not sixteen** (fixed 2026-09-02: "two-bar cells show bar one"), and a multi-bar cell is drawn `calc(var(--pv-base) * bars)` wide with `data-bars` on the element, so the steps stay one size and a two-bar motif is twice as wide as a one-bar one in the same list. A one-bar cell sets no width and every call site keeps its own rule. **No pitch** — nine usable pixels are all spent on loudness, the lesson `.nu-tf`'s deleted SVG faces paid for. Colour is `--hand`, or the player's `--vpaint` inside a `[data-vi]`. Builder: `nukernel/ui/preview.js` `preview(cell, opts?)`, an ES leaf module with no deps beyond `document`. |
 | `.nu-vpaint` `[data-vi]` | shell | **WHO IS PLAYING, AS A COLOUR (2026-09-02).** `[data-vi="0".."5"]` declares `--vpaint` for itself and its descendants from the CATEGORY family (§2.4.2); `.nu-vpaint` paints with it (the hue, white ink, an `--bw` ink border, `--r2`), and `.nu-vpaint.is-edge` is the quiet form — a 3px edge bar, no fill, for a row that keeps its own ground. A utility rather than a rule per surface, because four surfaces want it and three of them are owned by other files. |
-| `.nu-ic` `.nu-g` `.nu-n` `.nu-sub2` `.nu-trayopts` `.nu-seedrow` `.nu-seedwait` | shell (wave 1a) | **THE TREE MARK AND THE FOOT (2026-09-02).** A gutter mark is `.nu-ic` — a column of `.nu-g` (the glyph, 1.2rem, its own symbol font stack) over `.nu-n` (the word, .7rem) — and **from 400px it is a two-column grid**: the glyph in column 1, and `.nu-vh` (the word) over `.nu-sub2` (the dim second line: a member's instrument, a section's bars, a motif's readers) in column 2. The hinge is arithmetic, not taste: `--tray-w` is `24vw` between its stops, so it reaches 96px at exactly 400px of glass. `.nu-trayopts` is the play-options stack that unfolds ABOVE `#playops` inside the foot; `.nu-seedrow` is the seed's own row in the foot — the die (`#rewrite`, 44px, glyph only), the number beside it (`#seedval`, carrying `#reading`) and the numeric field it becomes (`#seedin`), wrapping to two lines below ~420px so neither target is ever under the tap floor — and `.nu-seedwait` is the countdown it draws under them from the `pending` feed (`data-live="pending"`, `:empty` when nothing is in flight). **RETIRED 2026-09-03: `.nu-seedout` / `.nu-seedbtn` / `.nu-seedvs`**, the flyout's column, its 44px actions and its vertical 0..65536 slider — Paul: *"Instead of a popup for seed, just get rid of the word seed and put the number."* |
+| ~~`.nu-ic`~~ ~~`.nu-g`~~ ~~`.nu-n`~~ ~~`.nu-sub2`~~ ~~`.nu-trayopts`~~ ~~`.nu-seedrow`~~ ~~`.nu-seedwait`~~ | *deleted with the gutter, 2026-08-31* | **THE TREE MARK AND THE FOOT (2026-09-02) — STRUCK 2026-09-07: these named the gutter's own furniture and went out of the page with it (see the `.nu-tray` tombstone above); `.nu-seedrow` alone survives, re-homed on the bar (`ui/eight.js:16341`). Kept for the argument, which is still good: a mark is a glyph over a word, and the hinge to two columns is arithmetic and not taste.** IT SAID: A gutter mark was `.nu-ic` — a column of `.nu-g` (the glyph, 1.2rem, its own symbol font stack) over `.nu-n` (the word, .7rem) — and **from 400px it is a two-column grid**: the glyph in column 1, and `.nu-vh` (the word) over `.nu-sub2` (the dim second line: a member's instrument, a section's bars, a motif's readers) in column 2. The hinge is arithmetic, not taste: `--tray-w` is `24vw` between its stops, so it reaches 96px at exactly 400px of glass. `.nu-trayopts` is the play-options stack that unfolds ABOVE `#playops` inside the foot; `.nu-seedrow` is the seed's own row in the foot — the die (`#rewrite`, 44px, glyph only), the number beside it (`#seedval`, carrying `#reading`) and the numeric field it becomes (`#seedin`), wrapping to two lines below ~420px so neither target is ever under the tap floor — and `.nu-seedwait` is the countdown it draws under them from the `pending` feed (`data-live="pending"`, `:empty` when nothing is in flight). **RETIRED 2026-09-03: `.nu-seedout` / `.nu-seedbtn` / `.nu-seedvs`**, the flyout's column, its 44px actions and its vertical 0..65536 slider — Paul: *"Instead of a popup for seed, just get rid of the word seed and put the number."* |
 | `.nu-bpmbig` `.nu-taprow` `.nu-progops` `.nu-cap` `.nu-cap-hand` `.nu-cap-flag` `.nu-cap-meter` | shell (slice 2a) | **TEMPO AND KEY (2026-09-02, B7).** Six rules and no new widget — everything else the two panels draw is a `.nu-field`, a `.nu-row` or a `.nu-combo`. `.nu-bpmbig` is the tempo read across the room (`--t5`/`--fw-display`, `tabular-nums` so the number cannot jump sideways under a dragging finger); `.nu-taprow` gives tap tempo the `--ctl` floor the transform row already had; `.nu-progops` spaces the changes-grid's `± bar`. `.nu-cap*` is the three-state caption under a control — hand / flag / measured — kept on the tokens rather than on literals. |
 | `.nu-rulax` `.nu-axword` `.nu-rule` `.nu-rulehead` `.nu-ruleplate` `.nu-rulekin` `.nu-chips` | shell (slice 2b) | **THE RULES PANEL (2026-09-02, B6).** One block per AXIS (`.nu-rulax`, `data-axis` = one of `rules.js AXES`'s eight) under `.nu-axword`, the vocabulary's own word as a tracked uppercase `<h3>` — a control label, so the text diet skips it. `.nu-rule` is one sentence-plus-control with a hairline under it (`data-rule` = the field, `data-tier` = which of the three re-derive tiers it lands in); `.nu-rulehead` is the `<h4>` over a group of per-key controls (a `paces` map, a `part` list); `.nu-ruleplate`/`.nu-rulekin` are the `.nu-namebar` plate's Rules form and its one line of lineage; `.nu-chips` is the wrapped `fx` set. **The tier SENTENCE is one `.nu-why` per block** (`.nu-axtier`), not one per row — 2026-09-02's probe measured twelve copies of it in one panel. |
 | `.nu-roster` `.nu-member` `.nu-memopen` `.nu-memglyph` `.nu-memname` `.nu-meminstr` `.nu-memreads` `.nu-memchip` `.nu-memadd` `.nu-memfoot` `.nu-tray-chips` `.nu-traychip` `.nu-chipw` `.nu-readby` `.nu-readchip` `.nu-readglyph` `.nu-readname` `.nu-readinstr` `.nu-readsecs` `.nu-motif` `.nu-motifname` | shell (slice 2c) | **BUILD THE BAND (2026-09-02, B10/B8).** Five surfaces, one idiom — a box with a CATEGORY edge (`.nu-vpaint` + `[data-vi]`), a glyph, a name, a dim second line, and its `.nu-preview` where the thing has a shape. `.nu-roster` is `auto-fill` over `minmax(min(13em,100%),1fr)` so three players are three boxes at 320 and four across at 1280 with no media query, and the `min()` is what keeps a long name from scrolling the page sideways. `.nu-member` is one player (head = `.nu-memopen`, the whole two-line face as one button), `.nu-memchip` a motif it reads, `.nu-tray-chips`/`.nu-traychip` the pop-up motif tray (`data-default` marks the voice's standing cell through `.nu-chipw`), `.nu-readby`/`.nu-read*` the motif editor's readers strip, `.nu-motif`/`.nu-motifname` the editor's own heading rule and 12ch name field. |
@@ -446,7 +651,7 @@ this list gets added HERE, not declared in a second stylesheet.**
 | `.nu-notes` | producer (D4) | the note-stack table |
 | `.nu-map` | atlas (D6) | a full-width, aspect-preserving block `<svg>` |
 | `.nu-score` | shell | THE SCORE (2026-08-25, Paul: *"add a section ABOVE motifs which is the current playing music, two measures at a time, but ALL"*) — the `[data-live="score"]` block at the top of Material: a caption and ONE abcjs system, a stave per voice of the record, two measures wide. A rule under it, `contain: layout paint` on the host (true by construction — ui/eight.js gives the host a fixed height and scales the system to fit, so nothing inside it can move the page), and nothing else: it holds no controls, by law. |
-| ~~`.nu-tf-row`~~ `.nu-tf` `.nu-tf-was` `.nu-tf-is` | shell | THE THREE TRANSFORM ROWS, IN SYMBOLS. Two instructions, the second reversing the first: 2026-08-25, Paul — *"'backwards shift left shift right upside down up a step down a step wider' can be icons"*; 2026-08-26, Paul — *"the icons for motifs -- they're too hard to parse. just use arrows pointing in opposite directions for widen and so forth. Simple unicode symbols or a few of them arranged."* The first was answered with an `<svg>` per button drawing the transform done to a five-note contour, ghost behind and result in front, over a `.nu-tf-ref` baseline; it was tested on the reader it was drawn for and failed — ten marks in two weights of one ink inside a 40px box is a smudge at 40px — so the pictures and `.nu-tf-ref` are gone. `.nu-tf` is now an aria-hidden, `pointer-events:none` `<span>` of one or two glyphs (`⇄` `∧∨` `↕` `×2` `¾` `♪↑`); where a face is a PAIR the first glyph is `.nu-tf-was` in `--rule` and the second `.nu-tf-is` in `currentColor`, so it reads "this becomes that". *(`.nu-tf-row` — "sets a 44px `min-inline-size` … and a .3em gap so seven fit one 390px line" — is STRUCK, 2026-08-29: the two transform bands became the `motifops` and `tempo` LEVELS of `#nu-tray` on 2026-08-28 and the rows left the page; the spacing audit found the selector matching zero elements on the rendered page at 390 and 1280 and its rules are tombstoned in `nu.css`. The faces live on inside the gutter marks — ui/eight.js `face()`.)* **This is still the only icon on the page and it still narrows rather than repeals Phase 1's "No icons anywhere: words instead"** — those are actions with no visual form, these are geometric operations on a shape you are looking at. The word stays in the DOM as a `.nu-vh` span, so with the stylesheet off each row reads as its words in order. |
+| ~~`.nu-tf-row`~~ `.nu-tf` `.nu-tf-was` `.nu-tf-is` | shell | THE THREE TRANSFORM ROWS, IN SYMBOLS. Two instructions, the second reversing the first: 2026-08-25, Paul — *"'backwards shift left shift right upside down up a step down a step wider' can be icons"*; 2026-08-26, Paul — *"the icons for motifs -- they're too hard to parse. just use arrows pointing in opposite directions for widen and so forth. Simple unicode symbols or a few of them arranged."* The first was answered with an `<svg>` per button drawing the transform done to a five-note contour, ghost behind and result in front, over a `.nu-tf-ref` baseline; it was tested on the reader it was drawn for and failed — ten marks in two weights of one ink inside a 40px box is a smudge at 40px — so the pictures and `.nu-tf-ref` are gone. `.nu-tf` is now an aria-hidden, `pointer-events:none` `<span>` of one or two glyphs (`⇄` `∧∨` `↕` `×2` `¾` `♪↑`); where a face is a PAIR the first glyph is `.nu-tf-was` in `--rule` and the second `.nu-tf-is` in `currentColor`, so it reads "this becomes that". *(`.nu-tf-row` — "sets a 44px `min-inline-size` … and a .3em gap so seven fit one 390px line" — is STRUCK, 2026-08-29: the two transform bands became the `motifops` and `tempo` LEVELS of `#nu-tray` on 2026-08-28 and the rows left the page; the spacing audit found the selector matching zero elements on the rendered page at 390 and 1280 and its rules are tombstoned in `nu.css`. The faces live on in the glyph table — ui/eight.js `face()`. *(This read "inside the gutter marks" until 2026-09-07; the gutter went 2026-08-31 and the faces went with the marks into the hamburger's rows and the table's cells.)*)* **This is still the only icon on the page and it still narrows rather than repeals Phase 1's "No icons anywhere: words instead"** — those are actions with no visual form, these are geometric operations on a shape you are looking at. The word stays in the DOM as a `.nu-vh` span, so with the stylesheet off each row reads as its words in order. |
 | `.nu-hint` | any | small dim explanatory text |
 | `.nu-here` (on a `<tr>`) | shell | the row you are WRITING, in the form list — a heavy `border-inline-start` on its first cell. **Not `<mark>`**: `<mark>` is the browser's own highlight, the only one this page uses, and in that same cell it already means *this section is SOUNDING* (the playhead writes inside the button). Two facts drawn identically is the conflation 2026-08-24 undid. A rule and not a tint, for the reason the step grid refuses a zebra. Added 2026-08-25. |
 | `.nu-row` | any | **a strip of buttons, spaced once** — `display:flex; flex-wrap:wrap; gap:var(--s2)`. One name for what was three ad-hoc spacings (2026-08-26's audit). *(It read `gap:.4em` until 2026-08-29, when the spacing audit counted eighteen distinct em quanta on the sheet and collapsed them to the five `--s*` steps below; `.4em` landed on `--s2` (.35em). The `.nu-tf-row` exception this sentence used to carry — this table said `.25em`, the sheet said `.3em`, and the drift between the two copies is itself the argument for the token — died with its rows: see the strike one row up.)* |
@@ -457,8 +662,8 @@ this list gets added HERE, not declared in a second stylesheet.**
 
 Custom properties, fixed: `--tap: 44px` (an isolated control) · `--box: 26px`
 (a checkbox or radio) · `--cell: 36px` (one step of a sixteen-step grid) ·
-`--tray-w: calc(56px + env(safe-area-inset-left, 0px))` (the gutter, and the number `body { padding-inline }` is arithmetic on — added here 2026-08-29 with the band's deletion) ·
-`--bar-h: 52px` (still declared; nothing on the page is that tall any more — see the `.nu-bar` reversal in §2.4.1) · `--head-h: 38px` · `--wash: 4%` (the section colour, §2.4.2) ·
+~~`--tray-w: calc(56px + env(safe-area-inset-left, 0px))`~~ (*"the gutter, and the number `body { padding-inline }` is arithmetic on — added here 2026-08-29 with the band's deletion"* — **DELETED 2026-08-31 with the gutter; it is declared zero times in any stylesheet today**) ·
+`--bar-h` (**LIVE, and it measures the bar exactly**: `tokens.css:293` resolves to **50.39px** and `test/shell.js` A7 pins the rendered `.nu-bar` against it. *This read "`--bar-h: 52px` — still declared; nothing on the page is that tall any more" from 2026-08-29 until 2026-09-07; the band came back on 2026-09-06 as the fixed bottom transport and the token found its creditor again.* Its partner is `--top-h`, the top strip's, pinned the same way by A7b at 44.0) · `--head-h: 38px` · `--wash: 4%` (the section colour, §2.4.2) ·
 **the spacing scale, five steps and no sixth (2026-08-29)**: `--s1: .2em` ·
 `--s2: .35em` · `--s3: .55em` · `--s4: .8em` · `--s5: 1.4em` — every
 margin/padding/gap RHYTHM value in `nu.css` points at one of these (the audit
@@ -473,7 +678,7 @@ Minimum (24px) — the criterion that exists for dense equally-spaced grids.
 *"The design system is not consistent."* The audit that sentence produced
 counted TWENTY-TWO distinct `font-size` values plus twelve more inside `font:`
 shorthands, of which exactly one (`--btn-fs`) was a token:
-`--t0: .6rem` (**the nav label, reserved — one caller, `#nu-tray .nu-vh`**) ·
+`--t0: .6rem` (**the nav label, reserved** — *its one caller was `#nu-tray .nu-vh`, and that selector went with the gutter on 2026-08-31; the step is still declared and still reserved, which is why the ramp reads six and not five*) ·
 `--t1: .72rem` (an annotation) · `--t2: .82rem` (a caption or label) ·
 `--t3: 1rem` (body, and every `h3`) · `--t4: 1.15rem` (a block's own name) ·
 `--t5: 1.5rem` (a display number).
@@ -481,7 +686,10 @@ shorthands, of which exactly one (`--btn-fs`) was a token:
 `--fw-display: 900`, with `--btn-fw` and `--num-fw` kept as aliases.
 **the radii**: `--r0: 0` (a plate) · `--r1: 6px` (a control) · `--r2: 3px` (a
 chip, or a fill inside a control) · `--r-pill: 999px` (a noun, and only a
-noun — nothing wears it yet).
+noun — *"nothing wears it yet"* until 2026-09-05: **the LOZENGE wears it, and
+nothing else on this page does**, `tokens.css:236`. The law held exactly as
+written; only the parenthesis went stale, which is the argument for writing a
+radius as a noun before anything needs it).
 **`--ctl: 48px`** — a laid-down control's height. It was READ and never
 declared from 2026-08-27 until 2026-09-02, and the second `input[type=range]`
 skin that read it is gone: there is one range block now, not two.
@@ -523,7 +731,11 @@ since 2026-09-02**: `#atlas` 0 · `#pan-tempo` 1 · `#pan-key` 2 · `#pan-motif`
 `#saverdeck` 9 · `#rulesdeck` 10 · `#pan-structure` 11 · `#exportdeck` 12.
 **Two of those hosts were deleted on 2026-09-04** (TABLE.md wave 2c: Tempo and
 Key are one tab, and Structure's pane is the Band table) and their ORDINALS are
-left as holes rather than closed — 2 and 11 are spent, because renumbering to
+left as holes rather than closed — ~~2 and 11 are spent~~ **three are spent now
+(2026-09-07: `#pan-tempo`, `#pan-key`, `#pan-structure`, each with its own
+tombstone at `nu.css:1310`, `:1314`, `:1351`) — and the count is exactly the
+kind of number that should not have been typed here; the LAW is what matters and
+it has not moved** — because renumbering to
 close a gap repaints every panel after it and the ladder's only meaning is that
 consecutive numbers are 137.5deg apart.
 Video and the screensaver shipped on 2026-09-01 with no number and inherited
@@ -632,14 +844,16 @@ INSIDE the button, so the clock still writes only inside `[data-live]` and still
 writes only text, and `test/motif-frozen.js` A1 ("no control inside a
 `[data-live]`") passes unchanged at 390 and 1400.
 
-**NINE TABS FOR EIGHT AXES, DELIBERATELY — REWRITTEN 2026-08-27.** This
+**~~NINE~~ SIX VIEWS FOR EIGHT AXES, DELIBERATELY — REWRITTEN 2026-08-27, AND THE COUNT RE-TAKEN 2026-09-07.** The tabs went nine → six (`docs/NAV.md`, 2026-09-06: the views live in one hamburger now), and **the document's eight top-level keys did not move** — a fresh `genreToDocument("gregorian", 1)` still returns `[basis, time, alphabet, material, form, voices, sound, performance]`. That is §2's *"nine tabs and nine top-level keys is a coincidence and is worth denying out loud"* proving itself: the paragraph below denied a coupling and the coupling was later tested by a rename it survived. The count in the heading is the only thing that changed. This
 paragraph said "FIVE HEADINGS FOR EIGHT AXES" and the argument it made is the
 one that survived: `8 · Performance` became a TAB of the band block on
 2026-08-25 (*"Why don't you move performance in as a tab too"*), and the
 grouping follows AXES.md's own SCOPE column — Performance is song-level, which
 makes it a peer of `form` and not of the voices — rather than the enumeration.
 Nothing was lost; do not "restore" eight headings, and do not "restore" eight
-tabs either.
+tabs either — and do not read the number in the heading as a law. The
+INSTRUCTION here is TRUE and has been vindicated twice; only its arithmetic
+moved.
 
 What changed is the containers and their names. Paul, 2026-08-27: *"Why don't
 we make tabs at the top level and let go of the idea of scrolling everything?
@@ -663,15 +877,26 @@ and the transport is not in a tab.
 
 **Three failure modes carried forward so nobody rediscovers them:** never write
 `overflow-x: hidden` on `body` or `#app` — it kills both stickies silently, and
-the sideways scroll is fixed at the table, never at the body; a sticky `<tr>`
-does nothing, only cells stick; **the shell's declared size is a promise the
-gate pins**, and today that promise is `--tray-w` — `test/shell.js` A7 measures
-the one `.nu-tray` against the token the page resolves. *(This read: "`--bar-h`
-is a promise the gate pins — made to `.nu-ax > h2` until 2026-08-27 and to
-`.nu-tabs` since." Both creditors and the debtor itself are gone — the bands
-were deleted on 2026-08-28 and 2026-08-29, §2.4.1 carries the reversal — and
-the promise moved to the chrome that replaced them, unchanged in every other
-respect.)*
+the sideways scroll is fixed at the table, never at the body — **and this one is
+gated: `test/shell.js` A0 asserts `body` and `#app` keep `overflow-x: visible`
+on every view; it is the natural "fix" for a page that scrolls sideways and it
+silently kills every sticky head, so `DESIGN.md` §3 now carries a pointer to it
+beside the horizontal-scroll law it protects**; a sticky `<tr>`
+does nothing, **only cells stick — and that is the half that is exactly true.
+Measured 2026-09-07: of fifteen `position: sticky` rules in `nu.css`, thirteen
+are on a `th` or a `td` and two are on neither (`.nu-spline`, `#nu-menu
+.nu-menusub`), both deliberately. The law is *a row cannot be sticky, a cell
+can*; it is not *nothing but a cell is ever sticky*, and this sentence has been
+read the second way in at least one other file**; **the shell's declared size is a promise the
+gate pins**, and today that promise is made **twice**: `test/shell.js` A7
+measures the one `.nu-bar` against `--bar-h` (50.39px) and A7b the one
+`.nu-topstrip` against `--top-h` (44.0). *(The promise has now been re-pointed
+three times and the LAW has not moved once, which is the argument for stating it
+as a law and not as a selector. It read "`--bar-h` is a promise the gate pins —
+made to `.nu-ax > h2` until 2026-08-27 and to `.nu-tabs` since"; then, from
+2026-08-29, "today that promise is `--tray-w` — A7 measures the one `.nu-tray`
+against the token the page resolves"; the gutter went on 2026-08-31 and the two
+bands of `TABLE.md` §16 took the promise on 2026-09-06.)*
 
 ### 2.5 NEW FILES — one owner each
 
@@ -695,6 +920,41 @@ self-checks stay **beside their data** (`gates-extract.js --check`,
 needing a browser lives in `test/`.
 
 ### 2.6 EXISTING FILES — who may edit them, and when
+
+**GENERATED FILES — one owner, the extractor, NEVER edited by hand** (written
+down 2026-09-07; the convention is two weeks older and was stated nowhere but in
+its own output's first line). Twenty-three files in this tree carry a banner
+reading *"GENERATED. DO NOT EDIT."* — and the banner is emitted by each
+extractor's own `render()`, so it cannot drift from the thing it labels. Three
+generate-and-commit pipelines, each with a `--check` that re-derives the artifact
+and exits non-zero on a difference:
+
+* **`nukernel/ui/*.js`** — SIX of its entries are build output (`ui/table.js`,
+  `ui/menus.js`, `ui/lozenge.js`, `ui/copy.js`, `ui/envelope.js`, `ui/ui.js`,
+  built from `nukernel/src/*/index.ts` by `tools/ui/build.js --check`) and
+  **twenty are hand-written source** (`ui/eight.js`, `ui/glyph.js`,
+  `ui/atlas.js`, and the rest). **They sit in ONE directory with no naming
+  distinction, and this is the most dangerous unwritten law the audit found**:
+  `ui/table.js` and `ui/eight.js` are neighbours, one is a build artifact and
+  one is the integration file, and the only thing that says which is the first
+  line of each. Read line 1 before you edit anything in `nukernel/ui/`. Do not
+  count the entries in prose — `tools/ui/build.js` reads them off the tree, so a
+  number typed here is stale the next time a directory is added (which is
+  exactly how `DESIGN.md` and `TABLE.md` both came to say "five" of six).
+* **`nukernel/genres.js`** — built from the 502 row files in
+  `nukernel/genres/*.json` by `node tools/genres/build.js --check`, byte for
+  byte. `nukernel/GENRES.md` is the contract for this one and the only document
+  in the tree that states the generated-file law at all. **A row edit is three
+  motions, not one**: edit the JSON, run the build, run the gate.
+* **the extractor set** — `knobs`, `gates`, `wiki`, `donor` and the four export
+  racks (`fxrack`, `fxrack2`, `drumrack`, `masterrack`), all eight implementing
+  `--check`. Only the first four are run by a gate directly; the racks are
+  covered transitively by `test/all.js`.
+
+**WHY THE COMMITTED ARTIFACT EXISTS AT ALL** (`genres.js:13`): the browser loads
+it. There is no build step between the working tree and the deployed page — the
+tree IS the web root — so the artifact is committed and the `--check` is what
+keeps it honest.
 
 **INTEGRATION FILES — one owner, the integrator, never edited in parallel:**
 `nukernel/ui/eight.js` · `nukernel/index.html` · `nukernel/ui/deps.js`. A module
@@ -999,8 +1259,8 @@ installed on this machine; the builds that exist are
 
 | command | what only a browser can prove | wave |
 |---|---|---|
-| `node test/shell.js` | **on every one of the nine tabs, at 320/375/430/820** (2026-08-27 — a survey taken after load measured the `Where` tab and called it the shell): `scrollWidth === clientWidth` · zero `button`/`select`/`input[type=number]` under 44px · every checkbox and radio ≥24px both axes · every `.nu-pane` has `scrollHeight − clientHeight ≤ 1` · no `<table>` overflows the box it is in · swept down each tab's whole height at eleven stops, the gutter sits at viewport top 0 and never moves on either axis, and **no `.nu-ax > h2` is sticky anywhere** · the stripe is ONE column and never scrolls sideways · one `<mark>` and one `aria-pressed`, both naming the open thing · the nine names are Paul's words in Paul's order · a tab remembers its own scroll (to a depth that tab HAS) and a tab never opened starts at 0 · nothing overlaps the gutter's band · **A7: exactly one `.nu-tray`, and its width equals `--tray-w` as the page resolves it** · after `pane.scrollLeft = 200` the sticky lane `th` moved ≤2px. *(A6/A7 rewritten 2026-08-29 with the band Paul deleted. They read: "the `.nu-bar` sits at 0 and `#toptabs` at exactly `--bar-h`" and "`.nu-bar` height equals `--bar-h`" — one piece of chrome, one of it, at its declared size, which is the claim the gutter carries now. That `#play` is in the head at every level, and what pressing it does, is `test/gutter.js` T2/T3.)* | 2 |
-| `node test/sheets.js` | `#app select` is empty · `.nu-opt` count per sheet equals `NuAvail.SHEETS[key].values(...).length` · exactly one `input:checked` per non-multi sheet · **NO SILENT GREY**: every `input:disabled` has non-empty `.nu-why` text and every `fieldset[disabled]` a non-empty `> .nu-why` · the three named gates end to end (untick drums → `dev.kit` reads *no drummer*; harmony modal → `alphabet.quality` reads *modal harmony has no changes*; a `pad` voice → `at the fifth` disabled while `out` is not) · ArrowDown moves the value AND `activeElement.dataset.k` · with `document.styleSheets[0].disabled = true` all of it still holds and every `.nu-why` string is in `body.innerText` | 2 |
+| `node test/shell.js` | **on every one of the ~~nine tabs~~ six views, at 320/375/430/820** (2026-08-27 — a survey taken after load measured the `Where` tab and called it the shell; *the gutter clauses below are struck 2026-09-07: the gutter was deleted 2026-08-31 and A6/A7 were rewritten onto the two bands, `test/shell.js:1207` now asserting the absence by name*): `scrollWidth === clientWidth` · zero `button`/`select`/`input[type=number]` under 44px · every checkbox and radio ≥24px both axes · every `.nu-pane` has `scrollHeight − clientHeight ≤ 1` · no `<table>` overflows the box it is in · swept down each view's whole height at eleven stops, ~~the gutter sits at viewport top 0 and never moves on either axis~~ *(the two fixed bands do, A6/A7b)*, and **no `.nu-ax > h2` is sticky anywhere** · ~~the stripe is ONE column and never scrolls sideways~~ · one `<mark>` and one `aria-pressed`, both naming the open thing · the nine names are Paul's words in Paul's order · a tab remembers its own scroll (to a depth that tab HAS) and a tab never opened starts at 0 · ~~nothing overlaps the gutter's band~~ · **A7: exactly one `.nu-bar`, and its height equals `--bar-h` (50.39px) as the page resolves it; A7b the same for `.nu-topstrip` and `--top-h` (44.0)** *(this read "exactly one `.nu-tray`, and its width equals `--tray-w`" until 2026-08-31)* · after `pane.scrollLeft = 200` the sticky lane `th` moved ≤2px. *(A6/A7 rewritten 2026-08-29 with the band Paul deleted. They read: "the `.nu-bar` sits at 0 and `#toptabs` at exactly `--bar-h`" and "`.nu-bar` height equals `--bar-h`" — one piece of chrome, one of it, at its declared size, which is the claim the two bands carry now. *(And that sentence read "which is the claim the gutter carries now" until 2026-09-07; `test/gutter.js` still has the name and its own first law is *"THE FILE IS STILL CALLED gutter.js AND THERE IS NO GUTTER."*)*)* | 2 |
+| `node test/sheets.js` | ~~`#app select` is empty~~ **REVERSED THE SAME EVENING, 2026-08-24, and recorded only in the gate until 2026-09-07.** `test/sheets.js:459-475` carries the reversal in full — *"THIS CHECK IS A REVERSAL, WRITTEN DOWN RATHER THAN DELETED … the law this file holds is no longer 'no menus'; it is 'no menu where you are comparing'"* — after Paul asked for `<select>` back where one option is settled (§2.4's kind 3). **The gates were keeping a better change log than the contract.** · `.nu-opt` count per sheet equals `NuAvail.SHEETS[key].values(...).length` · exactly one `input:checked` per non-multi sheet · **NO SILENT GREY**: every `input:disabled` has non-empty `.nu-why` text and every `fieldset[disabled]` a non-empty `> .nu-why` · the three named gates end to end (untick drums → `dev.kit` reads *no drummer*; harmony modal → `alphabet.quality` reads *modal harmony has no changes*; a `pad` voice → `at the fifth` disabled while `out` is not) · ArrowDown moves the value AND `activeElement.dataset.k` · with `document.styleSheets[0].disabled = true` all of it still holds and every `.nu-why` string is in `body.innerText` | 2 |
 | `node test/nudges.js` | with `env:"arch"` on section 2 the box carries the key AND the rendered events show `max(vel) − min(vel) ≥ 2`, and `= 0` with nothing set (kernel numbers measured: 64 flat vel-5 events → `3 4 4 5 5 5 5 4`) · **THE GREY-OUT GATE**: on a document with no drums voice, `outro: fill\|roll\|tomfill\|hatrun\|doubles\|break` and `intro: kit` are `disabled` and nothing else is; add a drums voice and all seven come alive · zero `pageerror` | 3 |
 | `node test/producer.browser.js` | ~~three~~ TWO real taps (2026-09-01, the one-verb collapse) → `window.__eightProd()` shows the note with a non-empty `said` · the compiled bar the ENGINE is handed changes, measured off the `audio/plan.js` timeline · *"take it off"* restores it byte-identical | 3 |
 | `node test/atlas.js` | G7 all non-`localhost:8777` requests aborted, no `pageerror`, exactly 62 `.dot` and 62 `.hit` circles and `LAND.length` paths · G8 set `#atlasYear` to `indexOf(1969)`, click Kingston's rendered `cx/cy`, `#title` becomes `Kingston 1969` within 3 s with the five `h2` headings intact · G9 the same click twice gives identical `__eightDoc()`, the bar's *"rewrite"* differs · G11 the fallback listbox gives the same document · G12 tap boxes ≥28 CSS px at 390×844 in the world view, ≥44 in Britain · G13 a swipe on the SVG still scrolls the page · G14 no performance entry names another host | 3 |
@@ -1017,18 +1277,46 @@ installed on this machine; the builds that exist are
    send to `tone.verb`, so the moment a return opens, wetness that was silently
    discarded becomes audible. The chant will not sound like it did yesterday, on
    purpose. Does it sound like a stone room?
-3. **~~`fx` back on a track~~ — ANSWERED, 2026-08-26, and the answer was no.**
+3. **`fx` back on a track — ASKED 2026-08-26, ANSWERED NO, THEN ANSWERED YES
+   ON 2026-08-27. THIS ENTRY IS RETIRED, 2026-09-07.**
+
+   **THE CURRENT LAW, FIRST: a voice may carry UP TO THREE EFFECTS.** Paul,
+   2026-08-27, recorded verbatim at `fields.js:637-638`: *"I think we need to do
+   what everyone else does with effects. Add per voice effects, up to three."*
+   `PARTMIX` today is `rev echo room aux genre lvl pan **fx fxw1 fxw2 fxw3 fxa1
+   fxa2 fxa3 fxb1 fxb2 fxb3** mute solo fader eq` — an insert list capped at
+   `MAX_FX` plus three knobs apiece — and this file's own §2.1 schema has
+   carried `"fx": ["chorus"]` in its `desk` example since the day it was
+   written, 866 lines above this paragraph. **The file contradicted itself for
+   eleven days and the loudest of the two voices was the wrong one.**
+
+   HOW IT WENT, kept because the reasoning on both sides is still worth reading.
    The ask stood here: *"`fx` back on a track reverses a quoted directive (Paul,
    2026-08-17: 'get rid of inserts, reverb, and echo — let me send to bus 1, bus
    2, and bus 3 instead'). The argument is that the premise changed — the sends
    are wired to real returns now, so a chip is only for what must be IN the
-   path. This needs Paul's nod, not a gate's."* He gave the opposite: *"Don't
-   let me add effects to instruments. That's bus and board stuff. But let me
-   have up to four buses and a way to direct them to each other."* The chip is
-   off PARTMIX and off every surface; the measurement that made the argument (an
-   insert costs a MULTIPLE, a bus costs a CONSTANT) is now the reason there is a
-   fourth bus. `desk-gate` G14 holds it: no per-voice effects control anywhere
-   on the rendered page, and no field left for one to write.
+   path. This needs Paul's nod, not a gate's."* On 2026-08-26 he gave the
+   opposite: *"Don't let me add effects to instruments. That's bus and board
+   stuff. But let me have up to four buses and a way to direct them to each
+   other."* And this entry then said: *"The chip is off PARTMIX and off every
+   surface … `desk-gate` G14 holds it: no per-voice effects control anywhere on
+   the rendered page, and no field left for one to write."* **One day later he
+   reversed it himself**, in the sentence above, and the reversal was written
+   down in `fields.js` and nowhere else — not here, where the prohibition it
+   overturned was quoted in his own voice. `desk-gate` G14 is a different check
+   entirely now (*"FOUR BUSES, AND WHERE THEY GO"*, `desk-gate.js:2389`), so the
+   gate this law cited stopped proving it without the law noticing.
+
+   WHAT SURVIVED THE REVERSAL: the measurement that started it (an insert costs
+   a MULTIPLE, a bus costs a CONSTANT) is still the reason there are buses at
+   all, and it is why the per-voice chain is **capped at three** rather than
+   open. The bus/board distinction is still the right default; three inserts is
+   the named exception to it.
+
+   THE LESSON, which is why this entry is retired in place rather than deleted:
+   **a law that quotes Paul is not safer than any other law — it is more
+   dangerous, because nobody edits a sentence in his voice.** When a directive
+   is reversed, the reversal goes where the directive is.
 4. **`--cell: 36px`.** It clears WCAG AA but not the 44px Apple figure. If the
    thumb disagrees on a real phone the answer is one custom property — and since
    the rotation of 2026-08-25 the cost is a taller block rather than a second
@@ -1043,6 +1331,14 @@ installed on this machine; the builds that exist are
 7. **Gate 4 — Live.** Only Live proves a set opens. The CLI's last line is the
    ask: `open "<path>" in Live 12.4.3 and say whether it opens`. This is the
    LIVE-gate law, which `verify.sh` has always missed.
-8. **The stylesheet off.** With `document.styleSheets[0].disabled = true` the
-   page must still read as the same document, top to bottom. That is the promise
-   the CSS reversal is allowed to make.
+8. **The stylesheet off.** With **every** stylesheet disabled the page must
+   still read as the same document, top to bottom. That is the promise the CSS
+   reversal is allowed to make, and it is gated: `test/sheets.js` reports *"with
+   the stylesheet off, all reasons are still in body.innerText"*. *(This read
+   "`document.styleSheets[0].disabled = true`" until 2026-09-07. The LAW is
+   unchanged; the MECHANISM in it went stale when the tokens moved out on
+   2026-09-07 and `index.html` grew a third link — `nu.css` is `[1]` now, and
+   `test/sheets.js:1550` and `test/selects.js:1468,2087` all ITERATE the list
+   and disable every one. `index.html:47-52` carries the same correction and is
+   the model for it: amend the SENTENCE, not the load order, and say why —
+   nobody indexes the list, they all iterate it.)*

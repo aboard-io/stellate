@@ -1117,8 +1117,13 @@
      than doing `cells[to] = cells[from]; delete cells[from]`. `Object.keys`
      order IS the bank's order — the motif marks' ordinals are read off it and
      `cellNames()[0]` is what `cellOf` falls through to — so a rename that
-     moved a cell to the end of the list would renumber every mark in the
-     gutter for a change of spelling. */
+     moved a cell to the end of the list would renumber every mark for a
+     change of spelling. (That sentence read "every mark in the gutter" until
+     2026-09-07. The gutter is where those marks WERE drawn; it was DELETED on
+     2026-08-28 — `test/shell.js` asserts its total absence and `--tray-w` is
+     declared in no stylesheet — and the history is rewritten here rather than
+     deleted, per this tree's own law, because the ordinals it named are still
+     read off this same order wherever the marks are drawn now.) */
   function renameCell(doc, from, to) {
     const cells = doc && doc.material && doc.material.cells;
     if (!cells || !Object.prototype.hasOwnProperty.call(cells, from)) return false;
@@ -2246,7 +2251,19 @@
          under a voice, pruned when the id dies, and the VALUE checked against
          the field's own shape — the paranoid half song.js applies to every
          enum, because a register from a build with a different range is a lie
-         the kernel would play. `entry` is bars and cannot be negative;
+         the kernel would play. `entry` is bars and is ≥ −1 BAR: one bar of
+         pickup, snapped to the meter's grid. (This read "`entry` is bars and
+         cannot be negative" until 2026-09-07. It was overtaken on 2026-09-05,
+         item 9, by the pickup — `entryOK` above has floored at −1 ever since —
+         and the header was never rewritten under it. WHY THE FLOOR IS −1 AND
+         NOT 0: nothing loops backwards, so a negative `entry` is a PICKUP a
+         hand wrote and it belongs to the section that BEGINS AFTER IT; one bar
+         is the ceiling because anything earlier is a chair in the PREVIOUS
+         section, which is that section's business and is refused at the door
+         — `kernel.js ENTRY_LEAD` is the same one-bar ceiling read from the
+         other end. It is not decoration: `precompose.js`'s CUT LAW keeps
+         `t < 0` on purpose, and the first draft of that line cut it and
+         deleted the anacrusis.)
          `reg` is the chair's own -4..3 (precompose regAt's clamp, the one
          owner of that range); `focus` is a flag. Absent is today: a voice with
          no overrides writes nothing, an emptied cell deletes itself and an
@@ -2284,10 +2301,19 @@
               /* AN ENTRY IS SNAPPED TO THE BAR'S OWN STEP BEFORE IT IS
                  JUDGED (2026-09-05, the review's item 4). It used to be
                  `Number.isInteger`, which is what made a pickup and a stretto
-                 unsayable; it is now any non-negative number on the meter's
-                 grid, and one off the grid is moved onto the nearest step
-                 rather than deleted. An integer is its own snap, so this is a
-                 no-op on every record written before today. */
+                 unsayable; it is now ANY NUMBER ≥ −1 BAR on the meter's grid —
+                 one bar of pickup and no more — and one off the grid is moved
+                 onto the nearest step rather than deleted. An integer is its
+                 own snap, so this is a no-op on every record written before
+                 today. (This sentence read "any non-negative number on the
+                 meter's grid" from the day it was written and was wrong the
+                 same day: `entryOK` has always floored at −1, which is the
+                 whole point of the round it was written in. Amended 2026-09-07.
+                 The floor is −1 and not 0 because nothing loops backwards: a
+                 negative time is a PICKUP belonging to the section that begins
+                 after it, and a bar earlier than that is a chair in the
+                 previous section. See the §1 note above and precompose.js's
+                 CUT LAW, which depends on it.) */
               if (f === "entry" && entryOK(c[f])) {
                 const snapped = entrySnap(c[f], cellStepsOf(doc));
                 if (snapped !== c[f]) c[f] = snapped;

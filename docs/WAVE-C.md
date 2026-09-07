@@ -61,12 +61,23 @@ search writes (putting you back where you were standing) is swallowed too, so
 the sentence over the globe is the same string before, during and after a
 search. Pressing a row still flies the camera: `openRow` is untouched.
 
-**THE JUMP IS CHIPS AND NOT A MENU** — twice-argued. Paul, 2026-08-24, of this
-exact surface: *"get rid of the era select boxes…"*, and `test/atlas.js` G7 has
-failed on `#atlasEra` and on any `<select>` under `#atlas` ever since. And
-Paul, 2026-09-02: *"make those tables of dropdowns full of tappable grids."*
-The dead id is not reused: this is `#atlasJump`, and it answers a different
-question (it MOVES you; the killed one FILTERED).
+**THE JUMP IS CHIPS AND NOT A MENU — AND THE CHIPS ARE GONE TOO (RETIRED
+2026-09-06, four hours later, by §B of this same file).** Twice-argued. Paul,
+2026-08-24, of this exact surface: *"get rid of the era select boxes…"*, and
+`test/atlas.js` G7 has failed on `#atlasEra` and on any `<select>` under
+`#atlas` ever since. And Paul, 2026-09-02: *"make those tables of dropdowns
+full of tappable grids."* The dead id is not reused: this was `#atlasJump`,
+and it answered a different question (it MOVED you; the killed one FILTERED).
+
+**What replaced it is the FIELD**, and the argument is §B below: `#atlasJump`,
+its 26 chips, its delegated listener, its two CSS rules and the keys
+`atlas.era.aria` / `atlas.era.chip` are deleted, `atlas.era.*` no longer
+resolves, and `#atlasJump` is on `test/atlas.js` G7's dead-id list — deleted,
+never hidden. **The law above SURVIVES its own surface**: no `<select>` under
+`#atlas`, ever, is still true and still gated. What did not survive is the
+answer this section gave to *"then what?"* — the era word turned out to be one
+of the six things the field already matches on, so a second control for it was
+a second control.
 
 **WHERE IT STANDS.** The brief said "the top of the picker". The top of the
 picker is a sentence and a globe; a field above them would have put ~300 px of
@@ -117,7 +128,18 @@ not with the index. It survives save/load because the save IS the document.
 `node test/table.test.js` T2 is green **without re-pinning `BASE_SHA`** — an
 unnamed record's boxes and rendered events are byte-identical.
 
-### THE TWO SEAMS I DO NOT OWN
+### THE TWO SEAMS I DO NOT OWN — BOTH PAID (RETIRED 2026-09-07)
+
+**Both landed, in the other hand's files, as one line each exactly as
+specified.** `nukernel/src/table/model.ts` carries the `form.name` text field
+in the Form group (with `textField` built and a `text` branch in `sheet.ts`
+drawing an `<input type="text">`), and `nukernel/src/table/grid.ts`'s section
+row head reads `${A.secWord(i)}` where it read `${A.roleWord(s.role)}`. The
+specification below is kept as written because it is the record of a HANDOFF
+that worked — a seam named precisely enough that the hand who owned it could
+pay it without a second conversation — and that is the reusable part. The line
+numbers in it are numbers about a file's layout on 2026-09-06 and will not
+resolve; the two files and the two symbols will.
 
 The section sheet's TypeScript and the table's row-head plate are the other
 hand's files. Both are one line:
@@ -275,9 +297,19 @@ to be.
 
 ## THE COPY THE OTHER HAND OWES THIS WAVE
 
+**RETIRED 2026-09-07: ALL TEN ARE PAID.** Every key below now resolves in
+`nukernel/src/copy/` — the nine that were missing are in `sheets.ts` and
+`table.ts`, and the one REWRITE landed verbatim (`"exportTab.link.sub": "The
+whole record, in a URL"`). `test/copy.test.js` is 10/10 over 1,106 keys and no
+key in this table prints as itself on the page any more. The table is kept as
+written because a copy DEBT stated as a table of keys, English and a reason is
+the shape that got it paid; the ✅/**missing** column below is the state on
+2026-09-06 and is history.
+
 `nukernel/src/copy/**` belongs to the hand working in the table. The atlas keys
-below **have already landed there** (`atlas.ts`); the rest are still missing and
-print as their own key on the page (`test/copy.browser.js` B1/B4 name them).
+below **had already landed there** (`atlas.ts`) when this was written; the rest
+were still missing and printed as their own key on the page
+(`test/copy.browser.js` B1/B4 name them).
 
 | key | English | note |
 |---|---|---|
@@ -298,10 +330,10 @@ print as their own key on the page (`test/copy.browser.js` B1/B4 name them).
 | `exportTab.record.backSaid` | Back — {players} players, {sections} sections | **missing** |
 | `row.name` | name | **missing** (the section sheet's field label, `avail.js form.name`) |
 
-**And one REWRITE**: `exportTab.link.sub` says *"Place, year, seed and current
-view"*. That is no longer true — it should say something like **"The whole
+**And one REWRITE**: `exportTab.link.sub` said *"Place, year, seed and current
+view"*. That was no longer true — it should say something like **"The whole
 record, in a URL"**. The card beneath it now says which of the two it is
-actually carrying, every time.
+actually carrying, every time. *(Landed as that exact string.)*
 
 ---
 
@@ -389,12 +421,26 @@ strip was three controls answering one question, and one of them was enough.
 viewers behind the ≡ keep both), and the live sentence over the map
 (`sentence()` in `ui/atlas.js`, `atlas.yearSay`).
 
-**Kept.** The ×, at 44×44, at the inline end (`.nu-sheethead` is
-`space-between`, and with the name hidden that put the close at the START,
-x=13, under a left thumb — `flex-end` is what "its close at the end" means when
-there is no name). And `#atlasHead`, index.html's own visually-hidden
-`<h2>Where & when</h2>`, which is what names the panel to a screen reader now
-that no word is drawn.
+**Kept, THEN DELETED (2026-09-07).** The ×, at 44×44, at the inline end
+(`.nu-sheethead` is `space-between`, and with the name hidden that put the
+close at the START, x=13, under a left thumb — `flex-end` is what "its close
+at the end" means when there is no name). And `#atlasHead`, index.html's own
+visually-hidden `<h2>Where & when</h2>`, which is what names the panel to a
+screen reader now that no word is drawn.
+
+**THE × IS RETIRED; `#atlasHead` STANDS.** Paul, the next day: *"Get rid of the
+dismiss x about the globe and expand the globe accordingly"* — carried by
+`docs/NAV.md` §20's third amendment, which is the OWNER of this decision. The
+whole header goes for this one surface, not just its word: `ui/eight.js`
+computes `const bare = name === "Where"` and removes `sheetHead` outright, so
+there is no `flex-end` question left to answer. **The two ways out are now the
+record's NAME in the strip (a toggle since §16) and Escape**, and the globe
+takes the 44px back — 364.4 × 298 → 364.4 × 342 at 390. The four VIEWERS
+behind the ≡ keep their header, their name and their ×: a sheet you opened
+from a list of five has to say which of the five it is. The reasoning above —
+that a close at the START under a left thumb is the wrong close — is still
+correct and is why the replacement is two named doors rather than a × moved
+again.
 
 **Measured, before → after:**
 
@@ -534,6 +580,17 @@ round**: the page's only Escape listeners shut the LOG and the die's popover
 gap and it belongs to whoever writes the sheets' keyboard round, not to a
 deletion brief.
 
+**THAT ROUND WAS WRITTEN, AND ESCAPE CLOSES IT (RETIRED 2026-09-07,
+`nukernel/TABLE.md` §18c).** `armEscape()` in `ui/eight.js` is the one
+listener: it ignores a keystroke inside an `input`, `textarea` or `select` — *a
+hand cancelling an edit is not a hand asking to leave the page* — then shuts
+whatever the one-owner is holding, and failing that returns to `Band`.
+`test/oneopen.js` O5 drives it, and `docs/NAV.md` §20's third amendment names
+Escape as one of the picker's two ways out. **The handoff worked exactly as
+this paragraph asked**: the gap was named, scoped to somebody else's round,
+and paid there rather than bolted onto a deletion brief. That is why the
+paragraph is kept.
+
 ## WHAT MOVED IN THE GATES
 
 `test/atlas.js` keeps every claim that still holds and rewrites the four that
@@ -546,6 +603,12 @@ read a deleted surface:
   line), plus a new check that the picker's header is the × ALONE: the name is
   not drawn, there is no rule under it, the `<h2>` still names the panel and the
   close is ≥ 44×44.
+  **AMENDED 2026-09-07 with the × it was reading:** `.nu-sheethead` is not
+  inserted for `Where` at all now (see the retirement above), so the order
+  begins at `#atlasHead` and there is no header to check. The current claim is
+  `test/atlas.js` **G11b**, and the half of G11 that outlived the surface is
+  the one worth keeping — the globe stands in front of the status line, and
+  `#atlasHead` is what names the panel when no word is drawn.
 * **G22** — *"the earth and the sentence are the same fact"* becomes **the earth
   and the CATALOGUE are the same fact**: the drawn marks are held against
   `NuAtlas.atYear(Y).shown.size`, asked independently in the page, which is one

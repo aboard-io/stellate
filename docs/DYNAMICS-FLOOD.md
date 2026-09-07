@@ -44,24 +44,66 @@ here; each shift re-pins it in one commit with the reason written at the pin.
 
 ## The shifts
 
-**1 · THE MOTIF'S OWN DYNAMICS.** A vocabulary of per-note dynamic FIGURES
-(the shapes a phrase actually takes: leaning first note, agogic close,
-backbeat weight, terraced repeat, swell, anacrusis push, syncopated
-displacement, flat by conviction) declared per family and per row, applied by
-the generator in place of `ideas-kit.js`'s single 8/5/6 line and
-`precompose.js`'s downbeat accent. The nulls stay null: a 303 does not
-breathe, and six rows say so already.
+**1 · THE MOTIF'S OWN DYNAMICS — SHIPPED AS v291, AND THIS SHIFT IS RETIRED.**
+A vocabulary of per-note dynamic FIGURES (the shapes a phrase actually takes:
+leaning first note, agogic close, backbeat weight, terraced repeat, swell,
+anacrusis push, syncopated displacement, flat by conviction) declared per
+family and per row, applied by the generator in place of `ideas-kit.js`'s
+single 8/5/6 line and `precompose.js`'s downbeat accent. The nulls stay null:
+a 303 does not breathe, and six rows say so already.
 
-**2 · THE CHORD VOCABULARY.** The 224 `cycle` rows still on bare triads get a
-progression and a quality vocabulary from their own anchors and the corpus
-mirror; the 34 unused quality words earn their rows where the music has them
-(ninths in bossa, elevenths in fusion, altered dominants in bop, add9 in
+**IT WAS BUILT EXACTLY AS WRITTEN (2026-09-06, commit `1c5e8db`, re-pinned by
+`7ec2e8c`).** The vocabulary is `genres-tables.js FIGURES`; the field is `dyn`;
+absent means `lean`, which is the line that was there, so a row that says
+nothing renders byte for byte what it rendered before the field existed.
+`test/dynfigure.test.js` is 10/10 and is where the count of rows naming a
+figure is a fact — read `nukernel/GENRES.md` §`dyn` for the contract and the
+gate for the number. The two-part proof this document asked for
+(*"the render CHANGED… it STAYED IN FAMILY"*) is the pin-and-reason commit
+pair, and it is house style now. **Nothing in this shift is outstanding.**
+
+**2 · THE CHORD VOCABULARY — UNEXECUTED, AND DRIFTING BACKWARDS. THIS IS THE
+LARGEST UNBUILT PROGRAM IN THE TREE.** The `cycle` rows still on bare triads
+get a progression and a quality vocabulary from their own anchors and the
+corpus mirror; the unused quality words earn their rows where the music has
+them (ninths in bossa, elevenths in fusion, altered dominants in bop, add9 in
 eighties pop, diminished passing chords in ragtime and jazz). Split bars,
 slash bass and held chords land where the anchor plays them.
 
-**3 · THE DEAD DATA.** 15 rows write `roots` no harmony reads: either the
-harmony is wrong or the roots are. `mbube`'s inversion is unreachable — the
-pad voices a pitch-class set, so either the pad learns inversions or the row
-stops claiming one. Both are one-line answers to a question the census asked.
+**RE-MEASURED ON THE SHIPPED `nukernel/genres.js`, 2026-09-07** (502 rows;
+`node -e` over `require("./nukernel/genres.js").GENRES`):
+
+| | when this shift was written (2026-09-06) | today |
+|---|---:|---:|
+| `cycle` rows carrying no `prog` | 224 | **238** |
+| quality words in use, of the 42 `kernel.js QUALFAM` publishes | 8 | **8** |
+| held chords | 0 | **0** |
+| slash bass | 0 | **0** |
+| split bars | 3 | **6** |
+
+The eight words in use are `7` · `dom7` · `m7` · `triad` · `maj7` · `sus4` ·
+`six` · `nine`; thirty-four of the vocabulary have never been written by any
+row. **The bare-triad count went UP by fourteen while this shift sat**, which
+is the point worth keeping: rows kept being added under the old habit because
+nothing refuses one. The engine side is finished and has been since before
+this document — `QUALFAM` holds all 42 and `kernel.js` renders every one of
+them — so every number above is a CATALOGUE number, and the flood law at the
+head of this file (*"a flood is DATA, not a default"*) is what makes it so.
+
+**3 · THE DEAD DATA — HALF PAID. THE 15 ROWS STAND.** 15 rows write `roots` no
+harmony reads: either the harmony is wrong or the roots are. It is a one-line
+answer to a question the census asked, and nobody has answered it.
+
+**Re-measured 2026-09-07: still exactly 15**, all of them `harmony: "modal"`,
+while `kernel.js` reads `g.roots` only under `harmony === "cycle"` — `firqa`
+`nuba` `sizhu` `thumri` `kriti` `varnam` `carnatic` `metalcore` `hardcore`
+`slowcore` `electroindustrial` `beiruttarab` `doom` `gothicmetal` `tarab`.
+
+*(This shift also read:* **"`mbube`'s inversion is unreachable — the pad voices
+a pitch-class set, so either the pad learns inversions or the row stops
+claiming one."** *That half is RESOLVED and the sentence is struck: no row in
+the catalogue carries an `inv` field at all, count 0 on 2026-09-07. The row
+stopped claiming one, which was the second of the two answers this shift
+offered.)*
 
 Each shift is one agent, gated, committed on its own, deployed to staging.

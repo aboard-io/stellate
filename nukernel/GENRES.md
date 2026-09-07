@@ -9,7 +9,7 @@ So it went the other direction.
 
 | | before | after |
 |---|---|---|
-| source of truth | `nukernel/genres.js`, 27,377 hand-written lines | `nukernel/genres/<key>.json`, 421 files, one per genre |
+| source of truth | `nukernel/genres.js`, 27,377 hand-written lines | `nukernel/genres/<key>.json`, one file per genre (421 at the migration; the count is `genres-build` G2's, which asserts the directory and the catalogue agree and names both numbers when they do not) |
 | shared tables | the top and the foot of the same file | `nukernel/genres-tables.js` (hand-written) |
 | the shipped script | hand-edited | **generated** by `tools/genres/build.js` |
 | a row's prose | a comment | the row's `note` field |
@@ -49,6 +49,28 @@ $ node test/genres-build.test.js           # G1..G4, the whole contract
 
 `genres-build` is registered in `test/all.js` as a **wave 1 node** gate, beside
 `rules` and `document`, because it is the data tier and nothing else.
+
+**AND THE SAME LAW APPLIES TO THIS DOCUMENT: READ THE GATE, NOT THE
+PARAGRAPH** (2026-09-07). A count typed into prose is a copy of the catalogue,
+and §1's whole argument is that a copy of the catalogue goes stale silently.
+Six counts in this file had done exactly that — the rows with a `dyn`, the
+rows with a `copyist` refusal, the rows with a `throat`, the rows with
+`parents`, the same-year edges, and the number of row files — every one of them
+frozen at the day it was typed and every one of them printed live by the gate.
+They are pointers now, not numbers. **The commands that answer, in full:**
+
+```
+$ node test/genres-build.test.js     # G2 prints: the row/file agreement, the
+                                     # same-year edges, the parents arithmetic,
+                                     # and which rows name their chairs' throats
+$ node test/dynfigure.test.js        # §A1/§A2 the dyn vocabulary both ways,
+                                     # §D1 the DYNAMICS: null machines
+$ node -e 'const G=require("./nukernel/genres.js"),R=G.GENRES,k=Object.keys(R);console.log("rows",k.length,"dyn",k.filter(x=>R[x].dyn!=null).length,"copyist",Object.keys(G.COPYIST).length)'
+```
+
+Where a number below is a MEASUREMENT OF A DAY — a census, a repair, a batch
+that was rescaled — it keeps its number and its date, because that is a fact
+about an event and not a claim about the catalogue now.
 
 **The two alias doors do not move.** The 2026-09-01 genre-only rename kept old
 keys opening at the door through `document.js OLDKEYS` and `song.js migrate()`.
@@ -114,8 +136,13 @@ facts follow, and G2 holds the third:
   declare weighted parents, the fit tool measures the residue, "the
   invention"*), and a row that says `{ ottoman: 0.45 }` and stops is making a
   real claim: fifty-five per cent of this music is not in the table above it.
-  Measured 2026-09-03: **195 of 373 rows sum to exactly 1** and the rest sum to
-  between 0.2 and 0.95.
+  **`genres-build` G2 prints the arithmetic on every run** — how many rows name
+  an ancestor, how many attribute all of themselves, how many keep a residue,
+  and how many declare `parents: {}` and are roots. Read it there. *(This line
+  read* **"Measured 2026-09-03: 195 of 373 rows sum to exactly 1 and the rest
+  sum to between 0.2 and 0.95"** *until 2026-09-07. The 195 had not moved; the
+  373 had, because the catalogue grew and the paragraph did not. The
+  denominator was the half that rotted, which is the argument for a pointer.)*
 - **The shares must not sum to more than 1.** A row cannot be more than all of
   itself, so a sum above 1 is not a weak claim, it is not a claim. **35 rows
   were above it** on 2026-09-03 — `shoegaze` at 1.50, `deathmetal` 1.45,
@@ -128,11 +155,14 @@ facts follow, and G2 holds the third:
   consistent with what it already said, so no residue is asserted that nobody
   argued for. Each of the 35 records the move in its own `note`.
 - **No parent is LATER than its child**, which is not the same as "earlier".
-  Nine edges in the catalogue join two rows of the same year and every one of
+  Some edges in the catalogue join two rows of the same year and every one of
   them is legal — a music and the music it immediately answered can share a
   date, and the table's year is the year of a named record rather than of a
   scene. The law is written as *not later* on purpose, and G2 tests it that
-  way.
+  way **and prints how many same-year edges it found**; that line is the count,
+  and it is the only copy of it. *(It read* **"Nine edges"** *until 2026-09-07,
+  by which time the gate was printing twelve. A law that argues its own wording
+  should not carry a number that argues with the gate.)*
 
 `wants` is the other half of the same field: an ancestor **in its own name**,
 as a plain lowercase string, where the table has no row for it. A want is paid
@@ -260,11 +290,22 @@ sit. Nine words today: `lean` `backbeat` `agogic` `terraced` `swell` `arch`
 
 **Absent is `lean`, which is the line that was there,** so a row that says
 nothing renders byte for byte what it rendered before the field existed —
-proved on all 479 rows (`test/dynfigure.test.js` §C2) before any row was
-written. 408 rows name a figure; 57 keep the lean by saying nothing, and the
+proved on **every row in the catalogue** by `test/dynfigure.test.js` §C2,
+before any row was written. **How many rows name a figure is `dynfigure`'s to
+say, not this paragraph's**: §A1 holds every `dyn` to a figure that exists and
+§A2 holds every figure to a row that uses it, so the vocabulary and the
+catalogue are checked against each other in both directions on every run. The
 **fourteen `DYNAMICS: null` machines** say nothing on purpose and are held to
-HEAD's own bytes by fingerprint (§D). `tools/genres/dyn.js` is the assignment —
+HEAD's own bytes by fingerprint (§D1 asserts the count and the names, so that
+one is a gate's number already). `tools/genres/dyn.js` is the assignment —
 hand, then measured, then family — and it is rerunnable.
+
+*(This paragraph read* **"proved on all 479 rows … 408 rows name a figure; 57
+keep the lean by saying nothing"** *when the flood shipped on 2026-09-06. Both
+numbers were correct that day and neither is now; the catalogue has grown and
+the shift has run again. The LAW — absent is `lean`, and the build refuses a
+`dyn` no figure answers to — has not moved at all, which is why only the
+numbers went.)*
 
 The build **refuses a `dyn` no figure answers to** (§6 G2): a name nobody wrote
 would compose a record with no per-note dynamics and no error, which is this
@@ -323,7 +364,11 @@ once. It belongs off the row on its own merits anyway: a refusal is a fact
 only the copyist pass does, and that pass is handed the table the way
 `precompose` is handed `FIGURES`.
 
-**35 rows refuse today** (2026-09-06): 22 refuse `"all"` — the five whose music
+**The rows that refuse today are `GENRES.COPYIST`'s own keys** — the table is
+emitted, not typed, and `Object.keys(require("./nukernel/genres.js").COPYIST)
+.length` is the count with no paragraph in between. It was **35 on
+2026-09-06**, and the composition of that 35 is what the rest of this
+paragraph argues, which is the part worth keeping: 22 refuse `"all"` — the five whose music
 IS parallel motion (`organum`, `winchester`, `gregorian`, `polychoral`,
 `sacredharp`), the fifteen driven-guitar rows whose declared octave or fifth
 doubling is an amp fact and not a voicing (`kernel.js chair.fifths`: *"a power
@@ -425,9 +470,16 @@ and both silent by design: a word named for a chair that is **not a person**
 (`hymn` states four throats and its fourth chair is a church organ) and a word
 this build has **no formant table for** are dropped, and the chair falls back to
 its row's mouth. A row that states no `throat` at all is byte-identical to every
-record written before the field existed — which is 464 of the 479 rows.
+record written before the field existed — **which is every row `genres-build`
+G2 does not name.** G2 prints the rows that state a throat, by key, on every
+run; that line is the list and the count, and this document does not keep a
+second copy of either. *(This sentence read* **"which is 464 of the 479 rows"**
+*until 2026-09-07, when the gate was naming eighteen out of five hundred and
+two. Both halves of the fraction had moved — the rows that state one and the
+rows there are — which is the worst kind of frozen count, because it stays
+plausible.)*
 
-**The ten rows that state one, and why** (2026-09-04): `chorale` `sacredharp`
+**The rows that state one, and why** (2026-09-04, when there were ten): `chorale` `sacredharp`
 `spirituals` (SATB, the tune in the top voice / in the tenor / on a concert
 stage), `francoflemish` `isorhythm` (superius and altus on the row's own
 countertenor, tenor, bass — no soprano on a repertory sung by men and boys),
@@ -451,7 +503,11 @@ to lie about a row to hold it.
 ### What each field actually is
 
 (`throat` is not in the census below: it is newer than the migration, and the
-fifteen rows that state one were written as templates by hand.)
+rows that state one were written as templates by hand — `genres-build` G2
+names them. *(It read* **"the fifteen rows that state one"** *until 2026-09-07;
+the count above and the count here were two frozen copies of one fact, and
+they had already drifted apart from each other before either drifted from the
+gate.)*)
 
 | field | templated | as `formula` | the shapes |
 |---|---:|---:|---|
@@ -533,12 +589,16 @@ Adding a genre: write `nukernel/genres/<key>.json`, add the key to
     roles and the blank state are exactly the rows with no history. (*"a role
     has a job, not a history"*, `atlas.js`.)
   - every named parent is a key that exists, and **no parent is later than its
-    child** — *not later*, not *earlier*: nine same-year edges are legal and
-    stay. Measured over the whole catalogue the day this landed: 0 violations.
+    child** — *not later*, not *earlier*: same-year edges are legal and stay,
+    and G2 prints how many there are. Measured over the whole catalogue the day
+    this landed: 0 violations. *(It read* **"nine same-year edges"** *until
+    2026-09-07 — a second frozen copy of the count amended above.)*
   - every declared weight is a share in `(0, 1]` and **a row's weights sum to
-    at most 1** — the residue is the row's own invention (§2, `parents`).
-    Measured 2026-09-03: 373 rows carry parents, 195 sum to exactly 1, none
-    sum to more.
+    at most 1** — the residue is the row's own invention (§2, `parents`). G2
+    prints the arithmetic; *none sum to more* is the assertion and the rest is
+    the gate's own line. *(It read* **"Measured 2026-09-03: 373 rows carry
+    parents, 195 sum to exactly 1, none sum to more"** *until 2026-09-07 — a
+    second frozen copy of the count amended in §2.)*
   - every closure is one of the nine template kinds, or a formula with a `src`.
   - a `dyn`, where present, names a figure `genres-tables.js FIGURES` holds
     (2026-09-06, the dynamics flood). `tools/genres/build.js` requires the

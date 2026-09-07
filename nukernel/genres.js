@@ -912,10 +912,43 @@
   // named so the composer can deal a DIFFERENT one per section role — the
   // thing that makes a chorus harmonically different from a verse. THE LAW for
   // a genre carrying both `prog` and `roots`: the prog's first-chord degrees
-  // must equal the roots bar for bar (gated). `roots` stays the skeleton the
-  // layers and the emergent machinery read; `prog` is what the pad, the bass
-  // and the ramp actually voice. A prog without a genre is inert data — that
-  // is the point, it is a vocabulary the arranger quotes by name.
+  // must equal the roots bar for bar ~~(gated)~~ **(gated 2026-09-07 by
+  // test/genres-build.test.js G5, and it was NOT before)**. `roots` stays the
+  // skeleton the layers and the emergent machinery read; `prog` is what the
+  // pad, the bass and the ramp actually voice. A prog without a genre is inert
+  // data — that is the point, it is a vocabulary the arranger quotes by name.
+  //
+  // WHY THE WORD CHANGED (2026-09-07). The claim was false the day it was
+  // written. The only assertion in the repo (test/remix.test.js:319) walked
+  // `tools/remix-out/` — twelve demo rows — and never opened
+  // `nukernel/genres/`, so tools/remix.js:1280 refused to MINT a row that
+  // broke the law while the shipped catalogue broke it in TWELVE places, and
+  // had since these tables landed. Eleven were the shared entries below
+  // pasted onto rows whose changes are not theirs: `soul7` (whose degrees are
+  // exactly psychsoul's and yachtsoul's roots) sat on seven rows that play
+  // I-vi-IV-V — girlgroup's "Will You Love Me Tomorrow", broadway's show
+  // turnaround, baroquepop's Pet Sounds — and made all seven play a I-IV-V
+  // blues; `jack7`, which the comment beside it says is "the newjackswing2
+  // cycle", sat on `newjackswing`, whose roots are a different progression;
+  // `blues12`, a TWELVE-bar form, sat on three EIGHT-bar rows. The twelfth,
+  // `territoryband`, the audit missed because the tool's own loop misses it.
+  // Fixed by taking the ROOTS in eleven cases — each row's `note` argues its
+  // roots by name and three cite them in a ruling another gate holds
+  // (precompose G14b, "the roots are degrees 0, 3 and 4, never 6") — and
+  // rewriting the prog as that row's own roots wearing the quality the shared
+  // entry brought, which is the half of the paste that was right. `symphony`
+  // went the other way: its prog is inline, and its note argues it in the
+  // prose ("drive it to the dominant with a real V-of-V, `prog` bar 3, a dom7
+  // on degree 1"), so bar 3 of the ROOTS was the drift and moved 4 -> 1.
+  //
+  // AND THE GATE READS IT CYCLICALLY, WHICH THE TOOL DOES NOT. kernel.js's
+  // `at` (:98) wraps both arrays, so a 4-bar prog under an 8-bar roots is
+  // legal and sounds as written (`crooner`), while a 12-bar prog under an
+  // 8-bar roots is a disagreement that rotates and never comes back into
+  // phase. G5 compares over lcm(|prog|, |roots|) bars with both wrapped, and
+  // takes a bar written as a LIST of chords by its FIRST — which is what the
+  // law's own wording says, and what remix.js's `row.prog[i].d` cannot do
+  // (bossa, gospel and doowop each hold a ii-V inside one bar).
   const PROGS = {
     /* COUNTRY ROCK'S TURNAROUND (2026-09-02). The census's own fingerprint
        for the label: major II — V of V — at 1.37x lift with `II V I IV` on 346
@@ -1252,6 +1285,204 @@
   // what makes the phrase, so the key has to be able to say WHICH figure
   // without a second map from function to word.
   for (const k of Object.keys(FIGURES)) FIGURES[k].k = k;
+
+  // ---- LINES — WHAT KIND OF TUNE THIS MUSIC WRITES -------------------------
+  // (2026-09-07, the melody round. Paul, on a share link to `sophistirock`:
+  // *"the motifs have a real sameness to them. We need novel melodies and
+  // motifs every single time. Seeds should be DIFFERENT — why does the system
+  // keep bringing us back here?"*)
+  //
+  // MEASURED FIRST, all 502 rows x seeds 1-3, off the rendered documents:
+  // 78% of every melodic move in the catalogue was one scale step or a
+  // repeated note, a fifth happened 0.7% of the time and an octave 0.3%. The
+  // cause is `ideas-kit.js CONTOURS`: eight melodic shapes, every one of them
+  // a walk along the scale. The seed changed WHICH notes a line walked and
+  // could never change the KIND of line.
+  //
+  // `ideas-kit.js` grew the missing kinds — the MANNERS: a leap filled in the
+  // other direction, a figure said again a step along, a line through the
+  // chord, a note held as an axis — and THIS is where the catalogue says how
+  // much of each its own music has. It is data quoting a vocabulary by name,
+  // which is `PROGS`' law and `FIGURES`' law and docs/DYNAMICS-FLOOD.md's:
+  // one new global default would only have made 502 rows alike a second way.
+  //
+  // A DISTRIBUTION IS A HAT, NOT A SWITCH. The weights are how many tickets
+  // each manner has; `precompose.js` §6d draws one per PART per reading, on
+  // its own stream, so two seeds of one row differ in the KIND of line each
+  // chair plays and not only in its spelling. Weight 0 means a music that
+  // does not do that at all, and it is a real claim: plainchant does not
+  // arpeggiate.
+  //
+  // THE GESTURE IS NOT IN THIS TABLE and that is the fence that keeps a part
+  // a part. A pad still holds, a counter still drops, an answer still rises —
+  // the manner only says how. `ideas-kit inManner` refuses the drone and the
+  // sequencer outright, so the six rows that say "a drone is a drone" and
+  // every 303 in the catalogue are untouched by every line below.
+  //
+  //   cad   which cadence closes a phrase — ideas-kit CADENCES, by name.
+  //         `open` is the refusal and means it: a chant does not cadence, it
+  //         stops, and neither does a machine.
+  const LINES = {
+    // THE ZERO OF THE TABLE. Mostly steps, a leap and a fill now and then,
+    // a sequence now and then — which is roughly what a corpus of Western
+    // song measures at, and what the box should do when nobody has said.
+    plain:     { w: "moves by steps, and leaps on purpose",
+                 hat: { step: 8, gapfill: 3, sequence: 2, chord: 2, pivot: 2 },
+                 cad: "stepdown" },
+    // CHANT AND POLYPHONY. A psalm tone moves by seconds and a third is an
+    // event; the whole point of `vox` is that it is the one family in the
+    // catalogue whose music is stepwise BY NATURE, and this round must not
+    // take that away from it. No chord manner at all — a plainchant does not
+    // arpeggiate, and neither does an organum — and no cadence in the
+    // functional sense: a modal line arrives, it does not resolve.
+    chantwise: { w: "steps, and a leap is an event",
+                 hat: { step: 14, gapfill: 2, sequence: 2, chord: 0, pivot: 2 },
+                 cad: "open" },
+    // THE HYMN TUNE AND THE FOLK TUNE. An arch with one leap in it, closing
+    // by step onto the tonic — and the triad, because a fiddle tune, a bugle
+    // call and a shape-note treble all climb one. This is the family with the
+    // widest spread on purpose: `roots` holds 146 rows and covers the fiddle,
+    // the banjo, the raga and the corrido.
+    tunewise:  { w: "arches, leaps once, and knows the triad",
+                 hat: { step: 8, gapfill: 4, sequence: 3, chord: 3, pivot: 2 },
+                 cad: "stepdown" },
+    // THE BAND. A rock hook is a riff on the pentatonic and its fourths are
+    // the guitar's own shape; the pivot is high because a riff INSISTS — it
+    // says one note and pushes off it. The plagal close is the rock cadence
+    // (IV-I), and it is what a modal tune with no leading tone actually does.
+    riffwise:  { w: "pushes off one note and reaches for the fourth",
+                 hat: { step: 6, gapfill: 4, sequence: 2, chord: 4, pivot: 4 },
+                 cad: "plagal" },
+    // THE STUDIO TOPLINE. A pop hook leaps to its high note and fills back
+    // down — that IS the modern topline, and the sequence is the pre-chorus
+    // climbing a step at a time. The most gap-fill of any row here.
+    hookwise:  { w: "leaps to the hook note and fills back down",
+                 hat: { step: 6, gapfill: 5, sequence: 3, chord: 3, pivot: 2 },
+                 cad: "leading" },
+    // SOUL AND GOSPEL. The melisma is stepwise — that is what a run IS — and
+    // the PHRASE opens with a leap and comes home. The pivot is the held
+    // note a singer worries before moving off it.
+    singwise:  { w: "opens with a leap and runs home by steps",
+                 hat: { step: 8, gapfill: 4, sequence: 2, chord: 2, pivot: 3 },
+                 cad: "leading" },
+    // FUNK AND THE GROOVE FAMILY. A funk line is a RHYTHM with pitches on it:
+    // one note worried, a stab through the chord, and very little travel.
+    // The highest pivot weight in the table and the lowest step count that is
+    // still a melody.
+    hornwise:  { w: "worries one note and stabs the chord",
+                 hat: { step: 5, gapfill: 3, sequence: 2, chord: 4, pivot: 6 },
+                 cad: "plagal" },
+    // THE FLOOR. A house riff is an arpeggio played by a person and a rave
+    // stab is a chord; the machine's own parts are fenced off from this table
+    // entirely (a `seq` chair keeps its arpeggio), so what this row shapes is
+    // the SUNG and PLAYED lines over the machine, which is exactly where a
+    // club record's tune lives.
+    stabwise:  { w: "arpeggiates, and repeats itself",
+                 hat: { step: 5, gapfill: 2, sequence: 4, chord: 6, pivot: 3 },
+                 cad: "open" },
+    // AMBIENT AND DOWNTEMPO. A drifting line circles: high pivot, low
+    // everything that travels, and no cadence — a drift record does not
+    // close, it fades. (The `hold` contour refuses every manner anyway, so
+    // this row speaks for the drift family's lines that DO move.)
+    driftwise: { w: "circles, and does not close",
+                 hat: { step: 9, gapfill: 2, sequence: 2, chord: 3, pivot: 5 },
+                 cad: "open" },
+    // THE HEAD. Bebop, and every music whose tune is written by an
+    // improviser: the widest intervals in the table, arpeggios through
+    // extended chords, and the leading tone under every close. No family
+    // takes this by default — it is quoted by the rows that mean it, which
+    // is the door a row uses when its family is not what its music is.
+    bopwise:   { w: "runs the changes, and lands on the leading tone",
+                 hat: { step: 5, gapfill: 4, sequence: 3, chord: 6, pivot: 2 },
+                 cad: "leading" },
+    // …AND THE REFUSAL. A row that says `line: "flat"` keeps the contour it
+    // was pinned to at every seed — the manner never moves. It is the one
+    // spelling of "this music has exactly one kind of line" and it exists so
+    // that a row can say so rather than being given a hat it does not want.
+    flat:      { w: "one kind of line, always",
+                 hat: { step: 1 }, cad: "open" },
+  };
+  // ---- SYLLABLES — WHAT A SINGER NOBODY CAST ACTUALLY SINGS ---------------
+  // (2026-09-07, the melody round. Paul, of the same London 1986 record:
+  // *"the vocals are do dooo doooo"*.)
+  //
+  // MEASURED FIRST. 319 of the 502 rows declare no `tone.mouth`, so their
+  // singer is CAST — `instruments.js throatOf` picks a MOUTHS row from the
+  // record's place, year and family, which is a good rule and gives sixteen
+  // different throats. What it cannot give is a different WORD: a MOUTHS row
+  // carries two or three vowels, walked at a constant rate for the length of
+  // the record, so the top bucket of the catalogue is
+  //
+  //     eao / half a beat / tenor      90 rows      (`skiffler`)
+  //     aei / half a beat / alto       49 rows      (`poplead`)
+  //
+  // — ninety records singing e-a-o, e-a-o, e-a-o. That is his three
+  // syllables, exactly, and it is a FALLBACK rather than a claim: every one
+  // of those rows is a row that said nothing.
+  //
+  // SO THE THROAT STAYS CAST AND THE WORD BECOMES THE FAMILY'S. Who is
+  // singing is a fact about where and when the record is (the cast rule is
+  // untouched); WHAT they sing is a fact about the kind of music, and this is
+  // where the catalogue says it. A row that states its own `mouth` — 183 of
+  // them — is not reached by any of this and renders byte for byte.
+  //
+  // EVERY WORD IS FIVE OR SEVEN VOWELS LONG, and that is the arithmetic
+  // rather than the taste: `to-engine.js` walks the word one vowel per
+  // syllable at a constant `syll`, so a word whose length divides the bar
+  // says the same syllable on the same beat forever. Five and seven are
+  // coprime with two and four, so the singer arrives at a different vowel on
+  // each repeat of the figure — which is what "not do dooo doooo" means when
+  // you write it down. (The alphabet is the tract's own five: i e a o u.)
+  const SYLLABLES = {
+    // the neutral word, and the one a family with no row takes
+    plain:    { w: "aeiou", syll: 1 },
+    // CHANT AND POLYPHONY. Latin's five vowels, open, two beats each: a psalm
+    // tone holds a syllable across a whole neume and that is what makes it
+    // chant rather than singing.
+    psalmody: { w: "aeoiu", syll: 2 },
+    // THE ROOTS FAMILY. Open and forward — a holler, a field song, a fiddle
+    // tune's mouth music — one syllable a beat, which is how a strophic verse
+    // scans.
+    holler:   { w: "aoiea", syll: 1 },
+    // THE BAND. Seven syllables at an eighth apiece, which is a beat group
+    // singing over the top of itself and never landing on the same vowel two
+    // bars running.
+    shout:    { w: "eaoieau", syll: 0.5 },
+    // THE STUDIO. A crooner, and then a belter: the vowel changes on the beat
+    // because the line is written to the lyric, and the darker vowels lead.
+    croon:    { w: "ouaeo", syll: 1 },
+    // SOUL AND GOSPEL. The run is the point — seven vowels at an eighth is a
+    // melisma with its own shape rather than a held note with a wobble on it.
+    runs:     { w: "aeiaoue", syll: 0.5 },
+    // THE FLOOR AND THE GROOVE. A hook, chopped: seven vowels, fast, and the
+    // word turns over against the bar the way a sampled phrase does.
+    vamp:     { w: "eaoiuae", syll: 0.5 },
+    // DRIFT. Slow, closed, and mostly behind the band — two beats a syllable
+    // and the dark end of the alphabet.
+    murmur:   { w: "uoaei", syll: 2 },
+  };
+  // WHICH WORD A FAMILY SINGS when its rows say nothing. Same shape as
+  // LINE_FAMILY above, and the same law: it is reached only where the row
+  // itself is silent.
+  const SYLL_FAMILY = {
+    kernel: "plain",  vox:    "psalmody", roots:  "holler",
+    band:   "shout",  studio: "croon",    soul:   "runs",
+    groove: "vamp",   club:   "vamp",     drift:  "murmur",
+    // a FUNCTION genre is a part stacked over somebody else's track, and what
+    // it sings is whatever the track is: the neutral word
+    parts:  "plain",
+  };
+
+  // WHICH DISTRIBUTION A FAMILY TAKES when its rows say nothing. Ten families
+  // and eleven distributions: `bopwise` is quoted, never defaulted to.
+  const LINE_FAMILY = {
+    kernel: "plain",   vox:    "chantwise", roots:  "tunewise",
+    band:   "riffwise", studio: "hookwise", soul:   "singwise",
+    groove: "hornwise", club:   "stabwise", drift:  "driftwise",
+    // a FUNCTION genre is the player stacked over a track, and what a player
+    // stacked over a track plays is a head
+    parts:  "bopwise",
+  };
 
   const GENRES = {
     // SILENCE — THE BLANK STATE, AND IT IS A ROW LIKE ANY OTHER (2026-09-01).
@@ -6378,6 +6609,24 @@
     // field existed, was gated, and had no rows. A power chord is a root and a
     // fifth, and a downstroke run up the neck is parallel fifths for the length of
     // the record; repairing them is not a correction, it is a genre change.
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: the row's own note already argued it — "punk crashes on the ONE and keeps
+    // crashing: the cymbal is the hat's louder twin here, not a punctuation mark"
+    // — and its `kit.x` is [9,0,...,8,...]. Without the declaration a dealt `crash`
+    // word would overwrite that lane with the deferring 1 and take the row's own
+    // sentence away.
     punk: {
       label: "New York 1976",
       near: "rock",
@@ -6402,6 +6651,7 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         x: [9, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0]
       },
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: { s: [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1] },
       tone: { wave: "sawtooth", cut: 2000, q: 1.8, atk: 0.002, rel: 0.3, gain: 0.3, verb: 0.1 },
       words: ["every eighth, downstrokes", "the same riff, an octave under, as written"],
@@ -6856,6 +7106,13 @@
     // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    // A BEBOP HEAD IS NOT A FIDDLE TUNE (2026-09-07, the melody round). New York
+    // 1945 is filed `roots`, which takes `tunewise` — an arch with one leap in
+    // it — and that is a description of "Turkey in the Straw", not of
+    // "Confirmation". A bop head runs the changes: the widest intervals in the
+    // catalogue, arpeggios through extended chords, and the leading tone under
+    // every close. This is the row `genres-tables.js LINES.bopwise` was written
+    // for, and it quotes it by name.
     jazz: {
       label: "New York 1945",
       bars: 8,
@@ -6921,6 +7178,7 @@
       word: (v, s) => (v === 0 ? [only("gate", rotate(6)), drop(2), drop(3)]
                      : v === 2 && s % 2 ? [drop(2)] : []),
       dyn: "anacrusis",
+      line: "bopwise",
     },
 
     // BO DIDDLEY. The genre is a RHYTHM, and that is the reason it earns a row
@@ -8518,6 +8776,15 @@
     // (Nuremberg 1586) has carried the correct four-case map since throats landed;
     // this one was a case short, and nothing could have caught it but reading the
     // row out loud.
+    // A HYMN TUNE IS NOT A CHANT (2026-09-07, the melody round). This row is
+    // `vox`, and `vox` takes `chantwise` — fourteen tickets in twenty for
+    // stepwise motion and NONE for the chord, which is exactly right for a psalm
+    // tone and wrong for a metrical hymn. Old Hundredth opens by leaping a fourth;
+    // every hymnal in the room is full of broken triads; and this row's own words
+    // above call its four parts a chord spelled out in order. So it quotes
+    // `tunewise` by name — the arch-that-leaps-once distribution written for the
+    // hymn and the fiddle tune — and takes its stepdown close, which is the
+    // cadence its own "I IV I V | I vi IV V" already lands on.
     hymn: {
       label: "Boston 1831",
       bars: 8,
@@ -8558,6 +8825,7 @@
       ],
       word: v => (v === 0 ? [] : [transpose([0, -2, -4, -7][v])]),
       dyn: "agogic",
+      line: "tunewise",
     },
 
     // CROONER. A solo voice out front of a dance orchestra, at ballad tempo
@@ -9296,6 +9564,22 @@
     // line rises into the arrival and the room rises with it. The `band`
     // cluster takes `backbeat`; the anchor's own evidence outranks it, which
     // is the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: the row's own note: "the chorus rock's full backbeat with the crash
+    // reintroduced" — the crash IS the chorus arriving — and `kits[1].x` writes it
+    // at 9 with an 8 on beat 3.
     powerballad: {
       label: "Los Angeles 1991",
       bars: 8,
@@ -9331,6 +9615,7 @@
           x: [9, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0]
         }
       ],
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: {
         s: [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1],
         x: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]
@@ -9700,6 +9985,21 @@
     // chord is an amp fact made pitch ... thirds intermodulate under
     // distortion and fifths do not". Re-choosing that chair's note to break
     // a parallel would be correcting the amplifier.
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kits[1].x` is [9,0,...,8,...] — the loud kit is a written second kit, not a
+    // dealt one.
     emo: {
       label: "Chicago 1999",
       near: "punk",
@@ -9737,6 +10037,7 @@
           x: [9, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0]
         }
       ],
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: { s: [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1] },
       tone: {
         wave: "sawtooth",
@@ -12418,6 +12719,20 @@
     //
     // AND IT IS A LEAF: no row later than 1975 names this music in a want or a
     // comment. Nothing downstream is repointed.
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kit.x` is [9,0,...] — the row's own downbeat crash, at 9.
     heartlandrock: {
       label: "Asbury Park 1975",
       near: "rock",
@@ -12446,6 +12761,7 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         x: [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       },
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: { s: [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0] },
       tone: {
         wave: "sawtooth",
@@ -16325,7 +16641,7 @@
       entry: v => [0, 0, 2, 4][v],
       reg: v => [-1, 1, 1, -1][v],
       realize: v => (v === 0 ? "pad" : "line"),
-      roots: [0, 0, 4, 4, 4, 1, 4, 4],
+      roots: [0, 0, 1, 4, 4, 1, 4, 4],
       prog: [
         { d: 0 },
         { d: 0 },
@@ -25870,7 +26186,12 @@
     // four-part music, which is a different claim. So the doubling stays in this
     // paragraph and in `words`, and the throat table stays as it is: right, and now
     // saying so.
-    //
+    // A SHAPE-NOTE TREBLE ARPEGGIATES (2026-09-07, the melody round). Same
+    // argument as `hymn` one shelf over, and stronger here: the whole point of
+    // the fasola system is that a singer reads the SHAPE of the chord tone off
+    // the notehead, and the tunes are written so the inner parts leap between
+    // them. `chantwise`, this row's family default, gives the chord manner zero
+    // tickets. It quotes `tunewise`.
     sacredharp: {
       label: "Philadelphia 1844",
       voices: 4,
@@ -25906,6 +26227,7 @@
       words: ["the tenor, who has the tune", "the treble, above it", "the alto", "the bass"],
       word: v => (v === 0 ? [] : [transpose([0, 5, -4, -9][v]), drop(3)]),
       dyn: "agogic",
+      line: "tunewise",
     },
 
     // ZYDECO — Lafayette 1955. Louisiana Creole dance music: a piano
@@ -26154,6 +26476,20 @@
     // 1955, and the vector reads a fifteen-second cue's arc plan against two dance
     // musics. A row whose whole form is a stinger cannot be near anything on plan.
     //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: the row's own note: "the crash lands on the bar 8 downbeat, which is where
+    // the cue arrives." The cue is the whole point of the row.
     newsfanfare: {
       instrumental: true,
       label: "London 1970",
@@ -26208,7 +26544,10 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         l: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
       },
-      kitVel: { h: [8, 0, 5, 0, 7, 0, 5, 0, 8, 0, 5, 0, 7, 0, 5, 0] },
+      kitVel: {
+        h: [8, 0, 5, 0, 7, 0, 5, 0, 8, 0, 5, 0, 7, 0, 5, 0],
+        x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+      },
       fill: {
         s: [0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
         x: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -26765,6 +27104,11 @@
     // them: soprano on the tune, then alto, tenor, bass. THE SOUND MOVES ON
     // THIS ROW AND THAT IS THE CORRECTION — the bass part is sung by a bass
     // instead of by an alto reaching an octave and a half under herself.
+    // A CHORALE MELODY IS A HYMN TUNE (2026-09-07, the melody round). The
+    // harmonization is counterpoint's; the TUNE on top of it is a metrical
+    // congregational song, arch-shaped and triadic, and that is the axis this
+    // field speaks for. `hymn` and `sacredharp` take the same word for the same
+    // reason and the three notes are one argument.
     chorale: {
       label: "Nuremberg 1586",
       voices: 4,
@@ -26825,6 +27169,7 @@
       ],
       word: v => (v === 0 ? [] : v === 1 ? [transpose(-2)] : v === 2 ? [transpose(-4), drop(2)] : [keep(0, 4, 8, 12), transpose(-7)]),
       dyn: "agogic",
+      line: "tunewise",
     },
 
     // BEL CANTO — Milan 1831. Bellini's *Norma* opened at La Scala on 26
@@ -31248,7 +31593,16 @@
       realize: () => "line",
       part: ["lead", "counter", "counter"],
       roots: [0, 0, 3, 0, 4, 3, 0, 4],
-      prog: PROGS.blues12,
+      prog: [
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 4, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 4, q: "dom7" }
+      ],
       mode: MODES.ionian,
       scale: SCALES.blues,
       harmony: "cycle",
@@ -31336,7 +31690,16 @@
       realize: () => "line",
       part: ["lead", "riff"],
       roots: [0, 0, 0, 0, 3, 3, 0, 4],
-      prog: PROGS.blues12,
+      prog: [
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 4, q: "dom7" }
+      ],
       mode: MODES.ionian,
       scale: SCALES.blues,
       harmony: "cycle",
@@ -31866,6 +32229,23 @@
     // .15) makes the last quarter a run-up, not an ending. The `band` cluster
     // takes `backbeat`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: the row's own note: its snare and crash "sit together on 2 and 4, which is
+    // the squarest kit in the wing AND THE POINT OF THE RECORD". The row already
+    // writes `kitVel.s` at 9 on those two beats; the cymbal beside it belongs at
+    // the same weight and had no way to say so until this door opened.
     glam: {
       label: "London 1971",
       voices: 3,
@@ -31899,7 +32279,10 @@
         c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
       },
-      kitVel: { s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0] },
+      kitVel: {
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+      },
       fx: ["crunch"],
       tone: {
         wave: "sawtooth",
@@ -32108,7 +32491,16 @@
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["pad", "counter", "stab"],
       roots: [0, 3, 1, 4, 0, 3, 1, 4],
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 3, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 3, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" }
+      ],
       mode: MODES.ionian,
       scale: SCALES.major,
       diatonic: true,
@@ -32188,7 +32580,16 @@
       realize: v => (v === 2 ? "pad" : "line"),
       part: ["counter", "lead", "pad"],
       roots: [0, 5, 3, 4, 0, 5, 1, 4],
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" }
+      ],
       mode: MODES.ionian,
       scale: SCALES.major,
       diatonic: true,
@@ -32591,7 +32992,16 @@
       realize: v => (v === 0 ? "pad" : "line"),
       part: ["pad", "lead", "counter"],
       roots: [0, 5, 1, 4, 0, 5, 1, 4],
-      prog: PROGS.jack7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" }
+      ],
       mode: MODES.ionian,
       scale: SCALES.major,
       diatonic: true,
@@ -34163,7 +34573,16 @@
       realize: v => (v === 1 ? "pad" : "line"),
       kit: {},
       harmony: "cycle",
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" }
+      ],
       roots: [0, 5, 3, 4, 0, 5, 1, 4],
       mode: MODES.ionian,
       scale: SCALES.major,
@@ -34243,7 +34662,16 @@
         r: [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
       },
       harmony: "cycle",
-      prog: PROGS.blues12,
+      prog: [
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" }
+      ],
       roots: [0, 0, 0, 0, 3, 3, 0, 0],
       mode: MODES.ionian,
       scale: SCALES.blues,
@@ -34360,6 +34788,10 @@
     // into the bar, which is what a chart's ties across the barline are for.
     // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
     // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
+    // QUOTES `bopwise` (2026-09-07, the melody round), for `jazz`'s reason and
+    // one of its own: a modal head has fewer changes to run and therefore leans
+    // HARDER on the shape of the mode's own chord — the fourth stacks of "So
+    // What" are the melody, not the accompaniment.
     modaljazz: {
       instrumental: true,
       label: "New York 1959",
@@ -34397,6 +34829,7 @@
                     : v === 1 ? [[fill(2)], [fill(2), transpose(-2)]][s % 2]
                     : [keep(0, 6, 8, 14)]),
       dyn: "anacrusis",
+      line: "bopwise",
     },
 
     // THE BRILL BUILDING — New York 1960. "Will You Love Me Tomorrow",
@@ -34459,7 +34892,16 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
       },
       harmony: "cycle",
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" }
+      ],
       roots: [0, 5, 3, 4, 0, 5, 3, 4],
       mode: MODES.ionian,
       scale: SCALES.major,
@@ -34577,7 +35019,16 @@
         p: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
       },
       harmony: "cycle",
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 1, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" }
+      ],
       roots: [0, 5, 1, 4, 0, 5, 3, 4],
       mode: MODES.ionian,
       scale: SCALES.major,
@@ -35144,7 +35595,16 @@
       },
       kitVel: { s: [0, 0, 0, 0, 9, 0, 0, 5, 0, 5, 0, 0, 9, 0, 0, 5] },
       harmony: "cycle",
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 0, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 0, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" }
+      ],
       roots: [0, 0, 3, 4, 0, 0, 3, 4],
       mode: MODES.mixo,
       scale: SCALES.blues,
@@ -36704,7 +37164,16 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
       },
       harmony: "cycle",
-      prog: PROGS.soul7,
+      prog: [
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" },
+        { d: 0, q: "7" },
+        { d: 5, q: "7" },
+        { d: 3, q: "7" },
+        { d: 4, q: "7" }
+      ],
       roots: [0, 5, 3, 4, 0, 5, 3, 4],
       mode: MODES.ionian,
       scale: SCALES.major,
@@ -41418,6 +41887,9 @@
     // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    // QUOTES `bopwise` (2026-09-07, the melody round). The Hot Club head is an
+    // arpeggio played at speed with a chromatic approach into every landing;
+    // `roots`' default would have written it as a stepwise arch.
     gypsyjazz: {
       instrumental: true,
       label: "Paris 1934",
@@ -41453,6 +41925,7 @@
                     : v === 1 ? [[drop(2)], [drop(2), transpose(5)]][s % 2]
                     : [keep(0, 4, 8, 12)]),
       dyn: "anacrusis",
+      line: "bopwise",
     },
 
     // LATIN JAZZ — New York 1947. "Manteca", co-written by Dizzy
@@ -41499,6 +41972,9 @@
     // the horn plays across. The `roots` cluster takes `lean`; the anchor's
     // own evidence outranks it, which is the flood's rule
     // (docs/DYNAMICS-FLOOD.md).
+    // QUOTES `bopwise` (2026-09-07, the melody round). The head is a bop head
+    // over a clave — the rhythm is the Cuban half and the LINE is the New York
+    // half, which is the axis this field speaks for.
     latinjazz: {
       instrumental: true,
       label: "New York 1947",
@@ -41539,6 +42015,7 @@
                     : v === 1 ? [keep(0, 3, 6, 10)]
                     : [drop(4), transpose(-3)]),
       dyn: "anacrusis",
+      line: "bopwise",
     },
 
     // DESCARGA — Havana 1957. Cachao's Panart jam sessions — the
@@ -44315,6 +44792,12 @@
     //
     // WHO SINGS: the doowop stack's own blend, forty-five years
     // earlier — the corner the corner learned from.
+    // THE QUARTET SINGS A SONG, NOT A PSALM (2026-09-07, the melody round).
+    // This row sits in `vox` for its four unaccompanied voices, and inherits
+    // `chantwise` with it — a stepwise distribution with no chord in it, on the
+    // one idiom in the family whose entire craft is finding the chord under a
+    // popular melody. `tunewise` is the nearest true word: an arch, one leap, and
+    // the triad.
     barbershop: {
       label: "New York 1910",
       voices: 4,
@@ -44365,6 +44848,7 @@
       ],
       word: v => (v === 0 ? [] : v === 1 ? [transpose(2), drop(2)] : v === 2 ? [transpose(-3), drop(2)] : [spread(0), keep(0, 4, 8, 12), drop(2)]),
       dyn: "agogic",
+      line: "tunewise",
     },
 
     // ---- THE COMMISSIONED SCREEN — the news pair's law, widened ---------
@@ -45497,6 +45981,22 @@
     // build, and the build is a bar-long crescendo. The `studio` cluster takes
     // `arch`; the anchor's own evidence outranks it, which is the flood's rule
     // (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: the row's own note: "The one drum is a FIELD drum, not a kit: lane l alone,
+    // the crash saved for the fill bar." A crash that is SAVED is a crash being
+    // used for effect.
     fantasyscore: {
       instrumental: true,
       label: "Wellington 2001",
@@ -45514,6 +46014,7 @@
       realize: v => (v >= 2 ? "pad" : "line"),
       drumkit: "room",
       kit: { l: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0] },
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: { x: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
       harmony: "cycle",
       roots: [0, 6, 3, 0, 0, 6, 4, 0],
@@ -48828,6 +49329,22 @@
     // fact made pitch ... thirds intermodulate under distortion and fifths
     // do not". Re-choosing that chair's note to break a parallel would be
     // correcting the amplifier.
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kit.x` writes a 9 on the downbeat of every bar, and the row's own note
+    // prints its lanes out loud ("crash 9020502050104020"). A dealt `crash` word
+    // would otherwise replace that vector with the deferring 1.
     grunge: {
       label: "Seattle 1991",
       near: "sludge",
@@ -48867,7 +49384,10 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         x: [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       },
-      kitVel: { s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0] },
+      kitVel: {
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+      },
       fill: { s: [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1] },
       tone: { wave: "sawtooth", cut: 1800, q: 1.8, atk: 0.005, rel: 0.5, gain: 0.3, verb: 0.18 },
       words: [
@@ -49139,6 +49659,20 @@
     // fact made pitch ... thirds intermodulate under distortion and fifths
     // do not". Re-choosing that chair's note to break a parallel would be
     // correcting the amplifier.
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kits[1].x` is [9,0,...]: the chorus kit the row wrote for itself.
     poppunk: {
       label: "Berkeley 1994",
       near: "punk",
@@ -49176,6 +49710,7 @@
           x: [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         }
       ],
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: { s: [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1] },
       tone: {
         wave: "sawtooth",
@@ -49225,6 +49760,22 @@
     //
     // WHO SINGS: the sung chorus over the shouted verse — the one
     // clean thing on the record, and the reason it sold
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kit.x` is [9,0,...] — a crash on the downbeat of every bar, written at the
+    // top of the scale by the row itself. The declaration keeps it through a dealt
+    // kit word.
     numetal: {
       label: "Los Angeles 2000",
       near: "industrialmetal",
@@ -49258,7 +49809,10 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         x: [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       },
-      kitVel: { k: [9, 0, 6, 0, 0, 4, 7, 0, 8, 0, 6, 0, 0, 4, 7, 0] },
+      kitVel: {
+        k: [9, 0, 6, 0, 0, 4, 7, 0, 8, 0, 6, 0, 0, 4, 7, 0],
+        x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+      },
       fill: { s: [0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1] },
       tone: {
         wave: "sawtooth",
@@ -49302,6 +49856,20 @@
     // the radio, in this row's own city five years before it.
     //
     // WHO SINGS: the gang chorus, everybody on the last word
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kit.x` is [9,0,...]: the row wrote its own crash at 9 on every downbeat.
     glammetal: {
       label: "Los Angeles 1987",
       near: "nwobhm",
@@ -49335,6 +49903,7 @@
         h: [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0],
         x: [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       },
+      kitVel: { x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] },
       fill: {
         s: [0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1],
         t: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0]
@@ -49525,6 +50094,21 @@
     // fact made pitch ... thirds intermodulate under distortion and fifths
     // do not". Re-choosing that chair's note to break a parallel would be
     // correcting the amplifier.
+    //
+    // THE CRASH IS THE STATEMENT (2026-09-07, the crash round). Paul, listening:
+    // "The crash cymbal should usually be about half as loud unless you're using
+    // it for effect. For example it eats west coast rock alive." The `crash` and
+    // `crashback` kit words wrote a hard velocity 9 and 8, so every row in the
+    // catalogue crashed at the top of the scale — measured on the compile path,
+    // seeds 1-3: 462 of 502 rows carry a crash and 2,443 of the 5,646 events (43%)
+    // were at velocity 9, with the INVERSION that the rows crashing RARELY crashed
+    // HARDEST (bossa's six in 224 bars are every one of them the loudest drum amp
+    // the box can make; punk's median is 0.3733). Those two words now write 1 —
+    // play, DEFER — and the written default is kernel.js CRASH_VEL, 4 of 9, which
+    // is -5.2 dB on an accented hit. THIS ROW KEEPS THE OLD WEIGHT and says so in
+    // its own vocabulary: `kitVel: { x: 9 }` — the same door `kitVel.k` has always
+    // been (36 rows write one) and which no row had claimed. WHY THIS ROW: `kit.x` is [9,0,...] and the `fill` lands another at 9 on the last
+    // sixteenth; both are the row's own writing.
     blackmetal: {
       label: "Oslo 1993",
       near: "deathmetal",
@@ -49553,7 +50137,10 @@
         h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         x: [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       },
-      kitVel: { s: [3, 0, 3, 0, 9, 0, 3, 0, 3, 0, 3, 0, 9, 0, 3, 0] },
+      kitVel: {
+        s: [3, 0, 3, 0, 9, 0, 3, 0, 3, 0, 3, 0, 9, 0, 3, 0],
+        x: [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+      },
       fill: { x: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9] },
       tone: {
         wave: "sawtooth",
@@ -53195,6 +53782,32 @@
       ? DYNAMICS[k] : DYN_FAMILY[GENRES[k].family];
     if (!d) continue;
     GENRES[k].stress = d.stress; GENRES[k].phrase = d.phrase; GENRES[k].touch = d.touch;
+  }
+
+  // ---- WHAT KIND OF TUNE EACH ROW WRITES (2026-09-07, the melody round) ----
+  // The row's own word if it has one, else its family's, else `plain`. Stamped
+  // rather than exported for the reason `family` is stamped two passes up: the
+  // resolution is a fact about the ROW, and precompose reads rows.
+  //   THE WORD IS CHECKED BY NAME, HERE, AT LOAD. A `line` no distribution
+  // answers to would otherwise fall through to a default and compose a
+  // plausible wrong tune in silence, which is exactly the failure the `dyn`
+  // check at the top of this file exists to prevent — said again one table
+  // over. (`tools/genres/build.js` cannot make this check: `line` resolves
+  // through `family`, and `family` is stamped by the pass above, inside this
+  // function, after the build has written the file.)
+  for (const k of Object.keys(GENRES)) {
+    const G = GENRES[k];
+    if (G.line != null && !Object.prototype.hasOwnProperty.call(LINES, G.line))
+      throw new Error(`genres: ${k}.line names no distribution: "${G.line}" ` +
+        `(genres-tables.js LINES has ${Object.keys(LINES).join(", ")})`);
+    G.line = LINES[G.line || LINE_FAMILY[G.family] || "plain"];
+    // …and the SYLLABLE a cast singer sings, on the same law and checked the
+    // same way. It is read by `instruments.js throatOf` and ONLY there, which
+    // is the one path a row with no `mouth` of its own takes.
+    if (G.syllab != null && !Object.prototype.hasOwnProperty.call(SYLLABLES, G.syllab))
+      throw new Error(`genres: ${k}.syllab names no word: "${G.syllab}" ` +
+        `(genres-tables.js SYLLABLES has ${Object.keys(SYLLABLES).join(", ")})`);
+    G.syllab = SYLLABLES[G.syllab || SYLL_FAMILY[G.family] || "plain"];
   }
 
   // ---- ORNAMENTS — what a style adds to a line it has already written ------

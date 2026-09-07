@@ -27,7 +27,16 @@ sheet** (a row of the table opened in place, §13's law, unchanged).
 
 ## The views
 
-Every panel becomes a view, and the view list is the hamburger's first block.
+Every panel becomes a view, and the view list is the hamburger's **second**
+block — the RECORD's eight surfaces are the first (§20's third amendment,
+2026-09-07; `ui/eight.js` appends the `record` group before `views`).
+
+*(This line read* **"the view list is the hamburger's first block"** *when it
+was written on 2026-09-06, and it was true for a day. It stopped being true
+when the record's own line was deleted and its surfaces moved into the plate —
+this document says so at §18's amendment 3 and draws it that way at §20, and
+the header is corrected here so the loudest sentence agrees with the two
+quiet ones.)*
 
 | view | what it is | note |
 |---|---|---|
@@ -84,11 +93,22 @@ play button.
 
 ## What must not change
 
-The one-sheet law and §13's "nothing is fixed but the bottom bar" (the top
-strip joins it as the second fixed thing, and only these two). Every address in
-`test/table-inventory.json` still resolves, re-filed where a control moved. No
-control loses its written refusal. Nothing here writes to the document except
-`Set seed`, which spends exactly what the die spent.
+The one-sheet law and the two fixed CHROME bands and only these two (the OWNER
+of that law is `nukernel/TABLE.md` §16, which carries the comparison; §13a.1's
+old *"nothing is fixed but the bottom bar"* was amended there in writing).
+Every address in `test/table-inventory.json` still resolves, re-filed where a
+control moved. No control loses its written refusal. **The menu itself writes
+nothing; two of its rows are DOORS onto writers.**
+
+*(This last sentence read* **"Nothing here writes to the document except `Set
+seed`, which spends exactly what the die spent"** *until 2026-09-07, and this
+document amended it at §18's amendment 3 without carrying the amendment up
+here. The corrected form: the plate's rows call `showTab`/`land` and never
+`setDocument` — `Set seed` presses the bar's own seed row (§18, amendment 2:
+two doors, one owner, one writer) and the record's eight surfaces open a
+SHEET, where the writing is done by a control with a name. The distinction the
+original sentence was reaching for survives intact: nothing is written by
+being in the menu.)*
 
 ---
 
@@ -152,7 +172,17 @@ sharpened rather than reversed.
    121px at 320). The law reads: **the top strip is identity, status and
    navigation; the bottom bar is controls, and only controls.** *"The bottom is
    what you hear"* was written about CONTROLS, and the tape is the one thing in
-   the bar a thumb never presses. The bar holds, left to right: the play
+   the bar a thumb never presses.
+
+   **THIS DOCUMENT OWNS WHERE THE TAPE IS, AND IT IS THE STRIP.** `ui/eight.js`
+   builds `stripEl.append(whereBtn, tapeNode(), menuBtn)` and `tapeNode()` is
+   the tape's one builder; the strip is where it has stood since v298. Said
+   here once because it is said elsewhere wrongly: `nukernel/DESIGN.md`
+   component 21 still calls the tape *"the bar's last child"*, which is what it
+   was for the few hours between §16 and this amendment. The component moved,
+   not the component's definition — `paintTape` is still its one writer,
+   `markForm` still that writer's one caller, and T13f's repaint budget
+   travelled with it. The bar holds, left to right: the play
    options' door, the voicing, play/stop, the die and its number, and the room
    — which is set in the bar itself, with no pop-up.
 
@@ -253,5 +283,18 @@ and no shadows on them; the 44px floor is untouched in both axes.
 **WHAT MUST NOT CHANGE, STILL:** the one-sheet law, the two fixed bands and only
 these two, every address in `test/table-inventory.json` resolving where it was
 re-filed, and no control losing its written refusal. One thing is added to that
-list: **the plate now scrolls inside itself** (891px of content in 785 of glass at 844, scrolling by 106), which is DESIGN §3's named navigation exemption and is not a licence
-for anything else on this page.
+list: **the plate now scrolls inside itself** (891px of content in 785 of glass
+at 844, scrolling by 106). It scrolls under `nukernel/DESIGN.md` §3, which is
+the OWNER of the menus-never-scroll law and the only place its exemptions are
+enumerated — read the count there, not here.
+
+*(This clause read* **"…which is DESIGN §3's named navigation exemption and is
+not a licence for anything else on this page"** *until 2026-09-07. The first
+half is TRUE and measured (`nu.css` gives `#nu-menu` its own `overflow-y`).
+The second half was FALSE when it was written: `.nu-strip-out`, `.nu-log`,
+`.nu-explain` and `.nu-say` share one `overflow-y: auto` chassis with a
+`max-block-size: min(70vh, 560px)`, and have for longer than the plate has.
+Two surfaces scroll inside themselves, and two documents each named a
+different one as the only one — `PROGRAM.md` names the strip, this file named
+the plate. That is exactly the failure a law with no owner produces, so this
+copy is now a pointer and §3 does the counting.)*
