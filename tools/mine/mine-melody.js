@@ -28,8 +28,24 @@
 // genre it claims to speak for (test/unit/melody-cells.test.js re-checks the
 // rendered result).
 "use strict";
-const C = require("./corpus-db.js");
-const Mine = require("./mine-midi.js");
+
+/* UMD, 2026-09-07 (docs/REMIX.md "the pipeline in the browser"), and the body
+   is NOT REINDENTED so that the diff is the head and the foot alone. Two
+   requires went with it, and neither was load-bearing:
+
+     `corpus-db.js` is the CLI's database and nothing else's. The four lifted
+     functions below are pure — they take a line of notes and give back
+     windows, statistics, a medoid and a phrase — so the require moved INTO
+     `main()`, where the database is actually opened. It was a leftover of the
+     file the functions were lifted out of, and holding it at the top dragged
+     `fs`, `path`, `process.exit` and a `better-sqlite3` probe onto every page
+     that wanted the window slicer.
+
+     `mine-midi.js` was imported and then never named once (measured: zero
+     uses of `Mine` in this file). It is gone. */
+(function (root) {
+"use strict";
+const NODE = typeof module !== "undefined" && !!module.exports;
 
 /* ---- THE THREE PIECES, LIFTED OUT OF main() 2026-09-06 --------------------
    `tools/remix.js` slices ONE file the way this script slices a whole rip, and
@@ -105,6 +121,7 @@ function main() {
   const rip = argv[0];
   const opt = (name, dflt) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : dflt; };
   if (!rip || rip.startsWith("--")) { console.error("usage: mine-melody.js <rip> [--db p] [--min-conf .55] [--name cellname]"); process.exit(1); }
+  const C = require("./corpus-db.js");     // the DB is the CLI's, not the module's
   const Sqlite = C.requireSqlite();
   const db = new Sqlite(opt("--db", "/mnt/sources/relocated/stellate-midi-corpus/corpus.db"), { readonly: true });
   const minConf = +opt("--min-conf", 0.55);
@@ -140,5 +157,8 @@ function main() {
   console.log(`cell onset-sync (off-beat fraction): A ${sync(A).toFixed(2)}  B ${sync(B).toFixed(2)}`);
 }
 
-module.exports = { windowsOf, winStats, medoid, melPhrase };
-if (require.main === module) main();
+const api = { windowsOf, winStats, medoid, melPhrase };
+if (NODE) module.exports = api;
+else root.NuMineMelody = api;
+if (NODE && require.main === module) main();
+})(typeof window !== "undefined" ? window : globalThis);

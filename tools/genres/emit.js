@@ -8,7 +8,17 @@
  * byte-for-byte what a fresh build says, the way gates.js and wiki.js are held.
  */
 "use strict";
-const { emit: emitTemplate } = require("./grammar.js");
+
+/* UMD, 2026-09-07 (docs/REMIX.md "the pipeline in the browser"). Body NOT
+   reindented: the diff is the head and the foot. `tools/remix.js` calls
+   `rowTxt` as its LAST check before a row is kept — if a row cannot be written
+   back out as JavaScript it is not a row — and a page has to be able to run
+   that check too, so this file travels. It is pure string work and it never
+   touched `fs`. */
+(function (root) {
+"use strict";
+const NODE = typeof module !== "undefined" && !!module.exports;
+const { emit: emitTemplate } = NODE ? require("./grammar.js") : root.NuGenreGrammar;
 
 const WIDTH = 96;               // the column the emitter tries to stay inside
 // `throat` joined the four 2026-09-04 (the per-chair singer round): WHOSE
@@ -97,4 +107,7 @@ function rowTxt(key, row) {
   return out;
 }
 
-module.exports = { rowTxt, valueTxt, noteTxt, WIDTH, CLOSURES };
+const api = { rowTxt, valueTxt, noteTxt, WIDTH, CLOSURES };
+if (NODE) module.exports = api;
+else root.NuGenreEmit = api;
+})(typeof window !== "undefined" ? window : globalThis);

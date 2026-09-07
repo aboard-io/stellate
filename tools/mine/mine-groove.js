@@ -12,7 +12,16 @@
 // velocities. Emitted tables are clamped to ±30% so the profile is a lean,
 // never a gate; splice into pipes.js ACCENT_PROFILES.
 "use strict";
-const C = require("./corpus-db.js");
+
+/* UMD, 2026-09-07 (docs/REMIX.md "the pipeline in the browser"), body NOT
+   reindented so the diff is the head and the foot alone. `corpus-db.js` moved
+   into `main()`: `accentProfile` takes NOTES, not a database, and the top-level
+   require was a leftover of the file it was lifted out of — it dragged `fs`,
+   `path` and a `better-sqlite3` probe onto any page that wanted a velocity
+   lean. The clamp and the mean-1 law are untouched and still documented above. */
+(function (root) {
+"use strict";
+const NODE = typeof module !== "undefined" && !!module.exports;
 
 /* LIFTED OUT OF main() 2026-09-06 for tools/remix.js, which measures the same
    lean on ONE file's notes rather than on a rip's trusted lines. The body is
@@ -38,6 +47,7 @@ function main() {
   const rip = argv[0];
   const opt = (name, dflt) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : dflt; };
   if (!rip || rip.startsWith("--")) { console.error("usage: mine-groove.js <rip> [--db p] [--min-conf .55]"); process.exit(1); }
+  const C = require("./corpus-db.js");     // the DB is the CLI's, not the module's
   const Sqlite = C.requireSqlite();
   const db = new Sqlite(opt("--db", "/mnt/sources/relocated/stellate-midi-corpus/corpus.db"), { readonly: true });
   const minConf = +opt("--min-conf", 0.55);
@@ -53,5 +63,8 @@ function main() {
   const offs = [2, 6, 10, 14].map(i => prof[i]);
   console.log(`  lean: downbeats ${(beats.reduce((a, b) => a + b) / 4).toFixed(3)}  8th-offbeats ${(offs.reduce((a, b) => a + b) / 4).toFixed(3)}`);
 }
-module.exports = { accentProfile };
-if (require.main === module) main();
+const api = { accentProfile };
+if (NODE) module.exports = api;
+else root.NuMineGroove = api;
+if (NODE && require.main === module) main();
+})(typeof window !== "undefined" ? window : globalThis);

@@ -29,8 +29,22 @@
 //     quarter. Check the metric level before trusting a bpm divergence either
 //     way (the ragtime anchor's first press was slow for exactly this reason).
 "use strict";
-const fs = require("fs");
-const path = require("path");
+
+/* UMD, 2026-09-07 (docs/REMIX.md "the pipeline in the browser"). THE PARSER IS
+   ZERO-DEPENDENCY AND ALWAYS WAS — `fs` and `path` are used only by the corpus
+   SCAN and by this file's own CLI, never by `parseSmf`/`featuresOf`/`detectKey`
+   /`chordsOf`, which is what makes this file's arithmetic carry to a page. So
+   the body is wrapped exactly the way `tools/theory.js` is wrapped, the two
+   node modules are taken only under node, and the export lands on `NuMineMidi`.
+
+   THE BODY IS NOT REINDENTED, and that is deliberate: this is a PORT and not a
+   rewrite, and a diff that touches only the head and the foot of the file is
+   the proof of that. Nothing between them moved. */
+(function (root) {
+"use strict";
+const NODE = typeof module !== "undefined" && !!module.exports;
+const fs = NODE ? require("fs") : null;      // the corpus scan and the CLI only
+const path = NODE ? require("path") : null;  // — never the parser
 
 // ---------------- SMF parser ----------------
 // parseSmf(Uint8Array|Buffer) -> { format, ppq, ntrk, tempoMap:[{tick,us}],
@@ -376,9 +390,10 @@ function cliCalibrate(genre, dir, argv) {
 // against. Nothing about the existing exports moved.
 const api = { parseSmf, laneFor, featuresOf, detectKey, chordsOf, scanDir, distTable, keySigTonic,
               bpmOf, median, pctl, interlock, CORE, MEASURABLE, PCN };
-if (typeof module !== "undefined" && module.exports) module.exports = api;
+if (NODE) module.exports = api;
+else root.NuMineMidi = api;
 
-if (require.main === module) {
+if (NODE && require.main === module) {
   const argv = process.argv.slice(2);
   const cmd = argv[0];
   if (cmd === "file" && argv[1]) {
@@ -393,3 +408,4 @@ if (require.main === module) {
   else if (cmd === "calibrate" && argv[1] && argv[2]) cliCalibrate(argv[1], argv[2], argv);
   else { console.log("usage: mine-midi.js file <f.mid> | scan <dir> [--json out] [--limit N] | keycheck <dir> | calibrate <genre> <dir> [--seeds N] [--json out]"); process.exit(1); }
 }
+})(typeof window !== "undefined" ? window : globalThis);

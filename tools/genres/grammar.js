@@ -18,8 +18,26 @@
  *   { "$v": true }            the closure returns the voice index itself
  *   { "$src": "…" }           source text, emitted verbatim (this is how a
  *                             `word` returns [drop(2), transpose(-12)])
+ *
+ * A THIRD DIRECTION, 2026-09-07: `compile()`. `emit()` writes SOURCE, and the
+ * only way to get a working closure back out of source is `eval` — which
+ * `tools/remix.js resolveRow` did, and which a page under a strict CSP is
+ * entitled to refuse. But a template is data, and data can be interpreted:
+ * `compile(t)` builds the same closure by CONSTRUCTION, out of nine little
+ * arrow functions written here once. It refuses `formula` by name (that kind
+ * IS source text and there is nothing to interpret) and it refuses a `$src`
+ * result slot it cannot resolve, which is exactly right — a caller that wants
+ * `[drop(2)]` is asking for the WORDS scope and has to say so.
+ *
+ * The law compile shares with the other two: compile(t) must BEHAVE like
+ * eval("(" + emit(t) + ")"), and test/genres-build.test.js proves it over
+ * every closure in the catalogue.
  */
 "use strict";
+(function (root) {
+"use strict";
+/* The body below is NOT REINDENTED by the 2026-09-07 UMD wrap; the diff is the
+   head, `compile` at the foot, and the export line. Nothing else moved. */
 
 /* ---- reading: an acorn node -> a template ------------------------------- */
 
@@ -171,4 +189,77 @@ function validate(t, where) {
   return true;
 }
 
-module.exports = { match, emit, validate, KINDS };
+/* ---- interpreting: a template -> a real closure, with no `eval` ---------- *
+ *
+ * `resolveSrc` is the one door a `$src` result slot goes through. It knows the
+ * two shapes the catalogue's own JSON actually uses in a result slot and
+ * nothing more: `TABLE.key` against the tables the caller hands in, and a bare
+ * JSON literal (`[]` is 219 of the 219 remix rows' `word`). Everything else —
+ * `[drop(2)]`, `{ ...MOUTHS.hymnal }`, a whole arrow function — is SOURCE in
+ * a scope this file does not have, and it says so by returning a miss rather
+ * than by guessing.
+ */
+function resolveSrc(src, tables) {
+  const m = /^(\w+)\.(\w+)$/.exec(src);
+  if (m && tables && tables[m[1]] && tables[m[1]][m[2]] !== undefined)
+    return { ok: true, v: tables[m[1]][m[2]] };
+  const lit = src.trim();
+  if (/^(\[[\s\d.,+-]*\]|-?\d+(\.\d+)?|"[^"\\]*"|true|false|null)$/.test(lit)) {
+    try { return { ok: true, v: JSON.parse(lit) }; } catch (e) { /* fall through */ }
+  }
+  return { ok: false, why: src };
+}
+
+/** a result slot -> (v) => value. Throws by name on a `$src` it cannot read. */
+function resFn(r, tables, where) {
+  if (r && typeof r === "object") {
+    if (r.$v === true) return (v) => v;
+    if (typeof r.$src === "string") {
+      const got = resolveSrc(r.$src, tables);
+      if (!got.ok) throw new Error(where + ": compile cannot read $src " +
+        JSON.stringify(r.$src) + " without eval — it names a scope this file does not have");
+      return () => got.v;
+    }
+    throw new Error(where + ": bad result slot " + JSON.stringify(r));
+  }
+  if (typeof r === "number" || typeof r === "string") return () => r;
+  throw new Error(where + ": bad result slot " + JSON.stringify(r));
+}
+
+/** compile(t, { tables, where }) -> the closure emit(t) would have described. */
+function compile(t, opt) {
+  opt = opt || {};
+  const tables = opt.tables || null;
+  const where = opt.where || "template";
+  validate(t, where);
+  switch (t.kind) {
+    case "id":      return (v) => v;
+    case "const":   { const f = resFn(t.n, tables, where); return () => f(undefined); }
+    case "scale":   return (v) => v * t.n;
+    case "plus":    return (v) => v + t.n;
+    case "minus":   return (v) => v - t.n;
+    case "neg":     return (v) => -v;
+    case "from":    return (v) => t.n - v;
+    case "table":   { const tt = t.t.slice(); return (v) => tt[v]; }
+    case "cases": {
+      const arms = t.cases.map((c) => ({
+        at: Array.isArray(c.at) ? c.at.slice() : [c.at],
+        then: resFn(c.then, tables, where) }));
+      const els = resFn(t.else, tables, where);
+      return (v) => {
+        for (const a of arms) if (a.at.includes(v)) return a.then(v);
+        return els(v);
+      };
+    }
+    case "formula":
+      throw new Error(where + ": compile refuses `formula` — that kind IS source " +
+        "text (" + JSON.stringify(t.src.slice(0, 40)) + "), and interpreting it would " +
+        "be writing a second JavaScript");
+    default: throw new Error(where + ": unknown template kind " + JSON.stringify(t.kind));
+  }
+}
+
+const api = { match, emit, compile, resolveSrc, validate, KINDS };
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.NuGenreGrammar = api;
+})(typeof window !== "undefined" ? window : globalThis);

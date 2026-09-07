@@ -57,6 +57,16 @@
 // that knows which side it is on; `report()`'s file write stays in the CLI
 // block, where there is a filesystem.
 "use strict";
+/* WRAPPED IN AN IIFE 2026-09-07 and the body NOT reindented (the diff is this
+   head and the foot). The TIER note above is still true — the browser tier
+   loaded these bytes as a `<script type="module">`, which gave the file its own
+   scope for free. `tools/remix.js` now travels to the page as well, and it and
+   this file BOTH declare a top-level `const sum`; two plain `<script>` tags
+   would be a redeclaration SyntaxError before either ran. The wrapper is what
+   lets a page load the pipeline with ordinary script tags, and it costs a
+   module tier nothing. */
+(function (root) {
+"use strict";
 const NODE = typeof require === "function" && typeof module !== "undefined";
 /* RESTORED 2026-09-06 from 4a4d730^ (it was deleted when band.html became
    index.html) so the dynamics flood could be measured against it, and GIVEN A
@@ -76,7 +86,7 @@ const NODE = typeof require === "function" && typeof module !== "undefined";
 const DEP = NODE
   ? n => require(require("path").join(process.env.NUROOT ||
       "/home/ford/stellate", "nukernel", n))
-  : n => ({ "genres.js": window.NuGenres, "compose.js": window.NuCompose })[n];
+  : n => ({ "genres.js": root.NuGenres, "compose.js": root.NuCompose })[n];
 let EXTRA = null;                       // (key) -> number[] appended to the vector
 const { GENRES } = DEP("genres.js");
 const { BPM } = DEP("compose.js");
@@ -413,4 +423,5 @@ if (NODE && require.main === module) {
     console.log("wrote " + process.argv[i + 1]);
   }
 } else if (NODE) module.exports = api;
-else window.NuGenealogy = api;             // the browser tier: ui/deps.js loadLab()
+else root.NuGenealogy = api;               // the browser tier: ui/deps.js loadLab()
+})(typeof window !== "undefined" ? window : globalThis);

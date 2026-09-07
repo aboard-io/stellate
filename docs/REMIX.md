@@ -271,3 +271,113 @@ is Paul's call and not a tool's.
 The corroboration for distrusting a key signature, from `mine-midi.js`'s own
 `keycheck` over these six corpus files: **exact 20%, relative 20%, fifth-off
 20%, other 40%.** Two files in five carry a signature that is not their key.
+
+---
+
+# THE PIPELINE RUNS IN A BROWSER (2026-09-07)
+
+Paul: *"Make the changes to the pipeline to run in browser."*
+
+`nukernel/TABLE.md` §20f measured five things standing between this pipeline
+and a page, and named them as a SEAM rather than hanging a MIDI-upload control
+on a door that could not open. This is the round that opened it. **The logic did
+not change and the output did not move**, and that is not a claim — it is the
+gate: `test/remix.test.js`'s 32 checks are green on the same inputs, and
+`test/remix.browser.js` runs the pipeline in a real chromium and compares its
+row, its session document, its store and its provenance against the node CLI's,
+character for character.
+
+## The five blockers, what each one actually was, and what was done
+
+| §20f said | what it was, checked | what was done |
+|---|---|---|
+| top-level `require("fs"/"path")` in `remix.js`, `mine-midi.js`, `corpus-db.js` | true, and in `mine-midi.js` it was **only** the corpus scan and the CLI — `parseSmf`, `featuresOf`, `detectKey` and `chordsOf` never touch a filesystem | `mine-midi.js` and `remix.js` are UMD, `fs`/`path` are taken under a `NODE` guard, and every use of them is inside that guard or inside `main()`. `corpus-db.js` never crosses; it stays a node tool. |
+| `read(file)` and `run(file, …)` take a PATH, not bytes | true | `readBytes(u8, name)` and `runBytes(u8, name, key, O)` ARE the pipeline; `read` and `run` are a two-line node shell over them. The CLI's flags, its printed lines and the files it writes are unchanged. `path.basename` became a five-token `baseName()` so a `File.name` and a path both work. |
+| `mine-melody`/`mine-groove` pull in `corpus-db.js` | true, and the require was **dead at module level**: the four lifted functions are pure, and `corpus-db` was only ever reached from inside `main()`. `mine-melody.js` also imported `mine-midi.js` and then never named it once (measured: zero uses). | both requires moved into `main()`; the unused one is gone. Both files are UMD. |
+| `sessionOf` requires app modules by ABSOLUTE filesystem path | true — `require(ROOT + "/nukernel/precompose.js")` | the `isNode ? require(…) : root.Nu…` idiom `precompose.js` itself opens with, plus an explicit `deps` argument for a caller that already holds them. The laziness is kept exactly where it was. |
+| `resolveRow`/`deSrc` use `eval` | true, in three places | **gone from the browser path.** See below. |
+
+## The `eval`, and why it did not survive the crossing
+
+`emit()` writes a closure as SOURCE, and the only way back from source is
+`eval`. But a template is DATA — nine little arithmetic sentences — so
+`tools/genres/grammar.js` grew a third direction: **`compile(t)` builds the
+closure by construction.** Measured over the whole catalogue, `compile(t)`
+agrees with `eval("(" + emit(t) + ")")` on every voice index 0..8 for **1,518
+closures with zero mismatches**; the 508 it refuses are `formula` (which IS
+source text) and `$src` result slots naming the WORDS scope (`[drop(2)]`,
+`{ ...MOUTHS.hymnal }`).
+
+**Not one of the 508 is reachable from a mined row.** The catalogue's own rows
+arrive at a page already compiled inside `nukernel/genres.js`; `resolveRow` only
+ever sees a row this tool just made, and every one of those is `const 0` / `neg`
+/ `cases` / `const []` — measured across all twelve rows in `tools/remix-out/`.
+`deSrc`'s `$src` forms are the same story: `MODES.x`, `SCALES.x` and `[]`, all
+three of which `grammar.js resolveSrc` reads without evaluating anything.
+
+So **the eval survives on the NODE side only**, as a named fallback, so that a
+human who hand-edits a mined row into a `formula` still gets a run out of the
+CLI. On a page the same input **refuses by name** — naming the field and the
+offending source — rather than dying in a CSP violation nobody can read. That is
+§15's shape: a control that says what it cannot do.
+
+The proof is not an argument. `test/remix.browser.js` serves the page under
+`Content-Security-Policy: script-src 'self'` (no `'unsafe-eval'`, no
+`'unsafe-inline'`) **and** COOP/COEP `require-corp` — §20f's "strict CSP and
+cross-origin isolation", both at once — and probes `eval` at load time inside
+the page's own realm, because a probe called through `page.evaluate` is answered
+by the debugger's realm and would report a false pass. Chromium says
+*"Evaluating a string as JavaScript violates the following Content Security
+Policy directive … 'unsafe-eval' is not an allowed source of script"*, and the
+pipeline produces the CLI's bytes anyway.
+
+## The byte-identity proof
+
+Three comparisons, all of the same payload: the row, the session document, the
+store and the provenance, `JSON.stringify`d and compared as one string.
+
+| what against what | inputs | result |
+|---|---|---|
+| the pipeline at `HEAD` vs the ported pipeline, both under node | 18 real corpus files (a stride through `/mnt/sources/…/rips`) plus the box's own `gt.mid` | **19 of 19 byte-identical** |
+| the node CLI's printed lines, before and after | `gt.mid` | **identical**, all 26 lines (the only textual difference in a full non-dry run is `path.relative(ROOT, …)` naming the harness tree's own root) |
+| the BROWSER vs the node CLI | `gt.mid`, dropped in as `Uint8Array` | **byte-identical, 21,274 characters**, and the 26 printed decisions match line for line |
+
+## The seam the UI door must implement
+
+**A door loads twenty-five classic `<script>` tags and makes one call.** The app
+tier is `nukernel/index.html`'s own order — `engine/theory.js`, then `kernel`,
+`genres`, `genres-tables`, `askable`, `fields`, `song`, `instruments`,
+`compose`, `presets`, `songs`, `document`, `knobs`, `chair`, `ideas-kit`,
+`rules`, `precompose` — and the pipeline tier is eight files that are all UMD as
+of this round: `tools/theory.js`, `tools/genealogy.js`,
+`tools/mine/mine-{midi,melody,groove}.js`, `tools/genres/{grammar,emit}.js` and
+`tools/remix.js`, which publish `NuMineMidi`, `NuMineMelody`, `NuMineGroove`,
+`NuGenreGrammar`, `NuGenreEmit` and `NuRemix`. On a `change` from an `<input
+type="file" accept=".mid,.midi">` the door reads `await file.arrayBuffer()`,
+wraps it in a `Uint8Array` and calls `NuRemix.runBytes(u8, file.name, key, {
+seed, dry: true, parents: false })` — where `key` is the row's name, lowercased
+and stripped to `[a-z0-9]`, defaulting to `"remix" + the file's stem`. **`dry`
+is the browser's only legal mode**: there is no filesystem on a page, and a
+non-dry call refuses by name rather than half-succeeding. What comes back is
+`{ key, row, doc, store, R, A, M, prov, fig }`; `store` is exactly the shape
+`ui/state.js` writes and `adoptSong` reads, so the door hands `store` to the
+session and the box opens on the result. Every decision the tool made is on
+`console.log` in the order the CLI prints it, so a door that wants to show its
+work can capture that; a run that throws throws by name (`"parsed, but it has no
+notes"`, `"no melodic window survived"`), and those names are what the door
+should print. Nothing is written into the catalogue and nothing touches
+`nukernel/genres/` — installing a mined row remains the CLI's `--install`, and
+`atlas.js` remains a human's.
+
+## The gates for this round
+
+| gate | result |
+|---|---|
+| `node test/remix.test.js` | **32 passed, 0 failed** — unchanged, on unchanged inputs |
+| `node test/remix.browser.js` | **10 passed, 0 failed** (new) |
+| `node test/theory.test.js` | **all 48 checks pass** |
+| `node test/describe.test.js` | **23 passed, 0 failed** |
+| `node test/document.test.js` | **50 passed, 0 failed** |
+| `node test/genres-build.test.js` | **PASS 12 ok, 0 failed** |
+| `node tools/genres/build.js --check` | **green** — 53,351 lines, nothing written into the catalogue |
+| the four miner/tool CLIs | `mine-midi.js file <f.mid>` still prints its JSON; `mine-melody.js`, `mine-groove.js` and `mine-midi.js` still print their usage. `tools/genealogy.js`'s CLI throws in `report()` on a missing anchor and `tools/genres/extract.js` cannot find `acorn` — **both fail identically at `HEAD`** and neither is this round's. |

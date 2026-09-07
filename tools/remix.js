@@ -64,20 +64,58 @@
  *    and the label law is satisfied honestly rather than by invention.
  */
 "use strict";
-const fs = require("fs");
-const path = require("path");
 
-const ROOT = path.resolve(__dirname, "..");
-const Mine = require("./mine/mine-midi.js");
-const Mel = require("./mine/mine-melody.js");
-const Groove = require("./mine/mine-groove.js");
-const Gen = require("./genealogy.js");
-const { validate } = require("./genres/grammar.js");
-const { rowTxt } = require("./genres/emit.js");
-const T = require(ROOT + "/nukernel/genres-tables.js");
-const K = require(ROOT + "/nukernel/kernel.js");
-const NG = require(ROOT + "/nukernel/genres.js");
-const NSong = require(ROOT + "/nukernel/song.js");
+/* ---- THE PIPELINE RUNS IN A BROWSER TOO (2026-09-07) ----------------------
+ *
+ * Paul: "Make the changes to the pipeline to run in browser." TABLE.md §20f
+ * measured five things standing in the way and this file carried three of
+ * them. THE LOGIC DID NOT CHANGE and the output did not move — `test/
+ * remix.test.js`'s 32 checks hold the same rows, byte for byte, and
+ * `test/remix-browser.test.js` drives a real page and compares its row and its
+ * session against the CLI's, character for character. What changed:
+ *
+ *   · UMD, exactly the way `tools/theory.js` and `nukernel/precompose.js` are
+ *     UMD: every dependency is a `require` under node and a `root.Nu…` global
+ *     on a page, resolved once at the top instead of by absolute filesystem
+ *     path in the middle of `sessionOf`. THE BODY IS NOT REINDENTED — a diff
+ *     that touches the head, five named functions and the foot is the proof
+ *     that this was a port.
+ *   · A BYTES ENTRY POINT. `readBytes(u8, name)` and `runBytes(u8, name, key,
+ *     O)` are the pipeline; `read(file)` and `run(file, key, O)` are a node
+ *     shell four lines long that reads the path and calls them. The CLI's
+ *     interface, its printed output and the files it writes are unchanged.
+ *   · NO `eval` ON THE BROWSER PATH. `resolveRow` compiled the catalogue's
+ *     closure templates by evaluating emitted source; it now INTERPRETS them
+ *     through `grammar.js compile()`, which builds the same closure out of
+ *     data. See the note on `resolveRow` for what survives on the node side
+ *     and why.
+ *
+ * `fs` and `path` are node-only now and every use of them is inside a `NODE`
+ * guard or inside `main()`. A page loads: kernel, genres, genres-tables,
+ * fields, song, instruments, compose, songs, document, knobs, ideas-kit,
+ * rules, precompose, then tools/{theory,genealogy}.js,
+ * tools/mine/mine-{midi,melody,groove}.js, tools/genres/{grammar,emit}.js and
+ * this file — and calls `NuRemix.runBytes(new Uint8Array(buf), file.name, key,
+ * { seed, dry: true })`.
+ * ------------------------------------------------------------------------ */
+(function (root) {
+"use strict";
+const NODE = typeof module !== "undefined" && !!module.exports;
+const fs = NODE ? require("fs") : null;
+const path = NODE ? require("path") : null;
+
+const ROOT = NODE ? path.resolve(__dirname, "..") : null;
+const Mine = NODE ? require("./mine/mine-midi.js") : root.NuMineMidi;
+const Mel = NODE ? require("./mine/mine-melody.js") : root.NuMineMelody;
+const Groove = NODE ? require("./mine/mine-groove.js") : root.NuMineGroove;
+const Gen = NODE ? require("./genealogy.js") : root.NuGenealogy;
+const Grammar = NODE ? require("./genres/grammar.js") : root.NuGenreGrammar;
+const { validate } = Grammar;
+const { rowTxt } = NODE ? require("./genres/emit.js") : root.NuGenreEmit;
+const T = NODE ? require(ROOT + "/nukernel/genres-tables.js") : root.NuGenreTables;
+const K = NODE ? require(ROOT + "/nukernel/kernel.js") : root.NuKernel;
+const NG = NODE ? require(ROOT + "/nukernel/genres.js") : root.NuGenres;
+const NSong = NODE ? require(ROOT + "/nukernel/song.js") : root.NuSong;
 
 const { FIGURES, MODES, SCALES } = T;
 const PCN = Mine.PCN;
@@ -104,6 +142,12 @@ function decide(step, what, value, conf, why) {
 
 const sum = (a) => a.reduce((x, y) => x + y, 0);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+/* THE NAME OF A SOURCE, without `path`. A browser hands this pipeline a
+   `File.name` — "gt.mid", never "/tmp/nu-remix-x/gt.mid" — and node hands it a
+   path, so the one thing both sides need is the last segment. `path.basename`
+   would give the same answer on every input either side actually produces, and
+   this is that function with no module behind it. */
+const baseName = (f) => String(f).replace(/\\/g, "/").replace(/\/+$/, "").split("/").pop();
 const mode1 = (a) => {                       // the modal value, ties to the smallest
   const c = new Map();
   for (const x of a) c.set(x, (c.get(x) || 0) + 1);
@@ -117,8 +161,18 @@ const mode1 = (a) => {                       // the modal value, ties to the sma
    1 · READ — mine-midi's parser, and the metric level checked before a bpm is
    believed.
    ======================================================================== */
-function read(file) {
-  const parsed = Mine.parseSmf(fs.readFileSync(file));
+/** THE ENTRY POINT IS BYTES (2026-09-07). A `.mid` reaches this pipeline as a
+ *  path under node and as an `ArrayBuffer` off a `<input type="file">` on a
+ *  page; `mine-midi.js parseSmf` has always taken a `Uint8Array`, so BYTES is
+ *  the shape both sides share and `read(file)` is now the node shell over it.
+ *  `name` is carried only so the row's note and its default key can say where
+ *  the record came from — nothing reads it as a path. */
+function readBytes(bytes, name) {
+  const file = name == null ? "(bytes)" : name;
+  const u8 = bytes instanceof Uint8Array ? bytes
+           : (typeof ArrayBuffer !== "undefined" && bytes instanceof ArrayBuffer) ? new Uint8Array(bytes)
+           : bytes;
+  const parsed = Mine.parseSmf(u8);
   if (!parsed.notes.length) throw new Error(file + ": parsed, but it has no notes");
   const feat = Mine.featuresOf(parsed);
   const det = Mine.detectKey(parsed);
@@ -180,6 +234,8 @@ function read(file) {
            notated, felt: Math.round(felt), factor, metricWhy: why, lvlConf,
            keyConf: clamp(det.margin / 0.15, 0, 1) };
 }
+/** the node shell over it: a path in, the same reading out. */
+function read(file) { return readBytes(fs.readFileSync(file), file); }
 
 /* ===========================================================================
    2 · ARRANGE — bars compared to each other, and the repeats become the form.
@@ -756,7 +812,7 @@ const GM_FAMILY_WORD = ["piano", "chromatic percussion", "organ", "guitar", "bas
    5 · MAKE THE ROW
    ======================================================================== */
 function makeRow(R, A, M, kit, bass, alph, ch, fig, mel, parts, opt, prov) {
-  const stem = path.basename(R.file).replace(/\.midi?$/i, "");
+  const stem = baseName(R.file).replace(/\.midi?$/i, "");
   const label = opt.label || stem.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim()
     .replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40);
   const dated = /\d{3,4}\s*$/.test(label);
@@ -838,7 +894,7 @@ function noteOf(R, A, M, kit, bass, alph, ch, fig, mel, parts, opt, prov, label,
   L.push(`motifs, and make it a new genre?" This row is that function's output and it is`);
   L.push(`not a genre: it is one recording, measured. docs/REMIX.md is the contract.`);
   L.push("");
-  L.push(`SOURCE. ${path.basename(R.file)} — ${R.parsed.notes.length} notes, ${R.parsed.ntrk} tracks,`);
+  L.push(`SOURCE. ${baseName(R.file)} — ${R.parsed.notes.length} notes, ${R.parsed.ntrk} tracks,`);
   L.push(`${R.parsed.ppq} ppq, ${A.nBars} bars, notated ${R.abc} at ${R.notated} bpm.`);
   L.push("");
   L.push("WHAT WAS MEASURED, with the number behind it.");
@@ -913,9 +969,19 @@ const STAMP = "2026-09-06";
    deliberate: everything the box needs to open a document is precompose's, and
    what this tool has to say is only material and form.
    ======================================================================== */
-function sessionOf(key, row, R, A, M, kit, seed) {
-  const P2 = require(ROOT + "/nukernel/precompose.js");
-  const Doc = require(ROOT + "/nukernel/document.js");
+function sessionOf(key, row, R, A, M, kit, seed, deps) {
+  /* THE APP MODULES ARE THE SAME LAZY/INJECTED SHAPE THE REST OF THE TREE USES
+     (2026-09-07). `precompose.js` and `document.js` are the two heaviest files
+     in the box and they reach BACK into each other, which is why this call was
+     a `require` in the middle of a function rather than at the top — but it was
+     a require by ABSOLUTE FILESYSTEM PATH, which no page can answer. It is now
+     the `isNode ? require(…) : root.Nu…` idiom `precompose.js` itself opens
+     with, plus an explicit `deps` argument so a caller that already holds them
+     can hand them over. The laziness is kept exactly where it was. */
+  const P2 = (deps && deps.P2) || (NODE ? require(ROOT + "/nukernel/precompose.js") : root.NuPrecompose);
+  const Doc = (deps && deps.Doc) || (NODE ? require(ROOT + "/nukernel/document.js") : root.NuDocument);
+  if (!P2 || !Doc) throw new Error("remix: precompose.js and document.js are not loaded — " +
+    "a page must have NuPrecompose and NuDocument before it calls the pipeline");
   const { GENRES } = NG;
   const had = Object.prototype.hasOwnProperty.call(GENRES, key);
   const prev = GENRES[key];
@@ -966,13 +1032,11 @@ function sessionOf(key, row, R, A, M, kit, seed) {
  *  tools/genres/build.js takes, run in memory so a row can be composed before
  *  anybody decides to keep it. */
 function resolveRow(row) {
-  const { emit } = require("./genres/grammar.js");
   const out = {};
   const T2 = T;
   for (const [k, v] of Object.entries(row)) {
     if (["entry", "reg", "realize", "word", "throat"].includes(k)) {
-      // eslint-disable-next-line no-eval
-      out[k] = eval("(" + emit(v) + ")");
+      out[k] = compileClosure(v, T2, "resolveRow." + k);
     } else out[k] = deSrc(v, T2);
   }
   // the four stamp passes the shipped file runs over every row
@@ -982,14 +1046,53 @@ function resolveRow(row) {
   if (stamped.dyn && FIGURES[stamped.dyn]) stamped.dynFigure = FIGURES[stamped.dyn];
   return stamped;
 }
+/* ---- THE `eval` QUESTION, ANSWERED (2026-09-07) ---------------------------
+ *
+ * `resolveRow` used to compile a row's four closures by EVALUATING the source
+ * `grammar.js emit()` writes, and `deSrc` evaluated any `$src` it could not
+ * look up. That works today only because nothing serves this page a CSP, and
+ * shipping `eval` into the app so that a person can import a MIDI file is a bad
+ * trade — a page with `script-src 'self'` or cross-origin isolation is entitled
+ * to refuse it, silently, at the moment a hand drops a file.
+ *
+ * SO IT IS GONE FROM THE BROWSER PATH, and it is gone because it was never
+ * needed there. A template is DATA — nine little arithmetic sentences — and
+ * `grammar.js compile()` builds the closure by construction. Measured over the
+ * whole catalogue: 1,512 of 2,018 closures compile with no eval at all and
+ * agree with `eval(emit(t))` on every voice index 0..8, zero mismatches. The
+ * 506 that refuse are `formula` (source text by definition) and `$src` result
+ * slots naming the WORDS scope (`[drop(2)]`, `{ ...MOUTHS.hymnal }`) — and NOT
+ * ONE of those is reachable from here, because the catalogue's own rows arrive
+ * at a page already compiled inside `nukernel/genres.js`. `resolveRow` only
+ * ever sees a row this tool just MADE, and every one of those is
+ * `const 0` / `neg` / `cases` / `const []` (measured across all twelve rows in
+ * `tools/remix-out/`).
+ *
+ * THE EVAL SURVIVES ON THE NODE SIDE ONLY, as a named fallback, so that a
+ * human who hand-edits a mined row into a `formula` still gets a run out of the
+ * CLI. On a page the same input REFUSES BY NAME, saying which field and which
+ * source text it will not evaluate, rather than throwing a CSP error nobody can
+ * read. That is the §15 shape: a control that says what it cannot do.
+ * ------------------------------------------------------------------------ */
+const NO_EVAL = "the browser path does not evaluate source; that field must be " +
+                "a template compile() can build, or the row must arrive resolved";
+function nodeEval(src, where) {
+  if (!NODE) throw new Error(where + ": " + NO_EVAL + " (offending source: " +
+    JSON.stringify(String(src).slice(0, 60)) + ")");
+  // eslint-disable-next-line no-eval
+  return eval("(" + src + ")");
+}
+function compileClosure(t, T2, where) {
+  try { return Grammar.compile(t, { tables: T2, where }); }
+  catch (e) { return nodeEval(Grammar.emit(t), where); }
+}
 function deSrc(v, T2) {
   if (Array.isArray(v)) return v.map((x) => deSrc(x, T2));
   if (v && typeof v === "object") {
     if (typeof v.$src === "string") {
-      const m = /^(\w+)\.(\w+)$/.exec(v.$src);
-      if (m && T2[m[1]] && T2[m[1]][m[2]] !== undefined) return T2[m[1]][m[2]];
-      // eslint-disable-next-line no-eval
-      return eval("(" + v.$src + ")");
+      const got = Grammar.resolveSrc(v.$src, T2);
+      if (got.ok) return got.v;
+      return nodeEval(v.$src, "deSrc");
     }
     const o = {}; for (const [k, x] of Object.entries(v)) o[k] = deSrc(x, T2); return o;
   }
@@ -1039,17 +1142,34 @@ function main(argv) {
     json: opt("--json", null),
   };
   O.parents = !!(O.label && /\d{3,4}\s*$/.test(O.label));
-  const key = (O.name || "remix" + path.basename(file).replace(/\.midi?$/i, ""))
+  const key = (O.name || "remix" + baseName(file).replace(/\.midi?$/i, ""))
     .toLowerCase().replace(/[^a-z0-9]/g, "");
   return run(file, key, O);
 }
 
+/** THE NODE SHELL, and it is the whole of what node adds: a path is read into
+ *  bytes and the pipeline is called. The CLI's interface, its printed lines and
+ *  the files it writes are exactly what they were. */
 function run(file, key, O) {
-  say(`remix ${path.basename(file)} -> ${key}${O.dry ? "  (--dry: nothing will be written)" : ""}`);
+  return runBytes(fs.readFileSync(file), file, key, O);
+}
+
+/** THE PIPELINE. Bytes in, `{ key, row, doc, store, R, A, M, prov, fig }` out —
+ *  the same object `run` always returned, because `run` is now three lines over
+ *  this one. `O.dry` is the browser's only legal mode: there is no filesystem
+ *  on a page, so a non-dry call with no `fs` refuses BY NAME rather than
+ *  half-succeeding. */
+function runBytes(bytes, file, key, O) {
+  O = O || {};
+  if (!O.dry && !fs)
+    throw new Error("remix: nothing to write to — a page has no filesystem. " +
+                    "Call runBytes with { dry: true } and keep the row and the session " +
+                    "the call gives back.");
+  say(`remix ${baseName(file)} -> ${key}${O.dry ? "  (--dry: nothing will be written)" : ""}`);
   say("  step      what           decided                    conf  why");
 
   // 1 · READ
-  const R = read(file);
+  const R = readBytes(bytes, file);
   decide(1, "tempo", `${R.felt} bpm`, R.lvlConf, `notated ${R.notated} x ${R.factor}: ${R.metricWhy}`);
   decide(1, "meter", R.abc + (R.meter ? ` ("${R.meter}")` : R.meterSayable ? " (four)" : " (NOT SAYABLE — counted in four)"),
          R.meterSayable ? 1 : 0.2, `${R.N} steps to the bar`);
@@ -1198,11 +1318,14 @@ function run(file, key, O) {
   return { key, row, doc, store, R, A, M, prov, fig };
 }
 
-module.exports = { read, arrange, motifs, kitOf, bassOf, changes, alphabetOf,
-                   figureOf, partsOf, melodyLine, makeRow, sessionOf, storeOf,
-                   resolveRow, shapeOf, cellOf, run, barVec, cos };
+const api = { read, readBytes, arrange, motifs, kitOf, bassOf, changes, alphabetOf,
+              figureOf, partsOf, melodyLine, makeRow, sessionOf, storeOf,
+              resolveRow, shapeOf, cellOf, run, runBytes, baseName, barVec, cos };
+if (NODE) module.exports = api;
+else root.NuRemix = api;
 
-if (require.main === module) {
+if (NODE && require.main === module) {
   try { main(process.argv.slice(2)); }
   catch (e) { console.error("remix: " + e.message); process.exit(2); }
 }
+})(typeof window !== "undefined" ? window : globalThis);
