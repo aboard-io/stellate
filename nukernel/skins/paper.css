@@ -1,0 +1,399 @@
+/* ===========================================================================
+   nukernel/skins/paper.css — THE PROOF THAT A SKIN IS A STYLESHEET.
+
+   docs/DESIGN-SYSTEM.md §1a, Paul verbatim: *"I really want us to be able to
+   skin the app via css rather than customizing objects."* And the test that
+   law names for itself:
+
+     "AND IT IS PROVEN BY A SECOND SKIN, NOT BY INTENTION. The system is to
+      ship an alternate skin in one file that turns the deck into something
+      visibly other — a light paper panel, a different accent, a different
+      density — loaded with no other change to the app. If writing that file
+      requires touching an element, the element is wrong."
+
+   THIS IS THAT FILE, AND IT IS THE WHOLE OF THAT SKIN. To turn it on, add ONE
+   LINE after `nu.css` and change nothing else:
+
+       <link rel="stylesheet" href="skins/paper.css">
+
+   No `.ts` edited. No attribute passed. No build run. No element touched.
+   `nukernel/design-paper.html` is `nukernel/design.html` with that one line
+   added and is otherwise byte-identical, which is the claim made where a
+   person can look at it.
+
+   ===== WHAT MAKES IT A DIFFERENT DESIGN AND NOT AN INVERSION ============
+   Three things move, and they are the three §1a names — colour, accent,
+   density:
+
+     · THE GROUND IS PAPER, not a panel. The deck's own daylight theme is
+       careful never to go paper white, because *"a panel is not a page"* — it
+       is the same machine under studio lights. THIS IS THE OTHER THING: it is
+       a printed page, warm, with the type set on it, and the machine's chassis
+       is gone. That is why it is a skin and not a third theme.
+     · THE ACCENT IS INK BLUE, not phosphor green. The deck's whole colour
+       system is three lamps and a screen; a lamp is a light and a light is
+       green. On paper there is nothing to light, so the accent is what a
+       printed page marks with — a stamped blue — and "selected" reads as
+       MARKED rather than as LIT. The amber becomes a burnt orange and the red
+       a printer's red; they keep their jobs and only their medium changes.
+     · THE DENSITY IS LOOSE. The deck is squeezed on purpose (*"It's
+       incredibly important we squeeze things as much as possible"*): five
+       steps from .2em to 1.4em. Paper is read, not operated, so every step
+       opens up — .28 to 2em — and the radii soften from a control's 6px to a
+       card's 10px. **The 44px tap floor does not move**, because it is not
+       spacing and never was (tokens.css says so on its own line); a looser
+       skin that shrank the target would be a skin that broke a law.
+
+   ===== WHAT IT DOES NOT DO, AND THAT IS THE POINT ======================
+   It sets no attribute, calls no function, and knows the name of no component
+   except through the tags the system already publishes. Everything below the
+   token block is a rule targeting a `<nu-*>` tag or one of its `nu-el` parts —
+   which is exactly the surface §1a promises a skin will find waiting for it.
+   If a look here had needed a new attribute or a branch in a `.ts` file, the
+   ELEMENT would have been wrong and would have been fixed; nothing did.
+
+   ===== THE CONTRAST FLOORS HOLD, AND THEY WERE MEASURED ================
+   The same fifty-four pairings the gallery's matrix draws — thirteen inks on
+   three grounds, five edges on three grounds — computed on these values before
+   they were written down. Worst text 5.14:1 against a 4.5 floor; worst edge
+   3.35:1 against a 3. A skin is allowed to look like anything; it is not
+   allowed to be unreadable, and "the value wins and the theme bends" is §1's
+   rule for this file as much as for the deck.
+   =========================================================================== */
+
+/* ===== THE TOKENS ======================================================
+   Loaded AFTER `tokens.css`, so these win on the cascade at equal
+   specificity. Every name here is one tokens.css already owns — a skin
+   RE-ANSWERS the questions the system asks and may not ask new ones, because
+   a token nu.css has never heard of paints nothing. */
+:root{
+  /* THE 142 NATIVE CONTROLS FOLLOW THE PAGE, as they follow the deck. */
+  color-scheme: light;
+
+  /* ---- the ground: paper, in three weights of stock -------------------- */
+  --deck:  #F4F0E6;  /* the page — a warm laid paper, and the room everything is printed on */
+  --panel: #FBF8F1;  /* a card laid on the page: tables, sheets, the bar */
+  --well:  #E4DFD1;  /* a panel ruled off and shaded — where the deck cut a hole, paper prints a tint */
+
+  /* ---- the ink: three weights of one black ---------------------------- */
+  --legend:       #1A1712;  /* the ink — every word the page says */
+  --legend-dim:   #575044;  /* the second voice: units, counts, a value's own label */
+  --legend-faint: #4E5A5E;  /* refused — a COOLER grey at the same value, which is the deck's own trick and works on paper for the same reason: quieter by HUE, because quieter by value fails a floor */
+
+  /* ---- the marks: a stamped blue, and no lamps ------------------------ */
+  --lamp:  #14479B;  /* the stamp — selected, focused, a value a hand set. On paper "on" is MARKED, not lit */
+  --armed: #8A4A0E;  /* the second mark: armed, under the pointer, next */
+  --clip:  #A8140F;  /* the printer's red — clipping and destruction, and never decoration */
+  --value: #1E4A86;  /* what a value is set in: the same blue, one weight quieter, because a readout is not a decision */
+  --lamp-hot: #0E3577;  /* a mark with a thumb on it — on paper the hover DARKENS, where on the deck it brightens */
+  --on-fill:  #FBF8F1;  /* the ink laid ON a filled control: 8.2:1 on the stamp, 6.5 on the amber, 7.1 on the red */
+
+  /* ---- the grey ramp, running the paper way --------------------------- */
+  --grey1: #EDE8DC;  /* a trough — barely off the page */
+  --grey2: #DDD7C7;  /* a cap, a raised fill */
+  --grey3: #B2AC9C;  /* a quiet fill, and the one grey that is never an edge */
+  --grey4: #7D7768;  /* the hairline that has to be SEEN — 3.35:1 on the well, which is the floor an edge owes */
+
+  /* ---- the six players, printed --------------------------------------- */
+  --v0: #15547E;   /* sky */
+  --v1: #155C3A;   /* green */
+  --v2: #4F2E92;   /* violet */
+  --v3: #7C2050;   /* magenta */
+  --vb: #434950;   /* the bass — slate */
+  --drum: #3E444A; /* the kit — graphite */
+
+  /* ---- level: four steps of ONE hue, and the hue is the stamp's -------- */
+  --q1: #C6D3E8;
+  --q2: #7C9BC9;
+  --q3: #3A69A4;
+  --q4: var(--lamp);
+
+  /* ---- the two row washes, made of ink because the page is light ------ */
+  --row-hi:  rgba(26, 23, 18, .05);
+  --row-lit: rgba(168, 20, 15, .10);
+
+  /* ---- the eight cluster hues, printed --------------------------------- */
+  --lz-h0: #1F5FBF;
+  --lz-h1: #16663E;
+  --lz-h2: #6A34AC;
+  --lz-h3: #9B2559;
+  --lz-h4: #7C4A00;
+  --lz-h5: #0D5F68;
+  --lz-h6: #6E4520;
+  --lz-h7: #454E5C;
+
+  /* ---- rules, and the shadow that is not a shadow ---------------------- */
+  --rule:        var(--grey4);
+  --rule-strong: var(--legend-dim);
+  --zebra: color-mix(in srgb, var(--legend) 4%, var(--panel));
+  /* THE DECK'S SHADOW IS A CUT AND THIS ONE IS NOT A SHADOW AT ALL. A hard
+     offset in the well reads as a plate standing proud of a chassis; on paper
+     there is no chassis to stand proud of, so the "shadow" is the second
+     impression of a rule — one hairline of ink, offset — which is what a
+     printed card actually looks like. */
+  --shadow: 0 1px 0 var(--grey3);
+  --press:  1px;
+
+  /* ---- the section wash, lighter because it lies UNDER ink ------------- */
+  --wash: 7%;
+  --wash-sat: 55%;
+  --wash-lit: 62%;
+
+  /* ===== THE DENSITY, WHICH IS THE THIRD THING §1a ASKS A SKIN TO MOVE ===
+     Every step of the ramp opens. Five steps, same five names, same geometric
+     shape, a wider spread: a page is read at arm's length and a panel is
+     operated under a thumb. `test/design-system.js` D5 walks every rendered
+     spacing value against `--s1..--s5` RESOLVED AT RUNTIME, so a skin that
+     moves the ramp moves the gate's own yardstick with it and stays honest —
+     which is the check working, not the check being dodged. */
+  --s1: .28em;   /* a hair */
+  --s2: .5em;    /* tight */
+  --s3: .8em;    /* a gap */
+  --s4: 1.15em;  /* air */
+  --s5: 2em;     /* a block */
+
+  /* ---- and the corners soften from a control's to a card's ------------- */
+  --r0: 2px;
+  --r1: 10px;
+  --r2: 6px;
+  /* `--r-pill` is untouched. tokens.css calls it *"a noun, and only a noun"*,
+     and a skin may repaint a noun but may not turn one into a verb. */
+
+  /* ---- type: set for reading, not for operating ------------------------ */
+  --t0: .68rem;
+  --t1: .78rem;
+  --t2: .88rem;
+  --t3: 1.02rem;
+  --t4: 1.22rem;
+  --t5: 1.65rem;
+  /* PAPER TAKES A LIGHTER FACE. The deck runs body at 500 because a legend
+     silkscreened on a dark panel needs the weight to hold its edge; ink on
+     paper does not, and 400 is what a page is set in. The four names stand
+     and only their values move. */
+  --fw-body:    400;
+  --fw-label:   600;
+  --fw-block:   700;
+  --fw-display: 700;
+  --num-fw: 500;
+  --btn-fw: var(--fw-body);
+
+  /* THE TAP FLOOR DOES NOT MOVE, and this line is here to say so rather than
+     to change anything: `--tap: 44px` is a law, not a look, and a skin that
+     shrank it would be a skin that broke one. Neither do `--box --cell --ctl`,
+     the slider's four, the envelope's two, or the two fixed bands' heights —
+     a skin repaints the machine; it does not resize a thumb. */
+}
+
+/* ===========================================================================
+   THE ELEMENTS, SKINNED — and this is the half that proves the law.
+
+   Everything above is a token, and a token would repaint the deck too. What
+   §1a actually promises is that a skin can reach THE ELEMENTS THEMSELVES with
+   ordinary CSS: their tags, their states as attributes on the host, and their
+   `nu-el` parts. Every rule below does exactly that and nothing else — no
+   attribute is passed to make one possible, and not one of them required a
+   line of TypeScript to change.
+
+   THE ONE STRUCTURAL IDEA: on the deck a selected control is FILLED with the
+   lamp, because a lamp is a light. On paper nothing lights, so a selected
+   control is STAMPED — the mark is a heavy rule down its start edge and the
+   word goes to the stamp's own blue — which is a genuinely different reading
+   of the same state, reached without the element knowing a thing about it.
+   =========================================================================== */
+
+/* A CONTROL ON PAPER IS A RULED BOX, not a moulded key: the border carries it
+   and there is no fill until a hand has done something. */
+[data-nu] .nu-elbtn{
+  background: var(--panel);
+  border: var(--bw) solid var(--rule);
+  box-shadow: none;
+}
+[data-nu] .nu-elbtn:hover{
+  background: var(--panel);
+  border-color: var(--armed);
+}
+
+/* SELECTED IS STAMPED, NOT LIT. The fill goes; a heavy rule down the start
+   edge and the stamp's ink take its place. */
+nu-button[selected] .nu-elbtn,
+nu-icon-button[selected] .nu-elbtn{
+  background: var(--panel);
+  color: var(--lamp);
+  border-color: var(--lamp);
+  border-inline-start-width: var(--bw-hard);
+}
+
+/* AN OPEN CONTROL IS UNDERSCORED, which is what a printed page has instead of
+   a tint: the thing standing under it is joined to it by a rule. */
+nu-button[open] .nu-elbtn,
+nu-icon-button[open] .nu-elbtn{
+  border-block-end-color: var(--lamp);
+  border-block-end-width: var(--bw-hard);
+}
+
+/* A REFUSED CONTROL KEEPS ITS DASHED EDGE — that is the law, not the look —
+   and on paper it also loses its ground, so it reads as a word set on the
+   page rather than as a control that has gone grey. */
+[data-nu][refused] .nu-elbtn{
+  background: transparent;
+  border-style: dashed;
+}
+
+/* THE SAY LINE IS AN ANNOTATION, and a printed annotation is indented and
+   ruled, not tinted. */
+[data-nu] .nu-elsay{
+  border-inline-start: var(--bw-hard) solid var(--armed);
+  padding-inline-start: var(--s2);
+  background: transparent;
+}
+
+/* A LEGEND ON PAPER IS NOT SILKSCREENED SMALL CAPS. It is a running head:
+   letter-spaced, at the label weight, in the second voice. */
+[data-nu] .nu-ellegend{
+  letter-spacing: .12em;
+}
+
+/* A VALUE IS PRINTED IN THE MONO FACE, because on a page a number that has to
+   line up with the number under it is set in a typewriter face and not in the
+   text face. */
+[data-nu] .nu-elval{
+  font-family: var(--mono);
+}
+
+/* A LAMP IS AN INK DOT. It keeps its size and its meaning; what goes is the
+   glow, because paper does not glow. */
+[data-nu] .nu-ellamp{
+  box-shadow: none;
+}
+
+/* THE RAIL'S SEGMENTS COME APART. A joined rail is a hardware fascia; on paper
+   a set of choices is a row of ruled boxes with air between them, and the
+   standing one is stamped. */
+nu-rail .nu-elrail{
+  gap: var(--s2);
+}
+nu-rail .nu-elseg{
+  border: var(--bw) solid var(--rule);
+  border-radius: var(--r2);
+}
+nu-rail .nu-elseg[aria-pressed="true"]{
+  background: var(--panel);
+  color: var(--lamp);
+  border-color: var(--lamp);
+  border-inline-start-width: var(--bw-hard);
+}
+
+/* THE SPINNER'S ONE BUTTON READS AS A STAMP TOO, and its position is set in
+   the mono face beside the word, the way a page number is. */
+nu-spinner .nu-elpos{
+  font-family: var(--mono);
+}
+
+/* A CELL IN A TABLE, ON PAPER, IS A RULED LINE AND NOT A BOX: one hairline
+   under it, no border round it, and the stamped one takes the rule at its
+   start edge. This is the rule that would be impossible if `<nu-cell>` drew
+   its own look — which is the whole of what this file is for. */
+nu-cell .nu-elcell{
+  border: 0;
+  border-block-end: var(--bw) solid var(--rule);
+  border-radius: var(--r0);
+  background: transparent;
+}
+nu-cell[selected] .nu-elcell{
+  color: var(--lamp);
+  border-inline-start: var(--bw-hard) solid var(--lamp);
+  background: transparent;
+}
+nu-cell[refused] .nu-elcell{
+  border-block-end-style: dashed;
+  background: transparent;
+}
+
+/* A COLUMN HEAD IS A RUNNING HEAD WITH A RULE UNDER IT — and on paper the
+   FAMILY HUE GOES. Eight coloured running heads is a printed page pretending
+   to be a control panel; a set table tells one group from the next by the rule
+   under the head and by the words, which is what a printed index does. This
+   is the rule that proves §1a on the hardest case in the system: the hue is a
+   caller's `--lz`, and killing it takes ONE selector at the element's own
+   specificity because `.nu-elcolhead` reads `var(--lz, …)` itself, so a plain
+   `color` here beats the fallback without touching `--lz` — which must stay
+   SET, because a gate counts the eight distinct hues and an unset one is a
+   ninth value rather than one fewer colour. Before 2026-09-07 the field set
+   the colour three selectors deep and this rule would have needed
+   `!important` or a longer selector than the caller's — a look a skin could
+   not reach, which is the law failing quietly. */
+nu-colhead .nu-elcolhead, nu-rowhead .nu-elrowhead{
+  color: var(--legend-dim);
+  border-block-end: var(--bw-hard) solid var(--legend);
+  background: transparent;
+  letter-spacing: .1em;
+}
+nu-colhead[current] .nu-elcolhead,
+nu-rowhead[current] .nu-elrowhead{
+  border-block-end-color: var(--lamp);
+  color: var(--lamp);
+}
+
+/* THE PLATE IS A CARD LAID ON THE PAGE: a hairline, a soft corner and the
+   second impression of a rule under it, rather than a plate bolted to a
+   chassis. */
+nu-plate{
+  background: var(--panel);
+  border: var(--bw) solid var(--rule);
+  border-radius: var(--r1);
+  box-shadow: var(--shadow);
+}
+nu-menu-row[current] .nu-elmenurow{
+  background: transparent;
+  color: var(--lamp);
+  border-inline-start: var(--bw-hard) solid var(--lamp);
+}
+
+/* THE INDEX IS A SET TABLE: ruled between rows, nothing round any of them,
+   and the row you are on marked at its start edge. */
+nu-index{
+  background: var(--panel);
+  border: var(--bw) solid var(--rule);
+  border-radius: var(--r1);
+}
+
+/* THE GLOBE IS A PRINTED MAP. It draws no colour of its own — every fill,
+   stroke and opacity on it is a nu.css rule, which the gate measures (D9e:
+   zero paint attributes on any SVG node) — so a stylesheet is all it takes to
+   turn a screen's earth into an engraving. These five rules ARE the proof
+   §1a asks for, on the one element that could most plausibly have needed a
+   `style=` and does not. */
+nu-globe .nu-elsea{
+  fill: var(--panel);
+  stroke: var(--legend);
+}
+nu-globe .nu-elgratline{
+  stroke: var(--grey3);
+}
+nu-globe .nu-ellimb{
+  stroke: var(--legend-dim);
+}
+nu-globe .nu-elpin{
+  fill: var(--lamp);
+}
+nu-globe .nu-elyear{
+  fill: var(--legend-dim);
+}
+
+/* AN INDEX ROW ON PAPER IS A LINE IN A SET TABLE: ruled under, the year in
+   the mono face the way a printed index sets its numbers, and the row you are
+   standing on marked at its start edge rather than tinted. */
+nu-index .nu-elixrow{
+  border-block-end: var(--bw) solid var(--rule);
+  border-radius: var(--r0);
+  background: transparent;
+}
+nu-index .nu-elixy{
+  font-family: var(--mono);
+}
+nu-index .nu-elixli[data-current="true"] .nu-elixrow,
+nu-index .nu-elixrow[aria-current="true"]{
+  background: transparent;
+  color: var(--lamp);
+  border-inline-start: var(--bw-hard) solid var(--lamp);
+}

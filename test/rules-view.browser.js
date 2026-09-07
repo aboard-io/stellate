@@ -277,7 +277,9 @@ function standUpServer() {
          headings"* — and the design pass measured this very control moving
          from "1 of 147 words on the glass" to all of them in clusters. So the
          `<optgroup>` became an `<li class="nu-combogrp">` in the combo round
-         and is a `<section class="nu-lzcluster" data-cluster>` now. The group
+         and is a `<nu-colhead class="nu-lzcluster" data-cluster>` since the
+         cell port (2026-09-07) — the CLUSTER kept its class and its
+         `data-cluster` because they are its address; only the tag moved. The group
          NAMES and their order did not move — the field carries
          `data-widget="lozenge"` and its two clusters read `native` (33) then
          `sampled` (87), which is the order `nukernel/rules.js instrOpts`
@@ -287,8 +289,16 @@ function standUpServer() {
         const m = document.querySelector('#pan-band [data-sel="rule.instr.0"]');
         if (!m) return null;
         const box = m.closest(".nu-combo") || m.parentElement;
-        const lz = [...box.querySelectorAll("section.nu-lzcluster")]
-          .map((g) => g.dataset.cluster);
+        /* A GROUP IS NOT A COLUMN (TABLE.md §19). A field too tall to wrap is
+           drawn as a sideways TABLE and a family longer than one column
+           CONTINUES into the next under the same word — so this reads twelve
+           columns for two families, and the claim below is about the FAMILIES
+           and their order. First-appearance de-duplication, which is exactly
+           what the field's own `clustersFrom` derives them by; the unheaded
+           leftovers carry no word and are dropped by `.filter(Boolean)` one
+           line down, as they always were. */
+        const lz = [...new Set([...box.querySelectorAll("nu-colhead.nu-lzcluster")]
+          .map((g) => g.dataset.cluster))].filter(Boolean);
         const groups = lz.length ? lz
           : m.options
             ? [...m.querySelectorAll("optgroup")].map((g) => g.label)
@@ -679,7 +689,20 @@ function standUpServer() {
   const live = () => p.evaluate(() => ({
     playing: window.__nuBounce().playing, rms: window.__nuEngine().rms,
     pos: window.__posLog.slice(), st: window.__stateLog.slice(),
-    seed: (document.getElementById("reading") || {}).textContent,
+    /* THE SEED, OFF THE ONE READOUT THAT STILL EXISTS (re-pointed 2026-09-07).
+       This read `#reading`, and `#reading` is DELETED — TABLE.md §20, Paul:
+       *"Get rid of seed number too."* All six mentions of it left in
+       `ui/eight.js` are inside comments, so this evaluated to `null` on every
+       run and R11c had been a standing red ever since: a gate asserting a
+       readout the page was told to stop producing, which is the identical
+       shape to `test/atlas.js` G9, retired the same day for the same reason.
+       `printReading` writes the number into `#rewrite`'s ACCESSIBLE NAME,
+       which is where a screen reader hears it and is the number's last home.
+       The claim is untouched — the two tiers ran at the SAME reading — and it
+       is now asked of something that is on the page. */
+    seed: (() => { const b = document.getElementById("rewrite");
+      const m = /^rewrite\s+(\d+)/.exec(b ? (b.getAttribute("aria-label") || "") : "");
+      return m ? m[1] : null; })(),
     doc: JSON.parse(JSON.stringify(window.__eightDoc())) }));
   const mono = (xs) => xs.every((v, i) => !i || v >= xs[i - 1]);
 
@@ -706,8 +729,17 @@ function standUpServer() {
     "R11b a COMPOSE-tier change EVOLVES the record: the transport never " +
     "stopped — " + dEv + " transport:state events across the edit (it was " +
     "two, false then true, before 2026-09-03)");
-  check(L3.seed === "3" && L2.seed === "3",
-    "R11c …at the same seed " + JSON.stringify([L2.seed, L3.seed]));
+  /* AND THE CLAIM IS A JOIN, NOT A LITERAL. It read `=== "3"` against the
+     boot seed in this file's own `REGGAE` fragment (`&s=3`), which is still
+     the right number — but what R11c is ABOUT is that a COMPOSE-tier change
+     evolved the record WITHOUT re-rolling, so the fact worth asserting is that
+     the two readings are the SAME and that they are the one the page was
+     opened on. Both, so a page that quietly re-rolled to some other stable
+     number cannot pass. */
+  check(L2.seed === "3" && L3.seed === L2.seed,
+    "R11c …at the same seed, read off the die's own name — " +
+    JSON.stringify([L2.seed, L3.seed]) + " (it read `#reading`, deleted by " +
+    "TABLE.md §20, and had been red ever since)");
   check(mono(L3.pos) && grew > 0,
     "R11d …with the bar counter monotone and still counting — " + grew +
     " new bars announced, serials " + JSON.stringify(L3.pos.slice(-6)) +

@@ -373,6 +373,7 @@ function refuseSilentGrey(spec) {
     if ((o3.disabled || o3.quiet) && !(o3.why && String(o3.why).trim()))
       throw new Error('lozenge: "' + spec.key + '" / "' + String(o3.value) + '" is ' + (o3.disabled ? "disabled" : "quiet") + " with no `why`");
 }
+var EDGE = A;
 function bins(spec) {
   const opts = spec.options || [];
   const by = /* @__PURE__ */ new Map();
@@ -404,9 +405,9 @@ var SCROLLX = /* @__PURE__ */ new Map();
 var HANDOFF = /* @__PURE__ */ new Map();
 var TOUCHED = /* @__PURE__ */ new Set();
 var CH = 9.5;
-var PILLPAD = 34;
-var PILLGAP = 8;
-var PILLROW = 50;
+var CELLPAD = 34;
+var CELLGAP = 8;
+var CELLROW = 50;
 var HEADROW = 48;
 var SAYROW = 30;
 function budget() {
@@ -436,13 +437,13 @@ function clusterHeight(b2, w2, shut) {
   if (shut) return head;
   let rows = 1, x2 = 0;
   for (const o3 of b2.opts) {
-    const pw = Math.max(44, String(o3.label || "").length * CH + PILLPAD) + PILLGAP;
+    const pw = Math.max(44, String(o3.label || "").length * CH + CELLPAD) + CELLGAP;
     if (x2 > 0 && x2 + pw > w2) {
       rows++;
       x2 = pw;
     } else x2 += pw;
   }
-  return head + rows * PILLROW;
+  return head + rows * CELLROW;
 }
 function autoFolds(plan, at) {
   if (plan.length < 2) return /* @__PURE__ */ new Set();
@@ -463,7 +464,7 @@ function autoFolds(plan, at) {
   return shut;
 }
 function perColumn() {
-  return Math.max(3, Math.floor((budget() - HEADROW - SAYROW - 8) / PILLROW));
+  return Math.max(3, Math.floor((budget() - HEADROW - SAYROW - 8) / CELLROW));
 }
 function fitsFlat(plan) {
   const w2 = fieldWidth();
@@ -537,61 +538,54 @@ function lozengeField(spec) {
     host.dataset.v = multi ? chain.join(",") : cur;
   };
   paintV();
-  const lozenge = (o3, tabbable) => {
+  const cell = (o3) => {
     const v2 = String(o3.value);
     const hot = stands(v2);
     const own = o3.why ? String(o3.why).trim() : "";
     const refused = !!off || !!o3.disabled;
     const why = off || own || "";
     const n2 = ordered && multi && hot && chain.length > 1 ? chain.indexOf(v2) + 1 : 0;
-    return b`<button type="button"
-      class=${e3({ "nu-lz": true, "is-hot": hot, "is-quiet": !!o3.quiet })}
+    return b`<nu-cell
+      class=${e3({ "nu-lz": true, "is-quiet": !!o3.quiet })}
+      label=${o3.label}
+      value=${v2}
+      order=${o2(n2 ? String(n2) : void 0)}
+      ?selected=${hot}
+      ?refused=${refused}
+      ?quiet=${!!o3.quiet}
+      why=${o2(why ? why : void 0)}
       data-k=${key + "|" + v2}
       data-v=${v2}
-      tabindex=${tabbable && !refused ? "0" : "-1"}
       aria-pressed=${String(hot)}
       aria-disabled=${o2(refused ? "true" : void 0)}
       data-why=${o2(why ? why : void 0)}
       aria-label=${why ? t3("menu.withWhy", { name: o3.label, why }) : o3.label}
-      ><span class="nu-lzword" data-w=${o3.label}>${o3.label}</span
-      >${n2 ? b`<small class="nu-lzn">${n2}</small>` : A}</button> `;
-  };
-  const stopOf = (b2) => {
-    const live = b2.opts.filter((o3) => !off && !o3.disabled);
-    if (!live.length) return null;
-    const mine = live.find((o3) => focusK === key + "|" + String(o3.value));
-    if (mine) return String(mine.value);
-    const hot = live.find((o3) => stands(String(o3.value)));
-    return String((hot || live[0]).value);
+      ></nu-cell>`;
   };
   const section = (c2) => {
     const b2 = plan[c2.bi];
     const shut = folded.has(c2.bi);
-    const stop = stopOf({ word: c2.word, opts: c2.opts });
     const holds = b2.opts.some((o3) => stands(String(o3.value)));
     const mine = c2.opts.some((o3) => stands(String(o3.value)));
     const held = shut && holds ? b2.opts.filter((o3) => stands(String(o3.value))).map((o3) => o3.label).join(", ") : "";
-    return b`<section
+    const marked = asTable ? mine : shut && holds;
+    return b`<nu-colhead
       class=${e3({
       "nu-lzcluster": true,
       "is-folded": shut,
-      "is-col": asTable,
-      "is-standing": asTable ? mine : shut && holds
+      "is-standing": marked
     })}
+      label=${o2(c2.word ? c2.word : void 0)}
+      count=${o2(c2.word && c2.first ? String(c2.total) : void 0)}
+      held=${o2(held ? held : void 0)}
+      ?open=${!shut}
+      ?current=${marked}
+      ?continued=${!c2.first}
       data-cluster=${c2.word}
       data-bi=${String(c2.bi)}
       data-cont=${o2(c2.first ? void 0 : "true")}
       data-hue=${c2.bi % HUES}
-      >${c2.word ? c2.first ? b`<button type="button" class="nu-lzhead"
-          data-k=${key + "|cluster|" + c2.word}
-          aria-expanded=${String(!shut)}
-          aria-current=${o2((asTable ? mine : shut && holds) ? "true" : void 0)}
-          ><span class="nu-lzheadword">${c2.word}</span
-          ><small class="nu-lzcount">${c2.total}</small
-          >${held ? b`<span class="nu-lzheld">${held}</span>` : A}</button>` : b`<span class="nu-lzhead nu-lzcont" aria-hidden="true"
-          ><span class="nu-lzheadword">${c2.word}</span></span>` : A}<div class="nu-lzwrap" ?hidden=${shut}
-        >${c2.opts.map((o3) => lozenge(o3, stop === String(o3.value)))}</div
-      ></section>`;
+      >${c2.opts.map(cell)}${EDGE}</nu-colhead>`;
   };
   const cols = () => asTable ? columnsOf(plan, folded, per) : plan.map((b2, bi) => ({
     bi,
@@ -600,14 +594,18 @@ function lozengeField(spec) {
     first: true,
     total: b2.opts.length
   }));
-  const draw = () => D(b`${asTable ? b`<div class="nu-lztrack">${cols().map(section)}</div>` : cols().map(section)}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite"
+  const draw = () => {
+    D(b`${asTable ? b`<nu-table label=${label} class="nu-lztable"
+          ><div class="nu-eltrack">${cols().map(section)}${EDGE}</div></nu-table>` : cols().map(section)}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite"
       ?data-said=${!!said}>${said}</p>`, host);
+    roveSoon();
+  };
   let placed = false;
   const showStanding = () => {
     if (placed || !asTable) return;
     placed = true;
     try {
-      const track = host.querySelector(".nu-lztrack");
+      const track = host.querySelector(".nu-eltrack");
       if (!track) return;
       const baton = HANDOFF.get(key);
       if (baton != null) {
@@ -621,7 +619,7 @@ function lozengeField(spec) {
         track.scrollLeft = was;
         return;
       }
-      const col = host.querySelector("section.nu-lzcluster.is-standing");
+      const col = host.querySelector("nu-colhead.is-standing");
       const x2 = col ? Math.max(0, col.offsetLeft - 8) : 0;
       track.scrollLeft = x2;
       SCROLLX.set(key, x2);
@@ -630,7 +628,7 @@ function lozengeField(spec) {
   };
   const readScroll = (baton) => {
     try {
-      const t4 = host.querySelector(".nu-lztrack");
+      const t4 = host.querySelector(".nu-eltrack");
       if (!t4 || !t4.isConnected) return;
       SCROLLX.set(key, t4.scrollLeft);
       if (baton) HANDOFF.set(key, t4.scrollLeft);
@@ -639,7 +637,7 @@ function lozengeField(spec) {
   };
   host.addEventListener("scroll", (e4) => {
     const t4 = e4.target;
-    if (t4 && t4.classList && t4.classList.contains("nu-lztrack"))
+    if (t4 && t4.classList && t4.classList.contains("nu-eltrack"))
       SCROLLX.set(key, t4.scrollLeft);
   }, true);
   const write = (v2) => {
@@ -681,7 +679,7 @@ function lozengeField(spec) {
   };
   host.addEventListener("pointerdown", (e4) => {
     readScroll();
-    const el = e4.target?.closest?.(".nu-lz");
+    const el = e4.target?.closest?.("nu-cell");
     if (!el || !host.contains(el)) return;
     disarm();
     swallow = false;
@@ -710,21 +708,19 @@ function lozengeField(spec) {
     from = null;
     swallow = true;
   });
+  host.addEventListener("nu-fold", (e4) => {
+    const sec = e4.target?.closest?.("nu-colhead");
+    if (!sec || !host.contains(sec)) return;
+    const ci = sec.dataset.bi != null ? +sec.dataset.bi : -1;
+    if (ci < 0) return;
+    TOUCHED.add(key);
+    if (folded.has(ci)) folded.delete(ci);
+    else folded.add(ci);
+    draw();
+  });
   host.addEventListener("click", (e4) => {
     const tgt = e4.target;
-    const head = tgt?.closest?.(".nu-lzhead");
-    if (head && host.contains(head)) {
-      const sec = head.closest("section.nu-lzcluster");
-      const ci = sec && sec.dataset.bi != null ? +sec.dataset.bi : -1;
-      if (ci >= 0) {
-        TOUCHED.add(key);
-        if (folded.has(ci)) folded.delete(ci);
-        else folded.add(ci);
-        draw();
-      }
-      return;
-    }
-    const el = tgt?.closest?.(".nu-lz");
+    const el = tgt?.closest?.("nu-cell");
     if (!el || !host.contains(el)) return;
     if (swallow) {
       swallow = false;
@@ -735,20 +731,61 @@ function lozengeField(spec) {
       return;
     }
     write(String(el.dataset.v || ""));
+  }, true);
+  const walk = () => Array.from(host.querySelectorAll("nu-colhead")).map((sec) => {
+    if (!sec.hasAttribute("open")) return [];
+    return Array.from(sec.querySelectorAll(":scope > nu-cell")).filter((b2) => b2.getAttribute("aria-disabled") !== "true" && !b2.hasAttribute("quiet"));
   });
-  const walk = () => Array.from(host.querySelectorAll("section.nu-lzcluster")).map((sec) => {
-    const w2 = sec.querySelector(".nu-lzwrap");
-    if (!w2 || w2.hidden) return [];
-    return Array.from(w2.querySelectorAll("button.nu-lz")).filter((b2) => !b2.disabled && b2.getAttribute("aria-disabled") !== "true");
-  });
-  const land = (b2) => {
-    if (!b2) return;
-    focusK = b2.dataset.k || null;
+  const btn = (c2) => c2 ? c2.querySelector("button.nu-elcell") : null;
+  let roving = false;
+  const rove = () => {
+    for (const sec of Array.from(host.querySelectorAll("nu-colhead"))) {
+      const b2 = sec.querySelector("button.nu-elcolhead");
+      const w2 = sec.getAttribute("label") || "";
+      if (b2 && w2 && !sec.hasAttribute("continued"))
+        b2.setAttribute("data-k", key + "|cluster|" + w2);
+    }
+    for (const c2 of Array.from(host.querySelectorAll("nu-cell"))) {
+      const b2 = btn(c2);
+      if (b2) b2.setAttribute("tabindex", "-1");
+    }
+  };
+  const roveSoon = () => {
+    if (roving) return;
+    roving = true;
+    const run = () => {
+      roving = false;
+      if (host.isConnected) rove();
+    };
+    try {
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+      else run();
+    } catch (e4) {
+      roving = false;
+    }
+  };
+  const land = (c2) => {
+    const b2 = btn(c2);
+    if (!c2 || !b2) return;
+    focusK = c2.dataset.k || null;
     draw();
+    rove();
     b2.focus();
   };
+  const along = (k2) => asTable ? k2 === "ArrowDown" ? 1 : k2 === "ArrowUp" ? -1 : 0 : k2 === "ArrowRight" ? 1 : k2 === "ArrowLeft" ? -1 : 0;
   host.addEventListener("keydown", (e4) => {
-    const el = e4.target?.closest?.(".nu-lz");
+    const head = e4.target?.closest?.("button.nu-elcolhead");
+    if (!head || !host.contains(head)) return;
+    if (along(e4.key) <= 0) return;
+    const sec = head.closest("nu-colhead");
+    const gi = Array.from(host.querySelectorAll("nu-colhead")).indexOf(sec);
+    const g2 = gi >= 0 ? walk()[gi] : void 0;
+    if (!g2 || !g2.length) return;
+    e4.preventDefault();
+    land(g2[0]);
+  });
+  host.addEventListener("keydown", (e4) => {
+    const el = e4.target?.closest?.("nu-cell");
     if (!el || !host.contains(el)) return;
     const k2 = e4.key;
     if (k2 === "Enter" || k2 === " " || k2 === "Spacebar") {
@@ -759,11 +796,11 @@ function lozengeField(spec) {
     const flat = groups.flat();
     const at = flat.indexOf(el);
     if (at < 0) return;
-    const along = asTable ? k2 === "ArrowDown" ? 1 : k2 === "ArrowUp" ? -1 : 0 : k2 === "ArrowRight" ? 1 : k2 === "ArrowLeft" ? -1 : 0;
+    const step = along(k2);
     const across = asTable ? k2 === "ArrowRight" ? 1 : k2 === "ArrowLeft" ? -1 : 0 : k2 === "ArrowDown" ? 1 : k2 === "ArrowUp" ? -1 : 0;
-    if (along) {
+    if (step) {
       e4.preventDefault();
-      land(flat[Math.min(flat.length - 1, Math.max(0, at + along))]);
+      land(flat[Math.min(flat.length - 1, Math.max(0, at + step))]);
       return;
     }
     if (across) {
@@ -792,7 +829,7 @@ function lozengeField(spec) {
     }
   });
   host.addEventListener("focusin", (e4) => {
-    const el = e4.target?.closest?.(".nu-lz");
+    const el = e4.target?.closest?.("nu-cell");
     if (el && host.contains(el)) focusK = el.dataset.k || null;
   });
   draw();

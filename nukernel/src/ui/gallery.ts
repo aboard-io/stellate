@@ -28,7 +28,7 @@
 // loads the same two bundles, and it costs the app exactly nothing.
 
 import { SPEC, ALL_STATES, PSEUDO_STATES } from "./api.js";
-import type { ElSpec, ElState } from "./api.js";
+import type { DemoKid, ElSpec, ElState } from "./api.js";
 import { t } from "../copy/global.js";
 
 /* ---- THE MEASURING, DONE IN THE BROWSER ------------------------------- */
@@ -267,31 +267,54 @@ function scales(host: HTMLElement): void {
 
 /* ---- THE ELEMENTS ----------------------------------------------------- */
 
+/** THE CHILDREN A CONTAINER DECLARED, BUILT — and built the same way for
+ *  every element that declares any, which is the whole reason the field is on
+ *  `ElSpec` and not in an `if` here. `refused` with no `why` is filled from
+ *  the catalogue, so a refusal sentence on this page still has one owner. */
+function kid(k: DemoKid): HTMLElement {
+  const n = document.createElement(k.tag);
+  for (const [a, v] of Object.entries(k.attrs || {})) n.setAttribute(a, v);
+  if (n.hasAttribute("refused") && !n.hasAttribute("why"))
+    n.setAttribute("why", t("ui.gal.demo.why"));
+  for (const c of k.kids || []) n.appendChild(kid(c));
+  return n;
+}
+
 /** Build one live example, in one state. `hover` and `focus` are drawn with
  *  `data-demo`, which nu.css styles beside the real pseudo-class — see
- *  `./api.ts`. */
+ *  `./api.ts`.
+ *
+ *  A STATE IS THE ATTRIBUTE OF ITS OWN NAME, and that is the mechanism rather
+ *  than a coincidence: `selected` sets `[selected]`, `open` sets `[open]`,
+ *  `current` sets `[current]`, and a state added to `ElState` needs no line
+ *  here. The two exceptions are named and both are real — the pseudo states,
+ *  which no markup can assert, and a control that is ALWAYS standing on a
+ *  value, for which "selected" is which word is lit and not an extra flag. */
 function example(spec: ElSpec, state: ElState): HTMLElement {
   const n = document.createElement(spec.tag);
   for (const [k, v] of Object.entries(spec.demo)) n.setAttribute(k, v);
-  if (state === "selected") {
-    if (spec.demo["options"]) {
-      /* A RAIL AND A SPINNER ARE ALWAYS STANDING ON A VALUE: "selected" for
-         them is not an extra attribute, it is WHICH segment is lit. So the
-         demo moves the value instead, and the state cell shows the lamp
-         travelling rather than a second thing lighting up. */
-      const opts = spec.demo["options"]!.split("|");
-      const last = opts[opts.length - 1] || "";
-      n.setAttribute("value", (last.split(":")[0] || "").replace(/^!/, ""));
-    } else n.setAttribute("selected", "");
+  if (state === "selected" && spec.demo["options"]) {
+    /* A RAIL AND A SPINNER ARE ALWAYS STANDING ON A VALUE: "selected" for
+       them is not an extra attribute, it is WHICH segment is lit. So the
+       demo moves the value instead, and the state cell shows the lamp
+       travelling rather than a second thing lighting up. */
+    const opts = spec.demo["options"]!.split("|");
+    const last = opts[opts.length - 1] || "";
+    n.setAttribute("value", (last.split(":")[0] || "").replace(/^!/, ""));
+  } else if (spec.demoStates && spec.demoStates[state]) {
+    /* A DERIVED STATE IS REACHED, NOT ASSERTED. The spec names the INPUT that
+       causes it — a year, a query — and the element reflects the state once
+       its own filter has run. Forcing `[state]` here as well would draw a
+       lamp the element had not lit. */
+    for (const [k, v] of Object.entries(spec.demoStates[state]!))
+      n.setAttribute(k, v);
+  } else if (state !== "rest" && PSEUDO_STATES.indexOf(state) < 0) {
+    n.setAttribute(state, "");
   }
-  if (state === "open") n.setAttribute("open", "");
-  if (state === "refused") {
-    n.setAttribute("refused", "");
-    n.setAttribute("why", t("ui.gal.demo.why"));
-  }
-  if (state === "busy") n.setAttribute("busy", "");
+  if (state === "refused") n.setAttribute("why", t("ui.gal.demo.why"));
   if (PSEUDO_STATES.indexOf(state) >= 0) n.setAttribute("data-demo", state);
   if (spec.tag === "nu-lamp" && state === "selected") n.setAttribute("on", "");
+  for (const k of spec.demoChildren || []) n.appendChild(kid(k));
   n.setAttribute("data-state", state);
   /* A REFUSED CONTROL IS DRAWN REFUSED **AND SAYING WHY**. DESIGN.md
      component 14's whole point is that the reason reaches a thumb, and a

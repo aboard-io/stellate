@@ -7420,16 +7420,24 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   padding-inline: var(--gl) var(--gr);
   background: var(--panel); color: var(--ink);
   border-block-end: var(--bw) solid var(--ink); }
-/* THE RECORD'S NAME IS AT THE START AND IS AS WIDE AS ITS OWN WORD — which is
+/* THE RECORD'S NAME IS AT THE END AND IS AS WIDE AS ITS OWN WORD — which is
    a correction to the arrangement it had in the bar, made on the rendered page
    at 1280. There it was `flex: 1 1 auto` (the bar's own rule, moved with the
    node) and drew a 1,200px plate with "Kingston 1969" floating in the middle
-   of it: docs/NAV.md says *"THE RECORD'S NAME GOES TOP LEFT"*, and a name
-   centred in a plate the width of the screen is not at the left of anything.
-   So the plate takes its CONTENT's width (`0 1 auto`) and an auto margin
-   holds the ≡ at the far end; `min-inline-size: 0` on the face is what lets a
-   long genre name ellipsise rather than push the ≡ off a phone, and the 44px
-   floor below stops that shrink going under a thumb. */
+   of it, and a name centred in a plate the width of the screen is not at
+   either end of anything. So the plate takes its CONTENT's width (`0 1 auto`);
+   `min-inline-size: 0` on the face is what lets a long genre name ellipsise
+   rather than push the ≡ off a phone, and the 44px floor below stops that
+   shrink going under a thumb. */
+/* (IT WAS AT THE *START* UNTIL 2026-09-07, TABLE.md §20. Paul: *"Sorry
+   hamburger should be on left."* The ≡ took the start of the band and the
+   name took the other end, which is the trade that sentence buys; the swap is
+   in the MARKUP, at `stripEl.append` in ui/eight.js, and nothing in this block
+   places either node — the tape between them is `1 1 auto` and does all the
+   placing there is. docs/NAV.md still says *"THE RECORD'S NAME GOES TOP
+   LEFT"*: that line is now wrong and is the doc's to correct, not this file's.
+   The name keeps `text-align: start` INSIDE its own plate, because a plate at
+   the right end of a band is still a left-to-right label. */
 /* (`margin-inline-end: auto` CAME OFF THIS RULE ON 2026-09-06, TABLE.md §18.
    It held the ≡ at the far end across a dead gap — 191px at 390, 121px at 320
    — and the gap is the TAPE's now, which is a `1 1 auto` child and does the
@@ -7474,9 +7482,16 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    Paul: *"You could put the playback bar to the right of the genre on top top
    if you want."* The tape is a READOUT and not a control, so it belongs with
    identity and navigation rather than with the transport: the strip is
-   identity · status · navigation, the bar is controls and only controls. It
+   identity, status and navigation; the bar is controls and only controls. It
    is the same node with the same two lines — the words over a 4px track — and
-   it takes the give the auto margin used to hold empty. */
+   it takes the give the auto margin used to hold empty.
+   AND IT IS THE ONE CHILD THAT PLACES THE OTHER TWO (2026-09-07, §20). The
+   band has no `justify-content`, no `order` and no template: it is three
+   children in markup order and one of them is flexible, so whichever two
+   nodes sit either side of the tape are AT THE TWO ENDS, at every width, for
+   free. That is why the ≡ moving to the left cost this block nothing but the
+   direction of its comments — the order it draws is the order ui/eight.js
+   appends, and there is nowhere else that fact is written down. */
 .nu-topstrip > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
   display: flex; flex-direction: column; justify-content: center;
   gap: var(--s1); }
@@ -7570,10 +7585,25 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    and at the same edge. A menu that opened at the far corner from its own
    button is the one arrangement a thumb cannot follow. */
 /* ...AND IT HANGS FROM THE TOP SINCE 2026-09-06 (docs/NAV.md). The ≡ is the
-   last button of `.nu-topstrip` now, so the plate stands directly UNDER the
-   mark that opens it and at the same edge — the same sentence as before,
-   turned over. A menu that opened at the far corner from its own button is
-   the one arrangement a thumb cannot follow. */
+   FIRST button of `.nu-topstrip` since 2026-09-07, so the plate stands
+   directly UNDER the mark that opens it and at the same edge — the same
+   sentence as before, turned over. A menu that opened at the far corner from
+   its own button is the one arrangement a thumb cannot follow. */
+/* ...AND THAT EDGE IS THE START SINCE 2026-09-07 (TABLE.md §20). Paul:
+   *"Sorry hamburger should be on left."* ONE DECLARATION IS THE WHOLE OF IT —
+   `inset-inline-end` became `inset-inline-start` — because "which corner the
+   plate hangs at" was never spelt anywhere else: the ≡ is placed by the
+   markup (ui/eight.js `stripEl.append`) and the plate by this line, and the
+   two agree because both now say START. The inset is the same `--s2` the
+   other edge had, so the plate's corner stands the same 5.6px inside the
+   glass it stood inside on the right, and the ≡ — which sits at `--gl`, and
+   `--gl` is `0px` — overhangs it by exactly that hair at its own TOP-LEFT
+   corner. THAT IS THE ASK'S SECOND HALF BUILT: the opener and the × are at
+   the plate's own corner rather than floating at the far end of the band.
+   AND IT MAKES `.nu-log` CONSISTENT AT LAST. The log panel has been anchored
+   to the START since it was written while the row that opens it hung off a
+   plate at the END — a door on the right that opened a drawer on the left.
+   Both are at the start now and nothing had to move to make that true. */
 /* ...AND IT OPENS AT THE TOP OF THE SCREEN SINCE 2026-09-07 (TABLE.md §20).
    Paul: *"The hamburger menu should open higher and the menu icon should be a
    dismiss button."* MEASURED before: the plate's top edge was 47.2px at 390
@@ -7585,15 +7615,15 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    controls a hand needs, and one of those is the ≡ itself.
    THE ≡ STAYS ON THE GLASS, ABOVE THE PLATE, AND IT IS THE DISMISS. It is
    lifted out of the strip's stacking context (`#burger`, below) so it stands
-   over the plate's own top-right corner and reads as the plate's close, which
+   over the plate's own top-LEFT corner and reads as the plate's close, which
    is Paul's second sentence built rather than drawn. `.nu-menuname` reserves a
-   thumb's width at its end so the app's name never runs under it.
+   thumb's width at its START so the app's name never runs under it.
    THE TAPE AND THE RECORD'S NAME GO BEHIND. That is the trade, said out loud:
    with the plate open you cannot read the position. A plate is a thing you are
    inside of for one tap. */
 #nu-menu{ position: fixed; z-index: 59;
   inset-block-start: calc(env(safe-area-inset-top, 0px) + var(--s1));
-  inset-inline-end: calc(var(--s2) + env(safe-area-inset-right, 0px));
+  inset-inline-start: calc(var(--s2) + env(safe-area-inset-left, 0px));
   display: flex; flex-direction: column; align-items: stretch;
   inline-size: min(30ch, calc(100vw - 2 * var(--s2)));
   /* MENUS NEVER SCROLL INSIDE THEMSELVES, and the ceiling is the SCREEN's
@@ -7643,8 +7673,128 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #nu-menu button[aria-current]{ background: var(--hand);
   color: var(--on-fill); border-color: var(--hand); }
 #nu-menu button[aria-current]:hover{ background: var(--lamp-hot); }
-#nu-menu .nu-ic{ display: flex; flex-direction: row; align-items: center;
-  gap: var(--s2); text-align: start; }
+/* ---- EVERY MARK IN THIS PLATE OCCUPIES THE SAME ADVANCE (2026-09-07) --
+   Paul, TABLE.md §20: *"Icons in hamburger should all have same width not
+   float left it looks uneven."*
+
+   THIS IS A NEW DECISION AND NOT AN EXISTING LAW APPLIED. Nothing in this
+   tree required equal-width marks before today. THE FACT THAT FORCES IT,
+   measured on the real app under iPhone 14 emulation before the change was
+   made (scratchpad/design/system-2/measure-before.json): `.nu-g` is
+   `font-size: 1.2rem; font-family: var(--sym)` with NO WIDTH, and `--sym` is
+   a PROPORTIONAL stack — so across the plate's eighteen rows the marks
+   advanced anywhere over a 21.3px range and the eighteen words started at
+   ELEVEN different x. The eye reads a list off the start edge of its words;
+   an edge that moves eleven times is noise the reader subtracts on every row,
+   which is what Paul saw before anyone measured it.
+   THE FIX IS NOT TO CHOOSE NARROWER MARKS. That would be a promise about a
+   font nobody controls, in a stack that falls back differently on every
+   platform, for a set of marks that grows every round. The fix is to stop
+   asking a mark how wide it is: give it a COLUMN, centre it there, and start
+   every word at the column's end. A mark is then a mark and not a
+   measurement, and a nineteenth row can carry any glyph at all without moving
+   the eighteen above it.
+   THE SHAPE IS THE RECORD'S NAME PLATE'S, COPIED ON PURPOSE (this file,
+   ~7460: `grid-template-columns: 1.4em minmax(0, 1fr)` with the mark on
+   `grid-column: 1; justify-self: center`). That rule was written to stop a
+   NAME being clipped and the equal advance was a side effect nobody wrote
+   down. It is written down now, and `<nu-menu-row>` in the design system —
+   `.nu-elmenurow`, ~9640 — declares the same three tracks with the same
+   `1.4em`, so the plate and the element draw one row and not two. `1.4em`
+   and not `rem` because the column then scales with the ROW's type, which is
+   the same reasoning the spacing ramp is under.
+   THE THIRD TRACK IS THE COUNT'S, and it is what a grid costs that the flex
+   row did not: `paintIcon` builds one face for every mark on this page in one
+   order — glyph, number, word — so the number is the SECOND child and the
+   word the third, and auto-placement would have put the log's count where the
+   word goes. All three are placed by hand below. An empty third track is
+   `max-content` of nothing, i.e. zero, so a row with no count spends only the
+   gap; the words still start on the one line, which is the whole ask.
+   (`.nu-sub2` — `paintIcon`'s optional second line — is NOT placed here,
+   because no row of this plate has one and a rule with no user is the thing
+   this file spends every round deleting. If one ever arrives it lands in row
+   2 and test/shell.js A6p2 goes red first: *"a Unicode mark and a title-case
+   name and NOTHING ELSE"*.) */
+/* ---- AND THE GAP IS `--s4` BECAUSE ONE MARK IS A COMPOUND ------------
+   MEASURED on the rendered plate at 390 the hour the column was written, mark
+   ink against a 19.6px track: `§` 9.2, `♩` 8.7, `⌗` 10.4, `♬` 16.8, `▣` 17.8 —
+   every one of the seventeen inside the column — and `▶∞` THIRTY. The play
+   mode's face is a transport triangle plus its modifier (`▶∞` loop, `▶|` once,
+   `▶⚄` album, fields.js `PLAYMODES`), which is TWO glyphs in a slot the rest
+   of the plate spends one on. Centred in a one-mark column it hangs 5.2px
+   past each end (see `.nu-g` below for why it is each END and not only the
+   word's), and against the `--s2` gap this rule first carried that came out at
+   MINUS 5.5px of clearance: `▶∞Loop`, touching, in the only row it could
+   happen to. The other seventeen had 5.8 to 10.4px.
+   SO THE GAP CLEARS THE WORST OVERFLOW AND THE COLUMN DOES NOT GROW. `--s4`
+   is 11.2px here, which leaves the compound mark 6.0px of daylight — MEASURED
+   after, beside 12.1px for the next-widest mark (`▣`) and 16.4px for the
+   narrowest (`§`) — where `--s2` leaves it minus 0.3 and `--s3` two and a
+   half. Nothing got tighter than it was and one thing stopped colliding.
+   The alternative was a
+   2.2em column, and it was refused: it would have paid for one outlier by
+   putting 7.5px of dead air beside all seventeen single marks and by walking
+   away from the `1.4em` `<nu-menu-row>` declares. A GAP IS THE RIGHT PLACE TO
+   ABSORB AN OUTLIER because it moves every word by the same amount, and the
+   words starting on ONE x is the whole ask.
+   THE REAL FIX IS UPSTREAM AND IS NOT THIS FILE'S: the plate's own law is
+   *"one format for each menu entry: Unicode icon (not emoji) plus title case
+   name"* — ICON, singular — and `▶∞` is two. When `PLAYMODES` gives the mode
+   one mark, this gap can go back to `--s2` and this paragraph can go. */
+#nu-menu .nu-ic{ display: grid;
+  grid-template-columns: 1.4em minmax(0, 1fr) max-content;
+  align-items: center; column-gap: var(--s4);
+  /* AND IT FILLS THE ROW, which is what puts the count at the far END. It
+     was reaching that end with `margin-inline-start: auto` on the number — a
+     FLEX idiom, deleted below — and an auto margin only ever worked because
+     the box it was in happened to be as wide as the button. It is said now. */
+  inline-size: 100%; text-align: start; }
+/* AND THE MARK'S OWN BOX IS THE TRACK, which is `justify-self: center` said
+   so that a tape measure can read it. The two draw the SAME PIXELS — a glyph
+   centred in 1.4em either way — but `justify-self` leaves the span sized to
+   its own ink, so `test/_system2-measure.cjs` (which measures `.nu-g`'s rect,
+   because that is what "icons should all have same width" says) reported the
+   21.3px spread of the FONT after the words had already been brought onto one
+   line. Paul's sentence is about the icons and not only about the words, so
+   the box is made to be what the eye is being told it is. `.nu-elmark` in THE
+   ELEMENTS still uses `justify-self` and should take these two declarations
+   the next time that block is open; until then the difference is a
+   measurement's and not a rendering's, and it is written here so nobody
+   "fixes" this back. */
+/* ---- AND ALL THREE NAME THEIR ROW, WHICH IS NOT BELT AND BRACES -------
+   MEASURED, by test/gutter.js T10 going red the hour this grid was written:
+   `["logger","log",213.1,274.8,23.2,44]` — the log's word hanging below the
+   bottom of its own button. THE CAUSE IS THE FACE'S BUILD ORDER. `paintIcon`
+   appends glyph, then NUMBER, then word; the number is placed in column 3 and
+   the word in column 2, so grid's own (sparse) auto-placement put the glyph in
+   row 1, the number in row 1 column 3 — and then found its cursor PAST column
+   2, which the algorithm may never walk backwards from, and dropped the word
+   into ROW 2. One row of the plate was two lines tall and the only row it
+   happened to was the only row with a count.
+   The old flex row could not have this bug: `order: 1` on the number was
+   enough there because a flex line has no second line to fall to. A grid does,
+   so a column placement that disagrees with the DOM order must say its row as
+   well. `<nu-menu-row>` in THE ELEMENTS needs none of this — its template
+   renders mark, word, count in that order — and the difference between the
+   two is exactly the difference between styling markup you own and styling
+   markup a shared painter builds. */
+/* AND IT CENTRES BY FLEX AND NOT BY `text-align`, WHICH IS THE DIFFERENCE
+   BETWEEN OVERFLOWING ONE WAY AND OVERFLOWING BOTH. MEASURED at 390 with the
+   compound mark: under `text-align: center` `▶∞`'s ink ran 20.9 → 50.9 in a
+   box of 20.9 → 40.5, i.e. its left edge sat exactly ON the box's left edge
+   and every one of the 10.4 overflowing pixels went toward the word. That is
+   what `text-align` does when a line is wider than its box — it clamps at the
+   start edge and spills to the end — so the gap would have had to be wider
+   than the WHOLE overflow to clear it. A flex centre is UNSAFE alignment: the
+   item is centred whatever its size and spills equally at both ends, so the
+   same mark now hangs 5.2px each way, the leftward half into the button's own
+   7.7px of padding where there is nothing to hit, and the gap has half as
+   much to cover. The box itself is still exactly the track (`inline-size:
+   100%`), so every mark still measures one width. */
+#nu-menu .nu-ic > .nu-g{ grid-row: 1; grid-column: 1;
+  inline-size: 100%;
+  display: flex; align-items: center; justify-content: center; }
+#nu-menu .nu-ic > .nu-vh{ grid-row: 1; grid-column: 2; }
 /* THE WORDS ARE VISIBLE HERE, which is the one thing the gutter could never
    afford. `#nu-tray .nu-vh` had to un-hide the word in a 87px column and
    ellipsise it; a 30ch plate holds "Screensaver" whole at body size, so this
@@ -7666,9 +7816,16 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 /* THE COUNT SITS AT THE FAR END OF ITS OWN ROW. `paintIcon` builds the face in
    one order for every mark on this page — glyph, number, word — which reads as
    "♪ 2 cantor" in a 44px column and as "¶ 3 log" in a 30ch plate, with the
-   badge between the picture and the name. `order` moves it to the end without
-   giving this file a second copy of the face's markup. */
-#nu-menu .nu-n{ order: 1; margin-inline-start: auto;
+   badge between the picture and the name. This puts it at the end without
+   giving this file a second copy of the face's markup.
+   IT IS A GRID PLACEMENT SINCE 2026-09-07 (§20) AND WAS `order: 1;
+   margin-inline-start: auto`. Both were FLEX idioms and the row is a grid now
+   (see `#nu-menu .nu-ic`, above): `order` in a grid only shuffles
+   AUTO-placement, which this row no longer uses, and an auto inline margin
+   inside a `max-content` track has nothing to push against. One declaration
+   says the same thing in the row's own terms, and it says WHICH end rather
+   than "as far as it will go". */
+#nu-menu .nu-n{ grid-row: 1; grid-column: 3;
   font-variant-numeric: tabular-nums; }
 /* ---- THE PLATE'S THREE BLOCKS (2026-09-06, docs/NAV.md) --------------
    The app's name over the views, and `Set seed` over the die and its number.
@@ -7676,11 +7833,20 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    no ground, and the two controls under the second one are the ones that were
    in the bar this morning. */
 .nu-menuname{ display: block;
-  /* AND ITS END CLEARS THE ≡ (2026-09-07, §20): the plate opens under the
+  /* AND ITS START CLEARS THE ≡ (2026-09-07, §20): the plate opens under the
      lifted hamburger now, and a name that ran beneath it would be a word with
      a button on top of it. `--tap` exactly, which is the width of the thing
-     it is clearing. */
-  padding: var(--s2) calc(var(--s3) + var(--tap)) var(--s3) var(--s3);
+     it is clearing.
+     THE RESERVATION MOVED WITH THE ≡ (same day, same section). It was on the
+     END while the plate hung at the end; the plate hangs at the START now and
+     a reservation left where it was would have been 44px of nothing on the
+     right and the app's name under the × on the left. AND IT IS SPELT
+     LOGICALLY — the four-value `padding` shorthand it replaces was PHYSICAL
+     (`top right bottom left`) and would have reserved the wrong side outright
+     in a right-to-left document, while every inset around it is already
+     `inline-start`/`inline-end`. */
+  padding-block: var(--s2) var(--s3);
+  padding-inline: calc(var(--s3) + var(--tap)) var(--s3);
   font: var(--fw-display) var(--t3)/1.1 var(--sans, inherit);
   text-transform: uppercase; letter-spacing: .08em; }
 .nu-menusub{ display: block; padding: 0 var(--s3) var(--s1);
@@ -8657,140 +8823,129 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 
 /* ---- THE FIELD, AND ITS CLUSTERS -------------------------------------- */
 .nu-lzfield{ display: block; inline-size: 100%; min-inline-size: 0; }
-.nu-lzcluster{ display: block; margin-block-start: var(--s3); }
-.nu-lzcluster:first-child{ margin-block-start: 0; }
-/* A HEADING IS A WORD AND A COUNT, in the cluster's own ink, over a hairline
-   of it — the same shape `.nu-grouphead` takes for a sheet's groups, one tier
-   in and one hue over. It is a BUTTON (it folds) and so it is 44px, which is
-   the one height on this page that is never spent. */
-/* THE WORD SITS ON ITS OWN RULE. `align-items: baseline` in a 44px box puts
-   both children at the TOP of it and left the hairline floating 25px below the
-   heading — which is what Paul read as *"a hairline rule above each cluster"*,
-   a rule belonging to nothing. `end` spends the same 44px of thumb and draws
-   the heading and its rule as one mark. */
-.nu-lzhead{ display: flex; align-items: end; gap: var(--s2);
-  inline-size: 100%; min-block-size: var(--tap); padding: 0 0 var(--s1);
-  /* THE RULE IS ABOVE THE PILLS AND NOT THROUGH THEM. Measured on the phone,
-     2026-09-05: the first pill's top stood 5px ABOVE the heading's own border
-     (the lozenge's `margin-block-start: -5px`), so the cluster's hairline was
-     drawn across the first row of words. The margin is gone; this is the air
-     DESIGN.md §1 spends between a question and what answers it. */
-  margin-block-end: var(--s2);
-  background: transparent; border: 0;
-  border-block-end: var(--bw) solid var(--lz, var(--rule));
-  border-radius: var(--r0); box-shadow: none;
-  color: var(--lz, var(--ink)); text-align: start; cursor: pointer; }
-.nu-lzhead:hover{ background: transparent; }
-.nu-lzheadword{ font: var(--fw-block) var(--t1)/1.2 var(--sans, inherit);
-  text-transform: uppercase; letter-spacing: .08em; }
-.nu-lzcount{ font: var(--num-fw) var(--t0)/1.2 var(--mono, monospace);
-  opacity: .7; font-variant-numeric: tabular-nums; }
-/* A FOLD IS REAL, AND THE `[hidden]` HAS TO BE SAID (src/lozenge/field.ts's
-   own note): a bare `.nu-lzwrap{ display: flex }` is a UA-rule-beating
-   `display` and would un-fold every fold on the page — the same trap
-   `.nu-wchip[hidden]` two thousand lines up was written for. */
-/* AND THE FIELD'S SPACING IS A GAP, WHICH IS THE ONE KIND THAT CANNOT
-   OVERLAP (2026-09-05). The pills used to carry `margin: -5px … -5px 0` and
-   the rows crossed each other's outlines by 10px on a phone; a `gap` is the
-   same air, said on the container, and it is never negative. */
-.nu-lzwrap:not([hidden]){ display: flex; flex-wrap: wrap; gap: var(--s2); }
-.nu-lzcluster.is-folded > .nu-lzhead{ opacity: .75; }
-/* ...AND THE ONE FOLD THAT HOLDS THE ANSWER SAYS SO (2026-09-06, TABLE.md
-   §15). A field too tall for the phone opens on the cluster its standing word
-   is in, and when even that will not fit it opens on none — so the heading
-   that holds the record's own answer is drawn in `--hand` (DESIGN.md §1:
-   "hand = you set it") at full weight, and the word itself is on the field's
-   head one row above. `aria-current` is the same fact for a screen reader. */
-.nu-lzcluster.is-standing > .nu-lzhead{ opacity: 1;
-  color: var(--hand); border-block-end-color: var(--hand); }
-.nu-lzcluster.is-standing > .nu-lzhead .nu-lzheadword{ font-weight: var(--fw-display); }
-/* the word the record is standing on, read off a folded cluster's own heading:
-   a VALUE and not an option, so it is not a pill and carries no address. */
-.nu-lzheld{ margin-inline-start: auto; max-inline-size: 60%;
-  font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
-  color: var(--hand); text-transform: none; letter-spacing: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ---- AND THE CLUSTER IS `<nu-colhead>` NOW (2026-09-07) ---------------
+   Paul: *"Make the table system with lozenges just list the items as cells.
+   The lozenges are getting in the way. Add the tables and cells to the design
+   system."* The tables and cells are in the system — `<nu-table>`,
+   `<nu-colhead>`, `<nu-rowhead>`, `<nu-cell>`, drawn at THE ELEMENTS at the
+   foot of this file — and `src/lozenge/field.ts` renders them where it used to
+   render `.nu-lztrack` / `.nu-lzhead` / `.nu-lz`.
 
-/* ---- ONE LOZENGE: THE PILL IS THE THUMB, AND NOTHING OVERLAPS --------
-   WHAT STOOD HERE, AND WHAT PAUL PHOTOGRAPHED. DESIGN.md §2/16 says *"~28px
-   tall visually with a 44px hit area through its margins"* and this block drew
-   it as `padding: 8px` with `margin-block: -5px` — "the visible pill is the
-   button minus 8px of padding". IT IS NOT: the border is on the BUTTON, so the
-   drawn pill was the whole 44px and the negative margin pulled the row pitch
-   to 34px, which is 10px of every row's outline crossing the row above it.
-   MEASURED under iPhone emulation at 390 (scratchpad/design/loz-phone), the
-   mode picker before this edit: 42 pills, 35 intersecting pairs, 10px of
-   overlap on each, the cluster's own hairline 5px INSIDE the first row.
-   *"The lozenges all overlap"* — Paul, 2026-09-05, with the screenshot.
+   SO EVERY RULE THAT DREW THE PILL IS DELETED FROM THIS FILE rather than left
+   standing with no user (docs/DESIGN-SYSTEM.md §5). Gone, by selector:
+   `.nu-lz` and its hover / hot / refused / quiet / is-off states, `.nu-lzword`
+   and its `::after` bold-width reserve, `.nu-lzn`, `.nu-lzhead` and its hover,
+   `.nu-lzheadword`, `.nu-lzcount`, `.nu-lzheld`, `.nu-lzcont`, `.nu-lzwrap`,
+   `.nu-lztrack`, `.nu-lzcluster` and its `is-col` / `is-folded` / `is-standing`
+   drawings. WHAT STAYS is the field itself (`.nu-lzfield`), its ONE say line
+   (`.nu-lzsay`), the whole-field refusal line, and the eight cluster hues —
+   and what the class names on the elements are FOR now is written on the two
+   of them that keep one: `nu-cell` wears `nu-lz` and `nu-colhead` wears
+   `nu-lzcluster` because `test/selects.js` asserts through those two strings
+   and may not be edited. They are ADDRESSES on the tags, not looks; no rule in
+   this file draws either one.
 
-   SO THE 44px IS A MINIMUM AND A PADDING AND NEVER AN OVERLAP. The pill's
-   height is its CONTENT's (`min-block-size` floors it at `--tap`, which is the
-   one number a restyle may not spend), the row pitch is that height plus
-   `.nu-lzwrap`'s gap, and a word wraps to a second line only when it cannot
-   fit — `flex: 0 0 auto` so a tight line moves a pill to the next row instead
-   of squeezing its word onto two, and `max-inline-size: 100%` so the one word
-   wider than the field wraps rather than scrolling the page sideways.
-   WHAT IT COSTS: the mode picker's 42 words are 10 rows at 390 instead of 8.
-   A cluster folds (law 1) and that is what folding is for; a field a thumb
-   cannot hit the right word on is not shorter, it is wrong. */
-.nu-lz{ display: inline-flex; align-items: center; justify-content: center;
-  flex: 0 0 auto; max-inline-size: 100%; gap: var(--s1);
-  min-block-size: var(--tap);
-  padding: var(--s2) .7ch; margin: 0;
-  background: transparent; box-shadow: none;
-  border: var(--bw) solid var(--lz, var(--rule));
-  border-radius: var(--r-pill);
-  color: var(--lz, var(--ink));
-  font: var(--fw-body) var(--t2)/1.2 var(--sans, inherit);
-  cursor: pointer; touch-action: manipulation; }
-/* THE WORD RESERVES ITS OWN BOLD WIDTH, IN EVERY STATE. A hot lozenge is
-   filled AND `--fw-label`, and bold is wider — so pressing a word grew its
-   pill under the thumb that pressed it and shoved every pill after it onto a
-   new line (Paul, 2026-09-05: *"it shouldn't move at all"*). The same word,
-   bold, in a zero-height clipped line, is what the box is measured against; it
-   is `attr(data-w)` and not `attr(aria-label)` because the label carries the
-   refusal's sentence too. */
-.nu-lzword{ display: block; }
-.nu-lzword::after{ content: attr(data-w); display: block;
-  block-size: 0; overflow: hidden; visibility: hidden; pointer-events: none;
-  font-weight: var(--fw-label); }
-.nu-lz:hover{ background: var(--panel); }
-/* HOT IS FILLED, and that is the state DESIGN.md §2 draws: the cluster's own
-   ink, white on it, and the label weight — hue for the kind, weight for the
-   state, said in one control. */
-.nu-lz.is-hot, .nu-lz[aria-pressed="true"]{
-  background: var(--lz, var(--hand)); border-color: var(--lz, var(--hand));
-  color: var(--on-fill); }
-/* ...AND THE WEIGHT IS ON THE WORD, NOT ON THE BUTTON. The pill's side padding
-   is `.7ch` (DESIGN.md §1: *"a control is a hair wider than its word"*) and a
-   `ch` is the width of the "0" IN THE CURRENT WEIGHT — so bolding the button
-   widened its padding as well as its word, and the pill still grew 1.1px under
-   the thumb that pressed it after `.nu-lzword::after` had reserved the text.
-   Bolding the WORD leaves the button at `--fw-body` and the padding still. */
-.nu-lz.is-hot > .nu-lzword, .nu-lz[aria-pressed="true"] > .nu-lzword{
-  font-weight: var(--fw-label); }
-.nu-lz.is-hot:hover, .nu-lz[aria-pressed="true"]:hover{
-  background: var(--lz, var(--hand)); }
-/* A CHAIN PRINTS ITS ORDER, because "transpose then invert" is not "invert
-   then transpose" and a set of pressed pills cannot say which came first. */
-.nu-lzn{ font: var(--num-fw) var(--t0)/1 var(--mono, monospace);
-  font-variant-numeric: tabular-nums;
-  min-inline-size: 1.4em; text-align: center;
-  padding: 1px .3ch; border-radius: var(--r-pill);
-  background: var(--on-fill-quiet); }
-/* REFUSED: DASHED, DIM, AND ITS WORD ONLY. `.nu-lzwhy` stood here — a
-   `flex: 0 0 100%` second line printing the reason inside the button, which is
-   `.nu-wchip > .nu-why`'s shape one widget along. Paul, 2026-09-05, with the
-   phone in his hand: *"you added sentences of text to some of them"*. A chip
-   strip is a few words on one line and can afford a second; a field of
-   forty-two is a SHAPE, and "ukrainian dorian" drawn 54px tall holding "the
-   record is straight, and modal harmony has no changes" is not a pill, it is a
-   paragraph with a border. The sentence has one place — `.nu-lzsay`, below,
-   on a long press or a tap — and the pill carries a word at every width. */
-.nu-lz[disabled], .nu-lz[aria-disabled="true"]{
-  background: transparent; border-style: dashed;
-  color: var(--dim); opacity: .7; cursor: not-allowed; box-shadow: none; }
-.nu-lz.is-quiet{ opacity: .8; }
+   ---- WHAT THE FIELD ADDS TO THE ELEMENTS, AND IT IS FOUR RULES ---------
+   Everything below is ARRANGEMENT — which axis a column runs on, whose say
+   line speaks, where the hue lands. The cell's own look (square at `--r2`, the
+   44px floor, filled in `--lamp` when it stands, dashed when refused, quiet
+   when inert) is the element's, once, at THE ELEMENTS. */
+
+/* 1 · THE FIELD HAS ONE SAY LINE AND IT IS `.nu-lzsay`. `<nu-table>` and
+   `<nu-cell>` each render a `.nu-elsay` of their own so that a table standing
+   alone can still refuse out loud; inside a field they would be a second and a
+   hundred-and-fiftieth copy of one sentence, and an empty inline box under
+   every cell measured 11px of row pitch — 149 cells, 1,639px of reserved room
+   for a sentence that has a place already. */
+.nu-lzfield nu-table > .nu-elsay,
+.nu-lzfield nu-cell > .nu-elsay{ display: none; }
+
+/* 1b · AND AN UNHEADED COLUMN DRAWS NO HEADING. The leftovers — a word a
+   caller's cluster list forgot, the absent detent that belongs to no family —
+   are a real column with real cells and NO word, because this component
+   prints no prose of its own (src/lozenge/api.ts). `<nu-colhead>` always
+   renders its head so that a column standing alone can be named; a head with
+   no word is a 44px empty box with a rule under it, which is a heading
+   belonging to nothing — the exact thing Paul read off the phone in September
+   and called *"a hairline rule above each cluster"*. The column keeps its
+   fold-free open state either way (field.ts `shy`), so nothing is hidden. */
+.nu-lzfield nu-colhead:not([label]) > .nu-elcolhead{ display: none; }
+
+/* 2 · THE HUE SURVIVED, AND IT MOVED TO THE HEADING. ARGUED, BECAUSE IT IS
+   THE ONE THING THIS PORT COULD HAVE THROWN AWAY BY ACCIDENT.
+   The eight were the LOZENGE's idea: hue means the kind, weight means the
+   state, and a cluster's ink was on the outline of its cold pills AND was the
+   FILL of its hot one. A table of cells cannot keep the second half. §1 says
+   there is ONE selection treatment on this page — a thing that is chosen is
+   LIT, in `--lamp` — and eight different fills for "this is the answer" is the
+   *"selected boxes are oddly selected"* bug wearing a palette. So the fill is
+   the lamp's, for every cell in every family, and the hue keeps the half it is
+   good at: telling one family from the next while a thumb pushes nineteen
+   columns sideways past the edge of the screen. It is the heading's word and
+   the heading's rule, which is where a reader is looking when they ask which
+   family this is, and it is the only saturated colour left in the field.
+   It stands down under `[current]`: the column holding the record's own answer
+   is drawn in the lamp by the element's own rule, and a hue that outranked it
+   would hide the answer to "where am I" behind the answer to "what kind". */
+/* THE FIELD SETS THE HUE; THE ELEMENT DRAWS IT. This rule used to set both
+   `color` and `border-block-end-color` three selectors deep, which put the
+   family hue out of reach of any skin rule targeting the tag — §1a's law
+   failing quietly rather than loudly. `.nu-elcolhead` reads `var(--lz, …)`
+   itself now, so all that is left here is to stand the hue DOWN on the column
+   holding the standing answer: `[current]` is the lamp's, and a family colour
+   that outranked it would hide the answer to "where am I" behind the answer to
+   "what kind".
+
+   ===== AND IT OVERRIDES THE PAINT, NOT THE VARIABLE ====================
+   This read `nu-colhead[current]{ --lz: initial }` for about an hour and
+   `test/table.browser.js` T12g caught it: *"13 clusters, 12 headings, 9 of 8
+   hues spent."* The census counts DISTINCT COMPUTED `--lz` VALUES across the
+   clusters, so unsetting the variable on one of them does not remove a hue —
+   it invents a ninth. The eight are a closed set (a ninth cluster reuses the
+   first rather than inventing a colour, tokens.css says so on their own line),
+   and a gate that counts them is right to fail an empty string.
+   So the hue stays SET on every column, and what changes is what is drawn
+   with it. A variable is what a thing IS; a declaration is what it LOOKS
+   LIKE — and "this column holds the answer" is a look. */
+.nu-lzfield nu-colhead[current] > .nu-elcolhead{
+  color: var(--lamp); border-block-end-color: var(--lamp); }
+
+/* 3 · THE WRAPPED SHAPE IS THE SAME COLUMN WITH ITS AXIS TURNED. A vocabulary
+   that fits (TABLE.md §15 state A: the feel, the three-word sets) is not worth
+   a sideways track, and a column of `18ch` lines would make a three-word field
+   as tall as a nineteen-family one. So in the wrapped shape the column runs
+   ACROSS and its cells are as wide as their words — still square, still
+   starting at the same edge, still 44px of thumb, and never a pill. */
+.nu-lzfield[data-table="false"] nu-colhead{
+  flex-direction: row; flex-wrap: wrap; align-items: stretch;
+  inline-size: 100%; max-inline-size: none; gap: var(--s2);
+  margin-block-start: var(--s3); }
+.nu-lzfield[data-table="false"] nu-colhead:first-child{ margin-block-start: 0; }
+.nu-lzfield[data-table="false"] nu-cell{ inline-size: auto; min-inline-size: 0; }
+
+/* ---- ONE OPTION IS `<nu-cell>`, AND THE PILL IS GONE -----------------
+   Paul, 2026-09-07: *"The lozenges are getting in the way."*
+
+   WHAT WAS DELETED HERE, AND WHY EACH RULE HAD TO GO RATHER THAN BE RETUNED.
+   `.nu-lz` was a `--r-pill` inline-flex box that CENTRED its word, sized
+   itself to that word, filled itself with its cluster's hue when it stood, and
+   went `--fw-label` when it did — so it needed `.nu-lzword::after` to reserve
+   the bold width or the box grew under the thumb that pressed it, and `.nu-lzn`
+   needed a second pill inside the first to print a chain position.
+   tokens.css: `--r-pill` is *"a noun, and only a noun — the LOZENGE wears it,
+   and nothing else on this page does"*. An option in a list is not a noun you
+   carry about; it is a LINE YOU READ. `<nu-cell>` is that line — square at
+   `--r2`, the width of its column, its word at the column's start edge, 44px
+   of thumb as a FLOOR and never as an overlap (law 2 survives the port whole,
+   and the photograph behind it still applies) — and every state the pill was
+   carrying is a cell state at THE ELEMENTS: `[aria-pressed]` fills in `--lamp`,
+   `[aria-disabled]` dashes, `.is-quiet` goes inert without dashing, and
+   `.nu-elorder` prints a chain position with no pill around it.
+   NOT ONE OF THOSE RULES IS RESTATED HERE. Twelve selectors left this file:
+   `.nu-lz`, `.nu-lz:hover`, `.nu-lz.is-hot`, `.nu-lz[aria-pressed="true"]`,
+   `.nu-lz.is-hot > .nu-lzword`, `.nu-lz.is-hot:hover`, `.nu-lz[disabled]`,
+   `.nu-lz[aria-disabled="true"]`, `.nu-lz.is-quiet`, `.nu-lzword`,
+   `.nu-lzword::after` and `.nu-lzn`. */
 /* THE SENTENCE A LONG PRESS SAYS. It reserves its own line whether or not
    there is one to say, for the reason `[data-k="board.legend"]` reserves two:
    GEOMETRY IS RESERVED AT CREATION, or a sentence arriving under a thumb moves
@@ -8817,8 +8972,10 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    COLOUR AND NOT A BOX — measured: the say line's top moves 0px. */
 .nu-lzsay[data-said]{ background: var(--well); color: var(--ink); }
 /* THE WHOLE FIELD REFUSED: dashed and dim, with `menuField`'s own `.nu-why`
-   line under it — one refusal line in this file, not two. */
-.nu-lzfield.is-off .nu-lz{ cursor: not-allowed; }
+   line under it — one refusal line in this file, not two. Every cell in it is
+   `refused` on its own account (field.ts law 7 hands the field's sentence down
+   to each one), so the dash is the element's and there is nothing to say here
+   but the sentence. */
 .nu-lzfield.is-off > .nu-why{ display: block; color: var(--dim);
   font: var(--fw-body) var(--t1)/1.35 var(--sans, inherit); }
 /* IT IS A FIELD IN A SHEET, AND IT TAKES THE SHEET'S WHOLE WIDTH — the same
@@ -8843,62 +9000,42 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    the gesture chaining to the pane under it and still lets the track
    rubber-band inside itself, and a bounce translates the column heads with it.
    `none` stops the gesture at the track's ends and hands it to nobody, which
-   is the same law §11c gave the pane and the page. Settled 2026-09-07. */
-.nu-lztrack{ display: flex; align-items: flex-start; gap: var(--s3);
-  overflow-x: auto; overflow-y: hidden;
-  overscroll-behavior-inline: none;
-  padding-block-end: var(--s2);
-  /* the scrollbar is a thin one where the platform draws one at all; a phone
-     draws none and the track is scrolled by the thumb that is on it. */
-  scrollbar-width: thin; }
-/* A COLUMN IS AS WIDE AS ITS WORDS AND NEVER WIDER THAN THE PHONE. 18ch holds
-   "acoustic grand piano" on two lines and every shorter name on one; the
-   `max-inline-size` is the floor under a viewport narrower than that. */
-.nu-lzcluster.is-col{ flex: 0 0 auto;
-  inline-size: 18ch; max-inline-size: calc(100vw - 4 * var(--s4));
-  margin-block-start: 0; }
-/* THE WRAP RUNS DOWN, AND IT DOES NOT WRAP. One word per line is the whole
-   ask; `nowrap` is what makes a column a column, and the height is bounded by
-   the packing in `src/lozenge/field.ts` and not by a scroll box (law 1's own
-   forbidden shape). */
-.nu-lzcluster.is-col > .nu-lzwrap:not([hidden]){
-  flex-direction: column; flex-wrap: nowrap; gap: var(--s1); }
-/* A PILL IN A COLUMN IS THE COLUMN'S WIDTH, and its word reads from the start
-   like every other line of a list. It keeps its 44px floor — the tap floor is
-   the one number a restyle may not spend — and wraps to a second line when the
-   name will not fit, which is law 2 unchanged. */
-.nu-lzcluster.is-col .nu-lz{ inline-size: 100%; justify-content: flex-start;
-  text-align: start; }
-.nu-lzcluster.is-col .nu-lzword{ text-align: start; }
-/* THE HEADING OF A CONTINUATION COLUMN IS A READOUT AND NOT A BUTTON, so it
-   is drawn quieter than the one it continues: the same word, no count, no
-   fold, and nothing for a thumb to press. */
-.nu-lzcont{ display: flex; align-items: end; inline-size: 100%;
-  min-block-size: var(--tap); padding: 0 0 var(--s1);
-  margin-block-end: var(--s2);
-  border-block-end: var(--bw) dashed var(--lz, var(--rule));
-  color: var(--lz, var(--ink)); opacity: .55; }
-/* THE COLUMN THE RECORD IS STANDING IN, marked exactly as a folded cluster
-   holding the answer is (`--hand`), so "where am I" is one mark in both
-   shapes of this field. */
-.nu-lzcluster.is-col.is-standing > .nu-lzhead{ color: var(--hand);
-  border-block-end-color: var(--hand); }
+   is the same law §11c gave the pane and the page. Settled 2026-09-07.
+
+   ---- AND EVERY WORD OF THAT IS NOW `<nu-table>`'s AND `<nu-colhead>`'s ----
+   THE ARRANGEMENT DID NOT CHANGE; ITS OWNER DID. `.nu-lztrack` was deleted
+   from this file the day `src/lozenge/field.ts` began rendering `<nu-table>`,
+   and the track it drew is `.nu-eltrack` at THE ELEMENTS — the same flex row,
+   the same `--s3` gap, the same `overflow-x: auto` with the same
+   `overscroll-behavior-inline: none` and the same argued refusal of `contain`.
+   `.nu-lzcluster.is-col` (`18ch`, `calc(100vw - 4 * var(--s4))`) is `nu-colhead`
+   there, arrived at by measuring the same words; `.nu-lzwrap`'s downward
+   `nowrap` stack is what `nu-colhead` IS; `.nu-lzcont` is
+   `.nu-elcolhead.is-cont`, still a readout and still never a second door to
+   one room; and `.nu-lzcluster.is-col.is-standing` is `[current]`, drawn in
+   the lamp rather than in `--hand` because `aria-current` has one treatment on
+   this page and a widget does not get its own.
+   FOUR SELECTORS LEFT THIS FILE HERE and none of them was replaced by a copy:
+   `.nu-lztrack`, `.nu-lzcluster.is-col`, `.nu-lzcont`,
+   `.nu-lzcluster.is-col.is-standing`. */
 
 /* ---- ONE OF A SET, OR SEVERAL AT ONCE (DESIGN.md component 24) --------
    Paul, 2026-09-07: *"Each exclusive of each other … and if things have
    multiple settings to make that really clear and shading or a little bit of a
-   fill behind them."* A single-select field fills ONE pill and leaves the
-   others outlined — which it already did — and a CHAIN gives every pill a tick
+   fill behind them."* A single-select field fills ONE cell and leaves the rest
+   plain — which the element already does — and a CHAIN gives every cell a tick
    box at its start, so a hand can see from the shape of the control whether
-   the words are alternatives or a set. The mark is drawn by the pill's own
-   `::before` and costs no element and no string. */
-.nu-lzfield[data-exclusive="false"] .nu-lz::before{
+   the words are alternatives or a set. The mark is the cell's own `::before`
+   and costs no element and no string. It is the FIELD's fact and not the
+   cell's — one cell cannot know whether its neighbours are alternatives — so
+   it hangs off `[data-exclusive]` on the field, which is where the TS stamps
+   it and where a gate reads it. */
+.nu-lzfield[data-exclusive="false"] .nu-elcell::before{
   content: ""; flex: 0 0 auto; inline-size: .8em; block-size: .8em;
   margin-inline-end: var(--s1);
   border: var(--bw) solid currentColor; border-radius: var(--r0);
   opacity: .55; }
-.nu-lzfield[data-exclusive="false"] .nu-lz.is-hot::before,
-.nu-lzfield[data-exclusive="false"] .nu-lz[aria-pressed="true"]::before{
+.nu-lzfield[data-exclusive="false"] .nu-elcell[aria-pressed="true"]::before{
   background: currentColor; opacity: 1; }
 
 /* ---- THE FORMULA BAR MIRRORS THE CELL'S FIRST GROUP (2026-09-05) ------
@@ -9342,49 +9479,423 @@ nu-value[means="flag"]  .nu-elval{ color: var(--flag); }
 nu-rail[busy] .nu-elseg{ box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed); }
 
 /* ---- <nu-spinner> — a state, not a shopping list ---------------------
-   TABLE.md §19, Paul: *"turn them into spinners for the status changes"*. The
-   word is the control; the two steps are the same 44px square the rest of the
-   page uses, and the POSITION is printed because a control showing one of
-   five has to say that there are five.
-   THE TWO MARKS ARE DRAWN HERE AND SAID IN THE MARKUP: the buttons carry
-   their word in a `.nu-vh` and nothing visible, so the ‹ and › are content on
-   a pseudo-element in `--sym` — the same arrangement `.nu-combo::after` has
-   used since the marks were tokenised. */
-.nu-elspin{ display: inline-flex; align-items: stretch; min-inline-size: 0;
+   TABLE.md §19, Paul: *"turn them into spinners for the status changes"*, and
+   then: *"The spinner can just be a single button without arrows left and
+   right. Click to rotate it."*
+
+   SO THE SPINNER IS ONE BUTTON AND `.nu-elstep` IS GONE — the rule and the
+   two `::before` marks with it, its last user having left the tree. The box
+   that was the group is now the button itself: the word, and the position
+   after it in the quiet register, on one 44px tap. A press rotates; the arrow
+   keys are the way back, and a key needs no glass.
+   THE WORD IS A SPAN AND NOT THE BUTTON, so the position can sit beside it
+   without the two sharing one text style — the word is the SCREEN's phosphor
+   and the count is a printed legend, which is §0's split inside one control. */
+.nu-elspin{ display: inline-flex; align-items: center; min-inline-size: 0;
+  gap: var(--s2);
+  min-block-size: var(--tap);
+  /* `padding-block: 0` IS LOAD-BEARING: a <button> the page does not size
+     carries the user agent's own `1px 6px`, which is a value off the ramp
+     nobody chose. */
+  padding-block: 0; padding-inline: var(--s3);
   border: var(--bw) solid var(--rule); border-radius: var(--r1);
-  background: var(--grey1); }
-.nu-elstep{ inline-size: var(--tap); min-block-size: var(--tap);
-  display: inline-flex; align-items: center; justify-content: center;
-  /* `padding: 0` IS LOAD-BEARING: a <button> the page does not size carries the
-     user agent's own `1px 6px`, which is a value off the ramp nobody chose. */
-  padding: 0;
-  background: transparent; border: 0; color: var(--legend);
-  font-family: var(--sym); font-size: var(--t4); cursor: pointer;
-  -webkit-tap-highlight-color: transparent; }
-.nu-elstep.is-prev::before{ content: "\2039"; }
-.nu-elstep.is-next::before{ content: "\203A"; }
-.nu-elspinword{ flex: 1 1 auto; min-inline-size: 0; min-block-size: var(--tap);
-  padding-block: 0; padding-inline: var(--s2);
+  background: var(--grey1); color: var(--value);
+  /* THE FONT IS SET HERE AND NOT ONLY ON THE WORD, because the ramp is in
+     `em`: a <button> the page leaves unstyled resolves `--s2` against the
+     user agent's 13.3px Arial, which is a gap nobody chose in a face nobody
+     chose. */
   font: var(--num-fw) var(--btn-fs)/1.2 var(--sans);
-  color: var(--value); background: transparent;
-  border-inline: var(--bw) solid var(--rule); border-block: 0;
-  cursor: pointer; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; text-align: start;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elspinword{ flex: 1 1 auto; min-inline-size: 0;
+  font: var(--num-fw) var(--btn-fs)/1.2 var(--sans);
+  color: var(--value); overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; }
-.nu-elpos{ display: inline-flex; align-items: center;
-  padding-inline: var(--s2);
+.nu-elpos{ flex: 0 0 auto;
   font: var(--fw-body) var(--t1)/1 var(--mono);
   font-variant-numeric: tabular-nums; color: var(--legend-dim); }
-.nu-elstep:hover, .nu-elspinword:hover,
-[data-demo="hover"] > .nu-elspin{ border-color: var(--armed); }
+.nu-elspin:hover, [data-demo="hover"] > .nu-elspin{
+  border-color: var(--armed); }
 [data-demo="hover"] > .nu-elspin > .nu-elspinword{ color: var(--armed); }
-.nu-elstep:focus-visible, .nu-elspinword:focus-visible,
-[data-demo="focus"] > .nu-elspin > .nu-elspinword{
-  outline: var(--bw-hard) solid var(--lamp); outline-offset: calc(-1 * var(--bw-hard)); }
+.nu-elspin:focus-visible, [data-demo="focus"] > .nu-elspin{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
 nu-spinner[refused] > .nu-elspin{ border-style: dashed; }
 nu-spinner[refused] .nu-elspinword,
-nu-spinner[refused] .nu-elstep{ color: var(--legend-faint); }
+nu-spinner[refused] .nu-elpos{ color: var(--legend-faint); }
 nu-spinner[busy] > .nu-elspin{
   box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed); }
+
+/* ---- <nu-table> · <nu-colhead> · <nu-rowhead> · <nu-cell> -------------
+   Paul, 2026-09-07: *"Make the table system with lozenges just list the items
+   as cells. The lozenges are getting in the way."*
+
+   THE SHAPE IS `.nu-lztrack`'S AND IS NOT INVENTED HERE. A sideways track of
+   `18ch` columns; each column a `nowrap` stack of full-width items, one item
+   per line; the TRACK scrolling and the PAGE not (§11c). That is the
+   arrangement the instrument picker already ships and the one Paul liked, and
+   these rules are it with tags instead of `.nu-lz*` classes. The lozenge
+   field's own rules are untouched and are ported onto these tags in a round of
+   their own — one look, arrived at twice, is not two looks.
+
+   WHAT IS DIFFERENT IS THE CELL, AND IT IS THE WHOLE POINT. `--r-pill` is a
+   NOUN in tokens.css — *"the LOZENGE wears it, and nothing else on this page
+   does"* — and an option in a list is not a noun you carry, it is a line you
+   read. So a cell is SQUARE (`--r2`), it fills its column, and its word starts
+   at the column's start edge. Everything the pill was carrying survives as a
+   cell STATE, because none of it was ever the pill's doing.
+
+   FOUR REGISTERS AND THEY ARE FOUR, NOT TWO:
+     SELECTED   the standing answer: FILLED in `--lamp`, word in `--on-fill`.
+                The system's one selection treatment, unchanged.
+     CURRENT    where you ARE — a heading whose column holds the answer. It is
+                the lamp as a HAIRLINE UNDER the word, never a fill, because
+                `aria-current` is not `aria-pressed` and two facts that read
+                the same are one fact lost.
+     REFUSED    dashed, the refused register, and it says why in the TABLE's
+                say line. Never `disabled`.
+     QUIET      INERT, WHICH IS NOT REFUSED. No border, no dash, the dim
+                legend ink and no press — greying an inert word with the
+                refused grey is the bug this register exists to prevent. */
+nu-table{ display: flex; flex-direction: column; align-items: stretch;
+  inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; }
+/* THE TRACK IS THE ONLY THING HERE THAT SCROLLS SIDEWAYS, and it contains the
+   gesture: `overscroll-behavior-inline: none` — NOT `contain`, which TABLE.md
+   §15a forbids by name, because `contain` still lets the track rubber-band
+   inside itself and a bounce translates the column heads with it. */
+.nu-eltrack{ display: flex; align-items: flex-start; gap: var(--s3);
+  min-inline-size: 0;
+  overflow-x: auto; overflow-y: hidden;
+  overscroll-behavior-inline: none;
+  padding-block-end: var(--s2);
+  /* the edge is drawn always and coloured only when refused, so a dashed
+     table does not move the words in it by a hairline */
+  border: var(--bw) solid transparent; border-radius: var(--r2);
+  scrollbar-width: thin; }
+/* GROUPS DOWN THE SIDE: the track stops being a track and becomes a stack,
+   and each row runs out across. Nothing scrolls; a row wraps. */
+nu-table[flow="down"] > .nu-eltrack{ flex-direction: column;
+  align-items: stretch; gap: var(--s2); overflow-x: hidden; }
+.nu-eltrack:focus-visible, [data-demo="focus"] > .nu-eltrack{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
+nu-table[refused] > .nu-eltrack{ border-style: dashed;
+  border-color: var(--legend-faint); }
+nu-table[busy] > .nu-eltrack{
+  box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed); }
+
+/* A COLUMN IS AS WIDE AS ITS WORDS AND NEVER WIDER THAN THE PHONE — 18ch and
+   `calc(100vw - 4 * var(--s4))`, both of them `.nu-lzcluster.is-col`'s own
+   numbers, arrived at by measuring "acoustic grand piano". THE STACK DOES NOT
+   WRAP: one word per line is the whole ask. */
+nu-colhead{ display: flex; flex-direction: column; flex-wrap: nowrap;
+  gap: var(--s1); flex: 0 0 auto;
+  inline-size: 18ch; max-inline-size: calc(100vw - 4 * var(--s4)); }
+/* THE HEAD IS RENDERED LAST AND DRAWN FIRST. lit-html appends its part at the
+   end of a light-DOM host, so the heading arrives after the cells the author
+   wrote; `order: -1` puts it back on top. Layout, in the stylesheet, which is
+   where §1a says it belongs — the alternative was the element moving its own
+   children about, and a component that reorders the DOM to look right is a
+   component that paints. */
+.nu-elcolhead{ order: -1;
+  display: flex; flex-wrap: wrap; align-items: center;
+  column-gap: var(--s2); row-gap: var(--s1);
+  inline-size: 100%; min-block-size: var(--tap);
+  padding-block: var(--s1); padding-inline: var(--s2);
+  font: var(--fw-label) var(--t1)/1.2 var(--sans);
+  text-transform: uppercase; letter-spacing: .08em;
+  /* THE CALLER'S HUE, AT THE ELEMENT'S OWN SPECIFICITY (2026-09-07).
+     `--lz` is set by whoever owns the column — the lozenge field sets one of
+     eight per family — and it FALLS BACK to the legend, so a caller that sets
+     nothing is unchanged. It is read HERE, in the element's own one-class
+     rule, rather than in a `.nu-lzfield nu-colhead[data-hue]:not([current])`
+     rule three selectors deep, because docs/DESIGN-SYSTEM.md §1a says a skin
+     is a stylesheet that targets the ELEMENTS: a look that can only be reached
+     by out-specifying a caller's rule is a look a skin cannot reach with one
+     line, which is the law failing quietly. `nukernel/skins/paper.css` now
+     overrides this with `nu-colhead .nu-elcolhead`, one selector, no `!important`. */
+  color: var(--lz, var(--legend-dim)); background: transparent;
+  border: 0;
+  border-block-end: var(--bw) solid var(--lz, var(--rule));
+  text-align: start; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elcolhead > .nu-elword{ flex: 1 1 auto; min-inline-size: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-elcount{ flex: 0 0 auto;
+  font: var(--fw-body) var(--t0)/1 var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--legend-dim); }
+/* THE HELD WORD IS A READOUT AND SITS ON ITS OWN LINE — the screen's ink under
+   the panel's legend, which is §0's split inside one control. `order: 1` puts
+   it after the fold mark, which is a generated last child. */
+.nu-elheld{ order: 1; flex: 1 0 100%; min-inline-size: 0;
+  font: var(--fw-body) var(--t1)/1.2 var(--sans);
+  text-transform: none; letter-spacing: 0; color: var(--value);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-elcolhead[aria-expanded]::after{ content: "\25BE"; flex: 0 0 auto;
+  font-family: var(--sym); color: var(--legend-dim); }
+.nu-elcolhead[aria-expanded="false"]::after{ content: "\25B8"; }
+/* THE FOLD IS ONE RULE. A column that is not open has no cells on the glass,
+   and nothing in TypeScript knows that. */
+nu-colhead:not([open]) > nu-cell{ display: none; }
+.nu-elcolhead:hover, [data-demo="hover"] > .nu-elcolhead{
+  color: var(--armed); border-block-end-color: var(--armed); }
+.nu-elcolhead:focus-visible, [data-demo="focus"] > .nu-elcolhead{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
+.nu-elcolhead[aria-current="true"]{ color: var(--lamp);
+  border-block-end-color: var(--lamp);
+  border-block-end-width: var(--bw-hard); }
+/* A CONTINUATION IS A READOUT AND NOT A SECOND DOOR TO ONE ROOM (`.nu-lzcont`'s
+   own law). The same word, a dashed rule, no count, no fold, no press — and
+   it is NOT drawn in the refused register, because nothing here is refused. */
+.nu-elcolhead.is-cont{ border-block-end-style: dashed; cursor: default; }
+
+/* ---- the same group with the axis turned ---------------------------- */
+nu-rowhead{ display: flex; flex-direction: row; flex-wrap: wrap;
+  align-items: stretch; gap: var(--s2); inline-size: 100%;
+  min-inline-size: 0; }
+.nu-elrowhead{ order: -1; flex: 0 0 auto;
+  display: flex; flex-direction: column; justify-content: center;
+  inline-size: 10ch; min-block-size: var(--tap);
+  padding-block: var(--s1); padding-inline: var(--s2);
+  font: var(--fw-label) var(--t1)/1.2 var(--sans);
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--legend-dim); background: transparent;
+  border: 0; border-inline-end: var(--bw) solid var(--rule);
+  text-align: start; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+nu-rowhead > nu-cell{ flex: 0 0 auto; inline-size: 12ch; }
+.nu-elrowhead:hover, [data-demo="hover"] > .nu-elrowhead{
+  color: var(--armed); border-inline-end-color: var(--armed); }
+.nu-elrowhead:focus-visible, [data-demo="focus"] > .nu-elrowhead{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
+.nu-elrowhead[aria-current="true"]{ color: var(--lamp);
+  border-inline-end-color: var(--lamp);
+  border-inline-end-width: var(--bw-hard); }
+
+/* ---- one option, drawn as a line ------------------------------------
+   THE ROW PITCH IS `--tap` AS A FLOOR AND NOT AS A HEIGHT: 44px is the least
+   a thumb may be given, and a two-word name that wraps grows the cell rather
+   than overlapping the one under it. */
+nu-cell{ display: block; inline-size: 100%; min-inline-size: 12ch; }
+.nu-elcell{ display: flex; align-items: center; gap: var(--s2);
+  inline-size: 100%; min-block-size: var(--tap);
+  padding-block: var(--s1); padding-inline: var(--s2);
+  font: var(--btn-fw) var(--btn-fs)/1.3 var(--sans);
+  color: var(--legend); background: var(--grey1);
+  border: var(--bw) solid var(--rule);
+  /* SQUARE, AND `--r-pill` IS NOT REACHABLE FROM HERE. */
+  border-radius: var(--r2);
+  text-align: start; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elcell > .nu-elword{ flex: 1 1 auto; min-inline-size: 0;
+  overflow-wrap: anywhere; }
+.nu-elcell > .nu-elmark{ font-size: var(--t3); }
+.nu-elorder{ flex: 0 0 auto;
+  font: var(--fw-body) var(--t0)/1 var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--legend-dim); }
+.nu-elcell:hover, [data-demo="hover"] > .nu-elcell{
+  border-color: var(--armed); background: var(--grey2); }
+.nu-elcell:focus-visible, [data-demo="focus"] > .nu-elcell{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
+.nu-elcell[aria-pressed="true"]{ background: var(--lamp);
+  border-color: var(--lamp); color: var(--on-fill); }
+.nu-elcell[aria-pressed="true"] .nu-elorder{ color: var(--on-fill); }
+.nu-elcell[aria-disabled="true"]{ border-style: dashed;
+  border-color: var(--legend-faint); color: var(--legend-faint);
+  background: transparent; }
+.nu-elcell[aria-busy="true"]{
+  box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed);
+  color: var(--legend-dim); }
+/* INERT IS NOT REFUSED: no edge, no dash, the dim legend ink, no pointer. */
+.nu-elcell.is-quiet{ background: transparent; border-color: transparent;
+  color: var(--legend-dim); cursor: default; }
+
+/* ---- <nu-plate> · <nu-menu-row> --------------------------------------
+   Paul, 2026-09-07: *"Icons in hamburger should all have same width not float
+   left it looks uneven."*
+
+   THE FIX IS A FIXED ADVANCE AND THE PRECEDENT IS THE RECORD'S NAME PLATE
+   (nu.css ~7443: `grid-template-columns: 1.4em minmax(0,1fr)` with the mark
+   centred in column 1). `--sym` is a PROPORTIONAL stack — measured in this
+   tree, `⊙` advances 26.8px and `⌗` 18.0px against a 19.2px tofu box — so a
+   mark that carries its own width starts every word in a different place, and
+   the eye uses the start edge of a list as its ruler. Give the mark a COLUMN,
+   centre it there, and the words line up whatever glyph a row is given. The
+   argument for it is one paragraph in `src/ui/panels.ts`; the rule is here,
+   and it holds anywhere a mark precedes a word.
+
+   AND A PLATE IS NEVER A FULL-WIDTH BAND OF GLASS. Its inline size is capped
+   at the viewport less a TAP and a step of air, at every width, because a tap
+   OUTSIDE a panel must have somewhere to land or the panel has one door. It
+   stops short of the bottom band and scrolls inside itself rather than growing
+   past the glass. Both are laws of the element and not of the page that hangs
+   it. */
+nu-plate{ display: none; }
+nu-plate[open]{ display: flex; flex-direction: column; gap: var(--s1);
+  inline-size: min(22rem, calc(100vw - var(--tap) - var(--s4)));
+  max-inline-size: 100%;
+  max-block-size: calc(100dvh - var(--top-h) - var(--bar-h) - var(--s4));
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--s2);
+  background: var(--panel);
+  border: var(--bw) solid var(--rule); border-radius: var(--r1);
+  scrollbar-width: thin; }
+/* THE ANCHOR IS SAID TWICE AND NEITHER IS A MARGIN. `align-self` places it
+   when the plate stands in flow (the gallery, a sheet); the `inset` pair
+   places it when the page has made it `position: fixed` (the app's own
+   shell) and is inert otherwise. An `auto` margin would have done both and
+   would have resolved to a used pixel value nobody chose, which is the one
+   thing the spacing ramp cannot forgive. */
+nu-plate[anchor="start"]{ align-self: start;
+  inset-inline-start: 0; inset-inline-end: auto; }
+nu-plate[anchor="end"]{ align-self: end;
+  inset-inline-start: auto; inset-inline-end: 0; }
+
+nu-menu-row{ display: block; inline-size: 100%; min-inline-size: 0; }
+.nu-elmenurow{ display: grid;
+  /* THE FIXED ADVANCE. Every mark gets 1.4em and is centred in it, so every
+     word starts on one vertical line. `em` and not `rem`, so the column scales
+     with the row's own type. */
+  grid-template-columns: 1.4em minmax(0, 1fr) max-content;
+  align-items: center; column-gap: var(--s2);
+  inline-size: 100%; min-block-size: var(--tap);
+  padding-block: var(--s1); padding-inline: var(--s2);
+  font: var(--btn-fw) var(--btn-fs)/1.2 var(--sans);
+  color: var(--legend); background: transparent;
+  border: var(--bw) solid transparent; border-radius: var(--r1);
+  text-align: start; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elmenurow > .nu-elmark{ grid-column: 1; justify-self: center; }
+.nu-elmenurow > .nu-elword{ grid-column: 2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-elmenurow > .nu-elcount{ grid-column: 3; }
+.nu-elmenurow:hover, [data-demo="hover"] > .nu-elmenurow{
+  background: var(--grey2); border-color: var(--armed); }
+.nu-elmenurow:focus-visible, [data-demo="focus"] > .nu-elmenurow{
+  outline: var(--bw-hard) solid var(--lamp);
+  outline-offset: calc(-1 * var(--bw-hard)); }
+.nu-elmenurow[aria-pressed="true"]{ background: var(--lamp);
+  border-color: var(--lamp); color: var(--on-fill); }
+/* THE COUNT FOLLOWS THE FILL. `--legend-dim` is the quiet register on a
+   PANEL; on a lamp it is a number nobody can read, which is the whole of the
+   "declared but never arriving" bug said in a colour. */
+.nu-elmenurow[aria-pressed="true"] .nu-elcount{ color: var(--on-fill); }
+/* WHERE YOU ARE IS A LAMP BAR DOWN THE START EDGE and never a fill: a fill is
+   what SELECTED means, and a destination you are standing in was not pressed.
+   An inset shadow rather than a border, so the words do not move a hairline
+   when the bar arrives. */
+.nu-elmenurow[aria-current="page"]{ color: var(--lamp);
+  box-shadow: inset var(--bw-hard) 0 0 0 var(--lamp); }
+.nu-elmenurow[aria-disabled="true"]{ border-style: dashed;
+  border-color: var(--legend-faint); color: var(--legend-faint); }
+.nu-elmenurow[aria-busy="true"]{
+  box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed);
+  color: var(--legend-dim); }
+
+/* ---- <nu-index> — 502 rows, and the field over them ------------------
+   The atlas's own list, given a tag. A YEAR, A NAME, A PLACE, in three
+   columns whose template is fixed so every row's columns agree; on a narrow
+   phone it becomes two lines rather than three squeezed ones. The rows a
+   query filters out are HIDDEN AND NOT DETACHED, so the list keeps its
+   length, its scroll and its tree.
+
+   THE EMPTY ANSWER IS A LIVE REGION AND IS NEVER REMOVED (`#atlasNone`'s own
+   law): a `role="status"` taken out of the tree and put back does not
+   announce. So it is empty at rest, an empty one has NO BOX, and it is never
+   `display: none`. */
+nu-index{ display: block; inline-size: 100%;
+  min-inline-size: 0; max-inline-size: 100%; }
+.nu-elixfind{ display: flex; align-items: center; gap: var(--s2);
+  padding-block-end: var(--s2); }
+.nu-elixq{ flex: 1 1 auto; min-inline-size: 0; min-block-size: var(--tap);
+  padding-block: var(--s1); padding-inline: var(--s2);
+  font: var(--fw-body) var(--t2)/1.2 var(--sans);
+  color: var(--value); background: var(--well);
+  border: var(--bw) solid var(--rule); border-radius: var(--r1); }
+.nu-elixq:focus-visible{ outline: var(--bw-hard) solid var(--lamp);
+  outline-offset: calc(-1 * var(--bw-hard)); }
+.nu-elixclear{ flex: 0 0 auto;
+  inline-size: var(--tap); min-block-size: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; background: transparent;
+  border: var(--bw) solid var(--rule); border-radius: var(--r1);
+  color: var(--legend-dim); font-family: var(--sym); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elixclear:hover{ border-color: var(--armed); color: var(--armed); }
+.nu-elixlist{ list-style: none; margin: 0; padding: 0; display: block; }
+.nu-elixli{ display: block; }
+/* `[hidden]` IS SAID EXPLICITLY because the rule above sets `display` and
+   would otherwise win: a filtered row that stayed on the glass is a filter
+   that does nothing. */
+.nu-elixli[hidden]{ display: none; }
+.nu-elixrow{ display: grid;
+  grid-template-columns: 4ch minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: center; column-gap: var(--s2); row-gap: var(--s1);
+  inline-size: 100%; min-block-size: var(--tap);
+  padding-block: var(--s1); padding-inline: var(--s2);
+  font: var(--fw-body) var(--t2)/1.3 var(--sans);
+  color: var(--legend); background: transparent;
+  border: var(--bw) solid transparent; border-radius: var(--r2);
+  text-align: start; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elixy{ grid-column: 1; font-family: var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--legend-dim); }
+.nu-elixw{ grid-column: 2; min-inline-size: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-elixp{ grid-column: 3; min-inline-size: 0; color: var(--legend-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-elixrow:hover, [data-demo="hover"] .nu-elixli:first-child .nu-elixrow{
+  border-color: var(--armed); background: var(--grey2); }
+.nu-elixrow:focus-visible,
+[data-demo="focus"] .nu-elixli:first-child .nu-elixrow{
+  outline: var(--bw-hard) solid var(--lamp);
+  outline-offset: calc(-1 * var(--bw-hard)); }
+/* EXACTLY ONE ROW IS `aria-current`, and it is a lamp bar and not a fill —
+   the same treatment a menu row's destination gets, for the same reason. */
+.nu-elixrow[aria-current="true"]{ color: var(--lamp);
+  box-shadow: inset var(--bw-hard) 0 0 0 var(--lamp); }
+.nu-elixrow[aria-current="true"] .nu-elixy{ color: var(--lamp); }
+.nu-elixnone{ margin: 0; padding: var(--s2);
+  font: var(--fw-body) var(--t2)/1.35 var(--sans); color: var(--flag); }
+.nu-elixnone:empty{ display: block; block-size: 0;
+  margin-block: 0; padding: 0; overflow: hidden; }
+@media (max-width: 460px){
+  /* TWO LINES RATHER THAN THREE SQUEEZED COLUMNS: the place goes under the
+     name, in the name's own column, so the year stays the ruler down the
+     start edge. */
+  .nu-elixrow{ grid-template-columns: 4ch minmax(0, 1fr); }
+  .nu-elixp{ grid-column: 2; }
+}
+
+/* ---- <nu-globe> — a sphere, and nothing scheduled --------------------
+   THE PROJECTION IS ARITHMETIC AND LIVES IN `src/ui/atlas.ts`; EVERY FILL,
+   STROKE AND OPACITY IS HERE. That division is what makes this element pass
+   §1a on the same terms as every other one: the TypeScript writes `cx`, `cy`,
+   `r` and `d`, which are the projection's output, and not one paint. A skin
+   restyles the globe by writing these six selectors and nothing else. */
+nu-globe{ display: inline-flex; }
+.nu-elglobe{ display: block; inline-size: 12rem; block-size: 12rem; }
+.nu-elglobe:focus-visible, [data-demo="focus"] > .nu-elglobe{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
+.nu-elsea{ fill: var(--well); stroke: none; }
+.nu-elgratline{ fill: none; stroke: var(--rule);
+  stroke-width: calc(var(--bw) / 2); }
+.nu-ellimb{ fill: none; stroke: var(--rule-strong); stroke-width: var(--bw); }
+.nu-elyear{ fill: var(--value); font-family: var(--mono);
+  font-size: var(--t1); font-variant-numeric: tabular-nums;
+  text-anchor: middle; }
+/* A YEAR THAT HOLDS ONE MARK OR NONE: the stamp is the whole picture, so it
+   is the size of a block's own name rather than of an annotation. */
+nu-globe[empty] .nu-elyear{ font-size: var(--t4); }
+/* A MARK THE SWEPT YEAR DOES NOT HOLD LEAVES THE SPHERE. */
+.nu-elplace[data-when="0"]{ display: none; }
+.nu-elplace{ cursor: pointer; }
+.nu-elpin{ fill: var(--lamp); stroke: none; }
+.nu-elring{ fill: none; stroke: var(--lamp); stroke-width: var(--bw);
+  opacity: 0; }
+/* THE RECORD THAT IS PLAYING WEARS THE RING, at full opacity, and it is the
+   one thing on the sphere that does. */
+.nu-elplace[aria-current="true"] .nu-elring{ opacity: 1; }
+.nu-elplace:hover .nu-elpin{ fill: var(--armed); }
+.nu-elplace:focus-visible{ outline: var(--bw-hard) solid var(--lamp); }
 
 /* ======================================================================
    THE GALLERY (nukernel/design.html, docs/DESIGN-SYSTEM.md §3)
@@ -9484,8 +9995,19 @@ nu-spinner[busy] > .nu-elspin{
    on this page that may scroll sideways is the matrix. */
 .dg-states{ display: flex; flex-wrap: wrap; gap: var(--s4);
   padding-block-start: var(--s3); }
+/* A STATE CELL MAY NOT BE WIDER THAN THE PAGE, and until <nu-table> arrived
+   nothing on this page was ever wide enough to test it: a flex item's base
+   size is its MAX-CONTENT, so a track holding three 18ch columns sized the
+   cell to 538px at 390 and pushed the document 161px sideways — D7's own
+   failure, found by the gate on the first run. `min-inline-size: 0` lets the
+   item shrink past its content and `max-inline-size: 100%` stops it at the
+   section's width; the track then does what a track is for and scrolls
+   INSIDE itself, which is §11c working rather than being bypassed. */
 .dg-state{ display: flex; flex-direction: column; gap: var(--s2);
-  align-items: flex-start; }
+  align-items: flex-start;
+  min-inline-size: 0; max-inline-size: 100%; }
+.dg-states{ min-inline-size: 0; }
+.dg-stagebox{ min-inline-size: 0; max-inline-size: 100%; }
 .dg-statename{ font: var(--fw-label) var(--t0)/1.2 var(--mono);
   text-transform: uppercase; letter-spacing: .08em; color: var(--legend-dim); }
 .dg-stagebox{ display: flex; align-items: center; min-block-size: var(--tap); }

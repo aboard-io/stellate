@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Design system, paper skin — Stellate</title>
+
+<!-- ===== WHY THIS IS A PAGE AND NOT A TAB ==============================
+     docs/DESIGN-SYSTEM.md §3: *"/design — a page in the app that renders every
+     component in every state, with its tokens, its attribute surface and a
+     live example… when done I should be able to see the design system."*
+
+     `TABS` in ui/eight.js is the one owner of what the BOX can show, and its
+     list is the hamburger's first block — v303 measured that plate at 891px of
+     content in 785 of glass with eighteen rows (TABLE.md §20). A nineteenth
+     row is a change to chrome that landed two versions ago, and this round is
+     the tokens and the gallery. A gallery is also not a VIEW of a record: it
+     shows no song, writes no document, opens no sheet, and belongs to whoever
+     is BUILDING the box rather than to whoever is playing it. So it stands
+     beside index.html, links the same three stylesheets in the same order, and
+     costs the app exactly nothing — nukernel/index.html does not change and
+     does not load ui/ui.js.
+
+     IT IS BUILT FROM THE DEFINITIONS. Everything below the <main> is drawn by
+     `NuUI.gallery()` out of `src/ui/api.ts` and out of the resolved values of
+     tokens.css. There is no list of components in this file, no palette table,
+     no contrast number and no state name — because every one of those would be
+     a second copy that could drift, which is the whole thing §3 is about. -->
+
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="nu.css">
+<!-- ===== THIS PAGE IS ONE LINE DIFFERENT FROM design.html ==============
+     docs/DESIGN-SYSTEM.md §1a: *"AND IT IS PROVEN BY A SECOND SKIN, NOT BY
+     INTENTION… an alternate skin in one file that turns the deck into
+     something visibly other — a light paper panel, a different accent, a
+     different density — loaded with no other change to the app. If writing
+     that file requires touching an element, the element is wrong."*
+
+     THE ONE LINE IS THE `skins/paper.css` LINK BELOW, AND THIS FILE IS THE
+     CLAIM MADE WHERE A PERSON CAN LOOK AT IT. Everything else here — the
+     three sheets in the same order, the same two bundles, the same host, the
+     same nine lines of inline module — is byte-identical to design.html, and
+     `test/design-system.js` D10a asserts that identity by diffing the two files
+     rather than by trusting this comment: if a second difference appears, the
+     gate fails and the proof is withdrawn.
+
+     WHY IT IS A SECOND DOCUMENT AND NOT A TOGGLE ON THE FIRST. A switch would
+     be a mechanism — an attribute, a class, a line of JavaScript — and a skin
+     proven by a mechanism is not a skin proven by a stylesheet. A second
+     document that differs by exactly one `<link>` is the strongest available
+     statement of the same fact, and it costs the app nothing: index.html loads
+     neither this file nor the skin. -->
+<link rel="stylesheet" href="skins/paper.css">
+<link rel="icon" href="data:,">
+</head>
+<body class="dg-body">
+
+<main id="gal" aria-label="Design system"></main>
+
+<!-- THE CATALOGUE FIRST. `ui/ui.js` is its own bundle and reads the strings
+     off `globalThis.COPY` (src/copy/global.ts), exactly as ui/table.js and
+     ui/menus.js do, so the catalogue ships once. -->
+<script type="module" src="ui/copy.js"></script>
+<script type="module" src="ui/ui.js"></script>
+<script type="module">
+  /* THE WHOLE OF THIS PAGE'S OWN CODE. `ui/ui.js` registers the elements when
+     it is evaluated and publishes its surface on `globalThis.NuUI`; this waits
+     for that and hands it the host. Module scripts are deferred and run in
+     order, so `NuUI` is up by the time this line does — the poll is for the
+     one case that is not ordered, a gate that injects this file. */
+  const go = () => {
+    const ui = globalThis.NuUI;
+    if (!ui) { requestAnimationFrame(go); return; }
+    ui.gallery(document.getElementById("gal"));
+  };
+  go();
+</script>
+</body>
+</html>

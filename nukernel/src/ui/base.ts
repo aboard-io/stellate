@@ -95,9 +95,29 @@ export class NuEl extends LitElement {
 
   /* A REFUSED CONTROL TAKES THE PRESS AND ANSWERS IT. Returns true when the
      press was spent on the refusal, so every handler in this directory reads
-     `if (this.refuse()) return;` and no element can forget. */
+     `if (this.refuse()) return;` and no element can forget.
+
+     ===== AND SO DOES A BUSY ONE (2026-09-07) =========================
+     THIS LINE READ `if (this.hasAttribute("busy")) return true;` AND SAID
+     NOTHING — it spent the press and printed no reason, which is the silent
+     grey with a different attribute on it. DESIGN.md component 14a states the
+     law the MIDI door's round established: *"a control that is WORKING is
+     `aria-disabled` and never `disabled`… so a busy control stays pressable
+     and ANSWERS a second press with a sentence. Ignoring a press and refusing
+     one look identical; only one of them says so."* A person who cannot tell
+     "working" from "broken" presses it again, and then a third time.
+
+     The caller's own `why` wins where there is one — a door that knows it is
+     reading a named file can say so — and the catalogue's sentence stands in
+     where there is not, so a busy control with a forgetful caller is still
+     impossible to mistake for a dead one. `busy` is asked FIRST because a
+     control that is both busy and refused is busy: what a hand needs to know
+     is that pressing again will not help yet. */
   protected refuse(): boolean {
-    if (this.hasAttribute("busy")) return true;
+    if (this.hasAttribute("busy")) {
+      this.say(this.getAttribute("why") || t("ui.busy.working"));
+      return true;
+    }
     if (!this.hasAttribute("refused")) { this.say(null); return false; }
     this.say(this.getAttribute("why") || t("ui.refused.noReason"));
     return true;
@@ -105,6 +125,14 @@ export class NuEl extends LitElement {
 
   protected override updated(ch: PropertyValues): void {
     super.updated(ch);
-    if (!this.hasAttribute("refused")) this.say(null);
+    /* A SENTENCE SURVIVES A RE-RENDER ONLY WHILE IT IS STILL TRUE. It is
+       cleared when the element is neither refused nor busy — the two states
+       that put one there — because a reason about an answer the control has
+       stopped refusing is stale the moment a different one lands. (`busy` was
+       missing from this test until 2026-09-07, so a busy element's own
+       sentence was wiped by the next render that touched it, which is how a
+       message can be written, painted and gone inside one frame.) */
+    if (!this.hasAttribute("refused") && !this.hasAttribute("busy"))
+      this.say(null);
   }
 }

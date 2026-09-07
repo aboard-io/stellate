@@ -88,10 +88,15 @@ function INSTALL() {
      in the DOM, `hidden`, and `words()` is a census of what is OFFERED, not of
      what is on the glass this second (which is what the browser gates measure
      with a rect). `say()` unfolds first, because a thumb would. */
+  /* `.nu-lz` IS A `<nu-cell>` SINCE 2026-09-07, and the class is the ADDRESS
+     it kept (Paul: *"just list the items as cells"*). The option's word is
+     `.nu-elword` — the element's own part — and the fold is the column's
+     `[open]`, pressed on the `.nu-elcolhead` button the column renders. Every
+     claim below is the one it was; three selectors moved. */
   const lozs = (n) => [...n.querySelectorAll(".nu-lz")];
   const unfold = (el) => {
     const sec = el && el.closest(".nu-lzcluster");
-    const head = sec && sec.querySelector(".nu-lzhead");
+    const head = sec && sec.querySelector(".nu-elcolhead, .nu-lzhead");
     if (head && head.getAttribute("aria-expanded") === "false") head.click();
   };
   window.__combo = {
@@ -108,7 +113,7 @@ function INSTALL() {
       if (kind === "lozenge")
         return lozs(n).map((c) => ({
           v: c.dataset.v == null ? "" : c.dataset.v,
-          w: (c.querySelector(".nu-lzword") || c).textContent,
+          w: (c.querySelector(".nu-elword") || c).textContent,
           off: c.disabled || c.getAttribute("aria-disabled") === "true",
           quiet: c.classList.contains("is-quiet"),
           why: c.dataset.why || "",

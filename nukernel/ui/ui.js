@@ -603,10 +603,30 @@ var NuEl = class extends i4 {
     if (n4) n4.textContent = text || "";
   }
   /* A REFUSED CONTROL TAKES THE PRESS AND ANSWERS IT. Returns true when the
-     press was spent on the refusal, so every handler in this directory reads
-     `if (this.refuse()) return;` and no element can forget. */
+       press was spent on the refusal, so every handler in this directory reads
+       `if (this.refuse()) return;` and no element can forget.
+  
+       ===== AND SO DOES A BUSY ONE (2026-09-07) =========================
+       THIS LINE READ `if (this.hasAttribute("busy")) return true;` AND SAID
+       NOTHING — it spent the press and printed no reason, which is the silent
+       grey with a different attribute on it. DESIGN.md component 14a states the
+       law the MIDI door's round established: *"a control that is WORKING is
+       `aria-disabled` and never `disabled`… so a busy control stays pressable
+       and ANSWERS a second press with a sentence. Ignoring a press and refusing
+       one look identical; only one of them says so."* A person who cannot tell
+       "working" from "broken" presses it again, and then a third time.
+  
+       The caller's own `why` wins where there is one — a door that knows it is
+       reading a named file can say so — and the catalogue's sentence stands in
+       where there is not, so a busy control with a forgetful caller is still
+       impossible to mistake for a dead one. `busy` is asked FIRST because a
+       control that is both busy and refused is busy: what a hand needs to know
+       is that pressing again will not help yet. */
   refuse() {
-    if (this.hasAttribute("busy")) return true;
+    if (this.hasAttribute("busy")) {
+      this.say(this.getAttribute("why") || t3("ui.busy.working"));
+      return true;
+    }
     if (!this.hasAttribute("refused")) {
       this.say(null);
       return false;
@@ -616,7 +636,8 @@ var NuEl = class extends i4 {
   }
   updated(ch) {
     super.updated(ch);
-    if (!this.hasAttribute("refused")) this.say(null);
+    if (!this.hasAttribute("refused") && !this.hasAttribute("busy"))
+      this.say(null);
   }
 };
 
@@ -959,28 +980,595 @@ var NuSpinner = class extends NuPick {
     const i5 = this.at();
     const now = o5[i5];
     const hard = this.refused || this.busy;
-    const stepBtn = (d3, cls, aria) => b2`<button type="button" class=${"nu-elstep " + cls}
-        aria-disabled=${hard ? "true" : A}
-        aria-label=${aria}
-        @click=${() => this.step(d3)}><span class="nu-vh">${aria}</span></button>`;
-    return b2`<div class="nu-elspin" role="group" aria-label=${name || A}
-      @keydown=${(e4) => this.keys(e4)}
-      >${stepBtn(-1, "is-prev", t3("ui.spin.prev", { name }))}<button
-        type="button" class="nu-elspinword"
-        aria-disabled=${hard ? "true" : A}
-        aria-label=${t3(
+    return b2`<button type="button" class="nu-elspin"
+      aria-disabled=${hard ? "true" : A}
+      aria-busy=${this.busy ? "true" : A}
+      aria-label=${t3(
       "ui.spin.now",
       { name, value: now ? now.w : "", n: i5 + 1, of: o5.length }
     )}
-        @click=${() => this.step(1)}>${now ? now.w : ""}</button
-      >${stepBtn(1, "is-next", t3("ui.spin.next", { name }))}${this.position ? b2`<small class="nu-elpos" aria-hidden="true"
-            >${i5 + 1}/${o5.length}</small>` : A}</div>
+      @keydown=${(e4) => this.keys(e4)}
+      @click=${() => this.step(1)}
+      ><span class="nu-elspinword">${now ? now.w : ""}</span>${this.position ? b2`<small class="nu-elpos" aria-hidden="true"
+            >${i5 + 1}/${o5.length}</small>` : A}</button>
       <span class="nu-elsay" role="status"></span>`;
   }
 };
 
+// nukernel/src/ui/cells.ts
+function watch(el2, fn) {
+  const o5 = new MutationObserver(() => fn());
+  o5.observe(el2, { childList: true });
+  return o5;
+}
+var NuTable = class extends NuEl {
+  constructor() {
+    super();
+    this.obs = null;
+    /** A REFUSED TABLE REFUSES EVERY PRESS IN IT, and answers each one. The
+     *  listener is in the CAPTURE phase so the reason is printed BEFORE a cell
+     *  or a heading can act on a press the table has already declined — which
+     *  is the difference between a refusal and a warning.
+     *
+     *  AND A BUSY ONE ANSWERS TOO, IN THE RIGHT WORDS. This said
+     *  `t("ui.refused.noReason")` for both, so a table that was merely WORKING
+     *  told a reader "Not available here." — a sentence about a different state,
+     *  which is worse than no sentence because it is wrong rather than missing.
+     *  `NuEl.refuse()` is the one owner of which sentence a spent press gets
+     *  (DESIGN.md component 14 and 14a), so this asks it rather than choosing
+     *  again; the early return above stays, because a table that is neither is
+     *  not in the business of swallowing anything. */
+    this.guard = (e4) => {
+      if (!this.refused && !this.busy) return;
+      e4.preventDefault();
+      e4.stopPropagation();
+      this.refuse();
+    };
+    this.key = null;
+    this.label = null;
+    this.flow = "across";
+    this.why = null;
+    this.refused = false;
+    this.busy = false;
+  }
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      flow: { type: String, reflect: true },
+      refused: { type: Boolean, reflect: true },
+      busy: { type: Boolean, reflect: true },
+      why: { type: String }
+    };
+  }
+  /** THE TRACK, BUILT AND KEPT. Everything that is not the track and not the
+   *  say line is a column and belongs inside the track. */
+  hydrate() {
+    let track = this.querySelector(":scope > .nu-eltrack");
+    if (!track) {
+      track = document.createElement("div");
+      track.className = "nu-eltrack";
+      track.setAttribute("role", "group");
+      track.tabIndex = 0;
+      this.insertBefore(track, this.firstChild);
+    }
+    const name = nameOf(this, "");
+    if (name) track.setAttribute("aria-label", name);
+    for (const c4 of Array.from(this.children)) {
+      if (c4 === track) continue;
+      if (c4.classList.contains("nu-elsay")) continue;
+      if (!(c4 instanceof HTMLElement)) continue;
+      track.appendChild(c4);
+    }
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.hydrate();
+    this.addEventListener("click", this.guard, true);
+    this.obs = watch(this, () => this.hydrate());
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.removeEventListener("click", this.guard, true);
+    if (this.obs) {
+      this.obs.disconnect();
+      this.obs = null;
+    }
+  }
+  /** The say line, and nothing else: the columns are the author's children and
+   *  lit-html appends this after them. */
+  render() {
+    return b2`<span class="nu-elsay" role="status"></span>`;
+  }
+  updated(ch) {
+    super.updated(ch);
+    this.hydrate();
+  }
+};
+var NuHead = class extends NuEl {
+  constructor() {
+    super();
+    this.obs = null;
+    this.key = null;
+    this.label = null;
+    this.count = null;
+    this.held = null;
+    this.current = false;
+  }
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      count: { type: Number },
+      held: { type: String },
+      current: { type: Boolean, reflect: true }
+    };
+  }
+  /** A CHAIN'S LENGTH IS A FACT ABOUT THE COLUMN, so the column is what
+   *  measures it: whenever the membership changes, every cell in it is asked
+   *  to draw again, because whether a cell prints its `order` depends on how
+   *  many ordered cells stand beside it. Without this the number would be
+   *  right on the first paint and stale forever after — the tree's
+   *  characteristic bug, declared and never arriving. */
+  refresh() {
+    for (const c4 of Array.from(this.querySelectorAll(":scope > nu-cell")))
+      c4.requestUpdate?.();
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.obs = watch(this, () => this.refresh());
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.obs) {
+      this.obs.disconnect();
+      this.obs = null;
+    }
+  }
+  /** The accessible name, with the two things a heading may add to it. A count
+   *  and a held word are drawn as their own quiet parts and marked
+   *  `aria-hidden`, so a reader hears one sentence rather than three
+   *  fragments. */
+  headName() {
+    const name = nameOf(this, "");
+    const n4 = this.count;
+    if (this.held && n4 != null)
+      return t3("ui.col.holding", { name, n: n4, value: this.held });
+    if (n4 != null) return t3("ui.col.count", { name, n: n4 });
+    if (this.held) return t3("ui.col.held", { name, value: this.held });
+    return name;
+  }
+  inside() {
+    return b2`<span class="nu-elword">${nameOf(this, "")}</span>${this.count != null ? b2`<small class="nu-elcount" aria-hidden="true">${this.count}</small>` : A}${this.held ? b2`<span class="nu-elheld" aria-hidden="true">${this.held}</span>` : A}`;
+  }
+};
+var NuColhead = class extends NuHead {
+  static {
+    this.properties = {
+      ...NuHead.properties,
+      open: { type: Boolean, reflect: true },
+      continued: { type: Boolean, reflect: true }
+    };
+  }
+  constructor() {
+    super();
+    this.open = false;
+    this.continued = false;
+  }
+  press() {
+    this.open = !this.open;
+    this.dispatchEvent(new CustomEvent(
+      "nu-fold",
+      { bubbles: true, composed: true, detail: { open: this.open } }
+    ));
+  }
+  render() {
+    if (this.continued)
+      return b2`<span class="nu-elcolhead is-cont" aria-hidden="true"
+        >${this.inside()}</span>`;
+    return b2`<button type="button" class="nu-elcolhead"
+      aria-expanded=${String(!!this.open)}
+      aria-current=${this.current ? "true" : A}
+      aria-label=${this.headName()}
+      @click=${() => this.press()}>${this.inside()}</button>`;
+  }
+};
+var NuRowhead = class extends NuHead {
+  render() {
+    return b2`<button type="button" class="nu-elrowhead"
+      aria-current=${this.current ? "true" : A}
+      aria-label=${this.headName()}
+      @click=${() => this.dispatchEvent(new CustomEvent(
+      "nu-press",
+      { bubbles: true, composed: true, detail: { value: nameOf(this, "") } }
+    ))}
+      >${this.inside()}</button>`;
+  }
+};
+var NuCell = class extends NuEl {
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      mark: { type: String },
+      value: { type: String },
+      order: { type: Number },
+      selected: { type: Boolean, reflect: true },
+      refused: { type: Boolean, reflect: true },
+      quiet: { type: Boolean, reflect: true },
+      busy: { type: Boolean, reflect: true },
+      why: { type: String }
+    };
+  }
+  constructor() {
+    super();
+    this.key = null;
+    this.label = null;
+    this.mark = null;
+    this.value = null;
+    this.order = null;
+    this.why = null;
+    this.selected = false;
+    this.refused = false;
+    this.quiet = false;
+    this.busy = false;
+  }
+  /** THE SAY LINE IS THE TABLE'S, WHEN THERE IS A TABLE. One sentence per
+   *  track, at the foot of it, where a thumb already is — twelve cells each
+   *  with a reserved line under it would push a column off the screen to hold
+   *  room for a sentence that is almost never there. Standing alone (the
+   *  gallery's own state grid, a cell used outside a table) it falls back to
+   *  its own, so a refusal is never silent for want of a parent. */
+  sayNode() {
+    const tbl = this.closest("nu-table");
+    const mine = tbl && tbl.querySelector(":scope > .nu-elsay");
+    return mine || super.sayNode();
+  }
+  /** How many cells in this group carry an `order`. Below two, the number is
+   *  not printed — see the note above. */
+  chain() {
+    const p3 = this.parentElement;
+    if (!p3) return this.order != null ? 1 : 0;
+    return p3.querySelectorAll(":scope > nu-cell[order]").length;
+  }
+  press(e4) {
+    if (this.refuse()) {
+      e4.preventDefault();
+      e4.stopPropagation();
+      return;
+    }
+    this.say(null);
+    this.dispatchEvent(new CustomEvent("nu-pick", {
+      bubbles: true,
+      composed: true,
+      detail: { value: this.value != null ? this.value : nameOf(this, "") }
+    }));
+  }
+  render() {
+    const w2 = nameOf(this, "");
+    const showOrder = this.order != null && this.chain() > 1;
+    const body = b2`${this.mark ? b2`<span class="nu-elmark" aria-hidden="true">${this.mark}</span>` : A}<span class="nu-elword">${w2}</span>${showOrder ? b2`<small class="nu-elorder" aria-hidden="true">${this.order}</small>` : A}`;
+    if (this.quiet)
+      return b2`<span class="nu-elcell is-quiet">${body}</span>
+        <span class="nu-elsay" role="status"></span>`;
+    return b2`<button type="button" class="nu-elcell"
+      aria-pressed=${this.selected ? "true" : A}
+      aria-disabled=${this.refused || this.busy ? "true" : A}
+      aria-busy=${this.busy ? "true" : A}
+      aria-label=${(() => {
+      const why = this.refused || this.busy ? this.why || t3("ui.refused.noReason") : null;
+      const named = showOrder ? t3("ui.cell.order", { name: w2, n: this.order != null ? this.order : 0 }) : w2;
+      if (why) return t3("menu.withWhy", { name: named || "", why });
+      return named || A;
+    })()}
+      @click=${(e4) => this.press(e4)}>${body}</button>
+      <span class="nu-elsay" role="status"></span>`;
+  }
+};
+
+// nukernel/src/ui/panels.ts
+var NuPlate = class extends NuEl {
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      anchor: { type: String, reflect: true },
+      open: { type: Boolean, reflect: true }
+    };
+  }
+  constructor() {
+    super();
+    this.key = null;
+    this.label = null;
+    this.anchor = "start";
+    this.open = false;
+  }
+  /** A PANEL WITH NO ACCESSIBLE NAME IS NOT A COMPONENT IN THIS SYSTEM. The
+   *  role and the name go on the HOST rather than on an inner box, because the
+   *  host is the scroll container and the thing a reader lands in; the rows
+   *  are the author's own children and stand where they were written. */
+  connectedCallback() {
+    super.connectedCallback();
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+    const name = nameOf(this, "");
+    if (name && !this.hasAttribute("aria-label"))
+      this.setAttribute("aria-label", name);
+  }
+  render() {
+    return A;
+  }
+};
+var NuMenuRow = class extends NuEl {
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      mark: { type: String },
+      count: { type: Number },
+      current: { type: Boolean, reflect: true },
+      selected: { type: Boolean, reflect: true },
+      refused: { type: Boolean, reflect: true },
+      busy: { type: Boolean, reflect: true },
+      why: { type: String }
+    };
+  }
+  constructor() {
+    super();
+    this.key = null;
+    this.label = null;
+    this.mark = null;
+    this.count = null;
+    this.why = null;
+    this.current = false;
+    this.selected = false;
+    this.refused = false;
+    this.busy = false;
+  }
+  press(e4) {
+    if (this.refuse()) {
+      e4.preventDefault();
+      e4.stopPropagation();
+      return;
+    }
+    this.dispatchEvent(new CustomEvent(
+      "nu-press",
+      { bubbles: true, composed: true, detail: { value: nameOf(this, "") } }
+    ));
+  }
+  render() {
+    const w2 = nameOf(this, "");
+    return b2`<button type="button" class="nu-elmenurow"
+      aria-current=${this.current ? "page" : A}
+      aria-pressed=${this.selected ? "true" : A}
+      aria-disabled=${this.refused || this.busy ? "true" : A}
+      aria-busy=${this.busy ? "true" : A}
+      aria-label=${w2 || A}
+      @click=${(e4) => this.press(e4)}
+      ><span class="nu-elmark" aria-hidden="true">${this.mark || ""}</span
+      ><span class="nu-elword">${w2}</span>${this.count != null ? b2`<small class="nu-elcount" aria-hidden="true">${this.count}</small>` : A}</button>
+      <span class="nu-elsay" role="status"></span>`;
+  }
+};
+
+// nukernel/src/ui/atlas.ts
+function fold(s4) {
+  return String(s4).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+function parseRows(s4) {
+  if (!s4) return [];
+  return s4.split(";").map((raw) => {
+    const f3 = raw.split("|").map((x2) => x2.trim());
+    return {
+      year: f3[0] || "",
+      name: f3[1] || "",
+      place: f3[2] || "",
+      k: f3[3] || (f3[1] || "").toLowerCase()
+    };
+  }).filter((r4) => r4.name !== "");
+}
+var NuIndex = class extends NuEl {
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      rows: { type: String },
+      query: { type: String, reflect: true },
+      current: { type: String, reflect: true }
+    };
+  }
+  constructor() {
+    super();
+    this.key = null;
+    this.label = null;
+    this.rows = null;
+    this.query = "";
+    this.current = null;
+  }
+  /** The AND-fold, over name, key, place and year. */
+  hit(r4) {
+    const q = fold(this.query || "").split(/\s+/).filter(Boolean);
+    if (!q.length) return true;
+    const hay = fold(r4.name + " " + r4.k + " " + r4.place + " " + r4.year);
+    return q.every((tok2) => hay.indexOf(tok2) >= 0);
+  }
+  type(e4) {
+    this.query = e4.target.value;
+  }
+  render() {
+    const all = parseRows(this.rows);
+    const shown = all.filter((r4) => this.hit(r4));
+    const q = this.query || "";
+    return b2`<div class="nu-elixfind">
+        <input class="nu-elixq" type="search" .value=${q}
+          aria-label=${t3("atlas.find.aria")}
+          @input=${(e4) => this.type(e4)}>
+        <button type="button" class="nu-elixclear"
+          aria-label=${t3("atlas.find.clear")}
+          @click=${() => {
+      this.query = "";
+    }}>\u2715</button>
+      </div>
+      <ul class="nu-elixlist" aria-label=${nameOf(this, "") || A}
+        >${all.map((r4) => b2`<li class="nu-elixli" data-k=${r4.k}
+          ?hidden=${!this.hit(r4)}><button type="button" class="nu-elixrow"
+          aria-current=${this.current && this.current === r4.k ? "true" : "false"}
+          aria-label=${t3(
+      "atlas.row.aria",
+      { name: r4.name, place: r4.place, year: r4.year }
+    )}
+          @click=${() => {
+      this.current = r4.k;
+      this.dispatchEvent(new CustomEvent(
+        "nu-pick",
+        { bubbles: true, composed: true, detail: { value: r4.k } }
+      ));
+    }}><span class="nu-elixy">${r4.year}</span
+          ><span class="nu-elixw">${r4.name}</span
+          ><span class="nu-elixp">${r4.place}</span></button></li>`)}</ul>
+      <p class="nu-elixnone" role="status"
+        >${shown.length ? "" : t3("atlas.find.none", { q })}</p>`;
+  }
+  /** `empty` IS DERIVED AND IS REFLECTED, not passed. A caller cannot know
+   *  whether a query matched until the filter has run, so the element that
+   *  runs it is the one that says so — and it says so as an ATTRIBUTE, which
+   *  is how every other state in this system is spelled and how the stylesheet
+   *  reaches it. It is deliberately not a reactive property: nothing observes
+   *  it, so writing it here cannot start a loop. */
+  updated(ch) {
+    super.updated(ch);
+    const all = parseRows(this.rows);
+    this.toggleAttribute("empty", all.length > 0 && !all.some((r4) => this.hit(r4)));
+  }
+};
+function parseMarks(s4) {
+  if (!s4) return [];
+  return s4.split(";").map((raw) => {
+    const f3 = raw.split("|").map((x2) => x2.trim());
+    return {
+      name: f3[0] || "",
+      year: f3[1] || "",
+      lat: parseFloat(f3[2] || "0") || 0,
+      lon: parseFloat(f3[3] || "0") || 0,
+      k: f3[4] || (f3[0] || "").toLowerCase()
+    };
+  }).filter((m2) => m2.name !== "");
+}
+var R2 = 60;
+var C3 = 72;
+var LON0 = -40;
+var RAD = Math.PI / 180;
+var NuGlobe = class extends NuEl {
+  static {
+    this.properties = {
+      key: { type: String },
+      label: { type: String },
+      marks: { type: String },
+      year: { type: String, reflect: true },
+      at: { type: String, reflect: true }
+    };
+  }
+  constructor() {
+    super();
+    this.key = null;
+    this.label = null;
+    this.marks = null;
+    this.year = null;
+    this.at = null;
+  }
+  /** x, y and the near-face test, all of it the orthographic projection with
+   *  φ₀ = 0. Arithmetic; see the head of this file. */
+  project(lat, lon) {
+    const phi = lat * RAD, dl = (lon - LON0) * RAD;
+    return {
+      x: C3 + R2 * Math.cos(phi) * Math.sin(dl),
+      y: C3 - R2 * Math.sin(phi),
+      near: Math.cos(phi) * Math.cos(dl) > 0
+    };
+  }
+  /** Which marks the swept year holds. No year set is no sweep, and every
+   *  mark stands. */
+  held(m2) {
+    return !this.year || m2.year === this.year;
+  }
+  graticule() {
+    const out = [];
+    for (const lat of [-60, -30, 0, 30, 60]) {
+      const half = R2 * Math.cos(lat * RAD);
+      const y3 = C3 - R2 * Math.sin(lat * RAD);
+      out.push(w`<line class="nu-elgratline" x1=${C3 - half} y1=${y3}
+        x2=${C3 + half} y2=${y3}></line>`);
+    }
+    for (const d3 of [-60, -30, 0, 30, 60]) {
+      const k2 = Math.sin(d3 * RAD);
+      const rx = Math.abs(k2 * R2);
+      const sweep = k2 >= 0 ? 1 : 0;
+      out.push(w`<path class="nu-elgratline" d=${"M " + C3 + "," + (C3 - R2) + " A " + rx.toFixed(2) + "," + R2 + " 0 0 " + sweep + " " + C3 + "," + (C3 + R2)}></path>`);
+    }
+    return out;
+  }
+  render() {
+    const name = nameOf(this, "");
+    const ms = parseMarks(this.marks);
+    return b2`<svg class="nu-elglobe" viewBox="0 0 144 144"
+      role="application" tabindex="0" aria-label=${name || A}
+      ><circle class="nu-elsea" cx=${C3} cy=${C3} r=${R2}></circle
+      ><g class="nu-elgrat" aria-hidden="true">${this.graticule()}</g
+      ><circle class="nu-ellimb" cx=${C3} cy=${C3} r=${R2}></circle
+      >${this.year ? w`<text class="nu-elyear" x=${C3} y=${C3 + R2 + 12}
+            aria-hidden="true">${this.year}</text>` : A}${ms.map((m2) => {
+      const p3 = this.project(m2.lat, m2.lon);
+      const on = p3.near && this.held(m2);
+      return w`<g class="nu-elplace" data-when=${on ? "1" : "0"}
+          role="button" tabindex=${on ? 0 : -1}
+          aria-current=${this.at === m2.k ? "true" : A}
+          aria-label=${t3(
+        "atlas.mark.aria",
+        { place: m2.name, year: m2.year, name: m2.k }
+      )}
+          @click=${() => {
+        this.at = m2.k;
+        this.dispatchEvent(new CustomEvent(
+          "nu-pick",
+          { bubbles: true, composed: true, detail: { value: m2.k } }
+        ));
+      }}><circle class="nu-elring" cx=${p3.x.toFixed(2)} cy=${p3.y.toFixed(2)}
+            r="8"></circle><circle class="nu-elpin" cx=${p3.x.toFixed(2)}
+            cy=${p3.y.toFixed(2)} r="3.5"></circle></g>`;
+    })}</svg>`;
+  }
+  /** THE THREE DERIVED STATES, REFLECTED. `sweeping` is a year being held,
+   *  `marked` is one of the marks being the record that is playing, and
+   *  `empty` is a year that holds one mark or none — which is real and
+   *  reachable, and on which the year stamp is the whole picture. None of the
+   *  three is a reactive property, so writing them here observes nothing and
+   *  schedules nothing: the element still paints once per change. */
+  updated(ch) {
+    super.updated(ch);
+    const ms = parseMarks(this.marks);
+    const on = ms.filter((m2) => {
+      const p3 = this.project(m2.lat, m2.lon);
+      return p3.near && this.held(m2);
+    });
+    this.toggleAttribute("sweeping", !!this.year);
+    this.toggleAttribute("marked", !!this.at && on.some((m2) => m2.k === this.at));
+    this.toggleAttribute("empty", !!this.year && on.length <= 1);
+  }
+};
+
 // nukernel/src/ui/api.ts
-var ALL_STATES = ["rest", "hover", "focus", "selected", "open", "refused", "busy"];
+var ALL_STATES = [
+  "rest",
+  "hover",
+  "focus",
+  "selected",
+  "current",
+  "open",
+  "sweeping",
+  "marked",
+  "empty",
+  "refused",
+  "busy"
+];
 var PSEUDO_STATES = ["hover", "focus"];
 var SELECTED = {
   name: "selected",
@@ -1005,7 +1593,7 @@ var WHY = {
 var BUSY = {
   name: "busy",
   type: "boolean",
-  note: "the box is working on it; writes aria-busy and takes no press"
+  note: "the box is working on it: aria-busy, still pressable, and a press says so"
 };
 var KEY = {
   name: "key",
@@ -1021,6 +1609,21 @@ var MARK = {
   name: "mark",
   type: "string",
   note: "one Unicode mark drawn in --sym; never an emoji, and never the only name"
+};
+var CURRENT = {
+  name: "current",
+  type: "boolean",
+  note: "you are HERE — writes aria-current, never aria-pressed: a place is not a press"
+};
+var COUNT = {
+  name: "count",
+  type: "number",
+  note: "how many are inside; a heading that can name a count must, or the fold hides a number"
+};
+var HELD = {
+  name: "held",
+  type: "string",
+  note: "the standing word this group holds — a readout, drawn quiet and aria-hidden"
 };
 var SPEC = [
   {
@@ -1199,7 +1802,7 @@ var SPEC = [
     tag: "nu-spinner",
     title: "Spinner",
     from: "DESIGN.md §2 component 23 (shipped v302 as .nu-spin)",
-    what: "a state of at most five positions: one control saying where you are, a step each side",
+    what: "a state of at most five positions: ONE button, and a press rotates it",
     attrs: [
       LABEL,
       KEY,
@@ -1215,10 +1818,272 @@ var SPEC = [
       BUSY
     ],
     states: ["rest", "hover", "focus", "selected", "refused", "busy"],
-    keys: "Right and Up step forward, Left and Down step back, Home and End take the ends; a press on the word steps forward",
-    named: "t(key) or label; the steps say forward and back with the name in them",
+    keys: "a press rotates forward and wraps; Right and Up step forward, Left and Down back, Home and End take the ends",
+    named: "t(key) or label, said with the word and the position — ui.spin.now, on the one button",
     refuses: "a refused spinner says its reason and does not move; it steps OVER a refused word and never into one",
     demo: { label: "Attack", options: "hard:straight in|soft:soft|slow:slow|swell:swelling", value: "soft" }
+  },
+  {
+    tag: "nu-table",
+    title: "Table",
+    from: "DESIGN.md §2 (table cell, column head, row head) — the shape .nu-lztrack already ships",
+    what: "a sideways track of columns: the track scrolls, the page does not",
+    attrs: [
+      KEY,
+      LABEL,
+      {
+        name: "flow",
+        type: "enum",
+        values: ["across", "down"],
+        note: "across is columns side by side and the default; down is groups on the side and rows running out"
+      },
+      REFUSED,
+      WHY,
+      BUSY
+    ],
+    states: ["rest", "focus", "refused", "busy"],
+    keys: "Tab reaches the track; the arrows and the wheel scroll it, and its columns take their own presses",
+    named: "t(key) or label, on the track — a scroll region with no name is a room with no door",
+    refuses: "a refused table takes every press inside it and prints one reason in its own say line",
+    demo: { label: "Instruments" },
+    demoChildren: [
+      {
+        tag: "nu-colhead",
+        attrs: { label: "Strings", count: "4", open: "", current: "" },
+        kids: [
+          { tag: "nu-cell", attrs: { label: "Violin", value: "violin", selected: "" } },
+          { tag: "nu-cell", attrs: { label: "Viola", value: "viola" } },
+          { tag: "nu-cell", attrs: { label: "Cello", value: "cello", mark: "◆" } },
+          { tag: "nu-cell", attrs: { label: "Double bass", value: "contrabass", refused: "" } }
+        ]
+      },
+      {
+        tag: "nu-colhead",
+        attrs: { label: "Reeds", count: "3", open: "", held: "clarinet" },
+        kids: [
+          { tag: "nu-cell", attrs: { label: "Clarinet", value: "clarinet", order: "1" } },
+          { tag: "nu-cell", attrs: { label: "Oboe", value: "oboe", order: "2" } },
+          { tag: "nu-cell", attrs: { label: "Bassoon", value: "bassoon", quiet: "" } }
+        ]
+      },
+      {
+        tag: "nu-colhead",
+        attrs: { label: "Reeds", continued: "", open: "" },
+        kids: [
+          { tag: "nu-cell", attrs: { label: "Cor anglais", value: "corAnglais" } },
+          { tag: "nu-cell", attrs: { label: "Contrabassoon", value: "contrabassoon" } }
+        ]
+      }
+    ]
+  },
+  {
+    tag: "nu-colhead",
+    title: "Column head",
+    from: "DESIGN.md §2 component 16 (column head) + .nu-lzhead / .nu-lzcont",
+    what: "a column: its name, how many are in it, what it is holding, and whether it is folded",
+    attrs: [
+      KEY,
+      LABEL,
+      COUNT,
+      HELD,
+      CURRENT,
+      {
+        name: "open",
+        type: "boolean",
+        note: "unfolded — its cells are on the glass; writes aria-expanded, and the fold is one CSS rule"
+      },
+      {
+        name: "continued",
+        type: "boolean",
+        note: "this column carries on the one before it, so it is a READOUT: aria-hidden, no count, no fold, no press"
+      }
+    ],
+    states: ["rest", "hover", "focus", "current", "open"],
+    keys: "Enter and Space fold and unfold it; a continuation takes no key, because it is not a control",
+    named: "t(key) or label, said with its count and its held word — the two are drawn aria-hidden",
+    refuses: "it does not: a heading that cannot fold is drawn continued, which is a readout and not a refusal",
+    demo: { label: "Strings", count: "4", held: "violin" },
+    demoChildren: [
+      { tag: "nu-cell", attrs: { label: "Violin", value: "violin", selected: "" } },
+      { tag: "nu-cell", attrs: { label: "Viola", value: "viola" } },
+      { tag: "nu-cell", attrs: { label: "Cello", value: "cello" } }
+    ]
+  },
+  {
+    tag: "nu-rowhead",
+    title: "Row head",
+    from: "DESIGN.md §2 component 17 (row head)",
+    what: "the same group with the axis turned: the name down the side, its cells running out across",
+    attrs: [KEY, LABEL, COUNT, HELD, CURRENT],
+    states: ["rest", "hover", "focus", "current"],
+    keys: "Enter and Space press it; there is no fold, because a folded row collapses its own handle",
+    named: "t(key) or label, said with its count and its held word",
+    refuses: "it does not: a row head names a group and never withholds one",
+    demo: { label: "Drums", count: "3" },
+    demoChildren: [
+      { tag: "nu-cell", attrs: { label: "Kick", value: "kick", selected: "" } },
+      { tag: "nu-cell", attrs: { label: "Snare", value: "snare" } },
+      { tag: "nu-cell", attrs: { label: "Hat", value: "hat" } }
+    ]
+  },
+  {
+    tag: "nu-cell",
+    title: "Table cell",
+    from: "DESIGN.md §2 component 15 (table cell) — Paul: “just list the items as cells”",
+    what: "one option, drawn as a line and not a pill: full width, word at the start edge",
+    attrs: [
+      KEY,
+      LABEL,
+      MARK,
+      { name: "value", type: "string", note: "what the record stores; the word is what a hand reads" },
+      SELECTED,
+      {
+        name: "order",
+        type: "number",
+        note: "its place in a chain, printed only when a chain has more than one member"
+      },
+      {
+        name: "quiet",
+        type: "boolean",
+        note: "INERT, which is NOT refused: no press was ever offered, so no button, no dash, no aria-disabled"
+      },
+      REFUSED,
+      WHY,
+      BUSY
+    ],
+    states: ["rest", "hover", "focus", "selected", "refused", "busy"],
+    keys: "Enter and Space press it; Tab reaches it, refused or not, because a reason a keyboard cannot reach is silent",
+    named: "t(key) or label; with a printed order the name says the position too",
+    refuses: "a press prints why in the TABLE's one say line, at the foot of the track where a thumb already is",
+    demo: { label: "Cello", value: "cello" }
+  },
+  {
+    tag: "nu-plate",
+    title: "Plate",
+    from: "DESIGN.md §2 component 18 (plate) — the app's #nu-menu, given a tag",
+    what: "the panel that arrives: a column of rows, capped, scrolling inside itself",
+    attrs: [
+      KEY,
+      LABEL,
+      {
+        name: "anchor",
+        type: "enum",
+        values: ["start", "end"],
+        note: "which edge of the screen it hangs from; start, because the hamburger is on the left"
+      },
+      OPEN
+    ],
+    states: ["open"],
+    keys: "Tab walks its rows; Escape is the page's to close it, not the plate's",
+    named: "t(key) or label, on the panel itself — a plate with no name is a room with no door",
+    refuses: "it does not; a row inside it refuses, and says so in its own say line",
+    demo: { label: "Menu", open: "" },
+    demoChildren: [
+      { tag: "nu-menu-row", attrs: { label: "Master", mark: "⇅", current: "" } },
+      { tag: "nu-menu-row", attrs: { label: "Sections", mark: "⌗", count: "4" } },
+      { tag: "nu-menu-row", attrs: { label: "Players", mark: "⊙", count: "12" } },
+      { tag: "nu-menu-row", attrs: { label: "Motifs", mark: "§" } },
+      { tag: "nu-menu-row", attrs: { label: "Rules", mark: "≡" } },
+      { tag: "nu-menu-row", attrs: { label: "Where", mark: "◉" } },
+      { tag: "nu-menu-row", attrs: { label: "Export", mark: "⤓", refused: "" } }
+    ]
+  },
+  {
+    tag: "nu-menu-row",
+    title: "Menu row",
+    from: "DESIGN.md §2 component 19 (menu row) — Paul: “icons should all have same width”",
+    what: "one line of a plate: a mark in a fixed advance, a name, and at most a count",
+    attrs: [
+      KEY,
+      LABEL,
+      MARK,
+      COUNT,
+      CURRENT,
+      SELECTED,
+      REFUSED,
+      WHY,
+      BUSY
+    ],
+    states: ["rest", "hover", "focus", "selected", "current", "refused", "busy"],
+    keys: "Enter and Space press it; Tab reaches it, refused or not",
+    named: "t(key) or label; the mark is decoration and the count is drawn aria-hidden",
+    refuses: "a press prints why in the row's own say line and goes nowhere",
+    demo: { label: "Sections", mark: "⌗", count: "4" }
+  },
+  {
+    tag: "nu-index",
+    title: "Index",
+    from: "DESIGN.md §2 (sheet row / label row) — the atlas's own #atlasIndex, 502 rows",
+    what: "a searchable list of records: a year, a name, a place, and one row you are on",
+    attrs: [
+      KEY,
+      LABEL,
+      {
+        name: "rows",
+        type: "list",
+        note: "year|name|place|key, rows separated by ; — a name may hold a comma and never a pipe"
+      },
+      {
+        name: "query",
+        type: "string",
+        note: "the standing search; folded NFD and matched as AND-tokens over name, key, place and year"
+      },
+      {
+        name: "current",
+        type: "string",
+        note: "the key of the row you are ON — aria-current on exactly one row, and never aria-selected"
+      }
+    ],
+    states: ["rest", "hover", "focus", "current", "empty"],
+    keys: "type in the field to filter; Tab walks the rows; Enter and Space open one",
+    named: "t(key) or label names the list; each row says its name, its place and its year",
+    refuses: "no row refuses; a query that matches nothing is answered by a sentence naming it",
+    demo: {
+      label: "Records",
+      rows: "1888|Ragtime|Sedalia|ragtime; 1917|Stride|Harlem|stride; 1948|Mambo|Havana|mambo; 1962|Bossa nova|Rio|bossa; 1969|Reggae|Kingston|reggae; 1973|Dub|Kingston|dub; 1977|No wave|New York|nowave; 1982|Electro|Detroit|electro; 1988|Acid house|Chicago|acid; 1991|Trip hop|Bristol|triphop; 1994|Jungle|London|jungle; 2003|Grime|London|grime"
+    },
+    demoStates: {
+      current: { current: "dub" },
+      empty: { query: "zzzz" }
+    }
+  },
+  {
+    tag: "nu-globe",
+    title: "Globe",
+    from: "DESIGN.md §2 (the atlas map) — the app's #atlasMap, SVG and never canvas",
+    what: "an orthographic sphere with a mark on every place a record was made",
+    attrs: [
+      KEY,
+      LABEL,
+      {
+        name: "marks",
+        type: "list",
+        note: "name|year|lat|lon|key, marks separated by ; — the projection is arithmetic, the paint is CSS"
+      },
+      {
+        name: "year",
+        type: "string",
+        note: "the year being swept: marks it does not hold leave the sphere, and the year is stamped on it"
+      },
+      {
+        name: "at",
+        type: "string",
+        note: "the key of the mark that is playing — it wears the ring and aria-current"
+      }
+    ],
+    states: ["rest", "focus", "sweeping", "marked", "empty"],
+    keys: "Tab reaches the sphere and then each mark it is showing; Enter and Space open one",
+    named: "t(key) or label on the sphere; each mark says its place, its year and its record",
+    refuses: "nothing to refuse: a year holding no mark is empty, which is an answer and not a refusal",
+    demo: {
+      label: "Where the records are",
+      marks: "Kingston|1973|18.0|-76.8|dub; Bristol|1991|51.5|-2.6|triphop; New York|1977|40.7|-74.0|nowave; Sedalia|1888|38.7|-93.2|ragtime"
+    },
+    demoStates: {
+      sweeping: { year: "1973" },
+      marked: { year: "1973", at: "dub" },
+      empty: { year: "1888" }
+    }
   }
 ];
 function attrsOf(tag) {
@@ -1459,24 +2324,31 @@ function scales(host) {
   geo.appendChild(gb);
   s4.appendChild(geo);
 }
+function kid(k2) {
+  const n4 = document.createElement(k2.tag);
+  for (const [a3, v2] of Object.entries(k2.attrs || {})) n4.setAttribute(a3, v2);
+  if (n4.hasAttribute("refused") && !n4.hasAttribute("why"))
+    n4.setAttribute("why", t3("ui.gal.demo.why"));
+  for (const c4 of k2.kids || []) n4.appendChild(kid(c4));
+  return n4;
+}
 function example(spec, state) {
   const n4 = document.createElement(spec.tag);
   for (const [k2, v2] of Object.entries(spec.demo)) n4.setAttribute(k2, v2);
-  if (state === "selected") {
-    if (spec.demo["options"]) {
-      const opts = spec.demo["options"].split("|");
-      const last = opts[opts.length - 1] || "";
-      n4.setAttribute("value", (last.split(":")[0] || "").replace(/^!/, ""));
-    } else n4.setAttribute("selected", "");
+  if (state === "selected" && spec.demo["options"]) {
+    const opts = spec.demo["options"].split("|");
+    const last = opts[opts.length - 1] || "";
+    n4.setAttribute("value", (last.split(":")[0] || "").replace(/^!/, ""));
+  } else if (spec.demoStates && spec.demoStates[state]) {
+    for (const [k2, v2] of Object.entries(spec.demoStates[state]))
+      n4.setAttribute(k2, v2);
+  } else if (state !== "rest" && PSEUDO_STATES.indexOf(state) < 0) {
+    n4.setAttribute(state, "");
   }
-  if (state === "open") n4.setAttribute("open", "");
-  if (state === "refused") {
-    n4.setAttribute("refused", "");
-    n4.setAttribute("why", t3("ui.gal.demo.why"));
-  }
-  if (state === "busy") n4.setAttribute("busy", "");
+  if (state === "refused") n4.setAttribute("why", t3("ui.gal.demo.why"));
   if (PSEUDO_STATES.indexOf(state) >= 0) n4.setAttribute("data-demo", state);
   if (spec.tag === "nu-lamp" && state === "selected") n4.setAttribute("on", "");
+  for (const k2 of spec.demoChildren || []) n4.appendChild(kid(k2));
   n4.setAttribute("data-state", state);
   if (state === "refused")
     requestAnimationFrame(() => {
@@ -1599,7 +2471,15 @@ var TAGS = [
   ["nu-legend", NuLegend],
   ["nu-value", NuValue],
   ["nu-rail", NuRail],
-  ["nu-spinner", NuSpinner]
+  ["nu-spinner", NuSpinner],
+  ["nu-table", NuTable],
+  ["nu-colhead", NuColhead],
+  ["nu-rowhead", NuRowhead],
+  ["nu-cell", NuCell],
+  ["nu-plate", NuPlate],
+  ["nu-menu-row", NuMenuRow],
+  ["nu-index", NuIndex],
+  ["nu-globe", NuGlobe]
 ];
 function define() {
   const declared = SPEC.map((s4) => s4.tag).sort().join(",");
@@ -1625,11 +2505,19 @@ export {
   ALL_STATES,
   EDGE_FLOOR,
   NuButton,
+  NuCell,
+  NuColhead,
+  NuGlobe,
   NuIconButton,
+  NuIndex,
   NuLamp,
   NuLegend,
+  NuMenuRow,
+  NuPlate,
   NuRail,
+  NuRowhead,
   NuSpinner,
+  NuTable,
   NuValue,
   PSEUDO_STATES,
   SPEC,

@@ -1043,8 +1043,8 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       seen.add(k);
       out.tried++;
       /* a folded cluster is opened the way a thumb opens one, first */
-      const sec = el.closest("section.nu-lzcluster");
-      const head = sec && sec.querySelector(".nu-lzhead");
+      const sec = el.closest(".nu-lzcluster");
+      const head = sec && sec.querySelector(".nu-elcolhead, .nu-lzhead");
       if (head && head.getAttribute("aria-expanded") === "false") {
         head.click(); await wait(140);
       }
@@ -1633,9 +1633,21 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
         /* ...AND WHERE THE REST OF THEM ARE. Every word is in exactly one
            cluster and its count is on that cluster's own heading, so the
            headings' counts plus the unheaded bin are the whole vocabulary. */
+        /* RE-POINTED 2026-09-07, AND IT HAD GONE VACUOUS. A cluster is a
+           `<nu-colhead>` now and its count is `.nu-elcount`; with no
+           `.nu-lzcount` and no `.nu-lzhead` left in the DOM this computed
+           `0 + n === n`, which is true of any DOM at all — the check passed
+           while asserting nothing. Reported by the round that made the change
+           rather than found later, which is the only reason it is repaired in
+           the same day. The CLAIM is unchanged and is the one below: every
+           word is in exactly one cluster and its count is on that cluster's
+           own heading, so the headings' counts plus the unheaded bin are the
+           whole vocabulary. `[label]` is what says a column HAS a heading —
+           `<nu-colhead>` always renders a heading box, so the box never was
+           the fact and the WORD is. */
         counts: secs.reduce((a, x) => a +
-          (+((x.querySelector(".nu-lzcount") || {}).textContent || 0) || 0), 0),
-        loose: secs.filter((x) => !x.querySelector(".nu-lzhead"))
+          (+((x.querySelector(".nu-elcount") || {}).textContent || 0) || 0), 0),
+        loose: secs.filter((x) => !x.getAttribute("label"))
           .reduce((a, x) => a + x.querySelectorAll(".nu-lz").length, 0),
         folded: secs.filter((x) => x.classList.contains("is-folded")).length,
         h: Math.round(f.getBoundingClientRect().height),

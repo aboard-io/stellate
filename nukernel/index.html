@@ -668,6 +668,17 @@
      importing it, so that a widget that must be ONE widget is not compiled
      into three files. This tag is what says, in the document, that the global
      is up before anything draws a sheet. -->
+<!-- THE DESIGN SYSTEM'S OWN ELEMENTS (docs/DESIGN-SYSTEM.md step 4, 2026-09-07).
+     `src/ui/` -> `nukernel/ui/ui.js` defines `<nu-table>`, `<nu-colhead>`,
+     `<nu-rowhead>`, `<nu-cell>` and eleven more, and until now only
+     `nukernel/design.html` loaded it — the elements existed and nothing in the
+     app used them. The lozenge field is the first caller (Paul: *"Make the
+     table system with lozenges just list the items as cells"*), and a custom
+     element that is not DEFINED renders as an inert unknown tag, so this line
+     is what makes the port real. It is named HERE, ahead of ui/lozenge.js, for
+     `ui/copy.js`'s own reason: the definitions ship ONCE, in one file, and the
+     bundles that draw with them do not each compile a copy. -->
+<script type="module" src="ui/ui.js"></script>
 <script type="module" src="ui/lozenge.js"></script>
 <script type="module" src="ui/eight.js"></script>
 

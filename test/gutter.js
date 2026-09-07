@@ -961,10 +961,18 @@ function standUpServer() {
      unchanged as a node and is a row of the plate the ≡ opens. */
   /* ...AND THE TWO BANDS TRADED AGAIN ON 2026-09-06 (TABLE.md §18): the TAPE
      is a readout and went up into the strip's dead gap; the ROOM and the DIE
-     are controls and came down into the width it left. The strip reads name ·
-     tape · ≡ and the bar reads transport · die · room. */
+     are controls and came down into the width it left.
+     ...AND THE STRIP'S TWO ENDS TRADED ON 2026-09-07 (TABLE.md §20). Paul:
+     *"Sorry hamburger should be on left."* The strip reads ≡ · tape · name
+     and the bar reads transport · die · room. IT IS ASSERTED AS MARKUP AND
+     NOT AS RENDERED x ON PURPOSE: the move was made in ui/eight.js's
+     `stripEl.append` rather than with a CSS `order`, precisely so that the
+     band has ONE order — the order it reads in, the order it tabs in and the
+     order it draws in — and this array is the check that it still does. A day
+     when this array and the glass disagree is a day someone added an
+     `order`. */
   check(JSON.stringify(t9.stripKids) ===
-          JSON.stringify(["toptab-Where", "nu-tape", "burger"]) &&
+          JSON.stringify(["burger", "nu-tape", "toptab-Where"]) &&
         JSON.stringify(t9.kids) ===
           JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t9.seed) === JSON.stringify(["rewrite", "seedin"]) &&
@@ -975,7 +983,7 @@ function standUpServer() {
        back silently — and *"replace the die icon with the countdown"* takes
        `.nu-seedwait` with it. What is left is the throw and the field it
        becomes. */
-    "T9 · the strip reads name · tape · ≡, the bar reads transport · die · " +
+    "T9 · the strip reads ≡ · tape · name, the bar reads transport · die · " +
     "room, and the seed row reads die · field, with no number, no separate " +
     "wait and the die nowhere else — " +
     JSON.stringify({ strip: t9.stripKids, bar: t9.kids, seed: t9.seed }));

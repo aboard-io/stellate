@@ -3812,6 +3812,14 @@ its verb.
 
 ### 15 · Wave B — the editor fits, the refusal speaks, the variation chains
 
+> **THE THREE FOLD STATES SURVIVE; THEIR SPELLING CHANGED (2026-09-07, §21).**
+> Where this section says `.nu-lzcount` on a heading and `.nu-lzwrap[hidden]`,
+> read `<nu-colhead count open>` and the one rule
+> `nu-colhead:not([open]) > nu-cell`. And a fact worth recording because it
+> changes which state a reader actually meets: a vocabulary that cannot fit
+> now becomes §19's TABLE rather than folding, so states B and C are reached
+> almost only by a hand closing a column on purpose.
+
 **APPROVED 2026-09-06** (docs/REDESIGN-SCOPE.md, wave B: items 4, 5 and 6),
 off the Coach House walkthrough — a fourteen-section trip-hop record built in
 the box on a phone (`scratchpad/pm-walkthrough/NOTES.md`, the record in
@@ -4156,12 +4164,31 @@ these numbers is not breaking a contract.*
 
 #### NOTHING RUBBER-BANDS
 
-**OPEN QUESTION, ASSIGNED (2026-09-07):** the two sideways scrollers built
-after this law — the sheet track (`nu.css:8501`) and `.nu-lztrack`
-(`nu.css:8830`) — declare `overscroll-behavior-inline: contain`, which the law
-below names as the wrong choice by name. Whether the tracks are exempt or the
-rules are wrong is **not settled here**; it is the live design-system round's
-to answer. The law and its reasoning stand as written until it does.
+**ASKED, AND ANSWERED (2026-09-07, the design-system round).** The question
+this paragraph carried was: the two sideways scrollers built after this law —
+the sheet track and `.nu-lztrack` — declared `overscroll-behavior-inline:
+contain`, which the law below names as the wrong value by name, and it was not
+settled whether the tracks were exempt or the rules were wrong. **THE RULES
+WERE WRONG. Both tracks are `none`** (`nu.css`, the `#pan-band .nu-sheettrack`
+rule and the `.nu-lztrack` rule; each carries the reason on its own line).
+
+The argument that decided it is the one already written below and needed no
+extension: **`contain` stops the gesture CHAINING to the scroller behind and
+still lets the scroller rubber-band inside itself**, and a bounce translates
+the scroller's `position: sticky` children with it — which for these two tracks
+is the column heads. That is *"the whole thing moves including the fixed
+parts"* one tier down from where Paul first saw it. There was never a reason
+for the tracks to be the exception; they were newer than the law, which is a
+fact about when they were written and not an argument. The tracks now hand a
+gesture at their end to nobody, exactly as `.nu-pane` and the document do.
+
+A THIRD `contain` WAS FOUND AND IT WAS A GHOST: the design system's own
+gallery stylesheet carried a comment claiming `overscroll-behavior-inline:
+contain` on `.dg-matrix, .dg-attrs` that the rule below it never declared —
+[[declared but never arriving]], in the round that exists to name that bug. The
+tables fit rather than scroll (D7 measures 0px of sideways scroll at 320), so
+the comment was corrected rather than the rule; if a future column makes one of
+them overflow, it takes `none`.
 
 > *"In the song section area I can drag it too far right and then the whole
 > thing moves including the fixed parts. So it all feels reel wobbly."*
@@ -4260,7 +4287,8 @@ and `test/table.browser.js`'s two shut gestures — exclude `.nu-corner` too.
 
 **THE LAW: THE TOP IS WHERE YOU GO. THE BOTTOM IS WHAT YOU HEAR.** Two fixed
 bands and nothing else is chrome. The strip at the head holds the record's NAME
-at the start and ONE hamburger at the end; the bar at the foot holds the
+at the END and ONE hamburger at the START (2026-09-07 — the two swapped ends;
+they were name-first, ≡-last from v298 until then); the bar at the foot holds the
 transport and the tape. A modality is a place the box behaves differently, and
 after this round there are two of them — **a view** (you are looking at one,
 chosen from the hamburger) and **a sheet** (a row of the table opened in place,
@@ -4335,11 +4363,22 @@ own word.
 RENDERED PAGE.** It came over from the bar wearing the bar's own `flex: 1 1
 auto` — the rule that let a genre name take the row's give — and at 1280 that
 drew a **1,200 × 44 plate with "Kingston 1969" floating in the middle of it**
-(measured; 340.4px at 390 and 275 at 320, centred in each). NAV.md says *"THE
+(measured; 340.4px at 390 and 275 at 320, centred in each). NAV.md said *"THE
 RECORD'S NAME GOES TOP LEFT"*, and a name centred in a plate the width of the
 screen is not at the left of anything. So the plate is `flex: 0 1 auto` with
 `margin-inline-end: auto` — content width, the ≡ held at the far end — and its
-face reads from the start. `min-inline-size: 0` still lets a long name
+face reads from the start.
+
+**AND THE TWO ENDS SWAPPED ON 2026-09-07, WHICH LEAVES THAT SENTENCE TRUE OF
+THE WRONG EDGE.** Paul: *"Hamburger should be on right."* and then, a minute
+later, *"Sorry hamburger should be on left."* The ≡ took the START of the band
+and the name took the END. **So "THE RECORD'S NAME GOES TOP LEFT" is retired
+here, in the section that owns the strip**, and the surviving law is the one
+this paragraph was really about and which did not move: the name plate is as
+wide as its own word, never as wide as the screen, and its face reads from its
+own start edge — `flex: 0 1 auto` still, with the `margin-inline-end: auto`
+now doing its work on the other side of the tape. `min-inline-size: 0` still
+lets a long name ellipsise rather than push the ≡ off a phone. `min-inline-size: 0` still lets a long name
 ellipsise rather than push the ≡ off a phone, and the 44px floor still stops
 that shrink going under a thumb.
 
@@ -5026,6 +5065,21 @@ number; the plate's `Set seed` door closes the plate and leaves the keyboard in
 
 ### 19 · The instrument table, and the chair's playing options (2026-09-07)
 
+> **THE SHAPE BELOW WAS EXTRACTED INTO THE DESIGN SYSTEM THE SAME WEEK
+> (2026-09-07, §21).** Everything this section argues is still true and still
+> the arrangement a reader meets; what is no longer true is WHO OWNS IT. The
+> track, the column, the continuation and the one-word-per-line rule are
+> `<nu-table>`, `<nu-colhead>` and `<nu-cell>` — elements of the system
+> (DESIGN.md §2a) — and the lozenge field is the first CALLER of them rather
+> than the author of the shape. So every rule this section names by selector
+> (`.nu-lztrack`, `.nu-lzcluster.is-col` and its four companions) is **deleted
+> from `nu.css`**; the identical geometry, with the same reasons on the same
+> lines, is at `THE ELEMENTS` as `.nu-eltrack` and `.nu-elcolhead`. Read the
+> selectors below as the history of a decision, not as a map of the
+> stylesheet. §21 carries the port, its measurements, and the lit-html
+> edge-marker law that the next component rendering children into a
+> self-rendering element will need.
+
 **TWO ASKS, VERBATIM**, on v299:
 
 > *"For the instrument selector make it a horizontal table wider than the
@@ -5104,7 +5158,10 @@ window.innerWidth` at 390), and the four scrollports that DO scroll sideways
 are named there.
 
 What is this section's own, and is why the track exists at all: `overflow-x` on
-the track and `overscroll-behavior-inline: contain` on it — a vocabulary too
+the track and `overscroll-behavior-inline: none` on it (**`contain` until
+2026-09-07** — §15a's own law names that value as the wrong one and the tracks
+were the last two places still using it; the correction and its argument are
+recorded there) — a vocabulary too
 tall to wrap is turned ninety degrees so the columns run off the SIDE, where
 there is no bottom to fall off, and nothing is hidden. The page is untouched by
 that, which is the whole point of putting the scroll on the track and not on
@@ -5580,14 +5637,28 @@ in the same words as the old one:
   through the plate's `Set Seed` row. **11 ok, 0 failed.**
 - **`test/atlas.js`** — G11 inverted (no header, no close, the globe at the top
   edge) and **G11b is new**: the two ways out, pressed. Its `#reading` readers
-  (G9, G11, G19) read the die's accessible name instead. **134 of 135**, and
-  the one red is the standing one §18h already filed: G9's *"the sentence under
-  the globe agrees with the reading"* — `#atlasSay` is EMPTY, because
+  (G9, G11, G19) read the die's accessible name instead. **134 of 135** on the day, and
+  the one red was the standing one §18h had already filed: G9's *"the sentence
+  under the globe agrees with the reading"* — `#atlasSay` is EMPTY, because
   `atlas.wroteSeed` was deleted on 2026-09-06 with the receipt Paul asked to be
   rid of (*"'Bristol 1994 · noirhop — 14 sections, 9 players, take 0 · seed
-  28138' stop producing it"*). The check is asserting a sentence the page was
-  told to stop saying; it is not this round's, and the fix is to retire the
-  check, in the round that owns the atlas.
+  28138' stop producing it"*). The check was asserting a sentence the page was
+  told to stop saying.
+
+  **CLOSED 2026-09-07, AND THE GATE IS 135 OF 135.** The design-system round
+  declared `<nu-index>` and `<nu-globe>` into the system, which made it the
+  round that owns the atlas, so it retired the check as this note asked.
+  RETIRED IS NOT DELETED: the claim — *"the reading moved, and the page says
+  which one is on it"* — was worth making and survives; what went is the
+  readout it was asked of. The join is re-taken against the two readouts that
+  still exist and neither is a recital: `#rewrite`'s accessible name (what
+  `printReading` writes and a screen reader hears, and the number's last home
+  since §20 deleted `#reading`) and **THE ADDRESS BAR** (`linkFrag` writes
+  `s=<seed>` off `ATLAS.link()` and `markLink` runs it on every gesture a HAND
+  makes, which a press of `#rewrite` is). Two readouts, two code paths, one
+  fact; a page that told a reader one reading while linking another now fails.
+  It also checks the number is a position in the die's own 0..65536 domain,
+  which is the only thing the old `/reading 2/` literal was ever really about.
 - **`test/table.browser.js`** — T13a's `wantBar` is `[voicing, play, rewrite]`;
   T13l's ≤ 2 taps adds `playmode`, `take` and `seedmenu`; T14a reads the plate's
   mark and word and makes the one-owner claim in the accessible name.
@@ -5684,3 +5755,122 @@ real hinge. The gate is already written and already headless
 meter and bar count); driving it *through the page* is the last step and not the
 first.
 
+
+### 21 · The lozenge became a table of cells (2026-09-07)
+
+Paul, looking at the design-system gallery: *"Make the table system with
+lozenges just list the items as cells. The lozenges are getting in the way. Add
+the tables and cells to the design system."*
+
+§19 turned the field ninety degrees — one column per family, one word per line,
+the track scrolling sideways. This is the other half: **what an option IS.**
+`<nu-table>`, `<nu-colhead>`, `<nu-rowhead>` and `<nu-cell>` are in the design
+system now, the field is a caller of them rather than the owner of the shape,
+and the pill is deleted.
+
+#### What the numbers say, and the honest one first
+
+Measured on the rendered app under iPhone 14 emulation, Kingston 1969 and the
+Coach House, before and after, by the same script (`test/_system2-measure.cjs`):
+
+| readable at once | 320 | 390 | 1280 |
+|---|---|---|---|
+| `sound.instrument` (149) | 0 → **0** | 3–4 → **3–4** | 34–38 → **38–43** |
+| `dev.kit` (69) | 10–14 → **10–14** | 14–15 → **14–15** | 46–50 → **46–50** |
+
+**THE PORT BOUGHT ALMOST NO READABLE-AT-ONCE, AND THE REASON IS THAT §19 HAD
+ALREADY SPENT IT.** `.nu-lzcluster.is-col .nu-lz{ inline-size: 100%;
+justify-content: flex-start }` had already made a table-mode pill
+full-column-width with its word at the start edge — a pill wearing a cell's
+geometry. The only levers left were the 18ch column and the `--tap` row pitch,
+and neither may be spent: 18ch is what holds "acoustic grand piano", and 44px
+is a floor and not rhythm. The one real gain was 11px a row from hiding
+`<nu-cell>`'s own say line inside a field that already has one — 149 cells ×
+11px = **1,639px** of room reserved for a sentence with a place already — which
+is why 1280 moved and the phones did not.
+
+**So the change is not a density win and must not be filed as one. It is a
+VOCABULARY win**, and the thing that actually changed is what the shape MEANS:
+
+| | before | after |
+|---|---|---|
+| radius | 999px (`--r-pill`) | **3px (`--r2`)** |
+| selected | filled in the CLUSTER'S HUE, word bolds | filled in `--lamp`, no weight change |
+| the family | the hue of every pill in the column | the **column head's** word and rule |
+| the order | `.nu-lzn` | `<nu-cell order>`, printed only in a chain of two or more |
+| height | 44px | 44px, 0 of 324 options short of 43.5 |
+
+#### The hue survived, and only half of it — which is the argued part
+
+The eight cluster hues were doing two jobs: *which family* (the outline of the
+cold pills) and *which is chosen* (the fill of the hot one). **The second one
+cannot survive.** DESIGN.md §1 says there is ONE selection treatment, and eight
+different fills meaning "this is the answer" is *"selected boxes are oddly
+selected"* wearing a palette. A cell that stands is filled in `--lamp`, for
+every family, always.
+
+The hue keeps the half it is good at — telling one family from the next while a
+thumb pushes seventeen columns past the edge of the screen — drawn on the
+**column head's** word and rule, where a reader looks when asking *which family
+is this*. It stands down under `[current]`, so "where am I" outranks "what
+kind". Measured at 390: 8 of 8 hues spent across 13 clusters, one per `data-bi`.
+
+Dropping it entirely was considered and refused for a reason worth keeping: a
+heading seventeen columns to the right is not on the glass when you need to know
+which family you are scrolling through, and `T5f`/`T12g`'s one-hue-per-cluster
+claim would have had to be retired to buy nothing.
+
+#### Two laws this round had to change, and it says so rather than hiding them
+
+**LAW 8, THE KEYBOARD.** `<nu-colhead>` renders its heading into its own light
+DOM, which lit appends *after* its cells and CSS puts back on top with
+`order: -1` — so in tab order a column read *"the words, then the name of the
+words"*, and the second Tab out of the circle of fifths landed on a nameless
+button. **Tab now walks the FAMILIES** (six stops on a 63-word field) and the
+along-axis arrow steps from a heading into the first word it holds. What is
+lost: a Tab that lands on an option. What is kept: every option reachable in
+reading order from its family's name.
+
+**AND A LIT-HTML TRAP THAT WILL CATCH THE NEXT COMPONENT.** A binding that is
+the last child of an element has no end marker, so the field's cell list and
+`<nu-colhead>`'s own heading shared one range — the first draw that changed a
+column's length cleared to the end and took the heading's markers with it. Four
+page errors and **zero** `.nu-elcolhead` across nineteen columns. The fix is a
+second `${nothing}` binding as an explicit edge (`EDGE` in `field.ts`).
+**Anything else that renders children INTO an element that also renders itself
+will hit this**, which is why it is recorded in the section rather than only in
+the file.
+
+#### What was deleted, and what a class means now
+
+Twenty-nine rules went from `nu.css`: every `.nu-lz` state, `.nu-lzword` and
+its bold-width `::after` reserve, `.nu-lzn`, `.nu-lzhead` and its hover,
+`.nu-lzheadword`, `.nu-lzcount`, `.nu-lzheld`, `.nu-lzwrap`, `.nu-lzcluster`
+and its four fold/standing variants, `.nu-lztrack`, `.nu-lzcont`, and the five
+`.is-col` rules §19 wrote. Kept: the eight `.nu-lzcluster[data-hue]`,
+`.nu-lzfield`, `.nu-lzsay` — **the say line stays outside the scrollport**, for
+its own old reason: a sentence that scrolled sideways away from the word it is
+about is a sentence nobody reads — and every `.nu-wchip*`, which is a different
+widget with its own users.
+
+`.nu-lz` and `.nu-lzcluster` survive **as classes on the tags, and no rule
+draws either.** They are ADDRESSES: `test/selects.js` asserts through both
+strings and may not be edited from inside a port. That is a deliberate,
+temporary bridge and it is named here so the next round can finish it.
+
+#### One check had to change its claim, and it is the round's point
+
+`T12h` read *"every option 44px of thumb in a PILL"* and measured the radius of
+the thing that drew it. Pointed at a `<nu-cell>` HOST — which draws nothing —
+it would have read `0px` and passed for ever. It reads the drawn
+`button.nu-elcell` now and asserts `radius < 12`: **every option 44px of thumb
+in a square CELL, 0 short, radius 3px.** [[test the artifact]] — a check that
+follows a port by pointing at the new tag and not at the new PAINT is a check
+that has stopped measuring.
+
+And one check had gone vacuous without failing: `test/selects.js`'s
+`counts + loose === n`, reading `.nu-lzcount` and `.nu-lzhead`, computed
+`0 + n === n` once those classes left the DOM — true of any DOM at all. It
+reads `.nu-elcount` and `[label]` now. It was reported by the round that broke
+it rather than found later, which is the only reason it was repaired the same
+day; a passing check is not evidence that it is still asking anything.

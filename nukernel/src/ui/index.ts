@@ -23,13 +23,18 @@
 import { NuButton, NuIconButton } from "./buttons.js";
 import { NuLamp, NuLegend, NuValue } from "./readouts.js";
 import { NuRail, NuSpinner } from "./pick.js";
+import { NuTable, NuColhead, NuRowhead, NuCell } from "./cells.js";
+import { NuPlate, NuMenuRow } from "./panels.js";
+import { NuIndex, NuGlobe } from "./atlas.js";
 import { SPEC, ALL_STATES, PSEUDO_STATES, attrsOf } from "./api.js";
 import { gallery, ratio, TEXT_FLOOR, EDGE_FLOOR } from "./gallery.js";
 
 export { NuButton, NuIconButton, NuLamp, NuLegend, NuValue, NuRail, NuSpinner };
+export { NuTable, NuColhead, NuRowhead, NuCell };
+export { NuPlate, NuMenuRow, NuIndex, NuGlobe };
 export { SPEC, ALL_STATES, PSEUDO_STATES, attrsOf };
 export { gallery, ratio, TEXT_FLOOR, EDGE_FLOOR };
-export type { ElSpec, ElState, AttrSpec } from "./api.js";
+export type { ElSpec, ElState, AttrSpec, DemoKid } from "./api.js";
 
 /** THE TAG TABLE. One row per element, and it is checked against `SPEC` on
  *  load — a tag defined here and not declared there is a component outside the
@@ -43,6 +48,14 @@ const TAGS: Array<[string, CustomElementConstructor]> = [
   ["nu-value", NuValue],
   ["nu-rail", NuRail],
   ["nu-spinner", NuSpinner],
+  ["nu-table", NuTable],
+  ["nu-colhead", NuColhead],
+  ["nu-rowhead", NuRowhead],
+  ["nu-cell", NuCell],
+  ["nu-plate", NuPlate],
+  ["nu-menu-row", NuMenuRow],
+  ["nu-index", NuIndex],
+  ["nu-globe", NuGlobe],
 ];
 
 export function define(): void {

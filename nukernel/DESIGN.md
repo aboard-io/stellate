@@ -73,7 +73,7 @@ component may wear":
 | layer | who writes it | the vocabulary | where it is declared |
 |---|---|---|---|
 | **the table** | the grid, as CLASSES on a cell or a row | the eight above | this section, and it is the owner of the framing |
-| **the elements** | a host attribute on one of the seven tags | `[selected] [open] [refused] [busy]`, rest their absence, plus the browser's own `hover` and `focus` | §2a, one selector in nu.css and one query in the gate per state |
+| **the elements** | a host attribute on one of the fifteen tags | `[selected] [current] [open] [sweeping] [marked] [empty] [refused] [busy]`, rest their absence, plus the browser's own `hover` and `focus` | §2a, one selector in nu.css and one query in the gate per state |
 | **the page** | the older page-wide class vocabulary, still live | `.is-on` · `.is-off` · `.is-quiet` · `<mark>`/`.is-now` | `PROGRAM.md` §2.4's FOUR STATES, still drawn by `nu.css` and `ui/sheets.js` |
 
 They overlap in three words (`rest`, `selected`, `refused`) and mean the same
@@ -92,13 +92,36 @@ spec change first and code second, the same as a component is.
 10. **Menu / picker** — one owner (`src/menus pickerFor`): chips ≤ 8 · native `<select>` on coarse > 8 · typed combo on fine; every address byte-identical across widgets.
 11. **Lamp** — a child `<i>` painted `--clock` (scheduled) or `--meter` (measured); never both meanings in one colour. A lamp that says a SENTENCE rather than marking a thing — the MOTIFS row's — names what the current SECTION reads and is written at a section boundary, never per beat (TABLE.md §13f, Paul, 2026-09-05: *"The text in the motifs section is changing rapidly every beat it's too much."*); a lamp that is a dot beside a name may follow the beat. **Sounding row**: the playing section is lit WHOLE — the row head and its cells in a `--clock` ground, ≥ 3:1 against a resting row — by one class on the `<tr>`, toggled once per section by the same writer that marks the number, not a halo around it (Paul: *"Really light up the sections as you move through them — not just a tiny halo around the number."*). A class the clock writes is excluded from the frozen half BY THE PAGE, the way `[data-live]` children are.
 12. **Bar** — fixed at the foot, `--bar-h`, and **THE TRANSPORT AND NOTHING ELSE SINCE 2026-09-06** (TABLE.md §16, Paul: *"So now bottom row is pure play controls and top right is compose arrange controls"*): **the voicing · play · the die · the room**, in that order, and **NO POP-UP AT ALL** (TABLE.md §20, 2026-09-07, Paul: *"Bottom bar: get rid of gear and move those functions into the menu"*). The ⚙ and its fold are deleted and the two controls behind them — the play mode and the take — are rows of the hamburger's HOW IT PLAYS block, the same nodes, one tap from the open plate where they were two from rest; the seed's NUMBER is deleted with them (*"Get rid of seed number too"*), so the die stands alone and **the die's own face IS the countdown** while a reseed waits (*"replace the die icon with the countdown"* — one node fewer, `data-live="pending"` on the mark, the same feed and the same arithmetic). **THE ROOM IS ONE WIDTH AT EVERY GLASS** — 112px, argued from the 320px budget (312 of content, less two 44px marks and the die and three seams, leaves 176, which is half a phone for a number between 0 and 100) — where it was the row's flexible child and measured 1,036px at 1280. **NO BORDER AND NO SHADOW ON ITS CONTROLS: A `--rule` HAIRLINE BETWEEN THEM** (*"Get rid of icon borders and shadows just put a light line between"*), drawn on the second child onwards at both levels the bar nests. **The `--tap` floor is untouched in both axes** — a control losing its border is not a control losing its size, and the 1px is a border on the box, not a bite out of it. (It read *"the opts fold · the voicing · play, then the TAPE taking the row's give at the end"*.) Icons with hidden labels and `data-say`; no visible words at all now that the genre plate has left it. (It read *"genre plate · die + number (+ countdown) · opts fold · voicing · play"*, and each of those three departures is filed: the genre plate is the TOP STRIP's, component 20; the die and its number are a row of the hamburger, component 13; the general countdown is inside the tape. What stayed is what a press of ▶ is about.) **The genre plate was a DOOR AND THEREFORE A TOGGLE** (2026-09-06, Paul: *"When I tap the button of the bottom left showing the genre close the picker and take me back to the compose view"*): it opens the picker and the same press closes it back to the table, so it wears `aria-expanded` + `aria-controls` beside the `aria-pressed` that marks it as the open tab. Its accessible NAME stays the genre's own word — the state says what the tap will do; the name says what the record is. Closing writes nothing: it is a `showTab`, and the record, the slots and the undo stack do not move.
-13. **Hamburger** — `#burger`, the LAST button of the **top strip** (component 20); its menu plate opens **at the top of the screen, in front of the strip**, and stops at the bar's top edge (TABLE.md §20, 2026-09-07, Paul: *"The hamburger menu should open higher and the menu icon should be a dismiss button"*; measured, the plate's top edge went 47.2 → 3.2 and it no longer covers 40px of the transport, which leaves a full-width band of "outside" for the first of §3's three ways out). **WHILE THE PLATE IS OPEN THE ≡ IS THE DISMISS**: it wears × and its accessible name is `close`, and pressing it shuts the plate — `#play`'s own law (*"the word on it is the NEXT tap"*) said on the other fixed band. This is not what §13a.1 refused: **the ≡ never opened a sheet**, so a sheet's × is still the sheet's, and the plate is the one surface the ≡ opens and therefore the one it may honestly close. The strip rises with it and gives up everything else for the duration (`data-menu="open"`: no ground, no rule, its other two children hidden, `pointer-events: none` on the band) — a `z-index` on the button alone cannot work, because a child competes only inside its parent's stacking context. **EVERY ROW OF THE PLATE IS ONE FORMAT: a UNICODE MARK (never an emoji — the property is `Emoji_Presentation`, not `Extended_Pictographic`, or ▶ and ⚙ would be refused) then a TITLE-CASE NAME, and nothing else on the glass.** Title case is `text-transform: capitalize` on the plate's own words and never a second copy of them in the catalogue. **The LOG'S count is the one trailing number in the plate.** The blocks read THE RECORD (its eight surfaces — the seven special rows and the record row's own face, counted and named in component 18) · WHERE YOU ARE (the six views) · HOW IT PLAYS (the play mode and the take) · Set Seed · Log — the record first, because a hand opens this plate to work on the record far more often than to leave the page it is on. **IT IS THE VIEW SELECTOR AND IT HAS THREE BLOCKS** (TABLE.md §16, 2026-09-06, Paul: *"move the view selector into a hamburger on the top right. Consolidate that with the existing bottom right hamburger (which goes away)… Put the name of the app at the top of the hamburger… Organize the hamburger sensibly"*): the app's NAME as a heading, then **where you are** — all six views, `Session` first, the current one wearing `aria-current="page"` and never `aria-pressed` — then **what you are making** — `Set seed`, which is `.nu-seedrow` moved in whole, the same die and the same number with their own listeners — then **what the box has done**, the log with its count. There is ONE hamburger on the page; a second one at another corner is the modality this component was rewritten to delete. A full-height in-flow sheet per viewer (Score · Video · Screensaver · Export), and the close is the **sheet header**'s: one line at the top of the open sheet, its name at the start and the × at the end. (It was a fixed plate at the top corner with the × beside it; TABLE.md §13a.1 deleted that strip under the law AS IT THEN READ — *"nothing is fixed but the bottom bar"*, the 2026-09-05 wording, quoted here only to say what the plate was deleted under. **That is not the law now**: it was amended on 2026-09-06 to *"nothing is fixed but the bottom bar and the top strip, and only these two"*, and the owner of the amendment is TABLE.md §16's *"§13a.1 IS AMENDED TO TWO, IN WRITING"* (TABLE.md:4123). The strip this component sits in is the second of the two.) **THE PICKER'S HEADER IS THE × ALONE** (2026-09-06, Paul: *"Get rid of 'where' and the line above … leave the close icon. Use the new space to move the globe up."*): a sheet opened from a MENU of five has to say which of the five it is, and a sheet opened by pressing the one thing it holds does not — so `#atlas` hides the name and the rule under it and the globe is the first thing under the top edge (46px higher at 390×844). The four viewers keep both. A sheet that drops its visible name keeps a visually-hidden `<h2>`: a panel with no accessible name is not a component in this system.
+13. **Hamburger** — `#burger`, the **FIRST** button of the **top strip** (component 20) — *the LAST until 2026-09-07, when Paul said* **"Hamburger should be on right."** *and then, a minute later,* **"Sorry hamburger should be on left."** *The second message is the instruction; the ≡ took the start of the band and the record's name took the end.* **THE MOVE IS IN THE MARKUP, NOT IN A `CSS` `order`** — the tape is the flexible middle child, so an `order` move would have inverted two of three children against the DOM and given the band two orders (read/tab against rendered) with two owners of one fact, making the ≡ the LAST tab stop while being the first thing a thumb meets. One `append` argument keeps reading order, tab order and rendered order identical. Measured: `#burger` x=346 → **0** at 390 and 276 → **0** at 320; the plate x=96.4 → **5.6** at every width, flush to the start edge with its × at its own top-left corner. The band read `identity · status · navigation` and now reads `navigation · status · identity`. (`.nu-log` was already start-anchored while its opener hung off an end-anchored plate; that inconsistency is gone.); its menu plate opens **at the top of the screen, in front of the strip**, and stops at the bar's top edge (TABLE.md §20, 2026-09-07, Paul: *"The hamburger menu should open higher and the menu icon should be a dismiss button"*; measured, the plate's top edge went 47.2 → 3.2 and it no longer covers 40px of the transport, which leaves a full-width band of "outside" for the first of §3's three ways out). **WHILE THE PLATE IS OPEN THE ≡ IS THE DISMISS**: it wears × and its accessible name is `close`, and pressing it shuts the plate — `#play`'s own law (*"the word on it is the NEXT tap"*) said on the other fixed band. This is not what §13a.1 refused: **the ≡ never opened a sheet**, so a sheet's × is still the sheet's, and the plate is the one surface the ≡ opens and therefore the one it may honestly close. The strip rises with it and gives up everything else for the duration (`data-menu="open"`: no ground, no rule, its other two children hidden, `pointer-events: none` on the band) — a `z-index` on the button alone cannot work, because a child competes only inside its parent's stacking context. **EVERY ROW OF THE PLATE IS ONE FORMAT: a UNICODE MARK (never an emoji — the property is `Emoji_Presentation`, not `Extended_Pictographic`, or ▶ and ⚙ would be refused) then a TITLE-CASE NAME, and nothing else on the glass.** Title case is `text-transform: capitalize` on the plate's own words and never a second copy of them in the catalogue. **The LOG'S count is the one trailing number in the plate.** The blocks read THE RECORD (its eight surfaces — the seven special rows and the record row's own face, counted and named in component 18) · WHERE YOU ARE (the six views) · HOW IT PLAYS (the play mode and the take) · Set Seed · Log — the record first, because a hand opens this plate to work on the record far more often than to leave the page it is on. **IT IS THE VIEW SELECTOR AND IT HAS THREE BLOCKS** (TABLE.md §16, 2026-09-06, Paul: *"move the view selector into a hamburger on the top right. Consolidate that with the existing bottom right hamburger (which goes away)… Put the name of the app at the top of the hamburger… Organize the hamburger sensibly"*): the app's NAME as a heading, then **where you are** — all six views, `Session` first, the current one wearing `aria-current="page"` and never `aria-pressed` — then **what you are making** — `Set seed`, which is `.nu-seedrow` moved in whole, the same die and the same number with their own listeners — then **what the box has done**, the log with its count. There is ONE hamburger on the page; a second one at another corner is the modality this component was rewritten to delete. A full-height in-flow sheet per viewer (Score · Video · Screensaver · Export), and the close is the **sheet header**'s: one line at the top of the open sheet, its name at the start and the × at the end. (It was a fixed plate at the top corner with the × beside it; TABLE.md §13a.1 deleted that strip under the law AS IT THEN READ — *"nothing is fixed but the bottom bar"*, the 2026-09-05 wording, quoted here only to say what the plate was deleted under. **That is not the law now**: it was amended on 2026-09-06 to *"nothing is fixed but the bottom bar and the top strip, and only these two"*, and the owner of the amendment is TABLE.md §16's *"§13a.1 IS AMENDED TO TWO, IN WRITING"* (TABLE.md:4123). The strip this component sits in is the second of the two.) **THE PICKER'S HEADER IS THE × ALONE** (2026-09-06, Paul: *"Get rid of 'where' and the line above … leave the close icon. Use the new space to move the globe up."*): a sheet opened from a MENU of five has to say which of the five it is, and a sheet opened by pressing the one thing it holds does not — so `#atlas` hides the name and the rule under it and the globe is the first thing under the top edge (46px higher at 390×844). The four viewers keep both. A sheet that drops its visible name keeps a visually-hidden `<h2>`: a panel with no accessible name is not a component in this system.
 14. **Refusal** — never a missing control: the control drawn refused with its sentence, and **the sentence is REACHABLE BY A THUMB** (TABLE.md §15, off the Coach House walkthrough: *"`filled in` is disabled with a real and excellent reason … tapping it does nothing at all. I tapped it eight times"*). **The LAW is §3's refusal bullet, whose owner is `PROGRAM.md` §2.3's `why` clause; this component is where it is DRAWN, not where it is stated.** What is drawn here: ONE OWNER for the sentence (the `why` the field or option already carries; nothing derives a second) and ONE PLACE per widget: `.nu-lzsay` in a lozenge field, `.nu-wsay` beside a chip strip, an ops bar, a slider, a refused field head, or **under a curve editor's plate** (component 9, added 2026-09-06 — the one widget this list did not reach, and the one whose refused control bound no listener at all). THE ONE EXCEPTION is the native `<select>`, whose wheel the browser owns and whose `<option disabled>` is a refusal it enforces: there the reason rides IN THE OPTION'S OWN WORDS, through `menu.withWhy`.
-15. **Glyph** — every icon from `ui/glyph.js`, each with its `.nu-vh` word and `data-say`; the sheet at 390 reads as a grid of marks.
-16. **Lozenge field** (Paul, 2026-09-05: *"a novel interface for when there
-    are tons of options and some of them can be multiple… tight lozenges,
-    organized by color and clustered semantically by the kind of things
-    they present… visibility into all of the options"*) —
+14a. **Busy** — the same law as 14, one state over, and it is new (2026-09-07, the MIDI door). **A control that is WORKING is `aria-disabled="true"` and never `disabled`.** The reason is identical to a refusal's and the audit that found the last three `disabled` in this tree found it by the same sweep: a `disabled` element takes no tap, so a second press on a control that is busy is SWALLOWED, and a person who cannot tell "working" from "broken" presses it again and then a third time. So a busy control stays pressable and **answers a second press with a sentence** — *"Still reading {name} — one moment"* — in the widget's own say line, exactly as a refusal answers. Ignoring a press and refusing one look identical; only one of them says so.
+    · **AND THE SENTENCE HAS TO BE PAINTED BEFORE THE THREAD IS TAKEN.** A status line written immediately before a synchronous block never reaches the glass: the write and the work are in one task, the browser paints between tasks, and the first thing a reader sees is the finished state. Measured on this page's first `.mid` run — the "reading…" line never appeared. Two `requestAnimationFrame`s and then a task, with a timeout fallback for a page painting no frames at all. This is [[declared but never arriving]] in its most literal form: the sentence was assigned, and it was assigned to a node nobody would look at until after it had changed.
+15. **Glyph** — every icon from `ui/glyph.js`, each with its `.nu-vh` word and `data-say`; the sheet at 390 reads as a grid of marks. **A refused mark is `aria-disabled` and never `disabled`, and a TAP on it opens the explainer** (2026-09-07). `paintIcon` set BOTH for two versions, and its own comment said why — *"`disabled` + `aria-disabled`, so the browser refuses the press"* — which is a browser refusing the QUESTION: no click, no pointerdown, no pointerover, so the three careful answers underneath it (`data-why`, the joined accessible name, the explainer a hold opens) reached nobody holding a phone. It was the silent grey with a paragraph behind a door that does not open, on every refused mark in the chrome. Found by widening `test/selects.js` 5a past the three class names it used to enumerate; it fell out at once as `tempo-half time`.
+16. **Lozenge field — A TABLE OF CELLS SINCE 2026-09-07** (Paul, 2026-09-05:
+    *"a novel interface for when there are tons of options and some of them can
+    be multiple… tight lozenges, organized by color and clustered semantically
+    by the kind of things they present… visibility into all of the options"*;
+    and then, looking at the design-system gallery on 2026-09-07: *"Make the
+    table system with lozenges just list the items as cells. The lozenges are
+    getting in the way."*) —
+    **READ THE DRAWING CLAUSES BELOW AS HISTORY.** The LAWS all survive and are
+    still the ones `field.ts` cites by number; what changed is what an option
+    IS. An option is a `<nu-cell>` — square at `--r2`, the full width of its
+    column, its word at the start edge, `--tap` a floor and never an overlap —
+    filled in `--lamp` when it stands, **because there is one selection
+    treatment and eight fills meaning "this is the answer" is §1's own
+    complaint wearing a palette**. The hue is the COLUMN HEAD's now and marks
+    the FAMILY, not the answer; it stands down under `[current]`. The order is
+    `<nu-cell order>`, drawn only in a chain of two or more. Law 1's fold is
+    `open` on the column and one CSS rule, not `hidden` on a wrap; law 2's
+    *"the button is the pill"* is *"the cell is the hit target"*; law 8 is
+    Tab-walks-families, arrows-walk-words (the change is argued in TABLE.md
+    §21, with the lit-html edge-marker trap that forced it). The field is a
+    CALLER of component 22's elements now and no longer the owner of the
+    shape — TABLE.md §21 is the section, with the measurements and the honest
+    finding that the port bought vocabulary, not density.
+    The clauses as originally written, kept because the LAWS are the reusable
+    part and the numbers are cited in code:
     **ITS CLAUSES ARE NUMBERED, AND THE NUMBERS ARE THE ONES THE CODE CITES**
     (2026-09-07): `src/lozenge/field.ts` cites these clauses BY NUMBER at
     seventeen places in its own comments — *"law 1"* six times, *"law 6"*
@@ -247,7 +270,8 @@ spec change first and code second, the same as a component is.
 20. **Top strip** (TABLE.md §16, 2026-09-06) — the page's SECOND and last fixed
     **CHROME** band, `--top-h` (`--tap` plus the notch, and no padding of its own): the
     RECORD'S NAME at the start, taking the row's give with `min-inline-size: 0`
-    and an ellipsis, and the ONE hamburger at the end. **THE TOP IS WHERE YOU
+    and an ellipsis at the END, and the ONE hamburger at the START (2026-09-07;
+    it was the other way round until Paul moved it). **THE TOP IS WHERE YOU
     GO** — the name is the record's identity and a tap on it opens the picker
     (it is the same toggle component 12 described, moved), and the ≡ is every
     other place the box can be. It is an opaque band with a hairline under it,
@@ -301,7 +325,19 @@ spec change first and code second, the same as a component is.
     the instruments in tables one per line per column"*, and, of a chair's
     playing options, *"Give them the same treatment as the instrument voice
     selector … we need to make it smaller and it can also go horizontally
-    wider than the screen"*) — **one shape, at two tiers**. A vocabulary too
+    wider than the screen"*) — **one shape, at two tiers**.
+    **AND IT IS TAGS NOW, NOT THE FIELD'S ARRANGEMENT (2026-09-07).** This
+    component described the track, the column and the continuation as things
+    the lozenge field DID; they are `<nu-table>`, `<nu-colhead>` and
+    `<nu-colhead continued>` — elements of the system (§2a) — and the field is
+    component 22's FIRST CALLER rather than its owner. The practical
+    difference is where a law is enforced: *"a continuation is a readout and
+    never a second address"* is the ELEMENT's rule now (it renders
+    `aria-hidden` and takes no press whenever `continued` is set), so a second
+    caller cannot get it wrong, where before it was one careful branch inside
+    one field. Everything below is unchanged in substance and is now the
+    elements' behaviour rather than the field's.
+    A vocabulary too
     tall to wrap becomes a TRACK of columns: one column per cluster, ONE WORD
     PER LINE inside it, the columns running off the side of the screen where
     there is no bottom to fall off; a family longer than a column CONTINUES
@@ -310,8 +346,13 @@ spec change first and code second, the same as a component is.
     up: one column per group, one setting per line, the column a thumb is
     working in widening to the sheet so a picker never opens inside a
     scrollport. **THE TRACK SCROLLS SIDEWAYS AND THE PAGE DOES NOT** —
-    `overflow-x` on the track, `overscroll-behavior-inline: contain` on it, and
-    the PAGE's own inline axis untouched (§11c). §3's horizontal-scroll law
+    `overflow-x` on the track, `overscroll-behavior-inline: none` on it, and
+    the PAGE's own inline axis untouched (§11c). (**`contain` until
+    2026-09-07**: TABLE.md §15a names that value as the wrong one by name —
+    it stops the gesture chaining to the pane behind and still lets the track
+    rubber-band inside itself, and a bounce carries the column heads with it —
+    and these two tracks were the last places in the tree still declaring it.
+    The law is §15a's; this line is its reader.) §3's horizontal-scroll law
     OWNS the sentence and the list of scrollports; this component is one of the
     four on it. (It read *"THE TRACK IS THE ONLY THING THAT SCROLLS SIDEWAYS"*
     until 2026-09-07: wrong by three — `.nu-pane`, `#atlasWrap` and the
@@ -361,7 +402,8 @@ spec change first and code second, the same as a component is.
 ## 2a · The elements that exist in code (2026-09-07)
 
 §2 is the whole VOCABULARY, in prose. This section is the part of it that is a
-TAG — seven custom elements under `nukernel/src/ui/`, built by
+TAG — **fifteen** custom elements under `nukernel/src/ui/` (seven on
+2026-09-07's first pass and eight more on its second), built by
 `node tools/ui/build.js` into the committed `nukernel/ui/ui.js` (a build
 entry — the BUILDER counts them, off the tree at `tools/ui/build.js:78-79`,
 and a number written in prose goes stale the next time a directory is added;
@@ -379,7 +421,40 @@ docs/DESIGN-SYSTEM.md is what moves the call sites, one surface at a time.
 | `<nu-legend>` | §0 | a printed label — small caps, dim, fixed, and it never lights |
 | `<nu-value>` | §0 | a readout: what the machine currently says, in tabular numerals |
 | `<nu-rail>` | 24 | one of a set drawn as one of a set: joined segments, one hairline between, the standing word filled |
-| `<nu-spinner>` | 23 | a state of at most five positions: one control saying where you are, a step each side |
+| `<nu-spinner>` | 23 | a state of at most five positions: **ONE BUTTON** saying where you are; a press rotates to the next and wraps |
+| `<nu-table>` | 16 + 22 | a sideways track of columns: the track scrolls, the page does not; it owns the one say line |
+| `<nu-colhead>` | 16 | a column: its name, how many are in it, what it is holding, and whether it is folded |
+| `<nu-rowhead>` | 16 | the same group turned down the side, for a table whose rows run out |
+| `<nu-cell>` | 16 | ONE OPTION, drawn as a plain cell and not a pill — the lozenge's affordances as cell states |
+| `<nu-plate>` | 13 | the panel a hamburger opens: anchored to one edge, scrolling inside itself, never a full-width band |
+| `<nu-menu-row>` | 13 | one row of a plate: a mark in a FIXED ADVANCE, then a title-case name, and nothing else but a count |
+| `<nu-index>` | — | the searchable list of records — a year, a name, a place and a mark per row, filtered by a field |
+| `<nu-globe>` | — | the earth as an instrument: it rests, it sweeps a year, it is marked, it can be empty |
+
+**AND SIX OF THE FIFTEEN ARE WIRED INTO THE APP, NOT JUST THE GALLERY
+(2026-09-07, step 4's first surfaces).** This is the distinction that matters
+and it is the one a reader will otherwise get wrong: DECLARED means the tag is
+in `SPEC`, drawn in every state on `design.html`, and gated; WIRED means a call
+site in the running box uses it. `nukernel/index.html` loads `ui/ui.js` now, so
+every tag is *registered* in the app — but registration is not use.
+
+| wired | where |
+|---|---|
+| `<nu-plate>` | `#nu-menu` **is** the tag (not a wrapper — a wrapper would have broken `OUTBOX.menu`'s `contains` test and closed the plate under a thumb). `anchor="start"`, `open` toggled beside `hidden` from one variable. It takes no `label`: `aria-labelledby="nu-menuname"` already names it and a `label` would be a second copy of the same word. |
+| `<nu-table>` `<nu-colhead>` `<nu-cell>` | the lozenge field, which is now a table of cells rather than a field of pills (component 16) |
+| `<nu-index>` `<nu-globe>` | declared from the atlas's own shapes; the atlas draws its own still |
+
+`<nu-menu-row>` is **declared and not wired, on purpose**, and the reason is
+worth keeping because it is a real cost of porting under measurement: the
+round's own tape measure reads plate rows through `.nu-vh`/`.nu-g`, and the
+element keeps its word in `.nu-elword`. Porting the rows would have made the
+word-alignment number unmeasurable in the same change that fixed it. The
+plate's rows also carry `data-k` and `data-say`, which four painters and ten
+shell assertions read and the element does not yet pass through. The element
+still WON the argument — `.nu-elmenurow`'s three tracks and its `1.4em` mark
+column are exactly what the plate now draws — and the follow-up is one commit:
+give the element a `data-k`/`data-say` passthrough, then move the tape measure
+and the ten assertions together.
 
 **THE DECLARATION IS THE CONTRACT.** `src/ui/api.ts` holds one row per element
 — its attributes, their types and a one-line note each, the states it can wear,
@@ -399,16 +474,34 @@ prefix: an element's inner parts are `nu-el*`, so a selector can always say
 whether it is inside a component or beside one. **No `css``` block anywhere in
 `src/ui`** — nu.css's THE ELEMENTS block carries the whole look.
 
-**THE ELEMENTS' SEVEN STATES, AND WHICH FIVE A HAND CAN ASSERT — the SECOND
+**THE ELEMENTS' ELEVEN STATES, AND WHICH NINE A HAND CAN ASSERT — the SECOND
 of the three layers §2 names, and not a second declaration of §2's eight.**
 These are attributes on a HOST; §2's are classes the GRID writes; the
 `.is-on`/`.is-off`/`.is-quiet`/`<mark>` set is the page-wide vocabulary at
 `PROGRAM.md` §2.4's FOUR STATES; all three are live and the code follows all three.
-`[selected] [open] [refused] [busy]` are attributes on the host and rest is
-their absence, so each is one selector in nu.css and one query in the gate. `hover` and `focus` are the
+`[selected] [current] [open] [sweeping] [marked] [empty] [refused] [busy]` are
+attributes on the host and rest is their absence, so each is one selector in
+nu.css and one query in the gate. `hover` and `focus` are the
 browser's own pseudo-classes and no markup can assert them, so nu.css pairs each
 with `[data-demo]` **in the same rule** — the gallery forces the demo spelling,
 and what it shows is drawn by the declaration that draws the live page.
+
+**IT WAS SEVEN AND IT IS ELEVEN, AND THE FOUR ARE ARGUED RATHER THAN
+ASSUMED** (2026-09-07, `src/ui/api.ts`'s own header). `current` IS NOT
+`selected`: `selected` is a thing a hand chose and can un-choose and it writes
+`aria-pressed`, so a screen reader says "pressed"; `current` is WHERE YOU ARE —
+the column the standing answer is in, the row of the index the record is on,
+the menu row naming the view already open — and ARIA has a separate word for it
+precisely because "you are here" is not "you pressed this". Four elements wear
+it and `<nu-index>` wears it as its ONLY answer state, because the atlas list
+has `aria-current="true"` on exactly one row, no `aria-selected` anywhere, and
+is not a listbox. Spelling it `selected` would have made all four announce a
+press that never happened. `sweeping`, `marked` and `empty` are `<nu-globe>`'s,
+and they are VERBS — what an instrument is DOING — which is the honest shape
+for the one component in the system that is not a control. None of them is
+`busy`, because the globe is never working on anything. The cost is zero second
+lists: the gallery sets a state by setting the attribute of that name, so a new
+state costs one line in `ALL_STATES` and one selector in nu.css.
 
 **ONE SELECTION TREATMENT, ONE FOCUS TREATMENT, AND THEY ARE DIFFERENT**
 (§1, Paul: *"Selected boxes are oddly selected"*). Selected = the control is
@@ -431,6 +524,27 @@ along the foot, static, because a page that animates a wait animates it under
 `src/copy/**` (the `ui.*` page); `label` is the escape hatch for a word that is
 the RECORD's own — a genre, a section's name, a player's — and therefore in no
 catalogue at all. A mark is never a name.
+
+**AND A MARK IN A PLATE ROW HAS A FIXED ADVANCE** (2026-09-07, Paul: *"Icons in
+hamburger should all have same width not float left it looks uneven."*). This
+is a NEW decision and not the enforcement of an old one — there was no law
+about mark widths anywhere in this document before it. The reason it is a law
+now is that a proportional glyph stack makes the WORDS ragged, which is the
+thing a reader actually sees: measured on the plate's eighteen rows, the marks'
+own advances spread 21.3px and the words after them started at ELEVEN different
+x. `--sym` is `system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2"` and in this
+page's stack `⊙` is 26.8px against `⌗`'s 18.0. So `<nu-menu-row>` gives the
+mark a fixed column and centres it in that column, exactly as the top strip's
+own name plate has done since v298, and the words start on one line. It holds
+anywhere a mark precedes a word.
+
+**AND THE WHOLE OF §2a IS UNDER `docs/DESIGN-SYSTEM.md` §1a's ACCEPTANCE
+TEST**, which is now proven rather than promised: `nukernel/skins/paper.css` is
+a second, deliberately different look — paper ground, ink-blue accent, a looser
+ramp — reached by adding ONE `<link>` to a copy of the gallery and changing
+nothing else. No `.ts` edited, no attribute passed, no build run; 64 tokens
+re-answered and not one of the deck's answers surviving. That file is the test
+this section can fail, and every element here passed it without being touched.
 
 ## 3 · Interaction laws
 
@@ -574,8 +688,8 @@ catalogue at all. A mark is never a name.
   so, and `ui/eight.js:16523` is the `#playops` tombstone. The mode and the
   take are rows of the hamburger's HOW IT PLAYS block. The sentence stood
   eleven lines from its own contradiction, in this section.)
-- **THE TOP IS WHERE YOU GO, THE BOTTOM IS WHAT YOU HEAR** (TABLE.md §16, 2026-09-06): every navigation and every arrangement control is behind ONE hamburger at the top right; every transport control is in the bar at the foot; nothing else is chrome. The box has exactly two modalities — a VIEW (chosen from that list) and a SHEET (a row of the table opened in place) — where it had five.
-- One scroll, one pin (TABLE.md §13): **nothing is fixed but the bottom bar and the top strip — two fixed CHROME bands, and only these two.** The OWNER of that sentence is TABLE.md §16's *"§13a.1 IS AMENDED TO TWO, IN WRITING"* (TABLE.md:4123), which carries the amendment's four-row comparison table and the 44.0 measured; this line is its reader and not a second copy. The word CHROME is load-bearing: pop-ups and the menu plate are `position: fixed` and are NOT chrome — component 20 has the grep and the reason. (This line has carried the 2026-09-06 amendment since it was made; four other copies of the sentence did not, so it is now a pointer rather than a fifth wording.) Inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell says a WORD at every width — the column is sized to one and the pane scrolls sideways with the section column frozen, rather than the cells falling back to a grid of identical marks (§14). Opening or closing a sheet leaves the pane's `scrollTop` identical. **NOTHING RUBBER-BANDS** (TABLE.md §15a, 2026-09-06, Paul: *"I can drag it too far right and then the whole thing moves including the fixed parts… it all feels reel wobbly"*): every scroller a thumb drags SIDEWAYS is `overscroll-behavior: none` and not `contain` — `contain` stops the gesture CHAINING to the scroller behind and still lets the scroller bounce inside itself, and a bounce translates its `position: sticky` children with it. The document too, which also turns pull-to-refresh off so a flick cannot reload the box mid-edit. **OPEN, AND ASSIGNED** (2026-09-07): the two newest sideways scrollers are `overscroll-behavior-inline: contain` — the sheet track (nu.css:8501) and `.nu-lztrack` (nu.css:8830) — which is the value this law names as the wrong one, by name, with its reason. Whether the tracks are exempt from the bounce reasoning or the tracks are wrong is the LIVE design-system round's question and is not settled in this document; the law stands as written until that round answers it.
+- **THE TOP IS WHERE YOU GO, THE BOTTOM IS WHAT YOU HEAR** (TABLE.md §16, 2026-09-06): every navigation and every arrangement control is behind ONE hamburger at the top **left** (2026-09-07 — *"Sorry hamburger should be on left"*; it was the top right from 2026-09-06 until then, and TABLE.md §20 owns the reversal); every transport control is in the bar at the foot; nothing else is chrome. The box has exactly two modalities — a VIEW (chosen from that list) and a SHEET (a row of the table opened in place) — where it had five.
+- One scroll, one pin (TABLE.md §13): **nothing is fixed but the bottom bar and the top strip — two fixed CHROME bands, and only these two.** The OWNER of that sentence is TABLE.md §16's *"§13a.1 IS AMENDED TO TWO, IN WRITING"* (TABLE.md:4123), which carries the amendment's four-row comparison table and the 44.0 measured; this line is its reader and not a second copy. The word CHROME is load-bearing: pop-ups and the menu plate are `position: fixed` and are NOT chrome — component 20 has the grep and the reason. (This line has carried the 2026-09-06 amendment since it was made; four other copies of the sentence did not, so it is now a pointer rather than a fifth wording.) Inside the pane one band sticks at a time — the grid's heads while the grid is under the thumb, or the owner row of the open sheet as its header, and never anything in a `<tfoot>`. Special rows are one line at rest. Adders are one cell, not columns, and a tap on one ADDS rather than asking (§13e). A cell says a WORD at every width — the column is sized to one and the pane scrolls sideways with the section column frozen, rather than the cells falling back to a grid of identical marks (§14). Opening or closing a sheet leaves the pane's `scrollTop` identical. **NOTHING RUBBER-BANDS** (TABLE.md §15a, 2026-09-06, Paul: *"I can drag it too far right and then the whole thing moves including the fixed parts… it all feels reel wobbly"*): every scroller a thumb drags SIDEWAYS is `overscroll-behavior: none` and not `contain` — `contain` stops the gesture CHAINING to the scroller behind and still lets the scroller bounce inside itself, and a bounce translates its `position: sticky` children with it. The document too, which also turns pull-to-refresh off so a flick cannot reload the box mid-edit. **ASKED, AND ANSWERED** (2026-09-07, the design-system round): the two newest sideways scrollers — the sheet track and `.nu-lztrack` — declared `overscroll-behavior-inline: contain`, the value this law names as the wrong one by name. **The rules were wrong, not the law: both are `none` now**, and the tree has no `contain` left on any horizontal track. TABLE.md §15a carries the settlement and the one-line argument (a bounce carries the tracks' sticky column heads with it, which is this complaint one tier down); this line is its reader.
 - **A HEADING WHOSE BLOCK CAN NAME ITSELF IS NOT DRAWN** (TABLE.md §15a): no label row over a column that prints its own name, no word beside a face that already says what the row is. The accessible name carries what a control DOES; the glass carries the record's own words.
 
 ## 4 · Copy (the voice) — ON THE GLASS

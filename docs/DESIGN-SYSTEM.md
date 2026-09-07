@@ -135,36 +135,74 @@ So an element carries STRUCTURE and STATE and never appearance:
   anywhere in `src/ui`"*, beside the light-DOM decision that gives it its
   reason); this is the fourth statement of it in the tree, so read it as a
   pointer and argue it there;
-- no reading a token in JavaScript in order to draw with it (the one exception
-  is a canvas instrument like the globe, which cannot be styled by a rule; it
-  reads its tokens off `getComputedStyle` at paint and says so);
+- no reading a token in JavaScript in order to draw with it. **THE CARVE-OUT
+  THAT USED TO STAND HERE IS WITHDRAWN (2026-09-07, measured).** It read *"the
+  one exception is a canvas instrument like the globe, which cannot be styled
+  by a rule; it reads its tokens off `getComputedStyle` at paint and says
+  so"* — and the globe is **SVG, not canvas**, has never called
+  `getComputedStyle`, and writes the CSS system colours `Canvas`/`CanvasText`
+  as presentation attributes. The exception was granted for a problem the code
+  did not have, which is the most expensive kind of exception: it licenses the
+  next component to reach for `getComputedStyle` by citing a precedent that
+  was never used. `<nu-globe>` writes NO paint at all — every fill, stroke and
+  opacity is a `nu.css` rule on its parts, which the gate measures (D9e: zero
+  paint attributes across every SVG node) — so the element that looked like it
+  needed an escape is the one that proves the law hardest. **If a future
+  instrument genuinely cannot be reached by a rule, it earns an exception by
+  demonstrating that, not by being the same shape as this one.**
 - a state is an attribute on the host — `[selected]`, `[open]`, `[refused]`,
   `[busy]` — and the stylesheet decides what that looks like.
 
-**AND IT IS PROVEN BY A SECOND SKIN, NOT BY INTENTION — AND THAT PROOF IS NOT
-BUILT YET (measured 2026-09-07).** The system is to ship an alternate skin in
-one file that turns the deck into something visibly other — a light paper
-panel, a different accent, a different density — loaded with no other change
-to the app. If writing that file requires touching an element, the element is
-wrong. The gate loads it and checks that nothing from the default palette
-survives.
+**AND IT IS PROVEN BY A SECOND SKIN, NOT BY INTENTION — AND THE PROOF IS BUILT
+(2026-09-07, step 2/4).** The system ships an alternate skin in one file that
+turns the deck into something visibly other, loaded with no other change to the
+app. If writing that file had required touching an element, the element would
+have been wrong. The gate loads it and checks that nothing from the default
+palette survives.
 
-**Say it plainly: no such file and no such check exists today.** `ls
-nukernel/*.css` is band, drums, fonts, hw, nu, tokens — there is no alternate
-skin — and `grep -n skin test/design-system.js` returns nothing across the
-gate's 464 lines. The five sub-rules above ARE measured and green (D2, D4a,
-D4b, D4c, D12), but they are the five things a skinnable element must not do;
-this is the one thing that would show a skin actually works. **Until it is
-written the SKIN law is unproven as a whole**, and it is the outstanding
-acceptance test of this document — not a decoration on the end of a law that
-is otherwise finished. It is the right shape for a law precisely because it
-names the test that can fail it, and a named test nobody has run is still a
-debt.
+**The file is `nukernel/skins/paper.css` and the artifact is
+`nukernel/design-paper.html`.** The page is the gallery plus ONE `<link>` —
+and D10a proves that by DIFFING the two documents rather than by a comment
+claiming it, because a comment claiming it would be exactly the bug this repo
+has a name for. The skin moves the three things §1a asks a skin to move:
+
+- **COLOUR** — the ground is paper rather than a panel. The deck's own daylight
+  theme is careful never to go paper white, because *"a panel is not a page"*;
+  it is the same machine under studio lights. This is the other thing: a
+  printed page, with the machine's chassis gone. That is why it is a skin and
+  not a third theme.
+- **ACCENT** — ink blue rather than phosphor green. The deck's colour system is
+  three lamps and a screen, and a lamp is a light. On paper there is nothing to
+  light, so the accent is what a printed page marks with, and SELECTED reads as
+  STAMPED — a heavy rule down the start edge — rather than as LIT. That is a
+  genuinely different reading of the same state, reached with no element
+  knowing anything about it.
+- **DENSITY** — every step of the ramp opens, `.2em–1.4em` to `.28em–2em`, and
+  the radii soften from a control's 6px to a card's 10px. **The 44px tap floor
+  does not move**, because it is not spacing and never was.
+
+**MEASURED, and these are the numbers that make it a proof rather than a
+demonstration** (`test/design-system.js` D10a–D10j, driven on the rendered
+page at 390 and 320):
+
+| claim | measured |
+|---|---|
+| the skinned page is the gallery plus one `<link>` | 1 line added, 0 removed |
+| the skin is a stylesheet and nothing else | 1 file, 0 non-CSS, **0 element sources that know it exists** |
+| every element still draws in every declared state | 15/15 defined, **76 state cells, 0 missing** |
+| **not one rule of the default palette wins** | **64 tokens re-answered, 0 of the deck's answers survive** |
+| the contrast floors still hold under it | **54 of 54 clear**, and the page's own printed numbers re-measured |
+| the looser density costs no tap target | **0 controls under 44px** at 390 and at 320 |
+| …and no sideways scroll | **0px over** at 390 and at 320 |
+| …and the spacing is on the SKIN'S OWN ramp | **3,361 values, 0 off** |
+
+That last row is the check working rather than being dodged: D5 resolves
+`--s1..--s5` **at runtime**, so a skin that moves the ramp moves the gate's own
+yardstick with it and has to stay honest against its own scale.
 
 The `[data-theme]` daylight block step 1 shipped is the weak form of this: a
-second look inside the same file. The strong form is a separate stylesheet
-that overrides nothing but tokens and element rules, and that is what "skin"
-means here.
+second look inside the same file. **This is the strong form**, and the law is
+no longer a named test nobody has run.
 
 ## 2 · THE ELEMENTS
 
@@ -408,7 +446,10 @@ keeps the name on purpose, and says so in its own header: every check in it is
 about the same SUBJECT — where a thumb finds the transport — and renaming the
 file would lose eleven rounds of argument to a `git log --follow` nobody
 runs**), `seed` 36, `atlas` 134 of 135 (G9 the
-known standing red), `table.browser` 793, `copy` 10, `ui-build --check` green
+known standing red — **closed 2026-09-07 by step 2/4, which declared
+`<nu-index>` and `<nu-globe>` and thereby became the round that owns the
+atlas; the gate is 135 of 135**), `table.browser` 793, `copy` 10,
+`ui-build --check` green
 over six entries, `tsc --noEmit` clean. Every browser gate was run TWICE — once
 on the palette flip, and again on the finished tree — because the element and
 gallery blocks were appended to nu.css after the first pass.
@@ -427,3 +468,170 @@ today.** The paragraph is kept because the ARGUMENT is the reusable part — a
 red gate is read by asking whose closure the red file is in, not by whose diff
 is on the screen — and the number is dated so nobody quotes it as a standing
 state.
+
+---
+
+# STEP 2 (THE REST OF THE ELEMENTS) AND STEP 4 (THE PORT), 2026-09-07
+
+Paul, having looked at the gallery step 1 shipped, said six things. They are
+this round, plus three the program owed: the skin law's proof, the `.mid` door,
+and two law bugs an audit found. Nine items.
+
+## The order the port went in, and why
+
+§5's order is a list of rounds; **within** step 4 the order is a list of
+surfaces, and it was chosen so that every stage could be verified before the
+next one could break it:
+
+1. **The elements first** — you cannot port onto what does not exist. Eight
+   added, one reshaped, each drawn on the gallery in every state and gated
+   there before any call site moved.
+2. **The second skin next** — written against those elements *before* the port
+   multiplied their call sites, so §1a could fail cheaply. It did not fail.
+3. **The plate** (asks 5 and 6), because they are two direct instructions and
+   the gates around the strip are small and exact.
+4. **The lozenge field** (ask 2), the substantive one and the riskiest: it is
+   under `test/table.browser.js`'s 793 checks.
+5. **The `.mid` door**, which is new work rather than a port, and touches only
+   the Export deck.
+
+The two code bugs were fixed first of all, before anything else moved, because
+a law bug in the files being ported is a law bug the port would copy.
+
+## The six asks, each with the number that proves it
+
+| # | Paul | the number |
+|---|---|---|
+| 1 | *"It's missing the genre list object with picker and the globe."* | `<nu-index>` and `<nu-globe>` are in the system with **honest** states, not borrowed ones: the index's only answer state is `current` (the atlas has `aria-current` on exactly one row and no `aria-selected` — it is not a listbox), and the globe's are VERBS — resting, sweeping, marked, empty |
+| 2 | *"Make the table system with lozenges just list the items as cells."* | `<nu-table>` `<nu-colhead>` `<nu-rowhead>` `<nu-cell>`, and the lozenge field is a table of them |
+| 3 | *"The spinner can just be a single button."* | **155.5 → 68.0px**, 87.5px and **56%** saved, at 390 and 320 alike |
+| 4 | *"Implement the design system… add them to the design system."* | `index.html` loads `ui/ui.js`; six of fifteen tags are WIRED, and the distinction is written down rather than blurred (DESIGN.md §2a) |
+| 5 | *"Icons in hamburger should all have same width."* | word-start spread **21.3px across 11 distinct x → 0px across 1**, at 320, 390 and 1280 |
+| 6 | *"Sorry hamburger should be on left."* | `#burger` x **346 → 0** at 390, **276 → 0** at 320, **1236 → 0** at 1280; the plate **96.4 → 5.6**, flush to the start edge |
+
+## What the round refused to do, and why
+
+- **`<nu-menu-row>` is declared and NOT wired.** Porting the plate's rows would
+  have moved their word from `.nu-vh` to `.nu-elword` in the same change that
+  fixed the word alignment — and the tape measure reads the alignment through
+  `.nu-vh`. A change that makes its own headline number unmeasurable is a
+  change that cannot be checked. The element still won the argument (the
+  plate draws `.nu-elmenurow`'s geometry) and the follow-up is one commit.
+- **The `.mid` pipeline did not move under `nukernel/`**, which was the
+  brief's own preferred option. `nukernel/export/package.json` declares
+  `"type": "module"` and all eight pipeline files are CommonJS/UMD with
+  `require.main` CLIs; under that marker node refuses them, so `node
+  tools/remix.js` and `test/remix.test.js` would both have broken. The obvious
+  home is the one home they cannot have. They ship instead by a targeted
+  `rsync -aR` naming the eight paths — 231 KB, not the 1.8 MB of `tools/` —
+  so the browser gate's URLs, the CLI's requires and the deployed paths stay
+  one answer instead of three.
+
+## What was added to the system, and its states
+
+Fifteen tags now, seven of them step 1's. `src/ui/api.ts`'s `SPEC` is where the
+count is a fact rather than a paragraph, and `src/ui/index.ts` throws at boot if
+the tag table and the declaration disagree.
+
+| tag | states |
+|---|---|
+| `<nu-table>` | rest · focus · refused · busy |
+| `<nu-colhead>` | rest · hover · focus · current · open |
+| `<nu-rowhead>` | rest · hover · focus · current |
+| `<nu-cell>` | rest · hover · focus · selected · refused · busy |
+| `<nu-plate>` | open |
+| `<nu-menu-row>` | rest · hover · focus · selected · current · refused |
+| `<nu-index>` | rest · focus · current · empty |
+| `<nu-globe>` | rest · sweeping · marked · empty |
+
+**THE STATE VOCABULARY GREW FROM SEVEN TO ELEVEN, AND THE FOUR ARE ARGUED
+RATHER THAN ASSUMED.** `current` IS NOT `selected`: `selected` is a thing a
+hand chose and can un-choose and it writes `aria-pressed`, so a screen reader
+says *"pressed"*; `current` is WHERE YOU ARE — the column the standing answer
+is in, the index row the record is on, the menu row naming the open view — and
+ARIA has a separate word for it precisely because "you are here" is not "you
+pressed this". Four elements wear it, and `<nu-index>` wears it as its ONLY
+answer state, because the atlas list has `aria-current="true"` on exactly one
+row and no `aria-selected` anywhere: it is not a listbox and the system may not
+pretend it is. `sweeping`, `marked` and `empty` are `<nu-globe>`'s and they are
+VERBS — what an instrument is DOING — which is the honest shape for the one
+component here that is not a control. None of them is `busy`: the globe is
+never working on anything. The cost is zero second lists — the gallery sets a
+state by setting the attribute of that name, so a new state is one line in
+`ALL_STATES` and one selector in `nu.css`.
+
+**AND ONE CORRECTION TO THIS DOCUMENT, MEASURED.** §1a's carve-out says the
+globe *"reads its tokens off `getComputedStyle` at paint and says so"*. **It
+never has.** `nukernel/ui/globe.js` writes the CSS system colours `Canvas` and
+`CanvasText` as SVG presentation attributes; there is no `getComputedStyle` in
+it. The exception was granted for a problem the code did not have. `<nu-globe>`
+goes further and writes NO paint at all — every fill, stroke and opacity is a
+`nu.css` rule on its parts, which D9e measures as zero paint attributes across
+every SVG node — so the one element that looked like it needed an escape from
+§1a is the one that proves the law hardest, and `skins/paper.css` turns its
+earth into an engraving in five rules.
+
+## The gates
+
+| gate | before | after |
+|---|---|---|
+| `design-system` | 48 ok, 0 failed | **95 ok, 0 failed** |
+| `atlas` | 134 of 135 (G9 the standing red) | **135 of 135** |
+| `rules-view` | 41 ok, 1 failed (R11c) | **42 ok, 0 failed** |
+| `table.browser` | 793 | **793** |
+| `shell` | PASS, 459 ok | **PASS, 459 ok** |
+| `selects` | ALL PASS (72) | **ALL PASS (72)** |
+| `gutter` · `oneopen` · `sheets` · `seed` | 52 · 11 · 31 · 36 | **52 · 11 · 31 · 36** |
+| `copy.test` | 10 ok | **10 ok** |
+| `remix.test` · `remix-door.browser` | 32 · — | **32 · 27 (new)** |
+| `ui-build --check` · `tsc --noEmit` | green · clean | **green (6 entries) · clean** |
+
+**TWO STANDING REDS WERE RETIRED, AND BOTH WERE THE SAME BUG IN TWO FILES.**
+`test/atlas.js` G9 and `test/rules-view.browser.js` R11c each asserted a
+readout the page had been told to DELETE — the receipt sentence under the globe
+(*"stop producing it"*) and `#reading` (*"Get rid of seed number too"*). A gate
+arguing with the product is not a gate. Neither was deleted: the CLAIM was
+worth making in both cases and survives, re-taken against readouts that exist —
+`#rewrite`'s accessible name and, for G9, **the address bar**, since `linkFrag`
+writes `s=<seed>` on every gesture a hand makes. Two readouts, two code paths,
+one fact; a page that told a reader one reading while linking another now
+fails, which the old check could not have caught.
+
+## The measurements
+
+Under iPhone 14 emulation (DPR 3, isMobile, hasTouch), on Kingston 1969 and the
+Coach House, by one script run twice — `test/_system2-measure.cjs`, written so
+the before and after could not be measured by two different methods.
+
+| | 320 before → after | 390 before → after | 1280 before → after |
+|---|---|---|---|
+| `#burger` x | 276 → **0** | 346 → **0** | 1236 → **0** |
+| the plate's x | 26.4 → **5.6** | 96.4 → **5.6** | 986.4 → **5.6** |
+| the record's name | start → **end** | start → **end** | start → **end** |
+| **word-start spread** | 21.3px / 11 x → **0px / 1 x** | same | same |
+| mark-advance spread | 21.3px → **0px** | 21.3px → **0px** | 21.3px → **0px** |
+| the spinner's width | — | 155.5 → **68.0px** | — |
+
+**AND ONE NUMBER THAT DID NOT MOVE, SAID PLAINLY BECAUSE THE ROUND WAS ASKED
+FOR IT.** *How much MORE of the record is on the glass:* **none.** 72 of 145
+cells at 390 before and after, 60 of 150 at 320, 117 of 145 at 1280. That is
+the right answer and not a failure: this round is **steps 2 and 4** — the
+elements and the port — and the record's share of the glass is bought by
+**step 5, the squeeze**, which is a different round with its own census already
+sitting in this file waiting to be spent. A port that had quietly bought glass
+would have bought it from the tap floor or the type, which is what the census
+was written to stop. The chrome's two fixed bands are the same height they
+were; what changed is which end of one of them your thumb finds the ≡ at.
+
+The lozenge-to-cell numbers, and the honest finding that the port bought
+VOCABULARY rather than DENSITY, are in `nukernel/TABLE.md` §21 — including why
+(§19 had already spent the density, by making a table-mode pill full-column
+width) and what the 1,639px recovered from hiding a redundant say line did buy.
+
+## Screenshots
+
+`scratchpad/design/system-2/` — the gallery at 320, 390 and 1280 under BOTH
+skins (`gallery-deck-*`, `gallery-paper-*`), every new element's card under
+both (`cells-deck-*`, `cells-paper-*`), the plate open at 390 and 320 before
+and after, the app at both widths, and the instrument picker and kit list as
+pills and then as cells.

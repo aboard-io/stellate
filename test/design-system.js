@@ -37,6 +37,42 @@
 //   D7  THE PAGE OBEYS ITS OWN LAWS: nothing scrolls sideways at 320 or 390,
 //       every control clears the 44px tap floor, and the three stylesheets are
 //       linked in the order the cascade needs.
+//   D8  THE TABLE OF CELLS MEANS WHAT IT SAYS. The <nu-table> track is a named
+//       group a keyboard can reach; the TRACK scrolls sideways and the PAGE
+//       does not; no <nu-cell> is a pill (`--r-pill` is the lozenge's noun and
+//       nothing else wears it); an `order` prints only where a chain has more
+//       than one member; a refused cell answers in the TABLE's one say line and
+//       not in its own; a QUIET cell is inert and is NOT drawn refused; a
+//       CONTINUED column head is aria-hidden and takes no press; and the
+//       spinner is ONE button that still prints its position, with no
+//       `.nu-elstep` left anywhere on the page.
+//   D9  THE PLATE, THE MENU ROW, THE INDEX AND THE GLOBE. Every menu row's
+//       word starts on ONE vertical line, out of marks whose natural advances
+//       differ (measured, so the check cannot pass vacuously); the plate is
+//       never a full-width band of glass and is capped short of the bottom
+//       band with its own scroll; the globe is SVG with a name, writes NOT ONE
+//       paint attribute, and its three verbs — sweeping, marked, empty — are
+//       reached rather than asserted; the index rests with every row shown, an
+//       empty answer of zero height, exactly one `aria-current` row and no
+//       `aria-selected`; a query HIDES rows rather than detaching them and
+//       names itself when it matches nothing; and the globe idles at ZERO.
+//   D10 A SKIN IS A STYLESHEET, AND THIS IS THE PROOF §1a NAMED FOR ITSELF.
+//       docs/DESIGN-SYSTEM.md §1a was, until 2026-09-07, the one law in that
+//       document with no check behind it, and it said so in its own words:
+//       *"no such file and no such check exists today… Until it is written the
+//       SKIN law is unproven as a whole."* D2/D4a/D4b/D4c/D12 measure the five
+//       things a skinnable element must NOT do; this measures the one thing
+//       that shows a skin actually works, which is a different claim.
+//       `nukernel/design-paper.html` is the gallery plus ONE `<link>` — proven
+//       by DIFFING the two documents, not by a comment claiming it — and
+//       `nukernel/skins/paper.css` is the whole of the second look: no `.ts`
+//       edited, no attribute passed, no build run, and no element source
+//       anywhere that knows the file exists. Under it, every element still
+//       draws in every declared state; every one of the tokens the skin
+//       re-answers resolves to something OTHER than the deck's answer, so NOT
+//       ONE rule of the default palette wins; all 54 contrast pairings still
+//       clear their floors; and the density it loosens does not cost the 44px
+//       tap floor or the page's inline axis at 390 or at 320.
 //
 // Run:  NODE_PATH=/home/ford/aboard-daily/node_modules node test/design-system.js
 
@@ -232,7 +268,12 @@ const REFUSALS = () => {
     const btns = Array.from(inst.querySelectorAll("button"));
     const hardDisabled = btns.filter((b) => b.disabled).length;
     const ariaDisabled = btns.filter((b) => b.getAttribute("aria-disabled") === "true").length;
-    const say = inst.querySelector(".nu-elsay");
+    /* `:scope >` AND NOT A DESCENDANT SEARCH. Every element's own say line is
+       a DIRECT child of it; a container (a refused <nu-table>) holds cells
+       that have say lines of their own, and a descendant query would clear
+       and then read the wrong one — a check that passes on the wrong node is
+       worse than one that fails. */
+    const say = inst.querySelector(":scope > .nu-elsay");
     if (say) say.textContent = "";
     if (btns[0]) btns[0].click();
     const said = say ? (say.textContent || "").trim() : "";
@@ -241,6 +282,32 @@ const REFUSALS = () => {
                hardDisabled, ariaDisabled, said,
                words: said ? said.split(/\s+/).length : 0,
                visible: !!rect && rect.height > 0 && rect.width > 0 });
+  }
+  return out;
+};
+
+/** D3f — every BUSY example, pressed. The same walk as REFUSALS and for the
+ *  same reason (DESIGN.md component 14a, 2026-09-07): a control that is
+ *  working is `aria-disabled` and never `disabled`, so it takes the press —
+ *  and a press it takes and does not answer is the silent grey wearing a
+ *  different attribute. Ignoring a press and refusing one look identical to a
+ *  thumb; only one of them says so. */
+const BUSIES = () => {
+  const spec = (globalThis.NuUI || {}).SPEC || [];
+  const out = [];
+  for (const s of spec) {
+    if (s.states.indexOf("busy") < 0) continue;
+    const card = document.querySelector('[data-tag="' + s.tag + '"]');
+    const inst = card && card.querySelector('.dg-state[data-state="busy"] ' + s.tag);
+    if (!inst) { out.push({ tag: s.tag, found: false }); continue; }
+    const btns = Array.from(inst.querySelectorAll("button"));
+    const say = inst.querySelector(":scope > .nu-elsay");
+    if (say) say.textContent = "";
+    if (btns[0]) btns[0].click();
+    const said = say ? (say.textContent || "").trim() : "";
+    out.push({ tag: s.tag, found: true,
+               hardDisabled: btns.filter((b) => b.disabled).length,
+               said, words: said ? said.split(/\s+/).length : 0 });
   }
   return out;
 };
@@ -322,13 +389,230 @@ const CONTRAST = () => {
   return { rows, under, disagree };
 };
 
+/* ===== D8 — THE TABLE OF CELLS, AND THE SPINNER THAT IS ONE BUTTON =====
+   Everything below is about what the GENERIC sweeps cannot see. D1/D2/D3/D5/D7
+   already walk every element in the SPEC — they draw it, count its states,
+   press its refusal, price its spacing and measure its tap. What they cannot
+   know is what these four tags MEAN: that the track and not the page is what
+   scrolls, that a cell is square and a lozenge is not, that a refusal made in
+   a cell is answered at the foot of the TABLE, that inert and refused are two
+   registers, that a number nobody can act on is not printed, and that the
+   spinner is now one control rather than three. */
+const TABLE = () => {
+  const px = (v) => {
+    const probe = document.createElement("div");
+    probe.style.cssText =
+      "position:absolute;left:-9999px;visibility:hidden;border-radius:" + v;
+    document.body.appendChild(probe);
+    const r = parseFloat(getComputedStyle(probe).borderRadius) || 0;
+    probe.remove();
+    return r;
+  };
+  const card = document.querySelector('[data-tag="nu-table"]');
+  const tbl = card && card.querySelector('.dg-state[data-state="rest"] nu-table');
+  const track = tbl && tbl.querySelector(":scope > .nu-eltrack");
+  const de = document.documentElement;
+
+  /* the cell is square: never --r-pill, and never past --r2 */
+  const pill = px("var(--r-pill)"), r2 = px("var(--r2)");
+  const round = [];
+  for (const c of document.querySelectorAll("#gal .nu-elcell")) {
+    const v = parseFloat(getComputedStyle(c).borderRadius) || 0;
+    if (v >= pill || v > r2 + 0.5) round.push(v);
+  }
+
+  /* a refusal made in a cell is answered at the foot of the TABLE */
+  const cellSay = { ran: false };
+  const rcell = tbl && tbl.querySelector("nu-cell[refused]");
+  const tsay = tbl && tbl.querySelector(":scope > .nu-elsay");
+  if (rcell && tsay) {
+    const own = rcell.querySelector(":scope > .nu-elsay");
+    tsay.textContent = ""; if (own) own.textContent = "";
+    const b = rcell.querySelector("button");
+    if (b) b.click();
+    const r = tsay.getBoundingClientRect();
+    cellSay.ran = true;
+    cellSay.said = (tsay.textContent || "").trim();
+    cellSay.words = cellSay.said ? cellSay.said.split(/\s+/).length : 0;
+    cellSay.visible = r.height > 0 && r.width > 0;
+    cellSay.ownStayedEmpty = !own || !(own.textContent || "").trim();
+    cellSay.hardDisabled = !!(b && b.disabled);
+    cellSay.aria = b ? b.getAttribute("aria-disabled") : null;
+  }
+
+  /* inert is not refused */
+  const q = tbl && tbl.querySelector("nu-cell[quiet]");
+  const quiet = q ? {
+    found: true,
+    buttons: q.querySelectorAll("button").length,
+    aria: q.querySelector("[aria-disabled]") ? 1 : 0,
+    dashed: q.querySelector(".nu-elcell")
+      ? getComputedStyle(q.querySelector(".nu-elcell")).borderTopStyle : "?",
+    box: q.getBoundingClientRect().height,
+  } : { found: false };
+
+  /* a position nobody can act on is a number for nothing */
+  let wantOrder = 0;
+  for (const g of document.querySelectorAll("#gal nu-colhead, #gal nu-rowhead")) {
+    const n = g.querySelectorAll(":scope > nu-cell[order]").length;
+    if (n > 1) wantOrder += n;
+  }
+  const gotOrder = document.querySelectorAll("#gal .nu-elorder").length;
+  const strayOrder = Array.from(document.querySelectorAll("#gal nu-cell[order]"))
+    .filter((c) => c.querySelector(".nu-elorder") &&
+      c.parentElement.querySelectorAll(":scope > nu-cell[order]").length < 2).length;
+
+  /* a continuation is a readout, not a second door to one room */
+  const cont = tbl && tbl.querySelector("nu-colhead[continued]");
+  const contHead = cont && cont.querySelector(".nu-elcolhead");
+
+  /* the spinner is ONE button */
+  const scard = document.querySelector('[data-tag="nu-spinner"]');
+  const spin = scard && scard.querySelector('.dg-state[data-state="rest"] nu-spinner');
+
+  return {
+    track: !!track,
+    role: track ? track.getAttribute("role") : null,
+    named: !!(track && track.getAttribute("aria-label")),
+    tabbable: track ? track.tabIndex : -1,
+    trackScroll: track ? Math.round(track.scrollWidth - track.clientWidth) : -1,
+    pageScroll: Math.round(de.scrollWidth - de.clientWidth),
+    round, pill: Math.round(pill), r2: Math.round(r2),
+    cellSay, quiet, wantOrder, gotOrder, strayOrder,
+    cont: !!cont,
+    contHidden: contHead ? contHead.getAttribute("aria-hidden") : null,
+    /* `:scope >` — a continuation's CELLS are buttons and are meant to be;
+       what may not be one is the HEAD, which is the direct child. */
+    contButtons: cont ? cont.querySelectorAll(":scope > button").length : -1,
+    spinButtons: spin ? spin.querySelectorAll("button").length : -1,
+    spinPos: !!(spin && spin.querySelector(".nu-elpos")),
+    steps: document.querySelectorAll("#gal .nu-elstep").length,
+  };
+};
+
+/* ===== D9 — THE PLATE, THE MENU ROW, THE INDEX AND THE GLOBE ==========
+   Four things the generic sweeps draw but cannot judge. A plate that filled
+   the screen would still pass D2 and D5 and D7; a menu row with ragged marks
+   would pass every one of them; an index whose filter detached its rows would
+   look identical to one that hid them; and a globe that spun would pass the
+   lot while burning a battery and disobeying the one law its own file
+   claims. */
+const PANELS = () => {
+  const de = document.documentElement;
+  const plate = document.querySelector(
+    '[data-tag="nu-plate"] .dg-state[data-state="open"] nu-plate');
+  const pr = plate ? plate.getBoundingClientRect() : null;
+  const pcs = plate ? getComputedStyle(plate) : null;
+
+  /* THE FIXED ADVANCE: every word starts on one vertical line. */
+  const starts = [], marks = [];
+  if (plate) {
+    for (const row of plate.querySelectorAll(".nu-elmenurow")) {
+      const rr = row.getBoundingClientRect();
+      const w = row.querySelector(".nu-elword");
+      const m = row.querySelector(".nu-elmark");
+      if (w) starts.push(Math.round((w.getBoundingClientRect().left - rr.left) * 10) / 10);
+      if (m) marks.push((m.textContent || "").trim());
+    }
+  }
+  /* AND THE CHECK IS NOT VACUOUS: the marks themselves have DIFFERENT natural
+     advances in --sym, which is the whole reason the column exists. Measured
+     here, in the same face and size the rows use. */
+  const natural = [];
+  if (plate && marks.length) {
+    const probe = document.createElement("span");
+    probe.style.cssText =
+      "position:absolute;left:-9999px;visibility:hidden;white-space:pre";
+    const m0 = plate.querySelector(".nu-elmark");
+    if (m0) {
+      const cs = getComputedStyle(m0);
+      probe.style.font = cs.font ||
+        (cs.fontSize + " " + cs.fontFamily);
+      document.body.appendChild(probe);
+      for (const ch of marks) {
+        probe.textContent = ch || " ";
+        natural.push(Math.round(probe.getBoundingClientRect().width * 10) / 10);
+      }
+      probe.remove();
+    }
+  }
+  return {
+    found: !!plate,
+    width: pr ? Math.round(pr.width) : -1,
+    height: pr ? Math.round(pr.height) : -1,
+    glass: Math.round(de.clientWidth),
+    room: Math.round(de.clientHeight),
+    overflowY: pcs ? pcs.overflowY : "?",
+    cap: pcs ? Math.round(parseFloat(pcs.maxBlockSize) || 0) : -1,
+    named: !!(plate && plate.getAttribute("aria-label")),
+    rows: starts.length,
+    startsDistinct: Array.from(new Set(starts)),
+    naturalDistinct: Array.from(new Set(natural)).length,
+  };
+};
+
+const ATLAS = () => {
+  const pick = (st) => document.querySelector(
+    '[data-tag="nu-index"] .dg-state[data-state="' + st + '"] nu-index');
+  const rest = pick("rest"), cur = pick("current"), mt = pick("empty");
+  const li = (el) => Array.from(el ? el.querySelectorAll(".nu-elixli") : []);
+  const shown = (el) => li(el).filter((n) => !n.hasAttribute("hidden")).length;
+  const none = (el) => el && el.querySelector(".nu-elixnone");
+  const nr = rest ? none(rest).getBoundingClientRect() : null;
+  const gl = (st) => document.querySelector(
+    '[data-tag="nu-globe"] .dg-state[data-state="' + st + '"] nu-globe');
+  const grest = gl("rest"), gsw = gl("sweeping"), gmk = gl("marked"),
+        gmt = gl("empty");
+  const places = (el) => Array.from(el ? el.querySelectorAll(".nu-elplace") : []);
+  const on = (el) => places(el).filter((g) =>
+    getComputedStyle(g).display !== "none");
+  /* NOT ONE PAINT IS WRITTEN ON THE SVG. Every fill, stroke and opacity comes
+     from a rule; a presentation attribute or a style= on any node under the
+     globe is the §1a failure this element was written to avoid. */
+  const painted = [];
+  for (const el of (grest ? grest.querySelectorAll("*") : []))
+    for (const a of ["fill", "stroke", "opacity", "fill-opacity",
+                     "stroke-opacity", "style", "color", "stroke-width"])
+      if (el.hasAttribute(a)) painted.push(el.tagName + "@" + a);
+  const svg = grest && grest.querySelector("svg");
+  return {
+    restRows: li(rest).length, restShown: shown(rest),
+    noneEmptyText: rest ? (none(rest).textContent || "").trim() : "?",
+    noneEmptyBox: nr ? Math.round(nr.height) : -1,
+    curMarked: cur ? cur.querySelectorAll('.nu-elixrow[aria-current="true"]').length : -1,
+    ariaSelected: document.querySelectorAll("#gal nu-index [aria-selected]").length,
+    emptyFlag: mt ? mt.hasAttribute("empty") : false,
+    emptyRows: shown(mt), emptyKept: li(mt).length,
+    emptySays: mt ? (none(mt).textContent || "").trim() : "",
+    isSvg: !!svg, isCanvas: !!(grest && grest.querySelector("canvas")),
+    role: svg ? svg.getAttribute("role") : null,
+    globeNamed: !!(svg && svg.getAttribute("aria-label")),
+    marksAll: places(grest).length, marksOn: on(grest).length,
+    sweptAll: places(gsw).length, sweptOn: on(gsw).length,
+    sweptTab: places(gsw).filter((g) =>
+      getComputedStyle(g).display === "none" &&
+      g.getAttribute("tabindex") === "-1").length,
+    sweptOff: places(gsw).filter((g) =>
+      getComputedStyle(g).display === "none").length,
+    year: !!(gsw && gsw.querySelector(".nu-elyear")),
+    markedRing: gmk ? gmk.querySelectorAll('.nu-elplace[aria-current="true"]').length : -1,
+    emptyGlobe: gmt ? gmt.hasAttribute("empty") : false,
+    emptyGlobeOn: on(gmt).length,
+    sweeping: gsw ? gsw.hasAttribute("sweeping") : false,
+    marked: gmk ? gmk.hasAttribute("marked") : false,
+    named: places(grest).every((g) => !!g.getAttribute("aria-label")),
+    painted,
+  };
+};
+
 /** D7 — the page's own laws. */
 const LAWS = () => {
   const de = document.documentElement;
   const taps = [];
   for (const el of document.querySelectorAll(
       "#gal nu-button button, #gal nu-icon-button button, " +
-      "#gal .nu-elseg, #gal .nu-elstep, #gal .nu-elspinword")) {
+      "#gal .nu-elseg, #gal .nu-elspin, #gal .nu-elcell, " +
+      "#gal .nu-elcolhead, #gal .nu-elrowhead, #gal .nu-elmenurow")) {
     const r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) continue;
     if (r.height < 43.5) taps.push(el.className + " " + r.height.toFixed(1));
@@ -384,7 +668,138 @@ const LAWS = () => {
       " cells, " + missing.length + " missing" +
       (missing.length ? ": " + missing.slice(0, 4).map((m) => m.tag + "/" + m.state).join(", ") : "") + ")");
 
+    /* D8 — the four new tags, and the spinner's new shape */
+    const T = await p.evaluate(TABLE);
+    check(T.track && T.role === "group" && T.named && T.tabbable === 0,
+      "D8a at " + W + " the <nu-table> track is a named, tab-reachable group (role=" +
+      T.role + ", named " + T.named + ", tabindex " + T.tabbable + ")");
+    check(!T.round.length,
+      "D8b at " + W + " no <nu-cell> is a pill — every one is <= --r2 (" + T.r2 +
+      "px, pill is " + T.pill + "px; " + T.round.length + " over" +
+      (T.round.length ? ": " + T.round.slice(0, 4).join(", ") : "") + ")");
+    check(T.wantOrder === T.gotOrder && !T.strayOrder,
+      "D8c at " + W + " an order prints only in a chain of two or more (" +
+      T.gotOrder + " printed, " + T.wantOrder + " earned, " + T.strayOrder +
+      " stray)");
+    check(T.spinButtons === 1 && T.spinPos && T.steps === 0,
+      "D8d at " + W + " the spinner is ONE button and still prints its position (" +
+      T.spinButtons + " button" + (T.spinPos ? ", position on" : ", NO POSITION") +
+      ", " + T.steps + " leftover .nu-elstep)");
+
+    /* D9 — the plate and its rows, at every width */
+    const P = await p.evaluate(PANELS);
+    check(P.found && P.rows >= 5 && P.startsDistinct.length === 1 &&
+          P.naturalDistinct > 1,
+      "D9a at " + W + " every menu row's word starts on one line (" + P.rows +
+      " rows, " + P.startsDistinct.length + " start offset" +
+      (P.startsDistinct.length === 1 ? " of " + P.startsDistinct[0] + "px" :
+        "s: " + P.startsDistinct.join(", ")) +
+      ", from " + P.naturalDistinct + " different natural mark widths)");
+    check(P.found && P.width > 0 && P.width <= P.glass - 44,
+      "D9b at " + W + " the plate is never a full-width band of glass (" +
+      P.width + "px in " + P.glass + "; a tap needs " + (P.glass - P.width) +
+      " >= 44 outside it)");
+    check(P.overflowY === "auto" && P.cap > 0 && P.cap < P.room &&
+          P.height <= P.cap && P.named,
+      "D9c at " + W + " the plate scrolls inside itself and stops short (" +
+      "overflow-y " + P.overflowY + ", capped at " + P.cap + " of " + P.room +
+      "px of glass, drawn " + P.height + ", named " + P.named + ")");
+
+    /* D8, the half that is about a phone — once at 320 and once at 390 */
+    if (W !== 1280) {
+      check(T.trackScroll > 0 && T.pageScroll <= 0,
+        "D8e at " + W + " the TRACK scrolls sideways and the PAGE does not (" +
+        T.trackScroll + "px in the track, " + T.pageScroll + "px in the page)");
+    }
+
+    /* D9, the half that needs one width and a hand — 390 */
+    if (W === 390) {
+      const A0 = await p.evaluate(ATLAS);
+      check(A0.isSvg && !A0.isCanvas && A0.role === "application" &&
+            A0.globeNamed && A0.named,
+        "D9d the globe is SVG with a name, and every mark says its own (" +
+        "svg " + A0.isSvg + ", canvas " + A0.isCanvas + ", role " + A0.role +
+        ", named " + A0.globeNamed + "/" + A0.named + ")");
+      check(!A0.painted.length,
+        "D9e …and not one paint is written on it — every fill and stroke is a " +
+        "rule (" + A0.painted.length +
+        (A0.painted.length ? ": " + A0.painted.slice(0, 4).join(", ") : "") + ")");
+      check(A0.sweeping && A0.year && A0.sweptOff > 0 &&
+            A0.sweptOff === A0.sweptTab && A0.marked && A0.markedRing === 1 &&
+            A0.emptyGlobe && A0.emptyGlobeOn <= 1,
+        "D9f …and its three verbs are real: sweeping drops " + A0.sweptOff +
+        " marks and stamps the year, marked rings " + A0.markedRing +
+        ", empty holds " + A0.emptyGlobeOn);
+      check(A0.restShown === A0.restRows && A0.restRows >= 10 &&
+            !A0.noneEmptyText && A0.noneEmptyBox === 0 && A0.curMarked === 1 &&
+            A0.ariaSelected === 0,
+        "D9g the index rests with all " + A0.restRows +
+        " rows, an empty answer of zero height, one aria-current row (" +
+        A0.curMarked + ") and no aria-selected (" + A0.ariaSelected + ")");
+      check(A0.emptyFlag && A0.emptyRows === 0 && A0.emptyKept === A0.restRows &&
+            /zzzz/.test(A0.emptySays),
+        "D9h …and a query that matches nothing HIDES its rows rather than " +
+        "dropping them, and names the query (" + A0.emptyKept + " kept, " +
+        A0.emptyRows + " shown, \"" + A0.emptySays + "\")");
+
+      /* THE FILTER, RUN BY A HAND, on the resting list. */
+      const SEL = '[data-tag="nu-index"] .dg-state[data-state="rest"] nu-index';
+      await p.fill(SEL + " .nu-elixq", "kingston");
+      await p.waitForTimeout(150);
+      const F = await p.evaluate((sel) => {
+        const ix = document.querySelector(sel);
+        const li = Array.from(ix.querySelectorAll(".nu-elixli"));
+        return { kept: li.length,
+                 shown: li.filter((n) => !n.hasAttribute("hidden")).length,
+                 words: li.filter((n) => !n.hasAttribute("hidden"))
+                   .map((n) => (n.querySelector(".nu-elixw").textContent || "").trim()) };
+      }, SEL);
+      check(F.kept >= 10 && F.shown === 2 &&
+            F.words.join(",") === "Reggae,Dub",
+        "D9i a query filters by PLACE and hides rather than detaches (" +
+        F.shown + " of " + F.kept + " shown: " + F.words.join(", ") + ")");
+      await p.fill(SEL + " .nu-elixq", "");
+      await p.waitForTimeout(120);
+
+      /* IT IDLES AT ZERO. The globe's own law, measured the way the app's is:
+         nothing changes in its subtree while nobody is touching it. */
+      await p.evaluate(() => {
+        const g = document.querySelector(
+          '[data-tag="nu-globe"] .dg-state[data-state="rest"] nu-globe');
+        const w = globalThis;
+        w.__globeMut = 0;
+        w.__globeObs = new MutationObserver((rs) => { w.__globeMut += rs.length; });
+        w.__globeObs.observe(g, { childList: true, subtree: true,
+                                  attributes: true, characterData: true });
+      });
+      await p.waitForTimeout(1500);
+      const idle = await p.evaluate(() => {
+        const w = globalThis;
+        w.__globeObs.disconnect();
+        return w.__globeMut;
+      });
+      check(idle === 0,
+        "D9j the globe idles at ZERO — " + idle +
+        " changes in its subtree over 1.5s with no hand on it");
+    }
+
     /* D3 — once, at 390, where a thumb is */
+    if (W === 390) {
+      check(T.cellSay.ran && !!T.cellSay.said && T.cellSay.visible &&
+            T.cellSay.ownStayedEmpty && !T.cellSay.hardDisabled &&
+            T.cellSay.aria === "true" && T.cellSay.words <= 12,
+        "D8f a refused <nu-cell> prints its reason in the TABLE's say line (\"" +
+        (T.cellSay.said || "SILENT") + "\", " + T.cellSay.words +
+        " words, own line empty " + T.cellSay.ownStayedEmpty +
+        ", aria-disabled " + T.cellSay.aria + ")");
+      check(T.quiet.found && T.quiet.buttons === 0 && T.quiet.aria === 0 &&
+            T.quiet.dashed !== "dashed" && T.quiet.box > 0,
+        "D8g a quiet <nu-cell> is INERT and not refused — no button, no " +
+        "aria-disabled, no dash (" + JSON.stringify(T.quiet) + ")");
+      check(T.cont && T.contHidden === "true" && T.contButtons === 0,
+        "D8h a continued <nu-colhead> is a readout: aria-hidden, and it takes " +
+        "no press (hidden " + T.contHidden + ", " + T.contButtons + " buttons)");
+    }
     if (W === 390) {
       const ref = await p.evaluate(REFUSALS);
       const noFind = ref.filter((r) => !r.found);
@@ -406,6 +821,20 @@ const LAWS = () => {
       check(!shouty.length,
         "D3e …and the sentence is <= 12 words (" +
         Math.max(0, ...ref.map((r) => r.words)) + " longest)");
+
+      /* D3f — AND A BUSY CONTROL ANSWERS TOO. */
+      const bz = await p.evaluate(BUSIES);
+      const bzNone = bz.filter((r) => !r.found);
+      const bzHard = bz.filter((r) => r.hardDisabled > 0);
+      const bzMute = bz.filter((r) => r.found && !r.said);
+      const bzLong = bz.filter((r) => r.words > 12);
+      check(bz.length >= 4 && !bzNone.length && !bzHard.length &&
+            !bzMute.length && !bzLong.length,
+        "D3f a press on a BUSY control is answered, not swallowed — " +
+        bz.length + " drawn, " + bzHard.length + " `disabled`, " +
+        bzMute.length + " silent, longest " +
+        Math.max(0, ...bz.map((r) => r.words)) + " words" +
+        (bzMute.length ? " (silent: " + bzMute.map((r) => r.tag).join(", ") + ")" : ""));
     }
 
     /* D5 */
@@ -454,6 +883,157 @@ const LAWS = () => {
       laws.sheets.join(" -> ") + ")");
 
     await ctx.close();
+  }
+
+  /* ===== D10 — A SKIN IS A STYLESHEET, AND HERE IS THE SECOND ONE =======
+     docs/DESIGN-SYSTEM.md §1a is the acceptance test of that whole document,
+     and until 2026-09-07 it was the one law in it with NO CHECK BEHIND IT —
+     the document said so itself, in its own words: *"no such file and no such
+     check exists today… Until it is written the SKIN law is unproven as a
+     whole, and it is the outstanding acceptance test of this document."*
+
+     THE FIVE SUB-RULES ALREADY MEASURED (D2, D4a, D4b, D4c, D12) ARE THE
+     THINGS A SKINNABLE ELEMENT MUST NOT DO. This is the one that shows a skin
+     actually works, which is a different claim and needs a different test: not
+     "no element names a colour" but "here is a second look, reached by adding
+     one stylesheet, and nothing of the first one survives it."
+
+     THE ARTIFACT IS `nukernel/design-paper.html` — `design.html` plus one
+     `<link>` — and `nukernel/skins/paper.css`. Everything below is measured on
+     the rendered page, never read out of either file's intentions. */
+  {
+    const PAPER = "http://127.0.0.1:" + srv.port + "/nukernel/design-paper.html";
+    console.log("\n=== the second skin ===");
+
+    /* D10a — THE ONE LINE, PROVEN BY DIFF AND NOT BY ASSERTION. A skin that
+       needed a second change to the page would not be a skin; a comment
+       claiming it did not would be the tree's characteristic bug. So the two
+       documents are compared with their comments and their <title> removed,
+       and what is left must differ by exactly the one stylesheet link. */
+    const strip = (f) => fs.readFileSync(path.join(ROOT, "nukernel", f), "utf8")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<title>[\s\S]*?<\/title>/g, "")
+      .split("\n").map((l) => l.trim()).filter(Boolean);
+    const base = strip("design.html"), skinned = strip("design-paper.html");
+    const extra = skinned.filter((l) => base.indexOf(l) < 0);
+    const missing = base.filter((l) => skinned.indexOf(l) < 0);
+    check(extra.length === 1 &&
+          /^<link rel="stylesheet" href="skins\/paper\.css">$/.test(extra[0]) &&
+          !missing.length,
+      "D10a the skinned page is the gallery plus ONE stylesheet link and " +
+      "nothing else (" + extra.length + " added, " + missing.length +
+      " removed" + (extra.length ? ": " + JSON.stringify(extra.slice(0, 3)) : "") + ")");
+
+    /* D10b — AND THE SKIN IS A STYLESHEET AND NOTHING ELSE. No `.ts` knows it
+       exists; `nukernel/skins/` holds no code. If either of those stopped
+       being true the law would have been kept in name and broken in fact. */
+    const skinDir = path.join(ROOT, "nukernel", "skins");
+    const skinFiles = fs.existsSync(skinDir) ? fs.readdirSync(skinDir) : [];
+    const notCss = skinFiles.filter((f) => !/\.css$/.test(f));
+    const uiDir = path.join(ROOT, "nukernel", "src", "ui");
+    const tsKnows = fs.readdirSync(uiDir).filter((f) => f.endsWith(".ts"))
+      .filter((f) => /paper\.css|skins\//.test(
+        fs.readFileSync(path.join(uiDir, f), "utf8")));
+    check(skinFiles.length >= 1 && !notCss.length && !tsKnows.length,
+      "D10b the skin is " + skinFiles.length + " stylesheet(s) and no code, " +
+      "and no element source knows it exists (" + notCss.join(",") +
+      tsKnows.join(",") + ")");
+
+    /* D10c..g — DRIVEN. One width is enough for the palette claims; the tap
+       floor and the inline axis are asked at the phone's, because a LOOSER
+       density is exactly the change that could break them. */
+    for (const W of [390, 320]) {
+      const dev = { ...devices["iPhone 14"] };
+      dev.viewport = { width: W, height: 844 };
+      const ctx = await b.newContext(dev);
+      const p = await ctx.newPage();
+      const errs = [];
+      p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
+      p.on("console", (m) => { if (m.type() === "error") errs.push("console: " + m.text()); });
+      await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+      await p.goto(PAPER, { waitUntil: "networkidle" });
+      await p.waitForFunction(() => !!document.querySelector("#gal[data-built]"),
+        null, { timeout: 15000 });
+      await p.waitForTimeout(400);
+
+      const laws = await p.evaluate(LAWS);
+      if (W === 390) {
+        check(!errs.length && laws.defined === laws.declared,
+          "D10c the skinned gallery draws every element with no console error (" +
+          errs.length + " errors, " + laws.defined + "/" + laws.declared + " defined)");
+        const states = await p.evaluate(STATES);
+        const missingS = states.filter((s) => !s.cell || !s.inst || s.h <= 0);
+        check(states.length >= 30 && !missingS.length,
+          "D10d …and every declared state is still on the glass under it (" +
+          states.length + " cells, " + missingS.length + " missing)");
+
+        /* THE CLAIM THE LAW ACTUALLY MAKES: zero rules from the default
+           palette winning. Measured as: every token `skins/paper.css`
+           re-declares resolves, on the rendered page, to something OTHER than
+           the value `tokens.css` gives it. A skin that redeclared a name and
+           lost the cascade would show up here as a token still wearing the
+           deck's answer — which is precisely "a default rule winning". */
+        const skinText = fs.readFileSync(path.join(skinDir, "paper.css"), "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, " ");
+        const claimed = [...new Set([...skinText.matchAll(/(--[\w-]+)\s*:/g)]
+          .map((m) => m[1]))];
+        const deckVals = await (async () => {
+          const c2 = await b.newContext(dev);
+          const p2 = await c2.newPage();
+          await p2.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+          await p2.goto(PAGE, { waitUntil: "networkidle" });
+          await p2.waitForTimeout(300);
+          const v = await p2.evaluate((names) => {
+            const cs = getComputedStyle(document.documentElement);
+            const out = {};
+            for (const n of names) out[n] = cs.getPropertyValue(n).trim();
+            return out; }, claimed);
+          await c2.close();
+          return v;
+        })();
+        const paperVals = await p.evaluate((names) => {
+          const cs = getComputedStyle(document.documentElement);
+          const out = {};
+          for (const n of names) out[n] = cs.getPropertyValue(n).trim();
+          return out; }, claimed);
+        const survived = claimed.filter((n) =>
+          deckVals[n] !== "" && deckVals[n] === paperVals[n]);
+        check(claimed.length >= 40 && !survived.length,
+          "D10e the skin re-answers " + claimed.length + " tokens and NOT ONE " +
+          "of the deck's answers survives it (" + survived.length + " survived" +
+          (survived.length ? ": " + survived.slice(0, 6).join(", ") : "") + ")");
+
+        /* AND IT IS STILL READABLE. A skin may look like anything; it may not
+           be unreadable. §1's rule — *"the value wins and the theme bends"* —
+           is this file's for a skin exactly as it is for the deck. */
+        const c = await p.evaluate(CONTRAST);
+        check(c.rows >= 40 && !c.under.length,
+          "D10f …and all " + c.rows + " pairings still clear their floor under " +
+          "it (" + c.under.length + " under" +
+          (c.under.length ? ": " + c.under.slice(0, 4).join(" · ") : "") + ")");
+        check(!c.disagree.length,
+          "D10g …with the page's own printed numbers re-measured (" +
+          c.disagree.length + " disagree)");
+      }
+
+      /* THE DENSITY IS THE THING THAT CAN BREAK A LAW. `paper.css` opens every
+         step of the ramp; the 44px tap floor is NOT on that ramp and does not
+         move with it, and the page's inline axis is not for sale. Asked at
+         both widths, because a looser skin fails narrow first. */
+      check(laws.sideways <= 0,
+        "D10h at " + W + " the skinned page does not scroll sideways (" +
+        laws.sideways + "px over)");
+      check(!laws.taps.length,
+        "D10i at " + W + " …and the 44px floor survives the looser density (" +
+        laws.taps.length + " short" +
+        (laws.taps.length ? ": " + laws.taps.slice(0, 3).join(", ") : "") + ")");
+      const ramp2 = await p.evaluate(RAMP);
+      check(ramp2.counted > 100 && !ramp2.off.length,
+        "D10j at " + W + " …and all " + ramp2.counted + " spacing values are on " +
+        "the SKIN's own ramp (" + ramp2.off.length + " off" +
+        (ramp2.off.length ? ": " + ramp2.off.slice(0, 4).join(" · ") : "") + ")");
+      await ctx.close();
+    }
   }
 
   await b.close();

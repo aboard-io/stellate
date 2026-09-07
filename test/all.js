@@ -549,6 +549,31 @@ const GATES = [
              "nukernel/export/masterrack.js", "nukernel/export/masterrack-extract.js",
              "nukernel/export/fxrack2.js", "nukernel/export/fxrack2-extract.js",
              "nukernel/export/live-devices.js"] },
+  /* THE .mid UPLOAD DOOR (2026-09-07). Paul: *"Could you write an auto remix
+     function that could take a midi file, arrange it, extract motifs, and make
+     it a new genre?"* `tools/remix.js` was that round and `test/remix.test.js`
+     (32 checks) and `test/remix.browser.js` (10) hold the PIPELINE — neither
+     of them has ever been registered here, and neither touches the card a hand
+     presses. This one drives it: the real app at 390x844, a real `.mid` through
+     `setInputFiles`, and the two claims no node assertion can reach — that the
+     control says it is working WHILE it works and stays pressable while it
+     does, and that what lands survives a reload with the mined row under it.
+
+     `covers` NAMES THE NINE FILES THE DOOR INJECTS, because they are loaded by
+     URL rather than imported: nothing in the module graph would select this
+     gate when one of them moves, and a 404 on any one of them is a card that
+     does nothing. `nukernel/genres-tables.js` is deliberately NOT on the list
+     — it is generated data that moves on every genre round, and covering it
+     would fire a two-minute browser gate on every one of them; the file it is
+     loaded FOR (`tools/remix.js`) is covered instead. */
+  { name: "remix-door", wave: 3, kind: "browser",
+    argv: ["test/remix-door.browser.js"], need: ["test/remix-door.browser.js"],
+    covers: ["test/remix-door.browser.js", "nukernel/export/remix-door.js",
+             "nukernel/ui/eight.js", "nukernel/src/copy/sheets.ts",
+             "tools/remix.js", "tools/genealogy.js", "tools/theory.js",
+             "tools/mine/mine-midi.js", "tools/mine/mine-melody.js",
+             "tools/mine/mine-groove.js",
+             "tools/genres/grammar.js", "tools/genres/emit.js"] },
   /* ...AND A SECOND RECORD, BECAUSE ONE RECORD ONLY EXERCISES ONE BRANCH
      (2026-09-03, the groove round). boombap is P0: one box, ONE lane, one
      track — so gate C's "no two adjacent tracks share a colour unless the
@@ -725,8 +750,14 @@ const GATES = [
      gate on this page now depends on it. */
   { name: "design-system", wave: 3, kind: "browser",
     argv: ["test/design-system.js"], need: ["test/design-system.js"],
+    /* THE SECOND SKIN AND ITS PAGE JOIN THE LIST (2026-09-07, step 2/4).
+       D10 drives `design-paper.html` and diffs it against `design.html`, so a
+       change to either — or to `skins/paper.css` — must select this gate;
+       without them the one check that proves docs/DESIGN-SYSTEM.md §1a could
+       go red without `test/impacted.js` ever choosing to run it. */
     covers: ["test/design-system.js", "nukernel/tokens.css",
-             "nukernel/design.html", "nukernel/nu.css",
+             "nukernel/design.html", "nukernel/design-paper.html",
+             "nukernel/skins/paper.css", "nukernel/nu.css",
              "nukernel/src/ui/index.ts", "nukernel/ui/ui.js"] },
   { name: "gutter",     wave: 3, kind: "browser",
     argv: ["test/gutter.js"], need: ["test/gutter.js"],

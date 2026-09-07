@@ -23,9 +23,33 @@ export const UI: Table = {
      when a caller forgets. */
   "ui.refused.noReason": "Not available here.",
   "ui.refused.allRefused": "No other setting is available.",
+  /* ...AND A BUSY CONTROL ANSWERS TOO (DESIGN.md component 14a). A press on
+     something that is working is a person asking whether it is broken, and
+     silence is the wrong answer to that question. */
+  "ui.busy.working": "Working on it — one moment.",
   "ui.spin.prev": "{name}, step back",
   "ui.spin.next": "{name}, step forward",
   "ui.spin.now": "{name}: {value}, {n} of {of}",
+
+  /* ---- a table, its heads and its cells ------------------------------
+     A HEADING SAYS ITS COUNT AND ITS HELD WORD IN ONE SENTENCE rather than in
+     three fragments: the count and the held word are drawn as their own quiet
+     parts and marked aria-hidden, so what a reader hears is a name and not
+     "Strings 4 violin". Every one of these is <= 12 words with its values in. */
+  "ui.col.count": "{name}, {n} inside",
+  "ui.col.held": "{name}, on {value}",
+  "ui.col.holding": "{name}, {n} inside, on {value}",
+  "ui.cell.order": "{name}, {n} in the chain",
+
+  /* ---- AND THE INDEX AND THE GLOBE SAY NOTHING NEW ------------------
+     `<nu-index>` and `<nu-globe>` print five strings and every one of them is
+     already owned by `atlas.*`: `atlas.find.aria`, `atlas.find.clear`,
+     `atlas.find.none`, `atlas.row.aria`, `atlas.mark.aria`. They are the SAME
+     sentences about the SAME 502 records — the elements are that surface given
+     tags — so the elements call those keys and this page holds no second copy.
+     `test/copy.test.js` C4 is the gate that settled it: five `ui.ix.*` keys
+     were written here first and C4 named the duplicate on the first run.
+     One meaning, one key, whichever surface asks for it. */
 
   /* ---- the gallery --------------------------------------------------
      A HEADING IS A FACE (<= 6 words) AND A BLURB IS A SENTENCE (<= 12), which

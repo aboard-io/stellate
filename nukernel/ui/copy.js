@@ -727,6 +727,50 @@ var SHEETS = {
   "exportTab.record.back": "Bring back the last record",
   "exportTab.record.gone.say": "That record is no longer here",
   "exportTab.record.backSaid": "Back — {players} players, {sections} sections",
+  /* ===== THE MIDI UPLOAD DOOR (2026-09-07, docs/REMIX.md §"The seam the UI
+       door must implement") ================================================
+       Paul: *"Could you write an auto remix function that could take a midi
+       file, arrange it, extract motifs, and make it a new genre?"* The tool was
+       the last round; this is the card. It sits beside the RECORD card because
+       the two are the same question — a file off the desktop becoming the
+       session — asked of two different file types.
+  
+       WHAT THE CARD SAYS AND WHAT THE TOOL SAYS ARE TWO DIFFERENT THINGS, and
+       the split is the whole point. The card owns the frame: what the control
+       takes, that it is working, that it will not take a second file yet. The
+       pipeline owns every DECISION — the sections it found, the motifs it kept,
+       which of its answers are guesses — and those arrive as `{value}`, in the
+       tool's own printed words, because a door that paraphrases the pipeline is
+       a second opinion about what the pipeline found. The whole printed run
+       goes to the log; this line is its first sentence.
+  
+       AND A GUESS STAYS A GUESS. The tool marks two of its answers — the
+       section names and which part carried the tune — and the summary names
+       them as guesses rather than folding them into the counts beside them. */
+  "exportTab.remix.name": "REMIX",
+  "exportTab.remix.what": "a record from a MIDI file",
+  "exportTab.remix.sub": "A MIDI file becomes a record",
+  "exportTab.remix.open": "Open a MIDI file",
+  /* THE FOUR THINGS IT SAYS WHILE IT WORKS. Fetching the tools is 449 KB and
+     mining is seconds, so both ends of the wait get a sentence; a second file
+     dropped mid-run is answered rather than swallowed, because the control
+     stays pressable throughout (it is `aria-disabled`, never `disabled`). */
+  "exportTab.remix.loading.say": "Getting the remix tools…",
+  "exportTab.remix.reading.say": "Reading {name} — this takes a moment",
+  "exportTab.remix.busy.say": "Still reading {name} — one moment",
+  "exportTab.remix.done.say": "Mined {name} — {sections} sections, {motifs} motifs. Guesses: {value}",
+  /* AND THE THREE WAYS IT CAN FAIL, EACH BY NAME. The pipeline refuses by
+     name — a file that is not MIDI, one with no notes, one too sparse to
+     slice — and those names are what prints; the server missing the tools and
+     a mined record the loader will not open are the other two, and neither is
+     the reader's fault to guess at. */
+  "exportTab.remix.refused.say": "Cannot remix {name} — {value}",
+  "exportTab.remix.noTools.say": "The remix tools could not be loaded — {value}",
+  "exportTab.remix.noLand.say": "Mined {name}, but the record will not open — {value}",
+  /* AND THE ROW COMES BACK WITH THE SESSION. A mined genre is not in the
+     catalogue, so a reload would open the record with no row under it; the
+     door keeps the row and reinstalls it, and the log says it did. */
+  "exportTab.remix.restored": "Remix genre restored",
   "exportTab.wav.sub": "WAV · 44.1 kHz · 16-bit",
   "exportTab.mid.sub": "MIDI type 1 · one track per player",
   "exportTab.als.sub": "One track per player · sections as scenes",
@@ -1731,9 +1775,31 @@ var UI = {
      when a caller forgets. */
   "ui.refused.noReason": "Not available here.",
   "ui.refused.allRefused": "No other setting is available.",
+  /* ...AND A BUSY CONTROL ANSWERS TOO (DESIGN.md component 14a). A press on
+     something that is working is a person asking whether it is broken, and
+     silence is the wrong answer to that question. */
+  "ui.busy.working": "Working on it — one moment.",
   "ui.spin.prev": "{name}, step back",
   "ui.spin.next": "{name}, step forward",
   "ui.spin.now": "{name}: {value}, {n} of {of}",
+  /* ---- a table, its heads and its cells ------------------------------
+     A HEADING SAYS ITS COUNT AND ITS HELD WORD IN ONE SENTENCE rather than in
+     three fragments: the count and the held word are drawn as their own quiet
+     parts and marked aria-hidden, so what a reader hears is a name and not
+     "Strings 4 violin". Every one of these is <= 12 words with its values in. */
+  "ui.col.count": "{name}, {n} inside",
+  "ui.col.held": "{name}, on {value}",
+  "ui.col.holding": "{name}, {n} inside, on {value}",
+  "ui.cell.order": "{name}, {n} in the chain",
+  /* ---- AND THE INDEX AND THE GLOBE SAY NOTHING NEW ------------------
+     `<nu-index>` and `<nu-globe>` print five strings and every one of them is
+     already owned by `atlas.*`: `atlas.find.aria`, `atlas.find.clear`,
+     `atlas.find.none`, `atlas.row.aria`, `atlas.mark.aria`. They are the SAME
+     sentences about the SAME 502 records — the elements are that surface given
+     tags — so the elements call those keys and this page holds no second copy.
+     `test/copy.test.js` C4 is the gate that settled it: five `ui.ix.*` keys
+     were written here first and C4 named the duplicate on the first run.
+     One meaning, one key, whichever surface asks for it. */
   /* ---- the gallery --------------------------------------------------
      A HEADING IS A FACE (<= 6 words) AND A BLURB IS A SENTENCE (<= 12), which
      is DESIGN.md §4's own pair of numbers and `test/copy.test.js` C2's. The

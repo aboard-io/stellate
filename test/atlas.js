@@ -28,7 +28,11 @@
  *       (it read "#atlasYear := indexOf(1969) … #title becomes"; the
  *       when-slider and the <h1> were both deleted on 2026-08-29 and the two
  *       facts moved rather than went — see `setYear` and `__nuName`)
- *   G9  the same tap twice is byte-identical; the bar's "rewrite" differs
+ *   G9  the same tap twice is byte-identical; the bar's "rewrite" differs,
+ *       and the reading it moved to is the reading the ADDRESS carries
+ *       (re-taken 2026-09-07: this asked `#atlasSay` for a receipt sentence
+ *       the page was told to stop producing, and had been the suite's one
+ *       standing red ever since — TABLE.md §18h)
  *   G11 THE GLOBE IS THE KEYBOARD PATH — the headline of this round
  *   G12 tap boxes >= 28 CSS px at the whole earth, >= 44 at 20 degrees or closer
  *   G13 a vertical swipe scrolls the PAGE and does not turn the globe; a
@@ -978,34 +982,56 @@ function g18() {
   await p.waitForTimeout(1400);
   const d3 = await p.evaluate(() => JSON.stringify(window.__eightDoc()));
   check(d3 !== d2, "G9 · \"rewrite\" writes a DIFFERENT record (" + d3.length + " chars)");
-  /* `/reading 2/` STOOD HERE and the 2 was `seed++` on a boot seed of exactly
-     1. The die ROLLS now rather than counts (2026-09-02 — a seed is a position
-     in a 0..65536 domain, which is what the slider makes it, and `seed++` had
-     no ceiling and no wrap), so the number is unpredictable BY DESIGN and a
-     literal would be asserting the old arithmetic. The claim is the one it
-     always was — the sentence under the globe says which reading is on the
-     page — and it is asserted against the page's OTHER readout of the same
-     one fact, `#reading`, which is what makes it a join and not a recital. */
-  const sayAgain = await p.evaluate(() =>
-    (document.getElementById("atlasSay") || {}).textContent);
-  /* ...AND `#reading` IS DELETED, 2026-09-07 (TABLE.md §20). Paul: *"Get rid
-     of seed number too."* The number is read off `#rewrite`'s accessible name,
-     which is the other place `printReading` has always written it and the one
-     a screen reader hears. The join is the same join. */
+  /* ===== THE STANDING RED, RETIRED (2026-09-07, the design-system round) ==
+     WHAT THIS ASSERTED, and it was red for two days: that `#atlasSay` — the
+     sentence under the globe — contained `"seed " + readAgain`. It is red
+     because THE PAGE WAS TOLD TO STOP SAYING THAT SENTENCE. Paul, 2026-09-06:
+     *"We don't need this with the genre picker at all: 'Bristol 1994 ·
+     noirhop — 14 sections, 9 players, take 0 · seed 28138' stop producing
+     it."* `atlas.wrote` and `atlas.wroteSeed` were deleted from
+     `src/copy/atlas.ts` with the receipt, and `stampYear` now CLEARS the line
+     it used to write. A gate asserting a sentence a person asked to be rid of
+     is a gate arguing with the product, and TABLE.md §18h filed it as
+     *"the fix is to retire the check, in the round that owns the atlas."*
+     This is that round: it declares `<nu-index>` and `<nu-globe>` into the
+     design system, so the atlas is its to answer for.
+
+     RETIRED IS NOT DELETED. The CLAIM was worth making — "the reading moved,
+     and the page says which one is on it" — and it survives; what is gone is
+     the readout it was asked of. So the join is re-taken against the two
+     readouts that DO still exist, and neither of them is a recital:
+
+       · `#rewrite`'s accessible name, which is what `printReading` writes and
+         what a screen reader hears — the last visible/spoken home of the
+         number since `#reading` was deleted on 2026-09-07 (§20, Paul: *"Get
+         rid of seed number too."*);
+       · THE ADDRESS BAR. `linkFrag` writes `s=<seed>` off `ATLAS.link()`, and
+         `markLink` runs it on every gesture a HAND makes — which a press of
+         `#rewrite` is. Two readouts, two code paths, one fact, and a page
+         that told a reader one reading while linking another would fail here.
+
+     `/reading 2/` STOOD HERE ORIGINALLY and the 2 was `seed++` on a boot seed
+     of exactly 1. The die ROLLS now rather than counts (2026-09-02 — a seed is
+     a position in a 0..65536 domain, which is what the slider makes it), so
+     the number is unpredictable BY DESIGN and a literal would be asserting the
+     old arithmetic. Hence a join and never a constant, which is the one part
+     of this check that has never changed. */
   const READSEED = () => { const b = document.getElementById("rewrite");
     const m = /^rewrite\s+(\d+)/.exec(b ? (b.getAttribute("aria-label") || "") : "");
     return m ? m[1] : null; };
   const readAgain = await p.evaluate(READSEED);
-  /* `"reading " + readAgain` STOOD HERE UNTIL 2026-09-05 (the functional text
-     pass). "reading 3" for a seed is one of the twenty banned families the
-     copy audit measured — a seed is a seed, and the gutter's own readout has
-     always called it that — so ui/atlas.js's sentence says "seed 57824" now
-     and this join follows the word. The claim is unchanged: the sentence under
-     the globe and `#reading` are the same one number. */
-  check(readAgain !== String(seedNow) &&
-        sayAgain.indexOf("seed " + readAgain) >= 0,
+  /* the address's own answer, read off the fragment the same gesture wrote.
+     `markLink` is on a debounce, so this is asked after the 1.4s wait above
+     rather than in the same tick as the press. */
+  const linkSeed = await p.evaluate(() => {
+    const q = new URLSearchParams(String(location.hash || "").replace(/^#/, ""));
+    return q.get("s"); });
+  const inRange = readAgain != null && /^\d+$/.test(readAgain) &&
+                  +readAgain >= 0 && +readAgain <= 65536;
+  check(readAgain !== String(seedNow) && inRange && linkSeed === readAgain,
     "G9 · …and says so: the reading went " + seedNow + " -> " + readAgain +
-    " and the sentence agrees — " + JSON.stringify(sayAgain.slice(-40)));
+    ", it is a position in the die's own 0..65536 domain, and the ADDRESS " +
+    "agrees (s=" + linkSeed + ") — two readouts, one fact");
 
   /* ---- G11 THE GLOBE IS THE KEYBOARD PATH ---------------------------- */
   /* THE HEADLINE OF THIS ROUND. There is no listbox to be a second door. The

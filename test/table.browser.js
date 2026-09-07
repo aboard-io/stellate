@@ -70,7 +70,7 @@ function STRANDED() {
     const r = x.getBoundingClientRect();
     if (!(r.width > 0)) continue;
     if (r.left >= 0 && r.right <= window.innerWidth + 1) continue;
-    const t = x.closest(".nu-sheettrack, .nu-lztrack");
+    const t = x.closest(".nu-sheettrack, .nu-lztrack, .nu-eltrack");
     if (!t || t.scrollWidth <= t.clientWidth + 1) {
       out.push(x.dataset.k || String(x.className).slice(0, 30)); continue; }
     const was = t.scrollLeft;
@@ -603,8 +603,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const field = document.querySelector("#pan-band .nu-lzfield");
       const secs = field ? [...field.querySelectorAll(".nu-lzcluster")] : [];
       const lz = field ? [...field.querySelectorAll(".nu-lz")] : [];
+      /* THE COLUMN IS A `<nu-colhead>` SINCE 2026-09-07 (Paul: *"just list the
+         items as cells"*). It kept `.nu-lzcluster` and its three `data-` facts,
+         which are its address; the WORD, the COUNT and the HEADING BUTTON are
+         the element's own parts, `.nu-elcolhead .nu-elword` / `.nu-elcount` /
+         `.nu-elcolhead`. The word is read THROUGH the heading because a cell
+         carries a `.nu-elword` too and the heading is rendered last (it is put
+         back on top by `order: -1`), so a bare `.nu-elword` would read the
+         first instrument in the column instead of the family's name. Not one
+         claim below moved. */
       return { groups: secs.map((x) =>
-                 ((x.querySelector(".nu-lzheadword") || {}).textContent || "").trim()),
+                 ((x.querySelector(".nu-elcolhead .nu-elword") || {})
+                   .textContent || "").trim()),
         hues: [...new Set(secs.map((x) => x.dataset.hue))].length,
         /* A CLUSTER IS NOT A COLUMN (2026-09-07, §19). The field draws itself
            as a sideways TABLE when it will not fit as a stack, and a family
@@ -620,16 +630,26 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         shown: lz.filter((c) => c.getBoundingClientRect().height > 0).length,
         short: lz.filter((c) => { const r = c.getBoundingClientRect();
           return r.height > 0 && r.height < 43.5; }).length,
-        pill: lz.length ? getComputedStyle(lz[0]).borderTopLeftRadius : null,
+        /* THE RADIUS OF THE BOX A READER ACTUALLY SEES. `.nu-lz` is the
+           `<nu-cell>` HOST since 2026-09-07 and the host draws nothing; the
+           control is the `button.nu-elcell` inside it, and its corner is what
+           the port is about — `--r2` and never `--r-pill`, which tokens.css
+           reserves for the lozenge and for nothing else on this page. */
+        pill: lz.length ? getComputedStyle(
+          lz[0].querySelector(".nu-elcell") || lz[0]).borderTopLeftRadius : null,
         /* ...AND WHAT THE HEADINGS PROMISE (2026-09-06, §15). A fold is only
            not a disappearance if its count is on its own heading, so the
            counts have to sum to the whole vocabulary. */
         counts: secs.reduce((a, x) => a +
-          (+((x.querySelector(".nu-lzcount") || {}).textContent || 0) || 0), 0),
+          (+((x.querySelector(".nu-elcount") || {}).textContent || 0) || 0), 0),
         /* AN UNHEADED CLUSTER HAS NO COUNT AND IS NEVER FOLDED (§15): it has
            no heading to carry the number and none to press, so it is drawn
-           whole in every state and counted here instead. */
-        loose: [...secs].filter((x) => !x.querySelector(".nu-lzhead"))
+           whole in every state and counted here instead. It is spelled as the
+           absence of a `label` now rather than the absence of a `.nu-lzhead`:
+           `<nu-colhead>` always renders its heading box (a column standing
+           alone has to be nameable) and nu.css draws it away when there is no
+           word, so the WORD is the fact and the box never was. */
+        loose: [...secs].filter((x) => !x.getAttribute("label"))
           .reduce((a, x) => a + x.querySelectorAll(".nu-lz").length, 0),
         folded: secs.filter((x) => x.classList.contains("is-folded")).length,
         marked: secs.filter((x) => x.classList.contains("is-standing")).length,
@@ -840,7 +860,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        sheet that *"can also go horizontally wider than the screen"*, so a
        control past the right edge is no longer a bug by itself: it is a bug
        when nothing brings it back. A control off the edge must sit inside a
-       TRACK — `.nu-sheettrack` or `.nu-lztrack`, the two scrollports §19
+       TRACK — `.nu-sheettrack` or `.nu-eltrack`, the two scrollports §19
        introduces — and the track must actually reach it, which is DRIVEN
        here rather than asserted: the track is scrolled to the control and
        the control's own rect is read again. Anything else off the edge is
@@ -4141,7 +4161,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const all = [...f.querySelectorAll(".nu-lz")];
       const hues = secs.map((x) => getComputedStyle(x).getPropertyValue("--lz").trim());
       return { n: all.length, clusters: secs.length,
-        heads: secs.filter((x) => x.querySelector(".nu-lzhead")).length,
+        heads: secs.filter((x) => x.getAttribute("label")).length,
         hues: [...new Set(hues)].length,
         /* SHORT IS MEASURED ON THE DRAWN PILLS (2026-09-06, §15). A pill
            inside a folded cluster has NO box at all, and a box of zero is not
@@ -4153,8 +4173,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            are: every one is in exactly one cluster and its count is on that
            cluster's own heading, so a fold is never a disappearance. */
         counts: secs.reduce((a, x) => a +
-          (+((x.querySelector(".nu-lzcount") || {}).textContent || 0) || 0), 0),
-        loose: secs.filter((x) => !x.querySelector(".nu-lzhead"))
+          (+((x.querySelector(".nu-elcount") || {}).textContent || 0) || 0), 0),
+        loose: secs.filter((x) => !x.getAttribute("label"))
           .reduce((a, x) => a + x.querySelectorAll(".nu-lz").length, 0),
         folded: secs.filter((x) => x.classList.contains("is-folded")).length,
         marked: secs.filter((x) => x.classList.contains("is-standing")).length,
@@ -4162,7 +4182,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         vh: Math.round(window.innerHeight),
         hot: all.filter((c) => c.getAttribute("aria-pressed") === "true").length,
         addr: all.length ? all[0].dataset.k : null,
-        pill: all.length ? getComputedStyle(all[0]).borderTopLeftRadius : null,
+        /* THE RADIUS OF THE BOX A READER SEES — the `button.nu-elcell` inside
+           the `<nu-cell>`, not the host, which draws nothing. */
+        pill: all.length ? getComputedStyle(
+          all[0].querySelector(".nu-elcell") || all[0]).borderTopLeftRadius : null,
         say: !!f.querySelector(".nu-lzsay") }; });
     /* THE CLAIM MOVED ONE CONDITION DEEPER, 2026-09-06 (§15). It read *"every
        one of its words is ON THE GLASS"* — §11d's *"visibility into all of the
@@ -4196,8 +4219,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       "T12g …clustered semantically, a heading and ONE hue each (" +
       (lz && lz.clusters) + " clusters, " + (lz && lz.heads) + " headings, " +
       (lz && lz.hues) + " of 8 hues spent)");
-    check(!!lz && lz.short === 0 && /px/.test(String(lz && lz.pill)),
-      "T12h …every lozenge 44px of thumb in a pill (" + (lz && lz.short) +
+    /* 44px OF THUMB IN A SQUARE CELL (2026-09-07). The count is the one it
+       was — not one drawn option under 43.5px — and the second half is the
+       whole of Paul's *"the lozenges are getting in the way"*: the box is
+       drawn with a corner it is allowed to have, and `--r-pill` (999px, the
+       lozenge's own and nothing else's on this page) is not one of them. */
+    check(!!lz && lz.short === 0 && /px/.test(String(lz && lz.pill)) &&
+          parseFloat(String(lz && lz.pill)) < 12,
+      "T12h …every option 44px of thumb in a square CELL (" + (lz && lz.short) +
       " short, radius " + (lz && lz.pill) + ")");
     /* A TAP WRITES, AND NOTHING DISMISSES — Paul's own sentence, on the widget
        that most obviously gets tapped twice. */
@@ -4578,7 +4607,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const pmeasure = (sel) => q.evaluate((sel) => {
         const f = document.querySelector('#pan-band .nu-lzfield[data-sel="' + sel + '"]');
         if (!f) return { missing: true };
-        const all = [...f.querySelectorAll("button.nu-lz")];
+        const all = [...f.querySelectorAll(".nu-lz")];
         const box = all.map((x) => { const r = x.getBoundingClientRect();
           return { v: x.dataset.v, x: r.x, y: r.y, w: r.width, h: r.height }; });
         let hits = 0, worst = null;
@@ -4589,25 +4618,29 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           if (ox > 0.5 && oy > 0.5) { hits++; if (!worst) worst = [a.v, c.v, +oy.toFixed(1)]; }
         }
         const sentences = all.filter((x) => {
-          const w = ((x.querySelector(".nu-lzword") || {}).textContent || "").trim();
-          const n = ((x.querySelector(".nu-lzn") || {}).textContent || "").trim();
+          const w = ((x.querySelector(".nu-elword") || {}).textContent || "").trim();
+          const n = ((x.querySelector(".nu-elorder") || {}).textContent || "").trim();
           return (x.textContent || "").replace(/\s+/g, " ").trim().replace(n, "").trim() !== w;
         }).map((x) => (x.textContent || "").trim().slice(0, 40));
         const chassis = f.closest(".nu-combo");
         const own = chassis || f.closest(".nu-sheetrow") || f.parentElement;
         /* THE RULE IS MEASURED INSIDE ONE CLUSTER (2026-09-06, §15). A field
-           folds itself to fit now, so `f.querySelector(".nu-lzhead")` and
-           `f.querySelector(".nu-lzwrap:not([hidden])")` can belong to two
-           DIFFERENT clusters — a folded heading at the top and an open wrap
-           six headings down — and the "gap" between them measured 589px of
-           other clusters. The claim was always about one heading and the pills
-           under it, so it is asked of the first cluster that has both. */
-        const sec = [...f.querySelectorAll("section.nu-lzcluster")].find((x) => {
-          const w2 = x.querySelector(".nu-lzwrap");
-          return w2 && !w2.hidden && x.querySelector(".nu-lzhead") &&
-                 w2.querySelector("button.nu-lz"); });
-        const head = sec ? sec.querySelector(".nu-lzhead") : null;
-        const first = sec ? sec.querySelector(".nu-lzwrap button.nu-lz") : null;
+           folds itself to fit now, so the first heading on the field and the
+           first drawn option can belong to two DIFFERENT clusters — a folded
+           heading at the top and an open one six headings down — and the "gap"
+           between them measured 589px of other clusters. The claim was always
+           about one heading and the words under it, so it is asked of the
+           first cluster that has both.
+           THE WRAP IS GONE WITH THE PILL (2026-09-07): a `<nu-colhead>` holds
+           its cells directly and the fold is `[open]` on the column, so "an
+           open cluster with words in it" is spelled as the column's own
+           attributes. The claim — the cluster's rule sits ABOVE its options
+           and not through them — has not moved a word. */
+        const sec = [...f.querySelectorAll("nu-colhead.nu-lzcluster")].find((x) =>
+          x.hasAttribute("open") && x.getAttribute("label") &&
+          x.querySelector(".nu-elcolhead") && x.querySelector(".nu-lz"));
+        const head = sec ? sec.querySelector(".nu-elcolhead") : null;
+        const first = sec ? sec.querySelector(".nu-lz") : null;
         return { n: all.length, hits, worst,
           clusters: f.querySelectorAll(".nu-lzcluster").length,
           /* 44px OF THUMB IS A CLAIM ABOUT A PILL THAT IS DRAWN. One inside a
@@ -4644,7 +4677,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
              no box — tapping it is not the gesture this check is about, and
              its "before" rectangle would be four zeros. */
           const drawn = (x) => x.getBoundingClientRect().height > 0;
-          const coldOf = () => [...f.querySelectorAll("button.nu-lz")].filter((x) =>
+          const coldOf = () => [...f.querySelectorAll(".nu-lz")].filter((x) =>
             !x.disabled && x.getAttribute("aria-disabled") !== "true" &&
             x.getAttribute("aria-pressed") !== "true" && drawn(x));
           /* A FIELD THAT OPENED ON NO CLUSTER HAS NO PILL TO TAP YET (§15
@@ -4653,7 +4686,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
              so the gate makes that gesture rather than reporting "missing"
              about a control it never opened. */
           if (!coldOf().length) {
-            const h = f.querySelector('.nu-lzhead[aria-expanded="false"]');
+            const h = f.querySelector('.nu-elcolhead[aria-expanded="false"]');
             if (h) h.click();
           }
           const cold = coldOf();
@@ -4715,7 +4748,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const say = f.querySelector(".nu-lzsay");
         const was = (window.__eightDoc().alphabet || {}).mode;
         off.click();
-        return { word: ((off.querySelector(".nu-lzword") || {}).textContent || "").trim(),
+        return { word: ((off.querySelector(".nu-elword") || {}).textContent || "").trim(),
           pill: (off.textContent || "").replace(/\s+/g, " ").trim(),
           why: off.dataset.why || "", said: (say.textContent || "").trim(),
           was, now: (window.__eightDoc().alphabet || {}).mode }; });
@@ -4957,8 +4990,26 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                    burger: !!document.querySelector("#nu-topstrip #burger"),
                    plate: !!document.querySelector(
                      '#nu-topstrip [data-k="toptab-Where"]'),
+                   /* BOTH ENDS, BECAUSE THE ENDS SWAPPED (2026-09-07). This
+                      read `stripLast` alone and asserted it was `burger`; the
+                      ≡ is the strip's FIRST child now and its name the last,
+                      so a check that names only one end cannot tell "moved as
+                      instructed" from "broken". Reading both makes the claim
+                      the ORDER of the band rather than one of its edges. */
+                   stripFirst: strip && strip.firstElementChild
+                     ? strip.firstElementChild.id : null,
                    stripLast: strip && strip.lastElementChild
-                     ? strip.lastElementChild.id : null,
+                     ? (strip.lastElementChild.id ||
+                        strip.lastElementChild.dataset.k || null) : null,
+                   /* ...and the RENDERED order too, which is the fact a thumb
+                      meets: an `order` in CSS could move the picture without
+                      moving the markup, and this round's whole argument for
+                      moving the markup is that those two must not disagree. */
+                   stripByX: strip ? [...strip.children]
+                     .map((c) => ({ id: c.id || c.dataset.k || c.className,
+                                    x: c.getBoundingClientRect().left }))
+                     .sort((a, b) => a.x - b.x)
+                     .map((c) => c.id) : [],
                    barLast: bar && bar.lastElementChild
                      ? String(bar.lastElementChild.className) : null,
                    barBtns: bar ? [...bar.querySelectorAll("button")]
@@ -4981,9 +5032,27 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            one has crept back, and each is the size its token declares — and it
            is stated as a list of ids rather than as the number 1.
            WHAT ELSE IS ASSERTED HERE, because it is the arrangement and not
-           just the height: the ≡ is the STRIP's last button (it was the bar's),
-           the record's name is the strip's first, the TAPE is the bar's last
-           child, and the bar holds THREE buttons — the options' door, the
+           just the height: the ≡ is the STRIP's FIRST button, the record's
+           name is the strip's LAST, the TAPE is the bar's last child, and the
+           bar holds THREE buttons
+
+           ===== THE TWO ENDS SWAPPED, 2026-09-07, AND SO DID THIS CHECK =====
+           It read `stripLast === "burger"` — the ≡ was the strip's last child
+           from §18 until now — and went red nine times (three widths x three
+           records) the moment Paul said *"Hamburger should be on right."* and
+           then, a minute later, *"Sorry hamburger should be on left."* The ≡
+           took the start of the band and the name took the end.
+           A CHECK THAT NAMES ONE END CANNOT TELL "MOVED AS INSTRUCTED" FROM
+           "BROKEN", which is why the repair is not `first` in place of `last`:
+           it reads BOTH ends now, so the claim is the ORDER of the band rather
+           than one of its edges, and either end drifting fails it.
+           AND IT READS THE RENDERED ORDER TOO (`stripByX`). The move was made
+           in the MARKUP rather than with a CSS `order` — deliberately, because
+           an `order` would have given the band two orders with two owners, and
+           made the ≡ the last tab stop while being the first thing a thumb
+           meets. Asserting that reading order and rendered order AGREE is what
+           stops a later round quietly buying the picture with an `order` and
+           leaving the keyboard behind — the options' door, the
            voicing and play — with the seed row nowhere in it and in the menu
            instead. `.nu-top` (the 2026-09-05 plate) and `.nu-formula` are
            still gone; `.nu-topstrip` is a different element with a different
@@ -5015,15 +5084,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               chrome.boxes[0].h <= 48 && chrome.boxes[1].h <= 72 &&
               chromeH <= 120 && chrome.tops === 0 && chrome.forms === 0 &&
               chrome.strips === 1 && chrome.bars === 1 &&
-              chrome.burger && chrome.plate && chrome.stripLast === "burger" &&
+              chrome.burger && chrome.plate &&
+              chrome.stripFirst === "burger" &&
+              chrome.stripLast === "toptab-Where" &&
+              chrome.stripByX[0] === "burger" &&
+              chrome.stripByX[chrome.stripByX.length - 1] === "toptab-Where" &&
               chrome.tapeInStrip && /nu-vs/.test(chrome.barLast || "") &&
               chrome.seedInBar && !chrome.seedInMenu &&
               JSON.stringify(chrome.barBtns) === JSON.stringify(wantBar),
           "T13a " + at + " · the fixed chrome is the STRIP and the BAR and " +
           "nothing else (" + chromeH + "pt of two bands), the ≡ is the " +
-          "strip's last button, the record's name its first and the TAPE " +
-          "between them, and the bar is controls alone — the transport, the " +
-          "die and the room — " + JSON.stringify(chrome));
+          "strip's FIRST button, the record's name its LAST and the TAPE " +
+          "between them — in the MARKUP and on the GLASS, which must agree — " +
+          "and the bar is controls alone — the transport, the die and the " +
+          "room — " + JSON.stringify(chrome));
 
         /* ---- b · ONE PINNED BAND, AND IT IS THE HEADS ----------------- */
         const pins = () => z.evaluate(() => {
@@ -6261,7 +6335,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const r = w.getBoundingClientRect();
           const hot = w.querySelector(
             '.nu-lz[aria-pressed=true], .nu-wchip[aria-pressed=true]');
-          const mark = w.querySelector('.nu-lzhead[aria-current=true]');
+          const mark = w.querySelector('.nu-elcolhead[aria-current=true]');
           const at = (el) => el && el.getBoundingClientRect().height > 0
             ? Math.round(el.getBoundingClientRect().top - r.top) : null;
           return { h: Math.round(r.height), k,
@@ -6393,8 +6467,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                      test/selects.js's check; this one is about REACH. */
                   .find((e) => (e.dataset.why || "").trim());
                 if (!bad) return null;
-                const sec = bad.closest("section.nu-lzcluster");
-                const head = sec && sec.querySelector(".nu-lzhead");
+                const sec = bad.closest("nu-colhead.nu-lzcluster");
+                const head = sec && sec.querySelector(".nu-elcolhead");
                 if (head && head.getAttribute("aria-expanded") === "false") head.click();
                 return { why: bad.dataset.why, v: bad.dataset.v || "",
                          k, drawn: bad.getBoundingClientRect().height > 0 }; }, fk);
@@ -6475,8 +6549,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                                e.getAttribute("aria-pressed") !== "true");
               const el = live[0];
               if (!el) return null;
-              const sec = el.closest("section.nu-lzcluster");
-              const head = sec && sec.querySelector(".nu-lzhead");
+              const sec = el.closest("nu-colhead.nu-lzcluster");
+              const head = sec && sec.querySelector(".nu-elcolhead");
               if (head && head.getAttribute("aria-expanded") === "false") head.click();
               el.click();
               return el.dataset.v || ""; },
@@ -6489,8 +6563,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               const el = [...w.querySelectorAll(".nu-lz, .nu-wchip")]
                 .find((e) => (e.dataset.v || "") === q.absent);
               if (!el) return "no detent";
-              const sec = el.closest("section.nu-lzcluster");
-              const head = sec && sec.querySelector(".nu-lzhead");
+              const sec = el.closest("nu-colhead.nu-lzcluster");
+              const head = sec && sec.querySelector(".nu-elcolhead");
               if (head && head.getAttribute("aria-expanded") === "false") head.click();
               if (el.getAttribute("aria-pressed") !== "true") el.click();
               return "ok"; },
@@ -6555,8 +6629,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               const el = [...w.querySelectorAll(".nu-lz, .nu-wchip")]
                 .find((e) => (e.dataset.v || "") === q.absent);
               if (!el) return "no detent";
-              const sec = el.closest("section.nu-lzcluster");
-              const head = sec && sec.querySelector(".nu-lzhead");
+              const sec = el.closest("nu-colhead.nu-lzcluster");
+              const head = sec && sec.querySelector(".nu-elcolhead");
               if (head && head.getAttribute("aria-expanded") === "false") head.click();
               el.click(); return "ok"; },
               { k: c.key, absent: c.kind === "drums" ? "" : "as written" });
@@ -6735,9 +6809,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               const row = btn && btn.closest(".nu-sheetrow");
               const f = row && row.nextElementSibling;
               if (!f || !f.classList.contains("nu-lzfield")) return null;
-              const tk = f.querySelector(".nu-lztrack");
-              const secs = [...f.querySelectorAll("section.nu-lzcluster")];
-              const opts = [...f.querySelectorAll("button.nu-lz")];
+              const tk = f.querySelector(".nu-eltrack");
+              const secs = [...f.querySelectorAll("nu-colhead.nu-lzcluster")];
+              const opts = [...f.querySelectorAll(".nu-lz")];
               const drawn = opts.filter((o) => {
                 const r = o.getBoundingClientRect();
                 return r.width > 0 && r.height > 0; });
@@ -6745,7 +6819,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                  shares one left edge and each has its own row band. */
               let perLine = true;
               for (const sec of secs) {
-                const o = [...sec.querySelectorAll("button.nu-lz")]
+                const o = [...sec.querySelectorAll(".nu-lz")]
                   .map((e) => e.getBoundingClientRect());
                 for (let i = 1; i < o.length; i++)
                   if (Math.abs(o[i].left - o[0].left) > 2 ||

@@ -1027,18 +1027,27 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       const strip = document.getElementById("nu-topstrip");
       return { word: v ? v.textContent.trim() : null,
                sub: s2 ? s2.textContent.trim() : null,
-               first: strip && strip.firstElementChild === b,
+               /* THE TWO ENDS TRADED ON 2026-09-07 (TABLE.md §20). Paul:
+                  *"Sorry hamburger should be on left."* The claim is the same
+                  claim — the name and the one ≡ are the two ENDS of the band,
+                  one each, with the tape between them — and only which end is
+                  which has changed. It is read off the MARKUP, still, because
+                  the markup is what moved: ui/eight.js appends `#burger`, the
+                  tape, the name, so reading order, tab order and rendered
+                  order are one order and this check is a check on all three.
+                  (`plate.first` WAS `strip.firstElementChild === b`.) */
+               last: strip && strip.lastElementChild === b,
                inMenu: !!document.querySelector('#nu-menu [data-k="toptab-Where"]'),
                inBar: !!document.querySelector('#nu-bar [data-k="toptab-Where"]'),
-               burgerLast: (() => { const st = document.getElementById("nu-topstrip");
-                 return !!st && st.lastElementChild &&
-                        st.lastElementChild.id === "burger"; })(),
+               burgerFirst: (() => { const st = document.getElementById("nu-topstrip");
+                 return !!st && st.firstElementChild &&
+                        st.firstElementChild.id === "burger"; })(),
                burgers: document.querySelectorAll("#burger").length };
     });
-    is(!!plate && !plate.inBar && plate.inMenu && !!plate.word && plate.first &&
-       plate.burgerLast && plate.burgers === 1,
-      "A6d " + width + " · …and the record's NAME is the top strip's first "
-      + "control with the one ≡ at its end, out of the bar, with `Where` also "
+    is(!!plate && !plate.inBar && plate.inMenu && !!plate.word && plate.last &&
+       plate.burgerFirst && plate.burgers === 1,
+      "A6d " + width + " · …and the record's NAME is the top strip's LAST "
+      + "control with the one ≡ at its start, out of the bar, with `Where` also "
       + "a row of the list (one view, two doors) — " + JSON.stringify(plate));
     /* ===== A6m — THE GENRE PLATE IS A DOOR, AND A DOOR SHUTS (2026-09-06) ==
        Paul: *"When I tap the button of the bottom left showing the genre close
@@ -1157,13 +1166,19 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         return { there: true, bars, bpm, rest, end, nSay, nFill, repeats,
                  said: saidSeq.length,
                  counts: document.querySelectorAll(".nu-count").length,
-                 /* AND IT STANDS BETWEEN THE NAME AND THE ≡ — the gap the
+                 /* AND IT STANDS BETWEEN THE ≡ AND THE NAME — the gap the
                     strip held empty at every width (191px at 390, 121 at
-                    320). "Last" was the bar's law; "between" is the strip's. */
+                    320). "Last" was the bar's law; "between" is the strip's,
+                    and "between" is the half of this that did NOT change on
+                    2026-09-07 when the two ends traded (TABLE.md §20, Paul:
+                    *"Sorry hamburger should be on left."*). The tape is still
+                    the middle child of three and still the only flexible one,
+                    which is WHY the two nodes either side of it are at the two
+                    ends; all that moved is which of them is `k[0]`. */
                  last: (() => { const st = document.getElementById("nu-topstrip");
                    const k = [...st.children];
                    return k.length === 3 && k[1] === el &&
-                          k[2].id === "burger"; })(),
+                          k[0].id === "burger"; })(),
                  fits: el.getBoundingClientRect().right <=
                        document.documentElement.clientWidth + 0.5 &&
                        say.scrollWidth <= say.clientWidth + 1 };

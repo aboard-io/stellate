@@ -200,7 +200,15 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
             three halves of "a link never merges destructively": the session a
             link displaces is moved aside and can be brought back. No second
             key and no second writer; see the block above `writeStore`. */
-         setDoc, readDoc, readPrevDoc, stashDoc, dropPrevDoc } from "./state.js";
+         setDoc, readDoc, readPrevDoc, stashDoc, dropPrevDoc,
+         /* AND WHY A RECORD WAS REFUSED (2026-09-07, the .mid door).
+            `adoptSong` returns false and leaves the first bad field on
+            `loadError`; `setDocument` ends in `push(true)`, which calls it and
+            ignores the boolean. A mined record is the one arrival on this page
+            that was built by a tool ten seconds ago rather than by this build,
+            so its door reads the reason and prints it instead of leaving a
+            silent no-op under a cheerful sentence. */
+         loadErrorText } from "./state.js";
 // THE RENDERED EVENT STREAM, for the console hooks at the foot of this file
 // only. D7's gate has to read what the band actually plays — velocities after
 // the envelope, the intro and the outro have had their say — and that stream
@@ -5049,6 +5057,10 @@ function exportRow(parent) {
   // THE RECORD ITSELF — SECOND, beside the link, because the two are one
   // question asked twice (see the songCard block).
   songCard(grid);
+  // A MIDI FILE COMING IN — THIRD, BESIDE THE RECORD IMPORT, because the two
+  // are the same gesture on two file types: a file off the desktop becomes
+  // the session. `remixCard` is defined beside `songCard` below.
+  remixCard(grid);
   // WAV — LIVE. The press path exists (engine/faust/press + the stream
   // worker's PCM sink); export/wav.js is that machinery pointed at a file.
   exportCard(grid, _t("exportTab.wav.name"), _t("exportTab.wav.what"),
@@ -14179,7 +14191,15 @@ function setMenu(want) {
   if (now === menuOpen) return menuOpen;
   menuOpen = now;
   if (menuOpen) paintMenuFaces();
-  if (menuBox) menuBox.hidden = !menuOpen;
+  /* TWO ATTRIBUTES AND ONE STATE, WHICH IS NOT TWO OWNERS (2026-09-07, §20).
+     `hidden` is what four gates read and what has hidden this plate since it
+     was a div; `open` is `<nu-plate>`'s own declaration of the only state it
+     has. Both are written HERE, in the one place `menuOpen` changes, from the
+     one variable — the same arrangement `aria-expanded` and `data-menu` are
+     already under two lines below. An `open` that drifted from `hidden` would
+     be the element saying one thing and the page drawing another, which is
+     the whole reason this file writes state in exactly one function. */
+  if (menuBox) { menuBox.hidden = !menuOpen; menuBox.toggleAttribute("open", menuOpen); }
   if (menuBtn) menuBtn.setAttribute("aria-expanded", String(menuOpen));
   /* AND THE ≡ REPAINTS ITSELF, BECAUSE ITS FACE IS THE PLATE'S STATE
      (2026-09-07, §20): ≡ shut, × open. `paintBadge` is the one painter of that
@@ -14499,7 +14519,29 @@ function chromeRow() {
      its one writer, `markForm` is that writer's one caller, and the repaint
      budget T13f gates — the word at most once a bar, the fill at most once a
      beat — is a property of `paintTape` and travels with it. */
-  stripEl.append(whereBtn, tapeNode(), menuBtn);
+  /* ===== AND THE ≡ IS AT THE START SINCE 2026-09-07 (TABLE.md §20) ======
+     Paul: *"Hamburger should be on right."* then, a minute later, *"Sorry
+     hamburger should be on left."* The second sentence is the instruction.
+
+     THE DOM IS MOVED AND NOT A CSS `order`, AND THAT IS THE WHOLE OF THE
+     DECISION. Both would put the ≡ on the left of the glass; only one keeps
+     the band with ONE order. To draw this arrangement with `order` takes TWO
+     declarations, not one — the ≡ to -1 AND the name to 1 — because the tape
+     is the flexible child between them, so `order` would not be nudging one
+     node past its neighbours but INVERTING two of three children against the
+     markup. A band whose reading order, tab order and rendered order disagree
+     has two orders and two owners of one fact, which is the shape this branch
+     has spent every round deleting; and a keyboard would meet the door to
+     everywhere else LAST while a thumb meets it FIRST. So the append is the
+     drawing: `#burger`, the tape, the record's name.
+     WHAT IT COSTS, SAID OUT LOUD: the band read `identity · status ·
+     navigation` and reads `navigation · status · identity` from today. That
+     is the trade Paul's sentence buys, and it is the arrangement every drawer
+     on a phone has — the door at the corner a left thumb reaches, the name
+     beside it. The three gates that asserted the old order by name
+     (test/shell.js A6d and A6n, test/gutter.js T9) are flipped with it,
+     because they are reading the markup and the markup is what moved. */
+  stripEl.append(menuBtn, tapeNode(), whereBtn);
   nav.append(stripEl);
   nameRecord();
 
@@ -14510,8 +14552,41 @@ function chromeRow() {
   /* NO CLASS: `.nu-menu` is ui/menus.js's chip strip and a second owner of
      that name restyled every chip on the page (nu.css carries the
      measurement). The plate is addressed by its own id. */
-  menuBox = el("div");
+  /* ...AND IT IS A `<nu-plate>` SINCE 2026-09-07 (TABLE.md §20). Paul: *"As
+     you find parts that aren't implemented like the hamburger and its menu
+     items add them to the design systems."* The element is in the system
+     (`src/ui/panels.ts`) and index.html already loads `ui/ui.js`, so the tag
+     upgrades the moment this runs; this line is the app taking it up.
+     THE TAG IS THE PANEL ITSELF AND NOT A WRAPPER AROUND IT. `#nu-menu` is
+     the id eight gates address, the node `OUTBOX.menu` hands the tap-outside
+     listener, and the scrollport `setMenu` returns to the top — so a
+     `<nu-plate>` with a `<div id="nu-menu">` inside it would have been two
+     boxes where the page has always had one, and `box.contains(target)` would
+     have gone false for a tap on the plate's own padding.
+     `anchor="start"` IS THE SAME FACT `inset-inline-start` SPELLS IN nu.css,
+     said in the element's own words: the plate hangs at the start edge,
+     because that is the end its ≡ is on since Paul's *"Sorry hamburger should
+     be on left."* The element's `[anchor]` rules are `align-self` and an
+     `inset` pair; `#nu-menu`'s own `inset-inline-start` is more specific and
+     is what actually places it, so the attribute is a DECLARATION a reader
+     and a gate can see, and the two say the same thing.
+     AND IT TAKES NO `label`, WHICH IS NOT THE PANEL GOING UNNAMED.
+     `<nu-plate>`'s law is that a panel with no accessible name is not a
+     component in this system, and this one has had a name since it was a div:
+     `aria-labelledby="nu-menuname"`, pointing at the `<b>` that draws the
+     app's name two lines below. The element reads `key`/`label` and, finding
+     neither, writes no `aria-label` at all — which is the right answer here,
+     because a `label` would be a SECOND COPY of `_t("burger.app")` living in
+     this file, and the plate would then be named by a string instead of by
+     the heading a hand can actually see. What the element DOES add is
+     `role="group"`, which the plate never declared and which is what makes a
+     screen reader announce its name on the way in.
+     WHAT IS *NOT* PORTED, AND WHY IT IS NOT: the plate's ROWS. They stay
+     `icon()` buttons and are not `<nu-menu-row>`. See the block above
+     `logBtn`. */
+  menuBox = document.createElement("nu-plate");
   menuBox.id = "nu-menu";
+  menuBox.setAttribute("anchor", "start");
   menuBox.hidden = true;
   /* THE APP'S NAME IS FIRST, and it is a HEADING and not a row: Paul asked for
      *"the name of the app at the top of the hamburger"*, and a plate of six
@@ -14636,6 +14711,40 @@ function chromeRow() {
      apart by their headings and by the air around them since §18; a rule as
      well is a second spelling of the same seam, and it is 17px of a plate
      that measured 33px too tall for a 844px phone.) */
+  /* ===== AND THE ROWS STAY `icon()` BUTTONS — A REFUSAL, ARGUED ========
+     (2026-09-07, TABLE.md §20.) The plate is a `<nu-plate>` since this round;
+     its eighteen rows are NOT `<nu-menu-row>`, and this is why, so that the
+     next round does not spend an hour rediscovering it.
+
+     1. THE ROUND'S OWN TAPE MEASURE READS `.nu-vh` AND `.nu-g`.
+        `test/_system2-measure.cjs` — the script that took the BEFORE numbers
+        this change is judged against — walks `#nu-menu button` and asks each
+        one for `.nu-vh` (where the word starts) and `.nu-g` (how wide the mark
+        is). `<nu-menu-row>` renders `.nu-elword` and `.nu-elmark` instead, so
+        the instrument would report zero words and a null spread, and the
+        number Paul asked for — *"icons should all have same width"* — would
+        become unmeasurable in the same commit that fixed it. Its own header
+        forbids the obvious escape: *"a before/after where the two halves were
+        measured by two different scripts is not a before/after."*
+     2. THE ROWS ARE ADDRESSED, AND THE ELEMENT HAS NO ADDRESS. Every row
+        carries `data-k` — `burger|trules`, `toptab-Score`, `logger` — which is
+        how `menuBtnMap`, `paintMenuFaces`, `paintChrome`, `showTab` and ten
+        assertions in test/shell.js find it, and `data-say`, which is what the
+        long-press explainer speaks. `<nu-menu-row>` declares `key`, `label`,
+        `mark`, `count` and four states, and none of them is either of those.
+     3. `paintIcon` IS THE ONE PAINTER OF EVERY MARK IN THIS CHROME, and a
+        face is repainted in place off a signature so a repaint can never drop
+        a listener out from under a thumb. Eighteen rows on a second painter
+        would be the second owner this branch has spent every round deleting —
+        and the first painter would still be drawing the other nineteen marks
+        in the bar and the strip.
+     WHAT THE ELEMENT WON ANYWAY: its rule. `.nu-elmenurow`'s three tracks and
+     its `1.4em` mark column are what `#nu-menu .nu-ic` now draws (nu.css
+     carries both, and says so in both places), so the plate and the element
+     ARE one row — they are just built by two painters until 1 and 2 are
+     answered. Answering them is a round of its own: give `<nu-menu-row>` a
+     `data-k` passthrough, then re-point the tape measure and the ten
+     assertions in one commit. */
   // the face says "log" and the NAME says how many — see `paintBadge`, which
   // is the one writer of both (the ≡'s badge is deleted: §18)
   logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: GLYPH.log.w,
@@ -16213,6 +16322,268 @@ function songCard(grid) {
   });
 }
 
+/* ===== THE .mid UPLOAD DOOR (2026-09-07) ================================
+   Paul: *"Could you write an auto remix function that could take a midi file,
+   arrange it, extract motifs, and make it a new genre?"* `tools/remix.js` was
+   that round; docs/REMIX.md §"The seam the UI door must implement" is the
+   contract this card keeps. A .mid goes in, a session comes out, you land on
+   it, and it survives a reload.
+
+   IT IS BESIDE THE RECORD IMPORT, AND FOR THE SAME REASON THE LINK IS BESIDE
+   THE RECORD: a file off the desktop becoming the session is one question, and
+   this card is that question asked of the other file type. `<input
+   type="file">` IS THE WHOLE OF THE OPEN GESTURE — no drag zone, no picker of
+   our own — which is the argument written out in full on `songCard` above.
+
+   ONE STATUS LINE IN THIS DECK AND IT IS THE DECK'S. Everything this card says
+   goes through `expSay`; it adds no `role="status"` of its own. (That law and
+   the two bug reports it faked are argued above `songCard`.)
+
+   `aria-disabled`, NEVER `disabled`. Loading the pipeline and mining a file is
+   seconds, not milliseconds, so there is a window where a second press is
+   likely — and a `disabled` control takes no tap at all, so the second press
+   would be SWALLOWED and the reader would be left pressing a dead thing. It
+   stays pressable throughout and answers with a sentence.
+
+   NOTHING IS WRITTEN INTO THE CATALOGUE. `runBytes` is called `{ dry: true }`,
+   which is the browser's only legal mode (a page has no filesystem and the
+   tool refuses by name rather than half-succeeding), and the row it makes is
+   installed into the IN-MEMORY `GENRES` table for this session only.
+   Installing a mined row into `nukernel/genres/` remains the CLI's `--install`
+   and `nukernel/atlas.js` remains a human's. */
+
+/* THE MINED ROW'S OWN SLOT, AND WHY IT IS A SECOND KEY. `ui/state.js` is this
+   page's one writer of the SESSION slot and stays it: what it writes is a
+   record and a genre SET, and a genre set holds recipes the bench can rebuild.
+   A mined row is neither — it is a catalogue row, the shape
+   `tools/genres/build.js` reads, and the only thing that can turn one back
+   into a playable genre is `NuRemix.resolveRow`. So it is kept beside the
+   session under its own name rather than smuggled into a field that means
+   something else, and the boot restores it through the same door the press
+   uses. One key, one writer, and it holds exactly one row: the last one
+   mined. */
+const REMIXSLOT = "nukernel.remix.v1";
+/* WHAT IS BEING MINED, or false. It is the FILE NAME rather than a flag,
+   because the sentence a second press gets has to name the file the first
+   press is still reading. */
+let remixBusy = false;
+
+const remixKeyFor = (name) => {
+  /* THE TOOL'S OWN RULE, quoted from `tools/remix.js main()`: the row's name
+     lowercased and stripped to [a-z0-9], defaulting to "remix" + the stem. */
+  const stem = String(name || "").replace(/^.*[\\/]/, "").replace(/\.midi?$/i, "");
+  return ("remix" + stem).toLowerCase().replace(/[^a-z0-9]/g, "") || "remix";
+};
+const readMined = () => {
+  try { return JSON.parse(localStorage.getItem(REMIXSLOT) || "null"); }
+  catch (e) { return null; }
+};
+const writeMined = (key, row) => {
+  try { localStorage.setItem(REMIXSLOT, JSON.stringify({ key, row })); }
+  catch (e) { /* private mode or quota: the record still lands, it just does
+                 not come back on the next boot. Not worth a refusal. */ }
+};
+
+/* THE TOOL'S PRINTED LINES, PARSED BY ITS OWN COLUMNS. `decide()` writes
+   `  ${step.padEnd(9)} ${what.padEnd(14)} ${value.padEnd(26)} conf …`, so the
+   first two columns are at fixed offsets and the third runs to the ` conf `
+   marker — which is how a form line whose value is longer than its column is
+   still read whole. Nothing here re-derives a decision; it only finds where
+   the tool wrote one. */
+function remixCol(line) {
+  if (!/^ {2}\S/.test(line)) return null;
+  const rest = line.slice(27);
+  const ci = rest.indexOf(" conf ");
+  if (ci < 0) return null;
+  return { what: line.slice(12, 26).trim(), value: rest.slice(0, ci).trim() };
+}
+/* WHAT THE RUN FOUND, IN THE TOOL'S OWN WORDS. The three the brief names:
+   the section count (off the `doc/session` line), the motif count (off the
+   `3 motifs` line) and the answers the tool itself flagged as guesses — it
+   appends " — THE NAMES ARE GUESSES" to the form line and " — A GUESS" to the
+   melody-line line, and those two are surfaced AS GUESSES rather than folded
+   into the counts beside them. */
+function remixFound(lines) {
+  const first = (re) => { for (const s2 of lines) { const m = re.exec(s2); if (m) return m[1]; }
+                          return null; };
+  const guesses = [];
+  for (const s2 of lines) {
+    if (!/THE NAMES ARE GUESSES|A GUESS\s*$/.test(s2)) continue;
+    const c = remixCol(s2);
+    if (c) guesses.push(c.what + ": " + c.value);
+  }
+  return { sections: first(/(\d+) sections?,/) || "0",
+           motifs: first(/(\d+) kept/) || "0",
+           guesses: guesses.join(" · ") };
+}
+
+const remixWhy = (e) => (e && e.message) || String(e);
+
+/** the door itself: nine scripts, one call, and a record on the page. */
+async function pressRemix(file, f) {
+  const name = file.name;
+  remixBusy = name;
+  f.setAttribute("aria-disabled", "true");
+  try {
+    expSay(_t("exportTab.remix.loading.say"));
+    let Remix, bytes;
+    try {
+      /* THE PIPELINE IS FETCHED ON THIS PRESS AND NOT AT BOOT — 449 KB for a
+         control most sessions never touch. `export/remix-door.js` is the
+         loader and the WAV card two cards up is the precedent; the difference
+         is that the nine files are UMD IIFEs, so they arrive as classic
+         <script> tags rather than through import(). */
+      const door = await import("../export/remix-door.js");
+      [Remix, bytes] = await Promise.all([
+        door.loadPipeline(),
+        file.arrayBuffer().then((b) => new Uint8Array(b)),
+      ]);
+    } catch (e) {
+      expSay(_t("exportTab.remix.noTools.say", { value: remixWhy(e) })); return;
+    }
+    expSay(_t("exportTab.remix.reading.say", { name }));
+    /* AND THE SENTENCE IS PAINTED BEFORE THE THREAD IS TAKEN. The mine is
+       SYNCHRONOUS and holds the main thread for as long as it holds it, so a
+       status line written in the same task is a line nobody ever sees — which
+       is the whole failure mode "say it while it works" exists to prevent. A
+       bare `setTimeout(0)` is not enough: it yields the task without promising
+       a frame, and MEASURED (test/remix-door.browser.js D1, first run) the
+       line went straight from "Getting the remix tools…" to the finished
+       summary with the reading sentence never on screen. Two frames and then a
+       task is the paint; the 50 ms is the fallback for a page that is painting
+       no frames at all, which is what a background tab is. */
+    await new Promise((res) => {
+      let done = false;
+      const go = () => { if (!done) { done = true; res(); } };
+      requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(go, 0)));
+      setTimeout(go, 50);
+    });
+
+    /* EVERY DECISION THE TOOL MAKES GOES TO console.log IN THE CLI'S ORDER, so
+       the door captures it exactly the way test/remix.browser.js does. The
+       whole run reaches the log; the summary below is its first sentence. */
+    const lines = [];
+    const o = console.log;
+    let r;
+    try {
+      console.log = (s2) => { lines.push(String(s2)); };
+      /* `dry: true` IS THE BROWSER'S ONLY LEGAL MODE and `parents: false` is
+         the catalogue's own law: a file names no place and no year, so a mined
+         row declares no parents (genres-build G2). The seed is the page's own
+         reading, so pressing the die and mining again is a different session
+         out of the same file — which is what a seed is for. */
+      r = Remix.runBytes(bytes, name, remixKeyFor(name),
+                         { seed: (DOC.performance && DOC.performance.take) || 1,
+                           dry: true, parents: false });
+    } catch (e) {
+      /* IT REFUSES BY NAME — "parsed, but it has no notes", "no melodic window
+         survived" — and the tool's own sentence is what prints. */
+      console.log = o;
+      for (const s2 of lines) logPut("engine", s2, null);
+      expSay(_t("exportTab.remix.refused.say", { name, value: remixWhy(e) }));
+      return;
+    } finally { console.log = o; }
+    for (const s2 of lines) logPut("engine", s2, null);
+
+    /* THE ROW GOES INTO THE IN-MEMORY TABLE BEFORE THE RECORD DOES, and that
+       order is the whole trap. The mined document's `basis` names a key no
+       shipped catalogue holds, and every reader of a record — `toGenre`,
+       `genreOf`, the score, the board — indexes `GENRES` by it. `push()` makes
+       the identical motion four hundred lines up (`GENRES[GK + i] = s2.genre`
+       before its `adoptSong`) and for the identical reason. Nothing is written
+       to nukernel/genres/; this is one session's table. */
+    GENRES[r.key] = Remix.resolveRow(r.row);
+    writeMined(r.key, r.row);
+
+    const next = JSON.parse(JSON.stringify(r.doc));
+    const missing = RECORDISH(next);
+    if (missing.length) {
+      expSay(_t("exportTab.remix.noLand.say",
+                { name, value: missing.join(", ") })); return;
+    }
+    try { NuDocument.normalize(next); }
+    catch (e) { expSay(_t("exportTab.remix.noLand.say",
+                          { name, value: remixWhy(e) })); return; }
+    /* THE SAME DOOR THE RECORD IMPORT USES. `setDocument` ends in `push(true)`
+       — which is `adoptSong` — and `push` ends in `setDoc(DOC)`, so the mined
+       record IS the session and survives a reload through ui/state.js's one
+       writer. `adoptSong` refuses silently from in there (its boolean is not
+       read), so the reason it leaves behind is read here rather than dropped. */
+    CTX.setDocument(next);
+    const why = loadErrorText();
+    if (why) { expSay(_t("exportTab.remix.noLand.say",
+                         { name, value: why.replace(/^ *\(|\)$/g, "") })); return; }
+    markLink();
+    const F = remixFound(lines);
+    expSay(_t("exportTab.remix.done.say",
+              { name, sections: F.sections, motifs: F.motifs, value: F.guesses }));
+    /* ...AND YOU ARE LOOKING AT WHAT YOU MINED, which is the record import's
+       own last statement and the same clause of REDESIGN-SCOPE item 9. */
+    showTab("Band");
+  } catch (e) {
+    /* THE LAST NET, AND IT IS A REFUSAL AND NOT A SILENCE. Three statements in
+       here can throw outside the two branches that name their own reason —
+       compiling the row (a `formula` closure has no browser path and says so),
+       normalising it, and `setDocument` itself — and an async handler with no
+       catch ends as an unhandled rejection: a page that logs in a console
+       nobody has open, under a status line still saying it is reading. */
+    expSay(_t("exportTab.remix.noLand.say", { name, value: remixWhy(e) }));
+  } finally {
+    remixBusy = false;
+    f.removeAttribute("aria-disabled");
+  }
+}
+
+function remixCard(grid) {
+  exportCard(grid, _t("exportTab.remix.name"), _t("exportTab.remix.what"),
+    _t("exportTab.remix.sub"), (card) => {
+    const f = el("input");
+    f.type = "file";
+    f.accept = ".mid,.midi";
+    f.dataset.k = "deck.exp.remix";
+    f.setAttribute("aria-label", _t("exportTab.remix.open"));
+    f.addEventListener("change", () => {
+      const file = f.files && f.files[0];
+      if (!file) return;
+      /* A SECOND PRESS WHILE IT RUNS IS ANSWERED, NOT SWALLOWED — see the
+         `aria-disabled` paragraph at the head of this block. */
+      if (remixBusy) expSay(_t("exportTab.remix.busy.say", { name: remixBusy }));
+      else pressRemix(file, f);
+      f.value = "";      // the same file twice in a row is two gestures
+    });
+    card.append(f);
+  });
+}
+
+/* AND THE MINED ROW COMES BACK WITH THE SESSION (the reload half of the
+   brief). The record itself rides ui/state.js's slot like any other and needs
+   nothing from here; what does NOT ride it is the ROW under it, because a
+   mined genre is in no catalogue and no genre set. Without it a restored
+   session opens with `GENRES[basis]` undefined — the page does not throw, it
+   simply plays a record with no genre beneath it, which is the quietest kind
+   of wrong.
+
+   IT IS ASYNC AND NOTHING WAITS ON IT, exactly as `landRecord` is: the box is
+   already usable, and the row lands a frame later with `setDocument`'s own
+   full redraw behind it. It costs nothing on a boot with no mined row in the
+   slot, which is every boot until somebody presses the card. */
+async function restoreMined() {
+  const had = readMined();
+  if (!had || !had.key || !had.row) return;
+  if (DOC.basis !== had.key) return;         // the session moved on
+  if (GENRES[had.key]) return;               // already here
+  try {
+    const door = await import("../export/remix-door.js");
+    const Remix = await door.loadPipeline();
+    GENRES[had.key] = Remix.resolveRow(had.row);
+    CTX.setDocument(DOC);                    // recompile with the row under it
+    logPut("act", _t("exportTab.remix.restored"), had.key);
+  } catch (e) { /* the tools are not on this server, or the row is one this
+                   build cannot compile: the record is on the page either way
+                   and a boot is not the place for a refusal nobody asked
+                   for. */ }
+}
+
 /* ---------- transport ----------
    ===== THE FIVE CONTROLS ARE BUILT HERE NOW, 2026-08-29 ==================
    Paul: *"Get rid of the play buttons and the title of the song."* / *"Add a
@@ -17785,7 +18156,14 @@ if (LINKSUB) applySub(LINKSUB);
    the one case that inflates a fragment; nothing waits on it, because the box
    is already usable and the record lands a frame later with `setDocument`'s
    own full redraw behind it. */
-landRecord();
+const LANDED = landRecord();
+/* ...AND THE ROW UNDER A MINED RECORD COMES BACK WITH IT (2026-09-07, the .mid
+   door). `restoreMined` is argued where it is defined; it is CHAINED off
+   `landRecord` rather than called beside it because `landRecord` returns a
+   promise in the one case that inflates a fragment, and until that resolves
+   `DOC` is still the blank state and the test the restore makes ("is this
+   session the mined one?") would answer no. Nothing waits on either. */
+Promise.resolve(LANDED).then(restoreMined);
 /* (`writeLink()` STOOD HERE and its argument is quoted and answered at
    `markLink` above: "The address is written once at boot whatever happened: a
    page that opened on its own record still has a URL worth copying, and a link

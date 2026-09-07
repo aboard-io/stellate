@@ -12,10 +12,23 @@ Paul, verbatim:
 > the top as a nav item and that's the new name for the default view. So now
 > bottom row is pure play controls and top right is compose arrange controls."
 
+**AND THEN, 2026-09-07, THE ≡ CROSSED THE BAND** — which is why "top right"
+appears twice above and "top left" everywhere below it. Paul: *"Hamburger
+should be on right."* and, a minute later, *"Sorry hamburger should be on
+left."* The second message is the instruction. **The quotation above is left
+exactly as it was said**, because a document that edits a person's words to
+match a later decision loses the fact that the decision was made; the
+correction is this paragraph, and `nukernel/TABLE.md` §20 owns it. What
+changed is the END of the strip the ≡ sits at, and the record's name took the
+other one. Nothing else in the ask above moved: one hamburger, six views,
+`Session` first, `Set seed` inside it, the log with its count, and the bar
+still pure transport.
+
 ## The law
 
 **THE TOP IS WHERE YOU GO. THE BOTTOM IS WHAT YOU HEAR.** Every navigation and
-every arrangement control lives in one hamburger at the top right. Every
+every arrangement control lives in one hamburger at the top **left** (it was
+the top right until 2026-09-07 — see the note under the diagram). Every
 transport control lives in the bar at the bottom. Nothing else is chrome.
 
 A modality is a place the box behaves differently. Today it has a tab strip, a
@@ -45,13 +58,25 @@ quiet ones.)*
 | **Score** | the engraved record | |
 | **Video** | the record watched | |
 | **Screensaver** | the record left alone | |
-| **Export** | the record taken away | |
+| **Export** | the record taken away — **and brought in** | two doors go the other way: a saved `.song.json` reopens, and a `.mid` is MINED into a record (2026-09-07) |
 
 `Session` is first and is where the box opens. The word replaces `Band`
 everywhere a hand can read it; the addresses (`toptab-Band`, the tab's host id)
 are the gates' business and move only where a gate is re-filed with it.
 
-## The hamburger, top right
+**AND `Export` IS NO LONGER A ONE-WAY DOOR, which is why its row above gained
+the only note in the table.** The name is still right — taking the record away
+is what most of the deck is for, and WAV, MP3, MIDI, the Live set and the link
+all go out — but two of its cards go the other way and a reader looking for
+"how do I get something IN" would not have found them here. The record import
+has been there since wave C; the `.mid` import landed 2026-09-07 and is a
+different kind of thing, because what arrives is not a record that was ours: a
+MIDI file is MINED — its tempo, meter, key, form, motifs, kit and changes
+measured out of the notes — and the box opens on what the measurement found,
+with the guesses flagged as guesses in the tool's own words. `docs/REMIX.md`
+owns that pipeline and this line is its reader.
+
+## The hamburger, top left
 
     ┌──────────────────────────┐
     │  STELLATE                │   the app's name, first
@@ -119,10 +144,11 @@ Built. The measurements, the deviations and the arithmetic are
 (the top strip, the tape) and the two amended ones (the bar, the hamburger) are
 `nukernel/DESIGN.md` §2.20/21 and §2.12/13.
 
-**WHAT LANDED.** The view selector is one hamburger at the top right, holding
+**WHAT LANDED.** The view selector is one hamburger at the top left, holding
 all six views with `Session` first, then `Set seed` (the seed row moved out of
 the bar as a NODE), then the log with its count. The bottom-right hamburger is
-gone; there is one. The record's name is the top left and opens Where. The bar
+gone; there is one. The record's name is the top **right** and opens Where —
+the two ends swapped on 2026-09-07 and the name went with the ≡. The bar
 is the transport and the tape. The word `Band` is `Session` everywhere a hand
 reads it; `toptab-Band`, `#pan-band` and `__eightTab("Band")` are unmoved,
 because an address is not a name.

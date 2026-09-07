@@ -150,16 +150,28 @@ export class NuRail extends NuPick {
 
 /* ---- <nu-spinner> — A STATE, NOT A SHOPPING LIST ----------------------
    Paul, 2026-09-07: *"turn them into spinners for the status changes"*.
+   Paul, 2026-09-07, second pass: *"The spinner can just be a single button
+   without arrows left and right. Click to rotate it."*
 
-   ONE CONTROL SAYING THE WORD THE ROW IS IN, a step each side, and the
-   position printed — `2/4` — because a control showing one of four has to say
-   there are four. A press on the WORD steps forward; the second control and
-   not a long press, because a long press already means SAY WHY everywhere on
-   this page (DESIGN.md component 14) and one gesture may not mean two things.
+   SO IT IS ONE BUTTON. It was three — `‹ word 2/4 ›` — and the two arrows
+   were 44px of tap floor each, spent on a direction, next to a control whose
+   whole vocabulary is at most five words. A rotate is the gesture a hardware
+   spinner actually has (a DATA wheel turns one way and comes back round), and
+   the width the arrows cost is width a phone does not have: MEASURED on the
+   gallery before and after, the resting control went from 155.5px to 68.0px
+   at 320 and at 390 alike — 87.5px, 56% of it, given back to the row. (The
+   refused example stays 232.9px at both widths, because what is wide there is
+   the SENTENCE and not the control, which is component 14 working.)
+
+   THE KEYBOARD KEEPS THE WAY BACK, and that is not a compromise but the point
+   of the arrow keys: a pointer wraps forward, and Left/Down step back,
+   Home/End take the ends. A hand that has overshot on a keyboard can reverse;
+   a thumb goes round. The POSITION goes on being printed — `2/4` — because a
+   control showing one of four has to say there are four, and it is now the
+   only thing on the glass that says a set exists at all.
 
    THE ADDRESS DOES NOT MOVE WHEN THE WIDGET DOES: the value lives on the
-   host, and the two steps are children of it, exactly as `src/table/sheet.ts`
-   keeps `data-k` on the word and `prev|` / `next|` on the steps. */
+   host, exactly as `src/table/sheet.ts` keeps `data-k` on the word. */
 export class NuSpinner extends NuPick {
   static override properties = {
     ...NuPick.properties,
@@ -194,22 +206,20 @@ export class NuSpinner extends NuPick {
     const i = this.at();
     const now = o[i];
     const hard = this.refused || this.busy;
-    const stepBtn = (d: number, cls: string, aria: string) =>
-      html`<button type="button" class=${"nu-elstep " + cls}
-        aria-disabled=${hard ? "true" : nothing}
-        aria-label=${aria}
-        @click=${() => this.step(d)}><span class="nu-vh">${aria}</span></button>`;
-    return html`<div class="nu-elspin" role="group" aria-label=${name || nothing}
+    /* ONE BUTTON, AND THE NAME CARRIES WHAT THE ARROWS USED TO. `ui.spin.now`
+       says the spinner's name, the word it is standing on, and where that is
+       in the set — so a screen reader gets the whole state from the one
+       control, which is what it used to get from three. */
+    return html`<button type="button" class="nu-elspin"
+      aria-disabled=${hard ? "true" : nothing}
+      aria-busy=${this.busy ? "true" : nothing}
+      aria-label=${t("ui.spin.now",
+        { name, value: now ? now.w : "", n: i + 1, of: o.length })}
       @keydown=${(e: KeyboardEvent) => this.keys(e)}
-      >${stepBtn(-1, "is-prev", t("ui.spin.prev", { name }))}<button
-        type="button" class="nu-elspinword"
-        aria-disabled=${hard ? "true" : nothing}
-        aria-label=${t("ui.spin.now",
-          { name, value: now ? now.w : "", n: i + 1, of: o.length })}
-        @click=${() => this.step(1)}>${now ? now.w : ""}</button
-      >${stepBtn(1, "is-next", t("ui.spin.next", { name }))}${this.position
+      @click=${() => this.step(1)}
+      ><span class="nu-elspinword">${now ? now.w : ""}</span>${this.position
         ? html`<small class="nu-elpos" aria-hidden="true"
-            >${i + 1}/${o.length}</small>` : nothing}</div>
+            >${i + 1}/${o.length}</small>` : nothing}</button>
       <span class="nu-elsay" role="status"></span>`;
   }
 }
