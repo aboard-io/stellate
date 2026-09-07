@@ -217,7 +217,19 @@ glide  = hslider("glide", 0.09, 0, 0.5, 0.001);
 // energy above 2 kHz goes from 5.7% to 13.0% and its RMS rises 1.49 dB —
 // texture, not hiss — while the SETTLED note moves 0.00 dB. test/oud.test.js
 // O4c holds all three; the sweep that chose it is beside `rasp` below.
-scratch = hslider("scratch", 0.45, 0, 1, 0.01);
+// ...AND IT CAME DOWN BY HALF ON THE EAR, 2026-09-07. Paul, hearing the first
+// version: *"The oud noise should be cut in about half right now it sounds
+// almost like percussion."* He is right and the measurement above is why it
+// happened: 0.45 was chosen to make the travel MEASURABLY noisy (energy above
+// 2 kHz 5.7% -> 13.0%), and a number chosen to be visible in a spectrum is
+// louder than a number chosen to be heard under a note. The finger is meant to
+// be the grain on the slide, not an event in the bar — and at 0.45 the burst
+// reads as a shaker hit, which is what "almost like percussion" names exactly.
+// 0.22 halves the amplitude (-6.1 dB on the noise alone). The travel is still
+// audibly a hand and the settled note is still identical, which is the pair of
+// claims O4c holds; its numbers are re-taken at the new default rather than
+// loosened.
+scratch = hslider("scratch", 0.22, 0, 1, 0.01);
 pick   = hslider("pick", 0.5, 0, 1, 0.01);        // how hard the string is pulled (velocity)
 // risha: THE PLECTRUM ITSELF, 0 a fingertip, 1 a filed quill. This is a fact
 // about the object in the hand, not about the arm — see note 3 above. The

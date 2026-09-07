@@ -481,7 +481,11 @@ ok("O2a darker than the nylon chair across the oud's own six courses (C2..C4)", 
      absent, not merely quiet. */
   const P = { pick: 0.5, ring: 2.8 };
   const dry = await twoNote("oud", { ...P, glide: 0.09, scratch: 0 }, 60, 65, 1.2, 1.2);
-  const wet = await twoNote("oud", { ...P, glide: 0.09, scratch: 0.45 }, 60, 65, 1.2, 1.2);
+  /* THE DEFAULT IS 0.22 SINCE 2026-09-07 and this line must follow it, or the
+     check measures a setting the instrument no longer ships. Paul, on the
+     first version: "The oud noise should be cut in about half right now it
+     sounds almost like percussion." */
+  const wet = await twoNote("oud", { ...P, glide: 0.09, scratch: 0.22 }, 60, 65, 1.2, 1.2);
   const hot = await twoNote("oud", { ...P, glide: 0.09, scratch: 1 }, 60, 65, 1.2, 1.2);
   const g2 = dry.g2;
   const TR = g2 + Math.floor(SR * 0.015), TRE = g2 + Math.floor(SR * 0.090);
@@ -495,9 +499,24 @@ ok("O2a darker than the nylon chair across the oud's own six courses (C2..C4)", 
   let differ = 0;
   for (let i = 0; i < l0.x.length; i++) if (l0.x[i] !== l1.x[i]) differ++;
   ok("O4c the bend SCRATCHES, and a note that has arrived does not", () => {
-    assert.ok(hf(wet) > hf(dry) * 2.0, "the travel's share above 2 kHz is " +
+    /* THE FLOOR IS 1.8, NOT 2.0, AND THE EAR MOVED IT (2026-09-07). Paul, on
+       the first shipped default of 0.45: "The oud noise should be cut in about
+       half right now it sounds almost like percussion." He is right, and the
+       reason the number was too big is written at the slider: 0.45 was chosen
+       to be VISIBLE IN A SPECTRUM, and a level chosen to be visible is louder
+       than a level chosen to be heard under a note. At the shipped 0.22 the
+       travel still carries 1.96x the high-frequency share of a dry slide —
+       the scratch plainly arrives, which is all this assertion can honestly
+       claim. How loud it should be is the ear's, and the ear has answered. */
+    assert.ok(hf(wet) > hf(dry) * 1.8, "the travel's share above 2 kHz is " +
       hf(wet).toFixed(1) + "% against " + hf(dry).toFixed(1) + "% dry — the scratch is declared and not arriving");
-    assert.ok(dTravel > 0.7 && dTravel < 3.0, "the travel is " + dTravel.toFixed(2) +
+    /* AND THE BAND MOVED WITH IT, for the same reason and by the same hand.
+       0.7 dB was the floor under a 0.45 default; at 0.22 the travel sits
+       0.37 dB over a dry slide, which is the point — a finger heard UNDER a
+       note rather than beside it. The ceiling stays at 3.0: past that it is a
+       noise gate again, and that half of the claim has not changed. The floor
+       is 0.2 because zero must still fail, and scratch 0 measures 0.00. */
+    assert.ok(dTravel > 0.2 && dTravel < 3.0, "the travel is " + dTravel.toFixed(2) +
       " dB over the dry one — a finger is texture, not a noise gate");
     assert.ok(Math.abs(dSettle) < 0.15, "the SETTLED note moved " + dSettle.toFixed(2) +
       " dB — the scratch is ringing on in the string after the hand stopped");
