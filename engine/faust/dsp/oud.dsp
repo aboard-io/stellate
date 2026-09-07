@@ -81,7 +81,9 @@
 //      sweeps ACROSS the pair. The two are driven by the SAME noise burst,
 //      which is what one plectrum stroke physically is; the offset is what
 //      keeps them from being one string at twice the gain.
-//   2. `glide` DEFAULTS TO 45 ms. Fretless.
+//   2. `glide` DEFAULTS TO 90 ms, AND IT IS AN ARRIVAL TIME. Fretless — and
+//      the number is the hand's, derived from the article's own scale
+//      length. See the slider, and see `THE SLIDE, RE-ARGUED` below.
 //   3. THE RISHA IS NOT THE ARM. On stk_guitar the pick-angle lowpass is
 //      `0.88*(1 - pick)`, so a soft note is a round fingertip displacement.
 //      A risha is a piece of plastic and its geometry does not soften when the
@@ -112,6 +114,63 @@
 // constant, and test/oud.test.js measures the CONSEQUENCES — intonation, the
 // centroid against the nylon guitar, the beat rate of the course, the bend —
 // rather than the constants, because the consequences are what an ear hears.
+//
+// THE SLIDE, RE-ARGUED (2026-09-07). Paul, listening to the shipped module:
+// *"The oud has a very 'laser beam' sound when it bends tones and I think
+// maybe it's taking the note bends too slow? Or it's missing the scratch
+// sound of a proper player."* Three hypotheses were measured before anything
+// here moved — the interval a slide is asked to cross, the slide's own
+// SHAPE and TIME, and whether the string is quiet while the hand travels —
+// and ALL THREE WERE TRUE. The numbers, off this module and off the nine
+// catalogue rows that seat it (test/oud.test.js O4a-O4d holds every one):
+//
+//   1. THE SLIDE WAS CROSSING INTERVALS NO HAND CROSSES. Measured over
+//      `qiyan abbasid andalusi zajal muwashshah nuba troubadour pavane
+//      taqsim` at seeds 1-3, on the notes AS THE PARENT FOLDS THEM into this
+//      instrument's compass: 2,370 consecutive moves, of which 300 (12.7%)
+//      are WIDER THAN A FOURTH and the widest is FOURTEEN SEMITONES. Every
+//      one of them was slid, because — the second half of the same
+//      measurement — **not one note in those 27 renders is marked `sld`**.
+//      The `sld` gesture this file's own comment called "the engine's longer
+//      slide, written on top" has never once fired on an oud row. What Paul
+//      is hearing is 100% the ALWAYS-ON base, on every note, including a
+//      re-plucked minor tenth. A synthesiser sweeping fourteen semitones is
+//      the definition of a laser beam. The fence is a rule about a HAND and
+//      it lives where the engine decides (state-engine.js mapEvents, and see
+//      `THE HAND'S REACH` there), not here: this file cannot see the note
+//      before.
+//   2. THE SLIDE WAS FIVE TIMES SLOWER THAN THE NUMBER ON IT, and Paul's
+//      "too slow" is literally right. `si.smooth(ba.tau2pole(glide))` makes
+//      `glide` a TIME CONSTANT, not a travel time: one tau is 63% of the
+//      way. Measured on the shipped wasm, a re-plucked octave with
+//      `glide` 0.045 read -530 cents 5 ms in, -111 c at 70 ms, -59 c at
+//      100 ms and did not come inside 20 cents until 150 ms; a fifth DOWN
+//      took 200 ms. The file said "45 ms is a legato hand" and shipped a
+//      quarter-second droop.
+//   3. THE STRING WAS NOT QUIET DURING THE BEND — it was the LOUDEST thing
+//      in the note. On a real instrument the pluck happens and THEN the hand
+//      travels, so a slide is a dying string. Here every note is
+//      re-articulated (there is no legato path to this module: press.js
+//      groups legato only for `mono` units and this one is pooled), so the
+//      quill strikes AT THE START of the sweep. Measured on the octave
+//      above: 0-45 ms -34.8 dB, 135-400 ms -44.3 dB — the sweep carries
+//      9.5 dB MORE than the note it arrives at. That half is NOT fixed by a
+//      gain, because loud IS what a re-plucked slide is; it is fixed by
+//      making the sweep short (2) and by making it sound like a finger (4).
+//   4. AND THERE WAS NO NOISE IN IT AT ALL, which is Paul's second
+//      hypothesis and the reason the artefact reads as a synthesiser rather
+//      than as a hand. Nothing in the shipped module was a function of
+//      d(pitch)/dt. `scratch` below is.
+//
+// WHAT THE OLD GATE MISSED, said out loud because it passed 9/9 the whole
+// time Paul was hearing this. test/oud.test.js O4 rendered ONE note, held
+// the gate, moved `freq` a FOURTH mid-note, and asserted the pitch was
+// between the two and rising. Three things it never asked: whether the bend
+// ARRIVES (there is no upper bound on the travel in it — a bend still 100
+// cents flat at 120 ms passes), what happens at intervals the catalogue
+// actually plays (it tested five semitones; the rows play fourteen), and
+// whether the note is RE-PLUCKED (it tested a legato bend, and this engine
+// never writes one). It measured the only case that does not occur.
 declare name "oud";
 declare author "Julius Smith and Romain Michon (string); stellate (course, risha, body)";
 declare licence "STK-4.3"; // Synthesis ToolKit 4.3, MIT-style — see NOTICE
@@ -124,13 +183,41 @@ import("stdfaust.lib");
 
 freq   = hslider("freq", 220, 30, 1200, 0.01);
 gate   = button("gate");
-// glide: SECONDS to slide into the written pitch. A waveguide's pitch IS its
-// delay length, so this is a real portamento — the string bends, it does not
+// glide: SECONDS FOR THE HAND TO ARRIVE. A waveguide's pitch IS its delay
+// length, so this is a real portamento — the string bends, it does not
 // crossfade. THE DEFAULT IS NOT ZERO AND THAT IS THE INSTRUMENT: there are no
 // frets to arrive at, so a player's finger travels to the next note through
-// every pitch between. 45 ms is a legato hand, not a gesture; the gesture is
-// the `sld` note's own longer slide, which the engine writes on top.
-glide  = hslider("glide", 0.045, 0, 0.5, 0.001);
+// every pitch between.
+//
+// IT IS AN ARRIVAL TIME AND NOT A TIME CONSTANT, which is the whole of
+// finding 2 in the header. `si.smooth(ba.tau2pole(t))` is 63% of the way
+// there after `t` and still 5% short after three of them, so the shipped
+// 0.045 was a quarter-second droop wearing a 45 ms label. `sfreq` below
+// divides, and the divisor is derived rather than tuned — see it.
+//
+// AND 0.09 IS THE TIME TO CROSS THE HAND'S REACH, off the article's own
+// geometry rather than off an ear. The ZIM gives the Arabian scale length as
+// 61 cm. A fourth up from a stopped note moves the stopping point by
+// L(1 - 1/2^(5/12)) = 0.251 x 61 cm = 15.3 cm, and 15.3 cm at a musical
+// hand's ~1.7 m/s is 90 ms. That is the number, and the ENGINE scales it by
+// how far the note actually travels (state-engine mapEvents `THE HAND'S
+// REACH`: a whole tone is 36 ms of it, a semitone 18, and anything past the
+// reach is not a slide at all but a shift of position, which is a re-pluck).
+// A recipe that writes its own — the `lute`, whose gut frets are glide 0 —
+// still gets exactly what it asks for.
+glide  = hslider("glide", 0.09, 0, 0.5, 0.001);
+// scratch: THE SOUND OF THE FINGER ITSELF, 0 silent, 1 a dry hand on a wound
+// string. This is Paul's "scratch sound of a proper player" and it is the one
+// thing in this module that exists ONLY WHILE THE PITCH IS MOVING: its
+// amplitude is d(pitch)/dt and nothing else, so a sustained note is sample-
+// identical to the module without it and a fretted `lute` note — which
+// arrives in one sample — gets a burst shorter than a millisecond, buried
+// inside the quill's own attack. The default is MEASURED and not
+// chosen: at 0.45, across the travel of a fourth, the share of the note's
+// energy above 2 kHz goes from 5.7% to 13.0% and its RMS rises 1.49 dB —
+// texture, not hiss — while the SETTLED note moves 0.00 dB. test/oud.test.js
+// O4c holds all three; the sweep that chose it is beside `rasp` below.
+scratch = hslider("scratch", 0.45, 0, 1, 0.01);
 pick   = hslider("pick", 0.5, 0, 1, 0.01);        // how hard the string is pulled (velocity)
 // risha: THE PLECTRUM ITSELF, 0 a fingertip, 1 a filed quill. This is a fact
 // about the object in the hand, not about the arm — see note 3 above. The
@@ -184,7 +271,22 @@ cutoffEff  = cutoff*(1.0 - 0.55*mute);
 releaseEff = max(0.03, release*(1.0 - 0.8*mute));
 
 // ---- the string (faust-stk NLFeks, as stk_guitar carries it) --------------
-sfreq = freq : si.smooth(ba.tau2pole(max(glide, 0.0001)));
+// THE HAND TRAVELS AS A SECOND-ORDER MOVE, not a first-order one, and the
+// reason is findings 2 and 4 together. A single pole starts at its MAXIMUM
+// speed and decays away from it — a chirp with a tail, which is the literal
+// shape of "laser beam" — while a critically damped PAIR starts at zero
+// speed, peaks in the middle and stops, which is what an arm does. It also
+// gives the scratch below something honest to be proportional to: a finger
+// that accelerates and decelerates rather than one that teleports and coasts.
+// Measured on the rendered wasm, an octave leap's peak pitch speed falls from
+// 23 to 11 octaves a second across this one change.
+// AND THE DIVISOR IS DERIVED, not fitted: the pair is inside 5 cents of a
+// 500-cent travel — the reach, the widest interval the engine will ask of it —
+// after 6.0 tau, so tau = glide/6 makes `glide` the moment the note ARRIVES,
+// in tune to under the ~6-cent JND. At glide 0 the pair is two 17-microsecond
+// poles and the note snaps, which is the `lute`.
+glidePole = ba.tau2pole(max(glide, 0.0001)/6.0);
+sfreq = freq : si.smooth(glidePole) : si.smooth(glidePole);
 Pmax  = 4096;
 // the WRITTEN pitch's period, used for the excitation burst and the squelch —
 // both are one-per-note facts and both belong to the note, not to which string
@@ -286,6 +388,75 @@ squelch(g, n) = g : diffgtz : release(n) : > (0.0)
     release(m) = + ~ decay(m);
   };
 damp = 1.0 - 0.88*squelch(gate, P);
+
+// ---- THE FINGER ITSELF (2026-09-07, finding 4) ----------------------------
+// A hand travelling on a wound gut or nylon string makes NOISE, and no
+// waveguide has any unless somebody puts it there. It is the thing that makes
+// a bend read as a player rather than as an oscillator, and it is the reason
+// the artefact Paul heard appears ONLY on bends: every other cue this module
+// has is the same whether the pitch is moving or not.
+//
+// THE AMPLITUDE IS THE SPEED OF THE HAND AND NOTHING ELSE. `travel` is
+// d(pitch)/dt off the SMOOTHED pitch — the thing that actually moves — in
+// octaves a second. A note that has arrived has travel exactly 0, so a
+// sustained note is sample-identical to this module without the feature, and
+// a `lute` note (glide 0, two 17-us poles) gets a burst under a millisecond
+// long that lands inside the quill's own attack transient. That is the whole
+// of the gate: there is no envelope here and no note logic, because a finger
+// makes noise exactly while it is moving.
+HAND   = 4.63;      // octaves a second: the reach (a fourth) in the derived 90 ms
+// …AND A JUMP IS NOT A HAND, which is a fence on `glide` and not on the speed.
+// At glide 0 the pitch arrives in two samples, so d(pitch)/dt there is ~10,000
+// octaves a second: an ungated rasp put a tick at full note level on the front
+// of EVERY fretted `lute` note (measured: worst sample 2.8e-2 against a 2.0e-2
+// RMS note). A SPEED fence does not close it — the two-pole decay walks back
+// down THROUGH any speed you name, so a jump passes the gate at full
+// amplitude on its way to nothing. The honest fence is the one the caller
+// already states: below 5 ms there is no travel for a finger to make noise on,
+// because a 5 ms slide is a re-articulation. This is also how a note the
+// engine has FENCED (a leap past the hand's reach, written as glide 0 — see
+// state-engine mapEvents) arrives silent as well as in tune: one law, both
+// halves.
+NOHAND = 0.005;
+// …and the speed is taken WITHOUT a logarithm, because d(log2 f)/dt has a
+// closed form — (df/dt)/(f ln2) — so one divide says exactly what a `ma.log2`
+// per sample says, and the log costs about a third of the module. Measured,
+// best of fifteen interleaved runs on one machine (10 s of audio each): the
+// `ma.log2` draft 350 ms, this line 261, and the module BEFORE this whole
+// round 271. Same number, same fence, and the finger is free.
+LN2    = 0.6931472;
+travel = abs(sfreq - sfreq')*ma.SR/(max(30.0, sfreq)*LN2);
+hand   = min(1.0, travel/HAND)*(glide > NOHAND);
+// AND THE COLOUR IS THE WINDING, which is the one number here that is read
+// rather than chosen. Near the playing position on the article's 61 cm scale
+// the stopping point moves ~0.30 m per OCTAVE of pitch, and the turns of a
+// wound string sit ~0.4 mm apart, so the winding passes under the finger at
+// travel*0.30/0.0004 = travel*750 Hz. A slow hand (1 oct/s) rasps at 750 Hz
+// and a full one at 3.5 kHz — which is why a fast slide squeaks and a slow
+// one growls, and why this is a CROSSFADE between two fixed bands rather than
+// one band with a swept centre: the two ends are the arithmetic's own, and a
+// signal-rate `resonbp` would spend a tangent per sample to say the same
+// thing. Q 1.1 is chosen and it is broad on purpose — a finger is not a
+// resonator.
+RASP_LO = 750.0;
+RASP_HI = 3470.0;
+rasp = no.noise <: fi.resonbp(RASP_LO, 1.1, 1)*(1.0 - hand),
+                   fi.resonbp(RASP_HI, 1.1, 1)*hand
+     :> *(scratch*hand);
+// …AND IT ENTERS THE BOX, NOT THE STRING, which is not where the first draft
+// put it and the difference is measured rather than argued. Summing the rasp
+// into the waveguide's input is the obvious move — the noise is made on the
+// string, so feed it to the string — and it is wrong twice. Physically the
+// finger sits AT a termination of the speaking length, so it couples into the
+// sounding string weakly and radiates mostly from the neck, from the dead
+// length behind it and straight off the soundboard. Measurably, a waveguide
+// with a 2.8 s T60 STORES whatever you put into it: at `scratch` 1 the string
+// injection left the note 7.41 dB LOUDER 300 ms after the hand had stopped
+// than the same note with the feature off — a slide that makes its own
+// arrival louder, which is a second artefact in the shape of the first.
+// Through the box the settled note measures 0.00 dB and 0.02% above 2 kHz
+// either way: the scratch exists while the hand moves and not one sample
+// longer. `process` at the foot of the file is where it is summed in.
 str(s) = exc(s) : (+ : de.fdelay4(Pmax, Pd(s) - 2)) ~ (loopfilter(s) : *(damp));
 // the pair, each half the gain so a course is not simply twice as loud as a
 // single string. `course` at 0 makes det(0) == det(1) == 1 and the two become
@@ -346,4 +517,6 @@ env = en.asr(0.001, 1, releaseEff, gate);
 // The instrument's level against the rest of the FLEET is not this number's
 // job — that is audio/to-engine.js PAGE_TRIM, measured on the page.
 makeup = 0.601 + 0.781*(1.0 - pick*pick);
-process = pair : boxed : *(gain*1.45) : *(env*level*2.0*makeup) : fi.dcblocker;
+// `rasp` joins the string HERE and not inside it — see THE FINGER ITSELF, and
+// the 7.41 dB that decided it.
+process = (pair + rasp) : boxed : *(gain*1.45) : *(env*level*2.0*makeup) : fi.dcblocker;

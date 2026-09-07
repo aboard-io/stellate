@@ -3420,7 +3420,7 @@
             "max": 0.501,
             "step": 0.001,
             "unit": "s",
-            "derived": 0.045
+            "derived": 0.09
           },
           {
             "key": "cutoff",

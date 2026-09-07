@@ -122,6 +122,93 @@
     if (midi > hi + 0.5) midi -= 12;   // narrow range: settle on the nearest octave
     return midi;
   }
+  /* THE SYNTH REGISTER FOLD, as a function because TWO callers need the same
+     answer (2026-09-07, the oud-slide round). `mapEvents` has always folded
+     here; nukernel/audio/to-engine.js now needs the SAME folded pitch to work
+     out how far a hand travels between two notes (`THE HAND'S REACH`), and it
+     has to be the folded one — measured over the nine rows that seat the oud,
+     the fold moves 12.7% of the moves past a fourth against 10.5% before it,
+     because an octave drop to stay in range IS a leap the player did not
+     write. A copied fold would be a second opinion about the same note. The
+     body below is the block that used to be inline in `mapEvents`, unchanged,
+     and its argument moved with it. */
+  const PITCH_FLOOR_HZ = 27.5;
+  // SYNTH REGISTER FOLD — the consumer for freqMax, and the synth-font
+  // dropout fix. The dx7.lib freq slider is COMPILED [50,1000]Hz: a note
+  // above it runs the FM operators off their tables and flushes to zero, so
+  // an sf=dx7 lead voicing chords above MIDI ~83 measures present-but-silent
+  // while its lower bars sound.
+  // Octave-fold into the unit's declared range — the drop a real player
+  // makes — instead of feeding the module a pitch it cannot say.
+  // THE FOLD HAD A CEILING AND NO FLOOR, and the floor is the half that
+  // nothing else covers. `freqMax` was consumed here from the day the dx7
+  // dropout was fixed; the matching `freqMin` defaulted to 0, which is not
+  // a floor, so a note UNDER an instrument came through at its written
+  // pitch on every path. Measured before this line existed: MIDI 17 (21.8
+  // Hz) handed to stk_piano, to the GM sampler, to strings and to the
+  // pluck arrived at 21.8 Hz in all four, while MIDI 110 was correctly
+  // folded down two, one, one and three octaves. And it is reachable —
+  // 2000 dice records (1.86 M pitched notes) put the singer's pad on MIDI
+  // 17..20 twenty-three times, four semitones under the bottom of a piano,
+  // where the note is not a pitch at all, only headroom the master has to
+  // carry.
+  // 27.5 Hz is A0, the bottom of a piano and the same bottom
+  // test/unit/dice.test.js asserts for every event it walks (21..108). A
+  // unit that knows better still says so: `freqMin` overrides, and the
+  // dx7 family keeps its compiled 52 Hz.
+  // NOTE this is deliberately NOT a whole-line shift. plan.js's register
+  // home already moves a LINE into its instrument's window before any of
+  // this runs ("A WHOLE LINE MOVES, OR THE LINE BREAKS"); what is left
+  // here is the single note that walked off the end on its own — an
+  // octave word on the top note, a voicing that spread too far — and for
+  // one note the octave fold IS the drop a player makes.
+  function registerFold(u, hz) {
+    let noteHz = hz;
+    if (u.freqMax) {
+      while (noteHz > u.freqMax && noteHz > 40) noteHz /= 2;
+      const fmin = u.freqMin != null ? u.freqMin : (u.dx7 ? 52 : PITCH_FLOOR_HZ);
+      while (fmin && noteHz < fmin && noteHz < 8000) noteHz *= 2;
+    }
+    return noteHz;
+  }
+  /* THE HAND'S REACH (2026-09-07, the oud-slide round). Paul, on the shipped
+     oud: *"a very 'laser beam' sound when it bends tones"*. Three hypotheses
+     were measured and all three were true; this is the first of them.
+
+     A PLAYER SLIDES WITHIN A POSITION AND RE-ARTICULATES FOR ANYTHING BIGGER.
+     A finger reaches about 15 cm along a neck without shifting, which on the
+     oud's own 61 cm scale length is a FOURTH; past that the hand lifts, moves
+     and strikes again, and what you hear is a new note in tune, not a sweep.
+     The module cannot know this — a dsp sees one `freq` slider and never the
+     note before it — so the rule lives here, where the engine already knows
+     both notes.
+
+     THE CENSUS THAT SAYS IT MATTERS, over `qiyan abbasid andalusi zajal
+     muwashshah nuba troubadour pavane taqsim` at seeds 1-3, on the notes as
+     `registerFold` above delivers them: 2,370 consecutive moves, 300 of them
+     (12.7%) WIDER THAN A FOURTH, the widest FOURTEEN SEMITONES — and not one
+     note in the twenty-seven renders is marked `sld`. So every one of those
+     leaps was being swept by the module's always-on base portamento, and the
+     `sld` gesture the base was written to sit under has never fired on an oud
+     row in its life.
+
+     WHAT THE RULE IS, in one line: a slide is a hand, a hand has a speed, and
+     a hand has a reach.
+       · past the reach there is no slide at all — the note is re-plucked in
+         tune, which is what a shift of position is;
+       · inside it the time is PROPORTIONAL TO THE DISTANCE, so the speed is
+         constant and a whole tone (37% of all moves) takes 36 ms of the
+         declared 90 rather than the same 90 as a fourth;
+       · `step == null` — no note before it, a rest longer than a beat, or a
+         chord tone struck with its neighbour — is in tune too, on
+         to-engine.js `bendOf`'s own long-standing law that a bend needs
+         somewhere to come from.
+     A unit that declares no `slideReach` writes exactly the number it wrote
+     before this existed, which is every module but this one. */
+  function handSlide(u, sec, step) {
+    if (!(sec > 0) || step == null) return 0;
+    return step > u.slideReach ? 0 : sec * step / u.slideReach;
+  }
   function easeRes(cutHz, res) {
     if (!(cutHz > SHRIEK_HZ_LO) || !(res > SHRIEK_RES_FLOOR)) return res;
     const t = Math.min(1, (cutHz - SHRIEK_HZ_LO) / (SHRIEK_HZ_HI - SHRIEK_HZ_LO));
@@ -1796,12 +1883,21 @@
       // playing a lute two octaves under itself.
       //
       // AND `slideSec` IS THE ONE NUMBER THAT MAKES IT NOT A GUITAR. The
-      // module defaults `glide` to 0.045 s where stk_guitar defaults to 0,
+      // module defaults `glide` to 0.09 s where stk_guitar defaults to 0,
       // because the instrument is FRETLESS and a slide between notes is the
       // ordinary articulation rather than an ornament; the base is written
       // here so a chair that names nothing still gets the instrument, and a
       // note marked `sld` takes the longer 0.16 s (glideFloor's law: a slide
       // shorter than the portamento it interrupts is not a gesture).
+      // BOTH ARE NOW TIMES TO CROSS `slideReach`, NOT FLAT TIMES EVERY
+      // INTERVAL PAYS (2026-09-07). 0.09 is 15.3 cm of neck — a fourth on the
+      // ZIM's own 61 cm scale — at a musical hand's 1.7 m/s, and `handSlide`
+      // scales it by how far the note actually goes, so a whole tone takes 36
+      // ms of it and a leap past the reach takes none at all. It replaced
+      // 0.045, which was not even the time it claimed: the module read it as a
+      // `tau2pole` TIME CONSTANT, so 45 ms on the slider was a ~200 ms droop,
+      // and that droop on every note including a re-plucked minor tenth is
+      // what Paul heard as "a very 'laser beam' sound when it bends tones".
       //
       // AND IT ARRIVES DRY UNLESS SOMEBODY ASKS. Every other model here takes
       // defaultInserts' two-per-voice house chain when its recipe names none —
@@ -1817,7 +1913,7 @@
         // THE FRETLESS DEFAULT, and a recipe may still write its own — which
         // is exactly what the `lute` recipe does (instruments.js PATCH_MODEL):
         // gut frets tied round the neck are, in this model, `glide` at 0.
-        const gl = clamp(m.glide != null ? m.glide : 0.045, 0, 0.5);
+        const gl = clamp(m.glide != null ? m.glide : 0.09, 0, 0.5);
         return { ...base, module: "oud",
         freqMax: 783.99, freqMin: 65.41, pool: role === "pad" ? 4 : 3,
         inserts: (Array.isArray(m.inserts) && m.inserts.length) ? base.inserts : [],
@@ -1828,6 +1924,14 @@
         // Reading it off the resolved glide rather than off the id keeps the
         // two facts one fact.
         dyn: MODEL_DYN.oud, slideParam: "glide", slideSec: gl > 0 ? 0.16 : 0.04,
+        // THE HAND'S REACH, in SEMITONES, and it is the number that stops this
+        // instrument sounding like a laser (2026-09-07). See `THE HAND'S
+        // REACH` in mapEvents for what it does and for the census that chose
+        // it; the short version is that a slide is a finger travelling, a
+        // finger reaches about 15 cm, and 15 cm on the article's 61 cm scale
+        // is a fourth. `slideBase`/`slideSec` are the times to cross exactly
+        // that, so the two numbers and this one are one fact about a hand.
+        slideReach: 5,
         params: { ...base.params,
           glide: gl,
           cutoff: clamp(c || 4200, 200, 14000),
@@ -3125,41 +3229,7 @@
         while (noteHz > u.sampler.stretchMaxHz && noteHz > 40) noteHz /= 2;
         while (noteHz < u.sampler.stretchMinHz && noteHz < 8000) noteHz *= 2;
       }
-      // SYNTH REGISTER FOLD — the consumer for freqMax, and the synth-font
-      // dropout fix. The dx7.lib freq slider is COMPILED [50,1000]Hz: a note
-      // above it runs the FM operators off their tables and flushes to zero, so
-      // an sf=dx7 lead voicing chords above MIDI ~83 measures present-but-silent
-      // while its lower bars sound.
-      // Octave-fold into the unit's declared range — the drop a real player
-      // makes — instead of feeding the module a pitch it cannot say.
-      // THE FOLD HAD A CEILING AND NO FLOOR, and the floor is the half that
-      // nothing else covers. `freqMax` was consumed here from the day the dx7
-      // dropout was fixed; the matching `freqMin` defaulted to 0, which is not
-      // a floor, so a note UNDER an instrument came through at its written
-      // pitch on every path. Measured before this line existed: MIDI 17 (21.8
-      // Hz) handed to stk_piano, to the GM sampler, to strings and to the
-      // pluck arrived at 21.8 Hz in all four, while MIDI 110 was correctly
-      // folded down two, one, one and three octaves. And it is reachable —
-      // 2000 dice records (1.86 M pitched notes) put the singer's pad on MIDI
-      // 17..20 twenty-three times, four semitones under the bottom of a piano,
-      // where the note is not a pitch at all, only headroom the master has to
-      // carry.
-      // 27.5 Hz is A0, the bottom of a piano and the same bottom
-      // test/unit/dice.test.js asserts for every event it walks (21..108). A
-      // unit that knows better still says so: `freqMin` overrides, and the
-      // dx7 family keeps its compiled 52 Hz.
-      // NOTE this is deliberately NOT a whole-line shift. plan.js's register
-      // home already moves a LINE into its instrument's window before any of
-      // this runs ("A WHOLE LINE MOVES, OR THE LINE BREAKS"); what is left
-      // here is the single note that walked off the end on its own — an
-      // octave word on the top note, a voicing that spread too far — and for
-      // one note the octave fold IS the drop a player makes.
-      const PITCH_FLOOR_HZ = 27.5;
-      if (u.freqMax) {
-        while (noteHz > u.freqMax && noteHz > 40) noteHz /= 2;
-        const fmin = u.freqMin != null ? u.freqMin : (u.dx7 ? 52 : PITCH_FLOOR_HZ);
-        while (fmin && noteHz < fmin && noteHz < 8000) noteHz *= 2;
-      }
+      noteHz = registerFold(u, noteHz);
       const sets = { freq: noteHz };
       if (!u.dx7) sets.gain = clamp(p.amp * u.gmul, 0, 2);
       if (u.decayFromDur) sets.decay = clamp(durB * spb, 0.1, u.module === "bell" ? 6 : 8);
@@ -3191,7 +3261,10 @@
       // bass events, which are single lines.
       // `slideBase` is the chair's own always-on portamento (applyGlide); absent
       // it is the 0 this line has always written, so nothing without a row moves.
-      if (u.slideParam) sets[u.slideParam] = p.slide ? u.slideSec : (u.slideBase || 0);
+      if (u.slideParam) {
+        const st = p.slide ? u.slideSec : (u.slideBase || 0);
+        sets[u.slideParam] = u.slideReach > 0 ? handSlide(u, st, p.step) : st;
+      }
       // THE VOWEL WALKS ALONG THE LINE. A sung note takes the next vowel in the
       // genre's own mouth, and the module glides between them — which is the
       // one thing a recording of a vowel can never do, and the reason a formant
@@ -3391,6 +3464,9 @@
     // velocity-producing caller must map onto or full force stops short of
     // the top of the plectrum.
     VOICE_TYPE, VOWELS, TRACT_DYN, DYN_AMP_LO, DYN_AMP_HI,
+    // the register fold, published for the bridge's `THE HAND'S REACH` pass —
+    // it must measure the interval on the SAME folded pitch mapEvents plays.
+    registerFold,
     // MASTERING STAGE surface (renderers + test/unit/mastering.test.js)
     panGains, notePan, reverbScale, collisionCarve, MASTER_PAN };
 });

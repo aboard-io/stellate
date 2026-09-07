@@ -1171,8 +1171,10 @@ const LIVE_AMP = [PITCH_AMP_FLOOR, PITCH_AMP_FLOOR + PITCH_AMP_SPAN];
 // …and the oud's 0.16 is longer than either, because on a FRETLESS instrument
 // a slide is not a gesture and not a repair: it is how a hand gets from one
 // note to the next. (Its unslid notes are not 0 either — the module's own
-// `glide` slider defaults to 0.045 s, which state-engine's `case "oud"` writes
-// as the chair's base and `glideFloor` keeps.)
+// `glide` slider defaults to 0.09 s, which state-engine's `case "oud"` writes
+// as the chair's base and `glideFloor` keeps. BOTH are now the time to cross
+// the HAND'S REACH — a fourth — rather than a flat time every interval pays:
+// see the stamping pass in `toEngine` and state-engine's `handSlide`.)
 const LIVE_SLIDE = { stk_guitar: 0.06, erhu: 0.09, oud: 0.16 };
 
 /* ---- PORTAMENTO, AS A CHAIR SAYS IT (2026-09-03) --------------------------
@@ -2768,6 +2770,49 @@ export function toEngine(plan, deps) {
                                        plan.bass && plan.bass.instr);
   else delete units.bass;
   delete units.pad; delete units.melody;         // the placeholders; the chairs above are the real voices
+  /* ---- THE HAND'S REACH, STAMPED ON THE NOTES (2026-09-07) ----------------
+     One pass, one number per note: `step`, how far the player's finger has to
+     travel to reach it, in SEMITONES. The parent's `mapEvents` turns it into a
+     slide time (state-engine `THE HAND'S REACH` and `handSlide`), and it has
+     to be stamped HERE rather than measured there for one reason: the live
+     lane maps ONE BAR AT A TIME (`export/wav.js` feed, `{lo, hi}`), so a
+     parent counting intervals inside mapEvents would lose the note before at
+     every bar line and the tape and the page would slide differently. This
+     runs once over the whole song, and `plan.js` slices the stamped events per
+     bar, so both paths read the same number.
+
+     THE PITCH IS THE FOLDED ONE — `SE.registerFold`, the parent's own, called
+     rather than copied — because an octave the register law dropped to keep a
+     note in the instrument's compass is a leap the composer never wrote and
+     the ear hears it as one: over the nine oud rows the fold moves 12.7% of
+     the moves past a fourth where the written notes give 10.5%.
+
+     THREE THINGS LEAVE `step` UNSTAMPED, and each is a bend with nowhere to
+     come from — the same three fences `bendOf` below has always drawn for the
+     sampled lane: a chair's first note, a note after a rest longer than a
+     beat, and a note struck WITH its neighbour (a chord is plucked, not slid).
+     Absent, `handSlide` writes 0 and the note arrives in tune.
+
+     AND IT COSTS NOTHING WHERE NOBODY ASKS: only a unit that declares
+     `slideReach` is walked, which today is the oud model and nothing else, so
+     a record without one is byte-identical, `step` and all. */
+  if (Object.values(units).some((u) => u && u.slideReach > 0)) {
+    const last = new Map();
+    // BY THE CLOCK, not by the order the bars pushed them. `pitched` is built
+    // bar by bar and, inside a bar, in the event list's own order — which a
+    // grace note or an ornament tiled off the beat can put out of sequence,
+    // and "the note before" has to mean the note before.
+    for (const p of pitched.slice().sort((a, b) => a.beat - b.beat)) {
+      const u = units[p.voice];
+      if (!u || !(u.slideReach > 0)) continue;
+      const hz = SE.registerFold(u,
+        clamp(SE.cpspch(p.pch), 20, 1e9) * (p.cents ? Math.pow(2, p.cents / 1200) : 1));
+      const q = last.get(p.voice);
+      last.set(p.voice, { hz, beat: p.beat, end: p.beat + p.dur });
+      if (!q || p.beat - q.end > 1 || p.beat <= q.beat + 1e-6) continue;
+      p.step = Math.abs(12 * Math.log2(hz / q.hz));
+    }
+  }
   // ---- THE SEATING PLAN (2026-08-29) ---------------------------------------
   // REVERSED. This pass used to be one line:
   //     units[c.key].pan = p * (1 + 0.6 * ((c.key.charCodeAt(1) % 3) - 1));

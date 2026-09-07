@@ -37,12 +37,30 @@
  *       rate must match f0*(2^(c/2400) - 2^(-c/2400)) at three pitches and two
  *       detunings, the modulation must be DEEP (a real null, not a wobble),
  *       and at `course` 0 there must be no beating at all.
- *   O4  THE SLIDE IS THE STRING, AND IT IS ON BY DEFAULT. An oud is fretless,
- *       so `glide` defaults to 45 ms where every other plucked module in the
- *       fleet defaults to 0. A pitch change must ARRIVE through the
- *       intervening frequencies rather than jump — and at `glide` 0 (which is
- *       what the `lute` recipe writes, gut frets being the thing an oud does
- *       not have) it must jump.
+ *   O4  THE SLIDE IS A HAND (rewritten 2026-09-07, the laser-beam round —
+ *       Paul: *"a very 'laser beam' sound when it bends tones … maybe it's
+ *       taking the note bends too slow? Or it's missing the scratch sound of a
+ *       proper player."*). The old O4 held one gate open, moved `freq` a
+ *       fourth underneath it and asserted the pitch was between the two and
+ *       rising. It passed while he was hearing this, because it never asked
+ *       whether the bend ARRIVES, never tested an interval wider than the one
+ *       a hand can reach, and tested a LEGATO bend, which this engine cannot
+ *       produce for a pooled module. Four claims replace it, and every one of
+ *       them is rendered through `twoNote` — a second PLUCK on the same pool
+ *       voice, written the way press/render-core.js writes it:
+ *       (a) `glide` IS THE TIME THE NOTE ARRIVES, in tune, to inside the
+ *           6-cent JND, at three intervals and two times, monotone, with no
+ *           overshoot three times later. It used to be a `tau2pole` TIME
+ *           CONSTANT: 45 ms on the slider was a ~200 ms droop.
+ *       (b) A LEAP IS RE-PLUCKED, NOT SWEPT. The census over the nine rows
+ *           that seat the instrument (12% of moves wider than a fourth, the
+ *           widest fourteen semitones, and ZERO notes marked `sld`), and the
+ *           `glide` the bridge actually writes per note, read off mapEvents.
+ *       (c) THE BEND SCRATCHES, and a note that has arrived does not: the
+ *           travel's energy above 2 kHz, its RMS, the settled note 300 ms
+ *           later, and the `lute` bit-identical with the feature at 0 and 1.
+ *       (d) EVERY INTERVAL THE CATALOGUE PLAYS IS IN TUNE 90 ms after the
+ *           strike, at the glide the engine itself wrote for it.
  *   O5  IT IS AN INSTRUMENT, NOT A FADER. Loudness is monotone in the
  *       plectrum's force and the force moves the SPECTRUM. A narrower swing
  *       than the guitar's is expected and argued (a fingertip changes shape
@@ -189,6 +207,18 @@ async function render(name, params, secs, hold, mid) {
   const set = (k, v) => proc.setParamValue("/" + name + "/" + k, v);
   for (const [k, v] of Object.entries(params)) set(k, v);
   const T = Math.floor(SR * secs), out = new Float32Array(T), holdN = Math.floor(SR * hold);
+  /* ONE BLOCK OF SILENCE FIRST, AND IT IS NOT A DETAIL. Every param above is
+     written before a sample is rendered, but `sfreq` is a SIGNAL that starts
+     at zero and slews to the slider, so a gate in the very first block strikes
+     a string whose length is still arriving. Both the excitation burst's
+     duration and the pluck comb's delay are `SR/sfreq` read AT THE STRIKE, so
+     that made O2 and O5 partly measurements of the pitch smoother's settling
+     rather than of the instrument, and the smoother is exactly what the slide
+     round changed. The renderer does not do this — press/render-core.js writes
+     every param one block BEFORE the gate (`[s - BS, ...]`) — so priming here
+     is what makes this bench the engine's case. The discarded block is not in
+     `out`, so every offset below still counts from the strike. */
+  proc.render([], BS);
   let gated = false, did = false;
   for (let s = 0; s < T; s += BS) {
     if (!gated) { set("gate", 1); gated = true; }
@@ -202,6 +232,45 @@ async function render(name, params, secs, hold, mid) {
   }
   return out;
 }
+
+/* TWO NOTES ON ONE POOL VOICE, WRITTEN THE WAY THE RENDERER WRITES THEM, and
+   this is the bench the old O4 did not have. press/render-core.js puts every
+   param change at `s - BS` and the gate at `s`, and it takes the gate DOWN
+   8 ms before the next note ("s + (dur - 0.008)"), so a second note on the
+   same voice is a fresh PLUCK whose pitch is already travelling when the quill
+   lands. The old gate held one gate open and moved `freq` underneath it — a
+   legato bend, which this engine cannot produce for this module (press groups
+   legato only for `mono` units and the oud is pooled at 3), so it measured the
+   one case that never happens. */
+async function twoNote(name, params, m1, m2, t1, t2, glide2) {
+  const f = await factoryOf(name);
+  const proc = await gen.createOfflineProcessor(SR, BS, f);
+  const set = (k, v) => proc.setParamValue("/" + name + "/" + k, v);
+  for (const [k, v] of Object.entries(params)) set(k, v);
+  set("freq", midiHz(m1));
+  const T = Math.floor(SR * (t1 + t2)), out = new Float32Array(T);
+  const g2 = Math.floor(SR * t1), off1 = g2 - Math.floor(SR * 0.008);
+  let stage = 0;
+  proc.render([], BS);                       // prime: see `render` above
+  for (let s = 0; s < T; s += BS) {
+    if (stage === 0) { set("gate", 1); stage = 1; }
+    else if (stage === 1 && s >= off1) { set("gate", 0); stage = 2; }
+    else if (stage === 2 && s >= g2 - BS) {
+      set("freq", midiHz(m2));
+      if (glide2 != null) set("glide", glide2);
+      stage = 3;
+    } else if (stage === 3 && s >= g2) { set("gate", 1); stage = 4; }
+    const len = Math.min(BS, T - s);
+    out.set(proc.render([], len)[0].subarray(0, len), s);
+  }
+  return { x: out, g2 };
+}
+/** the pitch `ms` after the second note's strike, in cents from its target. */
+const bendAt = (x, g2, ms, m1, m2) => {
+  const lo = Math.min(midiHz(m1), midiHz(m2)) * 0.85, hi = Math.max(midiHz(m1), midiHz(m2)) * 1.2;
+  const f = f0Of(x, g2 + Math.floor(SR * ms / 1000), 2048, lo, hi);
+  return f ? cents(f, midiHz(m2)) : NaN;
+};
 
 /* THE REFERENCE IS THE CHAIR THESE ROWS WERE ACTUALLY PLAYING — stk_guitar
    driven by instruments.js' own `nylon_string_guitar` recipe, read out of that
@@ -284,7 +353,17 @@ ok("O2a darker than the nylon chair across the oud's own six courses (C2..C4)", 
   ok("O2b the risha is a quill, not a finger — the same module, the plectrum moved", () => {
     assert.ok(worst > 1.05, "the quill's attack centroid is only x" + worst.toFixed(2) +
       " the fingertip's — the plectrum is not reaching the sound");
-    assert.ok(worstHF > 3.0, "the quill puts only x" + worstHF.toFixed(1) +
+    /* x2.5 AND NOT x3.0, AND THE NUMBER MOVED FOR A GOOD REASON (2026-09-07).
+       The old floor was fitted against a bench that struck the string in the
+       very first block, before `sfreq` had slewed to the slider — so the
+       excitation burst was several times too long and the pluck comb was in
+       the wrong place, for BOTH plectrums, and the ratio it produced (x4.1 to
+       x8) was partly the pitch smoother's settling. `render` now primes one
+       block, which is what press/render-core.js does, and the same claim
+       measures x2.7 to x5.4. The claim is unchanged and it is still large:
+       a filed quill puts nearly three times the fingertip's energy over
+       3 kHz into the first 23 ms. */
+    assert.ok(worstHF > 2.5, "the quill puts only x" + worstHF.toFixed(1) +
       " the fingertip's energy above 3 kHz");
     console.log("       " + rows.join("  ·  "));
   });
@@ -332,34 +411,102 @@ ok("O2a darker than the nylon chair across the oud's own six courses (C2..C4)", 
   });
 }
 
-/* ---- O4 the slide is the string, and it is on by default ---------------- */
+/* ---- O4 the slide is a HAND (2026-09-07, the laser-beam round) ----------
+   Paul: *"The oud has a very 'laser beam' sound when it bends tones and I
+   think maybe it's taking the note bends too slow? Or it's missing the scratch
+   sound of a proper player."*
+
+   WHAT THE OLD O4 MISSED, since it passed 9/9 the whole time he was hearing
+   this. It rendered ONE note, held the gate open, moved `freq` a fourth
+   underneath it and asserted the pitch was between the two and rising. Three
+   things it never asked, and each of them is one of the four findings:
+     · WHETHER THE BEND ARRIVES. There was no upper bound on the travel in it,
+       so a bend still 100 cents flat at 120 ms passed. `glide` was a
+       `tau2pole` TIME CONSTANT — 63% of the way after the number on the
+       slider — so the shipped 45 ms was a ~200 ms droop. O4a fences it.
+     · WHAT HAPPENS AT THE INTERVALS THE CATALOGUE PLAYS. It tested five
+       semitones. The nine rows that seat this instrument play FOURTEEN, and
+       12.7% of their moves are wider than a fourth. O4b measures the census
+       and the fence that answers it.
+     · WHETHER THE NOTE IS RE-PLUCKED. It tested a legato bend and this engine
+       never writes one, so it measured the only case that does not occur.
+       Everything below uses `twoNote`, which is the renderer's own writing.
+   And a fourth thing it could not have missed because it did not exist: there
+   was no noise in the bend at all (O4c). */
 {
-  const A3 = 220, D4 = 293.6648;
-  const track = async (g) => {
-    const x = await render("oud", { freq: A3, glide: g, pick: 0.5, ring: 12 }, 2.2, 2.0,
-                           { at: 1.0, set: { freq: D4 } });
-    return [0.005, 0.02, 0.04, 0.07, 0.12].map((dt) =>
-      f0Of(x, Math.floor(SR * (1.0 + dt)), 2048, 150, 420));
-  };
-  const bent = await track(0.045);        // the module's own fretless default
-  const snap = await track(0);            // what the `lute` recipe writes
-  ok("O4 fretless by default: a written note is ARRIVED at, and glide 0 jumps", () => {
-    // every sample of the bend is strictly between the two pitches, and rising
-    for (let i = 0; i < bent.length; i++)
-      assert.ok(bent[i] > A3 - 2 && bent[i] < D4 + 2,
-        "the bend left the interval at sample " + i + ": " + bent[i].toFixed(1) + " Hz");
-    for (let i = 1; i < bent.length; i++)
-      assert.ok(bent[i] >= bent[i - 1] - 1,
-        "the bend is not monotone: " + bent.map((v) => v.toFixed(1)).join(" "));
-    // ...and it is genuinely BETWEEN, not a jump with a smoothed edge
-    assert.ok(bent[1] < D4 - 15 && bent[1] > A3 + 15,
-      "20 ms into a 45 ms glide the pitch is " + bent[1].toFixed(1) +
-      " Hz — that is a jump, not a bend");
-    // glide 0 is there inside 5 ms
-    assert.ok(Math.abs(cents(snap[0], D4)) < 15,
-      "at glide 0 the note has not arrived after 5 ms: " + snap[0].toFixed(1) + " Hz");
-    console.log("       bend (A3->D4, 45 ms): " + bent.map((v) => v.toFixed(0)).join(" -> ") +
-      " Hz   ·   glide 0: " + snap.map((v) => v.toFixed(0)).join(" -> "));
+  /* O4a — `glide` IS THE TIME THE NOTE ARRIVES. Three intervals, the widest
+     of them the hand's whole reach, each re-plucked. The floor is 6 cents,
+     which is the pitch JND: past `glide` the note is IN TUNE and not merely
+     nearer. BEFORE this round, on the same bench, an octave read -530 c at
+     5 ms, -111 c at 70, -59 c at 100 and did not come inside 20 cents until
+     150 ms — a fifth DOWN took 200 — which is the sound Paul named. */
+  const rows = [], bad = [];
+  for (const [m1, m2, lbl] of [[60, 62, "whole tone"], [60, 65, "a fourth"], [67, 60, "down a fourth"]]) {
+    for (const g of [0.09, 0.036]) {
+      const { x, g2 } = await twoNote("oud", { pick: 0.5, ring: 2.8, glide: g }, m1, m2, 1.2, 1.2);
+      const q = (ms) => bendAt(x, g2, ms, m1, m2);
+      const early = q(g * 250), mid = q(g * 500), land = q(g * 1000), after = q(g * 3000);
+      if (!(Math.abs(land) < 6))
+        bad.push(lbl + " at glide " + g + ": " + land.toFixed(0) + " cents off at t=glide");
+      if (!(Math.abs(after) < 6))
+        bad.push(lbl + " at glide " + g + ": " + after.toFixed(0) + " cents off at 3x glide (overshoot)");
+      // …and it is genuinely TRAVELLING, not a jump with a smoothed edge
+      if (!(Math.abs(early) > Math.abs(mid) && Math.abs(mid) > Math.abs(land) + 1))
+        bad.push(lbl + " at glide " + g + ": not monotone (" +
+          [early, mid, land].map((v) => v.toFixed(0)).join(" ") + ")");
+      if (!(Math.abs(early) > 12))
+        bad.push(lbl + " at glide " + g + ": only " + early.toFixed(0) +
+          " cents off a quarter of the way in — that is a jump, not a bend");
+      rows.push(lbl + "/" + g + "s " + [early, mid, land].map((v) => v.toFixed(0) + "c").join(" "));
+    }
+  }
+  // the `lute`: gut frets, glide 0, there inside 5 ms
+  const { x: lu, g2: lg } = await twoNote("oud", { pick: 0.5, ring: 2.8, glide: 0 }, 60, 65, 1.2, 1.2);
+  const snap = bendAt(lu, lg, 5, 60, 65);
+  ok("O4a `glide` is the time the note ARRIVES — in tune, to inside the 6-cent JND", () => {
+    assert.strictEqual(bad.length, 0, bad.join("\n       "));
+    assert.ok(Math.abs(snap) < 15, "at glide 0 the note has not arrived after 5 ms: " +
+      snap.toFixed(0) + " cents off");
+    console.log("       t/4 · t/2 · t: " + rows.join("  ·  ") + "   ·   glide 0 at 5 ms " +
+      snap.toFixed(0) + "c");
+  });
+}
+{
+  /* O4c — THE SCRATCH, AND THAT IT IS ONLY THERE WHILE THE HAND IS MOVING.
+     Three numbers, all of them on the travel of a fourth at the derived 90 ms:
+     the share of the note's energy above 2 kHz through the travel, the RMS
+     through the same window, and the SETTLED note 300 ms later — which must
+     not move at all, because a finger that has stopped makes no noise. The
+     fourth is the `lute`: at glide 0 the whole feature must be arithmetically
+     absent, not merely quiet. */
+  const P = { pick: 0.5, ring: 2.8 };
+  const dry = await twoNote("oud", { ...P, glide: 0.09, scratch: 0 }, 60, 65, 1.2, 1.2);
+  const wet = await twoNote("oud", { ...P, glide: 0.09, scratch: 0.45 }, 60, 65, 1.2, 1.2);
+  const hot = await twoNote("oud", { ...P, glide: 0.09, scratch: 1 }, 60, 65, 1.2, 1.2);
+  const g2 = dry.g2;
+  const TR = g2 + Math.floor(SR * 0.015), TRE = g2 + Math.floor(SR * 0.090);
+  const ST = g2 + Math.floor(SR * 0.30), STE = g2 + Math.floor(SR * 0.60);
+  const hf = (r) => above(r.x, TR, 4096, 2000);
+  const dTravel = 20 * Math.log10(rms(wet.x, TR, TRE) / rms(dry.x, TR, TRE));
+  const dSettle = 20 * Math.log10(rms(wet.x, ST, STE) / rms(dry.x, ST, STE));
+  // the LUTE, bit for bit
+  const l0 = await twoNote("oud", { ...P, glide: 0, scratch: 0 }, 60, 65, 0.6, 0.6);
+  const l1 = await twoNote("oud", { ...P, glide: 0, scratch: 1 }, 60, 65, 0.6, 0.6);
+  let differ = 0;
+  for (let i = 0; i < l0.x.length; i++) if (l0.x[i] !== l1.x[i]) differ++;
+  ok("O4c the bend SCRATCHES, and a note that has arrived does not", () => {
+    assert.ok(hf(wet) > hf(dry) * 2.0, "the travel's share above 2 kHz is " +
+      hf(wet).toFixed(1) + "% against " + hf(dry).toFixed(1) + "% dry — the scratch is declared and not arriving");
+    assert.ok(dTravel > 0.7 && dTravel < 3.0, "the travel is " + dTravel.toFixed(2) +
+      " dB over the dry one — a finger is texture, not a noise gate");
+    assert.ok(Math.abs(dSettle) < 0.15, "the SETTLED note moved " + dSettle.toFixed(2) +
+      " dB — the scratch is ringing on in the string after the hand stopped");
+    assert.ok(hf(hot) > hf(wet), "the slider does not move the sound");
+    assert.strictEqual(differ, 0, "at glide 0 (the `lute`) scratch 0 and scratch 1 differ in " +
+      differ + " samples — a fretted note has no travelling finger");
+    console.log("       travel >2 kHz " + hf(dry).toFixed(1) + "% -> " + hf(wet).toFixed(1) +
+      "% (at scratch 1, " + hf(hot).toFixed(1) + "%)   ·   travel +" + dTravel.toFixed(2) +
+      " dB, settled " + dSettle.toFixed(2) + " dB   ·   lute: " + differ + " samples differ");
   });
 }
 
@@ -402,9 +549,92 @@ window.NuGenres = require(R("nukernel/genres.js"));
 window.NuFields = require(R("nukernel/fields.js"));
 window.NuSong = require(R("nukernel/song.js"));
 window.NuInstruments = require(R("nukernel/instruments.js"));
+window.NuCompose = require(R("nukernel/compose.js"));
+window.PRESETS = require(R("nukernel/presets.js")).PRESETS;
+window.NuDocument = require(R("nukernel/document.js"));
+window.NuSongs = require(R("nukernel/songs.js"));
 window.__REGISTRY = require(R("engine/registry-data.js"));
 const TE = await import(R("nukernel/audio/to-engine.js"));
 const SE = require(R("engine/faust/voices/state-engine.js"));
+
+/* ---- O4b/O4d the hand's reach, through the whole bridge ----------------- */
+{
+  /* O4b — A LEAP IS RE-PLUCKED, NOT SWEPT, and the census that says the fence
+     is load-bearing rather than decorative. Two measurements:
+       (i) THE CATALOGUE. Over the nine rows that seat this instrument, at two
+           seeds, on the notes AS `registerFold` delivers them: how many of the
+           line's consecutive moves are wider than a hand's reach, and how many
+           notes are marked `sld`. Both numbers are the finding. If the wide
+           moves went away, this fence would be dead code and should be said
+           so; if a `sld` ever appears, the gesture path wakes up and the 0.16 s
+           number starts mattering.
+      (ii) THE BRIDGE. One written line through `toEngine` -> `mapEvents`,
+           reading the `glide` actually written on each note: a whole tone, a
+           fourth (the reach), a fourth down, a repeated note, an octave up and
+           an octave down. */
+  const KG = require(R("engine/genre-kernel.js"));
+  const NP = require(R("nukernel/precompose.js"));
+  const G = window.NuGenres.GENRES, ND = window.NuDocument;
+  const ROWS = ["qiyan", "abbasid", "andalusi", "zajal", "muwashshah", "nuba",
+                "troubadour", "pavane", "taqsim"];
+  const fold = (m) => { let x = m; while (x > 79.01) x -= 12; while (x < 35.99) x += 12; return x; };
+  let moves = 0, wide = 0, widest = 0, slid = 0;
+  for (const gk of ROWS) for (const seed of [1, 2]) {
+    const doc = NP.genreToDocument(gk, seed);
+    const seats = (doc.voices || []).map((v, i) => ({ v, i }))
+      .filter((x) => x.v.kind === "line" && (x.v.instrument === "oud" || x.v.instrument === "lute"));
+    if (!seats.length) continue;
+    const sc = ND.scoreOf(doc, G, []);
+    for (const { i } of seats) {
+      const ev = sc.events.filter((e) => e.kind === "line" && e.v === i && e.n != null)
+        .sort((a, b) => a.t - b.t);
+      for (let k = 1; k < ev.length; k++) {
+        const iv = Math.abs(fold(ev[k].n) - fold(ev[k - 1].n));
+        moves++; if (iv > 5) wide++; widest = Math.max(widest, iv);
+        if (ev[k].sld) slid++;
+      }
+    }
+  }
+  const t = TE.toEngine({
+    bpm: 60, seed: 3, kit: "tr909",
+    bars: [{ barSteps: 16, ev: [60, 62, 67, 62].map((n, i) => ({ kind: "line", v: 0, n, off: i * 4, dur: 4, vel: 6 })) },
+           { barSteps: 16, ev: [62, 74, 62].map((n, i) => ({ kind: "line", v: 0, n, off: i * 4, dur: 4, vel: 6 })) }],
+    reverb: 0, delay: 0, seat: () => ({ chair: "line", instr: "oud" }), bass: null,
+  }, { SE, K: KG, E: require(R("engine/csd-engine.js")) });
+  const wrote = SE.mapEvents(require(R("engine/csd-engine.js")), t.state, t.ev, { units: t.units })
+    .events.filter((e) => e.unit === "v0").map((e) => +e.sets.glide.toFixed(4));
+  ok("O4b a hand's reach is a fourth: past it the note is re-plucked in tune", () => {
+    assert.ok(wide / moves > 0.05, "only " + (100 * wide / moves).toFixed(1) +
+      "% of the oud's moves are wider than a fourth — the fence has nothing to do, say so");
+    assert.ok(widest > 8, "the widest move measured is " + widest + " semitones");
+    assert.strictEqual(slid, 0, slid + " notes are marked `sld` — the GESTURE path is live now " +
+      "and `slideSec` (0.16 s) stops being a number nothing reaches; re-argue it");
+    // no previous note · +2 · +5 · -5 · repeat · +12 · -12
+    assert.deepStrictEqual(wrote, [0, 0.036, 0.09, 0.09, 0, 0, 0],
+      "the glide written per note is " + JSON.stringify(wrote));
+    console.log("       census: " + moves + " moves on " + ROWS.length + " rows x2 seeds, " +
+      wide + " (" + (100 * wide / moves).toFixed(1) + "%) wider than a fourth, widest " + widest +
+      " st, `sld` marks " + slid + "   ·   written: " + JSON.stringify(wrote));
+  });
+  /* O4d — AND THE END OF IT, IN THE AIR. Every interval above, rendered at the
+     glide the ENGINE just wrote for it, must be in tune 90 ms after the strike
+     — which is the whole complaint answered as one number. BEFORE the round,
+     on the same bench and the same intervals: a whole tone read -24 c at 70 ms
+     and -8 c at 100; a fourth was still travelling at 150; an octave read
+     -59 c at 100 ms and -530 c at 5. */
+  const IV = [[60, 62, 0.036], [60, 65, 0.09], [67, 60, 0.09], [60, 72, 0], [72, 60, 0]];
+  const late = [], rows2 = [];
+  for (const [m1, m2, g] of IV) {
+    const { x, g2 } = await twoNote("oud", { pick: 0.5, ring: 2.8, glide: g }, m1, m2, 1.2, 1.2);
+    const c90 = bendAt(x, g2, 90, m1, m2), c20 = bendAt(x, g2, 20, m1, m2);
+    if (!(Math.abs(c90) < 8)) late.push((m2 - m1) + " st at glide " + g + ": " + c90.toFixed(0) + "c at 90 ms");
+    rows2.push((m2 - m1 > 0 ? "+" : "") + (m2 - m1) + "st/" + g + "s " + c20.toFixed(0) + "c@20 " + c90.toFixed(0) + "c@90");
+  }
+  ok("O4d every interval the catalogue plays is IN TUNE 90 ms after the strike", () => {
+    assert.strictEqual(late.length, 0, late.join("; "));
+    console.log("       " + rows2.join("  ·  "));
+  });
+}
 
 /* ---- O6 the unit exists, a chair can reach it, and it arrives dry ------- */
 ok("O6a state-engine builds an oud UNIT with the instrument's compass and no amp", () => {
