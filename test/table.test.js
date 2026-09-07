@@ -200,7 +200,7 @@ const FULL = process.argv.includes("--full");
    the three reds are expected here, they are this round, and the reviewer's
    job is to check the counts above against the run, not to look for a fourth
    cause. */
-const BASE_SHA = "b908c18";  // genre QA shift 5, ON ITS OWN COMMIT (2026-09-06): salsa's bass figure, soft rock's chorus and city, the flanger's amount, Door 5 (an amplifier is never dealt — 284 dealt dirty chairs to 0), and grunge's tempo, singer and bass. 629 of 1446 documents over 251 anchors moved, and every one is a sound Paul asked to change. Was 1c5e8db — the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
+const BASE_SHA = "039c766";  // wave D + eighteen rows, ON THEIR OWN COMMITS (2026-09-07): the bass reads its own cell and 39,215 of 92,219 bass events stopped carrying dur:NaN — 83 of 177 sampled records render differently and every differing note was a 10 ms click that is now its written length. Eighteen new rows ride with it. Was b908c18 — genre QA shift 5: salsa's bass figure, soft rock's chorus and city, the flanger's amount, Door 5 (an amplifier is never dealt — 284 dealt dirty chairs to 0), and grunge's tempo, singer and bass. 629 of 1446 documents over 251 anchors moved, and every one is a sound Paul asked to change. Was 1c5e8db — the dynamics flood, shift 1: 416 rows gained a `dyn` figure and 409 anchors took it (2026-09-06). The pin was written during the round and could only name v289, so T2a-c reported the flood itself until the round landed; it names the flood`s own commit now and the three are green again. Was 0178335 (v289); was 4bab683 — scoreOf windows a section (T2c moves with it, as §12c predicted). Was 5672e84 (v284) 2026-09-05. Was 04d06e4 (v278) 2026-09-05; Was ee8366d 2026-09-05 (chord durations, kit re-seating on the meter, glyph cells — every one a sound moved on purpose and gated in its own round); the text pass renamed two ideas and 564 documents took the new name
 /* WHAT MAY BE STRIPPED IS A QUESTION ABOUT THE BASE, AND IT IS ASKED, NOT
    TYPED (2026-09-04). The list below is every ROW field any wave has ever
    carried onto a section — wave 2a's nine plus the two the row may override
@@ -1453,6 +1453,17 @@ const T4O_PIN = {
   "benga/1":           "lead:tenor:0 vocal:alto:1 backing:alto:0",
   "benga/2":           "lead:tenor:0 vocal:alto:0",
   "benga/3":           "lead:tenor:0 vocal:alto:0",
+  /* TWO OF THE EIGHTEEN ROWS ARE VOICED (2026-09-07): gospelpop declares a
+     soprano over a stack and mountaincountry a soprano over close harmony,
+     so both join the list the moment they land. VOICEROWS is derived from
+     the catalogue, never typed, which is why a new row appears here as a
+     missing pin rather than as a silent pass. */
+  "gospelpop/1":       "lead:soprano:2 pad:alto:0 vocal:alto:1",
+  "gospelpop/2":       "lead:soprano:1 pad:alto:0 vocal:alto:0",
+  "gospelpop/3":       "lead:soprano:1 pad:alto:0 vocal:alto:1",
+  "mountaincountry/1": "lead:soprano:1 vocal:alto:0 backing:alto:1",
+  "mountaincountry/2": "lead:soprano:1 vocal:alto:0 backing:alto:0",
+  "mountaincountry/3": "lead:soprano:1 vocal:alto:1",
   /* GRUNGE JOINED THE VOICED ROWS on 2026-09-06, and it is the fifth note of
      that shift: Paul asked for "slow low vocals", the row named no singer at
      all, and `castOf` was seating whatever the pool had. Its lead is a tenor
