@@ -2958,6 +2958,17 @@
     // the line stretches and the band waits for the last note. The `roots`
     // cluster takes `lean`; the anchor's own evidence outranks it, which is
     // the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE BACKBEAT CAME OFF (2026-09-07, the describe.js audit). The rim was on
+    // 2 and 4 and the record read as a dance band. AN ORQUESTA TIPICA HAS NO
+    // BACKBEAT: the tango's pulse is the MARCATO EN CUATRO, four even weights with
+    // the accent on 1 and 3, carried by the piano's left hand, the double bass and
+    // the bandoneon on the knee — the whole reason the genre feels like walking and
+    // not like rocking. The rim moves to 1 and 3, which is where the marcato is.
+    // (The kick's own `k` line is already the marcato with its anticipations and is
+    // untouched. The larger question — whether a 1935 tango should have a trap kit
+    // at all — is left in AUDIT-2026-09 for Paul, because deleting the kit is a
+    // different size of decision than moving one accent.)
     tango: {
       label: "Buenos Aires 1935",
       voices: 3,
@@ -2978,7 +2989,7 @@
       artic: "staccato",
       kit: {
         k: [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
-        p: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+        p: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
       },
       fill: { p: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0] },
       bassGrid: [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
@@ -5550,6 +5561,22 @@
     // line rises into the arrival and the room rises with it. The `soul`
     // cluster takes `backbeat`; the anchor's own evidence outranks it, which
     // is the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE ORGAN CAME OUT (2026-09-07, the describe.js audit). The row's own
+    // label is Chicago 1932 and its first chair was `percussive_organ` — GM 18,
+    // which is the Hammond drawbar organ with the percussion tab on. THE HAMMOND
+    // MODEL A WAS NOT SOLD UNTIL 1935, and the tab that gives GM 18 its name is
+    // the B-3's, 1955. Dorsey at Pilgrim Baptist in 1932 was a PIANIST; the organ
+    // is the sound gospel takes on twenty years later, and putting it here dated
+    // the whole record by two decades in one chair. `upright_piano` is the room.
+    // (The Hammond is not lost to the catalogue — `gospelpop` and every soul row
+    // after 1955 still has it, which is the point: the difference between 1932 and
+    // 1965 is supposed to be audible.)
+    //
+    // (And the row's own WORD moved with the chair: it said "the organ, walking the
+    // changes" and the chair is a piano now. A `words` entry that names an instrument
+    // the row does not seat is the same drift in prose that the instrument itself
+    // was in data.)
     gospel: {
       label: "Chicago 1932",
       voices: 3,
@@ -5559,7 +5586,7 @@
       bpm: 76,
       parents: { deltablues: 0.5, spirituals: 0.3, hymn: 0.2 },
       wants: [],
-      instr: ["percussive_organ", "solo_vox", "ohh_voices"],
+      instr: ["upright_piano", "solo_vox", "ohh_voices"],
       drumkit: "acoustic",
       entry: v => v * 2,
       reg: v => (v === 0 ? -1 : v - 1),
@@ -5593,7 +5620,7 @@
         mouth: MOUTHS.gospelchoir
       },
       words: [
-        "the organ, walking the changes",
+        "the piano, walking the changes",
         "the lead voice",
         "the choir, answering a third up from bar 5"
       ],
@@ -6274,6 +6301,12 @@
     // fact made pitch ... thirds intermodulate under distortion and fifths
     // do not". Re-choosing that chair's note to break a parallel would be
     // correcting the amplifier.
+    //
+    // IT REFUSES THE COPYIST (2026-09-07, the describe.js audit). The other
+    // half of `GENRES.md`'s own example sentence, and the same measurement: the
+    // field existed, was gated, and had no rows. A power chord is a root and a
+    // fifth, and a downstroke run up the neck is parallel fifths for the length of
+    // the record; repairing them is not a correction, it is a genre change.
     punk: {
       label: "New York 1976",
       near: "rock",
@@ -8378,6 +8411,16 @@
     // gets no throat at all — precompose drops a throat named for a chair
     // that is not a person, so the `else` here is a sentence about the bass
     // and not about the pipes.
+    //
+    // THE ALTO WAS MISSING (2026-09-07, the describe.js audit). This row's own
+    // `words` are SATB in order — "the soprano, the tune; the alto, a third under;
+    // the tenor, a fifth under; the bass, the octave and the root" — and its
+    // `throat` named only `0 -> soprano, 1 -> tenor, else bass`. So the chair the
+    // row CALLS the alto sang with a tenor throat, the chair it calls the tenor
+    // sang bass, and the record had three basses and no alto in it. `chorale`
+    // (Nuremberg 1586) has carried the correct four-case map since throats landed;
+    // this one was a case short, and nothing could have caught it but reading the
+    // row out loud.
     hymn: {
       label: "Boston 1831",
       bars: 8,
@@ -8391,7 +8434,7 @@
       entry: () => 0,
       reg: v => [2, 0, -2, -4][v],
       realize: () => "line",
-      throat: v => (v === 0 ? "soprano" : v === 1 ? "tenor" : "bass"),
+      throat: v => (v === 0 ? "soprano" : v === 1 ? "alto" : v === 2 ? "tenor" : "bass"),
       kit: {},
       nobass: true,
       mode: MODES.ionian,
@@ -14153,6 +14196,21 @@
     //
     // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD, on the row whose own first sentence is a bright low-resonance 303 and whose record is Speak & Spell. Basildon 1980 owned no harpsichord; it owned a sequencer, and a sequencer plays counterpoint. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
     //
+    // THE 303 CAME OUT (2026-09-07, the describe.js audit). Basildon 1980 with
+    // a signature TB-303 is the catalogue's clearest anachronism: THE TB-303 WAS
+    // RELEASED IN 1982 and was a commercial failure until Chicago found it in
+    // 1987 — which is `acid`'s row, and acid is where it belongs. Basildon 1980 is
+    // a Moog Prodigy and an ARP through a Boss chorus, so the signature is the
+    // MINIMOOG MODEL D (1970), which this fleet already carries and which four
+    // neighbouring rows use.
+    //
+    // THE SET WAS REWRITTEN, NOT RENAMED, because the two machines do not take the
+    // same parameters: a 303 takes `resonance / envmod / decay / waveform` and a
+    // modeld takes `res / envAmount / envAttack / envDecay / envSustain / oscMix /
+    // drive / glide / drift`. Carrying the 303 words over would have left a synth
+    // with five settings nobody reads, which is this box's characteristic bug. The
+    // cutoff and the resonance are the row's own numbers; the rest are read off
+    // `synthsoul`, the nearest modeld in the family.
     analogsynthpop: {
       bassInstr: "bass_lead",
       seqArp: "arpup",
@@ -14176,10 +14234,21 @@
       maxHold: 2,
       bassStyle: "octaves",
       synth: {
-        dsp: "tb303",
-        root: "tb303",
+        dsp: "modeld",
+        root: "modeld",
         level: 0.85,
-        set: { cutoff: 3400, resonance: 0.22, envmod: 0.28, decay: 0.5, waveform: 1 }
+        set: {
+          cutoff: 3400,
+          res: 0.22,
+          envAmount: 0.28,
+          envAttack: 0.004,
+          envDecay: 0.5,
+          envSustain: 0.5,
+          oscMix: 0.6,
+          drive: 0.12,
+          glide: 0,
+          drift: 3
+        }
       },
       kit: {
         k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -15238,6 +15307,14 @@
     // and "the third voice, a fourth up". Every parallel the census finds
     // here is the thing Notre-Dame invented, so the whole pass is refused by
     // name rather than any one fault of it.
+    //
+    // IT REFUSES THE COPYIST (2026-09-07, the describe.js audit). `GENRES.md`
+    // introduced `copyist` on 2026-09-06 and named this row in the sentence that
+    // introduced it — "a punk record does not want its parallel fifths corrected,
+    // and neither does an organum, whose whole music IS parallel motion." Measured
+    // 2026-09-07: NO ROW IN THE CATALOGUE DECLARED ONE. The field was documented,
+    // gated and never used, so the part-writing pass has been quietly repairing
+    // the one music in the table that is made of the fault. It is declared now.
     organum: {
       label: "Paris 1200",
       rate: 0.5,
@@ -35345,6 +35422,14 @@
     // arch, it recurs — this file's own words about the row next door. The
     // `studio` cluster takes `arch`; the anchor's own evidence outranks it,
     // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE 808 CAME OUT (2026-09-07, the describe.js audit). Tokyo 1978 is the
+    // first YMO record, and the row played it on a TR-808. THE TR-808 SHIPPED IN
+    // AUGUST 1980. What was on that record — on Firecracker, on Computer Game — is
+    // the ROLAND CR-78, released 1978, which the catalogue already carries and
+    // which four other rows of this era already use. The anachronism was the
+    // loudest thing in the description: a machine two years in the future keeping
+    // time on the record that is supposed to have invented the genre.
     technopop: {
       bassInstr: "bass_lead",
       label: "Tokyo 1978",
@@ -35357,7 +35442,7 @@
       wants: [],
       instr: ["square_lead", "electric_piano"],
       guests: "native",
-      drumkit: "tr808",
+      drumkit: "cr78",
       entry: v => (v === 0 ? 0 : 2),
       reg: v => (v === 0 ? 1 : 0),
       realize: () => "line",
@@ -43452,6 +43537,12 @@
     // is offered as nearer: Morricone and Miami Vice share a lone lead line over wide
     // space and nothing else.
     //
+    // FANTASIA CAME OUT (2026-09-07, the describe.js audit). GM 88 `fantasia`
+    // is not a generic word, it is A PHOTOGRAPH OF ONE PATCH — the Roland D-50's,
+    // and the D-50 is 1987. Miami 1984 is three years earlier and its lead is a
+    // Memorymoog and an Oberheim through a chorus, which is what `saw_wave` is
+    // here. The tell was that `fantasia` is the sound of 1988 television, not of
+    // 1984 television, and the row was reaching four years forward for it.
     copshowsynth: {
       instrumental: true,
       label: "Miami 1984",
@@ -43462,7 +43553,7 @@
       bpm: 100,
       parents: { horrorsynth: 0.25, eurodisco: 0.25, synthpop: 0.2, jazz: 0.1 },
       wants: ["the mahavishnu orchestra's fusion", "the linndrum session-pop of 1983"],
-      instr: ["polysynth", "fantasia", "warm_pad"],
+      instr: ["polysynth", "saw_wave", "warm_pad"],
       drumkit: "electronic",
       entry: v => (v === 0 ? 2 : 0),
       reg: v => [0, 1, -1][v],
@@ -45911,6 +46002,24 @@
     // LINEAGE: mambo for the Afro-Cuban percussion vocabulary the
     // arrangements borrow, romantic for the Hollywood scoring craft
     // Denny trained in (Los Angeles Conservatory, per the ZIM).
+    //
+    // THE SYNTH PAD IS AN ANACHRONISM AND IS STILL HERE (2026-09-07, the
+    // describe.js audit). Honolulu 1957 declares `warm_pad` for its third chair and
+    // every chair after it — a SYNTHESIZER pad, eleven years before one could be
+    // bought. Denny's wash is a string section and a vibraphone tail, so the fix is
+    // one word: `slow_strings`.
+    //
+    // IT WAS MADE AND THEN TAKEN BACK, and the reason is worth the paragraph.
+    // MEASURED: changing this one word moves **134 document readings across 69 OTHER
+    // rows**. `warm_pad` is the pad the guest dealer reaches for, and this row's
+    // `instr` is one of the lists `compose.js seatOK` scans; swapping it for a
+    // strings id changes the KIND this row offers, which flips one eligibility test,
+    // which reshuffles every draw after it for every host that scans the pool. Six
+    // other one-word fixes in the same pass moved three readings each — their own.
+    // This one is a flood, and a correction pass is not allowed to be one.
+    // So the anachronism is written down instead of removed, and the decision is
+    // Paul's: AUDIT-2026-09 asks whether 69 records may take a new guest draw to get
+    // a 1957 record off a synthesizer.
     exotica: {
       instrumental: true,
       label: "Honolulu 1957",
@@ -49938,9 +50047,9 @@
       "under distortion that doubling is the amp sound rather than a voicing."
     },
     punk: {
-      refuse: "all",
-      why: "the second chair is declared \"the same riff, an octave under, as written\", and " +
-      "under distortion that doubling is the amp sound rather than a voicing."
+      refuse: ["parallel"],
+      why: "the fifth IS the chord here — a barre shape moved up the neck is parallel by " +
+      "construction, and a copyist that resolves it is playing a different record"
     },
     emo: {
       refuse: "all",
@@ -49949,10 +50058,10 @@
       "voicing."
     },
     organum: {
-      refuse: "all",
-      why: "the vox organalis moves \"a fifth above, moving with it\" and the third voice " +
-      "arrives \"a fourth up\" — the parallel motion IS the record, and correcting it " +
-      "deletes the music."
+      refuse: ["parallel"],
+      why: "parallel fifths and octaves are not a fault here, they are the music: organum IS " +
+      "the chant doubled at the fifth and the octave, and a pass that corrects them " +
+      "deletes the genre"
     },
     arsnova: {
       refuse: ["missing"],
