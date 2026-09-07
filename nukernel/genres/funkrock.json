@@ -180,5 +180,8 @@
   "fx": [
     "wah"
   ],
+  "fxAmt": {
+    "wah": "half"
+  },
   "dyn": "syncope"
 }

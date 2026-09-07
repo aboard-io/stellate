@@ -539,21 +539,113 @@
        by NOTHING AT ALL (so the "phasers" in the complaint were this chip
        both times). That is why the default coming down and the row stating
        its own amount are, today, the same edit.
-       THE ROW STILL CANNOT STATE AN AMOUNT, and that is a real gap rather
-       than a decision. `fxChainFor` below already resolves a per-seat wet and
-       two face knobs (`fxw<n>`/`fxa<n>`/`fxb<n>`) — the machinery exists — but
-       it reads a DAW part entry, and `document.js boxesOf` returns `parts:
-       null` on EVERY precomposed record (said "all 482" until 2026-09-07 — same
-       drifted arithmetic, same live source), so a genre row reaches the engine
-       only as a bare key through `fxChain(keys)`. Giving the row an amount
-       means letting the key carry one, and that means teaching all six
-       `FX[k]` filters to split it (`fxChain`, `fxChainFor`, `busFxChain`
-       here; `soundFxOf` in precompose; the guard in song.js; and
-       `sectionOf`'s in audio/desk.js). Five of the six are in this layer and
-       one is not, which is why it is written down here rather than half-done. */
+       THE ROW COULD NOT STATE AN AMOUNT, AND NOW IT CAN — 2026-09-07, the
+       auto-wah round, one day after the paragraph below was written. It is
+       kept because it was the right thing to write down and because HALF OF IT
+       WAS WRONG, in a way worth naming: it went looking for the missing wire in
+       the wrong layer and concluded the job was six edits when it was one.
+
+       WHAT IT SAID: "THE ROW STILL CANNOT STATE AN AMOUNT, and that is a real
+       gap rather than a decision. `fxChainFor` below already resolves a
+       per-seat wet and two face knobs (`fxw<n>`/`fxa<n>`/`fxb<n>`) — the
+       machinery exists — but it reads a DAW part entry, and `document.js
+       boxesOf` returns `parts: null` on EVERY precomposed record, so a genre
+       row reaches the engine only as a bare key through `fxChain(keys)`.
+       Giving the row an amount means letting the KEY carry one, and that means
+       teaching all six `FX[k]` filters to split it (`fxChain`, `fxChainFor`,
+       `busFxChain` here; `soundFxOf` in precompose; the guard in song.js; and
+       `sectionOf`'s in audio/desk.js)."
+
+       THE FIRST HALF IS TRUE AND THE INFERENCE FROM IT IS NOT. `boxesOf`
+       really does write no `parts` — it never has — but it is not the writer.
+       `ui/eight.js push()` is: `b.parts = NuDeskDoc.deskPartsOf(DOC, GENRES)`,
+       on every box, on every record the box plays. And `deskPartsOf` reads
+       `voice.desk` — which, since the Character chip was DEALT on 2026-08-27
+       (`precompose.js deskThe`), is where a precomposed record's chip already
+       lives. So the part entry `fxChainFor` wants is not a DAW artefact the
+       catalogue cannot reach; it is the chair's own entry, and it is present on
+       every one of the 502 rows. `desk-doc.js cleanEntry` was already carrying
+       all nine knobs across it, because `PARTMIX` below declares them.
+
+       THE WIRE WAS CONTINUOUS AND NOTHING WAS WRITING AT THE NEAR END. Which
+       is why the amount did NOT have to ride on the key, and why none of the
+       six filters above needed to learn to split anything: `precompose.js
+       fxAmtOnto` writes `fxw<n>`/`fxa<n>`/`fxb<n>` onto the desk entry beside
+       the `e.fx` that `deskThe` already deals, and the value travels the rest
+       of the way on the wire the board's own knobs travel. One function, one
+       call site, and the chain that reaches the engine is the same shape it
+       was.
+
+       MEASURED, before any row declared anything, by forcing the knob onto the
+       entry by hand and PRESSING THE RECORD (`bleakprog` seed 1, 24 bars,
+       export/_satpress.js): `wah` at wet `dry` renders statistic-for-statistic
+       identical to the chip removed outright (RMS −23.56 dBFS, crest 18.44 dB,
+       both ways), and the four words climb in order — low −22.20, half −20.91,
+       deep −19.84, full −18.94 — with the untouched table default (`mix` 0.9)
+       landing at −19.28, between `deep` and `full` exactly where 0.9 belongs.
+       The ends are the two things they must be and the middle is monotone,
+       which is the proof that the number reaches the sound rather than the
+       document. `test/fxamt.test.js` holds it; `nukernel/GENRES.md` §2 has the
+       row's own spelling (`fxAmt`, keyed by CHIP and not by slot, because
+       `soundFxOf` drops `echo` from the dealt chain and a slot number would
+       therefore be a trap for whoever writes the row). */
     flanger:  { label: "flanger",    params: { rate: 0.3, depth: 0.4, feedback: 0.3, mix: 0.32 } },
     tremolo:  { label: "tremolo",    params: { rate: 5, depth: 0.8, mix: 0.9 } },
     leslie:   { label: "leslie",     params: { speed: 0.7, depth: 0.85, mix: 0.6 } },
+    /* AUTO-WAH — AND WHERE ITS HEAT COMES FROM, MEASURED AND THEN DERIVED
+       (2026-09-07, the auto-wah round). Paul: *"I don't know what you did to
+       Bleak prog but it's overall really hot and distorted. Too much auto-wah
+       maybe?"* Yes, and this line is why. THE NUMBERS ARE NOT IN `mix`.
+
+       MEASURED FIRST, on the rendered artifact — `bleakprog` seed 1, 24 bars,
+       pressed through the real engine — with `mix` held at 0.9 and only `q`
+       moved:
+
+         chip off        RMS -23.56 dBFS   crest 18.44 dB
+         q 2.0           RMS -23.31        crest 18.10     (+0.25 over dry)
+         q 2.5           RMS -21.81        crest 16.45     (+1.75)
+         q 3.0           RMS -20.72        crest 15.13     (+2.84)
+         q 4.0 (shipped) RMS -19.28        crest 13.65     (+4.28)
+
+       So of the +4.28 dB the chip costs the record, 4.03 dB is `q` and about a
+       quarter of a dB is everything else. Nothing clips — peak headroom is 5.6
+       dB and not one sample exceeds -3 dBFS with the chip on or off — so "hot
+       and distorted" is a resonance, not a master running out of room.
+
+       THEN DERIVED, and the arithmetic agrees with the artifact, which is the
+       part worth writing down. `engine/faust/dsp/insert_wah.dsp` says
+
+         // resonant bandpass ... unity gain, so `mix` alone sets the wet level
+         wet(x) = fi.resonbp(min(sweep(x), 0.45 * ma.SR), q, 1, x);
+
+       THAT COMMENT IS FALSE, and by 12 dB. `filters.lib` defines
+       `resonbp(fc,Q,gain) = tf2s(0, gain, 0, 1/Q, 1, wc)`, i.e.
+
+         H(s) = gain*s / (s^2 + s/Q + 1)   with s normalised by wc
+
+       and at the resonance s = j that is `gain*j / (j/Q)` = **gain * Q**. The
+       third argument is the numerator coefficient, NOT the peak gain. At `q` 4
+       the wet branch therefore carries +12.04 dB at whatever frequency the
+       envelope has swept it to, and `mix` scales a branch that is already four
+       times the input. Predicted peak gain against measured whole-record RMS,
+       both relative to q 2: +1.94/+1.50, +3.52/+2.59, +6.02/+4.03 dB — the
+       same order and about two thirds of it reaching the mix, which is what a
+       narrow boost on a broadband record should do. The arithmetic and the
+       press agree, so the mechanism is known and not guessed.
+
+       WHAT WAS DONE ABOUT IT, AND WHAT WAS NOT. This round did NOT move `q`,
+       and did not touch the .dsp. The fix it shipped is one lever and not two:
+       every one of the five rows that names this chip now states its own wet
+       (`fxAmt`, GENRES.md §2), which scales the same resonant branch and is
+       per-row rather than shared — and with two knobs moved at once neither
+       before-and-after could be attributed. THE CANDIDATE IS LEFT NAMED AND
+       NUMBERED FOR WHOEVER TAKES THE NEXT ROUND: passing `1/q` as the gain
+       argument makes the module do what its own comment already claims, costs
+       one `engine/faust/build/build.js insert_wah` rebuild, and would move
+       exactly the five rows below and any wah a hand places on the board.
+
+       WHO NAMES IT: `acidrock acidjazz funkrock bleakprog psychfunk`, and
+       nothing else in the catalogue. */
     wah:      { label: "auto-wah",   params: { base: 320, range: 2.2, sens: 0.7, q: 4, mix: 0.9 } },
     ringmod:  { label: "ring mod",   params: { freq: 180, mix: 0.4 } },
     sweep:    { label: "filter sweep", type: "filtersweep",

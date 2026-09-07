@@ -2979,7 +2979,10 @@
         MACHINEKIT.indexOf(voice.instrument) < 0) e.room = "touch";
     if (echo) e.echo = ECHOSEND;
     // THE CHARACTER CHIPS, ON THE STRIP (2026-08-27) — see deskThe below.
-    if (fx && fx.length) e.fx = fx.slice();
+    // ...AND THE ROW'S OWN AMOUNT OF EACH, when it states one (`fxAmtOnto`
+    // below carries the whole argument and the measurement). Absent writes
+    // nothing and the entry is the one this line produced before.
+    if (fx && fx.length) { e.fx = fx.slice(); fxAmtOnto(e, fx, G); }
     // ...and the row's own word for this part, last, so a named record wins
     // over the role's default without either table learning about the other.
     const said = G && G.mix && G.mix[part];
@@ -3088,6 +3091,102 @@
   const soundFxOf = (G) => (G.fx || [])
     .filter((k) => k !== "echo" && Object.prototype.hasOwnProperty.call(NF.FX, k))
     .slice(0, NF.MAX_FX);
+
+  /* ---------- ...AND HOW MUCH OF IT (2026-09-07, the auto-wah round) ------
+     PAUL, on the real app: *"I don't know what you did to Bleak prog but it's
+     overall really hot and distorted. Too much auto-wah maybe?"* He was right,
+     and the number is not close: MEASURED on `bleakprog` seed 1, 24 bars,
+     rendered through the real engine (scratchpad probe over export/_satpress.js
+     pressFloat, the same press test/_bandtap.cjs measures at), the record with
+     its wah reads RMS −19.28 dBFS and a crest of 13.65 dB; with the SAME record
+     rendered with the chip lifted off every chair it reads −23.56 and 18.44.
+     The auto-wah alone is therefore worth +4.28 dB of RMS and MINUS 4.79 dB of
+     crest factor. Nothing clips — peak headroom is 5.6 dB and not one sample of
+     the record exceeds −3 dBFS, before or after — so "hot and distorted" is not
+     the master running out of room. It is a resonant bandpass at `q` 4 held at
+     `mix` 0.9 (fields.js FX.wah), which is nine parts filter to one part record,
+     ringing on every sustained note. The row's own note calls this record "the
+     sparsest of the eighteen new rows ... a band mostly not playing"; with the
+     chip on, it measures DENSER than `progrock` next door (crest 13.65 against
+     16.89) and only 0.1 dB quieter. The prose and the artifact disagreed, and
+     the artifact was the one that was wrong.
+
+     THE SECOND COMPLAINT ABOUT ONE NUMBER IS A GAP, NOT A ROW. Paul reported
+     this same chip on `funkrock` on 2026-09-03 ("the auto-wah is on the kit");
+     `minneapolissound`'s flanger was the same shape of report one chip along on
+     2026-09-06. Each time the fix was to move the SHARED default in fields.js,
+     which silently re-voices every other row that names the thing — and five
+     rows name the wah (`acidrock acidjazz funkrock bleakprog psychfunk`). One
+     number cannot serve a Floyd envelope-filter, a funk record's pedal and an
+     acid-rock wah at once, so the row gets to say.
+
+     WHAT WAS ACTUALLY MISSING WAS THIS FUNCTION AND NOTHING ELSE. fields.js's
+     own note beside `flanger` said the row "reaches the engine only as a bare
+     key" and that letting it carry an amount "means teaching all six `FX[k]`
+     filters to split it". That was true when it was written and it is not true
+     now, and the reason is `deskThe` above: since 2026-08-27 the record's chip
+     is DEALT ONTO THE CHAIR (`e.fx`) instead of embedded on the box, and a
+     chair's entry is exactly the object `fields.js fxChainFor` already resolves
+     a per-seat wet and two face knobs out of. The wire is already continuous —
+     desk-doc.js `cleanEntry` carries `fxw<n>`/`fxa<n>`/`fxb<n>` because
+     fields.js PARTMIX declares all nine; ui/eight.js `deskPartsOf` puts the
+     entry on every box as `parts`; audio/desk.js `partsOf` calls `fxChainFor`
+     on it and hands the result to `insertsFor`. Nobody was writing at the near
+     end. This is that writer, and it is the whole change.
+     MEASURED END TO END before a single row declared anything, by forcing the
+     knob onto the desk entry by hand and pressing the record: `wah` at wet
+     `dry` renders statistic-for-statistic identical to the chip REMOVED
+     (−23.56 / 18.44 both ways), and the four words climb in order — low
+     −22.20, half −20.91, deep −19.84, full −18.94 — with the untouched default
+     (`mix` 0.9) landing at −19.28, between `deep` and `full` exactly where 0.9
+     belongs. A ladder that lands in the right order and whose ends are the two
+     things they should be is the proof that the value reaches the sound.
+
+     THE SHAPE IS THE DESK'S OWN VOCABULARY, keyed by CHIP and not by slot.
+     `fxAmt: { wah: "half" }` is the wet on its own; `fxAmt: { wah: { wet:
+     "half", a: "low" } }` adds the module's first and second face params
+     (fields.js FXFACE — for `wah` those are `sens` and `base`), each as one of
+     the five FXPOTS words across the param's own declared span. Keyed by chip
+     because `soundFxOf` DROPS `echo` from the dealt list (it is a send, not an
+     insert), so a row's `fx: ["echo","wah"]` deals a one-chip chain and the
+     wah's slot number is 1, not 2. A row author writing slot numbers would
+     have to know that; writing the chip's name, they do not.
+
+     EVERY WORD IS CHECKED AGAINST THE TABLE THAT OWNS IT and an unknown one is
+     DROPPED, which is the paranoid half every enum in this tree gets: a wet
+     this build has no number for would be a record it cannot honestly play. A
+     wet is refused outright on a chip whose module declares no `mix` slider
+     (`NF.fxHasMix` — `sweep` is the one, and fields.js already refuses it on
+     the board for the same reason), and a face word is refused on a chip that
+     has no such face param rather than invented.
+
+     ABSENT IS TODAY, and it is the whole reason this can ship in one round: a
+     row with no `fxAmt` takes no branch, writes no key, and produces the
+     byte-identical desk entry it produced before this function existed. The
+     claim is measured over the whole catalogue rather than asserted —
+     test/fxamt.test.js F1. */
+  const fxAmtOnto = (e, fx, G) => {
+    const said = G && G.fxAmt;
+    if (!said || typeof said !== "object" || Array.isArray(said)) return;
+    fx.forEach((k, i) => {
+      const a = said[k];
+      if (a == null) return;
+      const spec = typeof a === "string" ? { wet: a }
+        : (typeof a === "object" && !Array.isArray(a) ? a : null);
+      if (!spec) return;
+      const n = i + 1;
+      if (spec.wet != null && NF.fxHasMix(k) &&
+          Object.prototype.hasOwnProperty.call(NF.FXWETS, String(spec.wet)))
+        e["fxw" + n] = spec.wet;
+      const face = NF.FXFACE[k] || [];
+      [["a", 0], ["b", 1]].forEach(([sk, j]) => {
+        const v = spec[sk];
+        if (v != null && face[j] &&
+            Object.prototype.hasOwnProperty.call(NF.FXPOTS, String(v)))
+          e["fx" + sk + n] = v;
+      });
+    });
+  };
 
   /* ======================================================================
      7b · THE REGISTER FLOOR — nothing but the bass lives down there

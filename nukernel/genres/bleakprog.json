@@ -212,6 +212,12 @@
     "echo",
     "wah"
   ],
+  "fxAmt": {
+    "wah": {
+      "wet": "low",
+      "a": "low"
+    }
+  },
   "words": [
     "the guitar, four notes, the whole side",
     "the pad, one chord under it for bars at a time",

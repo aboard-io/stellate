@@ -13604,6 +13604,7 @@
       },
       tone: { wave: "sawtooth", cut: 1400, q: 1.5, atk: 0.05, rel: 2.2, gain: 0.22, verb: 0.6 },
       fx: ["echo", "wah"],
+      fxAmt: { wah: { wet: "low", a: "low" } },
       words: [
         "the guitar, four notes, the whole side",
         "the pad, one chord under it for bars at a time",
@@ -32169,6 +32170,7 @@
       },
       fill: { s: [0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1] },
       fx: ["wah", "crunch"],
+      fxAmt: { wah: "half" },
       orn: { grace: 0.3 },
       tone: {
         wave: "sawtooth",
@@ -35945,6 +35947,7 @@
       swing: 0.18,
       bassStyle: "sixteenths",
       fx: ["wah"],
+      fxAmt: { wah: "half" },
       tone: {
         wave: "sawtooth",
         cut: 2000,
@@ -42647,6 +42650,7 @@
         h: [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1]
       },
       fx: ["wah"],
+      fxAmt: { wah: "low" },
       tone: { wave: "square", cut: 2400, q: 1.1, atk: 0.006, rel: 0.3, gain: 0.26, verb: 0.3 },
       words: [
         "the organ, a dorian vamp with its collar open",
@@ -50052,6 +50056,7 @@
       ],
       word: v => (v === 1 ? [only("gate", rotate(2))] : [fill(1)]),
       fx: ["wah"],
+      fxAmt: { wah: "half" },
       dyn: "syncope",
     },
 

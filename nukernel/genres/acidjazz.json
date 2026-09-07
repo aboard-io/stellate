@@ -107,6 +107,9 @@
   "fx": [
     "wah"
   ],
+  "fxAmt": {
+    "wah": "low"
+  },
   "tone": {
     "wave": "square",
     "cut": 2400,

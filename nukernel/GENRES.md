@@ -266,6 +266,63 @@ a time no recipe could name. `glide == 0` still *is* that slew, bit-identical
 portamento.
 
 
+### `fxAmt` — how much of the effect the row names
+
+**2026-09-07, the auto-wah round.** Paul, on the real app: *"I don't know what
+you did to Bleak prog but it's overall really hot and distorted. Too much
+auto-wah maybe?"*
+
+`fx` says WHICH chips a record buys. `fxAmt` says **how much of each**, and it
+exists because until this round one number in `fields.js FX` served every row
+that named a thing:
+
+```json
+  "fx": ["echo", "wah"],
+  "fxAmt": { "wah": "half" }
+```
+
+Keyed by **chip**, never by slot. `precompose.js soundFxOf` DROPS `echo` from
+the dealt chain (it is a send, not an insert), so in the row above the wah's
+slot number is 1 and not 2 — a row author writing slot numbers would have to
+know that, and writing the chip's name they do not.
+
+The value is a **wet** in `fields.js FXWETS`' own five words — `dry`, `low`,
+`half`, `deep`, `full` — the same words the board's per-slot knob offers, so
+the row and the surface cannot drift. The long form adds the module's first and
+second face params (`fields.js FXFACE`; for `wah` they are `sens` and `base`),
+each as one of the five `FXPOTS` words across that param's own declared span:
+
+```json
+  "fxAmt": { "wah": { "wet": "half", "a": "low", "b": "mid" } }
+```
+
+**Absent is today.** A row with no `fxAmt` writes no knob and composes to the
+bytes it composed before the field existed — measured over the whole catalogue
+at three seeds, not asserted (`test/fxamt.test.js` F1).
+
+**Every word is checked against the table that owns it and an unknown one is
+DROPPED**, the paranoid half every enum in this tree gets. A wet is refused
+outright on a chip whose module declares no `mix` slider (`sweep` is the one),
+a face word is refused on a chip with no such face param, and an amount for a
+chip the row does not name reaches nothing.
+
+**How it reaches the sound**, because that was the part that was missing rather
+than the vocabulary: `precompose.js fxAmtOnto` writes `fxw<n>`/`fxa<n>`/`fxb<n>`
+onto the CHAIR's desk entry, beside the `e.fx` that `deskThe` has dealt there
+since 2026-08-27 → `desk-doc.js deskPartsOf` collects the entries → `ui/eight.js
+push()` puts them on every box as `parts` → `audio/desk.js partsOf` calls
+`fields.js fxChainFor`, which is the resolver the board's own knobs have used
+all along. No second door, and no `FX[k]` filter had to learn to split a key.
+`fields.js`' own note beside `flanger` carries the correction, since it had
+guessed the gap was six edits in five files.
+
+**Measured on the rendered artifact**, `bleakprog` seed 1, 24 bars, pressed
+through the real engine: wet `dry` is statistic-for-statistic identical to the
+chip removed outright (RMS −23.56 dBFS, crest 18.44 dB, both ways), and the
+words climb in order — `low` −22.20, `half` −20.91, `deep` −19.84, `full`
+−18.94 — with the untouched table default (`mix` 0.9) landing at −19.28,
+between `deep` and `full` exactly where 0.9 belongs.
+
 ### `dyn` — the row's own dynamic figure
 
 **2026-09-06, the dynamics flood, shift 1** (`docs/DYNAMICS-FLOOD.md`). One

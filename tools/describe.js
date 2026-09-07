@@ -286,7 +286,28 @@
     f.touch = G.touch || null;
 
     /* ---- sound and production ------------------------------------------- */
+    /* ...AND HOW MUCH OF IT (2026-09-07, the auto-wah round). A chip the row
+       has turned DOWN is a different production decision from the same chip at
+       the shared default, and this line printed the two the same way — which is
+       how `bleakprog` came to read "auto-wah across the record" while the chip
+       was running at nine parts wet and costing the record 4.28 dB of RMS. The
+       word is FXWETLABEL's, the one a hand reads on the board's own knob, so
+       the prose and the surface cannot drift. A row that states nothing prints
+       the bare label it always printed. */
     f.fx = (G.fx || []).map((x) => NF.FXLABEL[x] || x);
+    // ...AND `fxSay` IS THE SAME LIST WITH THE AMOUNT ON IT. Two facts and not
+    // one, because §B3 asks of the FACTS and not of the prose: `f.fx` must stay
+    // the bare FXLABEL words it has always been (that gate's whole job is to
+    // catch a table lookup that missed, and it cannot tell a decorated label
+    // from a raw key), while the SENTENCE is free to say how much.
+    f.fxSay = (G.fx || []).map((x) => {
+      const label = NF.FXLABEL[x] || x;
+      const a = G.fxAmt && G.fxAmt[x];
+      const spec = typeof a === "string" ? { wet: a }
+        : (a && typeof a === "object" && !Array.isArray(a) ? a : null);
+      const w = spec && NF.FXWETLABEL[spec.wet];
+      return w ? label + " (" + w + ")" : label;
+    });
     f.tone = G.tone || {};
     f.synth = G.synth || null;
     const M = (doc.sound && doc.sound.master) || {};
@@ -458,7 +479,7 @@
 
     /* --- production ----------------------------------------------------- */
     S.push("Sound: " + toneWord(f)
-      + (f.fx.length ? "; " + list(f.fx) + " across the record" : "; no effect chips")
+      + (f.fx.length ? "; " + list(f.fxSay) + " across the record" : "; no effect chips")
       + (f.master.length ? "; mastered " + f.master.slice(0, 2).join(", ") : "")
       + (f.buses.length ? "; sends are " + list(f.buses) : "") + ".");
 

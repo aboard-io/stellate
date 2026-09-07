@@ -122,6 +122,9 @@
   "fx": [
     "wah"
   ],
+  "fxAmt": {
+    "wah": "half"
+  },
   "tone": {
     "wave": "sawtooth",
     "cut": 2000,

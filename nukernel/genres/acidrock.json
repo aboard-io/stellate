@@ -144,6 +144,9 @@
     "wah",
     "crunch"
   ],
+  "fxAmt": {
+    "wah": "half"
+  },
   "orn": {
     "grace": 0.3
   },
