@@ -683,6 +683,31 @@ export function rowSheet(A: TableAPI, i: number): Field[] {
   return f;
 }
 
+/* ---- WHICH OF A CHAIR'S ROWS ARE STATES (2026-09-07, TABLE.md §19) ----
+   Paul: *"turn them into spinners for the status changes"*. A STATE is a row
+   the player is IN one of — how the note starts, how it ends, whether it is
+   doubled, whether the recording loops, whether the drummer is playing at all
+   — as against a row you SHOP in (which instrument, which material, which
+   bass pattern, which throat). The distinction is what the row MEANS, so it
+   is declared here, in the file that builds the row, and never guessed from
+   how many words it holds: `src/menus/pick.ts` owns the shape rule (a state
+   of at most `SPINMAX` positions is one control that steps) and this owns the
+   list, which is the same division `groupsFor` and the lozenge field are
+   under.
+
+   THE FIVE, AND WHY EACH ONE: `sound.attack` and `sound.release` are an
+   ordered ramp (straight in → soft → slow → swelling), which is exactly what
+   a stepper is for; `sound.double` and `sound.looping` are switches with a
+   default; the drummer's own on/off is two words and was already drawn as
+   two. Everything else on a chair keeps the widget it had. */
+const CYCLEROWS = new Set(["sound.attack", "sound.release",
+                           "sound.double", "sound.looping"]);
+/** ...marked on the built field, because `shField` is `avail.js`'s reader and
+ *  the spec has no opinion about widgets. */
+function cycled(f: Field): Field {
+  return (f as { kind?: string }).kind ? f : { ...(f as StripField), cycle: true };
+}
+
 export function colSheet(A: TableAPI, vi: number): Field[] {
   const v = A.doc().voices[vi]!;
   const f: Field[] = [];
@@ -699,6 +724,17 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
   const instr: Field[] = [], env: Field[] = [], tone: Field[] = [],
         mix: Field[] = [];
   f.push({ kind: "ops", label: t("col.ops"), ops: colOps(A, vi, v) });
+  /* ...AND THE THIRTY-THREE QUALITIES UNDER THEIR OWN WORD (§19). A second
+     bar and not a second sheet: it is the same `kind: "ops"` row, so the
+     refusal line, the undo wrapper and every address are the ones the wall
+     had. `compact` is what nu.css draws smaller — a verb you push is not a
+     value you set, and thirty-three of them at the value's own type is the
+     441px Paul photographed. */
+  {
+    const mk = makeOps(A, v);
+    if (mk.length) f.push({ kind: "ops", label: t("col.make"), ops: mk,
+                            compact: true });
+  }
   if (v.kind === "line") instr.push(shField(A, "cast.part", { voice: v.name }, t("col.plays")));
   const ik = v.kind === "bass" ? "sound.bassinstrument"
            : v.kind === "drums" ? "sound.drumkit" : "sound.instrument";
@@ -713,6 +749,9 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
     instr.push({ key: "drums", label: t("col.drummer"),
              word: on ? t("state.playing") : t("col.drummer.off"),
              value: on ? "1" : "",
+             /* A STATE OF TWO, AND THEREFORE A SPINNER (§19) — the one row on
+                this sheet that was already a state drawn as two buttons. */
+             cycle: true,
              derived: false,
              options: [{ v: "1", w: t("state.playing") },
                        { v: "", w: t("col.drummer.off") }],
@@ -756,7 +795,10 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
   if (curve) env.push({ kind: "node", node: curve.node });
   for (const k of curve ? ["sound.double", "sound.looping"]
                         : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
-    if (A.hasSheet(k, { voice: v.name })) env.push(shField(A, k, { voice: v.name }, null));
+    if (A.hasSheet(k, { voice: v.name })) {
+      const fl = shField(A, k, { voice: v.name }, null);
+      env.push(CYCLEROWS.has(k) ? cycled(fl) : fl);
+    }
   /* THE MODELLED CHAIR'S OWN THROAT — VOICE.md's knob table and its tract pad.
      Null on a chair that has nothing to turn (a recording has one breath). */
   const kn = A.voiceKnobs(v.name);
@@ -855,23 +897,25 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
   /* 1 · THE MOTIFS, WITH THEIR PREVIEWS AND THEIR PROVENANCE (3). One control
      and not two: the chips ARE the motif list, each wearing its own preview and
      the word that says where it came from.
-     ...EXCEPT FOR A BASS, WHICH IS TOLD RATHER THAN ASKED, AND IS TOLD SO. Both
-     compilers hand `K.bass` the FIRST LINE's compiled phrase, so a bass cell
-     that named a motif would name it into nothing. An honest sentence beats a
-     dead control. */
-  if (v.kind === "bass") {
-    const b = A.bassReads();
-    /* WHY: both compilers hand `K.bass` the first line's compiled phrase
-       (document.js scoreOf, ui/derive.js sectionEvents), so a motif named on
-       a bass cell would be named into nothing. The person reads the useful
-       half — where it comes from, and which cell to change. */
-    phrase.push({ kind: "say", label: t("special.phrases.word"),
-      word: b && b.cell ? t("cell.bass.reads", { value: b.cell, lead: b.lead })
-                        : t("cell.bass.readsNone"),
-      why: t("cell.bass.why") });
-  }
-  const reads = v.kind === "bass" ? null
-    : A.sh("material.cell", { voice: v.name, section: sid },
+
+     ...AND A BASS IS ASKED LIKE EVERYBODY ELSE SINCE 2026-09-07 (wave D). A
+     TOMBSTONE STOOD HERE and it was right about the engine it was written
+     against, so it is kept above its own answer:
+
+       "EXCEPT FOR A BASS, WHICH IS TOLD RATHER THAN ASKED, AND IS TOLD SO.
+        Both compilers hand `K.bass` the FIRST LINE's compiled phrase, so a
+        bass cell that named a motif would name it into nothing. An honest
+        sentence beats a dead control."
+
+     That stopped being true at b12da62: `kernel.js bass()` reads the bass
+     voice's OWN material cell as a figure over the record's harmony,
+     `document.js` compiles it (`bassCellAt` / `bassPhraseAt` / `slotsOf`) and
+     writes `bslot` onto the box, and `ui/derive.js` reads it. So the honest
+     sentence became the dead control — the engine offering a part the glass
+     refused to let anyone name — and the refusal comes off. `avail.js` needed
+     nothing: `cellsFor(doc, kindOf(doc, s))` already answers a bass with the
+     LINE cells and keeps the drum cells out. */
+  const reads = A.sh("material.cell", { voice: v.name, section: sid },
            t("cell.sheet.plays", { name: v.name, section: A.secName(i) }));
   if (reads) {
     const w = A.wcell(reads);
@@ -888,6 +932,13 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
              value: w.value == null ? "" : String(w.value),
              derived: w.derived, options, set: (x: string) => w.set(x),
              why: w.why || null,
+             /* WHAT A WRITTEN BASS DOES, said as a CAPTION and not as a
+                refusal (2026-09-07, wave D). The row is live — the reason the
+                sentence used to be a `why` was that the control was dead —
+                so the fact rides in the `sub`, where the sheet already prints
+                "where this value came from". kernel.js quotes this key by
+                name beside `bass()`'s own `own` argument. */
+             ...(v.kind === "bass" ? { sub: t("cell.bass.why") } : {}),
              clear: w.derived ? null : () => w.set("") });
   }
   /* 2 · WHAT IT DOES HERE. For a drummer that is an array out of the
@@ -1120,18 +1171,37 @@ export function colOps(A: TableAPI, vi: number, v: Voice): Op[] {
     { k: "tcol-deal|" + v.name, word: t("op.reset"),
       aria: t("op.resetCol.aria"),
       act: () => A.dealCol(vi) },
-    /* "MAKE X Y" IS A COLUMN OP NOW (5). ui/produce.js owns the verb and its
-       qualities; what the table adds is the X — the column you opened is the
-       subject, so the sentence is already half said when you get there. */
-    ...A.makeQualities(v.name).map((q) => ({ k: "tcol-make|" + v.name + "|" + q.v,
-      word: q.w, aria: t("op.make.aria", { name: v.name, quality: q.w }),
-      why: q.why || null,
-      act: () => A.makeXY(v.name, q.v) })),
     { k: "tcol-del|" + v.name, word: t("op.remove"),
       aria: t("op.remove.aria", { name: v.name }),
       why: n <= 1 ? t("refuse.lastPlayer") : null,
       act: () => A.dropVoice(v.name) },
   ];
+}
+
+/* ---- "MAKE X Y" IS ITS OWN BAR (2026-09-07, TABLE.md §19) -------------
+   Paul, of a chair's sheet: *"all these playing options that I can't
+   differentiate and they are spread all over the place … you can see how
+   chaotic that is."*
+
+   MEASURED, and it is one number: the chair's op bar drew **41 buttons in a
+   441px wall** at 390 — eight of them about the COLUMN (solo it, add a
+   player, move it, deal it, remove it) and thirty-three about the SOUND
+   (brighter · darker · drier · wetter · …). Two subjects, one undifferentiated
+   wrap, and the reader has to know the vocabulary to tell which is which.
+
+   THE SPLIT IS THE MODEL'S OWN. `colOps` already called `makeQualities` as a
+   separate list and then spread it into the middle of the structural ops;
+   this returns it as a bar of its own, under its own word, and NOT ONE
+   ADDRESS MOVES (`tcol-make|<voice>|<quality>`, which is what
+   test/table-inventory.json files and T7 walks). ui/produce.js is still the
+   one owner of the verb and its qualities; what changed is that the table
+   stopped mixing them in with "remove this player". */
+export function makeOps(A: TableAPI, v: Voice): Op[] {
+  return A.makeQualities(v.name).map((q) => ({
+    k: "tcol-make|" + v.name + "|" + q.v,
+    word: q.w, aria: t("op.make.aria", { name: v.name, quality: q.w }),
+    why: q.why || null,
+    act: () => A.makeXY(v.name, q.v) }));
 }
 
 export function cellOps(A: TableAPI, i: number, vi: number): Op[] {

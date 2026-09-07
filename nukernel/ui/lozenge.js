@@ -400,6 +400,8 @@ function bins(spec) {
   return out;
 }
 var FOLDS = /* @__PURE__ */ new Map();
+var SCROLLX = /* @__PURE__ */ new Map();
+var HANDOFF = /* @__PURE__ */ new Map();
 var TOUCHED = /* @__PURE__ */ new Set();
 var CH = 9.5;
 var PILLPAD = 34;
@@ -460,6 +462,33 @@ function autoFolds(plan, at) {
   if (!shy(one)) shut.add(one);
   return shut;
 }
+function perColumn() {
+  return Math.max(3, Math.floor((budget() - HEADROW - SAYROW - 8) / PILLROW));
+}
+function fitsFlat(plan) {
+  const w2 = fieldWidth();
+  let h2 = SAYROW;
+  for (const b2 of plan) h2 += clusterHeight(b2, w2, false);
+  return h2 <= budget();
+}
+function columnsOf(plan, folded, per) {
+  const out = [];
+  plan.forEach((b2, bi) => {
+    if (folded.has(bi)) {
+      out.push({ bi, word: b2.word, opts: [], first: true, total: b2.opts.length });
+      return;
+    }
+    for (let i3 = 0; i3 < b2.opts.length; i3 += per)
+      out.push({
+        bi,
+        word: b2.word,
+        opts: b2.opts.slice(i3, i3 + per),
+        first: i3 === 0,
+        total: b2.opts.length
+      });
+  });
+  return out;
+}
 function lozengeField(spec) {
   refuseSilentGrey(spec);
   const key = String(spec.key);
@@ -482,6 +511,7 @@ function lozengeField(spec) {
     host.setAttribute("aria-disabled", "true");
   }
   if (spec.ungated) host.dataset.ungated = "true";
+  host.dataset.exclusive = String(!spec.multi);
   let cur = spec.value == null ? "" : String(spec.value);
   const chain = (spec.values || []).map(String).filter((v2, i3, a2) => a2.indexOf(v2) === i3);
   const folded = FOLDS.get(spec.key) || /* @__PURE__ */ new Set();
@@ -491,11 +521,15 @@ function lozengeField(spec) {
     if (want === "" && !multi) return -1;
     return plan.findIndex((b2) => b2.opts.some((o3) => String(o3.value) === want));
   };
-  if (!TOUCHED.has(key)) {
+  let asTable = !fitsFlat(plan);
+  let per = perColumn();
+  if (!asTable && !TOUCHED.has(key)) {
     const want = autoFolds(plan, standingAt());
     folded.clear();
     for (const i3 of want) folded.add(i3);
   }
+  if (asTable && !TOUCHED.has(key)) folded.clear();
+  host.dataset.table = String(asTable);
   let said = "";
   let focusK = null;
   const stands = (v2) => multi ? chain.indexOf(v2) >= 0 : v2 === cur;
@@ -530,32 +564,87 @@ function lozengeField(spec) {
     const hot = live.find((o3) => stands(String(o3.value)));
     return String((hot || live[0]).value);
   };
-  const draw = () => D(b`${plan.map((b2, ci) => {
-    const shut = folded.has(ci);
-    const stop = stopOf(b2);
+  const section = (c2) => {
+    const b2 = plan[c2.bi];
+    const shut = folded.has(c2.bi);
+    const stop = stopOf({ word: c2.word, opts: c2.opts });
     const holds = b2.opts.some((o3) => stands(String(o3.value)));
+    const mine = c2.opts.some((o3) => stands(String(o3.value)));
     const held = shut && holds ? b2.opts.filter((o3) => stands(String(o3.value))).map((o3) => o3.label).join(", ") : "";
     return b`<section
       class=${e3({
       "nu-lzcluster": true,
       "is-folded": shut,
-      "is-standing": shut && holds
+      "is-col": asTable,
+      "is-standing": asTable ? mine : shut && holds
     })}
-      data-cluster=${b2.word}
-      data-hue=${ci % HUES}
-      >${b2.word ? b`<button type="button" class="nu-lzhead"
-          data-k=${key + "|cluster|" + b2.word}
+      data-cluster=${c2.word}
+      data-bi=${String(c2.bi)}
+      data-cont=${o2(c2.first ? void 0 : "true")}
+      data-hue=${c2.bi % HUES}
+      >${c2.word ? c2.first ? b`<button type="button" class="nu-lzhead"
+          data-k=${key + "|cluster|" + c2.word}
           aria-expanded=${String(!shut)}
-          aria-current=${o2(shut && holds ? "true" : void 0)}
-          ><span class="nu-lzheadword">${b2.word}</span
-          ><small class="nu-lzcount">${b2.opts.length}</small
-          >${held ? b`<span class="nu-lzheld">${held}</span>` : A}</button>` : A}<div class="nu-lzwrap" ?hidden=${shut}
-        >${b2.opts.map((o3) => lozenge(o3, stop === String(o3.value)))}</div
+          aria-current=${o2((asTable ? mine : shut && holds) ? "true" : void 0)}
+          ><span class="nu-lzheadword">${c2.word}</span
+          ><small class="nu-lzcount">${c2.total}</small
+          >${held ? b`<span class="nu-lzheld">${held}</span>` : A}</button>` : b`<span class="nu-lzhead nu-lzcont" aria-hidden="true"
+          ><span class="nu-lzheadword">${c2.word}</span></span>` : A}<div class="nu-lzwrap" ?hidden=${shut}
+        >${c2.opts.map((o3) => lozenge(o3, stop === String(o3.value)))}</div
       ></section>`;
-  })}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite"
+  };
+  const cols = () => asTable ? columnsOf(plan, folded, per) : plan.map((b2, bi) => ({
+    bi,
+    word: b2.word,
+    opts: b2.opts,
+    first: true,
+    total: b2.opts.length
+  }));
+  const draw = () => D(b`${asTable ? b`<div class="nu-lztrack">${cols().map(section)}</div>` : cols().map(section)}${off ? b`<small class="nu-why">${off}</small>` : A}<p class="nu-lzsay" role="status" aria-live="polite"
       ?data-said=${!!said}>${said}</p>`, host);
+  let placed = false;
+  const showStanding = () => {
+    if (placed || !asTable) return;
+    placed = true;
+    try {
+      const track = host.querySelector(".nu-lztrack");
+      if (!track) return;
+      const baton = HANDOFF.get(key);
+      if (baton != null) {
+        HANDOFF.delete(key);
+        track.scrollLeft = baton;
+        SCROLLX.set(key, baton);
+        return;
+      }
+      const was = SCROLLX.get(key);
+      if (was != null) {
+        track.scrollLeft = was;
+        return;
+      }
+      const col = host.querySelector("section.nu-lzcluster.is-standing");
+      const x2 = col ? Math.max(0, col.offsetLeft - 8) : 0;
+      track.scrollLeft = x2;
+      SCROLLX.set(key, x2);
+    } catch (e4) {
+    }
+  };
+  const readScroll = (baton) => {
+    try {
+      const t4 = host.querySelector(".nu-lztrack");
+      if (!t4 || !t4.isConnected) return;
+      SCROLLX.set(key, t4.scrollLeft);
+      if (baton) HANDOFF.set(key, t4.scrollLeft);
+    } catch (e4) {
+    }
+  };
+  host.addEventListener("scroll", (e4) => {
+    const t4 = e4.target;
+    if (t4 && t4.classList && t4.classList.contains("nu-lztrack"))
+      SCROLLX.set(key, t4.scrollLeft);
+  }, true);
   const write = (v2) => {
     if (off) return;
+    readScroll(true);
     const o3 = plan.flatMap((b2) => b2.opts).find((x2) => String(x2.value) === v2);
     if (!o3 || o3.disabled) return;
     if (multi) {
@@ -591,6 +680,7 @@ function lozengeField(spec) {
     }
   };
   host.addEventListener("pointerdown", (e4) => {
+    readScroll();
     const el = e4.target?.closest?.(".nu-lz");
     if (!el || !host.contains(el)) return;
     disarm();
@@ -625,7 +715,7 @@ function lozengeField(spec) {
     const head = tgt?.closest?.(".nu-lzhead");
     if (head && host.contains(head)) {
       const sec = head.closest("section.nu-lzcluster");
-      const ci = sec ? Array.from(host.children).indexOf(sec) : -1;
+      const ci = sec && sec.dataset.bi != null ? +sec.dataset.bi : -1;
       if (ci >= 0) {
         TOUCHED.add(key);
         if (folded.has(ci)) folded.delete(ci);
@@ -669,17 +759,19 @@ function lozengeField(spec) {
     const flat = groups.flat();
     const at = flat.indexOf(el);
     if (at < 0) return;
-    if (k2 === "ArrowRight" || k2 === "ArrowLeft") {
+    const along = asTable ? k2 === "ArrowDown" ? 1 : k2 === "ArrowUp" ? -1 : 0 : k2 === "ArrowRight" ? 1 : k2 === "ArrowLeft" ? -1 : 0;
+    const across = asTable ? k2 === "ArrowRight" ? 1 : k2 === "ArrowLeft" ? -1 : 0 : k2 === "ArrowDown" ? 1 : k2 === "ArrowUp" ? -1 : 0;
+    if (along) {
       e4.preventDefault();
-      land(flat[Math.min(flat.length - 1, Math.max(0, at + (k2 === "ArrowRight" ? 1 : -1)))]);
+      land(flat[Math.min(flat.length - 1, Math.max(0, at + along))]);
       return;
     }
-    if (k2 === "ArrowDown" || k2 === "ArrowUp") {
+    if (across) {
       e4.preventDefault();
       const gi = groups.findIndex((g2) => g2.indexOf(el) >= 0);
       if (gi < 0) return;
       const pos = groups[gi].indexOf(el);
-      const d2 = k2 === "ArrowDown" ? 1 : -1;
+      const d2 = across;
       for (let j = gi + d2; j >= 0 && j < groups.length; j += d2) {
         const g2 = groups[j];
         if (!g2.length) continue;
@@ -706,8 +798,22 @@ function lozengeField(spec) {
   draw();
   try {
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => {
-      if (!host.isConnected || TOUCHED.has(key) || plan.length < 2) return;
+      if (!host.isConnected) return;
+      showStanding();
+      if (TOUCHED.has(key)) return;
       if (host.getBoundingClientRect().height <= budget()) return;
+      if (asTable) {
+        const h2 = host.getBoundingClientRect().height;
+        const room = Math.max(1, budget() - HEADROW - SAYROW - 8);
+        const drawn = Math.max(1, h2 - HEADROW - SAYROW - 8);
+        const want = Math.max(3, Math.floor(per * room / drawn));
+        if (want < per) {
+          per = want;
+          draw();
+        }
+        return;
+      }
+      if (plan.length < 2) return;
       const one = standingAt() >= 0 ? standingAt() : 0;
       const all = folded.size >= plan.length;
       if (all) return;
@@ -718,6 +824,7 @@ function lozengeField(spec) {
         if (i3 !== one && !shy2(i3)) folded.add(i3);
       draw();
     });
+    else showStanding();
   } catch (e4) {
   }
   return host;

@@ -1127,7 +1127,7 @@
     },
     {
       "reach": "tcol-make|<voice>|<quality>",
-      "why": "§5: 'make X Y' is a column op now",
+      "why": "§5: 'make X Y' is a column op now, in its OWN bar under the chair sheet's `make it` (§19) — the address did not move when the bar split",
       "open": "tcol|<voice>"
     },
     {

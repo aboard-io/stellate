@@ -670,9 +670,18 @@ function push(first) {
   // untouched, so the shipped chant compiles the identical five slots per
   // voice; what it buys is a voice that can read `psalm` in the verses and
   // `neume` in the tag (PROGRAM.md §2.1, design 05 §2.1(a)).
-  lines.forEach((c, v) => {
-    for (let i = 0; i < NS; i++)
-      putPhrase(v * NS + i, phrase(materialAt(c, secs[i].id))); });
+  //
+  // ...AND THE BASS'S OWN SLOTS ARE PART OF THAT BANK (2026-09-07, wave D).
+  // `document.js slotsOf` is the ONE owner of the slot arithmetic — the lines
+  // as before, then the bass's per-section phrases one voice past the last
+  // line, which is exactly the index `boxesOf` writes as `bslot`. The loop
+  // that stood here filled only the lines, so a record with a WRITTEN bass
+  // played its own degrees in `scoreOf` and in every export while the page
+  // played the genre's part: declared, costed, and not arriving, which is this
+  // tree's characteristic bug pointed at the sound instead of at the glass
+  // (document.js's own note beside `slotsOf` names this line as the one wave D
+  // could not write). `test/written-bass.test.js` W4e is its measurement.
+  NuDocument.slotsOf(DOC).forEach((ph, i) => { if (ph) putPhrase(i, ph); });
   const boxes = NuDocument.boxesOf(DOC, GK);
   // THE SOUND AXIS, ONTO THE BOXES AND THE TWO SONG-LEVEL STORES. `parts` and
   // `fx` start as the SAME objects on every box: the stored strip is one
@@ -11691,11 +11700,10 @@ function tableAPI() {
        from the Structure grids' row heads). `CTX.playFrom` seeks when cold and
        QUEUES on the next box line while playing — the wave-4 law, one owner. */
     playFrom: (i) => CTX.playFrom(i),
-    /* WHAT A BASS ACTUALLY READS, and why it is not asked. `bassReadsWhy` drew
-       this as a paragraph beside the Structure grid; the measurement is the
-       same and it is a CELL's row now (ui/table.js says the rest). */
-    bassReads: () => { const l = LINES()[0];
-      return l ? { lead: l.name, cell: cellAt(l, editSec()) } : null; },
+    /* (`bassReads` STOOD HERE — "what a bass actually reads, and why it is not
+       asked". Wave D (b12da62) made a bass read its OWN cell, so the cell
+       sheet asks it now and nothing reads this. Deleted rather than left
+       unused; `src/table/api.ts` carries the same note.) */
     hasKind: (k) => V().some((v) => v.kind === k),
     /* THE COLUMN LAMP, and it is the SAME lamp the Structure grids lit: a
        `[data-live]` span the clock may write into, registered in `bandLamps`,

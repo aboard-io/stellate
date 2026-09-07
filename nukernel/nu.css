@@ -6517,6 +6517,14 @@ table.nu-trims{ color: var(--ink); }
 .nu-opbtn{ min-block-size: var(--tap); padding-inline: .5ch;
   font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
 .nu-opbtn[disabled]{ opacity: .5; cursor: not-allowed; }
+/* A VERB YOU PUSH IS NOT A VALUE YOU SET (TABLE.md §19, 2026-09-07). The
+   chair's second op bar is thirty-three qualities — brighter · darker · drier
+   · wetter — and at the value's own 1rem they drew a 441px wall on a 844px
+   phone. Smaller type and less padding, the 44px thumb floor untouched (it is
+   a BLOCK size and none of this is about height), and the bar reads as a
+   vocabulary rather than as thirty-three decisions. */
+.nu-sheetops.is-verbs .nu-opbtn{ font-size: var(--t1); padding-inline: .4ch; }
+.nu-sheetops.is-verbs .nu-opbar{ gap: var(--s1); }
 /* THE DRUMMER'S SIX GROUPS, one open at a time, the standing answer pinned
    above them so you can always see the word you are on. */
 .nu-wgroups{ display: flex; flex-direction: column; gap: var(--s2); }
@@ -8874,6 +8882,121 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-sheetgroup > .nu-lzfield{ grid-column: 1 / -1; }
 
 /* ======================================================================
+   THE SHEET AS A TABLE (TABLE.md §19 · DESIGN.md component 22, 2026-09-07)
+   ======================================================================
+   Paul, of a chair's playing options: *"When I open an instrument gives me
+   all these playing options that I can't differentiate and they are spread
+   all over the place. Give them the same treatment as the instrument voice
+   selector … we need to make it smaller and it can also go horizontally wider
+   than the screen."*
+
+   ONE COLUMN PER SUBJECT, ONE SETTING PER LINE. The sheet stops being a grid
+   of 20rem boxes that reflow into a tall stack on a phone and becomes a TRACK
+   of subject columns a thumb pushes sideways — the same shape the instrument
+   picker takes one tier down, which is what "the same treatment" means.
+   `overflow-x` is on the TRACK and never on the sheet or the pane:
+   `overscroll-behavior-inline: contain` keeps the gesture inside it, so the
+   page's own sideways axis is untouched (§11c). */
+#pan-band .nu-vsheet.is-table{ display: block; }
+#pan-band .nu-sheettrack{ display: flex; align-items: flex-start;
+  /* DESIGN.md §1's space law, on the axis the subjects now stand on:
+     *"between controls that answer one question: s3; between questions: s4;
+     between subjects: s5."* The subjects are side by side, so s5 is a COLUMN
+     gap rather than a block margin — the same number, the same law, turned
+     with the sheet. */
+  gap: var(--s5); overflow-x: auto; overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  padding-block-end: var(--s2); scrollbar-width: thin; }
+/* A SUBJECT COLUMN IS ITS OWN STACK, and it is as wide as a setting needs and
+   no wider: 22ch holds "double-tracked" and a label on one line at every
+   width this page is measured at. It is `0 0 auto` so a column never gives up
+   its width to a neighbour — the track grows instead, which is the whole
+   point of a track. */
+#pan-band .nu-sheettrack > .nu-sheetgroup{
+  flex: 0 0 auto; display: block;
+  inline-size: 22ch; max-inline-size: calc(100vw - 3 * var(--s4));
+  margin-block-start: 0; }
+#pan-band .nu-sheettrack > .nu-sheetgroup > .nu-sheetrow{
+  margin-block-start: var(--s2); }
+/* A SETTING IS A LINE: the label over its control at this width, because a
+   label beside a control in a 22ch column is a control four characters wide. */
+#pan-band .nu-sheettrack .nu-sheetrow{ flex-wrap: wrap; }
+#pan-band .nu-sheettrack .nu-sheetlab{ flex: 1 0 100%; min-inline-size: 0;
+  font-size: var(--t1); }
+#pan-band .nu-sheettrack .nu-sheetrow > .nu-wcell{ inline-size: 100%; }
+/* ...AND THE COLUMN A THUMB IS WORKING IN TAKES THE SHEET'S WIDTH, so a
+   picker opened inside it is not a scrollport inside a scrollport. One thing
+   is open at a time (§18), so exactly one column is ever wide. */
+#pan-band .nu-sheettrack > .nu-sheetgroup.is-open{
+  inline-size: min(100%, calc(100vw - 3 * var(--s4)));
+  min-inline-size: 22ch; }
+
+/* ---- A SETTING THAT IS SEVERAL SETTINGS (DESIGN.md component 24) ------
+   Paul: *"if things have multiple settings to make that really clear and
+   shading or a little bit of a fill behind them."* A fill behind the row and
+   a count at the end of its label — so a hand reading down a column can see
+   which lines are one answer and which are a whole control. */
+#pan-band .nu-sheetrow.is-compound{
+  background: var(--panel); border-radius: var(--r1);
+  padding: var(--s1) var(--s2);
+  box-shadow: inset 2px 0 0 0 var(--hand); }
+/* THE COUNT IS A BADGE AND NOT A BAND. A `.nu-noderow` is a COLUMN flex box
+   with `align-items: stretch` (a channel strip needs the whole width), so a
+   `flex: 0 0 auto` child stretched across it and the count drew as a filled
+   bar over the envelope — measured on the phone, first drawing. `align-self`
+   is the one line that says "not this child". */
+.nu-noderow > .nu-many{ align-self: flex-start; }
+.nu-many{ flex: 0 0 auto;
+  font: var(--num-fw) var(--t0)/1 var(--mono, monospace);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 1.6em; text-align: center;
+  padding: 2px .4ch; border-radius: var(--r-pill);
+  background: var(--hand); color: var(--paper); }
+
+/* ---- THE SPINNER (DESIGN.md component 23) ----------------------------
+   Paul: *"turn them into spinners for the status changes"*. One control
+   saying the state, a step each side, and the position under it. The two
+   steps are 44px of thumb each and draw their mark as a CSS triangle: this
+   page's marks come from ui/glyph.js and a stepper is not a mark, it is the
+   edge of the control (the same way a slider's cap is not a glyph). */
+.nu-spin{ display: flex; align-items: center; gap: var(--s1);
+  min-inline-size: 0; }
+.nu-spinstep{ flex: 0 0 auto; inline-size: var(--tap); min-block-size: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: var(--bw) solid var(--rule);
+  border-radius: var(--r2); color: var(--ink); cursor: pointer; padding: 0; }
+.nu-spinstep::before{ content: ""; inline-size: 0; block-size: 0;
+  border-block-start: .34em solid transparent;
+  border-block-end: .34em solid transparent; }
+.nu-spinstep.is-prev::before{ border-inline-end: .42em solid currentColor; }
+.nu-spinstep.is-next::before{ border-inline-start: .42em solid currentColor; }
+.nu-spinstep:hover{ background: var(--panel); }
+.nu-spinstep[aria-disabled="true"]{ border-style: dashed; color: var(--dim);
+  cursor: not-allowed; }
+.nu-spinword{ flex: 1 1 auto; min-inline-size: 0; text-align: center; }
+.nu-spinpos{ flex: 0 0 auto;
+  font: var(--num-fw) var(--t0)/1 var(--mono, monospace);
+  font-variant-numeric: tabular-nums; color: var(--dim); }
+
+/* ---- AN EXCLUSIVE STRIP IS A RAIL, NOT A ROW OF BUTTONS --------------
+   Paul: *"Each exclusive of each other."* A single-select strip of chips and
+   a multi-select set of them were the same picture — separate plates with a
+   gap — so a hand could not tell whether pressing the next word would replace
+   this one or join it. An exclusive strip is JOINED: no gap, one hairline
+   between segments, rounded at the two ends only, and the standing word
+   filled. Nothing about the address, the roles or `aria-pressed` moves. */
+#pan-band .nu-wchips.is-exclusive{ gap: 0; }
+#pan-band .nu-wchips.is-exclusive > .nu-wchip{
+  border-radius: 0; margin: 0; border-inline-start-width: 0; }
+#pan-band .nu-wchips.is-exclusive > .nu-wchip:first-of-type{
+  border-inline-start-width: var(--bw);
+  border-start-start-radius: var(--r2); border-end-start-radius: var(--r2); }
+#pan-band .nu-wchips.is-exclusive > .nu-wchip:last-of-type{
+  border-start-end-radius: var(--r2); border-end-end-radius: var(--r2); }
+#pan-band .nu-wchips.is-exclusive > .nu-wchip[aria-pressed="true"]{
+  background: var(--hand); color: var(--paper); }
+
+/* ======================================================================
    THE LOZENGE FIELD (DESIGN.md component 16 · TABLE.md §11d, 2026-09-05)
    ======================================================================
    Paul: *"a novel interface for when there are tons of options and some of
@@ -9098,6 +9221,77 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    reason: all of it answers one question and a column three-fifths of the way
    across would be a second reading order. */
 #pan-band .nu-vsheet > .nu-lzfield{ grid-column: 1 / -1; }
+
+/* ======================================================================
+   THE FIELD AS A TABLE (TABLE.md §19 · DESIGN.md component 22, 2026-09-07)
+   ======================================================================
+   Paul, of the instrument picker: *"For the instrument selector make it a
+   horizontal table wider than the screen with the instruments in tables one
+   per line per column."*
+
+   ONE COLUMN PER FAMILY, ONE INSTRUMENT PER LINE, AND THE TRACK IS THE ONLY
+   THING THAT SCROLLS. `overflow-x` on the TRACK and not on the field, because
+   the field's say line has to stay outside the scrollport (it sticks to the
+   foot and a sentence that scrolled sideways away from the word it is about
+   is a sentence nobody reads). `overscroll-behavior-inline: contain` keeps a
+   sideways gesture inside the track rather than handing it to the pane under
+   it, which is the same law §11c gave the pane and the page. */
+.nu-lztrack{ display: flex; align-items: flex-start; gap: var(--s3);
+  overflow-x: auto; overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  padding-block-end: var(--s2);
+  /* the scrollbar is a thin one where the platform draws one at all; a phone
+     draws none and the track is scrolled by the thumb that is on it. */
+  scrollbar-width: thin; }
+/* A COLUMN IS AS WIDE AS ITS WORDS AND NEVER WIDER THAN THE PHONE. 18ch holds
+   "acoustic grand piano" on two lines and every shorter name on one; the
+   `max-inline-size` is the floor under a viewport narrower than that. */
+.nu-lzcluster.is-col{ flex: 0 0 auto;
+  inline-size: 18ch; max-inline-size: calc(100vw - 4 * var(--s4));
+  margin-block-start: 0; }
+/* THE WRAP RUNS DOWN, AND IT DOES NOT WRAP. One word per line is the whole
+   ask; `nowrap` is what makes a column a column, and the height is bounded by
+   the packing in `src/lozenge/field.ts` and not by a scroll box (law 1's own
+   forbidden shape). */
+.nu-lzcluster.is-col > .nu-lzwrap:not([hidden]){
+  flex-direction: column; flex-wrap: nowrap; gap: var(--s1); }
+/* A PILL IN A COLUMN IS THE COLUMN'S WIDTH, and its word reads from the start
+   like every other line of a list. It keeps its 44px floor — the tap floor is
+   the one number a restyle may not spend — and wraps to a second line when the
+   name will not fit, which is law 2 unchanged. */
+.nu-lzcluster.is-col .nu-lz{ inline-size: 100%; justify-content: flex-start;
+  text-align: start; }
+.nu-lzcluster.is-col .nu-lzword{ text-align: start; }
+/* THE HEADING OF A CONTINUATION COLUMN IS A READOUT AND NOT A BUTTON, so it
+   is drawn quieter than the one it continues: the same word, no count, no
+   fold, and nothing for a thumb to press. */
+.nu-lzcont{ display: flex; align-items: end; inline-size: 100%;
+  min-block-size: var(--tap); padding: 0 0 var(--s1);
+  margin-block-end: var(--s2);
+  border-block-end: var(--bw) dashed var(--lz, var(--rule));
+  color: var(--lz, var(--ink)); opacity: .55; }
+/* THE COLUMN THE RECORD IS STANDING IN, marked exactly as a folded cluster
+   holding the answer is (`--hand`), so "where am I" is one mark in both
+   shapes of this field. */
+.nu-lzcluster.is-col.is-standing > .nu-lzhead{ color: var(--hand);
+  border-block-end-color: var(--hand); }
+
+/* ---- ONE OF A SET, OR SEVERAL AT ONCE (DESIGN.md component 24) --------
+   Paul, 2026-09-07: *"Each exclusive of each other … and if things have
+   multiple settings to make that really clear and shading or a little bit of a
+   fill behind them."* A single-select field fills ONE pill and leaves the
+   others outlined — which it already did — and a CHAIN gives every pill a tick
+   box at its start, so a hand can see from the shape of the control whether
+   the words are alternatives or a set. The mark is drawn by the pill's own
+   `::before` and costs no element and no string. */
+.nu-lzfield[data-exclusive="false"] .nu-lz::before{
+  content: ""; flex: 0 0 auto; inline-size: .8em; block-size: .8em;
+  margin-inline-end: var(--s1);
+  border: var(--bw) solid currentColor; border-radius: var(--r0);
+  opacity: .55; }
+.nu-lzfield[data-exclusive="false"] .nu-lz.is-hot::before,
+.nu-lzfield[data-exclusive="false"] .nu-lz[aria-pressed="true"]::before{
+  background: currentColor; opacity: 1; }
 
 /* ---- THE FORMULA BAR MIRRORS THE CELL'S FIRST GROUP (2026-09-05) ------
    DESIGN.md §2 component 5: *"the selected cell's vector as chips/values"*.

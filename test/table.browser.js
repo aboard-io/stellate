@@ -48,6 +48,40 @@ const fs = require("fs");
 const { spawn } = require("child_process");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
+
+/* ---- IS EVERY CONTROL OF AN OPEN SHEET REACHABLE? ONE OWNER (2026-09-07)
+   §6 ¶A is a claim about WHERE a control is: *"every op in §5 and every field
+   of §1 is reachable by tap at 320px"*. It was measured as "on the screen"
+   until §19, when Paul asked for a sheet that *"can also go horizontally
+   wider than the screen"* — so a control past the right edge is no longer a
+   bug by itself; it is a bug when NOTHING BRINGS IT BACK. A control off the
+   edge must sit inside one of §19's two scrollports (`.nu-sheettrack`,
+   `.nu-lztrack`), and the track must actually reach it, which is DRIVEN here
+   and not asserted: the track is scrolled to the control and the control's
+   own rect is read again, then the track is put back. Anything else off the
+   edge is STRANDED and fails exactly as it did before — which is the bug this
+   check was written for (at 390 the cell sheet's third op sat at x=590 with
+   the table under it scrolling and the sheet not).
+   It is passed to `page.evaluate` by both callers, so there is one sentence
+   about reachability in this file and not two. */
+function STRANDED() {
+  const out = [];
+  for (const x of document.querySelectorAll("#pan-band .nu-vsheet button")) {
+    const r = x.getBoundingClientRect();
+    if (!(r.width > 0)) continue;
+    if (r.left >= 0 && r.right <= window.innerWidth + 1) continue;
+    const t = x.closest(".nu-sheettrack, .nu-lztrack");
+    if (!t || t.scrollWidth <= t.clientWidth + 1) {
+      out.push(x.dataset.k || String(x.className).slice(0, 30)); continue; }
+    const was = t.scrollLeft;
+    t.scrollLeft = Math.max(0, x.offsetLeft - 8);
+    const r2 = x.getBoundingClientRect();
+    if (r2.left < 0 || r2.right > window.innerWidth + 1)
+      out.push(x.dataset.k || String(x.className).slice(0, 30));
+    t.scrollLeft = was;
+  }
+  return out;
+}
 const ROOT = path.join(__dirname, "..");
 const SHOTS = arg("--shots", null);
 const PAGE_ARG = arg("--page", null);
@@ -572,6 +606,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       return { groups: secs.map((x) =>
                  ((x.querySelector(".nu-lzheadword") || {}).textContent || "").trim()),
         hues: [...new Set(secs.map((x) => x.dataset.hue))].length,
+        /* A CLUSTER IS NOT A COLUMN (2026-09-07, §19). The field draws itself
+           as a sideways TABLE when it will not fit as a stack, and a family
+           longer than one column CONTINUES into the next — same word, same
+           ink, same fold, one `data-bi`. So the hue claim below counts
+           CLUSTERS (`data-bi`, the cluster's own index) and not sections;
+           counting sections would read two columns of one family as two
+           families that share a colour. */
+        clusters: [...new Set(secs.map((x) => x.dataset.bi == null
+          ? x.dataset.cluster : x.dataset.bi))].length,
+        cols: secs.length,
         chips: lz.length,
         shown: lz.filter((c) => c.getBoundingClientRect().height > 0).length,
         short: lz.filter((c) => { const r = c.getBoundingClientRect();
@@ -615,8 +659,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       "…and the field FITS THE PHONE (" + gr.h + "px against " + gr.vh +
       "px), with the standing answer on the glass (" +
       (gr.marked ? "its cluster marked" : "its word hot") + ")");
-    check(gr.hues === gr.groups.length && gr.short === 0,
-      "…one hue per cluster (" + gr.hues + " for " + gr.groups.length +
+    check(gr.hues === Math.min(gr.clusters, 8) && gr.short === 0,
+      "…one hue per cluster (" + gr.hues + " for " + gr.clusters +
       " clusters) and every lozenge 44px (" + gr.short + " short)");
     await shot("does-sheet-390");
     await tap("tcell|" + drums + "|" + secId);
@@ -785,19 +829,28 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       m.over + "px over)" + (m.paneScrolls ? " — the pane does, which is nu.css's answer" : ""));
     check(m.short === 0, "…and all " + m.n + " controls are 44px tall (" +
       m.short + " short)");
-    /* AND AN OPEN SHEET IS ON THE SCREEN, not two hundred pixels past the
-       right edge of a table that scrolls. §6 ¶A is a claim about WHERE a
-       control is: "every op in §5 and every field of §1 is reachable by tap at
+    /* AND AN OPEN SHEET IS REACHABLE, not two hundred pixels past the right
+       edge of a table that scrolls. §6 ¶A is a claim about WHERE a control
+       is: "every op in §5 and every field of §1 is reachable by tap at
        320px". MEASURED before the sticky rule was written: at 390 the cell
-       sheet's third op sat at x=590 on a 390px screen. */
+       sheet's third op sat at x=590 on a 390px screen, STRANDED — the table
+       under it scrolled, the sheet did not.
+
+       THE CLAIM IS AMENDED, IN WRITING, 2026-09-07 (§19). Paul asked for a
+       sheet that *"can also go horizontally wider than the screen"*, so a
+       control past the right edge is no longer a bug by itself: it is a bug
+       when nothing brings it back. A control off the edge must sit inside a
+       TRACK — `.nu-sheettrack` or `.nu-lztrack`, the two scrollports §19
+       introduces — and the track must actually reach it, which is DRIVEN
+       here rather than asserted: the track is scrolled to the control and
+       the control's own rect is read again. Anything else off the edge is
+       stranded and fails exactly as before. */
     await openCell("tcell|" + vName + "|" + secId);
-    const off = await p.evaluate(() =>
-      [...document.querySelectorAll("#pan-band .nu-vsheet button")]
-        .map((x) => x.getBoundingClientRect())
-        .filter((r) => r.width > 0 && (r.left < 0 || r.right > window.innerWidth + 1))
-        .length);
-    check(off === 0, "…and an open sheet's controls are all ON the screen (" +
-      off + " off the edge)");
+    const off = await p.evaluate(STRANDED);
+    check(off.length === 0, "…and every control of an open sheet is reachable " +
+      "— on the screen, or inside a track that scrolls to it (" + off.length +
+      " stranded" + (off.length ? ": " + JSON.stringify(off.slice(0, 4)) : "") +
+      ")");
     await tap("tcell|" + vName + "|" + secId);
     if (w === 390 || w === 1280) await shot("table-" + w);
   }
@@ -1579,22 +1632,37 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     "…each wearing its category slot and a lamp the clock may write into (" +
     JSON.stringify(heads.vi) + ", " + heads.lamps + " lamps)");
 
-  /* T8f (was structure S8) · THE BASS IS TOLD RATHER THAN ASKED, AND IT SAYS
-     SO. A bass takes the first line's phrase (document.js scoreOf, ui/derive.js
+  /* T8f (was structure S8) · THE BASS IS ASKED LIKE EVERYBODY ELSE, AND THE
+     CLAIM IS INVERTED RATHER THAN DELETED (2026-09-07, wave D).
+
+     IT READ: *"THE BASS IS TOLD RATHER THAN ASKED, AND IT SAYS SO. A bass
+     takes the first line's phrase (document.js scoreOf, ui/derive.js
      sectionEvents), so its motifs row is a refusal with a measured reason on
-     it — the no-silent-grey law, at the tier that now owns the question. */
+     it — the no-silent-grey law, at the tier that now owns the question."*
+     That was true of the ENGINE it was written against, and it stopped being
+     true at b12da62: `kernel.js bass()` reads the bass voice's own material
+     cell as a figure over the record's harmony. So the honest sentence became
+     a dead control, and what this checks now is the opposite — the row is a
+     LIVE picker with the vocabulary under it and a caption saying what a
+     written bass does. The refusal must be GONE: a control that may be used
+     and is drawn refused is the same lie the other way round. */
   const bassV2 = (await doc()).voices.find((v) => v.kind === "bass");
   if (bassV2) {
     await openCell("tcell|" + bassV2.name + "|" + secId);
     const bw = await p.evaluate((args) => { const [n, sid] = args;
-      const row = document.querySelector('#pan-band [data-k="material.cell|' + n + '|' + sid + '"]');
-      const why = document.querySelector("#pan-band .nu-vsheet .nu-why");
-      return { row: !!row, why: why ? why.textContent.trim().slice(0, 90) : null,
-               off: row ? row.hasAttribute("disabled") || row.getAttribute("aria-disabled") === "true" : null };
+      const k = "material.cell|" + n + "|" + sid;
+      const row = document.querySelector('#pan-band [data-k="' + k + '"]');
+      const line = row ? row.closest(".nu-sheetrow") : null;
+      return { row: !!row,
+        sub: line ? ((line.querySelector(".nu-sheetsub") || {}).textContent
+                     || "").trim() : null,
+        say: !!document.querySelector("#pan-band .nu-vsheet .nu-why"),
+        off: row ? row.hasAttribute("disabled") ||
+                   row.getAttribute("aria-disabled") === "true" : null };
     }, [bassV2.name, secId]);
-    check(bw.row === false || bw.off === true || !!bw.why,
-      "T8f the bass's motifs question is refused or explained rather than " +
-      "offered as a control that moves nothing — " + JSON.stringify(bw));
+    check(bw.row === true && bw.off === false && !!bw.sub,
+      "T8f the bass's motifs question is OFFERED, not refused — a live picker " +
+      "with a caption saying what a written bass does — " + JSON.stringify(bw));
     await tap("tcell|" + bassV2.name + "|" + secId);
   } else check(false, "T8f no bass on this record");
 
@@ -2324,6 +2392,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       await ctx.pages()[0].setViewportSize({ width: w, height: 900 });
       await p.waitForTimeout(420);
       await openCell(cell(v9a, s9a));
+      /* the same one sentence about reachability (§19), handed to the page so
+         the big readout below can ask it inside its own single evaluate. */
+      await p.evaluate((src) => { window.__nuStranded =
+        new Function("return (" + src + ")")(); }, STRANDED.toString());
       const m = await p.evaluate(() => {
         const host = document.getElementById("pan-band");
         const bar = host.querySelector("tr.nu-cellopen .nu-cellhead");
@@ -2331,9 +2403,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const shorts = [...host.querySelectorAll("button:not([hidden])")]
           .filter((b) => { const q = b.getBoundingClientRect();
             return q.width > 0 && q.height > 0 && q.height < 43.5; }).length;
-        const offs = [...host.querySelectorAll(".nu-vsheet button")]
-          .filter((b) => { const q = b.getBoundingClientRect();
-            return q.width > 0 && (q.left < 0 || q.right > window.innerWidth + 1); }).length;
+        const offs = window.__nuStranded ? window.__nuStranded().length : 0;
         const over = [...document.querySelectorAll("body *")]
           .map((e) => { const q = e.getBoundingClientRect();
             return { t: e.tagName, c: String(e.className || "").slice(0, 40),
@@ -4000,8 +4070,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          2026-09-05: the heading carries its MARK first (`ui/glyph.js
          GLYPH.group` — Paul: *"use more icons"*) and reading the whole element
          would read the glyph into the word. */
-      const gap = gs.length > 1
-        ? Math.round(parseFloat(getComputedStyle(gs[1]).marginBlockStart)) : 0;
+      /* THE SPACE BETWEEN SUBJECTS IS ON THE AXIS THEY STAND ON (2026-09-07,
+         §19). Stacked, it is the second group's own `margin-block-start`;
+         side by side in a `.nu-sheettrack`, it is the track's COLUMN GAP. The
+         law is DESIGN §1's `--s5` either way — the same number, turned with
+         the sheet — so the gate reads whichever axis the sheet is using
+         rather than failing a shape it has no rule against. */
+      const track = o.querySelector(".nu-sheettrack");
+      const gap = track
+        ? Math.round(parseFloat(getComputedStyle(track).columnGap))
+        : (gs.length > 1
+           ? Math.round(parseFloat(getComputedStyle(gs[1]).marginBlockStart)) : 0);
       return { heads: gs.map((g) =>
                  ((g.querySelector(".nu-groupword") || {}).textContent || "").trim()),
         marks: gs.filter((g) => g.querySelector(".nu-grouphead .nu-g")).length,
@@ -6490,6 +6569,345 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           check(!still.length,
             "T15c " + at + " · …the pane's scrollTop never moved " +
             JSON.stringify(done.map((r) => r.pane)));
+        }
+
+
+        /* ============ T19 · THE INSTRUMENT TABLE (TABLE.md §19) =========
+           Paul, 2026-09-07, twice:
+
+             *"For the instrument selector make it a horizontal table wider
+              than the screen with the instruments in tables one per line per
+              column."*
+
+             *"When I open an instrument gives me all these playing options
+              that I can't differentiate and they are spread all over the
+              place. Give them the same treatment as the instrument voice
+              selector. Each exclusive of each other, then either turn them
+              into spinners for the status changes … and if things have
+              multiple settings to make that really clear and shading or a
+              little bit of a fill behind them … we need to make it smaller
+              and it can also go horizontally wider than the screen."*
+
+           MEASURED BEFORE THIS ROUND (scratchpad/design/instrument-table/
+           before.json, a `git archive HEAD` of v299 served beside the working
+           tree): the chair sheet was 1,537px at 390 and 1,738 at 320 with
+           FOUR settings on the glass at rest and a 441px op bar of 41 buttons
+           as its tallest control; the instrument picker was one tap away, 707
+           px tall, and drew ZERO of its 147 instruments — thirteen families,
+           every one of them folded, the standing word inside a fold. A named
+           instrument took three taps and a scroll. */
+        {
+          const lineV = await z.evaluate(() => {
+            const d = window.__eightDoc();
+            const v = d.voices.find((x) => x.kind === "line");
+            return v ? v.name : null; });
+          if (!lineV) check(false, "T19 " + at + " · no line voice to open");
+          else {
+            await zshut(); await zrec(false);
+            await zopen("tcol|" + lineV);
+            await z.waitForTimeout(420);
+
+            /* ---- T19a · THE CHAIR SHEET IS A TABLE OF SUBJECTS -------- */
+            const sheet = await z.evaluate(() => {
+              const tr = document.querySelector("#pan-band tr.nu-wopen");
+              if (!tr) return null;
+              const vs = tr.querySelector(".nu-vsheet");
+              const tk = tr.querySelector(".nu-sheettrack");
+              const cols = tk ? [...tk.children] : [];
+              const box = (e) => { const r = e.getBoundingClientRect();
+                return { w: Math.round(r.width), h: Math.round(r.height),
+                         x: Math.round(r.left), y: Math.round(r.top) }; };
+              const vis = [...tr.querySelectorAll(".nu-sheetrow")].filter((e) => {
+                const r = e.getBoundingClientRect();
+                return r.height > 0 && r.top < innerHeight && r.bottom > 0; });
+              return { h: Math.round(tr.getBoundingClientRect().height),
+                table: vs ? vs.dataset.table : null,
+                tracks: tr.querySelectorAll(".nu-sheettrack").length,
+                cols: cols.map((c) => ({ g: c.dataset.group, ...box(c) })),
+                trackH: tk ? Math.round(tk.getBoundingClientRect().height) : null,
+                rows: tr.querySelectorAll(".nu-sheetrow").length,
+                visible: vis.length,
+                compound: [...tr.querySelectorAll(".nu-sheetrow.is-compound")]
+                  .map((e) => ({ many: e.dataset.many,
+                    badge: (e.querySelector(".nu-many") || {}).textContent })),
+                spins: [...tr.querySelectorAll(".nu-spin")].map((e) => {
+                  const w = e.querySelector(".nu-spinword");
+                  const row = e.closest(".nu-sheetrow");
+                  return { k: w ? w.dataset.k : null,
+                    word: w ? w.textContent.trim() : null,
+                    pos: (e.querySelector(".nu-spinpos") || {}).textContent,
+                    prev: !!e.querySelector('[data-k^="prev|"]'),
+                    next: !!e.querySelector('[data-k^="next|"]'),
+                    h: row ? Math.round(row.getBoundingClientRect().height) : null };
+                }) }; });
+            const sideCols = sheet ? sheet.cols.filter((c, i, a) =>
+              i > 0 && c.x > a[i - 1].x + 4) : [];
+            check(!!sheet && sheet.table === "true" && sheet.tracks === 1 &&
+                  sheet.cols.length >= 3 && sideCols.length >= 1 &&
+                  sheet.trackH <= 844,
+              "T19a " + at + " · the chair sheet is a TABLE of subject columns " +
+              "side by side — " + (sheet ? sheet.cols.length : 0) + " columns, " +
+              (sheet ? sheet.trackH : "?") + "px of track against a 844px " +
+              "phone, sheet " + (sheet ? sheet.h : "?") + "px (was 1,537 at " +
+              "390 / 1,738 at 320) — " + JSON.stringify(sheet && sheet.cols));
+            check(!!sheet && sheet.visible > 4,
+              "T19a " + at + " · …and more settings are on the glass at rest " +
+              "than the FOUR the stack showed: " +
+              (sheet ? sheet.visible : 0) + " of " + (sheet ? sheet.rows : 0));
+
+            /* ---- T19b · A COMPOUND SETTING IS MARKED ------------------ */
+            check(!!sheet && sheet.compound.length >= 1 &&
+                  sheet.compound.every((c) => +c.many > 1 &&
+                                              c.badge === String(c.many)),
+              "T19b " + at + " · a setting carrying SEVERAL settings is marked " +
+              "as one — a fill behind the row and its count printed " +
+              JSON.stringify(sheet && sheet.compound));
+
+            /* ---- T19c · A STATE IS A SPINNER, AND IT STEPS ------------ */
+            const sp = sheet && sheet.spins[0];
+            let stepped = null;
+            if (sp && sp.k) {
+              const d0 = await z.evaluate(() =>
+                JSON.stringify(window.__eightDoc().voices));
+              await z.evaluate((k) => { const el = document.querySelector(
+                '#pan-band [data-k="next|' + k + '"]'); if (el) el.click(); }, sp.k);
+              await z.waitForTimeout(800);
+              const mid = await z.evaluate((k) => { const el =
+                document.querySelector('#pan-band [data-k="' + k + '"]');
+                return { word: el ? el.textContent.trim() : null,
+                         doc: JSON.stringify(window.__eightDoc().voices) }; }, sp.k);
+              await z.evaluate((k) => { const el = document.querySelector(
+                '#pan-band [data-k="prev|' + k + '"]'); if (el) el.click(); }, sp.k);
+              await z.waitForTimeout(800);
+              const back = await z.evaluate(() =>
+                JSON.stringify(window.__eightDoc().voices));
+              stepped = { d0: d0.length, moved: mid.doc !== d0,
+                          word: mid.word, back: back === d0 };
+            }
+            check(!!sp && sp.prev && sp.next && /^\d+\/\d+$/.test(sp.pos || "") &&
+                  sp.h <= 2 * 44 + 40 && !!stepped && stepped.moved && stepped.back,
+              "T19c " + at + " · a STATE row is one spinner, not a line of " +
+              "buttons: " + (sheet ? sheet.spins.length : 0) + " on this chair, " +
+              "the field's own address on the word, a step each side, the " +
+              "position printed — " + JSON.stringify([sp, stepped]));
+
+            /* ---- T19d · THE INSTRUMENT PICKER IS A TABLE -------------- */
+            const ik = "sound.instrument|" + lineV;
+            await openField(ik);
+            await z.waitForTimeout(700);
+            const pick = await z.evaluate((k) => {
+              const btn = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+              const row = btn && btn.closest(".nu-sheetrow");
+              const f = row && row.nextElementSibling;
+              if (!f || !f.classList.contains("nu-lzfield")) return null;
+              const tk = f.querySelector(".nu-lztrack");
+              const secs = [...f.querySelectorAll("section.nu-lzcluster")];
+              const opts = [...f.querySelectorAll("button.nu-lz")];
+              const drawn = opts.filter((o) => {
+                const r = o.getBoundingClientRect();
+                return r.width > 0 && r.height > 0; });
+              /* ONE WORD PER LINE PER COLUMN: inside a column every option
+                 shares one left edge and each has its own row band. */
+              let perLine = true;
+              for (const sec of secs) {
+                const o = [...sec.querySelectorAll("button.nu-lz")]
+                  .map((e) => e.getBoundingClientRect());
+                for (let i = 1; i < o.length; i++)
+                  if (Math.abs(o[i].left - o[0].left) > 2 ||
+                      o[i].top < o[i - 1].bottom - 1) perLine = false;
+              }
+              const hot = f.querySelector('.nu-lz[aria-pressed="true"]');
+              const hr = hot ? hot.getBoundingClientRect() : null;
+              const tr2 = tk ? tk.getBoundingClientRect() : null;
+              return { h: Math.round(f.getBoundingClientRect().height),
+                table: f.dataset.table, excl: f.dataset.exclusive,
+                track: !!tk, cols: secs.length,
+                families: [...new Set(secs.map((e) => e.dataset.cluster))]
+                  .filter(Boolean),
+                total: opts.length, drawn: drawn.length, perLine,
+                trackW: tk ? Math.round(tk.scrollWidth) : null,
+                trackC: tk ? Math.round(tk.clientWidth) : null,
+                hot: hot ? hot.textContent.trim() : null,
+                hotIn: !!(hr && tr2 && hr.width > 0 &&
+                          hr.left >= tr2.left - 2 && hr.right <= tr2.right + 2),
+                page: document.documentElement.scrollWidth >
+                      document.documentElement.clientWidth ||
+                      document.body.scrollWidth > document.body.clientWidth };
+            }, ik);
+            check(!!pick && pick.table === "true" && pick.track &&
+                  pick.cols >= 3 && pick.perLine && pick.h <= 844,
+              "T19d " + at + " · the instrument picker is a TABLE that scrolls " +
+              "sideways — " + (pick ? pick.cols : 0) + " columns, one " +
+              "instrument per line, " + (pick ? pick.h : "?") + "px tall " +
+              "(707px and zero instruments drawn, before) — " +
+              JSON.stringify(pick));
+            check(!!pick && pick.drawn === pick.total && pick.total > 100 &&
+                  pick.families.length >= 8,
+              "T19d " + at + " · …and EVERY family is reachable with nothing " +
+              "folded away: " + (pick ? pick.drawn : 0) + " of " +
+              (pick ? pick.total : 0) + " instruments drawn across " +
+              (pick ? pick.families.length : 0) + " families " +
+              JSON.stringify(pick && pick.families));
+            /* A RECORD STANDING ON A WORD ITS OWN VOCABULARY DOES NOT HOLD
+               HAS NO PILL TO BRING INTO VIEW, and that is §15's own recorded
+               case rather than a hole in this one: the Silence record's fresh
+               `line 1` names `synth`, and `avail.js instrOptions` offers that
+               word only where the record or its basis declares a native
+               model. The field's HEAD one row above still prints it. So the
+               claim is asked where there is an answer to ask it of, and
+               REPORTED where there is not. */
+            check(!!pick && (pick.hot == null || pick.hotIn) &&
+                  pick.trackW > pick.trackC && !pick.page,
+              "T19d " + at + " · …the record's own instrument is on the glass " +
+              "without hunting (" + (pick && pick.hot != null ? pick.hot
+                : "standing on a word this vocabulary does not hold — the " +
+                  "field's head carries it") + "), the TRACK is " +
+              (pick ? pick.trackW : "?") + "px wide in a " +
+              (pick ? pick.trackC : "?") + "px port, and the PAGE does not " +
+              "scroll sideways at all");
+
+            /* ---- T19e · AN EXCLUSIVE SET LOOKS EXCLUSIVE -------------- */
+            await zshut(); await zrec(false);
+            await zopen("tcell|" + lineV + "|" + (sid14 || "s0"));
+            await z.waitForTimeout(420);
+            const chipKeys = await z.evaluate(() =>
+              [...document.querySelectorAll(
+                '#pan-band .nu-sheetrow .nu-wcell[aria-expanded]')]
+                .map((e) => e.dataset.k));
+            const rails = [];
+            for (const ck of chipKeys) {
+              await openField(ck);
+              await z.waitForTimeout(120);
+              const r = await z.evaluate((k) => {
+                const btn = document.querySelector(
+                  '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                const row = btn && btn.closest(".nu-sheetrow");
+                const w = row && row.nextElementSibling;
+                const strip = w && w.classList &&
+                  (w.classList.contains("nu-wchips") ? w
+                   : w.querySelector ? w.querySelector(".nu-wchips") : null);
+                if (!strip) return null;
+                const chips = [...strip.querySelectorAll(".nu-wchip")]
+                  .filter((c) => c.getBoundingClientRect().width > 0);
+                if (chips.length < 2) return null;
+                let joined = true;
+                for (let i = 1; i < chips.length; i++) {
+                  const a2 = chips[i - 1].getBoundingClientRect();
+                  const b2 = chips[i].getBoundingClientRect();
+                  if (Math.abs(b2.top - a2.top) < 2 && b2.left - a2.right > 1)
+                    joined = false; }
+                return { k, excl: strip.dataset.exclusive,
+                  cls: strip.classList.contains("is-exclusive"),
+                  on: chips.filter((c) =>
+                    c.getAttribute("aria-pressed") === "true").length,
+                  n: chips.length, joined }; }, ck);
+              if (r) rails.push(r);
+              await z.evaluate((k) => { const el = document.querySelector(
+                '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                if (el) el.click(); }, ck);
+            }
+            check(rails.length >= 1 &&
+                  rails.every((r) => r.excl === "true" && r.cls &&
+                                     r.joined && r.on <= 1),
+              "T19e " + at + " · a set you may hold ONE of is drawn as one — a " +
+              "joined rail with one segment filled, never a line of independent " +
+              "toggles: " + rails.length + " measured " + JSON.stringify(rails));
+            await zshut(); await zrec(false);
+
+            /* ---- T19f · A BASS CELL NAMES ITS OWN MOTIF (wave D's seam) --
+               `kernel.js bass()` has read a bass voice's OWN material cell as
+               a figure over the record's harmony since b12da62, and
+               `document.js slotsOf` banks it at the index `boxesOf` writes as
+               `bslot`. Until this round the SHEET refused to let anyone name
+               one — it printed "the bass follows the first line's motif" —
+               and `ui/eight.js push()` banked only the lines, so a written
+               bass sounded in `scoreOf` and in every export and NOT on the
+               page. That is this tree's characteristic bug pointed at the
+               sound, and this is the measurement that it is gone: the picker
+               is there, the tap lands on the CELL tier, one Ctrl-Z takes it
+               back, and the RENDERED bass events of that section move. */
+            {
+              const bv = await z.evaluate(() => {
+                const d = window.__eightDoc();
+                const v = d.voices.find((x) => x.kind === "bass");
+                return v ? v.name : null; });
+              if (!bv) check(true, "T19f " + at + " · no bass in this band");
+              else {
+                const bsid = sid14 || "s0";
+                const bi = await z.evaluate((q) => window.__eightDoc()
+                  .form.sections.findIndex((s) => s.id === q), bsid);
+                const bassEv = () => z.evaluate((x) => JSON.stringify(
+                  (window.__eightEvents(x) || []).filter((e) => e.kind === "bass")
+                    .map((e) => [Math.round(e.t * 1e3), e.n])), bi);
+                const ev0 = await bassEv();
+                await zopen("tcell|" + bv + "|" + bsid);
+                await z.waitForTimeout(400);
+                const mk = "material.cell|" + bv + "|" + bsid;
+                const row = await z.evaluate((k) => {
+                  const b = document.querySelector(
+                    '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                  if (!b) return null;
+                  const r = b.closest(".nu-sheetrow");
+                  return { there: true, tag: b.tagName,
+                    sub: ((r.querySelector(".nu-sheetsub") || {}).textContent
+                          || "").trim() }; }, mk);
+                /* THE MOTIF LIST IS A NATIVE WHEEL ON A THUMB (`pick.ts`
+                   rule 2: a coarse pointer past eight words), so the control
+                   IS the row's own element and not a strip under it. Both
+                   shapes are driven here, because which widget a vocabulary
+                   earns is not what this check is about. */
+                const picked = await z.evaluate((k) => {
+                  const b = document.querySelector(
+                    '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                  if (!b) return null;
+                  if (b.tagName === "SELECT") {
+                    const o = [...b.options].find((x) => x.value &&
+                      x.value !== b.value && !x.disabled);
+                    if (!o) return null;
+                    b.value = o.value;
+                    b.dispatchEvent(new Event("change", { bubbles: true }));
+                    return o.value; }
+                  if (b.getAttribute("aria-expanded") !== "true") b.click();
+                  const w = b.closest(".nu-sheetrow").nextElementSibling;
+                  if (!w) return null;
+                  const c = [...w.querySelectorAll(
+                    ".nu-wchip[data-v], .nu-lz[data-v]")]
+                    .filter((x) => x.dataset.v &&
+                      x.getAttribute("aria-pressed") !== "true" &&
+                      x.getAttribute("aria-disabled") !== "true");
+                  const t2 = c[0];
+                  if (!t2) return null;
+                  t2.click();
+                  return t2.dataset.v; }, mk);
+                await z.waitForTimeout(900);
+                const wrote = await z.evaluate((q) => {
+                  const v = window.__eightDoc().voices.find((x) => x.name === q.v);
+                  const m = v && v.material;
+                  return { mat: m && typeof m === "object" ? m[q.sid] : null,
+                    cells: v && v.cells && v.cells[q.sid]
+                      ? v.cells[q.sid].material : null }; },
+                  { v: bv, sid: bsid });
+                const ev1 = await bassEv();
+                await z.evaluate(() => { const el = document.querySelector(
+                  "#pan-band tbody td .nu-wcell"); if (el) el.focus(); });
+                await z.keyboard.press("Control+z");
+                await z.waitForTimeout(800);
+                const ev2 = await bassEv();
+                const held = wrote.mat || wrote.cells;
+                check(!!row && row.there && !!picked && held === picked &&
+                      ev1 !== ev0 && ev2 === ev0,
+                  "T19f " + at + " · a BASS cell names its own motif and the " +
+                  "RENDERED bass moves for it — picked " +
+                  JSON.stringify(picked) + ", the document holds " +
+                  JSON.stringify(held) + ", the section's bass events " +
+                  (ev1 !== ev0 ? "moved" : "DID NOT MOVE") + " and one Ctrl-Z " +
+                  (ev2 === ev0 ? "put them back" : "DID NOT put them back") +
+                  " — " + JSON.stringify(row));
+                await zshut(); await zrec(false);
+              }
+            }
+          }
         }
 
         await c13.close();

@@ -4851,3 +4851,250 @@ moved `#vol` 80 → 24, printed `24%`, and wrote `nukernel.vol.v1 = 24`. The die
 in the bar rolls the seed (1 → 65253) and the plate's row prints the same
 number; the plate's `Set seed` door closes the plate and leaves the keyboard in
 `#seedin`.
+
+### 19 · The instrument table, and the chair's playing options (2026-09-07)
+
+**TWO ASKS, VERBATIM**, on v299:
+
+> *"For the instrument selector make it a horizontal table wider than the
+> screen with the instruments in tables one per line per column."*
+
+> *"When I open an instrument gives me all these playing options that I can't
+> differentiate and they are spread all over the place. Give them the same
+> treatment as the instrument voice selector. Each exclusive of each each each
+> other, then either turn them into spinners for the status changes based on
+> the terminal and if things have multiple settings to make that really clear
+> and shading or a little bit of a phil behind them. But General, will you can
+> see how chaotic that is we need to make it make a smaller and it can also go
+> horizontally wider than the screen."*
+
+Read as: the chair's playing options are undifferentiated and scattered; give
+them the same visual treatment as the instrument picker; make mutually
+exclusive choices obviously exclusive; where a control cycles through states, a
+spinner beats a spread of buttons; where a setting carries several values, mark
+it with shading or a fill; make it smaller; and it may scroll horizontally
+wider than the screen, like the table.
+
+#### 19a · What the phone measured first
+
+`scratchpad/design/instrument-table/probe.cjs`, `devices["iPhone 14"]`, DPR 3,
+`isMobile`, `hasTouch`, 390 x 844 and 320 x 844, on **Kingston 1969** and on
+**Coach House** (`keeps/triphop-pm-walkthrough/coach-house.song.json`, imported
+through the Export view's own file input), the BEFORE off a `git archive HEAD`
+of v299 served beside the working tree:
+
+| | before (v299) |
+|---|---|
+| the chair sheet, a pitched player | **1,537px** at 390 · **1,738px** at 320 |
+| settings on the glass at rest | **4** at 390, **3** at 320, of 11 rows |
+| distinct control shapes in it | **7** (ops · native · clearback · wordbutton · curve · slider · numbox) |
+| the tallest single control | the **op bar: 41 buttons, 441px** at 390 (540 at 320) |
+| taps to the instrument picker | **1** |
+| the picker's height | **707px** |
+| instruments readable in it | **0 of 147** — all **13 families folded**, one heading on the glass at 390 and none at 320 |
+| where the record's own instrument was | inside a fold, drawn 0 x 0 |
+| taps to a NAMED instrument | **3**, plus a scroll of the pane before the third could land |
+
+**THE OP BAR WAS THE CHAOS, AND IT HAD TWO SUBJECTS IN IT.** Forty-one buttons
+in one wrap: eight about the COLUMN (solo it, add a player, move it, deal it,
+remove it) and thirty-three about the SOUND (brighter · darker · drier · wetter
+· …). `colOps` already called `makeQualities` as its own list and then spread it
+into the middle of the structural ops, so the split below is the model's own
+sentence said out loud — and not one address moves.
+
+#### 19b · The law
+
+**A VOCABULARY TOO TALL TO WRAP IS A TABLE THAT SCROLLS SIDEWAYS.** §15's fold
+answered the height by hiding words; the table answers it by turning the field
+ninety degrees — one column per cluster, one word per line, the columns running
+off the side of the screen where there is no bottom to fall off. It is a
+STRONGER form of the lozenge field's law 1 than the fold it replaces: nothing is
+hidden at all, so the count on a heading counts what you can see. A family
+longer than one column CONTINUES into the next, under the same word drawn as a
+readout — no second element on one address, which is `chipStrip`'s own pin law
+and `.nu-lzheld`'s. The fold stays for every vocabulary that still fits as a
+stack, and stays available by hand in the table.
+
+**AND A SHEET OF THREE SUBJECTS TAKES THE SAME SHAPE ONE TIER UP** — one column
+per group, one setting per line, the column a thumb is working in widening to
+the sheet so a picker never opens inside a scrollport. Which sheets is decided
+from the DATA (how many groups the model declared) and not from a flag a caller
+passes.
+
+**THE TRACK IS THE ONLY THING THAT SCROLLS SIDEWAYS.** `overflow-x` on the
+track, `overscroll-behavior-inline: contain` on it, and the PAGE's own inline
+axis untouched — §11c's law is about the page and is unchanged.
+
+**A STATE IS ONE CONTROL THAT STEPS.** A row the player is IN one of, of at most
+five positions, is a spinner: the word, a step each side, the position printed.
+`src/menus/pick.ts` owns the shape rule and `src/table/model.ts` owns the list
+of rows that are states, which is the same division `clustered` is under — the
+shape is the widget's rule, the semantics are the data's.
+
+**A SET YOU MAY HOLD ONE OF IS DRAWN AS ONE**, and a set you may hold several of
+is drawn as several: a single-select strip is a joined rail with one segment
+filled; a chain is separate pills each wearing its own tick box.
+
+**A ROW CARRYING MORE THAN ONE VALUE SAYS SO** — a filled ground, a `--hand`
+rail at its start, and its COUNT at the end of its label. The count is MEASURED
+off the widget (`[data-k]`) rather than declared beside it, so it cannot go
+stale.
+
+#### 19c · What landed, and what it measured
+
+**SHIPPED (uncommitted), 2026-09-07.** Eight files carry it:
+`src/lozenge/field.ts` (the table, its columns and their continuations, the
+sideways memory), `src/menus/pick.ts` + `src/menus/api.ts` (the spinner rule
+and the fifth picker), `src/table/sheet.ts` (the sheet track, the spinner, the
+exclusive rail, the compound mark), `src/table/model.ts` (which rows are
+states, and the op bar split in two), `src/table/api.ts` (`cycle`, `compact`),
+`src/copy/table.ts` (four keys) and `nu.css`. `node tools/ui/build.js --check`
+says **ui-build ok 5 entries** and `npx tsc --noEmit` is clean.
+
+**THE NUMBERS** (`scratchpad/design/instrument-table/probe.cjs`,
+`devices["iPhone 14"]`, DPR 3, `isMobile`, `hasTouch`, 390 and 320, on
+Kingston 1969 and Coach House; before off a `git archive HEAD` of v299 served
+beside the working tree; `before.json` / `after.json` kept, with the
+screenshots):
+
+| | before (v299) | after |
+|---|---|---|
+| the chair sheet, a pitched player, 390 | **1,537px** | **935px** |
+| …at 320 | **1,738px** | **982px** |
+| the bass chair · the drummer's, 390 | 1,971 · 1,776 | **1,462 · 1,258** |
+| settings on the glass at rest, 390 | **4** of 11 | **10** of 12 |
+| …at 320 | **3** | **6** |
+| the tallest single control, 390 | the op bar, **41 buttons, 441px** | the op bar, split in two, the taller **233px** |
+| …at 320 | **540px** | **280px** |
+| distinct control shapes | **7** | **8** — the spinner is new, and it took three word-buttons down to one |
+| the chair's four subjects | stacked, 1,334px of column | **side by side, a 475px track** |
+| the instrument picker | **707px**, **0 of 147** instruments drawn, 13 families ALL FOLDED | **690px**, **147 of 147 drawn**, 13 families in **17 columns** |
+| …its track | — | **3,078px wide in a 352px port** |
+| instruments readable with the picker on the glass, 390 · 320 | **0 · 0** — thirteen headings and not one word (`glance.cjs`) | **40 · 27** |
+| where the record's own instrument was | inside a fold, drawn 0 x 0, NOT on the glass | **on the glass at both widths**, its column marked and the track scrolled to it |
+| taps to a NAMED instrument | **3**, plus a scroll before the third could land | **2** |
+| spinners on a chair (pitched · bass · drums) | 0 · 0 · 0 | **2 · 4 · 5** |
+| compound rows marked | 0 | **1** (the envelope plate, `6` settings, counted off the widget) |
+| the PAGE's sideways scroll | none | **none** — the track is the scrollport |
+| controls taller than the viewport | 0 | **0** (T15a: 39 pickers, tallest 690px) |
+
+**FIVE THINGS THE RENDERED PAGE SAID THAT THE PROPOSAL DID NOT.**
+
+- **THE CHAOS WAS ONE CONTROL AND IT HAD TWO SUBJECTS IN IT.** The op bar drew
+  **41 buttons in a 441px wall** — eight about the COLUMN and thirty-three
+  about the SOUND — which is the whole of *"all these playing options that I
+  can't differentiate."* `colOps` already fetched the qualities as their own
+  list and then spread them into the middle of the structural ops; splitting
+  the bar is the model's own sentence said out loud, and not one address moved.
+  It is 149 + 289px now, under two headings, and the second bar is drawn at
+  `--t1` because a verb you push is not a value you set.
+- **A FAMILY IS NOT A COLUMN.** 147 instruments in 13 families become **17**
+  columns: `native` (28), `lead` (31) and `pad` do not fit one screen-tall
+  column and continue into the next. The continuation heading is a READOUT —
+  no `data-k`, `aria-hidden` — because two elements on one address is what
+  `chipStrip`'s pin law forbids, and `test/table.browser.js` T5f's *"one hue
+  per cluster"* had to learn the difference (it counted sections; it counts
+  `data-bi` now).
+- **A `scroll` EVENT ARRIVES A FRAME LATE, AND A WRITE DOES NOT WAIT FOR IT.**
+  The first drawing remembered the track's sideways position from its own
+  `scroll` listener, and T12n measured what that costs: a thumb that scrolls
+  the track and presses a word in the same task writes FIRST, so the rebuilt
+  field restored where the track was BEFORE the scroll and the pill under the
+  thumb jumped **202px → 1,033px**. The position is read straight off the live
+  element at `pointerdown` and again at the write, and handed to the next
+  build as a one-shot baton.
+- **AND THE SHEET'S OWN TRACK HAD THE SAME BUG ONE TIER UP.** With that fixed
+  the pill still moved **194px → 489px**, because the field sits in a
+  `.nu-sheettrack` column and THAT scroll was lost on the rebuild too. The
+  reading is armed in the CAPTURE phase on `click` as well as `pointerdown`,
+  because a `click` dispatched by script — which is how every gate on this
+  page presses a button — carries no pointer events at all.
+- **§6 ¶A's "reachable at 320" IS NOT "on the screen".** Paul asked for a sheet
+  wider than the screen, so T5g and T9t's *"nothing off the edge"* would have
+  failed a shape they have no rule against. The claim is amended in writing and
+  DRIVEN: a control past the edge must sit in a track, and the gate scrolls the
+  track to it and reads its rect again. Anything else is stranded and fails
+  exactly as before.
+
+**GATES.** `test/table.browser.js` grew **T19** — six claims (a…f) in the same
+six contexts §15 runs in — and four older ones learned the new shape (T5f's
+hue count, T5g/T9t's reachability, T12c's `--s5` on the axis the subjects
+stand on, and T8f, inverted with §19e). **PASSED (793 ok, 0 failed)**, twice.
+`test/selects.js` **ALL PASS**, `test/sheets.js` **ALL PASS (31 checks)**,
+`test/shell.js` **PASS** (24 skipped), `test/oneopen.js` **11 ok, 0 failed**,
+`node test/copy.test.js` **10 ok, 0 failed**, and `node test/table.test.js`
+**40 passed, 0 failed with NO re-pin** — measured against a `git archive HEAD`
+of b12da62 run beside it, which says the same 40, so the identity this round
+is not allowed to move did not move.
+
+#### 19d · What was refused, and why
+
+- **THE BASS'S AND THE DRUMMER'S INSTRUMENT ROWS DO NOT BECOME TABLES.**
+  `sound.bassinstrument` (12 recordings) and `sound.drumkit` (10 machines) carry
+  no `group` on their options — `avail.js` stamps `instruments.js familyOf` onto
+  `instrOptions` and onto nothing else — so they are long AND FLAT, which is
+  DESIGN §2/16's own named exception: *"the native picker stays only where a
+  vocabulary is long and flat."* Inventing families for twelve upright basses
+  would be the renderer writing a vocabulary, which is exactly what
+  `src/lozenge/clusters.ts` exists to refuse (*"this file holds no vocabulary"*).
+  Measured, and recorded rather than softened: those two rows are a native
+  `<select>` before this round and after it.
+- **A LONG PRESS DOES NOT STEP A SPINNER BACKWARDS.** Paul offered *"holding or
+  a second control steps back"*; the second control is what shipped. A long
+  press on a value already means SAY WHY on every widget on this page (§15,
+  and the lozenge's own law 3, 600 ms), and one gesture may not mean two
+  things — a hand that holds a refused spinner to read its reason must not
+  thereby have changed it.
+- **THE FORTY-ONE-BUTTON OP BAR WAS SPLIT, NOT PAIRED INTO STEPPERS.** The
+  thirty-three qualities READ as opposite pairs — brighter/darker,
+  drier/wetter, harder/softer — and a pair is the exact shape of a spinner. But
+  `producer.js ADJ` **declares no antonym**: the pairs are adjacent in the
+  table and nothing in the data says they are opposites, so pairing them would
+  be the renderer inventing a semantic the model does not carry — the same
+  refusal `clusters.ts` makes about headings, one tier over. If the qualities
+  ever declare their axis, the spinner is already here and the pair is two
+  addresses on one control.
+- **THE 44px TAP FLOOR IS NOT WHAT "SMALLER" MEANS.** *"We need to make it
+  smaller"* is answered with fewer lines, fewer shapes and smaller TYPE on the
+  verbs bar — never with a smaller thumb target. §13d's own sentence stands:
+  *"The tap floor is not negotiable and the air is."*
+- **THE SHEET IS STILL ALLOWED TO BE TALLER THAN THE PHONE**, and that is
+  §15's ruling and not a hole: *"a sheet is a SECTION OF THE PANE, and the pane
+  is this page's one scrollport, so a long sheet is one scroll and never a
+  scroll inside a scroll."* What §19 caps is the TRACK — the four subject
+  columns, and every picker inside them.
+
+#### 19e · The bass's own motif, wired (wave D's last two lines)
+
+**THE ENGINE WAS OPEN AND THE GLASS WAS SHUT.** Wave D (b12da62) let
+`kernel.js bass()` read a bass voice's OWN material cell as a figure over the
+record's harmony, gave `document.js` `bassCellAt` / `bassPhraseAt` / `slotsOf`,
+and wrote `bslot` onto the box. Two lines of UI were left, and until they
+landed a written bass sounded in `scoreOf` and in every export **and not on the
+page** — this tree's characteristic bug ([[declared-but-never-arriving]])
+pointed at the sound instead of at the glass.
+
+- **`src/table/model.ts`** — the bass's `say` row (*"the bass follows the first
+  line's motif. Change that cell."*) is deleted and the `v.kind === "bass"`
+  guard comes off `material.cell`, so a bass cell gets the motif picker every
+  other cell has. `avail.js` needed nothing: `cellsFor(doc, kindOf(doc, s))`
+  already answers a bass with the LINE cells and keeps the drum cells out.
+- **`ui/eight.js push()`** — the loop that banked the lines voice by voice
+  becomes `NuDocument.slotsOf(DOC).forEach((p, i) => { if (p) putPhrase(i, p); })`,
+  the one owner of the slot arithmetic, which appends the bass's per-section
+  phrases at exactly the index `boxesOf` writes as `bslot`.
+- **Three keys and one door.** `cell.bass.reads` and `cell.bass.readsNone` go
+  with the row that printed them; `bassReads()` is deleted from
+  `src/table/api.ts` and from `ui/eight.js` (an unused reader of a fact nobody
+  may act on is the next reader's trap). `cell.bass.why` is KEPT and rewritten
+  in the voice of the new fact — *"Plays these degrees over the chords; clear
+  it and the genre plays."* — and it rides as the row's CAPTION, not as a
+  refusal: the row is live now, and a control that may be used and is drawn
+  refused is the same lie the other way round.
+
+**MEASURED ON THE RENDERED PAGE** (`test/table.browser.js` T19f, in all six
+contexts, on Kingston 1969 and Coach House): a bass cell's motif picker is
+there, the tap lands on the CELL tier (`hook`), **the section's rendered bass
+events MOVE for it**, and one Ctrl-Z puts them back. **T8f is inverted rather
+than deleted** — it asserted the refusal, and it asserts the live picker and
+its caption now — which is the same treatment §13e gave T8a.

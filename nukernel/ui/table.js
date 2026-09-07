@@ -435,6 +435,7 @@ var fmt = (n3, unit) => C2().fmt(n3, unit);
 // nukernel/src/menus/pick.ts
 var CHIPMAX = 8;
 var LONGSTRIP = 24;
+var SPINMAX = 5;
 var COARSE = null;
 function coarse() {
   if (COARSE == null) {
@@ -448,6 +449,7 @@ function coarse() {
 }
 function pickerFor(n3, opts) {
   if (opts && opts.tight) return coarse() ? "native" : "combo";
+  if (opts && opts.cycle && n3 >= 2 && n3 <= SPINMAX) return "spinner";
   if (n3 <= CHIPMAX) return "chips";
   if (opts && opts.clustered) return "lozenge";
   if (coarse()) return "native";
@@ -976,11 +978,29 @@ function rowSheet(A2, i5) {
   for (const x2 of chain) f2.push(inGroup(x2, G.chain));
   return f2;
 }
+var CYCLEROWS = /* @__PURE__ */ new Set([
+  "sound.attack",
+  "sound.release",
+  "sound.double",
+  "sound.looping"
+]);
+function cycled(f2) {
+  return f2.kind ? f2 : { ...f2, cycle: true };
+}
 function colSheet(A2, vi) {
   const v3 = A2.doc().voices[vi];
   const f2 = [];
   const instr = [], env = [], tone = [], mix = [];
   f2.push({ kind: "ops", label: t4("col.ops"), ops: colOps(A2, vi, v3) });
+  {
+    const mk = makeOps(A2, v3);
+    if (mk.length) f2.push({
+      kind: "ops",
+      label: t4("col.make"),
+      ops: mk,
+      compact: true
+    });
+  }
   if (v3.kind === "line") instr.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
   const ik = v3.kind === "bass" ? "sound.bassinstrument" : v3.kind === "drums" ? "sound.drumkit" : "sound.instrument";
   instr.push(shField(
@@ -996,6 +1016,9 @@ function colSheet(A2, vi) {
       label: t4("col.drummer"),
       word: on ? t4("state.playing") : t4("col.drummer.off"),
       value: on ? "1" : "",
+      /* A STATE OF TWO, AND THEREFORE A SPINNER (§19) — the one row on
+         this sheet that was already a state drawn as two buttons. */
+      cycle: true,
       derived: false,
       options: [
         { v: "1", w: t4("state.playing") },
@@ -1013,7 +1036,10 @@ function colSheet(A2, vi) {
   const curve = A2.voiceEnv(v3.name);
   if (curve) env.push({ kind: "node", node: curve.node });
   for (const k2 of curve ? ["sound.double", "sound.looping"] : ["sound.attack", "sound.release", "sound.double", "sound.looping"])
-    if (A2.hasSheet(k2, { voice: v3.name })) env.push(shField(A2, k2, { voice: v3.name }, null));
+    if (A2.hasSheet(k2, { voice: v3.name })) {
+      const fl = shField(A2, k2, { voice: v3.name }, null);
+      env.push(CYCLEROWS.has(k2) ? cycled(fl) : fl);
+    }
   const kn = A2.voiceKnobs(v3.name);
   if (kn) tone.push({ kind: "node", label: kn.label, node: kn.node });
   const th = A2.throat(vi);
@@ -1100,16 +1126,7 @@ function cellSheet(A2, i5, vi) {
   const phrase = [], variation = [], dynamics = [], placement = [];
   const f2 = [];
   f2.push({ kind: "ops", label: t4("cell.ops"), ops: cellOps(A2, i5, vi) });
-  if (v3.kind === "bass") {
-    const b2 = A2.bassReads();
-    phrase.push({
-      kind: "say",
-      label: t4("special.phrases.word"),
-      word: b2 && b2.cell ? t4("cell.bass.reads", { value: b2.cell, lead: b2.lead }) : t4("cell.bass.readsNone"),
-      why: t4("cell.bass.why")
-    });
-  }
-  const reads = v3.kind === "bass" ? null : A2.sh(
+  const reads = A2.sh(
     "material.cell",
     { voice: v3.name, section: sid },
     t4("cell.sheet.plays", { name: v3.name, section: A2.secName(i5) })
@@ -1130,6 +1147,13 @@ function cellSheet(A2, i5, vi) {
       options,
       set: (x2) => w2.set(x2),
       why: w2.why || null,
+      /* WHAT A WRITTEN BASS DOES, said as a CAPTION and not as a
+         refusal (2026-09-07, wave D). The row is live — the reason the
+         sentence used to be a `why` was that the control was dead —
+         so the fact rides in the `sub`, where the sheet already prints
+         "where this value came from". kernel.js quotes this key by
+         name beside `bass()`'s own `own` argument. */
+      ...v3.kind === "bass" ? { sub: t4("cell.bass.why") } : {},
       clear: w2.derived ? null : () => w2.set("")
     });
   }
@@ -1378,16 +1402,6 @@ function colOps(A2, vi, v3) {
       aria: t4("op.resetCol.aria"),
       act: () => A2.dealCol(vi)
     },
-    /* "MAKE X Y" IS A COLUMN OP NOW (5). ui/produce.js owns the verb and its
-       qualities; what the table adds is the X — the column you opened is the
-       subject, so the sentence is already half said when you get there. */
-    ...A2.makeQualities(v3.name).map((q) => ({
-      k: "tcol-make|" + v3.name + "|" + q.v,
-      word: q.w,
-      aria: t4("op.make.aria", { name: v3.name, quality: q.w }),
-      why: q.why || null,
-      act: () => A2.makeXY(v3.name, q.v)
-    })),
     {
       k: "tcol-del|" + v3.name,
       word: t4("op.remove"),
@@ -1396,6 +1410,15 @@ function colOps(A2, vi, v3) {
       act: () => A2.dropVoice(v3.name)
     }
   ];
+}
+function makeOps(A2, v3) {
+  return A2.makeQualities(v3.name).map((q) => ({
+    k: "tcol-make|" + v3.name + "|" + q.v,
+    word: q.w,
+    aria: t4("op.make.aria", { name: v3.name, quality: q.w }),
+    why: q.why || null,
+    act: () => A2.makeXY(v3.name, q.v)
+  }));
 }
 function cellOps(A2, i5, vi) {
   const doc = A2.doc();
@@ -1506,6 +1529,10 @@ function pickerFor2(f2) {
   if (f2.multi && LOZ()) return "lozenge";
   if (f2.node) return "combo";
   if (f2.num) return "slider";
+  if (f2.cycle) {
+    const p3 = pickerFor((f2.options || []).length, { cycle: true });
+    if (p3 === "spinner") return p3;
+  }
   if (LOZ() && clustersOf(f2)) return "lozenge";
   return pickerFor((f2.options || []).length, { strip: true });
 }
@@ -1572,8 +1599,10 @@ function chipStrip(f2, onWrite) {
       >${o4.prov ? b`<small class="nu-chipprov">${o4.prov}</small>` : A}</button> `;
   };
   const all = f2.options || [];
+  const rail = { "nu-wchips": true, "is-exclusive": !f2.multi };
   if (!f2.groups || !f2.groups.length)
-    return b`<div class="nu-wchips" role="group"
+    return b`<div class=${e3(rail)} role="group"
+      data-exclusive=${String(!f2.multi)}
       aria-label=${f2.label}>${all.map(chip)}${sayLine(f2.key)}</div>`;
   const want = groupWords(f2, cur);
   const isPin = (o4) => {
@@ -1592,7 +1621,8 @@ function chipStrip(f2, onWrite) {
     </div>
     <div class="nu-wchips nu-pinned" role="group"
       aria-label=${t4("sheet.pinned.aria")}>${all.filter(isPin).map(chip)}</div>
-    <div class="nu-wchips" role="group" aria-label=${f2.label}>${all.filter((o4) => !isPin(o4)).map((o4) => {
+    <div class=${e3(rail)} role="group" aria-label=${f2.label}
+      data-exclusive=${String(!f2.multi)}>${all.filter((o4) => !isPin(o4)).map((o4) => {
     const v3 = String(o4.v == null ? "" : o4.v);
     const g2 = (f2.groups || []).find((gg) => gg.vals.includes(v3));
     const inGroup2 = !!want && !!g2 && g2.word === want;
@@ -1612,9 +1642,64 @@ var REDRAW = null;
 function onRedraw(fn) {
   REDRAW = fn;
 }
+var TRACKX = /* @__PURE__ */ new Map();
+var TRACKARMED = false;
+function armTracks() {
+  if (TRACKARMED || typeof document === "undefined" || typeof document.addEventListener !== "function") return;
+  TRACKARMED = true;
+  const grab = () => {
+    try {
+      for (const el of Array.from(
+        document.querySelectorAll(".nu-sheettrack[data-track]")
+      ))
+        TRACKX.set(String(el.dataset.track), el.scrollLeft);
+    } catch (e4) {
+    }
+  };
+  document.addEventListener("pointerdown", grab, true);
+  document.addEventListener("click", grab, true);
+}
+function restoreTracks() {
+  if (typeof requestAnimationFrame !== "function") return;
+  requestAnimationFrame(() => {
+    try {
+      for (const el of Array.from(
+        document.querySelectorAll(".nu-sheettrack[data-track]")
+      )) {
+        const was = TRACKX.get(String(el.dataset.track));
+        if (was != null && el.scrollLeft !== was) el.scrollLeft = was;
+      }
+    } catch (e4) {
+    }
+  });
+}
 function sheetBody(fields, name, openField, setOpenField, after) {
   const chunks = groupChunks(fields);
-  return b`<div class="nu-vsheet" role="group" aria-label=${name}>${chunks.map((c3) => c3.head == null ? c3.fields.map((f2) => fieldRow(f2, openField, setOpenField, after)) : groupSection(c3, openField, setOpenField, after))}</div>`;
+  const asTable = chunks.filter((c3) => c3.head != null).length >= 3;
+  armTracks();
+  const out = [];
+  let runN = 0;
+  let run = [];
+  const flush = () => {
+    if (!run.length) return;
+    const r2 = run;
+    run = [];
+    const tk = name + "|" + runN++;
+    out.push(b`<div class="nu-sheettrack" data-track=${tk}>${r2.map((c3) => groupSection(c3, openField, setOpenField, after))}</div>`);
+  };
+  for (const c3 of chunks) {
+    if (c3.head != null && asTable) {
+      run.push(c3);
+      continue;
+    }
+    flush();
+    out.push(c3.head == null ? c3.fields.map((f2) => fieldRow(f2, openField, setOpenField, after)) : groupSection(c3, openField, setOpenField, after));
+  }
+  flush();
+  if (asTable) restoreTracks();
+  return b`<div class=${e3({ "nu-vsheet": true, "is-table": asTable })}
+    data-table=${String(asTable)}
+    role="group" aria-label=${name}>${out}</div>`;
 }
 var glyphDoor = () => globalThis.NuGlyph || null;
 function groupSection(c3, openField, setOpenField, after) {
@@ -1622,7 +1707,12 @@ function groupSection(c3, openField, setOpenField, after) {
   const word = t4("group." + key);
   const g2 = glyphDoor();
   const mark = g2 ? g2.groupMark(key) : null;
-  return b`<section class="nu-sheetgroup" data-group=${key}
+  const open = c3.fields.some((f2) => {
+    const k2 = f2.key;
+    return !!k2 && k2 === openField;
+  });
+  return b`<section class=${e3({ "nu-sheetgroup": true, "is-open": open })}
+      data-group=${key}
       role="group" aria-label=${word}>
       <h4 class="nu-grouphead">${mark ? b`<span class="nu-g" aria-hidden="true">${mark}</span>` : A}<span class="nu-groupword">${word}</span></h4>${c3.fields.map((f2) => fieldRow(f2, openField, setOpenField, after))}
     </section>`;
@@ -1637,11 +1727,88 @@ function groupChunks(fields) {
   }
   return out;
 }
+function manyOf(f2) {
+  const k2 = f2.kind;
+  if (k2 === "node") {
+    const n3 = f2.node;
+    if (!n3 || typeof n3.querySelectorAll !== "function") return 0;
+    try {
+      const c3 = n3.querySelectorAll("[data-k]").length;
+      return c3 > 1 ? c3 : 0;
+    } catch (e4) {
+      return 0;
+    }
+  }
+  const sf = f2;
+  if (sf.multi && sf.values && sf.values.length > 1) return sf.values.length;
+  return 0;
+}
+function manyMark(n3) {
+  return n3 > 1 ? b`<small class="nu-many" aria-label=${t4("sheet.many", { n: n3 })}
+    >${n3}</small>` : A;
+}
+function spinRow(sf, write, clearBack) {
+  const opts = sf.options || [];
+  const cur = sf.value == null ? "" : String(sf.value);
+  const at = Math.max(0, opts.findIndex((o4) => String(o4.v == null ? "" : o4.v) === cur));
+  const step = (d2) => {
+    if (sf.why) {
+      say(sf.key, sf.why);
+      return;
+    }
+    for (let i5 = 1; i5 <= opts.length; i5++) {
+      const o4 = opts[(at + d2 * i5 + opts.length * opts.length) % opts.length];
+      if (o4.off) continue;
+      unsay(sf.key);
+      write(String(o4.v == null ? "" : o4.v));
+      return;
+    }
+    say(sf.key, sf.why || opts[at] && opts[at].why || null);
+  };
+  const refused = !!sf.why;
+  const stepBtn = (d2, cls, aria) => b`<button type="button" class=${"nu-spinstep " + cls}
+      data-k=${(d2 < 0 ? "prev|" : "next|") + sf.key}
+      aria-disabled=${o2(refused ? "true" : void 0)}
+      data-why=${o2(sf.why || void 0)}
+      aria-label=${aria}
+      @click=${() => step(d2)}><span class="nu-vh">${aria}</span></button>`;
+  return b`<div class="nu-sheetrow nu-spinrow">
+    <b class="nu-sheetlab">${sf.label}</b>
+    <div class="nu-spin" role="group" aria-label=${sf.label}>
+      ${stepBtn(-1, "is-prev", t4("sheet.spin.prev", { name: sf.label }))}
+      <button type="button"
+        class=${e3({
+    "nu-wcell": true,
+    "nu-spinword": true,
+    "is-derived": !!sf.derived,
+    "is-refused": refused
+  })}
+        data-k=${sf.key}
+        aria-disabled=${o2(refused ? "true" : void 0)}
+        data-why=${o2(sf.why || void 0)}
+        aria-label=${refused ? t4("sheet.field.refused", { name: sf.label, why: sf.why || "" }) : t4("sheet.field", {
+    name: sf.label,
+    value: valueAria(wordOf(sf), !!sf.derived)
+  })}
+        @click=${() => step(1)}>${wordOf(sf)}</button>
+      ${stepBtn(1, "is-next", t4("sheet.spin.next", { name: sf.label }))}
+      <small class="nu-spinpos" aria-hidden="true"
+        >${at + 1}/${opts.length}</small>
+    </div>
+    ${clearBack}
+    ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
+    ${sayLine(sf.key)}
+  </div>`;
+}
 function fieldRow(f2, openField, setOpenField, after) {
   if (f2.kind === "ops") {
     const o4 = f2;
     const bark = "ops|" + (o4.label || "") + "|" + (o4.ops[0] ? o4.ops[0].k : "");
-    return b`<div class="nu-sheetrow nu-sheetops">
+    return b`<div class=${e3({
+      "nu-sheetrow": true,
+      "nu-sheetops": true,
+      "is-verbs": !!o4.compact
+    })}>
       ${o4.label ? b`<b class="nu-sheetlab">${o4.label}</b>` : A}
       <div class="nu-opbar">${o4.ops.map((op) => b`<button type="button"
         class="nu-opbtn" data-k=${op.k}
@@ -1668,8 +1835,14 @@ function fieldRow(f2, openField, setOpenField, after) {
   }
   if (f2.kind === "node") {
     const n3 = f2;
-    return b`<div class="nu-sheetrow nu-noderow">
-      ${n3.label ? b`<b class="nu-sheetlab">${n3.label}</b>` : A}
+    const many2 = manyOf(f2);
+    return b`<div class=${e3({
+      "nu-sheetrow": true,
+      "nu-noderow": true,
+      "is-compound": many2 > 1
+    })}
+      data-many=${o2(many2 > 1 ? String(many2) : void 0)}>
+      ${n3.label ? b`<b class="nu-sheetlab">${n3.label}</b>` : A}${manyMark(many2)}
       ${n3.node ? n3.node : A}
     </div>`;
   }
@@ -1705,6 +1878,7 @@ function fieldRow(f2, openField, setOpenField, after) {
     }
     after();
   }}>${t4("act.clear")}</button>` : A;
+  if (pick === "spinner") return spinRow(sf, write, clearBack);
   if (pick === "combo")
     return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}
@@ -1783,8 +1957,10 @@ function fieldRow(f2, openField, setOpenField, after) {
       </select>${clearBack}
       ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
     </div>`;
-  return b`<div class="nu-sheetrow">
-      <b class="nu-sheetlab">${sf.label}</b>
+  const many = manyOf(f2);
+  return b`<div class=${e3({ "nu-sheetrow": true, "is-compound": many > 1 })}
+      data-many=${o2(many > 1 ? String(many) : void 0)}>
+      <b class="nu-sheetlab">${sf.label}</b>${manyMark(many)}
       <button type="button"
         class=${e3({
     "nu-wcell": true,

@@ -119,6 +119,20 @@
 //      set here; the field is a stack of sections and each section's wrap is a
 //      plain block of buttons, which is a shape nu.css can wrap.
 //
+// 11 · A VOCABULARY TOO TALL FOR THE PHONE IS A TABLE THAT SCROLLS SIDEWAYS
+//      (2026-09-07, TABLE.md §19). Paul, of the instrument picker: *"For the
+//      instrument selector make it a horizontal table wider than the screen
+//      with the instruments in tables one per line per column."* So a field
+//      that does not fit as a wrapped stack is drawn as one COLUMN PER
+//      CLUSTER, one word per line inside a column, the track scrolling on its
+//      own INLINE axis and the page's not at all (law 9 is about the PAGE and
+//      is unchanged: `.nu-lztrack` is the scrollport, `overscroll-behavior`
+//      keeps the gesture inside it). A family with more words than a column
+//      holds CONTINUES into the next column rather than growing past the
+//      bottom of the screen, which is how the height law (§15) is answered
+//      without a fold hiding anything at all: in table mode every option is
+//      not merely in the DOM, it is DRAWN.
+//
 // 10 · THE ADDRESS DOES NOT MOVE WHEN THE WIDGET DOES. `data-sel` is the key;
 //      `data-k` on the field is `spec.k` || "lz|" + key; a lozenge's `data-k`
 //      is `key + "|" + value` and its `data-v` is the value — byte for byte
@@ -192,6 +206,25 @@ function bins(spec: LozSpec): Bin[] {
 /** which clusters are folded, per field address. Module-level for the reason
  *  `sheet.ts`'s `GROUPOPEN` is: the panel is rebuilt from scratch on write. */
 const FOLDS = new Map<string, Set<number>>();
+/** ...and WHERE A HAND HAS SCROLLED THE TABLE SIDEWAYS, per field address.
+ *  Same reason `FOLDS` is module-level and not a local: every write on this
+ *  table ends in `changed() -> draw()`, which throws the whole panel away and
+ *  BUILDS THE FIELD AGAIN — so a scroll position held on the element would be
+ *  lost on every tap, the new field would scroll itself back to whatever is
+ *  standing NOW, and the pill under the thumb would jump sideways the moment
+ *  it was pressed. Measured on the rendered page before this map existed
+ *  (T12n, the mode picker at 390): a tap moved the word it landed on by
+ *  275px. Paul's law is *"it shouldn't move at all"*. */
+const SCROLLX = new Map<string, number>();
+/** ...and a ONE-SHOT HANDOFF for the write that is about to destroy the field.
+ *  `SCROLLX` is a memory and this is a baton: it is read off the live element
+ *  the instant a word is pressed, it is consumed by the very next build of
+ *  that address, and nothing else may write it. It exists because the `scroll`
+ *  EVENT arrives a frame late — a thumb that scrolls the track and presses a
+ *  word in the same task writes first, so the memory is still holding where
+ *  the track was BEFORE the scroll, and the pill under the thumb jumps
+ *  (measured 2026-09-07, T12n: 202px -> 1,033px). */
+const HANDOFF = new Map<string, number>();
 /** ...and which fields a HAND has folded, which is a different fact from which
  *  are folded. Past this set the field folds ITSELF to fit the phone (below);
  *  inside it, the hand's own answer stands and is never overruled. */
@@ -312,6 +345,65 @@ function autoFolds(plan: Bin[], at: number): Set<number> {
   return shut;
 }
 
+/* ===== THE TABLE (2026-09-07, TABLE.md §19) =============================
+   Paul, of the instrument picker: *"For the instrument selector make it a
+   horizontal table wider than the screen with the instruments in tables one
+   per line per column."*
+
+   THE FOLD ANSWERED THE HEIGHT BY HIDING WORDS; THE TABLE ANSWERS IT BY
+   TURNING THE FIELD NINETY DEGREES. §15's three states are still here and
+   still what a field with room uses (state A) — what changes is the ANSWER
+   when a vocabulary does not fit: instead of folding clusters shut (B, C) the
+   field lays each cluster out as a COLUMN, one word per line, and the columns
+   run off the side of the screen where there is no bottom to fall off.
+   Nothing is hidden at all in this state, which is a STRONGER form of law 1
+   than the fold it replaces: every option is not merely in the DOM, it is
+   drawn, and the count on a heading is a count of what you can see.
+
+   A COLUMN IS AS TALL AS THE SCREEN AND NEVER TALLER, so a family with more
+   words than one column holds CONTINUES into the next — the same heading, no
+   second address (a continuation heading is a readout, exactly as `.nu-lzheld`
+   is, because two elements on one `data-k` is what `chipStrip`'s pin law
+   forbids). Ten families of fourteen is a table 1,900px wide and 700px tall on
+   a 390px phone, and the phone scrolls it sideways the way it scrolls the
+   grid. */
+
+/** HOW MANY WORDS ONE COLUMN HOLDS. The budget less the heading and the say
+ *  line, over the pill's own row pitch — the same three constants the wrapped
+ *  estimate packs with, so the two states are measured in one arithmetic. */
+function perColumn(): number {
+  return Math.max(3, Math.floor((budget() - HEADROW - SAYROW - 8) / PILLROW));
+}
+
+/** DOES THE WHOLE VOCABULARY FIT AS A WRAPPED STACK? This is `autoFolds`'
+ *  state A asked as a question, and it is the ONE test that decides which
+ *  shape the field takes: a field that fits keeps the shape it has had since
+ *  v287, and a field that does not becomes the table. */
+function fitsFlat(plan: Bin[]): boolean {
+  const w = fieldWidth();
+  let h = SAYROW;
+  for (const b of plan) h += clusterHeight(b, w, false);
+  return h <= budget();
+}
+
+/** ONE COLUMN OF THE TABLE. `bi` is the cluster it belongs to — the fold, the
+ *  hue and the count are the CLUSTER's and not the column's, so a family that
+ *  runs over two columns folds as one thing and wears one ink. */
+interface Col { bi: number; word: string; opts: LozOption[];
+                first: boolean; total: number }
+
+function columnsOf(plan: Bin[], folded: Set<number>, per: number): Col[] {
+  const out: Col[] = [];
+  plan.forEach((b, bi) => {
+    if (folded.has(bi))
+      { out.push({ bi, word: b.word, opts: [], first: true, total: b.opts.length }); return; }
+    for (let i = 0; i < b.opts.length; i += per)
+      out.push({ bi, word: b.word, opts: b.opts.slice(i, i + per),
+                 first: i === 0, total: b.opts.length });
+  });
+  return out;
+}
+
 /** THE ONE DOOR. Returns the field element a caller appends; it owns its own
  *  standing value from then on and patches itself in place forever. */
 
@@ -334,6 +426,14 @@ export function lozengeField(spec: LozSpec): HTMLElement {
   host.dataset.k = spec.k ? String(spec.k) : "lz|" + key;
   if (off) { host.dataset.why = off; host.setAttribute("aria-disabled", "true"); }
   if (spec.ungated) host.dataset.ungated = "true";
+  /* ONE OF A SET, OR SEVERAL AT ONCE — SAID ON THE FIELD (2026-09-07, §19).
+     Paul: *"Each exclusive of each other."* A single-select field and a chain
+     are drawn with the same pill today and a hand cannot tell which it is
+     holding until it taps a second word and watches the first go out. The
+     fact is the spec's own `multi`; this is where it reaches the glass, and
+     nu.css draws the two differently (an exclusive set fills one pill of a
+     joined rail; a chain gives every pill its own tick box). */
+  host.dataset.exclusive = String(!spec.multi);
 
   /* ---- the state this field owns ------------------------------------- */
   let cur: string = spec.value == null ? "" : String(spec.value);
@@ -357,11 +457,21 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     if (want === "" && !multi) return -1;
     return plan.findIndex((b) => b.opts.some((o) => String(o.value) === want));
   };
-  if (!TOUCHED.has(key)) {
+  /* WHICH SHAPE THIS FIELD IS (2026-09-07, §19). One test, asked once: a
+     vocabulary that fits as a wrapped stack keeps the stack and §15's folds;
+     one that does not becomes the sideways TABLE, where nothing is folded at
+     all unless a hand folds it. `let` and not `const`: the rendered field is
+     measured one frame after the mount and the packing may be corrected
+     there, never the other way. */
+  let asTable = !fitsFlat(plan);
+  let per = perColumn();
+  if (!asTable && !TOUCHED.has(key)) {
     const want = autoFolds(plan, standingAt());
     folded.clear();
     for (const i of want) folded.add(i);
   }
+  if (asTable && !TOUCHED.has(key)) folded.clear();
+  host.dataset.table = String(asTable);
   let said = "";                             // what the last long press said
   let focusK: string | null = null;          // the roving tab stop's own key
 
@@ -415,15 +525,23 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     return String((hot || live[0]!).value);
   };
 
-  const draw = () => render(html`${plan.map((b, ci) => {
-    const shut = folded.has(ci);
-    const stop = stopOf(b);
+  /** ONE COLUMN (or, in the wrapped shape, one cluster) drawn. The two shapes
+   *  share every mark on the glass — the heading, the count, the pills, the
+   *  fold, the standing mark — and differ only in whether the wrap runs across
+   *  or down, which is a stylesheet's job and not a template's. */
+  const section = (c: Col) => {
+    const b = plan[c.bi]!;
+    const shut = folded.has(c.bi);
+    const stop = stopOf({ word: c.word, opts: c.opts });
     /* WHERE THE ANSWER IS, WHEN THE ANSWER IS BEHIND A FOLD (§15 state C).
        A heading that holds the standing word says so — `aria-current`, which
        is what a screen reader announces and what nu.css paints in `--hand` —
        so a folded field still points at the record's own answer, and the word
-       itself is on the field's head one row above. */
+       itself is on the field's head one row above. In the TABLE nothing is
+       folded, and the same mark says which COLUMN a hand should look at
+       first: the standing word is on the glass and its column is named. */
     const holds = b.opts.some((o) => stands(String(o.value)));
+    const mine = c.opts.some((o) => stands(String(o.value)));
     /* ...AND IT SAYS WHICH WORD (§15 state C). A folded field that only
        pointed at the cluster would be a field whose answer is one tap away
        from being read, and this component's oldest rule is that you can
@@ -433,29 +551,111 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     const held = shut && holds
       ? b.opts.filter((o) => stands(String(o.value))).map((o) => o.label).join(", ")
       : "";
+    /* A CONTINUATION HEADING IS A READOUT FOR THE SAME REASON `.nu-lzheld` is
+       (§19): the family already has a heading with the family's address on it,
+       and a second button carrying `key|cluster|word` would be two elements on
+       one address. It repeats the word so a column that begins halfway down a
+       family still says which family it is, and it is `aria-hidden` because a
+       screen reader already heard the heading it continues. */
     return html`<section
       class=${classMap({ "nu-lzcluster": true, "is-folded": shut,
-                         "is-standing": shut && holds })}
-      data-cluster=${b.word}
-      data-hue=${ci % HUES}
-      >${b.word ? html`<button type="button" class="nu-lzhead"
-          data-k=${key + "|cluster|" + b.word}
+                         "is-col": asTable,
+                         "is-standing": (asTable ? mine : shut && holds) })}
+      data-cluster=${c.word}
+      data-bi=${String(c.bi)}
+      data-cont=${ifDefined(c.first ? undefined : "true")}
+      data-hue=${c.bi % HUES}
+      >${c.word ? (c.first
+        ? html`<button type="button" class="nu-lzhead"
+          data-k=${key + "|cluster|" + c.word}
           aria-expanded=${String(!shut)}
-          aria-current=${ifDefined(shut && holds ? "true" : undefined)}
-          ><span class="nu-lzheadword">${b.word}</span
-          ><small class="nu-lzcount">${b.opts.length}</small
+          aria-current=${ifDefined((asTable ? mine : shut && holds) ? "true" : undefined)}
+          ><span class="nu-lzheadword">${c.word}</span
+          ><small class="nu-lzcount">${c.total}</small
           >${held ? html`<span class="nu-lzheld">${held}</span>` : nothing
-          }</button>` : nothing
+          }</button>`
+        : html`<span class="nu-lzhead nu-lzcont" aria-hidden="true"
+          ><span class="nu-lzheadword">${c.word}</span></span>`) : nothing
       }<div class="nu-lzwrap" ?hidden=${shut}
-        >${b.opts.map((o) => lozenge(o, stop === String(o.value)))}</div
+        >${c.opts.map((o) => lozenge(o, stop === String(o.value)))}</div
       ></section>`;
-  })}${off ? html`<small class="nu-why">${off}</small>` : nothing
+  };
+
+  const cols = (): Col[] => asTable
+    ? columnsOf(plan, folded, per)
+    : plan.map((b, bi) => ({ bi, word: b.word, opts: b.opts,
+                             first: true, total: b.opts.length }));
+
+  const draw = () => render(html`${asTable
+      ? html`<div class="nu-lztrack">${cols().map(section)}</div>`
+      : cols().map(section)
+    }${off ? html`<small class="nu-why">${off}</small>` : nothing
   }<p class="nu-lzsay" role="status" aria-live="polite"
       ?data-said=${!!said}>${said}</p>`, host);
+
+  /* THE STANDING COLUMN IS BROUGHT INTO VIEW, ONCE PER ADDRESS (§19). A table
+     wider than the screen with the record's own answer eleven columns off the
+     right edge is the hunting Paul is complaining about, said sideways. It is
+     done ONCE — the first time this ADDRESS is drawn — and after that the
+     hand's own scroll is what stands, restored across the rebuild every write
+     causes. A scroll on every write would move the track under the thumb that
+     is writing, which is DESIGN §3's law and what T12n measures. */
+  let placed = false;
+  const showStanding = () => {
+    if (placed || !asTable) return;
+    placed = true;
+    try {
+      const track = host.querySelector(".nu-lztrack") as HTMLElement | null;
+      if (!track) return;
+      /* THE BATON FIRST — where the track stood at the moment of the write
+         that built this field — then the memory, then the standing column. */
+      const baton = HANDOFF.get(key);
+      if (baton != null) { HANDOFF.delete(key); track.scrollLeft = baton;
+                           SCROLLX.set(key, baton); return; }
+      const was = SCROLLX.get(key);
+      if (was != null) { track.scrollLeft = was; return; }
+      const col = host.querySelector("section.nu-lzcluster.is-standing") as HTMLElement | null;
+      const x = col ? Math.max(0, col.offsetLeft - 8) : 0;
+      track.scrollLeft = x;
+      SCROLLX.set(key, x);
+    } catch (e) { /* no layout yet: the first column stands, which is honest */ }
+  };
+  /* ...AND THE HAND'S OWN POSITION IS REMEMBERED, TWO WAYS, BECAUSE ONE OF
+     THEM IS TOO LATE.
+
+     `scroll` does not bubble, so it is heard in the capture phase on the host
+     — one listener, bound once, the same arrangement the pointer handlers are
+     under (law 4). That catches a thumb that scrolls and then stops.
+
+     IT DOES NOT CATCH A THUMB THAT SCROLLS AND THEN WRITES, and that is the
+     case T12n measured (2026-09-07): a `scroll` EVENT is dispatched at the
+     next frame, so a gesture that moves the track and presses a word in the
+     same task writes FIRST — the sheet rebuilds, the new field restores the
+     position from before the scroll, and the pill under the thumb jumps
+     (measured: 202px -> 1,033px, the whole track snapping back to 0). So the
+     position is also read STRAIGHT OFF THE ELEMENT at the moment a gesture
+     starts and at the moment a write is made, while the track that holds it is
+     still on the page. `read` is the one owner of that reading. */
+  const readScroll = (baton?: boolean) => {
+    try {
+      const t = host.querySelector(".nu-lztrack") as HTMLElement | null;
+      if (!t || !t.isConnected) return;
+      SCROLLX.set(key, t.scrollLeft);
+      if (baton) HANDOFF.set(key, t.scrollLeft);
+    } catch (e) { /* nothing to read: what is remembered stands */ }
+  };
+  host.addEventListener("scroll", (e: Event) => {
+    const t = e.target as HTMLElement | null;
+    if (t && t.classList && t.classList.contains("nu-lztrack"))
+      SCROLLX.set(key, t.scrollLeft);
+  }, true);
 
   /* ---- the writes ----------------------------------------------------- */
   const write = (v: string) => {
     if (off) return;
+    /* WHERE THE TRACK IS, READ BEFORE THE WRITE THROWS THIS FIELD AWAY. The
+       baton is for the field that replaces this one, and only for it. */
+    readScroll(true);
     const o = plan.flatMap((b) => b.opts).find((x) => String(x.value) === v);
     if (!o || o.disabled) return;
     if (multi) {
@@ -495,6 +695,7 @@ export function lozengeField(spec: LozSpec): HTMLElement {
   const disarm = () => { if (timer != null) { clearTimeout(timer); timer = null; } };
 
   host.addEventListener("pointerdown", (e: PointerEvent) => {
+    readScroll();
     const el = (e.target as HTMLElement | null)?.closest?.(".nu-lz") as HTMLElement | null;
     if (!el || !host.contains(el)) return;
     disarm();
@@ -524,8 +725,13 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     const tgt = e.target as HTMLElement | null;
     const head = tgt?.closest?.(".nu-lzhead") as HTMLElement | null;
     if (head && host.contains(head)) {
+      /* THE CLUSTER IS READ OFF THE SECTION'S OWN ATTRIBUTE and not off its
+         position among the host's children: in the table the host's child is
+         the TRACK, and a family may own two columns, so a position is not an
+         identity. `data-bi` is the cluster's index, which is what the fold is
+         keyed on and what a continuation column shares with its first. */
       const sec = head.closest("section.nu-lzcluster") as HTMLElement | null;
-      const ci = sec ? Array.from(host.children).indexOf(sec) : -1;
+      const ci = sec && sec.dataset.bi != null ? +sec.dataset.bi : -1;
       if (ci >= 0) { TOUCHED.add(key);
         if (folded.has(ci)) folded.delete(ci); else folded.add(ci); draw(); }
       return;
@@ -580,17 +786,27 @@ export function lozengeField(spec: LozSpec): HTMLElement {
     const flat = groups.flat();
     const at = flat.indexOf(el);
     if (at < 0) return;
-    if (k === "ArrowRight" || k === "ArrowLeft") {
+    /* THE ARROWS FOLLOW THE WORDS (2026-09-07, §19). In the wrapped shape the
+       reading order runs ACROSS a cluster and the clusters stack, so
+       Left/Right walk the words and Up/Down step cluster to cluster. In the
+       TABLE the field is turned ninety degrees and so is the keyboard: a
+       column reads DOWN, and the next column is to the RIGHT. It is the same
+       two walks with the axes swapped, and not a second keyboard. */
+    const along = asTable ? (k === "ArrowDown" ? 1 : k === "ArrowUp" ? -1 : 0)
+                          : (k === "ArrowRight" ? 1 : k === "ArrowLeft" ? -1 : 0);
+    const across = asTable ? (k === "ArrowRight" ? 1 : k === "ArrowLeft" ? -1 : 0)
+                           : (k === "ArrowDown" ? 1 : k === "ArrowUp" ? -1 : 0);
+    if (along) {
       e.preventDefault();
-      land(flat[Math.min(flat.length - 1, Math.max(0, at + (k === "ArrowRight" ? 1 : -1)))]);
+      land(flat[Math.min(flat.length - 1, Math.max(0, at + along))]);
       return;
     }
-    if (k === "ArrowDown" || k === "ArrowUp") {
+    if (across) {
       e.preventDefault();
       const gi = groups.findIndex((g) => g.indexOf(el) >= 0);
       if (gi < 0) return;
       const pos = groups[gi]!.indexOf(el);
-      const d = k === "ArrowDown" ? 1 : -1;
+      const d = across;
       for (let j = gi + d; j >= 0 && j < groups.length; j += d) {
         const g = groups[j]!;
         if (!g.length) continue;                  // a folded or all-refused cluster
@@ -610,13 +826,39 @@ export function lozengeField(spec: LozSpec): HTMLElement {
 
   draw();
   /* ...AND THE ESTIMATE IS CHECKED AGAINST THE RENDERED FIELD, ONCE (§15).
-     `autoFolds` packs words it has not measured; this reads the box the
-     browser actually drew and steps the field DOWN a state if it is still
-     past the budget. One frame, one direction, and never against a hand. */
+     `autoFolds` and `perColumn` pack words they have not measured; this reads
+     the box the browser actually drew and corrects it if the estimate was
+     generous. One frame, one direction — the field only ever gets SHORTER —
+     and never against a hand.
+
+     THE TABLE'S CORRECTION IS ARITHMETIC AND NOT A STATE (2026-09-07, §19):
+     a column too tall means the pill's real row pitch is bigger than
+     `PILLROW`, so the pitch is MEASURED off the first pill drawn and the
+     words are repacked at the number that actually fits. A wrapped field
+     steps down §15's states exactly as it did. */
   try {
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => {
-      if (!host.isConnected || TOUCHED.has(key) || plan.length < 2) return;
+      if (!host.isConnected) return;
+      /* THE SIDEWAYS POSITION IS RESTORED FIRST AND ALWAYS — before any
+         question about height, and whether or not a hand has folded
+         something. It is where the reader WAS, and a rebuild that loses it is
+         the field jumping under the thumb. */
+      showStanding();
+      if (TOUCHED.has(key)) return;
       if (host.getBoundingClientRect().height <= budget()) return;
+      if (asTable) {
+        /* THE CORRECTION IS A RATIO AND NOT A PITCH, because a pill's height
+           is not one number: a word too long for its column wraps to a second
+           line (law 2), so the tallest column is what the budget has to hold
+           and the packing is scaled by what it actually measured. */
+        const h = host.getBoundingClientRect().height;
+        const room = Math.max(1, budget() - HEADROW - SAYROW - 8);
+        const drawn = Math.max(1, h - HEADROW - SAYROW - 8);
+        const want = Math.max(3, Math.floor(per * room / drawn));
+        if (want < per) { per = want; draw(); }
+        return;
+      }
+      if (plan.length < 2) return;
       const one = standingAt() >= 0 ? standingAt() : 0;
       const all = folded.size >= plan.length;
       if (all) return;                       // state C already: nothing below it
@@ -626,6 +868,7 @@ export function lozengeField(spec: LozSpec): HTMLElement {
         if (i !== one && !shy2(i)) folded.add(i);             // A -> B
       draw();
     });
+    else showStanding();
   } catch (e) { /* no rAF: the estimate stands */ }
   return host;
 }

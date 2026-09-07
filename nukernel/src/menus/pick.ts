@@ -48,6 +48,15 @@ export const CHIPMAX = 8;
  *  cell rows consult this (see `strip` below). */
 export const LONGSTRIP = 24;
 
+/** THE LONGEST STATE A SPINNER SAYS (2026-09-07, TABLE.md §19). Paul, of the
+ *  chair's playing options: *"turn them into spinners for the status
+ *  changes"*. Five, and five is the vocabulary the four sampler rows actually
+ *  hold — attack and release are four words and an absent detent, doubling is
+ *  three and one, looping two and one — which is also the longest set a person
+ *  can step through and still know where they are without counting. Past five
+ *  a row is a list you SHOP in and it keeps its chips. */
+export const SPINMAX = 5;
+
 /** Is there a thumb on this screen? Asked once and cached: a pointer does not
  *  change under a running page, and `matchMedia` in a loop over eighteen
  *  fields is eighteen style resolutions. */
@@ -109,11 +118,35 @@ export interface PickOpts {
    *  native picker for these vocabularies on every pointer; the native picker
    *  stays only where a vocabulary is long AND FLAT (a genre list)."* */
   clustered?: boolean;
+  /** THIS ROW IS A STATE, NOT A SHOPPING LIST (2026-09-07, TABLE.md §19).
+   *  Paul, of the chair's playing options: *"turn them into spinners for the
+   *  status changes based on the terminal"*, and, of the whole sheet, *"we
+   *  need to make it smaller"*.
+   *
+   *  WHAT A CYCLE IS, AND WHY THIS FILE DOES NOT DECIDE IT FROM THE DATA. A
+   *  vocabulary of four words looks exactly like a state of four positions
+   *  from here — `straight in · soft · slow · swelling` and `kick · snare ·
+   *  hats · toms` are both four — and the difference is what the row MEANS,
+   *  which is a fact `src/table/model.ts` holds and this file does not. So the
+   *  rule below is stated here (a state of at most `SPINMAX` positions is one
+   *  control that steps, not N buttons on a line) and WHICH ROWS ARE STATES is
+   *  declared by the model, one `cycle: true` per row, where a reader can see
+   *  the list. That is the same division `clustered` above is under: the shape
+   *  is the widget's rule, the semantics are the data's. */
+  cycle?: boolean;
 }
 
 export function pickerFor(n: number, opts?: PickOpts): Picker {
   // 0 · A CELL HAS NO ROOM FOR A STRIP — see `tight` above.
   if (opts && opts.tight) return coarse() ? "native" : "combo";
+  /* 0b · A STATE OF A FEW POSITIONS IS ONE CONTROL AND NOT A ROW OF THEM
+   *      (2026-09-07, §19). It stands ABOVE the chip rule because it is the
+   *      chip rule's own exception: four words are four chips by rule 1, and
+   *      four chips on a line are four things a hand has to tell apart when
+   *      the row only ever holds one of them. MEASURED on the chair sheet at
+   *      390 before this line: `attack`, `release`, `doubling` and `looping`
+   *      drew 17 chips across four lines to say four words. */
+  if (opts && opts.cycle && n >= 2 && n <= SPINMAX) return "spinner";
   // 1 · CHIPS ARE DECISIONS, and this page has said so since 2026-08-16.
   if (n <= CHIPMAX) return "chips";
   // 1b · A LONG VOCABULARY THAT KNOWS ITS OWN KINDS GETS ALL OF ITSELF SHOWN.

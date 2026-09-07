@@ -76,6 +76,14 @@ export interface StripField {
    *  new order. `set` stays the single writer, so there is one document write
    *  and one undo step either way. */
   setChain?: (v: string, on: boolean, order: string[]) => void;
+  /** THIS ROW IS A STATE THIS CONTROL STEPS THROUGH (2026-09-07, TABLE.md
+   *  §19). Paul, of a chair's playing options: *"turn them into spinners for
+   *  the status changes"*. `src/menus/pick.ts` owns the SHAPE rule (a state of
+   *  at most `SPINMAX` positions is one control, not N buttons on a line);
+   *  `src/table/model.ts` owns the LIST — which rows are states — because that
+   *  is a fact about what a row means and not about how many words it holds.
+   *  Absent on every other field, which keeps the widget it had. */
+  cycle?: boolean;
   num?: { min: number; max: number; step: number;
           /** what the number is in — "bars", "octaves", "" */
           unit?: string;
@@ -89,7 +97,13 @@ export interface SayField {
   why?: string | null;
   sub?: string | null;
 }
-export interface OpsField { kind: "ops"; label?: string; ops: Op[] }
+/** A BAR OF VERBS. `compact` is the SECOND bar a chair's sheet grew in §19 —
+ *  the thirty-three "make it ___" qualities, which are verbs you push and not
+ *  values you set, and which at the value's own type drew a 441px wall. It is
+ *  a look and it is declared by the model, because which bar is which is the
+ *  model's fact and not the renderer's guess. */
+export interface OpsField { kind: "ops"; label?: string; ops: Op[];
+                            compact?: boolean }
 export interface NodeField { kind: "node"; label?: string; node: HTMLElement | null }
 /** A FIELD WHOSE VALUE IS A WORD NOBODY OFFERED (2026-09-06, wave C item 8 of
  *  docs/REDESIGN-SCOPE.md: *"A section has a name. Types only today, so a form
@@ -266,7 +280,13 @@ export interface TableAPI {
   vpaintOf(vi: number): number | string | null;
   editSec(): number;
   playFrom(i: number): void;
-  bassReads(): { lead: string; cell: string | null } | null;
+  /* (`bassReads()` STOOD HERE to 2026-09-07 — "what a bass actually reads,
+     and why it is not asked", the door behind the one row of a cell sheet
+     that printed a sentence instead of offering a control. Wave D (b12da62)
+     let `kernel.js bass()` read the bass voice's OWN material cell, so the
+     sentence became false and the row became the motif picker every other
+     cell has. The door is deleted rather than left unused: an unused reader
+     of a fact nobody may act on is the next reader's trap.) */
   hasKind(k: string): boolean;
   lampFor(name: string): HTMLElement;
   previewOf(name: string): Node | null;

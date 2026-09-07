@@ -43,7 +43,7 @@ import type { Field, StripField, TextField, Choice } from "./api.js";
 import { pickerFor as pick } from "../menus/pick.js";
 import { t, fmt } from "../copy/global.js";
 
-export type Picker = "combo" | "chips" | "native" | "slider" | "lozenge";
+export type Picker = "combo" | "chips" | "native" | "slider" | "lozenge" | "spinner";
 
 /* THE RULE IS NOT THIS FILE'S ANY MORE, 2026-09-06. It was written here first
    and it was right here first — chips <= 8, the native picker on a coarse
@@ -125,6 +125,16 @@ export function pickerFor(f: StripField): Picker {
    *     quantity, and the shape of the answer (a line you slide along) thrown
    *     away. Words keep the chips. */
   if (f.num) return "slider";
+  /* 2b · A STATE OF A FEW POSITIONS IS A SPINNER (2026-09-07, TABLE.md §19).
+   *      `src/menus/pick.ts` owns the rule (at most `SPINMAX` positions) and
+   *      `src/table/model.ts` owns the list of rows that ARE states — a row
+   *      says `cycle` or it does not, and this asks. It stands above the
+   *      lozenge and the chip rules because it is their exception: four words
+   *      the row holds one of are one control, not four. */
+  if (f.cycle) {
+    const p = pick((f.options || []).length, { cycle: true });
+    if (p === "spinner") return p;
+  }
   /* 3 · A WALL OF WORDS THAT KNOWS ITS OWN KINDS IS A LOZENGE FIELD
    *     (2026-09-05, DESIGN.md component 16 · TABLE.md §11d). Paul: *"tight
    *     lozenges, organized by color and clustered semantically… visibility
@@ -268,8 +278,18 @@ export function chipStrip(f: StripField,
      strip, so anything reading "the control the field drew" reads its refusal
      with it. `.nu-wchips` is a wrapping flex row and `.nu-wsay` carries
      `flex: 1 0 100%`, so it is a line of its own under the words. */
+  /* ONE OF A SET LOOKS LIKE ONE OF A SET (2026-09-07, TABLE.md §19). Paul:
+     *"Each exclusive of each other."* Every strip this surface draws is
+     single-select — a chain goes to the lozenge field, which says the same
+     fact on its own host — so the flag is `!f.multi` and not a new field, and
+     nu.css draws an exclusive strip as one JOINED rail with one segment
+     filled rather than as a line of independent buttons. `aria-pressed` and
+     every address are untouched: this is a look, said in data so a gate can
+     read it. */
+  const rail = { "nu-wchips": true, "is-exclusive": !f.multi };
   if (!f.groups || !f.groups.length)
-    return html`<div class="nu-wchips" role="group"
+    return html`<div class=${classMap(rail)} role="group"
+      data-exclusive=${String(!f.multi)}
       aria-label=${f.label}>${all.map(chip)}${sayLine(f.key)}</div>`;
   /* ---- ONE GROUP OPEN AT A TIME ------------------------------------
      TABLE.md 6, of the drummer's sixty-eight: *"the does-array sheet groups
@@ -296,7 +316,8 @@ export function chipStrip(f: StripField,
     </div>
     <div class="nu-wchips nu-pinned" role="group"
       aria-label=${t("sheet.pinned.aria")}>${all.filter(isPin).map(chip)}</div>
-    <div class="nu-wchips" role="group" aria-label=${f.label}>${
+    <div class=${classMap(rail)} role="group" aria-label=${f.label}
+      data-exclusive=${String(!f.multi)}>${
       all.filter((o) => !isPin(o)).map((o) => {
         const v = String(o.v == null ? "" : o.v);
         const g = (f.groups || []).find((gg) => gg.vals.includes(v));
@@ -325,15 +346,103 @@ export function onRedraw(fn: () => void): void { REDRAW = fn; }
    is a `.nu-wcell` — the same plate the grid's own cells wear, so "inherited
    quiet, written bold" is one rule and not two — and tapping it grows its strip
    UNDER ITS OWN ROW. */
+/* ---- THE SHEET'S SIDEWAYS POSITION SURVIVES A WRITE (2026-09-07, §19) --
+   Every write on this table ends in `changed() -> draw()`, which throws the
+   whole sheet away and builds it again — so a track scrolled sideways springs
+   back to 0 on the first tap inside it, and the control under the thumb jumps
+   across the screen. MEASURED before this existed (T12n at 390): the mode
+   picker's own column stood at x=194 before a tap and x=489 after it, a 295px
+   jump with nothing about the record changed. It is the same fact
+   `src/lozenge/field.ts SCROLLX` keeps one tier down, and it is kept the same
+   way: a memory keyed by the track's own address, read off the live element
+   BEFORE the write (a `scroll` event arrives a frame late and would remember
+   where the track was before the gesture), restored one frame after the
+   rebuild.
+
+   THE READING IS ARMED IN THE CAPTURE PHASE, on `click` as well as
+   `pointerdown`, because a `click` dispatched by script — which is how every
+   gate on this page presses a button — carries no pointer events at all. */
+const TRACKX = new Map<string, number>();
+let TRACKARMED = false;
+function armTracks(): void {
+  if (TRACKARMED || typeof document === "undefined" ||
+      typeof document.addEventListener !== "function") return;
+  TRACKARMED = true;
+  const grab = () => {
+    try {
+      for (const el of Array.from(
+          document.querySelectorAll<HTMLElement>(".nu-sheettrack[data-track]")))
+        TRACKX.set(String(el.dataset.track), el.scrollLeft);
+    } catch (e) { /* nothing on the page: what is remembered stands */ }
+  };
+  document.addEventListener("pointerdown", grab, true);
+  document.addEventListener("click", grab, true);
+}
+function restoreTracks(): void {
+  if (typeof requestAnimationFrame !== "function") return;
+  requestAnimationFrame(() => {
+    try {
+      for (const el of Array.from(
+          document.querySelectorAll<HTMLElement>(".nu-sheettrack[data-track]"))) {
+        const was = TRACKX.get(String(el.dataset.track));
+        if (was != null && el.scrollLeft !== was) el.scrollLeft = was;
+      }
+    } catch (e) { /* the sheet is gone: nothing to put back */ }
+  });
+}
+
 export function sheetBody(fields: Field[], name: string,
                           openField: string | null,
                           setOpenField: (k: string | null) => void,
                           after: () => void): TemplateResult {
   const chunks = groupChunks(fields);
-  return html`<div class="nu-vsheet" role="group" aria-label=${name}>${
-    chunks.map((c) => c.head == null
+  /* ---- THE SHEET IS A TABLE TOO (2026-09-07, TABLE.md §19) -------------
+     Paul, of a chair's playing options: *"When I open an instrument gives me
+     all these playing options that I can't differentiate and they are spread
+     all over the place. Give them the same treatment as the instrument voice
+     selector … we need to make it smaller and it can also go horizontally
+     wider than the screen."*
+
+     SO A SHEET OF THREE SUBJECTS OR MORE STANDS THEM SIDE BY SIDE — one
+     COLUMN per group, one setting per line inside it, the track scrolling on
+     its own inline axis. It is the same shape the instrument picker takes one
+     tier down, which is what "the same treatment" means, and it is decided
+     from the DATA (how many groups the model declared) rather than from a
+     flag a caller passes: the chair's four (instrument · envelope · tone ·
+     mix), the section's five, the cell's four. A sheet of one or two subjects
+     is not spread over anything and keeps the stack it had.
+
+     THE DOCUMENT ORDER DOES NOT MOVE. A run of grouped chunks is WRAPPED in
+     the track where it stands; the ops bar, which carries no group, stays
+     ahead of it exactly as it was. `querySelectorAll(".nu-sheetrow")` reads
+     the same list in the same order it always did, which is the law §11c's
+     own group wrappers were written under. */
+  const asTable = chunks.filter((c) => c.head != null).length >= 3;
+  armTracks();
+  const out: unknown[] = [];
+  let runN = 0;
+  let run: { head: string | null; fields: Field[] }[] = [];
+  const flush = () => {
+    if (!run.length) return;
+    const r = run; run = [];
+    /* THE TRACK'S ADDRESS IS THE SHEET'S NAME AND ITS PLACE IN IT — stable
+       across the rebuild every write causes, which is the whole point. */
+    const tk = name + "|" + (runN++);
+    out.push(html`<div class="nu-sheettrack" data-track=${tk}>${
+      r.map((c) => groupSection(c, openField, setOpenField, after))}</div>`);
+  };
+  for (const c of chunks) {
+    if (c.head != null && asTable) { run.push(c); continue; }
+    flush();
+    out.push(c.head == null
       ? c.fields.map((f) => fieldRow(f, openField, setOpenField, after))
-      : groupSection(c, openField, setOpenField, after))}</div>`;
+      : groupSection(c, openField, setOpenField, after));
+  }
+  flush();
+  if (asTable) restoreTracks();
+  return html`<div class=${classMap({ "nu-vsheet": true, "is-table": asTable })}
+    data-table=${String(asTable)}
+    role="group" aria-label=${name}>${out}</div>`;
 }
 
 /* ---- THE MARKS REACH THIS BUNDLE THROUGH `globalThis` -----------------
@@ -358,7 +467,16 @@ function groupSection(c: { head: string | null; fields: Field[] },
   const word = t("group." + key);
   const g = glyphDoor();
   const mark = g ? g.groupMark(key) : null;
-  return html`<section class="nu-sheetgroup" data-group=${key}
+  /* THE COLUMN HOLDING THE OPEN CONTROL TAKES THE SHEET'S WIDTH (§19). A
+     picker opened inside an 18ch column would be a scrollport inside a
+     scrollport, which is the one shape this page has refused twice (§11c,
+     §15). One thing is open at a time (§18), so exactly one column is ever
+     wide, and it is the one a thumb is working in. */
+  const open = c.fields.some((f) => {
+    const k = (f as { key?: string }).key;
+    return !!k && k === openField; });
+  return html`<section class=${classMap({ "nu-sheetgroup": true, "is-open": open })}
+      data-group=${key}
       role="group" aria-label=${word}>
       <h4 class="nu-grouphead">${mark
         ? html`<span class="nu-g" aria-hidden="true">${mark}</span>` : nothing
@@ -395,6 +513,122 @@ function groupChunks(fields: Field[]): { head: string | null; fields: Field[] }[
   return out;
 }
 
+/* ---- WHICH SETTINGS ARE COMPOUND (2026-09-07, TABLE.md §19) -----------
+   Paul, of the chair's playing options: *"if things have multiple settings to
+   make that really clear and shading or a little bit of a fill behind them."*
+
+   A ROW IS COMPOUND WHEN IT CARRIES MORE THAN ONE VALUE, and there are
+   exactly two ways that happens on this surface, both of them already in the
+   data:
+
+     · A CHAIN — a `multi` field standing on two words or more (TABLE.md §15).
+       The count is the chain's own length.
+     · A SEATED WIDGET — a `node` row whose control is itself several
+       controls: the envelope's four handles, the throat's knob table, the
+       crate's files, the channel strip. The count is MEASURED off the node
+       the caller built (`[data-k]`, which is what every control on this page
+       wears), because a number declared beside it would be a second owner of
+       how many controls a widget has, and it would be wrong the first time
+       one of them was added.
+
+   A count of one is not compound: a widget with one address is a control, and
+   a badge saying "1" is a number nobody can act on — the same sentence the
+   lozenge field's own chain number is written under. */
+function manyOf(f: Field): number {
+  const k = (f as { kind?: string }).kind;
+  if (k === "node") {
+    const n = (f as Extract<Field, { kind: "node" }>).node;
+    if (!n || typeof n.querySelectorAll !== "function") return 0;
+    try { const c = n.querySelectorAll("[data-k]").length; return c > 1 ? c : 0; }
+    catch (e) { return 0; }
+  }
+  const sf = f as StripField;
+  if (sf.multi && sf.values && sf.values.length > 1) return sf.values.length;
+  return 0;
+}
+
+/** THE MARK ITSELF: a count in the row, and `is-compound` on the row for the
+ *  fill behind it. The number is DATA and not copy (the lozenge field prints
+ *  its chain's positions on the same argument); the sentence a screen reader
+ *  hears is one catalogue key. */
+function manyMark(n: number): TemplateResult | typeof nothing {
+  return n > 1 ? html`<small class="nu-many" aria-label=${t("sheet.many", { n })}
+    >${n}</small>` : nothing;
+}
+
+/* ---- THE SPINNER (2026-09-07, TABLE.md §19 · DESIGN.md component 23) ---
+   Paul: *"turn them into spinners for the status changes"*, and *"we need to
+   make it smaller"*.
+
+   ONE CONTROL SAYING THE STATE THE ROW IS IN, and two steps beside it. A tap
+   on the word steps FORWARD (the gesture a thumb already makes on a value
+   plate), `>` steps forward, `<` steps back — which is Paul's *"holding or a
+   second control steps back"* answered with the second control rather than
+   with the hold, because a long press on a value already means SAY WHY
+   everywhere else on this page (§15 / the lozenge's law 3) and one gesture
+   may not mean two things.
+
+   IT STEPS OVER A REFUSAL AND NEVER INTO ONE. A refused word is skipped by
+   the step and stays reachable the way every refusal is: the whole row
+   refused says its sentence and does not move (§15's law for a slider, said
+   again for a control that steps). The POSITION is printed — `2/5` — because
+   a control that shows one word of five has to say that there are five.
+
+   THE ADDRESS DOES NOT MOVE WHEN THE WIDGET DOES: the field's own `data-k` is
+   on the WORD, which is what T7 and `test/table-inventory.json` read, and the
+   two steps take `prev|<key>` and `next|<key>` — the same shape `clear|<key>`
+   and `num|<key>` already take. */
+function spinRow(sf: StripField, write: (v: string) => void,
+                 clearBack: TemplateResult | typeof nothing): TemplateResult {
+  const opts = sf.options || [];
+  const cur = sf.value == null ? "" : String(sf.value);
+  const at = Math.max(0, opts.findIndex((o) => String(o.v == null ? "" : o.v) === cur));
+  const step = (d: number) => {
+    if (sf.why) { say(sf.key, sf.why); return; }
+    for (let i = 1; i <= opts.length; i++) {
+      const o = opts[(at + d * i + opts.length * opts.length) % opts.length]!;
+      if (o.off) continue;
+      unsay(sf.key);
+      write(String(o.v == null ? "" : o.v));
+      return;
+    }
+    /* EVERY OTHER WORD IS REFUSED, which is a real answer and not a dead
+       button: the reason is the one the field or its words already carry. */
+    say(sf.key, sf.why || (opts[at] && opts[at]!.why) || null);
+  };
+  const refused = !!sf.why;
+  const stepBtn = (d: number, cls: string, aria: string) =>
+    html`<button type="button" class=${"nu-spinstep " + cls}
+      data-k=${(d < 0 ? "prev|" : "next|") + sf.key}
+      aria-disabled=${ifDefined(refused ? "true" : undefined)}
+      data-why=${ifDefined(sf.why || undefined)}
+      aria-label=${aria}
+      @click=${() => step(d)}><span class="nu-vh">${aria}</span></button>`;
+  return html`<div class="nu-sheetrow nu-spinrow">
+    <b class="nu-sheetlab">${sf.label}</b>
+    <div class="nu-spin" role="group" aria-label=${sf.label}>
+      ${stepBtn(-1, "is-prev", t("sheet.spin.prev", { name: sf.label }))}
+      <button type="button"
+        class=${classMap({ "nu-wcell": true, "nu-spinword": true,
+                           "is-derived": !!sf.derived, "is-refused": refused })}
+        data-k=${sf.key}
+        aria-disabled=${ifDefined(refused ? "true" : undefined)}
+        data-why=${ifDefined(sf.why || undefined)}
+        aria-label=${refused
+          ? t("sheet.field.refused", { name: sf.label, why: sf.why || "" })
+          : t("sheet.field", { name: sf.label,
+                               value: valueAria(wordOf(sf), !!sf.derived) })}
+        @click=${() => step(1)}>${wordOf(sf)}</button>
+      ${stepBtn(1, "is-next", t("sheet.spin.next", { name: sf.label }))}
+      <small class="nu-spinpos" aria-hidden="true"
+        >${at + 1}/${opts.length}</small>
+    </div>
+    ${clearBack}
+    ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
+    ${sayLine(sf.key)}
+  </div>`;
+}
+
 function fieldRow(f: Field, openField: string | null,
                   setOpenField: (k: string | null) => void,
                   after: () => void): TemplateResult {
@@ -406,7 +640,8 @@ function fieldRow(f: Field, openField: string | null,
        has ONE say line, addressed by the bar rather than by an op, because a
        toolbar is one control with several verbs. */
     const bark = "ops|" + (o.label || "") + "|" + (o.ops[0] ? o.ops[0].k : "");
-    return html`<div class="nu-sheetrow nu-sheetops">
+    return html`<div class=${classMap({ "nu-sheetrow": true, "nu-sheetops": true,
+                                        "is-verbs": !!o.compact })}>
       ${o.label ? html`<b class="nu-sheetlab">${o.label}</b>` : nothing}
       <div class="nu-opbar">${o.ops.map((op) => html`<button type="button"
         class="nu-opbtn" data-k=${op.k}
@@ -426,8 +661,15 @@ function fieldRow(f: Field, openField: string | null,
        the voice's channel strip is 207px of inserts, sends, EQ, pan and a
        fader, and beside an 11ch label at 390 it overflowed (desk-gate G13). */
     const n = f as Extract<Field, { kind: "node" }>;
-    return html`<div class="nu-sheetrow nu-noderow">
-      ${n.label ? html`<b class="nu-sheetlab">${n.label}</b>` : nothing}
+    /* A SEATED WIDGET IS USUALLY COMPOUND, and now it says so (§19): the
+       envelope is four handles, the knob table is a table, the crate is a
+       list of files. The count is measured off the node itself — see
+       `manyOf` — and the fill is the row's own. */
+    const many = manyOf(f);
+    return html`<div class=${classMap({ "nu-sheetrow": true, "nu-noderow": true,
+                                        "is-compound": many > 1 })}
+      data-many=${ifDefined(many > 1 ? String(many) : undefined)}>
+      ${n.label ? html`<b class="nu-sheetlab">${n.label}</b>` : nothing}${manyMark(many)}
       ${n.node ? n.node : nothing}
     </div>`;
   }
@@ -467,6 +709,8 @@ function fieldRow(f: Field, openField: string | null,
         @click=${() => { try { sf.clear!(); } catch (e) {} after(); }}>${
           t("act.clear")}</button>`
     : nothing;
+  /* A STATE THE ROW STEPS THROUGH (2026-09-07, §19) — see `spinRow`. */
+  if (pick === "spinner") return spinRow(sf, write, clearBack);
   if (pick === "combo")
     /* THE SUB IS DRAWN HERE TOO, 2026-09-06. It was on the `native` branch and
        on the chips branch and not on this one, so a field whose vocabulary is
@@ -576,8 +820,10 @@ function fieldRow(f: Field, openField: string | null,
       </select>${clearBack}
       ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
     </div>`;
-  return html`<div class="nu-sheetrow">
-      <b class="nu-sheetlab">${sf.label}</b>
+  const many = manyOf(f);
+  return html`<div class=${classMap({ "nu-sheetrow": true, "is-compound": many > 1 })}
+      data-many=${ifDefined(many > 1 ? String(many) : undefined)}>
+      <b class="nu-sheetlab">${sf.label}</b>${manyMark(many)}
       <button type="button"
         class=${classMap({ "nu-wcell": true, "nu-trimbtn": true,
                            "is-derived": !!sf.derived, "is-refused": !!sf.why })}

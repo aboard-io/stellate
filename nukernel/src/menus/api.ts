@@ -50,7 +50,11 @@ export interface MenuSpec {
   k?: string | null;
 }
 
-/** Which of the FOUR a vocabulary gets. `combo` is the typed one; `lozenge`
+/** Which of the FIVE a vocabulary gets. `combo` is the typed one; `lozenge`
  *  is DESIGN.md component 16 — every option visible at once, clustered under
- *  its own heading, one hue per cluster (2026-09-05). */
-export type Picker = "chips" | "native" | "combo" | "lozenge";
+ *  its own heading, one hue per cluster (2026-09-05); `spinner` is component
+ *  23 — one control showing the state a row is in, stepped word by word
+ *  (2026-09-07, TABLE.md §19). A spinner is only ever answered to a caller
+ *  that says its row is a STATE (`PickOpts.cycle`), so no vocabulary changes
+ *  widget without the file that knows what the row means asking for it. */
+export type Picker = "chips" | "native" | "combo" | "lozenge" | "spinner";

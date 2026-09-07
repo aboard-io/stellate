@@ -313,6 +313,7 @@ var o2 = (o3) => o3 ?? A;
 // nukernel/src/menus/pick.ts
 var CHIPMAX = 8;
 var LONGSTRIP = 24;
+var SPINMAX = 5;
 var COARSE = null;
 function coarse() {
   if (COARSE == null) {
@@ -329,6 +330,7 @@ function forgetPointer() {
 }
 function pickerFor(n2, opts) {
   if (opts && opts.tight) return coarse() ? "native" : "combo";
+  if (opts && opts.cycle && n2 >= 2 && n2 <= SPINMAX) return "spinner";
   if (n2 <= CHIPMAX) return "chips";
   if (opts && opts.clustered) return "lozenge";
   if (coarse()) return "native";

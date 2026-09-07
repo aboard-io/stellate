@@ -219,6 +219,11 @@ export const TABLE: Table = {
 
   /* ===== THE PLAYER SHEET (model.ts colSheet) =========================== */
   "col.ops": "this player",
+  /* THE SECOND OP BAR (§19, 2026-09-07): the thirty-three qualities, under a
+     word of their own, so a hand can tell "remove this player" from
+     "brighter". ui/produce.js's verb is `make`; this is the table's heading
+     for the words it takes. */
+  "col.make": "make it",
   "col.plays": "plays",
   "col.machine": "machine",
   "col.drummer": "drummer",
@@ -247,9 +252,13 @@ export const TABLE: Table = {
   "cell.ops": "this cell",
   "cell.sheet.plays": "{name} plays · {section}",
   "cell.sheet.variation": "{name} variation · {section}",
-  "cell.bass.reads": "{value} — from {lead}",
-  "cell.bass.readsNone": "from the first line",
-  "cell.bass.why": "The bass follows the first line's motif. Change that cell.",
+  /* (`cell.bass.reads` and `cell.bass.readsNone` STOOD HERE and went with the
+     row that printed them, 2026-09-07: a bass cell is a motif PICKER now, not
+     a sentence about somebody else's cell. `cell.bass.why` is KEPT and
+     rewritten in the voice of the new fact — kernel.js quotes this key by name
+     beside `bass()`'s own argument — because the row still has something true
+     to say about what a written bass does.) */
+  "cell.bass.why": "Plays these degrees over the chords; clear it and the genre plays.",
   "cell.focus": "focus",
   "cell.focus.on": "featured",
   "cell.focus.off": "not featured",
@@ -348,5 +357,14 @@ export const TABLE: Table = {
      TABLE.md §15 — a refusal is said out loud, and a slider refuses a value
      rather than a word. */
   "sheet.slider.range": "Between {min} and {max}",
+  /* ===== A STATE THAT STEPS, AND A SETTING THAT IS SEVERAL (§19) ========
+     TABLE.md §19, 2026-09-07. The spinner's two steps and the mark on a
+     compound row. The POSITION a spinner prints (`2/5`) and the COUNT on a
+     compound row are numbers and not copy — the lozenge field's chain numbers
+     are written under the same sentence — so what is here is only what a
+     screen reader has to hear said in words. */
+  "sheet.spin.prev": "{name} — the word before",
+  "sheet.spin.next": "{name} — the word after",
+  "sheet.many": "{n} settings in this one",
   "sheet.noOwner.why": "Not available here",
 };

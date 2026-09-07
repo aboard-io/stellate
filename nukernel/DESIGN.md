@@ -182,6 +182,58 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     too much"* is a law about WORDS, so the word repaints at most once a BAR
     and the fill at most once a beat, each memoised on what it draws (the
     string; the integer percent). Measured over eight bars: 9 and 9.
+22. **Table field / table sheet** (TABLE.md §19, 2026-09-07, Paul: *"For the
+    instrument selector make it a horizontal table wider than the screen with
+    the instruments in tables one per line per column"*, and, of a chair's
+    playing options, *"Give them the same treatment as the instrument voice
+    selector … we need to make it smaller and it can also go horizontally
+    wider than the screen"*) — **one shape, at two tiers**. A vocabulary too
+    tall to wrap becomes a TRACK of columns: one column per cluster, ONE WORD
+    PER LINE inside it, the columns running off the side of the screen where
+    there is no bottom to fall off; a family longer than a column CONTINUES
+    into the next column, under the same word drawn as a readout (no second
+    address). A sheet of three subjects or more takes the same shape one tier
+    up: one column per group, one setting per line, the column a thumb is
+    working in widening to the sheet so a picker never opens inside a
+    scrollport. **THE TRACK IS THE ONLY THING THAT SCROLLS SIDEWAYS** —
+    `overflow-x` on the track, `overscroll-behavior-inline: contain` on it, and
+    the PAGE's own inline axis untouched (§11c). It REPLACES the fold as the
+    answer to height (component 16's law 1 is stronger here, not weaker:
+    nothing is hidden at all, so the count on a heading counts what you can
+    see), and the fold stays for the vocabularies that still fit as a stack.
+    The standing word's column is marked in `--hand` and the track is scrolled
+    to it ONCE, on the mount, never again — a scroll on a write would move the
+    track under the thumb that is writing.
+23. **Spinner** (TABLE.md §19, 2026-09-07, Paul: *"turn them into spinners for
+    the status changes"*) — for a row that is a STATE of at most five
+    positions, not a list you shop in: ONE control saying the word the row is
+    in, a step each side, and the position printed (`2/5`) because a control
+    showing one of five has to say there are five. A tap on the word steps
+    FORWARD, `>` forward, `<` back — the second control and not a long press,
+    because a long press already means SAY WHY everywhere on this page
+    (component 14) and one gesture may not mean two things. It steps OVER a
+    refused word and never into one; a refused spinner says its reason and does
+    not move (component 14). **THE ADDRESS DOES NOT MOVE WHEN THE WIDGET
+    DOES**: the field's own `data-k` is on the word, and the steps take
+    `prev|<key>` / `next|<key>`, the shape `clear|<key>` and `num|<key>` take.
+    WHICH ROWS ARE STATES is declared by `src/table/model.ts` and the SHAPE
+    rule by `src/menus/pick.ts` — the same division component 16 is under.
+24. **Exclusive rail · compound mark** (TABLE.md §19, 2026-09-07, Paul: *"Each
+    exclusive of each other"* and *"if things have multiple settings to make
+    that really clear and shading or a little bit of a fill behind them"*) —
+    two marks that say what KIND of control a hand is holding, before it taps
+    anything. **EXCLUSIVE**: a single-select strip is JOINED — no gap, one
+    hairline between segments, rounded at the two ends only, the standing word
+    filled — and a chain is separate pills each wearing its own tick box. The
+    fact is the field's own `multi`, drawn as `data-exclusive` so a gate reads
+    what a hand sees. **COMPOUND**: a row carrying more than one value — a
+    chain of two words or more, or a seated widget that is itself several
+    controls (the envelope's handles, the knob table, the crate's files) — is
+    drawn on a filled ground with a `--hand` rail at its start and its COUNT
+    printed at the end of its label. The count is MEASURED off the widget
+    (`[data-k]`, which every control on this page wears) rather than declared
+    beside it, so it cannot go stale; a count of one is not compound, because a
+    badge saying "1" is a number nobody can act on.
 
 ## 3 · Interaction laws
 
