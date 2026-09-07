@@ -1712,12 +1712,28 @@ export function mount(parent, ctx) {
   function refit() {
     const w = wrap.clientWidth || 0;
     if (w <= 0) return false;
-    /* THE BOX IS THE COLUMN WIDE AND AT MOST 62% OF THE VIEWPORT TALL. The
+    /* THE BOX IS THE COLUMN WIDE AND AT MOST 67% OF THE VIEWPORT TALL. The
        globe sits in a long scrolling document, so a square earth on a 390x844
-       phone would be 46% of the screen before the slider; 62% of the height is
-       the ceiling that keeps the slider and the sentence on screen with it. */
-    const h = Math.min(Math.round(w * 0.82),
-                       Math.round((window.innerHeight || 800) * 0.62));
+       phone would be 46% of the screen before the slider; the ceiling is what
+       keeps the slider and the sentence on screen with it.
+       ...AND BOTH NUMBERS ROSE ON 2026-09-07 (TABLE.md §20). Paul: *"Get rid
+       of the dismiss x about the globe and expand the globe accordingly."* The
+       header the globe stood under is deleted — 44px of `--tap` at every
+       width, measured — and "accordingly" is this pair of constants and
+       nothing else: the drawing is the same drawing in a taller box.
+         · 0.82 -> 0.94 is that 44px expressed as the ASPECT it is at the width
+           Paul is on: 44 of the 364.4px column at 390 is 12 points of ratio.
+           It gives a narrower phone proportionally less (35.7px at 320) and
+           that is correct rather than a shortfall — on the narrow glass the
+           globe is WIDTH-bound and the ratio is what stops an earth taller
+           than its own column, which is what 0.82 was protecting.
+         · 0.62 -> 0.67 is the same 44px on a WIDE glass, where the globe is
+           height-bound and the ratio never binds: 44 of 844 is 5 points.
+       MEASURED after, on the rendered page: 298 -> 342 at 390, 241 -> 276 at
+       320, 523 -> 565 at 1280 — and the sentence and the index below it are
+       still on the glass at all three. */
+    const h = Math.min(Math.round(w * 0.94),
+                       Math.round((window.innerHeight || 800) * 0.67));
     if (w === lastW && h === lastH) return false;
     lastW = w; lastH = h;
     globe.fit(w, h);

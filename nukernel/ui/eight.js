@@ -402,7 +402,7 @@ import { songDurSec, voicing, setVoicing } from "../audio/plan.js";
    NOUN now — `burger.log` / `burger.menuLog`, picked by `tn` — and a plural
    chosen by an `if` in ui/glyph.js cannot be taught a second language's rest.
    ui/glyph.js still exports it and nothing calls it.) */
-import { GLYPH, kindGlyph, cellMark, icon, paintIcon,
+import { GLYPH, kindGlyph, cellMark, recordMark, icon, paintIcon,
          wireSay } from "./glyph.js";
 // THE ? MARK AND THE PAGE IT OPENS (2026-08-30, Paul: "add a ? Icon above the
 // log icon that fully explains every aspect of a genre"). The whole explainer
@@ -13404,13 +13404,39 @@ function logRow(L) {
    That is the correct place for it — a log line is not a notification, nothing
    in this box is waiting for the reader, and the one readout a player wants
    with the plate shut is the tape, which is on the glass at every moment. */
+/* ===== ...AND WHILE THE PLATE IS OPEN THE ≡ IS A DISMISS (2026-09-07, §20) =
+   Paul: *"The hamburger menu should open higher and the menu icon should be a
+   dismiss button."*
+
+   IT IS #play's OWN LAW, SAID ON THE OTHER FIXED BAND. "The word on it is the
+   NEXT tap" is what ▶/■ have always obeyed, and this control has always had
+   two taps in it — `setMenu()` with no argument toggles, and §18's third way
+   out is *"its own OPENER pressed again"*. What was missing was that the
+   button never SAID so: a ≡ standing over an open plate reads as the control
+   that opens the plate that is already open. So while the plate is open the
+   mark is × and the name is `close`, and both go back the moment it shuts.
+
+   AND THIS IS NOT THE THING §13a.1 REFUSED. That paragraph moved the × OUT of
+   the corner and into the open sheet's own header — *"the × that closes a
+   sheet is the sheet header's own"* — and it is still right, because THE ≡
+   NEVER OPENED A SHEET. A sheet is opened by a row of this plate, or by the
+   record's name, or by a link; the control that shuts a thing must be the
+   control that opened it, which is why a sheet's × belongs to the sheet. The
+   PLATE is the one surface on this page the ≡ opens, and it is therefore the
+   one surface the ≡ may honestly close. The two rules are the same rule.
+   ONE MARK, TWO SPELLINGS, ONE TABLE: both come from ui/glyph.js
+   (`GLYPH.act.menu`, `GLYPH.act.close`) and the SENTENCE while open is the
+   ≡'s own (`glyph.act.menu.close.say`, "Close this menu"), because
+   `glyph.act.close.say` says "Back to the song" and this press does not leave
+   the page it is on. */
 function paintBadge() {
   const n = logs.length || null;
   if (menuBtn) {
-    paintIcon(menuBtn, { glyph: GLYPH.act.menu.g,
-                         word: GLYPH.act.menu.w, say: GLYPH.act.menu.s });
+    const a = menuOpen ? GLYPH.act.close : GLYPH.act.menu;
+    paintIcon(menuBtn, { glyph: a.g, word: a.w,
+      say: menuOpen ? _t("glyph.act.menu.close.say") : GLYPH.act.menu.s });
     menuBtn.setAttribute("aria-expanded", String(menuOpen));
-    menuBtn.setAttribute("aria-label", GLYPH.act.menu.w);
+    menuBtn.setAttribute("aria-label", a.w);
   }
   if (!logBtn) return;
   paintIcon(logBtn, { glyph: GLYPH.log.g, num: n,
@@ -13911,10 +13937,24 @@ function menuHead(id, word) {
   b.id = "nu-menuh-" + id;
   return b;
 }
-/* A ROW OF THE RECORD'S GROUP: the WORD left and the row's own SENTENCE right,
-   one line, ellipsised — which is exactly what the row said when it stood at
-   the top of the session (§13a.2's "every special row is ONE LINE at rest").
-   The line moved into the menu; the shape of it did not. */
+/* A ROW OF THE RECORD'S GROUP: ONE MARK AND ONE NAME, and nothing else on the
+   glass (2026-09-07, §20). Paul: *"Come up with one format for each menu
+   entry: Unicode icon (not emoji) plus title case name."*
+
+   IT WAS THE WORD LEFT AND THE ROW'S OWN SENTENCE RIGHT — the special row's
+   resting line (§13a.2) drawn in the plate that opens it — and that was the
+   right shape while these eight were rows of the SESSION, where the sentence
+   is the record talking. In a plate of eighteen destinations it is eighteen
+   different amounts of text: `Default rules` beside `100 BPM · 4/4 · D natural
+   minor` beside nothing at all, ellipsised at three different points. So the
+   face comes off the glass and the row is spelled the way every other row of
+   this plate has always been spelled, by `icon()` — the mark, then the word,
+   with the word un-hidden by nu.css. The SENTENCE is not lost: it is the
+   accessible name (below) and the row's own sheet prints it in full one tap
+   later.
+   THE TITLE CASE IS nu.css's AND NOT A SECOND COPY OF THE WORDS. `text-
+   transform: capitalize` on the plate's own words, so `rules` is `Rules` here
+   and `RULES` in the table's row label, out of one string in one catalogue. */
 /** the word, then its sentence — and never the sentence alone. */
 function menuName(word, aria) {
   const w = String(word || "").trim();
@@ -13923,11 +13963,7 @@ function menuName(word, aria) {
   if (!w) return a;
   return a.toLowerCase().indexOf(w.toLowerCase()) === 0 ? a : w + " — " + a;
 }
-function menuRow(k, key, word, face, aria) {
-  const b = mkBtn("");
-  b.removeAttribute("id");
-  b.className = "nu-menurow";
-  b.dataset.k = "burger|" + k;
+function menuRow(k, key, id, word, aria) {
   /* AND IT SAYS WHAT IT IS TO A SCREEN READER, which is the row's own
      sentence — `special.time.aria` and its siblings, off the same `scopes()`
      the words come from. THE VISIBLE WORD IS THE HEAD OF IT, which is this
@@ -13937,8 +13973,9 @@ function menuRow(k, key, word, face, aria) {
      with their word already; the song's options say "Song options" under a row
      that says `this song`, and a reader who hears one word on the glass and
      another in their ear has been given two names for one control. */
+  const b = icon({ k: "burger|" + k, glyph: recordMark(id), word,
+                   say: menuName(word, aria) });
   b.setAttribute("aria-label", menuName(word, aria));
-  b.append(el("b", word, "nu-menuword"), el("span", face || "", "nu-menuface"));
   b.addEventListener("click", () => {
     /* THE MENU CLOSES AND ONE SHEET OPENS — never a stack of eight, never two
        at once. `land()` OPENS and never toggles (src/table/grid.ts says why),
@@ -13954,7 +13991,12 @@ function menuRow(k, key, word, face, aria) {
 }
 /* THE EIGHT, PAINTED OFF THE GRID THAT OWNS THEM. Built on the first paint
    (the grid does not exist when the plate is built) and repainted every time
-   the plate opens, because a face is a sentence about a record that moves. */
+   the plate opens.
+   WHAT IT REPAINTS IS THE SENTENCE AND NOT THE FACE, since 2026-09-07 (§20):
+   the rows say a mark and a word, both of which are fixed by the scope, and
+   the thing that moves with the record is the accessible name (`Master: soft ·
+   a touch · open — and the buses`). So this is two attribute writes on eight
+   buttons when the plate opens, and nothing at all on the glass. */
 function paintMenuFaces() {
   if (!recordGroup) return;
   let list = [];
@@ -13966,7 +14008,7 @@ function paintMenuFaces() {
     recordGroup.textContent = "";
     recordBtnMap.clear();
     for (const it of list) {
-      const b = menuRow(it.k, it.key, it.word, it.face, it.aria);
+      const b = menuRow(it.k, it.key, it.id, it.word, it.aria);
       recordGroup.append(b);
       recordBtnMap.set(it.key, b);
     }
@@ -13976,12 +14018,11 @@ function paintMenuFaces() {
   for (const it of list) {
     const b = recordBtnMap.get(it.key);
     if (!b) continue;
-    const f = b.querySelector(".nu-menuface");
-    if (f && f.textContent !== (it.face || "")) f.textContent = it.face || "";
-    const w = b.querySelector(".nu-menuword");
-    if (w && w.textContent !== it.word) w.textContent = it.word;
     const nm = menuName(it.word, it.aria);
-    if (nm && b.getAttribute("aria-label") !== nm) b.setAttribute("aria-label", nm);
+    if (nm && b.getAttribute("aria-label") !== nm) {
+      b.setAttribute("aria-label", nm);
+      b.dataset.say = nm;
+    }
   }
 }
 
@@ -14092,10 +14133,13 @@ NuOpen.register("log", () => setLog(false));
    tap that lands on a control ("a control decides for itself"). What this
    adds for a sheet is Escape from anywhere on the page rather than only from
    inside the pane, which is where the keydown could reach before. */
-const OUTBOX = { menu: () => menuBox, playops: () => playOpsBox,
-                 log: () => logPanel };
-const OUTOPENER = { menu: () => menuBtn, playops: () => playOpsBtn,
-                    log: () => logBtn };
+/* ...AND THERE ARE THREE SURFACES SINCE 2026-09-07 (§20) AND NOT FOUR: the
+   play fold is deleted with the gear that opened it (Paul: *"get rid of gear
+   and move those functions into the menu"*), so the twelve ordered pairs
+   `test/oneopen.js` walks are six. Nothing about the law changed — a surface
+   the box cannot open is a surface that cannot be the second thing standing. */
+const OUTBOX = { menu: () => menuBox, log: () => logPanel };
+const OUTOPENER = { menu: () => menuBtn, log: () => logBtn };
 document.addEventListener("pointerdown", (e) => {
   const now = OPENNOW;
   if (!now || !OUTBOX[now]) return;             // nothing open, or the grid's
@@ -14137,6 +14181,20 @@ function setMenu(want) {
   if (menuOpen) paintMenuFaces();
   if (menuBox) menuBox.hidden = !menuOpen;
   if (menuBtn) menuBtn.setAttribute("aria-expanded", String(menuOpen));
+  /* AND THE ≡ REPAINTS ITSELF, BECAUSE ITS FACE IS THE PLATE'S STATE
+     (2026-09-07, §20): ≡ shut, × open. `paintBadge` is the one painter of that
+     button and this is the one place `menuOpen` changes.
+     ...AND THE STRIP IS TOLD, ONCE, HERE. The plate opens at the top of the
+     screen now and the ≡ has to stand over it, which a `z-index` on a flex
+     child inside a stacking context cannot do (nu.css carries the
+     measurement). So the BAND rises and hides everything on it but the ≡, for
+     exactly as long as the plate is up. One writer, one attribute, and it is a
+     rendering of `menuOpen` rather than a second copy of it. */
+  paintBadge();
+  if (stripEl) {
+    if (menuOpen) stripEl.dataset.menu = "open";
+    else delete stripEl.dataset.menu;
+  }
   if (menuOpen) NuOpen.opened("menu"); else NuOpen.closed("menu");
   /* AND IT COMES BACK TO THE TOP EVERY TIME IT OPENS. The plate scrolls
      inside itself when the list is longer than the phone (§18), and a menu
@@ -14160,17 +14218,17 @@ function setMenu(want) {
    analog' etc spinner button to the main area right above play/stop and out of
    opts."* It stands between the door and ▶ in the bar, which is the neighbour
    it had in the gutter's foot.) */
-/* ...AND THERE ARE TWO OF THEM SINCE 2026-09-06 (§18). The ROOM came out of
-   this fold and stands in the bar itself — Paul: *"Get rid of the volume
-   options, popping up in the bottom instead integrate them into the bar with
-   only a pop-up."* What is left is the mode and the take, which are the two
-   facts about the next press of ▶ that a 320px line has no room for; they are
-   this bar's ONE pop-up, and the one owner of "what is open" knows it by
-   name. */
-const playOptItems = () => [
-  { key: "tp.mode", node: modeBtn },
-  { key: "tp.take", node: takeBtn },
-];
+/* ...AND THERE ARE NONE OF THEM SINCE 2026-09-07 (§20), BECAUSE THE FOLD IS
+   DELETED. Paul: *"Bottom bar: get rid of gear and move those functions into
+   the menu."* The room came out of this fold on 2026-09-06 and stands in the
+   bar; the mode and the take are rows of the hamburger's HOW IT PLAYS block
+   (see `chromeRow`), the same two nodes with the same two listeners. What went
+   with the fold is a POP-UP: the bar has none at all now, which is one of the
+   four surfaces `test/oneopen.js` was written about and the only one this
+   round could delete rather than tame.
+   THE LIST ITSELF IS DELETED AND NOT LEFT EMPTY. `playOptItems()` returned
+   `{key, node}` pairs for a box that no longer exists; an empty builder is a
+   seam somebody fills back in. */
 /* ===== THE GENRE'S NAME, ON THE SCREEN AT EVERY DEPTH ==================
    Paul, 2026-09-02: *"The name of the genre should be obvious."*
 
@@ -14474,6 +14532,25 @@ function chromeRow() {
      invented for the other three, and each one is the `aria-labelledby` of
      the group it heads, so the plate reads as four named lists rather than as
      seventeen buttons in a box. */
+  /* ===== THE RECORD'S OWN SURFACES (2026-09-06, §18) ===================
+     RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE · SONG,
+     in the order the record is made in — which is `scopes()`'s order in
+     src/table/grid.ts, read through `scopeMenu()` and never restated here.
+     The rows are built on the FIRST paint rather than now, because the grid
+     that owns the list is built by `showTab("Band")` a few lines below this
+     function and asking it for the eight before it exists would have been a
+     menu of empty words. `paintMenuFaces` is that paint, and it is called
+     every time the plate opens.
+     ...AND IT IS THE PLATE'S FIRST BLOCK SINCE 2026-09-07 (§20). Paul: *"In
+     the hamburger move the record sectio. above where you are section."* The
+     block that was second is first: a hand opens this plate to WORK on the
+     record far more often than to leave the page it is on, and the six views
+     include the one you are already standing on. The heading and the
+     `aria-labelledby` move with the group, so the plate still reads as three
+     named lists and neither group has been renamed. */
+  recordGroup = el("div", null, "nu-menugroup");
+  recordGroup.setAttribute("aria-labelledby", "nu-menuh-record");
+  menuBox.append(menuHead("record", _t("burger.record")), recordGroup);
   menuBox.append(menuHead("views", _t("burger.views")));
   menuBtnMap.clear();
   const viewGroup = el("div", null, "nu-menugroup");
@@ -14485,18 +14562,36 @@ function chromeRow() {
     menuBtnMap.set(it.key, b);
   }
   menuBox.append(viewGroup);
-  /* ===== THE RECORD'S OWN SURFACES (2026-09-06, §18) ===================
-     RULES · TIME · CHORDS · MOTIFS · MASTER · PRODUCE · PERFORMANCE · SONG,
-     in the order the record is made in — which is `scopes()`'s order in
-     src/table/grid.ts, read through `scopeMenu()` and never restated here.
-     The rows are built on the FIRST paint rather than now, because the grid
-     that owns the list is built by `showTab("Band")` a few lines below this
-     function and asking it for the eight before it exists would have been a
-     menu of empty words. `paintMenuFaces` is that paint, and it is called
-     every time the plate opens. */
-  recordGroup = el("div", null, "nu-menugroup");
-  recordGroup.setAttribute("aria-labelledby", "nu-menuh-record");
-  menuBox.append(menuHead("record", _t("burger.record")), recordGroup);
+  /* ===== HOW IT PLAYS — THE GEAR'S TWO CONTROLS, REHOUSED (2026-09-07) ===
+     Paul: *"Bottom bar: get rid of gear and move those functions into the
+     menu."*
+
+     WHAT THE GEAR HELD, MEASURED BEFORE IT WAS DELETED: `#playops` was a fold
+     over the bar holding exactly two controls — `#playmode` (loop · once ·
+     album, the three-position setting §18 kept in the bar) and `#take` (the
+     retake, which bumps `DOC.performance.take` and starts the record again).
+     THEY ARE THE SAME TWO NODES, MOVED. Not rebuilt: they keep their ids,
+     their listeners, their focus, their value and their `data-say`, which is
+     the same promise `.nu-seedrow` was moved under twice.
+     WHY THEY ARE A BLOCK OF THEIR OWN AND NOT THE RECORD'S. A view is
+     somewhere you go and the record's eight are facts the SONG carries; these
+     two are facts about the NEXT PRESS OF PLAY — the mode writes nothing to
+     the document at all and does not survive a reload, and the take is the one
+     performance fact this page has ever given a one-tap gesture. A row that
+     opened no sheet and belonged to no scope would be the third kind of thing
+     in a group of one kind, which is what a heading is for.
+     AND THE TWO CLOSE THE PLATE DIFFERENTLY, WHICH IS THE HONEST READING OF
+     WHAT EACH DOES. The take is a WRITE and it restarts the record, so the
+     plate gets out of the way to let you hear it — the same sentence the
+     record's eight obey. The mode is a SETTING you step through: a plate that
+     shut on every step would cost three openings to reach `album`, so it stays
+     open and the row repaints under the thumb, which is what the voicing in
+     the bar has always done. */
+  menuBox.append(menuHead("play", _t("burger.play")));
+  const playGroup = el("div", null, "nu-menugroup");
+  playGroup.setAttribute("aria-labelledby", "nu-menuh-play");
+  playGroup.append(modeBtn, takeBtn);
+  menuBox.append(playGroup);
   /* ===== THE SEED: TWO DOORS, ONE OWNER (2026-09-06, §18) ==============
      Paul, v298: *"Move the seed out of the bottom nav and into a 'set seed'
      in the hamburger."* Paul, today: *"Move the dice back into the bottom.
@@ -14522,7 +14617,10 @@ function chromeRow() {
      headings stand because their blocks are six rows and eight. */
   const seedLine = el("div", null, "nu-menuseed");
   seedMenuBtn = mkBtn("seedmenu");
-  seedMenuBtn.className = "nu-menurow";
+  /* AND IT IS SPELLED LIKE EVERY OTHER ROW OF THE PLATE (2026-09-07, §20): the
+     die's own ⚄ and the words `Set seed`, drawn title case by nu.css.
+     `printReading` paints it — one writer — and its accessible name still
+     carries the number the field will open holding. */
   seedMenuBtn.addEventListener("click", () => {
     setMenu(false); paintChrome(); openSeedEdit();
   });
@@ -14555,16 +14653,12 @@ function chromeRow() {
      three facts about the next press of ▶ — and at the end THE TAPE. */
   barEl = el("div", null, "nu-bar");
   barEl.id = "nu-bar";
-  /* THE PLAY OPTIONS UNFOLD ABOVE THEIR OWN DOOR, seated once, in a box that is
-     hidden rather than emptied — the same three nodes, keeping their listeners,
-     their focus and their value across every repaint. */
-  playOpsBox = el("div", null, "nu-baropts");
-  playOpsBox.hidden = true;
-  for (const it of playOptItems())
-    playOpsBox.append(it.node, document.createTextNode(" "));
-  playOpsBtn.setAttribute("aria-expanded", "false");
+  /* (THE PLAY OPTIONS' FOLD STOOD HERE, 2026-09-02 to 2026-09-07. Paul: *"get
+     rid of gear and move those functions into the menu."* Its two controls are
+     rows of the plate above; its door and its box are deleted, and the
+     tombstone that argues it is beside `playBtn`'s listener.) */
   const tp = el("div", null, "nu-bartp");
-  tp.append(playOpsBox, playOpsBtn, voicingBtn, playBtn);
+  tp.append(voicingBtn, playBtn);
   barEl.append(tp);
   /* ===== THE DIE COMES BACK, AND THE ROOM COMES WITH IT (2026-09-06, §18) =
      Paul: *"Move the dice back into the bottom. Leave them with the hamburger
@@ -14579,6 +14673,14 @@ function chromeRow() {
      AND THE ROOM IS THE BAR'S FLEXIBLE CHILD, where the tape used to be: it
      takes whatever the four fixed targets leave, prints its own percent, and
      needs nothing opened to be set. */
+  /* AND THE SEED ROW IS THE DIE ALONE (2026-09-07, §20). Paul: *"Get rid of
+     seed number too"* and *"Instead of a beat countdown when I hit dice replace
+     the die icon with the countdown. Will save space."* `#seedval` and its
+     `<b id="reading">` are deleted from the bar; `#seedin`, the field the
+     number became, stays in this row because the plate's `Set Seed` row is the
+     door that opens it and a field has to land SOMEWHERE a thumb can see. The
+     countdown is the die's own face now, so `.nu-seedwait` is deleted too:
+     one node fewer and one number in the place the gesture was made. */
   barEl.append(seedRowEl, volWrap);
   nav.append(barEl);
 
@@ -14845,25 +14947,40 @@ function showTab(name) {
     const h = name === "Band" ? null : hostOf(name);
     if (!h) { if (sheetHead.parentNode) sheetHead.remove(); }
     else {
-      /* THE PICKER'S HEADER IS THE × ALONE (2026-09-06). Paul: *"Get rid of
-         'where' and the line above … leave the close icon. Use the new space
-         to move the globe up."* The name is HIDDEN and not emptied, so the
-         node is the same node with the same parent for every sheet and the
-         one header is still one header; nu.css takes the rule under it away
-         for `#atlas` in the same breath. Nothing is lost to a screen reader:
-         `#atlasHead` is index.html's own visually-hidden <h2> ("Where & when")
-         and it is what names this panel, which is why it is the one child
-         ui/atlas.js's `mount` refuses to destroy. The four viewers behind the
-         ≡ keep their titles — a sheet you opened from a menu of five has to
-         say which of the five it is; the picker was opened by pressing the
-         genre, which is the only thing this sheet holds. */
+      /* ===== THE PICKER HAS NO HEADER AT ALL (2026-09-07, §20) ==========
+         Paul: *"Get rid of the dismiss x about the globe and expand the globe
+         accordingly."*
+
+         v297 took the WORD and the rule off this header and left the × — *"a
+         sheet opened from a MENU of five has to say which of the five it is,
+         and a sheet opened by pressing the one thing it holds does not"*. This
+         round finishes that sentence: a sheet whose only header content is a
+         close, on a view that has two other ways out, is 44px of a phone spent
+         on a duplicate. So the header is not inserted for `Where` at all and
+         the globe starts at the panel's own top edge.
+         THE TWO WAYS OUT ARE PROVEN AND GATED, because deleting a close with
+         no proven alternative is how a view becomes a trap: the record's NAME
+         in the top strip is a TOGGLE (§16, `whereBtn`'s listener — the same
+         press opens and closes), and ESCAPE with nothing open takes a view
+         back to the table (§18c, `armEscape`). test/atlas.js and
+         test/oneopen.js assert both, and test/shell.js asserts the header is
+         absent.
+         NOTHING IS LOST TO A SCREEN READER: `#atlasHead` is index.html's own
+         visually-hidden <h2> ("Where & when") and it is what names this panel,
+         which is why it is the one child ui/atlas.js's `mount` refuses to
+         destroy. The four VIEWERS keep their header, their name and their ×:
+         a sheet you opened from a list of five has to say which of the five it
+         is, and the ≡ that opened that list is not a control on the sheet. */
       const bare = name === "Where";
-      if (sheetName) {
-        sheetName.hidden = bare;
-        sheetName.textContent =
-          bare ? "" : ((GLYPH.tab[name] && GLYPH.tab[name].w) || name);
+      if (bare) { if (sheetHead.parentNode) sheetHead.remove(); }
+      else {
+        if (sheetName) {
+          sheetName.hidden = false;
+          sheetName.textContent =
+            (GLYPH.tab[name] && GLYPH.tab[name].w) || name;
+        }
+        if (h.firstChild !== sheetHead) h.insertBefore(sheetHead, h.firstChild);
       }
-      if (h.firstChild !== sheetHead) h.insertBefore(sheetHead, h.firstChild);
     }
   }
 
@@ -16147,10 +16264,26 @@ const playBtn = mkBtn("play"), rewriteBtn = mkBtn("rewrite"),
 // asks what a seed may be (ui/atlas.js `clampSeed` is the CLAMP; this is only
 // what the page SAYS the domain is)
 const SEEDMAX = 65536;
-const readingEl = el("b", "1", "nu-rd");
-readingEl.id = "reading";
-const seedValBtn = mkBtn("seedval");
-seedValBtn.append(readingEl);
+/* ===== THE NUMBER COMES OFF THE BAR (2026-09-07, §20) ==================
+   Paul: *"Get rid of seed number too."*
+
+   `#seedval` — the 44px button whose face was `<b id="reading">` — is DELETED
+   from the page, and `#reading` with it. The paragraph above is the argument
+   for having built them and it is kept because it is still the argument for
+   the shape that is left: two gestures on one subject were two targets, and
+   there is ONE gesture in the bar now (the throw) and one door in the plate
+   (type a number), so there is one target in each place.
+   WHAT IS LOST, SAID OUT LOUD: the seed is no longer READ anywhere on the
+   glass. It is in the die's accessible name (`rewrite 4113`, what a screen
+   reader is told the press will do — `printReading` still writes it), it is
+   what the field opens holding, and it is in the log for every throw. Paul
+   asked for the digits to go; this is what going costs, and the die's own
+   face is what takes the space back (the countdown, below).
+   THE FIELD IS STILL A SIBLING THAT IS HIDDEN, for the reason its own note
+   gives: a control created under a thumb has no listener yet and no place in
+   the tab order, and it has to take focus in the same task as the tap to raise
+   a phone's keyboard at all. What changed is which node it stands IN PLACE OF
+   — the die, which is the only other thing in the row. */
 /* THE FIELD THE NUMBER BECOMES. It is a SIBLING that is hidden, not a widget
    built on the press: a control created under a thumb is a control with no
    listener yet and no place in the tab order, and this one has to take focus
@@ -16175,10 +16308,17 @@ seedInEl.setAttribute("aria-label",
    feed (audio/live.js `pending`), same arithmetic — which is NOT here and must
    not come here. Empty is not drawn (nu.css `.nu-seedwait:empty`), so there is
    one state to keep honest instead of two. */
-const seedWaitEl = el("div", null, "nu-seedwait");
-seedWaitEl.dataset.live = "pending";
+/* (`.nu-seedwait` STOOD HERE — a `[data-live="pending"]` <div> under the die
+   printing `<b>5</b><small>beats</small>`. Paul, 2026-09-07: *"Instead of a
+   beat countdown when I hit dice replace the die icon with the countdown. Will
+   save space."* The number is the DIE'S OWN FACE now (`paintDie`), so the node
+   is deleted rather than hidden: one writer, one place, and the readout is on
+   the control the gesture was made on. `data-live` moves with it, onto the
+   die's `.nu-g` while a wait is up, which is what paints it in `--clock`. The
+   FEED and the ARITHMETIC did not move an inch — audio/live.js still owns
+   both, and `pend` is still the one map. */
 const seedRowEl = el("div", null, "nu-seedrow");
-seedRowEl.append(rewriteBtn, seedValBtn, seedInEl, seedWaitEl);
+seedRowEl.append(rewriteBtn, seedInEl);
 /* THE ROOM, STOOD UP (Paul: *"The volume slider is now vertical"*). The
    <input> is the same control it always was — same id, same 0..100 domain,
    same `aria-label`, same store — and what changed is the CHASSIS around it:
@@ -16359,43 +16499,26 @@ wireSay();
 playBtn.addEventListener("click", () => {
   if (playing) { stop(); say(false); } else { startAt(0); say(true); }
 });
-/* ...AND THE DOOR TO THEM, WHICH IS THE OTHER HALF OF THE SPLIT. It carries no
-   transport state at all — it never reads `playing` — so nothing about it
-   changes when the record starts. `aria-expanded` is the honest word for a
-   control that shows a set of siblings and is the one `#atlasIndexBtn` used
-   before it retired; `paintTray` re-reads it every repaint so a level entered
-   any other way still reports true. */
-/* ...AND IT IS A FOLD IN THE FOOT NOW, NOT A LEVEL (2026-09-02). Paul: *"Move
-   the play/stop button to the bottom, along with opts and where."* The four
-   controls it opens were never siblings you stand among — a mode, a take, a
-   voicing and a fader — so making them a LEVEL was the one place the stripe
-   used a level for something that was not a set of siblings, and it cost the
-   whole list to see them. They unfold ABOVE this button, inside the foot, and
-   the list gives up the pixels.
-   THE FACE IS A PICTURE AT LAST. `playOpsBtn.textContent = "opts"` stood here
-   and nu.css carried the debt beside it ("A PICTURE FOR IT IS OWED and it
-   wants a row in ui/glyph.js GLYPH.act"): `GLYPH.act.opts` is that row and
-   this mark is spelled like every other mark in the column now.
-   THE NAME WAS ALSO STALE and is fixed with the move: it said "rewrite, take,
-   voices, volume" and the die left this group on 2026-08-30, the mode joined
-   it the same day. */
-const playOpsBtn = icon({ k: "tp.opts", glyph: GLYPH.act.opts.g,
-                          word: GLYPH.act.opts.w, say: GLYPH.act.opts.s });
-playOpsBtn.id = "playops";
-let playOpsBox = null;
-const setPlayOps = (want) => {
-  if (!playOpsBox) return;
-  const open = want == null ? playOpsBox.hidden : !!want;
-  playOpsBox.hidden = !open;
-  playOpsBtn.setAttribute("aria-expanded", open ? "true" : "false");
-  /* THE FOLD IS A POP-UP AND THE ONE OWNER KNOWS IT (2026-09-06, §18). It is
-     the bar's ONE pop-up now — the room came out of it and stands in the bar
-     itself, so what is left behind this door is the mode and the take, the
-     two facts about the next press of ▶ that have no room on a 320px line. */
-  if (open) NuOpen.opened("playops"); else NuOpen.closed("playops");
-};
-NuOpen.register("playops", () => setPlayOps(false));
-playOpsBtn.addEventListener("click", () => setPlayOps());
+/* ===== TOMBSTONE: `#playops`, THE OPTIONS' DOOR (2026-09-02 to 2026-09-07) =
+   Paul, 2026-09-07: *"Bottom bar: get rid of gear and move those functions
+   into the menu."*
+
+   WHAT IT WAS: a ⚙ in `.nu-bartp` opening `.nu-baropts`, a fold above the bar
+   holding the play mode and the take (and, until 2026-09-06, the room). It was
+   born as the other half of a split — *"Make play/stop permanent and make a
+   new icon underneath for all the play/volume/seed functions"* — and every
+   move since has taken something out of it: the voicing on 2026-09-03, the
+   room on 2026-09-06, and now the last two.
+   WHY IT IS DELETED AND NOT MOVED. A door with two things behind it, on a bar
+   that has three marks, is a tap spent on a picture nobody can name — which is
+   the sentence §18 wrote about the gear that used to hold the song's options,
+   in the round that took THAT one away. The two controls are rows of the
+   hamburger now (`chromeRow`, the HOW IT PLAYS block), one tap deep instead of
+   two, wearing their own words instead of hiding behind a gear.
+   AND THE BAR HAS NO POP-UP AT ALL NOW, which is the other thing that went
+   with it. `setPlayOps`, `NuOpen.register("playops")` and the `playops` rows
+   of OUTBOX/OUTOPENER are deleted with it; `test/oneopen.js` walks three
+   surfaces and six ordered pairs where it walked four and twelve. */
 on("transport:state", () => say());
 volEl.value = String(vol);
 /* AND THE FADER IS ASSEMBLED — the track, its fill, its thumb, and the input
@@ -16519,31 +16642,66 @@ const startIfDown = () => { if (!playing) startNow(); };
    `CTX.setDocument`, which is `push(true)` and `commit("box")`. Painted at
    boot too, where the answer is 1: absent has to be today, and a button that
    said nothing until you pressed it would be the readout Paul was missing. */
-/* (`const readingEl = $("reading")` stood here. The <b> is built with its
-   button now — see the five controls at the head of this section — so this
-   line would have been a second lookup for a node this file is holding.) */
-const printReading = () => {
-  if (!readingEl || !ATLAS) return;
+/* (`const readingEl = $("reading")` stood here, and the <b> it looked up is
+   DELETED with `#seedval` on 2026-09-07 — Paul: *"Get rid of seed number
+   too."* The seed is not printed anywhere on the glass now; it is the die's
+   accessible name and the field's value.) */
+
+/* ===== THE DIE'S FACE, AND IT IS THE ONE WRITER OF IT (2026-09-07, §20) ==
+   Paul: *"Instead of a beat countdown when I hit dice replace the die icon
+   with the countdown. Will save space."*
+
+   TWO STATES, ONE NODE, AND THE SAME LAW `#play` HAS ALWAYS OBEYED. At rest
+   the die is ⚄ and its name is `rewrite <seed>`; while a reseed is waiting for
+   the next bar the SAME `.nu-g` prints the beats left, in `--clock` (which is
+   what `data-live` means on this page), and the name says the wait as well as
+   the number. Nothing else on the page draws that countdown, so there is one
+   readout and one writer for it — which is the shape `.nu-seedwait` had, on a
+   node that cost the bar 44px it no longer spends.
+   THE ARITHMETIC IS STILL NOT HERE. `seedLeft` is set by `paintSeedWait` off
+   the `pend` map audio/live.js is the one writer of; this function only draws
+   what it is handed, on the walk's own beat tick and on no clock of its own.
+   WHY THE NAME CARRIES THE WAIT. T10's law is that the visible thing is the
+   head of the accessible name, and `#rewrite` already holds this page's one
+   named exemption to it (its visible face is a picture and a number, never a
+   word). While the die says `5` a reader must be told what the 5 IS, so the
+   name reads `rewrite 4113 — 5 beats` and the number the press will change is
+   still the first thing in it. */
+let seedLeft = null;              // beats until the pending reseed lands
+const paintDie = () => {
+  if (!ATLAS) return;
   const n = String(ATLAS.reading());
-  readingEl.textContent = n;
+  const g = rewriteBtn.querySelector(".nu-g");
+  const waiting = seedLeft != null;
+  if (g) {
+    const face = waiting ? String(seedLeft) : GLYPH.act.seed.g;
+    if (g.textContent !== face) g.textContent = face;
+    if (waiting) g.setAttribute("data-live", "pending");
+    else g.removeAttribute("data-live");
+  }
   // the name a screen reader hears, and it is the same number: see the
   // hand-painted face above for why this is written rather than inherited.
-  rewriteBtn.setAttribute("aria-label", GLYPH.act.rewrite.w + " " + n);
-  /* ...AND THE NUMBER IS A CONTROL NOW, SO IT HAS A NAME OF ITS OWN
-     (2026-09-03). One writer, three places: the digit an eye reads, the die's
-     name (the gesture), and the number's name (the subject and what a press
-     on it will do). A screen reader must not be told "4242" and left to guess
-     that it is pressable. */
-  seedValBtn.setAttribute("aria-label", _t("seedRow.value.aria", { n }));
+  const nm = GLYPH.act.rewrite.w + " " + n
+    + (waiting ? " \u2014 " + _tn("count.beat", seedLeft) : "");
+  if (rewriteBtn.getAttribute("aria-label") !== nm)
+    rewriteBtn.setAttribute("aria-label", nm);
+};
+const printReading = () => {
+  if (!ATLAS) return;
+  const n = String(ATLAS.reading());
+  paintDie();
   /* ...AND THE MENU'S OWN DOOR TO IT WEARS THE SAME NUMBER (2026-09-06, §18).
-     ONE WRITER, THREE PLACES — the digit in the bar, the die's name, and the
-     plate's `set seed` row — which is this function's shape already. The row
-     is a DOOR and not a second store: pressing it opens the field this same
-     row holds. */
+     ONE WRITER, TWO PLACES — the die's name and the plate's `Set Seed` row —
+     which is this function's shape already. The row is a DOOR and not a second
+     store: pressing it opens the field the bar's own seed row holds.
+     THE NUMBER IS NOT ON ITS FACE ANY MORE (2026-09-07, §20). Every row of the
+     plate is a mark and a title-case name and nothing else, and the LOG's
+     count is the one trailing number the plate draws — Paul put it there
+     himself. So the seed rides this row's accessible NAME, where it always
+     also was, and the face is ⚄ over `Set seed`. */
   if (seedMenuBtn) {
-    seedMenuBtn.replaceChildren(
-      el("b", _t("burger.seed"), "nu-menuword"),
-      el("span", n, "nu-menuface"));
+    paintIcon(seedMenuBtn, { glyph: GLYPH.act.seed.g, word: _t("burger.seed"),
+                             say: _t("seedRow.value.say") });
     /* THE WORD FIRST, THEN THE NUMBER — `#rewrite`'s own shape ("rewrite " +
        n), for T10's own reason: what a reader hears must begin with what a
        reader sees. */
@@ -16716,6 +16874,12 @@ on("transport:round", () => {
 });
 
 takeBtn.addEventListener("click", () => {
+  /* AND IT CLOSES THE PLATE IT NOW STANDS IN (2026-09-07, §20). It is a WRITE
+     that restarts the record, so the surface gets out of the way to let you
+     hear it — the same statement the record's eight rows make when they open a
+     sheet. The mode beside it does NOT, because a setting you step through
+     three positions is a row you want to keep pressing. */
+  setMenu(false); paintChrome();
   /* THE NEXT TAKE, AND WHY 0 GOES TO 2. The slider's own domain is 0..99 and
      its readout says "take 1 — the reading it has always had" for BOTH 0 and
      1, because absent has to be today (document.js: every record written
@@ -16803,8 +16967,11 @@ rewriteBtn.addEventListener("click", () => rewriteNow());
    for a typed number — and `#reading` is still written only by
    `printReading`, which reads `ATLAS.reading()`. This section holds no copy
    of the seed; `#seedin.value` is a string a hand is in the middle of typing
-   and is thrown away on Escape. */
-seedValBtn.dataset.say = _t("seedRow.value.say");
+   and is thrown away on Escape.
+   ...AND `#seedval` IS DELETED IN ITS TURN, 2026-09-07 (§20). Paul: *"Get rid
+   of seed number too."* The explainer it carried (`seedRow.value.say`) is the
+   plate's `Set Seed` row's now — the one door left to the field — so the key
+   still has a printer and the sentence still reaches a thumb. */
 
 /* ---------- armSeed: which door the record comes back through ----------
    THE COUNT IS RAISED BEFORE THE COMPOSE AND SPENT BY THE LANDING (see
@@ -16867,10 +17034,11 @@ function writeSeed(n) {
 }
 
 /* ---------- the number becomes a field, and comes back ------------------
-   THE FIELD IS SHOWN, NOT BUILT, and the button is hidden rather than
-   removed: `#reading` is the page's one readout of the seed and eight gates
-   read it by id, so it stays in the DOM through the edit, saying the number
-   the record is still on until a new one is committed.
+   THE FIELD IS SHOWN, NOT BUILT, and the DIE is hidden rather than removed —
+   `#seedval` was what it stood in place of until 2026-09-07 and the die is
+   what is left in the row, so the row is one 44px slot holding either the
+   throw or the typing and never both. The die comes back the moment the edit
+   closes, by either door.
    ENTER AND BLUR COMMIT, ESCAPE CANCELS, which is the shape every field on
    this page has. `seedEditing` is what makes them one door and not three: the
    Enter path hides the input, which fires `blur`, which would otherwise
@@ -16879,8 +17047,8 @@ let seedEditing = false;
 function openSeedEdit() {
   if (!seedInEl || seedEditing) return;
   seedEditing = true;
-  seedInEl.value = String(ATLAS ? ATLAS.reading() : readingEl.textContent);
-  seedValBtn.hidden = true;
+  seedInEl.value = String(ATLAS ? ATLAS.reading() : "");
+  rewriteBtn.hidden = true;
   seedInEl.hidden = false;
   seedInEl.focus();
   seedInEl.select();
@@ -16890,7 +17058,7 @@ function closeSeedEdit(commitIt) {
   seedEditing = false;
   const raw = String(seedInEl.value || "").trim();
   seedInEl.hidden = true;
-  seedValBtn.hidden = false;
+  rewriteBtn.hidden = false;
   // A NUMBER OR NOTHING. An empty field or a typo is a gesture abandoned, and
   // abandoning is what Escape means — it may not roll a record on the way out.
   if (!commitIt || !/^[0-9]+$/.test(raw)) return;
@@ -16904,7 +17072,6 @@ function closeSeedEdit(commitIt) {
   if (ATLAS && +raw === +ATLAS.reading()) return;
   writeSeed(+raw);
 }
-seedValBtn.addEventListener("click", () => openSeedEdit());
 seedInEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); e.stopPropagation();
                            closeSeedEdit(true); }
@@ -16950,16 +17117,20 @@ function seedAnnounce() {
   announceChange(SEEDPEND, null, { who: SEEDPEND });
   paintSeedWait(false);
 }
+/* ...AND IT DRAWS ON THE DIE SINCE 2026-09-07 (§20). Paul: *"Instead of a beat
+   countdown when I hit dice replace the die icon with the countdown. Will save
+   space."* This function is unchanged in every way that matters — same feed,
+   same one pending, same arming, same clearing on a stop — and what it writes
+   is a module variable that `paintDie` reads instead of a node of its own. The
+   44px `.nu-seedwait` under the row is deleted; the number stands on the
+   control the gesture was made on. */
 function paintSeedWait(landed) {
-  if (!seedWaitEl) return;
   const left = pend.get(SEEDPEND);
   if (!seedWaiting || left == null || !playing) {
-    seedWaitEl.replaceChildren();
+    seedLeft = null;
     if (landed || !playing) seedWaiting = false;
-    return;
-  }
-  seedWaitEl.replaceChildren(el("b", String(left)),
-                             el("small", left === 1 ? "beat" : "beats"));
+  } else seedLeft = left;
+  paintDie();
 }
 on("transport:state", () => { if (!playing) paintSeedWait(true); });
 

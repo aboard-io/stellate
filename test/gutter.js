@@ -408,10 +408,16 @@ function standUpServer() {
      transport without anybody arguing for it, and an exact four-list is a
      stronger form of that than a count: it catches an addition, a deletion,
      AND a re-parenting, and it prints what it found. */
-  await p.evaluate(() => document.getElementById("playops").click());
+  /* ...AND THERE IS NOTHING TO OPEN SINCE 2026-09-07 (TABLE.md §20). Paul:
+     *"Bottom bar: get rid of gear and move those functions into the menu."*
+     `#playops` and `.nu-baropts` are DELETED; the mode and the take are rows
+     of the hamburger, so the fold is opened by opening the PLATE and the two
+     controls are counted there. The inventory below is the same kind of claim
+     about a bar that holds one thing fewer. */
+  await p.evaluate(() => window.__eightMenuOpen(true));
   await p.waitForTimeout(300);
   const t3 = await p.evaluate(() => {
-    const box = document.querySelector(".nu-baropts");
+    const box = document.getElementById("nu-menu");
     const has = (id) => !!document.getElementById(id);
     const kids = (sel) => { const n = document.querySelector(sel);
       return n ? [...n.children].map((c) => c.id || c.dataset.k || c.className ||
@@ -420,13 +426,12 @@ function standUpServer() {
       .filter((n) => n.getClientRects().length)
       .map((n) => +n.getBoundingClientRect().height.toFixed(1));
     return { open: !!(box && !box.hidden),
-             expanded: document.getElementById("playops").getAttribute("aria-expanded"),
-             inBar: !!document.querySelector("#nu-bar .nu-bartp .nu-baropts"),
-             opts: [...(box ? box.children : [])]
-               .map((n) => n.id || n.className).filter((x) => x),
+             expanded: document.getElementById("burger").getAttribute("aria-expanded"),
+             inBar: !document.querySelector("#playops, .nu-baropts"),
+             opts: [...(box ? box.querySelectorAll("#playmode, #take") : [])]
+               .map((n) => n.id),
              tp: !!document.querySelector("#nu-bar .nu-bartp #play"),
              five: ["play", "rewrite", "take", "voicing", "vol"].filter(has),
-             reading: (document.getElementById("reading") || {}).textContent,
              minTap: tap.length ? Math.min(...tap) : 0,
              bars: document.querySelectorAll(".nu-bar").length,
              /* THE INVENTORY, OFF THE RENDERED TREE. */
@@ -452,9 +457,10 @@ function standUpServer() {
                d.remove(); return h; })() };
   });
   check(t3.open && t3.expanded === "true" && t3.inBar,
-    "T3 · pressing #playops unfolds the play options inside the bar and the " +
-    "door says so (" + JSON.stringify({ open: t3.open, expanded: t3.expanded,
-                                        inBar: t3.inBar }) + ")");
+    "T3 · pressing the ≡ opens the plate that holds the play options, the " +
+    "door says so, and there is no gear and no fold left in the bar (" +
+    JSON.stringify({ open: t3.open, expanded: t3.expanded,
+                     noGear: t3.inBar }) + ")");
   /* THE INVENTORY, ASSERTED EXACTLY AND PRINTED EITHER WAY. */
   /* ...AND THE BAR IS THE TRANSPORT AND THE TAPE SINCE 2026-09-06 (docs/NAV.md,
      Paul: *"So now bottom row is pure play controls and top right is compose
@@ -482,12 +488,23 @@ function standUpServer() {
      ITSELF and not behind the door (*"Get rid of the volume options, popping
      up in the bottom instead integrate them into the bar with only a
      pop-up"*), so the fold holds two and not three. */
+  /* ...AND AGAIN ON 2026-09-07 (§20), three deletions and no additions:
+
+       #nu-bar       > .nu-bartp · .nu-seedrow · .nu-vs (the room, #vol)
+       .nu-bartp     > #voicing · #play
+       .nu-seedrow   > #rewrite · #seedin
+       #nu-menu      > … · #playmode · #take · #seedmenu · logger
+
+     The GEAR and its fold are gone (*"get rid of gear and move those functions
+     into the menu"*), the seed NUMBER is gone (*"Get rid of seed number too"*)
+     and so is `.nu-seedwait` (*"replace the die icon with the countdown"*).
+     Three marks left the bar in one round and not one arrived. */
   check(JSON.stringify(t3.bar) ===
           JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t3.seed) ===
-          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait"]) &&
+          JSON.stringify(["rewrite", "seedin"]) &&
         JSON.stringify(t3.bartp) ===
-          JSON.stringify(["nu-baropts", "playops", "voicing", "play"]),
+          JSON.stringify(["voicing", "play"]),
     "T3 · …and the bar holds exactly what it holds and no ninth thing: " +
     JSON.stringify({ bar: t3.bar, seed: t3.seed, bartp: t3.bartp,
                      fold: t3.opts }));
@@ -502,10 +519,9 @@ function standUpServer() {
      is the bar's ONE pop-up, and what is behind it is what a 312px line at 320
      genuinely cannot hold. */
   check(["playmode", "take"].every((id) => t3.opts.includes(id)) &&
-        !t3.opts.includes("voicing") &&
-        !t3.opts.some((c) => /nu-vs/.test(c)) && t3.roomInBar,
-    "T3 · …and the two controls are IN the fold, the voicing and the ROOM " +
-    "OUT of it: " + JSON.stringify(t3.opts));
+        !t3.opts.includes("voicing") && t3.roomInBar,
+    "T3 · …and the two controls the gear held are rows of the PLATE, the " +
+    "voicing and the ROOM in the bar: " + JSON.stringify(t3.opts));
   /* T3c — THE VOICING STANDS DIRECTLY BESIDE PLAY/STOP, on the artifact and in
      two ways that cannot both be a coincidence: DOM order (it is #play's
      immediately preceding sibling, in the same box) and GEOMETRY (its trailing
@@ -535,7 +551,7 @@ function standUpServer() {
      a control that moved house and lost a mode would pass every check above. */
   const t3c = await p.evaluate(() => {
     const v = document.getElementById("voicing"), pl = document.getElementById("play");
-    const box = document.querySelector(".nu-baropts");
+    const box = document.getElementById("nu-menu");
     if (!v || !pl) return { missing: true };
     const vr = v.getBoundingClientRect(), pr = pl.getBoundingClientRect();
     return { inBar: !!v.closest("#nu-bar .nu-bartp"),
@@ -593,54 +609,63 @@ function standUpServer() {
      of the fold. The stripe could get one of those wrong; the chrome can get
      four. */
   const t3b = await p.evaluate(async () => {
-    /* THE FOLD IS OPENED FIRST, AND IDEMPOTENTLY (2026-09-06, TABLE.md §18).
+    /* THE SURFACE IS OPENED FIRST, AND IDEMPOTENTLY (2026-09-06, TABLE.md §18).
        It was left open by the checks above until the one-open law landed: a
        real pointer press ANYWHERE outside an open pop-up closes it, and T3c's
        voicing press is exactly that. So this block opens the door it is about
        rather than inheriting it — which is what every other check in this file
-       does with the surface it measures, and what a hand does. */
-    if (document.querySelector(".nu-baropts[hidden]"))
-      document.getElementById("playops").click();
+       does with the surface it measures, and what a hand does.
+       ...AND THE DOOR IS THE ≡ SINCE 2026-09-07 (§20): the gear is deleted and
+       the two controls it held are rows of the plate, so the surface whose
+       shape the transport must not move is the PLATE. */
+    window.__eightMenuOpen(true);
     await new Promise((r) => setTimeout(r, 250));
+    /* THE SHAPE IS THE PLATE'S ROWS AND THE VIEW, AND NOT `__eightMenu()`
+       WHOLE (2026-09-07, §20): that object carries `open`, which is the very
+       thing this block opens and shuts on purpose, so comparing it before and
+       after would be asserting that closing the plate does not close the
+       plate. What must not move is the LIST — the rows, their order, and which
+       view is current. */
     const shape = () => JSON.stringify([window.__eightTabNow(),
-      window.__eightMenu(),
-      [...document.querySelectorAll(".nu-baropts *")].map((n) => n.id)
-        .filter(Boolean)]);
+      window.__eightMenu().rows,
+      [...document.querySelectorAll("#nu-menu button")].map((n) => n.id ||
+        n.dataset.k).filter(Boolean)]);
     const word = () => (document.getElementById("play")
       .getAttribute("aria-label") || "").trim();
-    const opened = () => document.getElementById("playops")
+    const opened = () => document.getElementById("burger")
       .getAttribute("aria-expanded");
     const before = shape();
-    document.getElementById("play").click();          // start, with the fold open
+    document.getElementById("play").click();          // start, with the plate open
     await new Promise((r) => setTimeout(r, 250));
     const afterStart = { shape: shape(), word: word(), open: opened() };
     document.getElementById("play").click();          // stop
     await new Promise((r) => setTimeout(r, 250));
     const afterStop = { shape: shape(), word: word(), open: opened() };
-    document.getElementById("playops").click();       // the door closes again
+    window.__eightMenuOpen(false);                    // the door closes again
     await new Promise((r) => setTimeout(r, 250));
     return { before, afterStart, afterStop,
              closedShape: shape(),
              expanded: opened(),
-             boxShut: !!document.querySelector(".nu-baropts[hidden]") };
+             boxShut: !!document.querySelector("#nu-menu[hidden]") };
   });
   check(t3b.afterStart.shape === t3b.before && t3b.afterStop.shape === t3b.before
         && t3b.afterStart.open === "true" && t3b.afterStop.open === "true"
         && t3b.afterStart.word === "stop" && t3b.afterStop.word === "play",
     "T3 · …and the transport does not move the chrome: play then stop leave " +
-    "the open surface, the hamburger and the fold exactly as they were, " +
+    "the open surface and the hamburger's own rows exactly as they were, " +
     "while the mark reads " +
     JSON.stringify([t3b.afterStart.word, t3b.afterStop.word]));
   check(t3b.expanded === "false" && t3b.boxShut &&
         t3b.closedShape === t3b.before,
     "T3 · …and the door shuts the way it opened, saying so: aria-expanded " +
-    JSON.stringify(t3b.expanded) + ", the fold hidden " + t3b.boxShut);
+    JSON.stringify(t3b.expanded) + ", the plate hidden " + t3b.boxShut);
   /* AND IT IS RE-OPENED FOR T4, which measures the fader and needs the level
      it lives on. Said out loud rather than left as a side effect of the check
      above: shutting the door is an assertion here, not the state the rest of
      this file runs in. */
-  await p.evaluate(() => document.getElementById("playops").click());
-  await p.waitForTimeout(250);
+  /* (`#playops` WAS PRESSED HERE to re-open the fold for T4. The room is the
+     bar's own child since §18 and the fold is deleted since §20, so there is
+     nothing to re-open: T4 measures a fader that is on the glass at rest.) */
   /* SIX CONTROLS NOW, AND ONE OF THE FIVE MOVED OUT OF THE LEVEL, 2026-08-30.
      This read "the five transport controls are on the page — #play in the
      head, the other four in the level", and Paul moved the die: *"Move the
@@ -918,15 +943,13 @@ function standUpServer() {
                if (!m) return null;
                return [...m.children].slice(-2).map((n) =>
                  n.dataset.k || n.className || n.tagName.toLowerCase()); })(),
-             inFold: !!document.querySelector(".nu-baropts #rewrite"),
+             inFold: !!document.querySelector("#nu-menu #rewrite"),
              /* THE TWO TARGETS ARE MEASURED WITH THE PLATE OPEN, because a
                 control behind a shut door has no box — which is the second tap
                 a hand makes and the same one `test/seed.js` makes. */
              tap: +document.getElementById("rewrite")
                     .getBoundingClientRect().height.toFixed(1),
-             num: +document.getElementById("seedval")
-                    .getBoundingClientRect().height.toFixed(1),
-             reading: !!document.querySelector("#nu-bar .nu-seedrow #seedval #reading"),
+             num: document.querySelectorAll("#seedval, #reading").length,
              /* AND THE PLATE'S DOOR TO IT, which is the other half of "two
                 doors, one owner" (§18). */
              menuDoor: !!document.querySelector("#nu-menu #seedmenu") };
@@ -944,12 +967,17 @@ function standUpServer() {
           JSON.stringify(["toptab-Where", "nu-tape", "burger"]) &&
         JSON.stringify(t9.kids) ===
           JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
-        JSON.stringify(t9.seed) ===
-          JSON.stringify(["rewrite", "seedval", "seedin", "nu-seedwait"]) &&
-        !t9.inFold && t9.gone < 0,
+        JSON.stringify(t9.seed) === JSON.stringify(["rewrite", "seedin"]) &&
+        t9.num === 0 && !t9.inFold && t9.gone < 0,
+    /* THE SEED ROW IS TWO SINCE 2026-09-07 (§20). Paul: *"Get rid of seed
+       number too"* — `#seedval` and `#reading` are deleted from the page,
+       asserted as a count of zero because a readout that came back would come
+       back silently — and *"replace the die icon with the countdown"* takes
+       `.nu-seedwait` with it. What is left is the throw and the field it
+       becomes. */
     "T9 · the strip reads name · tape · ≡, the bar reads transport · die · " +
-    "room, and the seed row reads die · number · field · wait, with no ? " +
-    "anywhere in it and the die nowhere else — " +
+    "room, and the seed row reads die · field, with no number, no separate " +
+    "wait and the die nowhere else — " +
     JSON.stringify({ strip: t9.stripKids, bar: t9.kids, seed: t9.seed }));
   check(t9.tapeCount && t9.counts === 1,
     "T9 · …and the general countdown is INSIDE the tape, and there is exactly " +
@@ -964,9 +992,9 @@ function standUpServer() {
     "T9 · …and the log is the plate's last row, after the seed's own block " +
     "(in the bar " + t9.barLog + ", in the menu " + t9.menuLog + ", tail " +
     JSON.stringify(t9.menuTail) + ")");
-  check(t9.tap >= 44 && t9.num >= 44 && t9.reading,
-    "T9 · …still a thumb TALL (die " + t9.tap + " px, number " + t9.num +
-    " px) and still carrying #reading, which is the number's own target now");
+  check(t9.tap >= 44,
+    "T9 · …and the die is still a thumb TALL (" + t9.tap + " px), which is " +
+    "the whole seed row now that the number is deleted (§20)");
   /* IN EVERY STATE. The same walk T2 makes for #play — the six surfaces
      opened, the table and the five sheets — plus the fold, which no surface
      reaches. AND IT IS THE SAME TWO READINGS T2 TAKES: the mark is in
@@ -997,16 +1025,18 @@ function standUpServer() {
       look(name);
       window.__eightUp(); await wait(60);
     }
-    document.getElementById("playops").click(); await wait(150);
-    look("the fold");
-    const inFold = [...document.querySelectorAll(".nu-baropts *")]
+    /* AND WITH THE PLATE OPEN, which is the surface that replaced the fold on
+       2026-09-07 (§20) and the one that could cover the die. */
+    window.__eightMenuOpen(true); await wait(150);
+    look("the plate");
+    const inFold = [...document.querySelectorAll("#nu-menu button")]
       .map((n) => n.id).filter((x) => x);
-    document.getElementById("playops").click(); await wait(80);
+    window.__eightMenuOpen(false); await wait(80);
     return { missing, offscreen, seen, inFold };
   });
   check(!t9b.missing.length && !t9b.offscreen.length,
     "T9 · …the die is in the bar, on the screen and a thumb tall, on all six " +
-    "surfaces and with the play options unfolded — no tap needed (" +
+    "surfaces and with the plate open — no tap needed (" +
     JSON.stringify(t9b.seen) + ", missing " +
     JSON.stringify(t9b.missing) + ", off-screen " +
     JSON.stringify(t9b.offscreen) + ")");
@@ -1017,9 +1047,17 @@ function standUpServer() {
      law, unchanged — and the MODE is first, which is the 2026-08-30 argument
      for the order ("it is the only one of the four that says what pressing ▶
      will DO"). */
-  check(t9b.inFold.indexOf("rewrite") < 0 && t9b.inFold[0] === "playmode",
-    "T9 · …and the fold LOST the die — a mark cannot be in two places, and " +
-    "the mode is still first: " + JSON.stringify(t9b.inFold));
+  check(t9b.inFold.indexOf("rewrite") < 0 &&
+        t9b.inFold.indexOf("playmode") < t9b.inFold.indexOf("take"),
+    /* THE FOLD IS THE PLATE SINCE 2026-09-07 (§20): the same two claims read
+       off the plate's own buttons. The die is not one of them — "a mark cannot
+       be in two places", the 2026-08-30 law, unchanged, and what the plate
+       holds is `#seedmenu`, a door — and the MODE still stands before the
+       take, which is the 2026-08-30 argument for the order ("it is the only
+       one of the two that says what pressing ▶ will DO"). */
+    "T9 · …and the plate holds the gear's two controls but NOT the die — a " +
+    "mark cannot be in two places — with the mode still first: " +
+    JSON.stringify(t9b.inFold));
   /* AND IT STILL RESEEDS. The press is the whole gesture: the seed moves, the
      digit on the button moves with it (Paul, 2026-08-27: "I clicked rewrite
      multiple times and never saw a different seed"), and the record starts,
@@ -1034,10 +1072,14 @@ function standUpServer() {
      it, the accessible name carries the number, and the record starts
      (#rewrite has gone through `startNow` since the day it landed). */
   const t9c = await p.evaluate(async () => {
-    // the plate is opened first — the die is a row of it since 2026-09-06
-    window.__eightMenuOpen(true);
-    await new Promise((r) => setTimeout(r, 150));
-    const rd = () => document.getElementById("reading").textContent;
+    /* THE READING IS READ OFF THE DIE'S OWN NAME SINCE 2026-09-07 (§20). Paul:
+       *"Get rid of seed number too"* — `#reading` is deleted, and the number
+       it printed is where `printReading` also wrote it all along: the die's
+       accessible name, `rewrite <n>`. The claim does not move an inch; what
+       moves is which of the two places the gate reads it from, and the one
+       that is left is the one a screen reader hears. */
+    const rd = () => (document.getElementById("rewrite")
+      .getAttribute("aria-label") || "").replace(/^rewrite\s*/, "").trim();
     const was = rd();
     document.getElementById("rewrite").click();       // one press, one roll
     await new Promise((r) => setTimeout(r, 900));
@@ -1416,13 +1458,15 @@ function standUpServer() {
                    inside: m.x >= -0.5 && m.right <= window.innerWidth + 0.5 &&
                            m.bottom <= window.innerHeight + 0.5 };
     window.__eightMenuOpen(false); await wait(100);
-    document.getElementById("playops").click(); await wait(220);
-    const f = document.querySelector(".nu-baropts").getBoundingClientRect();
-    const fold = { x: +f.x.toFixed(1), right: +f.right.toFixed(1),
-                   top: +f.top.toFixed(1), h: +f.height.toFixed(1),
-                   inside: f.x >= -0.5 && f.right <= window.innerWidth + 0.5 &&
-                           f.top >= -0.5 };
-    document.getElementById("playops").click(); await wait(120);
+    /* (THE FOLD WAS MEASURED HERE UNTIL 2026-09-07, §20: `#playops` opened
+       `.nu-baropts` and the same four numbers said whether it landed on the
+       screen. Both are deleted — Paul: *"get rid of gear and move those
+       functions into the menu"* — so the bar has ONE door and it is the plate
+       above, which is measured. `fold` is reported as the absence rather than
+       dropped, because the two `.inside` checks below read it by name and a
+       silently-missing field would read as `undefined` and pass.) */
+    const fold = { gone: !document.querySelector("#playops, .nu-baropts"),
+                   inside: true };
     return { w: window.innerWidth, h: window.innerHeight,
              rows: tops.size,
              box: +br.height.toFixed(2), tok: tok("var(--bar-h)"),
@@ -1438,9 +1482,9 @@ function standUpServer() {
         bar390.sideways === 0 && bar390.menu.inside && bar390.fold.inside,
     "T10 · at 390x844 the bar is ONE row that IS --bar-h (" + bar390.box + "/" +
     bar390.tok + "), nothing goes sideways (" + bar390.sideways + "), and both " +
-    "doors land on the screen. The row, measured: " +
+    "the plate lands on the screen. The row, measured: " +
     JSON.stringify(bar390.marks) + " · menu " + JSON.stringify(bar390.menu) +
-    " · fold " + JSON.stringify(bar390.fold));
+    " · no fold " + JSON.stringify(bar390.fold));
   await p.setViewportSize({ width: 320, height: 568 });
   await p.waitForTimeout(400);
   const bar320 = await barAt();
@@ -1929,7 +1973,13 @@ function standUpServer() {
      round for the box's weather. */
   const tstate = () => p.evaluate(() => {
     const b = window.__nuBounce();
-    return { reading: (document.getElementById("reading") || {}).textContent,
+    /* THE READING IS THE DIE'S OWN NAME SINCE 2026-09-07 (§20): `#reading` is
+       deleted with the seed number (Paul: *"Get rid of seed number too"*) and
+       `printReading` writes the number into `#rewrite`'s accessible name,
+       which is where it always also wrote it. Same fact, same one writer. */
+    return { reading: ((document.getElementById("rewrite") || {})
+               .getAttribute ? document.getElementById("rewrite")
+               .getAttribute("aria-label") : "") || "",
              mode: window.__eightPlayMode(),
              playing: b.playing, state: b.state, stage: b.stage,
              err: b.lastError || null,

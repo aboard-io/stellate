@@ -27,7 +27,7 @@
  * allows 45.
  *
  * WHAT EACH CHECK DRAGS AND WHERE IT LISTENS:
- *   V1 #vol (tray, via #playops): CDP touch to the bottom -> analyser RMS
+ *   V1 #vol (in the BAR since §18, no door to open): CDP touch -> analyser RMS
  *      ~0 within 2s; back up -> sound returns. Store follows both ways.
  *   V2 #vol2 (Mix -> main plate "listening"): same drag, same law — the
  *      desk-gate round only ever proved this one WROTE THE STORE.
@@ -260,7 +260,12 @@ function standUpServer() {
   /* ---- V1 #vol, the tray room fader ------------------------------------ */
   {
     const base = await avg(8, 200);
-    await p.evaluate(() => document.getElementById("playops").click());
+    /* (`#playops` WAS PRESSED HERE. The room came out of the fold into the
+       bar on 2026-09-06 (§18) and the fold itself is deleted on 2026-09-07
+       (§20, Paul: "get rid of gear and move those functions into the
+       menu"), so the fader is on the glass at rest and there is nothing to
+       open. The claim below is unchanged: a real touch on the track moves
+       the room and the RMS follows.) */
     await p.waitForTimeout(400);
     const v = await dragTo("#vol", 0.0);
     await p.waitForTimeout(1500);
@@ -484,9 +489,10 @@ function standUpServer() {
     const e0 = await eng2();
     const media = /^(mms|mse|segAB|media)/.test(e0.route || "");
     let base2 = 0; for (let i = 0; i < 8; i++) { base2 += (await eng2()).rms / 8; await p2.waitForTimeout(400); }
-    await p2.evaluate(() => document.getElementById("playops").click());
+    // …and nothing is opened here either: the room is the bar's own child
+    // since §18 and the fold is deleted since §20.
     await p2.waitForTimeout(500);
-    const g = await p2.evaluate(() => { const t = document.querySelector(".nu-baropts .nu-vs-track");
+    const g = await p2.evaluate(() => { const t = document.querySelector("#nu-bar .nu-vs-track");
       if (!t) return null; const r = t.getBoundingClientRect();
       return { x: r.x + r.width / 2, top: r.y + 12, bot: r.y + r.height - 12 }; });
     const cdp2 = await ctx2.newCDPSession(p2);

@@ -5204,34 +5204,12 @@ table.nu-trims{ color: var(--ink); }
 .nu-seedrow > #rewrite .nu-vh{ position: absolute; inline-size: 1px;
   block-size: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%);
   white-space: nowrap; }
-/* THE NUMBER IS A CONTROL AND WEARS THE PILL IT ALREADY WORE. `.nu-rd` (the
-   `.nu-trayfoot` block above) is the tint, the tabular figures and the weight;
-   what is added here is the BOX around it — a real target, at the tap floor in
-   both axes, growing into whatever the row has left. It steps up from the
-   badge's .7rem to a label's size because it is not an annotation on a
-   picture any more: it is the name of the record. */
-/* IT STARTS WHERE EVERY OTHER MARK'S WORD STARTS. `#nu-tray .nu-ic` is a
-   two-column grid — the picture, then the text, hard against the picture —
-   and the number is that second column made pressable, so it is `flex-start`
-   and not centred: measured at 1280, a centred pill floated 60px away from
-   the die it belongs to and read as a second control on its own. The padding
-   is `--s1` rather than the button default `--s3`, because five digits and a
-   pill want the width more than the button wants a margin. */
-.nu-seedrow > #seedval{ flex: 1 1 auto; min-block-size: var(--tap);
-  display: flex; align-items: center; justify-content: flex-start;
-  padding-inline: var(--s1); }
-/* AND `display` BEATS `[hidden]`, WHICH IS A UA RULE — measured on the
-   rendered page: the number stayed on the row beside the field it had just
-   become, so the row read "⚄ 4113" over a box saying 4113. Any author rule
-   that sets `display` on a node the page hides must say this; the field below
-   needs no twin because it sets no display of its own. */
-.nu-seedrow > #seedval[hidden]{ display: none; }
-/* ...AND `margin-inline: auto` COMES OFF IT. `.nu-trayfoot .nu-rd` centres
-   the pill in its own column, which is right for a badge under a mark and
-   wrong for a word beside one: measured at 1280, the auto margins put the
-   number 60px from the die inside a button that was already left-aligned. */
-.nu-seedrow > #seedval .nu-rd{ font-size: var(--t2, .82rem);
-  margin-inline: 0; }
+/* (SEVEN RULES FOR `#seedval` — the number's pill, its box, its `[hidden]`
+   twin and its `.nu-rd` face — STOOD HERE, 2026-09-03 to 2026-09-07. Paul:
+   *"Get rid of seed number too."* The control is deleted from the page and so
+   are its rules: a selector left behind is not dead code, it is a control that
+   stops working in a place the file still describes, which is the sentence
+   §18g had to write about six of them.) */
 /* THE FIELD STANDS EXACTLY WHERE THE NUMBER STOOD, so committing a number
    does not move the row under the thumb that typed it. 16px is the iOS zoom
    floor and a control this page asks a reader to TYPE in may never be under
@@ -5240,17 +5218,20 @@ table.nu-trims{ color: var(--ink); }
   min-block-size: var(--tap); inline-size: 0;
   font-family: var(--mono); font-variant-numeric: tabular-nums;
   font-size: 16px; text-align: center; }
-/* THE WAIT — the clock's one square inch of this row, on its own line so the
-   two targets above it never move when it arrives or goes. Same green, same
-   machine face and same `:empty` rule as `.nu-count`, because it is the same
-   measurement from the same feed said in the place the gesture was made. */
-.nu-seedwait{ flex: 1 0 100%; display: flex; align-items: baseline;
-  justify-content: center; gap: .25em;
-  font-family: var(--mono); color: var(--meter); line-height: 1.05; }
-.nu-seedwait:empty{ display: none; }
-.nu-seedwait b{ font-weight: var(--num-fw); font-size: .8rem;
-  font-variant-numeric: tabular-nums; }
-.nu-seedwait small{ font-size: .6rem; font-weight: 600; }
+/* (`.nu-seedwait` AND ITS FOUR RULES STOOD HERE. Paul, 2026-09-07: *"Instead
+   of a beat countdown when I hit dice replace the die icon with the countdown.
+   Will save space."* The countdown is the DIE'S OWN FACE now — ui/eight.js
+   `paintDie` writes the beats into `#rewrite`'s `.nu-g` and hangs
+   `data-live="pending"` on it, which is what paints a clock reading in
+   `--clock` everywhere on this page. One node fewer, one line of the bar
+   saved, and the number stands on the control the gesture was made on.) */
+/* THE DIE'S FACE WHILE IT IS COUNTING. The glyph slot holds up to two digits
+   instead of one 1.2rem mark, so the figures are tabular and a hair smaller —
+   nothing else about the button moves, and its 44px floor is `.nu-bar
+   button`'s. */
+#rewrite .nu-g[data-live]{ font-family: var(--mono);
+  font-variant-numeric: tabular-nums; font-size: var(--t2, .82rem);
+  font-weight: var(--num-fw); }
 
 /* ---- THE NAME PLATE ---------------------------------------------------
    Paul: *"The name of the genre should be obvious."* One ink plate, used by
@@ -7974,6 +7955,33 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   display: flex; flex-direction: column; justify-content: center;
   gap: var(--s1); }
 .nu-topstrip > #burger{ flex: 0 0 auto; }
+/* ---- WHILE THE PLATE IS OPEN THE STRIP IS ITS ≡ AND NOTHING ELSE ------
+   (2026-09-07, TABLE.md §20.) Paul: *"The hamburger menu should open higher
+   and the menu icon should be a dismiss button."*
+
+   MEASURED, AND IT IS WHY THIS RULE EXISTS RATHER THAN A `z-index` ON THE ≡
+   ALONE: the first build lifted `#burger` to `z-index: 60` and playwright
+   could not press it — *"`<b id="nu-menuname">Stellate</b> … intercepts
+   pointer events"*, 60 times, at both widths. A child's `z-index` competes
+   only INSIDE its parent's stacking context, and the strip is one
+   (`z-index: 58`), so the ≡ was 60 of 58 and the whole strip was still under
+   the plate's 59. The band has to rise, not the button.
+   AND WHEN THE BAND RISES, EVERYTHING ELSE ON IT HAS TO GET OUT OF THE WAY,
+   or the record's name and the tape paint over the plate they are supposed to
+   be behind. So while the plate is open the strip keeps its box and gives up
+   everything else: no ground, no rule, its other two children `visibility:
+   hidden`, and `pointer-events: none` on the band so a tap on its dead air
+   falls through to the plate — or past it, to the one listener that closes on
+   an outside tap. THE COST IS THE TAPE, said out loud: with the plate open you
+   cannot read the playhead. A plate is a thing you are inside of for one tap.
+   `data-menu` IS WRITTEN BY `setMenu` AND BY NOTHING ELSE — the same one
+   writer that moves `aria-expanded` on the button — so it is a rendering of
+   the state and not a second copy of it. */
+.nu-topstrip[data-menu="open"]{ z-index: 60; pointer-events: none;
+  background: transparent; border-block-end-color: transparent; }
+.nu-topstrip[data-menu="open"] > *{ visibility: hidden; }
+.nu-topstrip[data-menu="open"] > #burger{ visibility: visible;
+  pointer-events: auto; }
 .nu-topstrip button{ min-inline-size: var(--tap); min-block-size: var(--tap); }
 
 /* ---- A SHEET'S OWN HEADER, AND THE × IS ITS (§13a.1) ------------------
@@ -8040,8 +8048,25 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    mark that opens it and at the same edge — the same sentence as before,
    turned over. A menu that opened at the far corner from its own button is
    the one arrangement a thumb cannot follow. */
+/* ...AND IT OPENS AT THE TOP OF THE SCREEN SINCE 2026-09-07 (TABLE.md §20).
+   Paul: *"The hamburger menu should open higher and the menu icon should be a
+   dismiss button."* MEASURED before: the plate's top edge was 47.2px at 390
+   and at 320 — the strip's 44px plus a hair — and 47.2px is exactly the room
+   there was above it. It takes that room: the plate now begins one hair under
+   the safe area and the STRIP IS BEHIND IT, which costs nothing, because
+   everything the strip says while the plate is open is said by the plate (the
+   record's eight rows are the record's name said in full) except the two
+   controls a hand needs, and one of those is the ≡ itself.
+   THE ≡ STAYS ON THE GLASS, ABOVE THE PLATE, AND IT IS THE DISMISS. It is
+   lifted out of the strip's stacking context (`#burger`, below) so it stands
+   over the plate's own top-right corner and reads as the plate's close, which
+   is Paul's second sentence built rather than drawn. `.nu-menuname` reserves a
+   thumb's width at its end so the app's name never runs under it.
+   THE TAPE AND THE RECORD'S NAME GO BEHIND. That is the trade, said out loud:
+   with the plate open you cannot read the position. A plate is a thing you are
+   inside of for one tap. */
 #nu-menu{ position: fixed; z-index: 59;
-  inset-block-start: calc(var(--top-h) + var(--s1));
+  inset-block-start: calc(env(safe-area-inset-top, 0px) + var(--s1));
   inset-inline-end: calc(var(--s2) + env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; align-items: stretch;
   inline-size: min(30ch, calc(100vw - 2 * var(--s2)));
@@ -8053,7 +8078,17 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
      45px. The ceiling is what is left of the glass under the strip that opens
      it, so the plate scrolls only when a screen genuinely cannot hold it:
      511px at 568, 787 at 844. */
-  max-block-size: calc(100dvh - var(--top-h) - var(--s4)); overflow-y: auto;
+  /* ...AND IT STOPS AT THE TOP OF THE BAR, which is the other half of opening
+     higher (2026-09-07, §20). The plate ran to 834 of an 844px phone before
+     this round and covered 40px of the transport with it; a menu row under the
+     thumb that is reaching for ▶ is the *"easy to get into a state like that"*
+     §18 was called to fix, at the other end of the screen. And it is what buys
+     back the FIRST of §18c's three ways out: with the plate ending here there
+     is a full-width 50.4px band of glass that is not the plate, at every
+     width, so a tap outside has somewhere to land. MEASURED at 390 and 320:
+     the plate is 3.2 to 790.4 and the bar's top edge is 793.6. */
+  max-block-size: calc(100dvh - env(safe-area-inset-top, 0px)
+                       - 2 * var(--s1) - var(--bar-h)); overflow-y: auto;
   overscroll-behavior: contain;
   /* THE BLOCK PADDING IS A HAIR AND THE INLINE PADDING IS TIGHT (2026-09-06,
      §18): measured at 390 x 844 the plate's seventeen rows came to 790px
@@ -8091,7 +8126,17 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #nu-menu .nu-vh{ position: static; inline-size: auto; block-size: auto;
   clip: auto; clip-path: none; overflow: visible; white-space: nowrap;
   margin: 0; padding: 0;
-  font-size: var(--t3, 1rem); font-weight: var(--fw-label); }
+  font-size: var(--t3, 1rem); font-weight: var(--fw-label);
+  /* ...AND IT IS TITLE CASE, HERE AND ONLY HERE (2026-09-07, TABLE.md §20).
+     Paul: *"Come up with one format for each menu entry: Unicode icon (not
+     emoji) plus title case name."* IT IS A PRESENTATION RULE AND NOT A SECOND
+     COPY OF THE WORDS: `special.rules.word` is the string "rules" in one
+     catalogue, drawn `RULES` by the table's own row label (`text-transform:
+     uppercase`) and `Rules` here. A capitalised copy of eighteen words in
+     src/copy would be the second owner every round of this branch has been
+     spent deleting. `capitalize` and not `capitalize` on a `first-letter`
+     pseudo, because `this song` is two words and both of them are the name. */
+  text-transform: capitalize; }
 /* THE COUNT SITS AT THE FAR END OF ITS OWN ROW. `paintIcon` builds the face in
    one order for every mark on this page — glyph, number, word — which reads as
    "♪ 2 cantor" in a 44px column and as "¶ 3 log" in a 30ch plate, with the
@@ -8104,7 +8149,12 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    Both are HEADINGS and neither is a target: they carry no `--tap` floor and
    no ground, and the two controls under the second one are the ones that were
    in the bar this morning. */
-.nu-menuname{ display: block; padding: var(--s2) var(--s3) var(--s3);
+.nu-menuname{ display: block;
+  /* AND ITS END CLEARS THE ≡ (2026-09-07, §20): the plate opens under the
+     lifted hamburger now, and a name that ran beneath it would be a word with
+     a button on top of it. `--tap` exactly, which is the width of the thing
+     it is clearing. */
+  padding: var(--s2) calc(var(--s3) + var(--tap)) var(--s3) var(--s3);
   font: var(--fw-display) var(--t3)/1.1 var(--sans, inherit);
   text-transform: uppercase; letter-spacing: .08em; }
 .nu-menusub{ display: block; padding: 0 var(--s3) var(--s1);
@@ -8129,20 +8179,15 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-menugroup{ display: flex; flex-direction: column; align-items: stretch; }
 #nu-menu .nu-menusub{ position: sticky; inset-block-start: 0; z-index: 1;
   background: var(--panel); padding-block: var(--s1); }
-/* A ROW OF THE RECORD'S GROUP: the word left, the row's own sentence right,
-   one line, the sentence ellipsised. It is the special row's resting line
-   (§13a.2) drawn in the plate that now opens it — same two parts, same order,
-   same truncation, so a hand that learned to read RULES · TIME · CHORDS at the
-   top of the session reads the same lines here. */
-.nu-menurow{ display: flex; flex-direction: row; align-items: baseline;
-  gap: var(--s2); min-block-size: var(--tap); inline-size: 100%;
-  padding-inline: var(--s3); min-inline-size: 0; }
-.nu-menuword{ flex: 0 0 auto;
-  font: var(--fw-label) var(--t2, .82rem)/1.2 var(--sans, inherit);
-  text-transform: uppercase; letter-spacing: .04em; }
-.nu-menuface{ flex: 1 1 auto; min-inline-size: 0; text-align: end;
-  color: var(--dim); font-size: var(--t1, .72rem);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* (`.nu-menurow`, `.nu-menuword` AND `.nu-menuface` STOOD HERE, 2026-09-06 to
+   2026-09-07 — the record row's two-part line, the word left and its sentence
+   right, ellipsised. Paul: *"Come up with one format for each menu entry:
+   Unicode icon (not emoji) plus title case name."* There is ONE row shape in
+   this plate now and it is the one `icon()` builds for every other row —
+   `.nu-ic > .nu-g + .nu-vh` — so three classes and their eight declarations
+   are deleted rather than left for a selector nobody can find a printer for.
+   The sentences are the rows' accessible names and their `data-say`; the
+   record's own faces are one tap away, in the sheets that own them.) */
 /* THE SEED ROW IN THE PLATE. It is the same `.nu-seedrow` the bar held — same
    node, same children, same listeners — and what the plate gives it that the
    bar could not is ROOM: 30ch, so the die, the number and the field stand on
@@ -8224,9 +8269,31 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    line; a bar has width and no height at all, so it is `nowrap` and its two
    targets keep their 44px floor. */
 .nu-bar > .nu-seedrow{ flex: 0 0 auto; flex-wrap: nowrap; gap: var(--s1); }
-.nu-bar > .nu-seedrow > #seedval{ flex: 0 0 auto; min-inline-size: var(--tap); }
+/* (`.nu-bar > .nu-seedrow > #seedval` STOOD HERE. The number is deleted from
+   the page on 2026-09-07 — Paul: *"Get rid of seed number too"* — and the row
+   is the die and the hidden field it becomes.) */
 .nu-bar > .nu-seedrow > #seedin{ flex: 0 0 auto; inline-size: 6ch; }
-.nu-bar > .nu-vs-wide{ flex: 1 1 auto; min-inline-size: 72px; }
+/* ---- AND THE ROOM IS THE SAME SIZE AT EVERY WIDTH (2026-09-07, §20) ----
+   Paul: *"Make volume less wide."* MEASURED before, on the rendered bar: the
+   fader was the row's `1 1 auto` and took whatever the marks left — 89.9px at
+   320, 149.3 at 390 and **1,036.3 at 1280**, which is a metre of slider for a
+   number between 0 and 100.
+   THE BUDGET AT 320, WHICH IS WHERE IT IS TIGHTEST AND WHERE THE NUMBER COMES
+   FROM: the bar's content box is 312px; `.nu-bartp` is two 44px marks and a
+   1px seam (89); the seed row is the die alone (44); three seams at 1px below
+   380 (3). That leaves 176 — so 176 is the most the room could have, and it is
+   not what it should have: a fader as wide as half the phone is a control
+   claiming to be the most important thing in the bar. 112px is what it takes,
+   which is a ~64px track after the chassis's own margins and the percent
+   beside it — wider than the 42.5px track 320 shipped, narrower than 390's
+   101.9, and the SAME at 1280 as on a phone, which is the whole point.
+   THE SLACK GOES BETWEEN THE GROUPS AND NOT AFTER THEM. `margin-inline-start:
+   auto` holds the room at the far end, so the transport and the die read as
+   one group under a left thumb and the room as its own thing at the other end,
+   and the air the two departed marks left is between them rather than trailing
+   off the end of the row. */
+.nu-bar > .nu-vs-wide{ flex: 0 0 auto; inline-size: 112px;
+  margin-inline-start: auto; }
 /* ---- THE ROOM, LYING DOWN (2026-09-06, TABLE.md §18) ------------------
    The same chassis the mix board and the gutter have used since 2026-08-27
    (`ui/engineer.js vchassis`), turned ninety degrees: the <input> is still the
@@ -8325,6 +8392,33 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-bar button{ min-block-size: var(--tap); min-inline-size: var(--tap);
   background: transparent; border-color: transparent; }
 .nu-bar button:hover{ background: var(--flag-tint); }
+/* ---- NO BORDER, NO SHADOW, A HAIRLINE BETWEEN (2026-09-07, §20) --------
+   Paul: *"Get rid of icon borders and shadows just put a light line between."*
+
+   THE BORDERS WERE ALREADY TRANSPARENT (the rule above) and the SHADOW was
+   not: `button` carries the page's control shadow and the bar's marks
+   inherited it, so three transparent-bordered buttons still sat in three
+   little wells. Both are said explicitly here rather than left to a cascade
+   nobody can read, and what replaces them is one `--rule` hairline between
+   adjacent controls — the token DESIGN §1 calls "a rule is a HAIRLINE; a frame
+   is a plate, and a plate is rare".
+   THE FLOOR IS UNTOUCHED. A control losing its border is not a control losing
+   its size: `min-block-size` and `min-inline-size` above are still `--tap`,
+   and the 1px the rule adds is a border on the box, not a bite out of it.
+   IT IS DRAWN ON THE SECOND CHILD ONWARDS, at both levels the bar nests: the
+   three groups (`.nu-bartp`, `.nu-seedrow`, the room) and the marks inside the
+   first two. A leading rule on the row's first control would be a line against
+   the edge of the screen.
+   (THIS IS DELIBERATELY MINIMAL. The design system Paul has already described
+   — *"a mixing board/LED with musical aesthetics and green phosphor/vector
+   vibes"* — restyles this band whole; what is written here is the STRUCTURE of
+   the treatment, in tokens, so that pass has one thing to replace and not
+   three.) */
+.nu-bar button{ box-shadow: none; }
+.nu-bar > * + *,
+.nu-bar > .nu-bartp > button + button,
+.nu-bar > .nu-seedrow > button + button{
+  border-inline-start: var(--bw) solid var(--rule); }
 .nu-bar button[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
   border-color: var(--hand); }
 /* THE GENRE PLATE READS AS TWO LINES, the wiki name over the place and year,
@@ -8344,29 +8438,13 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    shorter. */
 #rewrite{ display: flex; flex-direction: row;
   align-items: center; justify-content: center; }
-/* ---- THE PLAY OPTIONS, AS A FOLD ABOVE THEIR OWN DOOR ------------------
-   They unfolded upwards inside the gutter's foot and they unfold upwards out
-   of the bar, which is the same gesture in the same direction: a fold at the
-   floor of the screen has one place to go. `[hidden]` is the whole of the
-   closed state — a box that is not laid out is measured by nothing, so a
-   folded fader costs no tap-floor check and no width. */
-.nu-baropts{ position: absolute; z-index: 1;
-  inset-block-end: calc(100% + var(--s1));
-  inset-inline-end: var(--gl);
-  display: flex; flex-direction: column; align-items: stretch;
-  gap: var(--s2); margin: 0; padding: var(--s2);
-  background: var(--panel); color: var(--ink);
-  border: var(--bw) solid var(--ink); border-radius: var(--r1);
-  box-shadow: var(--shadow); }
-.nu-baropts[hidden]{ display: none; }
-.nu-bartp{ position: relative; }
-/* the room fader stands up inside the fold, as it did in the gutter */
-/* (THE ROOM LEFT THIS FOLD ON 2026-09-06, §18 — it is `.nu-vs-wide` in the
-   bar itself now. The rule is kept because `.nu-vs-tall` is the chassis's own
-   name and the fold would seat one correctly if it were ever given one.) */
-.nu-baropts .nu-vs-tall{ justify-self: center; align-self: center;
-  margin-block: var(--s1); }
-.nu-baropts .nu-vs-val{ font-variant-numeric: tabular-nums; }
+/* (`.nu-baropts` AND ITS FIVE RULES STOOD HERE, with `.nu-bartp { position:
+   relative }` under them — the play fold and the box it anchored against. Paul,
+   2026-09-07: *"Bottom bar: get rid of gear and move those functions into the
+   menu."* The fold, its door and its two children's home are deleted; the mode
+   and the take are rows of the hamburger's HOW IT PLAYS block. The bar has no
+   pop-up at all now, which is the first time that has been true since it was
+   drawn.) */
 
 /* ---- AND THE 44px FLOOR THE GUTTER'S OWN RULE USED TO CARRY -----------
    `#nu-tray button, #boardtabs button, .nu-decktabs > button{ min-inline-size:

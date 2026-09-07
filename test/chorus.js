@@ -252,7 +252,8 @@ async function run(PAGE, { patch, jobs, ui }) {
    byte changes); and it must survive a REPAINT, because a setting that a redraw
    resets is a setting nobody can hold. */
 async function uiWalk(p) {
-  await p.evaluate(() => document.getElementById("playops").click());
+  /* (`#playops` WAS PRESSED HERE — the play fold is deleted on 2026-09-07,
+     TABLE.md §20, and the room it once held is the bar's own child.) */
   await p.waitForTimeout(300);
   return await p.evaluate(async () => {
     const PL = await import("/nukernel/audio/plan.js");
@@ -275,7 +276,7 @@ async function uiWalk(p) {
     const before = read();
     window.__eightTab("Band");
     await new Promise((r) => setTimeout(r, 250));
-    document.getElementById("playops").click();
+    // (the fold is deleted — §20; nothing needs opening)
     await new Promise((r) => setTimeout(r, 300));
     const after = read();
     /* THE QUESTION IS WHETHER A KEY NAMES A VOICING, and the old regex asked

@@ -218,7 +218,13 @@ export interface Grid {
    *  of `scopes()`, which stays the one owner of the list, its order and its
    *  words: a menu with its own copy of the eight would be the second owner
    *  the whole round exists to delete. */
-  scopeMenu(): { k: string; key: string; word: string; face: string;
+  /*  ...AND IT CARRIES THE SCOPE'S OWN `id` SINCE 2026-09-07 (§20), because
+   *  the plate draws a MARK per row now and `ui/glyph.js GLYPH.record` is
+   *  keyed by that id — `rules`, `time`, `chords`, `motifs`, `master`,
+   *  `produce`, `perf`, `song`. The alternative was for the chrome to parse
+   *  `key` ("sp|time" -> "time", "corner" -> ...?), which is a second, worse
+   *  copy of a fact this object already holds. */
+  scopeMenu(): { k: string; key: string; id: string; word: string; face: string;
                  aria: string }[];
 }
 
@@ -2076,7 +2082,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       return false;
     },
     armedMotif: () => ARM,
-    scopeMenu: () => scopes().map((sc) => ({ k: sc.k, key: sc.key,
+    scopeMenu: () => scopes().map((sc) => ({ k: sc.k, key: sc.key, id: sc.id,
       word: sc.word, aria: sc.aria,
       face: (() => { try { return sc.face(); }
                      catch (e) { return ""; } })() })),

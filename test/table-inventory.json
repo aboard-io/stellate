@@ -1259,19 +1259,10 @@
       },
       {
         "k": "rewrite",
-        "was": "the die in the gutter foot's .nu-seedrow",
-        "home": "hamburger",
-        "field": "unmoved as a NODE and moved as a home: `.nu-seedrow` was handed to the menu whole (same node, same id, same #reading inside it, same listeners) under the heading *Set seed*. Paul: 'Move the seed out of the bottom nav and into a set seed in the hamburger'",
-        "reach": "rewrite",
-        "menu": true
-      },
-      {
-        "k": "seedval",
-        "was": "the number beside the die",
-        "home": "hamburger",
-        "field": "unmoved beside the die, with `.nu-seedwait` (the seed's own countdown) under them. `.nu-count`, the GENERAL countdown, did NOT come: it is inside the tape in the bar, which is the one readout on this page that is on the screen with the plate shut",
-        "reach": "seedval",
-        "menu": true
+        "was": "the die in the gutter foot's .nu-seedrow, then the hamburger's",
+        "home": "bar",
+        "field": "the die, ALONE in `.nu-seedrow` since 2026-09-07 (§20). Paul: \"Get rid of seed number too\" (`#seedval` and the `#reading` inside it are deleted) and \"Instead of a beat countdown when I hit dice replace the die icon with the countdown\" (`.nu-seedwait` is deleted; the beats are the die's own face, `data-live=\"pending\"` while they are there). The seed is read off the die's accessible name, which is where `printReading` always also wrote it",
+        "reach": "rewrite"
       },
       {
         "k": "play",
@@ -1288,35 +1279,27 @@
         "reach": "voicing"
       },
       {
-        "k": "playops",
-        "was": "the fold above #play in the gutter's foot",
-        "home": "bar",
-        "field": "the options' door stays with the transport rather than joining the hamburger: its three children are a mode, a take and the room, and all three are facts about the next press of ▶. The hamburger holds things you look at and places you go",
-        "reach": "playops"
-      },
-      {
         "k": "playmode",
-        "was": "the first row of the play fold",
-        "home": "bar",
-        "field": "inside the fold, unmoved",
+        "was": "the first row of the play fold, behind the bar's gear",
+        "home": "hamburger",
+        "field": "a row of the plate's HOW IT PLAYS block since 2026-09-07 (TABLE.md §20, Paul: \"Bottom bar: get rid of gear and move those functions into the menu\"). THE SAME NODE with the same id and the same listener; what is gone is the gear in front of it, so the three-position setting is ONE tap from the open plate where it was two from rest. It does NOT close the plate: a setting you step through three positions is a row you keep pressing",
         "reach": "playmode",
-        "open": "tp.opts"
+        "menu": true
       },
       {
         "k": "take",
-        "was": "the second row of the play fold",
-        "home": "bar",
-        "field": "inside the fold, unmoved",
+        "was": "the second row of the play fold, behind the bar's gear",
+        "home": "hamburger",
+        "field": "beside the play mode in the plate's HOW IT PLAYS block since 2026-09-07 (§20) — the same node, the same write (DOC.performance.take) and the same restart. It DOES close the plate, because it is a write and the record has to be hearable",
         "reach": "take",
-        "open": "tp.opts"
+        "menu": true
       },
       {
         "k": "vol",
         "was": "the vertical room fader at the foot of the play fold",
         "home": "bar",
-        "field": "inside the fold, the same chassis and the same touch law",
+        "field": "the bar's own control since 2026-09-06 (§18) — the same chassis and the same touch law, lying down — and 112px WIDE AT EVERY WIDTH since 2026-09-07 (§20, Paul: \"Make volume less wide\"; it was the row's flexible child and measured 1,036px at 1280)",
         "reach": "vol",
-        "open": "tp.opts",
         "floor": 40
       },
       {
@@ -1397,9 +1380,17 @@
         "field": "beside it",
         "reach": "deck.view.roll",
         "when": "Score"
+      },
+      {
+        "k": "seedmenu",
+        "was": "the plate's SET SEED row, which printed the number at its end",
+        "home": "hamburger",
+        "field": "SET SEED — a mark and a title-case name like every other row of the plate (2026-09-07, §20), and the ONE door left to the typed field: it closes the plate and calls openSeedEdit(), which puts the keyboard in `#seedin` where the die stands. It carries the seed in its ACCESSIBLE NAME; the plate prints no number of its own, because the LOG's count is the one trailing number in it",
+        "reach": "seedmenu",
+        "menu": true
       }
     ],
-    "retired": "TWO CONTROLS OF THE GUTTER ARE RETIRED RATHER THAN MOVED AND EACH SAYS WHY. `trayup` (the ↑) went on 2026-09-02 with the tree that made it unnecessary and its absence is asserted by test/shell.js A6j. The nine `toptab-` rows of the stripe's root level are not a control at all any more: `Where` is the bar's plate, `Band` is the page, and the other four are the hamburger's, which is every one of them accounted for."
+    "retired": "TWO CONTROLS OF THE GUTTER ARE RETIRED RATHER THAN MOVED AND EACH SAYS WHY. `trayup` (the ↑) went on 2026-09-02 with the tree that made it unnecessary and its absence is asserted by test/shell.js A6j. The nine `toptab-` rows of the stripe's root level are not a control at all any more: `Where` is the bar's plate, `Band` is the page, and the other four are the hamburger's, which is every one of them accounted for. ...AND TWO MORE ON 2026-09-07 (TABLE.md §20). `playops` (the ⚙) and `seedval` (the number) are DELETED and not moved: Paul, \"Bottom bar: get rid of gear and move those functions into the menu\" and \"Get rid of seed number too\". Nothing is lost — the gear's two controls are rows of the plate above (one tap from the open plate, which is T7's own <= 2 from rest), and the seed's two jobs are the die's accessible name (reading it) and `seedmenu` (typing it). `.nu-seedwait` goes with them, into the die's own face; it was never a control and took no tap."
   },
   "sorted": "2026-09-06, TABLE.md §14 and docs/REDESIGN-SCOPE.md wave A, item 1 — \"The record collapses to one row.\" FIFTY-NINE ROWS CHANGED DOOR AND NOT ONE CHANGED ADDRESS. The seven record-scope surfaces — RULES, TIME, CHORDS, MOTIFS (the four rows above the grid) and MASTER, PRODUCE, PERFORMANCE (the three below it) — are the sections of one line at the top called THE RECORD, so every `open` that read `trules` / `ttime` / `tchords` / `tmotifs` / `tmix` / `tproduce` / `tfoot|perf` reads `trecord` now, with the row's own head first in `then`. The `data-k` of all seven heads, the `reach` of all fifty-nine controls, the sheets they open and the order of the fields inside them are untouched: this is a re-filing, which is what T7 is for. WHAT IT COSTS, SAID PLAINLY: a record-scope control is TWO doors from rest where it was one, and the board's five plates are three where they were two. What it buys is measured in TABLE.md §14 — the head of the sheet goes from five rows to two and the foot from four to one, so the grid (the only surface that shows the whole song) starts 180px higher on a 390px phone. The MIX row did NOT move: a fader is the player's, so `tmix|<voice>` is still one door in the `<tfoot>`, aligned under its own column head.  AND EIGHT ROWS WHOSE `reach` IS A SCOPE HEAD ITSELF took `open: trecord` with no `then`: the head IS the control they were filed onto (the deleted Time / Rules / Mix / Motifs / Produce tabs, the performance tab, the rules axis jumps and the motif bank's `+`), so the door in front of them is the record row and there is nothing to open after it. They read `open: null` while the seven rows stood on the sheet at rest; T7 measured them at 0x0 the first time this file was re-filed without them, which is the gate saying what a re-filing is for."
 }

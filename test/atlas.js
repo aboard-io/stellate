@@ -935,8 +935,13 @@ function g18() {
      NOTHING else in it. What moved is where the 1 comes from — `#reading`,
      which is the page's own readout of the atlas's own counter, and is the
      number a reader can see while the record is on the screen. */
+  /* (`#reading` STOOD HERE and is deleted with the seed number, 2026-09-07,
+     §20. The die's accessible name carries it — one writer, `printReading`,
+     and the place a screen reader hears it.) */
   const seedNow = await p.evaluate(() =>
-    +(document.getElementById("reading") || {}).textContent);
+    +((/^rewrite\s+(\d+)/.exec((document.getElementById("rewrite") || {})
+      .getAttribute ? document.getElementById("rewrite")
+        .getAttribute("aria-label") : "") || [])[1]));
   const d1 = await p.evaluate(async (s2) => {
     const doc = window.NuPrecompose.genreToDocument("reggae", s2);
     return JSON.stringify(doc);
@@ -983,8 +988,14 @@ function g18() {
      one fact, `#reading`, which is what makes it a join and not a recital. */
   const sayAgain = await p.evaluate(() =>
     (document.getElementById("atlasSay") || {}).textContent);
-  const readAgain = await p.evaluate(() =>
-    (document.getElementById("reading") || {}).textContent);
+  /* ...AND `#reading` IS DELETED, 2026-09-07 (TABLE.md §20). Paul: *"Get rid
+     of seed number too."* The number is read off `#rewrite`'s accessible name,
+     which is the other place `printReading` has always written it and the one
+     a screen reader hears. The join is the same join. */
+  const READSEED = () => { const b = document.getElementById("rewrite");
+    const m = /^rewrite\s+(\d+)/.exec(b ? (b.getAttribute("aria-label") || "") : "");
+    return m ? m[1] : null; };
+  const readAgain = await p.evaluate(READSEED);
   /* `"reading " + readAgain` STOOD HERE UNTIL 2026-09-05 (the functional text
      pass). "reading 3" for a seed is one of the twenty banned families the
      copy audit measured — a seed is a seed, and the gutter's own readout has
@@ -1033,7 +1044,8 @@ function g18() {
      of G11: the KEYBOARD path writes byte-identically to the pointer path,
      because there is one code path and no hidden twin. */
   const kbDoc = await p.evaluate(() => {
-    const s2 = +document.getElementById("reading").textContent;
+    const s2 = +((/^rewrite\s+(\d+)/.exec(document.getElementById("rewrite")
+      .getAttribute("aria-label")) || [])[1]);
     return { doc: JSON.stringify(window.__eightDoc()),
              want: JSON.stringify(window.NuPrecompose.genreToDocument("reggae", s2)),
              seed: s2, title: window.__nuName() }; });
@@ -1567,7 +1579,8 @@ function g18() {
   note("G19 · the tightest pair of in-window marks on a 390px phone is " +
     pile.a + "/" + pile.b + " at " + pile.d.toFixed(1) + " CSS px");
   const seed19 = await p.evaluate(() =>
-    +document.getElementById("reading").textContent);
+    +((/^rewrite\s+(\d+)/.exec(document.getElementById("rewrite")
+      .getAttribute("aria-label")) || [])[1]));
   await p.mouse.move(pile.x, pile.y); await p.mouse.down(); await p.mouse.up();
   await p.waitForTimeout(2000);
   const one = await p.evaluate(() => ({ title: window.__nuName(),
@@ -2140,32 +2153,56 @@ function g18() {
          (that is stamped inside the drawing) and is empty except while the box
          is announcing something it just did, so a reader meets the earth
          first and the announcement under the thing that caused it. */
-  const head = await p.evaluate(() => {
-    const h = document.querySelector("#atlas > .nu-sheethead");
-    const b = h.querySelector("b"), x = h.querySelector("button");
-    const cs = getComputedStyle(h);
-    return { kids: [...h.children].map((n) => n.tagName + "#" + (n.id || "")),
-             name: b ? b.textContent : null,
-             nameShown: b ? b.offsetParent !== null : false,
-             rule: cs.borderBlockEndWidth,
-             h2: (document.getElementById("atlasHead") || {}).textContent,
-             xw: x ? Math.round(x.getBoundingClientRect().width) : 0,
-             xh: x ? Math.round(x.getBoundingClientRect().height) : 0,
-             xlabel: x ? x.getAttribute("aria-label") : null };
-  });
+  /* ...AND THE HEADER IS DELETED OUTRIGHT ON 2026-09-07 (TABLE.md §20). Paul:
+     *"Get rid of the dismiss x about the globe and expand the globe
+     accordingly."* v297 left the × standing alone; a header whose only content
+     is a close, on a view with two other ways out, is 44px of a phone spent on
+     a duplicate. So `#atlas` has no `.nu-sheethead` at all, the panel's first
+     child is its own visually-hidden <h2>, and the globe starts at the top
+     edge — measured 364.4 x 342 at 390 where it was 364.4 x 298 at y=100.8.
+     THE TWO WAYS OUT ARE PROVEN HERE AND NOT ASSUMED, because deleting a close
+     with no proven alternative is how a view becomes a trap: the record's NAME
+     in the top strip is a toggle (the same press opens and closes, §16), and
+     ESCAPE with nothing open takes a view back to the table (§18c). Both are
+     driven on the rendered page below. */
+  const head = await p.evaluate(() => ({
+    heads: document.querySelectorAll("#atlas > .nu-sheethead").length,
+    closes: document.querySelectorAll("#atlas #sheetclose").length,
+    h2: (document.getElementById("atlasHead") || {}).textContent,
+    globe: (() => { const g = document.getElementById("atlasMap");
+      if (!g) return null; const r = g.getBoundingClientRect();
+      return { y: +r.y.toFixed(1), w: +r.width.toFixed(1),
+               h: +r.height.toFixed(1) }; })() }));
   check(JSON.stringify(order) === JSON.stringify(
-      ["DIV#.nu-sheethead", "H2#atlasHead", "DIV#atlasWrap", "P#atlasSay",
+      ["H2#atlasHead", "DIV#atlasWrap", "P#atlasSay",
        "P#atlasFind", "DIV#atlasIndex"]),
-    "G11 · reading order is the sheet's head, the heading, the globe, the " +
+    "G11 · reading order is the heading, the globe, the " +
     "status line, the list's own head, then the genre list — " +
     JSON.stringify(order));
-  check(!head.nameShown && head.rule === "0px" && head.h2 === "Where & when" &&
-        head.xw >= 44 && head.xh >= 44,
-    "G11 · the picker's header is the × and nothing else — the name is not " +
-    "drawn (" + JSON.stringify(head.name) + "), no rule under it (" +
-    head.rule + "), the sheet is still named by its <h2> (" +
-    JSON.stringify(head.h2) + ") and the close is " + head.xw + "x" + head.xh +
-    " — " + JSON.stringify(head.xlabel));
+  check(head.heads === 0 && head.closes === 0 && head.h2 === "Where & when",
+    "G11 · the picker has NO header and NO close of its own — the sheet is " +
+    "named by its <h2> (" + JSON.stringify(head.h2) + ") and the globe is the " +
+    "first thing under the top edge (" + JSON.stringify(head.globe) + ")");
+  /* G11b — AND THE TWO WAYS OUT BOTH WORK, driven and not assumed. */
+  const ways = await p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const plate = document.querySelector('#nu-topstrip [data-k="toptab-Where"]');
+    const out = {};
+    plate.click(); await wait(500);            // the toggle, pressed again
+    out.byName = window.__eightTabNow();
+    plate.click(); await wait(600);            // back into the picker
+    out.reopened = window.__eightTabNow();
+    return out;
+  });
+  await p.keyboard.press("Escape");
+  await p.waitForTimeout(500);
+  const byEsc = await p.evaluate(() => window.__eightTabNow());
+  check(ways.byName === "Band" && ways.reopened === "Where" && byEsc === "Band",
+    "G11b · the picker has two ways out and both are pressed here — the " +
+    "record's NAME is a toggle (" + ways.byName + ", and it reopens: " +
+    ways.reopened + ") and Escape leaves the view (" + byEsc + ")");
+  await p.evaluate(() => window.__eightTab("Where"));
+  await p.waitForTimeout(700);
   /* THE WALK STARTS AT THE GLOBE, NOT AT THE SLIDER (2026-08-29). It focused
      `#atlasYear`, which was the element immediately before the map; the map
      itself is now the first control in this section, and Tab from it is the

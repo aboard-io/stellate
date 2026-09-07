@@ -3592,6 +3592,7 @@ function bandTable(host, A2) {
     scopeMenu: () => scopes().map((sc) => ({
       k: sc.k,
       key: sc.key,
+      id: sc.id,
       word: sc.word,
       aria: sc.aria,
       face: (() => {

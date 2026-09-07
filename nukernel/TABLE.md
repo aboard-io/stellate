@@ -5098,3 +5098,399 @@ there, the tap lands on the CELL tier (`hook`), **the section's rendered bass
 events MOVE for it**, and one Ctrl-Z puts them back. **T8f is inverted rather
 than deleted** — it asserted the refusal, and it asserts the live picker and
 its caption now — which is the same treatment §13e gave T8a.
+
+### 20 · The chrome, tightened (2026-09-07)
+
+**FIVE MESSAGES, VERBATIM**, on v302:
+
+> 1. *"In the hamburger move the record sectio. above where you are section."*
+> 2. *"Come up with one format for each menu entry: Unicode icon (not emoji)
+>    plus title case name."*
+> 3. *"The hamburger menu should open higher and the menu icon should be a
+>    dismiss button"*
+> 4. *"Bottom bar: get rid of gear and move those functions into the menu. Make
+>    volume less wide. Get rid of icon borders and shadows just put a light
+>    line between"* · *"Get rid of seed number too"* · *"Instead of a beat
+>    countdown when I hit dice replace the die icon with the countdown . Will
+>    save space."*
+> 5. *"Get rid of the dismiss x about the globe and expand the globe
+>    accordingly"*
+
+**THIS ROUND IS STRUCTURE AND NOT SURFACE, ON PURPOSE.** Paul has already
+described the design system that comes next — *"this should look like a mixing
+board/LED with musical aesthetics and green phosphor/vector vibes. Light retro
+circa 1998"*, and *"squeeze things as much as possible… tighten things up"* —
+which will restyle every band on this page. So what is built here is WHAT IS
+WHERE, WHAT OPENS WHAT, AND WHAT THE FORMAT IS; the one place a look was asked
+for (*"no borders and shadows just put a light line between"*) is spent in
+TOKENS and in four declarations, so the pass that follows has one thing to
+replace and not three. §19's instrument table, its spinners and its exclusive
+rails are untouched.
+
+#### 20a · The plate: one order, one format
+
+**THE RECORD GOES FIRST.** The plate's blocks read THE RECORD (its eight
+surfaces) · WHERE YOU ARE (the six views) · HOW IT PLAYS (the gear's two) · Set
+Seed · Log. The headings and their `aria-labelledby` moved with their groups;
+neither group was renamed and no address moved. The argument for the order is
+Paul's own instruction plus the obvious one: a hand opens this plate to WORK on
+the record far more often than to leave the page it is standing on, and one of
+the six views is always the one you are already on.
+
+**AND EVERY ROW IS A UNICODE MARK AND A TITLE-CASE NAME.** Eighteen rows, one
+shape — `icon()`'s `.nu-ic > .nu-g + .nu-vh`, which is what the views and the
+log already were. What went is the record rows' own two-part line (`.nu-menurow`
+/ `.nu-menuword` / `.nu-menuface`, the word left and the row's sentence right,
+ellipsised): in a plate of eighteen destinations it was eighteen different
+amounts of text, cut at eighteen different points. **The sentence is not lost**
+— it is the row's accessible name and its `data-say`, and the row's own sheet
+prints it in full one tap later. `test/table.browser.js` T14a's "one owner, two
+readers" claim is made in that channel now and is otherwise unchanged.
+
+**THE TITLE CASE IS A CSS RULE AND NOT A SECOND COPY OF THE WORDS.**
+`#nu-menu .nu-vh { text-transform: capitalize }`. `special.rules.word` is the
+string `rules` in one catalogue, drawn `RULES` by the table's own row label
+(`text-transform: uppercase`) and `Rules` here. A capitalised copy of eighteen
+words in `src/copy` would be the second owner this branch has spent five rounds
+deleting.
+
+**THE LOG'S COUNT IS THE ONE TRAILING NUMBER IN THE PLATE** — Paul moved it
+there himself in §18g, off the ≡, where `≡52` read as fifty-two errors. So the
+seed came OFF the `Set Seed` row's face when the format landed: the row is ⚄
+over `Set Seed`, and the number it used to print rides its accessible name,
+which is where `printReading` always also wrote it.
+
+**THE EIGHT MARKS, AND THE TWO THAT ARE NEW** (`ui/glyph.js GLYPH.record`, a
+table of REFERENCES keyed by the scope's `id` — six of the eight already
+existed and are named, not retyped):
+
+| row | mark | where it comes from |
+|---|---|---|
+| Rules | `§` | `tab.Rules` — a numbered clause you may cite and amend |
+| Time | `♩` | `tab.Time` |
+| Chords | `⌗` | `group.chords`, **already this page's mark for this subject**: it wears it on the chords group's heading inside the very sheet this row opens |
+| Motifs | `♬` | `tab.Motifs` |
+| Master | `⇅` | `facet.mix` — the row's address is `tmix`, its key `mix|master`, its sheet the master's cells then the four buses. The same fact one scope up, which is this table's standing idiom |
+| Produce | `✦` | `tab.Produce` |
+| Performance | `◈` | `song.performance`, which is where this row's WORD already comes from |
+| This Song | `⊙` | **NEW** — a disc with its spindle hole, which is what a record is |
+
+`⌗` is **not** a roman numeral (Ⅳ, U+2163), which was the starting point this
+round was handed: the row's own face prints numerals (`i · i · iv · v`), so a
+numeral as its mark is the face said twice at a sixth of the size, and U+2163
+is a LIGATURE of two letters — it reads as text beside a column of pictures and
+it is the one character there a hand would try to select. `⊙` is **not** ⚙: the
+gear is deleted from the page in this same round, and §18 moved this row out
+from behind one precisely because *"a hand had to know what a gear meant"*.
+Both were **rendered before they were chosen**, which is `ui/glyph.js`'s own
+rule: in this page's stack, headless chromium, ⊙ is 26.8px and ⌗ is 18.0px
+against the 19.2px tofu box.
+
+**AND "NOT AN EMOJI" IS GATED BY `Emoji_Presentation`, NOT BY
+`Extended_Pictographic`.** The first draft of `test/shell.js` A6p2 used the
+second property and went red on the play mode alone — ▶ (`GLYPH.act.play`, and
+the head of that mark) is `Extended_Pictographic` and so are ⚙ and ✳, and all
+three default to TEXT presentation: they are drawn in the page's own ink, in
+the page's own glyph stack, and none of them is a coloured pictograph. What
+makes a character an emoji on the glass is `Emoji_Presentation` or an explicit
+U+FE0F, and both are refused.
+
+#### 20b · The plate opens higher, and the ≡ closes it
+
+**MEASURED BEFORE**, at 390 × 844 and 320 × 844 under iPhone emulation: the
+plate's top edge was **47.2px** at both widths — the strip's 44px band plus a
+hair — and 47.2px was exactly the room above it. Its box was **288 × 786.8**,
+bottom **834**, with 785px of content: no inner scroll, and 40px of it over the
+top of the bar.
+
+**AFTER: top 3.2, and it stops at the bar.** The plate begins one hair under
+the safe area and the strip is behind it. That is 44px gained at the head — and
+the same rule gives the FIRST of §18c's three ways out somewhere to land, which
+is the second half of the change and the one the gate found: with the plate
+ending at the bar's top edge there is a full-width **50.4px** band of glass that
+is not the plate, at every width. Before this round the plate covered 40px of
+the transport, which is a menu row under the thumb that is reaching for ▶ — the
+same *"easy to get into a state like that"* §18 was called to fix, at the other
+end of the screen.
+
+**THE ≡ IS THE DISMISS, AND IT SAYS SO.** While the plate is open the mark is ×
+and the accessible name is `close`; pressing it shuts the plate and both go
+back. This is `#play`'s own law said on the other fixed band — *"the word on it
+is the NEXT tap"* — and the button has always had two taps in it (`setMenu()`
+with no argument toggles; §18c's third way out is *"its own OPENER pressed
+again"*). What was missing was that it never SAID so: a ≡ standing over an open
+plate reads as the control that opens the plate that is already open.
+
+**AND THIS IS NOT WHAT §13a.1 REFUSED.** That paragraph moved the × out of the
+top corner and into the open sheet's own header — *"the × that closes a sheet is
+the sheet header's own"* — and it is still right, because **THE ≡ NEVER OPENED
+A SHEET.** A sheet is opened by a row of this plate, or by the record's name, or
+by a link; the control that shuts a thing must be the control that opened it,
+which is exactly why a sheet's × belongs to the sheet. The PLATE is the one
+surface on this page the ≡ opens, and it is therefore the one surface the ≡ may
+honestly close. The two rules are one rule.
+
+**THE ONE THING THE FIRST BUILD GOT WRONG, MEASURED.** `#burger` was lifted to
+`z-index: 60` and playwright could not press it — *"`<b id="nu-menuname">
+Stellate</b> … intercepts pointer events"*, sixty times, at both widths. A
+child's `z-index` competes only INSIDE its parent's stacking context and the
+strip is one (`z-index: 58`), so the ≡ was 60 of 58 and the whole strip was
+still under the plate's 59. **The BAND has to rise, not the button** — and when
+it rises everything else on it has to get out of the way, or the record's name
+and the tape paint over the plate. So `.nu-topstrip[data-menu="open"]` keeps its
+box and gives up the rest: no ground, no rule, its other two children
+`visibility: hidden`, `pointer-events: none` on the band so a tap on its dead
+air falls through. `data-menu` is written by `setMenu` and by nothing else.
+
+**THE COST, DECLARED.** With the plate open you cannot read the tape. And the
+plate now **scrolls inside itself**: eighteen rows at the 44px floor is 792px
+before a heading, and the plate measures **891px of content in 785 of glass** at 844 (it scrolls by 106) — so `Set Seed` and the log are under the fold of the plate's own
+scrollport, and a hand flicks to them. That is DESIGN §3's named exemption
+(a navigation list of destinations, each its own subject, with sticky headings)
+and nothing else on this page may do it. The arithmetic is not negotiable
+inside this round: 18 × 44 = 792 is the tap floor times the destinations, and
+the four rows that grew the list are the two the gear held plus their heading.
+
+#### 20c · The bar
+
+**BEFORE**, at rest, measured on the rendered bar:
+
+| | 320 | 390 | 1280 |
+|---|---|---|---|
+| `.nu-bartp` (⚙ · voicing · play) | 134 | 138.4 | 138.4 |
+| `.nu-seedrow` (die · number) | 94.1 | 91.2 | 94.1 |
+| the room (`.nu-vs-wide`) | 89.9 | **149.3** | **1036.3** |
+| the room's TRACK | 42.5 | 101.9 | 989 |
+| the tallest control | 44 | 44 | 44 |
+
+**AFTER:**
+
+| | 320 | 390 | 1280 |
+|---|---|---|---|
+| `.nu-bartp` (voicing · play) | 89 | 91.2 | 91.2 |
+| `.nu-seedrow` (the die alone) | 45 | 45 | 45 |
+| the room | **112** | **112** | **112** |
+| the room's TRACK | 63.7 | 63.7 | 63.7 |
+| the tallest control | 44 | 44 | 44 |
+
+**THE GEAR IS DELETED, NOT MOVED.** `#playops` held exactly two controls —
+`#playmode` (loop · once · album) and `#take` (the retake, which bumps
+`DOC.performance.take` and restarts the record); the room left it in §18. A
+door with two things behind it, on a bar with three marks, is a tap spent on a
+picture nobody can name, which is the sentence §18 wrote about the gear that
+used to hold the song's options. The two are rows of the plate's HOW IT PLAYS
+block — **the same nodes**, with their ids, listeners, focus and values — one
+tap from the open plate where they were two from rest. **The bar has no pop-up
+at all now**, which is the first time that has been true since it was drawn, and
+`test/oneopen.js` walks three surfaces and six ordered pairs where it walked
+four and twelve.
+
+**THEY ARE THEIR OWN BLOCK AND NOT THE RECORD'S.** A view is somewhere you go
+and the record's eight are facts the SONG carries; these two are facts about the
+next press of ▶ — the mode writes nothing to the document at all and does not
+survive a reload, and the take is the one performance fact this page has ever
+given a one-tap gesture. **And they close the plate differently, which is the
+honest reading of what each does**: the take is a WRITE that restarts the
+record, so the plate gets out of the way to let you hear it; the mode is a
+SETTING you step through, and a plate that shut on every step would cost three
+openings to reach `album`.
+
+**THE SEED NUMBER IS DELETED.** `#seedval` and the `<b id="reading">` inside it
+are gone, and the row is the die and the hidden field it becomes. **What is
+lost, said out loud: the seed is no longer READ anywhere on the glass.** It is
+in the die's accessible name (`rewrite 4113` — `printReading` is still the one
+writer), it is what the field opens holding, and it is in the log for every
+throw. The plate's `Set Seed` row is the ONE door to typing it, which is two
+taps from rest — T7's own ceiling.
+
+**THE DIE IS THE COUNTDOWN.** `.nu-seedwait` — a `[data-live="pending"]` div
+under the row printing `5 beats` — is deleted; `paintDie` writes the beats into
+`#rewrite`'s own `.nu-g` and hangs `data-live="pending"` on it while they are
+there, which is what paints a clock reading in `--clock` everywhere on this
+page. **The feed and the arithmetic did not move an inch**: `audio/live.js` owns
+both, `pend` is still the one map, `paintSeedWait` still arms and clears the
+same way. While the die says `5` its accessible name says `rewrite 4113 — 5
+beats`, so a reader is told what the 5 is.
+
+**THE ROOM IS 112px AT EVERY WIDTH.** The budget at 320, which is where it is
+tightest and where the number comes from: the bar's content box is 312px;
+`.nu-bartp` is two 44px marks and a 1px seam (89); the die is 44; three seams
+are 3. That leaves **176** — the most the room could have, and not what it
+should have: a fader as wide as half the phone is a control claiming to be the
+most important thing in the bar. 112 is a ~64px track after the chassis's own
+margins and the percent beside it — wider than the 42.5px track 320 shipped,
+narrower than 390's 101.9, and **the same at 1280 as on a phone**, which is the
+point. The slack goes BETWEEN the groups (`margin-inline-start: auto`), so the
+transport and the die read as one group under a left thumb and the room as its
+own thing at the far end.
+
+**NO BORDERS, NO SHADOWS, A HAIRLINE BETWEEN.** The borders were already
+transparent; the SHADOW was not — `button` carries the page's control shadow and
+the bar's marks inherited it, so three transparent-bordered buttons still sat in
+three little wells. Both are now said explicitly, and what replaces them is one
+`--rule` hairline between adjacent controls, at both levels the bar nests (the
+three groups, and the marks inside the first two). **A control losing its border
+is not a control losing its size**: the `--tap` floor is untouched in both axes
+and the 1px is a border on the box, not a bite out of it — measured, the
+tallest control in the bar is 44 before and after. This is DESIGN §2 component
+12's new treatment and is deliberately minimal, for the reason at the head of
+this section.
+
+#### 20d · The picker's close goes, and the globe grows
+
+**MEASURED BEFORE**: `#atlas > .nu-sheethead` was a 44px band at y=56.8 holding
+one control, the × at 44 × 44, with the sheet's visible name already hidden by
+§18's own round. **AFTER: `#atlas` has no header at all** — its first child is
+its own visually-hidden `<h2>`, and the globe starts at the top edge.
+
+| the globe | before | after |
+|---|---|---|
+| 390 × 844 | 364.4 × **298** at y=100.8 | 364.4 × **342** at y=**56.8** |
+| 320 × 844 | 294.4 × **241** | 294.4 × **276** |
+| 1280 × 844 | 1254.4 × **523** | 1254.4 × **565** |
+
+"Accordingly" is two constants in `ui/atlas.js refit` and nothing else — the
+same drawing in a taller box. `0.82 → 0.94` is the deleted 44px expressed as
+the ASPECT it is at the width Paul is on (44 of a 364.4px column is 12 points of
+ratio); it gives a narrower phone proportionally less, and that is correct
+rather than a shortfall, because on the narrow glass the globe is WIDTH-bound
+and the ratio is what stops an earth taller than its own column. `0.62 → 0.67`
+is the same 44px on a wide glass, where the globe is height-bound and the ratio
+never binds.
+
+**THE TWO WAYS OUT ARE PRESSED, NOT ASSUMED**, because deleting a close with no
+proven alternative is how a view becomes a trap. `test/atlas.js` G11b drives
+both on the rendered page: the record's NAME in the top strip is a TOGGLE (§16
+— the same press opens and closes, and it reopens), and ESCAPE with nothing open
+takes a view back to the table (§18c). G11 asserts the header and the close are
+absent by count.
+
+#### 20e · What the gates say
+
+Re-filed rather than softened, each amendment a claim about the new arrangement
+in the same words as the old one:
+
+- **`test/shell.js`** — A6o reads the record rows' word off `.nu-vh` (there is
+  one row shape in the plate now) and asserts a MARK beside it for the first
+  time; **A6p is new** — p1 the block order, p2 one format for all eighteen
+  rows with the log's count excepted, p3 the ≡ pressed as a dismiss, p4 the
+  plate above the strip's band and clear of the bar; **A6q is new** — the bar
+  holds no gear, no seed number and no separate countdown, and the gear's two
+  are rows of the plate.
+- **`test/gutter.js`** — T3's door is the ≡ (there is no fold to open); T3's
+  inventory is the new one exactly (`[voicing, play]`, `[rewrite, seedin]`);
+  T3b's "the transport does not move the chrome" watches the PLATE and compares
+  the plate's ROWS rather than `__eightMenu()` whole, which carries the very
+  `open` this block toggles; T9's seed row is two children with `#seedval` and
+  `#reading` asserted absent by count; T9b/T9c/T11 read the seed off the die's
+  accessible name. **ALL PASS (52).**
+- **`test/oneopen.js`** — three surfaces, six ordered pairs, nine ways out. The
+  tap-outside probe moved from the strip's air (which is INSIDE the plate now,
+  and the check went correctly red) to the bar's, and O5b opens the field
+  through the plate's `Set Seed` row. **11 ok, 0 failed.**
+- **`test/atlas.js`** — G11 inverted (no header, no close, the globe at the top
+  edge) and **G11b is new**: the two ways out, pressed. Its `#reading` readers
+  (G9, G11, G19) read the die's accessible name instead. **134 of 135**, and
+  the one red is the standing one §18h already filed: G9's *"the sentence under
+  the globe agrees with the reading"* — `#atlasSay` is EMPTY, because
+  `atlas.wroteSeed` was deleted on 2026-09-06 with the receipt Paul asked to be
+  rid of (*"'Bristol 1994 · noirhop — 14 sections, 9 players, take 0 · seed
+  28138' stop producing it"*). The check is asserting a sentence the page was
+  told to stop saying; it is not this round's, and the fix is to retire the
+  check, in the round that owns the atlas.
+- **`test/table.browser.js`** — T13a's `wantBar` is `[voicing, play, rewrite]`;
+  T13l's ≤ 2 taps adds `playmode`, `take` and `seedmenu`; T14a reads the plate's
+  mark and word and makes the one-owner claim in the accessible name.
+- **`test/seed.js`** — the reading is the die's own name, the door is
+  `#seedmenu`, the countdown is the die's face, and every press inside the plate
+  scrolls its row into the plate's own scrollport first (`block: "nearest"` —
+  the gesture, not a way past it).
+- **`test/table-inventory.json`** — `playops` and `seedval` deleted with a
+  written reason, `playmode` and `take` re-filed to the hamburger with
+  `menu: true`, `rewrite` and `vol` re-described, `seedmenu` filed as the seed's
+  one door.
+- **Re-pointed and otherwise unchanged**: `test/vol-reach.browser.js`,
+  `test/chorus.js` and `nukernel/desk-gate.js` no longer open a fold that does
+  not exist — the room has been the bar's own child since §18.
+
+**AND `node test/table.test.js` IS 35 PASSED, 5 FAILED, AND NOT ONE OF THE FIVE
+IS THIS ROUND'S — WITH THE PROOF WRITTEN DOWN RATHER THAN ASSERTED.** The five
+are T2a/T2b/T2c (the pinned-base comparison) and T4j/T4o (a sung chair's line;
+the fifteen voiced rows' throats and registers) — every one of them a claim
+about RENDERED MUSIC. T2 loads `nukernel/{document,precompose,genres,kernel,
+instruments,knobs,fields,compose,songs,song,presets,desk-doc}.js`,
+`export/score.js` and `engine/**`, and **the intersection of that set with this
+working tree's dirty files is `nukernel/genres.js` and nine
+`nukernel/genres/*.json`** — the round that is live in the catalogue right now
+(punk's `copyist` went from `refuse: "all"` to `refuse: ["parallel"]` while this
+round was in flight, and T2a names `rock`, `drone` and `tango` as the anchors
+that moved). This round touched none of them; its only non-chrome file is
+`src/table/grid.ts`, whose build output `ui/table.js` T2 never loads. So the
+pin is NOT re-pinned here: re-pinning is the catalogue round's to do when its
+music lands, and doing it from a chrome round would bake somebody else's
+in-flight sound into the baseline.
+
+#### 20f · The MIDI upload door, and why it is a SEAM and not a control
+
+**PAUL:** *"Including midi upload"*, answering a queue that ends with it. The
+ask is a MIDI upload beside the record-file import in the Export view: drop a
+`.mid`, `tools/remix.js` runs, and you land in the session looking at the
+result.
+
+**THE ANSWER IS (b), AND IT IS SHARPER THAN (b) WAS WRITTEN.** The pipeline
+cannot be loaded in the browser as it stands, and a *thin* UMD wrapper does not
+reach it either. Measured by reading every module on the path:
+
+| what blocks it | where |
+|---|---|
+| top-level `require("fs")` / `require("path")`, and `__dirname` | `tools/remix.js` :67-70, `tools/mine/mine-midi.js` :32-33, `tools/mine/corpus-db.js` :29-31 |
+| the entry point takes a PATH, not bytes — `read(file)` is `Mine.parseSmf(fs.readFileSync(file))`, and `run(file, key, O)` is built on it | `tools/remix.js` :121, :1047 |
+| `mine-melody.js` and `mine-groove.js` both `require("./corpus-db.js")`, which top-level-requires `fs`/`path` and holds a `requireSqlite()` that calls `process.exit` | `tools/mine/mine-melody.js` :31, `mine-groove.js` :15 |
+| the session builder requires the app's own modules by ABSOLUTE filesystem path (`require(ROOT + "/nukernel/precompose.js")`) rather than taking them as arguments | `tools/remix.js` :917-918 |
+| `resolveRow` / `deSrc` call `eval()` on emitted closure source — it works today because nothing serves this page a CSP, which is a fragility rather than a permission | `tools/remix.js` :969, :984, :993 |
+
+`tools/theory.js` IS UMD and `mine-midi.js`'s PARSER is genuinely
+zero-dependency, which is what made (a) worth checking; but the parser's file is
+not, and neither is anything above it. **A wrapper that got round all five would
+be a CommonJS module loader plus a virtual filesystem plus `eval` of fetched
+tool source, shipped inside an offline-first, COEP-isolated app.** That is not a
+thin wrapper; it is a second module system, and it would be the load-bearing
+path for a feature Paul asked for in three words.
+
+**THE SEAM, NAMED EXACTLY.** Five changes in `tools/`, none of them a rewrite
+and none of them this round's to make (that surface is live in another round):
+
+1. **`tools/mine/mine-midi.js` becomes UMD**, exactly as `tools/theory.js`
+   already is: wrap the body, drop the top-level `fs`/`path` (the parser uses
+   neither — only its own `main()` does), and export as `NuMineMidi` on a
+   browser global. This is the one change that carries the whole parser over.
+2. **`tools/remix.js` gains a bytes entry point**: `readBytes(u8, name)`
+   alongside `read(file)`, with `read` becoming
+   `readBytes(fs.readFileSync(file), file)` — one line, and the CLI is
+   unchanged.
+3. **`tools/remix.js` takes its app modules as arguments** rather than
+   `require`-ing them by absolute path: `sessionOf(..., { P2, Doc })`, defaulted
+   to the `require` calls under a `typeof require === "function"` guard. The
+   browser already holds `NuPrecompose` and `NuDocument` as globals.
+4. **`mine-melody.js`'s four lifted functions and `mine-groove.js`'s
+   `accentProfile` stop requiring `corpus-db.js`** — they are pure and do not
+   use it; the `require` is a leftover of the files they were lifted out of.
+   (`corpus-db.js` itself stays a node tool and never crosses.)
+5. **`resolveRow` stops using `eval`**: `tools/genres/build.js` already emits
+   these closures at build time, so the browser path can take the ROW ALREADY
+   RESOLVED — or the `$src` resolver can be a lookup with no `eval` for the
+   `T.<table>.<key>` form, which is what every row in the catalogue actually
+   uses.
+
+**AND THE DOOR IS NOT BUILT AS A HALF-WORKING CONTROL.** An `<input
+type="file" accept=".mid">` in the Export view that accepted a drop and then
+said *"the pipeline is not on this page"* would be a refusal by construction —
+a control that can never succeed, which is the opposite of §15's refusal law
+(*"a refused control is one a hand may one day use"*). What ships instead is
+this paragraph and the five items above, so the round that owns `tools/` can
+make the change in an afternoon and the round after it can hang the door on a
+real hinge. The gate is already written and already headless
+(`test/remix.test.js` R2, the exporter's own `.mid` round-tripped for tempo,
+meter and bar count); driving it *through the page* is the last step and not the
+first.
+

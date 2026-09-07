@@ -114,8 +114,21 @@ function standUpServer() {
     await p.waitForTimeout(2600);
     return p;
   };
-  const reading = (p) => p.evaluate(() =>
-    (document.getElementById("reading") || {}).textContent);
+  /* THE READING IS THE DIE'S OWN ACCESSIBLE NAME SINCE 2026-09-07 (§20). Paul:
+     *"Get rid of seed number too."* `#reading` and the `#seedval` that held it
+     are deleted from the page; `printReading` writes the number into
+     `#rewrite`'s `aria-label` ("rewrite 4242") and into the plate's `Set Seed`
+     row, exactly as it always also did. ONE WRITER, and this is the place a
+     screen reader hears it, which is the honest place to read it from.
+     WHILE A RESEED IS PENDING THE NAME CARRIES THE WAIT TOO — "rewrite 4242 —
+     5 beats" — so the number is taken off the head of it and not off the
+     whole string. */
+  const READING = () => {
+    const b = document.getElementById("rewrite");
+    const m = /^rewrite\s+(\d+)/.exec(b ? (b.getAttribute("aria-label") || "") : "");
+    return m ? m[1] : null;
+  };
+  const reading = (p) => p.evaluate(READING);
 
   /* ---- S1 A FRESH BOX DRAWS, AND WRITES NOTHING ---------------------- */
   /* TWO CLAIMS AND THEY ARE ONE FEATURE. The draw is 1..65535 (never 0 and
@@ -186,7 +199,8 @@ function standUpServer() {
      must go on working: this is the link a reader shares. */
   const p4 = await open("#at=Kingston&y=1969&s=1");
   const landed = await p4.evaluate(() => ({
-    reading: document.getElementById("reading").textContent,
+    reading: (/^rewrite\s+(\d+)/.exec(document.getElementById("rewrite")
+      .getAttribute("aria-label")) || [])[1],
     basis: window.__eightDoc().basis, title: document.title }));
   check(landed.reading === "1" && landed.basis === "reggae",
     "S2 · …and a place with a seed still lands both — " + JSON.stringify(landed));
@@ -218,18 +232,47 @@ function standUpServer() {
      `__eightMenuOpen` is the ≡ pressed, the same call the button's own
      listener makes; a rect measured with the plate shut is 0x0 and every press
      below would land at the top corner of the page. */
+  /* ...AND THE PLATE SCROLLS INSIDE ITSELF SINCE 2026-09-07 (§20). It opens at
+     the TOP of the screen now and holds eighteen rows — 890px of content in
+     787 of glass at 844 — so `Set Seed` and the log are UNDER THE FOLD of the
+     plate's own scrollport, which is the named exemption DESIGN §3 grants a
+     navigation list and nothing else on this page.
+     `scrollIntoView({ block: "nearest" })` IS NOT THE HARNESS LIE THIS REPO
+     WARNS ABOUT. That warning is about `page.click()` calling CDP's
+     scroll-into-view, which CENTRES its target and manufactures a page jump;
+     this scrolls the PLATE, by the least it can, to put a row a thumb would
+     have flicked to under the pointer — which is the gesture, not a way past
+     it. The rect is taken AFTER the scroll settles, off the rendered page. */
   const openMenu4 = () => p4.evaluate(() => window.__eightMenuOpen(true));
-  const numRect = async (id) => (await openMenu4(), p4.evaluate((k) => {
-    const n = document.getElementById(k);
-    if (!n) return null;
-    const r = n.getBoundingClientRect();
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2,
-             w: +r.width.toFixed(1), h: +r.height.toFixed(1) }; }, id));
-  const at3 = await numRect("seedval");
-  await p4.mouse.click(at3.x, at3.y);
-  await p4.waitForTimeout(200);
+  const numRect = async (id) => {
+    await openMenu4();
+    await p4.waitForTimeout(200);
+    return p4.evaluate((k) => {
+      const n = document.getElementById(k);
+      if (!n) return null;
+      if (n.closest("#nu-menu")) n.scrollIntoView({ block: "nearest" });
+      const r = n.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2,
+               w: +r.width.toFixed(1), h: +r.height.toFixed(1) }; }, id);
+  };
+  /* AND THE DOOR IS THE PLATE'S `Set Seed` ROW SINCE 2026-09-07 (§20). The
+     number that used to be the target is deleted; `#seedmenu` is the one door
+     left to the field, and it closes the plate on the way in, which is why the
+     rect below is taken with the plate OPEN and the field is measured after
+     the plate has gone. */
+  /* THE DOOR IS PRESSED AT ITS OWN RECT WITH THE PLATE OPEN, AND THE PLATE
+     SHUTS BEHIND IT — so the rect has to be taken FRESH each time rather than
+     kept: the second press below lands where the first row of the plate was,
+     and with the plate shut that point is a section of the table. */
+  const tapSeedDoor = async () => {
+    const at = await numRect("seedmenu");
+    await p4.mouse.click(at.x, at.y);
+    await p4.waitForTimeout(200);
+    return at;
+  };
+  const at3 = await tapSeedDoor();
   const field = await p4.evaluate(() => {
-    const i = document.getElementById("seedin"), v = document.getElementById("seedval");
+    const i = document.getElementById("seedin"), v = document.getElementById("rewrite");
     return { there: !!i, shown: i && !i.hidden, hid: v && v.hidden,
              mode: i && i.getAttribute("inputmode"),
              pat: i && i.getAttribute("pattern"),
@@ -247,10 +290,11 @@ function standUpServer() {
   await p4.keyboard.press("Enter");
   await p4.waitForTimeout(1500);
   const wrote = await p4.evaluate(() => ({
-    reading: document.getElementById("reading").textContent,
+    reading: (/^rewrite\s+(\d+)/.exec(document.getElementById("rewrite")
+      .getAttribute("aria-label")) || [])[1],
     doc: JSON.stringify(window.__eightDoc()),
     back: document.getElementById("seedin").hidden &&
-          !document.getElementById("seedval").hidden,
+          !document.getElementById("rewrite").hidden,
     basis: window.__eightDoc().basis }));
   const want4242 = await p4.evaluate(() =>
     JSON.stringify(window.NuPrecompose.genreToDocument("reggae", 4242)));
@@ -266,13 +310,13 @@ function standUpServer() {
      backed out would be a control that writes a record you did not ask for —
      and the number is the one control on this page whose only readout is the
      RECORD, so an accidental write is a song you cannot get back by undoing. */
-  await p4.mouse.click(at3.x, at3.y);
-  await p4.waitForTimeout(150);
+  await tapSeedDoor();
   await p4.keyboard.type("999");
   await p4.keyboard.press("Escape");
   await p4.waitForTimeout(600);
   const esc = await p4.evaluate(() => ({
-    reading: document.getElementById("reading").textContent,
+    reading: (/^rewrite\s+(\d+)/.exec(document.getElementById("rewrite")
+      .getAttribute("aria-label")) || [])[1],
     hidden: document.getElementById("seedin").hidden }));
   check(esc.reading === "4242" && esc.hidden,
     "S3 · …and Escape abandons the edit without writing a record — still " +
@@ -290,7 +334,10 @@ function standUpServer() {
     const a = JSON.stringify(window.NuPrecompose.genreToDocument("reggae", 0));
     const b2 = JSON.stringify(window.NuPrecompose.genreToDocument("reggae", 1));
     return { same: a === b2,
-             why: (document.getElementById("seedval") || {}).dataset.say };
+             /* THE EXPLAINER RODE `#seedval` UNTIL 2026-09-07 (§20) and is
+                `#seedmenu`'s now — the one door left to the field, and the
+                only control on the page whose subject is the seed's NUMBER. */
+             why: (document.getElementById("seedmenu") || {}).dataset.say };
   });
   check(zeroOne.same && /0 and 1/.test(zeroOne.why || ""),
     "S4 · 0 and 1 compose the same record — the idiom as written — and the " +
@@ -343,17 +390,21 @@ function standUpServer() {
        countdown did NOT come with it — `.nu-count` is inside the tape, which
        is the one readout on this page that is on the screen with the plate
        shut. Not one id moved, either time. */
-    row: !!document.querySelector("#nu-menu .nu-seedrow #reading") }));
+    /* THE ROW IS THE BAR'S AND HOLDS THE DIE ALONE SINCE 2026-09-07 (§20):
+       the number is deleted (*"Get rid of seed number too"*) and the plate
+       holds `#seedmenu`, a door. */
+    row: !!document.querySelector("#nu-bar .nu-seedrow #rewrite") &&
+         !!document.querySelector("#nu-menu #seedmenu") }));
   check(!gone.panel && !gone.slide && !gone.roll && !gone.next && !gone.num &&
         gone.exp === null,
     "S5 · …and the flyout is GONE — no panel, no slider, no roll, no next, " +
     "no field of its own, and no aria-expanded on the die: " +
     JSON.stringify(gone));
-  check(gone.name === "rewrite " + rolled && gone.word &&
+  check(String(gone.name).indexOf("rewrite " + rolled) === 0 && gone.word &&
         gone.word.says === "seed" && gone.word.seen === false && gone.row,
-    "S5 · …the die keeps its accessible name, its word leaves the FACE " +
-    "without leaving the DOM (Paul: \"get rid of the word seed and put the " +
-    "number\"), and the number stands beside it in the foot: " +
+    "S5 · …the die keeps its accessible name — which is the one place the " +
+    "number is read since §20 — its word leaves the FACE without leaving the " +
+    "DOM, and the plate holds the door to the field: " +
     JSON.stringify([gone.name, gone.word]));
   /* ---- S6 A SEED CHANGE STARTS PLAYING (2026-09-03) ------------------ */
   /* Paul: *"When I change the seed start playing."*
@@ -406,8 +457,7 @@ function standUpServer() {
   await p6.waitForTimeout(2600);
 
   const bounce = () => p6.evaluate(() => window.__nuBounce());
-  const read6 = () => p6.evaluate(() =>
-    (document.getElementById("reading") || {}).textContent);
+  const read6 = () => p6.evaluate(READING);
   /* A START IS SLOW AND THE GATE SAYS SO RATHER THAN GUESSING. From a stopped
      box `reseed` lands a whole new record — `CTX.setDocument`, `stop()`, then
      `startNow` — so the next song pays the ordinary cost of an open, and
@@ -449,9 +499,14 @@ function standUpServer() {
     // the seed row is a row of the hamburger since 2026-09-06 (docs/NAV.md) —
     // the plate is opened first, which is the tap a hand makes
     await p6.evaluate(() => window.__eightMenuOpen(true));
+    await p6.waitForTimeout(200);
+    // …and the row is brought under the thumb inside the PLATE's own
+    // scrollport, by the least it can — see `numRect` above for why that is
+    // the gesture and not a way past it.
     const at = await p6.evaluate((k) => {
       const n = document.getElementById(k);
       if (!n) return null;
+      if (n.closest("#nu-menu")) n.scrollIntoView({ block: "nearest" });
       const r = n.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, id);
     if (!at) return false;
@@ -468,7 +523,7 @@ function standUpServer() {
     JSON.stringify({ playing: boot6b.playing, state: boot6b.state }));
 
   /* S6b — THE FIRST INTERACTION ON THE PAGE IS A SEED CHANGE. */
-  const opened = await tap6("seedval");
+  const opened = await tap6("seedmenu");
   await p6.keyboard.type("4242");
   await p6.keyboard.press("Enter");
   const tB = await waitPlaying(30000);
@@ -537,7 +592,8 @@ function standUpServer() {
    *   the walk keeps counting     the `pos` feed's serial is MONOTONE (the
    *                               restart took it back to 0 before the fix)
    *   the engine keeps sounding   `__nuEngine().rms` is above zero through it
-   *   the countdown is drawn      `.nu-seedwait` fills, ticks DOWN on the beat
+   *   the countdown is drawn      the DIE's own face becomes the number and
+   *                               ticks DOWN on the beat
    *                               feed (never up), and CLEARS when it lands
    *   the new record arrives      the page then holds exactly
    *                               `genreToDocument(basis, the new reading)`
@@ -565,8 +621,18 @@ function standUpServer() {
   const live7 = () => p6.evaluate(() => ({
     playing: window.__nuBounce().playing, rms: window.__nuEngine().rms,
     pos: window.__posLog.slice(), st: window.__stateLog.slice(),
-    seed: (document.getElementById("reading") || {}).textContent,
-    wait: (document.querySelector(".nu-seedwait") || {}).textContent,
+    seed: (/^rewrite\s+(\d+)/.exec((document.getElementById("rewrite") || {})
+      .getAttribute ? document.getElementById("rewrite")
+        .getAttribute("aria-label") : "") || [])[1],
+    /* THE COUNTDOWN IS THE DIE'S OWN FACE SINCE 2026-09-07 (§20). Paul:
+       *"Instead of a beat countdown when I hit dice replace the die icon with
+       the countdown. Will save space."* `.nu-seedwait` is deleted; the beats
+       are drawn into `#rewrite`'s `.nu-g`, which wears `data-live="pending"`
+       for exactly as long as they are there — the same feed, the same
+       arithmetic, one node fewer. Empty is the mark itself, so what this reads
+       back is the digits or nothing. */
+    wait: (() => { const g = document.querySelector("#rewrite .nu-g[data-live]");
+      return g ? g.textContent : ""; })(),
     doc: JSON.stringify(window.__eightDoc()) }));
   /* THE WALK KEPT GOING FORWARD, WHICH IS WHAT "the position is kept" MEANS
      WHEN THE RECORD'S OWN LENGTH CHANGES. test/rules-view.browser.js R11d
@@ -605,10 +671,16 @@ function standUpServer() {
   const watchWait = async (ms) => {
     const seen = [], t0 = Date.now();
     while (Date.now() - t0 < ms) {
+      /* THE COUNTDOWN IS THE DIE'S FACE SINCE 2026-09-07 (§20): `.nu-seedwait`
+         is deleted and the beats are the `.nu-g` inside `#rewrite`, wearing
+         `data-live="pending"` while they are there. Same feed, same
+         arithmetic, one node fewer — so "shown" is a live glyph with a rect
+         and "cleared" is the mark back on the button. */
       const w = await p6.evaluate(() => {
-        const n = document.querySelector(".nu-seedwait");
-        const b2 = n && n.querySelector("b");
-        return { txt: n ? n.textContent : null, n: b2 ? +b2.textContent : null,
+        const n = document.querySelector("#rewrite .nu-g[data-live]");
+        const d = n && /^[0-9]+$/.test(n.textContent.trim());
+        return { txt: n ? n.textContent : null,
+                 n: d ? +n.textContent.trim() : null,
                  shown: !!(n && n.getClientRects().length) }; });
       if (!seen.length || seen[seen.length - 1].n !== w.n) seen.push(w);
       if (seen.length > 1 && w.n == null) break;
@@ -640,7 +712,7 @@ function standUpServer() {
   check(nums7.length >= 2 && nums7[nums7.length - 1] < nums7[0] &&
         nums7.every((n) => n > 0 && n < 400) &&
         wait7[wait7.length - 1].n == null,
-    "S7d · …and a countdown stands beside the number, counts DOWN on the " +
+    "S7d · …and the DIE ITSELF becomes the countdown, counts DOWN on the " +
     "walk's own beats and CLEARS when it lands: " + JSON.stringify(nums7));
   check(L7b.doc === want7,
     "S7e · …and the record on the page is genreToDocument(basis, " +
@@ -657,7 +729,7 @@ function standUpServer() {
      red if the evolve had been wired at the die's listener instead of at the
      landing every seed change shares. */
   const L8a = await live7();
-  await tap6("seedval");
+  await tap6("seedmenu");
   await p6.keyboard.type("777");
   await p6.keyboard.press("Enter");
   const wait8 = await watchWait(30000);

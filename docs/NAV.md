@@ -173,3 +173,85 @@ sharpened rather than reversed.
 
 The rest stands: two modalities (a view and a sheet), one hamburger at the top
 right, `Session` first, and every address unmoved.
+
+---
+
+## AMENDED AGAIN (2026-09-07) — nukernel/TABLE.md §20
+
+Paul, in five messages on v302: *"In the hamburger move the record sectio. above
+where you are section."* · *"Come up with one format for each menu entry:
+Unicode icon (not emoji) plus title case name."* · *"The hamburger menu should
+open higher and the menu icon should be a dismiss button"* · *"Bottom bar: get
+rid of gear and move those functions into the menu. Make volume less wide. Get
+rid of icon borders and shadows just put a light line between"* · *"Get rid of
+seed number too"* · *"Instead of a beat countdown when I hit dice replace the
+die icon with the countdown . Will save space."* · *"Get rid of the dismiss x
+about the globe and expand the globe accordingly"*
+
+**THE LAW IS UNCHANGED AND THE TWO DRAWINGS ABOVE ARE BOTH STALE.** The top is
+still where you go, the bottom is still controls and only controls, and there
+are still exactly two modalities. What moved is what is in each band.
+
+**THE HAMBURGER'S DRAWING IS WRONG NOW.** It is five blocks, the record first,
+every row a Unicode mark and a title-case name and nothing else on the glass:
+
+    ┌────────────────────────────┐   ← the plate opens at the TOP of the
+    │  STELLATE              [×] │     screen, in front of the strip, and
+    │  THE RECORD                │     the ≡ floats over its corner as the
+    │    §  Rules                │     DISMISS (× while open, ≡ while shut)
+    │    ♩  Time                 │
+    │    ⌗  Chords               │
+    │    ♬  Motifs               │
+    │    ⇅  Master               │
+    │    ✦  Produce              │
+    │    ◈  Performance          │
+    │    ⊙  This Song            │
+    │  WHERE YOU ARE             │
+    │    ☰  Session   ⊕  Where   │   (one per line; drawn across to save
+    │    𝄞  Score     ▣  Video   │    room in this drawing only)
+    │    ✷  Screensaver ⇩ Export │
+    │  HOW IT PLAYS              │   ← the gear's two, rehoused
+    │    ▶∞ Loop                 │
+    │    ↻  Take                 │
+    │    ⚄  Set Seed             │
+    │    ¶  Log                6 │   ← the ONE trailing number in the plate
+    └────────────────────────────┘
+
+The sentences the record's rows used to print at their right-hand end are their
+ACCESSIBLE NAMES now, and their sheets print them in full one tap later. Title
+case is a CSS rule on the plate's own words, never a second copy of them.
+
+**THE BOTTOM BAR'S DRAWING IS WRONG NOW** — the gear and the seed number are
+deleted and the die is the countdown:
+
+    ┌──────────────────────────────────────────────────────────┐
+    │  ◉ sung   ▶ │ ⚄            │              ▭▬▬ 62%        │
+    └──────────────────────────────────────────────────────────┘
+        the voicing, play │ the die (its face prints the beats
+        left while a reseed waits) │ the room, 112px at every width
+
+A `--rule` hairline stands between adjacent controls and there are no borders
+and no shadows on them; the 44px floor is untouched in both axes.
+
+**THREE SENTENCES OF THIS DOCUMENT ARE AMENDED.**
+
+1. **"`#playops` and its three children stay in the bar"** (the outcome note
+   above, decision 2) is REVERSED by Paul's own instruction. The gear is
+   deleted; the play mode and the take are rows of the hamburger's own HOW IT
+   PLAYS block, one tap from the open plate where they were two from rest. The
+   argument that put them in the bar — *"a mode, a take and the room are facts
+   about the next press of ▶"* — is still true of the ROOM, which stays.
+2. **"`Set seed` is a door, not the row"** (§18's amendment 2) stands, and it is
+   now the ONLY door: `#seedval` is deleted, so a hand types a seed through the
+   plate and reads it in the die's accessible name. The die stays in the bar.
+3. **The picker has no close of its own.** *"Leave the close icon"* (the §18
+   round) is superseded by *"Get rid of the dismiss x about the globe"*: the
+   two ways out are the record's NAME in the strip (a toggle since §16) and
+   Escape (§18c), and both are driven by `test/atlas.js` G11b rather than
+   assumed. The globe takes the 44px — 364.4 × 298 → 364.4 × 342 at 390.
+
+**WHAT MUST NOT CHANGE, STILL:** the one-sheet law, the two fixed bands and only
+these two, every address in `test/table-inventory.json` resolving where it was
+re-filed, and no control losing its written refusal. One thing is added to that
+list: **the plate now scrolls inside itself** (891px of content in 785 of glass at 844, scrolling by 106), which is DESIGN §3's named navigation exemption and is not a licence
+for anything else on this page.

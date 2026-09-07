@@ -784,6 +784,12 @@ var SHEETS = {
      song, which is the scope's own name in §14 and on the sheet it left. */
   "burger.views": "Where you are",
   "burger.record": "The record",
+  /* ...AND A THIRD, 2026-09-07 (TABLE.md §20). Paul: *"Bottom bar: get rid of
+     gear and move those functions into the menu."* The gear held the play mode
+     and the take — what the next press of PLAY will do — which is neither a
+     view nor a fact about the record, so it is a block of its own and the
+     heading says what the block is about in the same voice as the other two. */
+  "burger.play": "How it plays",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",
@@ -1046,10 +1052,20 @@ var GLYPHS = {
   "glyph.act.rewrite.say": "New seed, same place",
   /* the WORD is core's `noun.take`. */
   "glyph.act.take.say": "New take",
-  "glyph.act.opts": "opts",
-  "glyph.act.opts.say": "Playback options",
+  /* (`glyph.act.opts` AND ITS SENTENCE STOOD HERE, and both are deleted with
+     the gear on 2026-09-07 — TABLE.md §20, Paul: *"Bottom bar: get rid of gear
+     and move those functions into the menu."* The two controls behind it, the
+     play mode and the take, are rows of the plate now and say their own words.
+     A key with no printer is a string the text gate counts and nobody
+     reads.) */
   "glyph.act.menu": "menu",
-  "glyph.act.menu.say": "Score, video, screensaver, export and log",
+  "glyph.act.menu.say": "The record, the views and the log",
+  /* ...AND WHAT IT SAYS WHILE THE PLATE IS OPEN (2026-09-07, §20). Paul: *"the
+     menu icon should be a dismiss button"*. The WORD is `glyph.act.close`
+     below — one word, one owner, the same "close" every × on this page wears —
+     and only the SENTENCE is its own, because the ≡ closes the plate it opened
+     and not the song. */
+  "glyph.act.menu.close.say": "Close this menu",
   "glyph.act.close": "close",
   "glyph.act.close.say": "Back to the song",
   /* ...AND ONE MORE, 2026-09-05 (TABLE.md §13a.5): the `+` at each edge of the

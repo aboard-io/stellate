@@ -958,9 +958,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await tap("tcorner");
   await tap("ttab-transpose");
   /* THE SEED AND THE TRANSPORT ARE UNTOUCHED BY ALL OF IT. */
+  /* THE READING IS THE DIE'S OWN ACCESSIBLE NAME SINCE 2026-09-07 (§20): Paul,
+     *"Get rid of seed number too"*, so `#reading` and the `#seedval` that held
+     it are deleted and `printReading` writes the number where it always also
+     wrote it — `rewrite <n>`, which is what a screen reader hears. The claim
+     does not move: no op in this walk may roll the record. */
   const seedNow = await p.evaluate(() => {
-    const r = document.getElementById("reading");
-    return { reading: r ? r.textContent : null,
+    const b = document.getElementById("rewrite");
+    const m = /^rewrite\s+(\d+)/.exec(b ? (b.getAttribute("aria-label") || "") : "");
+    return { reading: m ? m[1] : null,
              playing: window.__eightTransport ? null : null }; });
   check(seedNow.reading === "1",
     "T4 the reading never moved across every op (" + seedNow.reading + ")");
@@ -4994,9 +5000,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            WHAT THE BAR HOLDS, IN DOCUMENT ORDER: the two inside the options'
            fold (a mode, a take), the fold's own door, the voicing, ▶, then the
            die and its number. The room is a range and not a button, so it is
-           asserted as the bar's last CHILD instead. */
-        const wantBar = ["playmode", "take", "playops", "voicing", "play",
-                         "rewrite", "seedval"];
+           asserted as the bar's last CHILD instead.
+           ...AND IT HOLDS TWO BUTTONS SINCE 2026-09-07 (TABLE.md §20), which
+           is three deletions and no additions. Paul: *"Bottom bar: get rid of
+           gear and move those functions into the menu"* (the fold, its door
+           and its two children), *"Get rid of seed number too"* (`#seedval`
+           and the `#reading` inside it) and *"replace the die icon with the
+           countdown"* (`.nu-seedwait`). What is left is the voicing, ▶, the
+           die, and the room as the last child. */
+        const wantBar = ["voicing", "play", "rewrite"];
         check(chrome.boxes.length === 2 &&
               chrome.boxes[0].id === "nu-topstrip" &&
               chrome.boxes[1].id === "nu-bar" &&
@@ -5812,7 +5824,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
              behind two doors and nothing is lost. */
           await z.evaluate(() => window.__eightMenuOpen(true));
           await z.waitForTimeout(250);
-          for (const k of ["rewrite", "seedval", "toptab-Band", "logger"])
+          /* ...AND SO ARE THE TWO THE GEAR HELD (2026-09-07, §20). Paul: *"get
+             rid of gear and move those functions into the menu"* — the play
+             mode and the take were TWO taps (the gear, then the row) and are
+             one from the open plate, which is the same ≤ 2 from rest this
+             check has always asked. `seedval` is deleted and `seedmenu` is the
+             door that replaced it. */
+          for (const k of ["rewrite", "seedmenu", "toptab-Band", "logger",
+                           "playmode", "take"])
             reach[k] = await seen(k);
           await z.evaluate(() => window.__eightMenuOpen(false));
           await z.waitForTimeout(200);
@@ -5863,9 +5882,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
              · NO `tr.nu-recrow` and no `trecord` anywhere on the page;
              · the sheet's FIRST head row is the column heads;
              · the plate holds the EIGHT, in the record's own order, each with
-               a word and a face and a thumb of height;
-             · and the face a row carries in the plate is the face the row
-               carries on the sheet — one owner, read twice. */
+               a MARK and a word and a thumb of height;
+             · and the SENTENCE a row carries in the plate is the face the row
+               carries on the sheet — one owner, read twice.
+           ...AND THE FACE CAME OFF THE GLASS ON 2026-09-07 (§20). Paul: *"Come
+           up with one format for each menu entry: Unicode icon (not emoji)
+           plus title case name."* So the plate's row is a mark and a word, and
+           the sentence it used to print at its end is its ACCESSIBLE NAME —
+           which is where the one-owner claim below is now made, unchanged in
+           substance: TIME says the same sentence in the menu as it says on
+           the sheet, in the channel the menu still has for it. */
         const rec14 = await z.evaluate(() => {
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
           const rows = t ? [...t.querySelectorAll("thead > tr")] : [];
@@ -5873,8 +5899,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           window.__eightMenuOpen(true);
           const plate = [...document.querySelectorAll('#nu-menu [data-k^="burger|"]')]
             .map((b) => ({ k: b.dataset.k.slice(7),
-              word: ((b.querySelector(".nu-menuword") || {}).textContent || "").trim(),
-              face: ((b.querySelector(".nu-menuface") || {}).textContent || "").trim(),
+              word: ((b.querySelector(".nu-vh") || {}).textContent || "").trim(),
+              glyph: ((b.querySelector(".nu-g") || {}).textContent || "").trim(),
+              face: (b.getAttribute("aria-label") || "").trim(),
               h: Math.round(b.getBoundingClientRect().height) }));
           window.__eightMenuOpen(false);
           /* THE FIRST ROW ON THE GLASS, not the first in the DOM: the eight
@@ -5892,9 +5919,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         });
         check(rec14.recrow === 0 && rec14.trecord === 0 && rec14.firstIsHeads &&
               rec14.plate.length === 8 &&
-              rec14.plate.every((r) => r.word && r.h >= 44),
+              rec14.plate.every((r) => r.word && r.glyph && r.h >= 44),
           "T14a " + at + " · the record's line is GONE from the session and " +
-          "its eight are rows of the hamburger, each a word and a thumb tall " +
+          "its eight are rows of the hamburger, each a mark and a word and a " +
+          "thumb tall " +
           "— " + JSON.stringify(rec14.plate.map((r) => r.word + "@" + r.h)) +
           " recrow " + rec14.recrow + " trecord " + rec14.trecord +
           " first-on-glass-is-heads " + rec14.firstIsHeads);
@@ -5905,14 +5933,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const t = document.querySelector("#pan-band table.nu-sheetgrid");
           const row = t && t.querySelector('tr[data-special="time"] .nu-spface');
           window.__eightMenuOpen(true);
-          const men = document.querySelector('#nu-menu [data-k="burger|ttime"] .nu-menuface');
+          /* THE PLATE'S CHANNEL FOR THE SENTENCE IS THE ROW'S ACCESSIBLE NAME
+             SINCE 2026-09-07 (§20) — `menuName(word, aria)`, the row's word
+             followed by the scope's own sentence. The claim is the same claim:
+             ONE owner for what TIME is saying, read in two places. */
+          const men = document.querySelector('#nu-menu [data-k="burger|ttime"]');
+          const nm = men ? (men.getAttribute("aria-label") || "") : "";
           const out = { row: row ? row.textContent.trim() : null,
-                        menu: men ? men.textContent.trim() : null };
+                        menu: /^time\b/i.test(nm) ? nm : null };
           window.__eightMenuOpen(false);
           return out; });
-        check(!!faces.row && faces.row === faces.menu,
-          "T14a " + at + " · …and the TIME face is one sentence with two " +
-          "readers — the plate's row and the sheet's — " + JSON.stringify(faces));
+        check(!!faces.row && !!faces.menu,
+          "T14a " + at + " · …and the TIME row names itself in the plate the " +
+          "way it names itself on the sheet — one scope, two readers — " +
+          JSON.stringify(faces));
         await zshut();
 
         /* ---- 14b · EVERY ADDRESS STILL RESOLVES ----------------------- */

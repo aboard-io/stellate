@@ -14,13 +14,15 @@
 //       hamburger, one after the other, and count what is on the glass at each
 //       step. Measured BEFORE this round: 1, then 2, then 3. It must be 1 at
 //       every step, for ever.
-//   O2  EVERY PAIR. For each ordered pair of the four surfaces — the menu, the
-//       play fold, the log, a table sheet — opening the second closes the
-//       first. Twelve pairs, no exceptions.
+//   O2  EVERY PAIR. For each ordered pair of the three surfaces — the menu,
+//       the log, a table sheet — opening the second closes the first. SIX
+//       pairs since 2026-09-07 and twelve before it: the play fold is deleted
+//       with the gear that opened it (TABLE.md §20).
 //   O3  THE WAY OUT, THREE WAYS, FOR EVERY SURFACE: a tap outside it, Escape,
 //       and its own close (the opener pressed again — for the log, whose
-//       opener is behind the menu, the × in its header). Twelve ways out.
-//       Measured BEFORE, on a HEAD overlay: six of the twelve worked.
+//       opener is behind the menu, the × in its header). NINE ways out since
+//       2026-09-07, twelve before it. Measured BEFORE §18, on a HEAD overlay:
+//       six of the twelve worked.
 //   O4  THE OWNER AND THE GLASS AGREE. `window.__nuOpen()` — the one owner's
 //       own answer — names exactly what a walk of the DOM finds open, in every
 //       state above. A page that BELIEVES one thing is open while two are is
@@ -83,7 +85,7 @@ function standUpServer() {
   });
 }
 
-/* WHAT IS ON THE GLASS, WALKED RATHER THAN ASKED. The four surfaces by their
+/* WHAT IS ON THE GLASS, WALKED RATHER THAN ASKED. The three surfaces by their
    own boxes: a box that is `hidden`, `display:none` or zero-height is not
    open, whatever anything says about it. */
 const GLASS = () => {
@@ -92,24 +94,27 @@ const GLASS = () => {
     e.getBoundingClientRect().height > 0;
   const out = [];
   if (vis(document.getElementById("nu-menu"))) out.push("menu");
-  if (vis(document.querySelector(".nu-baropts"))) out.push("playops");
   if (vis(document.getElementById("nu-log"))) out.push("log");
   if ([...document.querySelectorAll("#pan-band .nu-wopen")].some(vis))
     out.push("sheet");
   return out;
 };
-/* THE FOUR DOORS, PRESSED THE WAY A THUMB PRESSES THEM. The log's door is a
-   row of the menu, which is the whole reason its own opener cannot close it. */
+/* THE THREE DOORS, PRESSED THE WAY A THUMB PRESSES THEM. The log's door is a
+   row of the menu, which is the whole reason its own opener cannot close it.
+   (THERE WERE FOUR UNTIL 2026-09-07, TABLE.md §20. Paul: *"Bottom bar: get rid
+   of gear and move those functions into the menu."* `#playops` and its
+   `.nu-baropts` fold are DELETED — the mode and the take are rows of the plate
+   — so the bar has no pop-up at all and this file walks three surfaces and SIX
+   ordered pairs where it walked four and twelve. A surface the box cannot open
+   cannot be the second thing standing.) */
 const OPENERS = {
   menu: () => document.getElementById("burger").click(),
-  playops: () => document.getElementById("playops").click(),
   log: () => { document.getElementById("burger").click();
                document.querySelector('#nu-menu [data-k="logger"]').click(); },
   sheet: () => document.querySelector('#pan-band [data-k^="trow|"]').click(),
 };
 const CLOSERS = {
   menu: () => document.getElementById("burger").click(),
-  playops: () => document.getElementById("playops").click(),
   /* THE LOG'S THIRD WAY OUT IS THE × IN ITS HEADER (§18): its opener is
      behind the menu, and opening the menu closes the log. */
   log: () => document.querySelector('#nu-log [data-k="logclose"]').click(),
@@ -117,7 +122,7 @@ const CLOSERS = {
 };
 
 (async () => {
-  console.log("\none open thing — the four surfaces, driven on the rendered page");
+  console.log("\none open thing — the three surfaces, driven on the rendered page");
   const srv = await standUpServer();
   const PAGE = "http://127.0.0.1:" + srv.port + "/nukernel/index.html";
   const b = await chromium.launch({ executablePath: EXE });
@@ -133,14 +138,12 @@ const CLOSERS = {
   const owner = () => p.evaluate(() => window.__nuOpen && window.__nuOpen());
   const press = (name) => p.evaluate((n) => {
     ({ menu: () => document.getElementById("burger").click(),
-       playops: () => document.getElementById("playops").click(),
        log: () => { document.getElementById("burger").click();
                     document.querySelector('#nu-menu [data-k="logger"]').click(); },
        sheet: () => document.querySelector('#pan-band [data-k^="trow|"]').click(),
      })[n](); }, name);
   const close = (name) => p.evaluate((n) => {
     ({ menu: () => document.getElementById("burger").click(),
-       playops: () => document.getElementById("playops").click(),
        log: () => document.querySelector('#nu-log [data-k="logclose"]').click(),
        sheet: () => document.querySelector('#pan-band [data-k^="trow|"]').click(),
      })[n](); }, name);
@@ -157,13 +160,13 @@ const CLOSERS = {
 
     /* ---- O1 · PAUL'S OWN STATE ---------------------------------------- */
     const steps = [];
-    for (const s of ["sheet", "playops", "menu"]) {
+    for (const s of ["sheet", "menu"]) {
       await press(s); await p.waitForTimeout(380);
       steps.push({ s, on: await glass(), own: await owner() });
     }
     check(steps.every((x) => x.on.length === 1),
-      "O1 " + W + " · a sheet, then the volume's own bar, then the ≡: ONE " +
-      "surface is open at every step (was 1, 2, 3) — " +
+      "O1 " + W + " · a sheet, then the ≡: ONE " +
+      "surface is open at every step (was 1, 2) — " +
       steps.map((x) => x.s + ":" + x.on.join("+")).join(" ; "));
     /* O4 rides every reading: the owner and the glass say the same thing. */
     check(steps.every((x) => x.on.length === 1 && x.on[0] === x.own),
@@ -192,17 +195,27 @@ const CLOSERS = {
       await rest();
       await press(n); await p.waitForTimeout(320);
       if (way === "escape") await p.keyboard.press("Escape");
-      /* THE TAP OUTSIDE LANDS ON THE STRIP'S OWN AIR — not on a control, which
+      /* THE TAP OUTSIDE LANDS ON THE BAR'S OWN AIR — not on a control, which
          is DESIGN §3's *"nothing dismisses under a finger that is changing a
-         value"* asked the other way round. */
-      else if (way === "outside") await p.mouse.click(Math.round(W / 2), 22);
+         value"* asked the other way round.
+         IT WAS THE STRIP'S AIR AT (W/2, 22) UNTIL 2026-09-07 (§20). The plate
+         opens at the TOP of the screen now — Paul: *"The hamburger menu should
+         open higher"* — so that point is INSIDE it and this check went red on
+         `menu/outside`, correctly: the gate was tapping the surface it was
+         asking to be dismissed. The plate stops at the bar's top edge for
+         exactly this reason (nu.css carries the arithmetic), so the outside
+         that is guaranteed at every width is the band under it — and the point
+         is the gap the bar's own auto margin holds between the die and the
+         room, which is 66px wide at 320 and wider above it. */
+      else if (way === "outside") await p.mouse.click(Math.round(W * 0.52), 812);
       else await close(n);
       await p.waitForTimeout(340);
       const on = await glass();
       if (on.indexOf(n) >= 0) stuck.push(n + "/" + way);
     }
     check(!stuck.length, "O3 " + W + " · every surface closes three ways — a " +
-      "tap outside, Escape, its own close (12 of 12; 6 of 12 before)" +
+      "tap outside, Escape, its own close (9 of 9 on three surfaces since " +
+      "2026-09-07; 12 of 12 on four before that, 6 of 12 before §18)" +
       (stuck.length ? " — STUCK " + stuck.join(", ") : ""));
   }
 
@@ -224,8 +237,14 @@ const CLOSERS = {
      under a thumb; Escape there cancels the edit and must not close a surface
      or leave the view. */
   await rest();
+  /* THE DOOR IS THE PLATE'S `Set Seed` ROW SINCE 2026-09-07 (§20). Paul: *"Get
+     rid of seed number too"* — `#seedval` is deleted, so the two doors to the
+     field are this row and nothing else, and the row closes the plate on the
+     way. The claim is unchanged: Escape in the field is the FIELD's. */
   const field = await p.evaluate(async () => {
-    document.getElementById("seedval").click();
+    document.getElementById("burger").click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.getElementById("seedmenu").click();
     await new Promise((r) => setTimeout(r, 200));
     const on = document.activeElement && document.activeElement.id;
     return { focused: on, open: window.__nuOpen() };

@@ -171,7 +171,9 @@ export const GLYPH = {
        that has meant "a numbered clause of a text you may cite and amend"
        since the glossators, which is exactly what a rule is here: a sentence
        with a threshold in it that you can edit. It is not ≡ (that is a list),
-       not ⚙ (that is settings, and `act.opts` takes it below), and not ⚖ (a
+       not ⚙ (that is settings, and nothing in this box is a settings drawer
+       — `act.opts` held it from 2026-09-02 to 2026-09-07 and its tombstone is
+       below), and not ⚖ (a
        balance is a judgement; these are declarations). */
     /* (`Rules` STOOD HERE TWICE, two clauses, the second winning. One row,
        one mark, one key: the pair is collapsed on 2026-09-05 with the text
@@ -297,18 +299,23 @@ export const GLYPH = {
                s: t("glyph.act.rewrite.say") },
     take:    { g: "↻", w: t("noun.take"),
                s: t("glyph.act.take.say") },
-    /* THREE MORE, 2026-09-02 (the composer round). `opts` pays the debt
-       nu.css named at `#playops` ("A PICTURE FOR IT IS OWED and it wants a row
-       in ui/glyph.js `GLYPH.act`"): ⚙ is the gear every platform spells
-       settings with, and #playops was the one mark in the gutter that was a
-       word because it had no picture. `seed` is the SAME ⚅ the rewrite
-       gesture wears, under the word the foot now prints on it — one node, one
-       id, two names: the GESTURE's ("rewrite 5", what a screen reader is told
-       and what eleven gates call it) and the SUBJECT's ("seed", what an eye
-       reads under the die). `tap` is the tap-tempo mark the Tempo panel takes
-       in the next wave. */
-    opts:    { g: "⚙", w: t("glyph.act.opts"),
-               s: t("glyph.act.opts.say") },
+    /* THREE MORE, 2026-09-02 (the composer round). `seed` is the SAME ⚅ the
+       rewrite gesture wears, under the word the foot now prints on it — one
+       node, one id, two names: the GESTURE's ("rewrite 5", what a screen
+       reader is told and what eleven gates call it) and the SUBJECT's
+       ("seed", what an eye reads under the die). `tap` is the tap-tempo mark
+       the Tempo panel takes in the next wave.
+       ===== TOMBSTONE: `opts` (⚙), 2026-09-02 to 2026-09-07 ===============
+       It paid a debt nu.css named at `#playops` ("A PICTURE FOR IT IS OWED")
+       and it is deleted with the button. Paul, 2026-09-07: *"Bottom bar: get
+       rid of gear and move those functions into the menu."* Nothing on this
+       page draws a gear now, and nothing should: §18 had already moved the
+       song's options out from behind one *"where a hand had to know what a
+       gear meant"*, and the two controls this one held — the play mode and
+       the take — are rows of the plate wearing their own words. ⚙ IS
+       THEREFORE UNSPENT AGAIN, and the paragraph at `tab.Rules` above, which
+       ruled it out for a genre because "that is settings", still rules it out
+       for the same reason: nothing in this box is a settings drawer. */
     /* TWO MORE, 2026-09-09 (TABLE.md §10b step 6, the hamburger and the bar).
        Paul: *"…then have a hamburger menu for score, video, screensaver, and
        have genre, dice, playstop along the bottom."*
@@ -673,6 +680,81 @@ export const GLYPH = {
     tempo: "♩", meter: "∥", chords: "⌗",
   },
 };
+
+/* ===== THE RECORD'S EIGHT SURFACES, AS ROWS OF THE PLATE (2026-09-07) ====
+   TABLE.md §20. Paul: *"Come up with one format for each menu entry: Unicode
+   icon (not emoji) plus title case name."* The hamburger's RECORD group drew
+   a word and a sentence and no picture at all, so eight of its rows were the
+   only marks-less controls in the chrome.
+
+   IT IS A TABLE OF REFERENCES AND NOT A TABLE OF CHARACTERS, which is what
+   "one owner, move never copy" means when the marks already exist. Six of the
+   eight ARE marks this file has shipped for months, and they are named here
+   rather than retyped — a `§` typed a second time is a second owner of the
+   Rules mark the day somebody changes one of them. Keyed by the SCOPE'S ID
+   (`rules`, `time`, `chords`, `motifs`, `master`, `produce`, `perf`, `song`
+   — src/table/grid.ts `scopes()` stamps them), never by the printed word, for
+   the lesson the nine tabs' own note records: a table keyed by a printed word
+   draws no mark the day the word is translated.
+
+   THE SIX THAT ARE ALREADY HERE:
+     rules   §  the section sign — a numbered clause you may cite and amend
+     time    ♩  the beat itself, `tab.Time`'s own mark
+     motifs  ♬  two notes beamed, `tab.Motifs`'
+     produce ✦  the producer's touch, `tab.Produce`'
+     perf    ◈  `song.performance`, the mark this row's WORD already comes from
+     master  ⇅  two faders, `facet.mix`'s. THE SAME FACT ONE SCOPE UP, which is
+                this table's standing idiom (said at `mix` and again at
+                `facet.sec`): the row's address is `tmix`, its open key is
+                `mix|master`, and its sheet is the master's own cells followed
+                by the four buses. It is NOT `bus.main` (◎), which is one
+                stage of the series the sheet draws, and not a new picture,
+                because a second mark for the desk would be the fourth box of
+                rules the `sec` paragraph exists to refuse.
+
+   THE TWO THAT ARE ARGUED HERE:
+     chords  ⌗  U+2317 VIEWDATA SQUARE — the chart's grid of bars, and it is
+                ALREADY this page's mark for exactly this subject:
+                `group.chords` wears it on the heading of the chords group
+                inside the very sheet this row opens. One fact, one picture,
+                and the row and its own heading now say the same thing. It is
+                NOT a roman numeral (Ⅳ, U+2163): the row's FACE prints numerals
+                (`i · i · iv · v`), so a numeral as its mark is the face said
+                twice at a sixth of the size, and U+2163 is a LIGATURE of two
+                letters — it reads as text beside a column of pictures and it
+                is the one character here a hand would try to select.
+     song    ⊙  U+2299 CIRCLED DOT OPERATOR — a disc with its spindle hole,
+                which is what a record is. It is the ONE row of the eight that
+                is about the record ITSELF rather than about one of its facts
+                (fill from the genre, re-seed, transpose are three ways of
+                writing the whole thing again), so it takes the picture of the
+                whole thing. It is NOT ⚙: `act.opts` is deleted from the bar
+                in this same round, and §18 moved this row out from behind a
+                gear precisely because *"a hand had to know what a gear
+                meant"* — putting the gear back on it would undo that in a
+                picture. It is not ◎ (`bus.main`, two rings — a target) and
+                not ◉ (`kind.drums`, the filled fisheye); the three never
+                stand on one surface, and the plate holds only this one.
+                RENDERED BEFORE IT WAS CHOSEN, which is this table's own rule:
+                in this page's own stack, headless chromium 2026-09-07, ⊙ is
+                26.8px and ⌗ is 18.0px against the 19.2px tofu box — two real
+                glyphs, no fallback square. */
+GLYPH.record = {
+  rules:   GLYPH.tab.Rules.g,
+  time:    GLYPH.tab.Time.g,
+  chords:  GLYPH.group.chords,
+  motifs:  GLYPH.tab.Motifs.g,
+  master:  GLYPH.facet.mix.g,
+  produce: GLYPH.tab.Produce.g,
+  perf:    GLYPH.song.performance.g,
+  song:    "\u2299",
+};
+
+/* THE RECORD ROW'S RESOLVER, and it answers the record's own dot rather than
+   nothing: every one of the eight has a mark by construction above, so a null
+   here would mean the scope list grew a ninth member and the plate should say
+   so out loud rather than draw a hole. */
+export const recordMark = (id) => GLYPH.record[String(id || "")] || "\u2022";
 
 /* THE VOICE'S OWN MARK. `kindOf` is a function and not a table lookup here
    because only the caller knows what a name IS on its strip: ui/eight.js's

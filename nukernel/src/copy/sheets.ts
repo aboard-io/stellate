@@ -329,6 +329,12 @@ export const SHEETS: Table = {
      song, which is the scope's own name in §14 and on the sheet it left. */
   "burger.views": "Where you are",
   "burger.record": "The record",
+  /* ...AND A THIRD, 2026-09-07 (TABLE.md §20). Paul: *"Bottom bar: get rid of
+     gear and move those functions into the menu."* The gear held the play mode
+     and the take — what the next press of PLAY will do — which is neither a
+     view nor a fact about the record, so it is a block of its own and the
+     heading says what the block is about in the same voice as the other two. */
+  "burger.play": "How it plays",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",

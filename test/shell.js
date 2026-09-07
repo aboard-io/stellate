@@ -835,11 +835,19 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        word and a sentence in a button) and every one is a thumb tall.
        AND NOTHING OF THE RECORD IS LEFT ON THE SESSION AT REST: `trecord` is
        deleted, which is asserted as an absence because a stack that came back
-       would come back silently. */
+       would come back silently.
+       ...AND THE WORD IS READ OFF `.nu-vh` SINCE 2026-09-07 (§20). Paul: *"Come
+       up with one format for each menu entry: Unicode icon (not emoji) plus
+       title case name."* `.nu-menuword` was the record row's own class and the
+       record row's own shape; there is ONE row shape in this plate now, the
+       one `icon()` builds, so the word is where every other row of the plate
+       has always kept it. A MARK is asserted beside it here for the first
+       time: the eight were the only marks-less controls in the chrome. */
     const recRows = await page.evaluate(() =>
       [...document.querySelectorAll('#nu-menu [data-k^="burger|"]')]
         .map((b) => ({ k: b.dataset.k,
-                       word: (b.querySelector(".nu-menuword") || {}).textContent,
+                       word: (b.querySelector(".nu-vh") || {}).textContent,
+                       glyph: (b.querySelector(".nu-g") || {}).textContent,
                        h: Math.round(b.getBoundingClientRect().height) })));
     const RECKEYS = ["burger|trules", "burger|ttime", "burger|tchords",
                      "burger|tmotifs", "burger|tmix", "burger|tproduce",
@@ -849,15 +857,19 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     is(recRows.length === 8 &&
        JSON.stringify(recRows.map((r) => r.k)) === JSON.stringify(RECKEYS) &&
        recRows.every((r) => r.word && r.word.trim() && r.h >= 44) &&
+       recRows.every((r) => r.glyph && r.glyph.trim() && r.glyph !== "\u2022") &&
        noStack === 0,
       "A6o " + width + " · the record's eight are rows of the hamburger, in "
-      + "the record's own order, each a word and a thumb tall, and the "
-      + "session's own record row is gone — "
-      + JSON.stringify(recRows.map((r) => [r.word, r.h])) + " trecord " + noStack);
+      + "the record's own order, each a MARK and a word and a thumb tall, and "
+      + "the session's own record row is gone — "
+      + JSON.stringify(recRows.map((r) => [r.glyph, r.word, r.h]))
+      + " trecord " + noStack);
     /* ...AND THE SEED IS TWO DOORS AND ONE OWNER (§18). Paul: *"Move the dice
        back into the bottom. Leave them with the hamburger too."* The row
-       itself — `#rewrite`, `#seedval`, `#seedin` — is in the BAR, and the
-       plate holds `#seedmenu`, which presses it. */
+       itself — `#rewrite` and the `#seedin` it becomes — is in the BAR, and
+       the plate holds `#seedmenu`, which presses it. `#seedval` is deleted on
+       2026-09-07 (§20, Paul: *"Get rid of seed number too"*), so the row is
+       the die and the field and nothing else. */
     const seedDoors = await page.evaluate(() => ({
       rowInBar: !!document.querySelector("#nu-bar .nu-seedrow #rewrite"),
       doorInMenu: !!document.querySelector("#nu-menu #seedmenu"),
@@ -867,6 +879,131 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        seedDoors.rows === 1 && seedDoors.dice === 1,
       "A6o " + width + " · the die is in the bar and the plate holds a DOOR to "
       + "it — one row, one die, two ways in — " + JSON.stringify(seedDoors));
+    /* ===== A6p — ONE FORMAT, ONE ORDER, AND THE ≡ SHUTS IT (2026-09-07) ==
+       TABLE.md §20, five sentences of Paul's, checked on the rendered plate.
+
+       p1 THE ORDER. *"In the hamburger move the record sectio. above where you
+          are section."* The plate's blocks are read in DOM order off their own
+          headings, and the record's comes first.
+       p2 ONE FORMAT. *"Come up with one format for each menu entry: Unicode
+          icon (not emoji) plus title case name."* EVERY button in the plate is
+          a mark plus a word and nothing else on the glass: no `.nu-menuface`,
+          no second line, and the LOG'S COUNT is the one trailing number —
+          Paul moved it there himself. The mark is asserted to be a real
+          character and NOT an emoji, and the property that says so is
+          `Emoji_Presentation` and NOT `Extended_Pictographic`. Measured, which
+          is why: ▶ (`GLYPH.act.play`, and the head of the play mode's own
+          two-character mark), ⚙ and ✳ are all `Extended_Pictographic` and all
+          three DEFAULT TO TEXT PRESENTATION — they are drawn in the page's own
+          ink, in the page's own glyph stack, and none of them is a coloured
+          pictograph. What makes a character an emoji on the glass is
+          `Emoji_Presentation` (it is drawn in colour with no request) or an
+          explicit U+FE0F variation selector, and both are refused here. The
+          first draft used `Extended_Pictographic` and went red on the play
+          mode alone, which was the gate flagging a triangle this table has
+          drawn since the transport was written.
+          TITLE CASE IS READ OFF THE GLASS AND NOT SIMULATED. `textContent` is
+          the catalogue's own string (`this song`) and `innerText` is WHAT
+          CHROMIUM PAINTS after `text-transform` (`This Song`) — measured in
+          this browser before it was relied on — so this asserts the rendered
+          capital of every word a hand can see, rather than re-applying the
+          rule the page is supposed to be applying and then agreeing with
+          itself.
+       p3 THE ≡ IS A DISMISS WHILE THE PLATE IS OPEN. *"the menu icon should be
+          a dismiss button"*: it says `close`, it wears ×, and pressing it
+          shuts the plate. Measured by pressing it, not by reading a flag.
+       p4 THE PLATE OPENS HIGHER. *"The hamburger menu should open higher"*:
+          its top edge is above the top strip's own band (`--top-h`), which is
+          where it hung until this round, and it does not cover the bar.
+       Every one of these is measured with the plate OPEN, which is the state
+       the four sentences are about. */
+    const fmt = await page.evaluate(() => {
+      const m = document.getElementById("nu-menu");
+      if (!m) return null;
+      const heads = [...m.querySelectorAll(".nu-menusub")].map((h) => h.id);
+      const rows = [...m.querySelectorAll("button")].map((b) => {
+        const g = b.querySelector(".nu-g"), w = b.querySelector(".nu-vh");
+        const n = b.querySelector(".nu-n");
+        const seen = b.textContent.replace(/\s+/g, " ").trim();
+        const glyph = g ? g.textContent.trim() : "";
+        const word = w ? (w.innerText || w.textContent || "").trim() : "";
+        return { k: b.dataset.k || b.id, glyph, word,
+                 num: n ? n.textContent.trim() : null,
+                 extra: seen.replace(glyph, "").replace(w ? w.textContent.trim() : "", "")
+                            .replace(n ? n.textContent.trim() : "", "").trim() };
+      });
+      const r = m.getBoundingClientRect();
+      const bar = document.getElementById("nu-bar");
+      const br = bar ? bar.getBoundingClientRect() : { top: 1e9 };
+      return { heads, rows, top: +r.top.toFixed(1), bottom: +r.bottom.toFixed(1),
+               topH: parseFloat(getComputedStyle(document.documentElement)
+                 .getPropertyValue("--top-h")) || 44,
+               barTop: +br.top.toFixed(1) };
+    });
+    is(!!fmt && JSON.stringify(fmt.heads) ===
+       JSON.stringify(["nu-menuh-record", "nu-menuh-views", "nu-menuh-play"]),
+      "A6p1 " + width + " · the plate's blocks are THE RECORD, then where you "
+      + "are, then how it plays — " + JSON.stringify(fmt && fmt.heads));
+    const PIC = /\p{Emoji_Presentation}|\uFE0F/u;
+    const badFmt = !fmt ? ["no plate"] : fmt.rows.filter((r) =>
+      !r.glyph || !r.word || PIC.test(r.glyph) || r.extra ||
+      (r.num != null && r.k !== "logger") ||
+      /^[a-z]/.test(r.word) || /\s[a-z]/.test(r.word))
+      .map((r) => [r.k, r.glyph, r.word, r.num, r.extra]);
+    is(!badFmt.length,
+      "A6p2 " + width + " · every row of the plate is a Unicode mark and a "
+      + "title-case name and nothing else, the log's count excepted — "
+      + (badFmt.length ? JSON.stringify(badFmt)
+                       : JSON.stringify((fmt.rows || []).map((r) => r.glyph + r.word))));
+    const dismiss = await page.evaluate(async () => {
+      const b = document.getElementById("burger");
+      const before = { mark: (b.querySelector(".nu-g") || {}).textContent,
+                       name: b.getAttribute("aria-label"),
+                       open: !document.getElementById("nu-menu").hidden };
+      b.click();
+      await new Promise((r) => setTimeout(r, 220));
+      return { ...before, shut: document.getElementById("nu-menu").hidden,
+               after: (b.querySelector(".nu-g") || {}).textContent,
+               afterName: b.getAttribute("aria-label") };
+    });
+    is(dismiss.open && dismiss.mark === "\u00d7" && dismiss.name === "close" &&
+       dismiss.shut && dismiss.after === "\u2261" && dismiss.afterName === "menu",
+      "A6p3 " + width + " · with the plate open the ≡ IS the dismiss — it wears "
+      + "× and says close, and pressing it shuts the plate and goes back to ≡ — "
+      + JSON.stringify(dismiss));
+    is(!!fmt && fmt.top < fmt.topH && fmt.bottom <= fmt.barTop,
+      "A6p4 " + width + " · the plate opens ABOVE the strip's band and stops at "
+      + "the bar's top edge — top " + (fmt && fmt.top) + " < --top-h "
+      + (fmt && fmt.topH) + ", bottom " + (fmt && fmt.bottom) + " <= bar "
+      + (fmt && fmt.barTop));
+    await page.click("#burger");
+    await page.waitForTimeout(200);
+    /* ===== A6q — THE BAR HOLDS NO GEAR AND NO SEED NUMBER (2026-09-07) ====
+       Paul: *"Bottom bar: get rid of gear and move those functions into the
+       menu"* and *"Get rid of seed number too"*. Both are asserted as
+       ABSENCES, which is the only way a deletion can be gated: a control that
+       came back would come back silently. What replaces them is asserted too —
+       the two the gear held are rows of the plate, one tap from rest with the
+       plate open, which is T7's own ≤ 2 taps. */
+    const bar = await page.evaluate(() => {
+      const b = document.getElementById("nu-bar");
+      const ctl = [...b.querySelectorAll("button, input")]
+        .filter((e) => e.getClientRects().length);
+      return { kids: [...b.children].map((c) => c.id || c.className.split(" ")[0]),
+               gear: document.querySelectorAll("#playops, .nu-baropts").length,
+               seedval: document.querySelectorAll("#seedval, #reading").length,
+               wait: document.querySelectorAll(".nu-seedwait").length,
+               ctl: ctl.map((e) => e.id || e.dataset.k),
+               tall: Math.max(...ctl.map((e) =>
+                 Math.round(e.getBoundingClientRect().height))),
+               modeInMenu: !!document.querySelector("#nu-menu #playmode"),
+               takeInMenu: !!document.querySelector("#nu-menu #take") };
+    });
+    is(bar.gear === 0 && bar.seedval === 0 && bar.wait === 0 &&
+       bar.modeInMenu && bar.takeInMenu,
+      "A6q " + width + " · the bar holds no gear, no seed number and no "
+      + "separate countdown, and the gear's two controls are rows of the plate "
+      + "— " + JSON.stringify(bar));
     /* ...AND THE RECORD'S NAME IS THE TOP LEFT, WEARING THE GENRE'S WORD
        (2026-09-06, docs/NAV.md). It read "…and the genre is a name plate in
        the BAR, not a row in the hamburger", which was right while the bar

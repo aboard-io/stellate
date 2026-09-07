@@ -2306,7 +2306,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        THE PLATE STAYS UP BEHIND THE LEVEL — the gutter's level and the panel
        under it are two different facts — which is why `openBus` comes first
        and why both faders can be read in one round trip. */
-    await page.evaluate(() => document.getElementById("playops").click());
+    /* (`#playops` WAS PRESSED HERE. The room is the bar's own control since
+       2026-09-06 (§18) and the fold is deleted on 2026-09-07 (§20), so
+       `#vol` is on the glass at rest and no door has to be opened or shut
+       around the read.) */
     await page.waitForTimeout(500);
     const lis = await page.evaluate(async () => {
       const v2 = document.getElementById("vol2"), v1 = document.getElementById("vol");
@@ -2350,7 +2353,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        JSON.stringify(lis));
     // the stripe goes back up to root — the door out is the door in (v192's
     // own law: the level is entered on purpose, so it is left on purpose)
-    await page.evaluate(() => document.getElementById("playops").click());
+    /* (`#playops` WAS PRESSED HERE. The room is the bar's own control since
+       2026-09-06 (§18) and the fold is deleted on 2026-09-07 (§20), so
+       `#vol` is on the glass at rest and no door has to be opened or shut
+       around the read.) */
     await page.waitForTimeout(300);
     /* MEASURED AND SAID OUT LOUD, 2026-08-29: the two views share the store
        but neither REPAINTS when the other is moved (drive `#vol2` to 55 and
