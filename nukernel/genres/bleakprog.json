@@ -1,0 +1,226 @@
+{
+  "note": "BLEAK PROG — London 1976. Pink Floyd, Animals: Britannia Row, Islington —\nthe band's own studio, bought and fitted out with the Dark Side money —\nApril to November 1976, Harvest, released the 23rd of January 1977. Three\nlong sides about pigs, dogs and sheep, and the coldest record the band\never made.\n\nTHE ANCHOR IS ANIMALS AND NOT WISH YOU WERE HERE, AND THE REASON IS A\nMEASUREMENT. This is the paragraph the row exists for. The era offered was\n\"1975-77\", two records, and the obvious anchor was the famous one. It was\nrefused on two grounds and both are checkable. FIRST, \"Shine On You Crazy\nDiamond\" is `spacerock`'s music exactly — a slow, blues-schooled guitar\nline over a held drone, which is that row's `plan: \"arc\"`, `bpm: 70`,\n`rate: 0.5` and `bassStyle: \"pedal\"` said in words — so a Wish You Were\nHere row would have been a second copy of a row the table already had, and\nthe whole point of a new row is to be somewhere the table is not. SECOND,\nthe corpus cannot even count it: four transcriptions of \"Shine On\" read 56,\n116, 120 and 133, and TWO OF THE FOUR are in 3/4. A piece four transcribers\ncannot agree the METER of, let alone the tempo, is not a piece to hang a\ntempo on. Animals is not that music. It is long minor CYCLES — `roots`\ntwelve bars long, `bars: 12`, `harmony: \"cycle\"` in dorian — with a bass\nostinato underneath, an envelope-filtered guitar and a talkbox\n(`fx: [\"echo\",\"wah\"]`), and `maxHold: 4` for chords that sit. So the era is\nONE row, and the row is the record furthest from the row the table already\nhad.\n\nAND IT REFUSES `rate: 0.5` ON PURPOSE. Halving the clock is spacerock's\nidentity — it is what makes a Floyd side breathe under the tempo dial's own\nfloor — and taking it here would have collapsed the two rows into one\nslightly different one. This row is slow by TEMPO (116 against progrock's\n120) and long by FORM (a twelve-bar cycle where every other Floyd row here\nruns eight), not by a clock divider. It is the difference between a record\nthat drifts and a record that trudges, and Animals trudges.\n\nWHAT IT HAS THAT `spacerock` DOES NOT, then, said as fields: a twelve-bar\nroot cycle [0,0,0,0,6,6,3,3,0,0,4,4] where spacerock has a pedal and four\nroot pairs; `diatonic: true` in dorian, so the flat six and the minor\nseventh are the record's whole colour; a `solo_vox` chair — spacerock has\nno voice at all, and Animals is a lyric record with somebody shouting on\nit; `fx` that includes `wah` rather than `sweep`, which is an envelope\nfilter on ONE guitar rather than an automated sweep across the whole\nsection; and 116 against 70.\n\nTHE DYNAMIC FIGURE: `agogic`, and it is the most specific claim in this\nrow. FIGURES calls it \"the last note of the phrase leans and lengthens ...\nthe exact OPPOSITE of `lean`\", written for chant and for a ballad's line.\nIt is also, exactly, what Gilmour does: the phrase climbs, arrives at its\ntop note, and STAYS there while the band goes round again. Four notes over\na side. AGAINST `spacerock`'s `swell`, which is the near neighbour's figure\nand the one this row had to argue past: a swell crescendos across the bar\nINTO the next downbeat, so its weight is always on the way somewhere. This\nrow's weight is at the END of the phrase and it does not hand anything on.\nThat is the difference between a build and a held note, and it is the\ndifference between the two records. The engine already supplies the length\nhalf — `precompose`'s RELEASE `ring` runs the last note to the barline on\n84.7 per cent of cells — so the figure only has to supply the weight, which\nis what it does. Compiled: 112 accents at steps 5 and 22, which are the\nphrase ends and not the barlines.\n\nLINEAGE, AND IT IS THIS ROUND'S OWN GENEALOGY BEING BUILT INSIDE THE TABLE\nrather than pointed outside it. `studioprog` 0.35 — the 1973 row, three\nyears earlier, legal under §2's `not later` law and by a distance: this is\nthe same band, the same producer's chair and the same idea of a record,\nminus the meter and the guests. `spacerock` 0.20 — the drone is still\nunder the middle of every side. `bluesrock` 0.15 (West Hampstead 1966) —\nGilmour's actual schooling, the bends and the vibrato. `progrock` 0.10\n(Isle of Wight 1970) — the side-long form as a form. Sum 0.80; the residue\n0.20 is the bleakness, which is a fact about the words and the tempo and\nis not inherited from anybody.\n\nCOMPILED, seed 1: 41 bars, 8 sections, 636 EVENTS — THE SPARSEST OF THE\nEIGHTEEN NEW ROWS, against 3,978 for `avantfunk` and 1,372 for\n`rockopera` next door in this same Floyd chain. That is what \"slower,\nlonger, bleaker\" ought to look like on a note count, and it is the one\nplace in this round where the compiled record and the prose agree without\nanybody arranging it: 41 bars carrying 636 events is fifteen and a half\nnotes a bar across nine voices, which is a band mostly not playing. Fit r2\n0.841, residue 0.128 — comfortably under the catalogue median of 0.165,\nwhich is the fit tool saying, correctly, that this record is very largely\nits own previous record.",
+  "label": "London 1976",
+  "near": "spacerock",
+  "plan": "arc",
+  "bpm": 116,
+  "bars": 12,
+  "voices": 3,
+  "parents": {
+    "studioprog": 0.35,
+    "spacerock": 0.2,
+    "bluesrock": 0.15,
+    "progrock": 0.1
+  },
+  "instr": [
+    "clean_guitar",
+    "warm_pad",
+    "solo_vox"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 4
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 8
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    6,
+    6,
+    3,
+    3,
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1400,
+    "q": 1.5,
+    "atk": 0.05,
+    "rel": 2.2,
+    "gain": 0.22,
+    "verb": 0.6
+  },
+  "fx": [
+    "echo",
+    "wah"
+  ],
+  "words": [
+    "the guitar, four notes, the whole side",
+    "the pad, one chord under it for bars at a time",
+    "the voice, low, one line every four bars"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[keep(0, 6)], [keep(0, 6), transpose(3)], [keep(0, 10)], [invert(4), keep(0, 6)]][s % 4]\n                    : v === 1 ? [keep(0)]\n                    : [drop(3), transpose(-5)])"
+  },
+  "dyn": "agogic",
+  "family": "band"
+}

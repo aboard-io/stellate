@@ -1,0 +1,248 @@
+{
+  "note": "AVANT-FUNK — New York 1980. Talking Heads, Remain in Light, cut at Compass\nPoint in Nassau and Sigma Sound in Philadelphia, produced by Brian Eno,\nreleased by Sire, 8 October 1980.\n\nONE ROW AND NOT TWO, AND THAT IS THE POINT. The 1977 record was refused a\nrow of its own: its nervous art-punk is already spread across `punk` (New\nYork 1976), `newwave` (London 1979) and `beatgroup`, and a fourth row saying\nthose three things is a duplicate. The 1980 record is different in kind —\nAfro-derived interlocking polyrhythm over ONE CHORD — and nothing in 500\nrows holds it.\n\n`harmony: \"modal\"` WITH NO `roots` AND NO `prog` IS THE ROW. There are no\nchanges anywhere on this record; the row says so by writing nothing. To be\naccurate about how unusual that is: 147 of the 500 rows do the same, so \"no\nchanges\" is ordinary here, not rare. What is rare is the company it keeps.\nCounted 2026-09-07: only five rows combine no changes with four or more\nchairs and a drum kit; the other four are `crimejazz` and three film scores.\nThis is the catalogue's only BAND — guitar, organ, voice, synth, finger\nbass, room kit — with four chairs and nowhere to go.\n\nMEASURED, THE MIDI CORPUS, 2026-09-07. Fifty-three Talking Heads files,\nmedian 123, and ALL FIFTY-THREE IN 4/4 — which for a record whose reputation\nis polyrhythm is worth writing down: the cross-rhythm is in the parts, not\nthe meter, which is what this row does with four staggered loops in one 4/4\nbar. \"Once in a Lifetime\" reads 118, 120 and 125 across three\ntranscriptions, and \"Psycho Killer\" 110 twice. `bpm: 122` sits one under the\nmedian and inside that song's readings.\n\nCHORDONOMICON DOES NOT HOLD THIS WORD. There is NO `avant-funk` label in the\nmirror — zero songs — and that is said rather than hidden: it is a fact\nabout the name, not the music. \"Avant-funk\" is a critic's coinage the\n679,681-song tag census never adopted. The row keeps it: it is the term the\nmusic is discussed under, and a key is a genre term by the 2026-09-01 law. A\nrow with no census stands on its corpus and its record alone.\n\nFOUR CHAIRS, EACH A LOOP THAT NEVER VARIES. `entry: [0, 2, 4, 6]` staggers\nthem two steps apart so they enter one at a time; every `word` is built from\n`keep` (`keep(0,3,6,10,13)`, `keep(1,5,9,13)`, `keep(0)`), `maxHold: 1`\nforbids a note lasting past its step, and `artic: \"staccato\"` keeps every\npart short. That is `minimalism` (New York 1967, declared at 0.15) doing\nwhat Eno and Byrne said they were doing, written in fields rather than a\nsleeve note.\n\nTHE DYNAMIC FIGURE: `syncope`, AND HERE THE ROW IS LOUDEST. Measured at seed\n1: 546 ACCENTS, against 154 apiece for `deadpanglam`, `arenafunk` and\n`artpunk`, seated at steps 6, 14 and 22 — off the beat every time. FIGURES:\n\"Funk, afrobeat and ska are all one idea said three ways: the beat is where\nthe weight is NOT.\" Here it arrives on a record made by an art-school band\nfrom Rhode Island, which is the row's whole subject.\n\nLINEAGE: `afrobeat` (Lagos 1971) at 0.30 — the declared `near`, the\ninterlocking guitars, the one-chord vamp held a whole side. `funk`\n(Cincinnati 1967) at 0.20 — the sixteenth bass and the chank. `newwave`\n(London 1979) at 0.15 — the shouted voice, the clipped guitar, the band's\nown three earlier records. `minimalism` (New York 1967) at 0.15 — the\nprocess made audible. Sum 0.80; the residue 0.20 is four white people\nplaying it. That is not a joke; it is the honest name for what this record\nadds.\n\nTHE FIT: r2 0.849, residue 0.125 — well under the catalogue median of 0.165\nand below its p25 of 0.132. THE BEST-FITTING ROW OF THE FIVE, and fourth of\nthe eighteen behind `speedmetal`, `stadiumprog` and `progfolk`. The machine\nagrees here, as it does when a row's parents are audible in tempo, kit\ndensity and bass motion rather than in a voice or a scale. At seed 1 it\nrenders 3,978 events over 68 bars, the largest of the round: four loops that\nnever stop is a lot of notes.",
+  "label": "New York 1980",
+  "near": "afrobeat",
+  "plan": "song",
+  "bpm": 122,
+  "bars": 4,
+  "voices": 4,
+  "parents": {
+    "afrobeat": 0.3,
+    "funk": 0.2,
+    "newwave": 0.15,
+    "minimalism": 0.15
+  },
+  "instr": [
+    "clean_guitar",
+    "percussive_organ",
+    "solo_vox",
+    "polysynth"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      4,
+      6
+    ]
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": 0
+      },
+      {
+        "at": 3,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "chord"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead",
+    "stab"
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1.5,
+    "atk": 0.004,
+    "rel": 0.28,
+    "gain": 0.24,
+    "verb": 0.3
+  },
+  "fx": [
+    "echo"
+  ],
+  "words": [
+    "the guitar loop, sixteen steps, never varied",
+    "the organ, the counter-loop, two steps late",
+    "the voice, shouted over the top",
+    "the synth, the chord, once a bar"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0, 3, 6, 10, 13)]\n                    : v === 1 ? [rotate(2), keep(1, 5, 9, 13)]\n                    : v === 2 ? [[], [rotate(4)], [], [rotate(8)]][s % 4]\n                    : [keep(0)])"
+  },
+  "dyn": "syncope",
+  "family": "groove"
+}

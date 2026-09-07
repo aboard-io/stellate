@@ -614,6 +614,42 @@
        which clears the floor by under a pixel — the Sutton Courtenay
        margin, and the reason this dot is legal at all. */
     "West Hampstead": [51.55, -0.19],
+    /* FOUR DOTS FOR THE 2026-09-07 ROUND, and every one of them is a place a
+       (place, year) collision made necessary rather than a place somebody
+       preferred. G6b holds (place, year) to being a KEY, so a row whose true
+       city and true year are already spoken for must find the NEXT TRUE FACT
+       — never the next true-ish one, which is the softrock/Lagos lesson
+       (scratch/genre-qa/SHIFT-5.md §2) written down as a rule.
+
+       ST JOHN'S WOOD carries TWO records six years apart, which is the whole
+       argument for it: `englishpsych` (Piper at the Gates of Dawn, Feb-May
+       1967) and `studioprog` (The Dark Side of the Moon, Jun 1972-Feb 1973)
+       were both made in Abbey Road Studios, NW8, by the same band under the
+       same EMI contract, and `London 1967` and `London 1973` are held by
+       `acidrock` and `spacerock`. This is not the desk-not-the-room lie: the
+       Floyd were an EMI house band for a decade and Studio 3 is where both
+       records were played as well as mixed. 1.7 CSS px from London at the
+       Britain arc, so it declares WITHIN, the Muswell Hill case a fourth time.
+
+       THE BOWERY is CBGB, 315 Bowery, which is where `artpunk` (Television,
+       Marquee Moon) played four nights a week for two years; `New York 1977`
+       is `disco`'s. A named block of lower Manhattan on the Greenwich Village
+       precedent, 2 km uptown of it.
+
+       HUNTINGTON PARK is where `speedmetal` (Slayer) formed in 1981 and where
+       three of the four lived; `Los Angeles 1986` is `smoothjazz`'s. A city of
+       the Gateway Cities 9 km south-east of downtown, the South Central
+       relation exactly.
+
+       ASTON TIRROLD is the Berkshire cottage Traffic rented in 1967 and wrote
+       in until they broke up — "getting it together in the country" was coined
+       about this house — and `London 1970` is `newsfanfare`'s. It measures
+       11 km from Sutton Courtenay, so it takes that dot's own WITHIN row and
+       the two are siblings under the 2026-09-01 clause. */
+    "St John's Wood": [51.53, -0.17],
+    "Bowery": [40.72, -73.99],
+    "Huntington Park": [33.98, -118.22],
+    "Aston Tirrold": [51.57, -1.18],
     "Workington": [54.64, -3.55],
     "Venice": [45.44, 12.32], "Vienna": [48.21, 16.37],
     // ...AND TWO ON 2026-08-30, the downtempo round. TROMSØ is the
@@ -735,6 +771,17 @@
     // Park does.
     "Brooklyn": "New York",         // a borough of the city
     "South Central": "Los Angeles", // a district of the city
+    // ...and the 2026-09-07 round's four, each argued at its coordinate above.
+    // ST JOHN'S WOOD is direct containment (NW8) and a sibling of the other
+    // three London districts; ASTON TIRROLD takes Sutton Courtenay's own
+    // parent so the two Oxfordshire villages are siblings rather than an
+    // undeclared 11 km coincidence, which is the case that clause was written
+    // for. THE BOWERY and HUNTINGTON PARK are the Greenwich Village and South
+    // Central relations on the two coasts.
+    "St John's Wood": "London",     // NW8; Abbey Road Studios
+    "Aston Tirrold": "Oxford",      // the Berkshire cottage, 11 km from Sutton Courtenay
+    "Bowery": "New York",           // lower Manhattan; CBGB at 315
+    "Huntington Park": "Los Angeles", // a Gateway city, 9 km south-east
     "Basildon": "Essex",            // a town in the county
     // VERSAILLES IS ITS OWN COMMUNE AND A PRÉFECTURE, and this row is
     // still not a Sausalito lie (see that note below): INSEE's unité
@@ -835,6 +882,7 @@
     shoegaze:       { place: "London", year: 1991 },
     citypop:        { place: "Tokyo", year: 1984 },
     punk:           { place: "New York", year: 1976 },
+    artpunk:        { place: "Bowery", year: 1977 },
     ambient:        { place: "London", year: 1978 },
     techno:         { place: "Detroit", year: 1988 },
     jazz:           { place: "New York", year: 1945 },
@@ -854,6 +902,7 @@
     bigbeat:        { place: "Essex", year: 1997 },
     drill:          { place: "Chicago", year: 2012 },
     clubpop:        { place: "New York", year: 1983 },
+    gospelpop:      { place: "New York", year: 1985 },
     powerballad:    { place: "Los Angeles", year: 1991 },
     retrofunkpop:   { place: "Los Angeles", year: 2013 },
     reggaeton:      { place: "San Juan", year: 2004 },
@@ -866,9 +915,11 @@
     darkrnb:        { place: "Toronto", year: 2011 },
     bigroom:        { place: "Las Vegas", year: 2012 },
     blueeyedsoul:   { place: "Philadelphia", year: 1976 },
+    fmsoul:         { place: "New York", year: 1988 },
     folkduo:        { place: "Greenwich Village", year: 1964 },
     worldfolk:      { place: "Johannesburg", year: 1986 },
     jamband:        { place: "San Francisco", year: 1972 },
+    progfolk:       { place: "Aston Tirrold", year: 1970 },
     sophistirock:   { place: "London", year: 1986 },
     motorik:        { place: "Düsseldorf", year: 1974 },
     roboticpop:     { place: "Düsseldorf", year: 1978 },
@@ -876,6 +927,7 @@
     industrialmetal: { place: "Chicago", year: 1988 },
     ebm:            { place: "Chicago", year: 1989 },
     synthduo:       { place: "London", year: 1985 },
+    fmpop:          { place: "Oslo", year: 1985 },
     musichallrock:  { place: "Muswell Hill", year: 1966 },
     orchpsych:      { place: "Oklahoma City", year: 1999 },
     altcountry:     { place: "Chicago", year: 1996 },
@@ -892,6 +944,10 @@
     rootsrock:      { place: "Berkeley", year: 1969 },
     chamberpop:     { place: "Boston", year: 1994 },
     spacerock:      { place: "London", year: 1973 },
+    studioprog:     { place: "St John's Wood", year: 1973 },
+    bleakprog:      { place: "London", year: 1976 },
+    rockopera:      { place: "Provence", year: 1979 },
+    stadiumprog:    { place: "London", year: 1987 },
     grebo:          { place: "Stourbridge", year: 1990 },
     melodictechno:  { place: "Kent", year: 1991 },
     bleeptechno:    { place: "Manchester", year: 1989 },
@@ -901,6 +957,7 @@
     gothsynth:      { place: "Basildon", year: 1990 },
     gothicpop:      { place: "Crawley", year: 1987 },
     postpunk:       { place: "Manchester", year: 1979 },
+    avantfunk:      { place: "New York", year: 1980 },
     dancepostpunk:  { place: "Manchester", year: 1983 },
     madchester:     { place: "Manchester", year: 1990 },
     janglepop:      { place: "Manchester", year: 1984 },
@@ -1053,6 +1110,7 @@
     boogiewoogie:   { place: "Chicago", year: 1928 },
     deltablues:     { place: "Clarksdale", year: 1929 },
     bluesrock:      { place: "West Hampstead", year: 1966 },
+    boogierock:     { place: "San Francisco", year: 1977 },
     acidrock:       { place: "London", year: 1967 },
     glam:           { place: "London", year: 1971 },
     krautrock:      { place: "Cologne", year: 1971 },
@@ -1091,7 +1149,9 @@
     garagerock:     { place: "Portland", year: 1963 },
     baroquepop:     { place: "Los Angeles", year: 1966 },
     psychrock:      { place: "San Francisco", year: 1966 },
+    englishpsych:   { place: "St John's Wood", year: 1967 },
     protopunk:      { place: "New York", year: 1966 },
+    deadpanglam:    { place: "London", year: 1972 },
     zodiak:         { place: "Berlin", year: 1968 },
     amenbreak:      { place: "Washington", year: 1969 },
     progrock:       { place: "Isle of Wight", year: 1970 },
@@ -1104,9 +1164,13 @@
     gogo:           { place: "Washington", year: 1978 },
     boogie:         { place: "New York", year: 1981 },
     minneapolissound: { place: "Minneapolis", year: 1982 },
+    arenafunk:      { place: "Minneapolis", year: 1984 },
+    newjackband:    { place: "Minneapolis", year: 1991 },
     technopop:      { place: "Tokyo", year: 1978 },
     nwobhm:         { place: "London", year: 1980 },
     thrash:         { place: "San Francisco", year: 1983 },
+    speedmetal:     { place: "Huntington Park", year: 1986 },
+    progmetal:      { place: "San Francisco", year: 1988 },
     powermetal:     { place: "Hamburg", year: 1985 },
     metalcore:      { place: "Westfield", year: 2002 },
     triphop:        { place: "Bristol", year: 1991 },
@@ -1126,6 +1190,7 @@
     honkytonk:      { place: "Fort Worth", year: 1941 },
     westernswing:   { place: "Tulsa", year: 1940 },
     nashvillesound: { place: "Nashville", year: 1957 },
+    mountaincountry: { place: "Nashville", year: 1971 },
     outlawcountry:  { place: "Austin", year: 1973 },
     dreampop:       { place: "London", year: 1984 },
     slowcore:       { place: "Boston", year: 1989 },
@@ -1133,7 +1198,7 @@
     balearic:       { place: "Montreal", year: 2011 },
     artrock:        { place: "Oxford", year: 1997 },
     baggy:          { place: "Manchester", year: 1988 },
-    softrock:       { place: "Lagos", year: 1973 },
+    softrock:       { place: "London", year: 1974 },
     electroindustrial: { place: "Vancouver", year: 1986 },
     electropop:     { place: "Chicago", year: 1983 },
     artpop:         { place: "Kent", year: 1985 },
@@ -1430,6 +1495,15 @@
                // of ten thousand in North Karelia). The three measurements
                // are in the PLACES ledger above.
                "Sutton Courtenay", "West Hampstead",
+               // ...and the eighteen-row round of 2026-09-07 adds two English
+               // dots, both forced by a (place, year) collision and both
+               // declared WITHIN a dot this list already holds: ST JOHN'S WOOD
+               // (Abbey Road NW8, carrying `englishpsych` 1967 and `studioprog`
+               // 1973 — London 1967 is `acidrock`'s and London 1973 is
+               // `spacerock`'s) and ASTON TIRROLD (Traffic's Berkshire cottage,
+               // 11 km from Sutton Courtenay above — London 1970 is
+               // `newsfanfare`'s). The measurements are in the PLACES ledger.
+               "St John's Wood", "Aston Tirrold",
                "Hamburg", "Helsinki", "Kitee",
                // ...and the classical-period round's two (2026-09-03).
                // WEIMAR is plain German geography — `symphonicpoem` 1854,
@@ -1489,6 +1563,13 @@
                       // already holds: Detroit twice, Manchester (Britain)
                       // and New York. PLACES has the three measurements.
                       "Long Island", "Brooklyn", "South Central",
+                      // ...and the eighteen-row round of 2026-09-07 adds two,
+                      // one per coast, each declared WITHIN the city beside it:
+                      // THE BOWERY (CBGB at 315, `artpunk` 1977 — New York 1977
+                      // is `disco`'s) and HUNTINGTON PARK (where Slayer formed
+                      // in 1981, `speedmetal` 1986 — Los Angeles 1986 is
+                      // `smoothjazz`'s).
+                      "Bowery", "Huntington Park",
                       // ...and the debts round's four (2026-08-29): Washington
                       // (a march and a B-side eighty years apart), the Bronx,
                       // Houston, and SOUTH CAROLINA — a state standing where a

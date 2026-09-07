@@ -1,0 +1,212 @@
+{
+  "note": "ART PUNK — Bowery 1977. Television, Marquee Moon, recorded at A&R Studios,\nNew York, in September 1976, released by Elektra on 8 February 1977.\n\nTHE LABEL IS THE BOWERY, AND THE DOT IS NEW. `New York 1977` is `disco`'s,\nand `atlas.gate.js` G6b holds a (place, year) pair to being a KEY — so a row\nwhose true city and year are taken must find THE NEXT TRUE FACT rather than\nmove its date. CBGB at 315 Bowery is where this band played for two years,\nso the Bowery is that fact. It is declared WITHIN New York on the Greenwich\nVillage and Harlem precedent: `folkduo` is Greenwich Village 1964 and\n`doowop` is Harlem 1955.\n\nTHE ROW IS TWO CLEAN GUITARS, AND DOOR 5 MAKES THAT A FACT ABOUT THE RENDER.\n`instr: [\"clean_guitar\", \"clean_guitar\", \"solo_vox\"]`, `artic: \"legato\"`,\n`maxHold: 3`. Measured at seed 1, 2026-09-07: this record seats FOUR CLEAN\nGUITARS AND ZERO DIRTY ONES, because door 5 (precompose.js, 2026-09-06, \"an\namplifier is never dealt\") hands each guest chair the host's own guitar\ninstead of an overdrive or a palm mute. It matters that the number is\nmeasured: \"no distortion on this record\" is otherwise a sentence in a\ncomment, and this catalogue's characteristic bug is the field declared and\nnever arriving.\n\nWHAT THE NEIGHBOUR HAS INSTEAD. `punk` (New York 1976) is one year and six\nblocks away and is the declared `near`: it names `distortion_guitar` and\n`crunch_guitar`, runs at 160, takes `verb: 0.1` and `dyn: \"backbeat\"`, and\nits `roots` are four chords long. Every one of those is different here.\n\nTHE HARMONY IS MODAL AND SAYS SO. `mode` and `scale` are both `MODES.dorian`\nand `roots` is [0, 6, 0, 6, 0, 6, 3, 3] — i bVII i bVII for six bars and\nthen the BRIGHT DORIAN IV, twice, at the turn. That is what a long modal\nsolo needs and a three-chord punk record does not have: a vamp to leave\nrunning, with one chord in it that changes the light.\n\nMEASURED, CHORDONOMICON, AND IT DISAGREES WITH THIS ROW. The `art punk`\nlabel returns 384 songs, 268 of them (70%) MAJOR, topped by IV I IV I (12\nhits), then I IV I IV (9) and I V IV I (7). That is a major-key label and\nthis is a minor-mode row, and the disagreement is reported rather than\nsmoothed over. Two things stand against the census. Its median year is 1987,\nTEN YEARS DOWNSTREAM, so it measures what the phrase came to mean rather\nthan what it was coined about; and this row is anchored on one record whose\ntitle track is in a minor key. The corpus offers no arbitration: 2026-09-07,\n\"Television\" returns zero files (all three hits are TV themes) and \"Marquee\nMoon\" none. `bpm: 146` is therefore a judgement, between `punk`'s 160 and\n`garagerock`'s 126, and said as one.\n\nLINEAGE: `protopunk` (New York 1966) at 0.30 — the two-chord downtown vamp\nand the flat delivery. `punk` (New York 1976) at 0.20 — the same room, the\nsame bill, the same year's audience. `garagerock` (Portland 1963) at 0.15 —\nthe thin ringing guitar and the budget. `modaljazz` (New York 1959) at 0.15\nIS THE PARENT NOBODY EXPECTS: an eight-minute solo over a two-chord vamp is\nthat room's idea arriving in a rock band. Sum 0.80; the residue 0.20 is the\ntwo guitars: nothing above this row has a second lead player answering the\nfirst.\n\nTHE DYNAMIC FIGURE: `arch`, against `punk`'s `backbeat`. FIGURES calls the\narch \"up to the middle of the bar and back down. The sung line's own shape\"\n— said here of a GUITAR SOLO, which is the row's whole claim: the second\nchair is a sung line played on an instrument. A punk record leans where the\nsnare is; this one breathes.\n\nTHE FIT, AND WHERE IT ARGUES. r2 0.628, residue 0.207, between the\ncatalogue's median (0.165) and its p75 (0.218). `tools/genealogy.js` gives\n`protopunk` 0.00 against the declared 0.30, and the distance is mostly one\nnumber: 146 bpm against protopunk's 108. The vector reads tempo and this row\nis 38 bpm faster than its largest parent. That does not make the edge false,\nso the fit is recorded and the weight left alone.",
+  "label": "Bowery 1977",
+  "near": "punk",
+  "plan": "song",
+  "bpm": 146,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "protopunk": 0.3,
+    "punk": 0.2,
+    "garagerock": 0.15,
+    "modaljazz": 0.15
+  },
+  "instr": [
+    "clean_guitar",
+    "clean_guitar",
+    "solo_vox"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    6,
+    0,
+    6,
+    0,
+    6,
+    3,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 1.1,
+    "gain": 0.26,
+    "verb": 0.22
+  },
+  "words": [
+    "the first guitar, the figure, ringing",
+    "the second guitar, the long modal line over it",
+    "the voice, one register, no shout"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0, 3, 6, 8, 11, 14)]\n                    : v === 1 ? [[excerpt(0, 8)], [excerpt(8, 8)], [rotate(2)], [invert(4)]][s % 4]\n                    : [drop(2)])"
+  },
+  "dyn": "arch",
+  "family": "band"
+}

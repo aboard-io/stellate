@@ -1,0 +1,215 @@
+{
+  "note": "DEADPAN GLAM — London 1972. Lou Reed, Transformer, cut at Trident Studios in\nSoho in August 1972, produced by David Bowie and Mick Ronson, released by\nRCA in November 1972.\n\nTHE ROW EXISTS BECAUSE THE VELVET UNDERGROUND ROW ALREADY DOES. `protopunk`\n(New York 1966) opens its own note \"THE VELVET UNDERGROUND — New York 1966.\nThe Velvet Underground & Nico, cut at Scepter Studios in April 1966\", so the\nband is spoken for and the honest second Reed row is the SOLO record. That\nis why `protopunk` is this row's largest declared parent at 0.35 and not its\nsubject.\n\nAND THE LABEL IS LONDON BECAUSE THE RECORD IS. Ronson arranged it and played\nthe guitar; Trevor Bolder and Woody Woodmansey came in off Bowie's own band;\nHerbie Flowers played the basses. That is a London session with an American\nsinging over it. `New York 1972` is `singersongwriter`'s anyway; the date is\nnot the reason this says London.\n\nMEASURED, THE MIDI CORPUS, 2026-09-07. Fourteen files answer to \"Walk on the\nWild Side\" and FIVE INDEPENDENT TRANSCRIPTIONS READ 98, every one of them in\n4/4 and every one of them major. That is the same species of evidence\n`minneapolissound` (Minneapolis 1982) stands on — \"FIVE INDEPENDENT\nTRANSCRIPTIONS OF '1999' READ 119, 120, 120, 120 AND 120: bpm 120 is not a\ntaste\" — and it is where `bpm: 98` and `mode: MODES.ionian` come from.\n\nMEASURED, CHORDONOMICON. `glam rock` is a fat label — 3,410 songs, median\nyear 1982, 2,630 of them major (77%) — and its top four-chord window is I IV\nI IV at 175 hits, with V IV I V third at 75. `roots` is exactly that: I IV I\nIV I IV V IV, the first window shuttled and the third used as the turn.\n\nTHE CAST IS THE ARGUMENT. `bassInstr: \"contrabass\"` with `bassStyle:\n\"walk\"`, because the Wild Side bass is a double bass and an electric played\ntogether, and their countermelody is the hook of the record. A WALKING\nUPRIGHT ON A GLAM RECORD is the one thing no neighbour has: `glam` (London\n1971) and `musichallrock` (Muswell Hill 1966) both put eighths on a picked\nbass, and `protopunk` names no bass instrument at all. `tenor_sax` is the\nbaritone saxophone solo seated on the nearest reed the font holds, which is\na compromise and is said as one.\n\nTHE MOUTH, AND A CLAIM THAT WAS PROSE UNTIL TODAY. `{\n...MOUTHS.confessional, vib: 0 }`. `protopunk`'s note ends \"WHO SINGS:\ndeadpan — the confessional mouth with the vibrato off is Reed's whole\naddress\", but that row's `tone.mouth` is a bare `MOUTHS.confessional` and\nthe table gives confessional `vib: 0.28`. The vibrato was never actually\noff. Counted 2026-09-07: this is THE ONLY ROW OF THE 500 that writes `vib:\n0`, so the deadpan the 1966 row argued for arrives as a field here for the\nfirst time.\n\nLINEAGE: `protopunk` (New York 1966) at 0.35 — the same writer, the same\nflatness, the same songs about the city's actual subjects. `glam` (London\n1971) at 0.30 — one year earlier, the same town, the two men holding the pen\nhere. `doowop` (Harlem 1955) at 0.10 for the backing vocals, sung without\nany of the swoon. `musichallrock` (Muswell Hill 1966) at 0.10 for the\nnarrated character song, the form every lyric takes. Sum 0.85; the residue\n0.15 is the deadpan — nothing above this row declines to sing.\n\nTHE DYNAMIC FIGURE: `agogic`, against `protopunk`'s `backbeat`, and the swap\nis the row. FIGURES calls agogic \"the last note of the phrase leans and\nlengthens\" and \"the same shape a ballad's line and a romantic melody end\nwith\". A narrated line ARRIVES at its last word — \"...on the wild siiiide\" —\ninstead of leaning where the snare is. The kit still plays 2 and 4; the\nvoice no longer does.\n\nDOOR 5 AND THE FIT. At seed 1 this row seats TWO CLEAN GUITARS and no dirty\none, because it names `clean_guitar` and an amplifier is never dealt\n(precompose.js door 5, 2026-09-06). The genealogy fit reads r2 0.752,\nresidue 0.163 — just under the catalogue median of 0.165 over 428 children,\nwhich is the right answer for a famous voice over a plain band.",
+  "label": "London 1972",
+  "near": "protopunk",
+  "plan": "song",
+  "bpm": 98,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "protopunk": 0.35,
+    "glam": 0.3,
+    "doowop": 0.1,
+    "musichallrock": 0.1
+  },
+  "instr": [
+    "solo_vox",
+    "clean_guitar",
+    "tenor_sax"
+  ],
+  "bassInstr": "contrabass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1900,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.24,
+    "mouth": {
+      "$src": "{ ...MOUTHS.confessional, vib: 0 }"
+    }
+  },
+  "words": [
+    "the voice, telling it flat, arriving on the last word",
+    "the guitar, strummed, two chords and a turn",
+    "the baritone answer, one phrase every other bar"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [], [drop(2)]][s % 4]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : s % 2 ? [excerpt(8, 8)] : [])"
+  },
+  "dyn": "agogic",
+  "family": "band"
+}

@@ -1,0 +1,222 @@
+{
+  "note": "STADIUM PROG — London 1987. Pink Floyd, A Momentary Lapse of Reason: most\nof it cut on Gilmour's own houseboat studio, the Astoria, moored on the\nThames at Hampton, with the rest finished in Los Angeles; EMI in Britain,\nColumbia in America, released the 7th of September 1987. THE LABEL NAMES\nTHE ERA'S FIRST RECORD AND THE ROW IS THE ERA — this row runs forward to\nThe Division Bell in 1994 and to the Pulse tours, which is the same band,\nthe same producer, the same rack and the same fretless. Waters gone, and a\nFloyd that is a production rather than a group.\n\nWHAT IT IS, AND EVERY DIFFERENCE FROM THE OTHER FOUR FLOYD ROWS IS A FIELD.\n`family: \"studio\"` where `englishpsych`, `studioprog`, `bleakprog` and\n`rockopera` are all `band` — this is the digitally produced one, cut to a\nclick with session players filling the chairs the band no longer had, and\nthe `studio` dynamics row (a hand editing a machine) is the honest reading\nof that. `bassInstr: \"fretless_bass\"`, and this is THE FIRST ROW IN 500 TO\nSEAT ONE: grep the catalogue and `fretless_bass` appears in exactly this\nfile. It is the right instrument and it is also the era's signature — a\nfretless sliding under a clean guitar is what every 1987 record with a\nbudget sounded like. `fx: [\"chorus\"]` is the rack, one effect across the\nwhole record, which is what a rack was. `drumkit: \"power\"` is the gate.\n`warm_pad` plus a clean guitar at `maxHold: 4` and `verb: 0.55` is the\nWIDTH — four bars to a chord, everything held, nothing dry.\n\n`guests: \"native\"` (Door 3) AND WHY IT IS HERE. Without it, the guest draw\nseated a SAMPLED HARPSICHORD on this row's counter-line, which is the exact\nfault Door 3 was written for: a machine-era record handed an acoustic\ncuriosity because the draw did not know what room it was in. With it the\nguest arrives on a saw, which is what an Emulator II and a D-50 are. Four\nrows in this round declare it — `fmpop`, `fmsoul`, `gospelpop` and this\none — and all four are records made out of synthesisers.\n\n`bpm: 96` IS A JUDGEMENT AND THE CORPUS COULD NOT SETTLE IT, said plainly\nrather than dressed up. Four \"learning to fly\" files are in the trove and\nthey read 84, 117, 120 and 120 — a spread of 36 with no consensus anywhere\nin it — AND TOM PETTY HOLDS THE SAME SONG TITLE, released in the same\nperiod, so the trove cannot tell the two records apart by filename and\nneither can this row. Quoting a number out of that set would be quoting\nsomebody else's record with a coin toss on top. 96 is chosen instead:\nslower than `rockopera`'s measured 109, faster than `aor`'s 92, which is\nwhere a record that wants to be enormous and unhurried at once has to sit.\nThe 51 Pink Floyd files in the corpus median 120 and that is the whole band\nacross thirty years, so it settles nothing here either.\n\nTHE DYNAMIC FIGURE: `arch`, AND THE SHARED FIGURE IS CONCEDED RATHER THAN\nDODGED. `aor` (Los Angeles 1982) is this row's declared parent at 0.20 and\nit also takes `arch`; the temptation is to reach for a different word to\nmake the row look distinct, and that would be inventing evidence. The\nfigure is right for both: FIGURES calls `arch` \"the sung line's own shape\nand the one every singing teacher draws in the air\", and notes that \"a\nstudio pop record and an opera aria are both arches; the difference between\nthem is the touch on top, which is what that layer is for.\" So the\ndifference between this row and `aor` is NOT the figure and is not claimed\nto be. It is the cast and the width: aor seats `synth_strings_1`, a\n`marimba` and a clean guitar at `verb` unstated, with an `eighths` bass on\na `room` kit; this row seats a warm pad, a clean guitar and a lead voice\nover a FRETLESS on a POWER kit at `verb: 0.55`, with `maxHold: 4` where aor\nholds nothing. Same shape, different building. Compiled: 154 accents at\nsteps 0 and 16, alphabet [5,6,7,8].\n\nLINEAGE, AND THIS IS THE ROW THAT CLOSES THE ERA CHAIN. `bleakprog` 0.30 —\n1976, and it is the larger debt because the guitar language, the tempo and\nthe held minor chords all come from there rather than from The Wall.\n`rockopera` 0.20 — 1979, the arena scale and the power kit. `aor` 0.20 —\nLos Angeles 1982, the production itself: the gated snare, the chorused\nclean guitar, the record aimed at a stadium and a car radio at once.\n`sophistirock` 0.10 (London 1986) — the year before, and the same taste for\na fretless and a jazz chord in a pop record. Sum 0.80; the residue 0.20 is\nthe production, and the fit tool agrees more than it usually does.\n\nFIT r2 0.867, RESIDUE 0.115 — THE SECOND-BEST FIT OF THE EIGHTEEN NEW ROWS,\nbehind `speedmetal` at 0.104, and well under the catalogue median of 0.165.\nThat is worth reporting honestly rather than quietly: the machine is saying\nthat this record is very largely its own ancestors, which is the common\ncomplaint about it and is true. What the residue buys is the production —\nthe Astoria, the reverbs, the session drummers — and a residue of 0.115 is\nthis catalogue's way of saying \"not much was invented here\". The row is in\nthe table because the ERA is real and the sound is distinct, not because\nthe writing was.\n\nWHAT IT HAS THAT `spacerock` DOES NOT: everything that costs money. A\nfretless, a power kit, a chorus rack, a native guest, four voices of\nproduction and `family: \"studio\"` instead of `band`. `spacerock` (London\n1973) is the 1971 instrumental-space era and it was already in the table\nwhen this round began, which is why Paul's six Floyd eras became five rows.\nThis one is the far end of that chain, fourteen years and one lawsuit\nlater.",
+  "label": "London 1987",
+  "near": "aor",
+  "plan": "song",
+  "bpm": 96,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "bleakprog": 0.3,
+    "rockopera": 0.2,
+    "aor": 0.2,
+    "sophistirock": 0.1
+  },
+  "instr": [
+    "clean_guitar",
+    "warm_pad",
+    "solo_vox"
+  ],
+  "bassInstr": "fretless_bass",
+  "drumkit": "power",
+  "guests": "native",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    5,
+    4,
+    0,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      5,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.2,
+    "atk": 0.01,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.55
+  },
+  "fx": [
+    "chorus"
+  ],
+  "words": [
+    "the guitar, clean and wide, the bend at the top",
+    "the pad, the width, four bars a chord",
+    "the fretless, answering, up in the middle"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(1)], [rotate(4)], [fill(1), drop(2)]][s % 4]\n                    : v === 1 ? [keep(0)]\n                    : [drop(3), transpose(7)])"
+  },
+  "dyn": "arch",
+  "family": "studio"
+}

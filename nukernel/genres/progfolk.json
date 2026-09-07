@@ -1,0 +1,238 @@
+{
+  "note": "PROGRESSIVE FOLK — Aston Tirrold 1970. Traffic's John Barleycorn Must Die, cut\nat Olympic and Island Studios in London and released by Island in Britain and\nUnited Artists in America in July 1970: six tracks, two of them instrumental,\none of them a traditional song four centuries older than the band.\n\nTHE LABEL IS THE COTTAGE. `London 1970` is `newsfanfare`'s and G6b holds\n(place, year) to being a key, so the collision forced the question — and the\nanswer it forced is the truer one. Aston Tirrold is the Berkshire house the\nband rented in 1967 and kept writing in until they broke up, and \"getting it\ntogether in the country\" was coined about that address. `atlas.js` declares it\nWITHIN Oxford, taking Sutton Courtenay's own relation eleven kilometres away —\nthe exact case that clause was written for. SAY IT PLAINLY: this is a cottage\nand not a studio. The desk was in London and the music was not, and the\ncatalogue prefers a true rented house to a false capital city.\n\nTHE EVIDENCE IS THIN AND IS REPORTED AS THIN. MEASURED, 2026-09-07: the\n120,000-file MIDI corpus holds NO Traffic at all — all thirteen \"traffic\" hits\nare Tiesto or Hendrix's \"Crosstown Traffic\". What it holds is the repertory:\ntwo transcriptions of \"John Barleycorn Must Die\" at 120, one folk \"John\nBarleycorn\" at 80, two Joe Cocker covers of \"Feelin' Alright\" at 88 and 92 —\nmedian 92. `bpm: 108` is none of those. It is the album's own six-track spread,\na judgement, and said as one: it sits between the traditional song's 80 and the\ntranscribed arrangement's 120 because the record does. CHORDONOMICON has no\n`progressive folk` label either. Two silences and one argued number.\n\nTHE ROW IS FLUTE AND ORGAN OVER A JAZZ KIT. `instr: [\"flute\", \"rock_organ\",\n\"solo_vox\"]`, `drumkit: \"jazz\"`, `bassStyle: \"walk\"`, `swing: 0.12`, `plan:\n\"arc\"`, `maxHold: 4`, and `MODES.dorian` used as both mode and scale.\n`drumkit: \"jazz\"` is taken by sixteen rows in 500 and the other fifteen are\njazz, blues, Latin or highlife rows — `jazz`, `swing`, `tradjazz`, `jazzrock`,\n`indojazz`, `jumpblues`, `neworleans`, `mambo`, `highlife`, `afrobeat`,\n`westernswing`, `territoryband`, `shidaiqu`, `spyscore`, `jazzrap`. This is the\nonly English folk-rock row among them and the only row in the table that puts a\nride cymbal and a walking bass under a traditional ballad. THAT IS THE\nINVENTION: a jazz rhythm section — Capaldi and Wood came off that bandstand —\nplaying words nobody wrote.\n\nAGAINST `jamband` (San Francisco 1972), this row's declared `near`: two clean\nguitars over twelve bars of `PROGS.blues12` with a room kit, in America, at the\nsame 108. This is a flute over an eight-bar dorian vamp (`roots:\n[0,6,3,0,0,6,3,4]`) with a jazz kit and an organ holding the mode open, in a\nrented house in Berkshire. Same tempo, same `plan`, nothing else shared.\n\nTHE FIGURE: `dyn: \"anacrusis\"`, on `FIGURES`' own words — \"Swing and big band\nphrasing in one line: the tail of the bar is not the end of this bar, it is the\nrun-up to the next one.\" That is what a jazz-schooled rhythm section does to a\nmodal folk tune: the phrase arrives from before the barline and the bar it\nleaves sits flat under it. AND THE AWKWARD HALF, SAID RATHER THAN HIDDEN:\n`jamband` takes `anacrusis` TOO, so the figure is not what separates this row\nfrom its neighbour — the kit, the flute, the walk and the mode are. What it\nseparates the row from is the folk table, where `folkrock` and the English\ntraditional rows lean on the downbeat, which is where a folk tune's own weight\nlies. `sophistirock` (London 1986) takes `anacrusis` for the same family of\nreasons sixteen years later: jazz players making a record that is not jazz.\n\nLINEAGE: `folkrock` (Los Angeles 1965) at 0.20 — the electric band reading a\ntraditional song, which is the whole precedent. `jazz` at 0.20 — the rhythm\nsection, the walk, the swing, the ride. `ballad` (London 1666) at 0.15, and\nthis is the edge nobody expects: \"John Barleycorn\" is a BROADSIDE, printed and\nsold in the street for three centuries before Traffic sang it, and the `ballad`\nrow's own `wants` name \"the broadside press\". That parent hands this row both\nits tune stock and its mode — `ballad` is dorian, unaccompanied and `nobass`,\nand the flute here is playing its descendant. `bluesrock` (West Hampstead 1966)\nat 0.15 — the band's Spencer Davis half, where Winwood learned the organ.\n`psychpop` at 0.10 — the 1967 singles. Sum 0.80; the residue 0.20 is the\ncottage: three men, a room they were not paying a studio for, and a record that\nsounds like it.\n\nTHE FIT: r2 0.829, residue 0.119 — well under the catalogue median of 0.165 and\nnear its p10 of 0.096, which says the declared parents really do explain this\nrecord. The tool weights them folkrock 0.50 / bluesrock 0.26 / jazz 0.14 /\npsychpop 0.11 / ballad 0.00 against the declared 0.20 / 0.20 / 0.15 / 0.15 /\n0.10. The ballad share reads zero because it is 304 years upstream and no\nvector of tempo, kit density and mode reaches that far; that edge is argued\nfrom the song and stands on the argument.",
+  "label": "Aston Tirrold 1970",
+  "near": "jamband",
+  "plan": "arc",
+  "bpm": 108,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "folkrock": 0.2,
+    "jazz": 0.2,
+    "ballad": 0.15,
+    "bluesrock": 0.15,
+    "psychpop": 0.1
+  },
+  "instr": [
+    "flute",
+    "rock_organ",
+    "solo_vox"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 4
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "counter",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    6,
+    3,
+    0,
+    0,
+    6,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "walk",
+  "swing": 0.12,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      0,
+      4,
+      5,
+      0,
+      4,
+      0,
+      6,
+      0,
+      0,
+      4,
+      5,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1700,
+    "q": 1.2,
+    "atk": 0.02,
+    "rel": 1.4,
+    "gain": 0.24,
+    "verb": 0.4
+  },
+  "words": [
+    "the flute, the tune, over the vamp",
+    "the organ, the vamp itself, two chords for a side",
+    "the voice, the traditional words"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[excerpt(0, 8)], [excerpt(4, 8)], [invert(3)], [excerpt(8, 8)]][s % 4]\n                    : v === 1 ? [keep(0, 8)]\n                    : [drop(2), transpose(-5)])"
+  },
+  "dyn": "anacrusis",
+  "family": "band"
+}

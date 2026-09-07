@@ -1,0 +1,230 @@
+{
+  "note": "ENGLISH PSYCHEDELIA — St John's Wood 1967. Pink Floyd, The Piper at the\nGates of Dawn: cut at Abbey Road Studios NW8 between February and May 1967,\nreleased on EMI Columbia the 5th of August. Barrett's record — one guitar\nthrough a Binson Echorec, a Farfisa, and songs about a gnome, a bicycle and\na cat.\n\nTHE LABEL IS THE STUDIO'S OWN DISTRICT, AND THAT HAS TO BE ARGUED against\nthis catalogue's own ruling. `grunge` states the rule: a label names \"the\nroom the music came out of rather than the desk it was mixed on\", and by\nthat rule a studio name looks like exactly the wrong kind of fact. It is\nnot, here. `London 1967` is taken — it is `acidrock`'s, Hendrix and\n\"Purple Haze\", De Lane Lea and Olympic inside the same twelve months — and\n`atlas.gate.js` G6b holds (place, year) to being a KEY, so a taken dot\nforces the NEXT TRUE FACT rather than a fudge (the softrock/Lagos lesson of\n2026-09-06). And Abbey Road is not a desk this record passed through: the\nFloyd were an EMI house band for a decade, signed to the building before\nthey had a hit, and Piper was written and played in Studio 3 while Sgt\nPepper went up down the corridor. St John's Wood IS the room. Nor is the\ndot invented once and abandoned — it carries a second record six years\nlater on its own merits, `studioprog`, St John's Wood 1973. A place two\nrecords need is a place.\n\nWHAT THIS ROW HAS THAT THE FOUR PSYCHEDELIC ROWS ABOVE IT DO NOT, field by\nfield. A CORRECTION FIRST, because the draft this note was written from\nasserted it backwards: `psychrock` (San Francisco 1966) does NOT cycle\nroots. It declares `harmony: \"modal\"` with no `roots`, exactly as this row\ndoes, and the difference sits one field lower — psychrock's bass plays\n`eighths` and this row's is a `pedal`. Modal over a moving bass is a jam;\nmodal over a drone is a one-chord freakout, and NONE of the four is modal\nover a pedal. `acidrock` (London 1967) is `cycle` on [0,0,3,4] through\nSCALES.blues, a twelve-bar with a wah on it; `psychpop` (London 1968)\ncycles [0,0,3,3,4,4,0,0] in plain ionian; `orchpsych` (Oklahoma City 1999)\ncycles [0,3,4,5] under slow strings. THE ALPHABET is the second difference:\nSCALES.majpent under MODES.mixo, where psychrock takes that pentatonic\nunder ionian — the children's-rhyme tune, which has no fourth and no\nseventh in it. THE THIRD is `fx: [\"echo\",\"crunch\"]`, the Echorec and the\nfuzz box, which is neither psychrock's echo-and-tremolo nor acidrock's\nwah-and-crunch.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-07, the eighteen-row round;\ntest/precompose.test.js G14b). This row was written as MODES.mixo and the\ngate refused it, with exactly one offender and the offender was this row.\nThe reasoning is the check's own: `mode` is read in three places\n(kernel.js harm(), chordsOf(), bass()) and all three need CHORD ROOTS;\nthis row is `harmony: \"modal\"` and has none; and SCALES.majpent has no\nseventh in it at all, so the flat seventh mixolydian is named for cannot\nsound by either route. Swap mixo for ionian and NOT ONE RENDERED NOTE\nMOVES, which is what \"decorative\" means and why the ceiling is zero.\nSo the row says `MODES.ionian`, which is the fourth time the catalogue\nhas made that exact move on that exact evidence: G14b's own list names\n`ethiojazz`, `bhangra`, `protopunk` and `rumba` as \"the four on\nSCALES.majpent — no seventh at all\", every one renamed ionian on\n2026-09-02, and `protopunk` is this row's own neighbour one year and one\nocean away. It costs the row nothing it had: a nursery tune has a major\nthird and a major sixth and no seventh of either kind, which IS ionian,\nand the field now names the alphabet the record was always playing.\n\nTHE PARENT NO OTHER ROCK ROW IN 500 DECLARES: `nursery` (London 1744) at\n0.15 — the whole of \"Bike\", \"The Gnome\" and \"Matilda Mother\". Barrett wrote\nchildren's rhymes and put a fuzzbox behind them, and the table has a row for\nchildren's rhymes; grep confirms this is the only file in the catalogue\nnaming it as an ancestor. LINEAGE otherwise: `psychrock` 0.30, the modal\nfreakout itself; `garagerock` 0.15 (Portland 1963), the two-chord budget;\n`musichallrock` 0.10 (Muswell Hill 1966), the English half, the Kinks doing\nthe same trick with an upright piano; `drone` 0.10 (New York 1964), the\nheld pedal under all of it. Sum 0.80; the residue 0.20 is Barrett, who is\nnot derivable from any of them.\n\nTHE EVIDENCE IS ABSENT AND IS SAID TO BE. The MIDI corpus holds no\n\"Astronomy Domine\" and no \"Interstellar Overdrive\" — zero hits, checked.\nThe 51 Pink Floyd files it does hold median 120, and that is the band\nacross thirty years, not this record. So `bpm: 128` IS A JUDGEMENT and is\nstated as one: a fast, brittle, garage tempo, above psychrock's 112 and\nacidrock's 104, because Piper was made by a band still playing UFO twice a\nweek. CHORDONOMICON DOES NOT CORROBORATE IT EITHER, and saying so is more\nhonest than pretending it does: `psychedelic rock` there is 3,312 songs at\na median year of 1971, 80 per cent MAJOR, I IV I IV on top at 200 hits.\nThat is what psychedelia BECAME four years later, a major-key two-chord\nrock label, and it is precisely what this row is not. This row has no roots\nat all.\n\nTHE DYNAMIC FIGURE: `lean`, DECLARED and not left absent. FIGURES' own\ncomment says a row \"may still quote it on purpose\" where its family took\nsomething else, and names march, waltz, polka, musette and riff as the rows\nthat do. NINE rows declare it today, counted 2026-09-07 — those five plus\n`kriti`, `varnam`, this round's `progmetal` and this one — so the comment\nis four names behind its own table, which is worth writing down here.\nEVERY ROCK ROW THIS ONE SITS BESIDE TAKES `backbeat` — checked: psychrock,\nacidrock, garagerock and musichallrock, all four — and the reason to refuse\nit here is that these tunes are folk tunes. A children's rhyme leans on its\nfirst note and gives it back across the bar, which is FIGURES' own gloss on\n`lean` (\"the ordinary shape of a folk tune, a fiddle reel and a raga\nline\"). The kit plays a backbeat on this record; the melody does not.\nCompiled at seed 1: 112 accents, every one on the\nbarline at steps 0 and 16, alphabet [5,6,8].\n\nTHE FIT DISAGREES AND IS REPORTED, NOT TUNED. `tools/genealogy.js` fits\nthis row psychrock 0.59 / nursery 0.20 / garagerock 0.19 / drone 0.02 /\nmusichallrock 0.00 against the declared 0.30 / 0.15 / 0.15 / 0.10 / 0.10.\nThe machine wants psychrock at twice the claim, which is what a vector of\ntempo, kit density, bass motion and mode will say about two modal\npentatonic rock rows; what it cannot see is the words. Fit r2 0.570,\nresidue 0.204 — above the catalogue median of 0.165, the right direction\nfor a record nobody has managed to imitate.\n\nTHE MEDDLE ROW DOES NOT EXIST BECAUSE IT ALREADY DOES. Six Floyd eras were\non the table and five were written: the 1971 instrumental-space era IS\n`spacerock` (London 1973) — 70 bpm, `plan: \"arc\"`, `rate: 0.5`, a pedal\nbass under a slow blues-schooled guitar on a held drone — whose own note\nopens \"SPACE ROCK [Pink Floyd]\" and which `balearic` already cites as\n\"Pink Floyd's rung is `spacerock`, London 1973, already here.\" What this\nrow has that spacerock does not is everything above: a song rather than an\narc, 128 against 70, a kit with a backbeat, and three sung words.",
+  "label": "St John's Wood 1967",
+  "near": "psychrock",
+  "plan": "song",
+  "bpm": 128,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "psychrock": 0.3,
+    "garagerock": 0.15,
+    "nursery": 0.15,
+    "musichallrock": 0.1,
+    "drone": 0.1
+  },
+  "instr": [
+    "clean_guitar",
+    "percussive_organ",
+    "solo_vox"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.6,
+    "atk": 0.006,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.45
+  },
+  "fx": [
+    "echo",
+    "crunch"
+  ],
+  "words": [
+    "the guitar, the slide over the drone, echo on every note",
+    "the organ, one chord, the whole side",
+    "the voice, a nursery rhyme, said straight"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[fill(1)], [rotate(4), fill(1)], [invert(5)], [reverse()]][s % 4]\n                    : v === 1 ? [keep(0)]\n                    : [keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  },
+  "dyn": "lean",
+  "family": "band"
+}

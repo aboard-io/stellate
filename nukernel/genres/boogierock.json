@@ -1,0 +1,221 @@
+{
+  "note": "BOOGIE ROCK — San Francisco 1977. The Steve Miller Band's Book of Dreams,\nCapitol, May 1977 — out of the same 1976 CBS Studios San Francisco sessions\nthat produced Fly Like an Eagle eight months earlier. The two albums are ONE\nBODY OF WORK split into two releases, and this row is both of them. The year on\nthe label is the second record's because `San Francisco 1976` is `yachtsoul`'s\nand `atlas.gate.js` G6b holds (place, year) to being a key; the sessions the\nrow is about are 1976's.\n\nMEASURED, THE MIDI CORPUS, 2026-09-07: nine Steve Miller Band files, MEDIAN\n117 — Rockin Me 117, Jet Airliner 121, Swingtown 138, Fly Like an Eagle 100,\nThe Joker 81. `bpm: 117` is that median exactly. This is the uncommon case\nwhere the corpus SET the field rather than corroborating a guess, and the\nspread under it is the band: an 81 and a 138 in one discography. MEASURED,\nCHORDONOMICON: there is NO `boogie rock` label in the mirror at all — 1.5\nmillion labels across 679,681 sectioned songs and not one spells it. Said out\nloud so the next hand does not go looking for a number that is not there.\n\nTHE ROW IS A SHUFFLE WITH A TAPE ON IT. `swing: 0.14`, `fx: [\"echo\"]`, `mode:\nMODES.mixo` over `scale: SCALES.blues`, and `roots: [0,0,3,3,0,0,4,3]` — I to\nIV with the V at the turn, a boogie's own eight bars. And a `polysynth` pad on\nthe third chair, which is the half of these records that is not a shuffle at\nall: the wash under Fly Like an Eagle is a keyboard record's idea, and without\nit this row is only a slower `bluesrock`.\n\nDOOR 5 AND THE AMPLIFIER (scratch/genre-qa/SHIFT-5.md, 2026-09-06: \"an\namplifier is never dealt\"). The row declares `clean_guitar` and gets clean\nguitars — measured at seed 1, clean x2 and no dirty chair anywhere. The chair's\nown word says \"clean into the crunch\" and the row names no `crunch` chip, and\nthat is a DECISION rather than an omission: Door 5's law is that an amplifier\nis a decision, and a record that made none did not make that one. These are\nbright rhythm guitars with the dirt kept for a solo this row does not seat, and\nthe single chip the record spends goes on the tape instead.\n\nAGAINST `bluesrock` (West Hampstead 1966), the largest declared parent at 0.30\nand the row this one is likeliest to be confused with: that is a three-piece\nwith a harmonica at 105, `overdrive_guitar` declared, `fx: [\"crunch\"]`,\n`maxHold: 4`, a Les Paul sustaining into a valve amp. This is a pop record — a\nsynthesizer, a tape delay, a picked bass in eighths, a hook that repeats, and a\nshuffle that never gets louder than the vocal.\n\nTHE FIGURE: `dyn: \"backbeat\"`, and the argument for it is a REFUSAL TO BE\nCLEVER. A boogie shuffle is a backbeat; that is what a shuffle IS. Six of this\nrow's neighbours already say the word, and giving this one something exotic\nwould be a costume rather than a reading. THE COMPILED PROOF, seed 1: 202\naccents over the alphabet [5,6,7,8], and the two commonest seats are step 12\n(40 accents) and step 4 (34) — the four and the two of a sixteen-step bar,\nwhich is where the snare is. `FIGURES` weights the first onset in each of those\nquarters rather than the grid position itself, which is why a swung eighth\nstill lands the accent.\n\nLINEAGE: `bluesrock` (West Hampstead 1966) at 0.30 — the twelve-bar played by a\nrock band with an amplifier, the chassis. `rock` at 0.20 — the song length, the\nhook, the backbeat itself. `blues` at 0.15 — the shuffle and the flattened\nalphabet under everything. `psychrock` (San Francisco 1966) at 0.15 — the town,\nand the echo: this band came out of that scene and kept its tape delay after it\ndropped the jams. Sum 0.80; the residue 0.20 is the studio — the overdubbed\nsynth wash, the doubled vocal, a pop record built on top of a bar band.\n\nTHE FIT: r2 0.705, residue 0.162 — on the catalogue median of 0.165, the right\nplace for a row claiming to be an ordinary music made well. The tool\nredistributes INSIDE the declared set rather than outside it: rock 0.52 /\nbluesrock 0.25 / blues 0.22 / psychrock 0.00, against 0.30 / 0.20 / 0.15 /\n0.15. `nearest()` answers `gfunk` at 0.398, a tempo-and-shuffle coincidence\nworth nothing except as a reminder of what the feature vector reads.",
+  "label": "San Francisco 1977",
+  "near": "bluesrock",
+  "plan": "song",
+  "bpm": 117,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "bluesrock": 0.3,
+    "rock": 0.2,
+    "blues": 0.15,
+    "psychrock": 0.15
+  },
+  "instr": [
+    "clean_guitar",
+    "solo_vox",
+    "polysynth"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "swing": 0.14,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2100,
+    "q": 1.3,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.28,
+    "verb": 0.3
+  },
+  "fx": [
+    "echo"
+  ],
+  "words": [
+    "the guitar, the shuffle figure, clean into the crunch",
+    "the voice, a beat behind itself on the tape",
+    "the synth wash, holding the chord under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(1)], [rotate(2)], [fill(1), rotate(2)]][s % 4]\n                    : v === 1 ? [drop(2)]\n                    : [keep(0, 8)])"
+  },
+  "dyn": "backbeat",
+  "family": "band"
+}

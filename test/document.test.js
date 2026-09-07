@@ -894,6 +894,173 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
                 " · pop vel " + JSON.stringify(pop.vel) + " acc " + pop.acc);
   });
 
+
+  /* ===== G17 — THE EIGHTEEN ROWS OF 2026-09-07 ARE PLAYABLE ==============
+     Paul: *"I'd love to see you add some genres to capture Lou reed, purple
+     rain as well as new power generation prince, television, talking heads,
+     slayer, Metallica 1983 as well as and justice for all days, plus steve
+     miller and traffic, and more dx7 bands like a-ha and steve Winwood and
+     Whitney Houston especially. Don't forget Dolly Parton"* and, in a second
+     message, *"We definitely need all the Pink Floyd eras too."*
+
+     WHY THIS GATE EXISTS AND NOT A LINE IN table.test.js: T2 holds the
+     catalogue to the pinned base and a row that is new HERE cannot be
+     compared there — its own BASEHAS comment says so and names this file as
+     what holds the added rows instead ("A row that is new here is held
+     instead by the gates that ask what it IS — test/document.test.js
+     G16/G16b"). G16 asks that of the three starting points. This asks it of
+     the eighteen anchors, and asks it ON THE RENDER, because a row can
+     declare a kit, a bass, a meter and four chairs and reach no sound at
+     all — the "declared but never arriving" bug this repo keeps meeting.
+
+     FOUR QUESTIONS, and two of them could not be asked of the starting points:
+       a  each compiles to a record with notes, a drummer, and a bass — except
+          the ONE row that declares `nobass: true` on purpose, which must
+          therefore seat NO bass, because an unread refusal is the same bug
+          pointed the other way;
+       b  each carries the figure it declares — `flat` means one level and no
+          accent, and every other figure here must widen the alphabet and put
+          an accent somewhere;
+       c  the two fractional meters arrive: 7/4 is 28 steps to the bar and 7/8
+          is 14, and nothing in 500 rows had ever written a signature as a
+          fraction before this round;
+       d  no two of the eighteen render the same score, and none renders its
+          nearest declared neighbour's. Eighteen rows added in one afternoon is
+          exactly the case where one could quietly become another. */
+  const NEW0907 = ["deadpanglam", "arenafunk", "newjackband", "artpunk", "avantfunk",
+    "speedmetal", "progmetal", "boogierock", "progfolk", "fmpop", "fmsoul",
+    "gospelpop", "mountaincountry", "englishpsych", "studioprog", "bleakprog",
+    "rockopera", "stadiumprog"];
+  ok("G17 the eighteen rows of 2026-09-07 each compile to a playable record", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const seen = new Map();
+    for (const gk of NEW0907) {
+      assert.ok(GENRES[gk], gk + " is not in the catalogue");
+      const d = Doc.normalize(P2.genreToDocument(gk, 1));
+      const ev = Doc.scoreOf(d, GENRES, FLEET).events;
+      assert.ok(ev.length > 100, gk + " renders only " + ev.length + " events");
+      assert.ok(d.voices.some((v) => v.kind === "drums"), gk + " seats no kit");
+      const bass = d.voices.some((v) => v.kind === "bass");
+      if (GENRES[gk].nobass) assert.ok(!bass, gk + " declares nobass and seated one anyway");
+      else assert.ok(bass, gk + " seats no bass");
+      assert.ok(d.voices.filter((v) => v.kind === "line").length >= 2,
+        gk + " seats fewer than two lines");
+      assert.ok(d.form.sections.length >= 3, gk + " has no form");
+      seen.set(gk, JSON.stringify(ev));
+    }
+    const keys = [...seen.keys()];
+    for (let i = 0; i < keys.length; i++)
+      for (let j = i + 1; j < keys.length; j++)
+        assert.notStrictEqual(seen.get(keys[i]), seen.get(keys[j]),
+          keys[i] + " and " + keys[j] + " render the same score");
+    // ...AND NOT ITS NEIGHBOUR'S EITHER. `near` is the row's own claim about
+    // which record it stands beside; if the two render the same bytes the row
+    // is a duplicate with a different label on it.
+    for (const gk of NEW0907) {
+      const n = GENRES[gk].near;
+      if (!n || !GENRES[n]) continue;
+      const them = JSON.stringify(Doc.scoreOf(
+        Doc.normalize(P2.genreToDocument(n, 1)), GENRES, FLEET).events);
+      assert.notStrictEqual(seen.get(gk), them, gk + " renders exactly " + n);
+    }
+    console.log("       " + keys.length + " rows, " +
+      keys.map((k) => JSON.parse(seen.get(k)).length).reduce((a, b) => a + b, 0) +
+      " events, 0 identical pairs of " + (keys.length * (keys.length - 1) / 2));
+  });
+
+  /* ...AND THE FIGURE EACH ONE DECLARES REACHES THE NOTES, read off the
+     composed phrases rather than off `dyn` — the claim and the arrival are
+     two different facts. `speedmetal` is the interesting one: it is the first
+     `family: "band"` row to take `flat`, and `flat` is a claim about a
+     tremolo-picked riff at 208 bpm rather than an absence of one, so it has to
+     land as ONE level and ZERO accents or the argument in its note is wrong. */
+  ok("G17b each of the eighteen carries the dynamic figure it declares", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const read = (gk) => {
+      const d = Doc.normalize(P2.genreToDocument(gk, 1));
+      const vel = new Set(); let acc = 0, notes = 0;
+      for (const c of d.voices.filter((v) => v.kind === "line"))
+        for (const s of d.form.sections) {
+          const ph = Doc.toPhrase(d, Doc.materialAt(c, s.id));
+          if (!ph || !ph.gate) continue;
+          for (let i = 0; i < ph.gate.length; i++) if (ph.gate[i]) {
+            notes++; if (ph.vel) vel.add(ph.vel[i]);
+            if (ph.acc && ph.acc[i]) acc++;
+          }
+        }
+      return { notes, vel: [...vel].sort((a, b) => a - b), acc };
+    };
+    const said = [];
+    for (const gk of NEW0907) {
+      const m = read(gk);
+      assert.ok(m.notes > 200, gk + " composes only " + m.notes + " notes");
+      if (GENRES[gk].dyn === "flat") {
+        assert.deepStrictEqual(m.vel, [6], "`flat` is one level; " + gk + " has " + m.vel);
+        assert.strictEqual(m.acc, 0, "`flat` accents nothing; " + gk + " has " + m.acc);
+      } else {
+        /* THREE LEVELS IN FOUR-FOUR, TWO IN A SEVEN, AND THE DIFFERENCE IS A
+           FINDING THIS GATE MADE (2026-09-07). `studioprog` declares `syncope`
+           in 7/4 and composes the alphabet [5, 8] where every four-four
+           syncope row composes [5, 8, 9]. The reason is in FIGURES' own helper:
+           metrical strength is `S(i, N) = i*4 % N === 0 ? 0 : i*8 % N === 0 ? 1
+           : 2`, and at N = 28 the two tests COINCIDE — `i*8 % 28 === 0` means
+           `2i % 7 === 0` means i is a multiple of 7, which is exactly where
+           `i*4 % 28 === 0` already fired. So the middle tier, the eighth-and
+           that takes the 9, is unreachable in any meter whose step count is not
+           a multiple of 8. The figure still does its job — the off-beat takes 8
+           where the beat takes 5, which is what `syncope` MEANS — and the box
+           is not going to be told the record is wrong because the helper was
+           written for sixteen steps. Named here rather than papered over, and
+           left for whoever owns `genres-tables.js` to decide whether S should
+           read the meter's own pulse instead of a fixed eighth. */
+        const frac = /^\d+\/\d+$/.test(GENRES[gk].meter || "");
+        assert.ok(m.vel.length >= (frac ? 2 : 3), gk + " declares `" + GENRES[gk].dyn +
+          "` and its alphabet is " + JSON.stringify(m.vel));
+        assert.ok(m.acc > 0, gk + " declares `" + GENRES[gk].dyn + "` and accents nothing");
+      }
+      said.push(gk + " " + GENRES[gk].dyn + " " + JSON.stringify(m.vel) + "/" + m.acc);
+    }
+    console.log("       " + said.join(" · "));
+  });
+
+  /* ...AND THE TWO FRACTIONAL METERS ARRIVE. kernel.js `meterRow` has read
+     `n/d` since the any-meter round of 2026-09-05 (Paul: *"I should be able to
+     set any tempo at all like 21/17 you should let me choose anything"*) and
+     NO ROW HAD EVER WRITTEN ONE — the two words `three` and `six` were the
+     whole catalogue vocabulary. `studioprog` says "7/4" for Money's bar and
+     `progmetal` says "7/8" for Justice's riffs, so the step law is now a fact
+     about the table and not only about the hand: a step is the denominator's
+     beat halved as far as fits inside a sixteenth, so 7/4 is 28 steps and 7/8
+     is 14, and this reads it off the rendered document. */
+  ok("G17c the round's two fractional meters reach the compiled record", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const K2 = require(R + "/nukernel/kernel.js");
+    const want = { studioprog: ["7/4", 28], progmetal: ["7/8", 14] };
+    const say = [];
+    for (const gk of Object.keys(want)) {
+      const [sig, steps] = want[gk];
+      assert.strictEqual(GENRES[gk].meter, sig, gk + " no longer says " + sig);
+      assert.strictEqual(K2.metOf({ meter: sig }).steps, steps,
+        sig + " is not " + steps + " steps");
+      const d = Doc.normalize(P2.genreToDocument(gk, 1));
+      const g = Doc.toGenre(d, 0, GENRES);
+      assert.strictEqual(K2.metOf(g).steps, steps,
+        gk + " compiles at " + K2.metOf(g).steps + " steps, not " + steps);
+      for (const lane of Object.keys(GENRES[gk].kit || {}))
+        assert.strictEqual(GENRES[gk].kit[lane].length, steps,
+          gk + " kit lane " + lane + " is " + GENRES[gk].kit[lane].length +
+          " long in a " + steps + "-step bar");
+      say.push(gk + " " + sig + " = " + steps + " steps");
+    }
+    // and nobody ELSE in the table states a fraction, which is what makes
+    // these two the first: the census is printed so the next round can see it
+    // move rather than rediscover it.
+    const frac = Object.keys(GENRES).filter((k) => /^\d+\/\d+$/.test(GENRES[k].meter || ""));
+    console.log("       " + say.join(" · ") + " · " + frac.length +
+                " fractional-meter rows in " + Object.keys(GENRES).length +
+                ": " + frac.join(" "));
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

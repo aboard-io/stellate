@@ -1,0 +1,230 @@
+{
+  "note": "THE BAND ON THE SLEEVE — Minneapolis 1991. Prince and the New Power\nGeneration, Diamonds and Pearls, Paisley Park, 1 October 1991 — the first\nPrince record credited to a named band beside him, and this row is that\ncredit.\n\nTHE ROW IS THE BAND, FIELD BY FIELD. `brass_section` is seated FIRST, which\nneither Minneapolis row before it does. `bassInstr: \"finger_bass\"` is a live\nplayer where `minneapolissound` (Minneapolis 1982) has `bass_lead`, a\nsynthesiser, and `arenafunk` (Minneapolis 1984) has `picked_bass`. `drumkit:\n\"room\"` with `swing: 0.22` is a drummer in a room rather than 1982's\n`electronic` or 1984's `power`. Nine people, said in the only vocabulary the\nrow has.\n\nIT DIFFERS FROM `newjackswing` (New York 1987, its second declared parent at\n0.25) IN EXACTLY ONE WAY THAT MATTERS: that row is an SP-1200 and this one\nis a band. Nothing else is in dispute — both take mixolydian, `harmony:\n\"cycle\"`, `artic: \"staccato\"`, a swing, and `PROGS.jack7`. What 1987 has is\n`drumkit: \"electronic\"`, `bassStyle: \"octaves\"` and a `polysynth` on the\nfirst chair; what 1991 has is a room kit, sixteenths under the fingers, and\nhorns.\n\nTHE PROG IS NAMED, NOT COPIED. `prog: PROGS.jack7` is the shared table's own\nnew-jack cycle — I7 IV7 I7 V7, the sevenths said out loud — referenced\nthrough the `$src` escape as GENRES.md §2 requires, so the three rows that\nplay it (`newjackswing`, `newjackswing2`, this one) name one fact rather\nthan owning three copies of it.\n\nMEASURED, THE MIDI CORPUS, 2026-09-07. The corpus holds this record's two\npoles and nothing between them: \"Cream\" reads 113, and \"Diamonds and Pearls\"\nreads 81, twice. `bpm: 104` sits between the record's rocker and its ballad,\nwhich is where an album row belongs — the same reasoning `arenafunk` uses\none row earlier for the same act.\n\nMEASURED, CHORDONOMICON, AND THE LABEL IS THIN. `new jack swing` returns 227\nsongs with a median year of 1993, four years downstream of this record, and\nits top four-chord windows are I IV I IV at 7 hits and I V vi IV at 6. That\nis a small sample and is said as one. What it does support is the shape\n`jack7` already holds — the I-IV shuttle with the dominant at the turn —\nwith sevenths on every chord that a roman label cannot record.\n\nTHE DYNAMIC FIGURE: `anacrusis`, and it is the reason this row is not\n`syncope`, which BOTH `newjackswing` and `minneapolissound` take. FIGURES\nsays it in one sentence: \"This is what a horn section plays and the reason a\nbig band chart is full of notes tied over the barline.\" The first chair here\nIS a horn section, playing `only(\"gate\", rotate(6))` — a stab rotated late\ninto the bar — so the figure and the part are the same claim made twice.\nSaid honestly: the declared `near`, `newjackswing2` (Charlotte 1991), takes\n`anacrusis` too. That is not a collision. There the pickup is a gospel choir\nat 74 bpm over a TR-808 with `artic: \"legato\"`; here it is horns at 104 over\na room kit with `maxHold: 2`.\n\nLINEAGE: `minneapolissound` (Minneapolis 1982) at 0.30 — the same hand, the\nsame town, the ninth year of the same project. `newjackswing` (New York\n1987) at 0.25 — the swung sixteenth and the seventh-chord cycle, arriving\nfrom somebody else's machine. `funk` (Cincinnati 1967) at 0.20 — the horn\nstab and the muted chank, the two things a band gives back that a sampler\ntook away. `gospel` (Chicago 1932) at 0.10 for the backing choir. Sum 0.85;\nthe residue 0.15 is the nine people: no parent above this row is a touring\nband.\n\nTHE FIT AND THE SIZE. r2 0.796, residue 0.153, under the catalogue median of\n0.165 — the machine and the declaration agree here, which they do not on\n`arenafunk`. At seed 1 the record renders 3,674 events over 68 bars, the\nsecond-largest of the eighteen behind `avantfunk`'s 3,978, and carries 176\naccents where `deadpanglam`, `arenafunk` and `artpunk` each carry 154. A big\nband chart is a lot of notes; that is what the number is.",
+  "label": "Minneapolis 1991",
+  "near": "newjackswing2",
+  "plan": "song",
+  "bpm": 104,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "minneapolissound": 0.3,
+    "newjackswing": 0.25,
+    "funk": 0.2,
+    "gospel": 0.1
+  },
+  "instr": [
+    "brass_section",
+    "clean_guitar",
+    "solo_vox"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "chord"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "riff",
+    "lead"
+  ],
+  "prog": {
+    "$src": "PROGS.jack7"
+  },
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "swing": 0.22,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.4,
+    "atk": 0.004,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the horns, the stab, pushing into the bar",
+    "the guitar chank, sixteenths, muted",
+    "the voice, the hook"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [only(\"gate\", rotate(6))]\n                    : v === 1 ? [keep(2, 6, 10, 14)]\n                    : [[], [fill(1)], [rotate(4)], [drop(2)]][s % 4])"
+  },
+  "dyn": "anacrusis",
+  "family": "groove"
+}

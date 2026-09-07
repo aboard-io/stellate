@@ -1313,8 +1313,22 @@ ok("T3d provenance survives the door, a rename and a clear", () => {
        DERIVED from the catalogue (`VOICEROWS`), not typed, so a row that gains
        a `throat` closure tomorrow leaves this gate and joins that one without
        an edit here. */
+    /* ...AND NEITHER ARE THE ROWS THE BASE HAS NEVER HEARD OF (2026-09-07, the
+       eighteen-row catalogue round). This gate renders BOTH sides, so a row
+       that exists only in this tree is not a difference — it is
+       `B.P.genreToDocument("boogierock", 1)` throwing "no anchor" in a tree
+       with no such row. That is the lesson T2's own BASEHAS comment wrote down
+       for the three starting points ("do not ask the base a question the base
+       cannot answer"), and it is the same answer here: the intersection, said
+       out loud on the artifact so a green T4j can never quietly mean a T4j
+       that compared nothing. A new row is held instead by T4o's clauses 2 and
+       3 if it declares a throat, and by document G16/G17 either way. */
     const stride = Math.max(1, Math.round(ANCHORS.length / 45));
-    const pool = ANCHORS.filter((gk) => !VOICEROWS.includes(gk));
+    const newHere = ANCHORS.filter((gk) => !B.GENRES[gk]);
+    if (newHere.length)
+      console.log("       (T4j skips " + newHere.length + " row(s) the base does not have: " +
+                  newHere.join(" ") + ")");
+    const pool = ANCHORS.filter((gk) => !VOICEROWS.includes(gk) && !!B.GENRES[gk]);
     const sample = FULL ? pool : pool.filter((_, i) => i % stride === 0);
     const moved = [], stillFolded = [], notOctave = [];
     let chairs = 0, rewritten = 0;
@@ -1545,9 +1559,30 @@ const T4O_PIN = {
     };
     assert.ok(VOICEROWS.length >= 15,
       "the catalogue lost its per-chair throats: " + VOICEROWS.length + " rows");
+    /* A ROW YOUNGER THAN THE PIN IS NOT PINNED, AND THAT IS NOT A HOLE
+       (2026-09-07, the eighteen-row catalogue round). `VOICEROWS` is DERIVED
+       from the catalogue — which is the right design and the comment above
+       says why — so a round that adds a row with a `throat` closure adds it to
+       this walk, where two of the four claims cannot answer: clause 1 compares
+       against `T4O_PIN`, a table written before the row existed, and clause 4
+       asks the BASE, a tree with no such row (it throws "no anchor", which is
+       not a difference). T2's BASEHAS comment settled the general case for the
+       three starting points: do not ask the base a question the base cannot
+       answer, take the INTERSECTION, and print what could not be compared.
+       Clauses 2 and 3 are NOT base-aware and are asked of every voiced row
+       including the new ones — the row's own word must still be the throat the
+       seat sings, and the line must still be written inside that throat's
+       compass — so a new row is measured here from its first day, and only the
+       two comparisons against a past that has not got it are skipped. */
+    const unpinned = B ? VOICEROWS.filter((gk) => !B.GENRES[gk]) : [];
+    if (unpinned.length)
+      console.log("       (clauses 1 and 4 skip " + unpinned.length +
+                  " row(s) younger than the pin: " + unpinned.join(" ") +
+                  " — clauses 2 and 3 still hold them)");
     const wrong = [], folded = [], stood = [];
     for (const gk of VOICEROWS) {
       let movedHere = 0;
+      const pinned = !unpinned.includes(gk);
       for (const s of SEEDS) {
         const md = D.normalize(P.genreToDocument(gk, s));
         const lines = md.voices.filter((v) => v.kind === "line");
@@ -1557,7 +1592,7 @@ const T4O_PIN = {
         const got = lines.map((c, i) => ws[i] ? c.name + ":" + ws[i] + ":" + c.cast.reg : null)
                          .filter(Boolean).join(" ");
         const want = T4O_PIN[gk + "/" + s];
-        if (got !== want) wrong.push(gk + "/" + s + "\n         got  " + got +
+        if (pinned && got !== want) wrong.push(gk + "/" + s + "\n         got  " + got +
                                      "\n         want " + want);
         // 2 — the row's word is the one that won
         lines.forEach((c, i) => {
@@ -1575,7 +1610,7 @@ const T4O_PIN = {
           if (h !== 0) folded.push(gk + "/" + s + " " + c.name + " (" + h + ")");
         });
         // 4 — and it is DIFFERENT from the base
-        if (B) {
+        if (B && pinned) {
           const td = B.D.normalize(B.P.genreToDocument(gk, s));
           const was = baseThroats(gk, td);
           movedHere += ws.filter((w, i) => w && w !== was[i]).length;

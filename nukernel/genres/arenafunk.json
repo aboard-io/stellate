@@ -1,0 +1,375 @@
+{
+  "note": "ARENA FUNK — Minneapolis 1984. Prince and the Revolution, Purple Rain,\nWarner Bros., 25 June 1984 — cut across 1983 and 1984 between the Minnesota\nstudios and the First Avenue stage, and released as a film soundtrack.\n\nTHE ROW IS THE SCALE OF THE ROOM, which is why it is a second Minneapolis\nrow. `minneapolissound` (Minneapolis 1982) is 1999: one man, a Linn LM-1, a\nhome studio, `drumkit: \"electronic\"`, `dyn: \"syncope\"`, `fx: [\"flanger\"]`,\n`verb: 0.18`, and the guitar seated SECOND behind the Oberheim. This row is\nthe same man two years later playing a film soundtrack in an arena:\n`drumkit: \"power\"`, `dyn: \"swell\"`, `fx: [\"crunch\"]`, `verb: 0.45`, a crash\non both backbeats, a tom fill in its own `fill` lane, a `sus4` on the V, and\nTHE GUITAR SEATED FIRST.\n\nMEASURED, THE MIDI CORPUS, 2026-09-07, AND THE TEMPO IS THE INTERESTING\nARGUMENT, because the record has two poles and neither of them is the album.\nSeven independent transcriptions of \"When Doves Cry\" ALL READ 126. Three of\nthe title song read 58, 60 and 60 — a 12/8 ballad notated half-time. An\nalbum row is neither, so `bpm: 113` is THE MEDIAN OF ALL 176 PRINCE FILES in\nthe corpus: p25 90, MED 113, p75 135. `minneapolissound`'s own 120 was\nmeasured the same way over a 1982-only set of 50 files, so the two rows\ndiffer by seven bpm for a stated reason rather than by taste.\n\nTHE CHORD IS THE PARENT'S OWN SUSPENSION MOVED. `roots` is I I vi vi V V I I\nand the `prog` puts `q: \"sus4\"` on the first bar of the V.\n`minneapolissound` argues the device itself — \"the stab carries a sus4\nbecause the Minneapolis chord is a suspension that never quite resolves\" —\nand this row hangs that suspension on the dominant, where a gospel cadence\nputs it. No census supports the shape: Chordonomicon's `minneapolis sound`\nlabel (178 songs, 70% major) tops out at I IV I IV, which is 1999 and not\nthis record.\n\nDOOR 5, AND THE CASE PAUL NAMED AS WORKING. This row declares\n`crunch_guitar` and at seed 1 seats CRUNCH GUITARS ON THREE CHAIRS. Door 5\n(precompose.js, 2026-09-06) says an amplifier is never dealt, citing the\nprecedent exactly: \"minneapolissound declares crunch_guitar and stays\ncrunchy, which is the case Paul names as working\". Paul's words were \"it\nworks for Minneapolis for example because prince used that sound\". Two years\non he is still using it, so the door extends the precedent rather than\nundoing it.\n\nTHE DYNAMIC FIGURE: `swell`, and it widens the record. FIGURES says the\nswell \"gives a bar as many levels as it has notes\" and that \"Romantic, film\nand gospel all build the same way and none of them could say it\". The\ncompiled alphabet at seed 1 is [4,5,6,7,8,9], SIX LEVELS, tied with\n`gospelpop` for the widest of the eighteen rows added this round. The parent\ncannot match it: `syncope`'s `vel` is `[5, 9, 8][S(i, N)]`, three values by\nconstruction, so `minneapolissound` can never render more than three levels.\nA gospel build is a thing 1982 could not say.\n\nLINEAGE: `minneapolissound` (Minneapolis 1982) at 0.40 — the same hand, the\nsame town, the record this one is the sequel to. `gospel` (Chicago 1932) at\n0.25 — the organ, the suspended dominant, the choir the title song ends on,\nand gospel's own `dyn` is `swell`, quoted here. `rock` (London 1969) at 0.20\n— the power kit, the guitar first, the solo as the point. Sum 0.85; the\nresidue 0.15 is the arena: nothing above this row is a stadium record.\n\nTHE MACHINE DISAGREES AND THE WEIGHTS DO NOT MOVE. `tools/genealogy.js` fits\nthis row at minneapolissound 0.52 / rock 0.34 / gospel 0.14 against the\ndeclared 0.40 / 0.20 / 0.25, and returns r2 0.362 with residue 0.247, near\nthe catalogue's p90 of 0.260 and tied with `gospelpop` for the round's worst\nfit. The reason is written down rather than tuned away: the feature vector\nhas columns for tempo, kit density, bass motion and mode brightness and NO\nCOLUMN FOR A GOSPEL SCALE OR A GOSPEL VOICE. The 0.25 is a claim the fit\ncannot see, so the fit is reported and the weight stands.",
+  "label": "Minneapolis 1984",
+  "near": "minneapolissound",
+  "plan": "song",
+  "bpm": 113,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "minneapolissound": 0.4,
+    "gospel": 0.25,
+    "rock": 0.2
+  },
+  "instr": [
+    "crunch_guitar",
+    "polysynth",
+    "solo_vox"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    4,
+    4,
+    0,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 4,
+      "q": "sus4"
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      6,
+      0
+    ]
+  },
+  "fill": {
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.6,
+    "atk": 0.006,
+    "rel": 1.2,
+    "gain": 0.3,
+    "verb": 0.45
+  },
+  "fx": [
+    "crunch"
+  ],
+  "words": [
+    "the guitar, up front, the solo as the point",
+    "the Oberheim, holding the gospel chord",
+    "the voice, over the top of it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(1)], [rotate(2)], [fill(2)]][s % 4]\n                    : v === 1 ? [keep(0, 8)]\n                    : [transpose(5), drop(2)])"
+  },
+  "dyn": "swell",
+  "family": "band"
+}

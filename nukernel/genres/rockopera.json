@@ -1,0 +1,315 @@
+{
+  "note": "ROCK OPERA — Provence 1979. Pink Floyd, The Wall: Super Bear Studios at\nBerre-les-Alpes and Studio Miraval at Correns, April to November 1979,\nHarvest in Britain and Columbia in America, released the 30th of November\n1979. A double record that tells one story, and the last thing this band\ndid as a band.\n\nTHE LABEL IS PROVENCE AND IT IS LITERALLY TRUE, which is the only reason it\nis allowed. The band cut this record in the south of France as TAX EXILES —\nthat is why it was made there and it is a fact about the record, not a\ndetail. It is also forced: `atlas.gate.js` G6b holds (place, year) to being\na KEY, `London 1979` is `newwave`'s and `Los Angeles 1979` is\n`spaceopera`'s, so the two obvious dots were both taken and the row had to\nfind its NEXT TRUE FACT. It found a room instead of a city, which is this\ncatalogue's stated preference: a true room beats a false city every time,\nand nothing here pretends the band is French. Nothing pretends it is a\nFrench record. It says where the tape was rolling. AND THE DOT WAS ALREADY\nDRAWN — the map has carried Provence since the medieval round, where it\nholds `troubadour` (Provence 1210), so one place now carries two records\nseven hundred and sixty-nine years apart, both of them somebody singing a\nlong story to a crowd that already knows it.\n\nCITE THE TEMPO, BECAUSE IT IS THE BEST NUMBER IN THE FLOYD GROUP. Thirteen\ntranscriptions of \"Another Brick in the Wall\" are in the MIDI trove and the\nspread is 102, 104, 106, 109, 109, 109, 109, 109, 109, 109, 109, 120, 120.\nEIGHT OF THIRTEEN READ EXACTLY 109, which is this row's `bpm`. That is the\nsame species of evidence `minneapolissound` took for its 120 — five\nindependent transcriptions of \"1999\" reading 119, 120, 120, 120, 120 — and\nit is the strongest kind this corpus produces: not a median of a band, a\nconsensus of strangers on one song. The two 120s are the sequencer default\nand the three low readings are the same groove counted lazily.\n\nTHE ROW IS THE ARENA NARRATIVE, AND THE CAST SAYS SO. `drumkit: \"power\"`\nwith a written `fill` that walks the toms — `t` at steps 8 and 10, `m` at\n12, `l` at 14 — which is the gated tom fall this record is built out of.\n`ahh_choir` is SEATED AS A CHAIR rather than left to a guest draw, because\nthe choir is what a listener names first about this record and a chair is\nhow the table says a thing is not optional. `overdrive_guitar` is declared\nFIRST, so the solo is the point; Door 5's rule that \"an amplifier is never\ndealt\" then hands every guest the host's own first-named guitar, and the\nmeasured seed-1 record seats OVERDRIVE ON THREE CHAIRS AND NO CLEAN ONE.\nThat is the correct outcome for a record with no acoustic guitar audible\nanywhere on it.\n\nAND `drops: true`, WHICH THREE ROWS IN 500 DECLARE — `balearic`, `grunge`\nand this one. It cuts a `breakdown` section at `lvl: hush` into the form,\nand the compiled record comes out at TWELVE SECTIONS, the most of the\neighteen new rows (the next is eleven, and `studioprog` and `bleakprog`\nhave eight). `drops` is why. A record whose whole subject is a wall going\nup brick by brick is a record made of things stopping, and the form field\nis where that lives rather than in the prose.\n\nTHE DYNAMIC FIGURE: `backbeat`, argued plainly rather than reached for.\nThere is a temptation on a Floyd row to take something atmospheric, and it\nwould be wrong here: the biggest hit on this record is a disco-adjacent\ngroove with a New York session feel and a school choir on top, and what\nthat groove has is two and four. FIGURES puts it exactly — \"a soul, r&b or\nrock line does not lean on the barline, it leans where the snare is\" —\nand the measurement agrees: 246 accents seated at STEPS 4 AND 20, which are\nthe second and fourth quarters of the two bars. `disco` (New York 1977),\ndeclared here as a parent, takes the same figure, and this is one place\nwhere sharing a figure with a parent is the finding rather than a failure.\n\n`musicdrama` (Munich 1865) AT 0.10 IS THE EDGE WORTH A SENTENCE. A\nnarrative told across a whole work, with themes that recur and return\ntransformed, is Wagner's idea before it is anybody's, and this record does\nit literally — the same melodies come back four sides later with different\nwords. The catalogue had exactly one row declaring `musicdrama` before now\n(`impressionism`) and no rock row at all. Ten per cent is a small weight\nfor a large idea, and it is small on purpose: this record borrows the\nFORM and none of the harmony, none of the orchestra and none of the voices.\n\nLINEAGE: `bleakprog` 0.30 — the 1976 row, the same band three years on,\nand the minor cycles and the bleakness carried straight over. `disco` 0.15\n— the groove, measured above. `progrock` 0.15 (Isle of Wight 1970) — the\nside-long form. `gospel` 0.10 (Chicago 1932) — the choir, which is where a\nmassed `ahh_choir` behind a rock band comes from whatever the band thinks.\n`musicdrama` 0.10 — above. Sum 0.80; the residue 0.20 is the staging: the\ninflatables, the film and the actual wall, none of which is music and all\nof which is why this record sounds the way it does. Compiled: 39 bars, 12\nsections, 1,372 events, alphabet [5,6,7,8]. Fit r2 0.793, residue 0.140.\n\nWHAT IT HAS THAT `spacerock` DOES NOT: a story. Concretely — `plan:\n\"song\"` against an arc, `drops`, a written tom fill, a power kit, a choir\nand a lead voice, 109 against 70, and a backbeat where spacerock swells.\nThe Floyd rows in this table now run 1967, 1973, 1973, 1976, 1979 and 1987,\nand this is the one where the band stopped making sides and started making\nscenes.",
+  "label": "Provence 1979",
+  "near": "progrock",
+  "plan": "song",
+  "bpm": 109,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "bleakprog": 0.3,
+    "disco": 0.15,
+    "progrock": 0.15,
+    "gospel": 0.1,
+    "musicdrama": 0.1
+  },
+  "instr": [
+    "overdrive_guitar",
+    "ahh_choir",
+    "solo_vox"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "power",
+  "drops": true,
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 4
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "chord"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      6,
+      0
+    ]
+  },
+  "fill": {
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.4,
+    "atk": 0.008,
+    "rel": 1.4,
+    "gain": 0.28,
+    "verb": 0.5
+  },
+  "fx": [
+    "echo"
+  ],
+  "words": [
+    "the guitar solo, which is the point of the record",
+    "the choir, holding the chord, the size of the room",
+    "the voice, telling the story"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(1)], [fill(2)], [fill(2), rotate(2)]][s % 4]\n                    : v === 1 ? [keep(0, 8)]\n                    : [drop(2)])"
+  },
+  "dyn": "backbeat",
+  "family": "band"
+}

@@ -1,0 +1,223 @@
+{
+  "note": "MOUNTAIN COUNTRY — Nashville 1971. Dolly Parton, Coat of Many Colors, cut at\nRCA Studio B on Music Row and released by RCA Victor on the 4th of October\n1971.\n\nPaul wrote \"Don't forget Dolly Parton\", which is an instruction about CARE and\nnot about count: one row, argued, rather than three named after a person. Said\nonce, and the rest of this note is the earning of it.\n\nTHE YEAR IS ARGUED. The choice was the 1971-74 mountain-country writer against\nthe 1977-80 crossover, and the crossover is nearly covered already —\n`countrypop` (Nashville 1945), `nashvillesound` (Nashville 1957) and `disco`\n(New York 1977) between them hold most of what \"Here You Come Again\" and \"9 to\n5\" are. Nothing at all holds the writer.\n\nAND THE CORPUS MAKES THE CHOICE CONCRETE BY BEING EMPTY. It holds no Dolly\nParton: the thirteen \"dolly\" hits are Hello, Dolly! and Faure's Dolly Suite.\nThere is exactly ONE file, `bulk/J/JOLENE.MID`, and it reads 111 bpm, 4/4 and\nMINOR. That is the OTHER record, and a row built on it would have been a\ndifferent row — a minor two-chord vamp — which is itself the sharpest argument\nfor the year chosen. So `bpm: 100` is a judgement about Coat of Many Colors and\nis said as one; no transcription of it is in the corpus.\n\nTHE ROW IS THE ALPHABET. `scale: SCALES.majpent` under `mode: MODES.ionian`,\nwhere `countrypop` and `nashvillesound` are both plain ionian — because a\nmountain tune has no fourth and no seventh in it, and the pentatonic is the one\nfield that separates this row from every other Nashville row in the table. It\nis `appalachia`'s alphabet (Hot Springs 1916, majpent, `nobass`, one voice)\nbrought into a studio with a rhythm section, which is what the record is.\n\nAND THE CAST. `instr: [\"steel_string_guitar\", \"dulcimer\", \"solo_vox\"]` — FIVE\nROWS OF 500 SEAT A DULCIMER and the other four are `estampie`, `lautari`,\n`sizhu` and `taraf`, so this is the only American one. `drumkit: \"brush\"` and\n`bassStyle: \"fifths\"` are the Studio B rhythm section kept quiet behind a\nstory; `swing: 0.1` is the lilt a country record has and a folk record does\nnot. And a `throat` closure puts a SOPRANO on the singing chair — seven rows in\n500 name a soprano at all, and five of the other six are church choirs.\n\nCHORDONOMICON. `country` is the largest label in the mirror by an order of\nmagnitude: 53,352 songs, 45,539 of them major, with I IV I IV at 3,404 hits and\nI IV I V at 2,400 ahead of everything else. This row's `roots [0,0,3,0,4,4,0,0]`\nis I I IV I V V I I — that census with the fourth-bar turn a narrative verse\nneeds, and two bars of tonic before anything moves, because the first thing\nthis song does is describe a box of rags.\n\nTHE DYNAMIC FIGURE: `dyn: \"agogic\"` — \"leans on its last note\", and FIGURES\ncalls it \"the same shape a ballad's line and a romantic melody end with\". Every\nline of that title song arrives on its last word and holds it there.\n`appalachia`, the largest parent, takes `agogic` too, so the figure comes down\nwith the alphabet and is inheritance rather than invention. The contrast that\nmatters is `nashvillesound`'s `anacrusis`, which is a session band pushing into\nthe next bar: this row's weight is at the END of the sentence because the\nsentence is a story and a story has a last word.\n\nLINEAGE: `appalachia` (Hot Springs 1916) at 0.25 — the pentatonic, the high\nlonesome voice, the ballad that is one long verse. `nashvillesound` (Nashville\n1957) at 0.20 — the studio, the brushes, the Music Row bench this record was\nmade on. `countrypop` (Nashville 1945) at 0.15 — the songwriting trade.\n`gospel` (Chicago 1932) at 0.15 — the church this singer learned in. Sum 0.75;\nthe residue 0.25 is the writer, the largest invention share of the four rows\nwritten this pass and meant to be: what the parents do not explain is that\nsomebody wrote the song.\n\nTHE FIT: r2 0.763, residue 0.143, under the catalogue median of 0.165 — the\ntool and the declared weights do not argue about this row.",
+  "label": "Nashville 1971",
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 100,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "appalachia": 0.25,
+    "nashvillesound": 0.2,
+    "countrypop": 0.15,
+    "gospel": 0.15
+  },
+  "instr": [
+    "steel_string_guitar",
+    "dulcimer",
+    "solo_vox"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "brush",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "fifths",
+  "swing": 0.1,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      6,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      4,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 1800,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.24,
+    "verb": 0.28
+  },
+  "throat": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "soprano"
+      }
+    ],
+    "else": "alto"
+  },
+  "words": [
+    "the guitar, thumb and finger, the same figure all song",
+    "the dulcimer, the drone and the answer",
+    "the voice, high, the story arriving at its last word"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0, 4, 8, 12)]\n                    : v === 1 ? (s % 2 ? [excerpt(8, 8)] : [keep(0, 8)])\n                    : [[], [fill(1)], [], [drop(2)]][s % 4])"
+  },
+  "dyn": "agogic",
+  "family": "roots"
+}

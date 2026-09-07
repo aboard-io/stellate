@@ -1,0 +1,186 @@
+{
+  "note": "SPEED METAL — Huntington Park 1986. Slayer's Reign in Blood, cut at Hit City\nWest in Los Angeles with Rick Rubin producing and released by Def Jam on the\n7th of October 1986: ten songs, twenty-nine minutes, and a tempo no other row\nin this table plays.\n\nTHE LABEL IS HUNTINGTON PARK, AND THAT IS A RULE RATHER THAN A FLOURISH.\n`atlas.gate.js` G6b holds (place, year) to being a KEY and `Los Angeles 1986`\nis `smoothjazz`'s. The softrock/Lagos lesson of 2026-09-06 says a row whose\ntrue city and year collide looks for the NEXT TRUE FACT and not the next\ntrue-ISH one, so this does not become an approximate Los Angeles: Huntington\nPark is where the band formed in 1981, a Gateway city nine kilometres\nsouth-east of downtown, declared in `atlas.js` WITHIN Los Angeles.\n\nTHE ROW IS THE THREE THINGS `thrash` (San Francisco 1983) IS NOT.\n\nFIRST, THE SPEED — AND THE CORPUS COULD NOT CORROBORATE IT. `bpm: 208` is the\nfastest of the 500 rows by a distance: `skatepunk` 170, this round's own\n`fmpop` 169, `poppunk` 167, `thrash` 160, `deathmetal` 158. MEASURED,\n2026-09-07: a search of the 120,000-file MIDI corpus for \"slayer\" returns\nsixteen files and every one is Buffy the Vampire Slayer, the Slayers anime or\nNightwish's \"The Kinslayer\". There is no Slayer in the corpus. The number is a\njudgement about the record and is said as one — 208 is where sixteenths stop\nbeing played and start being poured.\n\nSECOND, THE ALPHABET. `mode: MODES.locrian` over `scale: SCALES.dimhw`, and\nthe half-whole diminished is taken by THIS ROW AND NO OTHER in 500 (measured\n2026-09-07). A Hanneman riff is built on the tritone, and the half-whole is the\nnamed alphabet holding both the tritone and the minor-major third ambiguity a\nchromatic riff walks through. `thrash` is phrygian over `SCALES.bluesx`;\n`deathmetal` is phrygian over locrian's own intervals written out. Three\nreadings of one darkness, and only this one is symmetrical. MEASURED,\nCHORDONOMICON, honestly: the `speed metal` label is 940 songs at median year\n2002 — sixteen years downstream — 48% MAJOR, topped by `i VI VII i` (18) and\n`i VII i VII` (16). That is a modal minor loop, which this row is more extreme\nthan rather than different from.\n\nTHIRD, AND IT IS THE ARGUMENT OF THE WHOLE ROW: `dyn: \"flat\"`. Paul's brief\nsaid it in as many words — Slayer is not `backbeat` — and every other metal row\ntakes `backbeat`: `thrash`, `nwobhm`, `heavymetal`, `deathmetal`, `blackmetal`,\n`doom`, `sludge`, `powermetal`, `metalcore`, `glammetal`, `gothicmetal`,\n`industrialmetal`, `numetal`, `symphonicmetal` — fourteen, measured 2026-09-07,\nand the two that do not are this row and `progmetal`. ARGUE IT HONESTLY,\nBECAUSE THE FIGURE WAS NOT WRITTEN FOR THIS: `genres-tables.js FIGURES`\nreserves `flat` for \"the machine wing that was never frozen\". Twenty-four rows\ntake it and twenty-three are sequencers or `gamelan`, whose bronze argument is\nits own; this is the first `family: \"band\"` row on the list. THE CLAIM: a\ntremolo-picked riff at 208 is a machine made of arms. A sixteenth at 208 lasts\n72 milliseconds and nothing a wrist does inside 72 milliseconds is a lean.\nEverything this music says about weight is in `kitVel`, where an 808 keeps its\naccent switch — Lombardo's near-blast is the kick on all four quarters at 9,\nthe snare on every offbeat eighth at 9, the ride on every eighth at 7 — and the\ncompiled record proves the rest: at seed 1 the line renders `vel [6]` with ZERO\naccents. It is the `electro` argument played by people.\n\nREFUSES THE COPYIST (docs/THEORY.md §2). `copyist: { refuse: \"all\" }`, on the\ndriven-guitar precedent: the second chair is the same notes an octave down\nunder a high-gain amp, and `kernel.js chair.fifths` gives the engine's own\nreason — \"a power chord is an amp fact made pitch ... thirds intermodulate\nunder distortion and fifths do not\". Fifteen driven-guitar rows refused the\nwhole pass on 2026-09-06; with this row and `progmetal` it is seventeen.\n\nLINEAGE: `thrash` (San Francisco 1983) at 0.45 — the idiom entire, the same\ncoast three years older. `hardcore` (Washington 1980) at 0.25 — the tempo, and\nwhy the songs are two minutes long; this record is punk's arithmetic, not\nmetal's. `nwobhm` (London 1980) at 0.10 — the songbook two removes back. Sum\n0.80; the residue 0.20 is the speed knob itself and Rubin's dry, close mix.\n\nTHE FIT IS THE BEST OF THE EIGHTEEN NEW ROWS: r2 0.927, residue 0.104, against\na catalogue p10 of 0.096 and a median of 0.165. `nearest()` puts `thrash` 0.544\naway, the closest row in 500. The tool fits thrash 0.92 / nwobhm 0.08 /\nhardcore 0.00 against the declared 0.45 / 0.25 / 0.10 — hardcore's share is\nreal and the vector cannot see it, because hardcore's tempo is already inside\nthrash. What the number says is that this record IS its parents plus a speed\nknob, and the row exists because the knob is audible.",
+  "copyist": {
+    "refuse": "all",
+    "why": "the second chair is declared \"the second guitar, tremolo, the same notes an octave down\" and under a high-gain amp that doubling is the sound rather than a voicing."
+  },
+  "label": "Huntington Park 1986",
+  "near": "thrash",
+  "plan": "song",
+  "bpm": 208,
+  "bars": 8,
+  "voices": 2,
+  "parents": {
+    "thrash": 0.45,
+    "hardcore": 0.25,
+    "nwobhm": 0.1
+  },
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "mode": {
+    "$src": "MODES.locrian"
+  },
+  "scale": {
+    "$src": "SCALES.dimhw"
+  },
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0
+    ],
+    "r": [
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3000,
+    "q": 1.2,
+    "atk": 0.002,
+    "rel": 0.12,
+    "gain": 0.28,
+    "verb": 0.12
+  },
+  "fx": [
+    "crunch"
+  ],
+  "words": [
+    "the riff, tremolo, the tritone at the turn",
+    "the second guitar, tremolo, the same notes an octave down"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[fill(2)], [fill(2), transpose(6)], [fill(2), rotate(4)], [fill(2), transpose(1)]][s % 4]\n                    : [fill(2), transpose(-12)])"
+  },
+  "dyn": "flat",
+  "family": "band"
+}

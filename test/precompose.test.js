@@ -152,7 +152,18 @@ function sectionEvents(doc, i) {
     if (!Number.isFinite(T.bpm) || T.bpm < NF.BPM_LO || T.bpm > NF.BPM_HI)
       say("bpm " + T.bpm + " (fence " + NF.BPM_LO + ".." + NF.BPM_HI + ")");
     if (!Number.isFinite(T.rate) || T.rate <= 0) say("rate " + T.rate);
-    if (T.meter != null && !NF.METERLABEL[T.meter]) say("meter " + T.meter);
+    /* THE METER VOCABULARY IS NOT A LABEL MAP ANY MORE (2026-09-07). This
+       asked `NF.METERLABEL`, which names TWO WORDS — "three" and "six" — and
+       fields.js's own comment beside it says exactly what that costs: "kernel.js
+       `meterRow` counts ANY n/d, so the vocabulary is no longer a closed set
+       and there is nothing left to enumerate… A signature labels itself." The
+       same stale reader put `test/rules.test.js` R2 red on sixteen offers with
+       no owner in the any-meter round of 2026-09-05; this is the third copy of
+       it, found the first day a ROW wrote a fraction (`studioprog` "7/4",
+       `progmetal` "7/8"). The one owner is kernel.js: a word METERS holds, or
+       a signature `okMeter` accepts, and nothing else. */
+    if (T.meter != null && !NF.METERLABEL[T.meter] && !K.okMeter(T.meter))
+      say("meter " + T.meter);
     if (T.swing != null && !NF.SWINGS[T.swing]) say("swing " + T.swing);
     if (T.groove != null && !NF.GROOVELABEL[T.groove]) say("groove " + T.groove);
 
@@ -419,7 +430,15 @@ function sectionEvents(doc, i) {
        per record — so this gate still asserts the composed set is uniform (a
        reading that dealt two lengths by accident is still a bug) and says so as
        its own line rather than as the law it used to be. */
-    const steps = K.stepsIn({ meter: NF.METERLABEL[T.meter] ? K.METERS[T.meter] : null });
+    /* ...AND THE BAR IS COUNTED IN THE RECORD'S OWN STEPS, THROUGH THE ONE
+       OWNER (2026-09-07). This resolved the meter through `NF.METERLABEL` too,
+       so a fractional signature fell to null and the cell was measured against
+       SIXTEEN: `studioprog`'s 7/4 bar is 28 steps and `progmetal`'s 7/8 is 14,
+       and both were reported as "not a multiple of 16" — a gate failing on a
+       record that is exactly right. `K.stepsIn` is `metOf` and `metOf` reads
+       the word, then the fraction, then home, which is the same walk every
+       renderer makes. */
+    const steps = K.stepsIn({ meter: T.meter });
     const lens = new Set(names.filter((n) => doc.material.cells[n].kind !== "drum")
                               .map((n) => doc.material.cells[n].deg.length));
     if (lens.size !== 1)
@@ -950,8 +969,18 @@ function sectionEvents(doc, i) {
      and they are NOT anchors to the atlas, which is the distinction `EXCLUDE`
      draws and which G0 has never been about. The literal stays a literal for
      the reason :649 gives. */
-  ok("G0 the catalog is 482 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 482,
+  /* 482 -> 500, 2026-09-07: eighteen rows for Paul's two lists — the Lou
+     Reed / Purple Rain / New Power Generation / Television / Talking Heads /
+     Slayer / Justice / Steve Miller / Traffic / a-ha / Winwood / Whitney /
+     Dolly Parton list, and "We definitely need all the Pink Floyd eras too."
+     FOUR ROWS PAUL ASKED FOR WERE REFUSED BECAUSE THE TABLE ALREADY HELD
+     THEM, which is why this is 500 and not 504: the Velvet Underground is
+     `protopunk` (New York 1966), Kill 'Em All is `thrash` (San Francisco
+     1983), the Meddle-era Floyd is `spacerock` (London 1973) and the Whitney
+     ballad is `powerballad` (Los Angeles 1991), each said in its own row's
+     first paragraph. The literal stays a literal for the reason :649 gives. */
+  ok("G0 the catalog is 500 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 500,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -1099,7 +1128,13 @@ function sectionEvents(doc, i) {
       // steps from it — so the mirror here must too, or the gate compares
       // a twelve-step record against a sixteen-step re-derivation of
       // itself and fails on the meter, not on a drift.
-      const met = G.meter ? K.METERS[G.meter] : null;
+      /* ...AND THE THIRD COPY OF THE SAME STALE READER (2026-09-07). This
+         said `K.METERS[G.meter]`, and `METERS` is the two WORDS — so the day a
+         row wrote "7/4" the mirror re-derived a 28-step record at sixteen
+         steps and reported a drift that was its own. `metOf` is the resolver
+         every renderer uses (a word, then a fraction, then home) and it is
+         what this mirror has to use to be a mirror. */
+      const met = G.meter ? K.metOf({ meter: G.meter }) : null;
       const row = met ? { ...row0, met } : row0;
       const doc1 = docs.get(gk + "/1");
       const cells = (doc1.material || {}).cells || {};

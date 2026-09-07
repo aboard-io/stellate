@@ -1,0 +1,268 @@
+{
+  "note": "FM POP — Oslo 1985. a-ha's Hunting High and Low, cut at Eel Pie and RAK in\nLondon and released by Warner Bros. on the 1st of June 1985.\n\nTHE ROW IS THE MACHINE, and that is the whole reason it is not `synthpop`.\n`synthpop` is Basildon 1981 and `analogsynthpop` is Basildon 1980, and both are\nANALOG rows — a `cr78` under each, a saw stab over it, and on analogsynthpop a\n`synth` block naming the TB-303 by id. This row declares `synth: { dsp:\n\"dx7_alg5\", root: \"DX7\", preset: \"BELLS\", level: 0.85, lineOnly: true }`.\n\"BELLS\" is a real Yamaha cartridge patch, one of the 114 in\nengine/faust/data/dx7-presets.json, and naming it is what makes an FM bell tone\na fact about the render rather than a word in a comment. It fires:\ntest/precompose.test.js's throat census prints \"the record's own signature,\nhonoured on ... fmpop→dx7_alg5\". THREE ROWS OF 500 LOAD A DX7 AND UNTIL THIS\nROUND THERE WAS ONE — `vaporwave` (Portland 2011), playing E.PIANO 1 off a\nrecord slowed to half speed. This row and `fmsoul` are the other two.\n\nMEASURED, THE MIDI CORPUS. The readings for \"Take On Me\" pile up in one place:\nFOUR INDEPENDENT TRANSCRIPTIONS READ 169, out of a spread across two file piles\nof 148 / 155 / 155 / 164 / 165 / 169 / 169 / 169 / 169 / 175 / 175 / 175 / 175.\nSo `bpm: 169` is not a taste, and it makes this THE FASTEST POP ROW IN THE\nTABLE — past every dance record here, `trance` 138, `eurodance` 132, `hinrg`\n126, `synthpop` 118 — and the third-fastest of all 500 rows, behind only\n`speedmetal` 208 and `skatepunk` 170. That a 1985 pop single outruns the whole\ndance wing is written down rather than rounded toward the neighbours.\n\nTHE CHANGES NOBODY ELSE HOLDS. `roots [5,5,3,3,0,0,4,4]` is vi vi IV IV I I V\nV — two bars a chord, the minor start and the major lift. No neighbour has it:\n`synthduo` (London 1985) is [0,5,3,4], `softrock` [0,4,5,3], `synthpop`\n[0,5,2,6], `italodisco` [0,5,3,4,...]. Starting on the relative minor is the\none harmonic move separating this row from the four that share its machines.\n\nLINEAGE: `synthpop` (Basildon 1981) at 0.35 — the song form, the stab-and-lead\ncast, the machine under the record. `newwave` (London 1979) at 0.20 — the\nguitar still on this record and the three-minute single.\n`italodisco` (Milan 1982) at 0.15 — the speed and the sequenced eighths, where\na pop record learned to run this fast. `technopop` (Tokyo 1978) at 0.10 — the\nFM itself, Yamaha's instrument and Japan's decade. Sum 0.80; the residue 0.20\nis the singer — most of what people mean when they name the record.\n\nWHO SINGS: `tone.mouth: MOUTHS.falsetto`, one of nine rows in 500 — a\ncountertenor by construction, vib 0.12, air 0.42, the nearly-straight head\nvoice a moody record deliberately does not wobble, over `wave: \"sine\"` — the FM\ncarrier's own shape — with `maxHold: 2`, because at 169 nothing is held.\n\nTHE DYNAMIC FIGURE: `dyn: \"arch\"` — FIGURES calls it \"the sung line's own shape\nand the one every singing teacher draws in the air\", and this hook is an octave\nleap up and back down inside two bars, which is that figure drawn literally.\n`synthpop` TAKES `arch` TOO, conceded rather than hidden: the figure does not\nseparate these two rows. The cast and the machine do — a modelled DX7 line and\na sung falsetto here, a saw stab and no singer there.\n\n`guests: \"native\"` (door 3, SHIFT-5). Without it the machine rows of this round\nseated a SAMPLED chair on a counter-line, the exact fault door 3 was written\nfor.\n\nTHE COST, WRITTEN DOWN RATHER THAN LEFT TO BE FOUND — the `minneapolissound`\nprecedent, which put its own 41.70 in its note rather than leave it at the top\nof a list. The precompose census prices this record at 36.83 against the\nparent's advisory BUDGET of 40: the fourth-heaviest of 1,500 records, with 0 of\n1,500 over: a modelled DX7, a synth bass, a polysynth and a square lead is what\nthis record is. The fit does not argue with any of it: r2 0.764, residue 0.169,\na hair over the catalogue median of 0.165 for 428 children.",
+  "label": "Oslo 1985",
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 169,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "synthpop": 0.35,
+    "newwave": 0.2,
+    "italodisco": 0.15,
+    "technopop": 0.1
+  },
+  "instr": [
+    "polysynth",
+    "square_lead",
+    "solo_vox"
+  ],
+  "bassInstr": "synth_bass_1",
+  "drumkit": "electronic",
+  "guests": "native",
+  "synth": {
+    "dsp": "dx7_alg5",
+    "root": "DX7",
+    "preset": "BELLS",
+    "level": 0.85,
+    "lineOnly": true
+  },
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "chord"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "riff",
+    "lead"
+  ],
+  "roots": [
+    5,
+    5,
+    3,
+    3,
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sine",
+    "cut": 3200,
+    "q": 1,
+    "atk": 0.002,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "fx": [
+    "chorus"
+  ],
+  "words": [
+    "the pad, four bars a chord, under everything",
+    "the bell riff, sixteen steps, the same every bar",
+    "the voice, the octave leap and back down"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0)]\n                    : v === 1 ? [fill(1)]\n                    : [[], [transpose(12)], [], [transpose(12), drop(2)]][s % 4])"
+  },
+  "dyn": "arch",
+  "family": "studio"
+}

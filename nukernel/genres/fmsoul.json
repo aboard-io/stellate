@@ -1,0 +1,249 @@
+{
+  "note": "FM SOUL — New York 1988. Steve Winwood's Roll with It, Virgin, June 1988.\n\nTHE LABEL AND THE SOUND ARE TWO DIFFERENT RECORDS, and this paragraph is here\nso nobody has to discover that. The sound this row was asked for — a DX7 and a\nLinn under a blue-eyed soul singer — is 1986's Back in the High Life, cut at\nUnique Recording in New York. `New York 1986` is already `raprock`'s, and\natlas.gate.js G6b holds (place, year) to being a KEY, so this row could not\nhave it. The softrock lesson of 2026-09-06 is that a row then takes the NEXT\nTRUE FACT rather than the next true-ish one: Roll with It is the same bench,\nthe same two machines and the same idiom two years on, so the row is anchored\nthere and the divergence is written down.\n\nMEASURED — AND THE EVIDENCE BELONGS TO THE SIBLING. The corpus holds four Steve\nWinwood files. Two clean transcriptions of \"Higher Love\" read 99 and 101, and a\nsearch for \"roll with it\" returns only Oasis, so there is no transcription of\nthe anchor record at all. `bpm: 112` is a judgement about Roll with It — a\nshuffle running faster than Higher Love's hundred — and it is said as one\nrather than dressed up as a number.\n\nTHE MACHINE: `synth: { dsp: \"dx7_alg5\", root: \"DX7\", preset: \"E.PIANO 1\",\nlevel: 0.85, lineOnly: true }` — the same Yamaha cartridge patch `vaporwave`\n(Portland 2011) loads twenty-five years downstream, one row playing it at the\nspeed it was sold at and one off a slowed record. Three rows in 500 declare a\nDX7; two arrived this round.\n\nAGAINST ITS LARGEST PARENT. `blueeyedsoul` (Philadelphia 1976, 0.30) is an\n`electric_piano`, a `clean_guitar` and a `room` kit played by people. This row\nis the same music with the rhythm section replaced by two machines:\n`drumkit: \"electronic\"`, `bassInstr: \"synth_bass_1\"`, `bassStyle: \"octaves\"`,\na `brass_section` answering in the holes and `swing: 0.10` where a room kit\nwould shuffle harder. `mode: MODES.mixo` with `roots [0,6,3,3,0,6,3,4]` is I\nbVII IV IV I bVII IV V — the flat-seventh turn a singer with a Hammond past\nreaches for and a Philadelphia session would not have written.\n\nTHE FAMILY IS `studio` AND NOT `soul`, on `minneapolissound`'s own argument,\nwhich is worth quoting because it applies here word for word: soul's dynamics\nrow hands a record a session player's wrist (touch t 0.07, v 1.0), and this\nrecord's rhythm section is a drum machine; `studio`'s row (t 0.035, v 0.6) is a\nhand editing a machine, which is what happened at Unique Recording.\n\nTHE DYNAMIC FIGURE: `dyn: \"backbeat\"` — FIGURES' own claim is that a soul, r&b\nor rock line \"does not lean on the barline, it leans where the snare is\", and\nthe compiled proof is this row's: 258 accents at steps 12 and 4 (s12x56 s4x46),\nthe two and the four of every bar — more than any of this round's eighteen new\nrows but `avantfunk`'s 546. `blueeyedsoul` TAKES\n`backbeat` TOO, and that is conceded rather than hidden: the figure comes down\nthe lineage intact and what changed is who is playing it.\n\n`guests: \"native\"` (door 3), and on this row the door is measurable. Without it\nthe record seated a SAMPLED HARPSICHORD on a counter-line — the exact fault\ndoor 3 was written for. With it the guest arrives on the row's own DX7 through\n`signed()`.\n\nLINEAGE: `blueeyedsoul` (Philadelphia 1976) at 0.30 — the idiom entire, and the\nrow this one is a machine remake of. `detroitsoul` (Detroit 1965) at 0.15 — the\nsource the Philadelphia record was itself reading from, taken directly because\nthis singer had been reading it since the Spencer Davis Group. `synthpop`\n(Basildon 1981) at 0.15 — the machines, which are the whole difference. `aor`\n(Los Angeles 1982) at 0.15 — the studio craft and mixolydian polish of an\neighties album made to sound expensive. `gospel` (Chicago 1932) at 0.05, the\nsmallest share on the row and the honest size of it: the shout at the end of\nthe chorus, nothing structural. Sum 0.80; the residue 0.20 is the singer.\n\nTHE FIT: r2 0.773, residue 0.145, under the catalogue median of 0.165. The\ntool and the declared weights agree about this row.",
+  "label": "New York 1988",
+  "near": "blueeyedsoul",
+  "plan": "song",
+  "bpm": 112,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "blueeyedsoul": 0.3,
+    "detroitsoul": 0.15,
+    "synthpop": 0.15,
+    "aor": 0.15,
+    "gospel": 0.05
+  },
+  "instr": [
+    "polysynth",
+    "brass_section",
+    "solo_vox"
+  ],
+  "bassInstr": "synth_bass_1",
+  "drumkit": "electronic",
+  "guests": "native",
+  "synth": {
+    "dsp": "dx7_alg5",
+    "root": "DX7",
+    "preset": "E.PIANO 1",
+    "level": 0.85,
+    "lineOnly": true
+  },
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "chord"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "counter",
+    "lead"
+  ],
+  "roots": [
+    0,
+    6,
+    3,
+    3,
+    0,
+    6,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "swing": 0.1,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sine",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "fx": [
+    "chorus"
+  ],
+  "words": [
+    "the FM piano, the chord, on the beat",
+    "the horns, the answer, in the holes",
+    "the voice, the hook, high and hoarse"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0, 4, 8, 12)]\n                    : v === 1 ? (s % 2 ? [excerpt(8, 8)] : [])\n                    : [[], [fill(1)], [rotate(2)], [drop(2)]][s % 4])"
+  },
+  "dyn": "backbeat",
+  "family": "studio"
+}

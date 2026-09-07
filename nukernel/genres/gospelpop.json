@@ -1,0 +1,287 @@
+{
+  "note": "GOSPEL POP — New York 1985. Whitney Houston, Whitney Houston, Arista, 14\nFebruary 1985.\n\nTHE ROW IS THE HALF OF THIS RECORD THE TABLE DID NOT HAVE, AND A MEASUREMENT\nDECIDED WHICH HALF. The BALLAD half was already here: `powerballad` (Los\nAngeles 1991) says so in its own\nnote — \"MEASURED, 2026-09-02 (the MIDI-corpus round): 139 files — Mariah Carey,\nWhitney Houston, Celine Dion ... and the row they all land on rather than three\ntwins of each other.\" The corpus agrees from the other end: 43 \"houston\" files\nhave a MEDIAN of 80 bpm — a room full of ballads, and `powerballad`'s own bpm\nto the number. So this row is the UPTEMPO half, which nothing in 500 rows held.\n\nMEASURED. \"How Will I Know\" reads 120 in the HOUSTON transcription, and two\nyears downstream \"I Wanna Dance With Somebody\" reads 118, 118, 119 and 120 in\nfour. `bpm: 119` is the middle of five readings spanning two beats a minute.\n\nTHE ROW IS THE VOICE OVER THE MACHINE. `instr: [\"solo_vox\", \"polysynth\",\n\"ohh_voices\"]` seats the singer on chair 0, which 127 rows of 500 also do, so\nthe seating is not the unusual part; what is under it is. `tone.mouth:\nMOUTHS.melisma` (alto, vib 0.5, syll 2 — \"a nineties ballad lead holds ONE\nvowel over many notes\") over `drumkit: \"electronic\"` and a `synth_bass_1` in\noctaves. THREE ROWS OF 500 PUT A MELISMA\nOVER A DRUM MACHINE, and the other two are not this: `cantopop` (Hong Kong\n1984), whose lineage is a crooner's rather than a church's, and `rnb`\n(Philadelphia 1994), nine years later with the electric piano ahead of the\nsinger. This is the only one of the three that also declares a `throat` —\nsoprano on chair 0, altos behind — a lead standing in front of her own backing\nstack. Seven rows in 500 name a soprano at all and five of the other six are\nchurch choirs.\n\nAGAINST `clubpop` (New York 1983), its second parent at 0.20 and the row that\nholds the Dance-pop article: that record is a machine with a pop lead on it.\nThis one is a machine with a church on it.\n\nTHE DYNAMIC FIGURE: `dyn: \"swell\"` — FIGURES says the swell \"gives a bar as\nmany levels as it has notes\" and names gospel among the three musics that build\nthat way. The compiled alphabet is exactly that: [4,5,6,7,8,9], six levels\nwide, one of only two among this round's eighteen new rows (`arenafunk` is the\nother). `gospel` (Chicago 1932) takes `swell` too, which is the point rather\nthan an embarrassment: the figure is the inheritance and the machine under it\nis the invention.\n\nCHORDONOMICON. The `gospel` label is 873 songs, 725 of them major, and its top\nfour-chord windows are I IV I IV (41), I IV V I (35) and I V vi IV (23). This\nrow's `roots [0,3,5,4,0,3,4,4]` is I IV vi V — the same four chords the label\nkeeps reaching for, in this record's own order.\n\nLINEAGE: `gospel` (Chicago 1932) at 0.25 — the voice, the melisma, the choir\nbehind it. `clubpop` (New York 1983) at 0.20 — the room it was sold into and\nthe machine it is built on. `detroitsoul` (Detroit 1965) at 0.15 — the\npop-single craft Arista were working from. `boogie` (New York 1981) at 0.15 —\nthe synth bass in octaves, one city and four years earlier. `disco` (New York\n1977) at 0.10 — the four on the floor. Sum 0.85; the residue 0.15 is the\nsinger.\n\nTHE FIT DISAGREES AND THE WEIGHTS ARE NOT BEING TUNED TO IT. r2 0.409, residue\n0.247 — near the catalogue's p90 of 0.260. `tools/genealogy.js` assigns disco\n0.46, boogie 0.36, detroitsoul 0.11, gospel 0.08 and clubpop 0.00. The machine\nhears a 1979 dance record and is right about everything it can see: the feature\nvector has columns for tempo, kick density, backbeat density, bass motion and\nmode brightness, and NO COLUMN FOR A VOICE. The gospel weight is a claim about\nthe singer and the fit is blind to singers. Moving it to make the number pretty\nwould be lying to the tool about the record, so it stands and the disagreement\nis written here instead.\n\n`guests: \"native\"` (door 3), so a guest arrives on the row's own chairs rather\nthan as a sample walking into a synthesiser record.",
+  "label": "New York 1985",
+  "near": "clubpop",
+  "plan": "song",
+  "bpm": 119,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "gospel": 0.25,
+    "clubpop": 0.2,
+    "detroitsoul": 0.15,
+    "boogie": 0.15,
+    "disco": 0.1
+  },
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "ohh_voices"
+  ],
+  "bassInstr": "synth_bass_1",
+  "drumkit": "electronic",
+  "guests": "native",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "chord"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "stab",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    5,
+    4,
+    0,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sine",
+    "cut": 2800,
+    "q": 1.1,
+    "atk": 0.004,
+    "rel": 0.8,
+    "gain": 0.28,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "throat": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "soprano"
+      }
+    ],
+    "else": "alto"
+  },
+  "words": [
+    "the voice, the run, arriving on the title",
+    "the synth stab, on the beat, out of the way",
+    "the backing stack, the answer"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [fill(1)], [fill(2), drop(2)]][s % 4]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : [keep(8, 12), transpose(4)])"
+  },
+  "dyn": "swell",
+  "family": "studio"
+}

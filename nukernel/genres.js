@@ -6299,6 +6299,117 @@
       dyn: "backbeat",
     },
 
+    // ART PUNK — Bowery 1977. Television, Marquee Moon, recorded at A&R Studios,
+    // New York, in September 1976, released by Elektra on 8 February 1977.
+    //
+    // THE LABEL IS THE BOWERY, AND THE DOT IS NEW. `New York 1977` is `disco`'s,
+    // and `atlas.gate.js` G6b holds a (place, year) pair to being a KEY — so a row
+    // whose true city and year are taken must find THE NEXT TRUE FACT rather than
+    // move its date. CBGB at 315 Bowery is where this band played for two years,
+    // so the Bowery is that fact. It is declared WITHIN New York on the Greenwich
+    // Village and Harlem precedent: `folkduo` is Greenwich Village 1964 and
+    // `doowop` is Harlem 1955.
+    //
+    // THE ROW IS TWO CLEAN GUITARS, AND DOOR 5 MAKES THAT A FACT ABOUT THE RENDER.
+    // `instr: ["clean_guitar", "clean_guitar", "solo_vox"]`, `artic: "legato"`,
+    // `maxHold: 3`. Measured at seed 1, 2026-09-07: this record seats FOUR CLEAN
+    // GUITARS AND ZERO DIRTY ONES, because door 5 (precompose.js, 2026-09-06, "an
+    // amplifier is never dealt") hands each guest chair the host's own guitar
+    // instead of an overdrive or a palm mute. It matters that the number is
+    // measured: "no distortion on this record" is otherwise a sentence in a
+    // comment, and this catalogue's characteristic bug is the field declared and
+    // never arriving.
+    //
+    // WHAT THE NEIGHBOUR HAS INSTEAD. `punk` (New York 1976) is one year and six
+    // blocks away and is the declared `near`: it names `distortion_guitar` and
+    // `crunch_guitar`, runs at 160, takes `verb: 0.1` and `dyn: "backbeat"`, and
+    // its `roots` are four chords long. Every one of those is different here.
+    //
+    // THE HARMONY IS MODAL AND SAYS SO. `mode` and `scale` are both `MODES.dorian`
+    // and `roots` is [0, 6, 0, 6, 0, 6, 3, 3] — i bVII i bVII for six bars and
+    // then the BRIGHT DORIAN IV, twice, at the turn. That is what a long modal
+    // solo needs and a three-chord punk record does not have: a vamp to leave
+    // running, with one chord in it that changes the light.
+    //
+    // MEASURED, CHORDONOMICON, AND IT DISAGREES WITH THIS ROW. The `art punk`
+    // label returns 384 songs, 268 of them (70%) MAJOR, topped by IV I IV I (12
+    // hits), then I IV I IV (9) and I V IV I (7). That is a major-key label and
+    // this is a minor-mode row, and the disagreement is reported rather than
+    // smoothed over. Two things stand against the census. Its median year is 1987,
+    // TEN YEARS DOWNSTREAM, so it measures what the phrase came to mean rather
+    // than what it was coined about; and this row is anchored on one record whose
+    // title track is in a minor key. The corpus offers no arbitration: 2026-09-07,
+    // "Television" returns zero files (all three hits are TV themes) and "Marquee
+    // Moon" none. `bpm: 146` is therefore a judgement, between `punk`'s 160 and
+    // `garagerock`'s 126, and said as one.
+    //
+    // LINEAGE: `protopunk` (New York 1966) at 0.30 — the two-chord downtown vamp
+    // and the flat delivery. `punk` (New York 1976) at 0.20 — the same room, the
+    // same bill, the same year's audience. `garagerock` (Portland 1963) at 0.15 —
+    // the thin ringing guitar and the budget. `modaljazz` (New York 1959) at 0.15
+    // IS THE PARENT NOBODY EXPECTS: an eight-minute solo over a two-chord vamp is
+    // that room's idea arriving in a rock band. Sum 0.80; the residue 0.20 is the
+    // two guitars: nothing above this row has a second lead player answering the
+    // first.
+    //
+    // THE DYNAMIC FIGURE: `arch`, against `punk`'s `backbeat`. FIGURES calls the
+    // arch "up to the middle of the bar and back down. The sung line's own shape"
+    // — said here of a GUITAR SOLO, which is the row's whole claim: the second
+    // chair is a sung line played on an instrument. A punk record leans where the
+    // snare is; this one breathes.
+    //
+    // THE FIT, AND WHERE IT ARGUES. r2 0.628, residue 0.207, between the
+    // catalogue's median (0.165) and its p75 (0.218). `tools/genealogy.js` gives
+    // `protopunk` 0.00 against the declared 0.30, and the distance is mostly one
+    // number: 146 bpm against protopunk's 108. The vector reads tempo and this row
+    // is 38 bpm faster than its largest parent. That does not make the edge false,
+    // so the fit is recorded and the weight left alone.
+    artpunk: {
+      label: "Bowery 1977",
+      near: "punk",
+      plan: "song",
+      bpm: 146,
+      bars: 8,
+      voices: 3,
+      parents: { protopunk: 0.3, punk: 0.2, garagerock: 0.15, modaljazz: 0.15 },
+      instr: ["clean_guitar", "clean_guitar", "solo_vox"],
+      bassInstr: "picked_bass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 0 : v === 1 ? 4 : 0),
+      reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 6, 0, 6, 0, 6, 3, 3],
+      mode: MODES.dorian,
+      scale: MODES.dorian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0]
+      },
+      tone: { wave: "sawtooth", cut: 2600, q: 1, atk: 0.006, rel: 1.1, gain: 0.26, verb: 0.22 },
+      words: [
+        "the first guitar, the figure, ringing",
+        "the second guitar, the long modal line over it",
+        "the voice, one register, no shout"
+      ],
+      word: (v, s) => (v === 0 ? [keep(0, 3, 6, 8, 11, 14)]
+                    : v === 1 ? [[excerpt(0, 8)], [excerpt(8, 8)], [rotate(2)], [invert(4)]][s % 4]
+                    : [drop(2)]),
+      dyn: "arch",
+      family: "band",
+    },
+
     // AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the
     // same stillness with a HARMONY inside it — a lydian maj7 cycle two bars
     // to the chord, no drums, no bass at all, a line that surfaces four bars
@@ -8868,6 +8979,133 @@
       dyn: "anacrusis",
     },
 
+    // GOSPEL POP — New York 1985. Whitney Houston, Whitney Houston, Arista, 14
+    // February 1985.
+    //
+    // THE ROW IS THE HALF OF THIS RECORD THE TABLE DID NOT HAVE, AND A MEASUREMENT
+    // DECIDED WHICH HALF. The BALLAD half was already here: `powerballad` (Los
+    // Angeles 1991) says so in its own
+    // note — "MEASURED, 2026-09-02 (the MIDI-corpus round): 139 files — Mariah Carey,
+    // Whitney Houston, Celine Dion ... and the row they all land on rather than three
+    // twins of each other." The corpus agrees from the other end: 43 "houston" files
+    // have a MEDIAN of 80 bpm — a room full of ballads, and `powerballad`'s own bpm
+    // to the number. So this row is the UPTEMPO half, which nothing in 500 rows held.
+    //
+    // MEASURED. "How Will I Know" reads 120 in the HOUSTON transcription, and two
+    // years downstream "I Wanna Dance With Somebody" reads 118, 118, 119 and 120 in
+    // four. `bpm: 119` is the middle of five readings spanning two beats a minute.
+    //
+    // THE ROW IS THE VOICE OVER THE MACHINE. `instr: ["solo_vox", "polysynth",
+    // "ohh_voices"]` seats the singer on chair 0, which 127 rows of 500 also do, so
+    // the seating is not the unusual part; what is under it is. `tone.mouth:
+    // MOUTHS.melisma` (alto, vib 0.5, syll 2 — "a nineties ballad lead holds ONE
+    // vowel over many notes") over `drumkit: "electronic"` and a `synth_bass_1` in
+    // octaves. THREE ROWS OF 500 PUT A MELISMA
+    // OVER A DRUM MACHINE, and the other two are not this: `cantopop` (Hong Kong
+    // 1984), whose lineage is a crooner's rather than a church's, and `rnb`
+    // (Philadelphia 1994), nine years later with the electric piano ahead of the
+    // singer. This is the only one of the three that also declares a `throat` —
+    // soprano on chair 0, altos behind — a lead standing in front of her own backing
+    // stack. Seven rows in 500 name a soprano at all and five of the other six are
+    // church choirs.
+    //
+    // AGAINST `clubpop` (New York 1983), its second parent at 0.20 and the row that
+    // holds the Dance-pop article: that record is a machine with a pop lead on it.
+    // This one is a machine with a church on it.
+    //
+    // THE DYNAMIC FIGURE: `dyn: "swell"` — FIGURES says the swell "gives a bar as
+    // many levels as it has notes" and names gospel among the three musics that build
+    // that way. The compiled alphabet is exactly that: [4,5,6,7,8,9], six levels
+    // wide, one of only two among this round's eighteen new rows (`arenafunk` is the
+    // other). `gospel` (Chicago 1932) takes `swell` too, which is the point rather
+    // than an embarrassment: the figure is the inheritance and the machine under it
+    // is the invention.
+    //
+    // CHORDONOMICON. The `gospel` label is 873 songs, 725 of them major, and its top
+    // four-chord windows are I IV I IV (41), I IV V I (35) and I V vi IV (23). This
+    // row's `roots [0,3,5,4,0,3,4,4]` is I IV vi V — the same four chords the label
+    // keeps reaching for, in this record's own order.
+    //
+    // LINEAGE: `gospel` (Chicago 1932) at 0.25 — the voice, the melisma, the choir
+    // behind it. `clubpop` (New York 1983) at 0.20 — the room it was sold into and
+    // the machine it is built on. `detroitsoul` (Detroit 1965) at 0.15 — the
+    // pop-single craft Arista were working from. `boogie` (New York 1981) at 0.15 —
+    // the synth bass in octaves, one city and four years earlier. `disco` (New York
+    // 1977) at 0.10 — the four on the floor. Sum 0.85; the residue 0.15 is the
+    // singer.
+    //
+    // THE FIT DISAGREES AND THE WEIGHTS ARE NOT BEING TUNED TO IT. r2 0.409, residue
+    // 0.247 — near the catalogue's p90 of 0.260. `tools/genealogy.js` assigns disco
+    // 0.46, boogie 0.36, detroitsoul 0.11, gospel 0.08 and clubpop 0.00. The machine
+    // hears a 1979 dance record and is right about everything it can see: the feature
+    // vector has columns for tempo, kick density, backbeat density, bass motion and
+    // mode brightness, and NO COLUMN FOR A VOICE. The gospel weight is a claim about
+    // the singer and the fit is blind to singers. Moving it to make the number pretty
+    // would be lying to the tool about the record, so it stands and the disagreement
+    // is written here instead.
+    //
+    // `guests: "native"` (door 3), so a guest arrives on the row's own chairs rather
+    // than as a sample walking into a synthesiser record.
+    gospelpop: {
+      label: "New York 1985",
+      near: "clubpop",
+      plan: "song",
+      bpm: 119,
+      bars: 8,
+      voices: 3,
+      parents: { gospel: 0.25, clubpop: 0.2, detroitsoul: 0.15, boogie: 0.15, disco: 0.1 },
+      instr: ["solo_vox", "polysynth", "ohh_voices"],
+      bassInstr: "synth_bass_1",
+      drumkit: "electronic",
+      guests: "native",
+      entry: v => (v === 0 ? 0 : v === 1 ? 0 : 4),
+      reg: v => (v === 1 ? 0 : v === 2 ? 1 : 0),
+      realize: v => (v === 1 ? "chord" : "line"),
+      part: ["lead", "stab", "pad"],
+      roots: [0, 3, 5, 4, 0, 3, 4, 4],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "octaves",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        o: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        c: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0]
+      },
+      tone: {
+        wave: "sine",
+        cut: 2800,
+        q: 1.1,
+        atk: 0.004,
+        rel: 0.8,
+        gain: 0.28,
+        verb: 0.4,
+        mouth: MOUTHS.melisma
+      },
+      throat: v => (v === 0 ? "soprano" : "alto"),
+      words: [
+        "the voice, the run, arriving on the title",
+        "the synth stab, on the beat, out of the way",
+        "the backing stack, the answer"
+      ],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [fill(1)], [fill(2), drop(2)]][s % 4]
+                    : v === 1 ? [keep(0, 4, 8, 12)]
+                    : [keep(8, 12), transpose(4)]),
+      dyn: "swell",
+      family: "studio",
+    },
+
     // POWER BALLAD [crooner]. A ballad that WAITS — the verse a crooner's
     // arrangement, brushes and strings; the chorus rock's full backbeat with
     // the crash reintroduced. `kits`, dnb's own device for a schedule that
@@ -9788,6 +10026,122 @@
       dyn: "backbeat",
     },
 
+    // FM SOUL — New York 1988. Steve Winwood's Roll with It, Virgin, June 1988.
+    //
+    // THE LABEL AND THE SOUND ARE TWO DIFFERENT RECORDS, and this paragraph is here
+    // so nobody has to discover that. The sound this row was asked for — a DX7 and a
+    // Linn under a blue-eyed soul singer — is 1986's Back in the High Life, cut at
+    // Unique Recording in New York. `New York 1986` is already `raprock`'s, and
+    // atlas.gate.js G6b holds (place, year) to being a KEY, so this row could not
+    // have it. The softrock lesson of 2026-09-06 is that a row then takes the NEXT
+    // TRUE FACT rather than the next true-ish one: Roll with It is the same bench,
+    // the same two machines and the same idiom two years on, so the row is anchored
+    // there and the divergence is written down.
+    //
+    // MEASURED — AND THE EVIDENCE BELONGS TO THE SIBLING. The corpus holds four Steve
+    // Winwood files. Two clean transcriptions of "Higher Love" read 99 and 101, and a
+    // search for "roll with it" returns only Oasis, so there is no transcription of
+    // the anchor record at all. `bpm: 112` is a judgement about Roll with It — a
+    // shuffle running faster than Higher Love's hundred — and it is said as one
+    // rather than dressed up as a number.
+    //
+    // THE MACHINE: `synth: { dsp: "dx7_alg5", root: "DX7", preset: "E.PIANO 1",
+    // level: 0.85, lineOnly: true }` — the same Yamaha cartridge patch `vaporwave`
+    // (Portland 2011) loads twenty-five years downstream, one row playing it at the
+    // speed it was sold at and one off a slowed record. Three rows in 500 declare a
+    // DX7; two arrived this round.
+    //
+    // AGAINST ITS LARGEST PARENT. `blueeyedsoul` (Philadelphia 1976, 0.30) is an
+    // `electric_piano`, a `clean_guitar` and a `room` kit played by people. This row
+    // is the same music with the rhythm section replaced by two machines:
+    // `drumkit: "electronic"`, `bassInstr: "synth_bass_1"`, `bassStyle: "octaves"`,
+    // a `brass_section` answering in the holes and `swing: 0.10` where a room kit
+    // would shuffle harder. `mode: MODES.mixo` with `roots [0,6,3,3,0,6,3,4]` is I
+    // bVII IV IV I bVII IV V — the flat-seventh turn a singer with a Hammond past
+    // reaches for and a Philadelphia session would not have written.
+    //
+    // THE FAMILY IS `studio` AND NOT `soul`, on `minneapolissound`'s own argument,
+    // which is worth quoting because it applies here word for word: soul's dynamics
+    // row hands a record a session player's wrist (touch t 0.07, v 1.0), and this
+    // record's rhythm section is a drum machine; `studio`'s row (t 0.035, v 0.6) is a
+    // hand editing a machine, which is what happened at Unique Recording.
+    //
+    // THE DYNAMIC FIGURE: `dyn: "backbeat"` — FIGURES' own claim is that a soul, r&b
+    // or rock line "does not lean on the barline, it leans where the snare is", and
+    // the compiled proof is this row's: 258 accents at steps 12 and 4 (s12x56 s4x46),
+    // the two and the four of every bar — more than any of this round's eighteen new
+    // rows but `avantfunk`'s 546. `blueeyedsoul` TAKES
+    // `backbeat` TOO, and that is conceded rather than hidden: the figure comes down
+    // the lineage intact and what changed is who is playing it.
+    //
+    // `guests: "native"` (door 3), and on this row the door is measurable. Without it
+    // the record seated a SAMPLED HARPSICHORD on a counter-line — the exact fault
+    // door 3 was written for. With it the guest arrives on the row's own DX7 through
+    // `signed()`.
+    //
+    // LINEAGE: `blueeyedsoul` (Philadelphia 1976) at 0.30 — the idiom entire, and the
+    // row this one is a machine remake of. `detroitsoul` (Detroit 1965) at 0.15 — the
+    // source the Philadelphia record was itself reading from, taken directly because
+    // this singer had been reading it since the Spencer Davis Group. `synthpop`
+    // (Basildon 1981) at 0.15 — the machines, which are the whole difference. `aor`
+    // (Los Angeles 1982) at 0.15 — the studio craft and mixolydian polish of an
+    // eighties album made to sound expensive. `gospel` (Chicago 1932) at 0.05, the
+    // smallest share on the row and the honest size of it: the shout at the end of
+    // the chorus, nothing structural. Sum 0.80; the residue 0.20 is the singer.
+    //
+    // THE FIT: r2 0.773, residue 0.145, under the catalogue median of 0.165. The
+    // tool and the declared weights agree about this row.
+    fmsoul: {
+      label: "New York 1988",
+      near: "blueeyedsoul",
+      plan: "song",
+      bpm: 112,
+      bars: 8,
+      voices: 3,
+      parents: { blueeyedsoul: 0.3, detroitsoul: 0.15, synthpop: 0.15, aor: 0.15, gospel: 0.05 },
+      instr: ["polysynth", "brass_section", "solo_vox"],
+      bassInstr: "synth_bass_1",
+      drumkit: "electronic",
+      guests: "native",
+      synth: { dsp: "dx7_alg5", root: "DX7", preset: "E.PIANO 1", level: 0.85, lineOnly: true },
+      entry: v => (v === 0 ? 0 : v === 1 ? 4 : 0),
+      reg: v => (v === 0 ? 0 : v === 1 ? 1 : 0),
+      realize: v => (v === 0 ? "chord" : "line"),
+      part: ["stab", "counter", "lead"],
+      roots: [0, 6, 3, 3, 0, 6, 3, 4],
+      mode: MODES.mixo,
+      scale: MODES.mixo,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "octaves",
+      swing: 0.1,
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        p: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0]
+      },
+      tone: { wave: "sine", cut: 2600, q: 1.2, atk: 0.004, rel: 0.7, gain: 0.27, verb: 0.3 },
+      fx: ["chorus"],
+      words: [
+        "the FM piano, the chord, on the beat",
+        "the horns, the answer, in the holes",
+        "the voice, the hook, high and hoarse"
+      ],
+      word: (v, s) => (v === 0 ? [keep(0, 4, 8, 12)]
+                    : v === 1 ? (s % 2 ? [excerpt(8, 8)] : [])
+                    : [[], [fill(1)], [rotate(2)], [drop(2)]][s % 4]),
+      dyn: "backbeat",
+      family: "studio",
+    },
+
     // FOLK DUO [skiffle]. Two voices in close harmony over one acoustic
     // guitar — MODAL, not counterpoint's emergent two-line machinery: a folk
     // duo does not compute contrary motion by rule, it just sings the tune a
@@ -9998,6 +10352,129 @@
       ],
       word: (v, s) => (v === 0 ? [] : [rotate((s % 4) + 2)]),
       dyn: "anacrusis",
+    },
+
+    // PROGRESSIVE FOLK — Aston Tirrold 1970. Traffic's John Barleycorn Must Die, cut
+    // at Olympic and Island Studios in London and released by Island in Britain and
+    // United Artists in America in July 1970: six tracks, two of them instrumental,
+    // one of them a traditional song four centuries older than the band.
+    //
+    // THE LABEL IS THE COTTAGE. `London 1970` is `newsfanfare`'s and G6b holds
+    // (place, year) to being a key, so the collision forced the question — and the
+    // answer it forced is the truer one. Aston Tirrold is the Berkshire house the
+    // band rented in 1967 and kept writing in until they broke up, and "getting it
+    // together in the country" was coined about that address. `atlas.js` declares it
+    // WITHIN Oxford, taking Sutton Courtenay's own relation eleven kilometres away —
+    // the exact case that clause was written for. SAY IT PLAINLY: this is a cottage
+    // and not a studio. The desk was in London and the music was not, and the
+    // catalogue prefers a true rented house to a false capital city.
+    //
+    // THE EVIDENCE IS THIN AND IS REPORTED AS THIN. MEASURED, 2026-09-07: the
+    // 120,000-file MIDI corpus holds NO Traffic at all — all thirteen "traffic" hits
+    // are Tiesto or Hendrix's "Crosstown Traffic". What it holds is the repertory:
+    // two transcriptions of "John Barleycorn Must Die" at 120, one folk "John
+    // Barleycorn" at 80, two Joe Cocker covers of "Feelin' Alright" at 88 and 92 —
+    // median 92. `bpm: 108` is none of those. It is the album's own six-track spread,
+    // a judgement, and said as one: it sits between the traditional song's 80 and the
+    // transcribed arrangement's 120 because the record does. CHORDONOMICON has no
+    // `progressive folk` label either. Two silences and one argued number.
+    //
+    // THE ROW IS FLUTE AND ORGAN OVER A JAZZ KIT. `instr: ["flute", "rock_organ",
+    // "solo_vox"]`, `drumkit: "jazz"`, `bassStyle: "walk"`, `swing: 0.12`, `plan:
+    // "arc"`, `maxHold: 4`, and `MODES.dorian` used as both mode and scale.
+    // `drumkit: "jazz"` is taken by sixteen rows in 500 and the other fifteen are
+    // jazz, blues, Latin or highlife rows — `jazz`, `swing`, `tradjazz`, `jazzrock`,
+    // `indojazz`, `jumpblues`, `neworleans`, `mambo`, `highlife`, `afrobeat`,
+    // `westernswing`, `territoryband`, `shidaiqu`, `spyscore`, `jazzrap`. This is the
+    // only English folk-rock row among them and the only row in the table that puts a
+    // ride cymbal and a walking bass under a traditional ballad. THAT IS THE
+    // INVENTION: a jazz rhythm section — Capaldi and Wood came off that bandstand —
+    // playing words nobody wrote.
+    //
+    // AGAINST `jamband` (San Francisco 1972), this row's declared `near`: two clean
+    // guitars over twelve bars of `PROGS.blues12` with a room kit, in America, at the
+    // same 108. This is a flute over an eight-bar dorian vamp (`roots:
+    // [0,6,3,0,0,6,3,4]`) with a jazz kit and an organ holding the mode open, in a
+    // rented house in Berkshire. Same tempo, same `plan`, nothing else shared.
+    //
+    // THE FIGURE: `dyn: "anacrusis"`, on `FIGURES`' own words — "Swing and big band
+    // phrasing in one line: the tail of the bar is not the end of this bar, it is the
+    // run-up to the next one." That is what a jazz-schooled rhythm section does to a
+    // modal folk tune: the phrase arrives from before the barline and the bar it
+    // leaves sits flat under it. AND THE AWKWARD HALF, SAID RATHER THAN HIDDEN:
+    // `jamband` takes `anacrusis` TOO, so the figure is not what separates this row
+    // from its neighbour — the kit, the flute, the walk and the mode are. What it
+    // separates the row from is the folk table, where `folkrock` and the English
+    // traditional rows lean on the downbeat, which is where a folk tune's own weight
+    // lies. `sophistirock` (London 1986) takes `anacrusis` for the same family of
+    // reasons sixteen years later: jazz players making a record that is not jazz.
+    //
+    // LINEAGE: `folkrock` (Los Angeles 1965) at 0.20 — the electric band reading a
+    // traditional song, which is the whole precedent. `jazz` at 0.20 — the rhythm
+    // section, the walk, the swing, the ride. `ballad` (London 1666) at 0.15, and
+    // this is the edge nobody expects: "John Barleycorn" is a BROADSIDE, printed and
+    // sold in the street for three centuries before Traffic sang it, and the `ballad`
+    // row's own `wants` name "the broadside press". That parent hands this row both
+    // its tune stock and its mode — `ballad` is dorian, unaccompanied and `nobass`,
+    // and the flute here is playing its descendant. `bluesrock` (West Hampstead 1966)
+    // at 0.15 — the band's Spencer Davis half, where Winwood learned the organ.
+    // `psychpop` at 0.10 — the 1967 singles. Sum 0.80; the residue 0.20 is the
+    // cottage: three men, a room they were not paying a studio for, and a record that
+    // sounds like it.
+    //
+    // THE FIT: r2 0.829, residue 0.119 — well under the catalogue median of 0.165 and
+    // near its p10 of 0.096, which says the declared parents really do explain this
+    // record. The tool weights them folkrock 0.50 / bluesrock 0.26 / jazz 0.14 /
+    // psychpop 0.11 / ballad 0.00 against the declared 0.20 / 0.20 / 0.15 / 0.15 /
+    // 0.10. The ballad share reads zero because it is 304 years upstream and no
+    // vector of tempo, kit density and mode reaches that far; that edge is argued
+    // from the song and stands on the argument.
+    progfolk: {
+      label: "Aston Tirrold 1970",
+      near: "jamband",
+      plan: "arc",
+      bpm: 108,
+      bars: 8,
+      voices: 3,
+      parents: { folkrock: 0.2, jazz: 0.2, ballad: 0.15, bluesrock: 0.15, psychpop: 0.1 },
+      instr: ["flute", "rock_organ", "solo_vox"],
+      bassInstr: "finger_bass",
+      drumkit: "jazz",
+      entry: v => (v === 0 ? 4 : v === 1 ? 0 : 0),
+      reg: v => (v === 0 ? 1 : v === 1 ? 0 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["counter", "pad", "lead"],
+      roots: [0, 6, 3, 0, 0, 6, 3, 4],
+      mode: MODES.dorian,
+      scale: MODES.dorian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "walk",
+      swing: 0.12,
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0],
+        p: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      kitVel: {
+        k: [7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0],
+        h: [6, 0, 0, 4, 5, 0, 4, 0, 6, 0, 0, 4, 5, 0, 4, 0]
+      },
+      tone: { wave: "sawtooth", cut: 1700, q: 1.2, atk: 0.02, rel: 1.4, gain: 0.24, verb: 0.4 },
+      words: [
+        "the flute, the tune, over the vamp",
+        "the organ, the vamp itself, two chords for a side",
+        "the voice, the traditional words"
+      ],
+      word: (v, s) => (v === 0 ? [[excerpt(0, 8)], [excerpt(4, 8)], [invert(3)], [excerpt(8, 8)]][s % 4]
+                    : v === 1 ? [keep(0, 8)]
+                    : [drop(2), transpose(-5)]),
+      dyn: "anacrusis",
+      family: "band",
     },
 
     // SOPHISTI-ROCK [jazzrock]. Steely's jazz-schooled changes and walking
@@ -10791,6 +11268,128 @@
       words: ["the voice, deadpan over the changes", "the strings, sweeping in a wash above"],
       word: v => (v === 1 ? [drop(2)] : []),
       dyn: "flat",
+    },
+
+    // FM POP — Oslo 1985. a-ha's Hunting High and Low, cut at Eel Pie and RAK in
+    // London and released by Warner Bros. on the 1st of June 1985.
+    //
+    // THE ROW IS THE MACHINE, and that is the whole reason it is not `synthpop`.
+    // `synthpop` is Basildon 1981 and `analogsynthpop` is Basildon 1980, and both are
+    // ANALOG rows — a `cr78` under each, a saw stab over it, and on analogsynthpop a
+    // `synth` block naming the TB-303 by id. This row declares `synth: { dsp:
+    // "dx7_alg5", root: "DX7", preset: "BELLS", level: 0.85, lineOnly: true }`.
+    // "BELLS" is a real Yamaha cartridge patch, one of the 114 in
+    // engine/faust/data/dx7-presets.json, and naming it is what makes an FM bell tone
+    // a fact about the render rather than a word in a comment. It fires:
+    // test/precompose.test.js's throat census prints "the record's own signature,
+    // honoured on ... fmpop→dx7_alg5". THREE ROWS OF 500 LOAD A DX7 AND UNTIL THIS
+    // ROUND THERE WAS ONE — `vaporwave` (Portland 2011), playing E.PIANO 1 off a
+    // record slowed to half speed. This row and `fmsoul` are the other two.
+    //
+    // MEASURED, THE MIDI CORPUS. The readings for "Take On Me" pile up in one place:
+    // FOUR INDEPENDENT TRANSCRIPTIONS READ 169, out of a spread across two file piles
+    // of 148 / 155 / 155 / 164 / 165 / 169 / 169 / 169 / 169 / 175 / 175 / 175 / 175.
+    // So `bpm: 169` is not a taste, and it makes this THE FASTEST POP ROW IN THE
+    // TABLE — past every dance record here, `trance` 138, `eurodance` 132, `hinrg`
+    // 126, `synthpop` 118 — and the third-fastest of all 500 rows, behind only
+    // `speedmetal` 208 and `skatepunk` 170. That a 1985 pop single outruns the whole
+    // dance wing is written down rather than rounded toward the neighbours.
+    //
+    // THE CHANGES NOBODY ELSE HOLDS. `roots [5,5,3,3,0,0,4,4]` is vi vi IV IV I I V
+    // V — two bars a chord, the minor start and the major lift. No neighbour has it:
+    // `synthduo` (London 1985) is [0,5,3,4], `softrock` [0,4,5,3], `synthpop`
+    // [0,5,2,6], `italodisco` [0,5,3,4,...]. Starting on the relative minor is the
+    // one harmonic move separating this row from the four that share its machines.
+    //
+    // LINEAGE: `synthpop` (Basildon 1981) at 0.35 — the song form, the stab-and-lead
+    // cast, the machine under the record. `newwave` (London 1979) at 0.20 — the
+    // guitar still on this record and the three-minute single.
+    // `italodisco` (Milan 1982) at 0.15 — the speed and the sequenced eighths, where
+    // a pop record learned to run this fast. `technopop` (Tokyo 1978) at 0.10 — the
+    // FM itself, Yamaha's instrument and Japan's decade. Sum 0.80; the residue 0.20
+    // is the singer — most of what people mean when they name the record.
+    //
+    // WHO SINGS: `tone.mouth: MOUTHS.falsetto`, one of nine rows in 500 — a
+    // countertenor by construction, vib 0.12, air 0.42, the nearly-straight head
+    // voice a moody record deliberately does not wobble, over `wave: "sine"` — the FM
+    // carrier's own shape — with `maxHold: 2`, because at 169 nothing is held.
+    //
+    // THE DYNAMIC FIGURE: `dyn: "arch"` — FIGURES calls it "the sung line's own shape
+    // and the one every singing teacher draws in the air", and this hook is an octave
+    // leap up and back down inside two bars, which is that figure drawn literally.
+    // `synthpop` TAKES `arch` TOO, conceded rather than hidden: the figure does not
+    // separate these two rows. The cast and the machine do — a modelled DX7 line and
+    // a sung falsetto here, a saw stab and no singer there.
+    //
+    // `guests: "native"` (door 3, SHIFT-5). Without it the machine rows of this round
+    // seated a SAMPLED chair on a counter-line, the exact fault door 3 was written
+    // for.
+    //
+    // THE COST, WRITTEN DOWN RATHER THAN LEFT TO BE FOUND — the `minneapolissound`
+    // precedent, which put its own 41.70 in its note rather than leave it at the top
+    // of a list. The precompose census prices this record at 36.83 against the
+    // parent's advisory BUDGET of 40: the fourth-heaviest of 1,500 records, with 0 of
+    // 1,500 over: a modelled DX7, a synth bass, a polysynth and a square lead is what
+    // this record is. The fit does not argue with any of it: r2 0.764, residue 0.169,
+    // a hair over the catalogue median of 0.165 for 428 children.
+    fmpop: {
+      label: "Oslo 1985",
+      near: "synthpop",
+      plan: "song",
+      bpm: 169,
+      bars: 8,
+      voices: 3,
+      parents: { synthpop: 0.35, newwave: 0.2, italodisco: 0.15, technopop: 0.1 },
+      instr: ["polysynth", "square_lead", "solo_vox"],
+      bassInstr: "synth_bass_1",
+      drumkit: "electronic",
+      guests: "native",
+      synth: { dsp: "dx7_alg5", root: "DX7", preset: "BELLS", level: 0.85, lineOnly: true },
+      entry: v => (v === 0 ? 0 : v === 1 ? 0 : 4),
+      reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      realize: v => (v === 0 ? "chord" : "line"),
+      part: ["pad", "riff", "lead"],
+      roots: [5, 5, 3, 3, 0, 0, 4, 4],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        c: [0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0],
+        h: [0, 0, 6, 0, 0, 0, 5, 0, 0, 0, 6, 0, 0, 0, 5, 0]
+      },
+      tone: {
+        wave: "sine",
+        cut: 3200,
+        q: 1,
+        atk: 0.002,
+        rel: 0.5,
+        gain: 0.26,
+        verb: 0.35,
+        mouth: MOUTHS.falsetto
+      },
+      fx: ["chorus"],
+      words: [
+        "the pad, four bars a chord, under everything",
+        "the bell riff, sixteen steps, the same every bar",
+        "the voice, the octave leap and back down"
+      ],
+      word: (v, s) => (v === 0 ? [keep(0)]
+                    : v === 1 ? [fill(1)]
+                    : [[], [transpose(12)], [], [transpose(12), drop(2)]][s % 4]),
+      dyn: "arch",
+      family: "studio",
     },
 
     // ---- TWENTY-THREE MORE ROOMS ------------------------------
@@ -12194,6 +12793,643 @@
       dyn: "swell",
     },
 
+    // STUDIO PROG — St John's Wood 1973. Pink Floyd, The Dark Side of the Moon:
+    // Abbey Road Studio 3, June 1972 to February 1973, Harvest, released the 1st
+    // of March 1973. The same room as `englishpsych` six years on and a different
+    // band inside it — Barrett gone, the tape machines promoted to instruments,
+    // and a record that stayed on the chart for fourteen years.
+    //
+    // THE FIRST FRACTIONAL SIGNATURE IN THE CATALOGUE, AND THIS ROW IS WHERE IT
+    // LANDS. `meter: "7/4"`. Until today the entire metrical vocabulary of every
+    // row in the table was TWO WORDS — `three` and `six`, three rows between them
+    // (`waltz`, `nationalism`, `musette`) — and nothing had ever written a
+    // fraction, although the engine had been able to read one since the any-meter
+    // round of 2026-09-05. Paul, that day: "I should be able to set any tempo at
+    // all like 21/17 you should let me choose anything." `kernel.js meterRow` has
+    // answered `n/d` ever since, and no row had asked it anything. TWO ROWS ASK
+    // TODAY, in the same round, and the honest version is that this one is first
+    // only by catalogue order: `progmetal` (San Francisco 1988) states `"7/8"`
+    // 231 places further down `_order.json`. So the claim is not "the only" — it
+    // is that seven-four and seven-eight arrive together after five hundred rows
+    // of four-four, and this is the one that arrives at seven QUARTERS.
+    //
+    // WHAT A SEVEN-FOUR BAR COSTS, ARITHMETICALLY, because the row had to be
+    // written to it and a later hand will need to know. THE STEP LAW: a step is
+    // the beat the denominator names, halved as many times as fits inside a
+    // sixteenth, so `sub` for d=4 is 4 and the bar is num x sub = 7 x 4, which
+    // is TWENTY-EIGHT STEPS. Every per-step vector on this row is therefore 28
+    // long and not 16 — `kit.k`, `kit.s`, `kit.h`, all three `kitVel` lanes and
+    // the `bassFig` — and a lane of the wrong length would have wrapped through
+    // `at()` and composed a record nobody could hear the fault in. `quarters` is
+    // 7 and `units` is 28, which is the same number as the grid because 4 is a
+    // power of two; nothing downstream moves by a float here, and it is only the
+    // exotic denominators where a step stops being a sixteenth.
+    //
+    // AND THE CORPUS CORROBORATES THE METER, WHICH IS THE CLEANEST PIECE OF
+    // EVIDENCE IN THIS ROUND. Three independent transcriptions of "Money" are in
+    // the MIDI trove and they read 120 in 4/4, 126 in 7/4 and 128 in 4/4. THE ONE
+    // THAT NOTATES THE SIGNATURE READS 126 — which is this row's `bpm` — and the
+    // two that disagree with it are exactly the two that flattened the bar to
+    // four to get it into a sequencer. A transcriber who kept the meter kept the
+    // tempo; a transcriber who lost the meter lost both. That is not a vote, it
+    // is a dependency, and it is why the number and the signature are declared
+    // together.
+    //
+    // THE BASS IS WRITTEN OUT, WHICH THREE ROWS IN 500 DO. `bassFig` shipped
+    // 2026-09-06 for salsa's tumbao and grunge's ripping octaves; this is the
+    // third row to declare one and the FIRST at any meter but four. Its grid is
+    // 28 long and carries SEVEN ONSETS — steps 0, 6, 8, 12, 16, 20, 24 — which is
+    // the seven-note bass figure the record is famous for, with `deg` walking 0,
+    // 0, 2, 3, 0, 3, 4 over the chord and `acc` on the two arrivals at 0 and 16.
+    // kernel.js reads a genre figure "on the bar" as a one-bar fingerprint
+    // restated every bar, so a 28-slot figure in a 28-step bar is exact and
+    // nothing wraps. `bassStyle: "eighths"` stands underneath it as the fallback
+    // the style branches take where the figure says nothing; the figure is what
+    // actually plays.
+    //
+    // WHAT IT HAS THAT `spacerock` DOES NOT, and the question is sharp because
+    // `near` points at it and spacerock is labelled LONDON 1973 — the same city
+    // and the same year, which is the whole reason this row's label had to become
+    // a district. Spacerock is one held drone under a slow guitar: `bassStyle:
+    // "pedal"`, no meter, no chord cycle, `rate: 0.5`, two chairs. This row has a
+    // METER; a chord cycle (`harmony: "cycle"`, `roots` [0,0,3,3,4,3,0,0] through
+    // SCALES.blues in aeolian) where spacerock has a pedal; a `tenor_sax` and an
+    // `ahh_choir` seated as chairs, which are the two things a listener names
+    // first about this record and which spacerock has no seat for; and
+    // `tapemusic` (Paris 1948) declared as an ancestor — an edge no other rock
+    // row in the table has — for the tape loop that opens the record and the
+    // clock that runs under it.
+    //
+    // THE DYNAMIC FIGURE: `syncope`, ARGUED FROM THE METER. The usual argument
+    // for a rock row is `backbeat`, and it is unavailable here in the strict
+    // sense: in a seven-quarter bar the figure's weight cannot sit on "the four"
+    // because there is no four. `syncope` is the figure that reads metrical
+    // STRENGTH rather than a list of legal steps — a note on a quarter gives way,
+    // a note off it takes the weight — so it means something in any signature,
+    // which is precisely what FIGURES was built for ("every position below is
+    // computed as a FRACTION of N, so a figure means the same thing in 7/8 as in
+    // 4/4"). Measured on the compiled record: 204 accents, seated at steps 8, 36
+    // and 43. In a 28-step bar those are step 8 of the first bar and steps 8 and
+    // 15 of the second, and none of 8, 8, 15 is a multiple of seven — every
+    // accent is off the quarter. That is the figure arriving rather than being
+    // declared.
+    //
+    // COMPILED, seed 1: 27 bars, 8 sections, 1,078 events, 594 notes, alphabet
+    // [5,8] — the NARROWEST of the five Floyd rows, where the other four spread
+    // over [5,6,8] or [5,6,7,8]. That is what a two-level figure does: `syncope`
+    // returns 5 on a quarter and 8 or 9 off it, and in 7/4 the strength function
+    // never returns the middle case, so the record speaks in two levels. Fit r2
+    // 0.607, residue 0.198.
+    //
+    // LINEAGE: `spacerock` 0.30 — the band's own previous record and the drone
+    // still under the middle of this one. `progrock` 0.20 (Isle of Wight 1970) —
+    // the side-long form and the odd bar. `blues` 0.15 — SCALES.blues is the
+    // alphabet and Gilmour never played anything else. `jazz` 0.10 — the sax
+    // chorus, a guest who plays once and leaves. `tapemusic` 0.10 — the loops,
+    // the cash register, the clocks, musique concrete arriving in a rock record
+    // twenty-five years after Schaeffer. Sum 0.85; the residue 0.15 is the
+    // studio itself — the desk, Parsons, and the eight months.
+    studioprog: {
+      label: "St John's Wood 1973",
+      near: "spacerock",
+      plan: "arc",
+      bpm: 126,
+      bars: 8,
+      voices: 3,
+      meter: "7/4",
+      parents: { spacerock: 0.3, progrock: 0.2, blues: 0.15, jazz: 0.1, tapemusic: 0.1 },
+      instr: ["clean_guitar", "tenor_sax", "ahh_choir"],
+      bassInstr: "finger_bass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 0 : v === 1 ? 8 : 4),
+      reg: v => (v === 1 ? 0 : v === 2 ? 1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["riff", "lead", "pad"],
+      roots: [0, 0, 3, 3, 4, 3, 0, 0],
+      mode: MODES.aeolian,
+      scale: SCALES.blues,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "eighths",
+      bassFig: {
+        grid: [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        deg: [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0
+        ],
+        acc: [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0],
+        h: [6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 6, 0, 5, 0, 4, 0, 6, 0, 5, 0, 5, 0, 4, 0]
+      },
+      tone: { wave: "sawtooth", cut: 1600, q: 1.4, atk: 0.02, rel: 1.6, gain: 0.24, verb: 0.55 },
+      fx: ["echo"],
+      words: [
+        "the guitar, the figure, seven to the bar",
+        "the sax, the guest, one chorus and gone",
+        "the voice with no words, over the top"
+      ],
+      word: (v, s) => (v === 0 ? [keep(0, 6, 8, 12, 16, 20, 24)]
+                    : v === 1 ? [[excerpt(0, 8)], [excerpt(8, 8)], [invert(4)], [rotate(3)]][s % 4]
+                    : [drop(3), transpose(12)]),
+      dyn: "syncope",
+      family: "band",
+    },
+
+    // BLEAK PROG — London 1976. Pink Floyd, Animals: Britannia Row, Islington —
+    // the band's own studio, bought and fitted out with the Dark Side money —
+    // April to November 1976, Harvest, released the 23rd of January 1977. Three
+    // long sides about pigs, dogs and sheep, and the coldest record the band
+    // ever made.
+    //
+    // THE ANCHOR IS ANIMALS AND NOT WISH YOU WERE HERE, AND THE REASON IS A
+    // MEASUREMENT. This is the paragraph the row exists for. The era offered was
+    // "1975-77", two records, and the obvious anchor was the famous one. It was
+    // refused on two grounds and both are checkable. FIRST, "Shine On You Crazy
+    // Diamond" is `spacerock`'s music exactly — a slow, blues-schooled guitar
+    // line over a held drone, which is that row's `plan: "arc"`, `bpm: 70`,
+    // `rate: 0.5` and `bassStyle: "pedal"` said in words — so a Wish You Were
+    // Here row would have been a second copy of a row the table already had, and
+    // the whole point of a new row is to be somewhere the table is not. SECOND,
+    // the corpus cannot even count it: four transcriptions of "Shine On" read 56,
+    // 116, 120 and 133, and TWO OF THE FOUR are in 3/4. A piece four transcribers
+    // cannot agree the METER of, let alone the tempo, is not a piece to hang a
+    // tempo on. Animals is not that music. It is long minor CYCLES — `roots`
+    // twelve bars long, `bars: 12`, `harmony: "cycle"` in dorian — with a bass
+    // ostinato underneath, an envelope-filtered guitar and a talkbox
+    // (`fx: ["echo","wah"]`), and `maxHold: 4` for chords that sit. So the era is
+    // ONE row, and the row is the record furthest from the row the table already
+    // had.
+    //
+    // AND IT REFUSES `rate: 0.5` ON PURPOSE. Halving the clock is spacerock's
+    // identity — it is what makes a Floyd side breathe under the tempo dial's own
+    // floor — and taking it here would have collapsed the two rows into one
+    // slightly different one. This row is slow by TEMPO (116 against progrock's
+    // 120) and long by FORM (a twelve-bar cycle where every other Floyd row here
+    // runs eight), not by a clock divider. It is the difference between a record
+    // that drifts and a record that trudges, and Animals trudges.
+    //
+    // WHAT IT HAS THAT `spacerock` DOES NOT, then, said as fields: a twelve-bar
+    // root cycle [0,0,0,0,6,6,3,3,0,0,4,4] where spacerock has a pedal and four
+    // root pairs; `diatonic: true` in dorian, so the flat six and the minor
+    // seventh are the record's whole colour; a `solo_vox` chair — spacerock has
+    // no voice at all, and Animals is a lyric record with somebody shouting on
+    // it; `fx` that includes `wah` rather than `sweep`, which is an envelope
+    // filter on ONE guitar rather than an automated sweep across the whole
+    // section; and 116 against 70.
+    //
+    // THE DYNAMIC FIGURE: `agogic`, and it is the most specific claim in this
+    // row. FIGURES calls it "the last note of the phrase leans and lengthens ...
+    // the exact OPPOSITE of `lean`", written for chant and for a ballad's line.
+    // It is also, exactly, what Gilmour does: the phrase climbs, arrives at its
+    // top note, and STAYS there while the band goes round again. Four notes over
+    // a side. AGAINST `spacerock`'s `swell`, which is the near neighbour's figure
+    // and the one this row had to argue past: a swell crescendos across the bar
+    // INTO the next downbeat, so its weight is always on the way somewhere. This
+    // row's weight is at the END of the phrase and it does not hand anything on.
+    // That is the difference between a build and a held note, and it is the
+    // difference between the two records. The engine already supplies the length
+    // half — `precompose`'s RELEASE `ring` runs the last note to the barline on
+    // 84.7 per cent of cells — so the figure only has to supply the weight, which
+    // is what it does. Compiled: 112 accents at steps 5 and 22, which are the
+    // phrase ends and not the barlines.
+    //
+    // LINEAGE, AND IT IS THIS ROUND'S OWN GENEALOGY BEING BUILT INSIDE THE TABLE
+    // rather than pointed outside it. `studioprog` 0.35 — the 1973 row, three
+    // years earlier, legal under §2's `not later` law and by a distance: this is
+    // the same band, the same producer's chair and the same idea of a record,
+    // minus the meter and the guests. `spacerock` 0.20 — the drone is still
+    // under the middle of every side. `bluesrock` 0.15 (West Hampstead 1966) —
+    // Gilmour's actual schooling, the bends and the vibrato. `progrock` 0.10
+    // (Isle of Wight 1970) — the side-long form as a form. Sum 0.80; the residue
+    // 0.20 is the bleakness, which is a fact about the words and the tempo and
+    // is not inherited from anybody.
+    //
+    // COMPILED, seed 1: 41 bars, 8 sections, 636 EVENTS — THE SPARSEST OF THE
+    // EIGHTEEN NEW ROWS, against 3,978 for `avantfunk` and 1,372 for
+    // `rockopera` next door in this same Floyd chain. That is what "slower,
+    // longer, bleaker" ought to look like on a note count, and it is the one
+    // place in this round where the compiled record and the prose agree without
+    // anybody arranging it: 41 bars carrying 636 events is fifteen and a half
+    // notes a bar across nine voices, which is a band mostly not playing. Fit r2
+    // 0.841, residue 0.128 — comfortably under the catalogue median of 0.165,
+    // which is the fit tool saying, correctly, that this record is very largely
+    // its own previous record.
+    bleakprog: {
+      label: "London 1976",
+      near: "spacerock",
+      plan: "arc",
+      bpm: 116,
+      bars: 12,
+      voices: 3,
+      parents: { studioprog: 0.35, spacerock: 0.2, bluesrock: 0.15, progrock: 0.1 },
+      instr: ["clean_guitar", "warm_pad", "solo_vox"],
+      bassInstr: "finger_bass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 4 : v === 1 ? 0 : 8),
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 0, 0, 0, 6, 6, 3, 3, 0, 0, 4, 4],
+      mode: MODES.dorian,
+      scale: MODES.dorian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "pedal",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        k: [7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0],
+        h: [5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0]
+      },
+      tone: { wave: "sawtooth", cut: 1400, q: 1.5, atk: 0.05, rel: 2.2, gain: 0.22, verb: 0.6 },
+      fx: ["echo", "wah"],
+      words: [
+        "the guitar, four notes, the whole side",
+        "the pad, one chord under it for bars at a time",
+        "the voice, low, one line every four bars"
+      ],
+      word: (v, s) => (v === 0 ? [[keep(0, 6)], [keep(0, 6), transpose(3)], [keep(0, 10)], [invert(4), keep(0, 6)]][s % 4]
+                    : v === 1 ? [keep(0)]
+                    : [drop(3), transpose(-5)]),
+      dyn: "agogic",
+      family: "band",
+    },
+
+    // ROCK OPERA — Provence 1979. Pink Floyd, The Wall: Super Bear Studios at
+    // Berre-les-Alpes and Studio Miraval at Correns, April to November 1979,
+    // Harvest in Britain and Columbia in America, released the 30th of November
+    // 1979. A double record that tells one story, and the last thing this band
+    // did as a band.
+    //
+    // THE LABEL IS PROVENCE AND IT IS LITERALLY TRUE, which is the only reason it
+    // is allowed. The band cut this record in the south of France as TAX EXILES —
+    // that is why it was made there and it is a fact about the record, not a
+    // detail. It is also forced: `atlas.gate.js` G6b holds (place, year) to being
+    // a KEY, `London 1979` is `newwave`'s and `Los Angeles 1979` is
+    // `spaceopera`'s, so the two obvious dots were both taken and the row had to
+    // find its NEXT TRUE FACT. It found a room instead of a city, which is this
+    // catalogue's stated preference: a true room beats a false city every time,
+    // and nothing here pretends the band is French. Nothing pretends it is a
+    // French record. It says where the tape was rolling. AND THE DOT WAS ALREADY
+    // DRAWN — the map has carried Provence since the medieval round, where it
+    // holds `troubadour` (Provence 1210), so one place now carries two records
+    // seven hundred and sixty-nine years apart, both of them somebody singing a
+    // long story to a crowd that already knows it.
+    //
+    // CITE THE TEMPO, BECAUSE IT IS THE BEST NUMBER IN THE FLOYD GROUP. Thirteen
+    // transcriptions of "Another Brick in the Wall" are in the MIDI trove and the
+    // spread is 102, 104, 106, 109, 109, 109, 109, 109, 109, 109, 109, 120, 120.
+    // EIGHT OF THIRTEEN READ EXACTLY 109, which is this row's `bpm`. That is the
+    // same species of evidence `minneapolissound` took for its 120 — five
+    // independent transcriptions of "1999" reading 119, 120, 120, 120, 120 — and
+    // it is the strongest kind this corpus produces: not a median of a band, a
+    // consensus of strangers on one song. The two 120s are the sequencer default
+    // and the three low readings are the same groove counted lazily.
+    //
+    // THE ROW IS THE ARENA NARRATIVE, AND THE CAST SAYS SO. `drumkit: "power"`
+    // with a written `fill` that walks the toms — `t` at steps 8 and 10, `m` at
+    // 12, `l` at 14 — which is the gated tom fall this record is built out of.
+    // `ahh_choir` is SEATED AS A CHAIR rather than left to a guest draw, because
+    // the choir is what a listener names first about this record and a chair is
+    // how the table says a thing is not optional. `overdrive_guitar` is declared
+    // FIRST, so the solo is the point; Door 5's rule that "an amplifier is never
+    // dealt" then hands every guest the host's own first-named guitar, and the
+    // measured seed-1 record seats OVERDRIVE ON THREE CHAIRS AND NO CLEAN ONE.
+    // That is the correct outcome for a record with no acoustic guitar audible
+    // anywhere on it.
+    //
+    // AND `drops: true`, WHICH THREE ROWS IN 500 DECLARE — `balearic`, `grunge`
+    // and this one. It cuts a `breakdown` section at `lvl: hush` into the form,
+    // and the compiled record comes out at TWELVE SECTIONS, the most of the
+    // eighteen new rows (the next is eleven, and `studioprog` and `bleakprog`
+    // have eight). `drops` is why. A record whose whole subject is a wall going
+    // up brick by brick is a record made of things stopping, and the form field
+    // is where that lives rather than in the prose.
+    //
+    // THE DYNAMIC FIGURE: `backbeat`, argued plainly rather than reached for.
+    // There is a temptation on a Floyd row to take something atmospheric, and it
+    // would be wrong here: the biggest hit on this record is a disco-adjacent
+    // groove with a New York session feel and a school choir on top, and what
+    // that groove has is two and four. FIGURES puts it exactly — "a soul, r&b or
+    // rock line does not lean on the barline, it leans where the snare is" —
+    // and the measurement agrees: 246 accents seated at STEPS 4 AND 20, which are
+    // the second and fourth quarters of the two bars. `disco` (New York 1977),
+    // declared here as a parent, takes the same figure, and this is one place
+    // where sharing a figure with a parent is the finding rather than a failure.
+    //
+    // `musicdrama` (Munich 1865) AT 0.10 IS THE EDGE WORTH A SENTENCE. A
+    // narrative told across a whole work, with themes that recur and return
+    // transformed, is Wagner's idea before it is anybody's, and this record does
+    // it literally — the same melodies come back four sides later with different
+    // words. The catalogue had exactly one row declaring `musicdrama` before now
+    // (`impressionism`) and no rock row at all. Ten per cent is a small weight
+    // for a large idea, and it is small on purpose: this record borrows the
+    // FORM and none of the harmony, none of the orchestra and none of the voices.
+    //
+    // LINEAGE: `bleakprog` 0.30 — the 1976 row, the same band three years on,
+    // and the minor cycles and the bleakness carried straight over. `disco` 0.15
+    // — the groove, measured above. `progrock` 0.15 (Isle of Wight 1970) — the
+    // side-long form. `gospel` 0.10 (Chicago 1932) — the choir, which is where a
+    // massed `ahh_choir` behind a rock band comes from whatever the band thinks.
+    // `musicdrama` 0.10 — above. Sum 0.80; the residue 0.20 is the staging: the
+    // inflatables, the film and the actual wall, none of which is music and all
+    // of which is why this record sounds the way it does. Compiled: 39 bars, 12
+    // sections, 1,372 events, alphabet [5,6,7,8]. Fit r2 0.793, residue 0.140.
+    //
+    // WHAT IT HAS THAT `spacerock` DOES NOT: a story. Concretely — `plan:
+    // "song"` against an arc, `drops`, a written tom fill, a power kit, a choir
+    // and a lead voice, 109 against 70, and a backbeat where spacerock swells.
+    // The Floyd rows in this table now run 1967, 1973, 1973, 1976, 1979 and 1987,
+    // and this is the one where the band stopped making sides and started making
+    // scenes.
+    rockopera: {
+      label: "Provence 1979",
+      near: "progrock",
+      plan: "song",
+      bpm: 109,
+      bars: 8,
+      voices: 3,
+      parents: { bleakprog: 0.3, disco: 0.15, progrock: 0.15, gospel: 0.1, musicdrama: 0.1 },
+      instr: ["overdrive_guitar", "ahh_choir", "solo_vox"],
+      bassInstr: "picked_bass",
+      drumkit: "power",
+      drops: true,
+      entry: v => (v === 0 ? 4 : v === 1 ? 0 : 0),
+      reg: v => (v === 0 ? 1 : v === 1 ? 0 : 0),
+      realize: v => (v === 1 ? "chord" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 0, 6, 6, 0, 0, 4, 4],
+      mode: MODES.aeolian,
+      scale: MODES.aeolian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        o: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 7, 0, 9, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [0, 0, 6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0, 6, 0]
+      },
+      fill: {
+        t: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+        m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        l: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      tone: { wave: "sawtooth", cut: 2000, q: 1.4, atk: 0.008, rel: 1.4, gain: 0.28, verb: 0.5 },
+      fx: ["echo"],
+      words: [
+        "the guitar solo, which is the point of the record",
+        "the choir, holding the chord, the size of the room",
+        "the voice, telling the story"
+      ],
+      word: (v, s) => (v === 0 ? [[], [fill(1)], [fill(2)], [fill(2), rotate(2)]][s % 4]
+                    : v === 1 ? [keep(0, 8)]
+                    : [drop(2)]),
+      dyn: "backbeat",
+      family: "band",
+    },
+
+    // STADIUM PROG — London 1987. Pink Floyd, A Momentary Lapse of Reason: most
+    // of it cut on Gilmour's own houseboat studio, the Astoria, moored on the
+    // Thames at Hampton, with the rest finished in Los Angeles; EMI in Britain,
+    // Columbia in America, released the 7th of September 1987. THE LABEL NAMES
+    // THE ERA'S FIRST RECORD AND THE ROW IS THE ERA — this row runs forward to
+    // The Division Bell in 1994 and to the Pulse tours, which is the same band,
+    // the same producer, the same rack and the same fretless. Waters gone, and a
+    // Floyd that is a production rather than a group.
+    //
+    // WHAT IT IS, AND EVERY DIFFERENCE FROM THE OTHER FOUR FLOYD ROWS IS A FIELD.
+    // `family: "studio"` where `englishpsych`, `studioprog`, `bleakprog` and
+    // `rockopera` are all `band` — this is the digitally produced one, cut to a
+    // click with session players filling the chairs the band no longer had, and
+    // the `studio` dynamics row (a hand editing a machine) is the honest reading
+    // of that. `bassInstr: "fretless_bass"`, and this is THE FIRST ROW IN 500 TO
+    // SEAT ONE: grep the catalogue and `fretless_bass` appears in exactly this
+    // file. It is the right instrument and it is also the era's signature — a
+    // fretless sliding under a clean guitar is what every 1987 record with a
+    // budget sounded like. `fx: ["chorus"]` is the rack, one effect across the
+    // whole record, which is what a rack was. `drumkit: "power"` is the gate.
+    // `warm_pad` plus a clean guitar at `maxHold: 4` and `verb: 0.55` is the
+    // WIDTH — four bars to a chord, everything held, nothing dry.
+    //
+    // `guests: "native"` (Door 3) AND WHY IT IS HERE. Without it, the guest draw
+    // seated a SAMPLED HARPSICHORD on this row's counter-line, which is the exact
+    // fault Door 3 was written for: a machine-era record handed an acoustic
+    // curiosity because the draw did not know what room it was in. With it the
+    // guest arrives on a saw, which is what an Emulator II and a D-50 are. Four
+    // rows in this round declare it — `fmpop`, `fmsoul`, `gospelpop` and this
+    // one — and all four are records made out of synthesisers.
+    //
+    // `bpm: 96` IS A JUDGEMENT AND THE CORPUS COULD NOT SETTLE IT, said plainly
+    // rather than dressed up. Four "learning to fly" files are in the trove and
+    // they read 84, 117, 120 and 120 — a spread of 36 with no consensus anywhere
+    // in it — AND TOM PETTY HOLDS THE SAME SONG TITLE, released in the same
+    // period, so the trove cannot tell the two records apart by filename and
+    // neither can this row. Quoting a number out of that set would be quoting
+    // somebody else's record with a coin toss on top. 96 is chosen instead:
+    // slower than `rockopera`'s measured 109, faster than `aor`'s 92, which is
+    // where a record that wants to be enormous and unhurried at once has to sit.
+    // The 51 Pink Floyd files in the corpus median 120 and that is the whole band
+    // across thirty years, so it settles nothing here either.
+    //
+    // THE DYNAMIC FIGURE: `arch`, AND THE SHARED FIGURE IS CONCEDED RATHER THAN
+    // DODGED. `aor` (Los Angeles 1982) is this row's declared parent at 0.20 and
+    // it also takes `arch`; the temptation is to reach for a different word to
+    // make the row look distinct, and that would be inventing evidence. The
+    // figure is right for both: FIGURES calls `arch` "the sung line's own shape
+    // and the one every singing teacher draws in the air", and notes that "a
+    // studio pop record and an opera aria are both arches; the difference between
+    // them is the touch on top, which is what that layer is for." So the
+    // difference between this row and `aor` is NOT the figure and is not claimed
+    // to be. It is the cast and the width: aor seats `synth_strings_1`, a
+    // `marimba` and a clean guitar at `verb` unstated, with an `eighths` bass on
+    // a `room` kit; this row seats a warm pad, a clean guitar and a lead voice
+    // over a FRETLESS on a POWER kit at `verb: 0.55`, with `maxHold: 4` where aor
+    // holds nothing. Same shape, different building. Compiled: 154 accents at
+    // steps 0 and 16, alphabet [5,6,7,8].
+    //
+    // LINEAGE, AND THIS IS THE ROW THAT CLOSES THE ERA CHAIN. `bleakprog` 0.30 —
+    // 1976, and it is the larger debt because the guitar language, the tempo and
+    // the held minor chords all come from there rather than from The Wall.
+    // `rockopera` 0.20 — 1979, the arena scale and the power kit. `aor` 0.20 —
+    // Los Angeles 1982, the production itself: the gated snare, the chorused
+    // clean guitar, the record aimed at a stadium and a car radio at once.
+    // `sophistirock` 0.10 (London 1986) — the year before, and the same taste for
+    // a fretless and a jazz chord in a pop record. Sum 0.80; the residue 0.20 is
+    // the production, and the fit tool agrees more than it usually does.
+    //
+    // FIT r2 0.867, RESIDUE 0.115 — THE SECOND-BEST FIT OF THE EIGHTEEN NEW ROWS,
+    // behind `speedmetal` at 0.104, and well under the catalogue median of 0.165.
+    // That is worth reporting honestly rather than quietly: the machine is saying
+    // that this record is very largely its own ancestors, which is the common
+    // complaint about it and is true. What the residue buys is the production —
+    // the Astoria, the reverbs, the session drummers — and a residue of 0.115 is
+    // this catalogue's way of saying "not much was invented here". The row is in
+    // the table because the ERA is real and the sound is distinct, not because
+    // the writing was.
+    //
+    // WHAT IT HAS THAT `spacerock` DOES NOT: everything that costs money. A
+    // fretless, a power kit, a chorus rack, a native guest, four voices of
+    // production and `family: "studio"` instead of `band`. `spacerock` (London
+    // 1973) is the 1971 instrumental-space era and it was already in the table
+    // when this round began, which is why Paul's six Floyd eras became five rows.
+    // This one is the far end of that chain, fourteen years and one lawsuit
+    // later.
+    stadiumprog: {
+      label: "London 1987",
+      near: "aor",
+      plan: "song",
+      bpm: 96,
+      bars: 8,
+      voices: 3,
+      parents: { bleakprog: 0.3, rockopera: 0.2, aor: 0.2, sophistirock: 0.1 },
+      instr: ["clean_guitar", "warm_pad", "solo_vox"],
+      bassInstr: "fretless_bass",
+      drumkit: "power",
+      guests: "native",
+      entry: v => (v === 0 ? 0 : v === 1 ? 0 : 4),
+      reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 3, 5, 4, 0, 3, 4, 4],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [5, 0, 4, 0, 5, 0, 4, 0, 5, 0, 4, 0, 5, 0, 4, 0]
+      },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.2, atk: 0.01, rel: 1.6, gain: 0.24, verb: 0.55 },
+      fx: ["chorus"],
+      words: [
+        "the guitar, clean and wide, the bend at the top",
+        "the pad, the width, four bars a chord",
+        "the fretless, answering, up in the middle"
+      ],
+      word: (v, s) => (v === 0 ? [[], [fill(1)], [rotate(4)], [fill(1), drop(2)]][s % 4]
+                    : v === 1 ? [keep(0)]
+                    : [drop(3), transpose(7)]),
+      dyn: "arch",
+      family: "studio",
+    },
+
     // GREBO [Ned's Atomic Dustbin]. THE JOKE IS LITERAL: two bass voices,
     // not one doubled — `voices:3` puts a fuzzed guitar riff over TWO
     // independent basslines a fifth apart in register, one pulsing the root
@@ -13184,6 +14420,129 @@
       word: v => (v === 1 ? [rotate(5), transpose(-9)] : []),
       fx: ["echo"],
       dyn: "backbeat",
+    },
+
+    // AVANT-FUNK — New York 1980. Talking Heads, Remain in Light, cut at Compass
+    // Point in Nassau and Sigma Sound in Philadelphia, produced by Brian Eno,
+    // released by Sire, 8 October 1980.
+    //
+    // ONE ROW AND NOT TWO, AND THAT IS THE POINT. The 1977 record was refused a
+    // row of its own: its nervous art-punk is already spread across `punk` (New
+    // York 1976), `newwave` (London 1979) and `beatgroup`, and a fourth row saying
+    // those three things is a duplicate. The 1980 record is different in kind —
+    // Afro-derived interlocking polyrhythm over ONE CHORD — and nothing in 500
+    // rows holds it.
+    //
+    // `harmony: "modal"` WITH NO `roots` AND NO `prog` IS THE ROW. There are no
+    // changes anywhere on this record; the row says so by writing nothing. To be
+    // accurate about how unusual that is: 147 of the 500 rows do the same, so "no
+    // changes" is ordinary here, not rare. What is rare is the company it keeps.
+    // Counted 2026-09-07: only five rows combine no changes with four or more
+    // chairs and a drum kit; the other four are `crimejazz` and three film scores.
+    // This is the catalogue's only BAND — guitar, organ, voice, synth, finger
+    // bass, room kit — with four chairs and nowhere to go.
+    //
+    // MEASURED, THE MIDI CORPUS, 2026-09-07. Fifty-three Talking Heads files,
+    // median 123, and ALL FIFTY-THREE IN 4/4 — which for a record whose reputation
+    // is polyrhythm is worth writing down: the cross-rhythm is in the parts, not
+    // the meter, which is what this row does with four staggered loops in one 4/4
+    // bar. "Once in a Lifetime" reads 118, 120 and 125 across three
+    // transcriptions, and "Psycho Killer" 110 twice. `bpm: 122` sits one under the
+    // median and inside that song's readings.
+    //
+    // CHORDONOMICON DOES NOT HOLD THIS WORD. There is NO `avant-funk` label in the
+    // mirror — zero songs — and that is said rather than hidden: it is a fact
+    // about the name, not the music. "Avant-funk" is a critic's coinage the
+    // 679,681-song tag census never adopted. The row keeps it: it is the term the
+    // music is discussed under, and a key is a genre term by the 2026-09-01 law. A
+    // row with no census stands on its corpus and its record alone.
+    //
+    // FOUR CHAIRS, EACH A LOOP THAT NEVER VARIES. `entry: [0, 2, 4, 6]` staggers
+    // them two steps apart so they enter one at a time; every `word` is built from
+    // `keep` (`keep(0,3,6,10,13)`, `keep(1,5,9,13)`, `keep(0)`), `maxHold: 1`
+    // forbids a note lasting past its step, and `artic: "staccato"` keeps every
+    // part short. That is `minimalism` (New York 1967, declared at 0.15) doing
+    // what Eno and Byrne said they were doing, written in fields rather than a
+    // sleeve note.
+    //
+    // THE DYNAMIC FIGURE: `syncope`, AND HERE THE ROW IS LOUDEST. Measured at seed
+    // 1: 546 ACCENTS, against 154 apiece for `deadpanglam`, `arenafunk` and
+    // `artpunk`, seated at steps 6, 14 and 22 — off the beat every time. FIGURES:
+    // "Funk, afrobeat and ska are all one idea said three ways: the beat is where
+    // the weight is NOT." Here it arrives on a record made by an art-school band
+    // from Rhode Island, which is the row's whole subject.
+    //
+    // LINEAGE: `afrobeat` (Lagos 1971) at 0.30 — the declared `near`, the
+    // interlocking guitars, the one-chord vamp held a whole side. `funk`
+    // (Cincinnati 1967) at 0.20 — the sixteenth bass and the chank. `newwave`
+    // (London 1979) at 0.15 — the shouted voice, the clipped guitar, the band's
+    // own three earlier records. `minimalism` (New York 1967) at 0.15 — the
+    // process made audible. Sum 0.80; the residue 0.20 is four white people
+    // playing it. That is not a joke; it is the honest name for what this record
+    // adds.
+    //
+    // THE FIT: r2 0.849, residue 0.125 — well under the catalogue median of 0.165
+    // and below its p25 of 0.132. THE BEST-FITTING ROW OF THE FIVE, and fourth of
+    // the eighteen behind `speedmetal`, `stadiumprog` and `progfolk`. The machine
+    // agrees here, as it does when a row's parents are audible in tempo, kit
+    // density and bass motion rather than in a voice or a scale. At seed 1 it
+    // renders 3,978 events over 68 bars, the largest of the round: four loops that
+    // never stop is a lot of notes.
+    avantfunk: {
+      label: "New York 1980",
+      near: "afrobeat",
+      plan: "song",
+      bpm: 122,
+      bars: 4,
+      voices: 4,
+      parents: { afrobeat: 0.3, funk: 0.2, newwave: 0.15, minimalism: 0.15 },
+      instr: ["clean_guitar", "percussive_organ", "solo_vox", "polysynth"],
+      bassInstr: "finger_bass",
+      drumkit: "room",
+      entry: v => [0, 2, 4, 6][v],
+      reg: v => (v === 1 ? 0 : v === 2 ? 0 : v === 3 ? 1 : 0),
+      realize: v => (v === 3 ? "chord" : "line"),
+      part: ["riff", "counter", "lead", "stab"],
+      mode: MODES.mixo,
+      scale: MODES.mixo,
+      harmony: "modal",
+      artic: "staccato",
+      maxHold: 1,
+      bassStyle: "sixteenths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        p: [0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0],
+        o: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 6, 0, 8, 0, 0, 0, 0, 0, 6, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [5, 0, 6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0, 6, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 2700,
+        q: 1.5,
+        atk: 0.004,
+        rel: 0.28,
+        gain: 0.24,
+        verb: 0.3
+      },
+      fx: ["echo"],
+      words: [
+        "the guitar loop, sixteen steps, never varied",
+        "the organ, the counter-loop, two steps late",
+        "the voice, shouted over the top",
+        "the synth, the chord, once a bar"
+      ],
+      word: (v, s) => (v === 0 ? [keep(0, 3, 6, 10, 13)]
+                    : v === 1 ? [rotate(2), keep(1, 5, 9, 13)]
+                    : v === 2 ? [[], [rotate(4)], [], [rotate(8)]][s % 4]
+                    : [keep(0)]),
+      dyn: "syncope",
+      family: "groove",
     },
 
     // DANCE POST-PUNK [New Order]. Post-punk's own machine chassis, sent
@@ -29081,6 +30440,117 @@
       dyn: "backbeat",
     },
 
+    // BOOGIE ROCK — San Francisco 1977. The Steve Miller Band's Book of Dreams,
+    // Capitol, May 1977 — out of the same 1976 CBS Studios San Francisco sessions
+    // that produced Fly Like an Eagle eight months earlier. The two albums are ONE
+    // BODY OF WORK split into two releases, and this row is both of them. The year on
+    // the label is the second record's because `San Francisco 1976` is `yachtsoul`'s
+    // and `atlas.gate.js` G6b holds (place, year) to being a key; the sessions the
+    // row is about are 1976's.
+    //
+    // MEASURED, THE MIDI CORPUS, 2026-09-07: nine Steve Miller Band files, MEDIAN
+    // 117 — Rockin Me 117, Jet Airliner 121, Swingtown 138, Fly Like an Eagle 100,
+    // The Joker 81. `bpm: 117` is that median exactly. This is the uncommon case
+    // where the corpus SET the field rather than corroborating a guess, and the
+    // spread under it is the band: an 81 and a 138 in one discography. MEASURED,
+    // CHORDONOMICON: there is NO `boogie rock` label in the mirror at all — 1.5
+    // million labels across 679,681 sectioned songs and not one spells it. Said out
+    // loud so the next hand does not go looking for a number that is not there.
+    //
+    // THE ROW IS A SHUFFLE WITH A TAPE ON IT. `swing: 0.14`, `fx: ["echo"]`, `mode:
+    // MODES.mixo` over `scale: SCALES.blues`, and `roots: [0,0,3,3,0,0,4,3]` — I to
+    // IV with the V at the turn, a boogie's own eight bars. And a `polysynth` pad on
+    // the third chair, which is the half of these records that is not a shuffle at
+    // all: the wash under Fly Like an Eagle is a keyboard record's idea, and without
+    // it this row is only a slower `bluesrock`.
+    //
+    // DOOR 5 AND THE AMPLIFIER (scratch/genre-qa/SHIFT-5.md, 2026-09-06: "an
+    // amplifier is never dealt"). The row declares `clean_guitar` and gets clean
+    // guitars — measured at seed 1, clean x2 and no dirty chair anywhere. The chair's
+    // own word says "clean into the crunch" and the row names no `crunch` chip, and
+    // that is a DECISION rather than an omission: Door 5's law is that an amplifier
+    // is a decision, and a record that made none did not make that one. These are
+    // bright rhythm guitars with the dirt kept for a solo this row does not seat, and
+    // the single chip the record spends goes on the tape instead.
+    //
+    // AGAINST `bluesrock` (West Hampstead 1966), the largest declared parent at 0.30
+    // and the row this one is likeliest to be confused with: that is a three-piece
+    // with a harmonica at 105, `overdrive_guitar` declared, `fx: ["crunch"]`,
+    // `maxHold: 4`, a Les Paul sustaining into a valve amp. This is a pop record — a
+    // synthesizer, a tape delay, a picked bass in eighths, a hook that repeats, and a
+    // shuffle that never gets louder than the vocal.
+    //
+    // THE FIGURE: `dyn: "backbeat"`, and the argument for it is a REFUSAL TO BE
+    // CLEVER. A boogie shuffle is a backbeat; that is what a shuffle IS. Six of this
+    // row's neighbours already say the word, and giving this one something exotic
+    // would be a costume rather than a reading. THE COMPILED PROOF, seed 1: 202
+    // accents over the alphabet [5,6,7,8], and the two commonest seats are step 12
+    // (40 accents) and step 4 (34) — the four and the two of a sixteen-step bar,
+    // which is where the snare is. `FIGURES` weights the first onset in each of those
+    // quarters rather than the grid position itself, which is why a swung eighth
+    // still lands the accent.
+    //
+    // LINEAGE: `bluesrock` (West Hampstead 1966) at 0.30 — the twelve-bar played by a
+    // rock band with an amplifier, the chassis. `rock` at 0.20 — the song length, the
+    // hook, the backbeat itself. `blues` at 0.15 — the shuffle and the flattened
+    // alphabet under everything. `psychrock` (San Francisco 1966) at 0.15 — the town,
+    // and the echo: this band came out of that scene and kept its tape delay after it
+    // dropped the jams. Sum 0.80; the residue 0.20 is the studio — the overdubbed
+    // synth wash, the doubled vocal, a pop record built on top of a bar band.
+    //
+    // THE FIT: r2 0.705, residue 0.162 — on the catalogue median of 0.165, the right
+    // place for a row claiming to be an ordinary music made well. The tool
+    // redistributes INSIDE the declared set rather than outside it: rock 0.52 /
+    // bluesrock 0.25 / blues 0.22 / psychrock 0.00, against 0.30 / 0.20 / 0.15 /
+    // 0.15. `nearest()` answers `gfunk` at 0.398, a tempo-and-shuffle coincidence
+    // worth nothing except as a reminder of what the feature vector reads.
+    boogierock: {
+      label: "San Francisco 1977",
+      near: "bluesrock",
+      plan: "song",
+      bpm: 117,
+      bars: 8,
+      voices: 3,
+      parents: { bluesrock: 0.3, rock: 0.2, blues: 0.15, psychrock: 0.15 },
+      instr: ["clean_guitar", "solo_vox", "polysynth"],
+      bassInstr: "picked_bass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 0 : v === 1 ? 2 : 0),
+      reg: v => (v === 1 ? 1 : v === 2 ? 1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["riff", "lead", "pad"],
+      roots: [0, 0, 3, 3, 0, 0, 4, 3],
+      mode: MODES.mixo,
+      scale: SCALES.blues,
+      harmony: "cycle",
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "eighths",
+      swing: 0.14,
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 6, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0]
+      },
+      tone: { wave: "sawtooth", cut: 2100, q: 1.3, atk: 0.005, rel: 0.6, gain: 0.28, verb: 0.3 },
+      fx: ["echo"],
+      words: [
+        "the guitar, the shuffle figure, clean into the crunch",
+        "the voice, a beat behind itself on the tape",
+        "the synth wash, holding the chord under it"
+      ],
+      word: (v, s) => (v === 0 ? [[], [fill(1)], [rotate(2)], [fill(1), rotate(2)]][s % 4]
+                    : v === 1 ? [drop(2)]
+                    : [keep(0, 8)]),
+      dyn: "backbeat",
+      family: "band",
+    },
+
     // HENDRIX — London 1967. "Purple Haze", cut at De Lane Lea and
     // Olympic in the first weeks of 1967: the electric guitar's whole
     // modern vocabulary — controlled feedback, the wah pedal, the
@@ -31866,6 +33336,179 @@
       dyn: "backbeat",
     },
 
+    // ENGLISH PSYCHEDELIA — St John's Wood 1967. Pink Floyd, The Piper at the
+    // Gates of Dawn: cut at Abbey Road Studios NW8 between February and May 1967,
+    // released on EMI Columbia the 5th of August. Barrett's record — one guitar
+    // through a Binson Echorec, a Farfisa, and songs about a gnome, a bicycle and
+    // a cat.
+    //
+    // THE LABEL IS THE STUDIO'S OWN DISTRICT, AND THAT HAS TO BE ARGUED against
+    // this catalogue's own ruling. `grunge` states the rule: a label names "the
+    // room the music came out of rather than the desk it was mixed on", and by
+    // that rule a studio name looks like exactly the wrong kind of fact. It is
+    // not, here. `London 1967` is taken — it is `acidrock`'s, Hendrix and
+    // "Purple Haze", De Lane Lea and Olympic inside the same twelve months — and
+    // `atlas.gate.js` G6b holds (place, year) to being a KEY, so a taken dot
+    // forces the NEXT TRUE FACT rather than a fudge (the softrock/Lagos lesson of
+    // 2026-09-06). And Abbey Road is not a desk this record passed through: the
+    // Floyd were an EMI house band for a decade, signed to the building before
+    // they had a hit, and Piper was written and played in Studio 3 while Sgt
+    // Pepper went up down the corridor. St John's Wood IS the room. Nor is the
+    // dot invented once and abandoned — it carries a second record six years
+    // later on its own merits, `studioprog`, St John's Wood 1973. A place two
+    // records need is a place.
+    //
+    // WHAT THIS ROW HAS THAT THE FOUR PSYCHEDELIC ROWS ABOVE IT DO NOT, field by
+    // field. A CORRECTION FIRST, because the draft this note was written from
+    // asserted it backwards: `psychrock` (San Francisco 1966) does NOT cycle
+    // roots. It declares `harmony: "modal"` with no `roots`, exactly as this row
+    // does, and the difference sits one field lower — psychrock's bass plays
+    // `eighths` and this row's is a `pedal`. Modal over a moving bass is a jam;
+    // modal over a drone is a one-chord freakout, and NONE of the four is modal
+    // over a pedal. `acidrock` (London 1967) is `cycle` on [0,0,3,4] through
+    // SCALES.blues, a twelve-bar with a wah on it; `psychpop` (London 1968)
+    // cycles [0,0,3,3,4,4,0,0] in plain ionian; `orchpsych` (Oklahoma City 1999)
+    // cycles [0,3,4,5] under slow strings. THE ALPHABET is the second difference:
+    // SCALES.majpent under MODES.mixo, where psychrock takes that pentatonic
+    // under ionian — the children's-rhyme tune, which has no fourth and no
+    // seventh in it. THE THIRD is `fx: ["echo","crunch"]`, the Echorec and the
+    // fuzz box, which is neither psychrock's echo-and-tremolo nor acidrock's
+    // wah-and-crunch.
+    //
+    // THE MODE THIS RECORD CANNOT SOUND (2026-09-07, the eighteen-row round;
+    // test/precompose.test.js G14b). This row was written as MODES.mixo and the
+    // gate refused it, with exactly one offender and the offender was this row.
+    // The reasoning is the check's own: `mode` is read in three places
+    // (kernel.js harm(), chordsOf(), bass()) and all three need CHORD ROOTS;
+    // this row is `harmony: "modal"` and has none; and SCALES.majpent has no
+    // seventh in it at all, so the flat seventh mixolydian is named for cannot
+    // sound by either route. Swap mixo for ionian and NOT ONE RENDERED NOTE
+    // MOVES, which is what "decorative" means and why the ceiling is zero.
+    // So the row says `MODES.ionian`, which is the fourth time the catalogue
+    // has made that exact move on that exact evidence: G14b's own list names
+    // `ethiojazz`, `bhangra`, `protopunk` and `rumba` as "the four on
+    // SCALES.majpent — no seventh at all", every one renamed ionian on
+    // 2026-09-02, and `protopunk` is this row's own neighbour one year and one
+    // ocean away. It costs the row nothing it had: a nursery tune has a major
+    // third and a major sixth and no seventh of either kind, which IS ionian,
+    // and the field now names the alphabet the record was always playing.
+    //
+    // THE PARENT NO OTHER ROCK ROW IN 500 DECLARES: `nursery` (London 1744) at
+    // 0.15 — the whole of "Bike", "The Gnome" and "Matilda Mother". Barrett wrote
+    // children's rhymes and put a fuzzbox behind them, and the table has a row for
+    // children's rhymes; grep confirms this is the only file in the catalogue
+    // naming it as an ancestor. LINEAGE otherwise: `psychrock` 0.30, the modal
+    // freakout itself; `garagerock` 0.15 (Portland 1963), the two-chord budget;
+    // `musichallrock` 0.10 (Muswell Hill 1966), the English half, the Kinks doing
+    // the same trick with an upright piano; `drone` 0.10 (New York 1964), the
+    // held pedal under all of it. Sum 0.80; the residue 0.20 is Barrett, who is
+    // not derivable from any of them.
+    //
+    // THE EVIDENCE IS ABSENT AND IS SAID TO BE. The MIDI corpus holds no
+    // "Astronomy Domine" and no "Interstellar Overdrive" — zero hits, checked.
+    // The 51 Pink Floyd files it does hold median 120, and that is the band
+    // across thirty years, not this record. So `bpm: 128` IS A JUDGEMENT and is
+    // stated as one: a fast, brittle, garage tempo, above psychrock's 112 and
+    // acidrock's 104, because Piper was made by a band still playing UFO twice a
+    // week. CHORDONOMICON DOES NOT CORROBORATE IT EITHER, and saying so is more
+    // honest than pretending it does: `psychedelic rock` there is 3,312 songs at
+    // a median year of 1971, 80 per cent MAJOR, I IV I IV on top at 200 hits.
+    // That is what psychedelia BECAME four years later, a major-key two-chord
+    // rock label, and it is precisely what this row is not. This row has no roots
+    // at all.
+    //
+    // THE DYNAMIC FIGURE: `lean`, DECLARED and not left absent. FIGURES' own
+    // comment says a row "may still quote it on purpose" where its family took
+    // something else, and names march, waltz, polka, musette and riff as the rows
+    // that do. NINE rows declare it today, counted 2026-09-07 — those five plus
+    // `kriti`, `varnam`, this round's `progmetal` and this one — so the comment
+    // is four names behind its own table, which is worth writing down here.
+    // EVERY ROCK ROW THIS ONE SITS BESIDE TAKES `backbeat` — checked: psychrock,
+    // acidrock, garagerock and musichallrock, all four — and the reason to refuse
+    // it here is that these tunes are folk tunes. A children's rhyme leans on its
+    // first note and gives it back across the bar, which is FIGURES' own gloss on
+    // `lean` ("the ordinary shape of a folk tune, a fiddle reel and a raga
+    // line"). The kit plays a backbeat on this record; the melody does not.
+    // Compiled at seed 1: 112 accents, every one on the
+    // barline at steps 0 and 16, alphabet [5,6,8].
+    //
+    // THE FIT DISAGREES AND IS REPORTED, NOT TUNED. `tools/genealogy.js` fits
+    // this row psychrock 0.59 / nursery 0.20 / garagerock 0.19 / drone 0.02 /
+    // musichallrock 0.00 against the declared 0.30 / 0.15 / 0.15 / 0.10 / 0.10.
+    // The machine wants psychrock at twice the claim, which is what a vector of
+    // tempo, kit density, bass motion and mode will say about two modal
+    // pentatonic rock rows; what it cannot see is the words. Fit r2 0.570,
+    // residue 0.204 — above the catalogue median of 0.165, the right direction
+    // for a record nobody has managed to imitate.
+    //
+    // THE MEDDLE ROW DOES NOT EXIST BECAUSE IT ALREADY DOES. Six Floyd eras were
+    // on the table and five were written: the 1971 instrumental-space era IS
+    // `spacerock` (London 1973) — 70 bpm, `plan: "arc"`, `rate: 0.5`, a pedal
+    // bass under a slow blues-schooled guitar on a held drone — whose own note
+    // opens "SPACE ROCK [Pink Floyd]" and which `balearic` already cites as
+    // "Pink Floyd's rung is `spacerock`, London 1973, already here." What this
+    // row has that spacerock does not is everything above: a song rather than an
+    // arc, 128 against 70, a kit with a backbeat, and three sung words.
+    englishpsych: {
+      label: "St John's Wood 1967",
+      near: "psychrock",
+      plan: "song",
+      bpm: 128,
+      bars: 8,
+      voices: 3,
+      parents: {
+        psychrock: 0.3,
+        garagerock: 0.15,
+        nursery: 0.15,
+        musichallrock: 0.1,
+        drone: 0.1
+      },
+      instr: ["clean_guitar", "percussive_organ", "solo_vox"],
+      bassInstr: "picked_bass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 0 : v === 1 ? 2 : 0),
+      reg: v => (v === 1 ? 0 : v === 2 ? 0 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      mode: MODES.ionian,
+      scale: SCALES.majpent,
+      harmony: "modal",
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "pedal",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        t: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      },
+      kitVel: {
+        k: [8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 2000,
+        q: 1.6,
+        atk: 0.006,
+        rel: 0.8,
+        gain: 0.26,
+        verb: 0.45
+      },
+      fx: ["echo", "crunch"],
+      words: [
+        "the guitar, the slide over the drone, echo on every note",
+        "the organ, one chord, the whole side",
+        "the voice, a nursery rhyme, said straight"
+      ],
+      word: (v, s) => (v === 0 ? [[fill(1)], [rotate(4), fill(1)], [invert(5)], [reverse()]][s % 4]
+                    : v === 1 ? [keep(0)]
+                    : [keep(0, 2, 4, 6, 8, 10, 12, 14)]),
+      dyn: "lean",
+      family: "band",
+    },
+
     // THE VELVET UNDERGROUND — New York 1966. The Velvet Underground
     // & Nico, cut at Scepter Studios in April 1966 for Warhol's
     // pocket change: Cale's viola drone from La Monte Young's Dream
@@ -31933,6 +33576,128 @@
                     : v === 1 ? [keep(0), spread(4)]
                     : [[], [fill(1)]][s % 2]),
       dyn: "backbeat",
+    },
+
+    // DEADPAN GLAM — London 1972. Lou Reed, Transformer, cut at Trident Studios in
+    // Soho in August 1972, produced by David Bowie and Mick Ronson, released by
+    // RCA in November 1972.
+    //
+    // THE ROW EXISTS BECAUSE THE VELVET UNDERGROUND ROW ALREADY DOES. `protopunk`
+    // (New York 1966) opens its own note "THE VELVET UNDERGROUND — New York 1966.
+    // The Velvet Underground & Nico, cut at Scepter Studios in April 1966", so the
+    // band is spoken for and the honest second Reed row is the SOLO record. That
+    // is why `protopunk` is this row's largest declared parent at 0.35 and not its
+    // subject.
+    //
+    // AND THE LABEL IS LONDON BECAUSE THE RECORD IS. Ronson arranged it and played
+    // the guitar; Trevor Bolder and Woody Woodmansey came in off Bowie's own band;
+    // Herbie Flowers played the basses. That is a London session with an American
+    // singing over it. `New York 1972` is `singersongwriter`'s anyway; the date is
+    // not the reason this says London.
+    //
+    // MEASURED, THE MIDI CORPUS, 2026-09-07. Fourteen files answer to "Walk on the
+    // Wild Side" and FIVE INDEPENDENT TRANSCRIPTIONS READ 98, every one of them in
+    // 4/4 and every one of them major. That is the same species of evidence
+    // `minneapolissound` (Minneapolis 1982) stands on — "FIVE INDEPENDENT
+    // TRANSCRIPTIONS OF '1999' READ 119, 120, 120, 120 AND 120: bpm 120 is not a
+    // taste" — and it is where `bpm: 98` and `mode: MODES.ionian` come from.
+    //
+    // MEASURED, CHORDONOMICON. `glam rock` is a fat label — 3,410 songs, median
+    // year 1982, 2,630 of them major (77%) — and its top four-chord window is I IV
+    // I IV at 175 hits, with V IV I V third at 75. `roots` is exactly that: I IV I
+    // IV I IV V IV, the first window shuttled and the third used as the turn.
+    //
+    // THE CAST IS THE ARGUMENT. `bassInstr: "contrabass"` with `bassStyle:
+    // "walk"`, because the Wild Side bass is a double bass and an electric played
+    // together, and their countermelody is the hook of the record. A WALKING
+    // UPRIGHT ON A GLAM RECORD is the one thing no neighbour has: `glam` (London
+    // 1971) and `musichallrock` (Muswell Hill 1966) both put eighths on a picked
+    // bass, and `protopunk` names no bass instrument at all. `tenor_sax` is the
+    // baritone saxophone solo seated on the nearest reed the font holds, which is
+    // a compromise and is said as one.
+    //
+    // THE MOUTH, AND A CLAIM THAT WAS PROSE UNTIL TODAY. `{
+    // ...MOUTHS.confessional, vib: 0 }`. `protopunk`'s note ends "WHO SINGS:
+    // deadpan — the confessional mouth with the vibrato off is Reed's whole
+    // address", but that row's `tone.mouth` is a bare `MOUTHS.confessional` and
+    // the table gives confessional `vib: 0.28`. The vibrato was never actually
+    // off. Counted 2026-09-07: this is THE ONLY ROW OF THE 500 that writes `vib:
+    // 0`, so the deadpan the 1966 row argued for arrives as a field here for the
+    // first time.
+    //
+    // LINEAGE: `protopunk` (New York 1966) at 0.35 — the same writer, the same
+    // flatness, the same songs about the city's actual subjects. `glam` (London
+    // 1971) at 0.30 — one year earlier, the same town, the two men holding the pen
+    // here. `doowop` (Harlem 1955) at 0.10 for the backing vocals, sung without
+    // any of the swoon. `musichallrock` (Muswell Hill 1966) at 0.10 for the
+    // narrated character song, the form every lyric takes. Sum 0.85; the residue
+    // 0.15 is the deadpan — nothing above this row declines to sing.
+    //
+    // THE DYNAMIC FIGURE: `agogic`, against `protopunk`'s `backbeat`, and the swap
+    // is the row. FIGURES calls agogic "the last note of the phrase leans and
+    // lengthens" and "the same shape a ballad's line and a romantic melody end
+    // with". A narrated line ARRIVES at its last word — "...on the wild siiiide" —
+    // instead of leaning where the snare is. The kit still plays 2 and 4; the
+    // voice no longer does.
+    //
+    // DOOR 5 AND THE FIT. At seed 1 this row seats TWO CLEAN GUITARS and no dirty
+    // one, because it names `clean_guitar` and an amplifier is never dealt
+    // (precompose.js door 5, 2026-09-06). The genealogy fit reads r2 0.752,
+    // residue 0.163 — just under the catalogue median of 0.165 over 428 children,
+    // which is the right answer for a famous voice over a plain band.
+    deadpanglam: {
+      label: "London 1972",
+      near: "protopunk",
+      plan: "song",
+      bpm: 98,
+      bars: 8,
+      voices: 3,
+      parents: { protopunk: 0.35, glam: 0.3, doowop: 0.1, musichallrock: 0.1 },
+      instr: ["solo_vox", "clean_guitar", "tenor_sax"],
+      bassInstr: "contrabass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 0 : v === 1 ? 0 : 4),
+      reg: v => (v === 1 ? 0 : v === 2 ? 1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 3, 0, 3, 0, 3, 4, 3],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "walk",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [6, 0, 4, 0, 5, 0, 4, 0, 6, 0, 4, 0, 5, 0, 4, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 1900,
+        q: 1.1,
+        atk: 0.008,
+        rel: 0.7,
+        gain: 0.26,
+        verb: 0.24,
+        mouth: { ...MOUTHS.confessional, vib: 0 }
+      },
+      words: [
+        "the voice, telling it flat, arriving on the last word",
+        "the guitar, strummed, two chords and a turn",
+        "the baritone answer, one phrase every other bar"
+      ],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [], [drop(2)]][s % 4]
+                    : v === 1 ? [keep(0, 4, 8, 12)]
+                    : s % 2 ? [excerpt(8, 8)] : []),
+      dyn: "agogic",
+      family: "band",
     },
 
     // THE ZODIAK — Berlin 1968. The Zodiak Free Arts Lab, opened at
@@ -33278,6 +35043,258 @@
       fxRhythm: true,
     },
 
+    // ARENA FUNK — Minneapolis 1984. Prince and the Revolution, Purple Rain,
+    // Warner Bros., 25 June 1984 — cut across 1983 and 1984 between the Minnesota
+    // studios and the First Avenue stage, and released as a film soundtrack.
+    //
+    // THE ROW IS THE SCALE OF THE ROOM, which is why it is a second Minneapolis
+    // row. `minneapolissound` (Minneapolis 1982) is 1999: one man, a Linn LM-1, a
+    // home studio, `drumkit: "electronic"`, `dyn: "syncope"`, `fx: ["flanger"]`,
+    // `verb: 0.18`, and the guitar seated SECOND behind the Oberheim. This row is
+    // the same man two years later playing a film soundtrack in an arena:
+    // `drumkit: "power"`, `dyn: "swell"`, `fx: ["crunch"]`, `verb: 0.45`, a crash
+    // on both backbeats, a tom fill in its own `fill` lane, a `sus4` on the V, and
+    // THE GUITAR SEATED FIRST.
+    //
+    // MEASURED, THE MIDI CORPUS, 2026-09-07, AND THE TEMPO IS THE INTERESTING
+    // ARGUMENT, because the record has two poles and neither of them is the album.
+    // Seven independent transcriptions of "When Doves Cry" ALL READ 126. Three of
+    // the title song read 58, 60 and 60 — a 12/8 ballad notated half-time. An
+    // album row is neither, so `bpm: 113` is THE MEDIAN OF ALL 176 PRINCE FILES in
+    // the corpus: p25 90, MED 113, p75 135. `minneapolissound`'s own 120 was
+    // measured the same way over a 1982-only set of 50 files, so the two rows
+    // differ by seven bpm for a stated reason rather than by taste.
+    //
+    // THE CHORD IS THE PARENT'S OWN SUSPENSION MOVED. `roots` is I I vi vi V V I I
+    // and the `prog` puts `q: "sus4"` on the first bar of the V.
+    // `minneapolissound` argues the device itself — "the stab carries a sus4
+    // because the Minneapolis chord is a suspension that never quite resolves" —
+    // and this row hangs that suspension on the dominant, where a gospel cadence
+    // puts it. No census supports the shape: Chordonomicon's `minneapolis sound`
+    // label (178 songs, 70% major) tops out at I IV I IV, which is 1999 and not
+    // this record.
+    //
+    // DOOR 5, AND THE CASE PAUL NAMED AS WORKING. This row declares
+    // `crunch_guitar` and at seed 1 seats CRUNCH GUITARS ON THREE CHAIRS. Door 5
+    // (precompose.js, 2026-09-06) says an amplifier is never dealt, citing the
+    // precedent exactly: "minneapolissound declares crunch_guitar and stays
+    // crunchy, which is the case Paul names as working". Paul's words were "it
+    // works for Minneapolis for example because prince used that sound". Two years
+    // on he is still using it, so the door extends the precedent rather than
+    // undoing it.
+    //
+    // THE DYNAMIC FIGURE: `swell`, and it widens the record. FIGURES says the
+    // swell "gives a bar as many levels as it has notes" and that "Romantic, film
+    // and gospel all build the same way and none of them could say it". The
+    // compiled alphabet at seed 1 is [4,5,6,7,8,9], SIX LEVELS, tied with
+    // `gospelpop` for the widest of the eighteen rows added this round. The parent
+    // cannot match it: `syncope`'s `vel` is `[5, 9, 8][S(i, N)]`, three values by
+    // construction, so `minneapolissound` can never render more than three levels.
+    // A gospel build is a thing 1982 could not say.
+    //
+    // LINEAGE: `minneapolissound` (Minneapolis 1982) at 0.40 — the same hand, the
+    // same town, the record this one is the sequel to. `gospel` (Chicago 1932) at
+    // 0.25 — the organ, the suspended dominant, the choir the title song ends on,
+    // and gospel's own `dyn` is `swell`, quoted here. `rock` (London 1969) at 0.20
+    // — the power kit, the guitar first, the solo as the point. Sum 0.85; the
+    // residue 0.15 is the arena: nothing above this row is a stadium record.
+    //
+    // THE MACHINE DISAGREES AND THE WEIGHTS DO NOT MOVE. `tools/genealogy.js` fits
+    // this row at minneapolissound 0.52 / rock 0.34 / gospel 0.14 against the
+    // declared 0.40 / 0.20 / 0.25, and returns r2 0.362 with residue 0.247, near
+    // the catalogue's p90 of 0.260 and tied with `gospelpop` for the round's worst
+    // fit. The reason is written down rather than tuned away: the feature vector
+    // has columns for tempo, kit density, bass motion and mode brightness and NO
+    // COLUMN FOR A GOSPEL SCALE OR A GOSPEL VOICE. The 0.25 is a claim the fit
+    // cannot see, so the fit is reported and the weight stands.
+    arenafunk: {
+      label: "Minneapolis 1984",
+      near: "minneapolissound",
+      plan: "song",
+      bpm: 113,
+      bars: 8,
+      voices: 3,
+      parents: { minneapolissound: 0.4, gospel: 0.25, rock: 0.2 },
+      instr: ["crunch_guitar", "polysynth", "solo_vox"],
+      bassInstr: "picked_bass",
+      drumkit: "power",
+      entry: v => (v === 0 ? 0 : v === 1 ? 2 : 0),
+      reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 0, 5, 5, 4, 4, 0, 0],
+      prog: [
+        { d: 0 },
+        { d: 0 },
+        { d: 5 },
+        { d: 5 },
+        { d: 4, q: "sus4" },
+        { d: 4 },
+        { d: 0 },
+        { d: 0 }
+      ],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        o: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        c: [0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0],
+        h: [0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 6, 0]
+      },
+      fill: {
+        t: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+        m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        l: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.6, atk: 0.006, rel: 1.2, gain: 0.3, verb: 0.45 },
+      fx: ["crunch"],
+      words: [
+        "the guitar, up front, the solo as the point",
+        "the Oberheim, holding the gospel chord",
+        "the voice, over the top of it"
+      ],
+      word: (v, s) => (v === 0 ? [[], [fill(1)], [rotate(2)], [fill(2)]][s % 4]
+                    : v === 1 ? [keep(0, 8)]
+                    : [transpose(5), drop(2)]),
+      dyn: "swell",
+      family: "band",
+    },
+
+    // THE BAND ON THE SLEEVE — Minneapolis 1991. Prince and the New Power
+    // Generation, Diamonds and Pearls, Paisley Park, 1 October 1991 — the first
+    // Prince record credited to a named band beside him, and this row is that
+    // credit.
+    //
+    // THE ROW IS THE BAND, FIELD BY FIELD. `brass_section` is seated FIRST, which
+    // neither Minneapolis row before it does. `bassInstr: "finger_bass"` is a live
+    // player where `minneapolissound` (Minneapolis 1982) has `bass_lead`, a
+    // synthesiser, and `arenafunk` (Minneapolis 1984) has `picked_bass`. `drumkit:
+    // "room"` with `swing: 0.22` is a drummer in a room rather than 1982's
+    // `electronic` or 1984's `power`. Nine people, said in the only vocabulary the
+    // row has.
+    //
+    // IT DIFFERS FROM `newjackswing` (New York 1987, its second declared parent at
+    // 0.25) IN EXACTLY ONE WAY THAT MATTERS: that row is an SP-1200 and this one
+    // is a band. Nothing else is in dispute — both take mixolydian, `harmony:
+    // "cycle"`, `artic: "staccato"`, a swing, and `PROGS.jack7`. What 1987 has is
+    // `drumkit: "electronic"`, `bassStyle: "octaves"` and a `polysynth` on the
+    // first chair; what 1991 has is a room kit, sixteenths under the fingers, and
+    // horns.
+    //
+    // THE PROG IS NAMED, NOT COPIED. `prog: PROGS.jack7` is the shared table's own
+    // new-jack cycle — I7 IV7 I7 V7, the sevenths said out loud — referenced
+    // through the `$src` escape as GENRES.md §2 requires, so the three rows that
+    // play it (`newjackswing`, `newjackswing2`, this one) name one fact rather
+    // than owning three copies of it.
+    //
+    // MEASURED, THE MIDI CORPUS, 2026-09-07. The corpus holds this record's two
+    // poles and nothing between them: "Cream" reads 113, and "Diamonds and Pearls"
+    // reads 81, twice. `bpm: 104` sits between the record's rocker and its ballad,
+    // which is where an album row belongs — the same reasoning `arenafunk` uses
+    // one row earlier for the same act.
+    //
+    // MEASURED, CHORDONOMICON, AND THE LABEL IS THIN. `new jack swing` returns 227
+    // songs with a median year of 1993, four years downstream of this record, and
+    // its top four-chord windows are I IV I IV at 7 hits and I V vi IV at 6. That
+    // is a small sample and is said as one. What it does support is the shape
+    // `jack7` already holds — the I-IV shuttle with the dominant at the turn —
+    // with sevenths on every chord that a roman label cannot record.
+    //
+    // THE DYNAMIC FIGURE: `anacrusis`, and it is the reason this row is not
+    // `syncope`, which BOTH `newjackswing` and `minneapolissound` take. FIGURES
+    // says it in one sentence: "This is what a horn section plays and the reason a
+    // big band chart is full of notes tied over the barline." The first chair here
+    // IS a horn section, playing `only("gate", rotate(6))` — a stab rotated late
+    // into the bar — so the figure and the part are the same claim made twice.
+    // Said honestly: the declared `near`, `newjackswing2` (Charlotte 1991), takes
+    // `anacrusis` too. That is not a collision. There the pickup is a gospel choir
+    // at 74 bpm over a TR-808 with `artic: "legato"`; here it is horns at 104 over
+    // a room kit with `maxHold: 2`.
+    //
+    // LINEAGE: `minneapolissound` (Minneapolis 1982) at 0.30 — the same hand, the
+    // same town, the ninth year of the same project. `newjackswing` (New York
+    // 1987) at 0.25 — the swung sixteenth and the seventh-chord cycle, arriving
+    // from somebody else's machine. `funk` (Cincinnati 1967) at 0.20 — the horn
+    // stab and the muted chank, the two things a band gives back that a sampler
+    // took away. `gospel` (Chicago 1932) at 0.10 for the backing choir. Sum 0.85;
+    // the residue 0.15 is the nine people: no parent above this row is a touring
+    // band.
+    //
+    // THE FIT AND THE SIZE. r2 0.796, residue 0.153, under the catalogue median of
+    // 0.165 — the machine and the declaration agree here, which they do not on
+    // `arenafunk`. At seed 1 the record renders 3,674 events over 68 bars, the
+    // second-largest of the eighteen behind `avantfunk`'s 3,978, and carries 176
+    // accents where `deadpanglam`, `arenafunk` and `artpunk` each carry 154. A big
+    // band chart is a lot of notes; that is what the number is.
+    newjackband: {
+      label: "Minneapolis 1991",
+      near: "newjackswing2",
+      plan: "song",
+      bpm: 104,
+      bars: 8,
+      voices: 3,
+      parents: { minneapolissound: 0.3, newjackswing: 0.25, funk: 0.2, gospel: 0.1 },
+      instr: ["brass_section", "clean_guitar", "solo_vox"],
+      bassInstr: "finger_bass",
+      drumkit: "room",
+      entry: v => (v === 0 ? 2 : v === 1 ? 0 : 0),
+      reg: v => (v === 0 ? 1 : v === 2 ? 0 : 0),
+      realize: v => (v === 0 ? "chord" : "line"),
+      part: ["stab", "riff", "lead"],
+      prog: PROGS.jack7,
+      mode: MODES.mixo,
+      scale: MODES.mixo,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "sixteenths",
+      swing: 0.22,
+      kit: {
+        k: [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        p: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+      },
+      kitVel: {
+        k: [9, 0, 0, 6, 0, 0, 0, 0, 8, 0, 6, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 5, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 2400,
+        q: 1.4,
+        atk: 0.004,
+        rel: 0.35,
+        gain: 0.28,
+        verb: 0.2
+      },
+      words: [
+        "the horns, the stab, pushing into the bar",
+        "the guitar chank, sixteenths, muted",
+        "the voice, the hook"
+      ],
+      word: (v, s) => (v === 0 ? [only("gate", rotate(6))]
+                    : v === 1 ? [keep(2, 6, 10, 14)]
+                    : [[], [fill(1)], [rotate(4)], [drop(2)]][s % 4]),
+      dyn: "anacrusis",
+      family: "groove",
+    },
+
     // YELLOW MAGIC ORCHESTRA — Tokyo 1978. Yellow Magic Orchestra
     // (Alfa, November 1978), opening with "Computer Game" and a
     // cover of Martin Denny's "Firecracker" played on a Roland
@@ -33486,6 +35503,263 @@
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(1)], [rotate(4), transpose(1)]][s % 4]
                     : [transpose(-5), fill(2)]),
       dyn: "backbeat",
+    },
+
+    // SPEED METAL — Huntington Park 1986. Slayer's Reign in Blood, cut at Hit City
+    // West in Los Angeles with Rick Rubin producing and released by Def Jam on the
+    // 7th of October 1986: ten songs, twenty-nine minutes, and a tempo no other row
+    // in this table plays.
+    //
+    // THE LABEL IS HUNTINGTON PARK, AND THAT IS A RULE RATHER THAN A FLOURISH.
+    // `atlas.gate.js` G6b holds (place, year) to being a KEY and `Los Angeles 1986`
+    // is `smoothjazz`'s. The softrock/Lagos lesson of 2026-09-06 says a row whose
+    // true city and year collide looks for the NEXT TRUE FACT and not the next
+    // true-ISH one, so this does not become an approximate Los Angeles: Huntington
+    // Park is where the band formed in 1981, a Gateway city nine kilometres
+    // south-east of downtown, declared in `atlas.js` WITHIN Los Angeles.
+    //
+    // THE ROW IS THE THREE THINGS `thrash` (San Francisco 1983) IS NOT.
+    //
+    // FIRST, THE SPEED — AND THE CORPUS COULD NOT CORROBORATE IT. `bpm: 208` is the
+    // fastest of the 500 rows by a distance: `skatepunk` 170, this round's own
+    // `fmpop` 169, `poppunk` 167, `thrash` 160, `deathmetal` 158. MEASURED,
+    // 2026-09-07: a search of the 120,000-file MIDI corpus for "slayer" returns
+    // sixteen files and every one is Buffy the Vampire Slayer, the Slayers anime or
+    // Nightwish's "The Kinslayer". There is no Slayer in the corpus. The number is a
+    // judgement about the record and is said as one — 208 is where sixteenths stop
+    // being played and start being poured.
+    //
+    // SECOND, THE ALPHABET. `mode: MODES.locrian` over `scale: SCALES.dimhw`, and
+    // the half-whole diminished is taken by THIS ROW AND NO OTHER in 500 (measured
+    // 2026-09-07). A Hanneman riff is built on the tritone, and the half-whole is the
+    // named alphabet holding both the tritone and the minor-major third ambiguity a
+    // chromatic riff walks through. `thrash` is phrygian over `SCALES.bluesx`;
+    // `deathmetal` is phrygian over locrian's own intervals written out. Three
+    // readings of one darkness, and only this one is symmetrical. MEASURED,
+    // CHORDONOMICON, honestly: the `speed metal` label is 940 songs at median year
+    // 2002 — sixteen years downstream — 48% MAJOR, topped by `i VI VII i` (18) and
+    // `i VII i VII` (16). That is a modal minor loop, which this row is more extreme
+    // than rather than different from.
+    //
+    // THIRD, AND IT IS THE ARGUMENT OF THE WHOLE ROW: `dyn: "flat"`. Paul's brief
+    // said it in as many words — Slayer is not `backbeat` — and every other metal row
+    // takes `backbeat`: `thrash`, `nwobhm`, `heavymetal`, `deathmetal`, `blackmetal`,
+    // `doom`, `sludge`, `powermetal`, `metalcore`, `glammetal`, `gothicmetal`,
+    // `industrialmetal`, `numetal`, `symphonicmetal` — fourteen, measured 2026-09-07,
+    // and the two that do not are this row and `progmetal`. ARGUE IT HONESTLY,
+    // BECAUSE THE FIGURE WAS NOT WRITTEN FOR THIS: `genres-tables.js FIGURES`
+    // reserves `flat` for "the machine wing that was never frozen". Twenty-four rows
+    // take it and twenty-three are sequencers or `gamelan`, whose bronze argument is
+    // its own; this is the first `family: "band"` row on the list. THE CLAIM: a
+    // tremolo-picked riff at 208 is a machine made of arms. A sixteenth at 208 lasts
+    // 72 milliseconds and nothing a wrist does inside 72 milliseconds is a lean.
+    // Everything this music says about weight is in `kitVel`, where an 808 keeps its
+    // accent switch — Lombardo's near-blast is the kick on all four quarters at 9,
+    // the snare on every offbeat eighth at 9, the ride on every eighth at 7 — and the
+    // compiled record proves the rest: at seed 1 the line renders `vel [6]` with ZERO
+    // accents. It is the `electro` argument played by people.
+    //
+    // REFUSES THE COPYIST (docs/THEORY.md §2). `copyist: { refuse: "all" }`, on the
+    // driven-guitar precedent: the second chair is the same notes an octave down
+    // under a high-gain amp, and `kernel.js chair.fifths` gives the engine's own
+    // reason — "a power chord is an amp fact made pitch ... thirds intermodulate
+    // under distortion and fifths do not". Fifteen driven-guitar rows refused the
+    // whole pass on 2026-09-06; with this row and `progmetal` it is seventeen.
+    //
+    // LINEAGE: `thrash` (San Francisco 1983) at 0.45 — the idiom entire, the same
+    // coast three years older. `hardcore` (Washington 1980) at 0.25 — the tempo, and
+    // why the songs are two minutes long; this record is punk's arithmetic, not
+    // metal's. `nwobhm` (London 1980) at 0.10 — the songbook two removes back. Sum
+    // 0.80; the residue 0.20 is the speed knob itself and Rubin's dry, close mix.
+    //
+    // THE FIT IS THE BEST OF THE EIGHTEEN NEW ROWS: r2 0.927, residue 0.104, against
+    // a catalogue p10 of 0.096 and a median of 0.165. `nearest()` puts `thrash` 0.544
+    // away, the closest row in 500. The tool fits thrash 0.92 / nwobhm 0.08 /
+    // hardcore 0.00 against the declared 0.45 / 0.25 / 0.10 — hardcore's share is
+    // real and the vector cannot see it, because hardcore's tempo is already inside
+    // thrash. What the number says is that this record IS its parents plus a speed
+    // knob, and the row exists because the knob is audible.
+    speedmetal: {
+      label: "Huntington Park 1986",
+      near: "thrash",
+      plan: "song",
+      bpm: 208,
+      bars: 8,
+      voices: 2,
+      parents: { thrash: 0.45, hardcore: 0.25, nwobhm: 0.1 },
+      instr: ["distortion_guitar", "distortion_guitar"],
+      bassInstr: "picked_bass",
+      drumkit: "power",
+      entry: () => 0,
+      reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      mode: MODES.locrian,
+      scale: SCALES.dimhw,
+      harmony: "modal",
+      artic: "staccato",
+      maxHold: 1,
+      bassStyle: "sixteenths",
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        s: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        r: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 9, 0, 0, 0, 9, 0, 0, 0, 9, 0, 0, 0],
+        s: [0, 0, 9, 0, 0, 0, 9, 0, 0, 0, 9, 0, 0, 0, 9, 0],
+        r: [7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 3000,
+        q: 1.2,
+        atk: 0.002,
+        rel: 0.12,
+        gain: 0.28,
+        verb: 0.12
+      },
+      fx: ["crunch"],
+      words: [
+        "the riff, tremolo, the tritone at the turn",
+        "the second guitar, tremolo, the same notes an octave down"
+      ],
+      word: (v, s) => (v === 0 ? [[fill(2)], [fill(2), transpose(6)], [fill(2), rotate(4)], [fill(2), transpose(1)]][s % 4]
+                    : [fill(2), transpose(-12)]),
+      dyn: "flat",
+      family: "band",
+    },
+
+    // PROGRESSIVE METAL — San Francisco 1988. Metallica's ...And Justice for All,
+    // cut at One on One Recorders in Los Angeles and released by Elektra on the 25th
+    // of August 1988: nine tracks, sixty-five minutes, no chorus worth the name.
+    //
+    // THE SECOND METALLICA ROW, AND THE FIRST WAS ALREADY IN THE TABLE. Paul asked
+    // for "Metallica 1983 as well as and justice for all days" and only the second
+    // half became a row, because `thrash` (San Francisco 1983) IS Kill 'Em All and
+    // says so in its own note. That is one of this round's four refusals, written
+    // down so the next hand does not undo it. THE LABEL IS SAN FRANCISCO AGAIN, five
+    // years on, on the catalogue's own grunge ruling: a label names the room the
+    // music came out of and not the desk it was mixed on. `Los Angeles 1988` is
+    // `skatepunk`'s in any case, so G6b would have refused it.
+    //
+    // THREE FIELDS CARRY THE ROW AND EACH IS RARE.
+    //
+    // FIRST, `meter: "7/8"`. `kernel.js meterRow` has read a signature spelled `n/d`
+    // since 2026-09-05 — Paul: "I should be able to set any tempo at all like 21/17"
+    // — and until this round no row had written one: the whole meter vocabulary was
+    // the two WORDS `three` (`waltz`, `musette`) and `six` (`nationalism`). Say the
+    // claim exactly: not the first fraction, one of the first two, since `studioprog`
+    // writes `7/4` in the same round. By the step law a 7/8 bar is 14 steps, and this
+    // row's `kit` and `kitVel` lanes are 14 long — the check that the meter ARRIVED
+    // rather than being merely declared.
+    //
+    // SECOND, `nobass: true`, and this paragraph has to be careful. There is a bass
+    // player on the record. Jason Newsted played every track and the mix is famous —
+    // argued about for thirty-eight years — for burying him almost to inaudibility.
+    // The table can say PRESENT or ABSENT and nothing in between; no row can declare
+    // a chair at minus twelve decibels. The honest reading of that mix is ABSENT, and
+    // the compiled record says it plainly: at seed 1 this row seats six voices with
+    // no bass chair, where `thrash` seats eight with one. NAME THE COST. The row
+    // cannot be argued back to a bass part, its low end is carried entirely by the
+    // second guitar's octave, and anyone who knows the 2018 remix will hear the row
+    // as one pressing rather than as the work. It is taken anyway, because a chair
+    // seated at a level nobody can hear is "declared but never arriving" with better
+    // manners, and because the absence is what everyone means when they name this
+    // album.
+    //
+    // THIRD, `plan: "arc"` where `thrash` is `"song"` — nine-minute pieces built by
+    // accumulation, riff onto riff, no refrain to return to. That is the `progrock`
+    // half of the name and the reason the parent is declared at all.
+    //
+    // MEASURED, THE MIDI CORPUS, 2026-09-07: 128 Metallica files, median 132, only 18
+    // of them major; the two Justice tracks present read "One" 108 twice and
+    // "Blackened" 182 twice, so `bpm: 145` is the midpoint of the album's own two
+    // attested tempos and is said as an average rather than a reading. CHORDONOMICON:
+    // `progressive metal` is 1,121 songs at median year 2009 — two decades
+    // downstream, a different music under the same name — topped by `i VI i VI` (24),
+    // a minor modal loop, which is this row's aeolian.
+    //
+    // THE FIGURE: `dyn: "lean"`, DECLARED rather than left absent. `FIGURES` keeps
+    // `lean` as a named figure precisely so a row may quote it on purpose where its
+    // family took something else (march, waltz, polka, musette, riff do). A
+    // downpicked gallop puts the weight on the first stroke of each group and gives
+    // it back over the group — `lean`, said about a bar. AND IT IS NOT `backbeat`,
+    // for a reason the table can be made to show: `FIGURES` finds the
+    // quarters as a FRACTION of the bar, so across fourteen steps `backbeat` weights
+    // the regions Q=1 (steps 4 to 6) and Q=3 (steps 11 to 13), while this row's snare
+    // sits on steps 4 and 10 — one inside the figure's region and one outside it. In
+    // 7/8 there is no four to lean on, and a figure that halves its own snare is
+    // worse than no figure.
+    //
+    // LINEAGE: `thrash` (San Francisco 1983) at 0.50 — the same band's earlier row,
+    // the downpick and the alphabet. `nwobhm` (London 1980) at 0.15 — the gallop
+    // itself, still the rhythmic unit under an odd meter. `progrock` (Isle of Wight
+    // 1970) at 0.15 — the FORM: nine minutes, an instrumental title track, a suite
+    // where a song used to be. Sum 0.80; the residue 0.20 is the mix — the treble,
+    // the dry snare, and the hole where the bass was.
+    //
+    // REPORT THE FIT AND DO NOT TUNE IT. r2 0.534, residue 0.230 — above the
+    // catalogue median of 0.165, at its p75 of 0.218. The tool assigns thrash 1.00 /
+    // nwobhm 0.00 / progrock 0.00 against the declared 0.50 / 0.15 / 0.15: the
+    // machine says this record is thrash and a FORM, and the form is precisely what a
+    // vector of tempo, kit density, bass motion and mode cannot see.
+    // `nearest()` makes it the most isolated of the eighteen new rows by a wide
+    // margin: the closest row in the whole table is `englishpsych` (St John's Wood
+    // 1967) at 1.277 and `thrash` itself is only sixth at 1.380, where the other
+    // seventeen new rows all sit inside 0.87 of a neighbour. A seven-eight bar with
+    // no bass in it is not near anything.
+    //
+    // REFUSES THE COPYIST (docs/THEORY.md §2). `copyist: { refuse: "all" }` — the two
+    // chairs are one downpicked wall doubled at the octave, and under a high-gain amp
+    // that parallel is the sound and not a voicing.
+    progmetal: {
+      label: "San Francisco 1988",
+      near: "thrash",
+      plan: "arc",
+      bpm: 145,
+      bars: 8,
+      voices: 2,
+      meter: "7/8",
+      nobass: true,
+      parents: { thrash: 0.5, nwobhm: 0.15, progrock: 0.15 },
+      instr: ["distortion_guitar", "distortion_guitar"],
+      drumkit: "power",
+      entry: () => 0,
+      reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      harmony: "modal",
+      artic: "staccato",
+      maxHold: 1,
+      kit: {
+        k: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        r: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 7, 0, 7, 0, 7, 0, 8, 0, 7, 0, 7, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        r: [7, 0, 5, 0, 6, 0, 5, 0, 7, 0, 6, 0, 5, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 2800,
+        q: 1.1,
+        atk: 0.002,
+        rel: 0.16,
+        gain: 0.28,
+        verb: 0.08
+      },
+      fx: ["crunch"],
+      words: [
+        "the riff, downpicked, seven eighths to the bar",
+        "the second guitar, the same wall an octave down"
+      ],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(-2)], [rotate(4), transpose(-2)]][s % 4]
+                    : [transpose(-12)]),
+      dyn: "lean",
+      family: "band",
     },
 
     // POWER METAL — Hamburg 1985. Helloween, WALLS OF JERICHO (Noise Records,
@@ -35247,6 +37521,118 @@
       ],
       word: v => (v === 1 ? [drop(2)] : v === 2 ? [only("gate", drop(4))] : []),
       dyn: "anacrusis",
+    },
+
+    // MOUNTAIN COUNTRY — Nashville 1971. Dolly Parton, Coat of Many Colors, cut at
+    // RCA Studio B on Music Row and released by RCA Victor on the 4th of October
+    // 1971.
+    //
+    // Paul wrote "Don't forget Dolly Parton", which is an instruction about CARE and
+    // not about count: one row, argued, rather than three named after a person. Said
+    // once, and the rest of this note is the earning of it.
+    //
+    // THE YEAR IS ARGUED. The choice was the 1971-74 mountain-country writer against
+    // the 1977-80 crossover, and the crossover is nearly covered already —
+    // `countrypop` (Nashville 1945), `nashvillesound` (Nashville 1957) and `disco`
+    // (New York 1977) between them hold most of what "Here You Come Again" and "9 to
+    // 5" are. Nothing at all holds the writer.
+    //
+    // AND THE CORPUS MAKES THE CHOICE CONCRETE BY BEING EMPTY. It holds no Dolly
+    // Parton: the thirteen "dolly" hits are Hello, Dolly! and Faure's Dolly Suite.
+    // There is exactly ONE file, `bulk/J/JOLENE.MID`, and it reads 111 bpm, 4/4 and
+    // MINOR. That is the OTHER record, and a row built on it would have been a
+    // different row — a minor two-chord vamp — which is itself the sharpest argument
+    // for the year chosen. So `bpm: 100` is a judgement about Coat of Many Colors and
+    // is said as one; no transcription of it is in the corpus.
+    //
+    // THE ROW IS THE ALPHABET. `scale: SCALES.majpent` under `mode: MODES.ionian`,
+    // where `countrypop` and `nashvillesound` are both plain ionian — because a
+    // mountain tune has no fourth and no seventh in it, and the pentatonic is the one
+    // field that separates this row from every other Nashville row in the table. It
+    // is `appalachia`'s alphabet (Hot Springs 1916, majpent, `nobass`, one voice)
+    // brought into a studio with a rhythm section, which is what the record is.
+    //
+    // AND THE CAST. `instr: ["steel_string_guitar", "dulcimer", "solo_vox"]` — FIVE
+    // ROWS OF 500 SEAT A DULCIMER and the other four are `estampie`, `lautari`,
+    // `sizhu` and `taraf`, so this is the only American one. `drumkit: "brush"` and
+    // `bassStyle: "fifths"` are the Studio B rhythm section kept quiet behind a
+    // story; `swing: 0.1` is the lilt a country record has and a folk record does
+    // not. And a `throat` closure puts a SOPRANO on the singing chair — seven rows in
+    // 500 name a soprano at all, and five of the other six are church choirs.
+    //
+    // CHORDONOMICON. `country` is the largest label in the mirror by an order of
+    // magnitude: 53,352 songs, 45,539 of them major, with I IV I IV at 3,404 hits and
+    // I IV I V at 2,400 ahead of everything else. This row's `roots [0,0,3,0,4,4,0,0]`
+    // is I I IV I V V I I — that census with the fourth-bar turn a narrative verse
+    // needs, and two bars of tonic before anything moves, because the first thing
+    // this song does is describe a box of rags.
+    //
+    // THE DYNAMIC FIGURE: `dyn: "agogic"` — "leans on its last note", and FIGURES
+    // calls it "the same shape a ballad's line and a romantic melody end with". Every
+    // line of that title song arrives on its last word and holds it there.
+    // `appalachia`, the largest parent, takes `agogic` too, so the figure comes down
+    // with the alphabet and is inheritance rather than invention. The contrast that
+    // matters is `nashvillesound`'s `anacrusis`, which is a session band pushing into
+    // the next bar: this row's weight is at the END of the sentence because the
+    // sentence is a story and a story has a last word.
+    //
+    // LINEAGE: `appalachia` (Hot Springs 1916) at 0.25 — the pentatonic, the high
+    // lonesome voice, the ballad that is one long verse. `nashvillesound` (Nashville
+    // 1957) at 0.20 — the studio, the brushes, the Music Row bench this record was
+    // made on. `countrypop` (Nashville 1945) at 0.15 — the songwriting trade.
+    // `gospel` (Chicago 1932) at 0.15 — the church this singer learned in. Sum 0.75;
+    // the residue 0.25 is the writer, the largest invention share of the four rows
+    // written this pass and meant to be: what the parents do not explain is that
+    // somebody wrote the song.
+    //
+    // THE FIT: r2 0.763, residue 0.143, under the catalogue median of 0.165 — the
+    // tool and the declared weights do not argue about this row.
+    mountaincountry: {
+      label: "Nashville 1971",
+      near: "countrypop",
+      plan: "song",
+      bpm: 100,
+      bars: 8,
+      voices: 3,
+      parents: { appalachia: 0.25, nashvillesound: 0.2, countrypop: 0.15, gospel: 0.15 },
+      instr: ["steel_string_guitar", "dulcimer", "solo_vox"],
+      bassInstr: "picked_bass",
+      drumkit: "brush",
+      entry: v => (v === 0 ? 0 : v === 1 ? 2 : 0),
+      reg: v => (v === 1 ? 1 : v === 2 ? 1 : 0),
+      realize: () => "line",
+      part: ["riff", "counter", "lead"],
+      roots: [0, 0, 3, 0, 4, 4, 0, 0],
+      mode: MODES.ionian,
+      scale: SCALES.majpent,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 3,
+      bassStyle: "fifths",
+      swing: 0.1,
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        k: [6, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0],
+        h: [4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0]
+      },
+      tone: { wave: "triangle", cut: 1800, q: 1, atk: 0.01, rel: 0.9, gain: 0.24, verb: 0.28 },
+      throat: v => (v === 2 ? "soprano" : "alto"),
+      words: [
+        "the guitar, thumb and finger, the same figure all song",
+        "the dulcimer, the drone and the answer",
+        "the voice, high, the story arriving at its last word"
+      ],
+      word: (v, s) => (v === 0 ? [keep(0, 4, 8, 12)]
+                    : v === 1 ? (s % 2 ? [excerpt(8, 8)] : [keep(0, 8)])
+                    : [[], [fill(1)], [], [drop(2)]][s % 4]),
+      dyn: "agogic",
+      family: "roots",
     },
 
     // OUTLAW COUNTRY — Austin 1973. Willie Nelson, SHOTGUN WILLIE, cut at
@@ -47623,6 +50009,17 @@
       refuse: "all",
       why: "the second chair is declared \"the rhythm guitar doubling at the octave, zero " +
       "swing\", and under distortion that doubling is the amp sound rather than a voicing."
+    },
+    speedmetal: {
+      refuse: "all",
+      why: "the second chair is declared \"the second guitar, tremolo, the same notes an " +
+      "octave down\" and under a high-gain amp that doubling is the sound rather than a " +
+      "voicing."
+    },
+    progmetal: {
+      refuse: "all",
+      why: "the two chairs are one downpicked wall doubled at the octave, which is an " +
+      "amplifier fact and not a voicing."
     },
     powermetal: {
       refuse: ["doubling"],

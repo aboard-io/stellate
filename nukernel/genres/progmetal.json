@@ -1,0 +1,174 @@
+{
+  "note": "PROGRESSIVE METAL — San Francisco 1988. Metallica's ...And Justice for All,\ncut at One on One Recorders in Los Angeles and released by Elektra on the 25th\nof August 1988: nine tracks, sixty-five minutes, no chorus worth the name.\n\nTHE SECOND METALLICA ROW, AND THE FIRST WAS ALREADY IN THE TABLE. Paul asked\nfor \"Metallica 1983 as well as and justice for all days\" and only the second\nhalf became a row, because `thrash` (San Francisco 1983) IS Kill 'Em All and\nsays so in its own note. That is one of this round's four refusals, written\ndown so the next hand does not undo it. THE LABEL IS SAN FRANCISCO AGAIN, five\nyears on, on the catalogue's own grunge ruling: a label names the room the\nmusic came out of and not the desk it was mixed on. `Los Angeles 1988` is\n`skatepunk`'s in any case, so G6b would have refused it.\n\nTHREE FIELDS CARRY THE ROW AND EACH IS RARE.\n\nFIRST, `meter: \"7/8\"`. `kernel.js meterRow` has read a signature spelled `n/d`\nsince 2026-09-05 — Paul: \"I should be able to set any tempo at all like 21/17\"\n— and until this round no row had written one: the whole meter vocabulary was\nthe two WORDS `three` (`waltz`, `musette`) and `six` (`nationalism`). Say the\nclaim exactly: not the first fraction, one of the first two, since `studioprog`\nwrites `7/4` in the same round. By the step law a 7/8 bar is 14 steps, and this\nrow's `kit` and `kitVel` lanes are 14 long — the check that the meter ARRIVED\nrather than being merely declared.\n\nSECOND, `nobass: true`, and this paragraph has to be careful. There is a bass\nplayer on the record. Jason Newsted played every track and the mix is famous —\nargued about for thirty-eight years — for burying him almost to inaudibility.\nThe table can say PRESENT or ABSENT and nothing in between; no row can declare\na chair at minus twelve decibels. The honest reading of that mix is ABSENT, and\nthe compiled record says it plainly: at seed 1 this row seats six voices with\nno bass chair, where `thrash` seats eight with one. NAME THE COST. The row\ncannot be argued back to a bass part, its low end is carried entirely by the\nsecond guitar's octave, and anyone who knows the 2018 remix will hear the row\nas one pressing rather than as the work. It is taken anyway, because a chair\nseated at a level nobody can hear is \"declared but never arriving\" with better\nmanners, and because the absence is what everyone means when they name this\nalbum.\n\nTHIRD, `plan: \"arc\"` where `thrash` is `\"song\"` — nine-minute pieces built by\naccumulation, riff onto riff, no refrain to return to. That is the `progrock`\nhalf of the name and the reason the parent is declared at all.\n\nMEASURED, THE MIDI CORPUS, 2026-09-07: 128 Metallica files, median 132, only 18\nof them major; the two Justice tracks present read \"One\" 108 twice and\n\"Blackened\" 182 twice, so `bpm: 145` is the midpoint of the album's own two\nattested tempos and is said as an average rather than a reading. CHORDONOMICON:\n`progressive metal` is 1,121 songs at median year 2009 — two decades\ndownstream, a different music under the same name — topped by `i VI i VI` (24),\na minor modal loop, which is this row's aeolian.\n\nTHE FIGURE: `dyn: \"lean\"`, DECLARED rather than left absent. `FIGURES` keeps\n`lean` as a named figure precisely so a row may quote it on purpose where its\nfamily took something else (march, waltz, polka, musette, riff do). A\ndownpicked gallop puts the weight on the first stroke of each group and gives\nit back over the group — `lean`, said about a bar. AND IT IS NOT `backbeat`,\nfor a reason the table can be made to show: `FIGURES` finds the\nquarters as a FRACTION of the bar, so across fourteen steps `backbeat` weights\nthe regions Q=1 (steps 4 to 6) and Q=3 (steps 11 to 13), while this row's snare\nsits on steps 4 and 10 — one inside the figure's region and one outside it. In\n7/8 there is no four to lean on, and a figure that halves its own snare is\nworse than no figure.\n\nLINEAGE: `thrash` (San Francisco 1983) at 0.50 — the same band's earlier row,\nthe downpick and the alphabet. `nwobhm` (London 1980) at 0.15 — the gallop\nitself, still the rhythmic unit under an odd meter. `progrock` (Isle of Wight\n1970) at 0.15 — the FORM: nine minutes, an instrumental title track, a suite\nwhere a song used to be. Sum 0.80; the residue 0.20 is the mix — the treble,\nthe dry snare, and the hole where the bass was.\n\nREPORT THE FIT AND DO NOT TUNE IT. r2 0.534, residue 0.230 — above the\ncatalogue median of 0.165, at its p75 of 0.218. The tool assigns thrash 1.00 /\nnwobhm 0.00 / progrock 0.00 against the declared 0.50 / 0.15 / 0.15: the\nmachine says this record is thrash and a FORM, and the form is precisely what a\nvector of tempo, kit density, bass motion and mode cannot see.\n`nearest()` makes it the most isolated of the eighteen new rows by a wide\nmargin: the closest row in the whole table is `englishpsych` (St John's Wood\n1967) at 1.277 and `thrash` itself is only sixth at 1.380, where the other\nseventeen new rows all sit inside 0.87 of a neighbour. A seven-eight bar with\nno bass in it is not near anything.\n\nREFUSES THE COPYIST (docs/THEORY.md §2). `copyist: { refuse: \"all\" }` — the two\nchairs are one downpicked wall doubled at the octave, and under a high-gain amp\nthat parallel is the sound and not a voicing.",
+  "copyist": {
+    "refuse": "all",
+    "why": "the two chairs are one downpicked wall doubled at the octave, which is an amplifier fact and not a voicing."
+  },
+  "label": "San Francisco 1988",
+  "near": "thrash",
+  "plan": "arc",
+  "bpm": 145,
+  "bars": 8,
+  "voices": 2,
+  "meter": "7/8",
+  "nobass": true,
+  "parents": {
+    "thrash": 0.5,
+    "nwobhm": 0.15,
+    "progrock": 0.15
+  },
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 1,
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      8,
+      0,
+      7,
+      0,
+      7,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      7,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1.1,
+    "atk": 0.002,
+    "rel": 0.16,
+    "gain": 0.28,
+    "verb": 0.08
+  },
+  "fx": [
+    "crunch"
+  ],
+  "words": [
+    "the riff, downpicked, seven eighths to the bar",
+    "the second guitar, the same wall an octave down"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(-2)], [rotate(4), transpose(-2)]][s % 4]\n                    : [transpose(-12)])"
+  },
+  "dyn": "lean",
+  "family": "band"
+}
