@@ -26689,6 +26689,8 @@
     // .12, phrase ≥ .8) says this line has no bar to lean on. The `vox`
     // cluster takes `agogic`; the anchor's own evidence outranks it, which is
     // the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // ...AND THE OUD ARRIVED (2026-09-07). This row named the gap harder than any other in the catalogue — its own refusal said a fretless neck is most of what an oud is — and it was playing a fretted nylon guitar while it said so. The Faust oud is the instrument that refusal was waiting for: the toolkit's string with no amplifier, two strings 0.7 ms apart because a risha sweeps across a course, and a glide that defaults to 45 ms because fretlessness is the whole claim. A taqsim is the improvisation that shows what a maqam and an instrument can do, so this is the row that should have had it first.
     taqsim: {
       instrumental: true,
       label: "Cairo 1932",
@@ -26703,14 +26705,16 @@
         "this row is in hijaz by its own 2026-08 decision and stays there for byte-identity; " +
         "the neutral-second maqamat it was locked out of are sayable now (MODES.rast, the " +
         "walls-down round) and `tarab` is the row that says them",
-        "the oud — there is no oud, ney, qanun or riq in the instrument registry, which " +
-        "WORLD.md calls the emptiest slot on the map. The nylon-string guitar below is a " +
-        "plucked gut-strung lute and it is FRETTED, and a fretless neck is most of what an oud " +
-        "is",
+        "the ney, the qanun and the riq — still not in the registry, and WORLD.md still calls " +
+        "this the emptiest slot on the map. The oud clause that stood here is WITHDRAWN " +
+        "2026-09-07: it read “there is no oud… and a fretless neck is most of what an oud is”, " +
+        "and there is one now (engine/faust/dsp/oud.dsp, fretless by construction, 45 ms " +
+        "glide, courses that beat). A refusal that has been answered is a lie the next hand " +
+        "inherits, so it is withdrawn with its date rather than deleted",
         "free rhythm — a taqsim has no bar at all, and half speed with long holds is as close " +
         "as an honest grid gets (WORLD.md §5.1, the chant's own admission)"
       ],
-      instr: ["nylon_string_guitar", "viola"],
+      instr: ["oud", "viola"],
       entry: v => (v === 1 ? 0 : 1),
       reg: v => (v === 0 ? 0 : -2),
       realize: v => (v === 0 ? "line" : "pad"),
