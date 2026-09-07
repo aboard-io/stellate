@@ -3985,10 +3985,21 @@
     // measured against a role the chair was not in. This list is the answer;
     // everything after it reads from here, and `cast.part` is written from it.
     const basePart = [];
-    for (let v = 0; v < nBase; v++) basePart.push((G.part && G.part[v]) || G.realize(v));
+    /* A PART IS A WORD THE KERNEL HAS, and until 2026-09-07 this line did not
+       check. `G.realize(v)` answers a DIFFERENT question — `kernel.js partOf`
+       reads it as "pad, or else a line" — so a row that realized anything the
+       kernel does not name stamped that word straight onto `cast.part`, where
+       `K.PARTS` has no entry for it. Three rows did (`realize: "chord"` on the
+       three starting points), `precompose.test.js` G1 reported `chord part
+       chord` at every seed from the day they landed, and three rounds filed it
+       as pre-existing. The rows are fixed; this is the door, so a fourth row
+       cannot do it again. `K.PARTS` is the vocabulary and the only judge. */
+    const partWord = (w) => (K.PARTS && K.PARTS[w]) ? w : (w === "pad" ? "pad" : "line");
+    for (let v = 0; v < nBase; v++)
+      basePart.push((G.part && G.part[v]) || partWord(G.realize(v)));
     const layerPart = layerKeys.map((lk) => {
       const L = GENRES[lk];
-      return (L.part && L.part[0]) || L.realize(0);
+      return (L.part && L.part[0]) || partWord(L.realize(0));
     });
     const baseKinds = [];
     for (let v = 0; v < nBase; v++) baseKinds.push(R.song.map((b, i) => baseKind[i](v)));

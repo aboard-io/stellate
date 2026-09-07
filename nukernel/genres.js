@@ -1366,6 +1366,8 @@
     // dance record with a voice on it is a dance record.
     //
     // ...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.
+    //
+    // ...AND THE SECOND CHAIR REALIZES A `pad` (2026-09-07). This row was written with `realize: "chord"`, which reads well and is not a word the engine has: `kernel.js` asks `realize(v) === "pad"` and treats everything else as a line, so the chair the note calls a pad has been playing a LINE since the row landed — and `precompose.js` stamped the raw word onto `cast.part`, where `PARTS` (line, lead, riff, counter, pad, stab, drone) does not hold it, which is the `chord part chord` three separate rounds filed as pre-existing rather than fixing. The word is `pad` now, which is what the row's own second word already says it is.
     dance: {
       label: "Dance",
       voices: 2,
@@ -1379,7 +1381,7 @@
       family: "kernel",
       entry: () => 0,
       reg: v => -v,
-      realize: v => (v === 0 ? "line" : "chord"),
+      realize: v => (v === 0 ? "line" : "pad"),
       roots: [0, 6, 5, 6],
       kit: {
         k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
@@ -1456,6 +1458,8 @@
     // fact made pitch ... thirds intermodulate under distortion and fifths
     // do not". Re-choosing that chair's note to break a parallel would be
     // correcting the amplifier.
+    //
+    // ...AND THE SECOND CHAIR REALIZES A `pad` (2026-09-07). This row was written with `realize: "chord"`, which reads well and is not a word the engine has: `kernel.js` asks `realize(v) === "pad"` and treats everything else as a line, so the chair the note calls a pad has been playing a LINE since the row landed — and `precompose.js` stamped the raw word onto `cast.part`, where `PARTS` (line, lead, riff, counter, pad, stab, drone) does not hold it, which is the `chord part chord` three separate rounds filed as pre-existing rather than fixing. The word is `pad` now, which is what the row's own second word already says it is.
     guitarrock: {
       label: "Guitar rock",
       voices: 2,
@@ -1468,7 +1472,7 @@
       family: "kernel",
       entry: () => 0,
       reg: v => -v,
-      realize: v => (v === 0 ? "line" : "chord"),
+      realize: v => (v === 0 ? "line" : "pad"),
       roots: [0, 3, 4, 0],
       kit: {
         k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -1519,6 +1523,8 @@
     // a sung line arches.
     //
     // ...AND THE TEMPO DOES NOT WANDER, for `silence`'s own reason (2026-09-06). Every anchored row takes the catalogue's give-or-take of 4 because a record was played by people on a night; a STARTING POINT was played by nobody. 124 is the number the row states and the number a hand reads on the Time row, and a canvas that opened at 125 would be answering a question about performance that has not been asked yet. `jitter: 0` is the same named exemption the blank state declares.
+    //
+    // ...AND THE SECOND CHAIR REALIZES A `pad` (2026-09-07). This row was written with `realize: "chord"`, which reads well and is not a word the engine has: `kernel.js` asks `realize(v) === "pad"` and treats everything else as a line, so the chair the note calls a pad has been playing a LINE since the row landed — and `precompose.js` stamped the raw word onto `cast.part`, where `PARTS` (line, lead, riff, counter, pad, stab, drone) does not hold it, which is the `chord part chord` three separate rounds filed as pre-existing rather than fixing. The word is `pad` now, which is what the row's own second word already says it is.
     pop: {
       label: "Pop",
       voices: 2,
@@ -1531,7 +1537,7 @@
       family: "kernel",
       entry: () => 0,
       reg: v => -v,
-      realize: v => (v === 0 ? "line" : "chord"),
+      realize: v => (v === 0 ? "line" : "pad"),
       roots: [0, 4, 5, 3],
       kit: {
         k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
