@@ -250,6 +250,34 @@
     // guitarist's own register keeps the hand where a harmonic lives. If the
     // parent ever gains a row, this table gains the same one.
     banjo: [48, 84],
+    // ...and THE OUD, whose window is not a compromise between a table and a
+    // zone map for the erhu's reason: it is a MODEL
+    // (engine/faust/dsp/oud.dsp), so there is no recording to fold into and
+    // the compass is the instrument's own. MIDI 36..72 is C2 to C5 — the
+    // ZIM's "Many current Arab players use this tuning: C2 F2 A2 D3 G3 C4"
+    // for the floor (nothing exists under the bottom course to be stopped, so
+    // a line that goes there folds back up in key, exactly as a guitar's low
+    // E does) and an octave above the TOP open course for the ceiling, which
+    // is as far up a fretless neck as there is string left to stop.
+    // AND THIS ROW IS THE INNER TIER. state-engine.js `case "oud"` declares
+    // 65.41..783.99 Hz, which is the MODULE's honest tuning and the union of
+    // the two instruments that share it (see the lute row below); the table
+    // here is what each INSTRUMENT plays, which is the split that law was
+    // always for. 65.41 Hz IS MIDI 36, so the floor is the same fact said
+    // twice in two units and cannot drift; the ceiling is this row's alone.
+    oud: [36, 72],
+    // ...and the LUTE's compass is the article's own 6-course Renaissance
+    // tenor: "The tenor lute was usually tuned nominally 'in G'... yielding
+    // the pattern (G'G) (Cc) (FF) (AA) (dd) (g)", so G2 = MIDI 43 at the
+    // bottom, and "A few additional partial frets of wood are usually glued to
+    // the body of the instrument, to allow stopping the highest-pitched
+    // courses up to a full octave higher than the open string" — the top open
+    // course is g = MIDI 67, so 79 at the top. THE MEDIEVAL INSTRUMENT'S OWN
+    // WINDOW IS NOT KNOWN HERE and this row does not invent one: the article
+    // says "very little music securely attributable to the lute survives from
+    // before 1500" and gives no medieval tuning at all, so `troubadour` plays
+    // the Renaissance compass and its note says so.
+    lute: [43, 79],
     // keyed reeds + organs (the pedal board is the floor, not a rumble).
     // THREE ORGANS, WHERE THERE WAS ONE PLAYABLE ONE. `drawbarorgan` is a
     // SINGLE zone rooted at MIDI 96 — measured on the shipped registry — so a
@@ -867,6 +895,110 @@
     // up top, because a thumb is the softest mallet there is.
     kalimba:    { dsp: "mallet", mul: 0.50, set: (M) => ({
       ring: 0.8, exPos: 1.4, tilt: 7, cutoff: Math.min(M.mcut, 7000), release: 1.5 }) },
+    // ---- the plectrum that is not a guitar pick --------------------------
+    // THE OUD (engine/faust/dsp/oud.dsp), and like the erhu below it this row
+    // is not a patch over a recording, because there is no recording. Every
+    // soundfont in this tree is GM bank 0 — 128 presets, measured — and its
+    // nearest plucked lutes are the sitar (104), the shamisen (106) and the
+    // koto (107), none of which is closer to an oud than a nylon guitar is.
+    // scratch/genre-qa/AUDIT-2026-09.md finding 14 counted the cost: ELEVEN
+    // rows — qiyan, abbasid, andalusi, zajal, muwashshah, troubadour, nuba,
+    // pavane, modinha, lundu, pipaqu — naming an oud, a lute, a vihuela or a
+    // pipa and playing `nylon_string_guitar`. The audit named the gap rather
+    // than approximating it; this closes it. Paul: "Do the Faust oud it's
+    // just a little code."
+    //
+    // THE ROW SETS ALMOST NOTHING, for the erhu's reason and not the six
+    // guitars'. A guitar recipe picks WHICH guitar because six ids share one
+    // string model; there is one oud, and the plectrum, the courses, the
+    // pluck position and the box are oud.dsp's own measured defaults. What a
+    // tone block gets to say to a wooden box is how bright its soundboard is
+    // and how long the hand lets the note ring, and that is the two lines
+    // below.
+    //
+    // AND `M.cab` IS THE RIGHT LEVER BUT NOT THE RIGHT NUMBER, so it is
+    // capped: `cab` is a SPEAKER CABINET's corner, lifted an octave above
+    // where a synth filter sits because a guitar amp lives there. This
+    // instrument has no cabinet — the `cutoff` it turns is the wooden
+    // soundboard's own top, and a plate radiates nothing useful above a few
+    // kHz. 5000 is where the module's own default (4200) sits with room for a
+    // bright Turkish top, and it is the same shape of cap the jazz box and
+    // the nylon top already take.
+    //
+    // NO INSERTS, AND THAT IS THE ACOUSTIC LAW ONE TABLE DOWN. A recipe with
+    // no `inserts` normally gets defaultInserts' house chain (a delay and a
+    // chorus); state-engine's `case "oud"` inverts that and hands the unit an
+    // empty chain unless a recipe names one, because "a nylon top through a
+    // higain stage is an electric with a costume" and an oud is a box in a
+    // room. The inversion lives in the unit rather than here so that nothing
+    // has to remember to write `inserts: []` on every future oud recipe.
+    //
+    // `pick` IS NOT SET, for the pianos' and the bow's reason: it is the
+    // striking hand and the note's own velocity writes it, through
+    // state-engine MODEL_DYN.oud (pick 0.12..1). A row that pinned it would
+    // make velocity a fader on an instrument whose gate proves it is not
+    // (test/oud.test.js: the spectral centroid moves x1.61/x1.53/x1.26/x1.14
+    // across MIDI 36/48/60/72).
+    oud: { dsp: "oud", set: (M) => ({
+      cutoff: Math.min(M.cab, 5000), release: Math.max(0.02, Math.min(M.rel, 0.6)) }) },
+    // ...AND THE LUTE, WHICH IS THE SAME INSTRUMENT WITH GUT FRETS TIED ROUND
+    // ITS NECK. Not a metaphor and not this file's opinion: the ZIM's own
+    // Lute article opens "The words lute and oud possibly derive from Arabic
+    // al-ʿoud", the Oud article calls the ʿūd "the direct ancestor of the
+    // European lute", and everything the model already does is what the
+    // article says a lute is —
+    //   COURSES  "The lute's strings are arranged in courses, of two strings
+    //            each" and "The two strings of a course are virtually always
+    //            stopped and plucked together, as if a single string", which
+    //            is oud.dsp's `pair` exactly.
+    //   GUT      "Strings were historically made of animal gut."
+    //   A DEEP ROUND BACK  "any plucked string instrument with a neck and a
+    //            deep round back enclosing a hollow cavity."
+    // What differs is two things, and both are a number here rather than a
+    // second dsp — which is this table's own idiom (six guitars share one
+    // string, and their whole comment block is about which guitar is which):
+    //   FRETS    "The frets are made of loops of gut tied around the neck."
+    //            A fret is exactly the thing an oud does not have, and in this
+    //            model fretlessness IS the non-zero `glide` default. So the
+    //            lute writes glide 0 and the note arrives where it is written.
+    //   THE HAND "Medieval lutes were four- and five-course instruments,
+    //            plucked with a QUILL as a plectrum", and "In the last few
+    //            decades of the fifteenth century... lutenists gradually
+    //            abandoned the quill in favor of plucking the instrument with
+    //            the FINGERS." ONE id spans both eras (troubadour 1180 and
+    //            pavane 1530 are the two rows that cast it), and 0.45 is the
+    //            middle of that transition rather than either end of it. That
+    //            is a COMPROMISE and this comment names it instead of hiding
+    //            it: the day a third row wants one side of 1500 sharply, the
+    //            answer is a second recipe on this same dsp, not a new model.
+    // WHAT IS NOT MODELLED, said out loud: "for lower pitches one of the two
+    // strings is tuned an octave higher", and the top course is a single
+    // string (the chanterelle). `course` is a unison pair at every pitch here.
+    // The octave-doubled bass course is a real feature of the instrument and
+    // it is absent; adding it is a third string in `pair` and a per-course
+    // decision the model has no way to reach, because a voice knows its pitch
+    // and not which course a player would have taken it on.
+    // The box is smaller and lighter than an Arabian oud's ("The lute's design
+    // makes it extremely light for its size"), so `body` sits above the oud's
+    // 100 Hz; the hand is over the rose rather than by the bridge, so the
+    // pluck is further along the string.
+    // AND THE PLECTRUM ITSELF IS NOT SET HERE, which is a limitation and not
+    // a choice: `risha` and `body` are real sliders on the module and
+    // state-engine's `case "oud"` does not read them off a recipe, because a
+    // recipe key must have a NAME in nukernel/src/copy/knobs.ts and that
+    // catalogue has no word for a plectrum or a soundbox (its own comment
+    // says why: a row with no name prints its key back at the reader). So
+    // this recipe says the hand's POSITION where it would rather say the
+    // hand's material — a lutenist's right hand sits over the rose, which is
+    // further from the bridge than a risha lands — and the quill stays the
+    // module's own 0.8. For `troubadour` (Provence 1210) that is exactly
+    // right; for `pavane` (Antwerp 1551) it is about fifty years late, and
+    // both rows' notes say so.
+    lute: { dsp: "oud", set: (M) => ({
+      glide: 0, course: 6, bright: 0.14, pluckPos: 0.24,
+      ring: 2.4, cutoff: Math.min(M.cab, 5200),
+      release: Math.max(0.02, Math.min(M.rel, 0.6)) }) },
+
     // ---- the bow -------------------------------------------------------
     // GM HAS NO ERHU, which is why this row is not a patch over a recording
     // the way every other row in this table is. All eleven soundfonts in the
@@ -1239,8 +1371,18 @@
   // added to genres.js without a line here still gets a singer, just not a
   // regional one.
   const PLACES = {
+    // ...AND SHEFFIELD, WHICH THE TABLE NEVER LEARNED (2026-09-07, the twelve
+    // questions, 9). `idm` has read "Sheffield 1992" since it was written and
+    // has been cast with `region: null` for as long — it fell past every rung
+    // here to the family rules, which the comment above calls "the honest
+    // failure" and which is still a failure. It was found by moving
+    // `bleeptechno` off Manchester and onto the city that actually made it:
+    // the label move recast the singer, which is the wrong reason for a singer
+    // to move, and the cause was a hole in this list rather than anything in
+    // that row. Two rows take a British throat now instead of a fallback.
     isles: ["London", "Liverpool", "Manchester", "Basildon", "Glasgow", "Dublin",
-            "Essex", "Kent", "Crawley", "Muswell Hill", "Stourbridge", "Swindon"],
+            "Essex", "Kent", "Crawley", "Muswell Hill", "Stourbridge", "Swindon",
+            "Sheffield"],
     america: ["New York", "Chicago", "Detroit", "Los Angeles", "Nashville",
               "Philadelphia", "New Orleans", "Boston", "Harlem", "San Francisco",
               "Austin", "Atlanta", "Cincinnati", "Cleveland", "Kansas City",
@@ -1901,7 +2043,16 @@
   // as a plain guitar.
   const FAMILY = [
     [/crunch|distortion|overdrive/, "dirty"],
-    [/guitar|banjo|sitar|koto|shamisen|harp$/, "guitar"],
+    // ...and `oud` JOINS THE PLUCKED ROW rather than being special-cased. It
+    // is a plucked lute — the direct ancestor of the European lute, and of
+    // half the ids already in this line — so the strip it wants is the one
+    // the nylon guitar it replaces was already on, which is also what makes
+    // the eleven rows' swap a change of instrument and not also a change of
+    // mix. (It reaches the strip through a MODEL, not the sampler, exactly as
+    // the guitar family's own ids do since the EKS round.)
+    // (`(^|_)lute$` and NOT a bare `lute`: this row is scanned before the reed
+    // row below it, and `/lute/` would file the FLUTE as a guitar.)
+    [/guitar|banjo|sitar|koto|shamisen|oud|(^|_)lute$|harp$/, "guitar"],
     [/organ/, "organ"],
     [/choir|voices|vox|voice/, "vox"],
     [/trumpet|trombone|tuba|brass|horn/, "brass"],

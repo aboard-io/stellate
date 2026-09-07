@@ -160,7 +160,7 @@ const MACHINE_KITS = new Set(["tr808", "tr909", "tr606", "cr78"]);
    larynx is exactly as native as a Minimoog. A chip genre seating voice_lead
    and voice_choir is 100% native and still sounds like people. */
 const ORGANIC_DSP = new Set(["voice_lead", "voice_choir", "tract_voice", "choir",
-                             "stk_guitar", "stk_piano", "gtr_amp", "erhu", "mallet",
+                             "stk_guitar", "stk_piano", "gtr_amp", "erhu", "oud", "mallet",
                              "bell", "organ"]);
 
 async function laneTable() {

@@ -31,7 +31,7 @@
 //            is nothing for `voiceUnit` to be asked. The pad in ui/eight.js
 //            plots your tongue against the vowel's, which is what `artic` IS.
 //
-// THE CENSUS: 271 controls across 28 voices —
+// THE CENSUS: 278 controls across 29 voices —
 //   tract_voice 23
 //   juno60 18
 //   oberheim 18
@@ -50,6 +50,7 @@
 //   gtr_amp 8
 //   solina 7
 //   vp330 7
+//   oud 7
 //   bass_wobble 7
 //   tb303 5
 //   pad_saw 5
@@ -68,9 +69,9 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
   return {
-    "built": "2026-09-05",
+    "built": "2026-09-07",
     "from": "nukernel/knobs-extract.js",
-    "total": 271,
+    "total": 278,
     "budget": 40,
     "census": {
       "modeld": 12,
@@ -96,6 +97,7 @@
       "gtr_amp": 8,
       "mallet": 5,
       "erhu": 9,
+      "oud": 7,
       "voice_lead": 14,
       "voice_choir": 11,
       "tract_voice": 23,
@@ -3399,6 +3401,92 @@
             "step": 0.001,
             "unit": "s",
             "derived": 0.045
+          }
+        ],
+        "quiet": []
+      },
+      "oud": {
+        "module": "oud",
+        "role": "melody",
+        "mouth": false,
+        "cost": 1.8,
+        "rows": [
+          {
+            "key": "glide",
+            "param": "glide",
+            "labelKey": "knobs.glide",
+            "kind": "number",
+            "min": 0,
+            "max": 0.501,
+            "step": 0.001,
+            "unit": "s",
+            "derived": 0.045
+          },
+          {
+            "key": "cutoff",
+            "param": "cutoff",
+            "labelKey": "knobs.cutoff",
+            "kind": "number",
+            "min": 200,
+            "max": 14000,
+            "step": 10,
+            "unit": "Hz",
+            "derived": 2000
+          },
+          {
+            "key": "pluckPos",
+            "param": "pluckPos",
+            "labelKey": "knobs.pluckPosition",
+            "kind": "number",
+            "min": 0.02,
+            "max": 0.98,
+            "step": 0.001,
+            "unit": null,
+            "derived": 0.18
+          },
+          {
+            "key": "course",
+            "param": "course",
+            "labelKey": "knobs.detune",
+            "kind": "number",
+            "min": 0,
+            "max": 30,
+            "step": 0.05,
+            "unit": "cents",
+            "derived": 8
+          },
+          {
+            "key": "bright",
+            "param": "bright",
+            "labelKey": "knobs.brightness",
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "step": 0.001,
+            "unit": null,
+            "derived": 0.1
+          },
+          {
+            "key": "ring",
+            "param": "ring",
+            "labelKey": "knobs.ringTime",
+            "kind": "number",
+            "min": 0.05,
+            "max": 12,
+            "step": 0.01,
+            "unit": "s",
+            "derived": 2.8
+          },
+          {
+            "key": "release",
+            "param": "release",
+            "labelKey": "env.seg.release",
+            "kind": "number",
+            "min": 0.005,
+            "max": 2,
+            "step": 0.001,
+            "unit": "s",
+            "derived": 0.22
           }
         ],
         "quiet": []

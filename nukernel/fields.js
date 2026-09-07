@@ -341,8 +341,28 @@
   // (ui/state.js GROOVE, song.js validates, migrate lifts old per-box saves),
   // and ui/derive.js reads it as an argument. The label table stays HERE
   // because it is vocabulary, and one registry file owns every word.
+  // SIX MORE WORDS, AND WHY THE FIRST FIVE STAY (2026-09-07, the twelve
+  // questions, 3). `precompose.js grooveOf` used to DERIVE the five below from
+  // whatever it could reach — the swing ratio, the tempo, `touch.v`, an echo
+  // send — and four of those five are facts about a RECORD dressed as facts
+  // about a DRUMMER. It derives from the kit now, and the kit can say six
+  // things the table could not: a four on the floor, a one drop, a half-time
+  // backbeat, a clave, a tresillo, and straight (the honest zero, which claims
+  // nothing rather than claiming a backbeat).
+  //
+  // THE OLD FIVE ARE NOT REMOVED, and that is the whole of the argument for
+  // keeping them: this table is a MENU (avail.js offers every key of it on the
+  // groove row) and `kernel.js GROOVES` holds a measured velocity-and-push
+  // profile for each. A hand that wants a record LAID BACK is asking for
+  // something no grid can state, and taking the word out of the menu would
+  // delete a control and silently rewrite every save that carries one.
+  // `backbeat` is in both halves because it is the one word that was always a
+  // kit fact.
   const GROOVELABEL = { backbeat: "backbeat", push: "pushed", laidback: "laid back",
-                        funk: "funk", dub: "dub" };
+                        funk: "funk", dub: "dub",
+                        fourfloor: "four on the floor", onedrop: "one drop",
+                        halftime: "half time", clave: "clave",
+                        tresillo: "tresillo", straight: "straight" };
   // ...AND THE METER, the third song fact of this family and the same law
   // exactly: a record counts in three or it does not, and a section that
   // changed meter mid-way would be a different feature. Absent (null) is the

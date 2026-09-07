@@ -2377,10 +2377,40 @@
     // practice over exactly this liturgy's line.
     //
     // WHO SINGS: the open-throated straight tone, packed tight enough that the seconds grind
+    //
+    // THE METER IS 7/8 AND THE KIT IS FOURTEEN STEPS (2026-09-07, the twelve
+    // questions, 7). This row was in FOUR with a sixteen-step trap grid — kick on 1,
+    // the a of 2 and the & of 4, rim on five more — under a Bulgarian village choir,
+    // which is the one thing everybody knows this music is not. `meter` has been a
+    // real field since `progmetal` (7/8) and `waltz` (three), the meter walls came
+    // down in v286 and `kernel.js meterRow` counts any n/d, so nothing but a hand was
+    // stopping this.
+    //
+    // THE GRID IS THE DANCE'S OWN AND NOT A GUESS. A *rŭchenitsa* counts seven
+    // eighths as 2+2+3 — the limp everybody hears, the long group last — so at
+    // `metOf("7/8")`'s fourteen steps (pulse 2) the seven eighths fall on 0, 2, 4, 6,
+    // 8, 10, 12 and the three GROUP HEADS on 0, 4 and 8. The *tŭpan* is one drum
+    // played two ways: the deep beater on the head of each group (`k` = 0, 4, 8) and
+    // the thin switch on the eighths between (`p` = 2, 6, 10, 12), which puts two
+    // switch strokes inside the long group and one inside each short one. That is
+    // the limp, written down.
+    //
+    // AND THE BASS GRID GOES WITH IT. This row wrote `bassGrid`
+    // `x......x......x.` — sixteen slots, a drone struck every seven — and
+    // `kernel.js` reads a grid with `at`, which WRAPS, so a sixteen-place grid on a
+    // fourteen-step bar loses its tail and lands its onsets at 0, 2, 7 and 9: three
+    // of the four in places the dance has no accent. It is fourteen places now and it
+    // marks the same three group heads the tŭpan's beater does (0, 4, 8), which is
+    // what a drone under a ruchenitsa is: one note at the head of each group.
+    //
+    // WHAT WENT: a snare, a hat and eleven of the sixteen onsets. A Western trap kit
+    // under the *Mystère des Voix Bulgares* was a costume, and the audit said so.
+    //
     bulgarian: {
       label: "Sofia 1975",
       plan: "arc",
       bpm: 96,
+      meter: "7/8",
       parents: { sticheron: 0.25 },
       wants: ["village diaphony"],
       instr: "ohh_voices",
@@ -2392,10 +2422,10 @@
       mode: MODES.phrygian,
       scale: DIATONIC,
       bassStyle: "pedal",
-      bassGrid: [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+      bassGrid: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
       kit: {
-        k: [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        p: [0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1]
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        p: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0]
       },
       artic: "legato",
       tone: {
@@ -3128,6 +3158,20 @@
     //
     // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD, on the row whose own first sentence is A SEQUENCER AND A DRUM MACHINE AND NOTHING ELSE IN THE ROOM. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
     //
+    // THE OCTAVE LINE IS EIGHTHS, AND THIS ROW SAYS SO (2026-09-07, the twelve
+    // questions, 1). `bassStyle: "octaves"` is a DENSITY word and `kernel.js
+    // STYLEGRID` answers it with one note per felt beat — four to the bar — which is
+    // what `bass-kit.js STYLEFIG` has always said the word means (`octaves` =
+    // `g16(0,4,8,12)`), and the two tables must not disagree. The eighth-note
+    // root-and-octave line is a different thing with a different name in that same
+    // table: `discoct`, "disco octaves" — root on the beat, the octave on the and,
+    // the accent on 1 and 3. So the rhythm is written out as a FIGURE here rather
+    // than borrowed from a density word that does not mean it, exactly as
+    // kernel.js's own E3 comment says a row that wants this must do. Measured: 4.00 -> 8.00 bass notes a bar.
+    // EVIDENCE, THE ROW'S OWN: *"The bass pulses in octaves under it"*, and
+    // *"the bass pulse is funk's octave engine sequenced"*. A pulse is a rate;
+    // Sweet Dreams' is the eighth.
+    //
     synthsoul: {
       bassInstr: "bass_lead",
       label: "London 1983",
@@ -3145,6 +3189,11 @@
       scale: DIATONIC,
       diatonic: true,
       bassStyle: "octaves",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        oct: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
       synth: {
         dsp: "modeld",
         root: "modeld",
@@ -4922,6 +4971,23 @@
     // Gamble and Huff are the step between Hitsville and the floor.
     // "latin percussion" stays: an instrumentation, not a genre — the
     // genealogy round's declined list has the argument.
+    //
+    // THE OCTAVE LINE IS EIGHTHS, AND THIS ROW SAYS SO (2026-09-07, the twelve
+    // questions, 1). `bassStyle: "octaves"` is a DENSITY word and `kernel.js
+    // STYLEGRID` answers it with one note per felt beat — four to the bar — which is
+    // what `bass-kit.js STYLEFIG` has always said the word means (`octaves` =
+    // `g16(0,4,8,12)`), and the two tables must not disagree. The eighth-note
+    // root-and-octave line is a different thing with a different name in that same
+    // table: `discoct`, "disco octaves" — root on the beat, the octave on the and,
+    // the accent on 1 and 3. So the rhythm is written out as a FIGURE here rather
+    // than borrowed from a density word that does not mean it, exactly as
+    // kernel.js's own E3 comment says a row that wants this must do. Measured: 4.00 -> 8.00 bass notes a bar.
+    // EVIDENCE, THE ROW'S OWN: the paragraph at the head of this note already reads
+    // *"strings stabbing the chords and an octave bass — the whole record leans
+    // forward"*, over an open hat on EVERY offbeat. The lean IS the eighth; four
+    // plain quarters under a hat playing eight is the one thing a 1977 floor record
+    // cannot be.
+    //
     disco: {
       label: "New York 1977",
       near: "newwave",
@@ -4942,6 +5008,11 @@
       prog: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 2, q: "7" }, { d: 4, q: "7" }],
       maxHold: 2,
       bassStyle: "octaves",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        oct: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
       kit: {
         k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
         c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -7813,6 +7884,20 @@
     // phase piece are both a figure restated a level away. The `drift` cluster
     // takes `swell`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // NO PERCUSSION AT ALL, WHICH IS WHAT THE RECORD HAS (2026-09-07, the
+    // twelve questions, 8). *Piano Phase* (New York 1967) is two pianists and nothing
+    // else, and this row was playing it over a hi-hat on every sixteenth, a rim, a
+    // clap and two drum fills. The phasing above is right — *"the same figure, a
+    // sixteenth further ahead every bar"* — and the band under it was 1967 nobody's.
+    // So `kit` empties and `drumkit` goes with it: `precompose.js grooveOf` answers
+    // null for a row with no grid, which is the box saying THE KIT SAYS NOTHING, and
+    // that is the true sentence about this record. What percussion minimalism does
+    // have is PITCHED — Reich's *Drumming* is marimbas and glockenspiels — and this
+    // row already declares two marimbas on its first two chairs, so the pitched half
+    // was never missing. 124 rows of 500 declare no grid; this is the 125th, and it
+    // is the one with the best reason.
+    //
     minimalism: {
       label: "New York 1967",
       bars: 8,
@@ -7822,7 +7907,6 @@
       parents: { drone: 0.4, counterpoint: 0.35, modaljazz: 0.15, tapemusic: 0.1 },
       wants: ["west african drumming"],
       instr: ["marimba", "marimba", "bright_yamaha_grand"],
-      drumkit: "acoustic",
       entry: () => 0,
       reg: v => (v === 2 ? 1 : 0),
       realize: () => "line",
@@ -7833,19 +7917,11 @@
       artic: "staccato",
       maxHold: 2,
       bassStyle: "eighths",
-      kit: {
-        h: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        p: [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0],
-        c: [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]
-      },
+      kit: {},
       kitVel: {
         h: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
         p: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
         c: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-      },
-      fill: {
-        p: [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0],
-        c: [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1]
       },
       tone: {
         wave: "triangle",
@@ -8238,6 +8314,22 @@
     // electro lead's slide is the whole of a phrase's motion where the
     // drums are a grid, and this row's `square_lead` is a `supersaw` seated
     // as a line, which now slews like the mono it is standing in for.
+    //
+    // THE OCTAVE LINE IS EIGHTHS, AND THIS ROW SAYS SO (2026-09-07, the twelve
+    // questions, 1). `bassStyle: "octaves"` is a DENSITY word and `kernel.js
+    // STYLEGRID` answers it with one note per felt beat — four to the bar — which is
+    // what `bass-kit.js STYLEFIG` has always said the word means (`octaves` =
+    // `g16(0,4,8,12)`), and the two tables must not disagree. The eighth-note
+    // root-and-octave line is a different thing with a different name in that same
+    // table: `discoct`, "disco octaves" — root on the beat, the octave on the and,
+    // the accent on 1 and 3. So the rhythm is written out as a FIGURE here rather
+    // than borrowed from a density word that does not mean it, exactly as
+    // kernel.js's own E3 comment says a row that wants this must do. Measured: 4.00 -> 8.00 bass notes a bar.
+    // EVIDENCE, THE ROW'S OWN: *"THE OCTAVE JUMP IS THE BASSLINE — Numbers,
+    // Al-Naafiysh, Nunk, all of it: one note, alternating registers, on the phrase's
+    // own accents, so the bass and the sequence are the same idea at two densities."*
+    // Two densities is the claim, and the bass was playing the sequence's.
+    //
     electro: {
       bassInstr: "bass_lead",
       bassTone: { cut: 500 },
@@ -8268,6 +8360,11 @@
       scale: DIATONIC,
       diatonic: true,
       bassStyle: "octaves",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        oct: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
       kit: {
         k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
         c: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -13668,10 +13765,27 @@
     // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
     // "flat"` — the line every note the same. A hand under .015 with a phrase
     // under .2 is a music whose discipline is not leaning.
+    //
+    // THE PLACE MOVES TO SHEFFIELD (2026-09-07, the twelve questions, 9).
+    // Bleep was labelled "Manchester 1989" and bleep is not Manchester. Warp Records
+    // was founded in SHEFFIELD in 1989 (Steve Beckett and Rob Mitchell, over the
+    // FON/Western Works record shop); LFO were Leeds; Unique 3, whose "The Theme" is
+    // the record that named the sound, were Bradford. Manchester 1989 is Madchester —
+    // which this catalogue already anchors correctly one row over — and `idm`, the
+    // direct child of this row, already reads "Sheffield 1992" and would have been
+    // descended from the wrong city.
+    //
+    // THE UNIQUENESS RULE HOLDS AND THE GENEALOGY LAW HOLDS. No other row carries
+    // "Sheffield 1989" (the catalogue has no duplicate place-year label at all, and
+    // `idm` is the only other Sheffield). Every declared parent is older — `techno`
+    // Detroit 1988, `house` Chicago 1986, `electro` New York 1982 — and the one child
+    // is younger, `idm` at 1992, so `test/genres-build.js`'s "none is later than its
+    // child" is unmoved. Only the place changed; the year was already right.
+    //
     bleeptechno: {
       bassInstr: "bass_lead",
       instrumental: true,
-      label: "Manchester 1989",
+      label: "Sheffield 1989",
       near: "acid",
       seqArp: "arpturn",
       plan: "dance",
@@ -15408,6 +15522,92 @@
     // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the lute, holding the bordun"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no medieval lute. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for a lute is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
+    // AND THIS ROW PLAYS THE `lute` RECIPE, NOT THE OUD ITSELF, because the name
+    // has to be right: the ZIM's Lute article opens "The words lute and oud
+    // possibly derive from Arabic al-ʿoud" and the Oud article calls the ʿūd
+    // "the direct ancestor of the European lute". Same model, two numbers
+    // different, and both are the article's own sentences — "The frets are made
+    // of loops of gut tied around the neck", which in this model is `glide` at
+    // 0, so the note arrives where it is written instead of sliding into it;
+    // and the plectrum, which moved inside the id's own span ("Medieval lutes
+    // were four- and five-course instruments, plucked with a QUILL as a
+    // plectrum" / "In the last few decades of the fifteenth century...
+    // lutenists gradually abandoned the quill in favor of plucking the
+    // instrument with the FINGERS"). One id covers 1180 and 1551 and sits at
+    // the middle of that transition; instruments.js names the compromise rather
+    // than hiding it. The COURSES are not a compromise at all — "The lute's
+    // strings are arranged in courses, of two strings each" and "The two
+    // strings of a course are virtually always stopped and plucked together, as
+    // if a single string" is `pair` in oud.dsp, exactly. WHAT IS STILL MISSING,
+    // stated: "for lower pitches one of the two strings is tuned an octave
+    // higher", and the top course is a single string. Every course here is a
+    // unison pair.
+    //
     troubadour: {
       label: "Provence 1210",
       bars: 8,
@@ -15416,7 +15616,7 @@
       parents: { gregorian: 0.8, zajal: 0.2 },
       wants: [],
       near: "gregorian",
-      instr: ["solo_vox", "nylon_string_guitar"],
+      instr: ["solo_vox", "lute"],
       entry: () => 0,
       reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 0 ? "line" : "pad"),
@@ -15500,6 +15700,16 @@
     // influence on medieval European dance is a live scholarly argument and not a fact
     // this table will assert on a feature vector.
     //
+    // A TABOR, NOT A KIT (2026-09-07, the twelve questions, 8). Paris 1300
+    // had a kick drum on 1, the & of 3 and 4, and a rim backbeat on 2 and 4 — a trap
+    // kit, six hundred years early, under a monophonic dance. THE ESTAMPIE'S
+    // PERCUSSION IS THE PIPE-AND-TABOR: one player, a three-hole pipe in the left
+    // hand and a small snared drum struck with a stick in the right. So the kit is
+    // ONE LANE — `s`, which is this box's snared drum and the nearest true thing to a
+    // tabor the registry holds — and it strikes the dance's own beat, four to the
+    // bar, because a tabor player with one stick keeps the tread and nothing else.
+    // The kick and the backbeat are gone.
+    //
     estampie: {
       organic: true,
       label: "Paris 1300",
@@ -15518,10 +15728,7 @@
       scale: MODES.dorian,
       bassStyle: "pedal",
       bassGrid: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-      kit: {
-        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-        p: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-      },
+      kit: { s: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] },
       tone: { wave: "square", cut: 2600, q: 1, atk: 0.01, rel: 0.5, gain: 0.26, verb: 0.35 },
       words: ["the puncta, round and round", "the strings doubling below"],
       word: (v, s) => (v === 0 ? (s % 2 ? [rotate(2)] : []) : [drop(2)]),
@@ -15612,6 +15819,100 @@
     // lute, pipe, viol
     //
     // the passamezzo antico
+    //
+    // A SIDE DRUM, NOT A KIT (2026-09-07, the twelve questions, 8). Antwerp
+    // 1551 had a kick on 1 and 3 and a rim on 2, the 3 and the & of 3. A pavane is a
+    // slow processional and its percussion is a SIDE DRUM, and the figure is not
+    // invented here: Arbeau's *Orchésographie* gives the pavan's tabor as a minim
+    // followed by two crotchets, restated every bar — which on this grid is a stroke
+    // on 1, a stroke on 3 and a stroke on 4, `s` at 0, 8 and 12. One lane, the drum
+    // the dance actually had, playing the figure the dance's own manual writes out.
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the lute, carrying the ground"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no Renaissance lute or vihuela. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for a lute is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
+    // AND THIS ROW PLAYS THE `lute` RECIPE, NOT THE OUD ITSELF, because the name
+    // has to be right: the ZIM's Lute article opens "The words lute and oud
+    // possibly derive from Arabic al-ʿoud" and the Oud article calls the ʿūd
+    // "the direct ancestor of the European lute". Same model, two numbers
+    // different, and both are the article's own sentences — "The frets are made
+    // of loops of gut tied around the neck", which in this model is `glide` at
+    // 0, so the note arrives where it is written instead of sliding into it;
+    // and the plectrum, which moved inside the id's own span ("Medieval lutes
+    // were four- and five-course instruments, plucked with a QUILL as a
+    // plectrum" / "In the last few decades of the fifteenth century...
+    // lutenists gradually abandoned the quill in favor of plucking the
+    // instrument with the FINGERS"). One id covers 1180 and 1551 and sits at
+    // the middle of that transition; instruments.js names the compromise rather
+    // than hiding it. The COURSES are not a compromise at all — "The lute's
+    // strings are arranged in courses, of two strings each" and "The two
+    // strings of a course are virtually always stopped and plucked together, as
+    // if a single string" is `pair` in oud.dsp, exactly. WHAT IS STILL MISSING,
+    // stated: "for lower pitches one of the two strings is tuned an octave
+    // higher", and the top course is a single string. Every course here is a
+    // unison pair.
+    //
     pavane: {
       label: "Antwerp 1551",
       voices: 3,
@@ -15621,7 +15922,7 @@
       parents: { estampie: 0.4, francoflemish: 0.35, troubadour: 0.25 },
       wants: ["galliard"],
       near: "polychoral",
-      instr: ["nylon_string_guitar", "recorder", "viola"],
+      instr: ["lute", "recorder", "viola"],
       drumkit: "room",
       entry: v => (v === 2 ? 2 : 0),
       reg: v => (v === 0 ? -1 : v - 1),
@@ -15630,10 +15931,7 @@
       scale: DIATONIC,
       diatonic: true,
       maxHold: 2,
-      kit: {
-        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-        p: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0]
-      },
+      kit: { s: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0] },
       bassGrid: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
       tone: { wave: "triangle", cut: 2400, q: 0.9, atk: 0.015, rel: 0.8, gain: 0.26, verb: 0.4 },
       words: ["the lute, carrying the ground", "the pipe above", "the viol between"],
@@ -24829,10 +25127,124 @@
     // into the bar, which is what a chart's ties across the barline are for.
     // The `roots` cluster takes `lean`; the anchor's own evidence outranks it,
     // which is the flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // ====================================================================
+    // PAUL, ON THE REAL APP: "SWING DOESN'T REALLY SOUND LIKE SWING"
+    // ====================================================================
+    // *"I was expecting Glenn miller and horns or Benny Goodman clarinet style with
+    // no vocals and lots of solos."* (2026-09-07.) `tools/describe.js swing`
+    // convicted the row six ways and every one of them is fixed here.
+    //
+    // 1 · IT SANG, AND A 1938 BIG BAND DOES NOT. The record was seating a `solo_vox`
+    // on a SKIFFLER mouth and an `ahh_choir` on a SHAPE-NOTE one — two other musics
+    // entirely, dealt as guests because nothing on this row said no. `instrumental:
+    // true` is the field that says it (83 rows of 500 already do; `compose.js instru`
+    // reads the row as well as its own INSTRUMENTAL table), and door 1 keeps an
+    // instrumental record instrumental. The horns are the voices now.
+    //
+    // 2 · THE CLARINET IS THE SOUND HE NAMED, AND IT WAS IN THE LIBRARY ALL ALONG.
+    // `found/samples/instruments/clarinet` exists in every one of the thirteen banks
+    // and eight rows already cast it (`neworleans`, `tradjazz`, `klezmer`, `march`,
+    // `polka`, `cumbia`, `banda`, `danzon`); this row, the one the whole swing era
+    // hangs on, did not. The chairs are the SWING REED SECTION now: the clarinet on
+    // top (voice 0) and the tenor on the same line an OCTAVE UNDER it (voice 1,
+    // `reg: -1`, `word: []` — the identical figure, which is what a section voicing
+    // IS). That doubling is the Miller reed sound and the Goodman colour, and it
+    // costs this row nothing it had: Lester Young's tenor keeps its chair.
+    //
+    // 3 · THE KIT WAS NOT A SWING KIT. It played the kick ON THE DOWNBEAT ALONE and
+    // a snare on the & of 4, which is a rock pickup. A swing drummer FEATHERS the
+    // bass drum on all four beats — heard as weight, not as a hit — rides the
+    // spang-a-lang, closes the hat on 2 and 4, and COMPS with the left hand instead
+    // of keeping a backbeat. So: `k` on all four at `kitVel` 4, which is the lowest
+    // kick velocity in the catalogue and is the feathering said in the row's own
+    // numbers; `r` unchanged, because the ride was already right and this note's own
+    // older paragraph says why ("THE RIDE IS THE RECORD"); `f` unchanged on 2 and 4,
+    // the one thing the audit found correct; and `s` moved off the & of 4 onto the
+    // "a" of 2 and the "a" of 4 at velocity 5 and 6 — the left hand catching the
+    // cymbal's second stroke, which is a comping accent and not a backbeat.
+    //
+    // AND `precompose.js grooveOf` LEARNED WHAT FEATHERING IS FOR IT. A kick on
+    // every beat is a four on the floor, and a FEATHERED kick on every beat is not:
+    // it is the thing you are meant not to hear. The rung reads `kitVel` as well as
+    // the grid now, and the threshold was measured rather than chosen — 34 rows
+    // declare a `kitVel.k` and the mean struck velocity is 6.0 to 9.0 on 33 of them
+    // and 4.0 on this one. This row reads `straight`, which is true: its kit marks
+    // neither the floor nor the backbeat, and the shuffle it does have is carried by
+    // `swing: 0.33` where a shuffle belongs.
+    //
+    // 4 · THE CHANGES WERE FOLK, NOT SWING. `roots [0,3,0,0,3,3,0,4]` over eight
+    // bars is I IV I I IV IV I v — a modal folk loop closing on a MINOR five. This
+    // row's own note, four paragraphs up, already said what the changes are: *"A
+    // Kansas City riff band is blues choruses at a dance tempo."* So the form is
+    // twelve bars of blues in SEVENTHS, and it is not invented here either — it is
+    // `bass-kit.js CHANGES.twelvebar`, this project's own bassist's table, degree for
+    // degree: `[0,0,0,0, 3,3,0,0, 4,3,0,4]`, every chord a dominant seventh. "One
+    // O'Clock Jump" and "Jumpin' at the Woodside" are both that. `bars: 12` with it,
+    // so a chorus is a chorus.
+    //
+    // AND THE QUALITY IS `dom7`, NOT `7`, WHICH IS THE DIFFERENCE BETWEEN A BLUES AND
+    // A MODE. `7` is a `kernel.js QSTEPS` word — stack thirds out of whatever scale
+    // the row is in — and this row is MIXOLYDIAN, where the chord on the fifth degree
+    // comes out MINOR: the first draft of this fix rendered `v7` in bar 9 and bar 12,
+    // which is a folk cadence wearing a blues's clothes. `dom7` is a `QFIX` word: the
+    // chord is a dominant seventh whatever the mode says, which is what the twelve-bar
+    // blues IS and what `bass-kit.js` writes beside its own `twelvebar` roots. The
+    // mode stays mixolydian so the MELODY keeps its flat seventh — AND THE MELODY'S
+    // OWN ALPHABET IS MIXOLYDIAN NOW TOO, which is what makes that sentence true.
+    // `scale` was `SCALES.major`, so the subject could not reach the flat seventh at
+    // all, and with the chords fixed to `dom7` the mode had nothing left to sound:
+    // `test/precompose.test.js` G14b caught it by name the first time this fix was
+    // run ("a row declares mixolydian and cannot sound the degree it is named for").
+    // Twenty-six rows already say `scale: MODES.mixo`; this is the twenty-seventh,
+    // and on a blues it is the blue seventh in the tune as well as under it.
+    //
+    // 5 · THERE WERE NO SOLOS, BECAUSE THERE WERE NO CHORUSES. Eleven sections over
+    // 37 bars with two- and three-bar verses is a pop form, and it came from `bars:
+    // 8` — `compose.js fullLen` rounds a section to a whole number of the genre's own
+    // bars, so an 8-bar genre gets short sections and a 12-bar one gets choruses.
+    // `bars: 12` is therefore the form fix as well as the harmony fix: head, choruses
+    // over the same twelve bars, out. The `solo` PART-GENRE was considered and not
+    // used — it hard-codes an `overdrive_guitar` (the fault door 5 was opened for)
+    // and a guest is a guest; the solo in a Basie chorus is the band's own front
+    // line, which is what voices 0 and 1 are.
+    //
+    // 6 · THE TONE BLOCK WAS SHAPING A SYNTH THAT IS NOT THERE. `tone.wave:
+    // "triangle"` is read in exactly one place — `audio/to-engine.js:1616`, inside
+    // the branch that builds a MODELLED voice — and all four chairs on this record
+    // are sampler recordings (`clarinet`, `tenor_sax`, `brass_section`,
+    // `jazz_guitar`), as is every guest an instrumental record can now be dealt. The
+    // word reached no sound. Removed rather than left standing: a field that is
+    // declared, costed and arrives nowhere is the one fault this catalogue keeps
+    // writing itself notes about.
+    //
+    // THE FAMILY AND THE NEIGHBOUR STAND, AND WERE CHECKED. `roots` is right of the
+    // ten families this table has — its room is "a chamber, a hall recording of
+    // people in a hall", which is what a 1938 band in a ballroom is, and the four
+    // alternatives are a guitar amp (`band`), a made record (`studio`), a club
+    // (`club`) and a plate on a soul vocal (`soul`). `near: "jazz"` is right for the
+    // same reason it was written: the contrast that defines a Kansas City riff band
+    // is the bebop that came out of it, and `jazz` in this table is New York 1945.
+    //
+    // AND GLENN MILLER AND BENNY GOODMAN ARE TWO MORE ROWS, WHICH THIS ONE IS NOT.
+    // Said plainly rather than made: this anchor is KANSAS CITY 1938 — Basie's Decca
+    // sides, the riff band, the floating rhythm section — and its own note spends a
+    // paragraph arguing that city against New York. Glenn Miller is NEW YORK 1939
+    // (Bluebird, "In the Mood", "Moonlight Serenade"): a SWEET dance band whose
+    // signature is precisely the clarinet-over-four-saxes voicing, at a slower tempo,
+    // on written arrangements rather than heads. Benny Goodman is CHICAGO 1935 (the
+    // Palomar broadcast is August 1935, the Congress Hotel sides are Chicago): the
+    // HOT band and the trio/quartet, Fletcher Henderson's charts, the clarinet as the
+    // soloist rather than the top of a section. Three different bands, three
+    // different years, three different cities, and the catalogue's own label law
+    // would give each its own row. What this round does is give Kansas City the reed
+    // section and the choruses it always had; the other two are a proposal and are
+    // written here rather than smuggled in.
+    //
     swing: {
       label: "Kansas City 1938",
-      voices: 3,
-      bars: 8,
+      voices: 4,
+      bars: 12,
       near: "jazz",
       plan: "song",
       bpm: 148,
@@ -24844,39 +25256,56 @@
         territoryband: 0.2
       },
       wants: [],
-      instr: ["tenor_sax", "brass_section", "jazz_guitar"],
+      instr: ["clarinet", "tenor_sax", "brass_section", "jazz_guitar"],
       drumkit: "jazz",
       swing: 0.33,
       entry: v => v,
-      reg: v => (v === 1 ? 0 : v === 2 ? -1 : 0),
+      reg: v => (v === 1 ? -1 : v === 3 ? -1 : 0),
       realize: () => "line",
-      part: ["lead", "riff", "counter"],
-      roots: [0, 3, 0, 0, 3, 3, 0, 4],
+      part: ["lead", "lead", "riff", "counter"],
+      roots: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4],
       mode: MODES.mixo,
-      scale: SCALES.major,
+      scale: MODES.mixo,
       diatonic: true,
       artic: "legato",
       maxHold: 2,
       bassStyle: "walk",
       kit: {
-        k: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
         r: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
         f: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        s: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+        s: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
       },
       kitVel: {
-        k: [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        r: [8, 0, 0, 5, 7, 0, 0, 5, 8, 0, 0, 5, 7, 0, 0, 6]
+        k: [4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0],
+        r: [8, 0, 0, 5, 7, 0, 0, 5, 8, 0, 0, 5, 7, 0, 0, 6],
+        s: [0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 6]
       },
       fill: { s: [0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1] },
-      tone: { wave: "triangle", cut: 2800, q: 1, atk: 0.008, rel: 0.6, gain: 0.27, verb: 0.34 },
+      tone: { cut: 2800, q: 1, atk: 0.008, rel: 0.6, gain: 0.27, verb: 0.34 },
       words: [
-        "the tenor, the solo",
+        "the clarinet, on top of the reeds",
+        "the tenor, the same line an octave under — the reed section",
         "the brass, riffing behind it",
         "the guitar, four to the bar"
       ],
-      word: v => (v === 1 ? [only("acc", rotate(4)), drop(2)] : v === 2 ? [split(2), drop(1)] : []),
+      word: v => (v === 2 ? [only("acc", rotate(4)), drop(2)] : v === 3 ? [split(2), drop(1)] : []),
       dyn: "anacrusis",
+      instrumental: true,
+      prog: [
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 4, q: "dom7" },
+        { d: 3, q: "dom7" },
+        { d: 0, q: "dom7" },
+        { d: 4, q: "dom7" }
+      ],
     },
 
     // BLUEGRASS — Nashville 1946. The Anglo-Celtic string band at speed: a
@@ -25017,6 +25446,36 @@
     // above it. Both of the pass's harmonic repairs — the parallel and the
     // missing chord tone — would be spent turning this book's sound into
     // triads.
+    //
+    // THE TENOR HAS THE TUNE, AND THE THROATS ARE DELIBERATE (2026-09-07,
+    // the twelve questions, 10). The audit read this row's `throat` closure — voice 0
+    // `alto`, voice 1 `soprano`, voice 2 `tenor`, else `bass` — beside its own
+    // `words` — "the tenor, who has the tune", "the treble, above it", "the alto",
+    // "the bass" — and asked whether the tenor had been given an alto's throat by the
+    // same accident that put `hymn`'s alto on a tenor line. IT HAD NOT, AND THE ROW
+    // WAS SILENT ABOUT BEING RIGHT, WHICH IS HOW A FUTURE ROUND BREAKS IT.
+    //
+    // IN SACRED HARP THE MELODY IS THE TENOR AND IT IS SUNG BY MEN AND WOMEN
+    // TOGETHER, AT THE OCTAVE. So is the treble. A throat is a chair's VOICE TYPE —
+    // what a body can reach — and the body that carries the tune in a shape-note
+    // square is as often a woman's as a man's: an alto throat on the tune is the
+    // sound of that line at the pitch most of the room sings it. `hymn` is the
+    // opposite case and the contrast is the argument: there the four SATB parts are
+    // four different lines and the closure was one case short, so the alto sang the
+    // tenor's. Here the four parts are the tenor, treble, alto and bass of the shape-
+    // note square, the tune is on the first of them, and the throats say what each
+    // line SOUNDS like rather than what it is called.
+    //
+    // THE OCTAVE DOUBLING IS THE ONE THING THIS GRAMMAR CANNOT SAY, and it is written
+    // down here rather than faked. A `throat` is one word per chair; the doubling is
+    // two bodies on one line an octave apart, which is a statement about the NUMBER
+    // OF CHAIRS, not about any chair's voice. The catalogue does have a shape for it
+    // — `gregorian` says the men-and-boys octave with `voices: 2` and `reg: v => -v`,
+    // one melody twice — and applying it here would make this a five-voice row for a
+    // four-part music, which is a different claim. So the doubling stays in this
+    // paragraph and in `words`, and the throat table stays as it is: right, and now
+    // saying so.
+    //
     sacredharp: {
       label: "Philadelphia 1844",
       voices: 4,
@@ -26452,6 +26911,71 @@
     // at its phrase end, ancestor and descendant alike. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the oud, filling under it"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no oud. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for an oud is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
     nuba: {
       label: "Tetouan 1790",
       voices: 4,
@@ -26466,11 +26990,14 @@
         "in 6/4, 8/4, 4/4, 5/8 and 6/8, each accelerating to a khalas; an anchor cannot " +
         "declare a metre at all in this table and one record has one tempo (WORLD.md §2 walls " +
         "1 and 2, neither landed)",
-        "the orchestra — no oud, no rabab, no qanun, no tar. The fiddle below is a violin " +
-        "played on the knee in the real thing, which is at least the same instrument; the rest " +
-        "are cognates and the harp is a guess at a qanun"
+        "the orchestra — THE OUD IS REAL AS OF 2026-09-07 (engine/faust/dsp/oud.dsp, a model " +
+        "rather than a recording because GM has no oud in any of its thirteen banks here), and " +
+        "the clause it used to open is kept for the date: \"no oud, no rabab, no qanun, no " +
+        "tar\". What is still missing is the rabab, the qanun and the tar. The fiddle below is " +
+        "a violin played on the knee in the real thing, which is at least the same instrument; " +
+        "the rest are cognates and the harp is a guess at a qanun"
       ],
-      instr: ["ahh_choir", "fiddle", "nylon_string_guitar", "harp"],
+      instr: ["ahh_choir", "fiddle", "oud", "harp"],
       entry: v => (v === 0 ? 2 : 0),
       reg: v => [0, 0, -1, -1][v],
       realize: v => (v === 3 ? "pad" : "line"),
@@ -27310,6 +27837,48 @@
     // and "lunzhi" return zero. Chordonomicon has no pipa label. So `bpm: 100` is
     // a CHOICE, argued from the repertory rather than measured: fast enough that a
     // tremolo reads as a roll and slow enough that a 68-beat section is a shape.
+    //
+    // THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    // COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    // `words` call *"the melody, with the tremolo on it"* — the pipa plays a `nylon_string_guitar`, because the sample registry has
+    // no pipa. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    // presets each and every one of them has the same plucked list — banjo, koto,
+    // shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    // no qanun and no saz in any of the thirteen.
+    //
+    // WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for a pipa is exactly
+    // the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    // 1932 record and a TR-808 on 1978, one register lower down. The difference is
+    // that those two had a true instrument to move to and this one does not, so the
+    // honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    // it is named. The row's own `words` already say the true instrument; this
+    // paragraph says why the sound is not it.
+    //
+    // QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    // `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    // `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    // `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    // rows from 705 to 1819, one library gap, counted once in
+    // `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    // THE OUD ARRIVED AND THIS ROW DID NOT TAKE IT (2026-09-07). Six of the
+    // eleven above now play `engine/faust/dsp/oud.dsp` and two play the `lute`
+    // recipe on that same model. This row is one of the three that does not,
+    // and the reason is the reason the gap was worth naming in the first place:
+    // a pipa is not an oud. It is FRETTED — this row's own comment above says
+    // "twenty-four to thirty frets" — it is played with the FINGERNAILS rather
+    // than a quill, and it is Chinese. An oud's default 45 ms slide between
+    // every note, which is the whole point of a fretless neck, would be a
+    // louder lie on this row than the nylon guitar is. `sizhu` seats the same
+    // nylon chair for its own pipa and the two rows agree.
+    // So the paragraph above still stands here, minus one word — there IS an
+    // oud now, and it is the wrong instrument for this row. What this row
+    // actually wants is written down so the next round does not have to
+    // rediscover it: a pipa model, on the same lane the erhu and the oud came down: a fretted,
+    // wire-and-silk, fingernail-struck lute whose signature is the LUNZHI
+    // tremolo this row's comment already describes as "a rapid
+    // re-articulation". The oud dsp's course is the wrong mechanism for it and
+    // its fretlessness is the wrong articulation.
+    //
     pipaqu: {
       organic: true,
       instrumental: true,
@@ -29096,6 +29665,71 @@
     // at its phrase end, ancestor and descendant alike. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the oud, shadowing the voice a sixth below"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no oud. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for an oud is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
     andalusi: {
       label: "Córdoba 822",
       voices: 2,
@@ -29108,10 +29742,15 @@
       cannot: [
         "the wusta of Zalzal — the neutral third the Baghdad school argued about is between " +
         "this table's frets, the same wall taqsim declares for rast and bayati",
-        "the oud itself — no oud in the registry; the nylon-string guitar is a plucked " +
-        "gut-strung lute and it is FRETTED, taqsim's own admission one row over"
+        "WITHDRAWN 2026-09-07, and the sentence is quoted rather than deleted because a " +
+        "refusal that expires is worth dating: \"the oud itself — no oud in the registry; the " +
+        "nylon-string guitar is a plucked gut-strung lute and it is FRETTED, taqsim's own " +
+        "admission one row over\". There is an oud now (engine/faust/dsp/oud.dsp) and it is " +
+        "fretless by construction — its glide defaults to 45 ms where every other plucked " +
+        "module in the fleet defaults to 0 — so both halves of that admission are answered. " +
+        "`taqsim`, one row over, still carries the same clause and this round did not touch it"
       ],
-      instr: ["solo_vox", "nylon_string_guitar"],
+      instr: ["solo_vox", "oud"],
       entry: v => v,
       reg: v => (v === 0 ? 0 : -1),
       realize: () => "line",
@@ -29451,6 +30090,47 @@
     //
     // WHO SINGS: bolerista — the sentimental Iberian tenor,
     // which is this idiom's own descendant singing back.
+    //
+    // THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    // COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    // `words` call *"the viola, arpeggiating under it"* — the Portuguese viola plays a `nylon_string_guitar`, because the sample registry has
+    // no viola de arame. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    // presets each and every one of them has the same plucked list — banjo, koto,
+    // shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    // no qanun and no saz in any of the thirteen.
+    //
+    // WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for a viola de arame is exactly
+    // the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    // 1932 record and a TR-808 on 1978, one register lower down. The difference is
+    // that those two had a true instrument to move to and this one does not, so the
+    // honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    // it is named. The row's own `words` already say the true instrument; this
+    // paragraph says why the sound is not it.
+    //
+    // QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    // `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    // `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    // `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    // rows from 705 to 1819, one library gap, counted once in
+    // `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    // THE OUD ARRIVED AND THIS ROW DID NOT TAKE IT (2026-09-07). Six of the
+    // eleven above now play `engine/faust/dsp/oud.dsp` and two play the `lute`
+    // recipe on that same model. This row is one of the three that does not,
+    // and the reason is the reason the gap was worth naming in the first place:
+    // the Portuguese viola de arame is a WIRE-strung five-course folk guitar,
+    // not a lute. The courses are the one thing the oud model would get right
+    // and the strings are the thing it would get wrong: this model is gut and
+    // nylon by construction (`bright` 0.10, a 2.8 s ring), and wire is the
+    // opposite of that.
+    // So the paragraph above still stands here, minus one word — there IS an
+    // oud now, and it is the wrong instrument for this row. What this row
+    // actually wants is written down so the next round does not have to
+    // rediscover it: either a `viola` recipe of its own — the oud dsp with `course` on, `glide`
+    // at 0 and `bright` up where a steel string lives — or, cheaper and
+    // available today, `steel_string_guitar`, which is already a wire-strung
+    // plucked box and is a better stand-in for a viola de arame than the nylon
+    // top is. That is a ROW decision and this round did not take it.
+    //
     modinha: {
       label: "Lisbon 1775",
       voices: 2,
@@ -29511,6 +30191,47 @@
     // .15) makes the last quarter a run-up, not an ending. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    // COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    // `words` call *"the viola, thumb and fingers"* — the Portuguese viola plays a `nylon_string_guitar`, because the sample registry has
+    // no viola de arame. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    // presets each and every one of them has the same plucked list — banjo, koto,
+    // shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    // no qanun and no saz in any of the thirteen.
+    //
+    // WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for a viola de arame is exactly
+    // the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    // 1932 record and a TR-808 on 1978, one register lower down. The difference is
+    // that those two had a true instrument to move to and this one does not, so the
+    // honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    // it is named. The row's own `words` already say the true instrument; this
+    // paragraph says why the sound is not it.
+    //
+    // QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    // `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    // `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    // `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    // rows from 705 to 1819, one library gap, counted once in
+    // `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    // THE OUD ARRIVED AND THIS ROW DID NOT TAKE IT (2026-09-07). Six of the
+    // eleven above now play `engine/faust/dsp/oud.dsp` and two play the `lute`
+    // recipe on that same model. This row is one of the three that does not,
+    // and the reason is the reason the gap was worth naming in the first place:
+    // the Portuguese viola de arame is a WIRE-strung five-course folk guitar,
+    // not a lute. The courses are the one thing the oud model would get right
+    // and the strings are the thing it would get wrong: this model is gut and
+    // nylon by construction (`bright` 0.10, a 2.8 s ring), and wire is the
+    // opposite of that.
+    // So the paragraph above still stands here, minus one word — there IS an
+    // oud now, and it is the wrong instrument for this row. What this row
+    // actually wants is written down so the next round does not have to
+    // rediscover it: either a `viola` recipe of its own — the oud dsp with `course` on, `glide`
+    // at 0 and `bright` up where a steel string lives — or, cheaper and
+    // available today, `steel_string_guitar`, which is already a wire-strung
+    // plucked box and is a better stand-in for a viola de arame than the nylon
+    // top is. That is a ROW decision and this round did not take it.
+    //
     lundu: {
       label: "Lisbon 1798",
       voices: 2,
@@ -31144,6 +31865,21 @@
     // who arrived at the sequencer separately, which is why `synthpop` declares BOTH of
     // them and neither declares the other.
     //
+    // THE OCTAVE LINE IS EIGHTHS, AND THIS ROW SAYS SO (2026-09-07, the twelve
+    // questions, 1). `bassStyle: "octaves"` is a DENSITY word and `kernel.js
+    // STYLEGRID` answers it with one note per felt beat — four to the bar — which is
+    // what `bass-kit.js STYLEFIG` has always said the word means (`octaves` =
+    // `g16(0,4,8,12)`), and the two tables must not disagree. The eighth-note
+    // root-and-octave line is a different thing with a different name in that same
+    // table: `discoct`, "disco octaves" — root on the beat, the octave on the and,
+    // the accent on 1 and 3. So the rhythm is written out as a FIGURE here rather
+    // than borrowed from a density word that does not mean it, exactly as
+    // kernel.js's own E3 comment says a row that wants this must do. Measured: 4.00 -> 8.00 bass notes a bar.
+    // EVIDENCE, THE ROW'S OWN: *"I Feel Love IS the octave pedal"* — Moroder's
+    // Musicland sequencer, Munich 1977, the record every row below this one in the
+    // club family is descended from. `seqArp` gave this row the arpeggio and left
+    // the bass under it walking in quarters.
+    //
     eurodisco: {
       label: "Munich 1977",
       voices: 3,
@@ -31167,6 +31903,11 @@
       artic: "staccato",
       maxHold: 2,
       bassStyle: "octaves",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        oct: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
       kit: {
         k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -31276,6 +32017,21 @@
     // gesture would turn the riff into a siren. 30 ms is the lag an analog
     // mono has anyway — enough that the line is not typed, short enough that
     // sixteen notes a bar still count.
+    //
+    // THE OCTAVE LINE IS EIGHTHS, AND THIS ROW SAYS SO (2026-09-07, the twelve
+    // questions, 1). `bassStyle: "octaves"` is a DENSITY word and `kernel.js
+    // STYLEGRID` answers it with one note per felt beat — four to the bar — which is
+    // what `bass-kit.js STYLEFIG` has always said the word means (`octaves` =
+    // `g16(0,4,8,12)`), and the two tables must not disagree. The eighth-note
+    // root-and-octave line is a different thing with a different name in that same
+    // table: `discoct`, "disco octaves" — root on the beat, the octave on the and,
+    // the accent on 1 and 3. So the rhythm is written out as a FIGURE here rather
+    // than borrowed from a density word that does not mean it, exactly as
+    // kernel.js's own E3 comment says a row that wants this must do. Measured: 4.00 -> 8.00 bass notes a bar.
+    // EVIDENCE, THE ROW'S OWN: *"the octave-jumping sequenced bassline is the
+    // signature of the Milan sound"* — and this row's identity is a SIXTEENTH-note
+    // synth riff over it, which a quarter-note bass leaves standing in the air.
+    //
     italodisco: {
       label: "Milan 1982",
       voices: 3,
@@ -31299,6 +32055,11 @@
       artic: "staccato",
       maxHold: 2,
       bassStyle: "octaves",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        oct: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
       kit: {
         k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
         s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -31944,6 +32705,71 @@
     // at its phrase end, ancestor and descendant alike. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the oud, shadowing and answering"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no oud. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for an oud is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
     abbasid: {
       label: "Baghdad 800",
       voices: 2,
@@ -31961,7 +32787,7 @@
         "own century sits a quarter tone off this table's grid (WORLD.md §2 wall 3), so the " +
         "row sings the court's diatonic strings and not the fret that made its name"
       ],
-      instr: ["solo_vox", "nylon_string_guitar"],
+      instr: ["solo_vox", "oud"],
       entry: v => v * 2,
       reg: v => -v,
       realize: () => "line",
@@ -32129,6 +32955,33 @@
     // earliest written polyphony anywhere, and it is parallel by
     // construction. A pass that broke those fourths would be correcting the
     // manuscript.
+    //
+    // THE PARALLEL REFUSAL IS DECLARED, AND IT ARRIVES (2026-09-07, the
+    // twelve questions, 11). AUDIT-2026-09's question 13 asks whether this row should
+    // take `organum`'s refusal — *"winchester is parallel organum at the fourth and
+    // could take the same `copyist` refusal `organum` just took"* — and the answer is
+    // that it already had one: `copyist: { refuse: "all" }` above, with the Troper's
+    // own evidence beside it. The question was written against a reading of the
+    // catalogue from before the copyist round landed 37 refusals; the row is not
+    // silent and never was.
+    //
+    // MEASURED, BECAUSE A DECLARATION THAT REACHES NO NOTE IS NOT A DECLARATION.
+    // `document.js scoreOf` runs the pass only when a caller asks for it
+    // (`opts.copyist`), so the refusal was checked with the pass ON: this row's score
+    // at seed 1 is `b3801b3bce` with the refusal and `4f1129b4f9` without it. IT
+    // MOVES. `organum` moves too, and so does `sacredharp` — all three of the
+    // parallel-refusing rows the audit named — where the audit could only say of
+    // `organum` "no render move at this reading", because it measured with the pass
+    // off.
+    //
+    // AND THE REFUSAL IS THE BROAD ONE ON PURPOSE. `organum` refuses `["parallel"]`;
+    // this row refuses all four faults, and the two are measurably different here
+    // (`refuse: "all"` gives `b3801b3bce`, `["parallel"]` gives `7e2728d538`). Two
+    // voices, a chant and a vox organalis a fourth under closing to unison, is not a
+    // texture with chords to be missing tones from or an inner part to be doubled
+    // wrongly: every repair the pass could make to it is a repair to the organum. The
+    // narrower word would say less than the row means.
+    //
     winchester: {
       label: "Winchester 1000",
       voices: 2,
@@ -39216,8 +40069,30 @@
     // THE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:
     // "syncope"` — the line leans off the beat. The groove is the point and it
     // is not on the beat.
+    //
+    // THE OCTAVE LINE IS EIGHTHS, AND THIS ROW SAYS SO (2026-09-07, the twelve
+    // questions, 1). `bassStyle: "octaves"` is a DENSITY word and `kernel.js
+    // STYLEGRID` answers it with one note per felt beat — four to the bar — which is
+    // what `bass-kit.js STYLEFIG` has always said the word means (`octaves` =
+    // `g16(0,4,8,12)`), and the two tables must not disagree. The eighth-note
+    // root-and-octave line is a different thing with a different name in that same
+    // table: `discoct`, "disco octaves" — root on the beat, the octave on the and,
+    // the accent on 1 and 3. So the rhythm is written out as a FIGURE here rather
+    // than borrowed from a density word that does not mean it, exactly as
+    // kernel.js's own E3 comment says a row that wants this must do. Measured: 0 -> a written line; this row declared no `bassStyle` at all,
+    // so its bass was reading the MELODY'S accent vector.
+    // EVIDENCE, THE ROW'S OWN, and it is the flattest statement of this fault in the
+    // catalogue: *"Hi-NRG is the octave-jumping sequenced bassline and nothing else;
+    // it is the one feature the genre is named for after the tempo."* The one feature
+    // the genre is named for was not in the render.
+    //
     hinrg: {
       bassInstr: "bass_lead",
+      bassFig: {
+        grid: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        oct: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0],
+        acc: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
       label: "Brixton 1984",
       voices: 3,
       bars: 8,
@@ -46020,6 +46895,18 @@
     // So the anachronism is written down instead of removed, and the decision is
     // Paul's: AUDIT-2026-09 asks whether 69 records may take a new guest draw to get
     // a 1957 record off a synthesizer.
+    //
+    // AND IT IS MADE (2026-09-07, the twelve questions, 5). `warm_pad` ->
+    // `slow_strings`. A warm synth pad on Les Baxter in 1957 is fifteen years early
+    // and the sound it is standing in for is a STRING SECTION — Denny's wash is
+    // strings and a vibraphone tail, which the two chairs above it already say. The
+    // paragraph over this one is the whole argument against making it, and the
+    // argument is not that the fix is wrong: it says in its own words *"the fix is
+    // one word"* and then declines it because the word costs 69 other rows a new
+    // guest draw. A correction that cannot be measured is not shipped; a correction
+    // that CAN be is not withheld because it is large. So it is made, and the 69 are
+    // measured by name in the round's report rather than counted and feared.
+    //
     exotica: {
       instrumental: true,
       label: "Honolulu 1957",
@@ -46035,7 +46922,7 @@
         "actual hook, and no registry voice says them; the room plays the notes and owes the " +
         "jungle"
       ],
-      instr: ["vibraphone", "yamaha_grand_piano", "warm_pad"],
+      instr: ["vibraphone", "yamaha_grand_piano", "slow_strings"],
       drumkit: "acoustic",
       entry: v => v,
       reg: v => [1, 0, 0][v],
@@ -46093,6 +46980,71 @@
     // at its phrase end, ancestor and descendant alike. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the oud's cognate, doubling under"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no oud. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for an oud is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
     muwashshah: {
       label: "Cairo 1200",
       voices: 3,
@@ -46109,7 +47061,7 @@
         "the kharja's language switch — the final verses jump to vernacular or Romance and a " +
         "register change is not a language change"
       ],
-      instr: ["solo_vox", "nylon_string_guitar", "fiddle"],
+      instr: ["solo_vox", "oud", "fiddle"],
       drumkit: "acoustic",
       entry: v => v,
       reg: v => [0, -1, 0][v],
@@ -46167,6 +47119,71 @@
     // at its phrase end, ancestor and descendant alike. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"the strings, the wheel the refrain turns on"* — the zajal's oud plays a `nylon_string_guitar`, because the sample registry has
+    //   no oud. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for an oud is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
     zajal: {
       label: "Córdoba 1150",
       voices: 2,
@@ -46180,7 +47197,7 @@
         "the crowd — a zajal is call and refrain with the street answering, and two chairs are " +
         "not a street"
       ],
-      instr: ["solo_vox", "nylon_string_guitar"],
+      instr: ["solo_vox", "oud"],
       drumkit: "acoustic",
       entry: v => v,
       reg: () => 0,
@@ -46710,6 +47727,71 @@
     // at its phrase end, ancestor and descendant alike. The `roots` cluster
     // takes `lean`; the anchor's own evidence outranks it, which is the
     // flood's rule (docs/DYNAMICS-FLOOD.md).
+    //
+    // THE INSTRUMENT IS IN THE LIBRARY NOW (2026-09-07, the oud round), and this
+    // paragraph is rewritten rather than deleted, because a stand-in becoming an
+    // instrument is the only kind of catalogue change worth dating. What stood
+    // here, on this row and on ten others:
+    //   THE INSTRUMENT IS NOT IN THE LIBRARY, AND THAT IS WRITTEN DOWN RATHER THAN
+    //   COVERED UP (2026-09-07, the twelve questions, 12). The chair this row's own
+    //   `words` call *"her own oud, under the line she is singing"* plays a `nylon_string_guitar`, because the sample registry has
+    //   no oud. MEASURED, not assumed: `found/samples/` holds thirteen GM banks of 128
+    //   presets each and every one of them has the same plucked list — banjo, koto,
+    //   shamisen, sitar and six guitars. There is no oud, no lute, no vihuela, no pipa,
+    //   no qanun and no saz in any of the thirteen.
+    //
+    //   WHY NOTHING IS SUBSTITUTED. A nylon-string guitar standing in for an oud is exactly
+    //   the costume this catalogue keeps refusing — the same fault as a Hammond on a
+    //   1932 record and a TR-808 on 1978, one register lower down. The difference is
+    //   that those two had a true instrument to move to and this one does not, so the
+    //   honest act is to NAME THE GAP and leave the nearest real thing sounding while
+    //   it is named. The row's own `words` already say the true instrument; this
+    //   paragraph says why the sound is not it.
+    //
+    //   QUEUED, WITH TEN OTHERS. `qiyan` (Medina 705), `abbasid` (Baghdad 800),
+    //   `andalusi` (Córdoba 822), `zajal` (Córdoba 1150), `muwashshah` (Cairo 1200),
+    //   `troubadour` (Provence 1210), `pavane` (Antwerp 1551), `modinha` (Lisbon 1775),
+    //   `nuba` (Tetouan 1790), `lundu` (Lisbon 1798) and `pipaqu` (Wuxi 1819) — eleven
+    //   rows from 705 to 1819, one library gap, counted once in
+    //   `scratch/genre-qa/AUDIT-2026-09.md` and now stated on each of the eleven.
+    //
+    // Every word of that is still true of the SAMPLE registry and none of it is
+    // true of the box. Paul, shown the count: *"Do the Faust oud it's just a
+    // little code."* `engine/faust/dsp/oud.dsp` is a MODEL, for the erhu's
+    // reason — it could not have been a recording, because the thing it models
+    // is in none of the thirteen banks — and it is the FAUST Synthesis
+    // ToolKit's extended Karplus-Strong string, the same one the six electrics
+    // and the four acoustics play, with the amplifier taken off it, a SECOND
+    // STRING beside it and a deep wooden box under it. Four things are
+    // measured rather than claimed (test/oud.test.js, on the shipped
+    // dist/oud-module.wasm):
+    //  · IT PLAYS THE NOTE. 0.0 to 0.5 cents from MIDI 36 to 84, no fitted
+    //    correction — the check that caught the old guitar waveguide at
+    //    +37 cents.
+    //  · IT IS THE DARKER, DEEPER INSTRUMENT the ZIM describes ("Arabian ouds
+    //    are normally larger... producing a fuller, deeper sound"). Against
+    //    the `nylon_string_guitar` chair this row was playing, at the same
+    //    pitch and the same velocity: 85.9% of a low-C's energy under 400 Hz
+    //    against 48.3%, and a body-window spectral centroid of 1046/899/924 Hz
+    //    against 1360/961/1004 at MIDI 36/48/60.
+    //  · THE RISHA IS A QUILL, NOT A FINGER ("played by plucking... with a
+    //    risha, which means feather in Arabic"). The first 23 ms carry 8.3x
+    //    the energy above 3 kHz that the same module plucked with a fingertip
+    //    does. Dark body, bright attack — which is the sound.
+    //  · IT IS A COURSE, NOT A CHORUS ("11 strings grouped in six courses").
+    //    Two strings 8 cents apart, struck 0.7 ms apart by one plectrum: the
+    //    fundamental beats at a measured 1.206 Hz at C4 against 1.209
+    //    predicted, 39 dB deep. Set to a single string it beats at nothing.
+    //  · AND IT IS FRETLESS ("Being a fretless instrument..."), which is the
+    //    one thing no guitar in this box can be. `glide` defaults to 45 ms
+    //    here where every other plucked module defaults to 0, so a line
+    //    ARRIVES at its notes; measured on a written A3-to-D4, the pitch
+    //    passes through 255, 263, 271, 279, 286 and 290 Hz instead of
+    //    jumping.
+    // No amplifier and no insert: state-engine's `case "oud"` hands the unit an
+    // empty chain where every other model takes the house delay-and-chorus,
+    // because an oud is a wooden box in a room.
+    //
     qiyan: {
       label: "Medina 705",
       voices: 2,
@@ -46735,7 +47817,7 @@
         "literary anecdotes (akhbar), calligraphy, or shadow play'; this box has one of the " +
         "seven and the label names the whole"
       ],
-      instr: ["solo_vox", "nylon_string_guitar"],
+      instr: ["solo_vox", "oud"],
       entry: v => v,
       reg: v => (v === 0 ? 0 : -1),
       realize: () => "line",

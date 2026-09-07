@@ -88,6 +88,17 @@ const STANDIN = {
   // the strings that are played by hand
   stk_guitar: "clean_guitar", gtr_amp: "overdrive_guitar",
   lead_fuzz: "distortion_guitar",
+  // …and the OUD reads as the nylon top, which is not a guess: it is exactly
+  // the chair eleven catalogue rows were seated on before the module existed
+  // (scratch/genre-qa/AUDIT-2026-09.md finding 14), and the nearest thing
+  // anybody recorded. GM has no oud, no lute, no vihuela and no pipa.
+  // TWO ROWS FOR ONE MODULE, and the second one is why this table is keyed the
+  // way it is: the lookup takes the voice's `instrument`, which for the fleet
+  // happens to be the module's name and here is not — `oud` and `lute` are two
+  // instruments on one dsp (instruments.js PATCH_MODEL), so a `lute` row that
+  // leaned on the module name would fall through to the piano, which is what
+  // it did before this line.
+  oud: "nylon_string_guitar", lute: "nylon_string_guitar",
   // the machines
   modeld: "saw_wave", tb303: "saw_wave", supersaw: "saw_wave",
   pad_saw: "warm_pad", juno60: "polysynth", oberheim: "polysynth",

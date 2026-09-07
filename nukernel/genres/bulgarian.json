@@ -1,8 +1,9 @@
 {
-  "note": "BULGARIAN. Le Mystère des Voix Bulgares, and the two things that make it\nunmistakable are both cheap to say here. The first is the SECOND: the\nupper voice sings a step above the melody and stays there — a dissonance\nheld as if it were a consonance, which is the sound. The second is the\nLIMP: a kick on 1, 8 and 15 divides sixteen steps as 7+7+2, so the bar\nnever sits down where you expect. Underneath both, a pedal — the ison,\nthe drone the whole tradition is built over.\n\nnamed \"Sofia 1975\" — Le Mystère des Voix Bulgares (the comment's own\nreference) is the Sofia state radio choir, first issued 1975.\n\nLINEAGE: a root under protest — the radio choir ARRANGED a village\ndiaphony older than notation; the ison under it is Orthodox chant's,\nand neither parent is in the catalog. Gregorian is chant, but the\nwrong church: claiming it would be tidier than it is true.\nPAID 2026-08-29, the debts round: \"orthodox chant\" is `sticheron`\n(Constantinople 843) — the diaphony's held second is village\npractice over exactly this liturgy's line.\n\nWHO SINGS: the open-throated straight tone, packed tight enough that the seconds grind",
+  "note": "BULGARIAN. Le Mystère des Voix Bulgares, and the two things that make it\nunmistakable are both cheap to say here. The first is the SECOND: the\nupper voice sings a step above the melody and stays there — a dissonance\nheld as if it were a consonance, which is the sound. The second is the\nLIMP: a kick on 1, 8 and 15 divides sixteen steps as 7+7+2, so the bar\nnever sits down where you expect. Underneath both, a pedal — the ison,\nthe drone the whole tradition is built over.\n\nnamed \"Sofia 1975\" — Le Mystère des Voix Bulgares (the comment's own\nreference) is the Sofia state radio choir, first issued 1975.\n\nLINEAGE: a root under protest — the radio choir ARRANGED a village\ndiaphony older than notation; the ison under it is Orthodox chant's,\nand neither parent is in the catalog. Gregorian is chant, but the\nwrong church: claiming it would be tidier than it is true.\nPAID 2026-08-29, the debts round: \"orthodox chant\" is `sticheron`\n(Constantinople 843) — the diaphony's held second is village\npractice over exactly this liturgy's line.\n\nWHO SINGS: the open-throated straight tone, packed tight enough that the seconds grind\n\nTHE METER IS 7/8 AND THE KIT IS FOURTEEN STEPS (2026-09-07, the twelve\nquestions, 7). This row was in FOUR with a sixteen-step trap grid — kick on 1,\nthe a of 2 and the & of 4, rim on five more — under a Bulgarian village choir,\nwhich is the one thing everybody knows this music is not. `meter` has been a\nreal field since `progmetal` (7/8) and `waltz` (three), the meter walls came\ndown in v286 and `kernel.js meterRow` counts any n/d, so nothing but a hand was\nstopping this.\n\nTHE GRID IS THE DANCE'S OWN AND NOT A GUESS. A *rŭchenitsa* counts seven\neighths as 2+2+3 — the limp everybody hears, the long group last — so at\n`metOf(\"7/8\")`'s fourteen steps (pulse 2) the seven eighths fall on 0, 2, 4, 6,\n8, 10, 12 and the three GROUP HEADS on 0, 4 and 8. The *tŭpan* is one drum\nplayed two ways: the deep beater on the head of each group (`k` = 0, 4, 8) and\nthe thin switch on the eighths between (`p` = 2, 6, 10, 12), which puts two\nswitch strokes inside the long group and one inside each short one. That is\nthe limp, written down.\n\nAND THE BASS GRID GOES WITH IT. This row wrote `bassGrid`\n`x......x......x.` — sixteen slots, a drone struck every seven — and\n`kernel.js` reads a grid with `at`, which WRAPS, so a sixteen-place grid on a\nfourteen-step bar loses its tail and lands its onsets at 0, 2, 7 and 9: three\nof the four in places the dance has no accent. It is fourteen places now and it\nmarks the same three group heads the tŭpan's beater does (0, 4, 8), which is\nwhat a drone under a ruchenitsa is: one note at the head of each group.\n\nWHAT WENT: a snare, a hat and eleven of the sixteen onsets. A Western trap kit\nunder the *Mystère des Voix Bulgares* was a costume, and the audit said so.\n",
   "label": "Sofia 1975",
   "plan": "arc",
   "bpm": 96,
+  "meter": "7/8",
   "parents": {
     "sticheron": 0.25
   },
@@ -35,6 +36,7 @@
     0,
     0,
     0,
+    1,
     0,
     0,
     0,
@@ -43,9 +45,6 @@
     0,
     0,
     0,
-    0,
-    0,
-    1,
     0
   ],
   "kit": {
@@ -54,6 +53,7 @@
       0,
       0,
       0,
+      1,
       0,
       0,
       0,
@@ -62,9 +62,6 @@
       0,
       0,
       0,
-      0,
-      0,
-      1,
       0
     ],
     "p": [
@@ -72,18 +69,16 @@
       0,
       1,
       0,
-      1,
-      0,
-      0,
       0,
       0,
       1,
       0,
+      0,
+      0,
       1,
       0,
-      0,
-      0,
-      1
+      1,
+      0
     ]
   },
   "artic": "legato",

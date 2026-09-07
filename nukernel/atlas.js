@@ -950,7 +950,7 @@
     stadiumprog:    { place: "London", year: 1987 },
     grebo:          { place: "Stourbridge", year: 1990 },
     melodictechno:  { place: "Kent", year: 1991 },
-    bleeptechno:    { place: "Manchester", year: 1989 },
+    bleeptechno:    { place: "Sheffield", year: 1989 },
     industrialbreaks: { place: "Swindon", year: 1989 },
     industrialrock: { place: "Cleveland", year: 1989 },
     analogsynthpop: { place: "Basildon", year: 1980 },

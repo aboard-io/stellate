@@ -356,6 +356,14 @@ const SYNTH = {
   // the `guoyue` cell. No `role`, for the guitar's reason: a fiddle carries the
   // tune and it also holds a drone under somebody else's.
   erhu:       { model: "erhu" },
+  // …and THE RISHA, for the bow's reason and out of the same measurement
+  // (2026-09-07, the oud round). GM's nearest plucked lutes are the sitar,
+  // the shamisen and the koto, and none of them is an oud — which is why
+  // eleven catalogue rows that name an oud, a lute, a vihuela or a pipa were
+  // seated on a nylon guitar (scratch/genre-qa/AUDIT-2026-09.md finding 14).
+  // No `role`, for the guitar's reason: an oud carries the taqsim and it also
+  // strums the accompaniment under somebody else's.
+  oud:        { model: "oud" },
   // THE THROAT. Both roles are declared, because a singer and a section are not
   // interchangeable seatings of one thing the way pad_saw and supersaw are: a
   // lead follows the TUNE and a choir holds the HARMONY, and the parent's `pad`
@@ -798,6 +806,31 @@ const PAGE_TRIM = {
      ONE RECORD: the day a second row casts an erhu, this wants re-measuring
      across both, and Paul's ears are the only gate that can call it done. */
   erhu:        9.63,
+  /* oud — DERIVED, and it says so, for stk_piano's, tract_voice's and the
+     erhu's reason. But it is the best-conditioned derivation in this table,
+     because the module was fitted against the exact chair it replaces rather
+     than against a cousin: dsp/oud.dsp's `makeup` was least-squares fitted at
+     MIDI 48 across seven values of `pick` to land on 2.4e-3..3.0e-3 RMS, and
+     the shipped nylon chair (stk_guitar + the `nylon_string_guitar` recipe)
+     measures 2.55e-3..2.98e-3 across the same span at the same pitch through
+     the same offline renderer — worst residual 0.20 dB. All eleven rows this
+     module is seated on were playing that chair, so the page's deficit for one
+     IS the page's deficit for the other and this row is stk_guitar's,
+     unchanged.
+     AND THE ERHU'S LESSON IS APPLIED RATHER THAN REPEATED: that row was
+     "honest about RMS and blind about PEAK" and came back 14.7 dB down the day
+     a record cast it. Measured here at pick 0.5, oud against the nylon chair:
+     A2 rms +3.97 dB / peak +4.41, A3 -0.69 / -3.01, A4 -6.44 / -6.34. RMS and
+     peak track each other to within 2.4 dB at every pitch — no hidden crest —
+     and the mean across the three is -1.05 dB RMS, which is inside the
+     hand-back this table already documents on its measured rows. What the
+     numbers DO say is that the instrument is bottom-heavy across its own
+     compass by about 10 dB from C2 to A4, and that is the deep box doing what
+     a deep box does, not a level fault; a single route gain cannot and should
+     not flatten it.
+     STILL DERIVED: the day the ear says these eleven rows are hot or quiet,
+     this is the row that owns it. */
+  oud:         1.424,
   /* THE THREE SINGERS WERE CUT x0.5012 (-6.00 dB) 2026-08-30, all three by the
      same number, and it is Paul's own. Having fixed one record by hand: *"Air
      (as a band) is good but the main vocals are 2x too loud and the other vocal
@@ -1135,7 +1168,12 @@ const LIVE_AMP = [PITCH_AMP_FLOOR, PITCH_AMP_FLOOR + PITCH_AMP_SPAN];
 // spellings of one fact is a fact waiting to disagree — the erhu's 0.09 s is
 // longer than the guitar's 0.06 because hua yin is a gesture and a guitar's
 // slide is a repair.
-const LIVE_SLIDE = { stk_guitar: 0.06, erhu: 0.09 };
+// …and the oud's 0.16 is longer than either, because on a FRETLESS instrument
+// a slide is not a gesture and not a repair: it is how a hand gets from one
+// note to the next. (Its unslid notes are not 0 either — the module's own
+// `glide` slider defaults to 0.045 s, which state-engine's `case "oud"` writes
+// as the chair's base and `glideFloor` keeps.)
+const LIVE_SLIDE = { stk_guitar: 0.06, erhu: 0.09, oud: 0.16 };
 
 /* ---- PORTAMENTO, AS A CHAIR SAYS IT (2026-09-03) --------------------------
  * Paul: "We are missing a big thing: Portamento. Everywhere, voices, synths,

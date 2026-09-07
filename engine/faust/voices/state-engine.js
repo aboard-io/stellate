@@ -1048,6 +1048,13 @@
     casiocz: GL_MS, vp330: GL_MS, fm2op: GL_MS,
     bass_saw: GL_MS, bass_sub: GL_MS, bass_reese: GL_MS, bass_wobble: GL_MS,
     stk_guitar: GL_S, gtr_amp: GL_S, erhu: GL_S,
+    // …and THE OUD, which is the one module in this table whose glide is not
+    // 0 when nobody asks. It is FRETLESS (dsp/oud.dsp, and the ZIM's own
+    // first sentence about the instrument), so a finger travelling to the next
+    // note passes through every pitch between whether the score marks a slide
+    // or not. The module's own slider carries that default and `glideFloor`
+    // below keeps it: a row that writes nothing still gets the instrument.
+    oud: GL_S,
     voice_lead: GL_SV, tract_voice: GL_SV,
   };
   function applyGlide(u, m) {
@@ -1128,6 +1135,17 @@
     // edge of breakup to a second amp at a hard pick — the blues-like-thrash
     // round; ±0.05 keeps velocity dirtying the note without recasting it)
     stk_guitar:  { pick: [0.12, 1], drive: [-0.05, 0.05, "rel"] },
+    // …and the RISHA, which is the plectrum and not the arm. Same span as the
+    // guitar's plectrum and NO `drive` row beside it, because there is no amp
+    // in dsp/oud.dsp to drive — an oud is the most acoustic instrument in this
+    // catalogue and instruments.js' own law ("a nylon top through a higain
+    // stage is an electric with a costume") is the reason. Measured on the
+    // module across this span, the spectral centroid moves x1.61 at MIDI 36,
+    // x1.53 at 48, x1.26 at 60 and x1.14 at 72 — a NARROWER swing than the
+    // guitar's x1.5..2.7 on purpose and by mechanism: a fingertip changes
+    // shape with force and a piece of filed plastic does not, so the module
+    // spends the difference on being bright at every dynamic instead.
+    oud:         { pick: [0.12, 1] },
     stk_piano:   { hammer: [0.3, 1] },
     mallet:      { hard: [0.05, 1] },
     //   erhu.force  the bow arm, and it is TWO things because a bow arm is:
@@ -1751,6 +1769,99 @@
           bright: m.bright != null ? clamp(m.bright, 0, 1) : mp("stiff", 0.32, 0, 1),
           ring: m.ring != null ? clamp(m.ring, 0.05, 12) : dampToRing(mp("damp", 0.9998, 0.99, 1)),
           release: clamp(m.release != null ? m.release : 0.25, 0.02, 2) } };
+      // ---- THE OUD (dsp/oud.dsp) ------------------------------------------
+      // The same extended Karplus-Strong string as the case above, with the
+      // amplifier taken off it, a second string beside it and a deep wooden
+      // box under it. It is here for the erhu's reason and not the guitar's:
+      // no recording in this tree is an oud (every soundfont is GM bank 0 and
+      // GM's nearest plucked lutes are the sitar, the shamisen and the koto),
+      // so eleven catalogue rows that name an oud, a lute, a vihuela or a pipa
+      // were seated on a nylon guitar. See scratch/genre-qa/AUDIT-2026-09.md
+      // finding 14.
+      //
+      // THE COMPASS IS IN TWO TIERS AND THIS IS THE OUTER ONE. What a MODULE
+      // declares is what the model plays in tune — measured 0.0 to 0.5 cents
+      // from MIDI 36 to 84 — and what an INSTRUMENT plays is
+      // instruments.js RANGES, which is the parent's own second-tier register
+      // law and is per id rather than per module. That split matters here
+      // because two instruments share this module: the oud's own window is
+      // C2..C5 (MIDI 36..72, the ZIM's "Many current Arab players use this
+      // tuning: C2 F2 A2 D3 G3 C4", an octave above the top open course for
+      // the ceiling) and the Renaissance lute's is G2..G5 (MIDI 43..79, the
+      // article's 6-course tenor "in G" plus the octave its glued-on partial
+      // frets reach). The union is 65.41 Hz to 783.99, and each id is folded
+      // into its own half of it upstream. The floor is a real floor for
+      // erhu.dsp's reason: nothing exists below the bottom course to be
+      // stopped, so a line that goes there folds back up in key rather than
+      // playing a lute two octaves under itself.
+      //
+      // AND `slideSec` IS THE ONE NUMBER THAT MAKES IT NOT A GUITAR. The
+      // module defaults `glide` to 0.045 s where stk_guitar defaults to 0,
+      // because the instrument is FRETLESS and a slide between notes is the
+      // ordinary articulation rather than an ornament; the base is written
+      // here so a chair that names nothing still gets the instrument, and a
+      // note marked `sld` takes the longer 0.16 s (glideFloor's law: a slide
+      // shorter than the portamento it interrupts is not a gesture).
+      //
+      // AND IT ARRIVES DRY UNLESS SOMEBODY ASKS. Every other model here takes
+      // defaultInserts' two-per-voice house chain when its recipe names none —
+      // a delay and a chorus on a lead — and on this instrument that is the
+      // costume instruments.js already refused for the acoustic guitars ("a
+      // nylon top through a higain stage is an electric with a costume"). An
+      // oud is a wooden box in a room. A recipe that DOES name a pedalboard
+      // still gets it (`m.inserts`, non-empty, the same override law every
+      // electric uses); absent means dry, where absent elsewhere means house
+      // style. This is the one place that law is inverted and it is inverted
+      // on purpose.
+      case "oud": {
+        // THE FRETLESS DEFAULT, and a recipe may still write its own — which
+        // is exactly what the `lute` recipe does (instruments.js PATCH_MODEL):
+        // gut frets tied round the neck are, in this model, `glide` at 0.
+        const gl = clamp(m.glide != null ? m.glide : 0.045, 0, 0.5);
+        return { ...base, module: "oud",
+        freqMax: 783.99, freqMin: 65.41, pool: role === "pad" ? 4 : 3,
+        inserts: (Array.isArray(m.inserts) && m.inserts.length) ? base.inserts : [],
+        // AND A FRETTED SETUP'S SLIDE IS NOT A FRETLESS ONE'S. 0.16 s is the
+        // hand travelling along a continuous string, which is how an oud
+        // player gets anywhere; on a fretted neck a `sld` note is a slur up to
+        // the next tied gut fret and it is over in a fortieth of a second.
+        // Reading it off the resolved glide rather than off the id keeps the
+        // two facts one fact.
+        dyn: MODEL_DYN.oud, slideParam: "glide", slideSec: gl > 0 ? 0.16 : 0.04,
+        params: { ...base.params,
+          glide: gl,
+          cutoff: clamp(c || 4200, 200, 14000),
+          // where the risha lands, measured from the nearer end, same
+          // convention and the same reflection the guitar case uses.
+          pluckPos: clamp(dampToPluck(mp("pluckPos", 0.18, 0.02, 0.98)), 0.02, 0.5),
+          // the course's detuning in CENTS. 0 is a single string, which is
+          // what the bottom course of an eleven-string instrument is.
+          course: mp("course", 8, 0, 30),
+          bright: m.bright != null ? clamp(m.bright, 0, 1) : mp("stiff", 0.10, 0, 1),
+          // TWO SLIDERS THE MODULE HAS AND THIS CASE DOES NOT READ, and the
+          // reason is a rule about NAMES rather than about sound. `risha`
+          // (the plectrum: a fingertip at 0, a filed quill at 1) and `body`
+          // (the box's air resonance in Hz — the Arabian/Turkish axis the
+          // article describes) are real, audible and reachable by anything
+          // that sets a param directly. They are not recipe keys because
+          // knobs-extract.js refuses a key with no name in
+          // nukernel/src/copy/knobs.ts, that catalogue has no word for a
+          // plectrum or for a soundbox, and adding one is a COPY decision
+          // owned by the design-system round rather than by this one. The
+          // day it gains those two rows, two lines here open them and the
+          // `lute` recipe below can stop approximating its own plectrum with
+          // a pluck position. Declared, costed and unreachable is this box's
+          // characteristic bug; declared, costed, reachable-by-the-engine and
+          // WAITING ON A NOUN is a different thing and it is written down.
+          // gut and nylon on a slack short scale: the MODULE's own 2.8 s when
+          // nobody writes one. (Not dampToRing's default, which is the
+          // guitar's loop coefficient translated — a recipe that writes the
+          // old `damp` word is still heard, it just no longer sets the floor
+          // for a recipe that writes nothing.)
+          ring: m.ring != null ? clamp(m.ring, 0.05, 12)
+              : (m.damp != null ? dampToRing(clamp(m.damp, 0.99, 1)) : 2.8),
+          release: clamp(m.release != null ? m.release : 0.22, 0.02, 2) } };
+      }
       // mallet — a struck bar over a tube, and the widest honest range of
       // anything here: measured inside FOUR cents from MIDI 45 to 91, which is
       // a marimba's whole instrument, once the module's tube correction is in.
@@ -2899,6 +3010,11 @@
     solina:  { cut: ["tone", 300, 12000] },   // solina's brightness param is `tone` (no res, no cutoff)
     stk_guitar: { cut: ["cutoff", 200, 14000],    // the cab's cliff; the STRING's brightness is `pick`, and that belongs to velocity
                   mute: true },                   // the palm — a per-note hand on the strings (see the np block)
+    // the oud's `cut` is the SOUNDBOARD's own top, not a cabinet's — a wooden
+    // plate radiates nothing useful above a few kHz — and it takes `mute` for
+    // the guitar's reason: the heel of the striking hand on the courses
+    // between phrases is a real gesture on this instrument.
+    oud:        { cut: ["cutoff", 200, 14000], mute: true },
     stk_piano:  { cut: ["cutoff", 200, 16000] },  // the lid; the HAMMER's brightness is `hammer`, same rule
     mallet:  { cut: ["cutoff", 400, 16000] },  // likewise: the mallet's own hardness is velocity's, not a pipe's
     // erhu takes `vib` and NO `cut`, and both halves are deliberate.

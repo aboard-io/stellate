@@ -1281,7 +1281,14 @@
   }
   // every word `grooveOf` below can return — listed so the check above is a
   // check and not a restatement of the function
-  const GROOVELABELCHECK = { dub: 1, laidback: 1, funk: 1, push: 1, backbeat: 1 };
+  // ...AND IT IS EXPORTED, because it is no longer the same list as the menu.
+  // `fields.js GROOVELABEL` holds ELEVEN words — these seven plus the four a
+  // HAND may still choose and nothing derives (`push`, `laidback`, `funk`,
+  // `dub`) — so a gate that wants "every word this function can answer is used
+  // by some row" has to read this table and not that one.
+  const GROOVEWORDS = { backbeat: 1, fourfloor: 1, onedrop: 1, halftime: 1,
+                        clave: 1, tresillo: 1, straight: 1 };
+  const GROOVELABELCHECK = GROOVEWORDS;
 
   /* ---------- WHAT CAN BE PRECOMPOSED, and it is not Object.keys(GENRES) --
      MEASURED IN THE BROWSER, which is the only place it shows: ui/eight.js
@@ -2280,54 +2287,175 @@
      sixteen-slot fingerprint of timing AND loudness (kernel.js:369), and every
      rung below names the anchor fact that fingerprint answers to. First match
      wins; the order is the order in which one fact overrules another. */
-  const SIXTEENTHS = 4;      // offbeat hits on the time lanes before it is a 16th feel
-  const HAND       = 0.8;    // touch.v — the velocity spread a ghost note needs
-  const REALSWING  = 0.17;   // between SWINGS `light` (0.12) and `swing` (0.22)
-  const HARD       = 0.5;    // stress — askable.js: "how much does the band lean"
-  const FAST       = 130;    // bpm, above which leaning hard reads as driving
-  const POCKET     = 140;    // bpm, above which sixteenths are a drive, not a pocket
+  /* ---- ...AND IT IS DERIVED FROM THE KIT, WORD BY WORD (2026-09-07, the
+     twelve questions, 3) ---------------------------------------------------
+
+     E6, the audit's own sixth engine finding: `backbeat` was this table's
+     honest zero and it was printed on records with no backbeat. MEASURED
+     before this rewrite: **40 of the 203 records that read "backbeat" had no
+     snare, clap or rim on 2 and 4 at all** — `yayue` (Suizhou 433 BC),
+     `kunqu` (1598), `badakhyal` (Delhi 1740), `grandopera` (1831), `ballet`
+     (1877), `march` (1889), `irishtrad`, `bolero`, `bossa` and `tango` among
+     them. That is the describe routine lying about the music, and it is worse
+     than a bad label: `kernel.js GROOVES` turns the word into a VELOCITY AND
+     PUSH FINGERPRINT, so a record printed `backbeat` was also being LEANT on
+     two and four it does not play.
+
+     A GROOVE WORD MUST DESCRIBE THE KIT, so every rung below is a question
+     asked of `G.kit` and of nothing else. What went out with the rewrite is
+     the four rungs that were not kit facts at all: `laidback` read the swing
+     ratio, `push` read `stress` and the tempo, `funk` read `touch.v`, and
+     `dub` read `fx: echo` plus the reverb size — four true statements about a
+     RECORD dressed as statements about a DRUMMER. They stay in `fields.js
+     GROOVELABEL` (a hand may still choose them, and `kernel.js GROOVES` still
+     has their profiles) and nothing derives them any more.
+
+     THE VOCABULARY, and every word is checkable against the grid:
+       clave      a lane whose onsets ARE a clave — the son and the rumba, 3-2
+                  and 2-3. Not "Latin-ish": the exact five-onset figure, which
+                  `salsa` and `son` both write as `p: x..x..x...x.x...`.
+       tresillo   a lane whose onsets are the 3+3+2, at either grain: over the
+                  bar's eight eighths (steps 0, 6, 12 — the habanera) or over
+                  each half-bar's eight sixteenths (0, 3, 6, 8, 11, 14).
+       onedrop    the kick fires exactly ONCE in the bar and it fires on the
+                  THREE. Reggae, dub, and the samba surdo. A kit with no kick
+                  is not a one drop, it is a different band, so the test is
+                  `=== 1`.
+       fourfloor  the kick is on every felt beat AND IS MEANT TO BE HEARD. It
+                  outranks the backbeat because a disco record with a clap on 2
+                  and 4 is a four on the floor record; the kick is the thing
+                  you are dancing to. Which is also why it reads `kitVel`: a
+                  SWING drummer's bass drum is on all four beats and is
+                  FEATHERED — felt, never heard — and a feathered four is not
+                  the thing you dance to. The floor was measured, not chosen:
+                  34 rows declare a `kitVel.k`, the mean velocity on the steps
+                  the kick actually plays runs 6.0 to 9.0 on 33 of them, and
+                  4.0 on `swing` (Kansas City 1938), which is the row the word
+                  feathering exists for.
+       backbeat   a snare, clap or rim on beat 2 AND on beat 4 of a bar of
+                  FOUR, and not on 1 and 3 as well. Both halves are the word's
+                  own meaning and both were measured on a real row: "beats 2
+                  and 4" of a bar of SEVEN is not a backbeat (`bulgarian`'s
+                  ruchenitsa switch falls on two of them and read `backbeat`
+                  until this line said four), and a drum striking all four
+                  beats is a tread, not a backbeat (`estampie`'s tabor).
+       halftime   the backbeat lane fires on the THREE of a bar of four and
+                  not on the two or the four: the backbeat at half the rate.
+       straight   nothing above is marked. The honest zero, and it is honest
+                  because it claims nothing.
+       (null)     THE KIT SAYS NOTHING — 124 rows declare no grid at all, and
+                  `setGroove` has always meant this by null.
+
+     EVERY POSITION IS THE METER'S. `metOf` gives the bar its steps and its
+     pulse, so "beat 2" is `pulse` and not the literal 4, and a 7/8 kit of
+     fourteen steps is asked the same questions as a 4/4 kit of sixteen. The
+     two figure tables are 4/4 fingerprints and say so: a clave and a tresillo
+     are sixteen-step statements and there is no honest fourteen of either, so
+     they are simply not asked under another meter rather than stretched — the
+     same law `kernel.js groove` keeps ("a wrong groove is worse than none").
+
+     WHAT IS NOT HERE, deliberately: nothing infers. There is no rung that
+     reads a tempo, a swing, an effect or a family, because none of those is
+     something a kit PLAYS, and the gate below (`grooveMatchesKit`) re-asks
+     every word of every row off the grid alone. */
+  // ...AND ONE NUMBER SURVIVES THE REWRITE BECAUSE A SECOND READER USES IT.
+  // `echoBus` below asks the same question of `tone.verb` that the old `dub`
+  // rung asked — is this record in a room at least as big as a hall — so the
+  // constant stays here, named once, rather than being re-typed at its one
+  // remaining call site.
   const BIGROOM    = 0.5;    // tone.verb — RETURNS `hall`, where a space record starts
+  const BACKLANES = ["s", "p", "c"];   // snare, rim, clap — the backbeat hands
+  // A CLAVE IS A FIGURE, NOT A FLAVOUR. The son and the rumba, each in both
+  // its rotations, as the onset sets they are. `salsa`, `son`, `highlife`,
+  // `ethiojazz`, `hiplife` and `latinjazz` write the son 3-2 on the rim lane
+  // and `hambone` writes it on the low tom; nothing else in 500 rows is a
+  // clave, and a row that is nearly one (`rumba`'s `0,3,6,9,12`, `bossa`'s
+  // `0,3,6,10,13`) is not told that it is.
+  const CLAVES = { "0,3,6,10,12": 1, "2,4,8,11,14": 1,     // son, 3-2 and 2-3
+                   "0,3,7,10,12": 1, "2,4,8,11,15": 1 };   // rumba, 3-2 and 2-3
+  // 3+3+2, at the two grains a bar of sixteen can say it: over the eight
+  // EIGHTHS of the bar (the habanera) and over the eight SIXTEENTHS of each
+  // half of it (the doubled cell `tango`, `contradanza` and `maxixe` all
+  // write on the kick — which is the habanera's own descent, said twice).
+  const TRESILLOS = { "0,6,12": 1, "0,3,6,8,11,14": 1 };
+  const onsets = (v, n) => { const o = [];
+    for (let i = 0; i < n; i++) if (v && v[i]) o.push(i); return o; };
+  // FEATHERED — the kick is on the beat and is not meant to be heard. `kitVel`
+  // is the row's own 0-9 statement of how hard a lane is struck, so this is a
+  // fact the grid alone cannot carry and the row already declares. A row that
+  // states no `kitVel.k` says nothing about weight and is not feathered.
+  const FEATHER = 5;
+  const feathered = (G, kick) => { const kv = (G.kitVel || {}).k;
+    if (!kv || !kick.length) return false;
+    let sum = 0; for (const i of kick) sum += kv[i] || 0;
+    return sum / kick.length <= FEATHER; };
   function grooveOf(G) {
-    const f = kitFacts(G), T = G.tone || {}, fx = G.fx || [];
-    // NO DRUMMER, NO POCKET. 25 anchors declare no grid at all and a groove is
-    // a fact about a kit; `null` here is what `setGroove` has always meant.
-    if (!f.any) return null;
-    // DUB — the one profile in the table that is MINED rather than written
-    // (kernel.js:377, off the MIDIMAN dub rip): a drag with the weight moved
-    // off the one. Two anchor facts reach it. The ONE DROP — a kick that fires
-    // exactly once in its own bar, which is true of reggae and dub and of
-    // nothing else in the catalog — and the SPACE RECORD, an anchor that sends
-    // an echo into a room at least as big as a hall. A kit with NO kick at all
-    // (skiffle, minimalism) is not a one drop, it is a different band, so the
-    // test is `=== 1` and not `<= 1`.
-    if (f.kick === 1 || (fx.indexOf("echo") >= 0 && (T.verb || 0) >= BIGROOM))
-      return "dub";
-    // LAID BACK — the record already drags, and it says so as a ratio. Only a
-    // REAL shuffle counts: fields.js SWINGS puts `light` at 0.12 and `swing` at
-    // 0.22, and a light lean is the sixteenth-note lilt a funk record has, not
-    // a drag. So the line is drawn between those two words and not at zero.
-    if (G.swing >= REALSWING) return "laidback";
-    // FUNK — "the sixteenths carry it, and the ghosts between them are what you
-    // hear" (kernel.js:393). Three facts, all three required: the anchor's own
-    // time lanes fire on the offbeat sixteenths; there is a HAND on them
-    // (`touch.v`, the velocity spread — a machine at 0.12 has no ghosts to
-    // play); and the tempo is a pocket rather than a drive. And no distortion:
-    // an anchor that declares `crunch` is a wall of sixteenths, and a ghost
-    // note under a wall is not audible, so it is not a groove.
-    const sixteenths = f.off >= SIXTEENTHS;
-    if (sixteenths && G.touch && G.touch.v >= HAND &&
-        G.bpm <= POCKET && fx.indexOf("crunch") < 0) return "funk";
-    // PUSHED — the lean forward. Three ways in, and they are one idea: nobody
-    // is holding back. A band that leans hard on the beat AT SPEED (`stress`
-    // is askable.js:72's own question); a machine record, which declares no
-    // `stress` at all because there is no band to ask; or any sixteenth-note
-    // time-keeping that did not qualify as funk above — a motorik pulse and a
-    // trap hat are both driving, not pocketing.
-    if (G.stress == null || (G.stress >= HARD && G.bpm >= FAST) || sixteenths)
-      return "push";
-    // BACKBEAT — two and four loud, nothing moved. The honest zero of the
-    // table for a record whose kit says nothing more particular than that.
-    return "backbeat";
+    const kit = G.kit || {};
+    const lanes = Object.keys(kit).filter((k) => /^[a-z]$/.test(k));
+    // NO DRUMMER, NO POCKET. A groove is a fact about a kit; `null` here is
+    // what `setGroove` has always meant, and it is what the box shows when
+    // the kit says nothing.
+    if (!lanes.length) return null;
+    const met = K.metOf({ meter: G.meter });
+    const STEPS = met.steps, P = met.pulse;
+    const beats = Math.max(1, Math.round(STEPS / P));
+    const at = (l, i) => !!((kit[l] || [])[i]);
+    const back = (i) => BACKLANES.some((l) => at(l, i));
+    if (STEPS === 16) {
+      for (const l of lanes) {
+        const k = onsets(kit[l], 16).join(",");
+        if (CLAVES[k]) return "clave";
+      }
+      for (const l of lanes) {
+        const k = onsets(kit[l], 16).join(",");
+        if (TRESILLOS[k]) return "tresillo";
+      }
+    }
+    const kick = onsets(kit.k, STEPS);
+    if (beats >= 3 && kick.length === 1 && kick[0] === 2 * P) return "onedrop";
+    if (beats >= 3 && kick.length >= beats && !feathered(G, kick)) {
+      let every = true;
+      for (let b = 0; b < beats; b++) if (!at("k", b * P)) { every = false; break; }
+      if (every) return "fourfloor";
+    }
+    if (beats === 4 && back(P) && back(3 * P) &&
+        !(back(0) && back(2 * P))) return "backbeat";
+    if (beats === 4 && back(2 * P) && !back(P) && !back(3 * P)) return "halftime";
+    return "straight";
+  }
+  /* THE GATE'S OWN READER, exported beside the derivation so the check is a
+     SECOND reading of the kit and not a restatement of the function above:
+     given a row and the word it printed, is that word true of its grid? */
+  function grooveMatchesKit(G, w) {
+    const kit = G.kit || {};
+    const lanes = Object.keys(kit).filter((k) => /^[a-z]$/.test(k));
+    if (!lanes.length) return w == null;
+    if (w == null) return false;
+    const met = K.metOf({ meter: G.meter });
+    const S = met.steps, P = met.pulse, beats = Math.max(1, Math.round(S / P));
+    const at = (l, i) => !!((kit[l] || [])[i]);
+    const back = (i) => BACKLANES.some((l) => at(l, i));
+    const kick = onsets(kit.k, S);
+    const anyLane = (T) => S === 16 &&
+      lanes.some((l) => T[onsets(kit[l], 16).join(",")]);
+    switch (w) {
+      case "clave":     return anyLane(CLAVES);
+      case "tresillo":  return anyLane(TRESILLOS);
+      case "onedrop":   return kick.length === 1 && beats >= 3 && kick[0] === 2 * P;
+      case "fourfloor": { if (beats < 3 || feathered(G, kick)) return false;
+                          for (let b = 0; b < beats; b++) if (!at("k", b * P)) return false;
+                          return true; }
+      case "backbeat":  return beats === 4 && back(P) && back(3 * P) &&
+                               !(back(0) && back(2 * P));
+      case "halftime":  return beats === 4 && back(2 * P) && !back(P) && !back(3 * P);
+      // STRAIGHT CLAIMS NOTHING, so what makes it true is that none of the
+      // six words above it is: a row may not sit on the zero while its kit
+      // is playing something the table has a name for.
+      case "straight":  return !["clave", "tresillo", "onedrop", "fourfloor",
+                                "backbeat", "halftime"]
+                                .some((x) => grooveMatchesKit(G, x));
+      default:          return false;
+    }
   }
 
   /* ---------- WHICH ROOM THE RECORD IS IN --------------------------------
@@ -4307,9 +4435,23 @@
       // its own first chair where it names none. BEFORE door 5, because the
       // chair this hands back may be the host's own dirty guitar and door 5
       // is the one that answers for those.
-      if (KEYBOARD(instrument) && hostKeys.indexOf(instrument) < 0 &&
-          (hostKeys.length || hostChair))
-        instrument = hostKeys[0] || hostChair;
+      // ...AND WHERE THE HOST HAS NEITHER, THE DOOR REFUSES (2026-09-07, the
+      // twelve questions, 4). It used to fall THROUGH — the guest kept its own
+      // keyboard — and the door's own paragraph above wrote that up as a
+      // question, because `rumba` (Havana 1900) declares `solo_vox` and
+      // `ohh_voices` and nothing else, so "its own first chair" reached past
+      // the end of a cast made entirely of people and handed a Havana 1900
+      // record a nine-foot Yamaha. THE ANSWER IS THAT A VOICES-ONLY RECORD IS
+      // LENT NOTHING. There is no instrument on this record to lend, the door
+      // has already established that a keyboard is not dealt, and silence is a
+      // better guest than a piano nobody asked for — the guest's LINE is still
+      // in the record (door 1 owns who sings, and the section chairs are
+      // untouched); what does not arrive is a chair the row never had.
+      if (KEYBOARD(instrument) && hostKeys.indexOf(instrument) < 0) {
+        const lend = hostKeys[0] || hostChair;
+        if (!lend) return;
+        instrument = lend;
+      }
       // DOOR 5 (2026-09-06) — an amplifier is never dealt. See the door above:
       // a dirty electric the HOST did not name becomes the host's own guitar,
       // or the clean one where the host names none.
@@ -4526,7 +4668,7 @@
            RELEASE, RELDEAL, DEVDEAL, DEVCAP, developOf, keepsIts,
            // § 7, exported so the gate measures THE CHOOSER rather than a
            // second copy of it — the same law `idiomOf` is exported under
-           grooveOf, busesOf, soundFxOf, kitFacts, retOf, ROOM, ECHOSEND,
+           grooveOf, grooveMatchesKit, GROOVEWORDS, busesOf, soundFxOf, kitFacts, retOf, ROOM, ECHOSEND,
            // §7d's SEAT, asked about ONE chair — the door `ui/eight.js`'s
            // "sings as" strip calls when a hand changes a throat, exported on
            // the same law as `idiomOf`: there is one seat and it is here, so a

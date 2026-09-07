@@ -1,8 +1,8 @@
 {
-  "note": "SWING — Kansas City 1938, and it pays a debt TWO anchors have been\ncarrying: `jazz` (New York 1945) declares `wants: [\"swing\", ...]` and\nits own comment admits it is bebop wearing the wrong year, and\n`highlife` (Accra 1957) declares `wants: [..., \"swing\", ...]` because\na West African dance band is a swing band with a clave under it.\nTHE YEAR is Count Basie's Decca sides and the Kansas City riff-band\nstyle at its peak: a rhythm section that floats rather than chugs, two\nsections of horns trading riffs, and a soloist over both.\nTHE CITY IS KANSAS CITY, not New York, and that is a claim: the swing\nthe catalog needs upstream of bebop is the RIFF band — head\narrangements built out of repeated two-bar figures, which is what\nBasie's band did and what a big Fletcher Henderson chart does not.\nCharlie Parker learned to play in that town, which is the shortest\nargument for the parent edge.\n\nLINEAGE, AND THE FOURTEEN-YEAR INVERSION IS GONE (2026-09-02, the\ncatalogue round). This declared `blues: 0.35` and spent six lines\narguing that naming a 1952 row as a 1938 row's parent was allowed\nbecause \"the anchor's own entry says its year is a Chess date on a\nform that is decades older\". The form decades older is IN THE TABLE.\nA Kansas City riff band is blues choruses at a dance tempo, and the\nblues that was in that town in 1938 was the boogie left hand — Pine\nTop Smith, \"Pine Top's Boogie Woogie\", Vocalion, Chicago, 29\nDecember 1928, and Pete Johnson and Big Joe Turner working the KC\nclubs the same decade. `boogiewoogie` (Chicago 1928) is ten years\nBEFORE this row and is what Basie's own left hand plays; `blues`\n(Chicago 1952) is fourteen years after it. The share is unchanged\nand now points backwards in time, which is the only direction a\nparent edge is allowed to point.\n\"new orleans jazz\" PAID 2026-08-29 (New Orleans 1923): a Basie\nhead is the Oliver ensemble chorus written down and riffed, and\nthe rhythm section's two-beat ancestry is that band's directly.\nPAID 2026-08-29, the debts round: \"territory bands\" is\n`territoryband` (Kansas City 1932) — Moten's book became Basie's\nand Basie's became this row's.\n\nTHE RIDE IS THE RECORD. Spang-a-lang on `r`, the hi-hat pedal on 2\nand 4, and the kick barely there at all — the Kansas City rhythm\nsection's whole innovation is that the bass drum stops marking the\nbeat and the cymbal takes it over.\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: boogiewoogie .35→.30, neworleans .25→.20, territoryband .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. A horn section phrases\ninto the bar, which is what a chart's ties across the barline are for.\nThe `roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).",
+  "note": "SWING — Kansas City 1938, and it pays a debt TWO anchors have been\ncarrying: `jazz` (New York 1945) declares `wants: [\"swing\", ...]` and\nits own comment admits it is bebop wearing the wrong year, and\n`highlife` (Accra 1957) declares `wants: [..., \"swing\", ...]` because\na West African dance band is a swing band with a clave under it.\nTHE YEAR is Count Basie's Decca sides and the Kansas City riff-band\nstyle at its peak: a rhythm section that floats rather than chugs, two\nsections of horns trading riffs, and a soloist over both.\nTHE CITY IS KANSAS CITY, not New York, and that is a claim: the swing\nthe catalog needs upstream of bebop is the RIFF band — head\narrangements built out of repeated two-bar figures, which is what\nBasie's band did and what a big Fletcher Henderson chart does not.\nCharlie Parker learned to play in that town, which is the shortest\nargument for the parent edge.\n\nLINEAGE, AND THE FOURTEEN-YEAR INVERSION IS GONE (2026-09-02, the\ncatalogue round). This declared `blues: 0.35` and spent six lines\narguing that naming a 1952 row as a 1938 row's parent was allowed\nbecause \"the anchor's own entry says its year is a Chess date on a\nform that is decades older\". The form decades older is IN THE TABLE.\nA Kansas City riff band is blues choruses at a dance tempo, and the\nblues that was in that town in 1938 was the boogie left hand — Pine\nTop Smith, \"Pine Top's Boogie Woogie\", Vocalion, Chicago, 29\nDecember 1928, and Pete Johnson and Big Joe Turner working the KC\nclubs the same decade. `boogiewoogie` (Chicago 1928) is ten years\nBEFORE this row and is what Basie's own left hand plays; `blues`\n(Chicago 1952) is fourteen years after it. The share is unchanged\nand now points backwards in time, which is the only direction a\nparent edge is allowed to point.\n\"new orleans jazz\" PAID 2026-08-29 (New Orleans 1923): a Basie\nhead is the Oliver ensemble chorus written down and riffed, and\nthe rhythm section's two-beat ancestry is that band's directly.\nPAID 2026-08-29, the debts round: \"territory bands\" is\n`territoryband` (Kansas City 1932) — Moten's book became Basie's\nand Basie's became this row's.\n\nTHE RIDE IS THE RECORD. Spang-a-lang on `r`, the hi-hat pedal on 2\nand 4, and the kick barely there at all — the Kansas City rhythm\nsection's whole innovation is that the bass drum stops marking the\nbeat and the cymbal takes it over.\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: boogiewoogie .35→.30, neworleans .25→.20, territoryband .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n\nTHE DYNAMIC FIGURE (2026-09-06, the dynamics flood, shift 1): `dyn:\n\"anacrusis\"` — the line pushes into the next bar. A horn section phrases\ninto the bar, which is what a chart's ties across the barline are for.\nThe `roots` cluster takes `lean`; the anchor's own evidence outranks it,\nwhich is the flood's rule (docs/DYNAMICS-FLOOD.md).\n\n====================================================================\nPAUL, ON THE REAL APP: \"SWING DOESN'T REALLY SOUND LIKE SWING\"\n====================================================================\n*\"I was expecting Glenn miller and horns or Benny Goodman clarinet style with\nno vocals and lots of solos.\"* (2026-09-07.) `tools/describe.js swing`\nconvicted the row six ways and every one of them is fixed here.\n\n1 · IT SANG, AND A 1938 BIG BAND DOES NOT. The record was seating a `solo_vox`\non a SKIFFLER mouth and an `ahh_choir` on a SHAPE-NOTE one — two other musics\nentirely, dealt as guests because nothing on this row said no. `instrumental:\ntrue` is the field that says it (83 rows of 500 already do; `compose.js instru`\nreads the row as well as its own INSTRUMENTAL table), and door 1 keeps an\ninstrumental record instrumental. The horns are the voices now.\n\n2 · THE CLARINET IS THE SOUND HE NAMED, AND IT WAS IN THE LIBRARY ALL ALONG.\n`found/samples/instruments/clarinet` exists in every one of the thirteen banks\nand eight rows already cast it (`neworleans`, `tradjazz`, `klezmer`, `march`,\n`polka`, `cumbia`, `banda`, `danzon`); this row, the one the whole swing era\nhangs on, did not. The chairs are the SWING REED SECTION now: the clarinet on\ntop (voice 0) and the tenor on the same line an OCTAVE UNDER it (voice 1,\n`reg: -1`, `word: []` — the identical figure, which is what a section voicing\nIS). That doubling is the Miller reed sound and the Goodman colour, and it\ncosts this row nothing it had: Lester Young's tenor keeps its chair.\n\n3 · THE KIT WAS NOT A SWING KIT. It played the kick ON THE DOWNBEAT ALONE and\na snare on the & of 4, which is a rock pickup. A swing drummer FEATHERS the\nbass drum on all four beats — heard as weight, not as a hit — rides the\nspang-a-lang, closes the hat on 2 and 4, and COMPS with the left hand instead\nof keeping a backbeat. So: `k` on all four at `kitVel` 4, which is the lowest\nkick velocity in the catalogue and is the feathering said in the row's own\nnumbers; `r` unchanged, because the ride was already right and this note's own\nolder paragraph says why (\"THE RIDE IS THE RECORD\"); `f` unchanged on 2 and 4,\nthe one thing the audit found correct; and `s` moved off the & of 4 onto the\n\"a\" of 2 and the \"a\" of 4 at velocity 5 and 6 — the left hand catching the\ncymbal's second stroke, which is a comping accent and not a backbeat.\n\nAND `precompose.js grooveOf` LEARNED WHAT FEATHERING IS FOR IT. A kick on\nevery beat is a four on the floor, and a FEATHERED kick on every beat is not:\nit is the thing you are meant not to hear. The rung reads `kitVel` as well as\nthe grid now, and the threshold was measured rather than chosen — 34 rows\ndeclare a `kitVel.k` and the mean struck velocity is 6.0 to 9.0 on 33 of them\nand 4.0 on this one. This row reads `straight`, which is true: its kit marks\nneither the floor nor the backbeat, and the shuffle it does have is carried by\n`swing: 0.33` where a shuffle belongs.\n\n4 · THE CHANGES WERE FOLK, NOT SWING. `roots [0,3,0,0,3,3,0,4]` over eight\nbars is I IV I I IV IV I v — a modal folk loop closing on a MINOR five. This\nrow's own note, four paragraphs up, already said what the changes are: *\"A\nKansas City riff band is blues choruses at a dance tempo.\"* So the form is\ntwelve bars of blues in SEVENTHS, and it is not invented here either — it is\n`bass-kit.js CHANGES.twelvebar`, this project's own bassist's table, degree for\ndegree: `[0,0,0,0, 3,3,0,0, 4,3,0,4]`, every chord a dominant seventh. \"One\nO'Clock Jump\" and \"Jumpin' at the Woodside\" are both that. `bars: 12` with it,\nso a chorus is a chorus.\n\nAND THE QUALITY IS `dom7`, NOT `7`, WHICH IS THE DIFFERENCE BETWEEN A BLUES AND\nA MODE. `7` is a `kernel.js QSTEPS` word — stack thirds out of whatever scale\nthe row is in — and this row is MIXOLYDIAN, where the chord on the fifth degree\ncomes out MINOR: the first draft of this fix rendered `v7` in bar 9 and bar 12,\nwhich is a folk cadence wearing a blues's clothes. `dom7` is a `QFIX` word: the\nchord is a dominant seventh whatever the mode says, which is what the twelve-bar\nblues IS and what `bass-kit.js` writes beside its own `twelvebar` roots. The\nmode stays mixolydian so the MELODY keeps its flat seventh — AND THE MELODY'S\nOWN ALPHABET IS MIXOLYDIAN NOW TOO, which is what makes that sentence true.\n`scale` was `SCALES.major`, so the subject could not reach the flat seventh at\nall, and with the chords fixed to `dom7` the mode had nothing left to sound:\n`test/precompose.test.js` G14b caught it by name the first time this fix was\nrun (\"a row declares mixolydian and cannot sound the degree it is named for\").\nTwenty-six rows already say `scale: MODES.mixo`; this is the twenty-seventh,\nand on a blues it is the blue seventh in the tune as well as under it.\n\n5 · THERE WERE NO SOLOS, BECAUSE THERE WERE NO CHORUSES. Eleven sections over\n37 bars with two- and three-bar verses is a pop form, and it came from `bars:\n8` — `compose.js fullLen` rounds a section to a whole number of the genre's own\nbars, so an 8-bar genre gets short sections and a 12-bar one gets choruses.\n`bars: 12` is therefore the form fix as well as the harmony fix: head, choruses\nover the same twelve bars, out. The `solo` PART-GENRE was considered and not\nused — it hard-codes an `overdrive_guitar` (the fault door 5 was opened for)\nand a guest is a guest; the solo in a Basie chorus is the band's own front\nline, which is what voices 0 and 1 are.\n\n6 · THE TONE BLOCK WAS SHAPING A SYNTH THAT IS NOT THERE. `tone.wave:\n\"triangle\"` is read in exactly one place — `audio/to-engine.js:1616`, inside\nthe branch that builds a MODELLED voice — and all four chairs on this record\nare sampler recordings (`clarinet`, `tenor_sax`, `brass_section`,\n`jazz_guitar`), as is every guest an instrumental record can now be dealt. The\nword reached no sound. Removed rather than left standing: a field that is\ndeclared, costed and arrives nowhere is the one fault this catalogue keeps\nwriting itself notes about.\n\nTHE FAMILY AND THE NEIGHBOUR STAND, AND WERE CHECKED. `roots` is right of the\nten families this table has — its room is \"a chamber, a hall recording of\npeople in a hall\", which is what a 1938 band in a ballroom is, and the four\nalternatives are a guitar amp (`band`), a made record (`studio`), a club\n(`club`) and a plate on a soul vocal (`soul`). `near: \"jazz\"` is right for the\nsame reason it was written: the contrast that defines a Kansas City riff band\nis the bebop that came out of it, and `jazz` in this table is New York 1945.\n\nAND GLENN MILLER AND BENNY GOODMAN ARE TWO MORE ROWS, WHICH THIS ONE IS NOT.\nSaid plainly rather than made: this anchor is KANSAS CITY 1938 — Basie's Decca\nsides, the riff band, the floating rhythm section — and its own note spends a\nparagraph arguing that city against New York. Glenn Miller is NEW YORK 1939\n(Bluebird, \"In the Mood\", \"Moonlight Serenade\"): a SWEET dance band whose\nsignature is precisely the clarinet-over-four-saxes voicing, at a slower tempo,\non written arrangements rather than heads. Benny Goodman is CHICAGO 1935 (the\nPalomar broadcast is August 1935, the Congress Hotel sides are Chicago): the\nHOT band and the trio/quartet, Fletcher Henderson's charts, the clarinet as the\nsoloist rather than the top of a section. Three different bands, three\ndifferent years, three different cities, and the catalogue's own label law\nwould give each its own row. What this round does is give Kansas City the reed\nsection and the choruses it always had; the other two are a proposal and are\nwritten here rather than smuggled in.\n",
   "label": "Kansas City 1938",
-  "voices": 3,
-  "bars": 8,
+  "voices": 4,
+  "bars": 12,
   "near": "jazz",
   "plan": "song",
   "bpm": 148,
@@ -15,6 +15,7 @@
   },
   "wants": [],
   "instr": [
+    "clarinet",
     "tenor_sax",
     "brass_section",
     "jazz_guitar"
@@ -29,10 +30,10 @@
     "cases": [
       {
         "at": 1,
-        "then": 0
+        "then": -1
       },
       {
-        "at": 2,
+        "at": 3,
         "then": -1
       }
     ],
@@ -44,15 +45,20 @@
   },
   "part": [
     "lead",
+    "lead",
     "riff",
     "counter"
   ],
   "roots": [
     0,
+    0,
+    0,
+    0,
+    3,
     3,
     0,
     0,
-    3,
+    4,
     3,
     0,
     4
@@ -61,7 +67,7 @@
     "$src": "MODES.mixo"
   },
   "scale": {
-    "$src": "SCALES.major"
+    "$src": "MODES.mixo"
   },
   "diatonic": true,
   "artic": "legato",
@@ -73,15 +79,15 @@
       0,
       0,
       0,
+      1,
       0,
       0,
       0,
+      1,
       0,
       0,
       0,
-      0,
-      0,
-      0,
+      1,
       0,
       0,
       0
@@ -130,15 +136,15 @@
       0,
       0,
       0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
       1,
-      0
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
     ]
   },
   "kitVel": {
@@ -147,15 +153,15 @@
       0,
       0,
       0,
+      4,
       0,
       0,
       0,
+      4,
       0,
       0,
       0,
-      0,
-      0,
-      0,
+      4,
       0,
       0,
       0
@@ -174,6 +180,24 @@
       0,
       5,
       7,
+      0,
+      0,
+      6
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       6
@@ -200,7 +224,6 @@
     ]
   },
   "tone": {
-    "wave": "triangle",
     "cut": 2800,
     "q": 1,
     "atk": 0.008,
@@ -209,7 +232,8 @@
     "verb": 0.34
   },
   "words": [
-    "the tenor, the solo",
+    "the clarinet, on top of the reeds",
+    "the tenor, the same line an octave under — the reed section",
     "the brass, riffing behind it",
     "the guitar, four to the bar"
   ],
@@ -217,13 +241,13 @@
     "kind": "cases",
     "cases": [
       {
-        "at": 1,
+        "at": 2,
         "then": {
           "$src": "[only(\"acc\", rotate(4)), drop(2)]"
         }
       },
       {
-        "at": 2,
+        "at": 3,
         "then": {
           "$src": "[split(2), drop(1)]"
         }
@@ -233,5 +257,56 @@
       "$src": "[]"
     }
   },
-  "dyn": "anacrusis"
+  "dyn": "anacrusis",
+  "instrumental": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ]
 }

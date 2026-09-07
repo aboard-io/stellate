@@ -171,10 +171,38 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
      outrank it. `salsa` and `kwaito` write a figure and are held to the freeze
      like everybody else. Every other anchor still owes it every note, and W2 —
      wave D's headline, no NaN durations — is asked of all 500 above the sig
-     test and is untouched by this. */
+     test and is untouched by this.
+
+     ...AND `fifths` JOINED THEM ON 2026-09-07 (the twelve questions, 2). The
+     E3 round took `walk` and `octaves` into `STYLEGRID` and left `fifths` and
+     `pedal` out, writing both up as the next question. The answer is that they
+     do not have the same answer: a PEDAL POINT is a held note and one a bar is
+     what the word means, so it still reads the accents and still owes the
+     freeze every note; `fifths` is the boom-chuck of a polka, a march, a
+     honky-tonk and a bluegrass bass — root on 1, fifth on 3 — and it was
+     playing 1.77 notes a bar because it was borrowing the melody's accents
+     like the other two. It is a two-beat now, and the 24 rows that declare it
+     are the point of the change. Same derivation, one more word.
+
+     AND ONE ROW MOVED FOR A REASON THAT IS NOT ABOUT ITS BASS AT ALL.
+     `bleeptechno` was labelled "Manchester 1989" and bleep is Sheffield —
+     Warp, LFO, Unique 3 — so the twelve questions moved the place. That
+     redraws the row's own SOLO GESTURE, because `precompose.js` draws it from
+     `ihash(label)` by design ("each anchor now states its own gesture, drawn
+     once from a hash of its own LABEL"), which rewrites the row's `climb` cell
+     and moves its render. `bassSig` above cannot see it — it hashes the bass's
+     own inputs and a label is not one of them — so the row lands here instead
+     of in `reargued`, where it belongs. It is named rather than derived
+     BECAUSE THE FREEZE CARRIES NO LABELS, and the exemption is guarded by the
+     fact that produced it: `RELABELLED` asserts the row is at the label this
+     round gave it, so a future round that moves it again, or back, fails on
+     this line instead of being waved through. */
   const REGRID = (a) => { const g = GENRES[a] || {};
     return !g.bassFig && !g.bassGrid &&
-           (g.bassStyle === "walk" || g.bassStyle === "octaves"); };
+           (g.bassStyle === "walk" || g.bassStyle === "octaves" ||
+            g.bassStyle === "fifths"); };
+  const RELABELLED = { bleeptechno: "Sheffield 1989" };
+  const relabelled = [];
   const badShape = [], badDur = [], badCount = [], stillNan = [];
   const minted = [], reargued = [], regridded = [];
   let events = 0, healed = 0, anchors = 0;
@@ -196,6 +224,7 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
     ev.forEach((e, i) => { if (!Number.isFinite(e.dur)) stillNan.push(a + "#" + i); });
     if (sig !== want.sig) { reargued.push(a); continue; }
     if (REGRID(a)) { regridded.push(a); continue; }   // E3, see REGRID above
+    if (RELABELLED[a]) { relabelled.push(a); continue; }   // see REGRID above
     anchors++;
     events += ev.length;
     const shape = [], cnt = new Map();
@@ -229,9 +258,21 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
                " anchor(s) re-argued since the freeze (inputs moved, not this " +
                "round's business): " + reargued.slice(0, 8).join(", ") : "") +
               (regridded.length ? "\n       " + regridded.length +
-               " anchor(s) whose bass the ENGINE re-argued (E3, the density " +
-               "words `walk` and `octaves` reaching a grid): " +
-               regridded.slice(0, 8).join(", ") : ""));
+               " anchor(s) whose bass the ENGINE re-argued (E3 + the twelve " +
+               "questions: the density words `walk`, `octaves` and `fifths` " +
+               "reaching a grid): " + regridded.slice(0, 8).join(", ") : "") +
+              (relabelled.length ? "\n       " + relabelled.length +
+               " anchor(s) whose LABEL a round corrected, which redraws the " +
+               "row's own solo gesture: " + relabelled.join(", ") : ""));
+  /* THE EXEMPTION IS GUARDED BY ITS OWN PREMISE. A named waiver rots the day
+     the fact behind it changes, so the fact is asserted here: every row in
+     `RELABELLED` still carries the label that round gave it. Move it again,
+     or back, and this goes red rather than the waiver quietly covering a
+     different move. */
+  ok(Object.keys(RELABELLED).every((a) => (GENRES[a] || {}).label === RELABELLED[a]),
+     "W1z every named relabelling is still the label its waiver was written for",
+     Object.keys(RELABELLED).map((a) => a + " = " +
+       JSON.stringify((GENRES[a] || {}).label)).join(", "));
   /* THE FLOOR CAME DOWN FROM 400 TO 340, BY EXACTLY THE ROWS E3 MOVED and by
      nothing else: 482 anchors carry a freeze this tree can build, 100 of those
      declare `walk` or `octaves` with no figure of their own, and 382 is what

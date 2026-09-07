@@ -224,13 +224,40 @@ ok("§C3 the phrase cache tells two figures apart", () => {
    `grime` 2003, `trap` 2003, `dubstep` 2005 — and stops reaching for a gesture
    that had not been invented. Detroit 1988 keeps its Reese: the test is "later
    than", not "on or later than", so the year the thing was made is not the year
-   it becomes unavailable. The new digits are the same measurement as the old. */
+   it becomes unavailable. The new digits are the same measurement as the old.
+
+   THIRTEEN OF THE FOURTEEN WERE RE-PINNED ON 2026-09-07 (the twelve
+   questions, 3), and the alarm did its job a third time: nothing was given a
+   figure, and something in the compiler moved underneath. `precompose.js
+   grooveOf` returned `push` for all thirteen of these rows — a word it reached
+   by asking about `stress`, the tempo and whether the kit fires on offbeat
+   sixteenths, none of which is a fact about what the DRUMS PLAY. The audit's
+   E6 measured the cost at the other end of the same function: 40 of the 203
+   records that read `backbeat` had nothing on 2 and 4 at all. The word is
+   derived off `G.kit` now, and every one of these thirteen took the word its
+   own grid states — `techno`, `acid`, `house`, `italodisco` and `tromso` a
+   FOUR ON THE FLOOR (their kick is on every beat); `trap` and `dubstep` HALF
+   TIME (the backbeat lane fires on the 3 alone); `grime` and `footwork` a
+   TRESILLO (their kick is the 3+3+2); `electro`, `miamibass` and `crunk` a
+   BACKBEAT they can actually be measured to play; `gqom` STRAIGHT, where it
+   had been given `dub`'s mined drag for having an echo and a big room.
+   `electro` and `italodisco` moved for a second reason as well, and it is in
+   their own notes: both declare the eighth-note root-and-octave line as a
+   written figure now (`bassFig: discoct`), where `bassStyle: "octaves"` was
+   giving them four notes a bar under a word their own paragraphs call the
+   signature of the sound.
+
+   AND THE ONE THAT DID NOT MOVE SAYS THE RULE OUT LOUD AGAIN. `tapemusic`
+   (Paris 1948) declares no kit at all, so `grooveOf` answered null for it
+   before this round and answers null after: THE KIT SAYS NOTHING, which is
+   the same sentence it was always making and is now the one the box prints.
+   The new digits are the same measurement as the old. */
 const FROZEN = {
-  techno: "e6195392b721be0e", acid: "6f121c16b942817e", house: "534a3af2d6b645af",
-  trap: "f51c567b6185b76f", electro: "b52927112191bb55", tapemusic: "99777da27cf1a1c7",
-  italodisco: "0b99d759002e4891", miamibass: "7dd6d7ad02cecf50", crunk: "65b35ff11b5b3d94",
-  grime: "4ee68c439d0a0e57", dubstep: "b2c0783a05b48266", footwork: "9c7802d431b4c468",
-  gqom: "38e64788f9a34b5a", tromso: "60554c4cfc5f85a9",
+  techno: "6962195da935614c", acid: "0b60c44ebcaba052", house: "e907c403371c0d92",
+  trap: "03d353d28a5abe47", electro: "029a41c6bea26e51", tapemusic: "99777da27cf1a1c7",
+  italodisco: "b59b5f0c99354079", miamibass: "e1d5b326f2e7365b", crunk: "e89e6a98febe55e6",
+  grime: "18884350eaedb0f9", dubstep: "f9e3136caff0bb7f", footwork: "bffeb9bab49b8a14",
+  gqom: "e2c589536d9d317e", tromso: "174b0c723ef13ca2",
 };
 ok("§D1 the `DYNAMICS: null` machines declare no figure", () => {
   const nulls = Object.keys(DYNAMICS).filter((k) => DYNAMICS[k] === null);

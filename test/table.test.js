@@ -574,8 +574,20 @@ if (B) {
       const sung = new Set(ml.map((v, i) => (SUNG(v) ? i : -1)).filter((i) => i >= 0));
       const voiced = VOICEROWS.includes(gk);
       for (let i = 0; i < mine.form.sections.length; i++) {
-        const a = portrait(D.toGenre(mine, i, GENRES), nv, sung, voiced);
-        const b = portrait(B.D.toGenre(theirs, i, B.GENRES), nv, sung, voiced);
+        /* A ROW WHOSE CHAIR COUNT MOVED THROWS INSTEAD OF DIFFERING, and that
+           is worth catching rather than letting the whole gate die on the
+           first one (2026-09-07). `nv` is THIS tree's line count and it is
+           asked of BOTH trees' closures, so a round that seats one more chair
+           than the base did — or one fewer — reads past the end of the base's
+           own `chairs` array inside its `reg`/`entry` closure. That is a
+           genuine difference and it is reported as one, by name, with the
+           reason; the alternative is `Cannot read properties of undefined` and
+           no list at all. */
+        let a, b;
+        try {
+          a = portrait(D.toGenre(mine, i, GENRES), nv, sung, voiced);
+          b = portrait(B.D.toGenre(theirs, i, B.GENRES), nv, sung, voiced);
+        } catch (e) { bad.push(gk + "/" + s + "#" + i + " (chair count moved)"); break; }
         if (a !== b) { bad.push(gk + "/" + s + "#" + i); break; }
       }
     }

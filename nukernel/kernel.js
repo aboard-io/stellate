@@ -799,6 +799,31 @@
     dub: { vel: [1.089,0.822,1.052,0.899, 1.076,0.777,1.065,0.843,
                  1.083,0.852,1.063,0.877, 1.064,0.72,1.042,0.836],
            push: [0,0.1,0.02,0.1, 0,0.1,0.02,0.1, 0,0.1,0.02,0.1, 0,0.1,0.02,0.12] },
+    // ONE DROP — the same mined vector under the name of the kit that plays
+    // it (2026-09-07, the twelve questions, 3). `precompose.js grooveOf` used
+    // to reach `dub` by asking "does the kick fire exactly once in its own
+    // bar", which is not a definition of dub, it is a definition of the ONE
+    // DROP; the word is derived off the kit now and says so. The numbers are
+    // not re-mined and not re-typed: they are the line above, and they came
+    // off the MIDIMAN dub rip, which is a rip of records whose kick fires once
+    // a bar on the three. `dub` stays for a hand that wants the drag on a kit
+    // that is not a one drop.
+    onedrop: { vel: [1.089,0.822,1.052,0.899, 1.076,0.777,1.065,0.843,
+                     1.083,0.852,1.063,0.877, 1.064,0.72,1.042,0.836],
+               push: [0,0.1,0.02,0.1, 0,0.1,0.02,0.1, 0,0.1,0.02,0.1, 0,0.1,0.02,0.12] },
+    /* AND FIVE WORDS WITH NO PROFILE, WHICH IS A DECISION AND NOT A GAP.
+       `fourfloor`, `halftime`, `clave`, `tresillo` and `straight` are the
+       other five things `grooveOf` can now say off a grid, and this box has no
+       MEASURED velocity fingerprint for any of them. `groove()` below returns
+       the stream untouched for a name it does not hold, so those records get
+       no lean at all — which is this file's own law two screens down said
+       about a vocabulary instead of about a meter: "A wrong groove is worse
+       than none, so under a declared meter the song's groove stands down
+       rather than being stretched — an honest zero until somebody writes
+       profiles in three." An honest zero until somebody mines a four-on-the-
+       floor. What those records had BEFORE was `funk`'s or `push`'s or
+       `dub`'s fingerprint dealt to them off a swing ratio or an echo send,
+       which was not an honest zero, it was somebody else's drummer. */
   };
   // Applied to the RENDERED stream, because it is a function of where a note
   // lands on the grid and an operator cannot know that. `barSteps` is the bar in
@@ -3387,7 +3412,8 @@
     // salsa's fault from shift 5 said catalogue-wide: "`bassStyle: octaves`
     // is not a rhythm".
     //
-    // THE TWO THE WORDS THEMSELVES ANSWER, and no others:
+    // THE TWO THE WORDS THEMSELVES ANSWER (and `fifths` joined them on
+    // 2026-09-07 — see the paragraph under this one):
     //   `walk`     ONE NOTE PER FELT BEAT. That is what walking IS — a
     //              quarter in 4/4, a quarter in 3/4, a dotted quarter in
     //              6/8 — so the entry is `QUARTERS`, the meter-aware pulse
@@ -3416,17 +3442,45 @@
     // word says. Two tables that both answer "what does `octaves` play" must
     // not disagree, and this is the one that was silent.
     //
-    // `fifths` and `pedal` stay out, for today. `bass-kit.js` gives them
-    // quarters too, but the audit measured them at 1.77 and 1.03 notes a bar
-    // and read both as "≈ right" — a root–fifth on 1 and 3, a pedal that
-    // holds — and there is no finding against either. Ninety-eight rows do not
-    // move on a consistency argument nobody has listened to. Written down as
-    // the next question rather than taken.
+    // `pedal` STAYS OUT, AND `fifths` COMES IN (2026-09-07, the twelve
+    // questions, 2). The two words were asked the same consistency question
+    // together and they do not have the same answer.
+    //
+    //   `pedal`  A PEDAL POINT IS A HELD NOTE. About one a bar — the audit
+    //            measured 1.03 over 74 rows — is not a shortfall, it is what
+    //            the word MEANS, and aligning it to the pulse would be a
+    //            consistency argument made against the meaning of the word.
+    //            It reads `subj.acc` and it keeps reading it: a pedal that
+    //            re-strikes where the tune leans is a pedal being played by
+    //            somebody. No entry, and that is the finding.
+    //   `fifths` A TWO-BEAT. Root on 1, fifth on 3 — the boom-chuck of a
+    //            polka, a march, a honky-tonk and a bluegrass bass, which is
+    //            what all 24 rows that declare it are. The audit measured it
+    //            at 1.77 notes a bar and read that as "≈ right"; 1.77 is not
+    //            two, it is two most bars and one when the tune happens to
+    //            accent only once, and a bass line that drops a beat because
+    //            the melody was quiet there is the same borrowed-accent fault
+    //            E3 named. So the entry is HALVES — every other felt beat —
+    //            and the `deg` branch four screens down, which has always
+    //            alternated root and fifth on `k % 2`, finally has a rhythm
+    //            that makes the alternation land on 1 and 3.
+    //            It is NOT four: `bass-kit.js STYLEFIG` gives `fifths`
+    //            `g16(0,4,8,12)`, and that table is the bassist's own — but a
+    //            root–fifth on every beat is a walking two-feel, and the four
+    //            rows the word is named for (polka Prague 1837, march,
+    //            honkytonk, bluegrass) play two. Where the two tables
+    //            disagree the WORD decides, and the word is "root and fifth",
+    //            which is two notes.
+    const HALVES = g.meter
+      ? (() => { const v = new Array(MSTEPS).fill(0);
+                 for (let i = 0; i < MSTEPS; i += 2 * MPULSE) v[i] = 1; return v; })()
+      : [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0];
     const STYLEGRID = {
       eighths:    [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
       sixteenths: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
       octaves:    QUARTERS,
       walk:       QUARTERS,
+      fifths:     HALVES,
     };
     // A FIGURE — a bass line written out rather than described. `bassStyle`
     // says how DENSE the line is and `bassGrid` where the genre's own notes

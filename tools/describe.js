@@ -393,7 +393,13 @@
       + ", " + f.bars + "-bar loop, "
       + (f.swing && f.swing !== "straight"
           ? (NF.SWINGLABEL[f.swing] || f.swing) + " eighths" : "straight eighths")
-      + (f.groove ? ", " + (NF.GROOVELABEL[f.groove] || f.groove) + " feel" : "") + ".");
+      /* AND THE GROOVE WORD IS A KIT FACT NOW, SO IT IS SAID AS ONE
+         (2026-09-07, the twelve questions, 3). This read `"<word> feel"`,
+         which was fair while the word came off a swing ratio and a stress
+         number; it is derived from `G.kit` today and printing "straight feel"
+         next to "shuffle eighths" would read as a contradiction where there is
+         none — the shuffle is the SWING and the word is what the DRUMS mark. */
+      + (f.groove ? ", the kit " + (NF.GROOVELABEL[f.groove] || f.groove) : "") + ".");
 
     /* --- key, mode, and whether the changes are even read ---------------- */
     S.push(f.keyName + " " + f.modeWord + (f.diatonic ? ", diatonic" : "")

@@ -227,6 +227,7 @@ const UNIT = {
   wobbleHz: "hz", vibRise: "s", ring: "s", glide: "ms", grainSec: "s",
   vowelEvery: "beats", seed: "take", obDetune: "cents",
   syncDetune: "cents", czDetune: "cents", drift: "cents",
+  course: "cents",   // the oud/lute course: two strings, this far apart
   fenvAmount: "oct", envAmount: "oct", freq: "Hz",
   // A DEPTH IN THE VOWEL TABLES IS NOT A DETUNE IN CENTS. Same word, two
   // meanings, and the dsp/key override is how one table says both.
@@ -246,6 +247,7 @@ const UNIT = {
   // dsp says `hslider("glide", 0, 0, 500, 1)  // portamento, ms` and the sheet
   // printed "s" over a number that goes to 500.
   "stk_guitar/glide": "s", "gtr_amp/glide": "s", "erhu/glide": "s",
+  "oud/glide": "s",
   "voice_lead/glide": "s", "tract_voice/glide": "s",
 };
 // FIRST HIT WINS, EVEN WHEN IT IS `null` — an override that says "this one has
@@ -353,6 +355,16 @@ const LABEL = {
   exPos: "knobs.strikePosition", tilt: "knobs.partialTilt",
   force: "knobs.bowPressure", speed: "knobs.bowSpeed",
   bowPos: "knobs.bowPosition", skin: "knobs.skin", pad: "knobs.bridgePad",
+  /* THE COURSE IS A DETUNE, AND IT IS THE SAME WORD BY MECHANISM, NOT BY
+     analogy: oud.dsp puts the pair half of `course` either side of the
+     written pitch in cents, which is what every other row on this key does
+     with two oscillators. No new noun is needed, and this file may not
+     invent one — the catalogue that names these is nukernel/src/copy/
+     knobs.ts and a design round owns it. (`risha` and `body`, the two
+     controls that WOULD need a new word, are therefore not recipe keys at
+     all — see state-engine.js `case "oud"`, which says so where it does
+     not read them.) */
+  course: "knobs.detune",
 
   /* ---- the throat and the tube ---- */
   voice: "knobs.voiceType", breath: "knobs.breath",

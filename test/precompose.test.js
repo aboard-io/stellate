@@ -1264,12 +1264,46 @@ function sectionEvents(doc, i) {
     return { words: e.length, tot, top, share: top / tot,
              ok: e.length >= floor && top / tot <= 0.6 };
   };
-  ok("G8f the groove word is various — every GROOVELABEL word is used, and " +
-     "none of them covers more than 60% of the records that have one", () => {
-    const sp = spread(hGroove, Object.keys(NF.GROOVELABEL).length);
-    assert.ok(sp.ok, sp.words + " of " + Object.keys(NF.GROOVELABEL).length +
+  /* ...AND THE FLOOR IS THE DERIVATION'S OWN LIST, NOT THE MENU'S (2026-09-07,
+     the twelve questions, 3). This read `Object.keys(NF.GROOVELABEL)` when the
+     label table and the set of answers `grooveOf` could give were the same five
+     words. They are not the same list any more: `GROOVELABEL` is a MENU of
+     eleven — the seven a kit can state plus `push`, `laidback`, `funk` and
+     `dub`, which a hand may still choose and which `kernel.js GROOVES` still
+     has profiles for — and nothing derives those four, because none of them is
+     a fact about a grid. So the floor is `P.GROOVEWORDS`, the derivation's own
+     table, and the claim is the one it always was: every word this function can
+     answer is answered by some row. The 60% share cap is untouched. */
+  ok("G8g the groove word is various — every word grooveOf can answer is used, " +
+     "and none of them covers more than 60% of the records that have one", () => {
+    const sp = spread(hGroove, Object.keys(P.GROOVEWORDS).length);
+    assert.ok(sp.ok, sp.words + " of " + Object.keys(P.GROOVEWORDS).length +
       " words, top share " + (sp.share * 100).toFixed(0) + "% — " +
       JSON.stringify(hGroove));
+  });
+  /* --- G8f A GROOVE WORD DESCRIBES THE KIT, ON ALL 500 (2026-09-07, the
+     twelve questions, 3). The audit's E6: `grooveOf` returned `backbeat` as
+     its honest zero and 40 of the 203 records that printed it had no snare,
+     clap or rim on 2 and 4 at all — `yayue` (433 BC), `kunqu` (1598),
+     `march`, `bossa`, `tango`. The word is derived off the grid now, and this
+     is the claim that says so: for every anchor, the word the record carries
+     is TRUE of the row's kit, and a row with no kit carries no word.
+     `grooveMatchesKit` is a second reading of `G.kit` written beside the
+     derivation for exactly this — it re-asks the question from the word's own
+     definition rather than re-running the rungs, so a rung that drifts from
+     its own meaning fails here. A one-word answer could not pass this line,
+     which is why the anti-degeneracy claim above can afford to be a share. */
+  ok("G8f no row prints a groove word its kit does not play", () => {
+    const bad = [];
+    for (const gk of ANCHORS) {
+      const w = docs.get(gk + "/1").time.groove || null;
+      if (!P.grooveMatchesKit(GENRES[gk], w))
+        bad.push(gk + " says " + JSON.stringify(w));
+    }
+    assert.ok(!bad.length, bad.length + " of " + ANCHORS.length + ": " +
+      bad.slice(0, 12).join(", "));
+    console.log("       " + ANCHORS.length + " rows, every groove word true of " +
+      "its own grid");
   });
   ok("G8g the return is various — ≥3 RETURNS words and ≥4 rooms", () => {
     const r = spread(hRet, 3), c = spread(hColor, 4);

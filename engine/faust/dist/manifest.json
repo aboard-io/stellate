@@ -4337,6 +4337,27 @@
    "/organ/level"
   ]
  },
+ "oud": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/oud/body",
+   "/oud/bright",
+   "/oud/course",
+   "/oud/cutoff",
+   "/oud/freq",
+   "/oud/gain",
+   "/oud/gate",
+   "/oud/glide",
+   "/oud/level",
+   "/oud/mute",
+   "/oud/pick",
+   "/oud/pluckPos",
+   "/oud/release",
+   "/oud/ring",
+   "/oud/risha"
+  ]
+ },
  "pad_saw": {
   "inputs": 0,
   "outputs": 1,

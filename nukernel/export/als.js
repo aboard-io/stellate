@@ -374,7 +374,7 @@ export const DONOR_TRACK = {
    ORDER MATTERS AND IS TESTED: "steel_string_guitar" must meet the string row
    before the "steel_drums" word in the FM row, so strings are asked first. */
 export const DONOR_BY_INSTR = [
-  [/guitar|banjo|mandolin|sitar|koto|shamisen|dulcimer|harp|violin|viola|cello|contrabass|fiddle|erhu|strings|harpsichord|clavinet/, "6-Tension"],
+  [/guitar|banjo|mandolin|sitar|koto|shamisen|oud|dulcimer|harp|violin|viola|cello|contrabass|fiddle|erhu|strings|harpsichord|clavinet/, "6-Tension"],
   [/piano|grand|_ep|organ|vibraphone|marimba|glockenspiel|kalimba|music_box|tubular|steel_drums|timpani|trumpet|trombone|tuba|horn|brass|sax|clarinet|oboe|flute|recorder|whistle|shenai|harmonica|accordion|bandoneon/, "4-Operator"],
   [/vox|voice|choir|pad|atmosphere|fantasia|glass|sea_shore|space/, "5-Meld"],
 ];

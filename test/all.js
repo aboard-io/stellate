@@ -820,6 +820,15 @@ const GATES = [
   { name: "erhu",       wave: 2, kind: "node",
     argv: ["test/erhu.test.js"], need: ["test/erhu.test.js"],
     covers: ["test/erhu.test.js", "engine/faust/dsp/erhu.dsp"] },
+  /* the oud (2026-09-07): the same lane as the erhu — a MODEL measured
+     offline, because the instrument it models is in none of the soundfonts.
+     `covers` names the dsp, the eight rows' own catalogue (the seating half of
+     O7 reads genres.js) and the two files that make it reachable. */
+  { name: "oud",        wave: 2, kind: "node",
+    argv: ["test/oud.test.js"], need: ["test/oud.test.js"],
+    covers: ["test/oud.test.js", "engine/faust/dsp/oud.dsp",
+             "engine/faust/voices/state-engine.js", "nukernel/instruments.js",
+             "nukernel/audio/to-engine.js"] },
   /* PORTAMENTO (2026-09-03). Paul: "We are missing a big thing: Portamento.
      Everywhere, voices, synths, and so forth... Think TB 303 for example!"
      Thirteen modules gained a `glide` slider that TAKES OVER the fixed
