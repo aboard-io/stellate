@@ -305,6 +305,23 @@ const GATES = [
   { name: "bass-grid", wave: 2, kind: "node",
     argv: ["test/bass-grid.test.js"],
     need: ["test/bass-grid.test.js"], covers: ["test/bass-grid.test.js"] },
+  /* THE BASS HOLDS A LINE (wave D, 2026-09-07). The other half of the same
+     seam and the fourth declared-and-never-arriving find on this chair: a
+     bass could not name a motif at all (both compilers handed `K.bass` the
+     first line's phrase), and 42.3% of every bass note in the catalogue —
+     36,878 of 87,150 — carried `dur: NaN` and played at `to-engine`'s
+     0.02-beat floor because `spans()` was sixteen slots long and the loop
+     read it up to thirty-two. Registered because both claims are about the
+     NOTES: the gate reads rendered pitches against the motif's own degrees
+     and holds all 482 anchors to a freeze of the stream before the round. */
+  { name: "written-bass", wave: 2, kind: "node",
+    argv: ["test/written-bass.test.js"],
+    need: ["test/written-bass.test.js", "test/fixtures/bass-pre-waveD.json"],
+    /* ...AND `ui/derive.js` BY NAME: W4 reaches the page's own compiler
+       through a dynamic `import()` of a built path, which the closure walker
+       cannot follow, and the whole point of W4 is that BOTH compilers play
+       the written part. */
+    covers: ["test/written-bass.test.js", "nukernel/ui/derive.js"] },
   /* NO TWO RECORDS SHARE A SOLO BY DEFAULT (2026-09-01, "Art rock has the
      same solo as iranian pop on seed 19"): the climb slot's triple pin gave
      390 records 32 solos; the widen gave them 212. This gate keeps the space

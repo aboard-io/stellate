@@ -557,7 +557,28 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   const dr = drums(lead, g, g.bars), loopSteps = g.bars * barSteps;
   for (let r = 0; r < total / g.bars; r++)
     for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
-  for (const e of bass(lead, g, total))
+  /* ...EXCEPT THAT THE BASS MAY NOW HAVE A PART OF ITS OWN (wave D,
+     2026-09-07). `docs/REDESIGN-SCOPE.md` §10 named this the last dead
+     control in the table: BOTH compilers handed `K.bass` the first line's
+     phrase, so a motif named on a bass cell was named into nothing. `bslot`
+     is the box's pointer into the same phrase bank the stack's own slots
+     index (`document.js boxesOf` writes it, `document.js slotsOf` fills it),
+     and it is the ONLY thing that changes here.
+
+     `lead` STAYS THE FIRST ARGUMENT and that is not laziness: it is the
+     harmonic authority — `chordsOf` reads it, and under `emergent` harmony
+     the roots are derived from its own first degree — and a bass with a
+     private progression is half the band modulating. The written part
+     arrives beside the harmony, as a figure over it.
+
+     ABSENT IS TODAY, THREE WAYS: a box with no `bslot`, a bank too short to
+     reach it (every caller that has not adopted `slotsOf` yet), and a slot
+     holding null all produce `undefined`, and `bass()` refuses anything
+     without a `deg` vector of its own. The word is never applied to it —
+     a development word is a transformation of the LINE's subject and a
+     written bass part is not that subject. */
+  const bown = sec.bslot == null ? null : slots[sec.bslot];
+  for (const e of bass(lead, g, total, bown))
     out.push({ ...e, kind: "bass", n: e.n + 12 * (+(sec.boct || 0)),
                vox: voxAll(sec, null) });
 
@@ -700,6 +721,10 @@ const rcache = new WeakMap();               // box -> { sig, out }
 export function sectionRender(sec, slots, songGroove, songSwing) {
   const ids = new Set();
   for (const e of stackOf(sec)) for (const i of e.slots) ids.add(i);
+  // ...AND THE BASS'S OWN SLOT (wave D). A scrub mutates a phrase IN PLACE
+  // — the sentence three lines up — so a written bass part edited on the
+  // bench would have gone on sounding the version this cache saw first.
+  if (sec.bslot != null) ids.add(sec.bslot);
   // the song groove AND swing are IN the signature: a box need not carry
   // either (the row's own words are optional, wave 2a) and a cache that
   // ignored the song's would keep serving the old feel after a change. The

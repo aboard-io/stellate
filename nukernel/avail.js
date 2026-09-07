@@ -241,14 +241,26 @@
      cannot work — which is the one thing the whole availability tier exists to
      prevent.
 
-     THE BASS IS NOT HERE AND THAT IS THE POINT. It is a `line`-shaped voice by
-     data, but nothing in either compiler lets it NAME a cell: `K.bass` is handed
-     `phrases[0]`, the FIRST LINE's phrase, in both of them (`document.js`
-     scoreOf:355 and `ui/derive.js`:433, both captioned "the bass reads accents,
-     which only one line can own"). So `cellsFor` answers for the two kinds that
-     can act on the answer, and `ui/eight.js` says out loud, on the bass's own
-     tab, which cell it is actually reading and why it cannot choose. An honest
-     refusal beats a menu that changes nothing. */
+     THE BASS IS HERE NOW (wave D, 2026-09-07), AND THE PARAGRAPH IT REPLACES
+     IS WORTH KEEPING IN VIEW, because it is the shape of every refusal in this
+     file: *"The bass is not here and that is the point. It is a `line`-shaped
+     voice by data, but nothing in either compiler lets it NAME a cell: `K.bass`
+     is handed `phrases[0]`, the FIRST LINE's phrase, in both of them … An
+     honest refusal beats a menu that changes nothing."* That was true and the
+     refusal was right; what changed is the architecture underneath it, not the
+     standard. `kernel.js bass()` takes a fourth argument now — the bass's own
+     compiled cell, read as a FIGURE over the record's harmony — and both
+     compilers hand it one: `document.js scoreOf` per section, `ui/derive.js
+     sectionEvents` through the box's `bslot`. So a bass answered among the
+     LINE cells is a menu that changes the sound, which is the only thing that
+     ever made it a menu.
+
+     AND A DRUM CELL IS STILL REFUSED TO IT, for the reason above and not by
+     omission: `toPhrase` returns a blank for one and `document.js bassCellAt`
+     answers null, so a bass pointed at a grid plays the genre's bass rather
+     than sixteen zeros. `cellsFor` is what keeps it off the menu in the first
+     place — `kindOf` answers "bass", which is not "drums", which is the line
+     list. One expression, three kinds, no table. */
   const drumCells = (doc) => Object.keys(doc.material.cells)
     .filter((n) => doc.material.cells[n].kind === "drum");
   const cellsFor = (doc, kind) =>

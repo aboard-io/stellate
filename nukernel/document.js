@@ -168,6 +168,41 @@
     return m[secId] != null ? m[secId] : m[""];
   };
 
+  /* ---------- ...AND THE BASS READS ITS OWN (WAVE D, 2026-09-07) ----------
+     `docs/REDESIGN-SCOPE.md` §10: *"Both compilers hand `K.bass` the first
+     line's compiled phrase, so a bass cell that named a motif named it into
+     nothing."* It does not any more — `kernel.js bass()` takes a fourth
+     argument, the bass's own compiled cell, and reads it as a FIGURE over the
+     record's own harmony. This is the half of the seam that says WHICH cell.
+
+     IT IS THE SAME READER EVERY OTHER VOICE USES. A bass voice's `material`
+     is a string or a `{secId: cell}` map like a line's or a drummer's, so
+     `materialAt` answers for it unchanged and the per-section freedom comes
+     free. What is new here is only the REFUSALS, and they are three:
+       · a bass that names nothing (which is every precomposed record in the
+         catalogue — `precompose.js` pushes a bass voice with a `cast`, a
+         `development` and no `material` key at all) answers null, and the
+         kernel takes the branch it has always taken. PRESENT-ONLY, so T2's
+         pin does not move for this.
+       · a name that is not in the bank answers null rather than falling
+         through to `cellOf`'s first-cell default — a bass pointing at a
+         deleted motif must play the genre's bass, not silently inherit the
+         first line's tune, which is the bug this whole wave is about.
+       · a DRUM cell answers null. `toPhrase` already refuses one ("a grid is
+         not a line") and `avail.js cellsFor` already keeps one off this
+         menu; this is the third door on the same room. */
+  const bassCellAt = (doc, i) => {
+    const v = BASSV(doc), name = v && materialAt(v, SECID(doc, i));
+    if (name == null || name === "") return null;
+    const c = (doc.material && doc.material.cells) ? doc.material.cells[name] : null;
+    if (!c || c.kind === "drum" || !Array.isArray(c.deg) || !c.deg.length) return null;
+    return name;
+  };
+  const bassPhraseAt = (doc, i) => {
+    const name = bassCellAt(doc, i);
+    return name ? toPhrase(doc, name) : null;
+  };
+
   /* ---------- HOW MANY BARS A CELL IS — AND EACH CELL KEEPS ITS OWN LENGTH
      (2026-09-05, the review's item 8) ---------------------------------------
      The kernel reads a phrase's own length AS the bar (`kernel.js render`,
@@ -873,6 +908,22 @@
       // and has done since it was written; what was missing was a writer.
       ...(Array.isArray(s2.auto) && s2.auto.length ? { auto: s2.auto } : {}),
       stack: [{ g: pre + i, slots: lines.map((c, v) => v * NS + i) }],
+      /* WHERE THE BASS'S OWN PHRASE SITS IN THE BANK (wave D, 2026-09-07).
+         The other compiler — `ui/derive.js sectionEvents`, the one the page
+         actually plays through — is handed a flat `slots` array and a box
+         that indexes into it, and a box had no way to point at anything but
+         a LINE's phrase. `bslot` is that pointer, allocated by the same
+         arithmetic the stack's own slots use (`v * NS + i`) one voice past
+         the last line, so the bass's section-`i` phrase lives at
+         `lines.length * NS + i` and nothing existing is re-addressed.
+         `slotsOf` below is the writer for it and the one owner of the
+         arithmetic; `sectionEvents` is the reader.
+
+         PRESENT-ONLY, twice over: a record whose bass names no cell writes no
+         key and the box is the object it has always been (document.test.js
+         G6's law), and a reader handed a bank that does not reach this index
+         gets `undefined` and renders the bass it rendered yesterday. */
+      ...(bassCellAt(doc, i) ? { bslot: lines.length * NS + i } : {}),
       /* THE SECTION'S NAME, ONTO THE BOX (WAVE C, 2026-09-06) — under
          `secname` and not `name`, because `export/score.js` already builds a
          box of its own with a `name` on it (the exported clip's title) and two
@@ -2598,7 +2649,14 @@
       const nP = phrases.length;
       const lead = phrases[0] || NuSong.blank();
       const dr = K.drums(lead, g, g.bars), loopSteps = g.bars * barSteps;
-      const bassEv = K.bass(lead, g, total);
+      /* THE BASS'S OWN MATERIAL, IF IT NAMED ANY (wave D). `lead` stays the
+         first argument because it is the HARMONIC authority — the chord
+         windows and, under `emergent` harmony, the roots themselves are read
+         off it — and the record has one progression. The fourth argument is
+         the bass's own written part, resolved per SECTION like every other
+         voice's. Null for every record that has not written one, which is the
+         whole catalogue, so this line moves no bytes on its own. */
+      const bassEv = K.bass(lead, g, total, bassPhraseAt(doc, i));
       const lineEv = [];
       phrases.forEach((ph, pi) => {
         const evs = K.render(ph, g, total);
@@ -2683,7 +2741,48 @@
           from: W.from, to: W.to, t0: wt0 };
   }
 
+  /* ---------- THE PHRASE BANK A BOX'S SLOTS POINT INTO (wave D) ----------
+     `ui/derive.js` is handed two things: the boxes `boxesOf` builds and a
+     flat array of compiled phrases the boxes index into. The arithmetic that
+     joins them (`voice v, section i -> slot v * NS + i`) was written in
+     `ui/eight.js push()` and read in `boxesOf` — two copies of one fact, and
+     the reason a box could point at a line's phrase and at nothing else. This
+     is the ONE owner of it, exported so the page, the gates and any node
+     caller build the same bank: the line block first, in voice order, then
+     the BASS's own phrases one voice past it.
+
+     A SECTION WHERE THE BASS NAMES NOTHING HOLDS `null`, not a blank phrase:
+     `bass()` refuses anything without a `deg` of its own and falls back to
+     the first line, which is the behaviour every record has today.
+
+     THE ONE LINE THIS WAVE COULD NOT WRITE, named so the UI round can:
+     `ui/eight.js push()` still fills the bank itself, line by line
+     (`lines.forEach((c, v) => { for (let i = 0; i < NS; i++)
+     putPhrase(v * NS + i, phrase(materialAt(c, secs[i].id))); })`), so on the
+     PAGE the bass's slot is empty and `sectionEvents` renders the bass the
+     genre describes — correct, and not yet the written one. The replacement
+     is `slotsOf(DOC).forEach((p, i) => { if (p) putPhrase(i, p); })`, which
+     is the same arithmetic with one owner instead of two. Until it lands a
+     written bass sounds in `scoreOf` and in every export and not on the page,
+     which is this tree's own "declared but never arriving" shape and is why
+     it is written down here rather than left to be discovered. */
+  function slotsOf(doc) {
+    const secs = doc.form.sections, NS = secs.length, lines = LINES(doc);
+    const out = [];
+    lines.forEach((c, v) => {
+      for (let i = 0; i < NS; i++)
+        out[v * NS + i] = toPhrase(doc, materialAt(c, SECID(doc, i)));
+    });
+    for (let i = 0; i < NS; i++) out[lines.length * NS + i] = bassPhraseAt(doc, i);
+    return out;
+  }
+
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
+           /* WAVE D — where the bass's own written part is and how it is
+              compiled. `bassCellAt` answers "which cell, in this section",
+              `bassPhraseAt` compiles it, `slotsOf` builds the bank a box's
+              `bslot` indexes into. */
+           bassCellAt, bassPhraseAt, slotsOf,
            /* THE PLAN AND THE HARMONY (2026-09-06, docs/THEORY.md §2).
               `planOf` is `scoreOf`'s own pass one, extracted so that
               `chordsIn` — what chord the record says is sounding at a

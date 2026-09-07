@@ -3262,11 +3262,51 @@
   // ---- the bass IS the harmony, read at low density ------------------------
   // Root motion is the progression, so chords are not a separate stage in the
   // pipeline — they are this object at a different density.
-  function bass(subj, g, bars) {
+  function bass(subj, g, bars, own) {
     if (g.nobass) return [];              // a genre may simply not have a bass part
     // A DRUM PHRASE carries no chord roots for a walking or root bass to read.
     if (subj && subj.kind === "drum") return [];
     const ev = [], N = subj.deg.length;
+
+    /* ---- A BASS MAY READ ITS OWN MATERIAL (wave D, 2026-09-07) -----------
+       Until today both compilers handed this function the FIRST LINE's
+       compiled phrase and nothing else, so a bass cell that named a motif
+       named it into nothing and the sheet said so
+       (`src/table/model.ts cell.bass.why`). `own` is the fourth argument that
+       makes the sentence false: the bass voice's OWN compiled cell, a phrase
+       like any other line's.
+
+       WHAT `subj` IS STILL FOR, AND WHY IT CANNOT MOVE. `subj` is the
+       HARMONIC authority, not the bass's notes: `chordsOf(subj, g, b)` reads
+       it (under `emergent` harmony `harm()` derives the root from the
+       subject's own first degree and the newest voice's word), `N` is the
+       bar the chord windows are measured in, and the record has ONE
+       progression. Handing this function the bass's cell as `subj` would
+       have given the bass a private harmony — half the band modulating,
+       which is §31's law and not a feature. So the material arrives beside
+       the harmony rather than in place of it.
+
+       AND IT ARRIVES AS A FIGURE, because a figure is what it is. `bassFig`
+       — shipped last night for salsa's tumbao and grunge's ripping octaves —
+       already says all of it at once and per step: where the note is
+       (`grid`), which degree it takes OVER THE CHORD (`deg`), which octave
+       (`oct`), whether it is accented and whether it slides. A written bass
+       cell is the same statement at a finer grain, so it is spelled as one
+       and every branch below is the branch a figure already took. That is
+       the whole measurement this wave turned on: opening the bass is one
+       argument and a shape conversion, not a second bass.
+
+       WHAT HAPPENS WHEN THE CHORD CHANGES UNDER IT — the box already had the
+       word and this borrows it rather than inventing a third answer. A
+       written step's degree is read OVER the chord sounding at that step
+       (`chordIn`, per step, so a beats-split bar turns under the figure),
+       exactly as `bassFig.deg` is; a written 0 is the chord's own bass note,
+       inversion and slash included. It FOLLOWS THE CHANGES. It does not play
+       as written in absolute pitch, and there is no word for that here
+       because there is no word for it anywhere in this file: every pitch in
+       the kernel is a degree of something. */
+    const OWN = (own && own !== subj && Array.isArray(own.deg) && own.deg.length &&
+                 Array.isArray(own.gate)) ? own : null;
 
     // WALKING — quarter notes that arrive somewhere. Root, third, fifth, then a
     // chromatic approach a semitone under the NEXT bar's root, which is why it
@@ -3349,7 +3389,35 @@
     // accent and slide have been carried to the engine (to-engine reads
     // e.acc/e.sld) since the bass chair existed, and nothing could ever set
     // them. Absent = every stream below is what it was.
-    const fig = g.bassFig || null;
+    // ...AND A WRITTEN CELL IS ONE, AT THE CELL'S OWN LENGTH. The conversion
+    // is four renames and one unit change: a cell's `oct` is in OCTAVES (it
+    // is multiplied by the scale period in `render`) and a figure's is in
+    // SEMITONES, which is the same twelve `bassReg` is multiplied by nine
+    // lines up. A cell that marks no octave, no accent and no slide converts
+    // to a figure that says nothing about them, and the branches below fall
+    // through to the style exactly as they do for a genre that declares none.
+    const fig = OWN
+      ? { grid: OWN.gate, deg: OWN.deg,
+          oct: (OWN.oct || []).map((x) => 12 * x),
+          acc: OWN.acc || null, sld: OWN.sld || null }
+      : (g.bassFig || null);
+    // A GENRE'S FIGURE IS READ ON THE BAR; A WRITTEN CELL ON THE STEP. They
+    // are different kinds of statement and the difference is the same one
+    // this file already draws between a KIT and a PHRASE: `bassFig` is a
+    // one-bar fingerprint restated every bar (16 slots, `at()`-wrapped), a
+    // cell is a phrase with its own length that states itself on its own
+    // period against the section (document.js, the mixed-length round: "a
+    // 3-bar phrase against a 4-bar section drifts, which is a composer's tool
+    // and not a bug"). Where the cell and the bar are the same length —
+    // which is every record the catalogue has ever composed — the two
+    // readings are the identical index, so nothing below can move without a
+    // hand writing a bass cell.
+    const figAt = (v, b, i) => at(v, OWN ? b * N + i : i);
+    // A CELL'S OWN DYNAMICS, under the same "says nothing = says nothing"
+    // law the octave vector keeps two screens down: `toPhrase` returns an
+    // all-zero `vel` for a cell nobody marked, and reading that as an
+    // instruction would render a written bass at velocity 0 — silent.
+    const OWNVEL = OWN && OWN.vel && OWN.vel.some(Boolean) ? OWN.vel : null;
     // ...AND `bassGrid` IS SECOND, NOT FOURTH (2026-09-01). It sat under both
     // STYLEGRID and the melody's accents, which meant it never fired: measured
     // across every anchor that writes one, 13 of 22 were outranked by their own
@@ -3376,7 +3444,39 @@
     // exist are simply read.
     const grid = (fig && fig.grid) || g.bassGrid || STYLEGRID[g.bassStyle]
       || (subj.acc.some(Boolean) ? subj.acc : QUARTERS);
-    const sp = spans(grid);                                     // holds to the next hit
+    // WHICH STEP THE GRID MARKS — one reader, so the written cell's absolute
+    // reading and the bar-relative one for everybody else are said once. The
+    // `bassBars` schedule's own per-bar grids are the GENRE's and stay
+    // bar-relative whatever the cell does.
+    const gridAt = (gb, b, i) => at(gb, OWN && gb === grid ? b * N + i : i);
+    /* ---- HOW LONG A NOTE IS HELD, OVER THE STEPS THAT ACTUALLY PLAY -------
+       THE BUG THIS REPLACES (`scratch/genre-qa/SHIFT-5.md`, found by the
+       grunge round and left for its own round): this line was
+       `const sp = spans(grid)` — a vector as long as the GRID, sixteen slots
+       — and the loop below reads `sp[i]` for `i` up to `N = subj.deg.length`,
+       which is THIRTY-TWO on a two-bar cell. Every note in the second bar
+       took an `undefined` hold and shipped `dur: NaN`. Measured across the
+       catalogue before this line: **36,878 of 87,150 bass events — 42.3% —
+       on 245 of 482 anchors.** It was not a cosmetic NaN: `audio/to-engine.js`
+       reads `Math.max(0.02, (e.dur || 0) / STEPS_PER_BEAT)` and `NaN` is
+       FALSY, so every one of those notes played at the 0.02-beat floor — ten
+       milliseconds at 120 — where its written hold was a beat or more. Half
+       the catalogue's bass was clicking.
+
+       THE FIX IS TO ASK THE QUESTION OVER THE RIGHT RANGE. A hold is "how far
+       to the next onset", and the onsets are the ones that PLAY — the grid
+       realized over the whole stream this call renders, not the grid's own
+       sixteen slots. Where the grid's length divides the bar (every 4/4
+       record in the catalogue) the answer for a step the old code could
+       reach is arithmetically the same number: the distance to the next
+       onset of a periodic pattern does not depend on which period you
+       measure it in. So this MOVES the NaN half and nothing else there.
+       Where it does NOT divide — a sixteen-slot `bassGrid` under a twelve-step
+       bar in 3/4 — the old span was measured across four slots that never
+       sound, and the new one is measured across the notes. That is a
+       correction and the round that made it counted the records it moved. */
+    const SPAN = spans(Array.from({ length: Math.max(1, bars) * N },
+                                  (_, x) => (gridAt(grid, (x / N) | 0, x % N) ? 1 : 0)));
     // A BASS SCHEDULE, READ PER BAR — the shape `kits` already gives the
     // drums, and for the same reason: a grid is one bar restated, and some
     // parts are slower than a bar. `bassBars` is read with `at`, so a
@@ -3385,13 +3485,23 @@
     // The note before a silent bar HOLDS across it: a part with four
     // measures between two notes is holding, not stopping. Absent = the
     // stream above, byte-identical.
-    const barGrid = (b) => (g.bassBars ? (at(g.bassBars, b) || null) : grid);
+    // ...AND A WRITTEN CELL OUTRANKS THE SCHEDULE'S RHYTHM BUT NOT ITS
+    // SILENCES. `bassBars` says two things at once — which bars the bass
+    // plays and, in the bars it does, what it plays there — and a hand that
+    // wrote a part has answered the second question and not the first. So an
+    // entry of 0 is still a bar the bass sits out (an arrangement fact, the
+    // genre's to state) and a non-zero entry hands the bar back to the
+    // written cell. Without a cell this is the expression it has always been,
+    // to the byte: an array is truthy and `0` is not, so `x ? x : null` and
+    // `x || null` are the same two branches.
+    const barGrid = (b) => (!g.bassBars ? grid
+      : (at(g.bassBars, b) ? (OWN ? grid : at(g.bassBars, b)) : null));
     const held = (() => {
       if (!g.bassBars) return null;
       const pos = [];
       for (let b = 0; b < bars; b++) {
         const gb = barGrid(b); if (!gb) continue;
-        for (let i = 0; i < N; i++) if (at(gb, i)) pos.push(b * N + i);
+        for (let i = 0; i < N; i++) if (gridAt(gb, b, i)) pos.push(b * N + i);
       }
       const out = new Map();
       // ...and a note HOLDS to the next one, but no longer than a bar. A
@@ -3404,7 +3514,13 @@
       return out;
     })();
     let played = false;
-    if (g.bassStyle === "walk") {
+    // A WRITTEN CELL OUTRANKS THE WALK, by the precedence this function's own
+    // comment argues for eighty lines up: a FIGURE says all of it at once and
+    // a STYLE says only how dense the line is. A bass told to walk and handed
+    // a written part plays the written part; clear the cell and the walk is
+    // still underneath it, which is the same floor `bassStyle` is for a genre
+    // that clears its figure in Rules.
+    if (g.bassStyle === "walk" && !OWN) {
       for (let b = 0; b < bars; b++) {
         // A WALKING BASS READS THE SCHEDULE TOO. It used to return before
         // `bassBars` was even computed, so a band told to leave four
@@ -3474,7 +3590,7 @@
       if (!gb) continue;                       // a bar the bass sits out
       const bar = [], barAt = [];
       for (let i = 0; i < N; i++)
-        if (at(gb, i)) {
+        if (gridAt(gb, b, i)) {
           const c = !cs ? null : chordIn(cs, i);
           const r = c ? c.deg : 0;
           const k = alt++;
@@ -3484,7 +3600,7 @@
           // OCTAVES. Reading an all-zero `oct` vector as an instruction
           // silenced the octaves STYLE under every figure, which made two
           // different answers to "what's your job" the identical line.
-          const figOct = fig && fig.oct && fig.oct.some(Boolean) ? at(fig.oct, i) : null;
+          const figOct = fig && fig.oct && fig.oct.some(Boolean) ? figAt(fig.oct, b, i) : null;
           const oct = figOct != null ? figOct
             : g.bassStyle === "octaves" ? 12 * (k % 2) : 0;
           const deg = g.bassStyle === "fifths" && k % 2 ? r + 4 : r;
@@ -3496,17 +3612,29 @@
           // minor third and the seventh an acid line lives on, which no
           // amount of octave-jumping can say. Absent = the note the harmony
           // chose, exactly as before.
-          const fd = fig && fig.deg ? at(fig.deg, i) : 0;
+          const fd = fig && fig.deg ? figAt(fig.deg, b, i) : 0;
           const n0 = !c ? mp(0 + fd, md)
             : fd ? mp(r + fd, md) + c.borrow
             : deg !== r ? mp(deg, md) + c.borrow
             : fold(c.bassPc, c.rootPc);
-          const hold = held ? held.get(b * N + i) : sp[i];
-          const acc = fig && fig.acc ? at(fig.acc, i) : 0;
-          const sld = fig && fig.sld ? at(fig.sld, i) : 0;
+          const span = held ? held.get(b * N + i) : SPAN[b * N + i];
+          // ...AND A WRITTEN REST CUTS IT SHORT. `toPhrase` writes `hold[i]`
+          // only where a rest ends a note early (the same present-only vector
+          // `render` reads for a line, "a written length is the whole
+          // length"), and `spans` stays the outer wall: a tie cannot swallow
+          // the note after it. A cell with no rests carries no `hold` key and
+          // this is the span above, unchanged.
+          const wr = OWN && OWN.hold ? at(OWN.hold, b * N + i) : 0;
+          const hold = wr ? Math.min(span, wr) : span;
+          const acc = fig && fig.acc ? figAt(fig.acc, b, i) : 0;
+          const sld = fig && fig.sld ? figAt(fig.sld, b, i) : 0;
+          // THE WRITTEN CELL'S OWN DYNAMICS, where it marked any: the point of
+          // a written part is that it is audibly THAT line, and a line's
+          // velocities are half of what makes it one.
+          const v0 = OWNVEL ? at(OWNVEL, b * N + i) : vel(subj, i);
           const e = { t: leant(timeOf(g, b, N, i)), dur: hold * bart / g.rate,
                       n: Math.max(24, onBass(n0 + 36 + oct + key) + bassReg), r,
-                      vel: acc ? Math.min(9, vel(subj, i) + 3) : vel(subj, i) };
+                      vel: acc ? Math.min(9, v0 + 3) : v0 };
           if (acc) e.acc = 1;
           if (sld) e.sld = 1;
           bar.push(e);

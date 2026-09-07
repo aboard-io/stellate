@@ -4260,6 +4260,18 @@
     if (!G.nobass) {
       const development = {};
       R.song.forEach((b, i) => { development[sid(i)] = b.bassop || ""; });
+      /* ...AND IT WRITES NO `material`, WHICH IS NOW A DECISION RATHER THAN
+         A LIMIT (wave D, 2026-09-07). A bass voice may carry a `material`
+         string or per-section map like any other chair — `document.js
+         bassCellAt` resolves it and `kernel.js bass()` reads it as a figure
+         over the record's harmony — so this composer COULD deal the bass a
+         motif out of the bank. It deliberately does not: a bass part dealt
+         from the line bank is the first line's tune played low, which is the
+         exact fault this wave was opened to end, and no row in the catalogue
+         has a written bass figure to deal. The composer's bass is described
+         (`cast.style` plus the row's own `bassGrid`/`bassFig`) and a written
+         one is a HAND's, which is why every anchor renders byte-identically
+         across the wave (test/written-bass.test.js W1). */
       voices.push({ name: nameFor("bass"), kind: "bass",
                     cast: { style: G.bassStyle || "eighths" }, development,
                     /* ...AND THE ANCHOR NAMES ITS OWN BASS INSTRUMENT AT LAST
