@@ -15,10 +15,12 @@
 // them happened to produce anyway.
 //
 // `askable.js` recorded the demotion's reason: `bassGrid` was "superseded by
-// `bassFig`". B1 below is that sentence turned into a measurement, and it fails
-// today: **0 of 387 anchors declare a `bassFig`.** The successor has no rows,
-// so the supersession was a promise and the demotion was its down payment. The
-// word is off that row now; B1 is what keeps it off.
+// `bassFig`". B1 below was that sentence turned into a measurement, and when
+// this file was written it failed: **0 of 387 anchors declared a `bassFig`** —
+// the successor had no rows, so the supersession was a promise and the
+// demotion was its down payment. THE SUCCESSOR HAS ROWS NOW (`salsa`,
+// `grunge`, `studioprog`) and B1 is the re-argument the tripwire was asking
+// for, not the tripwire.
 //
 // THE FIX WAS A PRECEDENCE, NOT A TABLE. Nothing was written by hand and no
 // grid was invented — the order is now the one kernel.js's own comment argues
@@ -32,9 +34,23 @@
 // and demands the two streams be identical event for event.
 //
 // WHAT IS ASSERTED
-//   B1  the catalog's own shape: ≥1 anchor declares a `bassGrid`, and if any
-//       anchor ever declares a `bassFig` this gate says so out loud, because
-//       that is the day this precedence is worth re-arguing.
+//   B1  the catalog's own shape, AND THE PRECEDENCE RE-ARGUED (2026-09-07, the
+//       engine audit). This line used to be a tripwire — "if any anchor ever
+//       declares a `bassFig` this gate says so out loud, because that is the
+//       day this precedence is worth re-arguing" — and it has been red since
+//       `salsa`'s tumbao and `grunge`'s octaves landed. THE DAY CAME; here is
+//       the argument. `askable.js` called `bassGrid` "superseded by `bassFig`",
+//       and it is not: they are two different statements at two different
+//       grains. A GRID says only WHERE the notes fall and lets the harmony
+//       choose them (the habanera under `tango`, the off-beat under `reggae`);
+//       a FIGURE says where AND which degree AND which octave AND the accent
+//       AND the slide (`salsa`'s two tumbao strokes, `grunge`'s ripping
+//       octaves, `studioprog`'s 7/4 line). Neither supersedes the other; the
+//       more specific one wins, which is the order the expression already has.
+//       Measured: 3 anchors declare a figure, 26 declare a grid, NO anchor
+//       declares both — so the precedence has never yet had to arbitrate on a
+//       real row, and B1 arbitrates it on a made-up one instead, which is the
+//       only honest way to hold a rule the catalogue has not exercised.
 //   B2  EVERY anchor that declares a `bassGrid` plays it: the rendered bass
 //       onsets, folded into one bar, are exactly the steps the grid marks.
 //   B3  ABSENT IS TODAY. Every anchor that declares no `bassGrid` renders
@@ -89,16 +105,41 @@ const WITHOUT = ANCHORS.filter((a) => GENRES[a] && !GENRES[a].bassGrid);
 console.log("bass-grid — " + ANCHORS.length + " anchors, " + WITH.length +
             " declaring a bassGrid\n");
 
-/* ---------- B1 · the catalog's own shape ---------- */
-console.log("B1 — the field exists, and its declared successor still has no rows");
+/* ---------- B1 · the catalog's own shape, and the precedence ---------- */
+console.log("B1 — the field exists, and a figure outranks it");
 ok(WITH.length > 0, "at least one anchor declares a bassGrid", String(WITH.length));
 const FIGS = ANCHORS.filter((a) => GENRES[a] && GENRES[a].bassFig);
 console.log("  anchors declaring bassFig: " + FIGS.length +
-            (FIGS.length ? " — " + FIGS.join(", ") : ""));
-ok(FIGS.length === 0,
-   "askable.js used to call bassGrid 'superseded by bassFig'; if a bassFig has " +
-   "arrived, re-argue this precedence rather than deleting this line",
-   FIGS.join(", "));
+            (FIGS.length ? " — " + FIGS.join(", ") : "") +
+            " · declaring bassGrid: " + WITH.length +
+            " · declaring both: " +
+            (FIGS.filter((a) => GENRES[a].bassGrid).join(", ") || "none"));
+ok(FIGS.length > 0,
+   "the successor has rows now — a figure is declared, so the precedence is a " +
+   "live question and not a promise",
+   String(FIGS.length));
+/* AND IT IS ASKED OF THE NOTES, on a row that declares BOTH — which no anchor
+   does, so the gate makes one: a genre whose `bassGrid` marks the downbeat
+   alone and whose `bassFig` marks beats two and four. If the figure wins, the
+   bass plays 4 and 12 and never 0. Nothing here reads the precedence
+   expression; it reads where the notes landed. */
+{
+  const g16 = (...on) => { const v = new Array(16).fill(0);
+                           on.forEach((i) => { v[i] = 1; }); return v; };
+  const ctrl = WITHOUT.find((a) => !GENRES[a].nobass && !GENRES[a].bassFig &&
+                                   bassOf(a) && bassOf(a).ev.length);
+  const patch = (g) => ({ ...g, bassStyle: "eighths",
+                          bassGrid: g16(0), bassFig: { grid: g16(4, 12) } });
+  const r = ctrl ? bassOf(ctrl, patch) : null;
+  const fold = (x) => [...new Set(x.ev.map((e) => ((Math.round(e.t) % x.N) + x.N) % x.N))]
+    .sort((a2, b2) => a2 - b2);
+  ok(!!r, "a control anchor renders at all", r ? null : "none found");
+  if (r) console.log("  control: " + ctrl);
+  if (r) ok(JSON.stringify(fold(r)) === JSON.stringify([4, 12]),
+     "a row declaring a grid, a figure AND a style plays the FIGURE — the most " +
+     "specific statement wins, and neither `bassGrid` nor `bassStyle` supersedes it",
+     "onsets " + fold(r).join(","));
+}
 
 /* ---------- B2 · every declared grid reaches the notes ---------- */
 console.log("\nB2 — every declared grid is the rhythm the bass actually plays");

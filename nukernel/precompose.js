@@ -3674,6 +3674,80 @@
     const GUITARISH = (id) => NC.kindOf(id) === "guitar";
     const hostGuitars = [].concat(G.instr || []).filter(GUITARISH);
     const hostAmp = (id) => hostGuitars[0] || "clean_guitar";
+    /* DOOR 6 — A KEYBOARD IS NEVER DEALT (2026-09-07, the engine audit, E4).
+       Door 5's sentence, one family over, and found the same way: by reading
+       what actually sat down.
+
+       MEASURED, 500 anchors at seed 2, BEFORE this door. The undeclared line
+       instruments a record is handed are `solo_vox` 216, `ahh_choir` 181,
+       `warm_pad` 149 — a singer, a backing section and a pad, which is what a
+       guest chair is FOR — and then **`yamaha_grand_piano` 143** and
+       **`harpsichord` 36**. Those last two are not a role. They are two rows'
+       hard-coded `instr`: `simple`, an undated FUNCTION row (a part, not a
+       place — `eraOK`'s own predicate) that names a CONCERT GRAND, and
+       `counterpoint` (Vienna 1725), whose instrument is a HARPSICHORD. So a
+       nine-foot Yamaha plays on `deathmetal` (Tampa 1990), on `punk` (New
+       York 1976), on `screamo` and `emo`; a sampled harpsichord plays on
+       `roboticpop` (Düsseldorf 1978), `minneapolissound` (Minneapolis 1982),
+       `copshowsynth` (Miami 1984) and `trailerscore` (2012). About a hundred
+       and eighty records, every one of them seating a keyboard nobody asked
+       for. `precompose.js`'s own DOOR 3 comment named this fault in 2026-09-03
+       — *"a 909 record with a harpsichord counter-line is not a cross, it is a
+       chair nobody asked for"* — and closed it behind an opt-in that 23 rows
+       of 500 ever took.
+
+       WHY DOORS 3 AND 5 DO NOT CATCH IT. Door 3 is a ROW's declaration
+       (`guests: "native"`) and a row that never heard of the harpsichord on it
+       never declared anything; door 5 asks its question only about the four
+       dirty GUITAR ids. Neither is wrong. What was missing is the third
+       instance of the sentence both of them are saying: an instrument that is
+       a DECISION is not dealt to a record that made no such decision.
+
+       AND A KEYBOARD IS A DECISION IN EXACTLY THAT SENSE. A concert grand is
+       a room and a budget; a harpsichord is a century. Neither is the neutral
+       member of a family the way `clean_guitar` is, so there is no honest
+       "give it the plain one" branch here — the answer has to come off the
+       host. In order:
+         · THE HOST'S OWN KEYBOARD, where it names one. `songwriterpiano` and
+           `parlor` get their `upright_piano`, `jazz` its `bright_yamaha_grand`,
+           `hymn` and `fugue` their `church_organ`, `tango` its BANDONEÓN — the
+           marcato instrument, which `familyOf` files under `keys` and which is
+           the right hand this record's guest should have had all along. 46 of
+           the 180 chairs land here.
+         · OTHERWISE THE HOST'S OWN FIRST CHAIR, because "a guest brings its
+           line, not its instrument" (ui/derive.js:123) and the room's
+           instrument is the room's. `deathmetal` and `punk` get their own
+           distortion guitar (a second guitar on a death-metal record is the
+           record); `roboticpop`, `minneapolissound` and `copshowsynth` get
+           their `polysynth` — which is door 3's answer, arrived at from the
+           row's own declared cast instead of from an opt-in it never took;
+           `bossa` its nylon top; `gamelan` its VIBRAPHONE, which is the audit's
+           own question 12 (a 12-tone piano cannot play slendro) answered by
+           the same line. 131 chairs.
+         · A SINGER AND A SECTION ARE NOT A CHAIR TO LEND. `VOCAL` and
+           `isSection` are skipped when the host's first chair is chosen, so
+           this door can never turn a counter-line into a second choir — door
+           1 owns who sings and this one must not be able to conjure one.
+       WHERE THE HOST HAS NEITHER — three chairs of the 180, on `vocal`,
+       `backing` and `rumba`, whose whole declared cast is voices — the door
+       does not fire and the guest keeps its own instrument. That is door 5's
+       own exemption ("the two part-genres keep their own instrument when they
+       are played as records in their own right") plus one real row, `rumba`
+       (Havana 1900: `solo_vox`, `ohh_voices`), which is written up as a
+       question rather than answered by inventing an instrument for a record
+       that declares none.
+
+       IT INFERS NOTHING AND IT MOVES NOTHING ELSE. A guest already on the
+       host's own keyboard is untouched; a guest that is not a keyboard is
+       untouched (the singer, the choir and the pad are 546 of the 926 chairs
+       a record is dealt that it never declared, and take no branch); `familyOf` is instruments.js's own family
+       table, read rather than re-spelled, so this door and the mixer cannot
+       disagree about what a keyboard is. */
+    const KEYBOARD = (id) => { const f = NI.familyOf(id);
+                               return f === "keys" || f === "organ"; };
+    const hostKeys = [].concat(G.instr || []).filter(KEYBOARD);
+    const hostChair = [].concat(G.instr || [])
+      .find((id) => !VOCAL(id) && !isSection(id)) || null;
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
     const hostYear = NC.genreYear(gk);
     const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];
@@ -4228,6 +4302,14 @@
         const mine = ownKinds.find((id) => NC.kindOf(id) === NC.kindOf(instrument));
         if (mine && mine !== instrument) instrument = mine;
       }
+      // DOOR 6 (2026-09-07) — a keyboard is never dealt. See the door above:
+      // a keyboard the HOST did not name becomes the host's own keyboard, or
+      // its own first chair where it names none. BEFORE door 5, because the
+      // chair this hands back may be the host's own dirty guitar and door 5
+      // is the one that answers for those.
+      if (KEYBOARD(instrument) && hostKeys.indexOf(instrument) < 0 &&
+          (hostKeys.length || hostChair))
+        instrument = hostKeys[0] || hostChair;
       // DOOR 5 (2026-09-06) — an amplifier is never dealt. See the door above:
       // a dirty electric the HOST did not name becomes the host's own guitar,
       // or the clean one where the host names none.

@@ -107,19 +107,46 @@ const bassOf = (sc) => sc.events.filter((e) => e.kind === "bass");
    T2's own "row(s) do not exist at BASE_SHA" line draws.
 
    THE LIST IS `bass()`'s OWN READS, in the order the function makes them: the
-   document (which is the phrase, the form and the cast), then, per section,
-   every genre field the function or its callees touch. */
+   phrase it is handed, the form it is handed, and then, per section, every
+   genre field the function or its callees touch.
+
+   ...AND THE DOCUMENT IS NOW READ THROUGH THE BASS'S OWN EYES (2026-09-07,
+   the engine audit). This line was `JSON.stringify(doc)` — the WHOLE
+   document — on the reading the comment above still gives ("the phrase, the
+   form and the cast"). A document is also every GUEST CHAIR'S INSTRUMENT,
+   and `bass()` cannot read one: its four arguments are the first line's
+   compiled phrase, the section's genre, a bar count and the bass's own cell.
+   MEASURED when the audit's door 6 (a keyboard is never dealt) re-seated a
+   counter-line on 183 rows without touching a single bass note: this
+   signature moved on all of them and the freeze stopped speaking for the lot
+   — **261 anchors compared where 494 had been**, and W1/W2b went red on the
+   arithmetic rather than on the bass. A signature wider than the function it
+   guards does not protect the claim, it retires it.
+
+   SO IT IS EXACTLY THE FOUR ARGUMENTS. The lead phrase and the bass's own
+   cell, per section, through the same two readers `document.js scoreOf` uses
+   to build them; the form's own shape (which decides `bars`); and the genre
+   fields below. Nothing narrower than what `bass()` reads, and nothing
+   wider. */
 function bassSig(Doc, P, GENRES, a) {
   const doc = P.genreToDocument(a, 1);
   const F = ["nobass", "bassStyle", "bassGrid", "bassFig", "bassBars", "bassArtic",
              "bassReg", "bassNudge", "key", "mode", "scale", "prog", "roots",
              "harmony", "rate", "meter", "swing", "stress", "touch", "phrase",
              "voices", "bars", "cellBars", "period"];
-  const per = doc.form.sections.map((_s, i) => {
+  const lines = doc.voices.filter((v) => v.kind === "line");
+  const per = doc.form.sections.map((s, i) => {
     const g = Doc.toGenre(doc, i, GENRES);
-    return F.map((k) => JSON.stringify(g[k] === undefined ? null : g[k])).join("|");
+    const lead = lines[0] ? Doc.toPhrase(doc, Doc.materialAt(lines[0], s.id)) : null;
+    // `bassPhraseAt` is wave D's own reader and did not exist at the freeze's
+    // commit, where the answer was null for every anchor — as it still is for
+    // all 500 today, none of which names a bass cell. Guarded so the signature
+    // can be regenerated in that tree and mean the same thing in this one.
+    const own = Doc.bassPhraseAt ? Doc.bassPhraseAt(doc, i) : null;
+    return JSON.stringify([lead, own]) + "|" +
+           F.map((k) => JSON.stringify(g[k] === undefined ? null : g[k])).join("|");
   });
-  return JSON.stringify(doc) + "§" + per.join("§");
+  return JSON.stringify(doc.form) + "§" + per.join("§");
 }
 
 /* ================= W1 · ABSENT IS TODAY, AND W2 · NO NaN ================= */
@@ -127,8 +154,29 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
             "names a bass cell\n");
 {
   const FREEZE = JSON.parse(fs.readFileSync(R("test/fixtures/bass-pre-waveD.json"), "utf8"));
+  /* ...AND THE ROWS THE ENGINE ITSELF RE-ARGUED (2026-09-07, the engine
+     audit, E3). `reargued` above is for a row whose INPUTS moved; this is the
+     other half of the same distinction, and it had never come up before:
+     `kernel.js STYLEGRID` held two entries where `fields.js BASSOPS` holds
+     six, so `walk` and `octaves` — 106 rows — fell past the table to the
+     MELODY'S own accent vector and rendered 2.05 and 1.85 notes a bar under
+     two words that mean four. (The walk also wrote its four notes into the
+     FIRST bar of a two-bar cell and left the second silent: `N` is the cell,
+     not the bar.) Both are fixed and the 106 records the fix moves are the
+     entire point of it, so the freeze's "absent is today" claim cannot speak
+     for them and says so out loud instead of going red.
+
+     DERIVED, NOT LISTED, so it cannot rot: a row whose own `bassStyle` is one
+     of the two words and which writes no `bassFig` or `bassGrid` of its own to
+     outrank it. `salsa` and `kwaito` write a figure and are held to the freeze
+     like everybody else. Every other anchor still owes it every note, and W2 —
+     wave D's headline, no NaN durations — is asked of all 500 above the sig
+     test and is untouched by this. */
+  const REGRID = (a) => { const g = GENRES[a] || {};
+    return !g.bassFig && !g.bassGrid &&
+           (g.bassStyle === "walk" || g.bassStyle === "octaves"); };
   const badShape = [], badDur = [], badCount = [], stillNan = [];
-  const minted = [], reargued = [];
+  const minted = [], reargued = [], regridded = [];
   let events = 0, healed = 0, anchors = 0;
   for (const a of P.anchors()) {
     const want = FREEZE[a] || null;
@@ -147,6 +195,7 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
        just as much as one nobody has touched. */
     ev.forEach((e, i) => { if (!Number.isFinite(e.dur)) stillNan.push(a + "#" + i); });
     if (sig !== want.sig) { reargued.push(a); continue; }
+    if (REGRID(a)) { regridded.push(a); continue; }   // E3, see REGRID above
     anchors++;
     events += ev.length;
     const shape = [], cnt = new Map();
@@ -178,10 +227,22 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
                " anchor(s) minted since the freeze: " + minted.slice(0, 8).join(", ") : "") +
               (reargued.length ? "\n       " + reargued.length +
                " anchor(s) re-argued since the freeze (inputs moved, not this " +
-               "round's business): " + reargued.slice(0, 8).join(", ") : ""));
-  ok(anchors > 400,
+               "round's business): " + reargued.slice(0, 8).join(", ") : "") +
+              (regridded.length ? "\n       " + regridded.length +
+               " anchor(s) whose bass the ENGINE re-argued (E3, the density " +
+               "words `walk` and `octaves` reaching a grid): " +
+               regridded.slice(0, 8).join(", ") : ""));
+  /* THE FLOOR CAME DOWN FROM 400 TO 340, BY EXACTLY THE ROWS E3 MOVED and by
+     nothing else: 482 anchors carry a freeze this tree can build, 100 of those
+     declare `walk` or `octaves` with no figure of their own, and 382 is what
+     is left. The claim the number is defending — "the freeze still speaks for
+     MOST of the catalogue" — is three quarters of it, and every row it stopped
+     speaking for is named in one of the two buckets above, with the round that
+     took it. */
+  ok(anchors > 340,
      "W1 the freeze still speaks for most of the catalogue (" + anchors +
-     " of " + (anchors + minted.length + reargued.length) + " anchors)",
+     " of " + (anchors + minted.length + reargued.length + regridded.length) +
+     " anchors)",
      String(anchors));
   ok(badCount.length === 0,
      "W1a every anchor renders the SAME NUMBER of bass notes it did before wave D",

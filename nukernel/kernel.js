@@ -3377,9 +3377,56 @@
     // because the melody has no accents is not the part anyone asked for. Every
     // style that predates this table has no entry and reads the accents exactly
     // as it always did.
+    // ...AND EVERY DENSITY WORD IS IN IT NOW (2026-09-07, the engine audit,
+    // E3). The table held two entries and `fields.js BASSOPS` holds six, so
+    // `walk`, `octaves`, `fifths` and `pedal` — 204 rows — fell past it to
+    // `subj.acc`, THE MELODY'S OWN ACCENT VECTOR, which since the dynamics
+    // flood is one or two accents a bar. Measured over the catalogue at seed
+    // 2, median bass notes per bar: `eighths` 8.0, `sixteenths` 16.0, and
+    // then `walk` 2.0, `octaves` 1.0, `fifths` 1.0, `pedal` 1.0. This is
+    // salsa's fault from shift 5 said catalogue-wide: "`bassStyle: octaves`
+    // is not a rhythm".
+    //
+    // THE TWO THE WORDS THEMSELVES ANSWER, and no others:
+    //   `walk`     ONE NOTE PER FELT BEAT. That is what walking IS — a
+    //              quarter in 4/4, a quarter in 3/4, a dotted quarter in
+    //              6/8 — so the entry is `QUARTERS`, the meter-aware pulse
+    //              vector eight lines up, and not a sixteen-slot literal.
+    //              The walk branch below plays this rhythm by construction;
+    //              the entry is here so that `held` and `SPAN` — the two
+    //              readers that ask "how long until the next onset" — are
+    //              asking about the notes the walk actually plays instead of
+    //              about a melody's accents.
+    //   `octaves`  ROOT AND OCTAVE, ON THE BEAT — one note per felt beat with
+    //              the register alternating on it, which is what the
+    //              alternation four screens down (`12 * (k % 2)`) has been
+    //              waiting for since the style existed: it has always been
+    //              able to say WHICH octave and never had a rhythm to say it
+    //              on.
+    //
+    // AND NEITHER NUMBER IS INVENTED HERE — THE BOX ALREADY ANSWERED BOTH.
+    // `bass-kit.js STYLEFIG` is the bassist's own table, written for the DAW,
+    // and it reads `pedal / walk / octaves / fifths` = `g16(0, 4, 8, 12)`,
+    // `eighths` = `g16(0,2,…,14)`, `sixteenths` = all sixteen. So the word
+    // `octaves` means one a beat in this project's own vocabulary, and the
+    // eighth-note disco line — root on the beat, octave on the and — is a
+    // different thing with a different name in the same table: `discoct`,
+    // "disco octaves", a FIGURE. A row that wants that writes it (`bassFig`,
+    // which salsa's tumbao and grunge already do); it is not what the density
+    // word says. Two tables that both answer "what does `octaves` play" must
+    // not disagree, and this is the one that was silent.
+    //
+    // `fifths` and `pedal` stay out, for today. `bass-kit.js` gives them
+    // quarters too, but the audit measured them at 1.77 and 1.03 notes a bar
+    // and read both as "≈ right" — a root–fifth on 1 and 3, a pedal that
+    // holds — and there is no finding against either. Ninety-eight rows do not
+    // move on a consistency argument nobody has listened to. Written down as
+    // the next question rather than taken.
     const STYLEGRID = {
       eighths:    [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
       sixteenths: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+      octaves:    QUARTERS,
+      walk:       QUARTERS,
     };
     // A FIGURE — a bass line written out rather than described. `bassStyle`
     // says how DENSE the line is and `bassGrid` where the genre's own notes
@@ -3521,6 +3568,28 @@
     // still underneath it, which is the same floor `bassStyle` is for a genre
     // that clears its figure in Rules.
     if (g.bassStyle === "walk" && !OWN) {
+      // A WALK IS ONE NOTE PER FELT BEAT, however many the bar has: four
+      // in 4/4 (root, two middles, the approach), three in 3/4 (root, one
+      // middle, the approach), two in 6/8. Four is the literal it always
+      // was and the slice is a no-op there.
+      const nbeats = Math.max(2, Math.round(MSTEPS / MPULSE));
+      /* ...AND ONE PER FELT BEAT OF EVERY BAR, NOT OF EVERY CELL (2026-09-07,
+         the engine audit, E3). `N` is `subj.deg.length` — the LINE's compiled
+         cell — and the catalogue composes two-bar cells, so `N` is 32 where
+         the bar is 16. This loop wrote `nbeats` notes at steps 0, 4, 8, 12 of
+         a THIRTY-TWO step span and left the second bar of every cell empty:
+         measured at seed 2, `jazz` (New York 1945) rendered 32 notes over 16
+         bars — 2.0 a bar — and called it a walking bass, and every one of the
+         38 `walk` rows read the same. The notes it did play were in the right
+         places, which is why nobody heard a wrong note; half the bass was
+         simply not there.
+         THE BAR IS `MSTEPS`, which this function already knows and already
+         uses for `QUARTERS` and for `nbeats`. Where the cell IS the bar
+         (`MBARS === 1`) every expression below is the one that was here —
+         `base` is 0, `w` is `b`, the chord lookups collapse to `cs[0]` and
+         `ncs[0]` — so a one-bar cell renders the bytes it rendered
+         yesterday, and only a cell longer than its own bar moves. */
+      const MBARS = Math.max(1, Math.round(N / MSTEPS));
       for (let b = 0; b < bars; b++) {
         // A WALKING BASS READS THE SCHEDULE TOO. It used to return before
         // `bassBars` was even computed, so a band told to leave four
@@ -3534,37 +3603,43 @@
         // tune happened to accent.
         const gw = g.bassBars ? (at(g.bassBars, b) || null) : null;
         if (g.bassBars && !gw) continue;
-        const c = chordsOf(subj, g, b)[0], nc = chordsOf(subj, g, (b + 1) % bars)[0];
-        const r = c.deg, p4 = c.pcs;
-        // alternate the direction of the middle two so three bars of one chord
-        // do not walk the identical line three times — and when the chord
-        // carries a SEVENTH, the odd bars walk up through it: a walking line
-        // that never sounds the seventh of a seventh chord does not have one
-        const mid = b % 2 === 0 ? [p4[1], p4[2]]
-          : (p4.length > 3 ? [p4[2], p4[3]] : [p4[2], p4[1]]);
-        // the walk starts from bassPc, so an inversion is audible from the
-        // first beat, and it AIMS at the next chord's bassPc — a walking line
-        // is defined by where it is going
-        // A WALK IS ONE NOTE PER FELT BEAT, however many the bar has: four
-        // in 4/4 (root, two middles, the approach), three in 3/4 (root, one
-        // middle, the approach), two in 6/8. Four is the literal it always
-        // was and the slice is a no-op there.
-        const nbeats = Math.max(2, Math.round(MSTEPS / MPULSE));
-        const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1]
-          .filter((_, q) => q < nbeats - 1 || q === 3);
-        const steps = tones.map((_, q) => q * MPULSE).filter((i) => !gw || at(gw, i));
-        const bar = steps.map((i, k) =>
-          ({ t: leant((b * N + i) / g.rate),
-             // 3.7 is the number the walk has always written; scaling it by
-             // bart/0.94 came back 3.6999999999999997 and broke byte
-             // identity for all 110 genres, which is the whole reason that
-             // tripwire exists
-             dur: (held ? held.get(b * N + i) * bart
-                        : (g.bassArtic ? 3.94 * bart : 3.7)) / g.rate,
-             n: Math.max(24, onBass(tones[i / MPULSE] + 36 + key) + bassReg), r, walk: true,
-             vel: k === 0 ? 7 : 5 }));
-        played = perform(bar, steps, bg, b, N, { lane: "B" }) || played;
-        for (const e of bar) ev.push(e);
+        const cs = chordsOf(subj, g, b), ncs = chordsOf(subj, g, (b + 1) % bars);
+        for (let m = 0; m < MBARS; m++) {
+          const base = m * MSTEPS, w = b * MBARS + m;
+          // THE CHORD SOUNDING AT THIS BAR, and the one it is walking INTO.
+          // `chordIn` is the reader the root bass below already uses per
+          // step, so a beats-split cell turns under the walk instead of
+          // being read once at its own first chord.
+          const c = chordIn(cs, base);
+          const nc = m + 1 < MBARS ? chordIn(cs, base + MSTEPS) : chordIn(ncs, 0);
+          const r = c.deg, p4 = c.pcs;
+          // alternate the direction of the middle two so three bars of one chord
+          // do not walk the identical line three times — and when the chord
+          // carries a SEVENTH, the odd bars walk up through it: a walking line
+          // that never sounds the seventh of a seventh chord does not have one
+          const mid = w % 2 === 0 ? [p4[1], p4[2]]
+            : (p4.length > 3 ? [p4[2], p4[3]] : [p4[2], p4[1]]);
+          // the walk starts from bassPc, so an inversion is audible from the
+          // first beat, and it AIMS at the next chord's bassPc — a walking line
+          // is defined by where it is going
+          const tones = [c.bassPc, mid[0], mid[1], nc.bassPc - 1]
+            .filter((_, q) => q < nbeats - 1 || q === 3);
+          const steps = tones.map((_, q) => base + q * MPULSE)
+            .filter((i) => !gw || at(gw, i));
+          const bar = steps.map((i, k) =>
+            ({ t: leant((b * N + i) / g.rate),
+               // 3.7 is the number the walk has always written; scaling it by
+               // bart/0.94 came back 3.6999999999999997 and broke byte
+               // identity for all 110 genres, which is the whole reason that
+               // tripwire exists
+               dur: (held ? held.get(b * N + i) * bart
+                          : (g.bassArtic ? 3.94 * bart : 3.7)) / g.rate,
+               n: Math.max(24, onBass(tones[(i - base) / MPULSE] + 36 + key) + bassReg),
+               r, walk: true,
+               vel: k === 0 ? 7 : 5 }));
+          played = perform(bar, steps, bg, b, N, { lane: "B" }) || played;
+          for (const e of bar) ev.push(e);
+        }
       }
       return played ? ev.sort((a, b) => a.t - b.t) : ev;
     }

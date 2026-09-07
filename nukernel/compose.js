@@ -1512,6 +1512,40 @@
     // genre's form length (fullLen above for why those are different questions)
     b.len = fullLen(G);
     const again = (a && a.again) || 0;                  // how many times this role has been
+    /* ---- A GESTURE HAS A DATE (2026-09-07, the engine audit, E5) ---------
+       The drop deals a kit word and a bass word out of two literal lists, and
+       three of the words in them are not techniques, they are DATED
+       INVENTIONS with an owner and a record:
+         `amen`    the Amen break — the Winstons, "Amen, Brother", 1969, and a
+                   SAMPLING gesture only from 1988 on. Dated at 1969, the
+                   earlier of the two, so the gate is the generous one.
+         `reese`   the Reese bass — Reese (Kevin Saunderson), "Just Want
+                   Another Chance", Detroit 1988.
+         `wobble`  the LFO'd dubstep wobble — Croydon, 2006.
+       MEASURED at seed 2 before this gate: the amen break is dealt to
+       `marabi` 1935, `banda` 1938, `mambo` 1950, `soundsystem` 1950, `forro`
+       1950, `kwela` 1955 and `tarantella` 1959; the Reese to 27 rows earlier
+       than 1988; the wobble to 13 rows earlier than 2006, including **`polka`
+       (Prague 1837)**. A dubstep wobble on an 1837 polka is not a cross, it is
+       a machine that never read the label.
+
+       THE LABEL ALREADY CARRIES THE FACT. `genreYear` is the same reader
+       `eraOK` and `seatOK` use two hundred lines up to keep a guest and an
+       instrument off a record that predates them; this is that law said about
+       the ARRANGER's vocabulary, which was the one place it had never been
+       said. A row with no year is a FUNCTION genre — "a part and not a place"
+       — and carries no claim, so it passes everything, exactly as `eraOK`'s
+       own null branch reads.
+
+       IT FILTERS THE LIST AND DOES NOT SKIP THE DRAW. `pick` consumes one
+       number whatever the list holds, so a record that refuses nothing draws
+       the same dice in the same order and renders the bytes it rendered
+       yesterday; a record that refuses something picks from what is left. And
+       something is always left: `eighths` is undated, and so are `four`,
+       `kitOf`'s whole family table and the `null`. */
+    const MOVE_YEAR = { amen: 1969, reese: 1988, wobble: 2006 };
+    const dated = (list) => { const y = genreYear(gk);
+      return y == null ? list : list.filter((w) => !(MOVE_YEAR[w] > y)); };
     const layer = (g2, slots) => b.stack.push({ g: g2, slots });
     // THE SINGER, PLACED. Same shape as `guest` below and drawn the same way —
     // unconditionally, on its own stream, so retuning where the voice sings
@@ -1767,8 +1801,11 @@
       b.stack[0].slots = S.seq != null ? [S.seq, S.climb] : [S.riff, S.climb];
       // the drop is the one place a NAMED pattern earns its keep: four on the
       // floor, or the break the whole floor knows, or the family's own move
-      if (kit) { b.kit = pick(r, ["four", "four", "amen", kitOf(S, G), null]);
-                 b.bassop = pick(r, ["reese", "wobble", "eighths"]); }
+      // ...THROUGH THE YEAR GATE, which is `dated` at the head of this
+      // function: the amen break is 1969, the Reese 1988 and the wobble 2006,
+      // and a record older than one of them does not reach for it.
+      if (kit) { b.kit = pick(r, dated(["four", "four", "amen", kitOf(S, G), null]));
+                 b.bassop = pick(r, dated(["reese", "wobble", "eighths"])); }
       b.ops = [pick(r, ["rep2", "rep4", "rot2"])];
       b.echo = chance(r, 0.4) ? "touch" : null;
       b.intro = chance(r, 0.4) ? "hit" : null;
@@ -2438,6 +2475,12 @@
     if (!GENRES[gk]) gk = "simple";
     const r = rng(seed == null ? 1 : seed), G = row || GENRES[gk];
     const kit = Object.keys(G.kit || {}).length > 0;
+    // A DRAW WHOSE ANSWER IS NO LONGER READ. The dice for a policy this file
+    // has stopped having are still thrown, because `r` is one stream shared by
+    // every decision after them and a retired policy must not shift a bar line
+    // (the seed discipline this file states a dozen times). One reader today:
+    // the swing, four screens down, and the reason is written there.
+    const spent = (x) => (void x, null);
     // eight kinds of material, and every one of them is USED — a song that
     // fills three slots and leaves five blank has not composed anything, it
     // has made a phrase. The bank is sized to WHAT THE SONG NEEDS: exactly
@@ -2543,7 +2586,41 @@
                 // must not shift the dice the stops or the bends are drawing
                 fill: rng(ihash(gk + "/thin/" + (seed == null ? 1 : seed))),
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
-                swing: kit && chance(r, 0.3) ? pick(r, ["light", "swing", "shuffle"]) : null };
+                /* SWING IS THE ROW'S, AND NOBODY ELSE'S (2026-09-07, the
+                   engine audit, E1). This line read
+                   `kit && chance(r, 0.3) ? pick(r, ["light","swing","shuffle"])
+                   : null` — a coin, thrown for any record with a kit, that
+                   knows nothing about the genre. `precompose.js swingOf`
+                   reads the roll FIRST (`if (R.swing) return R.swing`), so
+                   the coin also outranked the number the row wrote down.
+
+                   MEASURED over all 500 records: at seed 2, **387 carry a
+                   nonzero `time.swing` and only 94 rows declare a swing at
+                   all** — techno, bossa, motorik and three hundred others
+                   handed swung eighths. And the coin is worse than a coin:
+                   `r` is `rng(seed)`, salted by the SEED and not by the
+                   genre, so at a fixed seed almost the whole catalogue reads
+                   the same throw — 387 of 500 at seed 2, and **93 of 500 at
+                   seeds 1 and 3**, which is the 94 declared rows and nothing
+                   else. One flip was deciding whether the catalogue swings.
+
+                   A MACHINE DOES NOT SWING AND A BOSSA'S SWAY IS NOT SWING.
+                   The honest default is STRAIGHT, and it is the same law the
+                   dynamics flood is written under: *a flood is data, not a
+                   default*. The catalogue can already say it — 94 rows write
+                   a `swing` ratio, `motorik` writes `0` on purpose, and
+                   `swingOf` turns the number into the document's word. A row
+                   that swings and has not said so is a ROW to fix, and it is
+                   now possible to tell which ones those are.
+
+                   THE TWO DRAWS STAY. A stream position is an arrangement
+                   fact: `r` is shared by every section decision `build()`
+                   makes below, so deleting the draws would re-deal every
+                   record's plan to fix its swing. `spent` consumes exactly
+                   what this line always consumed — one `chance`, and a `pick`
+                   only when the chance came up — and answers null. */
+                swing: spent(kit && chance(r, 0.3)
+                  ? pick(r, ["light", "swing", "shuffle"]) : null) };
     // WHO IS ON THE RECORD, decided once, before a section exists — the singer
     // and the guest both, and the singer FIRST because the guest pool is
     // filtered of whoever is already on the payroll (guestCast).

@@ -204,13 +204,33 @@ ok("§C3 the phrase cache tells two figures apart", () => {
    rows carry a chip that reaches a chair; exactly those two moved; the other
    twelve are byte-identical. The new digits are the same measurement as the
    old — `sha1(JSON.stringify(document.normalize(precompose.genreToDocument(
-   key, 1)))).slice(0, 16)` — taken with the narrowing in place. */
+   key, 1)))).slice(0, 16)` — taken with the narrowing in place.
+
+   ELEVEN OF THE FOURTEEN WERE RE-PINNED ON 2026-09-07 (the engine audit, E5),
+   and the alarm did its job again: nothing was given a figure, and something
+   in the compiler moved underneath. `compose.js build()` deals a drop's kit
+   and bass word out of two literal lists, and three of the words in them are
+   DATED INVENTIONS rather than techniques — the amen break (1969), the Reese
+   bass (1988) and the dubstep WOBBLE (2006). Measured before the gate: the
+   wobble was dealt to 13 rows older than 2006, including `polka` (Prague
+   1837). The lists are filtered on the label's own year now.
+
+   AND THE THREE THAT DID NOT MOVE SAY THE RULE OUT LOUD. `footwork` (2013)
+   and `gqom` (2016) POSTDATE the wobble, still draw it in two of their three
+   drops, and are byte-identical; `tapemusic` (1948) has no kit at all, so the
+   line that deals these words never runs on it. Every one of the other eleven
+   is older than 2006 — `techno` 1988, `acid` 1987, `house` 1986, `electro`
+   1982, `italodisco` 1982, `miamibass` 1986, `crunk` 1997, `tromso` 2001,
+   `grime` 2003, `trap` 2003, `dubstep` 2005 — and stops reaching for a gesture
+   that had not been invented. Detroit 1988 keeps its Reese: the test is "later
+   than", not "on or later than", so the year the thing was made is not the year
+   it becomes unavailable. The new digits are the same measurement as the old. */
 const FROZEN = {
-  techno: "9e621abe83bb4215", acid: "79810bb9e20a21a7", house: "5aa405df88fc70e3",
-  trap: "0d3692b201de1516", electro: "f3d0d61db5c6e143", tapemusic: "99777da27cf1a1c7",
-  italodisco: "f8de629f00eed78c", miamibass: "ff3b0f736cacfd9c", crunk: "dd253e2ea1ab2d2e",
-  grime: "071f5db0a1d194db", dubstep: "b05ff830f6b9d2c8", footwork: "9c7802d431b4c468",
-  gqom: "38e64788f9a34b5a", tromso: "369ff7ed51cd16fb",
+  techno: "e6195392b721be0e", acid: "6f121c16b942817e", house: "534a3af2d6b645af",
+  trap: "f51c567b6185b76f", electro: "b52927112191bb55", tapemusic: "99777da27cf1a1c7",
+  italodisco: "0b99d759002e4891", miamibass: "7dd6d7ad02cecf50", crunk: "65b35ff11b5b3d94",
+  grime: "4ee68c439d0a0e57", dubstep: "b2c0783a05b48266", footwork: "9c7802d431b4c468",
+  gqom: "38e64788f9a34b5a", tromso: "60554c4cfc5f85a9",
 };
 ok("§D1 the `DYNAMICS: null` machines declare no figure", () => {
   const nulls = Object.keys(DYNAMICS).filter((k) => DYNAMICS[k] === null);

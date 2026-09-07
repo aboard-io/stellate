@@ -1400,18 +1400,37 @@ function sectionEvents(doc, i) {
        "found by reading their own kit/nobass/instr", () =>
       assert.strictEqual(hired.length, 0, hired.length + ":\n      " +
         hired.slice(0, 8).join("\n      ")));
-    // …AND THE FEATURE IS STILL THERE. A filter that empties every ballot
-    // passes both assertions above and deletes the guest, so the count is held
-    // from BELOW as well: 3364 layer placements before this round, 3279 after,
-    // and the Beatles' string quartet is named because it is precisely the
-    // case the tight rule would have cost.
+    /* …AND THE FEATURE IS STILL THERE. A filter that empties every ballot
+       passes both assertions above and deletes the guest, so the count is held
+       from BELOW as well: 3364 layer placements before this round, 3279 after,
+       and the Beatles' counter-line is named because it is precisely the case
+       the tight rule would have cost.
+
+       WHAT IT ASKS ABOUT `beatgroup` CHANGED ON 2026-09-07 (the engine audit,
+       DOOR 6) AND WHAT IT CLAIMS DID NOT. The proof used to be spelled
+       `counterpoint` ON A HARPSICHORD, because that is the instrument Vienna
+       1725 brought with it in 2026-08-30's tree. Door 6 — a keyboard is never
+       dealt — says a record that named no keyboard did not decide on one, so
+       the counter-line arrives on Liverpool 1962's OWN `steel_string_guitar`
+       instead. The guest is seated, at seed 3, exactly as before; only the
+       chair it plays moved, and that is door 6's whole content. The assertion
+       is therefore about the GUEST, which is what the paragraph above says it
+       is about, and it names the instrument as a second claim rather than as
+       the definition: whatever `beatgroup` seats its visitor on must be an
+       instrument `beatgroup` itself declares. A door that quietly deleted the
+       hire would still fail, which is the job this line was written for. */
     ok("G8e3 …and the guest survives the law — the catalog still visits, and " +
-       "the harpsichord on a 1962 Liverpool record is still the proof", () => {
+       "the counter-line on a 1962 Liverpool record is still the proof", () => {
       assert.ok(visited.length > 800, "only " + visited.length + " hires over " +
         (ANCHORS.length * SEEDS.length) + " records — the era law emptied the ballots");
-      const quartet = [1, 2, 3].some((s2) => (docs.get("beatgroup/" + s2) || { voices: [] })
-        .voices.some((v) => v.name === "counterpoint" && v.instrument === "harpsichord"));
-      assert.ok(quartet, "no seed of beatgroup books the string quartet any more");
+      const own = [].concat((GENRES.beatgroup || {}).instr || []);
+      const seat = [1, 2, 3].map((s2) => ((docs.get("beatgroup/" + s2) || { voices: [] })
+        .voices.find((v) => v.name === "counterpoint") || {}).instrument)
+        .filter(Boolean);
+      assert.ok(seat.length, "no seed of beatgroup books the string quartet any more");
+      assert.deepStrictEqual(seat.filter((id) => own.indexOf(id) < 0), [],
+        "beatgroup seats its counter-line on " + seat.join(", ") +
+        ", and its own cast is " + own.join(", "));
     });
   }
 
