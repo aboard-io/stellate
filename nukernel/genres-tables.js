@@ -1978,6 +1978,16 @@
                 "shidaiqu", "enka", "trot", "kroncong", "lukthung", "nhacvang",
                 "filmi", "qawwali", "arabesk", "kabulpop", "rebetiko", "fado",
                 "irishtrad", "balkanbrass", "ragtime", "swing", "bluegrass",
+                // ...AND THE TWO SWING-ERA BANDS, 2026-09-07 (Paul, on the
+                // rebuilt `swing`: "Two rows"). Both file beside the row
+                // they were argued against and for the reason it is here:
+                // this cluster's room is "a chamber, a hall recording of
+                // people in a hall", and a 1935 hotel ballroom and a 1939
+                // one are exactly that. Neither takes a DYNAMICS row —
+                // `roots` has a family fallback and the strophic idiom is
+                // right for a thirty-two-bar song and a riffed strain
+                // alike.
+                "hotswing", "sweetband",
                 // ...AND SEVEN ON 2026-08-29. The cluster's row is the
                 // strophic one — statement, statement, departure, return —
                 // and it is right for a Tin Pan Alley chorus, a bel canto

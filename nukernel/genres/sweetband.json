@@ -1,0 +1,105 @@
+{
+  "note": "SWEET BAND — New York 1939, the second of the two rows `swing`'s own note\nproposed. Paul, having heard the rebuilt `swing`: *\"Two rows\"*.\n\nTHE ARGUMENT FOR A SEPARATE ROW is a VOICING, and it is the only anchor in\nthis table whose signature is one. A Glenn Miller chart puts a clarinet on\nthe melody an octave ABOVE four saxophones holding the same harmony, and\nthe result is a sound that is not a clarinet and is not a sax section —\none instrument nobody can name. That is why a Miller side is identifiable\nin two bars, and it is a fact about ARRANGEMENT rather than about\nrepertory, tempo or city, which is exactly the kind of fact a row is for.\n\nTHE RECORD IS THE BAND'S OWN THEME. \"Moonlight Serenade\", Bluebird\nB-10214, recorded New York, 4 April 1939 — the tune the band opened and\nclosed with, written as a reed exercise, which is to say the voicing came\nfirst and the song came out of it. Six corpus transcriptions: 84, 84, 84,\n85, 82, 72 BPM. The median is 84 and four of the six are exactly 84, so\nthat is the number. THE BOOK IS BIMODAL AND THAT IS SAID OUT LOUD: the\njump numbers in the same corpus run In the Mood 185 / 172 / 170 / 165 /\n160, Little Brown Jug 155 / 155, Chattanooga Choo Choo 155 / 153 / 150,\nPennsylvania 6-5000 153 and Tuxedo Junction 112 / 108. A single row cannot\nbe both, and the one that carries the voicing is the ballad — at 84 the\nclarinet-over-saxes block is AUDIBLE as a block, and at 170 it is a\nsmear. The jump half of this book is a real row somebody could argue for\nlater; it is not this one, and it is not being smuggled in under this\none's tempo.\n\nEb MAJOR, AND EVERY CHORD A SEVENTH. Three of the six transcriptions read\nEb major, which is the record's key. Four of the six measure a SEVENTH\ndensity of 0.83 to 0.85 — that is nearly every chord in the tune carrying\na seventh, which is the sweet band's whole harmonic manner and the thing\nthat separates it from a blues. So the eight bars are the Tin Pan Alley\nturnaround said in sevenths: I maj7 · vi7 · ii7 · V7 · I maj7 · IV maj7 ·\nii7 · V7, `maj7` and `m7` and `dom7` written as `QFIX` words so the\nqualities are the chord's and not the mode's. THIS IS THE HARMONIC\nDIFFERENCE FROM `swing`, which is twelve bars of dominant sevenths on a\nblues; a sweet band plays a song.\n\nTHE KIT IS A DANCE-BAND KIT AND IT IS MINED. Three corpus transcriptions\nof this record carry drums, and they agree on more than they disagree:\n\n  · THE RIDE IS ON ALL FOUR — 3 of 3, at 0.9 a bar — and TWO of the three\n    add the swung \"a\" of 2 and the \"a\" of 4 and nowhere else. This is the\n    sharpest kit contrast with `swing`, whose ride is spang-a-lang on\n    every beat and every \"a\": \"ding, ding-a\" on the backbeats only is the\n    dance-band ride. The velocities written here — 6, 7, 6, 7 on the\n    beats and 4 on the two \"a\"s — are the measured means of the file the\n    corpus names for the band, not a guess.\n  · THE SNARE IS BRUSHES ON ALL FOUR AT VELOCITY 2. One transcription\n    plays the snare on every beat at a mean velocity of 2 out of 9, which\n    is a swirl and not a hit; the other two have almost no snare at all\n    (10 events in 69 bars). `swing` COMPS its snare on the \"a\" of 2 and\n    the \"a\" of 4 at velocities 5 and 6. A comping left hand is a soloist's\n    accompanist and a brush on all four is a dancer's floor, and that is\n    the difference between the two bands in one lane.\n  · A RIM ON BEAT 4, at 0.9 a bar. Present in one of the three — the file\n    the corpus names G.MILLER — and taken on that authority, said here so\n    a reader knows it is 1 of 3 and not 3 of 3.\n  · THE KICK IS ON ALL FOUR AND IT IS NOT FEATHERED. One transcription\n    plays it on all four at velocity 6, two barely play it. `kitVel` 5 is\n    the reading: above `swing`'s 4, which that row's note calls \"the\n    lowest kick velocity in the catalogue\" and argues at length is the\n    thing you are meant not to hear. A sweet band marks the dance floor.\n\n`drumkit: \"brush\"` for the same reason `hotswing` takes `acoustic` and\n`swing` keeps `jazz`: `fields.js DRUMKITS` holds all three, the measured\ndrum density here is 0.47 events a bar against Sing Sing Sing's 3.45, and\na snare written at velocity 2 on a kit with sticks on it is a declaration\nthat arrives somewhere other than where it was aimed.\n\n`bassStyle: \"fifths\"` — THE TWO-BEAT. The catalogue's own word for a\ntwo-beat bass (recorded when the disco octave landed: \"fifths is a\ntwo-beat\"). `swing` and `hotswing` both walk in four; a 1939 sweet dance\nband under a ballad plays half notes, and the walking four is the Kansas\nCity rhythm section's innovation rather than this band's habit.\n\n`dyn: \"arch\"` — AND `anacrusis` WAS REFUSED WITH A NUMBER. `anacrusis` is\nthe swing wing's figure and `FIGURES`'s own note calls it \"what a horn\nsection plays … the reason a big band chart is full of notes tied over the\nbarline\". The corpus says this band does not do that: three transcriptions\nof this record read 0.046, 0.046 and 0.039 OFF-GRID and 0.19, 0.19 and\n0.16 VARIATION, against 0.343 and 0.53 for the Goodman book. A written\nchart played by a section that has rehearsed it plays the bar it is given\nand shapes it; it does not push across the barline. `arch` is that shape —\n\"up to the middle of the bar and back down\", the table's own words for a\nsung line — and this melody, which is a rising and falling reed figure, is\none.\n\nTHE CAST, AND THE VOICING IS IN THE `realize` COLUMN. Four chairs:\n`clarinet` an octave UP as the `lead`; `alto_sax` at concert register\nrealized as a `pad`, which is what makes the saxes a block of held harmony\nrather than a second melody; `trombone` an octave down, also a pad,\nbecause Miller's own instrument was the trombone and its section is the\nother half of this sound; and `brass_section` answering the phrase. THE\nDIFFERENCE FROM `swing`'s REED SECTION IS DELIBERATE AND IT IS IN THE\nDATA, not in the prose: `swing` doubles ONE tenor in unison an octave\nunder the clarinet (`reg: -1`, `word: []`, an identical figure), which is\ntwo instruments playing one line. Here the saxes are a PAD — they hold the\nchord under the tune. A unison octave and a block voicing are two\ndifferent arrangements and they render as two different things.\n\nPARENTS. `swing` at 0.35: this is a swing band, 1939 is after 1938, and\nthe edge is legal in the one direction GENRES.md §2 allows. `tinpanalley`\n(New York 1924) at 0.25, larger than the 0.15 `swing` gives it, because\nthe sweet band's repertory IS the popular song and the measured 0.83\nseventh density is that repertory's harmony. `hotswing` (Chicago 1935) at\n0.15 — a smaller and more specific claim: what this band inherited from\nGoodman is the FORMAT, the touring swing band as a commercial object,\nwhich the Palomar and the Congress Hotel invented in 1935 and which every\nband of 1939 including this one was built to be. 0.75 attributed. The 0.25\nresidue is the voicing, and it should be the largest single invention on\nany of the three rows, because it is the only thing here nobody had done.\n\nINSTRUMENTAL, AND THE RECORD SAYS SO. Ray Eberle and the Modernaires sang\nwith this band constantly, and not on this side: \"Moonlight Serenade\" was\ncut as an instrumental on 4 April 1939 and the lyric was written to it\nafterwards. `instrumental: true`.\n\nNO `tone.wave`, FOR `swing`'s LESSON SIX. `wave` is read in exactly one\nbranch of `audio/to-engine.js` — the one that builds a MODELLED voice —\nand all four chairs here are sampler recordings, so the word would be\ndeclared, costed and reach no sound.",
+  "label": "New York 1939",
+  "voices": 4,
+  "bars": 8,
+  "near": "hotswing",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "swing": 0.35,
+    "tinpanalley": 0.25,
+    "hotswing": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clarinet",
+    "alto_sax",
+    "trombone",
+    "brass_section"
+  ],
+  "drumkit": "brush",
+  "swing": 0.33,
+  "entry": {
+    "kind": "table",
+    "t": [0, 0, 1, 2]
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": [1, 2],
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "pad",
+    "counter"
+  ],
+  "harmony": "cycle",
+  "roots": [0, 5, 1, 4, 0, 3, 1, 4],
+  "prog": [
+    { "d": 0, "q": "maj7" }, { "d": 5, "q": "m7" }, { "d": 1, "q": "m7" }, { "d": 4, "q": "dom7" },
+    { "d": 0, "q": "maj7" }, { "d": 3, "q": "maj7" }, { "d": 1, "q": "m7" }, { "d": 4, "q": "dom7" }
+  ],
+  "mode": { "$src": "MODES.ionian" },
+  "scale": { "$src": "MODES.ionian" },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    "s": [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    "r": [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1],
+    "f": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    "p": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+  },
+  "kitVel": {
+    "k": [5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0],
+    "s": [2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0],
+    "r": [6, 0, 0, 0, 7, 0, 0, 4, 6, 0, 0, 0, 7, 0, 0, 4],
+    "f": [0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0],
+    "p": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0]
+  },
+  "fill": {
+    "s": [0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0]
+  },
+  "tone": {
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.02,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.45
+  },
+  "words": [
+    "the clarinet, on top of the four saxes",
+    "the saxes, holding the chord under it — one instrument",
+    "the trombones, under that",
+    "the brass, answering the phrase"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      { "at": 3, "then": { "$src": "[rotate(8), drop(2)]" } }
+    ],
+    "else": { "$src": "[]" }
+  },
+  "dyn": "arch",
+  "instrumental": true
+}

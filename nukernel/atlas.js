@@ -1066,6 +1066,8 @@
     balkanbrass:    { place: "Guča", year: 1985 },
     ragtime:        { place: "Sedalia", year: 1899 },
     swing:          { place: "Kansas City", year: 1938 },
+    hotswing:       { place: "Chicago", year: 1935 },
+    sweetband:      { place: "New York", year: 1939 },
     bluegrass:      { place: "Nashville", year: 1946 },
     sacredharp:     { place: "Philadelphia", year: 1844 },
     zydeco:         { place: "Lafayette", year: 1955 },

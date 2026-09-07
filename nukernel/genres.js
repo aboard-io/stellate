@@ -25241,6 +25241,20 @@
     // section and the choruses it always had; the other two are a proposal and are
     // written here rather than smuggled in.
     //
+    // PAID 2026-09-07, THE SAME DAY, AND THE PROPOSAL IS NOW TWO ROWS. Paul,
+    // having read the paragraph above: *"Two rows"*. `hotswing` (Chicago 1935)
+    // and `sweetband` (New York 1939) are in the table, and each is a different
+    // music rather than a second label on this one — 184 BPM and 84 against this
+    // row's 148, Krupa's floor tom and a brush swirl against this row's
+    // spang-a-lang, a minor riff strain and a Tin Pan Alley turnaround in
+    // sevenths against this row's twelve-bar blues. NEITHER DECLARES THIS ROW AS
+    // A PARENT IN BOTH DIRECTIONS, and the reason is the law this note already
+    // spent three paragraphs on: `sweetband` is 1939 and may declare `swing`,
+    // and `hotswing` is 1935 and may NOT, because a parent edge points
+    // backwards in time or it is not a parent edge. What Chicago 1935 shares
+    // with Kansas City 1938 it inherited from the same places — New Orleans,
+    // the popular song, the rag — and it says so by naming those instead.
+    //
     swing: {
       label: "Kansas City 1938",
       voices: 4,
@@ -25306,6 +25320,387 @@
         { d: 0, q: "dom7" },
         { d: 4, q: "dom7" }
       ],
+    },
+
+    // HOT SWING — Chicago 1935, and it is one of the two rows `swing`'s own
+    // note proposed rather than smuggled in. Paul, having heard the rebuilt
+    // `swing`: *"Two rows"*.
+    //
+    // THE ARGUMENT FOR A SEPARATE ROW is that this is a different music and not
+    // a second label on one. `swing` is Kansas City 1938 — Basie's riff band, a
+    // floating rhythm section, twelve-bar blues choruses at 148. This is the HOT
+    // band: Fletcher Henderson's written charts played at flag-waver tempo, the
+    // clarinet as a SOLOIST rather than the top of a section, a rhythm section
+    // that drives rather than cushions, and Gene Krupa, whose floor tom is not a
+    // decoration but the record's whole identity. Everything below is measured
+    // off the corpus, and the two rows diverge on every number that matters.
+    //
+    // THE RECORD AND THE CITY. The band opened at the Congress Hotel on 6
+    // November 1935 and played the Henderson book nightly; the chart the
+    // residency was built on is "King Porter Stomp", Victor 25090, and the
+    // corpus holds one transcription of it at 184 BPM. SAID PLAINLY, because
+    // the table's year is the year of a named record: that side was cut in New
+    // York on 1 July 1935, five months before the Chicago room. The YEAR is the
+    // record's; the CITY is where the book became this music in public, which is
+    // the claim `swing`'s note already makes when it says "the Congress Hotel
+    // sides are Chicago". A reader who wants one city and one date has New York
+    // 1935 available and it is not what this row is about.
+    //
+    // THE TEMPO IS 184 AND IT IS CORROBORATED. Ten corpus transcriptions of
+    // four titles from this book: Stompin' at the Savoy 190 / 190 / 175 / 165 /
+    // 165, Sing Sing Sing 248 / 222 / 222 / 192, King Porter Stomp 184, Goody
+    // Goody 176. The median of the ten is 187 and the anchor record's own
+    // transcription is 184 — three BPM apart, so the record and the book agree.
+    // 148 is what `swing` says; a flag-waver is not a Basie medium.
+    //
+    // THE MODE IS MINOR, AND THE NUMBER IS FROM A LATER RECORD, WHICH IS SAID
+    // RATHER THAN HIDDEN. Four corpus transcriptions of "Sing Sing Sing" read A
+    // minor, A minor, E minor and C major — three of four minor. That is Victor
+    // 25796, Hollywood, 6 July 1937, two years after this row's year, and it is
+    // kept for the reason `PROGS.newsummerV`'s note keeps its own late record:
+    // it CORROBORATES a habit rather than anchoring the row. The minor
+    // flag-waver is this band's signature and King Porter Stomp is major, so the
+    // row takes the colour from the record that has it and says which.
+    //
+    // SIXTEEN BARS, BECAUSE THE STRAIN IS SIXTEEN. King Porter Stomp is a Jelly
+    // Roll Morton multi-strain rag and the Henderson chart is built on its trio
+    // strain — sixteen bars, riffed and re-riffed, with the solos taken over it.
+    // `compose.js fullLen` rounds a section to a whole number of the row's own
+    // bars (this is the mechanism `swing`'s `bars: 12` fix turned on), so
+    // declaring sixteen is what gives this row solo CHORUSES instead of pop
+    // verses. The changes are the riff strain in the minor: eight bars of the
+    // tonic vamp, four to the subdominant, four through the dominant home.
+    //
+    // AND THE DOMINANT IS `dom7`, NOT `7`, WHICH IS `swing`'s OWN LESSON FOUR
+    // READ IN THE OTHER MODE. `7` is a `kernel.js QSTEPS` word — stack thirds
+    // out of whatever scale the row is in — and in aeolian the chord on the
+    // fifth degree comes out MINOR, which is a folk cadence and not what a swing
+    // band plays over a minor strain. `dom7` is a `QFIX` word: an absolute
+    // dominant seventh whatever the mode says. The mode stays aeolian so the
+    // line keeps its minor third and flat sixth.
+    //
+    // KRUPA IS THE KIT, AND THE KIT IS MINED. The drum lanes of
+    // `singsingsing.mid` (252 bars, 4,064 drum events, GM percussion mapped onto
+    // this project's own twelve lanes) say four things this row now says back:
+    //
+    //   · THE BASS DRUM IS HEARD. Kick on all four beats at a mean velocity of
+    //     6, where `swing`'s own note argues its way down to `kitVel` 4 —
+    //     "the lowest kick velocity in the catalogue", the feathering you are
+    //     meant not to hear. Krupa's is not feathered. Same grid, different
+    //     music, and the velocity is the whole difference.
+    //   · THE FLOOR TOM IS THE TIMEKEEPER. `l` on every beat AND on every swung
+    //     "a" — measured densities 0.5 / 0.6 / 0.5 / 0.4 on the beats and 0.2 /
+    //     0.6 / 0.3 / 0.5 on the a's, about four hits a bar, at velocities 5 to
+    //     7. Written here as eight steps with a `?l` CHANCE vector rather than
+    //     eight certain hits, because a hit that sounds in half the bars is what
+    //     the tape actually holds and `kernel.js` reads `?d` as odds out of nine
+    //     (5/9 on the beats, 4/9 on the a's reproduces the measured density).
+    //   · THE RIDE IS A COLOUR, NOT THE CLOCK. 491 ride events over 252 bars is
+    //     0.3 a bar, so `?r` is 3 — the cymbal is in some choruses and not in
+    //     others. This is the sharpest single contrast with `swing`, whose own
+    //     note says "THE RIDE IS THE RECORD" and rides certain spang-a-lang on
+    //     every beat. On this record the toms took that job.
+    //   · THE HAT IS ON 2 AND 4. `f` at 0.9 a bar on each, velocity 7 — the one
+    //     thing all three of these bands do the same way, and it is left alone.
+    //
+    // The snare is 422 events over 252 bars — 1.7 a bar, scattered — so it is in
+    // `fill` and not in the bar, which is what a drummer who is playing toms
+    // does with the left hand.
+    //
+    // AND THE DRUMKIT WORD IS `acoustic`, NOT `jazz`. `fields.js DRUMKITS` holds
+    // both; `jazz` is the small light kit `swing` correctly declares for a
+    // ballroom rhythm section, and Krupa's Slingerland with tunable toms out
+    // front is the full kit, which is what `acoustic` names. A row that declares
+    // four hits a bar of floor tom on a kit with no floor tom in it would be the
+    // "declared but never arriving" fault this catalogue keeps writing itself
+    // notes about.
+    //
+    // `dyn: "syncope"` — THE WEIGHT IS OFF THE BEAT, AND IT IS MEASURED TWICE.
+    // `anacrusis` is `swing`'s figure and the table's own note calls it "what a
+    // horn section plays", so taking something else needs evidence rather than
+    // taste. There is evidence in two places. In the LINES: the Goodman book
+    // reads 0.343 / 0.356 / 0.384 off-grid where the Miller book's written
+    // charts read 0.046 — a seven-fold difference in where the notes fall. In
+    // the DRUMS: Stompin' at the Savoy's snare is heaviest at steps 7 and 15,
+    // the swung "a"s, at 0.8 and 0.6 a bar against 0.4 to 0.5 on the beats.
+    // Both halves of the record put the weight off the beat, which is precisely
+    // what `FIGURES.syncope` says.
+    //
+    // PARENTS, AND THE ONE EDGE THIS ROW MAY NOT DECLARE. It cannot declare
+    // `swing`. `swing` is Kansas City 1938 and this row is 1935, and GENRES.md
+    // §2 is explicit that no parent may be LATER than its child — the exact
+    // inversion `swing`'s own note spent six lines removing from itself last
+    // week, and it is not being re-introduced from the other end. So the
+    // ancestors named are the ones both bands actually share and this one
+    // reached first: `neworleans` (New Orleans 1923) at 0.30, the largest,
+    // because a hot clarinet out front of an ensemble IS the New Orleans front
+    // line and Chicago is where Goodman learned it, from the New Orleans players
+    // who had moved there; `tinpanalley` (New York 1924) at 0.20, because
+    // Stompin' at the Savoy and most of this book are thirty-two-bar popular
+    // songs however fast they are taken; and `ragtime` at 0.15, because the
+    // anchor record is a Jelly Roll Morton rag and this chart is its trio
+    // strain. 0.65 attributed, and the 0.35 residue is the claim: the arranged
+    // riff band at this speed, with a soloist over it and a drummer driving it,
+    // is what 1935 put together out of those three.
+    //
+    // INSTRUMENTAL, AND THE RECORD SAYS SO. King Porter Stomp is an instrumental
+    // and so is Sing Sing Sing; Helen Ward sang with this band on other sides
+    // and not on these. `instrumental: true` is the field that keeps a guest
+    // singer off an instrumental record — the fault `swing` was convicted of on
+    // 2026-09-07.
+    hotswing: {
+      label: "Chicago 1935",
+      voices: 4,
+      bars: 16,
+      near: "sweetband",
+      plan: "song",
+      bpm: 184,
+      parents: { neworleans: 0.3, tinpanalley: 0.2, ragtime: 0.15 },
+      wants: [],
+      instr: ["clarinet", "brass_section", "tenor_sax", "bright_yamaha_grand"],
+      drumkit: "acoustic",
+      swing: 0.42,
+      entry: v => v,
+      reg: v => (v === 2 ? -1 : v === 3 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "lead", "stab"],
+      harmony: "cycle",
+      roots: [0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 4, 4, 0, 0],
+      prog: [
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 3, q: "m7" },
+        { d: 3, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" },
+        { d: 4, q: "dom7" },
+        { d: 4, q: "dom7" },
+        { d: 0, q: "m7" },
+        { d: 0, q: "m7" }
+      ],
+      mode: MODES.aeolian,
+      scale: MODES.aeolian,
+      diatonic: true,
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "walk",
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        l: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+        "?l": [5, 0, 0, 4, 5, 0, 0, 4, 5, 0, 0, 4, 5, 0, 0, 4],
+        r: [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1],
+        "?r": [3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3],
+        f: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        k: [6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0],
+        l: [5, 0, 0, 6, 7, 0, 0, 6, 6, 0, 0, 5, 6, 0, 0, 6],
+        r: [6, 0, 0, 0, 9, 0, 0, 6, 6, 0, 0, 0, 9, 0, 0, 6],
+        f: [0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0]
+      },
+      fill: {
+        s: [0, 0, 0, 0, 5, 0, 6, 0, 0, 0, 7, 0, 6, 0, 8, 0],
+        m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0],
+        x: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]
+      },
+      tone: { cut: 3000, q: 1, atk: 0.006, rel: 0.35, gain: 0.28, verb: 0.26 },
+      words: [
+        "the clarinet, out front and on its own",
+        "the brass, two bars of riff behind it",
+        "the tenor, taking the chorus after",
+        "the piano, comping the holes"
+      ],
+      word: v => (v === 1 ? [rotate(2), drop(2)] : v === 2 ? [rotate(8)] : v === 3 ? [keep(0, 6, 8, 14)] : []),
+      dyn: "syncope",
+      instrumental: true,
+    },
+
+    // SWEET BAND — New York 1939, the second of the two rows `swing`'s own note
+    // proposed. Paul, having heard the rebuilt `swing`: *"Two rows"*.
+    //
+    // THE ARGUMENT FOR A SEPARATE ROW is a VOICING, and it is the only anchor in
+    // this table whose signature is one. A Glenn Miller chart puts a clarinet on
+    // the melody an octave ABOVE four saxophones holding the same harmony, and
+    // the result is a sound that is not a clarinet and is not a sax section —
+    // one instrument nobody can name. That is why a Miller side is identifiable
+    // in two bars, and it is a fact about ARRANGEMENT rather than about
+    // repertory, tempo or city, which is exactly the kind of fact a row is for.
+    //
+    // THE RECORD IS THE BAND'S OWN THEME. "Moonlight Serenade", Bluebird
+    // B-10214, recorded New York, 4 April 1939 — the tune the band opened and
+    // closed with, written as a reed exercise, which is to say the voicing came
+    // first and the song came out of it. Six corpus transcriptions: 84, 84, 84,
+    // 85, 82, 72 BPM. The median is 84 and four of the six are exactly 84, so
+    // that is the number. THE BOOK IS BIMODAL AND THAT IS SAID OUT LOUD: the
+    // jump numbers in the same corpus run In the Mood 185 / 172 / 170 / 165 /
+    // 160, Little Brown Jug 155 / 155, Chattanooga Choo Choo 155 / 153 / 150,
+    // Pennsylvania 6-5000 153 and Tuxedo Junction 112 / 108. A single row cannot
+    // be both, and the one that carries the voicing is the ballad — at 84 the
+    // clarinet-over-saxes block is AUDIBLE as a block, and at 170 it is a
+    // smear. The jump half of this book is a real row somebody could argue for
+    // later; it is not this one, and it is not being smuggled in under this
+    // one's tempo.
+    //
+    // Eb MAJOR, AND EVERY CHORD A SEVENTH. Three of the six transcriptions read
+    // Eb major, which is the record's key. Four of the six measure a SEVENTH
+    // density of 0.83 to 0.85 — that is nearly every chord in the tune carrying
+    // a seventh, which is the sweet band's whole harmonic manner and the thing
+    // that separates it from a blues. So the eight bars are the Tin Pan Alley
+    // turnaround said in sevenths: I maj7 · vi7 · ii7 · V7 · I maj7 · IV maj7 ·
+    // ii7 · V7, `maj7` and `m7` and `dom7` written as `QFIX` words so the
+    // qualities are the chord's and not the mode's. THIS IS THE HARMONIC
+    // DIFFERENCE FROM `swing`, which is twelve bars of dominant sevenths on a
+    // blues; a sweet band plays a song.
+    //
+    // THE KIT IS A DANCE-BAND KIT AND IT IS MINED. Three corpus transcriptions
+    // of this record carry drums, and they agree on more than they disagree:
+    //
+    //   · THE RIDE IS ON ALL FOUR — 3 of 3, at 0.9 a bar — and TWO of the three
+    //     add the swung "a" of 2 and the "a" of 4 and nowhere else. This is the
+    //     sharpest kit contrast with `swing`, whose ride is spang-a-lang on
+    //     every beat and every "a": "ding, ding-a" on the backbeats only is the
+    //     dance-band ride. The velocities written here — 6, 7, 6, 7 on the
+    //     beats and 4 on the two "a"s — are the measured means of the file the
+    //     corpus names for the band, not a guess.
+    //   · THE SNARE IS BRUSHES ON ALL FOUR AT VELOCITY 2. One transcription
+    //     plays the snare on every beat at a mean velocity of 2 out of 9, which
+    //     is a swirl and not a hit; the other two have almost no snare at all
+    //     (10 events in 69 bars). `swing` COMPS its snare on the "a" of 2 and
+    //     the "a" of 4 at velocities 5 and 6. A comping left hand is a soloist's
+    //     accompanist and a brush on all four is a dancer's floor, and that is
+    //     the difference between the two bands in one lane.
+    //   · A RIM ON BEAT 4, at 0.9 a bar. Present in one of the three — the file
+    //     the corpus names G.MILLER — and taken on that authority, said here so
+    //     a reader knows it is 1 of 3 and not 3 of 3.
+    //   · THE KICK IS ON ALL FOUR AND IT IS NOT FEATHERED. One transcription
+    //     plays it on all four at velocity 6, two barely play it. `kitVel` 5 is
+    //     the reading: above `swing`'s 4, which that row's note calls "the
+    //     lowest kick velocity in the catalogue" and argues at length is the
+    //     thing you are meant not to hear. A sweet band marks the dance floor.
+    //
+    // `drumkit: "brush"` for the same reason `hotswing` takes `acoustic` and
+    // `swing` keeps `jazz`: `fields.js DRUMKITS` holds all three, the measured
+    // drum density here is 0.47 events a bar against Sing Sing Sing's 3.45, and
+    // a snare written at velocity 2 on a kit with sticks on it is a declaration
+    // that arrives somewhere other than where it was aimed.
+    //
+    // `bassStyle: "fifths"` — THE TWO-BEAT. The catalogue's own word for a
+    // two-beat bass (recorded when the disco octave landed: "fifths is a
+    // two-beat"). `swing` and `hotswing` both walk in four; a 1939 sweet dance
+    // band under a ballad plays half notes, and the walking four is the Kansas
+    // City rhythm section's innovation rather than this band's habit.
+    //
+    // `dyn: "arch"` — AND `anacrusis` WAS REFUSED WITH A NUMBER. `anacrusis` is
+    // the swing wing's figure and `FIGURES`'s own note calls it "what a horn
+    // section plays … the reason a big band chart is full of notes tied over the
+    // barline". The corpus says this band does not do that: three transcriptions
+    // of this record read 0.046, 0.046 and 0.039 OFF-GRID and 0.19, 0.19 and
+    // 0.16 VARIATION, against 0.343 and 0.53 for the Goodman book. A written
+    // chart played by a section that has rehearsed it plays the bar it is given
+    // and shapes it; it does not push across the barline. `arch` is that shape —
+    // "up to the middle of the bar and back down", the table's own words for a
+    // sung line — and this melody, which is a rising and falling reed figure, is
+    // one.
+    //
+    // THE CAST, AND THE VOICING IS IN THE `realize` COLUMN. Four chairs:
+    // `clarinet` an octave UP as the `lead`; `alto_sax` at concert register
+    // realized as a `pad`, which is what makes the saxes a block of held harmony
+    // rather than a second melody; `trombone` an octave down, also a pad,
+    // because Miller's own instrument was the trombone and its section is the
+    // other half of this sound; and `brass_section` answering the phrase. THE
+    // DIFFERENCE FROM `swing`'s REED SECTION IS DELIBERATE AND IT IS IN THE
+    // DATA, not in the prose: `swing` doubles ONE tenor in unison an octave
+    // under the clarinet (`reg: -1`, `word: []`, an identical figure), which is
+    // two instruments playing one line. Here the saxes are a PAD — they hold the
+    // chord under the tune. A unison octave and a block voicing are two
+    // different arrangements and they render as two different things.
+    //
+    // PARENTS. `swing` at 0.35: this is a swing band, 1939 is after 1938, and
+    // the edge is legal in the one direction GENRES.md §2 allows. `tinpanalley`
+    // (New York 1924) at 0.25, larger than the 0.15 `swing` gives it, because
+    // the sweet band's repertory IS the popular song and the measured 0.83
+    // seventh density is that repertory's harmony. `hotswing` (Chicago 1935) at
+    // 0.15 — a smaller and more specific claim: what this band inherited from
+    // Goodman is the FORMAT, the touring swing band as a commercial object,
+    // which the Palomar and the Congress Hotel invented in 1935 and which every
+    // band of 1939 including this one was built to be. 0.75 attributed. The 0.25
+    // residue is the voicing, and it should be the largest single invention on
+    // any of the three rows, because it is the only thing here nobody had done.
+    //
+    // INSTRUMENTAL, AND THE RECORD SAYS SO. Ray Eberle and the Modernaires sang
+    // with this band constantly, and not on this side: "Moonlight Serenade" was
+    // cut as an instrumental on 4 April 1939 and the lyric was written to it
+    // afterwards. `instrumental: true`.
+    //
+    // NO `tone.wave`, FOR `swing`'s LESSON SIX. `wave` is read in exactly one
+    // branch of `audio/to-engine.js` — the one that builds a MODELLED voice —
+    // and all four chairs here are sampler recordings, so the word would be
+    // declared, costed and reach no sound.
+    sweetband: {
+      label: "New York 1939",
+      voices: 4,
+      bars: 8,
+      near: "hotswing",
+      plan: "song",
+      bpm: 84,
+      parents: { swing: 0.35, tinpanalley: 0.25, hotswing: 0.15 },
+      wants: [],
+      instr: ["clarinet", "alto_sax", "trombone", "brass_section"],
+      drumkit: "brush",
+      swing: 0.33,
+      entry: v => [0, 0, 1, 2][v],
+      reg: v => (v === 2 ? -1 : 0),
+      realize: v => (v === 1 || v === 2 ? "pad" : "line"),
+      part: ["lead", "pad", "pad", "counter"],
+      harmony: "cycle",
+      roots: [0, 5, 1, 4, 0, 3, 1, 4],
+      prog: [
+        { d: 0, q: "maj7" },
+        { d: 5, q: "m7" },
+        { d: 1, q: "m7" },
+        { d: 4, q: "dom7" },
+        { d: 0, q: "maj7" },
+        { d: 3, q: "maj7" },
+        { d: 1, q: "m7" },
+        { d: 4, q: "dom7" }
+      ],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "fifths",
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        s: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        r: [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1],
+        f: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        p: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        k: [5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0],
+        s: [2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0],
+        r: [6, 0, 0, 0, 7, 0, 0, 4, 6, 0, 0, 0, 7, 0, 0, 4],
+        f: [0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0],
+        p: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0]
+      },
+      fill: { s: [0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 4, 0] },
+      tone: { cut: 2400, q: 1, atk: 0.02, rel: 0.9, gain: 0.26, verb: 0.45 },
+      words: [
+        "the clarinet, on top of the four saxes",
+        "the saxes, holding the chord under it — one instrument",
+        "the trombones, under that",
+        "the brass, answering the phrase"
+      ],
+      word: v => (v === 3 ? [rotate(8), drop(2)] : []),
+      dyn: "arch",
+      instrumental: true,
     },
 
     // BLUEGRASS — Nashville 1946. The Anglo-Celtic string band at speed: a
@@ -51990,6 +52385,16 @@
                 "shidaiqu", "enka", "trot", "kroncong", "lukthung", "nhacvang",
                 "filmi", "qawwali", "arabesk", "kabulpop", "rebetiko", "fado",
                 "irishtrad", "balkanbrass", "ragtime", "swing", "bluegrass",
+                // ...AND THE TWO SWING-ERA BANDS, 2026-09-07 (Paul, on the
+                // rebuilt `swing`: "Two rows"). Both file beside the row
+                // they were argued against and for the reason it is here:
+                // this cluster's room is "a chamber, a hall recording of
+                // people in a hall", and a 1935 hotel ballroom and a 1939
+                // one are exactly that. Neither takes a DYNAMICS row —
+                // `roots` has a family fallback and the strophic idiom is
+                // right for a thirty-two-bar song and a riffed strain
+                // alike.
+                "hotswing", "sweetband",
                 // ...AND SEVEN ON 2026-08-29. The cluster's row is the
                 // strophic one — statement, statement, departure, return —
                 // and it is right for a Tin Pan Alley chorus, a bel canto

@@ -979,8 +979,17 @@ function sectionEvents(doc, i) {
      1983), the Meddle-era Floyd is `spacerock` (London 1973) and the Whitney
      ballad is `powerballad` (Los Angeles 1991), each said in its own row's
      first paragraph. The literal stays a literal for the reason :649 gives. */
-  ok("G0 the catalog is 500 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 500,
+  /* 500 -> 502, 2026-09-07: the TWO SWING-ERA BANDS. Paul, having heard the
+     rebuilt `swing` and been told that Glenn Miller and Benny Goodman had been
+     argued as two further rows rather than quietly made: "Two rows".
+     `hotswing` (Chicago 1935) and `sweetband` (New York 1939) are what that
+     paragraph proposed, and each is a DIFFERENT MUSIC rather than a second
+     label on `swing` — 184 BPM against 84, a floor tom against brushes, a
+     minor riff strain against a Tin Pan Alley turnaround in sevenths, every
+     accent off the beat against every accent on it. The literal stays a
+     literal for the reason :649 gives. */
+  ok("G0 the catalog is 502 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 502,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

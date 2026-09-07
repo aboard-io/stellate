@@ -1,0 +1,111 @@
+{
+  "note": "HOT SWING — Chicago 1935, and it is one of the two rows `swing`'s own\nnote proposed rather than smuggled in. Paul, having heard the rebuilt\n`swing`: *\"Two rows\"*.\n\nTHE ARGUMENT FOR A SEPARATE ROW is that this is a different music and not\na second label on one. `swing` is Kansas City 1938 — Basie's riff band, a\nfloating rhythm section, twelve-bar blues choruses at 148. This is the HOT\nband: Fletcher Henderson's written charts played at flag-waver tempo, the\nclarinet as a SOLOIST rather than the top of a section, a rhythm section\nthat drives rather than cushions, and Gene Krupa, whose floor tom is not a\ndecoration but the record's whole identity. Everything below is measured\noff the corpus, and the two rows diverge on every number that matters.\n\nTHE RECORD AND THE CITY. The band opened at the Congress Hotel on 6\nNovember 1935 and played the Henderson book nightly; the chart the\nresidency was built on is \"King Porter Stomp\", Victor 25090, and the\ncorpus holds one transcription of it at 184 BPM. SAID PLAINLY, because\nthe table's year is the year of a named record: that side was cut in New\nYork on 1 July 1935, five months before the Chicago room. The YEAR is the\nrecord's; the CITY is where the book became this music in public, which is\nthe claim `swing`'s note already makes when it says \"the Congress Hotel\nsides are Chicago\". A reader who wants one city and one date has New York\n1935 available and it is not what this row is about.\n\nTHE TEMPO IS 184 AND IT IS CORROBORATED. Ten corpus transcriptions of\nfour titles from this book: Stompin' at the Savoy 190 / 190 / 175 / 165 /\n165, Sing Sing Sing 248 / 222 / 222 / 192, King Porter Stomp 184, Goody\nGoody 176. The median of the ten is 187 and the anchor record's own\ntranscription is 184 — three BPM apart, so the record and the book agree.\n148 is what `swing` says; a flag-waver is not a Basie medium.\n\nTHE MODE IS MINOR, AND THE NUMBER IS FROM A LATER RECORD, WHICH IS SAID\nRATHER THAN HIDDEN. Four corpus transcriptions of \"Sing Sing Sing\" read A\nminor, A minor, E minor and C major — three of four minor. That is Victor\n25796, Hollywood, 6 July 1937, two years after this row's year, and it is\nkept for the reason `PROGS.newsummerV`'s note keeps its own late record:\nit CORROBORATES a habit rather than anchoring the row. The minor\nflag-waver is this band's signature and King Porter Stomp is major, so the\nrow takes the colour from the record that has it and says which.\n\nSIXTEEN BARS, BECAUSE THE STRAIN IS SIXTEEN. King Porter Stomp is a Jelly\nRoll Morton multi-strain rag and the Henderson chart is built on its trio\nstrain — sixteen bars, riffed and re-riffed, with the solos taken over it.\n`compose.js fullLen` rounds a section to a whole number of the row's own\nbars (this is the mechanism `swing`'s `bars: 12` fix turned on), so\ndeclaring sixteen is what gives this row solo CHORUSES instead of pop\nverses. The changes are the riff strain in the minor: eight bars of the\ntonic vamp, four to the subdominant, four through the dominant home.\n\nAND THE DOMINANT IS `dom7`, NOT `7`, WHICH IS `swing`'s OWN LESSON FOUR\nREAD IN THE OTHER MODE. `7` is a `kernel.js QSTEPS` word — stack thirds\nout of whatever scale the row is in — and in aeolian the chord on the\nfifth degree comes out MINOR, which is a folk cadence and not what a swing\nband plays over a minor strain. `dom7` is a `QFIX` word: an absolute\ndominant seventh whatever the mode says. The mode stays aeolian so the\nline keeps its minor third and flat sixth.\n\nKRUPA IS THE KIT, AND THE KIT IS MINED. The drum lanes of\n`singsingsing.mid` (252 bars, 4,064 drum events, GM percussion mapped onto\nthis project's own twelve lanes) say four things this row now says back:\n\n  · THE BASS DRUM IS HEARD. Kick on all four beats at a mean velocity of\n    6, where `swing`'s own note argues its way down to `kitVel` 4 —\n    \"the lowest kick velocity in the catalogue\", the feathering you are\n    meant not to hear. Krupa's is not feathered. Same grid, different\n    music, and the velocity is the whole difference.\n  · THE FLOOR TOM IS THE TIMEKEEPER. `l` on every beat AND on every swung\n    \"a\" — measured densities 0.5 / 0.6 / 0.5 / 0.4 on the beats and 0.2 /\n    0.6 / 0.3 / 0.5 on the a's, about four hits a bar, at velocities 5 to\n    7. Written here as eight steps with a `?l` CHANCE vector rather than\n    eight certain hits, because a hit that sounds in half the bars is what\n    the tape actually holds and `kernel.js` reads `?d` as odds out of nine\n    (5/9 on the beats, 4/9 on the a's reproduces the measured density).\n  · THE RIDE IS A COLOUR, NOT THE CLOCK. 491 ride events over 252 bars is\n    0.3 a bar, so `?r` is 3 — the cymbal is in some choruses and not in\n    others. This is the sharpest single contrast with `swing`, whose own\n    note says \"THE RIDE IS THE RECORD\" and rides certain spang-a-lang on\n    every beat. On this record the toms took that job.\n  · THE HAT IS ON 2 AND 4. `f` at 0.9 a bar on each, velocity 7 — the one\n    thing all three of these bands do the same way, and it is left alone.\n\nThe snare is 422 events over 252 bars — 1.7 a bar, scattered — so it is in\n`fill` and not in the bar, which is what a drummer who is playing toms\ndoes with the left hand.\n\nAND THE DRUMKIT WORD IS `acoustic`, NOT `jazz`. `fields.js DRUMKITS` holds\nboth; `jazz` is the small light kit `swing` correctly declares for a\nballroom rhythm section, and Krupa's Slingerland with tunable toms out\nfront is the full kit, which is what `acoustic` names. A row that declares\nfour hits a bar of floor tom on a kit with no floor tom in it would be the\n\"declared but never arriving\" fault this catalogue keeps writing itself\nnotes about.\n\n`dyn: \"syncope\"` — THE WEIGHT IS OFF THE BEAT, AND IT IS MEASURED TWICE.\n`anacrusis` is `swing`'s figure and the table's own note calls it \"what a\nhorn section plays\", so taking something else needs evidence rather than\ntaste. There is evidence in two places. In the LINES: the Goodman book\nreads 0.343 / 0.356 / 0.384 off-grid where the Miller book's written\ncharts read 0.046 — a seven-fold difference in where the notes fall. In\nthe DRUMS: Stompin' at the Savoy's snare is heaviest at steps 7 and 15,\nthe swung \"a\"s, at 0.8 and 0.6 a bar against 0.4 to 0.5 on the beats.\nBoth halves of the record put the weight off the beat, which is precisely\nwhat `FIGURES.syncope` says.\n\nPARENTS, AND THE ONE EDGE THIS ROW MAY NOT DECLARE. It cannot declare\n`swing`. `swing` is Kansas City 1938 and this row is 1935, and GENRES.md\n§2 is explicit that no parent may be LATER than its child — the exact\ninversion `swing`'s own note spent six lines removing from itself last\nweek, and it is not being re-introduced from the other end. So the\nancestors named are the ones both bands actually share and this one\nreached first: `neworleans` (New Orleans 1923) at 0.30, the largest,\nbecause a hot clarinet out front of an ensemble IS the New Orleans front\nline and Chicago is where Goodman learned it, from the New Orleans players\nwho had moved there; `tinpanalley` (New York 1924) at 0.20, because\nStompin' at the Savoy and most of this book are thirty-two-bar popular\nsongs however fast they are taken; and `ragtime` at 0.15, because the\nanchor record is a Jelly Roll Morton rag and this chart is its trio\nstrain. 0.65 attributed, and the 0.35 residue is the claim: the arranged\nriff band at this speed, with a soloist over it and a drummer driving it,\nis what 1935 put together out of those three.\n\nINSTRUMENTAL, AND THE RECORD SAYS SO. King Porter Stomp is an instrumental\nand so is Sing Sing Sing; Helen Ward sang with this band on other sides\nand not on these. `instrumental: true` is the field that keeps a guest\nsinger off an instrumental record — the fault `swing` was convicted of on\n2026-09-07.",
+  "label": "Chicago 1935",
+  "voices": 4,
+  "bars": 16,
+  "near": "sweetband",
+  "plan": "song",
+  "bpm": 184,
+  "parents": {
+    "neworleans": 0.3,
+    "tinpanalley": 0.2,
+    "ragtime": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clarinet",
+    "brass_section",
+    "tenor_sax",
+    "bright_yamaha_grand"
+  ],
+  "drumkit": "acoustic",
+  "swing": 0.42,
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      },
+      {
+        "at": 3,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "lead",
+    "stab"
+  ],
+  "harmony": "cycle",
+  "roots": [
+    0, 0, 0, 0, 0, 0, 0, 0,
+    3, 3, 0, 0, 4, 4, 0, 0
+  ],
+  "prog": [
+    { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" },
+    { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" },
+    { "d": 3, "q": "m7" }, { "d": 3, "q": "m7" }, { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" },
+    { "d": 4, "q": "dom7" }, { "d": 4, "q": "dom7" }, { "d": 0, "q": "m7" }, { "d": 0, "q": "m7" }
+  ],
+  "mode": { "$src": "MODES.aeolian" },
+  "scale": { "$src": "MODES.aeolian" },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    "l": [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+    "?l": [5, 0, 0, 4, 5, 0, 0, 4, 5, 0, 0, 4, 5, 0, 0, 4],
+    "r": [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1],
+    "?r": [3, 0, 0, 0, 3, 0, 0, 3, 3, 0, 0, 0, 3, 0, 0, 3],
+    "f": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+  },
+  "kitVel": {
+    "k": [6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0],
+    "l": [5, 0, 0, 6, 7, 0, 0, 6, 6, 0, 0, 5, 6, 0, 0, 6],
+    "r": [6, 0, 0, 0, 9, 0, 0, 6, 6, 0, 0, 0, 9, 0, 0, 6],
+    "f": [0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0]
+  },
+  "fill": {
+    "s": [0, 0, 0, 0, 5, 0, 6, 0, 0, 0, 7, 0, 6, 0, 8, 0],
+    "m": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0],
+    "x": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]
+  },
+  "tone": {
+    "cut": 3000,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the clarinet, out front and on its own",
+    "the brass, two bars of riff behind it",
+    "the tenor, taking the chorus after",
+    "the piano, comping the holes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      { "at": 1, "then": { "$src": "[rotate(2), drop(2)]" } },
+      { "at": 2, "then": { "$src": "[rotate(8)]" } },
+      { "at": 3, "then": { "$src": "[keep(0, 6, 8, 14)]" } }
+    ],
+    "else": { "$src": "[]" }
+  },
+  "dyn": "syncope",
+  "instrumental": true
+}
