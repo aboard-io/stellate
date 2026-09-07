@@ -161,23 +161,65 @@ function standUpServer() {
     return out;
   });
 
-  /* one real drag on a vchassis track (frac 0 = bottom of the range) */
+  /* ---- ONE REAL DRAG ON A vchassis TRACK, ALONG THE AXIS THE TRACK RUNS ON
+     (frac 0 = the quiet end, frac 1 = the loud end).
+
+     IT DRAGGED STRAIGHT DOWN AND THE ROOM FADER LIES DOWN NOW (2026-09-07).
+     This helper was written on 2026-08-30 against a page where every level
+     control on it was a COLUMN, so it held `x` at the track's midpoint and
+     moved `y`. TABLE.md §18 turned the room ninety degrees — Paul: *"Get rid
+     of the volume options, popping up in the bottom instead integrate them
+     into the bar"* — and `#vol` has been `vchassis(volEl, …, true)` inside
+     `.nu-vs-wide` since: a 63.7 x 20 track in the bar (measured, 390px
+     viewport) whose `fromPointer` reads `e.clientX`.
+     A VERTICAL DRAG ON A HORIZONTAL FADER IS A TAP AT ITS MIDDLE. Measured on
+     this tree before the repair: the ten touchMoves held clientX at the
+     track's centre, so `fromPointer` computed f = 0.5 on every one of them and
+     the gesture SET THE ROOM TO 50% — `#vol.value === "50"`,
+     `nukernel.vol.v1 === "50"` — and V1 then measured the ring at half volume
+     (0.0354 -> 0.0392, +0.9 dB: the post-fader glue compressor at ratio 2.2
+     hands most of a 6 dB cut straight back, and what is left is inside the
+     chant's own ±2 dB section swing) and reported it as "the fader reaches no
+     sound". It reached sound perfectly: the same page, driven to 0 through the
+     input's own listeners, went to RMS 0.0000.
+     SO THE AXIS IS READ OFF THE TRACK rather than assumed, and the claim is
+     unchanged — a real CDP touch, pressed on the track, dragged to the ZERO
+     end, measured at the sound. The tall chassis (#vol2 and every desk fader)
+     gets exactly the geometry it always got: start at the middle, end at
+     `bottom - 12`, which is `pad` in vchassis's own arithmetic. */
+  const trackGeom = (page, sel) => page.evaluate((s) => {
+    const i = document.querySelector(s); if (!i) return null;
+    const t = i.closest(".nu-vs-track") || i.parentElement;
+    const r = t.getBoundingClientRect();
+    /* `.nu-vs-wide` is the class the stylesheet turns the chassis with, and
+       the rect is the fallback for a chassis that is wide without saying so */
+    return { wide: !!(t.closest && t.closest(".nu-vs-wide")) || r.width > r.height,
+             x: r.x, y: r.y, w: r.width, h: r.height };
+  }, sel);
+  /* the same gesture for either axis, so V1/V2-V6 and V7 share one law */
+  const dragTrack = async (page, session, g, frac) => {
+    const pad = 12;                       // vchassis's own thumb pad
+    const lo = g.wide ? g.x + pad : g.y + g.h - pad;   // frac 0 — the quiet end
+    const hi = g.wide ? g.x + g.w - pad : g.y + pad;   // frac 1 — the loud end
+    const at = (f) => lo + f * (hi - lo);
+    const aT = at(frac), aS = at(0.5);
+    const cross = g.wide ? g.y + g.h / 2 : g.x + g.w / 2;
+    const pt = (a) => (g.wide ? { x: a, y: cross } : { x: cross, y: a });
+    const touch = (type, a) => session.send("Input.dispatchTouchEvent", {
+      type, touchPoints: type === "touchEnd"
+        ? [] : [{ ...pt(a), radiusX: 6, radiusY: 6 }] });
+    await touch("touchStart", aS);
+    for (let i = 1; i <= 10; i++) await touch("touchMove", aS + (aT - aS) * i / 10);
+    await touch("touchEnd", 0);
+    await page.waitForTimeout(200);
+  };
   const dragTo = async (sel, frac) => {
     await p.evaluate((s) => { const i = document.querySelector(s);
       if (i) (i.closest(".nu-vs-track") || i.parentElement).scrollIntoView({ block: "center" }); }, sel);
     await p.waitForTimeout(300);
-    const g = await p.evaluate((s) => { const i = document.querySelector(s);
-      if (!i) return null;
-      const t = i.closest(".nu-vs-track") || i.parentElement; const r = t.getBoundingClientRect();
-      return { x: r.x + r.width / 2, top: r.y + 12, bot: r.y + r.height - 12 }; }, sel);
+    const g = await trackGeom(p, sel);
     if (!g) return null;
-    const yT = g.bot - frac * (g.bot - g.top), yS = (g.top + g.bot) / 2;
-    const touch = (type, y) => cdp.send("Input.dispatchTouchEvent", {
-      type, touchPoints: type === "touchEnd" ? [] : [{ x: g.x, y, radiusX: 6, radiusY: 6 }] });
-    await touch("touchStart", yS);
-    for (let i = 1; i <= 10; i++) await touch("touchMove", yS + (yT - yS) * i / 10);
-    await touch("touchEnd", 0);
-    await p.waitForTimeout(200);
+    await dragTrack(p, cdp, g, frac);
     return p.evaluate((s) => document.querySelector(s).value, sel);
   };
   /* restoring is not the thing under test, so it may go through the input's
@@ -492,18 +534,15 @@ function standUpServer() {
     // …and nothing is opened here either: the room is the bar's own child
     // since §18 and the fold is deleted since §20.
     await p2.waitForTimeout(500);
-    const g = await p2.evaluate(() => { const t = document.querySelector("#nu-bar .nu-vs-track");
-      if (!t) return null; const r = t.getBoundingClientRect();
-      return { x: r.x + r.width / 2, top: r.y + 12, bot: r.y + r.height - 12 }; });
+    /* THE SAME AXIS-AWARE GESTURE V1 MAKES, and for the same reason: the room
+       is `.nu-vs-wide` in the bar since §18, so a straight-down touch on it is
+       a tap at 50% (see `dragTrack`'s note). Measured on the media route with
+       the drag along the track's own axis: `#vol` -> "0", the store -> "0",
+       `element.volume` still 1 (Apple's own behaviour, stubbed above), and the
+       engine's baked envelope 0.0429 -> 0.0000 in 15s. */
+    const g = await trackGeom(p2, "#vol");
     const cdp2 = await ctx2.newCDPSession(p2);
-    if (g) {
-      const touch = (type, y) => cdp2.send("Input.dispatchTouchEvent", {
-        type, touchPoints: type === "touchEnd" ? [] : [{ x: g.x, y, radiusX: 6, radiusY: 6 }] });
-      await touch("touchStart", (g.top + g.bot) / 2);
-      for (let i = 1; i <= 10; i++)
-        await touch("touchMove", (g.top + g.bot) / 2 + (g.bot - (g.top + g.bot) / 2) * i / 10);
-      await touch("touchEnd", 0);
-    }
+    if (g) await dragTrack(p2, cdp2, g, 0.0);
     const elvol = await p2.evaluate(() => { const h = window.FaustLive && FaustLive.lastHandle;
       const e = h && h.mediaEl; return e ? e.volume : null; });
     let silent = null;

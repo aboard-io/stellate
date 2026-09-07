@@ -16005,7 +16005,28 @@ function shareCard(grid) {
        the friction this whole wave was written out of. */
     const say = el("p", null, "nu-hint");
     say.id = "sharesay";
-    say.setAttribute("role", "status");
+    /* ...AND IT IS NOT A SECOND LIVE REGION, WHICH IT WAS FOR THIRTEEN DAYS
+       (2026-09-07). It shipped with `role="status"` in v294 and that is the
+       THIRD time a card in this deck has carried one — see `songCard`'s
+       tombstone, "ONE STATUS LINE IN THIS DECK, AND IT IS THE DECK'S", which
+       deleted the second and named the cost: `#exportdeck [role=status]` is a
+       `querySelector`, it returns the FIRST match in document order, and every
+       card sits in the grid ABOVE `deckSay`. So this paragraph — which only
+       ever says what the LINK is carrying — became the answer to "what did the
+       export card just say", and two gates read it and reported a working
+       encode as a dead one: test/mp3.test.js M6 ("0 sentences", "nothing",
+       i.e. a frozen main thread) while M1/M2 read a correct 192 kbps MPEG
+       stream out of the bytes, and test/als-page.browser.js read the share
+       sentence where "spliced — …" belongs.
+       WHAT IS LOST BY DROPPING IT, said plainly: this line is written once as
+       the card is built and once more when the pack resolves a few ms later,
+       so as a live region it announced the tab opening rather than an event.
+       Every SENTENCE THIS CARD SAYS IN ANSWER TO A PRESS already goes through
+       `expSay` → `deckSay`, the deck's one live region — the copy, the
+       hand-over fallback, every refusal — so nothing a screen reader is
+       waiting for moved. The line is still on the card, still `#sharesay`,
+       still read in place (test/share.test.js S5), and still the place the
+       ceiling is stated at share time. */
     card.append(f, b, say);
     /* THE NODE IS HANDED OVER RATHER THAN LOOKED UP, because at this instant
        the card is not in the document yet — `exportCard` appends it to the
