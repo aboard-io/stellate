@@ -1,0 +1,394 @@
+/* ===========================================================================
+   nukernel/tokens.css — THE TOKENS, AND NOTHING ELSE.
+
+   docs/DESIGN-SYSTEM.md, step 1 of the order. Paul: *"The colors are y
+   combinator colors. In general this should look like a mixing board/LED with
+   musical aesthetics and green phosphor/vector vibes."* And, of the whole
+   thing: *"One way to think of yourself is as a legendary arranger keyboard
+   from 1988 called the Stellate."*
+
+   THE LAW OF THIS FILE, in four lines:
+     1 · Every design token on this page is declared HERE and nowhere else.
+         `nu.css` holds the component rules and declares no token; a rule that
+         types a colour, a size or a gap instead of naming one is the drift
+         this file exists to catch in review.
+     2 · A token is named for what it DOES, never for what it looks like.
+         `--lamp`, not `--green`; `--legend`, not `--offwhite`. When the paint
+         changes the name still tells the truth.
+     3 · Every token is argued, on its own line, in this file. A value nobody
+         can defend in one line is a value nobody chose.
+     4 · It is linked BEFORE `nu.css` (and after `fonts.css`, which owns the
+         faces): a token has to exist before the rule that reads it.
+
+   THE MACHINE THIS PALETTE IS. An arranger keyboard is a PANEL and a SCREEN
+   and they do not look alike. LEGENDS are printed on the panel: small caps,
+   dim, fixed, never lit. VALUES live on the screen: phosphor, bright, and the
+   only things that change. A control that is DOING something has a LAMP, and a
+   lamp is the one place saturated colour is allowed on this page — which is
+   what settles the thing Paul named first (*"Selected boxes are oddly
+   selected"*): a selected thing is LIT, and nothing else in the system lights.
+
+   THREE LAMPS AND ONE SCREEN, and that is the whole colour system:
+     the GREEN lamp   a hand set this · this is selected · this is on
+     the AMBER lamp   armed — about to matter, under the pointer, next
+     the RED lamp     the tempo LED, and clipping and destruction. Never
+                      decorative, and never a fourth accent looking for work.
+     the PHOSPHOR     not a lamp: the ink the screen prints values in.
+
+   WHY THERE IS NO AUTOMATIC LIGHT THEME. The Stellate is a machine, and a
+   machine looks the same in every room; `nu.css` made this argument itself
+   when it retired the old system-colour dark mode (*"a hand-blue that inverts
+   to something else at night is not a semantic paint any more"*), and it holds
+   the other way round too. So the deck is the COMMITTED look and there is no
+   `prefers-color-scheme` query below. A second theme exists and is a real
+   design rather than an inversion — `:root[data-theme="light"]`, the same
+   panel under studio lights, with the phosphor read as dark green on grey the
+   way an LCD is read in daylight — and it is reached by a hand, not by a
+   system setting.
+   =========================================================================== */
+
+:root{
+  /* THE 142 NATIVE CONTROLS FOLLOW THE DECK. `light` stood here while the page
+     was paper; a dark page with light native wheels is a white rectangle
+     opening out of a black panel. */
+  color-scheme: dark;
+
+  /* ===== THE DECK — three depths of ground, and no fourth ================
+     A panel is not one flat colour: there is the chassis, the plate bolted to
+     it, and the cut in the plate the screen sits in. Everything else is a
+     hairline. */
+  --deck:  #16191A;  /* the chassis — graphite with a green bias, the room everything bolts to */
+  --panel: #20262A;  /* a plate screwed onto the chassis: tables, sheets, the bar */
+  --well:  #0C0F10;  /* a cut into a plate — the screen's own ground, and the darkest thing here */
+
+  /* ===== THE LEGENDS — printed on the panel, three voices ===============
+     Silkscreen ink, warm because a panel's white is never paper's. Dim and
+     fixed: a legend is the one thing on this page that never lights. */
+  --legend:       #E6E1D4;  /* the ink — every word the panel says */
+  --legend-dim:   #9A968A;  /* the second voice: units, counts, a value's own label */
+  --legend-faint: #8C918A;  /* refused — a COOLER grey, not a darker one: quieter by hue, because quieter by value is a contrast floor failed */
+
+  /* ===== THE THREE LAMPS AND THE SCREEN =================================
+     Saturated, and the only saturated colour in the system. */
+  --lamp:  #35D97B;  /* the green lamp — ON: selected, focused, a value a hand set */
+  --armed: #F2A93B;  /* the amber lamp — armed: under the pointer, next, about to matter */
+  --clip:  #FF5A47;  /* the red lamp — the tempo LED, clipping, and destruction. Never decoration */
+  --value: #6EE7A4;  /* the phosphor — the ink the SCREEN prints a readout in; not a lamp, a number */
+  --lamp-hot: #5CF0A0;  /* a lamp with a thumb on it — the one hover this palette has */
+  --on-fill:  var(--well);  /* the ink laid ON any filled control — a lamp, a cluster hue, an ink plate: on this palette every fill is one end of the deck and the ink is the other */
+  --on-fill-dim: color-mix(in srgb, var(--on-fill) 72%, transparent);  /* the second voice ON a fill: an alpha, so it works over whichever fill it lands on */
+  --on-fill-quiet: color-mix(in srgb, var(--on-fill) 28%, transparent);  /* a badge's ground on a filled control — the chain number on a hot lozenge */
+  --scrim: color-mix(in srgb, var(--well) 70%, transparent);  /* the gradient that says a scroller has more to the side; the well, because a scrim is a depth and not a colour */
+  --stage: #000000;        /* a PICTURE's ground, and the one place a literal black is the subject rather than a decision about the chassis */
+  --stage-saver: #0C0A1A;  /* the screensaver's own ground — the old chart's midnight, kept because the drawing is composed on it */
+
+  /* ===== THE GREY RAMP, BIASED TOWARD THE GREEN =========================
+     Four steps between the deck and the legend, for the furniture that is
+     neither ground nor word: a trough, a cap, a plate's edge, a disabled
+     fill. Biased green so a grey never reads as a cold second accent. */
+  --grey1: #1D2224;  /* a trough — barely off the deck */
+  --grey2: #2B3235;  /* a cap, a raised fill */
+  --grey3: #464E4A;  /* a quiet fill, and the one grey that is never an edge (it is under the 3:1 floor and may not carry a boundary) */
+  --grey4: #6C7066;  /* the hairline that has to be SEEN — 3.49:1 on the deck, which is the floor a control's edge owes */
+
+  /* ===== THE APP'S FOUR MEANINGS, SAID IN THE MACHINE'S OWN COLOURS =====
+     `nu.css` has painted with these four names since 2026-09-02 and they are
+     semantic, never decorative: hand = you set it · clock = scheduled ·
+     meter = measured · flag = refused/warning. They are not a second palette;
+     they are the four the panel already has, which is the argument for the
+     mapping being one line each rather than four new hexes. */
+  --hand:  var(--lamp);   /* you set it, it is selected, it is focused — the lamp is on */
+  --clock: var(--clip);   /* the playhead and the tempo LED, which on a 1988 panel is the red one */
+  --meter: var(--value);  /* measured signal, engine truth — the screen's own phosphor */
+  --flag:  var(--armed);  /* armed, refused, about to matter — the amber */
+  /* A TINT IS A LAMP'S GLOW ON THE DECK, not a pastel. On paper a tint was a
+     wash of the accent into white; on a deck it is the accent bled into the
+     plate, so a tinted row is still a row of the panel. */
+  --hand-tint:  color-mix(in srgb, var(--lamp) 22%, var(--panel));
+  --clock-tint: color-mix(in srgb, var(--clip) 22%, var(--panel));
+  --meter-tint: color-mix(in srgb, var(--value) 20%, var(--panel));
+  --flag-tint:  color-mix(in srgb, var(--armed) 22%, var(--panel));
+
+  /* ===== THE GROUND NAMES nu.css ALREADY PAINTS WITH =====================
+     `--ground --panel --well --paper --ink --dim --faint` are the names every
+     one of nu.css's 9,600 lines reaches for. They are ALIASES onto the deck
+     above and not a second opinion about it: one palette, two vocabularies,
+     and the port (step 4) is what retires the older one call site at a time. */
+  --ground: var(--deck);
+  --paper:  var(--deck);         /* the ground you are standing on; the section wash re-declares it */
+  --ink:    var(--legend);
+  --dim:    var(--legend-dim);
+  --faint:  var(--legend-faint);
+
+  /* ===== CATEGORY: WHICH PLAYER =========================================
+     Six lanes — four melodic, one bass, one kit — and the set is complete on
+     purpose so a seventh voice wraps to `--v0` rather than inventing a colour
+     at a call site. The HUES are hw.css's own; the VALUES are lifted for a
+     dark ground, because a hue chosen to sit on #F0EDE4 disappears on #16191A.
+     `.nu-vpaint` is the one thing that paints with these. */
+  --v0: #4FB3EC;   /* voice 0 — sky */
+  --v1: #57C98A;   /* voice 1 — green */
+  --v2: #A98BFF;   /* voice 2 — violet */
+  --v3: #F07AB4;   /* voice 3 — magenta */
+  --vb: #9AA6AE;   /* the bass  — slate */
+  --drum: #8A93A0; /* the kit   — graphite */
+
+  /* ===== LEVEL: HOW MUCH ================================================
+     Four steps of ONE hue so a velocity reads as a quantity, and the hue is
+     the LAMP's: how loud a step is is how much lamp is on. Ascending, so the
+     number counts up with the value, and `--q4` IS `--lamp`, so the accent
+     does not move and only the quiet end changes. */
+  --q1: #1E4A34;   /* a ghost */
+  --q2: #23895A;
+  --q3: #2BB56B;
+  --q4: var(--lamp);  /* an accent — the lamp itself, at the top of the ramp */
+
+  /* ===== THE TWO ROW WASHES =============================================
+     Alphas, not colours, so they lie OVER whatever ground a row already has
+     (a plate, a section wash, a zebra stripe) instead of replacing it. On a
+     deck they are made of LIGHT: a dark alpha over a dark panel is nothing. */
+  --row-hi:  rgba(230, 225, 212, .055);  /* the row under the pointer */
+  --row-lit: rgba(255, 90, 71, .14);     /* the row that is sounding — the clock's alpha, not the hand's */
+
+  /* ===== THE CLUSTER HUES — the lozenge field's eight ====================
+     Hue means the KIND, weight means the STATE. Eight is a decision: past
+     eight, hue stops being a category anyone can hold, and a ninth cluster
+     reuses the first rather than inventing a colour. Lifted for the deck, and
+     kept clear of the three lamps so a cluster never reads as a state. */
+  --lz-h0: #5B9BF0;
+  --lz-h1: #4FC188;
+  --lz-h2: #B489F5;
+  --lz-h3: #F07AA8;
+  --lz-h4: #E0A245;
+  --lz-h5: #46BFC9;
+  --lz-h6: #C99168;
+  --lz-h7: #98A2AE;
+
+  /* ===== RULES AND EDGES ================================================
+     A rule is a HAIRLINE; a frame is a plate, and a plate is rare. Two border
+     weights and no third, so a sweep can point every rule at one of them. */
+  --bw:      1px;   /* a control's frame: buttons, menus, plates, troughs, caps, sheets */
+  --bw-hard: 2px;   /* an emphasis edge: the now-row, the playhead, a sticky column, a focus ring (WCAG 2.2 wants 2px) */
+  --rule:        var(--grey4);        /* the quiet line — a hairline inside a dense table may not shout down its contents */
+  --rule-strong: var(--legend-dim);   /* the line that frames a control */
+  --zebra: color-mix(in srgb, var(--legend) 5%, var(--panel));  /* the table's permanent stripe */
+  /* THE SHADOW IS A CUT, NOT A BEVEL. §0 refuses "drop shadows pretending to
+     be moulded edges"; a hard offset in the deck's own darkest reads as the
+     plate standing proud of a cut, has zero blur, and keeps the press gesture
+     (the control travels INTO its own shadow) meaningful on a dark ground,
+     where a black shadow would be invisible. */
+  --shadow: 2px 2px 0 var(--well);
+  --press:  2px;    /* how far a press travels — the shadow's own offset */
+
+  /* ===== THE SECTION WASH ===============================================
+     A COLOUR PER SECTION, generated rather than chosen: the section's index
+     times the golden angle, so twelve views get twelve hues nobody had to
+     pick. These three are what the generator is allowed to know — how far
+     round, how saturated, how light, and how much of it reaches the ground.
+     It moves the GROUND a control stands on and is never a state. */
+  --wash: 4%;         /* how much of the hue reaches the ground — 4%, where the lamps are full strength */
+  --wash-turn: 137.5deg;  /* the golden angle: the one step that never repeats a hue inside twelve */
+  --wash-sat: 70%;    /* saturated, because 4% of a grey is nothing */
+  --wash-lit: 42%;    /* dark enough to stay UNDER the deck's own legends; it was 50% on paper, where the wash lay under ink */
+
+  /* ===== TYPE — the family is IBM Plex, and fonts.css owns the faces =====
+     These three are the only place a family name is written on this page, and
+     the only place a rule may read one from. The fallback stacks are honest:
+     a woff2 that has not arrived, or a character outside Plex's Latin blocks,
+     falls through per CHARACTER. */
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* THE ONE FACE THAT IS DELIBERATELY NOT PLEX, and it is a GLYPH stack, not a
+     type choice: the page draws its marks as characters (▾ ↕ ↑ ▫ ▪ ⇅) that no
+     Latin block of Plex contains, and a serif ↕ beside a sans ↑ is two
+     different arrows. One stack keeps every row of marks in one hand. */
+  --sym: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+
+  /* ===== SIX STEPS OF TYPE AND NO SEVENTH ===============================
+     A step is a DISTINCTION A READER CAN NAME, not a size somebody needed
+     once. Counted before this scale existed: twenty-two distinct font-sizes
+     plus twelve more inside `font:` shorthands, of which exactly one was a
+     token. NOTHING under 16px on a phone that a hand EDITS — that is a floor
+     and not a step (iOS zooms a focused control under 16px and does not zoom
+     back), which is why `--btn-fs` and the `select` rule are called out below
+     rather than folded into the ladder. */
+  --t0: .6rem;    /* the smallest step — a word grid's column-head name */
+  --t1: .72rem;   /* an annotation — a stamp, a sub-line under a name */
+  --t2: .82rem;   /* a caption or a label */
+  --t3: 1rem;     /* body, and every h3 */
+  --t4: 1.15rem;  /* a block's own name */
+  --t5: 1.5rem;   /* a display number — one you read across the room */
+  /* FOUR WEIGHTS AND NO FIFTH. Plex Sans's axis ends at Bold, so 800 and 900
+     resolve to one face: the four NAMES stand, two of them land together. */
+  --fw-body:    500;
+  --fw-label:   700;
+  --fw-block:   800;
+  --fw-display: 900;
+  --num-fw: 600;  /* the machine voice: a semibold numeral face, one notch over body, so a value never reads as a label */
+  --btn-fw: var(--fw-body);  /* a button's word is body weight — a row of tabs is not a row of headlines */
+  --btn-fs: .875rem;         /* 14px — one step down from body, and named because it is deliberately BETWEEN --t2 and --t3 */
+
+  /* ===== FOUR RADII AND NO FIFTH ========================================
+     Small; nothing bubbles. */
+  --r0: 0;         /* a plate is square */
+  --r1: 6px;       /* a control eases to 6px */
+  --r2: 3px;       /* a chip, or a fill inside a control */
+  --r-pill: 999px; /* a noun, and only a noun — the LOZENGE wears it, and nothing else on this page does */
+
+  /* ===== THE SPACING RAMP — FIVE STEPS AND NO SIXTH =====================
+     Counted before this ramp existed: EIGHTEEN distinct em/rem quanta in
+     margin/padding/gap, a page that grew tab by tab each bringing its own idea
+     of "a little air". Five is what a reader can actually see.
+     WHAT IS NOT ON THE RAMP, by name, because it is engineering and not
+     rhythm: 0 and auto; every px value (tap floors, scrollbar seats,
+     safe-area sums, hairline compensations); every calc() that cancels a
+     border or a page gutter; and the two glyph micro-kerns, which space INK.
+     THE STEPS ARE `em` AND THAT IS MEASURED DEBT, NOT A DECISION LEFT ALONE
+     (census, 2026-09-07, scratchpad/design/system-1/): five steps in `em`
+     render as TWENTY-ONE distinct pixel values on the page at 390, because a
+     step resolves against the font-size of the box it lands in — 404 of 426
+     rendered declarations sit off the ramp, and 196 of them are one rule
+     (`.nu-cellword`, `--s1` at `--t1` = 2.3px). Changing the unit MAKES THE
+     PAGE BIGGER, which is the opposite of what step 5 was called to do, so
+     the ramp is unmoved here and the census is the evidence the squeeze
+     spends. */
+  --s1: .2em;   /* a hair — inside a control, between a cap and its word */
+  --s2: .35em;  /* tight — cell padding, a control from its own label */
+  --s3: .55em;  /* a gap — between controls that answer one question */
+  --s4: .8em;   /* air — between questions; a plate's own padding */
+  --s5: 1.4em;  /* a block — between one subject and the next */
+
+  /* ===== THE TAP FLOOR AND THE CONTROL GEOMETRY =========================
+     44px is the isolated-control floor (WCAG 2.2 AAA / the Apple figure) and
+     it is NOT spacing: it does not move when the page is squeezed. */
+  --tap:  44px;   /* every isolated control */
+  --box:  26px;   /* a checkbox or a radio — a native widget answers to size, not to min-height */
+  --cell: 36px;   /* one step of a sixteen-step grid */
+  --ctl:  48px;   /* a laid-down control: 4px over --tap, because a slider is dragged rather than tapped */
+  --head-h: 38px; /* what an axis heading's box would have been; nothing reads it, and a token that vanishes from under a contract is how the next round finds it by breaking */
+
+  /* ===== ONE SLIDER, TWO AXES ===========================================
+     Measured ACROSS and ALONG the axis rather than in width and height, which
+     is the whole trick: the same three numbers build the fader on the board
+     and the pitch bar in the bench. */
+  --sl-trough: 20px;  /* the well, ACROSS the axis */
+  --sl-cap:    38px;  /* the cap,  ACROSS the axis — 9px proud of the well each side */
+  --sl-grab:   22px;  /* the cap,  ALONG the axis — what a thumb is */
+  --sl-line:   40px;  /* a laid-down slider's line: the bench row's bar height */
+
+  /* ===== THE CURVE EDITOR'S PLATE =======================================
+     Three --taps tall: enough that an envelope is a SHAPE and not a line,
+     short enough that a chair's sheet still fits a phone with the plate open. */
+  --env-h:   132px;
+  --env-dot: 11px;   /* the mark inside the 44px handle — a quarter of the target, so the picture is small and the thumb is not */
+
+  /* ===== THE PAGE GUTTER — named once, because two fixed bands cancel it
+     to go full-bleed and a second copy of the number would drift. */
+  --gl: 0px;                              /* the views run to the glass */
+  --gr: env(safe-area-inset-right, 0px);  /* not a margin: the part of the glass a finger cannot reach */
+
+  /* ===== THE TWO FIXED BANDS, AND ONLY THESE TWO ========================
+     Each pays its own safe-area inset INSIDE its own token, so <body> reserves
+     the token once and nothing double-counts the notch. */
+  --bar-h: calc(var(--tap) + var(--s1) + var(--s1)
+                + env(safe-area-inset-bottom, 0px));  /* the transport, at the foot */
+  --top-h: calc(var(--tap) + env(safe-area-inset-top, 0px));  /* identity and navigation, at the head: two 44px targets and no padding of its own */
+}
+
+/* ===========================================================================
+   THE PANEL IN DAYLIGHT — `:root[data-theme="light"]`
+
+   A REAL DESIGN AND NOT AN INVERSION. What changes is the room, not the
+   machine: the panel is the warm grey a printed control surface actually is
+   (never paper white — a panel is not a page), the legends are printed dark on
+   it, and the SCREEN keeps being a screen. An LCD read in daylight is DARK
+   green on grey-olive, not bright green on white, so the phosphor darkens and
+   the well goes olive rather than going white; that is the one move that makes
+   this a second design instead of a flipped one.
+
+   THE LAMPS STAY LAMPS. Green, amber and red keep their jobs and only their
+   values move, far enough down to clear 4.5:1 against a light panel. Nothing
+   here is a new meaning, so nothing here is a new name.
+
+   ONLY COLOUR IS RE-DECLARED. Every scale — type, weight, radius, spacing,
+   tap, geometry — is one owner in `:root` above, because a ramp is not a
+   theme.
+   =========================================================================== */
+:root[data-theme="light"]{
+  color-scheme: light;
+  --deck:  #D9D6CA;  /* the chassis under studio lights — a warm panel grey, and never paper */
+  --panel: #E9E6DB;  /* a plate screwed onto it */
+  --well:  #C9CDC2;  /* the cut the screen sits in — olive-grey, which is what an unlit LCD is */
+  --legend:       #191C18;  /* printed ink */
+  --legend-dim:   #4E5249;  /* the second voice */
+  --legend-faint: #4B5654;  /* refused — the same trick the deck plays: a COOLER grey at the same value, because a quieter one fails the floor on the well */
+  --lamp:  #0A6034;  /* the green lamp, read in daylight */
+  --armed: #6E4300;  /* the amber lamp */
+  --clip:  #9A1408;  /* the red lamp */
+  --value: #084C29;  /* the phosphor, dark on the well the way an LCD reads in the sun */
+  --lamp-hot: #074726;
+  --on-fill: #F4F2E9;  /* the ink on a fill inverts with the panel, and is the only colour token that has to */
+  /* THE GREY RAMP RUNS THE OTHER WAY, and the ends keep their jobs: grey1 is
+     still the trough (barely off the ground), grey4 is still the hairline that
+     has to be seen. Only the direction of "quiet" inverts with the room. */
+  --grey1: #CFCCC0;  /* a trough */
+  --grey2: #BDBAAE;  /* a cap, a raised fill */
+  --grey3: #9A9D93;  /* a quiet fill, never an edge */
+  --grey4: #6C7066;  /* the hairline that has to be seen — 3.48:1 on the panel */
+  /* THE SIX PLAYERS, DARKENED FOR A LIGHT PANEL: the same six hues, at the
+     value a light ground needs, so a lane keeps its identity across the two
+     rooms and only its brightness moves. */
+  --v0: #17557F;   /* sky */
+  --v1: #145C3B;   /* green */
+  --v2: #522F94;   /* violet */
+  --v3: #7E2153;   /* magenta */
+  --vb: #454B50;   /* the bass — slate */
+  --drum: #40464C; /* the kit — graphite */
+  /* LEVEL: still four steps of ONE hue, still ascending, still ending on the
+     lamp — a quantity read as how much lamp, whichever way the room runs. */
+  --q1: #C3D8C9;   /* a ghost */
+  --q2: #7FB89B;
+  --q3: #3C8C60;
+  --q4: var(--lamp);  /* the lamp itself, at the top of the ramp */
+  /* THE EIGHT CLUSTER HUES, and eight is still a decision. These are the
+     original set, which was chosen against a light ground in the first place;
+     only h4, h5 and h6 move, to clear the floor on a panel rather than paper. */
+  --lz-h0: #1F5FBF;
+  --lz-h1: #1B7A4B;
+  --lz-h2: #7A3FBF;
+  --lz-h3: #A62B62;
+  --lz-h4: #8A5300;
+  --lz-h5: #0F6C76;
+  --lz-h6: #7A4E24;
+  --lz-h7: #4B5563;
+  /* THE TWO ROW WASHES ARE MADE OF INK HERE, where on the deck they are made
+     of light: an alpha lies over whatever ground a row already has, so the
+     colour has to be the one that darkens THIS room. */
+  --row-hi:  rgba(25, 28, 24, .05);   /* the row under the pointer */
+  --row-lit: rgba(154, 20, 8, .12);   /* the row that is sounding — the clock's alpha */
+  --shadow: 2px 2px 0 var(--legend);  /* on a light panel the cut is drawn in ink, not in the well */
+}
+
+/* ===========================================================================
+   THE TWO ROOMS THAT ARE NOT THEMES
+
+   A person who has asked their machine for more contrast, or who is running
+   forced colours, has said something about LEGIBILITY, not about taste. So the
+   category hues collapse to one ink, the level ramp collapses to one accent,
+   and the two transient row washes go — because a wash is the first thing to
+   fail a contrast floor and the last thing anybody needs.
+   =========================================================================== */
+@media (prefers-contrast: more){
+  :root{ --wash: 0%;
+    --v0: var(--ink); --v1: var(--ink); --v2: var(--ink); --v3: var(--ink);
+    --vb: var(--ink); --drum: var(--ink);  /* six identities become one, and the WORD beside each still names the player */
+    --q1: var(--hand); --q2: var(--hand); --q3: var(--hand); --q4: var(--hand);  /* level collapses to its own top step; the value is read off the fill's WIDTH */
+    --row-hi: transparent; --row-lit: transparent; }  /* a wash is the first thing to fail a floor and the last thing anybody needs */
+}
+@media (forced-colors: active){
+  :root{ --wash: 0%;
+    --v0: CanvasText; --v1: CanvasText; --v2: CanvasText; --v3: CanvasText;
+    --vb: CanvasText; --drum: CanvasText;  /* six identities become one, and the WORD beside each still names the player */
+    --q1: Highlight; --q2: Highlight; --q3: Highlight; --q4: Highlight;  /* the system's own accent, which is the only one forced colours allows */
+    --row-hi: transparent; --row-lit: transparent; }  /* a wash is the first thing to fail a floor and the last thing anybody needs */
+}

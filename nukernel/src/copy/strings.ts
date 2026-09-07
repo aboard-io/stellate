@@ -33,6 +33,7 @@ import { RULES } from "./rules.js";
 import { FIELDS } from "./fields.js";
 import { MISC } from "./misc.js";
 import { SHELL } from "./shell.js";
+import { UI } from "./ui.js";
 
 /** Fold the pages into one table, refusing a key that is claimed twice. */
 function merge(pages: Array<[string, Table]>): Table {
@@ -53,5 +54,5 @@ export const STRINGS: Table = merge([
   ["core", CORE], ["table", TABLE], ["sheets", SHEETS], ["produce", PRODUCE],
   ["board", BOARD], ["glyph", GLYPHS], ["knobs", KNOBS], ["atlas", ATLAS],
   ["rules", RULES],
-  ["fields", FIELDS], ["misc", MISC], ["shell", SHELL],
+  ["fields", FIELDS], ["misc", MISC], ["shell", SHELL], ["ui", UI],
 ]);

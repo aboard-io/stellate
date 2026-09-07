@@ -65,7 +65,22 @@
      be a third-party origin on a page that boots with the wire cut, and a
      subresource with no CORP header under this document's COEP
      `require-corp`. Both of those are fatal; neither is a style question. -->
+<!-- AND THE TOKENS COME BEFORE THE RULES (2026-09-07, docs/DESIGN-SYSTEM.md
+     step 1). `nukernel/tokens.css` holds every design token and nothing else —
+     the palette, the type scale, the spacing ramp, the radii, the hairlines,
+     the tap floors — with each one argued on its own line; nu.css holds the
+     component rules and declares no token at all. It is linked BETWEEN the
+     faces and the rules because that is the order the cascade needs: a face
+     has to be known before a rule asks for it, and a token has to exist before
+     a rule reads it.
+     THERE ARE THREE LINKS NOW AND NOBODY INDEXES THEM. The note above records
+     that no caller ever indexed `document.styleSheets` — test/sheets.js,
+     test/selects.js and ui/selects.js all ITERATE it and disable every one —
+     which is exactly what makes a third link harmless. It also means nothing
+     load-bearing for the STYLESHEET-OFF reading may live in tokens.css, and
+     nothing does: it is declarations only. -->
 <link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="nu.css">
 <!-- AND NO REQUEST FOR A FAVICON. An empty data: URI, which is the only way to
      tell a browser not to go and ask: every load of this page fetched

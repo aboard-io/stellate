@@ -221,512 +221,31 @@
    widget itself. `transform: scale()` was the other candidate and it is a
    trap: it leaves the layout box at 13px, so neighbours overlap the visual
    and the hit area stays 13px. */
-:root{
-  /* DARK MODE IS RETIRED WITH LAMPBLACK (2026-08-27). This block read
-     `color-scheme: light dark; --paper: Canvas; --ink: CanvasText` and the
-     comment under it was proud of the mechanism: "Mixing against the system
-     colours is the whole of dark mode in this file — measured light
-     rgb(255,255,255) paper with srgb 0.62 rules, dark rgb(18,18,18) paper with
-     srgb 0.42 rules — and it is why there is not one theme media query below."
-     The mechanism was real and it is written down here so nobody rebuilds it
-     wrong; what it could never produce is a COMMITTED look, and Enamel is one:
-     "bolder... more primary colors and chunkier. It looks like a funeral
-     program" (Paul, 2026-08-27). Bright flat paint on a steel chassis is a
-     single palette by definition — a hand-blue that inverts to something else
-     at night is not a semantic paint any more. `color-scheme: light` is kept
-     (not deleted) so the 142 native controls render their LIGHT chrome even
-     for a dark-preference visitor, instead of dark widgets on a #F0EDE4 page. */
-  color-scheme: light;
-  /* ---- the chassis (ideal/design-system.html "paint") ---- */
-  --ground: #F0EDE4;   /* the chassis — the room everything bolts to */
-  --panel:  #FFFFFF;   /* a plate screwed onto the chassis: tables, the bar */
-  --well:   #E3E0D6;   /* a cut into a plate: step-grid troughs */
-  /* `--paper` KEEPS ITS NAME AND ITS MEANING — the ground you are standing on,
-     re-declared by the section wash exactly as before — it just stops being
-     `Canvas` and becomes the chassis. Every rule below that painted itself
-     with `--paper` (the sticky heading, the pane covers, the sticky columns,
-     the circle labels, the score gutter) follows for free, which is the same
-     argument the wash made on 2026-08-26. */
-  --paper: var(--ground);
-  --ink:   #191611;    /* jet — every border, every word said */
-  --dim:   #6B6353;    /* the second voice: values, counts, units */
-  --faint: #A79E8E;    /* refused, and only refused */
-  /* ---- the four paints: semantic, never decorative, never mixed ---- */
-  --hand:  #1E45E0;    /* THE HAND — selection, focus, a value you set */
-  --clock: #E5330E;    /* THE CLOCK — playhead, sounding, [data-live] */
-  --meter: #0B9B4E;    /* THE METER — measured signal, engine truth */
-  --flag:  #FFC61A;    /* THE FLAG — armed, hover, about to matter */
-  --hand-tint:  #D9E1FF;
-  --clock-tint: #FFD9CE;
-  --meter-tint: #CFEFDC;
-  --flag-tint:  #FFEFC2;
-  /* ---- CATEGORY: WHICH PLAYER (2026-09-02) --------------------------------
-     LIFTED FROM `nukernel/hw.css:89-90`, verbatim, which is the honest way to
-     add a palette to this page: it is already written, already argued and
-     already contrast-checked in a file on this disk, and inventing a seventh
-     colour at a call site is exactly what hw.css's own comment says the set
-     exists to prevent — "a six-lane palette with two lanes missing is how a
-     seventh colour gets invented at the call site."
+/* ===== THE TOKENS MOVED OUT, 2026-09-07 (docs/DESIGN-SYSTEM.md step 1) ====
+   Paul: *"Create a design system with all the elements we use."* A `:root`
+   block of five hundred lines standing at the head of a nine-thousand-line
+   stylesheet is a design system nobody can see; `nukernel/tokens.css` is that
+   block, alone in a file, with every token argued on its own line, and it is
+   linked ahead of this one in index.html.
 
-     THE SET IS COMPLETE ON PURPOSE, even where a lane has no user today. Four
-     melodic lanes, one bass, one kit, because that is the shape of the band
-     the record can hold; a seventh voice wraps back to `--v0`, which is a
-     collision a reader can see and resolve (two names, one hue, side by side)
-     rather than a colour nobody chose.
+   WHAT WENT: every custom property this file used to declare — the palette,
+   the type scale, the four weights, the four radii, the five spacing steps,
+   the two border weights, the tap floors, the slider anatomy, the two fixed
+   bands, and the page gutter. Nothing was renamed and nothing changed shape,
+   so every one of the rules below reads exactly the token it always read;
+   what changed is where the token is DECLARED and what colour it resolves to.
+   The palette itself is the Stellate's now — a dark deck, printed legends,
+   phosphor values, three lamps — and tokens.css carries that argument.
 
-     WHAT PAINTS WITH THESE IS `.nu-vpaint` AND NOTHING ELSE — see its rule
-     below. The order is the voice's own index in the record (`DOC.voices`),
-     which is also `ui/eight.js voicePaint`'s order, so the nav, the score and
-     the board can agree without any of them being told. */
-  --v0: #1F8FD6;   /* voice 0 — sky */
-  --v1: #1F9D63;   /* voice 1 — green */
-  --v2: #8B5CF0;   /* voice 2 — violet */
-  --v3: #D1478F;   /* voice 3 — magenta */
-  --vb: #7A8188;   /* the bass  — slate */
-  --drum: #6B7280; /* the kit   — graphite */
-  /* ---- LEVEL: HOW MUCH (2026-09-02) ---------------------------------------
-     Four steps of ONE hue, so a velocity reads as a quantity at a glance the
-     way a bar chart does and not as four unrelated lights.
+   WHAT STAYED: this file's rules, all of them, and the prose that explains a
+   RULE. Prose that explained a TOKEN moved with the token. The long-form
+   history of each one (the eighteen-quanta spacing audit, the twenty-two
+   font-sizes, Enamel's retuning, the gutter's rise and deletion) is in
+   tokens.css in short form and in git in full.
 
-     THE NAMES AND THE IDEA ARE hw.css:96's; THE HEXES ARE NOT, AND THE
-     SUBSTITUTION IS THE POINT. hw.css ships `--step-q1 #e14a1e … --step-q4
-     #f7b85c` — a warm 909 ramp — and hw.css can afford it because that page
-     has no red in its state palette. THIS page does: `--clock` is #E5330E and
-     `#e14a1e` is a few points of hue from it. A LEVEL that reads as the
-     playhead, ON THE STEP GRID, WHERE THE PLAYHEAD IS, is the one place this
-     page cannot afford a near-miss, so the ramp is built on the hand instead:
-     a step you wrote is cobalt, and how loud it is is HOW MUCH cobalt. At full
-     level it IS `--hand`, which is what every one of these fills was before
-     today, so the accent does not move and only the quiet end changes.
-     Ascending, so the number counts up with the value — hw.css's ramp counts
-     the other way, and that is the second reason the hexes did not survive.
-     CONTRAST: `--q1` on `--well` is a low-contrast FILL, not text, and every
-     surface that wears it draws an ink border round the fill (`.nu-kf`,
-     `.nu-vaf`), so the shape is legible at every step and only the loudness is
-     being said by the paint. */
-  --q1: #A9BAF0;   /* a ghost */
-  --q2: #7A92EA;
-  --q3: #4A6AE5;
-  --q4: #1E45E0;   /* an accent — this is `--hand` itself, at the top of the ramp */
-  /* ---- THE TWO ROW WASHES (hw.css:101-102, 2026-09-02) --------------------
-     `--zebra` (below) is the table's own permanent stripe and stays what it
-     is. These two are the tints a row wears TRANSIENTLY: under the pointer,
-     and while it is sounding. They are alphas rather than colours on purpose —
-     hw.css's own reason, and it is the right one here too: they lie over
-     whatever ground the row already has (a plate, a section wash, a zebra
-     stripe) instead of replacing it, so a hover on an even row still reads as
-     an even row. `--row-lit` is the CLOCK's alpha and not the hand's, because
-     "this row is sounding" is the clock's fact everywhere else on this page. */
-  --row-hi:  rgba(25, 22, 17, .045);   /* the row under the pointer */
-  --row-lit: rgba(229, 51, 14, .11);   /* the row that is sounding */
-  /* ---- type: one heavy sans said, one mono counted; no serif ------------
-     IBM PLEX, AND ONE STYLESHEET OWNS IT (2026-09-06, Paul: *"Make everything
-     the IBM flex Family fonts referring to one style sheet."*). The FACES are
-     declared in nukernel/fonts.css — thirty `@font-face` rules, nothing else,
-     linked ahead of this file; the FILES are self-hosted at /vendor/plex, with
-     the weight-and-block argument at vendor/plex/VERSION.txt. These three
-     tokens are the only place a family name is written in this stylesheet and
-     the only place any rule may read one from. It said `system-ui` here and,
-     until today, in four rules further down that wanted a symbol and typed a
-     whole stack to get one; those four now read `--sym`.
-
-     THE FALLBACK STACKS ARE HONEST AND THEY ARE NOT DECORATION. A woff2 that
-     has not arrived yet, a browser that refused it, a `unicode-range` this
-     page stepped outside of (Plex's Latin blocks carry no ♭, no ♯, no →) —
-     each of those falls through per CHARACTER, which is why the old
-     system-ui stack is kept behind Plex rather than replaced by a bare
-     `sans-serif`. What changes is which face wins, not what happens when
-     none does.
-
-     NO --serif AND NO --cond, though Plex has both. A token is a promise that
-     something reads it; nothing on this page sets a serif or a condensed face,
-     and two more families would be ~200 KB of woff2 nothing renders. They are
-     one `@font-face` block and one line here away if a round ever wants them. */
-  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  /* THE ONE FACE THAT IS DELIBERATELY NOT PLEX, and it is a GLYPH stack, not
-     a type choice. The page draws its marks as characters — ▾ ↕ ↑ ▫ ▪ ⇅ and
-     the rest of ui/glyph.js — and IBM Plex's Latin blocks do not contain them.
-     Naming Plex first here would put every mark one step deeper into a
-     per-character fallback the design cannot see or control, and the reason
-     the four rules that use this were written in the first place still holds
-     verbatim: "a serif ↕ next to a sans ↑ is two different arrows". One stack
-     keeps every row of marks in one hand. So `--sym` is the exception, it is
-     argued here, and it is a TOKEN — the rules that draw marks (`.nu-g`,
-     `.nu-tf`, `.nu-ixgo`, `.nu-combo::after`) point at it and name no face. */
-  --sym: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
-  /* ---- chunk: THE SCALE, RETUNED (2026-08-27, Paul: "The enamel-style
-     borders and drop shadows are too big. think 1px with shadow of 2px. make
-     the button text smaller and not bold. Do this in the css at the highest
-     level don't do every single one.")
-
-     ENAMEL IS NOT REVERSED, ITS SCALE IS. The paint, the four semantic
-     colours, the hard zero-blur shadow, the press-into-the-shadow — all of it
-     stands. What was too big was the SIZE of the chunk: 3px borders on 292
-     controls, 4px and 6px shadows, and 800-weight 16px text on every button.
-     Measured on the rendered page before this edit: button border 3px, button
-     shadow 4px 4px 0, button text 800/16px; strip and plate shadow 4px 4px 0;
-     every control frame 2px or 3px. Retuned to the two numbers Paul named.
-
-     TWO BORDER WEIGHTS AND NO THIRD, so a sweep can point every rule at one
-     of them and nothing hard-codes a pixel again:
-       --bw       a CONTROL'S FRAME. 1px. Buttons, menus, plates, troughs,
-                  caps, slots, sheets, the transport's rule.
-       --bw-hard  an EMPHASIS EDGE. 2px, and it stays 2 on purpose — the
-                  clock's now-row, the score's playhead mark, a table head's
-                  underline and a sticky column's edge are STRUCTURE, and at
-                  1px the playhead stops reading as the playhead. This is the
-                  "the hard/clock accent may stay 2px" line, spent here.
-     A focus ring is an emphasis edge too (`--bw-hard`, not `--bw`): WCAG 2.2
-     Focus Appearance wants a 2px-thick perimeter and 1px would fail it. */
-  --bw:      1px;
-  --bw-hard: 2px;
-  --shadow: 2px 2px 0 var(--ink);  /* hard offset, zero blur; pressed = into it */
-  --press:  2px;                   /* how far a press travels — the shadow's own offset */
-  /* ===== THE SPACING SCALE — FIVE STEPS AND NO SIXTH (2026-08-29) ========
-     Counted on this sheet before this block existed: EIGHTEEN distinct em/rem
-     quanta in margin/padding/gap declarations (.15 .18 .2 .25 .3 .35 .4 .45
-     .5 .55 .6 .7 .75 .8 1 1.6em, .25rem, .75rem) — a page that grew tab by
-     tab, each tab bringing its own idea of "a little air". Structure is
-     information: eighteen gaps can encode at most five distinctions a reader
-     can actually see, so the other thirteen were noise. Every RHYTHM value on
-     this sheet now points at one of these five, and a rule that types a
-     literal em into margin/padding/gap is the drift this block exists to
-     catch in review.
-     WHAT IS NOT ON THE SCALE, by name, because it is engineering rather than
-     rhythm: 0 and auto; every px value (tap floors, scrollbar seats,
-     safe-area sums, hairline compensations like -1px and -9px); every calc()
-     that cancels a border or a page gutter; and the two glyph micro-kerns
-     (.06em in .nu-ic, .1em on .nu-tf-was), which space INK, not blocks. */
-  --s1: .2em;   /* a hair — inside a control, between a cap and its word */
-  --s2: .35em;  /* tight — cell padding, a control from its own label */
-  --s3: .55em;  /* a gap — between controls that answer one question */
-  --s4: .8em;   /* air — between questions; a plate's own padding */
-  --s5: 1.4em;  /* a block — between one subject and the next */
-  /* ===== THE TYPE, WEIGHT AND RADIUS SCALES (2026-09-02) ================
-     THE OTHER HALF OF THE SPACING LAW, AND IT IS THE SAME AUDIT. Paul,
-     2026-09-01: *"The design system is not consistent."* Counted on this sheet
-     before this block existed: TWENTY-TWO distinct `font-size` values plus
-     twelve more inside `font:` shorthands — .55 .6 .7 .72 .75 .78 .8 .82 .85
-     .9 .95 1 1.15 1.2 1.25rem, .8em, .9em, and the px literals 9, 9.5, 10, 11,
-     12, 13, 15 — of which exactly one (`--btn-fs`) was a token. Weights were
-     typed literally eighteen times at 600, five at 700, four at 800, four at
-     400 and twice at 900. Radii: `--r1` fourteen times, against the literals
-     2px (x3), 3px (x8), 4px (x2), 5px, 6px (x2), 999px and 50%. That is the
-     eighteen-quanta condition the spacing block above was written to end, left
-     standing for the three properties spacing does not cover.
-
-     SIX STEPS OF TYPE AND NO SEVENTH. A step is a DISTINCTION A READER CAN
-     NAME, not a size somebody needed once:
-       --t0  the nav label, and NOTHING else. Reserved, and the reservation is
-             the point: `#nu-tray .nu-vh` is the one place on the page that
-             genuinely needs a size under an annotation, so it is named here
-             rather than typed there, and no second caller may take it.
-             ...AND THE RESERVATION IS SPENT, 2026-09-02 (wave 4). Paul, after
-             using the page: *"Type should be bigger too."* The gutter's word
-             went up two steps (`--t2`) and its second line up one (`--t1`), so
-             the step this row reserved has no caller in the stripe at all.
-             What holds it now is the WORD GRID'S column-head name — the dim
-             mono line under the instrument, which is the same kind of thing
-             the reservation was describing: a size under an annotation, in a
-             box that cannot widen. The step is unchanged and so is the rule
-             that there is no seventh; only the caller moved.
-       --t1  an annotation — `.nu-why`, a stamp, a sub-line under a name.
-       --t2  a caption or a label — `.nu-hint`, `.nu-log`, `.nu-say`, `.nu-explain`.
-       --t3  body, and every `h3`. 1rem, which is what `body` already sets.
-       --t4  a block's own name — a namebar, a panel's plate.
-       --t5  a display number — one you read across the room.
-     FOUR WEIGHTS AND NO FIFTH, and they are Enamel's own, stated in prose at
-     `body` ("900 display / 800 blocks / 700 labels / 500 body") since
-     2026-08-27 and never once as a token until now.
-     FOUR RADII AND NO FIFTH: 0 for a plate (the implicit rule this page has
-     always followed), 6px for a control, 3px for a chip or a fill inside one,
-     999px for a pill — and a pill is RESERVED FOR NOUNS
-     (ideal/design-system.html:494), which is why nothing wears it yet.
-
-     WHAT IS NOT ON THESE SCALES, BY NAME, and it is the same kind of list the
-     spacing block keeps:
-       · 16px on `<select>` and on text entry. It is a FLOOR, not a step: iOS
-         zooms the page when a control under 16px takes focus. A menu may lose
-         its bold; it may not lose its size. No `--t*` under `--t3` may ever be
-         put on a `<select>`, and `select{ font: inherit }` at the top of this
-         file is what keeps it there.
-       · `--btn-fs` (14px) and `--num-fw` (600). The button's size is
-         deliberately BETWEEN `--t2` and `--t3` — "one step down from body",
-         the argument two paragraphs down — and the machine voice is a
-         semibold numeral face, one notch over body, so a value never reads as
-         a label. Two exemptions, both older than this block, both kept as
-         tokens so they stay countable.
-       · the mono faces inside a dense grid (`.nu-van`, `.nu-kn2`, `.nu-pbb`,
-         `#scoredeck .nu-mot > b`, `.nu-grid th`): 9px-13px numerals sized to a
-         36px cell and a 12px cap, which is engineering against a fixed box,
-         not rhythm. `.nu-grid th` is on this list for a second reason worth
-         naming: the motif table has 3.2px of slack at 320 (see HOW WIDE A
-         DRAWN TUNE HAS TO BE) and .8rem -> .82rem would spend some of it.
-       · THE MONO MACHINE LABEL, which is a FAMILY this scale does not yet
-         cover and a debt rather than an exemption: `.nu-rowlab` `.nu-vs-lab`
-         `.nu-vs-val` `.nu-flowlab` `.nu-seamlab` `.nu-panword` `.nu-slotn`
-         `.nu-busin` `.nu-tabarrow` `.nu-trims th` — twelve rules at .62rem to
-         .9rem, all `var(--mono)`, all 600-700, most tracked and capped.
-         `ideal/design-system.html:60-63` names the thing (`.lab`, "11px mono
-         700 caps, dim — a machine label") and this page should collapse them
-         onto one token. It is NOT done here, and the reason is the reason a
-         paint wave is allowed to be careful: every one of those sizes was
-         chosen against a measured COLUMN on the board, the bench or the trim
-         grid, and retyping twelve of them in a round with no board gate is how
-         a desk grows 4px and G13 goes red on somebody else's morning. One
-         token, one measured round, later.
-       · the two weights that are not steps: 600 and 400. 600 is the MACHINE
-         VOICE (`--num-fw` — a semibold numeral face, one notch over body, so a
-         value never reads as a label) and it is already a token. 400 is "give
-         the bold back": it appears only where an element inherits a weight
-         from its FURNITURE — a `<b>` inside a table cell, a `<th>`'s child —
-         and has to return it. Neither is a step of the display/block/label/body
-         ladder; both are named here so the count stays honest.
-       · `1.2rem` on `.nu-g` and `.7rem` on `.nu-n` — the gutter's GLYPH and
-         its digit are ink, not type: they are sized to the 44px mark they sit
-         in. (The gutter's WORD is `--t0` and is on the scale.
-         …AND IT IS `--t2` SINCE 2026-09-02, wave 4 — Paul: *"Type should be
-         bigger too."* The gutter's word is the label size now and its dim
-         SECOND line is `--t1`; `--t0` is a column head's name on a word grid
-         and nothing in the stripe. The scale did not change, only which step
-         the stripe stands on.)
-       · `50%` radius, which is a circle and not a corner (`.nu-circ`), and
-         every px radius under 3 inside a 22px badge.
-       · every `%`, `em`-of-its-own-box and `ch` measure: those are lengths
-         against a control, not sizes on a page. */
-  --t0: .6rem;    /* the smallest step — a word grid's column-head name */
-  --t1: .72rem;   /* an annotation */
-  --t2: .82rem;   /* a caption or a label */
-  --t3: 1rem;     /* body, and every h3 */
-  --t4: 1.15rem;  /* a block's own name */
-  --t5: 1.5rem;   /* a display number */
-  --fw-body:    500;
-  --fw-label:   700;
-  --fw-block:   800;
-  --fw-display: 900;
-  --r0: 0;         /* a plate is square */
-  --r1: 6px;       /* a control eases to 6px */
-  --r2: 3px;       /* a chip, or a fill inside a control */
-  --r-pill: 999px; /* a noun, and only a noun — the LOZENGE wears it (2026-09-05,
-                      DESIGN.md component 16); nothing else on this page does */
-  /* THE BUTTON'S TEXT: SMALLER, AND NOT BOLD. It was 800/16px, the same size
-     as body copy and heavier than an <h2>, which is what made a row of tabs
-     read as a row of headlines. 500 is the body weight (the page already says
-     `font: 500 16px/1.45`) and 14px is one step down from it. The tap target
-     does NOT follow the type down: every button still carries
-     `min-height: var(--tap)` (44px), so a smaller label buys air inside the
-     control and gives up no hit area — measured after, still 44px.
-     16px IS KEPT ON `select` AND ON TEXT ENTRY and that is not an oversight:
-     iOS zooms the page when a <select> or a text field under 16px takes
-     focus. A menu can lose its bold; it cannot lose its size. */
-  --btn-fw: var(--fw-body);        /* an alias since 2026-09-02, not a second opinion */
-  --btn-fs: .875rem;               /* 14px — exempt by name in the scale block above */
-  --num-fw: 600;                   /* the machine voice: every value a control prints */
-  /* ONE SLIDER, TWO AXES (2026-08-27, Paul: "The horizontal sliders should
-     have the same handles and vibes as the vertical sliders, just be
-     horizontal"). These three are the ANATOMY, measured ACROSS and ALONG the
-     axis rather than in width and height, which is the whole trick: the same
-     three numbers build the fader on the board and the pitch bar in the
-     bench. The face they wear is stated once at `.nu-vs-track` — see the
-     comment there, which is the one owner of what a slider looks like. */
-  --sl-trough: 20px;  /* the well, ACROSS the axis */
-  --sl-cap:    38px;  /* the cap,  ACROSS the axis — 9px proud of the well each side */
-  --sl-grab:   22px;  /* the cap,  ALONG the axis — what a thumb is */
-  /* THE CURVE EDITOR'S PLATE (DESIGN.md component 9, 2026-09-05). Three
-     `--tap`s tall: enough that an envelope is a SHAPE and not a line, short
-     enough that a chair's sheet still fits a phone with the plate open. The
-     DOT is the mark inside the 44px handle — a quarter of the target, so the
-     picture is small and the thumb is not. */
-  --env-h:   132px;
-  --env-dot: 11px;
-  --sl-line:   40px;  /* a laid-down slider's line: the bench row's bar height */
-  /* --ctl WAS READ AND NEVER DECLARED (declared 2026-09-02). The second
-     `input[type=range]` block, written 2026-08-27, said `block-size: var(--ctl,
-     48px)` and nothing on this sheet ever defined `--ctl`, so every native
-     range on the page has been riding the FALLBACK for a week — which works,
-     and which is also exactly how a token comes to mean nothing. It is the
-     height of a laid-down control: 48 and not `--tap`'s 44, because a slider
-     is dragged rather than tapped and the four extra pixels are the cap's
-     shoulder. The one scope that cancels it is `.nu-grid` (30px in a 36px
-     cell), for the reason written there. */
-  --ctl: 48px;
-  /* (`--r1: 6px` STOOD HERE and moved up into the radius scale on 2026-09-02,
-     where it is one of four rather than the only one. Same value, same
-     meaning, one owner — see THE TYPE, WEIGHT AND RADIUS SCALES.) */
-  /* THE RULES ARE TWO WEIGHTS OF REAL COLOUR NOW, NOT TWO MIXES OF Canvas.
-     `--rule` was 38% of CanvasText — the quiet line — and everything that
-     leaned on its quietness (the pad's furniture, `.nu-tf-was`, cell rules in
-     a 96-row table) still needs a second voice, so `--rule` is `--dim` rather
-     than full ink: Enamel's "rules and borders are ink, full strength" is paid
-     where a border frames a CONTROL (the 2-3px borders below), and the
-     hairlines inside a dense table keep the second voice so the grid does not
-     shout down its own contents. `--rule-strong` IS the ink, full strength. */
-  --rule:        var(--dim);
-  --rule-strong: var(--ink);
-  --zebra:       color-mix(in srgb, var(--ink) 6%, var(--panel));
-  --tap: 44px;    /* an isolated control */
-  --box: 26px;    /* a checkbox or a radio */
-  --cell: 36px;   /* one step of a sixteen-step grid — see .nu-grid */
-  /* (`--bar-h: 52px` STOOD HERE — sticky level 1, the transport — and was dead
-     from 2026-08-29, when `.nu-bar` was deleted for the gutter. The name is
-     LIVE AGAIN and means the BOTTOM bar (2026-09-09, TABLE.md §10b step 6);
-     its one declaration is at the foot of this block, beside the gutter token
-     it replaces, because that is where the trade is argued.) */
-  /* --head-h WAS "sticky level 2, the axis heading" and is now what an axis
-     heading's box WOULD have been. Nothing reads it since 2026-08-27: sticky
-     level 2 is the tab row, which wraps and therefore may not promise a
-     height, and the heading it replaced is `.nu-vh` (see THE SECOND BAND IS
-     THE TAB ROW). Kept, not deleted, because PROGRAM.md §2.4.1 fixes the
-     custom-property list and a token that vanishes from under a contract is
-     how the next round discovers it by breaking. */
-  --head-h: 38px;
-  /* the page gutter, named once because the two sticky bands cancel it to go
-     full-bleed and a second copy of the number would drift.
-
-     12px OF AIR STOOD HERE AND IT IS GONE (2026-08-30). Paul: *"Get rid of
-     all margins and padding on the outside of the views."* The views run to
-     the edges now: the left inset is already PAID by the tray (its own
-     padding carries env(safe-area-inset-left), see .nu-tray), so --gl owes
-     nothing; --gr keeps only the notch inset for landscape, which is not a
-     margin — it is the part of the glass a finger cannot reach. Every
-     full-bleed negative-margin trick below re-pays these same two tokens, so
-     the whole arithmetic follows this one edit — that is why the number is
-     named once.
-
-     AND IT IS STILL 0 AFTER 2026-09-02, WHICH IS NOT A CONTRADICTION OF THE
-     SENTENCE THAT CAME NEXT. Paul, 2026-09-01: *"Many inner sections lack any
-     padding and just smash into the nav."* Both sentences are true because
-     they are about two different edges. 2026-08-30's *"Get rid of all margins
-     and padding on the outside of the views"* is about the OUTSIDE — the page
-     runs to the glass and the gutter's rule, and it still does, because `--gl`
-     is still 0 and `body`'s arithmetic at `padding-inline` is unchanged.
-     2026-09-01 is about the INSIDE: what smashes into the nav is a panel's
-     first control, and the air it needs is paid at `.nu-pan` (see its rule),
-     INSIDE the view, where a wash and a full-bleed table can still be told to
-     bleed back out over it. Paying it here instead would have widened the
-     content gutter for every full-bleed block on the page and moved the number
-     test/shell.js A7 and A6i measure. */
-  --gl: 0px;
-  --gr: env(safe-area-inset-right, 0px);
-  /* ===== THE FIXED GUTTER (2026-08-28) ================================
-     Paul: *"Make it a fixed gutter"* and *"Dont let anything go under it."*
-     56px, and the number is arithmetic rather than taste: a tap target is
-     `--tap` (44px), the stripe pays `--bw` of rule down its inner edge and
-     4px of padding on each side, so 1 + 4 + 44 + 4 = 53 is the floor and 56
-     gives the mark 47px of column — three pixels over the floor rather than
-     under it. It is the ONE number the whole layout law is made of: the
-     content column is narrowed by exactly this much (see `body`), which is
-     what makes "nothing goes under it" a fact about flow instead of a
-     z-index that only looks right.
-     THE SAFE AREA IS INSIDE THE STRIPE, not beside it. On a notched phone in
-     landscape `env(safe-area-inset-right)` is the rounded corner, and the
-     gutter is what is against that corner now — so it grows by the inset and
-     pays it back as its own padding, and the 56px of column the marks stand
-     in does not move. */
-  /* THE GUTTER MOVED TO THE LEFT, 2026-08-28. Paul: *"Move the right nav to
-     the left so it doesn't interfere with the scroll on the right."* Right was
-     wrong for two reasons a measurement would not have caught: the scrollbar
-     and the fling live on that edge on a desktop, and the swipe-back gesture
-     owns it on a phone — a fixed stripe there is a thumb trap. The safe-area
-     inset it reserves follows it, so a notch on the left is still cleared. */
-  /* ===== BIGGER, AND IT IS A CLAMP NOW (2026-09-02) ===================
-     Paul: *"The left nav is very good. I think it should be bigger with bigger
-     type and we should really work hard on nesting options inside the left
-     nav."*
-
-     THIS REVERSES THE 56px ABOVE, and the arithmetic that argued for it is
-     kept because it is still the FLOOR: 1px of rule + 4 + 44 (`--tap`) + 4 is
-     53, so nothing may be narrower than that and 56 gave the mark 47px of
-     column. What changes is that 47px is not a column a WORD fits in — it is a
-     column a glyph fits in with a word broken across three lines under it —
-     and Paul has asked for the word, the instrument under the word, and
-     several levels of them at once.
-       clamp(72px, 24vw, 136px)
-       · 72px is the floor this file already named as "the sanctioned way to
-         buy room" when it measured the labels (THE MARKS WEAR THEIR WORDS,
-         below): 63px of column, which is where a two-line word at --t1 stops
-         breaking mid-syllable;
-       · 24vw is the middle, so the stripe is a proportion of the glass rather
-         than a constant that is generous on a phone and mean on a laptop:
-         76.8px at 320, 90 at 375, 103.2 at 430, 136 (clamped) from 567 up;
-       · 136px is the ceiling, which is where the mark becomes a ROW — glyph at
-         the left, the word and its dim second line to the right (see #nu-tray
-         .nu-ic, WAVE 1a at the foot of this file) — and past which a gutter is
-         a sidebar and the content column starts paying for it.
-     THE 96px HINGE is not in this token: it is a media query at 400px, which
-     is exactly where 24vw reaches 96 and where two text lines beside a 1.2rem
-     glyph stop being narrower than the glyph itself. Below it the mark stays a
-     column, which is what 47px has always been.
-     EVERYTHING STILL FOLLOWS THIS ONE EDIT: `body { padding-inline }` narrows
-     the content column, `.nu-log` and the new `.nu-strip-out` anchor their
-     near edge at it, and ui/glyph.js `place()` MEASURES the gutter rather than
-     being told — which is why none of the three had to change.
-     THE SAFE AREA IS STILL INSIDE THE STRIPE (the paragraph above): the inset
-     is added outside the clamp, so the column the marks stand in is the
-     clamp's number and the notch is paid on top of it. */
-  /* ===== AND WIDER AGAIN, 2026-09-02 (the wave-4 arithmetic) ==========
-     Paul, after using the page: *"The expanded left nav needs more alignment.
-     Icons run into icons now. Type should be bigger too. Remember that
-     vertical space is cheaper than horizontal, and if it needs to be wider
-     that's fine."*
-
-     THIS REWRITES THE CLAMP ABOVE IN PLACE and keeps its argument, because
-     the argument was right and only its numbers were timid. Every stop moves
-     up one notch:
-       clamp(96px, 28vw, 176px)
-       · 96px is the FLOOR, and it is the number the paragraph above already
-         identified as the hinge — "where two text lines beside a 1.2rem glyph
-         stop being narrower than the glyph itself". Making the floor the hinge
-         is what deletes the hinge: the mark is a ROW at every width this page
-         is drawn at, so a phone gets the instrument line under the player's
-         name (B10, the one feature that was drawn on no phone at all) and the
-         two media queries below collapse into one unconditional block. The
-         column it buys is 96 − 1 (rule) − 8 (the stripe's own padding) = 87px:
-         a 24px glyph column and 63px of word, which is the whole of the old
-         72px stop spent on the WORD alone.
-       · 28vw is the middle — 89.6 at 320 (so the floor holds), 105 at 375,
-         109.2 at 390, 120.4 at 430, 176 (clamped) from 629 up.
-       · 176px is the CEILING, up from 136. "If it needs to be wider that's
-         fine" is permission to spend horizontal on the one column that reads
-         two facts per row; 176 is where a member row prints "percussive
-         organ" without an ellipsis at --t1, measured, and past which the
-         stripe would be reading as a sidebar rather than as a gutter.
-     WHAT IT COSTS, SAID RATHER THAN HIDDEN: the content column at 320px is
-     320 − 96 = 224px (it was 320 − 76.8 = 243). Paul's own sentence is the
-     ruling on that trade — vertical space is cheaper than horizontal, and the
-     panels below are one column of fields at that width either way. */
-  /* ===== ...AND THE GUTTER IS DELETED, 2026-09-09 (TABLE.md §10b step 7) ===
-     `--tray-w: calc(clamp(96px, 28vw, 176px) + env(safe-area-inset-left, 0px))`
-     STOOD HERE, and the paragraphs above are the arithmetic that chose it.
-     What replaces it is a BAR at the foot of the page (§10a: *"[ genre ] ·
-     [ die + number ] · [ play / stop ]"*), and the trade it makes is the exact
-     inverse of the one the gutter made: 96-to-176px of WIDTH at every level
-     against 44px of HEIGHT, once. On a 320px phone that is 224px of content
-     column becoming 320 − 24 = 296 — a whole player column of the table back —
-     for a row of chrome the page was already reserving 24px under
-     (`padding-block-end: max(24px, env(safe-area-inset-bottom))`).
-     THE SAFE AREA MOVES WITH IT. The gutter paid `env(safe-area-inset-left)`
-     because it stood in the notch's column; the bar pays
-     `env(safe-area-inset-bottom)` because it stands on the home indicator, and
-     it pays it INSIDE `--bar-h` so nothing can double-count it. */
-  --bar-h: calc(var(--tap) + var(--s1) + var(--s1)
-                + env(safe-area-inset-bottom, 0px));
-  /* ===== `--top-h` IS A REAL BAND AGAIN, 2026-09-06 (docs/NAV.md) =======
-     Paul: *"move the view selector into a hamburger on the top right…
-     Consolidate that with the existing bottom right hamburger (which goes
-     away)."* The strip that took the token back holds TWO 44px targets and
-     nothing else — the record's name at the start, the ≡ at the end — so it is
-     `--tap` EXACTLY, with no padding of its own: the token was `--tap + two
-     steps` when the strip was a floating plate with air round it, and a
-     full-width band pays for its air in the row, not in its height.
-     IT PAYS THE NOTCH, WHICH `<body>` USED TO. The strip stands at
-     `inset-block-start: 0`, so the safe area is inside it (its own
-     `padding-block-start`) and inside this token, and <body> reserves the
-     token once. Nothing double-counts it, which is the same discipline
-     `--bar-h` keeps at the other end. */
-  --top-h: calc(var(--tap) + env(safe-area-inset-top, 0px));
-}
+   THE LAW THIS LEAVES BEHIND: nothing below this line may declare a custom
+   property at `:root`, and no rule may type a colour. Both are gated by
+   test/design-system.js. */
 *,*::before,*::after{ box-sizing: border-box; }
 /* ---- NOTHING RUBBER-BANDS (2026-09-06, TABLE.md §15a) ----------------
    Paul: *"In the song section area I can drag it too far right and then the
@@ -904,8 +423,8 @@ th button:active, td button:active{ transform: none; background: var(--flag); }
    ui/eight.js does not move. The <mark> inside goes transparent here so the
    cap is one colour: on a cobalt cap the mark has nothing left to say that
    the cap is not already saying. */
-button[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF; }
-button[aria-pressed="true"]:hover{ background: #152F9E; }
+button[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill); }
+button[aria-pressed="true"]:hover{ background: var(--lamp-hot); }
 button[aria-pressed="true"] mark{ background: transparent; color: inherit; }
 /* THE MENU IS A PLATE TOO — the same jet border and 6px ease as a button, one
    weight down (700, the label weight): a settled choice is quieter than a
@@ -1616,9 +1135,10 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    the four paints, so it stays. `--rule`/`--rule-strong`/`--zebra` are
    literal colours now, so "every line keeps exactly the weight it had" is
    true by construction rather than by mixing discipline. */
-:root{ --wash: 4%; }
-@media (prefers-contrast: more){ :root{ --wash: 0%; } }
-@media (forced-colors: active){ :root{ --wash: 0%; } }
+/* (`:root{ --wash: 4% }` AND ITS TWO MEDIA OVERRIDES STOOD HERE and are in
+   nukernel/tokens.css with every other token — see the tombstone at the head
+   of this file. The paragraph above is about the WASH, which is a mechanism
+   this file draws; the NUMBER is a token, and it moved.) */
 /* ...AND THE TWO NEW FAMILIES FALL WITH IT (2026-09-02). CATEGORY and LEVEL
    are the fifth and sixth colour families (see the top of this file) and they
    are subject to exactly the same rule the wash is: a reader who has asked for
@@ -1631,16 +1151,10 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    player; the hue was only ever the shortcut). LEVEL collapses to `--hand`,
    its own top step, so a fill is still the paint it always was and the value
    is read off the fill's WIDTH, which is where it was already being read. */
-@media (prefers-contrast: more){
-  :root{ --v0: var(--ink); --v1: var(--ink); --v2: var(--ink); --v3: var(--ink);
-         --vb: var(--ink); --drum: var(--ink);
-         --q1: var(--hand); --q2: var(--hand); --q3: var(--hand); --q4: var(--hand);
-         --row-hi: transparent; --row-lit: transparent; } }
-@media (forced-colors: active){
-  :root{ --v0: CanvasText; --v1: CanvasText; --v2: CanvasText; --v3: CanvasText;
-         --vb: CanvasText; --drum: CanvasText;
-         --q1: Highlight; --q2: Highlight; --q3: Highlight; --q4: Highlight;
-         --row-hi: transparent; --row-lit: transparent; } }
+/* (THE `prefers-contrast: more` AND `forced-colors: active` OVERRIDES OF THE
+   CATEGORY AND LEVEL FAMILIES STOOD HERE, and are in nukernel/tokens.css
+   under THE TWO ROOMS THAT ARE NOT THEMES. The paragraph above is the
+   argument and stays where the families are drawn; the declarations moved.) */
 /* ===== `.nu-vpaint` — THE ONE THING THAT WEARS A CATEGORY (2026-09-02) =====
    THE CONTRACT, AND IT IS TWO ATTRIBUTES AND ONE CLASS:
 
@@ -1673,13 +1187,14 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 [data-vi="3"]{ --vpaint: var(--v3); }
 [data-vi="4"]{ --vpaint: var(--vb); }
 [data-vi="5"]{ --vpaint: var(--drum); }
-.nu-vpaint{ background: var(--vpaint, var(--ink)); color: #FFFFFF;
+.nu-vpaint{ background: var(--vpaint, var(--ink)); color: var(--on-fill);
   border: var(--bw) solid var(--ink); border-radius: var(--r2); }
 .nu-vpaint.is-edge{ background: transparent; color: inherit; border: 0;
   box-shadow: inset 3px 0 0 var(--vpaint, var(--ink)); border-radius: var(--r0); }
 .nu-ax, #atlas{
   --paper: color-mix(in oklab,
-                     hsl(calc(var(--sec) * 137.5deg) 70% 50%) var(--wash), var(--ground));
+                     hsl(calc(var(--sec) * var(--wash-turn)) var(--wash-sat) var(--wash-lit))
+                     var(--wash), var(--ground));
   background: var(--paper); }
 /* THE CANCEL-AND-RE-PAY IS THE PANEL'S INSET NOW, NOT `--gl` (2026-09-02).
    Paul, 2026-09-01: *"Many inner sections lack any padding and just smash into
@@ -1930,8 +1445,8 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
   background:
     linear-gradient(to right, var(--paper) 30%, transparent) left / 24px 100% no-repeat local,
     linear-gradient(to left,  var(--paper) 30%, transparent) right / 24px 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.22), transparent) left / 10px 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.22), transparent) right / 10px 100% no-repeat scroll; }
+    radial-gradient(farthest-side at 0 50%, var(--scrim), transparent) left / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--scrim), transparent) right / 10px 100% no-repeat scroll; }
 
 /* THE SIXTEEN-STEP GRID, ROTATED, and the tension this file used to resolve
    the other way. It read, and the argument is kept because it was right about
@@ -2081,7 +1596,7 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
      the hand, and the chosen key on the ring is the clearest case of "if
      cobalt is on it, you put it there" on the whole page. Same two
      declarations, same single owner, new paint. */
-  background: var(--hand); color: #FFFFFF; }
+  background: var(--hand); color: var(--on-fill); }
 /* <mark> IS THE CLOCK'S OWN HIGHLIGHT (2026-08-27). It was the browser's
    default — Mark/MarkText, a yellow the UA chose — and yellow is the FLAG's
    word now, which the sounding step is not: it is not about to matter, it is
@@ -2800,7 +2315,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-slot.is-empty{ border-style: dashed; background: transparent; }
 .nu-slot.is-off{ opacity: .6; }
 .nu-slotrow{ display: flex; gap: var(--s2); align-items: center; }
-.nu-slotn{ font: 700 .75rem var(--mono, monospace); color: #fff; background: var(--ink);
+.nu-slotn{ font: 700 .75rem var(--mono, monospace); color: var(--on-fill); background: var(--ink);
   inline-size: 22px; block-size: 22px; border-radius: var(--r2); flex: none;
   display: inline-flex; align-items: center; justify-content: center; }
 .nu-slot.is-empty .nu-slotn{ background: var(--faint); }
@@ -2916,7 +2431,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: 3px;
   cursor: pointer; padding: 0; }
 .nu-panbtn:hover{ background: var(--flag-tint); }
-.nu-panbtn[aria-pressed="true"]{ background: var(--hand); color: #fff; }
+.nu-panbtn[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill); }
 .nu-panword{ margin: 0; font: 600 .72rem var(--mono, monospace); }
 .nu-panword.is-dflt{ color: var(--dim); }
 
@@ -2929,7 +2444,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-tgl{ min-block-size: 44px; min-inline-size: 72px; font-weight: var(--btn-fw);
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: 4px;
   cursor: pointer; }
-.nu-tgl[aria-pressed="true"]{ background: var(--hand); color: #fff; }
+.nu-tgl[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill); }
 .nu-drive{ display: block; }
 .nu-goes{ margin: 0; border-block-start: var(--bw) solid var(--ink);
   padding-block-start: var(--s2); font: 600 .7rem var(--mono, monospace);
@@ -3011,7 +2526,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   display: block; inline-size: fit-content;
   font-family: var(--sans); font-size: var(--t4); font-weight: var(--fw-block);
   line-height: 1; letter-spacing: .08em; text-transform: uppercase;
-  color: #FFFFFF; background: var(--ink);
+  color: var(--on-fill); background: var(--ink);
   padding: var(--s3) var(--s4); border-radius: var(--r1); }
 .nu-namebar-sub{ display: block; margin-block-start: var(--s1);
   font-size: var(--t1); font-weight: var(--fw-body); letter-spacing: 0;
@@ -3021,7 +2536,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
      3.4:1 against #191611, which clears AA for the 11.5px it is set at only
      because it is never the only copy of what it says (the roster's own
      column carries the same word). */
-  color: rgba(255, 255, 255, .72); }
+  color: var(--on-fill-dim); }
 /* WHAT `.nu-busname` KEPT OF ITS OWN: nothing. It was `.85rem/800/6px`, which
    is `--t4`/`--fw-block`/`--r1` to within the rounding the type scale exists
    to remove — 13.6px becomes 18.4px on the four bus plates. It is allowed to
@@ -3078,8 +2593,8 @@ table.nu-trims{ color: var(--ink); }
   font: var(--btn-fw) .72rem var(--mono, monospace); cursor: pointer; padding: 0; }
 .nu-trims tr.now td .nu-trimbtn{ border-color: var(--clock); border-width: var(--bw-hard); }
 .nu-trims tr.now th{ background: var(--clock-tint); border-radius: 3px; }
-.w-out{ background: var(--ink); color: #fff; }
-.w-hush{ background: var(--hand); color: #fff; }
+.w-out{ background: var(--ink); color: var(--on-fill); }
+.w-hush{ background: var(--hand); color: var(--on-fill); }
 .w-back{ background: var(--hand-tint); }
 .w-mid{ background: var(--panel); color: var(--dim); }
 /* DIM IS DERIVED, BRIGHT IS SET — the page's own law, on the word grid
@@ -3099,7 +2614,7 @@ table.nu-trims{ color: var(--ink); }
    (w-mid keeps the global hover); a cell that already says a word answers
    the pointer in its own color, one shade harder where the palette has one. */
 .nu-trimbtn.w-out:hover{ background: var(--ink); }
-.nu-trimbtn.w-hush:hover{ background: #152F9E; }
+.nu-trimbtn.w-hush:hover{ background: var(--lamp-hot); }
 .nu-trimbtn.w-back:hover{ background: var(--hand-tint); }
 .nu-trimbtn.w-fwd:hover{ background: var(--flag-tint); }
 .nu-trimbtn.w-lift:hover{ background: var(--flag); }
@@ -3656,7 +3171,7 @@ table.nu-trims{ color: var(--ink); }
 #scoredeck .nu-mot > b{ position: absolute; inset-block-start: 1px;
   white-space: nowrap;
   font: var(--fw-label) 9px/1.4 var(--mono); letter-spacing: .04em;
-  background: var(--vpaint, var(--hand)); color: #FFFFFF;
+  background: var(--vpaint, var(--hand)); color: var(--on-fill);
   padding: 0 4px; border-radius: var(--r2); }
 /* …and the last cap on a rule hangs from the section's END rather than its
    start, so it cannot collide with the next section's first cap. A translate
@@ -3725,7 +3240,7 @@ table.nu-trims{ color: var(--ink); }
   justify-content: center; inline-size: 44px; block-size: 32px;
   border: var(--bw) solid var(--ink); border-radius: var(--r1);
   font: var(--fw-block) 11px/1 var(--mono); flex: none;
-  background: var(--ink); color: #FFFFFF; }
+  background: var(--ink); color: var(--on-fill); }
 #exportdeck .nu-exp > button{ margin-block-start: auto; }
 
 /* THE PLAYHEAD LINE IS GONE (Paul, 2026-08-26: "Get rid of the playhead"), and
@@ -4497,7 +4012,7 @@ table.nu-trims{ color: var(--ink); }
   display: inline-flex; align-items: center; justify-content: center; }
 .nu-segb:first-child{ border-inline-start: 0; }
 .nu-segb:hover{ background: var(--flag-tint); }
-.nu-segb[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF; }
+.nu-segb[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill); }
 .nu-segb:disabled{ color: var(--faint); background: var(--well); cursor: default; }
 /* ---- THE TWO LAID-DOWN SLIDERS ---------------------------------------
    THE ANATOMY IS `.nu-vs-track`'S AND IT IS NOT RESTATED HERE — the trough's
@@ -4812,7 +4327,7 @@ table.nu-trims{ color: var(--ink); }
   color: var(--paper);
   border-inline-start-color: color-mix(in srgb, var(--paper) 45%, transparent); }
 .nu-bench tr:has(> th[data-live="count"] mark) .nu-segb[aria-pressed="true"]{
-  background: var(--hand); color: #FFFFFF; }
+  background: var(--hand); color: var(--on-fill); }
 .nu-bench tr:has(> th[data-live="count"] mark) .nu-segb:disabled{
   color: color-mix(in srgb, var(--paper) 40%, transparent);
   background: transparent; }
@@ -5054,7 +4569,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-video { display: flex; flex-direction: column; gap: var(--s3); }
 .nu-video-canvas {
   inline-size: 100%; block-size: auto; aspect-ratio: 4 / 3;
-  background: #000; display: block; border: var(--bw) solid var(--rule);
+  background: var(--stage); display: block; border: var(--bw) solid var(--rule);
 }
 .nu-video-form {
   display: flex; flex-wrap: wrap; gap: var(--s2);
@@ -5072,7 +4587,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-video-cap { margin: 0; font-size: var(--t1); opacity: .7; }
 
 /* the stage is what goes fullscreen, so the controls stay reachable inside it */
-.nu-video-stage { position: relative; background: #000; line-height: 0; }
+.nu-video-stage { position: relative; background: var(--stage); line-height: 0; }
 /* both spellings: Safari needs the -webkit- pseudo-class, and a selector list
    containing one it does not know would drop the WHOLE rule, so they are
    written as separate rules on purpose */
@@ -5105,10 +4620,10 @@ table.nu-trims{ color: var(--ink); }
    and its two fullscreen spellings, its `16/9` and its `#0c0a1a` are all
    decisions this round has no quarrel with.) */
 .nu-saver { display: flex; flex-direction: column; gap: var(--s3); }
-.nu-saver-stage { position: relative; background: #0c0a1a; line-height: 0; }
+.nu-saver-stage { position: relative; background: var(--stage-saver); line-height: 0; }
 .nu-saver-canvas {
   inline-size: 100%; aspect-ratio: 16 / 9; display: block;
-  background: #0c0a1a; border: var(--bw) solid var(--rule);
+  background: var(--stage-saver); border: var(--bw) solid var(--rule);
 }
 /* both spellings, separate rules — the video stage's own warning: a selector
    list with one unknown pseudo-class drops the WHOLE rule */
@@ -6327,9 +5842,9 @@ table.nu-trims{ color: var(--ink); }
   font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
 /* the word you are on, in the hand's own paint — the same cobalt the gutter's
    mark and every `aria-pressed` control on this page wears */
-.nu-wchip[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
+.nu-wchip[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill);
   border-color: var(--hand); }
-.nu-wchip[aria-pressed="true"]:hover{ background: #152F9E; }
+.nu-wchip[aria-pressed="true"]:hover{ background: var(--lamp-hot); }
 /* A REFUSAL IS GREY AND CARRIES ITS REASON. `data-why` is on the chip, the
    reason is joined to its accessible name and repeated in its `title`, so
    nothing here is a silent grey — which is the failure this box legislates
@@ -6512,7 +6027,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-groupbar{ display: flex; flex-wrap: wrap; gap: var(--s2); }
 .nu-groupbtn{ min-block-size: var(--tap); padding-inline: .5ch;
   font: var(--btn-fw) 1rem/1.2 var(--sans, inherit); }
-.nu-groupbtn[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
+.nu-groupbtn[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill);
   border-color: var(--hand); }
 .nu-wchips.nu-pinned{ background: transparent; border-style: dashed; }
 /* A MOTIF CHIP CARRIES ITS PICTURE AND WHERE IT CAME FROM (§3). The preview is
@@ -7943,7 +7458,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   color: var(--dim); font-size: var(--t1, .72rem); line-height: 1.15;
   font-weight: 500; }
 .nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"] .nu-sub2{
-  color: #FFFFFF; opacity: .8; }
+  color: var(--on-fill); opacity: .8; }
 /* ---- AND THE TAPE TAKES THE GAP (2026-09-06, TABLE.md §18) -----------
    Paul: *"You could put the playback bar to the right of the genre on top top
    if you want."* The tape is a READOUT and not a control, so it belongs with
@@ -8115,8 +7630,8 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    name at the same moment, which is one state spelled twice. `aria-pressed`
    stays where it means something: the genre plate's own toggle. */
 #nu-menu button[aria-current]{ background: var(--hand);
-  color: #FFFFFF; border-color: var(--hand); }
-#nu-menu button[aria-current]:hover{ background: #152F9E; }
+  color: var(--on-fill); border-color: var(--hand); }
+#nu-menu button[aria-current]:hover{ background: var(--lamp-hot); }
 #nu-menu .nu-ic{ display: flex; flex-direction: row; align-items: center;
   gap: var(--s2); text-align: start; }
 /* THE WORDS ARE VISIBLE HERE, which is the one thing the gutter could never
@@ -8419,7 +7934,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-bar > .nu-bartp > button + button,
 .nu-bar > .nu-seedrow > button + button{
   border-inline-start: var(--bw) solid var(--rule); }
-.nu-bar button[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
+.nu-bar button[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill);
   border-color: var(--hand); }
 /* THE GENRE PLATE READS AS TWO LINES, the wiki name over the place and year,
    which is exactly what it read as in the gutter's foot — the same
@@ -8574,7 +8089,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    matters most, silently deleted by a restyle. */
 #pan-band .nu-groupbtn[aria-pressed="true"],
 #pan-band .nu-wchip[aria-pressed="true"]{
-  background: var(--hand); border-color: var(--hand); color: #FFFFFF; }
+  background: var(--hand); border-color: var(--hand); color: var(--on-fill); }
 
 /* 3 · A VALUE IN A SHEET IS A CUT, NOT A BOX --------------------------
    A sheet row is `label · control · value · clear-back` and the control has to
@@ -8906,7 +8421,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-castchip[aria-pressed="true"],
 #pan-band .nu-bankname[aria-pressed="true"],
 #pan-band .nu-bankopen[aria-pressed="true"]{
-  background: var(--hand); border-color: var(--hand); color: #FFFFFF; }
+  background: var(--hand); border-color: var(--hand); color: var(--on-fill); }
 /* A NUMBER YOU TYPE IS A CUT, NOT A PLATE — §3's own rule, said for the two
    entries the time panel draws itself (`bpm.typed`, `meter.num/den.typed`). */
 #pan-band .nu-bpmbig, #pan-band .nu-signum{
@@ -9109,16 +8624,12 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    something it does not mean. These are their own ramp, at the same weight —
    every one dark enough for white text (the lightest, `--lz-h4` #B26B00, is
    4.0:1 on white) because the hot state fills. */
-:root{
-  --lz-h0: #1F5FBF;   /* 0 */
-  --lz-h1: #1B7A4B;   /* 1 */
-  --lz-h2: #7A3FBF;   /* 2 */
-  --lz-h3: #A62B62;   /* 3 */
-  --lz-h4: #B26B00;   /* 4 */
-  --lz-h5: #0F7C86;   /* 5 */
-  --lz-h6: #8A5A2B;   /* 6 */
-  --lz-h7: #4B5563;   /* 7 */
-}
+/* (`:root{ --lz-h0 … --lz-h7 }` STOOD HERE and is in nukernel/tokens.css with
+   every other token. The eight are lifted for the deck — a hue chosen to sit
+   on #F0EDE4 is not the same hue on #16191A — and the sentence above about
+   white text is answered there by `--on-lamp`, which is the deck's own
+   darkest rather than white. The paragraph above stays: it argues the SET,
+   which is what this file draws.) */
 .nu-lzcluster[data-hue="0"]{ --lz: var(--lz-h0); }
 .nu-lzcluster[data-hue="1"]{ --lz: var(--lz-h1); }
 .nu-lzcluster[data-hue="2"]{ --lz: var(--lz-h2); }
@@ -9233,7 +8744,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    state, said in one control. */
 .nu-lz.is-hot, .nu-lz[aria-pressed="true"]{
   background: var(--lz, var(--hand)); border-color: var(--lz, var(--hand));
-  color: #FFFFFF; }
+  color: var(--on-fill); }
 /* ...AND THE WEIGHT IS ON THE WORD, NOT ON THE BUTTON. The pill's side padding
    is `.7ch` (DESIGN.md §1: *"a control is a hair wider than its word"*) and a
    `ch` is the width of the "0" IN THE CURRENT WEIGHT — so bolding the button
@@ -9250,7 +8761,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   font-variant-numeric: tabular-nums;
   min-inline-size: 1.4em; text-align: center;
   padding: 1px .3ch; border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .28); }
+  background: var(--on-fill-quiet); }
 /* REFUSED: DASHED, DIM, AND ITS WORD ONLY. `.nu-lzwhy` stood here — a
    `flex: 0 0 100%` second line printing the reason inside the button, which is
    `.nu-wchip > .nu-why`'s shape one widget along. Paul, 2026-09-05, with the
@@ -9639,3 +9150,356 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #atlasNone{ margin: var(--s3); }
 #atlasSay:empty, #atlasNone:empty{ display: block; block-size: 0;
   margin-block: 0; padding: 0; overflow: hidden; }
+
+/* ======================================================================
+   THE ELEMENTS (docs/DESIGN-SYSTEM.md steps 2 and 3, 2026-09-07)
+
+   Paul: *"Styles should be in CSS and elements should be lit web components
+   that are carefully defined."* So: `nukernel/src/ui/**` carries the
+   STRUCTURE — the tags, the attributes, the keyboard, the refusal — and this
+   block carries the LOOK, all of it, for every one of them. There is no
+   `css``` block anywhere in src/ui and there may not be one: an element that
+   painted itself would be a second stylesheet, and a component's colour would
+   stop being a token the moment somebody wanted to change it.
+
+   THEY RENDER INTO THE LIGHT DOM, which is why these are ordinary selectors
+   and not `::part`. The decision and its four reasons are written down in
+   `nukernel/src/ui/base.ts`; the short form is that a shadow root is a wall
+   this file cannot reach through, and this file is meant to be in charge.
+
+   THE FIVE STATES A HAND CAN ASSERT ARE ATTRIBUTES ON THE HOST —
+   `[selected] [open] [refused] [busy]`, and rest is their absence — so every
+   one of them is one selector here and one query in test/design-system.js.
+   THE TWO THE BROWSER OWNS ARE PAIRED WITH `[data-demo]` IN THE SAME RULE:
+   `:hover, [data-demo="hover"]` and `:focus-visible, [data-demo="focus"]`.
+   The gallery forces the demo spelling, so what it shows is drawn by the
+   declaration that draws the live page, and the two cannot diverge without a
+   syntax error.
+
+   ONE SELECTION TREATMENT AND ONE FOCUS TREATMENT, AND THEY ARE DIFFERENT
+   (§1, Paul: *"Selected boxes are oddly selected"*):
+     SELECTED  the lamp is ON — the control is FILLED in `--lamp` and its word
+               is `--on-fill`. Nothing else on this page fills.
+     FOCUS     a lamp RING — `--bw-hard` of `--lamp` OUTSIDE the box, offset,
+               so a control can be focused and selected at once and read as
+               both.
+     HOVER     the AMBER edge — armed, about to matter. It is a border colour
+               and never a fill, so a pointer passing over a strip cannot be
+               mistaken for a hand having chosen something.
+     OPEN      the lamp's GLOW — a `--hand-tint` ground and a `--lamp`
+               hairline: something of this control's is standing under it.
+     REFUSED   dashed, quiet, and it SAYS WHY (component 14). Never `disabled`.
+     BUSY      an amber hairline along the foot. Static, because a page that
+               animates a wait is a page that animates under `prefers-reduced-
+               motion` too.
+   ====================================================================== */
+
+/* ---- the host boxes ---------------------------------------------------
+   A host is a layout box and nothing else: it draws no ground, no border and
+   no radius, so `<nu-button>` in a flex row behaves exactly as the `<button>`
+   inside it would have. */
+nu-button, nu-icon-button, nu-rail, nu-spinner{
+  display: inline-flex; flex-direction: column; align-items: stretch;
+  min-inline-size: 0; }
+nu-lamp{ display: inline-flex; align-items: center; }
+nu-legend, nu-value{ display: inline-flex; align-items: baseline;
+  gap: var(--s1); min-inline-size: 0; }
+
+/* ---- THE SAY LINE, ONE PER WIDGET (component 14) ---------------------
+   `role="status"`, so the sentence is heard as well as seen, and EMPTY IT
+   TAKES NO ROOM — a reason arriving under a thumb may not move the control
+   the thumb is on, and a reserved blank line under every button on the page
+   would be the other way of getting that wrong. The room is bought back by
+   the host being a column: the sentence grows DOWN, away from the finger. */
+.nu-elsay{ display: block; font: var(--fw-body) var(--t2)/1.3 var(--sans);
+  color: var(--flag); padding-block-start: var(--s1); }
+.nu-elsay:empty{ display: none; }
+
+/* ---- <nu-button> · <nu-icon-button> ---------------------------------- */
+.nu-elbtn{ display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--s2);
+  min-block-size: var(--tap); min-inline-size: var(--tap);
+  padding: var(--s1) var(--s3);
+  font: var(--btn-fw) var(--btn-fs)/1.2 var(--sans);
+  color: var(--legend); background: var(--grey1);
+  border: var(--bw) solid var(--rule); border-radius: var(--r1);
+  cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.nu-elicon{ padding: 0; inline-size: var(--tap); flex: 0 0 auto; }
+.nu-elmark{ font-family: var(--sym); font-size: var(--t4); line-height: 1;
+  flex: 0 0 auto; }
+.nu-elword{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* THE THREE TONES. A tone says what KIND of thing a press does, at rest,
+   before anything is selected: the panel's own, the one that is ON, and the
+   one that destroys. It is a border colour and never a fill, because a fill
+   is what SELECTED means and one look may not mean two things. */
+.nu-elbtn{ border-color: var(--rule); }
+[tone="lamp"] > .nu-elbtn{ border-color: var(--lamp); color: var(--lamp); }
+[tone="clip"] > .nu-elbtn{ border-color: var(--clip); color: var(--clip); }
+
+[size="tight"] > .nu-elbtn{ min-block-size: var(--ctl); }
+
+.nu-elbtn:hover, [data-demo="hover"] > .nu-elbtn{
+  border-color: var(--armed); background: var(--grey2); }
+.nu-elbtn:focus-visible, [data-demo="focus"] > .nu-elbtn{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: var(--press); }
+.nu-elbtn[aria-pressed="true"]{
+  background: var(--lamp); border-color: var(--lamp); color: var(--on-fill); }
+.nu-elbtn[aria-pressed="true"]:hover,
+[data-demo="hover"] > .nu-elbtn[aria-pressed="true"]{
+  background: var(--lamp-hot); border-color: var(--lamp-hot); }
+.nu-elbtn[aria-expanded="true"]{
+  background: var(--hand-tint); border-color: var(--lamp); color: var(--legend); }
+.nu-elbtn[aria-disabled="true"]{
+  border-style: dashed; border-color: var(--legend-faint);
+  color: var(--legend-faint); background: transparent; }
+.nu-elbtn[aria-busy="true"]{
+  box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed);
+  color: var(--legend-dim); }
+
+/* ---- <nu-lamp> — the one place saturated colour is allowed ----------- */
+.nu-ellamp{ display: block; background: var(--grey3);
+  border-radius: var(--r-pill); }
+[shape="dot"] > .nu-ellamp{ inline-size: 10px; block-size: 10px; }
+[shape="bar"] > .nu-ellamp{ inline-size: 4px; block-size: 18px;
+  border-radius: var(--r2); }
+nu-lamp[on][means="hand"]  > .nu-ellamp{ background: var(--hand); }
+nu-lamp[on][means="clock"] > .nu-ellamp{ background: var(--clock); }
+nu-lamp[on][means="meter"] > .nu-ellamp{ background: var(--meter); }
+nu-lamp[on][means="flag"]  > .nu-ellamp{ background: var(--flag); }
+
+/* ---- <nu-legend> — printed, and it never lights ---------------------- */
+.nu-ellegend{ display: inline-flex; align-items: center; gap: var(--s1);
+  font: var(--fw-label) var(--t2)/1.2 var(--sans);
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--legend-dim); }
+label.nu-ellegend{ cursor: pointer; }
+.nu-ellegend .nu-elmark{ font-size: var(--t2); }
+
+/* ---- <nu-value> — the screen ----------------------------------------- */
+.nu-elval{ font: var(--num-fw) var(--t3)/1.2 var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--value); }
+.nu-elunit{ font: var(--fw-body) var(--t1)/1.2 var(--mono);
+  color: var(--legend-dim); }
+/* DERIVED IS QUIET AND BLANK IS THE DEFAULT (§3): a value nobody set reads in
+   the second voice at body weight, so "somebody chose this" is legible across
+   a sheet without a word being spent saying it. */
+nu-value[derived] .nu-elval{ color: var(--legend-dim); font-weight: 400; }
+.nu-elval[data-blank]{ color: var(--legend-dim); font-style: normal; }
+nu-value[means="meter"] .nu-elval{ color: var(--meter); }
+nu-value[means="clock"] .nu-elval{ color: var(--clock); }
+nu-value[means="flag"]  .nu-elval{ color: var(--flag); }
+
+/* ---- <nu-rail> — ONE OF A SET LOOKS LIKE ONE OF A SET ----------------
+   TABLE.md §19, Paul: *"Each exclusive of each other."* JOINED — no gap, one
+   hairline between segments, rounded at the two ends only — so the strip
+   reads as one control holding one answer rather than as N buttons that
+   happen to be near each other. `data-exclusive="false"` is a CHAIN and comes
+   apart into separate pills, which is the same fact said the other way. */
+.nu-elrail{ display: inline-flex; align-items: stretch; min-inline-size: 0; }
+.nu-elseg{ min-block-size: var(--tap); padding: var(--s1) var(--s3);
+  font: var(--btn-fw) var(--btn-fs)/1.2 var(--sans);
+  color: var(--legend); background: var(--grey1);
+  border: var(--bw) solid var(--rule); border-radius: 0;
+  cursor: pointer; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elrail[data-exclusive="true"] > .nu-elseg + .nu-elseg{
+  border-inline-start-width: 0; }
+.nu-elrail[data-exclusive="true"] > .nu-elseg:first-child{
+  border-start-start-radius: var(--r1); border-end-start-radius: var(--r1); }
+.nu-elrail[data-exclusive="true"] > .nu-elseg:last-child{
+  border-start-end-radius: var(--r1); border-end-end-radius: var(--r1); }
+.nu-elrail[data-exclusive="false"]{ gap: var(--s2); flex-wrap: wrap; }
+.nu-elrail[data-exclusive="false"] > .nu-elseg{ border-radius: var(--r-pill);
+  padding-inline: var(--s4); }
+.nu-elseg:hover, [data-demo="hover"] .nu-elseg:first-child{
+  border-color: var(--armed); background: var(--grey2); }
+.nu-elseg:focus-visible, [data-demo="focus"] .nu-elseg[aria-pressed="true"]{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: calc(-1 * var(--bw-hard)); }
+.nu-elseg[aria-pressed="true"]{
+  background: var(--lamp); border-color: var(--lamp); color: var(--on-fill); }
+.nu-elseg[aria-disabled="true"]{ border-style: dashed;
+  color: var(--legend-faint); background: transparent; }
+nu-rail[busy] .nu-elseg{ box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed); }
+
+/* ---- <nu-spinner> — a state, not a shopping list ---------------------
+   TABLE.md §19, Paul: *"turn them into spinners for the status changes"*. The
+   word is the control; the two steps are the same 44px square the rest of the
+   page uses, and the POSITION is printed because a control showing one of
+   five has to say that there are five.
+   THE TWO MARKS ARE DRAWN HERE AND SAID IN THE MARKUP: the buttons carry
+   their word in a `.nu-vh` and nothing visible, so the ‹ and › are content on
+   a pseudo-element in `--sym` — the same arrangement `.nu-combo::after` has
+   used since the marks were tokenised. */
+.nu-elspin{ display: inline-flex; align-items: stretch; min-inline-size: 0;
+  border: var(--bw) solid var(--rule); border-radius: var(--r1);
+  background: var(--grey1); }
+.nu-elstep{ inline-size: var(--tap); min-block-size: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  /* `padding: 0` IS LOAD-BEARING: a <button> the page does not size carries the
+     user agent's own `1px 6px`, which is a value off the ramp nobody chose. */
+  padding: 0;
+  background: transparent; border: 0; color: var(--legend);
+  font-family: var(--sym); font-size: var(--t4); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.nu-elstep.is-prev::before{ content: "\2039"; }
+.nu-elstep.is-next::before{ content: "\203A"; }
+.nu-elspinword{ flex: 1 1 auto; min-inline-size: 0; min-block-size: var(--tap);
+  padding-block: 0; padding-inline: var(--s2);
+  font: var(--num-fw) var(--btn-fs)/1.2 var(--sans);
+  color: var(--value); background: transparent;
+  border-inline: var(--bw) solid var(--rule); border-block: 0;
+  cursor: pointer; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+.nu-elpos{ display: inline-flex; align-items: center;
+  padding-inline: var(--s2);
+  font: var(--fw-body) var(--t1)/1 var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--legend-dim); }
+.nu-elstep:hover, .nu-elspinword:hover,
+[data-demo="hover"] > .nu-elspin{ border-color: var(--armed); }
+[data-demo="hover"] > .nu-elspin > .nu-elspinword{ color: var(--armed); }
+.nu-elstep:focus-visible, .nu-elspinword:focus-visible,
+[data-demo="focus"] > .nu-elspin > .nu-elspinword{
+  outline: var(--bw-hard) solid var(--lamp); outline-offset: calc(-1 * var(--bw-hard)); }
+nu-spinner[refused] > .nu-elspin{ border-style: dashed; }
+nu-spinner[refused] .nu-elspinword,
+nu-spinner[refused] .nu-elstep{ color: var(--legend-faint); }
+nu-spinner[busy] > .nu-elspin{
+  box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 0 var(--armed); }
+
+/* ======================================================================
+   THE GALLERY (nukernel/design.html, docs/DESIGN-SYSTEM.md §3)
+
+   The page that IS the system. It is drawn by `src/ui/gallery.ts` out of the
+   element declarations and out of the resolved values of tokens.css, so this
+   block styles a SHAPE — a section, a swatch, a matrix, a state cell — and
+   never a component, of which it knows none.
+
+   IT OBEYS ITS OWN LAWS, which is the whole reason it is worth having: every
+   length below is a token, every gap is a step of the ramp, and the page is
+   one column at 320 and 390 with nothing scrolling sideways but the matrix,
+   which is a table and is allowed to (§11c: the track is the only thing that
+   scrolls sideways, and it contains itself). test/design-system.js measures
+   all three of those on the rendered page.
+   ====================================================================== */
+.dg-body{ margin: 0; background: var(--deck); color: var(--legend);
+  font: var(--fw-body) var(--t3)/1.45 var(--sans);
+  padding: var(--s4);
+  padding-inline: max(var(--s4), env(safe-area-inset-left, 0px));
+  overscroll-behavior: none; }
+.dg{ display: block; max-inline-size: 76rem; margin-inline: auto; }
+.dg-bar{ display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); flex-wrap: wrap;
+  padding-block-end: var(--s3);
+  border-block-end: var(--bw) solid var(--rule); }
+.dg-title{ margin: 0;
+  font: var(--fw-display) var(--t5)/1.1 var(--sans);
+  letter-spacing: .02em; text-transform: uppercase; color: var(--legend); }
+.dg-sec{ padding-block: var(--s5); }
+.dg-sec + .dg-sec{ border-block-start: var(--bw) solid var(--rule); }
+.dg-h{ margin: 0;
+  font: var(--fw-block) var(--t4)/1.2 var(--sans);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--legend); }
+.dg-h3{ margin: 0; padding-block-start: var(--s4);
+  font: var(--fw-label) var(--t2)/1.2 var(--sans);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--legend-dim); }
+.dg-blurb{ margin: 0; padding-block-start: var(--s2);
+  max-inline-size: 46rem;
+  font: var(--fw-body) var(--t2)/1.45 var(--sans); color: var(--legend-dim); }
+
+/* ---- swatches --------------------------------------------------------- */
+.dg-swatches{ display: flex; flex-wrap: wrap; gap: var(--s3);
+  padding-block-start: var(--s3); }
+.dg-swatch{ display: flex; flex-direction: column; gap: var(--s1);
+  inline-size: 8.5rem; }
+.dg-chip{ block-size: var(--tap); border-radius: var(--r2);
+  border: var(--bw) solid var(--rule); }
+.dg-radchip{ background: var(--grey2); }
+.dg-tokname{ font: var(--fw-label) var(--t1)/1.2 var(--mono);
+  color: var(--legend); }
+.dg-tokval{ font: var(--fw-body) var(--t0)/1.2 var(--mono);
+  color: var(--legend-dim); font-variant-numeric: tabular-nums; }
+
+/* ---- the contrast matrix --------------------------------------------- */
+.dg-matrix{ inline-size: 100%; border-collapse: collapse;
+  margin-block-start: var(--s3);
+  font: var(--fw-body) var(--t2)/1.3 var(--mono); }
+.dg-matrix th, .dg-matrix td{ padding: var(--s2);
+  border-block-end: var(--bw) solid var(--rule); text-align: start; }
+.dg-matrix thead th{ color: var(--legend-dim);
+  font-weight: var(--fw-label); }
+.dg-fg{ display: table-cell; color: var(--legend); font-weight: var(--fw-body); }
+.dg-dot{ display: inline-block; inline-size: 10px; block-size: 10px;
+  border-radius: var(--r-pill); margin-inline-end: var(--s2);
+  border: var(--bw) solid var(--rule); }
+.dg-num{ text-align: end; font-variant-numeric: tabular-nums;
+  color: var(--value); }
+/* UNDER THE FLOOR SAYS SO IN THE ONE COLOUR THAT MEANS "THIS IS WRONG". */
+.dg-num.is-under{ color: var(--clip); font-weight: var(--num-fw); }
+.dg-num.is-under::after{ content: " \2716"; font-family: var(--sym); }
+.dg-band td{ color: var(--legend-dim); background: var(--panel);
+  text-transform: uppercase; letter-spacing: .08em;
+  font-size: var(--t1); }
+
+/* ---- the scales ------------------------------------------------------- */
+.dg-stack{ display: flex; flex-direction: column; gap: var(--s2);
+  padding-block-start: var(--s3); }
+.dg-typerow{ display: flex; align-items: baseline; gap: var(--s3);
+  flex-wrap: wrap; }
+.dg-typespec{ color: var(--legend); min-inline-size: 14rem; }
+.dg-rampbar{ display: block; block-size: 14px; background: var(--lamp);
+  border-radius: var(--r2); }
+
+/* ---- the element cards ------------------------------------------------ */
+.dg-el{ padding-block: var(--s4); }
+.dg-el + .dg-el{ border-block-start: var(--bw) solid var(--rule); }
+.dg-elhead{ display: flex; align-items: baseline; gap: var(--s3);
+  flex-wrap: wrap; }
+.dg-tag{ font: var(--fw-body) var(--t2)/1.2 var(--mono); color: var(--value); }
+.dg-what{ margin: 0; padding-block-start: var(--s1);
+  font: var(--fw-body) var(--t3)/1.4 var(--sans); color: var(--legend); }
+.dg-from{ margin: 0; padding-block-start: var(--s1);
+  font: var(--fw-body) var(--t1)/1.4 var(--sans); color: var(--legend-dim); }
+/* THE STATES, SIDE BY SIDE. `flex-wrap` and not a track: a state grid is a
+   handful of small things and wrapping is what a phone wants; the one thing
+   on this page that may scroll sideways is the matrix. */
+.dg-states{ display: flex; flex-wrap: wrap; gap: var(--s4);
+  padding-block-start: var(--s3); }
+.dg-state{ display: flex; flex-direction: column; gap: var(--s2);
+  align-items: flex-start; }
+.dg-statename{ font: var(--fw-label) var(--t0)/1.2 var(--mono);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--legend-dim); }
+.dg-stagebox{ display: flex; align-items: center; min-block-size: var(--tap); }
+.dg-attrs{ inline-size: 100%; border-collapse: collapse;
+  margin-block-start: var(--s4);
+  font: var(--fw-body) var(--t2)/1.35 var(--sans); }
+.dg-attrs th, .dg-attrs td{ padding: var(--s2); text-align: start;
+  vertical-align: top; border-block-end: var(--bw) solid var(--rule); }
+.dg-attr{ font-family: var(--mono); font-weight: var(--fw-label);
+  color: var(--value); white-space: nowrap; }
+.dg-attrtype{ font-family: var(--mono); color: var(--legend-dim);
+  font-size: var(--t1); }
+.dg-attrnote{ color: var(--legend); }
+.dg-laws{ display: grid; grid-template-columns: max-content 1fr;
+  gap: var(--s2) var(--s3); margin: 0; padding-block-start: var(--s3);
+  font: var(--fw-body) var(--t2)/1.35 var(--sans); }
+.dg-laws dt{ color: var(--legend-dim); text-transform: uppercase;
+  letter-spacing: .08em; font-size: var(--t1); font-weight: var(--fw-label); }
+.dg-laws dd{ margin: 0; color: var(--legend); }
+
+/* AT 320 AND 390 THE TABLES ARE THE ONLY THING THAT SCROLLS, AND THEY CONTAIN
+   IT. `overscroll-behavior-inline: contain` and not the page's `none`,
+   because a table is a scroller a thumb is meant to drag; what may not happen
+   is the gesture chaining out to the document (§15a's law). */
+.dg-matrix, .dg-attrs{ display: table; }
+.dg-sec > .dg-matrix, .dg-el > .dg-attrs{ inline-size: 100%; }
+@media (max-width: 460px){
+  .dg-swatch{ inline-size: 6.5rem; }
+  .dg-typespec{ min-inline-size: 100%; }
+  .dg-laws{ grid-template-columns: 1fr; }
+}
+/* A SELECTED READOUT IS LIT, LIKE EVERYTHING ELSE THAT IS SELECTED — and it is
+   an `outline`, not a border or a shadow, so the number does not move by a
+   pixel when the ring lands on it. */
+nu-value[selected] .nu-elval{ outline: var(--bw-hard) solid var(--lamp);
+  outline-offset: var(--s1); color: var(--value); }

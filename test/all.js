@@ -710,6 +710,24 @@ const GATES = [
     argv: ["test/oneopen.js"], need: ["test/oneopen.js"],
     covers: ["test/oneopen.js", "nukernel/ui/eight.js",
              "nukernel/src/table/grid.ts", "nukernel/ui/table.js"] },
+  /* THE DESIGN SYSTEM (2026-09-07, docs/DESIGN-SYSTEM.md). It drives
+     nukernel/design.html — the gallery, which is built from the element
+     declarations rather than beside them — and asserts the seven things the
+     contract promises: every declared state on the glass, every refusal
+     reachable by a thumb, no component naming a colour, every spacing value on
+     the ramp, and the contrast floors in both themes.
+     IT DOES NOT DRIVE index.html AND TAKES NO `--page`, which is why it has no
+     `url`: the gallery is its own document and the app does not load ui/ui.js.
+     `covers` names the four files that can break it — the tokens, the
+     stylesheet the elements are drawn by, the source they are declared in
+     (which `test/closure.js` expands through the entry) and the page itself.
+     nukernel/tokens.css is ALSO in `table-page`'s list, because every browser
+     gate on this page now depends on it. */
+  { name: "design-system", wave: 3, kind: "browser",
+    argv: ["test/design-system.js"], need: ["test/design-system.js"],
+    covers: ["test/design-system.js", "nukernel/tokens.css",
+             "nukernel/design.html", "nukernel/nu.css",
+             "nukernel/src/ui/index.ts", "nukernel/ui/ui.js"] },
   { name: "gutter",     wave: 3, kind: "browser",
     argv: ["test/gutter.js"], need: ["test/gutter.js"],
     /* (`nukernel/ui/explain.js` STOOD IN THIS LIST until 2026-09-02. Paul,
@@ -1032,6 +1050,10 @@ const GATES = [
     covers: ["test/table.browser.js", "test/table-inventory.json",
              "nukernel/ui/table.js", "nukernel/ui/wordgrid.js",
              "nukernel/ui/eight.js", "nukernel/nu.css",
+             /* ...AND THE TOKENS, 2026-09-07: nu.css declares none of them any
+                more, so a palette or a scale edit that moves a measured number
+                on this page happens in tokens.css and nowhere else. */
+             "nukernel/tokens.css",
              "nukernel/avail.js", "nukernel/document.js",
              /* ...AND THE TWO FILES `structure` COVERED, 2026-09-04: the grids
                 drew whatever `nudgesFor` named and whatever `SHEETS` offered,

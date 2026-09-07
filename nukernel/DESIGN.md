@@ -7,18 +7,39 @@ The tokens are nu.css's own (they exist; this names the law each carries).
 The tone is a composer's desk: what a hand reaches for first, in the words a
 musician uses.
 
-## 1 · Tokens (nu.css :root — the owners; nothing hard-coded elsewhere)
+## 1 · Tokens — and `nukernel/tokens.css` is the owner
 
-| family | tokens | law |
-|---|---|---|
-| ink | `--ink --dim --faint --paper --panel --ground --well --zebra` | one ink, one dim, one refused; paper under panel under well |
-| meaning | `--hand --clock --meter --flag` (+ `-tint`) | **semantic, never decorative**: hand = you set it · clock = scheduled · meter = measured · flag = refused/warning; `--v0..3` = which player, `--q1..4` = how much |
-| cluster | `--lz-h0 … --lz-h7` (the lozenge field's palette, and `--lz` is the one a cluster is wearing) | **hue means the KIND, weight means the STATE** — one ink per semantic cluster, outline when cold and fill when hot. Eight, and eight is a decision: past eight, hue stops being a category anyone can hold. Not the meaning four and not the voice six, because a cluster hue that collided with either would say something it does not mean; a ninth cluster reuses the first hue rather than inventing a colour |
-| rule | `--bw` (1px) `--bw-hard --rule --rule-strong` | a rule is a HAIRLINE; a frame is a plate, and a plate is rare |
-| radius | `--r0` 0 (a plate) `--r1` 6px (a control) `--r2` 3px (a chip) `--r-pill` (a lozenge, and only a lozenge) | small; nothing bubbles |
-| space | `--s1` .2em hair · `--s2` .35em tight · `--s3` .55em gap · `--s4` .8em air · `--s5` 1.4em block | between controls that answer one question: s3; between questions: s4; between subjects: s5 |
-| type | `--t0` .6rem … `--t5` 1.5rem; `--fw-body` 500 · `--fw-label` 700 · `--fw-block` 800 · `--fw-display` 900; `--sans --mono --sym --num-fw` | body t3 = 1rem; a value is tabular; NOTHING under 16px on a phone that a hand edits; hierarchy by weight and size, not by boxes. **THE FAMILY IS IBM PLEX** (2026-09-06, Paul: *"Make everything the IBM flex Family fonts referring to one style sheet."*) — `--sans` = IBM Plex Sans, `--mono` = IBM Plex Mono, self-hosted at `vendor/plex` and never a CDN, because this page boots with the wire cut and is served COEP `require-corp`. **ONE STYLESHEET OWNS THE FACES**: `nukernel/fonts.css` holds every `@font-face` and nothing else, linked once ahead of nu.css; nu.css holds the tokens; no third file, no rule anywhere, and no `ctx.font` in a canvas may name a family — a canvas reads `--sans`/`--mono` off `:root` the way `paints()` already reads the six hues. `--sym` is the ONE face token that is deliberately not Plex, and it is a glyph stack, not a type choice: the page draws its marks as characters (▾ ↕ ↑ ▫ ▪) that no Latin block of Plex contains, and *a serif ↕ next to a sans ↑ is two different arrows*. Weights are the family's: 400 · 500 · 600 · 700 are files, and 800/900 resolve to Bold because Plex Sans's axis ends there — the four NAMES stand, two of them land on one face. |
-| tap | `--tap` 44px · `--bar-h` · `--head-h` | every control 44px tall; a control is a hair wider than its word (~.5ch each side); a slider's grab is `--sl-grab` |
+**THE TOKENS MOVED OUT OF nu.css ON 2026-09-07** (docs/DESIGN-SYSTEM.md step
+1). They are declared in `nukernel/tokens.css`, alone in a file, linked between
+`fonts.css` and `nu.css`, with **every token argued on its own line** — which
+is why this section points at that file instead of restating it. A table here
+and a declaration there is two owners of one value, which is the drift the move
+was made to end. `nu.css` declares nothing at `:root` and types no literal
+colour in a rule; `test/design-system.js` D4 measures both.
+
+What this section still owns is the LAW each family carries, because a law is
+about how the page uses a token and is not a value:
+
+| family | law |
+|---|---|
+| the deck | three depths of ground and no fourth: `--deck` the chassis, `--panel` a plate bolted to it, `--well` a cut into the plate. Everything else is a hairline |
+| the legend | printed on the panel: small caps, dim, fixed, **never lit**. Three voices — `--legend`, `--legend-dim` (units and counts), `--legend-faint` (refused, and only refused) |
+| the lamps | **three lamps and one screen, and that is the whole colour system.** `--lamp` green = on / selected / a hand set it · `--armed` amber = about to matter · `--clip` red = the tempo LED, clipping, destruction. `--value` is the phosphor the SCREEN prints a readout in and is not a lamp. **A lamp is the one place saturated colour is allowed**, which is what settles "selected boxes are oddly selected": a selected thing is LIT, and nothing else in the system lights |
+| meaning | `--hand --clock --meter --flag` (+ `-tint`) are **semantic, never decorative**, and they are the four the panel already has: hand = the lamp · clock = the red one · meter = the screen · flag = the amber. `--v0..3`/`--vb`/`--drum` = which player, `--q1..4` = how much |
+| cluster | `--lz-h0 … --lz-h7` — **hue means the KIND, weight means the STATE**. Eight, and eight is a decision: past eight, hue stops being a category anyone can hold, and a ninth cluster reuses the first rather than inventing a colour. Kept clear of the three lamps, so a cluster never reads as a state |
+| rule | `--bw` (1px) a control's frame · `--bw-hard` (2px) an emphasis edge and a focus ring. A rule is a HAIRLINE; a frame is a plate, and a plate is rare |
+| radius | `--r0` a plate · `--r1` a control · `--r2` a chip · `--r-pill` a lozenge, and only a lozenge. Small; nothing bubbles |
+| space | five steps and no sixth: `--s1` hair · `--s2` tight · `--s3` gap · `--s4` air · `--s5` block. Between controls that answer one question: s3; between questions: s4; between subjects: s5. **The steps are `em`, and the census of 2026-09-07 measured what that costs**: five steps render as twenty-one distinct pixel values at 390, 404 of 426 declarations off the ramp, 196 of them from one rule. Changing the unit makes the page BIGGER, so the ramp is unmoved and the census is the evidence step 5 spends |
+| type | `--t0` … `--t5`; `--fw-body` 500 · `--fw-label` 700 · `--fw-block` 800 · `--fw-display` 900; `--sans --mono --sym --num-fw`. Body t3 = 1rem; a value is tabular; NOTHING under 16px on a phone that a hand edits; hierarchy by weight and size, not by boxes. **THE FAMILY IS IBM PLEX** and `nukernel/fonts.css` holds every `@font-face` and nothing else, self-hosted at `vendor/plex` and never a CDN, because this page boots with the wire cut under COEP `require-corp`. `--sym` is the ONE face token deliberately not Plex and is a glyph stack, not a type choice: the page draws its marks as characters (▾ ↕ ↑ ▫ ▪) no Latin block of Plex contains, and *a serif ↕ next to a sans ↑ is two different arrows* |
+| tap | `--tap` 44px · `--bar-h` · `--top-h`. Every control 44px tall; a control is a hair wider than its word (~.5ch each side); a slider's grab is `--sl-grab`. **The tap floor is not spacing and does not move when the page is squeezed** |
+
+**THE DECK IS THE COMMITTED LOOK AND THERE IS NO `prefers-color-scheme` QUERY.**
+A machine looks the same in every room — nu.css made that argument itself when
+it retired the old system-colour dark mode, and it holds the other way round
+too. A second theme exists and is a real design rather than an inversion:
+`:root[data-theme="light"]`, the same panel under studio lights, with the
+phosphor read as dark green on grey the way an LCD is read in daylight. It is
+reached by a hand, not by a system setting.
 
 ## 2 · Components (the whole vocabulary; each with its states)
 
@@ -234,6 +255,67 @@ States every component may wear: **rest · derived (quiet, inherited/default) ·
     (`[data-k]`, which every control on this page wears) rather than declared
     beside it, so it cannot go stale; a count of one is not compound, because a
     badge saying "1" is a number nobody can act on.
+
+## 2a · The elements that exist in code (2026-09-07)
+
+§2 is the whole VOCABULARY, in prose. This section is the part of it that is a
+TAG — seven custom elements under `nukernel/src/ui/`, built by
+`node tools/ui/build.js` into the committed `nukernel/ui/ui.js` (the fifth
+build entry), drawn in every state on `nukernel/design.html`, and gated by
+`test/design-system.js`. Everything else in §2 is still drawn by
+`ui/eight.js`, `src/table`, `src/menus` and `src/lozenge`; step 4 of
+docs/DESIGN-SYSTEM.md is what moves the call sites, one surface at a time.
+
+| tag | §2 | what it is |
+|---|---|---|
+| `<nu-button>` | 1 | a word you press: one thing happens, and the word says which |
+| `<nu-icon-button>` | 1 + 15 | a mark you press, with its word said out loud and drawn nowhere |
+| `<nu-lamp>` | 11 | the one place saturated colour is allowed: a thing that is doing something is LIT |
+| `<nu-legend>` | §0 | a printed label — small caps, dim, fixed, and it never lights |
+| `<nu-value>` | §0 | a readout: what the machine currently says, in tabular numerals |
+| `<nu-rail>` | 24 | one of a set drawn as one of a set: joined segments, one hairline between, the standing word filled |
+| `<nu-spinner>` | 23 | a state of at most five positions: one control saying where you are, a step each side |
+
+**THE DECLARATION IS THE CONTRACT.** `src/ui/api.ts` holds one row per element
+— its attributes, their types and a one-line note each, the states it can wear,
+its keyboard, where its accessible name comes from, and how it refuses. Three
+readers consume that one table and none may keep a second copy: the element
+itself, the gallery that draws it, and the gate that walks it. **A component
+not in that table is not in the system**, and `src/ui/index.ts` throws at boot
+if the tag table and the declaration disagree.
+
+**THEY RENDER INTO THE LIGHT DOM, AND `nu.css` IS IN CHARGE.** Decided once and
+written down in `src/ui/base.ts`: a shadow root is a wall the page's own
+stylesheet cannot reach through, `::part` would be a second surface to keep in
+step, the page measures itself and eleven gates walk its DOM (and every walk
+stops at a shadow boundary), and it is what `src/table`, `src/menus` and
+`src/lozenge` already do. What it costs is encapsulation, and the answer is the
+prefix: an element's inner parts are `nu-el*`, so a selector can always say
+whether it is inside a component or beside one. **No `css``` block anywhere in
+`src/ui`** — nu.css's THE ELEMENTS block carries the whole look.
+
+**THE SEVEN STATES, AND WHICH FIVE A HAND CAN ASSERT.** `[selected] [open]
+[refused] [busy]` are attributes on the host and rest is their absence, so each
+is one selector in nu.css and one query in the gate. `hover` and `focus` are the
+browser's own pseudo-classes and no markup can assert them, so nu.css pairs each
+with `[data-demo]` **in the same rule** — the gallery forces the demo spelling,
+and what it shows is drawn by the declaration that draws the live page.
+
+**ONE SELECTION TREATMENT, ONE FOCUS TREATMENT, AND THEY ARE DIFFERENT**
+(§1, Paul: *"Selected boxes are oddly selected"*). Selected = the control is
+FILLED in `--lamp` with its word in `--on-fill`, and nothing else on this page
+fills. Focus = a `--bw-hard` lamp RING outside the box, offset, so a control can
+be focused and selected at once and read as both. Hover = the amber EDGE, a
+border colour and never a fill. Open = a `--hand-tint` ground with a `--lamp`
+hairline. Refused = dashed, quiet, `aria-disabled` and never `disabled`, and a
+press prints the reason in that widget's one say line. Busy = an amber hairline
+along the foot, static, because a page that animates a wait animates it under
+`prefers-reduced-motion` too.
+
+**EVERY NAME COMES FROM THE CATALOGUE.** `key` is a key into
+`src/copy/**` (the `ui.*` page); `label` is the escape hatch for a word that is
+the RECORD's own — a genre, a section's name, a player's — and therefore in no
+catalogue at all. A mark is never a name.
 
 ## 3 · Interaction laws
 
