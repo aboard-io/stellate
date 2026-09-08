@@ -14022,8 +14022,14 @@ function menuRow(k, key, id, word, aria) {
      with their word already; the song's options say "Song options" under a row
      that says `this song`, and a reader who hears one word on the glass and
      another in their ear has been given two names for one control. */
-  const b = icon({ k: "burger|" + k, glyph: recordMark(id), word,
-                   say: menuName(word, aria) });
+  /* NO EXPLAINER ON A MENU ROW (2026-09-08). Paul: *"Get rid of all the
+     tooltips in the menu."* `data-say` is what `wireSay` opens on a hold, and
+     on this plate it was the row's own accessible sentence said a second time
+     — eighteen rows, eighteen pop-ups, over a list whose whole content is
+     eighteen words a reader has already read. The sentence is NOT lost: it is
+     still the row's `aria-label` one line down, which is what a screen reader
+     hears, and the sheet the row opens prints it in full one tap later. */
+  const b = icon({ k: "burger|" + k, glyph: recordMark(id), word });
   b.setAttribute("aria-label", menuName(word, aria));
   b.addEventListener("click", () => {
     /* THE MENU CLOSES AND ONE SHEET OPENS — never a stack of eight, never two
@@ -14070,7 +14076,9 @@ function paintMenuFaces() {
     const nm = menuName(it.word, it.aria);
     if (nm && b.getAttribute("aria-label") !== nm) {
       b.setAttribute("aria-label", nm);
-      b.dataset.say = nm;
+      // …and no `data-say` with it: see `menuRow` — the plate carries no
+      // explainers, and the name is what a reader is given.
+      delete b.dataset.say;
     }
   }
 }
@@ -14745,7 +14753,7 @@ function chromeRow() {
   const viewGroup = el("div", null, "nu-menugroup");
   viewGroup.setAttribute("aria-labelledby", "nu-menuh-views");
   for (const it of MENUROWS()) {
-    const b = icon({ k: it.key, glyph: it.glyph, word: it.word, say: it.say });
+    const b = icon({ k: it.key, glyph: it.glyph, word: it.word });
     b.addEventListener("click", () => { it.act(); setMenu(false); paintChrome(); });
     viewGroup.append(b);
     menuBtnMap.set(it.key, b);
@@ -14832,8 +14840,7 @@ function chromeRow() {
   const paintTheme = () => {
     const on = lightNow();
     paintIcon(themeBtn, { glyph: on ? "◐" : "☀",
-                          word: _t(on ? "burger.dark" : "burger.light"),
-                          say: _t(on ? "burger.dark.say" : "burger.light.say") });
+                          word: _t(on ? "burger.dark" : "burger.light") });
   };
   themeBtn.addEventListener("click", () => {
     const on = lightNow();

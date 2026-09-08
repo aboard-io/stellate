@@ -1229,8 +1229,24 @@ export function hideSay() {
   if (n) { n.hidden = true; n.textContent = ""; }
 }
 
-const target = (e) => (e.target && e.target.closest)
-  ? e.target.closest("[data-say]") : null;
+/* ===== AND THE PLATE CARRIES NO EXPLAINERS (2026-09-08) =================
+   Paul: *"Get rid of all the tooltips in the menu."*
+
+   THE ROWS THAT BUILD THEIR OWN FACE STOPPED SETTING `data-say` (ui/eight.js
+   `menuRow`, the view list, the daylight row), and NINE were left: the six
+   view rows, the play mode, the take and the seed's door are painted by
+   `paintChrome` and `printReading`, which are about the CONTROL and not about
+   where it happens to be standing — the same node wears a say in the bar and
+   would wear it in the plate.
+   SO THE REFUSAL IS HERE, at the one owner of the explainer, and it is about
+   the SURFACE rather than the control: nothing inside `#nu-menu` opens one. A
+   plate of eighteen destinations is a list a reader reads; a pop-up over each
+   word is the same word again, one beat later, under their thumb. The
+   accessible name is untouched and is what a screen reader hears. */
+const target = (e) => {
+  const t = (e.target && e.target.closest) ? e.target.closest("[data-say]") : null;
+  return t && t.closest("#nu-menu") ? null : t;
+};
 const clear = () => { if (timer) { clearTimeout(timer); timer = 0; } downAt = null; };
 
 let wired = false;

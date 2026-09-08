@@ -8261,9 +8261,29 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    button` and not `#nu-menu > button`: a view row is a child of
    `.nu-menugroup` now and a selector that still demanded a direct child would
    have taken the ground out from under all six on the day they were grouped. */
+/* ---- A ROW IS A LINE, NOT A PLATE (2026-09-08) ------------------------
+   Paul: *"The menu should have a very light line between items instead of
+   heavy curved lines."*
+
+   THE PLATES WERE THE BASE BUTTON'S, NOT THIS BLOCK'S, which is why they
+   survived a rule that already said `border-color: transparent`. `button` in
+   this stylesheet carries a 1px edge, `--r1` of corner and the page's control
+   SHADOW; the line above cleared the edge's COLOUR and left the corner and the
+   shadow, so every row drew as a rounded box with a hard 2px offset under it —
+   eighteen of them stacked, which is the "heavy curved lines" exactly.
+   SO THE ROW GIVES UP ALL THREE and takes a hairline BETWEEN rows instead: one
+   `--rule` line on every row after the first in its group, which is the
+   lightest mark this page has and the one `.nu-bar` already uses between its
+   own marks. A list of destinations is a list, and what separates its items is
+   a line, not a frame each.
+   THE GROUPS NEED NO LINE OF THEIR OWN — a sticky heading in small caps stands
+   between them and is a stronger break than any rule. */
 #nu-menu button{ min-block-size: var(--tap); inline-size: 100%;
   justify-content: flex-start; text-align: start;
-  background: transparent; border-color: transparent; }
+  background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+#nu-menu .nu-menugroup > button + button,
+#nu-menu .nu-menuseed > button + button{
+  border-block-start: var(--bw) solid var(--rule); }
 #nu-menu button:hover{ background: var(--flag-tint); }
 /* THE VIEW YOU ARE ON IS `aria-current` AND NOT `aria-pressed` (2026-09-06,
    docs/NAV.md: *"The current view is marked in the list"*). With six views one
