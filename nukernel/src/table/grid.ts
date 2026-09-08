@@ -1833,6 +1833,17 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const hand = A.written(i, vi);
     const sel = !!SEL && SEL.sec === sid && SEL.voice === name;
     const inRange = rangeHas(S, sid, name);
+    /* NO EXPLAINER ON A CELL (2026-09-08). Paul: *"Get rid of tooltips over the
+       song sections, they don't all need to say 'Motif from this song's
+       genre.'"* `cellMark(i, vi)` is the PROVENANCE — where this cell's
+       material came from — and its sentence is one of three, so a table of
+       eighty cells was eighty pop-ups saying one of three things, most of them
+       the same one. The mark is already ON the cell (a filled dot, a hollow
+       one, a pencil), and the sheet a tap opens says the sentence where there
+       is room for it. The accessible NAME below still carries the mark's word,
+       for the reader who cannot see the dot.
+       (The comment is here rather than in the template because a backtick
+       inside a template literal ends it.) */
     return html`<td class=${classMap({ "is-inrange": inRange })}>
       <button type="button"
         class=${classMap({ "nu-wcell": true, "nu-cellword": true,
@@ -1844,7 +1855,6 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
           ? t("cell.aria.mark", { name, section: A.secName(i),
                                   value: word, mark: mark.w })
           : t("cell.aria", { name, section: A.secName(i), value: word })}
-        data-say=${ifDefined(mark && mark.s ? mark.s : undefined)}
         @click=${(e: MouseEvent) => {
           if (e.shiftKey && SEL) { ANCHOR = { sec: sid, voice: name }; draw(); return; }
           /* AN ARMED BANK SPENDS ITSELF ON THE NEXT CELL (§10b step 4). The

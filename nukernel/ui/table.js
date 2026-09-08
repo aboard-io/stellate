@@ -3323,7 +3323,6 @@ function bandTable(host, A2) {
       value: word,
       mark: mark.w
     }) : t4("cell.aria", { name, section: A2.secName(i5), value: word })}
-        data-say=${o2(mark && mark.s ? mark.s : void 0)}
         @click=${(e4) => {
       if (e4.shiftKey && SEL) {
         ANCHOR = { sec: sid, voice: name };
