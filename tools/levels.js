@@ -5,6 +5,7 @@
  *   node tools/levels.js --records salsa,reggae   # a few
  *   node tools/levels.js --bars 8 --seed 1        # the press
  *   node tools/levels.js --json out.json          # for the fixer to read
+ *   node tools/levels.js --write                  # …and into the trim table
  *
  * WHY IT EXISTS. Paul, 2026-09-08: *"Can you watch levels on genres? Everything
  * you added recently is super loud. Do a pass through all of the genres. Like
@@ -47,6 +48,12 @@ const SEED = +arg("seed", 1);
 const ONLY = arg("records", null);
 const JSONOUT = arg("json", null);
 const LIMIT = +arg("limit", 0);
+const WRITE = process.argv.includes("--write");
+/* `--from levels.json` writes the table out of a pass that ALREADY RAN. The
+   measurement is an hour of pressing; re-spending it because the writer was
+   added afterwards would be silly, and the JSON is the same object the run
+   printed. */
+const FROM = arg("from", null);
 
 const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
 const fx = (x, n) => (Number.isFinite(x) ? x.toFixed(n) : "-inf");
@@ -184,5 +191,54 @@ const fx = (x, n) => (Number.isFinite(x) ? x.toFixed(n) : "-inf");
   if (errs.length) console.log("page errors: " + errs.slice(0, 3).join(" | "));
   if (JSONOUT) { fs.writeFileSync(path.resolve(JSONOUT), JSON.stringify(rows, null, 1));
                  console.log("wrote " + JSONOUT); }
+  /* ---- --write: the table nukernel/audio/loudness.js reads ------------
+     THE MEASUREMENT IS THE SOURCE. loudness.js holds the LAW (a target, how
+     much of the distance to take back, the rails) and this writes the FACTS
+     between its two markers — the same shape wiki.js has: generated, headed
+     DO NOT EDIT, re-derivable by one command. A partial run may not write:
+     a table missing four hundred rows would silently leave them untrimmed
+     and look like a finished pass. */
+  if (WRITE) {
+    if (FROM) {
+      const prior = JSON.parse(fs.readFileSync(path.resolve(FROM), "utf8"));
+      ok.length = 0;
+      for (const r of prior) if (!r.err && Number.isFinite(r.loudDb)) ok.push(r);
+      console.log("\n--write reading " + FROM + " — " + ok.length + " measured rows");
+    }
+    const whole = FROM || (!ONLY && !LIMIT);
+    if (!whole) { console.log("\n--write refused: it takes a WHOLE pass " +
+      "(no --records, no --limit) or the table would be a partial one."); }
+    else {
+      const f = path.join(__dirname, "..", "nukernel", "audio", "loudness.js");
+      const src = fs.readFileSync(f, "utf8");
+      const A = "/* ===== TRIM TABLE — GENERATED, DO NOT EDIT ===== */";
+      const B = "/* ===== END TRIM TABLE ===== */";
+      const i = src.indexOf(A), j = src.indexOf(B);
+      if (i < 0 || j < 0) { console.log("--write: markers not found in " + f); }
+      else {
+        /* A SILENT ROW IS NOT A QUIET ONE. `silence` — the blank state — presses
+           to nothing and measures -415 dB; taken as a measurement it would ask
+           for the biggest lift the rails allow, which is a gain applied to
+           nothing at best and to a hiss at worst. Anything under -80 dB is not
+           a record whose level needs adjusting, so it is left out of the table
+           entirely and `trimOf` answers 1 for it. */
+        const body = ok.filter((r) => Number.isFinite(r.loudDb) && r.loudDb > -80)
+          .sort((a, b) => (a.gk < b.gk ? -1 : 1))
+          .map((r) => "  " + (/^[A-Za-z_$][\w$]*$/.test(r.gk) ? r.gk : JSON.stringify(r.gk)) +
+                      ": [" + r.loudDb.toFixed(1) + ", " + r.peak.toFixed(3) + "],")
+          .join("\n");
+        const stamp = new Date().toISOString().slice(0, 10);
+        const out = src.slice(0, i) + A + "\n" +
+          "// " + ok.length + " rows — [the loudest second of the record's busiest\n" +
+          "// section in dBFS, the peak of that press] — measured " + stamp + " with `node tools/levels.js\n" +
+          "// --bars " + BARS + " --seed " + SEED + " --write`. Re-derive after any change to the\n" +
+          "// engine, the desk or the catalogue: these are facts about a render.\n" +
+          "export const MEASURED = {\n" + body + "\n};\n" + src.slice(j);
+        fs.writeFileSync(f, out);
+        console.log("\nwrote the trim table into nukernel/audio/loudness.js — " +
+          ok.length + " rows");
+      }
+    }
+  }
   await browser.close();
 })();

@@ -36,12 +36,13 @@
 // the persistent procs and the DSP smooths them).
 import { GENRES, BASSSYNTH, BASS_INSTR, instrOf, throatTone, voicedAs,
          VOICINGS, homeFor } from "../ui/deps.js";
-import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
+import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm, BASIS } from "../ui/state.js";
 import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
 import { toEngine, samplerLibFor, recipeFor } from "./to-engine.js";
 import { deskUnits, deskAmp, deskSweeps, voiceRoster,
          barEchoSec, songEchoSec } from "./desk.js";
 import { isSynthFont, fontDef } from "./fonts.js";
+import { levelled } from "./loudness.js";
 
 /* ---------- the parent, loaded once ---------- */
 // The engine ships as CLASSIC scripts that publish onto `window` (CLAUDE.md:
@@ -778,7 +779,26 @@ export function barPlan(n) {
   }
   return { ev: { pitched, drums, found: [], sfx: deskSweeps(sec, b.beats, boxBeatOf),
                  srcById: {}, totalBeats: b.beats },
-           units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf, D && D.SE),
+           /* …AND THE RECORD'S OWN LEVEL TRIM RIDES OVER THEM (2026-09-08).
+              Paul: *"Everything you added recently is super loud… salsa is
+              unlistenably loud."* Measured across the catalogue, the loudest
+              second of a record's busiest section runs from about -14 dB to
+              about -51 — sixteen decibels between the fifth and ninety-fifth
+              percentiles — and no single cause explains it (audio/loudness.js
+              carries the correlations). So the fix is a MEASURED number per
+              row, applied here, on the finished units and over the desk: the
+              same route the master fader rides, for the reasons desk.js gives
+              about which voices read `lvl` and which read their sends.
+              THE RECORD'S BASIS, AND IT HAD TO BE PUBLISHED TO BE READ. The
+              box's own `stack[0].g` is `lab.eight.N` — the per-section row
+              ui/eight.js compiles out of the document — so a trim keyed on it
+              matched nothing and the first build of this line was measured
+              doing exactly that: house trimmed by 7.95 dB rendered at -14.4,
+              which is where it started. `ui/state.js BASIS` is the catalogue
+              key, said once where the compiled rows are filed. An unmeasured
+              row answers 1 and this is the same array, untouched. */
+           units: levelled(deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf, D && D.SE),
+                           BASIS),
            // THE BAR'S OWN MASTER-STAGE OVERRIDES (2026-08-28) — the third
            // thing a bar may carry, beside its notes and its units, and it
            // exists for exactly one word so far. See barFx below for the whole

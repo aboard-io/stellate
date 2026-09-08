@@ -167,6 +167,19 @@ export function setViewSec(i) { viewSec = i; }
 export function setLoopOnly(v) { loopOnly = v; }
 export function setPendingStart(v) { pendingStart = v; }
 export function setBpm(v) { bpm = +v; }
+/* ===== WHICH ROW THE RECORD IS, AS A SONG-LEVEL FACT (2026-09-08) ======
+   The audio layer could not name the record. A box's `stack[0].g` is
+   `lab.eight.N` — the per-section row ui/eight.js compiles out of the document
+   and files in GENRES — so everything downstream of the desk knows which
+   SECTION it is playing and not which CATALOGUE ROW the record came from.
+   That is exactly the fact `audio/loudness.js` needs to trim by, and it is a
+   fact about the whole song, which is what this file holds (`bpm`, `GROOVE`,
+   `SWING`, `METER` are its neighbours and arrived the same way).
+   IT IS A NAME AND NOT A RECIPE: nothing renders differently for knowing it,
+   and a session that never sets it answers null, which every reader treats as
+   "no measurement" and renders byte-identically. */
+export let BASIS = null;
+export function setBasis(k) { BASIS = k == null ? null : String(k); }
 export function setRubato(v) {
   RUBATO = !!v;
   try { localStorage.setItem(RUBSTORE, RUBATO ? "1" : "0"); } catch (e) { /* private mode */ }

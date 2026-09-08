@@ -161,7 +161,7 @@ import { GENRES, MODES, KEYS, ROLES, DRUMNAME, PROGS,
             the sound cannot drift. */
          throatVoiceOf } from "./deps.js";
 import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
-         setMeter, setGroove, setMaster, setBuses, vol, setVol,
+         setMeter, setGroove, setMaster, setBuses, vol, setVol, setBasis,
          // WHICH SECTION YOU ARE WRITING, adopted rather than reinvented.
          // ui/state.js has had this concept since audio/live.js:229 wrote the
          // reason down a month early — "The playhead marks which box is
@@ -652,6 +652,12 @@ function push(first) {
   // absent-is-today law for the ninth top-level key.
   const R = producedDoc(DOC, genreFor);
   R.secs.forEach((s2, i) => { GENRES[GK + i] = s2.genre; });
+  /* …AND THE ROW THE RECORD CAME FROM, SAID ONCE (2026-09-08). The keys just
+     filed are `lab.eight.N`, which is what the audio layer sees; the CATALOGUE
+     key is `DOC.basis` and nothing downstream could reach it. `setBasis` is one
+     name on the song, beside the tempo and the groove this same block sets
+     three lines down, and audio/loudness.js is its only reader. */
+  setBasis(DOC.basis || null);
   for (let i = NS; i < 64; i++) delete GENRES[GK + i];
   if (first) adoptSong({ v: NuSong.VERSION, bpm: R.bpm, genres: {},
     slots: [phrase(lines[0] && cellAt(lines[0], 0))],
