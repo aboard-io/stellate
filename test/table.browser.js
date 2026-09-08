@@ -7081,10 +7081,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             await openField(ik);
             await z.waitForTimeout(700);
             const pick = await z.evaluate((k) => {
-              const btn = document.querySelector(
-                '#pan-band .nu-sheetrow [data-k="' + k + '"]');
-              const row = btn && btn.closest(".nu-sheetrow");
-              const f = row && row.nextElementSibling;
+              /* THE GRID IS THE ROW, NOT A FIELD UNDER IT. A lozenge field
+                 opens as the row's next sibling and the old probe read it
+                 there; `motifRow` returns one `.nu-sheetrow.nu-morow` with the
+                 cards inside it and nothing to open — which is why the first
+                 translation of this check came back `null` at 390 and at 1280.
+                 The address is the way in: every card carries
+                 `<field key>|<value>` on its own `data-k`. */
+              const card = document.querySelector(
+                '#pan-band [data-k^="' + k + '|"]');
+              const f = card && card.closest(".nu-sheetrow");
               const grid = f && f.querySelector(".nu-mogrid");
               if (!grid) return null;
               const cards = [...grid.querySelectorAll(".nu-mopick")];
