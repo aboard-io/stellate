@@ -162,6 +162,15 @@ export interface Op {
   k: string;
   word: string;
   aria?: string;
+  /** A MARK, WHEN THE OP IS A GESTURE AND NOT A SENTENCE (2026-09-08, TABLE.md
+   *  §24). Paul: *"This cell—the basic operations should be icons."* An op that
+   *  carries one is drawn as the mark plus its WORD in a `.nu-vh` — never the
+   *  mark alone, which is the law every other icon on this page obeys and the
+   *  belt against a font that has no outline for it. An op WITHOUT one is
+   *  unchanged and that is most of them: `fill from the genre`, `deal again`,
+   *  `duplicate this section` are sentences, and a sentence has no honest
+   *  picture. Only gestures a spreadsheet already has a mark for get one. */
+  mark?: string;
   /** a refused op: greyed, aria-disabled, data-why, the reason on its name. */
   why?: string | null;
   act?: () => void;

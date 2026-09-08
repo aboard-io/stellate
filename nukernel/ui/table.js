@@ -1125,7 +1125,6 @@ function cellSheet(A2, i5, vi) {
   const sid = s3.id;
   const phrase = [], variation = [], dynamics = [], placement = [];
   const f2 = [];
-  f2.push({ kind: "ops", label: t4("cell.ops"), ops: cellOps(A2, i5, vi) });
   const reads = A2.sh(
     "material.cell",
     { voice: v3.name, section: sid },
@@ -1230,6 +1229,7 @@ function cellSheet(A2, i5, vi) {
     why: t4("cell.pitchedOnly.why")
   });
   for (const x2 of phrase) f2.push(inGroup(x2, G.phrase));
+  f2.push({ kind: "ops", label: t4("cell.ops"), ops: cellOps(A2, i5, vi) });
   for (const x2 of variation) f2.push(inGroup(x2, G.variation));
   for (const x2 of dynamics) f2.push(inGroup(x2, G.dynamics));
   for (const x2 of placement) f2.push(inGroup(x2, G.placement));
@@ -1424,10 +1424,18 @@ function cellOps(A2, i5, vi) {
   const doc = A2.doc();
   const v3 = doc.voices[vi], s3 = doc.form.sections[i5];
   return [
+    /* THE THREE ARE MARKS SINCE 2026-09-08 (TABLE.md §24). Paul: *"This
+       cell—the basic operations should be icons."* Each keeps its `k`, its
+       `word` and its `aria` exactly — the word is what the `.nu-vh` prints
+       and what a screen reader still hears — and gains the mark measured in
+       src/copy/glyph.ts. `⌫` erases back to what the genre plays; `→` and
+       `↓` are the two directions a fill goes, which is the whole of what
+       "across the row" and "down the column" mean. */
     {
       k: "tcell-clear|" + v3.name + "|" + s3.id,
       word: t4("op.clearCell"),
       aria: t4("op.clearCell.aria"),
+      mark: "⌫",
       why: A2.written(i5, vi) ? null : t4("refuse.nothingToClear"),
       act: () => A2.clearCell(i5, vi)
     },
@@ -1437,12 +1445,14 @@ function cellOps(A2, i5, vi) {
       k: "tcell-copyrow|" + v3.name + "|" + s3.id,
       word: t4("op.fillRow"),
       aria: t4("op.fillRow.aria"),
+      mark: "→",
       act: () => A2.copyCell(i5, vi, "row")
     },
     {
       k: "tcell-copycol|" + v3.name + "|" + s3.id,
       word: t4("op.fillCol"),
       aria: t4("op.fillCol.aria"),
+      mark: "↓",
       act: () => A2.copyCell(i5, vi, "col")
     }
   ];
@@ -1811,7 +1821,8 @@ function fieldRow(f2, openField, setOpenField, after) {
     })}>
       ${o4.label ? b`<b class="nu-sheetlab">${o4.label}</b>` : A}
       <div class="nu-opbar">${o4.ops.map((op) => b`<button type="button"
-        class="nu-opbtn" data-k=${op.k}
+        class=${e3({ "nu-opbtn": true, "is-mark": !!op.mark })}
+        data-k=${op.k}
         aria-disabled=${o2(op.why ? "true" : void 0)}
         data-why=${o2(op.why || void 0)}
         aria-label=${op.why ? t4(
@@ -1829,7 +1840,18 @@ function fieldRow(f2, openField, setOpenField, after) {
         op.act();
       } catch (e4) {
       }
-    }}>${op.word}</button>`)}</div>
+    }}>${/* ===== AN OP MAY BE A MARK (2026-09-08, TABLE.md §24) ============
+       Paul, of the cell card: *"This cell—the basic operations should be
+       icons."* An op that carries a `mark` draws the mark and keeps its
+       WORD in a `.nu-vh` beside it — which is `paintIcon`'s own shape,
+       said in lit rather than by hand, and is why a font that fails on
+       somebody's phone still leaves a readable control. An op with no
+       `mark` is unchanged: `fill from the genre`, `deal again` and the
+       row and column ops are SENTENCES, and a sentence has no honest
+       picture. Only the five that are gestures a spreadsheet already has
+       a mark for became marks. */
+    op.mark ? b`<span class="nu-g" aria-hidden="true">${op.mark}</span
+                 ><span class="nu-vh">${op.word}</span>` : op.word}</button>`)}</div>
       ${sayLine(bark)}
     </div>`;
   }
@@ -2739,28 +2761,22 @@ function bandTable(host, A2) {
         aria-label=${t4("bar.selection")}>
       <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
       <div class="nu-fops">
-        ${barBtn(
-      "tundo",
-      t4("bar.undo"),
-      U.undoWord,
-      U.canUndo,
-      t4("bar.undo.none"),
-      () => {
-        U.undo();
-      }
-    )}
-        ${barBtn(
-      "tredo",
-      t4("bar.redo"),
-      U.redoWord,
-      U.canRedo,
-      t4("bar.redo.none"),
-      () => {
-        U.redo();
-      }
-    )}
-        ${barBtn(
+        ${/* ===== UNDO AND REDO ARE THE BAR'S NOW (2026-09-08, §24) =======
+        Paul: *"We can move undo, redo to the bottom nav and make them
+        global."* They stood here, as `tundo` and `tredo`, and the ids
+        have gone to the two marks ui/eight.js puts in the foot — the
+        SAME `undoStack` singleton, so nothing about the stack moved.
+        WHY HERE WAS WRONG, in one sentence: the stack is
+        document-wide and Ctrl-Z works anywhere, so an undo BUTTON that
+        exists only while a cell sheet is open was the page giving two
+        different answers to one question.
+        WHAT IS LEFT ON THIS LINE IS THE CELL'S OWN TWO, as marks — Paul:
+        *"Use icons for copy paste."* They keep `tcopy` and `tpaste`,
+        which is where test/table-inventory.json files them. */
+    A}
+        ${barMark(
       "tcopy",
+      "⧉",
       t4("bar.copy"),
       t4("act.copy"),
       !!at,
@@ -2771,8 +2787,9 @@ function bandTable(host, A2) {
         draw();
       }
     )}
-        ${barBtn(
+        ${barMark(
       "tpaste",
+      "⎘",
       t4("bar.paste"),
       t4("act.paste"),
       !!at && !!CLIP,
@@ -2782,6 +2799,18 @@ function bandTable(host, A2) {
       </div>
     </div>`;
   };
+  const barMark = (k2, mark, word, aria, on, why, act) => b`<button type="button" class="nu-opbtn is-mark" data-k=${k2}
+      ?disabled=${!on}
+      aria-disabled=${o2(on ? void 0 : "true")}
+      data-why=${o2(on ? void 0 : why)}
+      title=${o2(on ? void 0 : why)}
+      aria-label=${on ? aria : t4("sheet.refused", { name: aria, why })}
+      @click=${() => {
+    if (!on) return;
+    act();
+  }}
+      ><span class="nu-g" aria-hidden="true">${mark}</span
+      ><span class="nu-vh">${word}</span></button>`;
   const barBtn = (k2, word, aria, on, why, act) => b`<button type="button" class="nu-opbtn" data-k=${k2}
       ?disabled=${!on}
       aria-disabled=${o2(on ? void 0 : "true")}
@@ -3286,24 +3315,6 @@ function bandTable(host, A2) {
     if (i5 < 0 || vi < 0) return [];
     const f2 = wrapOps(cellSheet(A2, i5, vi));
     const ops = f2.find((x2) => x2.kind === "ops");
-    if (ops) ops.ops.push(
-      {
-        k: "tcell-copy|" + A2.doc().voices[vi].name + "|" + sid,
-        word: t4("bar.copy"),
-        aria: t4("act.copy"),
-        act: () => {
-          CLIP = { sec: sid, voice: A2.doc().voices[vi].name };
-          draw();
-        }
-      },
-      {
-        k: "tcell-paste|" + A2.doc().voices[vi].name + "|" + sid,
-        word: t4("bar.paste"),
-        aria: t4("act.paste"),
-        why: CLIP ? null : t4("bar.paste.none"),
-        act: () => pasteInto(i5, vi)
-      }
-    );
     return f2;
   };
   function wrapOps(fields) {

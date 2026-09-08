@@ -352,6 +352,23 @@ export const GLYPH = {
        longer exists. */
     seed:    { g: "⚄", w: t("noun.seed"),
                s: t("glyph.act.rewrite.say") },
+    /* THE EDIT MARKS (2026-09-08, TABLE.md §24) — measured against this
+       page's own font before they were chosen; src/copy/glyph.ts carries the
+       numbers and the method. Each keeps its word, as every mark here does. */
+    undo:    { g: "\u21b6", w: t("glyph.act.undo"),
+               s: t("glyph.act.undo.say") },
+    redo:    { g: "\u21b7", w: t("glyph.act.redo"),
+               s: t("glyph.act.redo.say") },
+    copy:    { g: "\u29c9", w: t("glyph.act.copy"),
+               s: t("glyph.act.copy.say") },
+    paste:   { g: "\u2398", w: t("glyph.act.paste"),
+               s: t("glyph.act.paste.say") },
+    clear:   { g: "\u232b", w: t("glyph.act.clear"),
+               s: t("glyph.act.clear.say") },
+    fillrow: { g: "\u2192", w: t("glyph.act.fillrow"),
+               s: t("glyph.act.fillrow.say") },
+    fillcol: { g: "\u2193", w: t("glyph.act.fillcol"),
+               s: t("glyph.act.fillcol.say") },
     tap:     { g: "⏱", w: t("glyph.act.tap"),
                s: t("glyph.act.tap.say") },
   },

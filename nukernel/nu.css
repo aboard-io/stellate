@@ -6147,6 +6147,21 @@ table.nu-trims{ color: var(--ink); }
   min-inline-size: 0; max-inline-size: 100%; padding-inline: .5ch;
   font: var(--btn-fw) 1rem/1.2 var(--mono, monospace); text-align: start; }
 .nu-sheetsub{ flex: 0 0 auto; color: var(--dim); font-size: .8rem; }
+/* ---- AN OP THAT IS A MARK (2026-09-08, TABLE.md §24) ------------------
+   Paul: *"This cell—the basic operations should be icons"* and *"Use icons for
+   copy paste."* Five word-buttons wrapped to two rows on the cell card at 390
+   — `clear to default` alone is 14 characters — and every one of them is a
+   gesture a spreadsheet already has a picture for.
+   IT IS A SQUARE AND THE WORD IS UNDER THE STYLESHEET, NOT GONE. `.nu-vh` is
+   the same visually-hidden span every mark on this page carries: a screen
+   reader hears `clear`, a stylesheet-off reading prints it, and only an eye
+   with the CSS on sees a mark alone. The `--tap` floor is on both axes because
+   a picture is a smaller target than a word and this is where that would be
+   felt first. */
+.nu-opbtn.is-mark{ inline-size: var(--tap); min-inline-size: var(--tap);
+  min-block-size: var(--tap); padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; }
+.nu-opbtn.is-mark > .nu-g{ font-size: 1.1rem; line-height: 1; }
 /* A ROW WITH A WIDGET IN IT IS A BLOCK, not a label-beside-a-control. The
    channel strip is the one user and it is 207px wide at its narrowest; the
    label stands above it and it takes the sheet's whole width, which is the
@@ -8243,6 +8258,24 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    line; a bar has width and no height at all, so it is `nowrap` and its two
    targets keep their 44px floor. */
 .nu-bar > .nu-seedrow{ flex: 0 0 auto; flex-wrap: nowrap; gap: var(--s1); }
+/* ---- UNDO AND REDO, IN THE FOOT (2026-09-08, TABLE.md §24) ------------
+   Paul: *"We can move undo, redo to the bottom nav and make them global."*
+
+   THE BUDGET AT 320, WHICH IS WHERE IT IS TIGHTEST and where every number in
+   this block has always come from: the bar's content box is 312px; `.nu-bartp`
+   is two 44px marks and a 1px seam (89); the seed row is the die alone (44);
+   THIS pair is another two marks and a seam (89); four seams at 1px (4); the
+   room is not drawn under a thumb. That leaves **86px of tape** — against the
+   70px its own note names as the floor (*"a track under 70px cannot show a bar
+   of an 88-bar record moving"*), so the readout survives the two new marks
+   with 16px to spare. At 390 the gaps are 8 and the tape gets 130.
+   THEY STAND AFTER THE DIE AND BEFORE THE TAPE, which is the row's own
+   argument about groups: the transport is what you press to HEAR, the die and
+   these two are what you press to CHANGE, and the tape is the readout that
+   ends the row. Three groups of controls in the order a hand uses them, then
+   what they did. */
+.nu-bar > .nu-baredit{ flex: 0 0 auto; display: flex; flex-direction: row;
+  align-items: center; gap: var(--s1); }
 /* (`.nu-bar > .nu-seedrow > #seedval` STOOD HERE. The number is deleted from
    the page on 2026-09-07 — Paul: *"Get rid of seed number too"* — and the row
    is the die and the hidden field it becomes.) */
@@ -8420,6 +8453,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 @media (max-width: 379px){
   .nu-bar{ gap: 1px; }
   .nu-bar > .nu-bartp{ gap: 1px; }
+  .nu-bar > .nu-baredit{ gap: 1px; }
   .nu-topstrip{ gap: 1px; }
   /* (`.nu-bar > .nu-seedrow { gap: 1px }` AND `.nu-bar #seedval {
      padding-inline: 0 }` STOOD HERE, 2026-09-05 to 2026-09-06, and both were
@@ -9030,24 +9064,66 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    bounce translates the sticky heads with it — which is the whole of Paul's
    *"it all feels reel wobbly"*. `none` is what the pane and the page already
    carry (§11c) and this is the same law on the same axis. */
+/* ===== AND IT IS ONE COLUMN AGAIN, 2026-09-08 (TABLE.md §24) ===========
+   Paul: *"The two column thing is a disaster it should be one column
+   scrolling."*
+
+   THIS REVERSES §19, WHICH WAS ALSO HIS ASK, and both sentences are right
+   about what they were looking at. §19 was told *"When I open an instrument
+   gives me all these playing options that I can't differentiate and they are
+   spread all over the place … we need to make it smaller and it can also go
+   horizontally wider than the screen"* — and the complaint it fixed was
+   DIFFERENTIATION: settings in one undifferentiated stack, with no way to see
+   that these four are about the envelope and those three about tone. Columns
+   gave the subjects edges.
+   WHAT THEY COST, AND IT IS WHAT THE WORD "disaster" IS ABOUT: a phone is 378px
+   of card and a subject column is 22ch, so TWO of them fit — and a two-column
+   grid on a narrow glass is not two columns, it is a READING ORDER THAT
+   ZIGZAGS. Measured on the cell card at 390: MOTIF beside VARIATION, then
+   ARTICULATION under MOTIF while RAMP LIMIT sits under VARIATION, so the eye
+   goes down-left, up-right, down-left. And the third subject and the fourth
+   are off the right edge of a card that gives no sign they are there.
+   THE SUBJECTS KEEP THEIR EDGES AND LOSE THEIR AXIS. `flex-direction: column`
+   is the whole of it: every group is full width, in one scroll, in the order
+   the record is made in — and a group still opens with its own heading and its
+   own rule, which is the differentiation §19 was actually asked for. The
+   sideways scroll goes with the axis, so a card has ONE scroller again and the
+   `overscroll-behavior-inline` argument below retires with the overflow it was
+   about.
+   (§19's rows are kept whole below because most of them are about a SUBJECT
+   COLUMN's insides — one setting per line, the label over its control — and
+   those are right in a column of one.) */
 #pan-band .nu-vsheet.is-table{ display: block; }
-#pan-band .nu-sheettrack{ display: flex; align-items: flex-start;
+#pan-band .nu-sheettrack{ display: flex; align-items: stretch;
+  flex-direction: column;
   /* DESIGN.md §1's space law, on the axis the subjects now stand on:
      *"between controls that answer one question: s3; between questions: s4;
      between subjects: s5."* The subjects are side by side, so s5 is a COLUMN
      gap rather than a block margin — the same number, the same law, turned
      with the sheet. */
-  gap: var(--s5); overflow-x: auto; overflow-y: hidden;
-  overscroll-behavior-inline: none;
-  padding-block-end: var(--s2); scrollbar-width: thin; }
+  /* THE GAP IS STILL `--s5` AND IS STILL §1's SPACE LAW — *"between one
+     subject and the next: s5"* — and it is a BLOCK gap again rather than a
+     column one, which is the same number turned back with the sheet.
+     `overflow-x: auto` AND `overscroll-behavior-inline: none` ARE DELETED with
+     the axis they were about. The second was argued hard (§15a: `contain`
+     rubber-bands and translates the sticky heads with it, which is *"it all
+     feels reel wobbly"*), and a track that does not scroll sideways cannot
+     rubber-band sideways either — the law is kept by having nothing to apply
+     it to. */
+  gap: var(--s5);
+  padding-block-end: var(--s2); }
 /* A SUBJECT COLUMN IS ITS OWN STACK, and it is as wide as a setting needs and
    no wider: 22ch holds "double-tracked" and a label on one line at every
    width this page is measured at. It is `0 0 auto` so a column never gives up
    its width to a neighbour — the track grows instead, which is the whole
    point of a track. */
+/* A SUBJECT IS THE WHOLE WIDTH NOW. It was `flex: 0 0 auto` at `22ch` —
+   *"as wide as a setting needs and no wider … it is `0 0 auto` so a column
+   never gives up its width to a neighbour"* — which is exactly right for a
+   column in a track and exactly wrong for the only column there is. */
 #pan-band .nu-sheettrack > .nu-sheetgroup{
   flex: 0 0 auto; display: block;
-  inline-size: 22ch; max-inline-size: calc(100vw - 3 * var(--s4));
+  inline-size: 100%; max-inline-size: 100%;
   margin-block-start: 0; }
 #pan-band .nu-sheettrack > .nu-sheetgroup > .nu-sheetrow{
   margin-block-start: var(--s2); }

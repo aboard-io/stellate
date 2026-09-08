@@ -964,16 +964,25 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
         aria-label=${t("bar.selection")}>
       <span class="nu-fadr" data-k="taddr" aria-live="polite">${shown}</span>
       <div class="nu-fops">
-        ${barBtn("tundo", t("bar.undo"), U.undoWord, U.canUndo,
-                 t("bar.undo.none"), () => { U.undo(); })}
-        ${barBtn("tredo", t("bar.redo"), U.redoWord, U.canRedo,
-                 t("bar.redo.none"), () => { U.redo(); })}
-        ${barBtn("tcopy", t("bar.copy"), t("act.copy"), !!at,
-                 t("bar.noSel"),
-                 () => { if (!SEL) return; CLIP = { ...SEL }; draw(); })}
-        ${barBtn("tpaste", t("bar.paste"), t("act.paste"), !!at && !!CLIP,
-                 !at ? t("bar.noSel") : t("bar.paste.none"),
-                 () => pasteHere(S))}
+        ${/* ===== UNDO AND REDO ARE THE BAR'S NOW (2026-09-08, §24) =======
+              Paul: *"We can move undo, redo to the bottom nav and make them
+              global."* They stood here, as `tundo` and `tredo`, and the ids
+              have gone to the two marks ui/eight.js puts in the foot — the
+              SAME `undoStack` singleton, so nothing about the stack moved.
+              WHY HERE WAS WRONG, in one sentence: the stack is
+              document-wide and Ctrl-Z works anywhere, so an undo BUTTON that
+              exists only while a cell sheet is open was the page giving two
+              different answers to one question.
+              WHAT IS LEFT ON THIS LINE IS THE CELL'S OWN TWO, as marks — Paul:
+              *"Use icons for copy paste."* They keep `tcopy` and `tpaste`,
+              which is where test/table-inventory.json files them. */ nothing}
+        ${barMark("tcopy", "\u29c9", t("bar.copy"), t("act.copy"), !!at,
+                  t("bar.noSel"),
+                  () => { if (!SEL) return; CLIP = { ...SEL }; draw(); })}
+        ${barMark("tpaste", "\u2398", t("bar.paste"), t("act.paste"),
+                  !!at && !!CLIP,
+                  !at ? t("bar.noSel") : t("bar.paste.none"),
+                  () => pasteHere(S))}
       </div>
     </div>`;
   };
@@ -984,6 +993,24 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
    *  demands a non-empty reason, and it named all four of these the hour they
    *  landed — "naked: tundo, tredo, tcopy, tpaste". An undo button that is grey
    *  because there is nothing to undo should say so. */
+  /** ...AND ONE THAT IS A MARK (2026-09-08, §24). Same button, same refusal
+   *  law, same `data-k`; what differs is that the glyph is drawn and the WORD
+   *  goes to the `.nu-vh` beside it — never the mark alone, which is the rule
+   *  every icon on this page obeys and the belt against a font with no outline
+   *  for it. `paintIcon` says the same thing in the imperative half of the
+   *  app; this is it in lit. */
+  const barMark = (k: string, mark: string, word: string, aria: string,
+                   on: boolean, why: string, act: () => void): TemplateResult =>
+    html`<button type="button" class="nu-opbtn is-mark" data-k=${k}
+      ?disabled=${!on}
+      aria-disabled=${ifDefined(on ? undefined : "true")}
+      data-why=${ifDefined(on ? undefined : why)}
+      title=${ifDefined(on ? undefined : why)}
+      aria-label=${on ? aria : t("sheet.refused", { name: aria, why })}
+      @click=${() => { if (!on) return; act(); }}
+      ><span class="nu-g" aria-hidden="true">${mark}</span
+      ><span class="nu-vh">${word}</span></button>`;
+
   const barBtn = (k: string, word: string, aria: string, on: boolean,
                   why: string, act: () => void): TemplateResult =>
     html`<button type="button" class="nu-opbtn" data-k=${k}
@@ -1970,14 +1997,22 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        thing the three beside them are: one gesture on this cell. */
     const ops = f.find((x) => (x as { kind?: string }).kind === "ops") as
       { kind: "ops"; ops: Op[] } | undefined;
-    if (ops) ops.ops.push(
-      { k: "tcell-copy|" + A.doc().voices[vi]!.name + "|" + sid,
-        word: t("bar.copy"), aria: t("act.copy"),
-        act: () => { CLIP = { sec: sid, voice: A.doc().voices[vi]!.name }; draw(); } },
-      { k: "tcell-paste|" + A.doc().voices[vi]!.name + "|" + sid,
-        word: t("bar.paste"), aria: t("act.paste"),
-        why: CLIP ? null : t("bar.paste.none"),
-        act: () => pasteInto(i, vi) });
+    /* (`tcell-copy|…` AND `tcell-paste|…` WERE APPENDED HERE and are deleted
+       on 2026-09-08, TABLE.md §24, under Paul's *"What else can be taken away
+       consolidated or simplified?"* — with the receipt that they were the
+       clearest answer to it on this card. The paragraph that justified them
+       read: *"they are appended to the cell's own op bar rather than given a
+       bar of their own, because they are the same kind of thing the three
+       beside them are: one gesture on this cell."* True — and the card ALSO
+       carried `tcopy` and `tpaste` in its head, four pixels above, doing the
+       same two things to the same cell. MEASURED on the rendered card at 390:
+       the words `copy` and `paste` appeared TWICE, in two rows, one under the
+       other.
+       THE HEAD'S PAIR SURVIVES because the head is the card's title bar and
+       copy/paste of the WHOLE CELL belongs beside the address, and because
+       `tcopy`/`tpaste` are the addresses test/table-inventory.json files. The
+       three that are left in this bar are the three that are only about this
+       cell: clear it, fill the row, fill the column.) */
     return f;
   };
 

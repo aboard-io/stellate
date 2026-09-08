@@ -1141,6 +1141,35 @@ var GLYPHS = {
      and only the SENTENCE is its own, because the ≡ closes the plate it opened
      and not the song. */
   "glyph.act.menu.close.say": "Close this menu",
+  /* ===== THE EDIT MARKS (2026-09-08, TABLE.md §24) ======================
+     Paul: *"We can move undo, redo to the bottom nav and make them global. Use
+     icons for copy paste."* and, of the cell card, *"the basic operations
+     should be icons."*
+     EVERY ONE IS MEASURED AGAINST THIS PAGE'S OWN FONT AND NOT ASSUMED. The
+     test is the one a mark has to pass here: render U+FFFF — which no font
+     has — take its width as THIS font's tofu, and refuse any candidate that
+     comes back the same width. All seven differ from a 60px tofu at 100px
+     type, so all seven have real outlines. (`⧉` 71.4 · `⎘` 80 · `⌫` 141.4 ·
+     `↶`/`↷`/`→`/`↓` 83.8.)
+     AND EVERY ONE STILL CARRIES ITS WORD. `paintIcon` puts the word in a
+     `.nu-vh` beside the mark, so a font that fails on somebody's phone leaves
+     a readable control rather than a blank square — which is the belt the ×
+     did not have until this morning (`el("span", "✕")` and an empty span).
+     A mark is never the only thing that says what a button does. */
+  "glyph.act.undo": "undo",
+  "glyph.act.undo.say": "Take back the last change",
+  "glyph.act.redo": "redo",
+  "glyph.act.redo.say": "Put the last change back",
+  "glyph.act.copy": "copy",
+  "glyph.act.copy.say": "Copy this cell",
+  "glyph.act.paste": "paste",
+  "glyph.act.paste.say": "Paste into this cell",
+  "glyph.act.clear": "clear",
+  "glyph.act.clear.say": "Back to what the genre plays",
+  "glyph.act.fillrow": "fill row",
+  "glyph.act.fillrow.say": "Put this across the row",
+  "glyph.act.fillcol": "fill column",
+  "glyph.act.fillcol.say": "Put this down the column",
   "glyph.act.close": "close",
   "glyph.act.close.say": "Back to the song",
   /* ...AND ONE MORE, 2026-09-05 (TABLE.md §13a.5): the `+` at each edge of the

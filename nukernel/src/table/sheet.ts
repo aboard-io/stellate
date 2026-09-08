@@ -659,7 +659,8 @@ function fieldRow(f: Field, openField: string | null,
                                         "is-verbs": !!o.compact })}>
       ${o.label ? html`<b class="nu-sheetlab">${o.label}</b>` : nothing}
       <div class="nu-opbar">${o.ops.map((op) => html`<button type="button"
-        class="nu-opbtn" data-k=${op.k}
+        class=${classMap({ "nu-opbtn": true, "is-mark": !!op.mark })}
+        data-k=${op.k}
         aria-disabled=${ifDefined(op.why ? "true" : undefined)}
         data-why=${ifDefined(op.why || undefined)}
         aria-label=${op.why ? t("sheet.refused",
@@ -667,7 +668,21 @@ function fieldRow(f: Field, openField: string | null,
                             : (op.aria || op.word)}
         @click=${() => { if (op.why) { say(bark, op.why); return; }
           if (!op.act) return; unsay(bark);
-          try { op.act(); } catch (e) {} }}>${op.word}</button>`)}</div>
+          try { op.act(); } catch (e) {} }}>${
+        /* ===== AN OP MAY BE A MARK (2026-09-08, TABLE.md §24) ============
+           Paul, of the cell card: *"This cell—the basic operations should be
+           icons."* An op that carries a `mark` draws the mark and keeps its
+           WORD in a `.nu-vh` beside it — which is `paintIcon`'s own shape,
+           said in lit rather than by hand, and is why a font that fails on
+           somebody's phone still leaves a readable control. An op with no
+           `mark` is unchanged: `fill from the genre`, `deal again` and the
+           row and column ops are SENTENCES, and a sentence has no honest
+           picture. Only the five that are gestures a spreadsheet already has
+           a mark for became marks. */
+        op.mark
+          ? html`<span class="nu-g" aria-hidden="true">${op.mark}</span
+                 ><span class="nu-vh">${op.word}</span>`
+          : op.word}</button>`)}</div>
       ${sayLine(bark)}
     </div>`;
   }

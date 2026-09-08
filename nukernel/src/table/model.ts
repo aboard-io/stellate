@@ -893,7 +893,6 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
   const phrase: Field[] = [], variation: Field[] = [],
         dynamics: Field[] = [], placement: Field[] = [];
   const f: Field[] = [];
-  f.push({ kind: "ops", label: t("cell.ops"), ops: cellOps(A, i, vi) });
   /* 1 · THE MOTIFS, WITH THEIR PREVIEWS AND THEIR PROVENANCE (3). One control
      and not two: the chips ARE the motif list, each wearing its own preview and
      the word that says where it came from.
@@ -1042,6 +1041,23 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
     word: t("cell.pitchedOnly.word"),
     why: t("cell.pitchedOnly.why") });
   for (const x of phrase) f.push(inGroup(x, G.phrase));
+  /* ===== THE MOTIF IS FIRST AND THE TOOLBAR IS SECOND (2026-09-08, §24) =
+     Paul: *"The main thing is motif selection and operations on motifs. Those
+     should be up top."*
+
+     THE OPS BAR HELD THE TOP and the paragraph above says why it was allowed
+     to: *"a toolbar is not one of the four subjects, and a heading over it
+     would be a heading that lied."* That is still true about the HEADING and
+     was never an argument for the PLACE. Measured on the card at 390: a hand
+     opening a cell met `clear to default · fill across the row · fill down the
+     column · copy · paste` — five verbs in two rows, about a hundred and
+     thirty pixels — before it met the one thing the cell is FOR, which is what
+     this part plays.
+     SO THE PHRASE GROUP IS FIRST AND THE BAR FOLLOWS IT. A toolbar under the
+     subject it acts on is the arrangement of every editor that has one, and it
+     reads correctly for the first time: here is the motif, then the things you
+     can do to this cell. The bar still keeps NO group, for its own reason. */
+  f.push({ kind: "ops", label: t("cell.ops"), ops: cellOps(A, i, vi) });
   for (const x of variation) f.push(inGroup(x, G.variation));
   for (const x of dynamics) f.push(inGroup(x, G.dynamics));
   for (const x of placement) f.push(inGroup(x, G.placement));
@@ -1208,17 +1224,24 @@ export function cellOps(A: TableAPI, i: number, vi: number): Op[] {
   const doc = A.doc();
   const v = doc.voices[vi]!, s = doc.form.sections[i]!;
   return [
+    /* THE THREE ARE MARKS SINCE 2026-09-08 (TABLE.md §24). Paul: *"This
+       cell—the basic operations should be icons."* Each keeps its `k`, its
+       `word` and its `aria` exactly — the word is what the `.nu-vh` prints
+       and what a screen reader still hears — and gains the mark measured in
+       src/copy/glyph.ts. `⌫` erases back to what the genre plays; `→` and
+       `↓` are the two directions a fill goes, which is the whole of what
+       "across the row" and "down the column" mean. */
     { k: "tcell-clear|" + v.name + "|" + s.id, word: t("op.clearCell"),
-      aria: t("op.clearCell.aria"),
+      aria: t("op.clearCell.aria"), mark: "\u232b",
       why: A.written(i, vi) ? null : t("refuse.nothingToClear"),
       act: () => A.clearCell(i, vi) },
     /* FILL RIGHT AND FILL DOWN ARE 5's COPY-TO-ROW AND COPY-TO-COLUMN, said in
        a spreadsheet's own words (9a). One door each, unchanged. */
     { k: "tcell-copyrow|" + v.name + "|" + s.id, word: t("op.fillRow"),
-      aria: t("op.fillRow.aria"),
+      aria: t("op.fillRow.aria"), mark: "\u2192",
       act: () => A.copyCell(i, vi, "row") },
     { k: "tcell-copycol|" + v.name + "|" + s.id, word: t("op.fillCol"),
-      aria: t("op.fillCol.aria"),
+      aria: t("op.fillCol.aria"), mark: "\u2193",
       act: () => A.copyCell(i, vi, "col") },
   ];
 }

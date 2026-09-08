@@ -14825,7 +14825,57 @@ function chromeRow() {
      THE READOUT IS LAST IN READING ORDER FOR THE SAME REASON IT IS LAST IN
      THE MARKUP: nothing in it is a target, so nothing is asking for a tab
      stop before the controls. */
-  barEl.append(seedRowEl, tapeNode(), volWrap);
+  /* ===== AND UNDO/REDO ARE THE BAR'S, GLOBAL, 2026-09-08 (TABLE.md §24) =
+     Paul: *"We can move undo, redo to the bottom nav and make them global."*
+
+     THIS REVERSES §16's LAW, WHICH IS WORTH SAYING IN FULL: *"THE TOP IS WHERE
+     YOU GO, THE BOTTOM IS WHAT YOU HEAR … every transport control is in the
+     bar at the foot; nothing else is chrome."* §22 already bent it once for the
+     TAPE and bent it the honest way — a readout of what the transport did is
+     the transport's. Undo is not that. Undo is an EDIT, and the bar is now
+     the transport AND the two edits that are about the record as a whole.
+     WHAT MAKES IT RIGHT ANYWAY, and it is Paul's own word: GLOBAL. Undo and
+     redo were the first line of the open CELL sheet — four verbs that existed
+     only while a cell was open, on a stack that is document-wide. A page whose
+     Ctrl-Z works everywhere and whose undo BUTTON exists in one modal is a
+     page with two different answers to the same question. The bar is the one
+     band on the screen in every state, which is exactly what a document-wide
+     stack needs.
+     THE STACK IS THE SAME OBJECT AND NOT A SECOND ONE. `undoStack` is a
+     singleton over the TableAPI (src/table/undo.js) and ui/eight.js has
+     imported it since the chained-motif round, so these two marks press the
+     stack the grid presses. No bridge, no copy, no "which undo did I get".
+     THEY GREY WHEN THERE IS NOTHING, AND SAY WHY — `data-why`, the joined
+     accessible name, §4's no-silent-grey — and they are painted by
+     `paintChrome`, which already runs on every draw. */
+  const undoBtn = mkBtn("tundo-bar"), redoBtn = mkBtn("tredo-bar");
+  const editRow = el("div", null, "nu-baredit");
+  editRow.append(undoBtn, redoBtn);
+  const stackNow = () => { try { return undoStack(tableAPI()); } catch (e) { return null; } };
+  paintEdit = () => {
+    const U = stackNow();
+    for (const [b, can, word, none] of [
+      [undoBtn, U && U.canUndo, GLYPH.act.undo, _t("bar.undo.none")],
+      [redoBtn, U && U.canRedo, GLYPH.act.redo, _t("bar.redo.none")]]) {
+      paintIcon(b, { glyph: word.g, word: word.w, say: word.s });
+      /* `aria-disabled` AND NEVER `disabled` — DESIGN.md component 15, the
+         2026-09-07 finding: a `disabled` button takes no click, no pointerdown
+         and no pointerover, so the reason underneath it reaches nobody holding
+         a phone. It is greyed, it is announced, and a tap opens the why. */
+      if (can) { b.removeAttribute("aria-disabled"); b.removeAttribute("data-why");
+                 b.removeAttribute("title"); }
+      else { b.setAttribute("aria-disabled", "true"); b.dataset.why = none;
+             b.title = none;
+             b.setAttribute("aria-label", _t("sheet.refused",
+               { name: word.s, why: none })); }
+    }
+  };
+  undoBtn.addEventListener("click", () => { const U = stackNow();
+    if (U && U.canUndo) { U.undo(); paintEdit(); } });
+  redoBtn.addEventListener("click", () => { const U = stackNow();
+    if (U && U.canRedo) { U.redo(); paintEdit(); } });
+  paintEdit();
+  barEl.append(seedRowEl, editRow, tapeNode(), volWrap);
   nav.append(barEl);
 
   logPanel = $("nu-log");
@@ -14841,7 +14891,12 @@ function chromeRow() {
    `aria-pressed="true"` — the sheet that is open — and when you are standing
    on the TABLE none of them does, which is the honest reading of "where you
    are" on a page whose table is not a view you opened. */
+/* THE TWO EDIT MARKS' OWN PAINTER, held at module scope so `paintChrome` can
+   call it without knowing how the bar was built — the same arrangement
+   `paintTape` has. It is null until `chromeRow` has run. */
+let paintEdit = () => {};
 function paintChrome() {
+  paintEdit();
   /* THE CURRENT VIEW IS `aria-current`, AND IT IS THE ONE CHANNEL THAT SAYS SO
      (2026-09-06, docs/NAV.md: *"The current view is marked in the list"*). It
      was `on:` — `paintIcon`'s `aria-pressed` plus a `<mark>` — and with six
