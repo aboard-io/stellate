@@ -992,16 +992,6 @@ function colSheet(A2, vi) {
   const f2 = [];
   const instr = [], env = [], tone = [], mix = [];
   f2.push({ kind: "ops", label: t4("col.ops"), ops: colOps(A2, vi, v3) });
-  {
-    const mk = makeOps(A2, v3);
-    if (mk.length) f2.push({
-      kind: "ops",
-      label: t4("col.make"),
-      ops: mk,
-      compact: true
-    });
-  }
-  if (v3.kind === "line") instr.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
   const ik = v3.kind === "bass" ? "sound.bassinstrument" : v3.kind === "drums" ? "sound.drumkit" : "sound.instrument";
   instr.push(shField(
     A2,
@@ -1009,6 +999,7 @@ function colSheet(A2, vi) {
     { voice: v3.name },
     v3.kind === "drums" ? t4("col.machine") : t4("noun.instrument")
   ));
+  if (v3.kind === "line") instr.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
   if (v3.kind === "drums") {
     const on = A2.castOf(vi, "on") !== false;
     instr.push({
@@ -1112,6 +1103,15 @@ function colSheet(A2, vi) {
     }
   ] });
   for (const x2 of instr) f2.push(inGroup(x2, G.instrument));
+  {
+    const mk = makeOps(A2, v3);
+    if (mk.length) f2.push({
+      kind: "ops",
+      label: t4("col.make"),
+      ops: mk,
+      compact: true
+    });
+  }
   for (const x2 of env) f2.push(inGroup(x2, G.envelope));
   for (const x2 of tone) f2.push(inGroup(x2, G.tone));
   for (const x2 of mix) f2.push(inGroup(x2, G.mix));
@@ -1365,6 +1365,7 @@ function colOps(A2, vi, v3) {
     {
       k: "tcol-solo|" + v3.name,
       word: t4("op.solo"),
+      mark: "◉",
       aria: t4("op.solo.aria", { name: v3.name }),
       act: () => A2.soloVoice(v3.name)
     },
@@ -1391,6 +1392,7 @@ function colOps(A2, vi, v3) {
     {
       k: "tcol-left|" + v3.name,
       word: t4("op.left"),
+      mark: "←",
       aria: t4("op.left.aria"),
       why: vi === 0 ? t4("refuse.alreadyFirst") : null,
       act: () => A2.moveVoice(vi, -1)
@@ -1398,6 +1400,7 @@ function colOps(A2, vi, v3) {
     {
       k: "tcol-right|" + v3.name,
       word: t4("op.right"),
+      mark: "→",
       aria: t4("op.right.aria"),
       why: vi === n3 - 1 ? t4("refuse.alreadyLast") : null,
       act: () => A2.moveVoice(vi, 1)
@@ -1405,12 +1408,14 @@ function colOps(A2, vi, v3) {
     {
       k: "tcol-deal|" + v3.name,
       word: t4("op.reset"),
+      mark: "⚄",
       aria: t4("op.resetCol.aria"),
       act: () => A2.dealCol(vi)
     },
     {
       k: "tcol-del|" + v3.name,
       word: t4("op.remove"),
+      mark: "−",
       aria: t4("op.remove.aria", { name: v3.name }),
       why: n3 <= 1 ? t4("refuse.lastPlayer") : null,
       act: () => A2.dropVoice(v3.name)

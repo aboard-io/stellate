@@ -730,16 +730,24 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
      had. `compact` is what nu.css draws smaller — a verb you push is not a
      value you set, and thirty-three of them at the value's own type is the
      441px Paul photographed. */
-  {
-    const mk = makeOps(A, v);
-    if (mk.length) f.push({ kind: "ops", label: t("col.make"), ops: mk,
-                            compact: true });
-  }
-  if (v.kind === "line") instr.push(shField(A, "cast.part", { voice: v.name }, t("col.plays")));
+  /* ===== THE INSTRUMENT IS FIRST (2026-09-08, TABLE.md §24) ============
+     Paul: *"Icons, then actually select the instrument, then the rest in one
+     column in priority order."*
+
+     `cast.part` HELD THE FIRST LINE and it is a real question — what this
+     chair PLAYS, its role: lead, pad, riff. But it is not the question a hand
+     opens a chair to answer. Measured on the sheet at 390: a thumb met nine
+     word-buttons, then `plays`, and only then the instrument — which is the
+     one row the whole group is named after and the only one that changes what
+     you hear the moment it is set.
+     SO THE ORDER IS THE PRIORITY ORDER Paul asked for: the instrument, then
+     the role it plays, then everything else. `cast.part` moves down one line
+     and loses nothing — same field, same address, same vocabulary. */
   const ik = v.kind === "bass" ? "sound.bassinstrument"
            : v.kind === "drums" ? "sound.drumkit" : "sound.instrument";
   instr.push(shField(A, ik, { voice: v.name },
                  v.kind === "drums" ? t("col.machine") : t("noun.instrument")));
+  if (v.kind === "line") instr.push(shField(A, "cast.part", { voice: v.name }, t("col.plays")));
   /* IS THERE A DRUMMER AT ALL — `cast.on`. avail.js `f["voice.on"]` is read off
      it and greys all sixty-eight kit words when it is false, so deleting this
      would leave a record with a drummer nobody could sit out. Said in two words
@@ -879,6 +887,24 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
       aria: t("col.buses.aria", { name: v.name }),
       act: () => A.showBoard() } ] });
   for (const x of instr) f.push(inGroup(x, G.instrument));
+  /* ===== AND `MAKE IT` FOLLOWS THE INSTRUMENT (2026-09-08, §24) ========
+     Paul: *"Icons, then actually select the instrument, then the rest in one
+     column in priority order."*
+
+     IT STOOD SECOND, directly under the nine ops, and its own note explains
+     what it is: thirty-three QUALITIES — brighter, darker, drier, wetter — as
+     a compact bar. Measured on the sheet at 390: about 250px of chips between
+     the icons and the instrument row, so a hand looking for `clean guitar`
+     scrolled past thirty-three adjectives to reach it.
+     THEY ARE ADJUSTMENTS TO A SOUND AND THE SOUND IS CHOSEN ABOVE THEM. That
+     is the whole of the reorder and it is Paul's word `priority`: pick the
+     instrument, then shape it. Not one address moved and the bar is the same
+     `kind: "ops"` row with the same `compact` flag; only its line changed. */
+  {
+    const mk = makeOps(A, v);
+    if (mk.length) f.push({ kind: "ops", label: t("col.make"), ops: mk,
+                            compact: true });
+  }
   for (const x of env) f.push(inGroup(x, G.envelope));
   for (const x of tone) f.push(inGroup(x, G.tone));
   for (const x of mix) f.push(inGroup(x, G.mix));
@@ -1185,10 +1211,30 @@ export function rowOps(A: TableAPI, i: number, s: Section): Op[] {
   ];
 }
 
+/* ===== MARKS FOR THE GESTURES, WORDS FOR THE SENTENCES (2026-09-08, §24) =
+   Paul: *"The same is true of instrument selection. Icons, then actually
+   select the instrument, then the rest in one column in priority order."*
+
+   NINE WORD-BUTTONS STOOD BETWEEN A HAND AND THE INSTRUMENT, and five of them
+   are gestures every editor draws the same way: solo, move left, move right,
+   deal again, remove. Those get marks — `◉` is already this page's own
+   sounding dot, `←`/`→` are the two directions a column moves, `⚄` is the die
+   the page has rolled since the seed strip, `−` is the `+`'s opposite and the
+   `+` is already the mark on every adder here.
+   THE THREE HIRES KEEP THEIR WORDS, and that is `Op.mark`'s own rule rather
+   than an oversight: *"an op WITHOUT one is unchanged … a sentence has no
+   honest picture."* `Add bass` and `Add drums` differ by their NOUN, and three
+   identical `+` marks in a row would be three buttons a hand cannot tell
+   apart — which is the disease, not the cure. They also carry refusals
+   (`refuse.haveBass`) that only a word can wear legibly.
+   THEY STAY ON THIS SHEET. test/shell.js A6l asserts *"a player's `remove` AND
+   the three hires are in the sheet its own column head opens"* — one tap from
+   rest — and the `+` at the axis end fires the same addresses. Two doors, one
+   owner; neither is deleted here. */
 export function colOps(A: TableAPI, vi: number, v: Voice): Op[] {
   const n = A.doc().voices.length;
   return [
-    { k: "tcol-solo|" + v.name, word: t("op.solo"),
+    { k: "tcol-solo|" + v.name, word: t("op.solo"), mark: "\u25c9",
       aria: t("op.solo.aria", { name: v.name }),
       act: () => A.soloVoice(v.name) },
     { k: "tcol-add|line", word: t("op.addLine"), aria: t("op.addLine.aria"),
@@ -1199,16 +1245,18 @@ export function colOps(A: TableAPI, vi: number, v: Voice): Op[] {
     { k: "tcol-add|drums", word: t("op.addDrums"), aria: t("op.addDrums.aria"),
       why: A.hasKind("drums") ? t("refuse.haveDrums") : null,
       act: () => A.addVoice("drums") },
-    { k: "tcol-left|" + v.name, word: t("op.left"), aria: t("op.left.aria"),
+    { k: "tcol-left|" + v.name, word: t("op.left"), mark: "\u2190",
+      aria: t("op.left.aria"),
       why: vi === 0 ? t("refuse.alreadyFirst") : null,
       act: () => A.moveVoice(vi, -1) },
-    { k: "tcol-right|" + v.name, word: t("op.right"), aria: t("op.right.aria"),
+    { k: "tcol-right|" + v.name, word: t("op.right"), mark: "\u2192",
+      aria: t("op.right.aria"),
       why: vi === n - 1 ? t("refuse.alreadyLast") : null,
       act: () => A.moveVoice(vi, 1) },
-    { k: "tcol-deal|" + v.name, word: t("op.reset"),
+    { k: "tcol-deal|" + v.name, word: t("op.reset"), mark: "\u2684",
       aria: t("op.resetCol.aria"),
       act: () => A.dealCol(vi) },
-    { k: "tcol-del|" + v.name, word: t("op.remove"),
+    { k: "tcol-del|" + v.name, word: t("op.remove"), mark: "\u2212",
       aria: t("op.remove.aria", { name: v.name }),
       why: n <= 1 ? t("refuse.lastPlayer") : null,
       act: () => A.dropVoice(v.name) },
