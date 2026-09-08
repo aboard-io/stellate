@@ -28,6 +28,30 @@
    what settles the thing Paul named first (*"Selected boxes are oddly
    selected"*): a selected thing is LIT, and nothing else in the system lights.
 
+   ===== THE PALETTE IS TWO HUES AND AN ALARM (2026-09-08) ==============
+   Paul: *"Simplify the palette. Black and greens for night. White and light
+   blue for daytime."*
+
+   WHAT WENT. The deck was a graphite with a green bias and the ink a warm
+   cream; the lamps were green, AMBER and red; the six players were sky, green,
+   violet, magenta, slate and graphite; the daylight room was a warm panel grey
+   with a dark-green phosphor. That is five hue families on one surface, and it
+   read as a machine assembled from parts of other machines.
+   WHAT IS LEFT. NIGHT is black and greens: the grounds are black with a green
+   bias, the ink is a green white, ARMED is a pale green instead of amber, and
+   the six players are six greens told apart by VALUE rather than by hue — which
+   is what a phosphor screen does anyway. DAY is white and light blue, the same
+   structure in the other room: white grounds, near-black ink, and every lamp,
+   phosphor and player a blue.
+   THE ALARM STAYS RED IN BOTH, and that is the one exception with a reason: a
+   palette whose alarm is the same hue as its ON light is a panel that cannot
+   shout. `--clip` is the tempo LED, clipping and destruction, and it is the
+   only thing in either room allowed to be a third hue.
+   EVERY PAIRING WAS MEASURED BEFORE IT WAS WRITTEN. The gate's own matrix is
+   13 inks and 5 edges against 3 grounds in both themes — 54 pairings, 4.5:1
+   for ink and 3:1 for an edge — and each value here was chosen against that
+   arithmetic rather than picked and checked afterwards.
+
    THREE LAMPS AND ONE SCREEN, and that is the whole colour system:
      the GREEN lamp   a hand set this · this is selected · this is on
      the AMBER lamp   armed — about to matter, under the pointer, next
@@ -57,22 +81,22 @@
      A panel is not one flat colour: there is the chassis, the plate bolted to
      it, and the cut in the plate the screen sits in. Everything else is a
      hairline. */
-  --deck:  #16191A;  /* the chassis — graphite with a green bias, the room everything bolts to */
-  --panel: #20262A;  /* a plate screwed onto the chassis: tables, sheets, the bar */
-  --well:  #0C0F10;  /* a cut into a plate — the screen's own ground, and the darkest thing here */
+  --deck:  #0A0D0B;  /* the chassis — BLACK with a green bias, the room everything bolts to */
+  --panel: #111614;  /* a plate screwed onto the chassis: tables, sheets, the bar. One step off the black and no more */
+  --well:  #050706;  /* a cut into a plate — the screen's own ground, and the darkest thing here: as near black as a screen gets without losing its depth */
 
   /* ===== THE LEGENDS — printed on the panel, three voices ===============
      Silkscreen ink, warm because a panel's white is never paper's. Dim and
      fixed: a legend is the one thing on this page that never lights. */
-  --legend:       #E6E1D4;  /* the ink — every word the panel says */
-  --legend-dim:   #9A968A;  /* the second voice: units, counts, a value's own label */
-  --legend-faint: #8C918A;  /* refused — a COOLER grey, not a darker one: quieter by hue, because quieter by value is a contrast floor failed */
+  --legend:       #D7E6D9;  /* the ink — every word the panel says, and it is a GREEN white now: silkscreen under a green lamp */
+  --legend-dim:   #93A897;  /* the second voice: units, counts, a value's own label — the same green, quieter */
+  --legend-faint: #7E9686;  /* refused — a GREYER green, not a darker one: quieter by saturation, because quieter by value is a contrast floor failed */
 
   /* ===== THE THREE LAMPS AND THE SCREEN =================================
      Saturated, and the only saturated colour in the system. */
   --lamp:  #35D97B;  /* the green lamp — ON: selected, focused, a value a hand set */
-  --armed: #F2A93B;  /* the amber lamp — armed: under the pointer, next, about to matter */
-  --clip:  #FF5A47;  /* the red lamp — the tempo LED, clipping, and destruction. Never decoration */
+  --armed: #9FE8B6;  /* ARMED — under the pointer, next, about to matter. It was AMBER and is a pale green (2026-09-08, "black and greens for night"): the one hue is the panel's, and what separates armed from on is BRIGHTNESS, which is how a real lamp says the same thing */
+  --clip:  #FF5A47;  /* the red lamp — the tempo LED, clipping, and destruction. THE ONE THING THAT IS NOT GREEN, and it is kept red on purpose: a palette where the alarm is the same hue as the ON light is a panel that cannot shout. Never decoration */
   --value: #6EE7A4;  /* the phosphor — the ink the SCREEN prints a readout in; not a lamp, a number */
   --lamp-hot: #5CF0A0;  /* a lamp with a thumb on it — the one hover this palette has */
   --on-fill:  var(--well);  /* the ink laid ON any filled control — a lamp, a cluster hue, an ink plate: on this palette every fill is one end of the deck and the ink is the other */
@@ -86,10 +110,10 @@
      Four steps between the deck and the legend, for the furniture that is
      neither ground nor word: a trough, a cap, a plate's edge, a disabled
      fill. Biased green so a grey never reads as a cold second accent. */
-  --grey1: #1D2224;  /* a trough — barely off the deck */
-  --grey2: #2B3235;  /* a cap, a raised fill */
-  --grey3: #464E4A;  /* a quiet fill, and the one grey that is never an edge (it is under the 3:1 floor and may not carry a boundary) */
-  --grey4: #6C7066;  /* the hairline that has to be SEEN — 3.49:1 on the deck, which is the floor a control's edge owes */
+  --grey1: #101614;  /* a trough — barely off the deck, and green like it */
+  --grey2: #1B2520;  /* a cap, a raised fill */
+  --grey3: #33463C;  /* a quiet fill, and the one grey that is never an edge (it is under the 3:1 floor and may not carry a boundary) */
+  --grey4: #526E5D;  /* the hairline that has to be SEEN — 3.48:1 on the deck, 3.26 on the panel, which is the floor a control's edge owes */
 
   /* ===== THE APP'S FOUR MEANINGS, SAID IN THE MACHINE'S OWN COLOURS =====
      `nu.css` has painted with these four names since 2026-09-02 and they are
@@ -126,12 +150,12 @@
      at a call site. The HUES are hw.css's own; the VALUES are lifted for a
      dark ground, because a hue chosen to sit on #F0EDE4 disappears on #16191A.
      `.nu-vpaint` is the one thing that paints with these. */
-  --v0: #4FB3EC;   /* voice 0 — sky */
+  --v0: #8FE9C0;   /* voice 0 — sky */
   --v1: #57C98A;   /* voice 1 — green */
-  --v2: #A98BFF;   /* voice 2 — violet */
-  --v3: #F07AB4;   /* voice 3 — magenta */
-  --vb: #9AA6AE;   /* the bass  — slate */
-  --drum: #8A93A0; /* the kit   — graphite */
+  --v2: #39A96B;   /* voice 2 — deep green */
+  --v3: #7FD8A6;   /* voice 3 — pale green */
+  --vb: #6E9C81;   /* the bass  — the greyest green, because a bass is the floor */
+  --drum: #7C9B88; /* the kit   — greener than the bass by a hair, and quieter than a line */
 
   /* ===== LEVEL: HOW MUCH ================================================
      Four steps of ONE hue so a velocity reads as a quantity, and the hue is
@@ -316,34 +340,34 @@
    =========================================================================== */
 :root[data-theme="light"]{
   color-scheme: light;
-  --deck:  #D9D6CA;  /* the chassis under studio lights — a warm panel grey, and never paper */
-  --panel: #E9E6DB;  /* a plate screwed onto it */
-  --well:  #C9CDC2;  /* the cut the screen sits in — olive-grey, which is what an unlit LCD is */
-  --legend:       #191C18;  /* printed ink */
-  --legend-dim:   #4E5249;  /* the second voice */
-  --legend-faint: #4B5654;  /* refused — the same trick the deck plays: a COOLER grey at the same value, because a quieter one fails the floor on the well */
-  --lamp:  #0A6034;  /* the green lamp, read in daylight */
-  --armed: #6E4300;  /* the amber lamp */
-  --clip:  #9A1408;  /* the red lamp */
-  --value: #084C29;  /* the phosphor, dark on the well the way an LCD reads in the sun */
-  --lamp-hot: #074726;
-  --on-fill: #F4F2E9;  /* the ink on a fill inverts with the panel, and is the only colour token that has to */
+  --deck:  #F4F8FB;  /* the chassis under studio lights — WHITE, barely blued (2026-09-08: "White and light blue for daytime") */
+  --panel: #FFFFFF;  /* a plate screwed onto it — the one true white in either room */
+  --well:  #E8F0F7;  /* the cut the screen sits in — the palest blue, which is what a lit screen is in daylight */
+  --legend:       #0D1A24;  /* printed ink */
+  --legend-dim:   #3C4E5B;  /* the second voice */
+  --legend-faint: #465868;  /* refused — the same trick the deck plays: a COOLER grey at the same value, because a quieter one fails the floor on the well */
+  --lamp:  #0B5FA5;  /* ON — the blue lamp, at the value an ink needs on white */
+  --armed: #0D6A9B;  /* ARMED — the same blue, one step toward the light, which is the night palette's move made in this room */
+  --clip:  #A31912;  /* the red lamp — the one hue that is not blue here, for the reason the night palette gives about green */
+  --value: #0A5590;  /* the phosphor — dark blue on the well, the way a lit screen reads in the sun */
+  --lamp-hot: #094E88;
+  --on-fill: #FFFFFF;  /* the ink on a fill inverts with the panel, and is the only colour token that has to */
   /* THE GREY RAMP RUNS THE OTHER WAY, and the ends keep their jobs: grey1 is
      still the trough (barely off the ground), grey4 is still the hairline that
      has to be seen. Only the direction of "quiet" inverts with the room. */
-  --grey1: #CFCCC0;  /* a trough */
-  --grey2: #BDBAAE;  /* a cap, a raised fill */
-  --grey3: #9A9D93;  /* a quiet fill, never an edge */
-  --grey4: #6C7066;  /* the hairline that has to be seen — 3.48:1 on the panel */
+  --grey1: #E4EDF4;  /* a trough */
+  --grey2: #D3E0EB;  /* a cap, a raised fill */
+  --grey3: #A9BECE;  /* a quiet fill, never an edge */
+  --grey4: #6D8BA2;  /* the hairline that has to be seen — 3.48:1 on the panel */
   /* THE SIX PLAYERS, DARKENED FOR A LIGHT PANEL: the same six hues, at the
      value a light ground needs, so a lane keeps its identity across the two
      rooms and only its brightness moves. */
-  --v0: #17557F;   /* sky */
-  --v1: #145C3B;   /* green */
-  --v2: #522F94;   /* violet */
-  --v3: #7E2153;   /* magenta */
-  --vb: #454B50;   /* the bass — slate */
-  --drum: #40464C; /* the kit — graphite */
+  --v0: #12599C;   /* sky */
+  --v1: #0B6470;   /* green */
+  --v2: #2C4E8C;   /* violet */
+  --v3: #155E86;   /* magenta */
+  --vb: #37505F;   /* the bass — slate */
+  --drum: #405464; /* the kit — graphite */
   /* LEVEL: still four steps of ONE hue, still ascending, still ending on the
      lamp — a quantity read as how much lamp, whichever way the room runs. */
   --q1: #C3D8C9;   /* a ghost */
