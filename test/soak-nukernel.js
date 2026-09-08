@@ -216,7 +216,7 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
   }
   console.log(`  first note at ${firstNoteMs == null ? "never (within 60s)" : (firstNoteMs / 1000).toFixed(2) + "s"} after the click`);
 
-  console.log("\n   t(s)  route      iso ring  runway     fed  bklog  keepUp   epi  worstMs  lastAtSec  quanta  anom  clicks  cmRms  deficit  healed  pMean  pPeak  heapMB");
+  console.log("\n   t(s)  route      iso ring  runway     fed  bklog  keepUp   epi  worstMs  lastAtSec  quanta  anom  clicks   gaps    jump  cmRms  deficit  healed  pMean  pPeak  heapMB");
   while (Date.now() < END) {
     await sleep(POLL * 1000);
     let s;
@@ -270,6 +270,7 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
       String(!!E.isolated).padEnd(4), String(!!E.ring).padEnd(5),
       f(E.runwaySec, 2, 6), f(row.fedSec, 2, 7), f(row.backlogSec, 2, 6), f(E.keepUp, 3, 7), f(st.episodes, 0, 5), f(st.worstMs, 1, 8),
       f(st.lastAtSec, 1, 10), f(st.quanta, 0, 7), f(E.anomalies, 0, 5), f(E.clicks, 0, 7),
+      f(E.gaps, 0, 6), f(E.peakjump, 2, 7),
       f(row.cmRms, 3, 6), f(E.ringDeficit, 0, 8), f(E.healedSec, 2, 7),
       f(E.producer && E.producer.mean, 3, 6), f(E.producer && E.producer.peak, 3, 6),
       f(row.heap / 1048576, 1, 7),
@@ -301,6 +302,8 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
   const lastAt = rows.reduce((a, r) => Math.max(a, (r.starve && r.starve.lastAtSec) || 0), 0);
   const maxAnom = Math.max(0, ...rows.map((r) => r.anomalies | 0));
   const clicks = rows.reduce((a, r) => Math.max(a, r.clicks || 0), 0);
+  const gaps = rows.reduce((a, r) => Math.max(a, r.gaps || 0), 0);
+  const jump = rows.reduce((a, r) => Math.max(a, r.peakjump || 0), 0);
   const cmAlive = rows.some((r) => r.clickMonAlive);
   const pPeak = rows.reduce((a, r) => Math.max(a, (r.producer && r.producer.peak) || 0), 0);
   const p05 = pct(keeps, 0.05);
@@ -314,8 +317,24 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
     ["starve.episodes === 0", maxEpi === 0,
       `episodes=${maxEpi} worstMs=${worst} lastAtSec=${lastAt}`],
     ["keepUp p05 >= 0.92", p05 != null && p05 >= 0.92, `p05=${p05}`],
-    ["clickMonAlive && clicks === 0 (F6)", cmAlive && clicks === 0,
-      `clickMonAlive=${cmAlive} clicks=${clicks}`],
+    /* F6, TRANSLATED (2026-09-08) — and it is the same repair the round made to
+       `audio/live.js health()`. This asked `clicks === 0`, and `clicks` is not
+       a count of glitches: clickmon.dsp counts every sample-to-sample jump over
+       0.5 and its own header says "ordinary program clears it, program edges
+       (303/break onsets) can beat it — the logged metadata is how we tell a
+       real glitch from an edgy transient". Measured on Kingston 1969 over seven
+       minutes: 297 clicks, ZERO gaps, worst jump 0.90. Every one of those was
+       a snare, and the old check called the record broken.
+       THE HARD FAILURE IS `gaps`, which cannot be music: 128 consecutive
+       near-zero samples while the recent RMS was loud is a starved render path
+       and nothing else. `peakjump` is the second half — a transient sits just
+       over the 0.5 bar and a torn buffer is near 2 — so a ceiling of 1.5 fails
+       a tear and passes a drum. `clicks` is still printed every poll, as the
+       context it always was. */
+    ["clickMonAlive && gaps === 0 (F6)", cmAlive && gaps === 0,
+      `clickMonAlive=${cmAlive} gaps=${gaps} clicks=${clicks} (clicks are transients unless gaps say otherwise)`],
+    ["peakjump < 1.5 — no torn buffer", !(jump >= 1.5),
+      `peakjump=${jump} (a transient is ~0.8, a tear ~2)`],
     ["anomalies === 0", maxAnom === 0, `anomalies=${maxAnom}`],
     ["end heap <= 1.25x minute-2 heap", heapAt2 > 0 && heapEnd <= 1.25 * heapAt2,
       `${(heapAt2 / 1048576).toFixed(1)}MB -> ${(heapEnd / 1048576).toFixed(1)}MB`],
@@ -394,7 +413,7 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
     console.log("\n  --- the whole series (a failure is a shape, not a number) ---");
     for (const r of rows) {
       const st2 = r.starve || {};
-      console.log(`  t=${String(r.t).padStart(4)}s route=${r.route} ring=${r.ring} runway=${(r.runwaySec || 0).toFixed(2)} keepUp=${r.keepUp} epi=${st2.episodes | 0} maxRun=${st2.maxRun | 0} worstMs=${st2.worstMs || 0} lastAtSec=${st2.lastAtSec || 0} anom=${r.anomalies} clicks=${r.clicks} cmRms=${r.cmRms} heapMB=${(r.heap / 1048576).toFixed(1)}`);
+      console.log(`  t=${String(r.t).padStart(4)}s route=${r.route} ring=${r.ring} runway=${(r.runwaySec || 0).toFixed(2)} keepUp=${r.keepUp} epi=${st2.episodes | 0} maxRun=${st2.maxRun | 0} worstMs=${st2.worstMs || 0} lastAtSec=${st2.lastAtSec || 0} anom=${r.anomalies} clicks=${r.clicks} gaps=${r.gaps} jump=${r.peakjump} cmRms=${r.cmRms} heapMB=${(r.heap / 1048576).toFixed(1)}`);
     }
   }
   if (JSONOUT) fs.writeFileSync(JSONOUT, JSON.stringify({ tag: TAG, mins: MINS, load: LOAD, rows, checks, cerr, perr }, null, 1));
