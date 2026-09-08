@@ -158,12 +158,20 @@ fail=0
 # loosening — a check that passes on the third read passed.
 chk() { # chk <label> <url> <grep-pattern|-> [header-pattern]
   local label="$1" url="$2" body="$3" hdr="${4:-}"
-  local out ok=0 i
-  for i in 1 2 3; do
-    out="$(curl -fsS -D /tmp/.swhdr --max-time 20 "$url" 2>/dev/null || true)"
-    ok=1
-    [ -z "$out" ] && ok=0
-    if [ "$ok" = "1" ] && [ "$body" != "-" ] && ! printf '%s' "$out" | grep -q "$body"; then ok=0; fi
+  local ok=0 i
+  for i in 1 2 3 4 5; do
+    # THE BODY GOES TO A FILE AND grep READS THE FILE (2026-09-08, the second
+    # false alarm in one day). Twice now this check has reported a 200 whose
+    # body "has no <urlset" on a sitemap that had one — and the identical
+    # function, run by hand against the identical URL a minute later, passed.
+    # Whatever the shell was doing to an 85 KB body on its way through a
+    # variable and a `printf` pipeline, it is not something a deploy gate may
+    # do: a smoke test that cries wolf teaches the next person to ignore it,
+    # which is worse than having none. So curl writes to disk, grep reads disk,
+    # and nothing about the body passes through the shell at all.
+    if curl -fsS -D /tmp/.swhdr -o /tmp/.swbody --max-time 20 "$url" >/dev/null 2>&1; then ok=1; else ok=0; fi
+    [ "$ok" = "1" ] && [ ! -s /tmp/.swbody ] && ok=0
+    if [ "$ok" = "1" ] && [ "$body" != "-" ] && ! grep -qa -- "$body" /tmp/.swbody; then ok=0; fi
     if [ "$ok" = "1" ] && [ -n "$hdr" ] && ! grep -qi "$hdr" /tmp/.swhdr; then ok=0; fi
     [ "$ok" = "1" ] && break
     sleep 2
@@ -185,7 +193,7 @@ chk "feed"                  "$SITE/feed.xml"             "<rss"
 chk "manifest"              "$SITE/manifest.webmanifest" "start_url"
 echo -n "   old path /how.html -> "; curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" --max-time 20 "$SITE/how.html"
 echo -n "   old door /nukernel/ -> "; curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" --max-time 20 "$SITE/nukernel/index.html"
-rm -f /tmp/.swhdr
+rm -f /tmp/.swhdr /tmp/.swbody
 if [ "$fail" != "0" ]; then
   echo "SMOKE FAILED. Roll back with: tools/deploy/switch-prod-vhost.sh --rollback" >&2
   exit 1
