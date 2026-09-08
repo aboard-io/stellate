@@ -1077,10 +1077,25 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          AND THE HEAD IS OPTIONAL NOW. A card grid is ALWAYS open — there is no
          head at the bare key to press — so a missing `[data-k=<key>]` is not
          "no such field" any more; it is a field that needs no opening. */
-      return [...document.querySelectorAll(
-          "#pan-band .nu-wchip, #pan-band .nu-lz, #pan-band .nu-mopick")]
-        .filter((c) => !c.disabled && c.getAttribute("aria-disabled") !== "true" &&
-                       (c.dataset.k || "").split("|").pop() !== "")
+      /* THE MOTIF CARDS ARE FILTERED BY KEY AND THE OTHER TWO ARE NOT, and
+         that asymmetry is the whole of a bug this reader had for one run.
+         A chip strip and a lozenge field are only ON THE GLASS while their own
+         field is open, so "every chip on the page" has always meant "this
+         field's chips" and the unfiltered sweep was safe. A MOTIF CARD GRID IS
+         ALWAYS OPEN (§24) — that is the point of it — so adding `.nu-mopick`
+         to the sweep handed `walk` sixteen motif cards while it was walking
+         the ARTICULATION strip. It tapped a motif, the articulation never
+         landed, and the check reported `the tap landed on the CELL tier
+         through putCell: null` about a control that works.
+         So the cards are asked for by name: only those whose address is under
+         the key this walk is about. */
+      const own = (c) => !c.disabled &&
+        c.getAttribute("aria-disabled") !== "true" &&
+        (c.dataset.k || "").split("|").pop() !== "";
+      return [...document.querySelectorAll("#pan-band .nu-wchip, #pan-band .nu-lz")]
+        .concat([...document.querySelectorAll(
+          '#pan-band .nu-mopick[data-k^="' + k + '|"]')])
+        .filter(own)
         .map((c) => c.dataset.k);
     }, fieldKey);
   };
@@ -4176,15 +4191,23 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         if (el.getAttribute("aria-pressed") === "true") continue;
         if (el.classList.contains("nu-vpaint")) continue;
         /* ...AND THE TWO DESIGN.md NAMED ON 2026-09-08 (TABLE.md §24). The
-           exclusion list is how this probe READS the law — *"a plate is only
-           where DESIGN.md names one"* — so a component that gets named there
+           exclusion list is how this probe READS the law — "a plate is only
+           where DESIGN.md names one" — so a component that gets named there
            gets named here, and one that does not still counts.
-           `.nu-modalcard` is component 4, the sheet as a card: *"a scrim and a
-           plate"*, in as many words. `.nu-mogrid`'s cards are component 26,
+           The modal card is component 4, the sheet as a card: "a scrim and a
+           plate", in as many words. The motif grid's cards are component 26,
            the motif field: sixteen targets, and a border is what this page
            draws around a target. Both are plates ON PURPOSE and both are
            written down; what this check still catches is a plate nobody
-           declared. */
+           declared.
+           NO BACKTICKS IN THIS COMMENT, AND THAT IS NOT A STYLE NOTE: this
+           whole probe is a TEMPLATE LITERAL handed to p.evaluate, so ONE
+           backtick ends the string and everything after it becomes code. The
+           first draft quoted the two class names the way every other comment
+           in this file does, and the gate died with "ReferenceError:
+           modalcard is not defined" — three runs of 381s each, and three
+           checks chased that were only ever the last one to report before the
+           crash. A probe that is a string is not a place to quote code in. */
         if (el.closest(".nu-strip, #rack, .nu-plate, .nu-env, " +
                        ".nu-modalcard, .nu-mogrid")) continue;
         plates++; who.push("plate " + el.tagName + "." + el.className);
