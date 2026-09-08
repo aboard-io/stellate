@@ -6164,3 +6164,87 @@ order, in the same stylesheet — full width, `border-block` only, no radius, it
 own scrollport at `min(60vh, 560px)` — so the gallery's twelve rows and the
 app's 502 are read through the same window and the day either moves the other is
 one grep away. DESIGN.md component 25 is the contract.
+
+### 22b · The board's grid gets the same card (2026-09-08)
+
+§22 deliberately left `ui/wordgrid.js` alone: the sentence it was answering was
+about the EDITOR, and the board's own small grid is a different surface. Paul,
+having seen the result: *"do them"*.
+
+So `insertOpen` builds a `.nu-modal > .nu-modalcard` instead of a
+`<tr class="nu-wopen">`, out of the same classes and the same stylesheet, with
+the same four ways out. **A board that dismissed differently from the table
+would be the modality this box has spent every round deleting.**
+
+**AND `close()` DID NOT HAVE TO CHANGE** to remove it: `openTr` has always
+meant *"the node this open put in the document"*, and it is a scrim rather than
+a row.
+
+**THE CARD TAKES THE FOCUS, NOT ITS FIRST CONTROL** — §22's rule, for §22's
+reason: a screen reader then hears the dialog's NAME before the first word in
+it. It read `box.querySelector("button:not([disabled])")`, which announced a
+chip. A CELL's card then puts the thumb on the word it is already on, which is
+the one place this differs from a sheet's and is worth keeping: a strip of
+words is a choice among a few and has a standing answer to land on; an
+eighteen-field sheet does not.
+
+**THE ROW IS NOW BUILT BY NOTHING**, so `.nu-wopen`'s two rules are deleted —
+the tombstone in nu.css read *"the accordion has one user left … the day the
+board's grid moves they go with it"*, and that day was the same day. The
+`.nu-vsheet` sticky-and-100vw pair goes with them and the scoped
+`.nu-modalbody > .nu-vsheet` override folds back into the base rule: with one
+box left there is nothing to scope against, and a rule that says the same thing
+twice is a rule that will one day say it differently.
+
+**AND TWO GATES WOULD HAVE GONE QUIETLY WRONG.** `test/sheets.js` (three sites)
+and `test/nudges.js` read a strip as *"a sibling `<div>` inside a SHEET, or a
+`<tr class="nu-wopen">` inside a GRID"*. With the row gone the first clause is
+false and the fallback looks for a `.nu-sheetrow` a grid cell does not have —
+`undefined`, no chips, and the check reports **that a pad greys NOTHING** rather
+than failing. The field's own sibling is tried first now and the CARD's body is
+the fallback.
+
+**A CARD OVER A CARD IS ALLOWED, AND IT IS A DRILL-DOWN.** The board is seated
+inside the MASTER row's sheet, so tapping a board cell opens a second card over
+the first — measured: `modals: 2`, named `master` then `stab in s0`. That is
+not the one-open law broken; it is one surface opened from inside another, and
+dismissing the inner returns you to the outer. Two competing surfaces is what
+that law is about.
+
+### 22c · A mark is not a plate (2026-09-08)
+
+> *"Get rid of the border around the hamburger and the [x]."*
+
+The same subtraction §22b's own round made on the record's name, finishing the
+band: `#burger` loses its border, its ground, its shadow and its corner. **A
+border is what this page draws around a TARGET, and the two ends of the top
+strip are a MARK and a NAME.** With the name already plateless the ≡ was the
+last plate on the band and read as a button parked on a header.
+
+**NOTHING ABOUT THE TARGET MOVES.** The 44px floor in both axes, the
+`data-say`, the `.nu-vh` word and the `aria-expanded` are untouched — *a
+control losing its border is not a control losing its size*, which is the
+clause `.nu-bar` wrote when its own marks lost theirs.
+
+**AND EVERY × NOW SAYS THE SAME THING.** `#sheetclose` and `.nu-spclose` had
+already lost their ground and shadow and were still carrying a 1px TRANSPARENT
+border and an `--r1` corner — which draws nothing today and is a plate the
+first time anyone gives buttons a border colour. With `.nu-modalx`, born
+borderless in §22, that is one construction in three places.
+
+### 22d · And the room goes from the board too (2026-09-08)
+
+§22's own note ended *"one store, one fewer view of it"*, and for a few hours
+that was literally true and quietly wrong: `#vol2` on the mix board is the SAME
+0..100 store with the SAME engine underneath it, so a phone still had a fader
+that answered seconds late — one tap further away, where a hand would find it
+after giving up on the bar and conclude the box was broken rather than that
+this control cannot work here.
+
+**IT IS THE MONITOR AND NOT A CHANNEL FADER**, which is why the rule names
+`.nu-listen` and not `.nu-vs-tall`. The board's channel faders are the same
+chassis and a different KIND of value: a channel fader writes a mix offset into
+the RECORD and reaches the ear through the recompile, exactly like every other
+written number on this page. It works on a phone, it is not late, and taking it
+away would delete real control over the mix. Only the room is refused, and only
+because it is the one value the WAV-first route cannot move in time.

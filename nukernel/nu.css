@@ -5849,15 +5849,14 @@ table.nu-trims{ color: var(--ink); }
       in is the one scroller and it already was. `position: sticky` on the
       cell would have been the popup by another name and is refused for the
       same reason."
-   AND ITS TWO RULES STAY, BECAUSE THE ACCORDION HAS ONE USER LEFT. The TABLE
-   does not build `.nu-wopen` any more — src/table/grid.ts `openSheet` hands
-   its sheet up to a card instead of drawing a row — but `ui/wordgrid.js`
-   still does (`insertOpen`), and its one live instance is the mix board's
-   `trimgrid` (ui/engineer.js). §22 is about the EDITOR, which is what Paul
-   was holding; the board's own small grid is a different surface and is not
-   swept along by a sentence that was not about it. So these rules describe
-   exactly one grid now instead of two, and the day the board's grid moves
-   they go with it.
+   AND ITS TWO RULES ARE DELETED, BECAUSE NOTHING BUILDS THE ROW ANY MORE.
+   `.nu-wopen > td { padding: var(--s2) 0 }` and `.nu-wopen > td { position:
+   relative }` stood here and at the foot of the `.nu-vsheet` block. For one
+   day they described exactly one grid — the table stopped drawing the row on
+   2026-09-08 and `ui/wordgrid.js` still did, so the sentence here read *"the
+   accordion has one user left … the day the board's grid moves they go with
+   it."* The board's grid moved the same day (§22b, Paul: *"do them"*), and
+   they go with it. There is no `.nu-wopen` in this document.
    WHAT THE MEASUREMENT WAS: 779.4px of `<tr>` on an 844px phone, inserted
    between the row you tapped and every row below it. "The row gets taller"
    was true and was the problem.
@@ -5869,7 +5868,6 @@ table.nu-trims{ color: var(--ink); }
    half of the old law that had to give: an eighteen-field vector does not fit
    in the 720px a phone has between the two fixed bands, and "vertical space
    is cheap and abundant" was a claim about a document, not about a phone. */
-.nu-wopen > td{ padding: var(--s2) 0; }
 
 /* ---- THE SCRIM, WHICH IS THE DISMISS ---------------------------------
    A full-bleed veil at `--scrim` — the token's own words are *"a scrim is a
@@ -6110,27 +6108,28 @@ table.nu-trims{ color: var(--ink); }
      none. Measured: sheet 263.2 in a 255.2 pane at 390; 1068.4 in a 1078.4
      pane at 1280. The panel's own padding is named now, so the sheet IS the
      pane's width and the gate can say `>= 95%` of it. */
-  position: sticky; inset-inline-start: 0;
-  inline-size: min(100%, calc(100vw - var(--gl) - var(--gr)
-                              - 2 * var(--s4))); }
-/* ---- ...AND NONE OF THAT APPLIES INSIDE A CARD (2026-09-08, §22) ------
-   Every word of the argument above is a fact about a sheet standing in a
-   table that scrolls sideways, which is what the accordion was and what
-   `ui/wordgrid.js`'s rows still are. A card does not stand in the pane: it is
-   `position: fixed`, its own box is already capped at the screen (and at 44rem
-   on a desk), and there is no sideways scroll under it to ride — so the sticky
-   and the 100vw arithmetic are two declarations fighting a scroll that is not
-   there. Inside the card the sheet is simply the card's width.
-   THE OVERRIDE IS HERE AND NOT A SECOND `.nu-vsheet`, because the sheet is
-   ONE component with one set of rows, one grid and one type scale; what
-   differs is the box it was handed, and that is exactly what a scoped
-   override is for.
-   WHAT THE ARGUMENT WAS PROTECTING IS UNCHANGED AND IS STRUCTURAL IN A CARD:
-   §6 ¶A — *"every op in §5 … reachable by tap at 320px"* — cannot be broken
-   by a horizontal scroll the card does not have. */
-.nu-modalbody > .nu-vsheet{ position: static; inline-size: 100%;
+  /* ...AND THE TWO DECLARATIONS THAT PAID FOR IT ARE GONE (2026-09-08, §22
+     and §22b). They read `position: sticky; inset-inline-start: 0;
+     inline-size: min(100%, calc(100vw - var(--gl) - var(--gr) - 2 *
+     var(--s4)))`, and every word of the argument above is a fact about a sheet
+     standing INSIDE A TABLE THAT SCROLLS SIDEWAYS. No sheet does: the editor's
+     went into a card on 2026-09-08 and the board's went the same day, so both
+     stand in a `position: fixed` box that is already capped at the screen (and
+     at 44rem on a desk) with no sideways scroll under it to ride. The sticky
+     and the 100vw arithmetic were two declarations fighting a scroll that is
+     no longer there.
+     IT SPENT AN HOUR AS A SCOPED OVERRIDE — `.nu-modalbody > .nu-vsheet` — and
+     that was right while `ui/wordgrid.js` still put a sheet in a `<td>`: two
+     boxes, one component, which is exactly what a scoped override is for. With
+     one box left there is nothing to scope against, and a rule that says the
+     same thing twice is a rule that will one day say it differently.
+     WHAT THE ARGUMENT WAS PROTECTING IS UNCHANGED AND IS STRUCTURAL NOW: §6
+     ¶A — *"every op in §5 … reachable by tap at 320px"* — cannot be broken by
+     a horizontal scroll no surface has. The plate also comes off (`padding`,
+     `background`, `border`): the CARD is the plate, and a bordered box inside
+     a bordered box is the thing §11 spent a round deleting. */
+  inline-size: 100%;
   padding: 0; background: none; border: 0; border-radius: 0; }
-.nu-wopen > td{ position: relative; }
 /* AN OPS BAR, A SEATED WIDGET AND AN OPEN STRIP TAKE THE WHOLE SHEET. */
 .nu-vsheet > .nu-sheetops,
 .nu-vsheet > .nu-noderow,
@@ -7771,6 +7770,42 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-topstrip[data-menu="open"] > #burger{ visibility: visible;
   pointer-events: auto; }
 .nu-topstrip button{ min-inline-size: var(--tap); min-block-size: var(--tap); }
+/* ---- AND THE ≡ IS A MARK, NOT A PLATE (2026-09-08, TABLE.md §22c) -----
+   Paul: *"Get rid of the border around the hamburger and the [x]."*
+
+   IT IS THE SAME SUBTRACTION THE RECORD'S NAME TOOK ONE ROUND AGO, and the
+   same sentence justifies it: a border, a ground and a hard shadow are what
+   this page draws around a TARGET, and the two ends of the top strip are a
+   MARK and a NAME. With the name already plateless the ≡ was the last plate on
+   the band, which read as one button parked on a header rather than as the
+   band's own two ends. The strip is one surface now.
+   NOTHING ABOUT THE TARGET MOVES. `.nu-topstrip button` one line up is still
+   the 44px floor in both axes, the `data-say` and the `.nu-vh` word are
+   untouched, and `[aria-expanded]` still says what the next press does. A
+   control losing its border is not a control losing its size — which is the
+   clause `.nu-bar` wrote when its own marks lost theirs (*"Get rid of icon
+   borders and shadows just put a light line between"*).
+   WHAT SAYS IT IS PRESSABLE is what says it on every other borderless mark in
+   this chrome: the ink, and `--flag-tint` under a hand. And while the plate is
+   open the ≡ wears × and says `close` (component 13), which is a state the
+   band already draws without a box around it. */
+.nu-topstrip > #burger{ background: none; border: 0; border-radius: 0;
+  box-shadow: none; }
+.nu-topstrip > #burger:hover{ background: var(--flag-tint); }
+/* ---- ...AND SO IS EVERY × (2026-09-08, §22c) -------------------------
+   The second half of Paul's sentence. `.nu-sheethead > button` had already
+   taken the ground and the shadow off the sheet's close, and left a 1px
+   TRANSPARENT border and a `--r1` corner behind — which draws nothing today
+   and is a plate the first time anyone gives buttons a border colour. A mark
+   that is not a plate should not be carrying a plate's box.
+   THE THREE ×'s ON THIS PAGE NOW SAY THE SAME THING: the sheet's
+   (`#sheetclose`), the special row's (`.nu-spclose`, which has been
+   transparent since it landed and is made explicit here), and the card's
+   (`.nu-modalx`, born borderless in §22). One mark, one construction, three
+   places — and `--flag-tint` under a hand on all three. */
+.nu-sheethead > button, .nu-spclose{
+  background: none; border: 0; border-radius: 0; box-shadow: none; }
+.nu-sheethead > button:hover, .nu-spclose:hover{ background: var(--flag-tint); }
 
 /* ---- A SHEET'S OWN HEADER, AND THE × IS ITS (§13a.1) ------------------
    One line at the top of whichever panel is open: the sheet's NAME at the
@@ -8272,6 +8307,22 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    exactly as they were. One store, one fewer view of it. */
 @media (pointer: coarse) {
   .nu-bar > .nu-vs-wide{ display: none; }
+  /* ...AND THE BOARD'S OWN MONITOR GOES WITH IT (2026-09-08). The paragraph
+     above ends *"one store, one fewer view of it"*, and for a few hours that
+     was literally true and quietly wrong: `#vol2` on the mix board is the
+     SAME 0..100 store with the SAME engine underneath it, so a phone still had
+     a fader that answered seconds late — one tap further away, where a hand
+     would find it after giving up on the bar and conclude the box was broken
+     rather than that this control cannot work here.
+     IT IS THE MONITOR AND NOT A CHANNEL FADER, which is the whole of why this
+     rule names `.nu-listen` and not `.nu-vs-tall`: the board's channel faders
+     are the same chassis and are a different KIND of value. A channel fader
+     writes a mix offset into the RECORD and reaches the ear through the
+     recompile, exactly like every other written number on this page — it works
+     on a phone, it is not late, and taking it away would delete real control
+     over the mix. Only the room is refused, and only because it is the one
+     value the WAV-first route cannot move in time. */
+  .nu-listen{ display: none; }
 }
 /* ---- THE ROOM, LYING DOWN (2026-09-06, TABLE.md §18) ------------------
    The same chassis the mix board and the gutter have used since 2026-08-27

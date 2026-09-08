@@ -2599,7 +2599,15 @@ export const paintVoiceMix = () => {
 // things on this strip it is: the record's controls are the record; this one
 // is the room.
 function listening() {
-  const wrap = el("span", null, "nu-vs nu-vs-tall");
+  /* `.nu-listen` IS A NAME FOR THE STYLESHEET AND NOTHING ELSE (2026-09-08,
+     TABLE.md §22). The board's channel faders are `.nu-vs-tall` too and they
+     are a different KIND of control — a channel fader writes a mix offset into
+     the RECORD, which reaches the ear through the recompile like every other
+     written value; this one is the monitor, and the monitor is the thing the
+     WAV-first route cannot move in time. So the rule that takes the room off a
+     phone needs a way to say THIS fader and not those, and `#vol2` is an id
+     the rule would have to reach through `:has()`. One class, one meaning. */
+  const wrap = el("span", null, "nu-vs nu-vs-tall nu-listen");
   const r = document.createElement("input");
   r.type = "range"; r.min = "0"; r.max = "100"; r.step = "1";
   r.value = String(vol); r.id = "vol2"; r.dataset.k = "m|listening";

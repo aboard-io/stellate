@@ -195,13 +195,18 @@ export function wordGrid(host, spec) {
   const tbody = el("tbody");
 
   /* ---- THE STRIP OF WORDS, WHICH IS THE WHOLE OF THE INSTITUTION -------
-     ONE ROW, INSERTED, SPANNING THE TABLE. Not a `<div>` over the grid and not
-     a cell that grows: a `<tr>` after the row you tapped, with one `<td>` that
-     spans every column, so the table stays a table with the stylesheet off and
-     a screen reader reads "the words for this cell" immediately after the cell
-     that asked for them.
-     IT NEVER SCROLLS INSIDE ITSELF. The chips WRAP; the row gets taller; the
-     pane the grid stands in is the one scroller and it already is. */
+     IT WAS ONE ROW, INSERTED, SPANNING THE TABLE, and its argument is kept
+     because two of its three clauses moved into the card that replaced it
+     (2026-09-08, TABLE.md §22b — see `insertOpen`): *"Not a `<div>` over the
+     grid and not a cell that grows: a `<tr>` after the row you tapped, with
+     one `<td>` that spans every column, so the table stays a table with the
+     stylesheet off and a screen reader reads 'the words for this cell'
+     immediately after the cell that asked for them. IT NEVER SCROLLS INSIDE
+     ITSELF. The chips WRAP; the row gets taller; the pane the grid stands in
+     is the one scroller and it already is."*
+     WHAT `close()` REMOVES IS THE SCRIM NOW, and the line below did not have
+     to change to do it: `openTr` has always been "the node this open put in
+     the document", and it is a `.nu-modal` rather than a `<tr>`. */
   function close() {
     if (openTr && openTr.parentNode) openTr.parentNode.removeChild(openTr);
     /* THE BUTTON THAT OPENED IT, and since 2026-09-04 that is not always a
@@ -484,27 +489,80 @@ export function wordGrid(host, spec) {
   /* WHERE AN OPEN ROW GOES, said once for the three things that open one: a
      cell (under its own row), a row head (under its own row) and a column head
      (at the top of the body, because a column has no row of its own). */
-  function insertOpen(body, afterTr, key, btn) {
-    const tr = el("tr", null, "nu-wopen");
-    const td = el("td");
-    td.colSpan = cols.length + 1;
-    td.append(body);
-    tr.append(td);
-    if (afterTr && afterTr.parentNode)
-      afterTr.parentNode.insertBefore(tr, afterTr.nextSibling);
-    else tbody.insertBefore(tr, tbody.firstChild);
-    openKey = key; openTr = tr; openBtn = btn || null;
+  /* ===== AND IT IS A CARD HERE TOO, 2026-09-08 (TABLE.md §22b) ==========
+     Paul, having seen the editor's sheets become modals: *"do them"* — of the
+     two things §22 deliberately left behind, and this is the first.
+
+     WHAT STOOD HERE, and it is the argument §22 answered on the other surface:
+     `insertOpen` built a `<tr class="nu-wopen">` with one `<td colspan>` after
+     the row you tapped — *"not a `<div>` over the grid and not a cell that
+     grows … so the table stays a table with the stylesheet off"*, and *"it
+     never scrolls inside itself: the chips WRAP, the row gets taller, the pane
+     is the one scroller"*.
+     THE MEASUREMENT THAT RETIRES IT IS THE SAME ONE, made on the editor: a
+     vector of any size opens BELOW the row and pushes everything under it
+     down, so the thing you were reading leaves the screen. §22 kept the two
+     good clauses and moved them into a card, and this grid gets the same card
+     rather than a second answer — the same classes, the same stylesheet, the
+     same four ways out. A board that dismissed differently from the table
+     would be the modality this box has spent every round deleting.
+     `afterTr` IS TAKEN AND IGNORED, and the parameter stays. Both callers know
+     which row they are about and pass it; a card does not stand after a row,
+     but the day one wants to know which row it came from there is nowhere new
+     to put it — which is the same decision §22 made about `openSheet`'s shape
+     in src/table/grid.ts. */
+  function insertOpen(body, afterTr, key, btn, name) {
+    const scrim = el("div", null, "nu-modal");
+    const card = el("div", null, "nu-modalcard");
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-label", name || key || "");
+    card.tabIndex = -1;
+    const head = el("div", null, "nu-modalhead");
+    head.append(el("b", name || "", "nu-modalname"));
+    const x = el("button", t("sheet.close.mark"), "nu-modalx");
+    x.type = "button";
+    x.dataset.k = "wsheet-x";
+    x.setAttribute("aria-label", t("sheet.close", { name: name || key || "" }));
+    x.addEventListener("click", () => { const b = openBtn; close();
+                                        if (b) b.focus({ preventScroll: true }); });
+    head.append(x);
+    const bodyBox = el("div", null, "nu-modalbody");
+    bodyBox.append(body);
+    card.append(head, bodyBox);
+    scrim.append(card);
+    /* THE SCRIM IS A DISMISS, and the card's own Escape is the other door —
+       the table's `keydown` listener is bound to `tbl` and a card is not in
+       it, so the key has to be answered where the hand is. */
+    scrim.addEventListener("pointerdown", (e) => {
+      if (e.target !== scrim) return;
+      e.preventDefault();
+      const b = openBtn; close();
+      if (b) b.focus({ preventScroll: true });
+    });
+    card.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      const b = openBtn; close();
+      if (b) b.focus({ preventScroll: true });
+    });
+    host.append(scrim);
+    openKey = key; openTr = scrim; openBtn = btn || null;
     if (btn) btn.setAttribute("aria-expanded", "true");
-    return tr;
+    return scrim;
   }
 
   /* A SHEET OPENED FROM ANYWHERE — a cell, a row head, a column head. */
   function openSheet(key, fields, name, afterTr, btn) {
     close();
     const box = sheetBody(fields, name);
-    insertOpen(box, afterTr, key, btn);
-    const first = box.querySelector("button:not([disabled])");
-    if (first) first.focus({ preventScroll: true });
+    insertOpen(box, afterTr, key, btn, name);
+    /* THE CARD TAKES THE FOCUS AND NOT ITS FIRST CONTROL, which is §22's own
+       rule and the reason for it is the same: a screen reader then reads the
+       dialog's NAME before it reads the first word in it. It read
+       `box.querySelector("button:not([disabled])")`, which announced a chip. */
+    const card = openTr && openTr.querySelector(".nu-modalcard");
+    if (card) card.focus({ preventScroll: true });
   }
 
   /* A CELL OPENS ONE OF TWO BODIES, and which one is the caller's word: a
@@ -513,11 +571,21 @@ export function wordGrid(host, spec) {
      because a footer row is a row this map has never heard of. */
   function openCell(tr, row, c, btn) {
     close();
+    const cname = c.say || (btn && btn.getAttribute("aria-label")) || c.key;
     const body = c.sheet
       ? sheetBody(c.sheet(), c.say || c.key)
-      : chipStrip(c, c.say || (btn.getAttribute("aria-label") || ""),
+      : chipStrip(c, cname,
                   (v, write) => { close(); write(); paintCell(row.id, c); });
-    insertOpen(body, tr || trOf.get(row.id), c.key, btn);
+    insertOpen(body, tr || trOf.get(row.id), c.key, btn, cname);
+    /* A CELL'S CARD LANDS ON THE WORD IT IS ALREADY ON, which is the one place
+       this differs from a sheet's and is worth keeping: a strip of words is a
+       CHOICE among a few, and putting a thumb on the standing answer is how
+       every picker on this page opens. A sheet is eighteen fields and has no
+       standing answer to land on, so that one lands on the card (`openSheet`).
+       The card is focused first either way, so the dialog's name is announced
+       before the word. */
+    const card = openTr && openTr.querySelector(".nu-modalcard");
+    if (card) card.focus({ preventScroll: true });
     const first = body.querySelector('button[aria-pressed="true"]')
                || body.querySelector("button:not([disabled])");
     if (first) first.focus({ preventScroll: true });

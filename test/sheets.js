@@ -1022,9 +1022,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     await new Promise((r) => setTimeout(r, 120));
     /* THE STRIP IS A SIBLING `<div>` INSIDE A SHEET (2026-09-04) and a `<tr
        class="nu-wopen">` inside a grid — see `padRead` for the argument. */
-    const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-    const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
-      : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+    /* WHERE A STRIP IS, AND IT IS ONE PLACE SINCE 2026-09-08 (TABLE.md
+       §22b). It was two: a sibling `<div>` inside a SHEET, and a `<tr
+       class="nu-wopen">` inside a GRID. `ui/wordgrid.js` opens a card now
+       like everything else, so the grid branch is dead — and dead in the
+       worst way if it were left, because `tr.classList.contains("nu-wopen")`
+       would simply be false and the fallback would look for a
+       `.nu-sheetrow` a grid cell does not have: `undefined`, no chips, and
+       the check would report that a pad greys NOTHING rather than failing.
+       SO THE FIELD'S OWN SIBLING IS TRIED FIRST and the CARD's body is the
+       fallback: a field inside a sheet opens its strip beside itself, and a
+       cell in a grid opens a card whose body IS the strip. */
+    const strip = (c.closest(".nu-sheetrow") || {}).nextElementSibling
+      || document.querySelector(".nu-modalcard .nu-modalbody");
     /* ...AND THE SAME FOURTH WIDGET HERE — the drummer's sixty-eight are a
        lozenge field since 2026-09-05 (see `padRead`'s note). */
     const chips = strip ? [...strip.querySelectorAll(".nu-wchip, .nu-lz")] : [];
@@ -1196,15 +1206,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (c && !c.disabled) {
       const shut = c.getAttribute("aria-expanded") !== "true";
       if (shut) c.click();
-      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      if (tr && tr.classList.contains("nu-wopen"))
+      /* THE STRIP IS THE CARD'S BODY SINCE 2026-09-08 (TABLE.md §22b) — see
+         `padRead` above for the argument. This one had no sheet-field branch
+         to fall back to (it only ever read the grid's row), so it is the card
+         alone. */
+      const strip = document.querySelector(".nu-modalcard .nu-modalbody");
+      if (strip)
         /* BOTH SPELLINGS OF REFUSED (2026-09-06, TABLE.md §15). A refused chip
            is `aria-disabled` and NOT `disabled` now — a `disabled` button takes
            no click, so its reason was reachable only through a screen reader —
            which is the same reading `padRead` two hundred lines down already
            makes for the lozenge. Asking only `.disabled` here would have said a
            pad refuses NOTHING. */
-        for (const o of tr.querySelectorAll(".nu-wchip, .nu-lz"))
+        for (const o of strip.querySelectorAll(".nu-wchip, .nu-lz"))
           rows.push({ v: o.dataset.k.slice(c.dataset.k.length + 1),
                       off: !!o.disabled ||
                            o.getAttribute("aria-disabled") === "true" });
@@ -1280,9 +1294,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (c && !c.disabled) {
       const shut = c.getAttribute("aria-expanded") !== "true";
       if (shut) c.click();
-      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
-        : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      /* WHERE A STRIP IS, AND IT IS ONE PLACE SINCE 2026-09-08 (TABLE.md
+         §22b). It was two: a sibling `<div>` inside a SHEET, and a `<tr
+         class="nu-wopen">` inside a GRID. `ui/wordgrid.js` opens a card now
+         like everything else, so the grid branch is dead — and dead in the
+         worst way if it were left, because `tr.classList.contains("nu-wopen")`
+         would simply be false and the fallback would look for a
+         `.nu-sheetrow` a grid cell does not have: `undefined`, no chips, and
+         the check would report that a pad greys NOTHING rather than failing.
+         SO THE FIELD'S OWN SIBLING IS TRIED FIRST and the CARD's body is the
+         fallback: a field inside a sheet opens its strip beside itself, and a
+         cell in a grid opens a card whose body IS the strip. */
+      const strip = (c.closest(".nu-sheetrow") || {}).nextElementSibling
+        || document.querySelector(".nu-modalcard .nu-modalbody");
       /* `.nu-lz` IS THE FOURTH WIDGET (2026-09-05, DESIGN.md component 16). The
          development words carry avail.js's own families — "the subject", "a
          piece of it", "moved in pitch", "counterpoint" — so the strip a cell
@@ -1379,9 +1403,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       /* THE STRIP IS A SIBLING `<div>` INSIDE A SHEET (2026-09-04) and a
          `<tr class="nu-wopen">` inside a grid — same button, same chips, two
          places to look. See `padRead` above, which carries the argument. */
-      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
-        : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      /* WHERE A STRIP IS, AND IT IS ONE PLACE SINCE 2026-09-08 (TABLE.md
+         §22b). It was two: a sibling `<div>` inside a SHEET, and a `<tr
+         class="nu-wopen">` inside a GRID. `ui/wordgrid.js` opens a card now
+         like everything else, so the grid branch is dead — and dead in the
+         worst way if it were left, because `tr.classList.contains("nu-wopen")`
+         would simply be false and the fallback would look for a
+         `.nu-sheetrow` a grid cell does not have: `undefined`, no chips, and
+         the check would report that a pad greys NOTHING rather than failing.
+         SO THE FIELD'S OWN SIBLING IS TRIED FIRST and the CARD's body is the
+         fallback: a field inside a sheet opens its strip beside itself, and a
+         cell in a grid opens a card whose body IS the strip. */
+      const strip = (c.closest(".nu-sheetrow") || {}).nextElementSibling
+        || document.querySelector(".nu-modalcard .nu-modalbody");
       /* `.nu-lz` TOO, since 2026-09-05 — the development words are a lozenge
          field now (see `padRead`'s note). Same `aria-pressed`, same
          `<field>|<value>` address; only the class moved. */

@@ -405,9 +405,19 @@ const spread = (ev) => {
          opens a sheet row's words with `insertAdjacentElement("afterend")`.
          The nudges are ROW SHEET fields now (the five Structure grids are
          deleted with their pane), so both places are looked in. */
-      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
-      const strip = (tr && tr.classList.contains("nu-wopen")) ? tr
-        : (c.closest(".nu-sheetrow") || {}).nextElementSibling;
+      /* WHERE A STRIP IS, AND IT IS ONE PLACE SINCE 2026-09-08 (TABLE.md
+         §22b). It was two: a sibling `<div>` inside a SHEET, and a `<tr
+         class="nu-wopen">` inside a GRID. `ui/wordgrid.js` opens a card now
+         like everything else, so the grid branch is dead — and dead in the
+         worst way if it were left, because `tr.classList.contains("nu-wopen")`
+         would simply be false and the fallback would look for a
+         `.nu-sheetrow` a grid cell does not have: `undefined`, no chips, and
+         the check would report that a pad greys NOTHING rather than failing.
+         SO THE FIELD'S OWN SIBLING IS TRIED FIRST and the CARD's body is the
+         fallback: a field inside a sheet opens its strip beside itself, and a
+         cell in a grid opens a card whose body IS the strip. */
+      const strip = (c.closest(".nu-sheetrow") || {}).nextElementSibling
+        || document.querySelector(".nu-modalcard .nu-modalbody");
       const chips = strip ? [...strip.querySelectorAll(".nu-wchip")] : [];
       for (const o of chips) {
         const why = o.dataset.why || "";
