@@ -14950,6 +14950,43 @@ function chromeRow() {
   logBtn.addEventListener("click", () => { setLog(!logOpen); setMenu(false);
                                            paintChrome(); });
   menuBox.append(logBtn);
+  /* ===== AND THE LAST ROW IS THE WAY BACK (2026-09-08, LAUNCH.md §5) =====
+     Paul: *"add a link to that in the hamburger menu"* — the archive, which is
+     `stellate.app/old`: the star map this project was until this month, served
+     unchanged from its own tree at a PATH on this origin.
+
+     IT IS AN `<a>` AND NOT A BUTTON, which is the whole of why it is built by
+     hand here instead of going through `icon()`. This row LEAVES: a middle
+     click, a long press and a "copy link address" all have to work, and none
+     of them work on a button that calls `location.assign`. So it is a link,
+     drawn to look like every other row (`paintIcon` fills the same three-track
+     face into it), with `target="_blank"` and `rel="noopener noreferrer"` —
+     `noopener` because a page we hand a tab to should never hold a handle on
+     ours, even one we wrote ourselves.
+     IT IS NOT ONE OF `MENUROWS()`, DELIBERATELY. test/gutter.js T2 asserts the
+     plate's row list is DERIVED — `menu rows === __eightTabs()` — and a typed
+     row would break that check for a good reason: the six views are one list
+     with one owner. This is chrome, like the log, the daylight row and the seed
+     door, and it is appended the same way they are.
+     THE HREF IS A PATH AND NOT A HOST. `/old/` resolves against whatever the
+     page is served from, so the same bytes work on staging, on prod, and on any
+     sub-path deploy — and there is no second name in the source that would have
+     to be kept in sync with DNS. */
+  const oldLink = document.createElement("a");
+  oldLink.href = "/old/";
+  oldLink.target = "_blank";
+  oldLink.rel = "noopener noreferrer";
+  oldLink.dataset.k = "oldsite";
+  oldLink.className = "nu-menuold";
+  paintIcon(oldLink, { glyph: "\u29C9", word: _t("burger.old"), say: _t("burger.old.say") });
+  /* THE VISIBLE WORD HEADS THE ACCESSIBLE NAME, which is this band's own law
+     (gutter T10, and it caught two real defects the day before this row was
+     written). The say-line follows it and carries the fact that the row leaves
+     the app, because "opens in a new tab" is exactly the thing a screen reader
+     must hear BEFORE the tab opens. */
+  oldLink.setAttribute("aria-label", _t("burger.old") + " \u2014 " + _t("burger.old.say"));
+  oldLink.addEventListener("click", () => { setMenu(false); paintChrome(); });
+  menuBox.append(oldLink);
   nav.append(menuBox);
 
   /* THE BAR, AND IT IS THE TRANSPORT AND NOTHING ELSE (docs/NAV.md: *"bottom

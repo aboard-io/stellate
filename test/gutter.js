@@ -1044,7 +1044,7 @@ function standUpServer() {
                 rule exists. */
              menuTail: (() => { const m = document.getElementById("nu-menu");
                if (!m) return null;
-               return [...m.children].slice(-2).map((n) =>
+               return [...m.children].slice(-3).map((n) =>
                  n.dataset.k || n.className || n.tagName.toLowerCase()); })(),
              inFold: !!document.querySelector("#nu-menu #rewrite"),
              /* THE TWO TARGETS ARE MEASURED WITH THE PLATE OPEN, because a
@@ -1121,10 +1121,19 @@ function standUpServer() {
      are told apart by their HEADINGS and the air around them now, and a rule
      as well was a second spelling of one seam — 17px of a plate that measured
      33px too tall for an 844px phone. */
+  /* ...AND THE LAST ROW IS THE ARCHIVE SINCE 2026-09-08 (LAUNCH.md §5). Paul:
+     *"add a link to that in the hamburger menu."* `/old/` — the star map this
+     project was until this month — is the one row of this plate that LEAVES,
+     so it is an `<a>` and it stands at the very bottom, after the log, which
+     is where a way out belongs. The log is still the last row of the plate's
+     own controls and this check still says so; what it asserts now is the
+     whole tail, in order, so a THIRD thing appended after them fails here the
+     way a second one would have. TRANSLATED, NOT LOOSENED. */
   check(!t9.barLog && t9.menuLog && t9.menuDoor &&
-        JSON.stringify(t9.menuTail) === JSON.stringify(["nu-menuseed", "logger"]),
-    "T9 · …and the log is the plate's last row, after the seed's own block " +
-    "(in the bar " + t9.barLog + ", in the menu " + t9.menuLog + ", tail " +
+        JSON.stringify(t9.menuTail) === JSON.stringify(["nu-menuseed", "logger", "oldsite"]),
+    "T9 · …and the log is the plate's last CONTROL, after the seed's own " +
+    "block, with the way out to the archive below it (in the bar " +
+    t9.barLog + ", in the menu " + t9.menuLog + ", tail " +
     JSON.stringify(t9.menuTail) + ")");
   check(t9.tap >= 44,
     "T9 · …and the die is still a thumb TALL (" + t9.tap + " px), which is " +

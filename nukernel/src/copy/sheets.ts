@@ -389,6 +389,22 @@ export const SHEETS: Table = {
   "burger.dark": "The deck",
   "burger.light.say": "Read the panel in daylight — a lighter room",
   "burger.dark.say": "Back to the deck — the committed dark panel",
+  /* ===== THE ARCHIVE, NAMED ONCE (2026-09-08, LAUNCH.md §5) =============
+     Paul: *"turn the old version into old.stellate.app and then add a link to
+     that in the hamburger menu"* — and, of the archive itself, *"Don't bother
+     saying the old one is old."*
+
+     SO THE ROW SAYS IT AND THE ARCHIVE DOES NOT. The old star map carries no
+     banner, no ribbon and no apology; the one place this project admits there
+     are two versions is this row, which is where somebody looking for the old
+     one would think to look. It is a PLACE and not an announcement: the word
+     is the name of the thing, `The old Stellate`, the way every other row here
+     names a destination.
+     AND THE SAY-LINE SAYS IT LEAVES. A menu row that silently opens another
+     tab is the one thing a plate of destinations must not do, so the sentence
+     carries both facts — what it is, and that it opens in a new tab. */
+  "burger.old": "The old Stellate",
+  "burger.old.say": "The star map this project was until 2026 — opens in a new tab",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",

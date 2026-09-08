@@ -8332,6 +8332,18 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #nu-menu > button:not(:first-child){
   border-block-start: var(--bw) solid var(--rule); }
 #nu-menu .nu-menuseed > button{ display: block; }
+/* ---- THE ONE ROW OF THIS PLATE THAT IS A LINK (2026-09-08) ------------
+   The archive row leaves the app, so it is an `<a>` (a middle click and a
+   "copy link address" have to work) — and a plate whose rows all look alike
+   must not have one row that looks like a link. It takes the same box the
+   buttons take, in the same order, and gives up the two things an anchor
+   brings with it: the underline and the visited colour. */
+#nu-menu > a.nu-menuold{ display: block; inline-size: 100%;
+  min-block-size: var(--tap); box-sizing: border-box;
+  color: inherit; text-decoration: none;
+  border-block-start: var(--bw) solid var(--rule); }
+#nu-menu > a.nu-menuold:visited{ color: inherit; }
+@media (hover: hover){ #nu-menu > a.nu-menuold:hover{ background: var(--flag-tint); } }
 /* ...AND THE PLATE ITSELF ADDS NOTHING BETWEEN THEM. `<nu-plate>` brings a
    `row-gap` of `--s1` (3.2px measured), which falls between the plate's DIRECT
    children and not between siblings inside a group — so eight grouped rows
