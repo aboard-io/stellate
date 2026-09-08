@@ -14872,16 +14872,49 @@ function chromeRow() {
     paintIcon(themeBtn, { glyph: on ? "◐" : "☀",
                           word: _t(on ? "burger.dark" : "burger.light") });
   };
-  themeBtn.addEventListener("click", () => {
-    const on = lightNow();
+  /* ===== THE ROOM IS THE DEFAULT AND THE HAND IS THE OVERRIDE (2026-09-08) =
+     Paul: *"Make light/dark mode respect system settings."*
+
+     THREE STATES, TWO WORDS. What is stored is a PIN and nothing else: with a
+     pin the page is what the pin says, and with no pin it is what
+     `prefers-color-scheme` says. So pressing the row to the value the room
+     ALREADY prefers does not write that value — it CLEARS the pin, and the
+     page goes back to following. That is how a two-state toggle offers the
+     third state (follow the room) without a third word for a hand to read, and
+     it means the way back is the same gesture as the way out.
+     AND IT FOLLOWS LIVE. A phone crossing into the evening, or a laptop on a
+     schedule, flips the page it is holding — but only while there is no pin,
+     which is the whole of what a pin means. The listener is added once, here,
+     beside the control it belongs to. */
+  const roomWantsLight = () => {
+    try { return !!(window.matchMedia
+      && matchMedia("(prefers-color-scheme: light)").matches); } catch (e) { return false; }
+  };
+  const setRoom = (light) => {
     try {
-      if (on) document.documentElement.removeAttribute("data-theme");
-      else document.documentElement.setAttribute("data-theme", "light");
+      if (light) document.documentElement.setAttribute("data-theme", "light");
+      else document.documentElement.removeAttribute("data-theme");
     } catch (e) {}
-    try { localStorage.setItem("nukernel.theme.v1", on ? "deck" : "light"); }
-    catch (e) { /* a private window refuses the write; the room still changed */ }
     paintTheme();
+  };
+  themeBtn.addEventListener("click", () => {
+    const want = !lightNow();                 // what pressing gives you
+    try {
+      if (want === roomWantsLight()) localStorage.removeItem("nukernel.theme.v1");
+      else localStorage.setItem("nukernel.theme.v1", want ? "light" : "deck");
+    } catch (e) { /* a private window refuses the write; the room still changes */ }
+    setRoom(want);
   });
+  try {
+    const mq = window.matchMedia && matchMedia("(prefers-color-scheme: light)");
+    const onRoom = () => {
+      let pin = null;
+      try { pin = localStorage.getItem("nukernel.theme.v1"); } catch (e) {}
+      if (!pin) setRoom(roomWantsLight());
+    };
+    if (mq && mq.addEventListener) mq.addEventListener("change", onRoom);
+    else if (mq && mq.addListener) mq.addListener(onRoom);
+  } catch (e) {}
   paintTheme();
   themeLine.append(themeBtn);
   menuBox.append(themeLine);

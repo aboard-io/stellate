@@ -139,18 +139,31 @@
      IN DAYLIGHT" — and the ONLY control that set it was in the design gallery
      (ui/ui.js `chrome`, the ☀ button on /design). The app had no row for it,
      so a hand on this page had no way to ask, which is exactly the report.
-     IT IS A HAND'S CHOICE AND NOT THE SYSTEM'S, which is tokens.css's own
-     argument and it is kept: "the Stellate is a machine, and a machine looks
-     the same in every room… reached by a hand, not by a system setting." So
-     there is no `prefers-color-scheme` here either — what is remembered is
-     what a hand pressed, and a fresh page is the deck.
+     IT FOLLOWS THE ROOM UNTIL A HAND SAYS OTHERWISE (2026-09-08). Paul: *"Make
+     light/dark mode respect system settings."* This block used to argue the
+     opposite — tokens.css's *"a machine looks the same in every room… reached
+     by a hand, not by a system setting"* — and that argument is retired, in
+     both files, because the room a machine sits in is a fact about the person
+     using it and every other app on their screen already knows it.
+     THREE STATES, AND ONLY ONE OF THEM IS STORED. A stored `light`/`deck` is a
+     hand's PIN and always wins; nothing stored means follow
+     `prefers-color-scheme`, live (ui/eight.js listens, so a phone crossing into
+     the evening flips the page it is holding). Pressing the row back to what
+     the room already says CLEARS the pin rather than setting the same value by
+     hand — which is how a two-state toggle offers a third state without a
+     third word to read.
      AND IT IS HERE, IN THE HEAD, BECAUSE OF THE FLASH. Applied from a module
      the page would paint the deck first and repaint light a beat later, which
-     is the one thing a theme switch must not do. Four lines, no dependency,
-     inside a try because a private window's localStorage throws on read. -->
+     is the one thing a theme switch must not do. No dependency, and inside a
+     try because a private window's localStorage throws on read — a throw there
+     leaves the deck, which is the safe half of the guess. -->
 <script>
-  try { if (localStorage.getItem("nukernel.theme.v1") === "light")
-    document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+  try {
+    var t = localStorage.getItem("nukernel.theme.v1");
+    if (!t && window.matchMedia)
+      t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "deck";
+    if (t === "light") document.documentElement.setAttribute("data-theme", "light");
+  } catch (e) {}
 </script>
 </head>
 <body>

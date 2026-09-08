@@ -482,6 +482,31 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     requestAnimationFrame(() => {
       if (!host.isConnected) return;
       for (const g of Array.from(host.querySelectorAll<HTMLElement>(".nu-mogrid"))) {
+        /* ===== THE CAP LANDS ON A CARD EDGE (2026-09-08) ==================
+           Paul, of the sheet: *"This is a mess do you see it"*, with the motif
+           grid and the instrument grid both SLICED THROUGH THE MIDDLE of their
+           second row — half a sparkline, the word `own` cut in two lengthwise.
+
+           THE CAP WAS TYPED IN THE WRONG UNIT. nu.css asks for "two rows of
+           cards" and says it as `2 * var(--tap) + var(--s2)` — 96px — because
+           `--tap` is the 44px floor a card is built on. A card is not 44px: it
+           carries a sparkline over a name over a provenance line, and it
+           measures 88. So the box was one row and a half, and a half row of
+           cards is exactly what a hand reads as "broken".
+           SO THE HEIGHT IS MEASURED, HERE, WHERE THERE IS A LAYOUT TO MEASURE.
+           CSS cannot ask how tall a card came out and this function already
+           runs on the frame after one is drawn — for the same reason, written
+           two paragraphs down. `ROWS * card + (ROWS - 1) * gap` is the whole
+           arithmetic, and it is set as an inline `maxBlockSize` that overrides
+           the stylesheet's guess for THIS grid at THIS card size, so a motif
+           card and an instrument card each get two whole rows of themselves. */
+        const card = g.querySelector<HTMLElement>(".nu-mocard");
+        if (card) {
+          const ch = Math.round(card.getBoundingClientRect().height);
+          const gap = parseFloat(getComputedStyle(g).rowGap || "0") || 0;
+          const ROWS = 2;
+          if (ch > 0) g.style.maxBlockSize = Math.round(ROWS * ch + (ROWS - 1) * gap) + "px";
+        }
         if (g.scrollHeight <= g.clientHeight + 1) continue;
         const key = (g.querySelector("[data-k]") as HTMLElement | null)?.dataset.k || "";
         if (!key || SHOWN.has(key)) continue;
@@ -496,7 +521,18 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
            honest distance whatever the offset parent is. */
         const gr = g.getBoundingClientRect(), r = on.getBoundingClientRect();
         const want = g.scrollTop + (r.top - gr.top) - (g.clientHeight - r.height) / 2;
-        g.scrollTop = Math.max(0, Math.min(g.scrollHeight - g.clientHeight, want));
+        /* ...AND IT LANDS ON A ROW, NOT BETWEEN TWO (2026-09-08). Capping the
+           BOX at two whole cards is half the fix; a scroll that stops at 43px
+           shows the same sliced row the cap was raised to remove — measured on
+           the shipped sheet, the instrument grid centred on "ahh choir" and cut
+           the row above it through the middle of the word `reed`. So the
+           placement is rounded to a whole number of rows. The grid's own
+           `scroll-snap` (nu.css) keeps a HAND's scroll on the same grid; this
+           is the same rule for the scroll the page performs. */
+        const step = card ? Math.round(card.getBoundingClientRect().height +
+                     (parseFloat(getComputedStyle(g).rowGap || "0") || 0)) : 0;
+        const snapped = step > 0 ? Math.round(want / step) * step : want;
+        g.scrollTop = Math.max(0, Math.min(g.scrollHeight - g.clientHeight, snapped));
       }
     });
   };

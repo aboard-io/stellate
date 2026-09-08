@@ -2672,6 +2672,13 @@ function bandTable(host, A2) {
     requestAnimationFrame(() => {
       if (!host.isConnected) return;
       for (const g2 of Array.from(host.querySelectorAll(".nu-mogrid"))) {
+        const card = g2.querySelector(".nu-mocard");
+        if (card) {
+          const ch = Math.round(card.getBoundingClientRect().height);
+          const gap = parseFloat(getComputedStyle(g2).rowGap || "0") || 0;
+          const ROWS = 2;
+          if (ch > 0) g2.style.maxBlockSize = Math.round(ROWS * ch + (ROWS - 1) * gap) + "px";
+        }
         if (g2.scrollHeight <= g2.clientHeight + 1) continue;
         const key = g2.querySelector("[data-k]")?.dataset.k || "";
         if (!key || SHOWN.has(key)) continue;
@@ -2680,7 +2687,9 @@ function bandTable(host, A2) {
         if (!on) continue;
         const gr = g2.getBoundingClientRect(), r2 = on.getBoundingClientRect();
         const want = g2.scrollTop + (r2.top - gr.top) - (g2.clientHeight - r2.height) / 2;
-        g2.scrollTop = Math.max(0, Math.min(g2.scrollHeight - g2.clientHeight, want));
+        const step = card ? Math.round(card.getBoundingClientRect().height + (parseFloat(getComputedStyle(g2).rowGap || "0") || 0)) : 0;
+        const snapped = step > 0 ? Math.round(want / step) * step : want;
+        g2.scrollTop = Math.max(0, Math.min(g2.scrollHeight - g2.clientHeight, snapped));
       }
     });
   };

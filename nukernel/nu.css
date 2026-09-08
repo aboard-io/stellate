@@ -6315,8 +6315,23 @@ table.nu-trims{ color: var(--ink); }
      the sheet keeps its other subjects on the screen. `overscroll-behavior`
      stops the scroll chaining out into the sheet behind it, which is the same
      clause `.nu-pane` has carried since it was written. */
+  /* THE HEIGHT IS A GUESS HERE AND A MEASUREMENT IN grid.ts (2026-09-08).
+     This line asked for "two rows of cards" in the only unit CSS has — the
+     44px tap floor a card is BUILT on — and a card is 57 to 88px tall
+     depending on whether it carries a sparkline, so the box came out one row
+     and a half and sliced the second one through the middle of its own words.
+     Paul: *"This is a mess do you see it."* `placeGrids()` overrides this with
+     `ROWS * card + gap` measured off a real card on the frame after it is
+     drawn; what stays here is a sane floor for the frame before that, and for
+     any host that never runs the placer. */
   max-block-size: calc(2 * var(--tap) + 1 * var(--s2));
-  overflow-y: auto; overscroll-behavior: contain; }
+  overflow-y: auto; overscroll-behavior: contain;
+  /* AND A HAND'S SCROLL STOPS ON WHOLE CARDS TOO. The placer rounds the scroll
+     it performs; this is the same rule for the one a thumb performs, and it is
+     `proximity` rather than `mandatory` so a flick still travels — it only
+     refuses to STOP halfway through a row. */
+  scroll-snap-type: y proximity; }
+.nu-mogrid > .nu-mocard{ scroll-snap-align: start; }
 /* A CARD IS THE TARGET AND THE ✎ RIDES IN ITS CORNER. `position: relative` on
    the card is what the pencil is placed against; the pick button underneath it
    is the whole card, so the 44px floor belongs to the thing a thumb aims at
@@ -9232,6 +9247,66 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #pan-band .nu-groupbtn[aria-pressed="true"],
 #pan-band .nu-wchip[aria-pressed="true"]{
   background: var(--hand); border-color: var(--hand); color: var(--on-fill); }
+
+/* ======================================================================
+   THE SHEET, TIDIED (2026-09-08)
+   ======================================================================
+   Paul, with two screenshots of an open sheet: *"This is a mess do you see
+   it"* — then *"Clean it all up and deploy."* The sliced card rows were the
+   loudest of it and are fixed where they were caused (src/table/grid.ts: the
+   cap was typed in `--tap` and a card is not a tap). These are the other four
+   things in those screenshots, each of them a rule that was answering its own
+   question and not the row's.
+
+   1 · A WORD THAT CANNOT BE PUSHED STOPS BEING A BUTTON. `MAKE IT` is
+   thirty-three qualities and most of them are unavailable on any given chair,
+   so the wall Paul photographed was thirty-three BOXES of which eight could be
+   pressed. Dimming them to .5 kept every box, which is the noise. A disabled
+   verb keeps its word and gives up its edge and its ground: the boxes on the
+   glass are the ones a hand can use, and the rest read as the vocabulary they
+   are. Nothing moves — same order, same wrap, same 44px targets.
+
+   2 · `Clear` BELONGS TO THE FIELD ABOVE IT, NOT TO THE MIDDLE OF THE SHEET.
+   It is `flex: 0 0 auto` after a grid that takes the whole row, so it wrapped
+   onto a line of its own and centred there — a lone word floating under a
+   picker, attached to nothing. An auto margin at its start pushes it to the
+   row's end, which is where a field's own undo goes.
+
+   3 · THE THREE MARKS UNDER `THIS CELL` SAY WHAT THEY DO. They are
+   `.nu-opbtn.is-mark` — 44px squares carrying a glyph, with the word in a
+   `.nu-vh` — and three unlabelled boxes in a sheet whose every other control
+   is a word is exactly the *"what does that do"* this design keeps deleting
+   elsewhere. The word comes out of the visually-hidden span and stands beside
+   the glyph. The span is the SAME span, so nothing is written twice and the
+   accessible name does not change.
+
+   4 · ONE SEPARATOR. A dashed edge means REFUSED on this surface (`.nu-wcell.
+   is-refused`, `.nu-mkb[data-why]`) — it is the one thing dashes say — so a
+   dashed line between two ordinary fields is that word used for spacing. The
+   sheet's field rows take the hairline the plate's rows already take.
+   ====================================================================== */
+/* `aria-disabled` AND NOT `disabled`, which is this page's own law and the
+   reason the first cut of this rule changed nothing: DESIGN.md component 15 —
+   *"a `disabled` button takes no click, no pointerdown and no pointerover, so
+   the reason underneath it reaches nobody holding a phone"*. Every verb in
+   this bar is greyed the accessible way, so the selector has to ask the same
+   question the page answers. Both are listed: a `disabled` chip anywhere else
+   in this sheet should read the same. */
+#pan-band .nu-sheetops.is-verbs .nu-opbtn[aria-disabled="true"],
+#pan-band .nu-sheetops.is-verbs .nu-opbtn[disabled]{
+  border-color: transparent; background: none; opacity: .75;
+  color: var(--dim); }
+#pan-band .nu-clearback{ margin-inline-start: auto; }
+#pan-band .nu-sheetops .nu-opbtn.is-mark{
+  inline-size: auto; min-inline-size: var(--tap);
+  padding-inline: .6ch; gap: .5ch; }
+#pan-band .nu-sheetops .nu-opbtn.is-mark > .nu-vh{
+  position: static; inline-size: auto; block-size: auto;
+  clip: auto; clip-path: none; white-space: nowrap;
+  overflow: visible; margin: 0; }
+#pan-band .nu-vsheet .nu-sheetrow{ border-block-end: 0; }
+#pan-band .nu-vsheet .nu-sheetrow + .nu-sheetrow{
+  border-block-start: var(--bw) solid var(--rule); border-block-end: 0; }
 
 /* 3 · A VALUE IN A SHEET IS A CUT, NOT A BOX --------------------------
    A sheet row is `label · control · value · clear-back` and the control has to

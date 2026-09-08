@@ -59,16 +59,26 @@
                       decorative, and never a fourth accent looking for work.
      the PHOSPHOR     not a lamp: the ink the screen prints values in.
 
-   WHY THERE IS NO AUTOMATIC LIGHT THEME. The Stellate is a machine, and a
-   machine looks the same in every room; `nu.css` made this argument itself
-   when it retired the old system-colour dark mode (*"a hand-blue that inverts
-   to something else at night is not a semantic paint any more"*), and it holds
-   the other way round too. So the deck is the COMMITTED look and there is no
-   `prefers-color-scheme` query below. A second theme exists and is a real
-   design rather than an inversion — `:root[data-theme="light"]`, the same
-   panel under studio lights, with the phosphor read as dark green on grey the
-   way an LCD is read in daylight — and it is reached by a hand, not by a
-   system setting.
+   WHICH THEME A FRESH PAGE OPENS IN, AND WHO DECIDES (2026-09-08). Paul:
+   *"Make light/dark mode respect system settings."* This paragraph argued the
+   opposite for four months — *"the Stellate is a machine, and a machine looks
+   the same in every room"* — and the argument is retired rather than hidden,
+   because it was answering the wrong question: what room a machine sits in is
+   a fact about the person using it, and every other window on their screen
+   already knows it.
+   THE PALETTE IS STILL KEYED ON `data-theme` AND ON NOTHING ELSE, which is the
+   part worth keeping. There is still no `prefers-color-scheme` query in this
+   file: a second copy of a 40-token palette inside a media query is a second
+   copy to drift, and the day the two disagree nobody will be able to say which
+   is the design. What reads the query is one line in index.html's head (before
+   the first paint, so there is no flash) and one listener in ui/eight.js (so a
+   room that changes under an open page changes the page). This file states the
+   two designs; those two lines decide which one a page is wearing.
+   THE SECOND THEME IS A REAL DESIGN AND NOT AN INVERSION —
+   `:root[data-theme="light"]`, the same panel under studio lights, with the
+   phosphor read as dark green on grey the way an LCD is read in daylight — and
+   it is now reached by the room OR by a hand, with the hand winning while it
+   holds a pin.
    =========================================================================== */
 
 :root{
