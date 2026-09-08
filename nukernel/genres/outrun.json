@@ -1,0 +1,48 @@
+{
+  "note": "OUTRUN — Tokyo 1986. The arcade driving cabinet's own music: bright,\nfast, major, and written to be heard over coins and a room full of\nmachines. The other half of what a hand means by \"eighties synth\" — the\nhalf that is not in a minor key and not about dread.\nPaul, 2026-09-08: \"We need more synthwave genres.\"\n\nWHY IT IS ITS OWN ROW. Every synth row this table has is MINOR:\n`copshowsynth`, `horrorsynth`, `synthwave`, `chasetheme`, `gothsynth`. The\narcade board is the exception and the exception is the point — an FM\nchip's brightest register, a mixolydian seventh instead of a natural\nminor, a shuffle in the hats and a gated snare that arrives like a door\nslamming. A record that sounds like a chase at night is a different\nmusic from one that sounds like a beach at noon, and they were made on\nthe same silicon two years apart.\n\nTOKYO 1986 IS THE BOARD, NOT A TITLE. The FM sound chip is the\ncommission here the way a television studio is `chasetheme`'s: the\nwriting is shaped by three voices of frequency modulation and a PCM\nchannel for the drums, and it sounds like that whatever the game was\ncalled.\n\nWHAT THE ROW DOES:\n  · `mode: mixo` — the flattened seventh over a major triad, which is the\n    whole harmonic signature and the reason this cannot be filed under\n    the minor rows above;\n  · `bpm 138` with `bassStyle: sixteenths` and `seqArp: arpoct` — the\n    octave-jumping bass line an FM chip plays better than anything\n    analogue;\n  · `drumkit: tr909` and a gated snare on 2 and 4, hats in eighths with\n    the offbeat open: the arcade's own idea of a rock beat;\n  · `tone.cut 3200`, the brightest filter in the synth family, because a\n    cabinet speaker had no bottom end to lose.",
+  "instrumental": true,
+  "label": "Tokyo 1986",
+  "voices": 3,
+  "bars": 8,
+  "near": "italodisco",
+  "seqArp": "arpoct",
+  "plan": "dance",
+  "bpm": 138,
+  "parents": { "italodisco": 0.3, "technopop": 0.25, "eurodisco": 0.2, "copshowsynth": 0.15 },
+  "wants": ["the arcade board's own FM sound chip, as an instrument"],
+  "instr": ["saw_wave", "synth_brass_1", "warm_pad"],
+  "drumkit": "tr909",
+  "entry": { "kind": "cases", "cases": [{ "at": 2, "then": 2 }], "else": 0 },
+  "reg": { "kind": "table", "t": [1, 0, -1] },
+  "realize": { "kind": "cases", "cases": [{ "at": 2, "then": "pad" }], "else": "line" },
+  "part": ["lead", "counter", "pad"],
+  "kit": {
+    "k": [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    "s": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    "h": [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
+  },
+  "harmony": "cycle",
+  "roots": [0, 0, 3, 3, 4, 4, 0, 0],
+  "mode": { "$src": "MODES.mixo" },
+  "scale": { "$src": "DIATONIC" },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "fx": ["chorus", "echo"],
+  "tone": { "wave": "sawtooth", "cut": 3200, "q": 1, "atk": 0.004, "rel": 0.42, "gain": 0.24, "verb": 0.3 },
+  "words": [
+    "the lead, the coastline coming up fast",
+    "the answer, the chip's second voice",
+    "the pad, sunlight on the windscreen"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      { "at": 0, "then": { "$src": "[fill(2)]" } },
+      { "at": 1, "then": { "$src": "[rotate(4)]" } }
+    ],
+    "else": { "$src": "[drop(9)]" }
+  },
+  "dyn": "arch"
+}

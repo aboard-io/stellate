@@ -1436,10 +1436,13 @@ var ATLAS = {
   /* ===== THE ARTICLE MARK (the ↗ in the fourth column) ================== */
   "atlas.wiki.title": "Open {name} on Wikipedia",
   "atlas.wiki.aria": "{name} on Wikipedia",
-  /* an article that is not the genre itself — the broader subject, the work,
-     the artist. The word rides beside the name in its own quiet span. */
-  "atlas.wiki.kind": "· the {kind}",
-  "atlas.wiki.kindAria": "{name} · the {kind} on Wikipedia",
+  /* (`atlas.wiki.kind` and `atlas.wiki.kindAria` STOOD HERE — "· the {kind}",
+     for an article that is not the genre itself. Deleted 2026-09-08. Paul:
+     *"And get rid of 'The Broader' — what does that even mean?"* Once the act
+     and album links went the day before, the only word either string could
+     produce was "the broader": a research term, on 27 rows of a list of 500,
+     that a reader could do nothing with. `kind` is still wiki.js's field and
+     still what WIKI.md reports; it is simply not spoken to anybody now.) */
   /* ===== A ROW WITH NO ARTICLE ==========================================
      Three reasons, three sentences, and none of them is the research note.
      Each is also the row's `data-why`, which two gates read back off the

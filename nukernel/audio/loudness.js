@@ -58,7 +58,7 @@ const PEAK_MAX = 0.89;   // a lift may take the loudest sample this far and no f
    table is a no-op: `trimOf` answers 1 for every key, and every record renders
    byte-identically to the day before this file existed. */
 /* ===== TRIM TABLE — GENERATED, DO NOT EDIT ===== */
-// 503 rows — [the loudest second of the record's busiest
+// 506 rows — [the loudest second of the record's busiest
 // section in dBFS, the peak of that press] — measured 2026-09-08 with `node tools/levels.js
 // --bars 4 --seed 1 --write`. Re-derive after any change to the
 // engine, the desk or the catalogue: these are facts about a render.
@@ -142,6 +142,7 @@ export const MEASURED = {
   chamberpop: [-25.2, 0.445],
   chanson: [-18.9, 0.497],
   characterpiece: [-29.1, 0.209],
+  chasetheme: [-29.4, 0.255],
   chazzanut: [-19.3, 0.577],
   chillout: [-32.1, 0.181],
   chiptune: [-13.0, 0.700],
@@ -397,6 +398,7 @@ export const MEASURED = {
   organum: [-19.1, 0.489],
   ottoman: [-40.9, 0.046],
   outlawcountry: [-30.2, 0.437],
+  outrun: [-29.8, 0.238],
   oxyrhynchus: [-25.5, 0.200],
   pad: [-42.9, 0.029],
   palmwine: [-35.4, 0.143],
@@ -442,6 +444,7 @@ export const MEASURED = {
   reggaeton: [-28.2, 0.235],
   requiem: [-23.3, 0.230],
   retrofunkpop: [-27.8, 0.337],
+  retrohorrorsynth: [-33.8, 0.134],
   retrosoul: [-28.2, 0.289],
   riff: [-36.3, 0.239],
   rnb: [-22.0, 0.287],

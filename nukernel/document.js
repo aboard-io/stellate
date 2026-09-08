@@ -551,7 +551,48 @@
                         // column as its default — TABLE.md §1, and this
                         // closure is where a cell override reaches the kernel
                         // (kernel.js:1523 `for (let b = g.entry(v); …)`).
-                        entry: (v) => resolve(doc, si, LIX[v], "entry", GENRES),
+                        /* ===== AND IT MAY NOT PUT A PLAYER PAST THE END OF
+                           THE SECTION (2026-09-08) =========================
+                           Paul, of a record he had built: *"Look at this and
+                           tell me why I can't hear the overdrive guitar."*
+
+                           IT WAS PLAYING, AND EVERY NOTE OF IT LANDED AFTER THE
+                           MUSIC STOPPED. Measured on his own share link (Cairo
+                           1932, seed 6451): the added `line 3` chair, an
+                           overdrive guitar with `hook` written into all nine
+                           sections and `entry: 1`, rendered FIFTY-FOUR events a
+                           section — first onset at step 64, in a window of
+                           [0, 64). Zero survived, in every section, so the
+                           table showed a player, the sheet showed its material,
+                           the desk showed its fader, and the record was silent.
+                           THE UNITS ARE THE TRAP AND THEY ARE BOTH RIGHT.
+                           `entry` counts in CELLS (`barsOf` — "what the entry
+                           slider counts a cell in"), and this record's cells
+                           are two bars long while its sections are two bars
+                           long: one cell IS the whole section, so an entry of 1
+                           is an entry at the end. On the catalogue's own rows a
+                           cell is one bar and a section is eight, which is why
+                           this never showed up — and precompose has clamped its
+                           own side "to the shortest one for exactly that
+                           reason" since 2026-09-03. The document path had no
+                           such clamp, and a hand can type an entry the
+                           catalogue never would.
+                           SO THE CLAMP IS HERE, at the one door a cell override
+                           reaches the kernel through, and it is the honest
+                           bound: a chair may enter on any cell of its section
+                           except the one after the last. A negative entry (the
+                           pickup channel, §9 of the 2026-09-05 review) is left
+                           alone — that is a chair entering EARLY, which the
+                           lead-in channel carries on purpose. */
+                        entry: (v) => {
+                          const want = resolve(doc, si, LIX[v], "entry", GENRES);
+                          const secBars = Math.max(1,
+                            ((doc.form && doc.form.sections && doc.form.sections[si]
+                              && doc.form.sections[si].bars) | 0) || 1);
+                          const cell = Math.max(1, barsOf(doc) | 0);
+                          const last = Math.max(0, Math.floor(secBars / cell) - 1);
+                          return want > last ? last : want;
+                        },
                         // THE CHAIR'S OWN PART REACHES THE KERNEL (2026-08-28).
                         // This handed over `realize` and nothing else, so the
                         // kernel fell back to its two-value shim ("pad" or

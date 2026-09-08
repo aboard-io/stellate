@@ -38093,6 +38093,147 @@
       dyn: "arch",
     },
 
+    // OUTRUN — Tokyo 1986. The arcade driving cabinet's own music: bright,
+    // fast, major, and written to be heard over coins and a room full of
+    // machines. The other half of what a hand means by "eighties synth" — the
+    // half that is not in a minor key and not about dread.
+    // Paul, 2026-09-08: "We need more synthwave genres."
+    //
+    // WHY IT IS ITS OWN ROW. Every synth row this table has is MINOR:
+    // `copshowsynth`, `horrorsynth`, `synthwave`, `chasetheme`, `gothsynth`. The
+    // arcade board is the exception and the exception is the point — an FM
+    // chip's brightest register, a mixolydian seventh instead of a natural
+    // minor, a shuffle in the hats and a gated snare that arrives like a door
+    // slamming. A record that sounds like a chase at night is a different
+    // music from one that sounds like a beach at noon, and they were made on
+    // the same silicon two years apart.
+    //
+    // TOKYO 1986 IS THE BOARD, NOT A TITLE. The FM sound chip is the
+    // commission here the way a television studio is `chasetheme`'s: the
+    // writing is shaped by three voices of frequency modulation and a PCM
+    // channel for the drums, and it sounds like that whatever the game was
+    // called.
+    //
+    // WHAT THE ROW DOES:
+    //   · `mode: mixo` — the flattened seventh over a major triad, which is the
+    //     whole harmonic signature and the reason this cannot be filed under
+    //     the minor rows above;
+    //   · `bpm 138` with `bassStyle: sixteenths` and `seqArp: arpoct` — the
+    //     octave-jumping bass line an FM chip plays better than anything
+    //     analogue;
+    //   · `drumkit: tr909` and a gated snare on 2 and 4, hats in eighths with
+    //     the offbeat open: the arcade's own idea of a rock beat;
+    //   · `tone.cut 3200`, the brightest filter in the synth family, because a
+    //     cabinet speaker had no bottom end to lose.
+    outrun: {
+      instrumental: true,
+      label: "Tokyo 1986",
+      voices: 3,
+      bars: 8,
+      near: "italodisco",
+      seqArp: "arpoct",
+      plan: "dance",
+      bpm: 138,
+      parents: { italodisco: 0.3, technopop: 0.25, eurodisco: 0.2, copshowsynth: 0.15 },
+      wants: ["the arcade board's own FM sound chip, as an instrument"],
+      instr: ["saw_wave", "synth_brass_1", "warm_pad"],
+      drumkit: "tr909",
+      entry: v => (v === 2 ? 2 : 0),
+      reg: v => [1, 0, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
+      },
+      harmony: "cycle",
+      roots: [0, 0, 3, 3, 4, 4, 0, 0],
+      mode: MODES.mixo,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "sixteenths",
+      fx: ["chorus", "echo"],
+      tone: { wave: "sawtooth", cut: 3200, q: 1, atk: 0.004, rel: 0.42, gain: 0.24, verb: 0.3 },
+      words: [
+        "the lead, the coastline coming up fast",
+        "the answer, the chip's second voice",
+        "the pad, sunlight on the windscreen"
+      ],
+      word: v => (v === 0 ? [fill(2)] : v === 1 ? [rotate(4)] : [drop(9)]),
+      dyn: "arch",
+    },
+
+    // RETRO HORROR SYNTH — Austin 2016. The arpeggio that opens a streaming
+    // horror series: four analogue notes cycling in a minor key, a pad blooming
+    // under them, no drums at all for the first thirty seconds.
+    // Paul, 2026-09-08: "More stuff that sounds like the Airwolf TV show theme
+    // and Knight Rider and Stranger things. TV synth tunes."
+    //
+    // IT IS A REVIVAL AND THE ROW SAYS SO. `horrorsynth` is Los Angeles 1978 —
+    // the thing itself, written by a director on a deadline with a Prophet and
+    // no orchestra. This is the 2016 MEMORY of it: the same arpeggio, but slower,
+    // wider, drenched, and mixed like a record rather than like a cue. The
+    // distance between the two is the whole content of this row, which is why
+    // `horrorsynth` takes the biggest share below and why nothing here is
+    // allowed to be faster than it.
+    //
+    // NOT SYNTHWAVE EITHER, and the difference is the drums. Paris 2010 is a
+    // DANCE plan with a kit under it; this is an `arc` with a kick on the bar
+    // line and nothing else — the tension is in the arpeggio's own repetition,
+    // and a backbeat would resolve it. `dungeonsynth` (Notodden 1994) is the
+    // only other row in the table that dares this little percussion, which is
+    // why it is a parent.
+    //
+    // WHAT THE ROW DOES:
+    //   · `seqArp: arpup` over `harmony: modal` and `bassStyle: pedal` — one
+    //     chord, held, with the figure turning above it. The pedal is the point:
+    //     nothing moves underneath, so the ear has only the arpeggio to hold on
+    //     to and starts hearing it as a threat;
+    //   · `atk 0.02 / rel 1.6` — the slow bloom, which is the sound of a pad
+    //     that arrived after the note and stays after it has gone;
+    //   · `maxHold: 4` and `artic: legato`, the opposite of 1978's staccato
+    //     pulse: the revival sustains where the original stabbed.
+    retrohorrorsynth: {
+      instrumental: true,
+      label: "Austin 2016",
+      voices: 3,
+      bars: 8,
+      near: "horrorsynth",
+      seqArp: "arpup",
+      plan: "arc",
+      bpm: 110,
+      parents: { horrorsynth: 0.4, synthwave: 0.25, berlinschool: 0.2, dungeonsynth: 0.1 },
+      wants: [],
+      instr: ["saw_wave", "warm_pad", "halo_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 1 ? 2 : v === 2 ? 4 : 0),
+      reg: v => [0, -1, 1][v],
+      realize: v => (v === 1 ? "pad" : v === 2 ? "pad" : "line"),
+      part: ["riff", "pad", "pad"],
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        h: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      },
+      harmony: "modal",
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "pedal",
+      fx: ["chorus", "echo"],
+      tone: { wave: "sawtooth", cut: 1500, q: 1.1, atk: 0.02, rel: 1.6, gain: 0.24, verb: 0.55 },
+      words: [
+        "the arpeggio, four notes going round, patient",
+        "the pad, arriving late and staying too long",
+        "the high pad, a room with the light off"
+      ],
+      word: v => (v === 0 ? [fill(1)] : v === 1 ? [drop(9)] : [drop(11)]),
+      dyn: "swell",
+    },
+
     // FOOTWORK — Chicago 2013. DJ Rashad's Double Cup, Hyperdub,
     // released the 22nd of October 2013: the Teklife circle's 160
     // BPM battle music — triplet toms against a half-time 808, one
@@ -45342,6 +45483,96 @@
         "the pad, the ocean at 3 a.m."
       ],
       word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(2), rotate(2)] : [drop(9)]),
+      dyn: "arch",
+    },
+
+    // CHASE THEME — Universal City 1982, and it is the TELEVISION MAIN TITLE
+    // as a piece of music: sixty seconds that have to say what the show is
+    // before the show starts.
+    // Paul, 2026-09-08: "You know what I want? More stuff that sounds like the
+    // Airwolf TV show theme and Knight Rider and Stranger things. TV synth
+    // tunes."
+    //
+    // WHAT IT IS, AND WHY IT IS NOT copshowsynth. Miami 1984 is a MOOD — a cue
+    // under neon and water, written to sit beneath dialogue and go nowhere in
+    // particular. This is the opposite job: a main title is an ANNOUNCEMENT, it
+    // is over in a minute, and every bar of it is going somewhere. The
+    // machinery is the same generation of hardware and the writing could not be
+    // less alike: a sequenced sixteenth-note bass that never stops, brass stabs
+    // landing off the beat, a lead that states one heroic figure twice and
+    // leaves.
+    //
+    // THE YEAR IS THE ARRIVAL AND NOT THE FAMOUS ONE. 1982 is when the
+    // sequenced television title lands in prime time; the helicopter show is
+    // 1984 and inherits it. Universal City is the lot the department that wrote
+    // most of them sat on — the commission is the genre and the commission was
+    // a television studio, which is the same law `copshowsynth` states about
+    // Miami.
+    //
+    // WHAT THE ROW ACTUALLY DOES:
+    //   · `bassStyle: sixteenths` and `seqArp: arpup` — the engine that drives
+    //     the whole thing, and the one fact everybody can hum;
+    //   · a kit whose kick lands on 1, the & of 3 and the & of 7 rather than
+    //     four on the floor: this is a chase, not a dance floor, and the
+    //     difference is where the kick refuses to be;
+    //   · `roots` i - bVII - i - bVI, the minor-key action cycle, which is the
+    //     Aeolian cliche and is a cliche because it works;
+    //   · `artic: staccato` with `maxHold: 2` — nothing sustains, because a main
+    //     title has no time for a long note.
+    //
+    // PARENTS. `horrorsynth` (Los Angeles 1978) is the sequencer ostinato
+    // itself, four years earlier and pointed at dread instead of speed;
+    // `eurodisco` (Munich 1977) is the machine that made a sixteenth-note bass
+    // a normal thing to write; `synthpop` (Basildon 1981) is the polysynth
+    // vocabulary; `electro` (New York 1982) is the same year's drum programming.
+    // The residue is the arrangement: nothing above it writes a sixty-second
+    // piece whose job is to end.
+    chasetheme: {
+      instrumental: true,
+      label: "Universal City 1982",
+      voices: 3,
+      bars: 8,
+      near: "copshowsynth",
+      seqArp: "arpup",
+      plan: "arc",
+      bpm: 124,
+      parents: { horrorsynth: 0.3, eurodisco: 0.25, synthpop: 0.2, electro: 0.15 },
+      wants: ["the Universal television music department's own staff writers"],
+      instr: ["synth_brass_1", "saw_wave", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 2 ? 2 : 0),
+      reg: v => [0, 1, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      harmony: "cycle",
+      roots: [0, 0, 6, 6, 0, 0, 5, 5],
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "sixteenths",
+      fx: ["chorus", "echo"],
+      tone: {
+        wave: "sawtooth",
+        cut: 2400,
+        q: 1.1,
+        atk: 0.006,
+        rel: 0.5,
+        gain: 0.25,
+        verb: 0.34
+      },
+      words: [
+        "the brass, announcing the show",
+        "the sequencer, sixteen notes to the bar and no let up",
+        "the pad, the desert going past at speed"
+      ],
+      word: v => (v === 0 ? [fill(2)] : v === 1 ? [rotate(2)] : [drop(9)]),
       dyn: "arch",
     },
 

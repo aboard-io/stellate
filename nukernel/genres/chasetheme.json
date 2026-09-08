@@ -1,0 +1,48 @@
+{
+  "note": "CHASE THEME — Universal City 1982, and it is the TELEVISION MAIN TITLE\nas a piece of music: sixty seconds that have to say what the show is\nbefore the show starts.\nPaul, 2026-09-08: \"You know what I want? More stuff that sounds like the\nAirwolf TV show theme and Knight Rider and Stranger things. TV synth\ntunes.\"\n\nWHAT IT IS, AND WHY IT IS NOT copshowsynth. Miami 1984 is a MOOD — a cue\nunder neon and water, written to sit beneath dialogue and go nowhere in\nparticular. This is the opposite job: a main title is an ANNOUNCEMENT, it\nis over in a minute, and every bar of it is going somewhere. The\nmachinery is the same generation of hardware and the writing could not be\nless alike: a sequenced sixteenth-note bass that never stops, brass stabs\nlanding off the beat, a lead that states one heroic figure twice and\nleaves.\n\nTHE YEAR IS THE ARRIVAL AND NOT THE FAMOUS ONE. 1982 is when the\nsequenced television title lands in prime time; the helicopter show is\n1984 and inherits it. Universal City is the lot the department that wrote\nmost of them sat on — the commission is the genre and the commission was\na television studio, which is the same law `copshowsynth` states about\nMiami.\n\nWHAT THE ROW ACTUALLY DOES:\n  · `bassStyle: sixteenths` and `seqArp: arpup` — the engine that drives\n    the whole thing, and the one fact everybody can hum;\n  · a kit whose kick lands on 1, the & of 3 and the & of 7 rather than\n    four on the floor: this is a chase, not a dance floor, and the\n    difference is where the kick refuses to be;\n  · `roots` i - bVII - i - bVI, the minor-key action cycle, which is the\n    Aeolian cliche and is a cliche because it works;\n  · `artic: staccato` with `maxHold: 2` — nothing sustains, because a main\n    title has no time for a long note.\n\nPARENTS. `horrorsynth` (Los Angeles 1978) is the sequencer ostinato\nitself, four years earlier and pointed at dread instead of speed;\n`eurodisco` (Munich 1977) is the machine that made a sixteenth-note bass\na normal thing to write; `synthpop` (Basildon 1981) is the polysynth\nvocabulary; `electro` (New York 1982) is the same year's drum programming.\nThe residue is the arrangement: nothing above it writes a sixty-second\npiece whose job is to end.",
+  "instrumental": true,
+  "label": "Universal City 1982",
+  "voices": 3,
+  "bars": 8,
+  "near": "copshowsynth",
+  "seqArp": "arpup",
+  "plan": "arc",
+  "bpm": 124,
+  "parents": { "horrorsynth": 0.3, "eurodisco": 0.25, "synthpop": 0.2, "electro": 0.15 },
+  "wants": ["the Universal television music department's own staff writers"],
+  "instr": ["synth_brass_1", "saw_wave", "warm_pad"],
+  "drumkit": "electronic",
+  "entry": { "kind": "cases", "cases": [{ "at": 2, "then": 2 }], "else": 0 },
+  "reg": { "kind": "table", "t": [0, 1, -1] },
+  "realize": { "kind": "cases", "cases": [{ "at": 2, "then": "pad" }], "else": "line" },
+  "part": ["lead", "riff", "pad"],
+  "kit": {
+    "k": [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+    "s": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    "h": [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+  },
+  "harmony": "cycle",
+  "roots": [0, 0, 6, 6, 0, 0, 5, 5],
+  "mode": { "$src": "MODES.aeolian" },
+  "scale": { "$src": "DIATONIC" },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "fx": ["chorus", "echo"],
+  "tone": { "wave": "sawtooth", "cut": 2400, "q": 1.1, "atk": 0.006, "rel": 0.5, "gain": 0.25, "verb": 0.34 },
+  "words": [
+    "the brass, announcing the show",
+    "the sequencer, sixteen notes to the bar and no let up",
+    "the pad, the desert going past at speed"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      { "at": 0, "then": { "$src": "[fill(2)]" } },
+      { "at": 1, "then": { "$src": "[rotate(2)]" } }
+    ],
+    "else": { "$src": "[drop(9)]" }
+  },
+  "dyn": "arch"
+}

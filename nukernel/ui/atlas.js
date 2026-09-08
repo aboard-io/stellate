@@ -1015,17 +1015,25 @@ export function mount(parent, ctx) {
     const w = W(), row = w && w.WIKI[gk];
     if (w && row) {
       const title = w.name(gk);
-      const kind = row.kind !== "genre" ? row.kind : "";
+      /* ===== THE KIND IS NOT PRINTED (2026-09-08) =======================
+         Paul: *"And get rid of 'The Broader' — what does that even mean?"*
+
+         IT MEANT SOMETHING TO THE TABLE AND NOTHING TO A READER. `kind` is
+         wiki.js's own honesty check — whether the article a row links is the
+         genre itself or a wider subject the genre lives inside — and it was
+         drawn on the plate so the claim could be checked from the page. Once
+         the artist and work links went (2026-09-08, the round before this),
+         the only word it could ever say was "the broader", printed beside 27
+         rows in a list of 500, telling a reader nothing they could act on.
+         THE FIELD STAYS AND THE PRINT GOES. `kind` is still in wiki.js, still
+         written by the extractor, still what WIKI.md reports and what the gate
+         reads — a fact about the research does not stop being true because it
+         left the glass; it also still rides the link as `data-kind` four lines
+         down, which is where a gate reads it. What a READER gets is the name
+         and the arrow. */
       const s = el("span", { className: "nu-ixw", textContent: title });
       s.dataset.gk = gk;
-      /* THE SEPARATOR IS A SPACE AND THE SENTENCE IS A KEY. The kind rides in
-         its own span so nu.css can keep it quiet and `nowrap` at 320; the
-         leading space is LAYOUT between two spans, not a word, which is why it
-         is here and not inside the catalogue string (a padded string is a
-         thing test/copy.test.js C9 refuses, and rightly — a translator should
-         never own trailing whitespace). */
-      if (kind) s.append(el("span", { className: "nu-kind",
-                                      textContent: " " + t("atlas.wiki.kind", { kind }) }));
+
       /* THE MARK IS ↗ AND NOT A "W" (2026-08-30), argued rather than picked:
            · a W is Wikipedia's WORDMARK shrunk to one letter — a logo on a
              page that draws marks, and the one thing the mark would say
@@ -1060,9 +1068,7 @@ export function mount(parent, ctx) {
       // TWO KEYS RATHER THAN A SUFFIX GLUED ON: "{name} · the {kind} on
       // Wikipedia" is one sentence in one order here and in another order
       // somewhere else, and a caller that concatenated could not be taught it.
-      a.setAttribute("aria-label", kind
-        ? t("atlas.wiki.kindAria", { name: title, kind })
-        : t("atlas.wiki.aria", { name: title }));
+      a.setAttribute("aria-label", t("atlas.wiki.aria", { name: title }));
       return { plate: s, over: a };
     }
     /* THE REASON IS THREE SENTENCES AND NONE OF THEM IS THE RESEARCH NOTE

@@ -695,9 +695,13 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    (ui/atlas.js:665) and nothing was left wearing `.nu-wiki`: the dead-selector
    pass measured zero matches across all nine tabs. The SHAPE the rule stated
    lives at `.nu-ixw`, exactly where that paragraph says it was restated.
-   `.nu-kind` is alive — the list writes it for the 31 rows whose article is
-   an act or an album, ui/atlas.js:676.) */
-.nu-kind{ opacity: .7; white-space: nowrap; }
+   `.nu-kind` WAS alive and is not, 2026-09-08. Paul: *"get rid of 'The
+   Broader' — what does that even mean?"* The span was the printed half of
+   wiki.js's `kind`, and once the act and album links went the only word it
+   could say was "the broader" — a research term, on 27 rows of a list of 500,
+   that a reader could do nothing with. ui/atlas.js stopped emitting it and the
+   rule goes with it rather than sitting here matching nothing; the FIELD is
+   untouched, still written by the extractor and still what WIKI.md reports.) */
 
 /* ===== THE TWO STICKY BANDS ============================================
    Two, never three: 52 + 38 = 90px of a 667px screen, 13.5%. In landscape
@@ -5762,11 +5766,11 @@ table.nu-trims{ color: var(--ink); }
      IT KEEPS THE NOWRAP AND TAKES A BREAK POINT INSTEAD (measured both):
      `white-space: normal` fixed the overflow and split the footnote badly —
      "Neolithic flute music ·" / "the broader", a dangling separator at the end
-     of a line. `display: inline-block` is the same fix with the footnote kept
-     whole: an inline-block is a break OPPORTUNITY at its own edge, so the kind
-     drops to the next line entire, and its min-content is its own width
-     (~70px) instead of the unbreakable run it was welded to. */
-  .nu-ixw .nu-kind{ display: inline-block; }
+     of a line. `display: inline-block` was the fix with the footnote kept
+     whole. BOTH ARE GONE, 2026-09-08 — the kind is not printed any more (see
+     `.nu-kind` above, and Paul: *"get rid of 'The Broader'"*), so there is no
+     footnote to break and this rule matched nothing. The row's own wrap is
+     unchanged: it is the name alone now, which was the wide case all along.) */
   /* A REFUSED ROW'S WORD IS STILL THE OVERLAY THE EXPLAINER ANSWERS, so it
      keeps a thumb's height — but `block-size: var(--tap)` with
      `line-height: var(--tap)` was a ONE-LINE recipe (44px per line), and this

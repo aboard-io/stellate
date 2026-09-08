@@ -1,0 +1,45 @@
+{
+  "note": "RETRO HORROR SYNTH — Austin 2016. The arpeggio that opens a streaming\nhorror series: four analogue notes cycling in a minor key, a pad blooming\nunder them, no drums at all for the first thirty seconds.\nPaul, 2026-09-08: \"More stuff that sounds like the Airwolf TV show theme\nand Knight Rider and Stranger things. TV synth tunes.\"\n\nIT IS A REVIVAL AND THE ROW SAYS SO. `horrorsynth` is Los Angeles 1978 —\nthe thing itself, written by a director on a deadline with a Prophet and\nno orchestra. This is the 2016 MEMORY of it: the same arpeggio, but slower,\nwider, drenched, and mixed like a record rather than like a cue. The\ndistance between the two is the whole content of this row, which is why\n`horrorsynth` takes the biggest share below and why nothing here is\nallowed to be faster than it.\n\nNOT SYNTHWAVE EITHER, and the difference is the drums. Paris 2010 is a\nDANCE plan with a kit under it; this is an `arc` with a kick on the bar\nline and nothing else — the tension is in the arpeggio's own repetition,\nand a backbeat would resolve it. `dungeonsynth` (Notodden 1994) is the\nonly other row in the table that dares this little percussion, which is\nwhy it is a parent.\n\nWHAT THE ROW DOES:\n  · `seqArp: arpup` over `harmony: modal` and `bassStyle: pedal` — one\n    chord, held, with the figure turning above it. The pedal is the point:\n    nothing moves underneath, so the ear has only the arpeggio to hold on\n    to and starts hearing it as a threat;\n  · `atk 0.02 / rel 1.6` — the slow bloom, which is the sound of a pad\n    that arrived after the note and stays after it has gone;\n  · `maxHold: 4` and `artic: legato`, the opposite of 1978's staccato\n    pulse: the revival sustains where the original stabbed.",
+  "instrumental": true,
+  "label": "Austin 2016",
+  "voices": 3,
+  "bars": 8,
+  "near": "horrorsynth",
+  "seqArp": "arpup",
+  "plan": "arc",
+  "bpm": 110,
+  "parents": { "horrorsynth": 0.4, "synthwave": 0.25, "berlinschool": 0.2, "dungeonsynth": 0.1 },
+  "wants": [],
+  "instr": ["saw_wave", "warm_pad", "halo_pad"],
+  "drumkit": "electronic",
+  "entry": { "kind": "cases", "cases": [{ "at": 1, "then": 2 }, { "at": 2, "then": 4 }], "else": 0 },
+  "reg": { "kind": "table", "t": [0, -1, 1] },
+  "realize": { "kind": "cases", "cases": [{ "at": 1, "then": "pad" }, { "at": 2, "then": "pad" }], "else": "line" },
+  "part": ["riff", "pad", "pad"],
+  "kit": {
+    "k": [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    "h": [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+  },
+  "harmony": "modal",
+  "mode": { "$src": "MODES.aeolian" },
+  "scale": { "$src": "DIATONIC" },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "fx": ["chorus", "echo"],
+  "tone": { "wave": "sawtooth", "cut": 1500, "q": 1.1, "atk": 0.02, "rel": 1.6, "gain": 0.24, "verb": 0.55 },
+  "words": [
+    "the arpeggio, four notes going round, patient",
+    "the pad, arriving late and staying too long",
+    "the high pad, a room with the light off"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      { "at": 0, "then": { "$src": "[fill(1)]" } },
+      { "at": 1, "then": { "$src": "[drop(9)]" } }
+    ],
+    "else": { "$src": "[drop(11)]" }
+  },
+  "dyn": "swell"
+}
