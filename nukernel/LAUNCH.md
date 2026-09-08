@@ -383,7 +383,7 @@ vhost in thirty seconds.
 | **D2** | robots kept, sitemap + feeds + manifest new | **done** — robots/manifest written; the two generators run on the way out |
 | **D3** | no markdown, no sources in the web root | **done** — both deploy scripts exclude them |
 | **D4** | no `og:image` | **stands**; real icons added |
-| **D5** | `.github/workflows/verify.yml` | **open** — port it to this branch or retire it deliberately, before the rename |
+| **D5** | `.github/workflows/verify.yml` | **decided: retired.** Paul: *"I don't care about verify.yml."* It is not ported; it stays on `legacy` with the tree it was written for and leaves `main`'s tip at the rename. The consequence, said once: after the rename GitHub runs no checks on push — the gates are `test/all.js` and the browser gates, run here, and that is the whole verification story. |
 | **D6** | does the archive say it is the archive? | **decided: no.** Paul: *"Don't bother saying the old one is old."* The old tree stays byte-for-byte what it is; the only signposts are the hamburger link on the new site and the line in `robots.txt`. |
 
 ## 10 · Still to do before the switch
@@ -392,5 +392,29 @@ vhost in thirty seconds.
 2. **`old.stellate.app`** (§2) — DNS, cert, vhost. Nothing else can be
    rehearsed until the name resolves.
 3. **The new root** (§7 step 2) and a prod deploy into it, unswitched.
-4. **D5** — decide about CI.
-5. **The switch** (§7 step 5), then the branches (§6).
+4. **The switch** (§7 step 5), then the branches (§6).
+
+### One door, and a redirect for the other (decided here, done at the switch)
+
+The deploy writes the tree TWICE: once as `/nukernel/` and once, its contents,
+at the root. That is history — the root became the front door on 2026-09-02
+after a deploy refreshed only `/nukernel/` and Paul opened the site to
+yesterday's build — and the cost is the whole app shipped twice, a 2.5 MB
+`genres.js` included.
+
+**On prod the root is the only door.** The first rsync drops `nukernel` from its
+source list (it keeps shipping `engine`, `vendor` and `sw.js`), and the vhost
+carries one more line so every bookmark and every link anyone has ever sent
+still lands:
+
+```nginx
+location /nukernel/ { return 301 https://stellate.app/$is_args$args; }
+```
+
+`$is_args$args` because a `?at=…` link must survive the hop, and a fragment
+survives it by itself — the browser re-applies it after a redirect, so
+`/nukernel/index.html#at=Kingston&y=1969` opens Kingston 1969 at the root.
+
+**Staging keeps both doors until the switch**, deliberately: `/nukernel/index.html`
+is the address Paul has been testing at all week, and a rehearsal is worth less
+than the thing being rehearsed.
