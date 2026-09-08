@@ -2900,7 +2900,26 @@ table.nu-trims{ color: var(--ink); }
    The red is what carries the meaning; the face stays the page's — and the
    WEIGHT stays the page's too, for the same 390px measurement: at 600 the
    reserve sentence was one letter over the wrap. Red alone is the signal. */
-[data-live]{ color: var(--clock); }
+/* ===== AND IT IS RED ONLY WHEN IT IS SAYING SOMETHING (2026-09-08, §24) =
+   Paul: *"The orange is a strange highlight color."*
+
+   IT WAS EVERY SECTION NUMBER IN THE GRID, PERMANENTLY. `[data-live]` is the
+   attribute that says *"the clock may write here"*, and the section row head
+   wraps its number in one (`<span data-live="count">`) so the playhead can put
+   a `<mark>` in it. This rule painted the ATTRIBUTE rather than the STATE, so
+   all thirteen numbers on a thirteen-section record stood in the playhead's
+   red at rest — a highlight highlighting everything, which is a highlight
+   highlighting nothing. And when a row actually began sounding there was no
+   colour left to say so.
+   THE STATE IS THE `<mark>`, and it always was: `mark()` is the one write the
+   clock is allowed to make, and `:has(mark)` is how the row already reads its
+   own playhead two hundred lines down. So the red goes where the mark is. A
+   live element with nothing to say is INK, like every other resting readout on
+   this page, and the day it has something to say it turns.
+   NOTHING IN THE JAVASCRIPT CHANGED, which is the same sentence the row's own
+   tint made when it was written: this is paint following a write that was
+   already happening. */
+[data-live]:has(mark), [data-live] mark{ color: var(--clock); }
 /* ...and a hint INSIDE a live element is still the clock's sentence — the
    score caption is `.nu-hint`, whose dim would otherwise beat the inherited
    red. A live subtree holds no control by law, so the selector cannot leak. */
@@ -5097,8 +5116,22 @@ table.nu-trims{ color: var(--ink); }
    #app, so the row's tint has to be a CONSEQUENCE of the one write it is
    allowed to make (the `<mark>` in the row head's live span) rather than a
    write of its own. Nothing here appears or disappears; only the paint moves. */
-.nu-sgrid tbody tr:has(mark) > th{ background: var(--clock-tint);
-  border-radius: var(--r2); }
+/* ---- AND THE PLAYHEAD IS A RULE, NOT A BLOCK (2026-09-08, §24) --------
+   Paul: *"The playing bar is blocky in the sections."*
+
+   IT WAS A FLOODED HEAD — `background: var(--clock-tint)` with a corner on it
+   — so a sounding section arrived as a filled slab moving down a column of
+   words, which is the "blocky" in that sentence. And this page already has the
+   answer, written down and used one class over: *"`.nu-here` is a rule down
+   the row and not a tint"* (nu.css:203). A playhead is the same kind of fact
+   as "you are here" and gets the same kind of mark, in its own colour.
+   THREE PIXELS OF `--clock` DOWN THE HEAD'S START EDGE, and the number beside
+   it already turns red on its own (the `[data-live]` rule above). Two channels,
+   both cheap, neither of them a slab: the eye finds the rule and the number
+   confirms it. The tint is kept for the ONE case it reads correctly — the
+   `<mark>` itself, which is a few characters and not a row. */
+.nu-sgrid tbody tr:has(mark) > th{
+  box-shadow: inset 3px 0 0 var(--clock); }
 .nu-sgrid tbody tr:has(mark) > td > select{ border-color: var(--clock); }
 /* THE COLUMN HEAD IS THE PLAYER, AND THE PLAYER IS A COLOUR. `.nu-vpaint` is
    the utility's filled form (white ink on the player's hue, the page's own ink
@@ -5766,16 +5799,43 @@ table.nu-trims{ color: var(--ink); }
    write of its own. Nothing appears or disappears; only the paint moves. The
    board drives its own row with `tr.now` (it is outside #app and says so with
    `data-live="trimrow"`), and both spellings land on the same tint. */
-.nu-wordgrid tbody tr:has(mark) > th{ background: var(--clock-tint);
-  border-radius: var(--r2); }
-/* ...AND THE SOUNDING ROW TINTS THE ROW, NOT THE CELL'S BORDER. That rule
-   (`> td > .nu-wcell{ border-color: var(--clock) }`) was the clock's only mark
-   on the cells and it stopped meaning anything the minute a resting cell lost
-   its border (§11); a rule that reads right and moves nothing is a shape this
-   file has a paragraph about. The tint goes on the `<td>` instead, which is
-   the same paint the row head already wears and is visible without a frame. */
-.nu-wordgrid tbody tr:has(mark) > td{ background: var(--clock-tint); }
-.nu-wordgrid tbody tr:has(mark) > td > .nu-trimbtn{ border-color: var(--clock); }
+/* ---- ...AND IT IS ONE BAND, NOT A LINE OF BLOCKS (2026-09-08, §24) ----
+   Paul: *"The playing bar is blocky in the sections."*
+
+   THE CAUSE IS `border-spacing`, AND IT TOOK MEASURING TO SEE. The tint was
+   painted on the row head AND on every `<td>` — two rules, both correct on
+   their own — and `.nu-trims` sets `border-spacing: 3px`, so the cells cannot
+   touch. A lit row therefore drew as five or ten SEPARATE tinted rectangles
+   with 3px of untinted gap between each, marching across the screen. That is
+   the "blocky": not the brightness and not the height, the GAPS.
+   THE PAINT MOVES TO THE `<tr>`, WHICH IS THE ONE BOX THAT HAS NO GAPS IN IT.
+   Under `border-collapse: separate` a row's background paints behind the whole
+   row, spacing included, so the same tint becomes one continuous band with the
+   cells sitting on it. One rule instead of two, and nothing about WHICH row is
+   lit changes: `:has(mark)` is still the clock's own write read back.
+   AND THE LAW IS KEPT RATHER THAN REVERSED. DESIGN.md component 11 has Paul's
+   earlier sentence on it — *"Really light up the sections as you move through
+   them — not just a tiny halo around the number"* — so the row stays LIT
+   WHOLE; what it stops being is segmented. A leading rule in full `--clock`
+   goes down the start edge as well, which is `.nu-here`'s own idiom
+   (nu.css:203, *"a rule down the row and not a tint"*) doing the job the
+   number's red used to do alone.
+   `> td > .nu-trimbtn{ border-color }` GOES WITH THE SECOND TINT. Its own note
+   already recorded that the rule it replaced *"stopped meaning anything the
+   minute a resting cell lost its border"*; with the band continuous behind
+   them the cells need no third mark. */
+.nu-wordgrid tbody tr:has(mark){ background: var(--clock-tint); }
+/* ...AND THE CELLS GET OUT OF THE BAND'S WAY. The row head carries an OPAQUE
+   `--ground` (the seam-closer, `#pan-band .nu-wordgrid tbody th.nu-srowh`), so
+   a band painted on the `<tr>` would be covered exactly where the section's
+   name is — the band would start at the first cell and the head would sit
+   outside it, which is the segmentation this rule is here to end. Both are
+   made transparent for the duration, which is the same two lines
+   `tr.is-playing` states below and for the same reason. */
+#pan-band .nu-wordgrid tbody tr:has(mark) > th,
+#pan-band .nu-wordgrid tbody tr:has(mark) > td{ background: transparent; }
+#pan-band .nu-wordgrid tbody tr:has(mark) > th.nu-srowh{
+  box-shadow: inset 3px 0 0 var(--clock); }
 
 /* ---- a cell: the trim plate, and it may not widen the column -----------
    `.nu-trimbtn` is the whole plate (44px, the word colours, the dim derived
@@ -6800,7 +6860,13 @@ table.nu-trims{ color: var(--ink); }
    distance of a finger, and it is what `markForm` has always written.
    (The colours are id-scoped, down beside the ground they have to beat: see
    `#pan-band .nu-wordgrid tbody tr.is-playing` below.) */
-.nu-sheetgrid tbody tr.is-playing{ --lit: color-mix(in srgb, var(--clock) 85%, var(--panel)); }
+/* `--lit` IS 22% AND WAS 85% (2026-09-08, §24). Paul: *"The orange is a
+   strange highlight color."* 85% of `--clock` is a near-full alarm red laid
+   down as a resting GROUND for a whole row, with `--ink` asked to read on top
+   of it. 22% is `--clock-tint`'s own strength, which is the number this page
+   already uses everywhere the clock has to be visible UNDER type rather than
+   instead of it. Same token, same row, same law; one number. */
+.nu-sheetgrid tbody tr.is-playing{ --lit: color-mix(in srgb, var(--clock) 22%, var(--panel)); }
 .nu-sheetgrid tbody tr.is-playing > th .nu-srowname{ font-weight: var(--fw-block); }
 
 /* ===== A FOLDED GRID (2026-09-05, TABLE.md §13f) =======================
@@ -8766,9 +8832,24 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    player") and it is kept — as the quiet form the same rule already declares
    for a row that must keep its own ground (`.nu-vpaint.is-edge`), turned to
    the block-end so it underlines the name instead of gripping its side. */
+/* ---- AND THE HEAD STOPS BEING THE HEAVIEST THING (2026-09-08, §24) ----
+   Paul: *"the header row is thicker than the rest."*
+
+   MEASURED, and the head is not taller — 53.3px against a body row's 64.5. It
+   is HEAVIER: every column head wore a 3px bar of its player's hue, so a band
+   of four players drew four slabs of colour across the top of a grid whose
+   rows have no rules at all between them. Weight, not height, and the word
+   "thicker" is the right one for what it looked like.
+   `--bw-hard` IS THE PAGE'S OWN ANSWER — the same 2px it uses wherever a line
+   has to be seen rather than felt — and the hue is untouched. DESIGN.md §1's
+   *"--v0..3 = which player"* is a claim about the COLOUR and never about how
+   many pixels of it there are; the mark below is still painted in it too, so
+   the player's hue is on the glyph a thumb aims at as well as under the name.
+   THE BAR STILL WINS ITS ARGUMENT with the row underneath: 2px of a saturated
+   hue against 0px of anything is still a head that reads as a head. */
 #pan-band .nu-wordgrid thead th.nu-colhead .nu-colbtn.nu-vpaint{
   background: transparent; color: var(--ink); border: 0;
-  box-shadow: inset 0 -3px 0 var(--vpaint, var(--ink)); }
+  box-shadow: inset 0 calc(-1 * var(--bw-hard)) 0 var(--vpaint, var(--ink)); }
 #pan-band .nu-wordgrid thead th.nu-colhead .nu-colbtn.nu-vpaint:hover{
   background: var(--hand-tint); }
 /* ...AND THE HEAD'S OWN MARK IS PAINTED IN IT, so the hue is on the glyph a
@@ -9706,11 +9787,41 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    the light is stated where the ground is, at the same weight, and the 3px
    ring the seam-closer paints round the row head is painted in the light too —
    a cream ring round a lit head is the seam reopened. */
+/* ---- ...AND IT IS ONE BAND AND A QUIETER ONE (2026-09-08, §24) --------
+   Paul: *"The playing bar is blocky in the sections"* and *"The orange is a
+   strange highlight color."*
+
+   TWO COMPLAINTS, ONE RULE. `background: var(--lit)` was set on every `<th>`
+   and every `<td>` of the playing row, and `.nu-trims` sets `border-spacing:
+   3px` — so the cells CANNOT touch, and a lit section drew as five or ten
+   separate saturated rectangles with a gap between each, marching down the
+   grid. That is the "blocky": not the height and not the brightness, the GAPS.
+   And `--lit` is `--clock` at 85%, which is a near-full-strength alarm red
+   used as a resting ground for a whole row — the "strange highlight colour".
+   THE PAINT MOVES TO THE `<tr>`, which is the one box in a table that has no
+   gaps in it: under `border-collapse: separate` a row's background paints
+   behind the whole row, spacing included, so the same idea becomes ONE
+   continuous band with the cells sitting on it.
+   AND `--lit` COMES DOWN FROM 85% TO 22%, which is `--clock-tint`'s own
+   strength — the number this page already uses when the clock has to be
+   visible under type rather than instead of it. The row is still unmistakably
+   lit and its words are still `--ink` on it, which is what the 85% was
+   reaching for and was overshooting: at 85% the ink was fighting the ground.
+   DESIGN.md COMPONENT 11 IS KEPT, NOT REVERSED. Paul's earlier sentence is on
+   it — *"Really light up the sections as you move through them — not just a
+   tiny halo around the number"* — so the row is still lit WHOLE. What it stops
+   being is segmented and shouting. A 3px `--clock` rule down the start edge
+   carries the leading edge, which is `.nu-here`'s own idiom (nu.css:203).
+   THE 3px RING GOES WITH THE PER-CELL PAINT. Its job was to keep the
+   seam-closer's cream ring from cutting a lit head out of a lit row; with the
+   band behind the whole row there is no seam to reopen — the ring paints over
+   a band that is already continuous underneath it. */
+#pan-band .nu-wordgrid tbody tr.is-playing{ background: var(--lit); }
 #pan-band .nu-wordgrid tbody tr.is-playing > th,
 #pan-band .nu-wordgrid tbody tr.is-playing > td{
-  background: var(--lit); color: var(--ink); }
+  background: transparent; color: var(--ink); }
 #pan-band .nu-wordgrid tbody tr.is-playing > th.nu-srowh{
-  box-shadow: 0 0 0 3px var(--lit); }
+  box-shadow: inset 3px 0 0 var(--clock); }
 /* ...AND THE PLAYHEAD SURVIVES IT. `.nu-colhead.is-sounding` spends its own
    `box-shadow` on the clock's edge bar under a sounding player; the rule above
    is id-scoped and would have outranked it, so the two are ONE list here, the

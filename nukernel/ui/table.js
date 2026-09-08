@@ -1027,8 +1027,6 @@ function colSheet(A2, vi) {
       set: (x2) => A2.putCast(vi, "on", !!x2)
     });
   }
-  if (A2.hasCrate(v3.name))
-    instr.push({ kind: "node", label: t4("col.files"), node: A2.voiceCrate(v3.name) });
   if (v3.kind === "line")
     instr.push(shField(A2, "cast.material", { voice: v3.name }, t4("col.material")));
   if (v3.kind === "bass")

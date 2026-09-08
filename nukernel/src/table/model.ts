@@ -757,11 +757,28 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
                        { v: "", w: t("col.drummer.off") }],
              set: (x: string) => A.putCast(vi, "on", !!x) });
   }
-  /* ...AND ITS FILES, DIRECTLY UNDER IT. The samples crate is not a vector and
-     has no cell, so it comes here WHOLE, under the instrument it swaps, and is
-     absent on a chair no recording plays. */
-  if (A.hasCrate(v.name))
-    instr.push({ kind: "node", label: t("col.files"), node: A.voiceCrate(v.name) });
+  /* (THE SAMPLE CRATE STOOD HERE and is deleted on 2026-09-08, TABLE.md §24.
+     Paul: *"I don't really need to know about individual samples in an
+     instrument I can't do anything with them so remove that."*
+
+     WHAT IT WAS, and its own note is worth keeping because it explains why it
+     was allowed in: *"The samples crate is not a vector and has no cell, so it
+     comes here WHOLE, under the instrument it swaps, and is absent on a chair
+     no recording plays."* It listed the FILES a sampled chair plays — which
+     recording is behind `acoustic bass` — under the instrument row.
+     WHY IT GOES, in Paul's own terms and this file's: a chair sheet is a list
+     of DECISIONS, and every other row in it is one — a word you set, a number
+     you slide, an envelope you drag. The crate was the only row on the sheet
+     that answered a question nobody could act on: it named files, and the
+     control that swaps them is the INSTRUMENT row one line above. A readout
+     with no decision under it is furniture, and on a phone it was furniture
+     between the instrument and the envelope, which are the two things a hand
+     opens a chair to reach.
+     NOTHING IS DELETED BUT THE ROW. `A.hasCrate` and `A.voiceCrate` stay on
+     the seam and `ui/samples.js` is untouched — the CRATE is a real surface
+     with its own view and its own asks (COMPOSER.md §5.1), and this is a row
+     coming off a sheet, not a feature being removed. The day a chair sheet has
+     something to DO with a file, the door is where it was.) */
   if (v.kind === "line")
     instr.push(shField(A, "cast.material", { voice: v.name }, t("col.material")));
   if (v.kind === "bass")
