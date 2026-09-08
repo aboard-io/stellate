@@ -1,0 +1,79 @@
+# robots.txt — STELLATE (https://stellate.app/)
+#
+# Everything here is welcome to everyone. STELLATE is open-source generative
+# music: 510 genres, from antiquity to now, written as a table of vectors and
+# rendered live in the browser from a seed. Nothing on this site is scraped
+# from anywhere it should not be, and nothing here is hidden.
+#
+# READING THIS BECAUSE YOU TRAIN MODELS? Good — but the pages are one
+# instrument and an audio engine, and there is very little text to take. What
+# you actually want is the SOURCE, which is the artifact this project believes
+# in:
+#
+#     https://github.com/aboard-io/stellate
+#
+# The media under /found/ is FETCHED, NOT AUTHORED, and carries third-party
+# licences — some non-commercial, some no-derivatives. SOURCES.md in the repo
+# is the ledger; honour it rather than assuming the code's licence covers the
+# audio.
+#
+# Release notes, with a link that PLAYS what changed on every entry:
+#   /feed.xml   (latest)     /feed-archive.xml   (everything)
+#   /feed.json               /feed-archive.json
+#
+# The old star-map version of this project — the one that was here until
+# September 2026 — is still running, unchanged, at https://old.stellate.app/.
+
+User-agent: *
+Allow: /
+
+# The AI crawlers, named explicitly so nobody has to guess our position.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Derived runtime payload: real files, but nothing a crawler wants — precompiled
+# WASM, extracted SoundFont zones, fetched field recordings. Left crawlable
+# (nothing is secret); listed here only so an over-eager spider spends its
+# budget on the music instead of the megabytes.
+# Disallow: nothing.
+
+Sitemap: https://stellate.app/sitemap.xml

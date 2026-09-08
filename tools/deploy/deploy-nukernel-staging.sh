@@ -28,6 +28,18 @@
 # right for re-shipping the same version to a fixed server and wrong for
 # anything a reader has to reload for.
 #
+#   4 · THE WEB ROOT IS A PUBLISHED SURFACE AND THE WORKING TREE IS NOT
+#       (2026-09-08, LAUNCH.md D3). Paul: *"Don't publish markdown. Erase and
+#       clean all of that up."* The second rsync copies `nukernel/*` to the
+#       ROOT, so every design document in that directory — TABLE.md, DESIGN.md,
+#       GENRES.md, COMPOSER.md and fourteen more — was being served beside
+#       index.html, along with the TypeScript sources the build consumes, the
+#       node-only `*-extract.js` scripts, the `ideal/` mockups and package.json.
+#       None of it is secret (the repo is public) and none of it is a page. The
+#       excludes below are the difference between "the source is the artifact"
+#       and "the source IS the site": the source is on GitHub, where it can be
+#       read properly, and the site is the instrument.
+#
 # THE STAGING SERVER IS THE DEFAULT (PLAN.md, memory `staging-server-default`):
 # prod only on an explicit "ship to prod", which this script does not do.
 # ---------------------------------------------------------------------------
@@ -36,6 +48,24 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEST="${DEST:-root@stellate.app:/srv/stellate-test/}"
 SW="$REPO/sw.js"
+
+# ---- THE GUARD (2026-09-08, LAUNCH.md §6) ---------------------------------
+# Paul: *"Add the guard and make things secure."*
+#
+# THIS SCRIPT MAY ONLY WRITE TO A STAGING ROOT. `DEST` is an environment
+# variable, which is exactly how a deploy meant for test.stellate.app ends up
+# pointed at the live site by a hand that was in a hurry — and this tree ships
+# a service worker, so a wrong deploy is not a wrong file, it is a wrong file
+# CACHED on every visitor's phone until the next version bump reaches them.
+# The prod path has its own script with its own confirmation
+# (deploy-nukernel-prod.sh); this one refuses anything that is not staging.
+case "$DEST" in
+  *stellate-test*|*/srv/stellate-nu-preview/*) ;;
+  *) echo "refusing: DEST=$DEST is not a staging root." >&2
+     echo "  This script writes to test.stellate.app only." >&2
+     echo "  For the live site use tools/deploy/deploy-nukernel-prod.sh." >&2
+     exit 2 ;;
+esac
 
 if [ "${1:-}" = "--bump" ]; then
   cur="$(grep -oE 'const VERSION = "v[0-9]+"' "$SW" | grep -oE 'v[0-9]+')"
@@ -75,6 +105,16 @@ rsync -a --delay-updates \
   --exclude 'node_modules' \
   --exclude '*.wav' \
   --exclude '*.mp3' \
+  --exclude '*.md' \
+  --exclude 'docs/' \
+  --exclude 'src/' \
+  --exclude 'ideal/' \
+  --exclude '*-extract.js' \
+  --exclude 'package.json' \
+  --exclude 'package-lock.json' \
+  --exclude 'tsconfig.json' \
+  --exclude 'serve.sh' \
+  --exclude 'verify.sh' \
   --exclude 'nukernel/genres/' \
   nukernel engine vendor sw.js "$DEST"
 
@@ -130,6 +170,16 @@ rsync -a --delay-updates \
   --exclude 'node_modules' \
   --exclude '*.wav' \
   --exclude '*.mp3' \
+  --exclude '*.md' \
+  --exclude 'docs/' \
+  --exclude 'src/' \
+  --exclude 'ideal/' \
+  --exclude '*-extract.js' \
+  --exclude 'package.json' \
+  --exclude 'package-lock.json' \
+  --exclude 'tsconfig.json' \
+  --exclude 'serve.sh' \
+  --exclude 'verify.sh' \
   --exclude 'genres/' \
   nukernel/ "$DEST"
 

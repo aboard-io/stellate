@@ -111,14 +111,25 @@
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="nu.css">
-<!-- AND NO REQUEST FOR A FAVICON. An empty data: URI, which is the only way to
-     tell a browser not to go and ask: every load of this page fetched
+<!-- THE ICON IS A REAL FILE NOW, AND THE 404 IS STILL THE REASON (2026-09-08,
+     LAUNCH.md). This read `href="data:,"` — an empty data: URI, the only way to
+     tell a browser not to go and ask — because every load fetched
      /favicon.ico and took a 404 for it, which is a network round trip on a page
-     whose whole claim is that it plays and draws with the wire cut. It is also
-     the last line of test/sheets.js's "zero console errors" — a check that has
-     to stay literal to be worth anything, so the noise goes rather than the
-     check. -->
-<link rel="icon" href="data:,">
+     whose whole claim is that it plays and draws with the wire cut, and because
+     that 404 was the last line of test/sheets.js's "zero console errors".
+     BOTH REASONS ARE ANSWERED BY A FILE THAT EXISTS rather than by refusing to
+     have one: 528 bytes, cached by the worker on the first visit like every
+     other asset, and no console line either way. What changed is that this box
+     is about to be an INSTALLABLE app on its own domain, and an app with no
+     icon is an app a phone draws a grey square for. The mark is the table
+     itself — four bars of a score on black in the page's own armed green,
+     which is the shape a hand sees when the box opens. -->
+<link rel="icon" href="assets/icon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<!-- THE MANIFEST IS WHAT MAKES IT INSTALLABLE, and it names the same four
+     icons rather than a second set — one list, in one file, and this line is a
+     pointer to it. -->
+<link rel="manifest" href="manifest.webmanifest">
 <!-- ===== THE ROOM'S LIGHT, BEFORE THE FIRST PAINT (2026-09-08) =========
      Paul: "The light/dark mode should be working now. It's still in dark mode
      for me."
@@ -785,5 +796,27 @@
      is opened by a hand. -->
 <div id="nu-log" class="nu-log" role="log" aria-live="off"
      data-copy-aria="glyph.log" aria-label="log" hidden></div>
+<!-- ===== THE ONE COUNT THIS SITE KEEPS (2026-09-08, LAUNCH.md D1) ========
+     Paul: *"add analytics using the same system."*
+
+     IT IS THE SAME SYSTEM THE OLD SITE USED AND IT IS THE SAME FOUR LINES:
+     GoatCounter, self-hosted on this droplet, proxied at `/gc/count` by the
+     vhost so nothing third-party is ever contacted, and `count.js` is VENDORED
+     — no request leaves this origin, which is also what keeps the page inside
+     its own COOP/COEP isolation without a CORP question.
+     COOKIE-FREE AND IDENTIFIER-FREE by design: GoatCounter sets nothing, reads
+     nothing back, and counts a page view and a referrer. There is no consent
+     banner because there is nothing to consent to.
+     `defer`, NOT `async`, AND LAST IN THE DOCUMENT: the beacon must never be
+     in front of the audio graph booting. On staging the endpoint returns 204
+     and nothing is counted, which is why this line is safe to ship before the
+     switch.
+     THE SRC IS ABSOLUTE AND THE ICONS ARE RELATIVE, ON PURPOSE. This page is
+     served at TWO addresses — `/` (the deploy copies `nukernel/*` to the root)
+     and `/nukernel/index.html` — and `vendor/` exists at the root only, so a
+     relative src would 404 at the second one. `assets/` is inside `nukernel/`
+     and is copied with it, so it resolves at both. The screensaver's three.js
+     import already sets this precedent: `/vendor/three`, absolute. -->
+<script data-goatcounter="/gc/count" defer src="/vendor/goatcounter/count.js"></script>
 </body>
 </html>

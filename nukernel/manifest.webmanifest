@@ -1,0 +1,23 @@
+{
+  "name": "Stellate",
+  "short_name": "Stellate",
+  "description": "Infinite remixable music in many genres for free. Pick a place and a year, hear the record the box writes, and edit any part of it.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#0A0D0B",
+  "theme_color": "#0A0D0B",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["music", "entertainment", "education"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "assets/icon-32.png",  "sizes": "32x32",   "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

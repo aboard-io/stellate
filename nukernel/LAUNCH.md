@@ -5,10 +5,20 @@ old version into old.stellate.app and then add a link to that in the hamburger
 menu, make that plan and then we'll do the switch. maybe the current main
 becomes the legacy branch and this one becomes main. but figure it out."*
 
-**Nothing in this document has been done.** It is the plan and the runbook; the
-switch is a separate word from Paul. Every number below was measured on the
-droplet or in this tree today, and the commands are the ones that were actually
-run to measure them.
+**Nothing on the server has been touched.** This is the plan and the runbook,
+and the switch is a separate word from Paul. Every number below was measured on
+the droplet or in this tree today, and the commands are the ones that were
+actually run to measure them.
+
+**What HAS been done, in the tree** (Paul, 2026-09-08: *"we want to keep all the
+robots and have a new sitemap, new feeds, and manifest, and add analytics using
+the same system. Don't publish markdown. Erase and clean all of that up. Add the
+guard and make things secure. Don't bother saying the old one is old."*): the
+analytics beacon, `robots.txt`, `manifest.webmanifest` and the icons; the
+sitemap and feed generators; the deploy excludes that stop publishing the source;
+the guards on all four deploy scripts, on both branches. §4 and §9 record each
+one. Everything in §7 that touches nginx, DNS or the live site is still ahead of
+us.
 
 ---
 
@@ -177,27 +187,46 @@ prod today:
 | GoatCounter beacon | `<script data-goatcounter="/gc/count" … src="vendor/goatcounter/count.js">` in the old `index.html` | **the new index.html has no beacon: prod analytics go to zero** |
 | 17 internal design docs | not on prod | `TABLE.md`, `COMPOSER.md`, `DESIGN.md`, `GENRES.md`, `KERNEL.md` … **published at the web root**, because the deploy copies `nukernel/*` to the root |
 
-**D1 · Analytics.** Recommend: add the four-line GoatCounter beacon to
-`nukernel/index.html` before launch. It is cookie-free, vendored (no third-party
-request), already proxied by the vhost, and without it the switch is also a
-decision to stop measuring.
+**All four were decided by Paul on 2026-09-08, and three of them are done.**
+*"we want to keep all the robots and have a new sitemap, new feeds, and
+manifest, and add analytics using the same system. Don't publish markdown.
+Erase and clean all of that up."*
 
-**D2 · The open-web layer.** Recommend: serve `robots.txt`, `sitemap.xml` and
-`manifest.webmanifest` from the NEW root (three small files, written for the new
-site), and let the feeds 301 to the old host until this branch has a feed
-generator of its own. A feed that keeps working is better than a feed that 404s.
+**D1 · Analytics — SAME SYSTEM, DONE.** GoatCounter, self-hosted on this
+droplet, proxied at `/gc/count`, `count.js` vendored so no request leaves the
+origin (which is also what keeps the page inside its own COOP/COEP isolation
+without a CORP question). Cookie-free and identifier-free: nothing to consent
+to. `defer` and last in the document, because a beacon must never be in front
+of the audio graph booting. Staging returns 204, so the line is safe to ship
+before the switch — and `count.js` skips localhost by itself, which is why a
+local load makes no request at all.
 
-**D3 · The design docs at the web root.** Recommend: add
-`--exclude '*.md'` to the prod deploy's root rsync. The repo is public and
-nothing here is secret, but a web root is a published surface and `CLAUDE.md`
-sitting beside `index.html` is an accident, not a choice. (They stay under
-`/nukernel/` in the repo and on staging.)
+**D2 · The open-web layer — ALL NEW, WRITTEN FOR THIS APP.**
+`robots.txt` keeps the old file's stance whole (everyone welcome, every AI
+crawler named explicitly rather than left to guess, the source pointed at, the
+`found/` licences flagged) with this app's facts and a line pointing at the
+archive. `manifest.webmanifest` is the box's own: black ground, four icon
+sizes, `display: standalone`. The **sitemap and the feeds are generated**, from
+the catalogue and from git log — `tools/build/gen-sitemap.js` and
+`tools/build/gen-feed.js` — and both run on the way out the door in
+`deploy-nukernel-prod.sh`, which is the arrangement the old site used and the
+reason its feeds were never stale. Every URL in either is a real share link in
+this app's own grammar (`#at=<place>&y=<year>&s=<seed>`), so every entry
+*plays*.
 
-**D4 · The og:image.** Recommend: leave it as it is for launch. The card says
-"Stellate — Infinite remixable music in many genres for free" with no picture,
-which is the deliberate decision from 2026-09-08 and reads cleanly.
+**D3 · The web root is not the working tree — DONE.** Both deploy scripts now
+exclude `*.md`, `docs/`, `src/`, `ideal/`, `*-extract.js`, `package.json`,
+`package-lock.json`, `tsconfig.json`, `serve.sh` and `verify.sh`. Seventeen
+design documents, the TypeScript sources and the node-only extractors were
+being served beside `index.html`. None of it is secret — the repo is public —
+and none of it is a page: the source belongs on GitHub where it can be read
+properly, and the site is the instrument.
 
----
+**D4 · No `og:image`.** Unchanged, as decided 2026-09-08: a card with a broken
+picture is worse than a card with no picture, and the copy carries it
+("Infinite remixable music in many genres for free"). The app now has real
+icons, so a tab, a bookmark and an installed app are no longer a grey square —
+that was the part of "no icon" that was costing something.
 
 ## 5 · The link in the hamburger
 
@@ -257,12 +286,19 @@ Three things that are true afterwards and should be said out loud:
    on this branch. Decide: port it (it will need this branch's gate list, which
    is `test/all.js` + the browser gates) or delete it deliberately. A workflow
    that vanishes silently is the worst of the three options.
-3. **`tools/deploy/deploy-staging.sh` on the legacy branch carries
-   `--delete-excluded`** and defaults to a stellate.app path. Run from a legacy
-   checkout after the switch it would **delete the new site**. Before the
-   rename, either point it at `/srv/stellate` explicitly with a comment saying
-   why, or make it refuse to run unless `DEST` is passed. This is the single
-   most dangerous thing in this document.
+3. **The legacy branch's two deploy scripts are now guarded (done,
+   2026-09-08, `main` 63edeba).** The danger was worse than the plan first said,
+   and it was not `DEST`: both scripts hard-code their root and rsync with
+   `--delete --delete-excluded`, which makes the SERVER match the checkout.
+   `deploy-staging.sh` writes `/srv/stellate-test`, which is this branch's
+   staging root — one run of it from a legacy checkout would delete the music
+   box's staging site and replace it. And `deploy-stellate.sh` writes
+   `/srv/stellate`, which after the switch is the archive AND the home of the
+   786 MB `found/` tree now shared by all three sites; it is protected by a
+   filter, so a change to those two lines stops being a mistake about one app
+   and becomes an outage for three. Each script now asks for one typed word
+   (`--yes-archive`, `--yes-replace-staging`), says what it is about to change,
+   and points at the script the operator probably meant.
 
 Sequence: **do the server switch first, verify it, then rename the branches.**
 The rename buys nothing at launch time and, done first, it changes what
@@ -339,13 +375,22 @@ vhost in thirty seconds.
 
 ---
 
-## 9 · What Paul has to decide
+## 9 · Decided
 
-| | |
-|---|---|
-| **D1** | Add the GoatCounter beacon to the new `index.html`? *(recommend yes — otherwise prod analytics stop)* |
-| **D2** | `robots.txt` / `sitemap.xml` / `manifest.webmanifest` written for the new site, feeds 301'd to the archive until this branch generates its own? *(recommend yes)* |
-| **D3** | Exclude `*.md` from the prod deploy so the design docs are not published at the web root? *(recommend yes)* |
-| **D4** | Ship with no `og:image`? *(recommend yes, as decided 2026-09-08)* |
-| **D5** | Port `.github/workflows/verify.yml` to this branch, or retire it deliberately? |
-| **D6** | Does `old.stellate.app` say anywhere on its own glass that it is the old one, or is the hamburger link on the new site the only signpost? *(the old tree is currently planned to be byte-for-byte unchanged; a banner is a change to it)* |
+| | | |
+|---|---|---|
+| **D1** | analytics, same system | **done** — beacon vendored and in the page |
+| **D2** | robots kept, sitemap + feeds + manifest new | **done** — robots/manifest written; the two generators run on the way out |
+| **D3** | no markdown, no sources in the web root | **done** — both deploy scripts exclude them |
+| **D4** | no `og:image` | **stands**; real icons added |
+| **D5** | `.github/workflows/verify.yml` | **open** — port it to this branch or retire it deliberately, before the rename |
+| **D6** | does the archive say it is the archive? | **decided: no.** Paul: *"Don't bother saying the old one is old."* The old tree stays byte-for-byte what it is; the only signposts are the hamburger link on the new site and the line in `robots.txt`. |
+
+## 10 · Still to do before the switch
+
+1. **The hamburger link** (§5) — build it, gate it, ship it to staging.
+2. **`old.stellate.app`** (§2) — DNS, cert, vhost. Nothing else can be
+   rehearsed until the name resolves.
+3. **The new root** (§7 step 2) and a prod deploy into it, unswitched.
+4. **D5** — decide about CI.
+5. **The switch** (§7 step 5), then the branches (§6).
