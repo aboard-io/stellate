@@ -6298,7 +6298,25 @@ table.nu-trims{ color: var(--ink); }
 .nu-morow{ flex-direction: column; align-items: stretch; }
 .nu-mogrid{ display: grid; gap: var(--s2);
   grid-template-columns: repeat(auto-fill, minmax(9ch, 1fr));
-  inline-size: 100%; }
+  inline-size: 100%;
+  /* ---- AND A LONG ONE SCROLLS INSIDE ITSELF (2026-09-08) --------------
+     Paul asked for the motif selector on the instrument row, and the motif
+     bank is nine cards while the instrument list is a hundred and fifty-one.
+     MEASURED after that change: the grid stood 2,424px tall and the chair
+     sheet showed TWO settings at rest where it had shown six — every other
+     subject (the envelope, the register, the entry, the desk) pushed under a
+     wall of instruments, which is the defect §19 built the sideways table to
+     avoid and which test/table.browser.js T19a caught in the same shape it
+     was written for ("more settings are on the glass at rest than the FOUR
+     the stack showed": 2 of 12).
+     So a grid is capped at TWO ROWS OF CARDS and scrolls inside itself. The
+     bank never reaches the cap — nine cards is two rows — so the motif row is
+     untouched; the instrument row keeps every option drawn and reachable, and
+     the sheet keeps its other subjects on the screen. `overscroll-behavior`
+     stops the scroll chaining out into the sheet behind it, which is the same
+     clause `.nu-pane` has carried since it was written. */
+  max-block-size: calc(2 * var(--tap) + 1 * var(--s2));
+  overflow-y: auto; overscroll-behavior: contain; }
 /* A CARD IS THE TARGET AND THE ✎ RIDES IN ITS CORNER. `position: relative` on
    the card is what the pencil is placed against; the pick button underneath it
    is the whole card, so the 44px floor belongs to the thing a thumb aims at

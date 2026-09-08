@@ -4015,6 +4015,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         .map((th) => (th.querySelector("button").dataset.k || "").slice(5)),
       heads: document.querySelectorAll("#pan-band th.nu-colhead button[data-k^=\"tcol|\"]").length,
       chromeMarks: document.querySelectorAll("#nu-chrome mark").length,
+      /* …AND WHERE THOSE MARKS ARE. A `<mark>` in the chrome is not wrong in
+         itself — `paintIcon` draws the PRESSED face as one, and since
+         2026-09-08 the strip carries two tabs of which the open view's is
+         pressed, so the table's own view lights `toptab-Band`. What this check
+         is about is that the column head's LAMP did not become one, so the
+         question is asked precisely: every mark in the chrome sits inside a
+         tab. */
+      chromeMarksOutsideTabs: [...document.querySelectorAll("#nu-chrome mark")]
+        .filter((m) => !m.closest('[data-k^="toptab-"]')).length,
       /* THE PAINT IS THE PLAYHEAD'S RED AND NOT THE METER'S GREEN, read off the
          rendered box rather than off the class list: `--clock` means "this is
          where the record is" and `--meter` means "a number came back from the
@@ -4040,9 +4049,11 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       "T10x a player's column head lights within 25 s of #play — " +
       onNow.lit.length + " of " + onNow.heads + " lit (" +
       JSON.stringify(onNow.lit) + ")");
-    check(onNow.chromeMarks === 0,
-      "T10x …and the lamp is a CHILD, not a mark: the chrome's own <mark> " +
-      "count is unmoved by it (" + onNow.chromeMarks + " on the table)");
+    check(onNow.chromeMarksOutsideTabs === 0,
+      "T10x …and the lamp is a CHILD, not a mark: every <mark> in the chrome " +
+      "is a pressed TAB and none of them is the lamp (" +
+      onNow.chromeMarks + " marks, " + onNow.chromeMarksOutsideTabs +
+      " of them outside a tab)");
     check(onNow.row === 1,
       "T10x …and the SOUNDING section's row head wears markForm's one <mark> " +
       "— " + onNow.row + " lit row head");
@@ -5275,7 +5286,22 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            addresses the inventory files (`tundo`, `tredo`) — a control that
            moves keeps its name — so T13l below finds them where it always
            looked, in the bar rather than in an open cell sheet. */
-        const wantBar = ["voicing", "play", "rewrite", "tundo", "tredo"];
+        /* ...AND THE STRIP IS THREE CHILDREN SINCE 2026-09-08 (TABLE.md §25
+           and the round after it). Paul: *"put two tabs at the top: Explore
+           and Edit"*, then *"put the edit button as a proper button
+           immediately to its right not as a second Hamburger."* The law this
+           check states — the ≡ first, nothing in the band but identity and
+           navigation — is unchanged and is asked of the new order; what moves
+           is the LAST child, which is the Edit tab now rather than the
+           record's name, because the record's name and the button that leaves
+           it stand together at the start of the band. `stripByX` still has to
+           agree with the markup, which is the clause doing the work: a flex
+           `order` that put Edit anywhere else would be caught here.
+           THE BAR IS UNTOUCHED. ▶ moved to the front of it on 2026-09-08
+           ("Put the play button on the bottom left and make it 2x wide for
+           fitt's law, then the other buttons"), so `wantBar` says so — same
+           five buttons, same addresses, one order. */
+        const wantBar = ["play", "voicing", "rewrite", "tundo", "tredo"];
         check(chrome.boxes.length === 2 &&
               chrome.boxes[0].id === "nu-topstrip" &&
               chrome.boxes[1].id === "nu-bar" &&
@@ -5284,17 +5310,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               chrome.strips === 1 && chrome.bars === 1 &&
               chrome.burger && chrome.plate &&
               chrome.stripFirst === "burger" &&
-              chrome.stripLast === "toptab-Where" &&
+              chrome.stripLast === "toptab-Band" &&
               chrome.stripByX[0] === "burger" &&
-              chrome.stripByX[chrome.stripByX.length - 1] === "toptab-Where" &&
+              chrome.stripByX[1] === "toptab-Where" &&
+              chrome.stripByX[chrome.stripByX.length - 1] === "toptab-Band" &&
               chrome.tapeInBar && !chrome.tapeInStrip &&
               /nu-vs/.test(chrome.barLast || "") &&
               chrome.seedInBar && !chrome.seedInMenu &&
               JSON.stringify(chrome.barBtns) === JSON.stringify(wantBar),
           "T13a " + at + " · the fixed chrome is the STRIP and the BAR and " +
           "nothing else (" + chromeH + "pt of two bands), the ≡ is the " +
-          "strip's FIRST child and the record's NAME its LAST with nothing " +
-          "between them — in the MARKUP and on the GLASS, which must agree — " +
+          "strip's FIRST child, the record's NAME the tab beside it and EDIT " +
+          "its last — in the MARKUP and on the GLASS, which must agree — " +
           "and the bar is the transport, the die, the TAPE and the room — " +
           JSON.stringify(chrome));
 

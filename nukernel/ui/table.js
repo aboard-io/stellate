@@ -1821,7 +1821,7 @@ function motifRow(sf, write, clearBack) {
   };
   return b`<div class="nu-sheetrow nu-morow">
     <b class="nu-sheetlab">${sf.label}</b>
-    <div class="nu-mogrid">
+    <div class="nu-mogrid" data-k=${sf.key}>
       ${opts.map(card)}
       ${api && api.newMotif ? b`<button type="button" class="nu-mocard nu-monew" data-k="motif-new"
             aria-label=${t4("motif.new")}
@@ -2648,12 +2648,14 @@ function bandTable(host, A2) {
     }
     return n3;
   };
+  const SHOWN = /* @__PURE__ */ new Set();
   const draw = () => {
     MODAL = null;
     D(view(), host);
     const root = host.querySelector(".nu-modalroot");
     if (root) D(modal(), root);
     keepCardScroll();
+    placeGrids();
     landFocus();
     stick();
   };
@@ -2664,6 +2666,22 @@ function bandTable(host, A2) {
       if (CARDTOPAT !== OPEN || !host.isConnected) return;
       const b2 = host.querySelector(".nu-modalbody");
       if (b2 && b2.scrollTop < want) b2.scrollTop = want;
+    });
+  };
+  const placeGrids = () => {
+    requestAnimationFrame(() => {
+      if (!host.isConnected) return;
+      for (const g2 of Array.from(host.querySelectorAll(".nu-mogrid"))) {
+        if (g2.scrollHeight <= g2.clientHeight + 1) continue;
+        const key = g2.querySelector("[data-k]")?.dataset.k || "";
+        if (!key || SHOWN.has(key)) continue;
+        SHOWN.add(key);
+        const on = g2.querySelector('.nu-mopick[aria-pressed="true"]');
+        if (!on) continue;
+        const gr = g2.getBoundingClientRect(), r2 = on.getBoundingClientRect();
+        const want = g2.scrollTop + (r2.top - gr.top) - (g2.clientHeight - r2.height) / 2;
+        g2.scrollTop = Math.max(0, Math.min(g2.scrollHeight - g2.clientHeight, want));
+      }
     });
   };
   const keepCardScroll = () => {

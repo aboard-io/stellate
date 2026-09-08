@@ -407,12 +407,17 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return n;
   };
 
+  /* which capped grids have been put on their answer this open — see
+     `placeGrids`. Cleared with the sheet, because a new sheet is a new set of
+     grids and none of them has been placed yet. */
+  const SHOWN = new Set<string>();
   const draw = () => {
     MODAL = null;                       // the walk below is what fills it
     render(view(), host);
     const root = host.querySelector(".nu-modalroot");
     if (root) render(modal(), root as HTMLElement);
     keepCardScroll();
+    placeGrids();
     landFocus();
     stick();
   };
@@ -453,6 +458,46 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       if (CARDTOPAT !== OPEN || !host.isConnected) return;
       const b2 = host.querySelector(".nu-modalbody") as HTMLElement | null;
       if (b2 && b2.scrollTop < want) b2.scrollTop = want;
+    });
+  };
+  /* ---- A CAPPED CARD GRID OPENS ON ITS OWN ANSWER (2026-09-08) --------
+     The instrument row is a grid of 151 cards in a two-row window — `nu.css`
+     caps it so the chair sheet keeps its other subjects on the glass, which is
+     what T19a asks and what a 2,424px grid took away. A window that opens at
+     the top then shows `modeld` to a record playing a clean guitar: the card
+     is not hidden, it is nine rows down, and "without hunting" is exactly the
+     claim this page's own gate makes about that control.
+     SO EACH SCROLLABLE GRID IS PUT ON ITS PRESSED CARD, ONCE. `SHOWN` is the
+     set of grids already placed this open, so a hand that scrolls the grid
+     keeps its position through every later redraw — the same law
+     `keepCardScroll` above states for the card ("a tap moves nothing"), asked
+     of the one control inside it that has a scroll of its own. A grid that
+     fits its cards has nothing to place and is skipped. */
+  const placeGrids = (): void => {
+    /* ON THE NEXT FRAME, WHICH IS THE SAME LESSON `putCardTop` RECORDS ABOVE:
+       a scroll set before the content is laid out is a scroll against a
+       scroller that has no height yet, and it lands on zero. Measured here
+       exactly that way — the grid answered `scrollHeight === clientHeight` at
+       the moment `draw()` ran, so every placement was skipped. */
+    requestAnimationFrame(() => {
+      if (!host.isConnected) return;
+      for (const g of Array.from(host.querySelectorAll<HTMLElement>(".nu-mogrid"))) {
+        if (g.scrollHeight <= g.clientHeight + 1) continue;
+        const key = (g.querySelector("[data-k]") as HTMLElement | null)?.dataset.k || "";
+        if (!key || SHOWN.has(key)) continue;
+        SHOWN.add(key);
+        const on = g.querySelector<HTMLElement>('.nu-mopick[aria-pressed="true"]');
+        if (!on) continue;
+        /* FROM THE RECTS AND NOT FROM `offsetTop`, which was measured wrong
+           first: `.nu-mocard` is `position: relative` (it is what the ✎ is
+           placed against), so the button's `offsetTop` is its offset inside
+           its own CARD — zero, always — and the placement computed a negative
+           scroll and clamped to the top on every grid. The rects are the
+           honest distance whatever the offset parent is. */
+        const gr = g.getBoundingClientRect(), r = on.getBoundingClientRect();
+        const want = g.scrollTop + (r.top - gr.top) - (g.clientHeight - r.height) / 2;
+        g.scrollTop = Math.max(0, Math.min(g.scrollHeight - g.clientHeight, want));
+      }
     });
   };
   const keepCardScroll = (): void => {

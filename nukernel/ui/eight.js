@@ -1036,7 +1036,26 @@ function keepPanes() {
     if (d.dataset.pane) paneScroll.set(d.dataset.pane, [d.scrollLeft, d.scrollTop]);
   }
 }
+/* ...AND A CAPPED CARD GRID SHOWS THE ANSWER IT IS STANDING ON (2026-09-08).
+   The instrument row is a grid of 151 cards in a two-row window (nu.css caps
+   it so the chair sheet keeps its other subjects on the glass — T19a), and a
+   window that opens at the top shows `modeld` to a record playing a clean
+   guitar. The card is not hidden, it is nine rows down, which is exactly the
+   "without hunting" this page's own gate asks about. So on every paint each
+   scrollable grid is scrolled to its pressed card, centred where there is room.
+   A grid that fits its cards has nothing to scroll and is untouched. */
+function showPicked() {
+  for (const g of document.querySelectorAll(".nu-mogrid")) {
+    if (g.scrollHeight <= g.clientHeight + 1) continue;
+    const on = g.querySelector('.nu-mopick[aria-pressed="true"]');
+    if (!on) continue;
+    const want = on.offsetTop - (g.clientHeight - on.offsetHeight) / 2;
+    const top = Math.max(0, Math.min(g.scrollHeight - g.clientHeight, want));
+    if (Math.abs(g.scrollTop - top) > 1) g.scrollTop = top;
+  }
+}
 function putPanes() {
+  showPicked();
   for (const d of document.querySelectorAll(".nu-pane")) {
     if (!d.dataset.pane || !paneScroll.has(d.dataset.pane)) continue;
     // scrollLeft on a scroll container never moves the WINDOW, which is why

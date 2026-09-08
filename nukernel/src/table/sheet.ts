@@ -694,9 +694,18 @@ function motifRow(sf: StripField, write: (v: string) => void,
         : nothing}
     </div>`;
   };
+  /* THE FIELD'S OWN ADDRESS RIDES THE GRID (2026-09-08). This surface's law is
+     that a control which changes SHAPE keeps its NAME — T13l's own sentence,
+     and what test/table-inventory.json files under `reach`. The cards are
+     `<field>|<value>`, so without this the bare `sound.instrument|stab`
+     vanished the day that row stopped being a `<select>`, and T7 reported it
+     MISSING along with four of its neighbours. The grid is the control now, so
+     the grid wears the name.
+     (AND THE COMMENT IS HERE RATHER THAN IN THE TEMPLATE: a backtick inside a
+     template literal ends it, and every name in this paragraph wants one.) */
   return html`<div class="nu-sheetrow nu-morow">
     <b class="nu-sheetlab">${sf.label}</b>
-    <div class="nu-mogrid">
+    <div class="nu-mogrid" data-k=${sf.key}>
       ${opts.map(card)}
       ${api && api.newMotif
         ? html`<button type="button" class="nu-mocard nu-monew" data-k="motif-new"
