@@ -14332,7 +14332,7 @@ whereBtn.addEventListener("click", () =>
    it, and Edit IS the table — the thing under everything. There is nowhere for
    a second press to go, so it does nothing, which is what a tab you are
    already on should do. */
-const editBtn = icon({ k: "toptab-Band", glyph: GLYPH.tab.Band.g,
+const editBtn = icon({ k: "toptab-Band", glyph: GLYPH.act.edit.g,
                        word: _t("tab.edit"), say: _t("tab.edit.say") });
 editBtn.addEventListener("click", () => showTab("Band"));
 /* ...AND THE ROW'S OWN `label` STANDS BETWEEN THE ARTICLE AND THE KEY
@@ -14394,7 +14394,7 @@ function nameRecord() {
                         sub: full, say: _t("tab.explore.say"), on: isOpen });
   whereBtn.setAttribute("aria-label", full);
   whereBtn.setAttribute("aria-expanded", String(isOpen));
-  if (editBtn) paintIcon(editBtn, { glyph: GLYPH.tab.Band.g,
+  if (editBtn) paintIcon(editBtn, { glyph: GLYPH.act.edit.g,
                                     word: _t("tab.edit"),
                                     say: _t("tab.edit.say"),
                                     on: openTab === "Band" });

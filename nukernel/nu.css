@@ -7889,10 +7889,34 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    name on it instead of a chip floating at one end of a bar.
    `background: none` AND NOT `transparent`: the base `button` rule sets
    `background`, and the shorthand is what has to be answered. */
-.nu-topstrip > button[data-k="toptab-Where"]{ flex: 1 1 auto;
+/* ---- AND IT LOOKS LIKE A TAB (2026-09-08) -----------------------------
+   Paul: *"Make the name of the genre in the top bar more obviously a tab and
+   then put the edit button as a proper button immediately to its right not as
+   a second Hamburger."*
+
+   IT WAS A WORD WITH AN ACCENT ON IT. §22c took the plate off this button for
+   a good reason — a header is a thing you READ, not a target sitting on the
+   band — and §25 then made it half of a two-tab switch without giving it back
+   anything that says "tab". Ink alone does not: a coloured word beside another
+   word is two words, and the one binary this page has was carried entirely by
+   a hue.
+   SO IT GETS THE ONE MARK A TAB HAS ALWAYS HAD — the rule UNDER it, in the
+   `--hand` the pressed word already uses, plus that hue's own tint as a
+   ground. Not a border: a frame all the way round is a plate, which is what
+   §22c refused, and a tab is precisely a plate with its bottom edge open onto
+   the thing it selects. The unpressed tab keeps a transparent rule of the
+   same weight, so nothing moves by two pixels when the mode changes.
+   `0 1 auto` AND NOT `1 1 auto`, which is the other half of the ask: the name
+   took the whole band, so `Edit` was pushed to the far end and read as a
+   second, unrelated control. The name is now as wide as it needs to be (and no
+   wider — `min-inline-size: 0` on the face still ellipsises `Gregorian chant`
+   rather than pushing anything off a phone), and the button sits against it. */
+.nu-topstrip > button[data-k="toptab-Where"]{ flex: 0 1 auto;
   min-inline-size: var(--tap);
-  background: none; border: 0; border-radius: 0; box-shadow: none;
-  padding-inline: 0; }
+  background: none; border: 0; border-radius: var(--r2) var(--r2) 0 0;
+  box-shadow: none;
+  border-block-end: 2px solid transparent;
+  padding-inline: var(--s2); }
 /* ...AND WHEN IT IS THE OPEN VIEW IT SAYS SO IN INK, NOT IN A BOX. `aria-
    pressed="true"` painted this button with the page's fill because it was a
    plate; a header with no plate has nowhere to put a fill that would not
@@ -7910,7 +7934,8 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    `--hand` is the page's own answer and its comment says so — *"you set it, it
    is selected, it is focused"* — which is exactly what a tab you are on is. */
 .nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"]{
-  background: none; color: var(--hand); }
+  background: var(--hand-tint); color: var(--hand);
+  border-block-end-color: var(--hand); }
 /* ===== AND THE OTHER MODE IS A TAB BESIDE IT (2026-09-08, TABLE.md §25) =
    Paul: *"I don't think people will know there's a song editor so put two tabs
    at the top: Explore and Edit."*
@@ -7929,9 +7954,24 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    NO PLATE, for §22c's reason: a border is what this page draws around a
    TARGET and the strip is a band of marks. The pressed state is the accent on
    the word, which is the same channel the plate beside it uses. */
+/* ---- AND EDIT IS A BUTTON, BESIDE IT (2026-09-08) ---------------------
+   Paul: *"put the edit button as a proper button immediately to its right not
+   as a second Hamburger."* Two faults, and the mark is the smaller one
+   (ui/glyph.js gives this tab the pencil now; `☰` stays on the plate's
+   `Session` row where a list belongs). The other is that it was drawn like the
+   header beside it — no plate, no ground, no edge — at the FAR END of the band
+   behind a flexible gap, which is how a control comes to read as chrome.
+   IT IS THE PAGE'S OWN BUTTON AGAIN: the `--rule-strong` edge, the panel
+   ground and the `--r2` corner every other target on this page wears, standing
+   immediately after the name. It keeps its `0 0 auto` — a button is its own
+   width — and the free space now falls after it, which is why the two read as
+   a pair with the room to their right rather than as two ends of a bar. */
 .nu-topstrip > button[data-k="toptab-Band"]{ flex: 0 0 auto;
-  background: none; border: 0; border-radius: 0; box-shadow: none;
-  padding-inline: var(--s2); }
+  margin-inline-start: var(--s2);
+  background: var(--panel); color: var(--ink);
+  border: var(--bw) solid var(--rule-strong); border-radius: var(--r2);
+  box-shadow: none;
+  padding-inline: var(--s3); }
 .nu-topstrip > button[data-k="toptab-Band"] .nu-ic{
   display: flex; flex-direction: row; align-items: center; gap: var(--s1); }
 .nu-topstrip > button[data-k="toptab-Band"] .nu-vh{
@@ -7939,8 +7979,10 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   clip: auto; clip-path: none; margin: 0; padding: 0; white-space: nowrap;
   font-size: var(--t2, .82rem); font-weight: var(--fw-label); }
 .nu-topstrip > button[data-k="toptab-Band"][aria-pressed="true"]{
-  background: none; color: var(--hand); }
+  background: var(--hand); color: var(--on-fill); border-color: var(--hand); }
 .nu-topstrip > button[data-k="toptab-Band"]:hover{ background: var(--flag-tint); }
+.nu-topstrip > button[data-k="toptab-Band"][aria-pressed="true"]:hover{
+  background: var(--hand-hot, var(--hand)); }
 .nu-topstrip > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0;
   justify-content: flex-start; text-align: start; }
 /* ---- THE NAME IS A NAME AGAIN (2026-09-06, TABLE.md §18) --------------

@@ -297,6 +297,17 @@ export const GLYPH = {
                s: t("act.stop") },
     rewrite: { g: "svg:die", w: t("glyph.act.rewrite"),
                s: t("glyph.act.rewrite.say") },
+    /* THE EDIT TAB'S OWN MARK (2026-09-08). Paul: *"put the edit button as a
+       proper button immediately to its right not as a second Hamburger."*
+       The tab was drawn with `tab.Band.g`, which is `☰` — the SAME character
+       the hamburger four pixels to its left wears, so the strip read as two
+       menus. `☰` stays where it belongs (the plate's `Session` row, a list of
+       views); the tab that opens the editor takes the pencil this page already
+       uses for a hand-written cell (`cell.prov.hand`), because that is what
+       the view is for. Two doors to one address may not wear one mark when
+       one of them is standing beside a different door wearing it. */
+    edit:    { g: "✎", w: t("tab.edit"),
+               s: t("tab.edit.say") },
     take:    { g: "↻", w: t("noun.take"),
                s: t("glyph.act.take.say") },
     /* THREE MORE, 2026-09-02 (the composer round). `seed` is the SAME ⚅ the
