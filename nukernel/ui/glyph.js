@@ -366,9 +366,9 @@ export const GLYPH = {
     /* THE EDIT MARKS (2026-09-08, TABLE.md §24) — measured against this
        page's own font before they were chosen; src/copy/glyph.ts carries the
        numbers and the method. Each keeps its word, as every mark here does. */
-    undo:    { g: "\u21b6", w: t("glyph.act.undo"),
+    undo:    { g: "svg:undo", w: t("glyph.act.undo"),
                s: t("glyph.act.undo.say") },
-    redo:    { g: "\u21b7", w: t("glyph.act.redo"),
+    redo:    { g: "svg:redo", w: t("glyph.act.redo"),
                s: t("glyph.act.redo.say") },
     copy:    { g: "\u29c9", w: t("glyph.act.copy"),
                s: t("glyph.act.copy.say") },
@@ -965,6 +965,22 @@ const svgEl = (name, attrs) => {
   return n;
 };
 const DRAWN = {
+  /* UNDO AND REDO, DRAWN (2026-09-08). Paul: *"Go get better (bolder,
+     thicker) undo/redo icons."* They were `↶` and `↷` (U+21B6/B7) — an
+     ANTICLOCKWISE TOP SEMICIRCLE ARROW, a curve set at text weight in whatever
+     family has it, which on this deck draws as a hairline squiggle two thirds
+     the height of the marks beside it. A stroked arc is the right picture and
+     the wrong weight, and a font is the wrong place to ask for weight: there
+     is no bolder ↶.
+     SO IT IS GEOMETRY, at `stroke-width: 2.4` against the die's 1.6, with a
+     filled head rather than a stroked one — a head made of two strokes reads
+     thin at 20px however heavy the shaft is. The arc is three quarters of a
+     circle opening at the top, which is the gesture both marks have always
+     made; `redo` is the same path mirrored, so the pair cannot drift apart.
+     Nothing else here is drawn: every other mark is one character in the table
+     above, which is what keeps this file a vocabulary. */
+  undo: () => backArc(1),
+  redo: () => backArc(-1),
   /* a five-face: the square, then the four corners and the centre. Stroked in
      `currentColor` so a pressed mark's ink follows the fill like every other
      glyph, and sized in `em` so it grows with the row's own type. */
@@ -982,6 +998,31 @@ const DRAWN = {
     return svg;
   },
 };
+/* THE ARROW BOTH MARKS ARE MADE OF, and it was drawn by looking. `dir` 1 is
+   the anticlockwise turn (undo) and -1 the mirror of it (redo), so the pair is
+   one picture and cannot drift.
+   THE FIRST TRY WAS A RING. An arc of three quarters of a circle with a
+   triangle at the end reads, at twenty pixels, as a broken washer — the head
+   is inside the curve's own sweep and the eye never finds the point. Four
+   candidates were rendered side by side at 22px and at 66px and this is the
+   one that reads at both: a straight shaft into a half-turn under it, with a
+   HEAD THAT IS A FILLED TRIANGLE at the end of the shaft, which is where an
+   eye looks first. A stroked head is thin at this size whatever the shaft
+   weighs; the shaft is 2.4 against the die's 1.6 because Paul asked for
+   thicker and the arrow is the mark on this page most often hit in a hurry. */
+function backArc(dir) {
+  const svg = svgEl("svg", { viewBox: "0 0 24 24", width: "1.15em", height: "1.15em",
+                             fill: "none", stroke: "currentColor",
+                             "stroke-width": 2.4, "stroke-linecap": "round",
+                             "stroke-linejoin": "round" });
+  const g = svgEl("g", dir < 0 ? { transform: "translate(24 0) scale(-1 1)" } : {});
+  g.append(svgEl("path", { d: "M4.5 12.5 h9 a5.5 5.5 0 1 1 -5.2 7.3" }));
+  g.append(svgEl("path", { d: "M9.4 7.6 L3.6 12.5 L9.4 17.4 Z",
+                           fill: "currentColor", stroke: "none" }));
+  svg.append(g);
+  return svg;
+}
+
 export function drawGlyph(glyph) {
   const g = String(glyph == null ? "" : glyph);
   if (g.slice(0, 4) === "svg:") {

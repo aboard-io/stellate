@@ -8514,7 +8514,16 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
      control keeps its 45.18, and the difference is spent inside the padding
      where a transparent button has nothing to clip. */
   block-size: var(--bar-h);
-  padding: var(--s1) var(--gl)
+  /* …AND THE END OF THE ROW GETS AIR (2026-09-08). Paul: *"Give me some
+     padding on the bottom right of the bottom bar."* `--gl` is the gutter and
+     it is `0px` — *"the views run to the glass"* — which is right for a table
+     that fills the width and wrong for the last control in a band: the volume
+     ended flush against the edge of the screen, with the thumb's own travel
+     running off the glass. `--s4` is the air this page pays between a control
+     and an edge everywhere else. The START of the row keeps the gutter, because
+     the ≡ is a corner target and Fitts is the argument for leaving it in the
+     corner — the same argument that just moved play to the other one. */
+  padding: var(--s1) var(--s4)
            calc(var(--s1) + env(safe-area-inset-bottom, 0px)) var(--gl);
   background: var(--panel); color: var(--ink);
   border-block-start: var(--bw) solid var(--ink); }
@@ -9276,6 +9285,23 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    containing block, so the lamp is laid on the head's bottom edge — the same
    place `.is-sounding`'s own edge bar is drawn — and takes no height at all.
    It is still a SIBLING of the button and still the clock's own surface. */
+/* ---- AND THE BAND IS OPAQUE, GAPS INCLUDED (2026-09-08) ---------------
+   Paul: *"when a row is playing and I scroll left the HEADER ROW is
+   transparent."*
+
+   IT IS `border-spacing` AGAIN, AND IT IS THE SAME LESSON §24 LEARNED ABOUT
+   THE PLAYING ROW two hundred lines up: this grid sets `border-spacing: 3px`,
+   so the head's cells CANNOT TOUCH. Each `<th>` paints its own opaque ground
+   and between every pair of them is a 3px column of nothing — and what is
+   behind a sticky head is the body scrolling under it. Stationary that reads
+   as a seam; with a lit row passing beneath, those stripes go red and the band
+   reads as a transparent header.
+   SO THE GROUND MOVES TO THE `<tr>`, which is the one box in a separated table
+   that has no gaps in it — exactly the repair the lit row took, quoted here
+   because it is the same defect one row up. The cells keep their own paint
+   (they are still what a hover and a sounding column light), and the row
+   underneath them fills the spacing. */
+#pan-band .nu-sheetgrid thead > tr{ background: var(--deck); }
 #pan-band .nu-sheetgrid thead th.nu-colhead{ position: sticky; }
 #pan-band .nu-sheetgrid thead th.nu-colhead > .nu-scollamp{
   position: absolute; inset-block-end: 1px; inset-inline: 0;
@@ -9308,11 +9334,28 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    so nothing is traded for it but the mark's size, which comes down to the
    head's 1rem for the same reason a head's is smaller than a cell's: it is
    the second voice in the cell now, not the first. */
-#pan-band .nu-sheetgrid.is-stack .nu-cellword .nu-ic{
+/* ---- AND IT STACKS AT EVERY WIDTH NOW (2026-09-08) --------------------
+   Paul: *"always put the label on a section cell BELOW the little icon."*
+
+   IT WAS A MEASUREMENT, AND THE MEASUREMENT WAS ABOUT FIT. `stick()` compared
+   the column against the mark plus a nine-character word and stacked only when
+   they would not share a line — so a phone read `● / counter` and a desktop
+   read `● counter`, which is the same cell wearing two faces depending on how
+   wide the window happens to be. That is the thing a hand cannot learn: the
+   grammar of a cell should not change when you rotate the screen.
+   SO THE STACK IS THE FACE. The word gets the whole column to ellipsise
+   against at every width (the reason the narrow case existed), the mark is the
+   second voice above it, and the row is still `--tap` tall in both states —
+   the mark's line and the word's line together are 30px inside a 44px floor,
+   which is why this costs no height on a desktop either.
+   `is-stack` IS STILL WRITTEN and is no longer read here: it remains the
+   honest name for "these two would not have fitted on one line", which
+   `--wordw` and `has-words` are measured beside. */
+#pan-band .nu-sheetgrid .nu-cellword .nu-ic{
   flex-direction: column; align-items: stretch; gap: 0; }
-#pan-band .nu-sheetgrid.is-stack .nu-cellword .nu-g{ font-size: 1rem;
+#pan-band .nu-sheetgrid .nu-cellword .nu-g{ font-size: 1rem;
   line-height: 1; }
-#pan-band .nu-sheetgrid.is-stack .nu-cellword .nu-w{ text-align: center;
+#pan-band .nu-sheetgrid .nu-cellword .nu-w{ text-align: center;
   inline-size: 100%; }
 /* ---- AND THE SWIPE IS NOT SNAPPED, WHICH IS A REFUSAL WITH A MEASUREMENT
    UNDER IT (2026-09-06, §14 item 2). A table a phone reads a few players at a

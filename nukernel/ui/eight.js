@@ -17237,6 +17237,40 @@ wireSay();
 playBtn.addEventListener("click", () => {
   if (playing) { stop(); say(false); } else { startAt(0); say(true); }
 });
+/* ===== AND SPACE IS THE SAME PRESS (2026-09-08) ========================
+   Paul: *"Hitting space should start and stop playback."* It is the one
+   keyboard gesture every player on earth has, and this page had none: the
+   transport could be reached by thumb and by tab, and a hand at a laptop
+   with the table open had to go and find the button.
+
+   IT IS THE BUTTON'S OWN CLICK, not a second transport. `playBtn.click()`
+   means there is one path into `startAt`/`stop`, one `say()`, one place the
+   state is decided — the alternative is two owners of "is it playing", which
+   is the drift this file is written against.
+
+   WHERE SPACE ALREADY MEANS SOMETHING, IT KEEPS MEANING IT, and that is most
+   of this handler:
+     · a TEXT FIELD takes its own space — a name with a word in it is the
+       reason `#seedin` and the section-name field exist;
+     · a FOCUSED CONTROL takes its own space — space is how a keyboard presses
+       a button, and stealing it would make every mark on the page play the
+       record instead of doing its job;
+     · a MODIFIER means a different gesture entirely (Ctrl-space, ⌘-space is
+       the platform's), so any of the four is left alone.
+   Otherwise the page takes it, and `preventDefault` stops the browser
+   scrolling the document a screen down under the answer. */
+addEventListener("keydown", (e) => {
+  if (e.key !== " " && e.code !== "Space") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && t.isContentEditable) return;
+  const tag = t && t.tagName ? t.tagName.toLowerCase() : "";
+  if (tag === "input" || tag === "textarea" || tag === "select") return;
+  if (tag === "button" || tag === "a" || tag === "summary") return;
+  if (t && t.getAttribute && t.getAttribute("role") === "button") return;
+  e.preventDefault();
+  playBtn.click();
+});
 /* ===== TOMBSTONE: `#playops`, THE OPTIONS' DOOR (2026-09-02 to 2026-09-07) =
    Paul, 2026-09-07: *"Bottom bar: get rid of gear and move those functions
    into the menu."*
