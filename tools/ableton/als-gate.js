@@ -1842,6 +1842,146 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
     }
   }
 
+  /* ---- Gate I — AN INT NODE STAYS AN INT (2026-09-08) --------------------
+     Paul, with a file the box had just handed him: *"The document
+     minneapolissound-2.als is corrupt and cannot be loaded. (Unexpected value
+     for int node: 0.8 (at line 4582, column 31))"*
+
+     THE WHOLE FILE WAS REFUSED FOR ONE FRACTION. Live's loader types every
+     device parameter, and one it types as an integer will not take `0.8` — it
+     does not clamp, it does not round, it stops. Fourteen gates could prove
+     the set was well-formed, id-unique, round-tripped against the song, wore
+     the right colours and played the right feel, and every one of them passed
+     on a file Live would not open. That is the LIVE-gate law landing on its
+     own: what none of them measured was the TYPE of a number.
+     FOUND: `live-devices.js` wrote `ChorusDelayTime: 0.8` on the flanger chip.
+     Its own comment named the units right and the type wrong — *"Chorus2's
+     ChorusDelayTime is 0..5 ms and the donor sits at 3"* — and 0..5 with a
+     donor of 3 is five POSITIONS, not a continuum.
+
+     THE KEY IS THE DEVICE AND THE PARAMETER, NEVER THE PARAMETER ALONE, and
+     that is a measurement rather than a nicety: the first build of this gate
+     keyed by name and reported `Amount = 0.9` and `DryWet = 0.6` as faults.
+     Both are wrong — `Amount` is a -100..100 integer on one device and an
+     0..1 float on Chorus2; `DryWet` is 0..100 on one and 0..1 on another.
+     Live types a parameter INSIDE A DEVICE, so a gate that reads the name out
+     of its device is asking a question Live never asks.
+     IT IS AN XML STACK WALK AND NOT A REGEX OVER NEIGHBOURS. When a
+     `<Manual Value/>` is met the top of the stack is the PARAMETER and the one
+     under it is the DEVICE; the `<MidiControllerRange>`'s Min and Max are read
+     one level deeper. One pass, exact ancestry, no fixed-width window to fall
+     out of.
+
+     THE DONOR IS THE SCHEMA, WHICH IS THIS FILE'S OLDEST RULE (gate 2, gate
+     S). A `Device.Parameter` is an INT when all three of the donors' own
+     signals agree, and all three are needed because any two mis-fire:
+
+       · its `<MidiControllerRange>` has WHOLE ends — necessary and nowhere
+         near sufficient: every float knob in Live has a 0..1 or -1..1 range;
+       · that range SPANS AT LEAST TWO — which drops the 0..1 floats whose
+         donor value happens to be whole (`Filter_Resonance`,
+         `FilterCutoffFrequency`, `FilterQFactor`, all measured);
+       · and at least one donor writes it a NON-ZERO whole `Manual`. This is
+         the clause that carries the weight. Zero is where every untouched
+         float knob rests and says nothing; `Chorus2.ChorusDelayTime`'s `3` is
+         a positive statement that the parameter takes whole numbers. Measured,
+         this clause and only this clause separates the real int from `Pan`
+         (-1..1, `0` in all thirty-four donor instances) and `Makeup` (0..20,
+         `0`).
+
+     IT UNDER-REPORTS ON PURPOSE AND SAYS SO. An int parameter every donor
+     leaves at 0 is invisible here, and that is the right way to be wrong: a
+     gate that cried wolf on five float knobs would be turned off within the
+     week, and this one found the one real fault in a 56,519-line export on its
+     first run. What it watches is counted on every pass, so what it is NOT
+     watching is readable rather than implied. */
+  {
+    const isWhole = (v) => /^-?\d+$/.test(String(v).trim());
+    const paramsOf = (x) => {
+      const out = [];                       // { key, manual, min, max }
+      const TAG = /<(\/?)([A-Za-z0-9_]+)((?:"[^"]*"|[^>"])*?)(\/?)>/g;
+      const stack = [];
+      let cur = null;                       // the parameter block we are in
+      let m;
+      while ((m = TAG.exec(x))) {
+        const close = m[1] === "/", name = m[2], attrs = m[3], self = m[4] === "/";
+        if (close) {
+          if (cur && stack.length === cur.depth) cur = null;
+          stack.pop();
+          continue;
+        }
+        if (!self) { stack.push(name); continue; }
+        const v = /\sValue="([^"]*)"/.exec(attrs);
+        if (!v) continue;
+        const top = stack[stack.length - 1];
+        if (name === "Manual" && stack.length >= 2) {
+          cur = { key: stack[stack.length - 2] + "." + top, manual: v[1],
+                  depth: stack.length, min: null, max: null };
+          out.push(cur);
+        } else if (cur && top === "MidiControllerRange" &&
+                   stack.length === cur.depth + 1) {
+          if (name === "Min") cur.min = v[1];
+          else if (name === "Max") cur.max = v[1];
+        }
+      }
+      return out;
+    };
+    const ends = new Map(), manuals = new Map();
+    for (const d of [donorXml, rackXml, answersXml, answers2Xml])
+      for (const q of paramsOf(d)) {
+        if (q.min == null || q.max == null) continue;
+        if (!isWhole(q.min) || !isWhole(q.max)) continue;
+        if (Math.abs(+q.max - +q.min) < 2) continue;
+        ends.set(q.key, q.min + ".." + q.max);
+        if (!manuals.has(q.key)) manuals.set(q.key, new Set());
+        manuals.get(q.key).add(q.manual);
+      }
+    const INT = new Map();
+    for (const [key, vals] of manuals) {
+      const all = [...vals];
+      if (!all.every(isWhole)) continue;              // a float lives here
+      if (!all.some((v) => +v !== 0)) continue;       // 0 alone proves nothing
+      INT.set(key, ends.get(key));
+    }
+    const here = paramsOf(xml);
+    const bad = [];
+    for (const q of here)
+      if (INT.has(q.key) && !isWhole(q.manual))
+        bad.push(q.key + " = " + q.manual + " (Live types it int, " +
+                 INT.get(q.key) + ")");
+    /* THE PROBE, because a check that reads nothing passes for ever. One int
+       parameter that is actually IN this export is given a fraction in a copy
+       of the file; if the walk does not catch it, the walk is broken and says
+       so instead of passing. */
+    const watched = [...new Set(here.map((q) => q.key).filter((k) => INT.has(k)))];
+    const victim = watched[0];
+    let probed = false;
+    if (victim) {
+      const leaf = victim.slice(victim.indexOf(".") + 1);
+      const hurt = xml.replace(
+        new RegExp("(<" + leaf + ">[\\s\\S]{0,120}?<Manual Value=\")([^\"]*)"),
+        "$10.8");
+      probed = paramsOf(hurt).some((q) => q.key === victim && !isWhole(q.manual));
+    }
+    if (!victim)
+      ok = fail("gate I", "not one parameter the donors type as int is in this " +
+        "output — the walk is reading nothing, or this export writes no device " +
+        "the donors type");
+    else if (!probed)
+      ok = fail("gate I", "the fractional probe on " + victim + " was NOT caught " +
+        "— gate I is measuring nothing");
+    else if (bad.length)
+      ok = fail("gate I", "Live will refuse this file: " +
+        [...new Set(bad)].join(" · "));
+    else
+      pass("gate I", INT.size + " device.parameter(s) the donors type as int · " +
+        watched.length + " of them are in this file (" +
+        watched.slice(0, 6).join(", ") + (watched.length > 6 ? ", …" : "") +
+        ") · fractional probe caught on " + victim +
+        " · an int knob every donor leaves at 0 is NOT watched, by design");
+  }
+
+
   return ok;
 }
 

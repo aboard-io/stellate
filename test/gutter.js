@@ -488,6 +488,23 @@ function standUpServer() {
      ITSELF and not behind the door (*"Get rid of the volume options, popping
      up in the bottom instead integrate them into the bar with only a
      pop-up"*), so the fold holds two and not three. */
+  /* ...AND ONCE MORE ON 2026-09-08 (TABLE.md §22), which is the shape T9
+     asserts today:
+
+       #nu-topstrip  > #burger · toptab-Where          (the name is the header)
+       #nu-bar       > .nu-bartp · .nu-seedrow · .nu-tape · .nu-vs (#vol)
+       .nu-bartp     > #voicing · #play
+       .nu-seedrow   > #rewrite · #seedin
+
+     THE TAPE CAME BACK DOWN (Paul: *"Move the playback bar to the bottom
+     bar"*) and the strip's gap is the RECORD'S NAME instead, expanded and
+     wearing no plate. AND THE ROOM IS NOT DRAWN AT ALL ON A COARSE POINTER
+     (Paul: *"Just get rid of the volume control on mobile if it can't
+     work"*) — `display: none` under `@media (pointer: coarse)`, so `#vol` is
+     still in the document and every reader of the store still finds it, and
+     this driver, which runs with `hasTouch: true`, sees a `.nu-vs-wide` with
+     a zero box. The list is MARKUP and the assertion is markup, so the media
+     query does not move it. */
   /* ...AND AGAIN ON 2026-09-07 (§20), three deletions and no additions:
 
        #nu-bar       > .nu-bartp · .nu-seedrow · .nu-vs (the room, #vol)
@@ -500,7 +517,8 @@ function standUpServer() {
      and so is `.nu-seedwait` (*"replace the die icon with the countdown"*).
      Three marks left the bar in one round and not one arrived. */
   check(JSON.stringify(t3.bar) ===
-          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
+          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-tape",
+                          "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t3.seed) ===
           JSON.stringify(["rewrite", "seedin"]) &&
         JSON.stringify(t3.bartp) ===
@@ -726,6 +744,13 @@ function standUpServer() {
      on four of the six surfaces; what shipped is a panel IN FLOW with the
      chrome's two bands reserved, so the document is the scroller everywhere
      and `scrollY` means what this check needs it to mean. */
+  /* (ITS RESULT IS NO LONGER READ, 2026-09-08, and the WALK is kept for its
+     effect rather than its answer: it leaves the page standing on the tallest
+     panel, scrolled into it, which is the state every check below this line
+     was written against. What read `deepest.name` and `deepest.over` was T4's
+     touch drag — "the page CAN scroll and is scrolled before the drag …
+     otherwise the second half of this check would be vacuous" — and there is
+     no touch drag on a fader that a thumb never sees.) */
   const deepest = await p.evaluate(async () => {
     let best = null;
     /* `Time` LEFT THIS WALK WITH ITS TAB, 2026-09-06 (TABLE.md §10b): it is a
@@ -785,42 +810,96 @@ function standUpServer() {
      `#vol`; what changed is the AXIS, so the drag below runs left to right and
      the check reads the same three facts — the value moved, the page did not,
      and the readout says so. */
-  const room = await p.evaluate(() => {
-    const t = document.querySelector("#nu-bar .nu-vs-wide .nu-vs-track");
-    if (!t) return null;
-    const r = t.getBoundingClientRect();
-    return { x: r.x + r.width / 2, y0: r.y + r.height / 2,
-             left: r.x + 8, right: r.x + r.width - 8,
-             top: r.y + 8, bot: r.y + r.height - 8,
-             scrollable: document.documentElement.scrollHeight - window.innerHeight,
-             y: window.scrollY, v: +document.getElementById("vol").value };
+  /* (THE TOUCH DRAG'S OWN PROBE STOOD HERE — the track's rect, the page's
+     scrollable height and `window.scrollY`, all read so a real touch drag
+     could be aimed at the fader and the page proved not to move under it. It
+     went with the drag on 2026-09-08: there is no fader in the bar under a
+     thumb. See T4 below.) */
+  /* ===== AND THERE IS NO FADER UNDER A THUMB, 2026-09-08 (TABLE.md §22) =
+     Paul: *"Just get rid of the volume control on mobile if it can't work.
+     Leave it on desktop."*
+
+     IT CANNOT WORK, AND THE REASON IS THE ENGINE'S. A phone gets the WAV-FIRST
+     route, which has no live output graph to hang a gain on: the level rides
+     `mvol` into the next bar FED to the worker and is heard when the segments
+     already queued have played out. Seconds, not frames.
+     THIS DRIVER IS THE COARSE POINTER (`hasTouch: true` at 390x844), so what
+     it must now measure is an ABSENCE — and an absence is the one thing a
+     gate has to state precisely, because a control that came back would come
+     back silently. Three facts:
+       · the bar's fader has NO BOX (`display: none` under `(pointer: coarse)`),
+       · `#vol` is STILL IN THE DOCUMENT on its 0..100 domain — the store, the
+         restore and `nukernel/desk-gate.js`'s min/max read are untouched, and
+         "not drawn" is not "deleted",
+       · and the drag still WORKS where the fader still is.
+     THE THIRD IS MEASURED AND NOT ASSUMED. A check that deleted the drag with
+     the control would have traded a real measurement for a claim about a
+     platform nobody in this file is standing on — so the same real drag runs
+     in a SECOND context with `hasTouch: false`, which is the desktop this
+     round was told to leave alone. That is the shape T12n already uses for a
+     phone; this is it turned the other way. */
+  const roomGone = await p.evaluate(() => {
+    const w = document.querySelector("#nu-bar .nu-vs-wide");
+    const v = document.getElementById("vol");
+    const r = w ? w.getBoundingClientRect() : null;
+    return { there: !!w, box: r ? [r.width, r.height] : null,
+             disp: w ? getComputedStyle(w).display : null,
+             vol: !!v, min: v && v.min, max: v && v.max,
+             coarse: matchMedia("(pointer: coarse)").matches,
+             stored: !!localStorage.getItem("nukernel.vol.v1") ||
+                     !!(v && v.value) };
   });
-  if (!room) check(false, "T4 · there is no fader in the bar");
-  else {
-    const cdp = await p.context().newCDPSession(p);
-    const touch = (type, x) => cdp.send("Input.dispatchTouchEvent", {
-      type, touchPoints: type === "touchEnd" ? []
-        : [{ x, y: room.y0, radiusX: 8, radiusY: 8 }] });
-    await touch("touchStart", room.right);
-    for (let i = 1; i <= 14; i++)
-      await touch("touchMove", room.right - i * (room.right - room.left) / 14);
-    await touch("touchEnd", room.left);
-    await p.waitForTimeout(300);
-    const after = await p.evaluate(() => ({
-      v: +document.getElementById("vol").value, y: window.scrollY,
-      out: (document.querySelector("#nu-bar .nu-vs-val") || {}).textContent }));
-    check(room.scrollable > 0 && room.y > 0,
-      "T4 · the page CAN scroll and is scrolled before the drag — the " +
-      JSON.stringify(deepest.name) + " tab is the deepest at 390x844 (" +
-      deepest.over + " px of overflow) and the window is at " + room.y +
-      " — otherwise the second half of this check would be vacuous");
-    check(after.v !== room.v && after.v <= 5,
-      "T4 · a real touch drag ALONG the fader moves the room: " + room.v +
-      " -> " + after.v + " (" + JSON.stringify(after.out) + ")");
-    check(after.y === room.y,
-      "T4 · …and the page does not move a pixel under it: scrollY " + room.y +
-      " -> " + after.y);
+  check(roomGone.coarse && roomGone.there && roomGone.disp === "none" &&
+        roomGone.box[0] === 0 && roomGone.box[1] === 0 &&
+        roomGone.vol && roomGone.min === "0" && roomGone.max === "100",
+    "T4 · under a thumb the bar draws NO room fader — and `#vol` is still in " +
+    "the document on its own 0..100, so the store and every reader of it are " +
+    "untouched: " + JSON.stringify(roomGone));
+  {
+    /* THE SAME DRAG, ON A FINE POINTER. Same page, same `#vol`, same chassis;
+       the only difference is the context's `hasTouch`, which is what the
+       media query answers to. A mouse press-move-release is used rather than
+       CDP touch points for the same reason: this is the pointer this context
+       has. */
+    const dctx = await b.newContext({ viewport: { width: 1280, height: 900 },
+                                      hasTouch: false });
+    const d = await dctx.newPage();
+    await d.goto(PAGE, { waitUntil: "load" });
+    await d.waitForTimeout(2200);
+    const dr = await d.evaluate(() => {
+      const t = document.querySelector("#nu-bar .nu-vs-wide .nu-vs-track");
+      if (!t) return null;
+      const r = t.getBoundingClientRect();
+      return { y: r.y + r.height / 2, left: r.x + 8, right: r.x + r.width - 8,
+               w: Math.round(r.width),
+               v: +document.getElementById("vol").value }; });
+    if (!dr || !(dr.w > 0)) check(false,
+      "T4 · there is no fader in the bar on a FINE pointer, and there must be");
+    else {
+      await d.mouse.move(dr.right, dr.y);
+      await d.mouse.down();
+      for (let i = 1; i <= 14; i++)
+        await d.mouse.move(dr.right - i * (dr.right - dr.left) / 14, dr.y);
+      await d.mouse.up();
+      await d.waitForTimeout(300);
+      const after = await d.evaluate(() => ({
+        v: +document.getElementById("vol").value,
+        out: (document.querySelector("#nu-bar .nu-vs-val") || {}).textContent }));
+      check(after.v !== dr.v && after.v <= 5,
+        "T4 · …and on a FINE pointer, where it is left alone, a real drag " +
+        "ALONG the fader still moves the room: " + dr.v + " -> " + after.v +
+        " (" + JSON.stringify(after.out) + ")");
+    }
+    await dctx.close();
   }
+  /* (`room.scrollable > 0 && room.y > 0` AND THE PAGE-DID-NOT-MOVE CHECK STOOD
+     HERE. Both were about a TOUCH drag on the bar's fader — "the page CAN
+     scroll and is scrolled before the drag … otherwise the second half of this
+     check would be vacuous", and "the page does not move a pixel under it".
+     They are the `touch-action: none` law on the control, and they went with
+     the control: there is no fader under a thumb to drag the page with. The
+     law itself is untouched and still carried by `.nu-vs-track`, which the
+     mix board's own faders still wear on every pointer.) */
 
 
   /* ---- THE TRANSPORT, PUT DOWN ON PURPOSE ---------------------------- */
@@ -929,8 +1008,12 @@ function standUpServer() {
       .map((n) => n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
     return { kids, stripKids, seed,
              gone: kids.indexOf("explain"),
-             /* THE COUNTDOWN IS THE TAPE'S, and there is exactly one of it. */
-             tapeCount: !!document.querySelector("#nu-topstrip .nu-tape .nu-count"),
+             /* THE COUNTDOWN IS THE TAPE'S, and there is exactly one of it.
+                (It read `#nu-topstrip .nu-tape .nu-count` from 2026-09-06 to
+                2026-09-08; the tape went back down to the bar — TABLE.md §22,
+                Paul: *"Move the playback bar to the bottom bar"* — and the
+                countdown went with it, inside the same node.) */
+             tapeCount: !!document.querySelector("#nu-bar .nu-tape .nu-count"),
              counts: document.querySelectorAll(".nu-count").length,
              barLog: !!document.querySelector("#nu-bar [data-k=\"logger\"]"),
              menuLog: !!document.querySelector("#nu-menu [data-k=\"logger\"]"),
@@ -971,10 +1054,24 @@ function standUpServer() {
      order it draws in — and this array is the check that it still does. A day
      when this array and the glass disagree is a day someone added an
      `order`. */
+  /* ...AND THEY TRADED ONCE MORE ON 2026-09-08 (TABLE.md §22). Paul: *"Move
+     the playback bar to the bottom bar and expand the genre as header but
+     don't put a border around it."* The strip is TWO children — the ≡ and the
+     record's name, which is the band's `1 1 auto` now and wears no plate — and
+     the bar is FOUR: the transport, the die, the TAPE (the row's flexible
+     child, so it does all the placing there is), and the room at the far end.
+     §18's sharpened law — *"the strip is identity, status and navigation"* —
+     is retired with the measurement that bought it; a tape stands on the band
+     the ▶ that moves it is on. The room's own `margin-inline-start: auto` came
+     off in the same edit, for the same reason it came off `.nu-topstrip`: an
+     auto margin beside a flexible child eats the space that child was asked to
+     take. This array is still asserted as MARKUP and not as rendered x, for
+     the reason the paragraph above gives. */
   check(JSON.stringify(t9.stripKids) ===
-          JSON.stringify(["burger", "nu-tape", "toptab-Where"]) &&
+          JSON.stringify(["burger", "toptab-Where"]) &&
         JSON.stringify(t9.kids) ===
-          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-vs nu-vs-wide"]) &&
+          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-tape",
+                          "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t9.seed) === JSON.stringify(["rewrite", "seedin"]) &&
         t9.num === 0 && !t9.inFold && t9.gone < 0,
     /* THE SEED ROW IS TWO SINCE 2026-09-07 (§20). Paul: *"Get rid of seed
@@ -1446,9 +1543,19 @@ function standUpServer() {
        same centre and a different top, and the count came back 2 on a bar that
        had not wrapped. One row is one CENTRE LINE, which is what
        `align-items: center` means and what a wrapped row would break. */
-    const tops = new Set([...bar.children].map((c) => {
-      const r = c.getBoundingClientRect();
-      return Math.round(r.top + r.height / 2); }));
+    /* ...AND A CHILD WITH NO BOX IS ON NO ROW (2026-09-08, TABLE.md §22).
+       The room fader is `display: none` under `(pointer: coarse)` — Paul:
+       *"Just get rid of the volume control on mobile if it can't work"* — and
+       an undrawn box reports `0,0,0,0`, whose centre line is 0. Counted, that
+       is a second row on a bar that has not wrapped, and this check went red
+       at both widths saying so. `getClientRects().length` is the same filter
+       `marks` below already uses for the same reason: what is not drawn is not
+       on a row. */
+    const tops = new Set([...bar.children]
+      .filter((c) => c.getClientRects().length)
+      .map((c) => {
+        const r = c.getBoundingClientRect();
+        return Math.round(r.top + r.height / 2); }));
     const marks = [...bar.querySelectorAll("button")]
       .filter((n) => n.getClientRects().length)
       .map((n) => [n.id || n.dataset.k, +n.getBoundingClientRect().width.toFixed(1),

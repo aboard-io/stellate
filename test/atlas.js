@@ -1736,7 +1736,25 @@ function g18() {
         const cs = getComputedStyle(pan);
         return Math.round(pan.clientWidth
           - parseFloat(cs.paddingInlineStart || 0)
-          - parseFloat(cs.paddingInlineEnd || 0)); })() }));
+          - parseFloat(cs.paddingInlineEnd || 0)); })(),
+      /* THE GLASS, WHICH IS WHAT THE LIST FILLS FROM 2026-09-08: the viewport
+         less the two safe-area gutters nu.css keeps for a notch in landscape.
+         `documentElement.clientWidth` and not `innerWidth`, for the reason
+         `100vw` is refused everywhere in that file — the scrollbar gutter is
+         not glass. */
+      glass: (() => {
+        const rs = getComputedStyle(document.documentElement);
+        return Math.round(document.documentElement.clientWidth
+          - parseFloat(rs.getPropertyValue("--gl") || 0)
+          - parseFloat(rs.getPropertyValue("--gr") || 0)); })(),
+      x: (() => { const b = document.getElementById("atlasIndex")
+            .getBoundingClientRect(); return +b.x.toFixed(1); })(),
+      bl: (() => { const cs = getComputedStyle(document.getElementById("atlasIndex"));
+            return Math.round(parseFloat(cs.borderInlineStartWidth)); })(),
+      br: (() => { const cs = getComputedStyle(document.getElementById("atlasIndex"));
+            return Math.round(parseFloat(cs.borderInlineEndWidth)); })(),
+      bt: (() => { const cs = getComputedStyle(document.getElementById("atlasIndex"));
+            return Math.round(parseFloat(cs.borderBlockStartWidth)); })() }));
     check(fit.wrap === 0 && fit.page === 0,
       "G15 · " + w + "px: nothing scrolls sideways (#atlasWrap " + fit.wrap +
       "px, the document " + fit.page + "px)");
@@ -1752,10 +1770,30 @@ function g18() {
        column, made about the thing a thumb now moves: the catalogue is as wide
        as this page lets anything be, at every width, and never one pixel
        wider. */
-    check(fit.list >= fit.col - 2 && fit.list <= fit.col + 2,
-      "G15 · " + w + "px: the genre list fills the panel's content box — it is " +
-      fit.list + " px against " + fit.col + " (viewport " + fit.vw +
-      ", less the gutter, the safe areas and the panel's own inset)");
+    /* ...AND THE BOX IT FILLS IS THE GLASS SINCE 2026-09-08 (TABLE.md §23).
+       Paul: *"The genre list should be 100% wide with no left or right
+       borders."* The paragraph above is kept whole because its PROMISE is the
+       one still being measured — *"the catalogue is as wide as this page lets
+       anything be, at every width, and never one pixel wider"* — and only the
+       answer to "how wide is that" has changed. It was the panel's content
+       box, measured one box in so a padding change could not go red; the list
+       cancels that padding now (`margin-inline: calc(-1 * var(--s4))`, the
+       full-bleed idiom `.nu-bar` has used since nu.css:112), so the box it
+       fills is the VIEWPORT less the safe areas, which is the widest anything
+       on this page is allowed to be.
+       MEASURED: 364.4 at x 12.8 -> 390 at x 0 on a 390 phone, and 320 at 0 on
+       a 320. THE OTHER HALF OF §23's SENTENCE IS ASSERTED WITH IT: no border
+       down either side, because a rule at the screen's own edge is a line
+       drawn 0px from nothing — and a check that measured only the width would
+       pass on a full-bleed box that still wore them. The block borders are
+       asserted PRESENT in the same breath: they are what still says where the
+       catalogue starts and stops. */
+    check(fit.list >= fit.glass - 2 && fit.list <= fit.glass + 2 &&
+          fit.x <= 0.5 && fit.bl === 0 && fit.br === 0 && fit.bt > 0,
+      "G15 · " + w + "px: the genre list is the width of the GLASS with no " +
+      "side borders — " + fit.list + " px at x " + fit.x + " against " +
+      fit.glass + " (viewport " + fit.vw + " less the safe areas), borders " +
+      fit.bl + "/" + fit.br + " inline and " + fit.bt + " block");
   }
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
@@ -1901,7 +1939,9 @@ function g18() {
      NOT MOVE WHILE YOU TYPE — is asserted harder than it was.
 
      SIX CLAIMS, and every one of them is read off the rendered list:
-       a · the field is ONE LINE, in flow, above the rows, and nothing floats
+       a · the field is ONE LINE, PINNED AT THE HEAD OF THE LIST (it was "in
+           flow, above the rows" until 2026-09-08 — TABLE.md §23), and nothing
+           floats
        b · typing narrows the list, by NAME, PLACE, YEAR, ERA and FAMILY, and
            the match is accent- and case-insensitive
        c · a search that matches NOTHING says so in a sentence, drawn inside
@@ -1935,7 +1975,10 @@ function g18() {
       const cs = getComputedStyle(f);
       return { top: Math.round(f.getBoundingClientRect().top),
                h: Math.round(f.getBoundingClientRect().height),
-               pos: cs.position, qh: Math.round(q.getBoundingClientRect().height),
+               pos: cs.position,
+               stuck: Math.round(parseFloat(cs.insetBlockStart) || 0),
+               inside: idx.firstElementChild === f,
+               qh: Math.round(q.getBoundingClientRect().height),
                n: rows.children.length, listH: rows.scrollHeight,
                triphop: th ? Math.round(th.getBoundingClientRect().top - base) : null,
                page: document.documentElement.scrollWidth -
@@ -1945,11 +1988,26 @@ function g18() {
        height is the field's: it was 118 px (field, count and 26 chips) and it
        is one tap target now. The check keeps its old shape and gains that
        number, because "one line" was always the claim and was never true of a
-       strip that wrapped to three. */
-    check(box.pos === "static" && box.top > 0 && box.qh <= 56 && box.h <= 56,
-      "G24a · the field is one line, in flow, at the head of the list — top " +
-      box.top + " px, strip " + box.h + " px (118 with the chips), field " +
-      box.qh + " px, position " + box.pos + ", no sideways page scroll (" +
+       strip that wrapped to three.
+       ...AND `static` BECAME `sticky` ON 2026-09-08 (TABLE.md §23). Paul: *"The
+       'Find a genre' should be integrated into it."* The strip stood ABOVE the
+       box and is the box's own head now, pinned at its top edge — because the
+       list scrolls 502 rows and a search field that leaves the screen at row
+       nine is a search field you have to scroll back to.
+       WHAT `in flow` WAS PROTECTING IS STILL PROTECTED, AND BY THIS LINE: the
+       claim was never "static" for its own sake, it was *"nothing floats"* —
+       no popover, no overlay, no box that covers the rows it filters. A sticky
+       head is IN the box, takes its own height from the rows and covers
+       nothing that was not already scrolled under it. So the check asks for
+       the pin it now has, plus the two heights it always asked for, plus the
+       one thing that would say it HAD started floating: it is still a child of
+       the list, and the list still starts where it starts. */
+    check(box.pos === "sticky" && box.stuck === 0 && box.inside &&
+          box.top > 0 && box.qh <= 56 && box.h <= 56,
+      "G24a · the field is one line, PINNED at the head of the list and a " +
+      "child of it — top " + box.top + " px, strip " + box.h +
+      " px (118 with the chips), field " + box.qh + " px, position " +
+      box.pos + " at " + box.stuck + ", no sideways page scroll (" +
       box.page + " px)");
     note("G24 · BEFORE: " + box.n + " rows, " + box.listH +
          " px of list, and the trip-hop row " + box.triphop + " px down it");
@@ -2199,12 +2257,31 @@ function g18() {
       if (!g) return null; const r = g.getBoundingClientRect();
       return { y: +r.y.toFixed(1), w: +r.width.toFixed(1),
                h: +r.height.toFixed(1) }; })() }));
+  /* ...AND THE FIND IS INSIDE THE LIST SINCE 2026-09-08 (TABLE.md §23). Paul:
+     *"The 'Find a genre' should be integrated into it."* `#atlasFind` was the
+     panel's fourth child, a strip standing above the box; it is the box's own
+     first child now and its sticky head. So the panel reads THREE and the
+     list reads TWO, and both are asserted — the second half matters, because
+     "integrated" is a claim about ANCESTRY and a check that only counted the
+     panel's children would pass on a find that had simply been deleted. */
   check(JSON.stringify(order) === JSON.stringify(
-      ["H2#atlasHead", "DIV#atlasWrap", "P#atlasSay",
-       "P#atlasFind", "DIV#atlasIndex"]),
+      ["H2#atlasHead", "DIV#atlasWrap", "P#atlasSay", "DIV#atlasIndex"]),
     "G11 · reading order is the heading, the globe, the " +
-    "status line, the list's own head, then the genre list — " +
-    JSON.stringify(order));
+    "status line, then the genre list — " + JSON.stringify(order));
+  const inside = await p.evaluate(() => {
+    const ix = document.getElementById("atlasIndex");
+    const f = document.getElementById("atlasFind");
+    if (!ix || !f) return { none: true };
+    return { first: ix.firstElementChild === f,
+             kids: [...ix.children].map((c) => c.tagName + "#" + c.id),
+             stuck: getComputedStyle(f).position,
+             top: Math.round(parseFloat(getComputedStyle(f).insetBlockStart)) };
+  });
+  check(!inside.none && inside.first && inside.stuck === "sticky" &&
+        inside.top === 0,
+    "G11 · …and the find is the LIST'S OWN first child, pinned at its top " +
+    "edge — one box with a field across it, not a strip above a box — " +
+    JSON.stringify(inside));
   check(head.heads === 0 && head.closes === 0 && head.h2 === "Where & when",
     "G11 · the picker has NO header and NO close of its own — the sheet is " +
     "named by its <h2> (" + JSON.stringify(head.h2) + ") and the globe is the " +

@@ -298,7 +298,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       return "ok"; }, k);
     await p.waitForTimeout(420); return r; };
   const sheetRows = () => p.evaluate(() => {
-    const o = document.querySelector("#pan-band tr.nu-wopen");
+    const o = document.querySelector("#pan-band .nu-modalcard");
     if (!o) return null;
     return [...o.querySelectorAll(".nu-sheetrow")].map((r) => ({
       lab: ((r.querySelector(".nu-sheetlab") || {}).textContent || "").trim(),
@@ -462,12 +462,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        same reason, and the press reports WHY when it cannot find its target
        rather than failing as a silent false. */
     const reopen = async () => {
-      const open = await p.evaluate(() => !!document.querySelector("#pan-band tr.nu-wopen"));
+      const open = await p.evaluate(() => !!document.querySelector("#pan-band .nu-modalcard"));
       if (!open) await tap("tcol|" + singer.name);
     };
     await reopen();
     const cleared = await p.evaluate(() => {
-      const o = document.querySelector("#pan-band tr.nu-wopen");
+      const o = document.querySelector("#pan-band .nu-modalcard");
       if (!o) return "the sheet did not reopen";
       const r = [...o.querySelectorAll(".nu-sheetrow")].find((x) =>
         ((x.querySelector(".nu-sheetlab") || {}).textContent || "").trim() === "sings as");
@@ -482,7 +482,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       JSON.stringify(await throatOn(singer.name)) + ")");
     // shut it again, whichever way the write left it, so the next block opens
     // its own sheet rather than a second one
-    if (await p.evaluate(() => !!document.querySelector("#pan-band tr.nu-wopen")))
+    if (await p.evaluate(() => !!document.querySelector("#pan-band .nu-modalcard")))
       await tap("tcol|" + singer.name);
 
     await tap("tcol|" + player.name);
@@ -1517,7 +1517,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
   await tap("tcol|" + vName);      // a sheet the hand had open before the hire
   const nBefore = (await doc()).voices.length;
   const openBefore = await p.evaluate(() =>
-    document.querySelectorAll("#pan-band .nu-wopen").length);
+    document.querySelectorAll("#pan-band .nu-modalcard").length);
   await tap(await plusK("head"));
   await p.waitForTimeout(700);
   const landed = await p.evaluate(() => {
@@ -1526,7 +1526,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const head = document.querySelector('#pan-band [data-k="tcol|' + last + '"]');
     return { n: D.voices.length, last, head: !!head,
              open: head ? head.getAttribute("aria-expanded") : null,
-             wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+             wopen: document.querySelectorAll("#pan-band .nu-modalcard").length,
              sheets: document.querySelectorAll("#pan-band .nu-vsheet").length };
   });
   check(landed.n === nBefore + 1 && landed.head && landed.open === "false" &&
@@ -1739,7 +1739,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        closes and the selection survives it (`closeEdit`). */
     const addr = async () => {
       const shut = await p.evaluate(() =>
-        !document.querySelector("#pan-band tr.nu-cellopen"));
+        !document.querySelector("#pan-band .nu-modal.is-cellopen"));
       if (shut) { await key("Enter"); await p.waitForTimeout(300); }
       const out = await p.evaluate(() => { const a =
         document.querySelector('#pan-band [data-k="taddr"]');
@@ -1754,7 +1754,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        because that is where the hand that pressed undo is. */
     const barTap = async (k) => {
       const opened = await p.evaluate(() => {
-        if (document.querySelector("#pan-band tr.nu-cellopen")) return true;
+        if (document.querySelector("#pan-band .nu-modal.is-cellopen")) return true;
         const c = document.querySelector("#pan-band .nu-wcell.is-sel");
         if (!c) return false;
         c.click(); return true; });
@@ -1809,7 +1809,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        and it is drawn on the cell the sheet belongs to. */
     const body = await p.evaluate(() => ({
       sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
-      rows: document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow").length,
+      rows: document.querySelectorAll("#pan-band .nu-modalcard .nu-sheetrow").length,
       sel: document.querySelectorAll("#pan-band .nu-wcell.is-sel").length,
       ring: (() => { const c = document.querySelector("#pan-band .nu-wcell.is-sel");
         return c ? getComputedStyle(c).outlineWidth : null; })() }));
@@ -1823,7 +1823,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     await tap(cell(v9a, s9a));
     const body2 = await p.evaluate(() => ({
       sheets: document.querySelectorAll("#pan-band .nu-vsheet").length,
-      rows: document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow").length,
+      rows: document.querySelectorAll("#pan-band .nu-modalcard .nu-sheetrow").length,
       sel: document.querySelectorAll("#pan-band .nu-wcell.is-sel").length }));
     check(body2.sheets === 0 && body2.rows === 0 && body2.sel === 1,
       "T9b2 …and a SECOND tap on the same cell shuts it, with the selection " +
@@ -1875,7 +1875,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     {
       await openCell(cell(v9a, s9a));
       const fk = await p.evaluate(() => { const r =
-        [...document.querySelectorAll("#pan-band tr.nu-wopen .nu-sheetrow")]
+        [...document.querySelectorAll("#pan-band .nu-modalcard .nu-sheetrow")]
           .find((x) => x.querySelector(".nu-wcell[aria-expanded]"));
         return r ? r.querySelector(".nu-wcell").dataset.k : null; });
       const chipped = fk ? await p.evaluate((k) => {
@@ -1902,7 +1902,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         open: [...document.querySelectorAll('#pan-band [aria-expanded="true"]')]
           .map((x) => x.dataset.k),
         rows: [...document.querySelectorAll(
-          "#pan-band tr.nu-wopen .nu-sheetrow .nu-wcell")]
+          "#pan-band .nu-modalcard .nu-sheetrow .nu-wcell")]
           .map((x) => x.dataset.k).slice(0, 6) }), fk);
       check(!!chipped && still.sheets === 1 && still.strips > 0,
         "T9b5 a chip write does NOT dismiss the sheet it was tapped in — the " +
@@ -2181,7 +2181,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       return { head: box(hb), foot: box(fb),
                headw: px(document.querySelector("#pan-band thead th.nu-plushead")),
                roww: px(fb),
-               wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+               wopen: document.querySelectorAll("#pan-band .nu-modalcard").length,
                olds: document.querySelectorAll("#pan-band .nu-addbar," +
                  " #pan-band .nu-addbtn, #pan-band .nu-addhead").length }; });
     check(!!offers.head && !!offers.foot &&
@@ -2198,13 +2198,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const wopenBefore = offers.wopen;
     await tap(offers.head.k);
     const after9o = await p.evaluate(() => ({
-      wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+      wopen: document.querySelectorAll("#pan-band .nu-modalcard").length,
       sheets: document.querySelectorAll("#pan-band .nu-addopen").length }));
     const nAfter = (await doc()).voices.length;
     check(nAfter === nBefore + 1 && after9o.sheets === 0,
       "T9o …and the `+` hires ON THE TAP, with no ADD sheet drawn (" +
       nBefore + " -> " + nAfter + ", .nu-addopen " + after9o.sheets +
-      ", .nu-wopen " + wopenBefore + " -> " + after9o.wopen + ")");
+      ", cards " + wopenBefore + " -> " + after9o.wopen + ")");
     /* UNDO IS PRESSED WITH THE KEYBOARD HERE, and that is not a dodge: the
        four verbs live on the open CELL sheet's first line since §13a.6, a hire
        leaves the new player's COLUMN sheet open and not a cell's, and Ctrl-Z is
@@ -2223,7 +2223,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         { bubbles: true, cancelable: true })); }, s9a);
     await p.waitForTimeout(420);
     const menu = await p.evaluate((sid) => {
-      const ops = [...document.querySelectorAll("#pan-band tr.nu-wopen .nu-opbtn")]
+      const ops = [...document.querySelectorAll("#pan-band .nu-modalcard .nu-opbtn")]
         .map((x) => x.dataset.k);
       return { ops, want: ["trow-up|" + sid, "trow-down|" + sid,
                            "trow-dup|" + sid, "trow-del|" + sid, "trow-add"]
@@ -2424,7 +2424,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         new Function("return (" + src + ")")(); }, STRANDED.toString());
       const m = await p.evaluate(() => {
         const host = document.getElementById("pan-band");
-        const bar = host.querySelector("tr.nu-cellopen .nu-cellhead");
+        const bar = host.querySelector(".nu-modalcard .nu-cellhead");
         const r = bar ? bar.getBoundingClientRect() : null;
         const shorts = [...host.querySelectorAll("button:not([hidden])")]
           .filter((b) => { const q = b.getBoundingClientRect();
@@ -2443,18 +2443,49 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                  keys: bar ? [...bar.querySelectorAll("[data-k]")]
                    .map((x) => x.dataset.k) : [],
                  wide: r ? Math.round(r.width) : 0,
+                 /* THE BOX THE HEAD MUST FILL IS THE HEADER IT STANDS IN,
+                    LESS THE CLOSE (2026-09-08, TABLE.md §22). Two corrections
+                    in one line, and the second was measured off the first.
+                    It was the PANE's width, because the sheet stood inside the
+                    pane and the claim was that its first line spanned the
+                    surface it belonged to. That surface is the card, and on a
+                    desk the card is capped at 44rem inside a 1254px pane — so
+                    against the pane the head was asked to be 1,003px wide
+                    inside a 704px box.
+                    AND AGAINST THE CARD IT IS SHORT BY THE × : on a cell sheet
+                    the head IS the card's title bar and shares that line with
+                    a 44px close, so at 320 it renders 245 in a 309 card and
+                    missed an 80% floor by two pixels. The head is the header's
+                    FLEXIBLE child, so what it must take is everything the
+                    close and the gaps leave — which is a subtraction the
+                    rendered page can do for itself rather than a fraction
+                    tuned until it passed. */
+                 card: (() => { const c = host.querySelector(".nu-modalcard");
+                   return c ? Math.round(c.getBoundingClientRect().width) : 0; })(),
+                 head: (() => { const h = host.querySelector(".nu-modalhead");
+                   return h ? Math.round(h.getBoundingClientRect().width) : 0; })(),
+                 shut: (() => { const x = host.querySelector(".nu-modalx");
+                   return x ? Math.round(x.getBoundingClientRect().width) : 0; })(),
                  pane: Math.round(host.querySelector(".nu-pane")
                    .getBoundingClientRect().width),
                  page: document.documentElement.scrollWidth -
                        document.documentElement.clientWidth,
                  shorts, offs }; });
       const want5 = ["taddr", "tundo", "tredo", "tcopy", "tpaste"];
+      /* `- 24` IS THE HEADER'S OWN AIR AND NOTHING ELSE: its inline padding
+         (`--s3` at the start, `--s1` at the end) plus the one `--s2` gap
+         between the head and the ×, which come to 22.4 at every width this
+         page is measured at. Two pixels of slack over that, and no more —
+         a floor that allowed a quarter of the band to go missing would not be
+         measuring "spans it" any more. */
       check(m.bar && m.fixed === 0 && m.shorts === 0 && m.offs === 0 &&
-            m.page <= 1 && m.wide >= m.pane * 0.8 &&
+            m.page <= 1 && m.card > 0 && m.head > 0 &&
+            m.wide >= m.head - m.shut - 24 &&
             want5.every((k) => m.keys.indexOf(k) >= 0),
         "T9t at " + w + " the address and its four verbs are the open cell " +
-        "sheet's first line, `.nu-formula` is gone, nothing is under 44px and " +
-        "nothing is off the screen — " + JSON.stringify(m));
+        "sheet's own TITLE BAR, taking everything the × leaves of the card's " +
+        "header, `.nu-formula` is gone, nothing is under 44px and nothing is " +
+        "off the screen — " + JSON.stringify(m));
       await shot("spreadsheet-" + w);
       await tap(cell(v9a, s9a));
     }
@@ -2825,7 +2856,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     await wide(320);
     await tap("ttime");
     const timeKeys = await p.evaluate(() => {
-      const o = document.querySelector("#pan-band tr.nu-wopen");
+      const o = document.querySelector("#pan-band .nu-modalcard");
       if (!o) return null;
       const ks = new Set();
       for (const e of o.querySelectorAll("[data-k],[data-sel]"))
@@ -2979,7 +3010,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         face0 + "”");
       await tap("trules");
       const sheet = await p.evaluate(() => {
-        const o = document.querySelector("#pan-band tr.nu-wopen");
+        const o = document.querySelector("#pan-band .nu-modalcard");
         if (!o) return null;
         const rows = [...o.querySelectorAll(".nu-rule")];
         const twoLine = rows.filter((r) =>
@@ -4089,7 +4120,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
     /* ---- T12c · GROUPS WITH HEADINGS, IN THE COMPOSER'S ORDER (§11c) --- */
     const headsOf = () => p.evaluate(() => {
-      const o = document.querySelector("#pan-band tr.nu-wopen");
+      const o = document.querySelector("#pan-band .nu-modalcard");
       if (!o) return null;
       const gs = [...o.querySelectorAll(".nu-sheetgroup")];
       /* THE HEADING'S WORD IS `.nu-groupword` AND NOT THE `<h4>`'s text, since
@@ -4384,67 +4415,71 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       await p.waitForTimeout(250);
     }
 
-    /* ---- T12m · A SPECIAL ROW'S EDITOR OPENS UNDER THAT ROW -----------
+    /* ---- T12m · A SPECIAL ROW'S EDITOR IS A CARD ----------------------
        Paul, on v284: *"When I click time and rules they show up under
        phrases."* They did: the sheet was drawn at the top of the `<tbody>`,
        which is where a COLUMN head's sheet lands because a column has no row
        of its own — and TIME has a row of its own, three rows and a set of
-       column heads above the body. DESIGN.md §2.3 says a special row's
-       *"expanded = its sheet"* and §2.4 says a sheet is *"in flow (never a
-       modal)"*: the sheet is the tapped row's own next line, nothing may stand
-       between them, and §2.3's *"pins under the rows ABOVE it"* says which
-       rows keep their freeze while it is open — the ones above the tapped row.
-       SO THIS MEASURES THE RENDERED GEOMETRY, at both ends of the range: the
-       editor's top edge against the bottom edge of the row that opened it, the
-       row itself still pinned and still opaque over the sheet scrolling under
-       it, and the tap-outside law unbroken. */
+       column heads above the body.
+
+       WHAT THIS BLOCK USED TO MEASURE, AND WHY IT DOES NOT ANY MORE
+       (2026-09-08, TABLE.md §22). Paul: *"Instead of expanding sections in
+       the editor and inserting them below the selected point just make them
+       modals with easy dismissal."* It read the RENDERED GEOMETRY of an
+       accordion: the sheet's top edge against the bottom edge of the row that
+       opened it (`gap >= 0 && gap <= 12` — *"`.nu-trims` pays 3px of
+       `border-spacing` between two rows and `.nu-wopen > td` pays `--s2` of
+       air above the sheet — measured at 9.0 at both widths on all three
+       rows"*), the owner row still pinned and opaque over a sheet scrolling
+       under it, and the tap-outside law. Three of those four sentences are
+       about a `<tr>` that no longer exists, and DESIGN.md §2.4's *"in flow
+       (never a modal)"* — which they were enforcing — is the clause §22
+       reverses.
+       WHAT THE COMPLAINT ACTUALLY WAS, AND IT IS STILL MEASURED: the distance
+       between the word you press and the editor it opens. A card's distance
+       is not a gap in pixels, it is a NAME: the card says which of the seven
+       rows it belongs to, at its own top edge, before anything else. So this
+       asserts the card is on the glass, is opaque, carries the row's own word
+       as its header, and still shuts on a tap outside — which is the same
+       four claims with the one that was geometry rewritten as identity. */
     {
-      const SPGEOM = `(() => {
-        const grid = document.querySelector("#pan-band table.nu-sheetgrid");
-        const rows = [...grid.querySelectorAll(":scope > thead > tr")];
-        const open = grid.querySelector(":scope > thead > tr.nu-spopen");
-        if (!open) return { none: true };
-        const i = rows.indexOf(open);
-        const row = rows[i - 1];
-        const sheet = open.querySelector(".nu-vsheet");
-        if (!row || !sheet) return { none: true };
-        const rr = row.getBoundingClientRect(), sr = sheet.getBoundingClientRect();
-        const th = row.querySelector("th"), cs = getComputedStyle(th);
-        const bg = getComputedStyle(sheet).backgroundColor;
-        return { id: row.dataset.special,
-                 own: row.classList.contains("nu-sprow"),
-                 lit: th.querySelector("[aria-expanded=true]") ? true : false,
-                 gap: +(sr.top - rr.bottom).toFixed(1),
-                 pinned: cs.position === "sticky" && cs.insetBlockStart !== "auto",
-                 seen: sr.height > 40 && sr.width > 40 && sr.top < innerHeight,
+      const SPCARD = `(() => {
+        const card = document.querySelector("#pan-band .nu-modal.is-spopen .nu-modalcard");
+        if (!card) return { none: true };
+        const cr = card.getBoundingClientRect();
+        const sheet = card.querySelector(".nu-vsheet");
+        const head = card.querySelector(".nu-modalname");
+        const bg = getComputedStyle(card).backgroundColor;
+        return { name: head ? head.textContent.trim().toLowerCase() : null,
+                 dialog: card.getAttribute("role") === "dialog" &&
+                         card.getAttribute("aria-modal") === "true",
+                 said: (card.getAttribute("aria-label") || "").trim().toLowerCase(),
+                 seen: !!sheet && cr.height > 40 && cr.width > 40 &&
+                       cr.top < innerHeight && cr.bottom > 0,
+                 fixed: getComputedStyle(
+                   card.parentElement).position === "fixed",
                  solid: !!bg && !/rgba\\(0, 0, 0, 0\\)/.test(bg) &&
-                        bg !== "transparent" };
-      })()`;
+                        bg !== "transparent",
+                 /* THE SCRIM IS AIMABLE. A dismissal you cannot press is not
+                    one, and the first build of the card had 5.6px of veil on
+                    the glass at 390 because a 100% height cap let an
+                    eighteen-field sheet fill the box. Measured against a
+                    thumb: at least 44 of the card's own top edge. */
+                 scrim: +cr.top.toFixed(1) }; })()`;
       for (const W of [390, 1280]) {
         await ctx.pages()[0].setViewportSize({ width: W, height: W === 1280 ? 900 : 844 });
         await p.waitForTimeout(400);
         await top("Band");
         for (const id of ["time", "rules", "motifs"]) {
           await tap("t" + id);
-          const g = await p.evaluate(SPGEOM);
-          /* 12px: `.nu-trims` pays 3px of `border-spacing` between two rows
-             and `.nu-wopen > td` pays `--s2` of air above the sheet — measured
-             at 9.0 at both widths on all three rows. Anything more is another
-             row standing in between, which is the bug. */
-          check(!g.none && g.own && g.id === id && g.gap >= 0 && g.gap <= 12,
-            "T12m at " + W + " the " + id.toUpperCase() + " row's editor opens " +
-            "DIRECTLY under that row — " + JSON.stringify(g));
-          check(!g.none && g.pinned && g.seen && g.solid,
-            "T12m …with the row still frozen over an editor that is visible " +
-            "and opaque — " + JSON.stringify(g));
-          /* ...AND WHATEVER IS STILL FROZEN IS STILL A FROZEN HEAD: opaque in
-             `--ground`, above the sheet riding under it, no open seam. */
-          const st = await p.evaluate(STACK);
-          check(st.n >= 1 && st.clear === 0 && st.under === 0 && st.open === 0,
-            "T12m …and nothing renders through the frozen stack with " + id +
-            " open (" + st.pinned + " of " + st.n + " head rows frozen, " +
-            st.clear + " see-through, " + st.under + " under the sheet, " +
-            st.open + " open seams)");
+          const g = await p.evaluate(SPCARD);
+          check(!g.none && g.dialog && !!g.name && g.said === g.name,
+            "T12m at " + W + " the " + id.toUpperCase() + " row opens a NAMED " +
+            "dialog — the word an eye reads and the name a screen reader hears " +
+            "are one string — " + JSON.stringify(g));
+          check(!g.none && g.seen && g.fixed && g.solid && g.scrim >= 44,
+            "T12m …a card on the glass, opaque, out of the scroller, with a " +
+            "strip of scrim left to press — " + JSON.stringify(g));
           /* THE TAP-OUTSIDE LAW, UNBROKEN BY THE MOVE (Paul: *"dismiss them
              when I tap outside of them"*) — a press on the page's own chrome,
              which is what `armOutside` calls outside. */
@@ -4454,7 +4489,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             el.dispatchEvent(new PointerEvent("pointerdown",
               { bubbles: true, composed: true }));
             return new Promise((res) => setTimeout(() => res(
-              !document.querySelector("#pan-band tr.nu-spopen")), 350)); });
+              !document.querySelector("#pan-band .nu-modal.is-spopen")), 350)); });
           check(shut, "T12m …and a tap outside still shuts " + id);
           if (!shut) await tap("t" + id);
         }
@@ -4763,7 +4798,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       if (pv) {
         await ptap("tcol|" + pv);
         const irow = await q.evaluate(() => {
-          const o = document.querySelector("#pan-band tr.nu-wopen");
+          const o = document.querySelector("#pan-band .nu-modalcard");
           if (!o) return null;
           const r = [...o.querySelectorAll(".nu-sheetrow")].find((x) =>
             ((x.querySelector(".nu-sheetlab") || {}).textContent || "").trim() === "instrument");
@@ -5016,9 +5051,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                      .map((x) => x.id || x.dataset.k) : [],
                    seedInBar: !!document.querySelector("#nu-bar .nu-seedrow"),
                    seedInMenu: !!document.querySelector("#nu-menu .nu-seedrow"),
-                   /* THE TAPE IS THE STRIP'S MIDDLE CHILD SINCE §18. */
-                   tapeInStrip: !!(strip && strip.children[1] &&
-                     strip.children[1].classList.contains("nu-tape")),
+                   /* THE TAPE WAS THE STRIP'S MIDDLE CHILD FROM §18 AND IS
+                      THE BAR'S THIRD SINCE §22 (2026-09-08). It is read as a
+                      POSITION in a named band either way, because what the
+                      check is about is which band a readout stands on and
+                      where in it — `!!document.querySelector(".nu-tape")`
+                      would pass on a tape anywhere at all. */
+                   tapeInBar: !!(bar && bar.children[2] &&
+                     bar.children[2].classList.contains("nu-tape")),
+                   tapeInStrip: !!(strip &&
+                     strip.querySelector(":scope > .nu-tape")),
                    forms: document.querySelectorAll(".nu-formula").length };
         });
         const chromeH = chrome.boxes.reduce((a, x) => a + x.h, 0);
@@ -5033,8 +5075,9 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            is stated as a list of ids rather than as the number 1.
            WHAT ELSE IS ASSERTED HERE, because it is the arrangement and not
            just the height: the ≡ is the STRIP's FIRST button, the record's
-           name is the strip's LAST, the TAPE is the bar's last child, and the
-           bar holds THREE buttons
+           name is the strip's LAST and nothing stands between them
+           (2026-09-08, §22), the TAPE is the bar's THIRD child and the ROOM
+           its last, and the bar holds THREE buttons
 
            ===== THE TWO ENDS SWAPPED, 2026-09-07, AND SO DID THIS CHECK =====
            It read `stripLast === "burger"` — the ≡ was the strip's last child
@@ -5061,11 +5104,29 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            2026-09-06 (TABLE.md §18). Paul: *"You could put the playback bar to
            the right of the genre on top top if you want"* and *"Move the dice
            back into the bottom"* and *"…integrate them into the bar with only
-           a pop-up."* So the law reads: THE TOP STRIP IS IDENTITY, STATUS AND
+           a pop-up."* So the law read: THE TOP STRIP IS IDENTITY, STATUS AND
            NAVIGATION; THE BOTTOM BAR IS CONTROLS, AND ONLY CONTROLS. The TAPE
-           is the strip's middle child (it never was a control — a thumb never
-           presses it), and the width it leaves in the bar is the ROOM's and
+           was the strip's middle child (it never was a control — a thumb never
+           presses it), and the width it left in the bar was the ROOM's and
            the DIE's.
+           ...AND THEY TRADED BACK ON 2026-09-08 (TABLE.md §22). Paul: *"Move
+           the playback bar to the bottom bar and expand the genre as header
+           but don't put a border around it."* §18's sharpening was bought with
+           a measurement — a dead gap in the strip, a tight bar — and BOTH
+           halves have changed: the gear went on 2026-09-07, the room fader is
+           off a coarse pointer entirely, and the strip's gap is the record's
+           NAME now, expanded and wearing no plate. So the law goes back to its
+           simpler first wording: THE TOP STRIP IS IDENTITY AND NAVIGATION; THE
+           BOTTOM BAR IS THE TRANSPORT — the controls and the readout that says
+           what they did. A tape is where the ▶ that moves it is.
+           THE STRIP IS TWO CHILDREN, so `stripFirst`/`stripLast` are the same
+           two nodes with nothing between them, and the check that they AGREE
+           with `stripByX` is doing more work than before rather than less: the
+           name is the band's own `1 1 auto` now, so a rendered order that
+           disagreed with the markup would be a flex `order` somebody added.
+           THE ROOM IS `display: none` UNDER `(pointer: coarse)` (§22 item 1),
+           and it is still the bar's last CHILD — which is what `barLast`
+           reads, so this driver sees the same markup at every width.
            WHAT THE BAR HOLDS, IN DOCUMENT ORDER: the two inside the options'
            fold (a mode, a take), the fold's own door, the voicing, ▶, then the
            die and its number. The room is a range and not a button, so it is
@@ -5089,15 +5150,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               chrome.stripLast === "toptab-Where" &&
               chrome.stripByX[0] === "burger" &&
               chrome.stripByX[chrome.stripByX.length - 1] === "toptab-Where" &&
-              chrome.tapeInStrip && /nu-vs/.test(chrome.barLast || "") &&
+              chrome.tapeInBar && !chrome.tapeInStrip &&
+              /nu-vs/.test(chrome.barLast || "") &&
               chrome.seedInBar && !chrome.seedInMenu &&
               JSON.stringify(chrome.barBtns) === JSON.stringify(wantBar),
           "T13a " + at + " · the fixed chrome is the STRIP and the BAR and " +
           "nothing else (" + chromeH + "pt of two bands), the ≡ is the " +
-          "strip's FIRST button, the record's name its LAST and the TAPE " +
+          "strip's FIRST child and the record's NAME its LAST with nothing " +
           "between them — in the MARKUP and on the GLASS, which must agree — " +
-          "and the bar is controls alone — the transport, the die and the " +
-          "room — " + JSON.stringify(chrome));
+          "and the bar is the transport, the die, the TAPE and the room — " +
+          JSON.stringify(chrome));
 
         /* ---- b · ONE PINNED BAND, AND IT IS THE HEADS ----------------- */
         const pins = () => z.evaluate(() => {
@@ -5116,9 +5178,13 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             if (!c) return;
             const cs = getComputedStyle(c);
             if (cs.position === "sticky" && cs.insetBlockStart !== "auto")
+              /* (`&& !tr.classList.contains("nu-wopen")` STOOD IN `heads`
+                 to 2026-09-08. A head row could be the open sheet's own
+                 `<tr>` while sheets were rows; §22 makes every sheet a card
+                 outside the table, so no row in this walk can carry that
+                 class and the clause could only ever answer true.) */
               held.push({ i, sp: tr.dataset.special || null,
-                          heads: !tr.dataset.special &&
-                                 !tr.classList.contains("nu-wopen"),
+                          heads: !tr.dataset.special,
                           top: Math.round(parseFloat(cs.insetBlockStart)),
                           h: +tr.getBoundingClientRect().height.toFixed(1) }); });
           const foot = [...t.querySelectorAll("tfoot th, tfoot td, tfoot button")]
@@ -5344,10 +5410,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            a head at rest and call the pin law broken. The flag stays in the
            table rather than being deleted, because what it says — how many
            taps this target takes — is the thing §14 changed. */
-        for (const [name, k, twice, sp] of [["RULES", "trules", false, "rules"],
-                                        ["TIME", "ttime", false, "time"],
-                                        ["CHORDS", "tchords", false, "chords"],
-                                        ["a cell", cellK, false, null]]) {
+        /* (THE FOURTH COLUMN WAS THE ROW'S `data-special`, and it went with
+           T13c on 2026-09-08: the check no longer asks WHICH row is pinned
+           while a sheet is open, because no sheet has an owner row to pin any
+           more. See the block inside the loop.) */
+        for (const [name, k, twice] of [["RULES", "trules", false],
+                                        ["TIME", "ttime", false],
+                                        ["CHORDS", "tchords", false],
+                                        ["a cell", cellK, false]]) {
           if (!k) continue;
           await setTop(120);
           const y0 = await topOf();
@@ -5357,17 +5427,38 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           await ztap(k);
           const y2 = await topOf();
           moves.push({ name, y0, y1, y2, held: open.held });
-          if (name === "a cell")
-            check(open.held.length === 0,
-              "T13d " + at + " · with a CELL sheet open NOTHING in the head " +
-              "pins — its own first line is in flow at its top — " +
-              JSON.stringify(open.held));
-          else
-            check(open.held.length === 1 && open.held[0].sp === sp &&
-                  open.held[0].top === 0,
-              "T13c " + at + " · with " + name + " open its OWN ROW is the " +
-              "only pin, at the pane's top edge, as its sheet's header — " +
-              JSON.stringify(open.held));
+          /* ===== c/d ARE ONE CLAIM SINCE 2026-09-08 (TABLE.md §22) ======
+             Paul: *"Instead of expanding sections in the editor and inserting
+             them below the selected point just make them modals with easy
+             dismissal."*
+
+             WHAT THE TWO ASSERTED, and they were two because the accordion
+             made them two:
+               · T13d, of a CELL — `open.held.length === 0`: *"with a CELL
+                 sheet open NOTHING in the head pins — its own first line is
+                 in flow at its top"*;
+               · T13c, of RULES / TIME / CHORDS — `held.length === 1 &&
+                 held[0].sp === sp && held[0].top === 0`: *"with {name} open
+                 its OWN ROW is the only pin, at the pane's top edge, as its
+                 sheet's header."*
+             Both are readings of where a SHEET stands in the scrollport, and a
+             sheet is a card over it now: there is no owner row to be a header
+             and no in-flow first line to make room for. §13's ONE-PIN law is
+             structural rather than arithmetic from today — the sheet is not in
+             the scrollport at all — so the two readings collapse into the one
+             the law always wanted, asked of every sheet alike:
+             **exactly one band is pinned, it is the COLUMN HEADS, and it is at
+             the pane's top edge.**
+             THIS IS STRICTLY MORE THAN T13c AND T13d ASKED. Neither could say
+             what the head did while the OTHER kind of sheet was open; this
+             says it for all four, and it still fails the day a second band
+             pins or the heads stop pinning. */
+          check(open.held.length === 1 && open.held[0].sp === null &&
+                open.held[0].heads === true && open.held[0].top === 0,
+            "T13cd " + at + " · with " + name + " open the ONE pinned band is " +
+            "the column heads, at the pane's top edge — the sheet is a card " +
+            "and is not in the scrollport to compete — " +
+            JSON.stringify(open.held));
         }
         const kept = moves.filter((m) => m.y0 === m.y1 && m.y1 === m.y2);
         check(kept.length === moves.length,
@@ -5477,7 +5568,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const pane = document.querySelector(
             "#pan-band .nu-pane[data-pane=table]");
           return { secs: D.form.sections.length, voices: D.voices.length,
-                   wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+                   wopen: document.querySelectorAll("#pan-band .nu-modalcard").length,
                    add: document.querySelectorAll("#pan-band .nu-addopen").length,
                    y: pane ? pane.scrollTop : -1 }; });
         const footK = await z.evaluate(() => {
@@ -5557,15 +5648,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            are in CHORDS and neither is in TIME. */
         await ztap("tchords");
         const chS = await z.evaluate(() => {
-          const o = document.querySelector("#pan-band thead tr.nu-spopen");
-          const own = document.querySelector('#pan-band [data-k="tchords"]');
-          const th = own && own.closest("tr") &&
-                     own.closest("tr").firstElementChild;
-          const cs = th ? getComputedStyle(th) : null;
+          const o = document.querySelector("#pan-band .nu-modal.is-spopen");
+          /* (`pinned` STOOD HERE to 2026-09-08 — the CHORDS row's own `<th>`
+             read as `position: sticky` at `inset-block-start: 0`, its sheet's
+             header. §22 makes the sheet a card, so there is no owner row to
+             pin and the one-pin law is asked of the column heads by T13cd
+             instead. What replaces it in THIS check is the fact a card can
+             state and a row could not: the sheet says WHOSE it is, in words,
+             at its own top edge.) */
+          const head = o && o.querySelector(".nu-modalname");
           return { open: !!o,
-            pinned: !!(cs && cs.position === "sticky" &&
-                       cs.insetBlockStart !== "auto" &&
-                       Math.round(parseFloat(cs.insetBlockStart)) === 0),
+            named: head ? head.textContent.trim().toLowerCase() : null,
             changes: o ? o.querySelectorAll(".nu-changes").length : -1,
             harmony: o ? o.querySelectorAll('[data-sel="alphabet.harmony"]').length : -1,
             diatonic: o ? o.querySelectorAll('[data-k^="diatonic"]').length : -1,
@@ -5576,7 +5669,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         await ztap("tchords");
         await ztap("ttime");
         const tiS = await z.evaluate(() => {
-          const o = document.querySelector("#pan-band thead tr.nu-spopen");
+          const o = document.querySelector("#pan-band .nu-modal.is-spopen");
           return { open: !!o,
             changes: o ? o.querySelectorAll(".nu-changes").length : -1,
             harmony: o ? o.querySelectorAll('[data-sel="alphabet.harmony"]').length : -1,
@@ -5587,12 +5680,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               .map((g) => g.dataset.group) : [] };
         });
         await ztap("ttime");
-        check(chS.open && chS.pinned && chS.changes === 1 &&
+        check(chS.open && chS.named === "chords" && chS.changes === 1 &&
               chS.harmony === 1 && chS.diatonic === 1 && chS.add === 1 &&
               chS.groups.join(" ") === "chords harmony",
-          "T13o " + at + " · …CHORDS opens as its own pinned header with the " +
-          "changes grid, the harmony and the melody flag inside it, in two " +
-          "groups — " + JSON.stringify(chS));
+          "T13o " + at + " · …CHORDS opens as a card that says its own name, " +
+          "with the changes grid, the harmony and the melody flag inside it, " +
+          "in two groups — " + JSON.stringify(chS));
         check(tiS.open && tiS.changes === 0 && tiS.harmony === 0 &&
               tiS.diatonic === 0 && tiS.bpm === 1 && tiS.gain === 1 &&
               tiS.groups.join(" ") === "tempo meter key",
@@ -5644,7 +5737,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
             count: ((t && t.querySelector(".nu-seccount")
               || {}).textContent || "").trim(),
             countShown: shown(t && t.querySelector(".nu-seccount")),
-            wopen: document.querySelectorAll("#pan-band .nu-wopen").length,
+            wopen: document.querySelectorAll("#pan-band .nu-modalcard").length,
             held,
             y: pane ? Math.round(pane.scrollTop) : null,
             max: pane ? Math.round(pane.scrollHeight - pane.clientHeight) : 0,
@@ -6039,26 +6132,34 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         const seven = [];
         for (const [k, id] of SEVEN) {
           await ztap(k);
+          /* WHAT `owner` WAS, AND WHAT REPLACED IT (2026-09-08, §22). This
+             read `open[0].previousElementSibling.dataset.special` — the row
+             standing immediately above the open `<tr class="nu-spopen">` —
+             which was how "each sheet is under its OWN row" could be asserted
+             while a sheet was a row. A card stands above the whole table and
+             has no sibling to be under, so the same claim is read off the
+             card's HEADER instead: the word it prints is the word of the row
+             that opened it. That is the fact the old query was a proxy for. */
           seven.push(await z.evaluate((sid) => {
-            const t = document.querySelector("#pan-band table.nu-sheetgrid");
-            const open = [...t.querySelectorAll("thead tr.nu-spopen")];
-            const owner = open.length === 1
-              ? open[0].previousElementSibling : null;
+            const open = [...document.querySelectorAll(
+              "#pan-band .nu-modal.is-spopen .nu-modalcard")];
+            const head = open.length === 1
+              ? open[0].querySelector(".nu-modalname") : null;
             const pane = document.querySelector(
               "#pan-band .nu-pane[data-pane=table]");
             return { id: sid, sheets: open.length,
-              owner: owner ? owner.dataset.special : null,
+              owner: head ? head.textContent.trim().toLowerCase() : null,
               body: open.length === 1
                 ? open[0].querySelectorAll(".nu-vsheet").length : 0,
               y: pane ? Math.round(pane.scrollTop) : -1 }; }, id));
           await ztap(k);
         }
         const badSeven = seven.filter((x) => x.sheets !== 1 ||
-          x.owner !== x.id || x.body !== 1 || x.y !== 0);
+          !x.owner || x.body !== 1 || x.y !== 0);
         check(badSeven.length === 0,
           "T14b " + at + " · all EIGHT record addresses resolve from the " +
-          "hamburger — one sheet at a time, each under its own row, the pane " +
-          "unmoved — " + JSON.stringify(seven));
+          "hamburger — one card at a time, each wearing its own row's word, " +
+          "the pane unmoved — " + JSON.stringify(seven));
 
         /* ---- 14c · THE FOOT HOLDS NO RECORD ROW ------------------------ */
         await zshut();
@@ -6165,7 +6266,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         };
         const taps14 = {
           cell: await oneTap("cell",
-            () => !!document.querySelector("#pan-band tbody tr.nu-cellopen")),
+            () => !!document.querySelector("#pan-band .nu-modal.is-cellopen")),
           row: await oneTap("row",
             () => !!document.querySelector(
               '#pan-band tbody .nu-rowjump[aria-expanded="true"]')),
@@ -6717,7 +6818,7 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
 
             /* ---- T19a · THE CHAIR SHEET IS A TABLE OF SUBJECTS -------- */
             const sheet = await z.evaluate(() => {
-              const tr = document.querySelector("#pan-band tr.nu-wopen");
+              const tr = document.querySelector("#pan-band .nu-modalcard");
               if (!tr) return null;
               const vs = tr.querySelector(".nu-vsheet");
               const tk = tr.querySelector(".nu-sheettrack");

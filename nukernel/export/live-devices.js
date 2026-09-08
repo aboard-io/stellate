@@ -667,7 +667,23 @@ export function instrumentTagOf(trackXml) {
 export const FX_PARAMS = {
   chorus:  { rate: 0.7, depth: 0.6, mix: 0.45 },
   phaser:  { rate: 0.35, depth: 0.8, mix: 0.7 },
-  flanger: { rate: 0.3, depth: 0.9, feedback: 0.6, mix: 0.6 },
+  /* THE FLANGER CAME DOWN 29 dB IN fields.js ON 2026-09-06 AND THIS COPY DID
+     NOT FOLLOW UNTIL 2026-09-08. Paul, on the real app: *"The phasers/flangers
+     on Minneapolis 1982 are right but WAY too turned up."* fields.js measured
+     the fix out of the shipped DSP — depth .9 / fb .6 / mix .6 is 37.62 dB of
+     comb ripple, depth .4 / fb .3 / mix .32 is 8.37, which is where the phaser
+     already sits — and moved. This line kept the old three, so gate F went red
+     and STAYED red across two rounds while the export handed Paul the 37 dB
+     flanger the app had stopped playing.
+     IT IS ONE RECORD AND IT IS HIS. fields.js's own census: *"`flanger` is
+     named by `minneapolissound` and by nothing else"* — the file in the bug
+     report is `minneapolissound-2.als`. The drift and the corruption were the
+     same record, found in the same hour, and only one of them was a crash.
+     A RED GATE IS A REPORT, NOT A NOTE. This is the paragraph above's own rule
+     landing on this line: *"duplicate the value if you must, never duplicate
+     the authority."* Gate F is the authority check and it was doing its job
+     from the first run; what failed is that a red was read and left. */
+  flanger: { rate: 0.3, depth: 0.4, feedback: 0.3, mix: 0.32 },
   tremolo: { rate: 5, depth: 0.8, mix: 0.9 },
   leslie:  { speed: 0.7, depth: 0.85, mix: 0.6 },
   wah:     { base: 320, range: 2.2, sens: 0.7, q: 4, mix: 0.9 },
@@ -875,9 +891,25 @@ export function fxDeviceFor(chip, params, ctx = {}) {
     case "flanger": return { device: "Chorus2", nearest: "no Flanger in either donor", params: {
       Rate: g("rate", 0.3), Amount: g("depth", 0.9), DryWet: g("mix", 0.6),
       Feedback: Math.abs(g("feedback", 0.6)),
-      // a flanger's comb is SHORT; Chorus2's ChorusDelayTime is 0..5 ms and the
-      // donor sits at 3, which is chorus territory
-      ChorusDelayTime: 0.8 },
+      /* A FLANGER'S COMB IS SHORT; Chorus2's ChorusDelayTime is 0..5 ms and
+         the donor sits at 3, which is chorus territory. So: 1.
+         IT WAS `0.8` AND LIVE REFUSED THE WHOLE FILE FOR IT (2026-09-08).
+         Paul: *"The document minneapolissound-2.als is corrupt and cannot be
+         loaded. (Unexpected value for int node: 0.8 (at line 4582, column
+         31))"* — the value in that sentence is this line, verbatim.
+         `ChorusDelayTime` IS AN INT NODE, and the donor says so in three
+         ways at once: its `Manual` is `3`, its `MidiControllerRange` is
+         `0..5`, and both ends are whole. A millisecond count on a 0..5 knob
+         has five positions, not a continuum — the comment above was right
+         about the UNITS and wrong about the TYPE, and 0.8 ms is a number this
+         parameter cannot hold. One is the shortest comb the device can spell
+         and is what "shorter than the donor's 3" has to round to.
+         NOTHING ELSE IN THIS FILE WAS WRONG THE SAME WAY, and that is
+         measured rather than assumed: `als-gate.js` gate I now reads every
+         parameter the donors only ever write whole and refuses a fraction in
+         it, and this was its one catch across the page's own 56,519-line
+         export. */
+      ChorusDelayTime: 1 },
       flags: { InvertFeedback: g("feedback", 0.6) < 0 } };
     /* THE PHASER, arrived 2026-09-03 on donor 4. The three constants are the
        Faust file's own (`chain = seq(i, 4, ap)` = 2 notches; `fb = 0.5`;

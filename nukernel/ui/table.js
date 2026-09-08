@@ -2445,6 +2445,9 @@ var RO = null;
 var OUT = null;
 var OWNER = () => globalThis.NuOpen || null;
 var SHEETNAME = "sheet";
+var CARDTOP = 0;
+var CARDTOPAT = null;
+var CAP = null;
 var STICK = null;
 var GRIDSTORE = "nu.band.grid.v1";
 var GRIDOPEN = (() => {
@@ -2544,8 +2547,52 @@ function bandTable(host, A2) {
     return n3;
   };
   const draw = () => {
+    MODAL = null;
     D(view(), host);
+    const root = host.querySelector(".nu-modalroot");
+    if (root) D(modal(), root);
+    keepCardScroll();
+    landFocus();
     stick();
+  };
+  const putCardTop = (body, want) => {
+    body.scrollTop = want;
+    if (body.scrollTop >= want - 1) return;
+    requestAnimationFrame(() => {
+      if (CARDTOPAT !== OPEN || !host.isConnected) return;
+      const b2 = host.querySelector(".nu-modalbody");
+      if (b2 && b2.scrollTop < want) b2.scrollTop = want;
+    });
+  };
+  const keepCardScroll = () => {
+    const body = host.querySelector(".nu-modalbody");
+    if (!body) return;
+    if (CARDTOPAT === OPEN && CARDTOP > 0 && body.scrollTop !== CARDTOP)
+      putCardTop(body, CARDTOP);
+    else if (CARDTOPAT !== OPEN) {
+      CARDTOP = 0;
+      CARDTOPAT = OPEN;
+    }
+    body.onscroll = () => {
+      CARDTOP = body.scrollTop;
+      CARDTOPAT = OPEN;
+    };
+  };
+  const armCardScroll = () => {
+    if (CAP) {
+      document.removeEventListener("pointerdown", CAP, true);
+      document.removeEventListener("click", CAP, true);
+    }
+    CAP = () => {
+      if (!OPEN || !host.isConnected) return;
+      const body = host.querySelector(".nu-modalbody");
+      if (body) {
+        CARDTOP = body.scrollTop;
+        CARDTOPAT = OPEN;
+      }
+    };
+    document.addEventListener("pointerdown", CAP, true);
+    document.addEventListener("click", CAP, true);
   };
   const armResize = (paneEl2) => {
     STICK = stick;
@@ -2572,13 +2619,10 @@ function bandTable(host, A2) {
     const tRect = t5.getBoundingClientRect();
     const base = pane2 ? tRect.top - pane2.getBoundingClientRect().top + pane2.scrollTop : 0;
     const tops = rows.map((tr) => base + (tr.getBoundingClientRect().top - tRect.top));
-    const spOpen = rows.findIndex((r2) => r2.classList.contains("nu-spopen"));
-    const cellOpen = !!t5.querySelector("tbody > tr.nu-cellopen");
-    const owner = spOpen > 0 ? spOpen - 1 : -1;
     const last = rows.length - 1;
     const lastRow = last >= 0 ? rows[last] : null;
-    const heads = GRIDOPEN && !!lastRow && !lastRow.dataset.special && !lastRow.classList.contains("nu-spopen");
-    const pinned = cellOpen ? -1 : owner >= 0 ? owner : heads ? last : -1;
+    const heads = GRIDOPEN && !!lastRow && !lastRow.dataset.special;
+    const pinned = heads ? last : -1;
     const pinRow = pinned >= 0 ? rows[pinned] : null;
     for (const tr of all)
       for (const c3 of Array.from(tr.children))
@@ -2630,7 +2674,57 @@ function bandTable(host, A2) {
   const wrap = (name, fn) => () => op(name, fn);
   const view = () => {
     const S2 = shapeOf(A2);
-    return b`<div class="nu-sheetwrap">${pane(S2)}</div>`;
+    return b`<div class="nu-sheetwrap">${pane(S2)}</div>
+      <div class="nu-modalroot"></div>`;
+  };
+  let MODAL = null;
+  const modal = () => {
+    const M3 = MODAL;
+    if (!M3) return A;
+    return b`<div class=${M3.cls ? "nu-modal " + M3.cls : "nu-modal"}
+        @pointerdown=${(e4) => {
+      if (e4.target !== e4.currentTarget) return;
+      e4.preventDefault();
+      shutSheet();
+    }}
+      ><div class="nu-modalcard" role="dialog" aria-modal="true"
+          tabindex="-1"
+          aria-label=${M3.name}
+          @keydown=${(e4) => {
+      if (e4.key === "Tab") {
+        holdTab(e4);
+        return;
+      }
+      if (e4.key !== "Escape") return;
+      e4.stopPropagation();
+      if (OPENFIELD) {
+        OPENFIELD = null;
+        draw();
+        return;
+      }
+      shutSheet();
+    }}
+        ><div class="nu-modalhead">
+          ${M3.head ?? b`<b class="nu-modalname">${M3.name}</b>`}
+          <button type="button" class="nu-modalx" data-k="tsheet-x"
+            aria-label=${t4("sheet.close", { name: M3.name })}
+            @click=${() => shutSheet()}>${t4("sheet.close.mark")}</button>
+        </div>
+        <div class="nu-modalbody">
+          ${sheetBody(
+      M3.fields,
+      M3.name,
+      OPENFIELD,
+      (k2) => {
+        OPENFIELD = k2;
+        draw();
+      },
+      () => {
+      }
+    )}
+        </div>
+      </div>
+    </div>`;
   };
   const cellHead = (S2) => {
     const at = S2.at();
@@ -2823,8 +2917,7 @@ function bandTable(host, A2) {
           </div>
         </th>
       </tr>`);
-      if (open)
-        out.push(openRow(S2, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen"));
+      if (open) openSheet(S2, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen");
     }
     return out;
   };
@@ -2978,9 +3071,17 @@ function bandTable(host, A2) {
   const orphanSheet = (S2) => {
     if (!OPEN) return A;
     if (OPEN.indexOf("col|") === 0 && !S2.across)
-      return openRow(S2, sheetFor(OPEN, () => colSheetOf(OPEN.slice(4))), OPEN.slice(4));
+      return openSheet(
+        S2,
+        sheetFor(OPEN, () => colSheetOf(OPEN.slice(4))),
+        OPEN.slice(4)
+      );
     if (OPEN.indexOf("row|") === 0 && S2.across)
-      return openRow(S2, sheetFor(OPEN, () => rowSheetOf(OPEN.slice(4))), OPEN.slice(4));
+      return openSheet(
+        S2,
+        sheetFor(OPEN, () => rowSheetOf(OPEN.slice(4))),
+        secNameOf(OPEN.slice(4))
+      );
     return A;
   };
   const bodyRow = (S2, rid, cols) => {
@@ -2994,20 +3095,31 @@ function bandTable(host, A2) {
       ${c2(cols, (c3) => c3, (c3) => bodyCell(S2, rid, c3))}
       <td class="nu-addcell"></td>
     </tr>
-    ${OPEN === openKey ? openRow(S2, sheetFor(
-      openKey,
-      () => S2.across ? colSheetOf(rid) : rowSheetOf(rid)
-    ), rid) : A}
+    ${/* AND THE NAME IS A NAME (2026-09-08, §22). It read `rid`, which is a
+        VOICE's name when the table faces voices and a SECTION's ID when it
+        does not — `s0`. That was invisible while the sheet was a row and
+        the string was only an `aria-label` on a body nobody named; a card
+        prints it, and a card headed `s0` is the raw model on the glass.
+        `A.secName` is the same reader `cellHead` and every row head use. */
+    A}
+    ${OPEN === openKey ? openSheet(
+      S2,
+      sheetFor(
+        openKey,
+        () => S2.across ? colSheetOf(rid) : rowSheetOf(rid)
+      ),
+      rowName(S2, rid)
+    ) : A}
     ${cols.map((c3) => {
       const key = S2.across ? "cell|" + c3 + "|" + rid : "cell|" + rid + "|" + c3;
-      return OPEN === key ? openRow(
+      return OPEN === key ? openSheet(
         S2,
         sheetFor(key, () => cellSheetOf(S2, rid, c3)),
         t4(
-          "cell.sheet.name",
+          "bar.address",
           {
-            name: S2.across ? rid : c3,
-            section: S2.across ? c3 : rid
+            section: secNameOf(S2.across ? c3 : rid),
+            player: S2.across ? rid : c3
           }
         ),
         "nu-cellopen",
@@ -3119,7 +3231,7 @@ function bandTable(host, A2) {
       ${c2(cols, (c3) => c3, (c3) => mixCell(c3))}
       <td class="nu-addcell"></td>
     </tr>
-    ${cols.map((c3) => OPEN === "mix|" + c3 ? openRow(S2, sheetFor(OPEN, () => wrapOps(mixSheet(A2, c3))), c3) : A)}`;
+    ${cols.map((c3) => OPEN === "mix|" + c3 ? openSheet(S2, sheetFor(OPEN, () => wrapOps(mixSheet(A2, c3))), c3) : A)}`;
   };
   const mixCell = (name) => {
     const openKey = "mix|" + name;
@@ -3145,18 +3257,20 @@ function bandTable(host, A2) {
       ${mixLamp(name)}
     </td>`;
   };
-  const openRow = (S2, fields, name, cls, head) => b`<tr class=${cls ? "nu-wopen " + cls : "nu-wopen"}
-      ><td colspan=${nCols(S2)}>${head ?? A}${sheetBody(
-    fields,
-    name,
-    OPENFIELD,
-    (k2) => {
-      OPENFIELD = k2;
-      draw();
-    },
-    () => {
-    }
-  )}</td></tr>`;
+  const openSheet = (_S, fields, name, cls, head) => {
+    MODAL = {
+      fields,
+      name,
+      cls: cls ? "is-" + cls.replace(/^nu-/, "") : null,
+      head: head ?? null
+    };
+    return A;
+  };
+  const secNameOf = (sid) => {
+    const i5 = A2.doc().form.sections.findIndex((x2) => x2.id === sid);
+    return i5 < 0 ? sid : A2.secName(i5);
+  };
+  const rowName = (S2, rid) => S2.across ? rid : secNameOf(rid);
   const rowSheetOf = (sid) => {
     const i5 = A2.doc().form.sections.findIndex((s3) => s3.id === sid);
     return i5 < 0 ? [] : wrapOps(rowSheet(A2, i5));
@@ -3342,7 +3456,13 @@ function bandTable(host, A2) {
     const tg = e4.target;
     const tag = tg?.tagName;
     if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
-    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || !!tg.closest(".nu-prodrow") || SPECIAL(OPEN) && !!tg.closest(".nu-wopen"));
+    const inSpecial = !!tg && (!!tg.closest(".nu-sprow") || !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") || !!tg.closest(".nu-prodrow") || /* (IT READ `SPECIAL(OPEN) && tg.closest(".nu-wopen")` TO 2026-09-08.
+       A special row's sheet is a card outside `.nu-pane` from §22, so this
+       handler — which is the PANE's `keydown` — cannot be reached from
+       inside one at all, and the clause it needed the class for is
+       answered by geometry. The card runs its own Escape, and nothing else
+       it holds is a key this ladder wants.) */
+    false);
     if (inSpecial && e4.key !== "Escape") return;
     if (meta && (e4.key === "z" || e4.key === "Z")) {
       e4.preventDefault();
@@ -3480,13 +3600,52 @@ function bandTable(host, A2) {
       if (!OPEN) return;
       const t5 = e4.target;
       if (!t5 || !t5.closest) return;
-      if (t5.closest(".nu-wopen")) return;
+      if (t5.closest(".nu-modalcard")) return;
       if (t5.closest("button, a, input, select, textarea, [role=slider], label"))
         return;
       if (!host.isConnected) return;
       shutSheet();
     };
     document.addEventListener("pointerdown", OUT, true);
+  }
+  let CARDAT = null;
+  let CAMEFROM = null;
+  function landFocus() {
+    const at = MODAL ? OPEN : null;
+    if (at === CARDAT) return;
+    if (at) {
+      if (!CARDAT) CAMEFROM = document.activeElement || null;
+      const card = host.querySelector(".nu-modalcard");
+      if (card) card.focus({ preventScroll: true });
+    } else if (CAMEFROM && CAMEFROM.isConnected) {
+      CAMEFROM.focus({ preventScroll: true });
+      CAMEFROM = null;
+    } else {
+      const pn = host.querySelector(".nu-pane");
+      if (pn) pn.focus({ preventScroll: true });
+      CAMEFROM = null;
+    }
+    CARDAT = at;
+  }
+  const TABBABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function holdTab(e4) {
+    const card = host.querySelector(".nu-modalcard");
+    if (!card) return;
+    const all = Array.from(card.querySelectorAll(TABBABLE));
+    if (!all.length) {
+      e4.preventDefault();
+      card.focus({ preventScroll: true });
+      return;
+    }
+    const first = all[0], last = all[all.length - 1];
+    const on = document.activeElement;
+    if (e4.shiftKey && (on === first || on === card)) {
+      e4.preventDefault();
+      last.focus();
+    } else if (!e4.shiftKey && on === last) {
+      e4.preventDefault();
+      first.focus();
+    }
   }
   function shutSheet() {
     if (!OPEN) return;
@@ -3533,6 +3692,7 @@ function bandTable(host, A2) {
   reindex();
   armResize(paneEl);
   armOutside();
+  armCardScroll();
   {
     const own = OWNER();
     if (own) own.register(SHEETNAME, () => {

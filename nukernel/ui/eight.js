@@ -14541,7 +14541,31 @@ function chromeRow() {
      beside it. The three gates that asserted the old order by name
      (test/shell.js A6d and A6n, test/gutter.js T9) are flipped with it,
      because they are reading the markup and the markup is what moved. */
-  stripEl.append(menuBtn, tapeNode(), whereBtn);
+  /* ===== AND THE TAPE WENT DOWN TO THE BAR ON 2026-09-08 (§22) =========
+     Paul: *"Move the playback bar to the bottom bar and expand the genre as
+     header."*
+
+     THE PARAGRAPH ABOVE IS KEPT WHOLE because it is the argument the tape
+     WON when it came up here, and every clause of it is still true about the
+     tape — it is the same component, `tapeNode()` still builds it,
+     `paintTape` is still its one writer, and the repaint budget T13f gates
+     still travels with it. What is no longer true is the CONCLUSION it drew
+     about which band a readout belongs to.
+     WHAT §18 TRADED, AND WHY THE TRADE IS OFF. Its reason for moving the tape
+     up was that the strip had a dead gap (191px at 390) and the bar was
+     tight. THE BAR IS NOT TIGHT ANY MORE: the room fader is off a phone
+     entirely (§22 item 1) and the gear went on 2026-09-07, so the foot is two
+     44px marks, the die, and 242.6px of air at 390 — measured. And the
+     strip's gap is not dead from today either: it is the RECORD'S NAME, which
+     is what *"expand the genre as header"* spends it on.
+     SO THE LAW GOES BACK TO ITS FIRST WORDING, and it is the simpler one:
+     THE TOP STRIP IS IDENTITY AND NAVIGATION; THE BOTTOM BAR IS THE
+     TRANSPORT — the controls AND the readout that says what they did. A tape
+     is where the ▶ that moves it is. §18 sharpened the law to fit a
+     measurement; the measurement changed, so the sharpening comes out.
+     THE STRIP IS TWO CHILDREN NOW, so the placing that was the tape's is the
+     NAME's: `#burger` at the start, the plate as the `1 1 auto` beside it. */
+  stripEl.append(menuBtn, whereBtn);
   nav.append(stripEl);
   nameRecord();
 
@@ -14790,7 +14814,18 @@ function chromeRow() {
      door that opens it and a field has to land SOMEWHERE a thumb can see. The
      countdown is the die's own face now, so `.nu-seedwait` is deleted too:
      one node fewer and one number in the place the gesture was made. */
-  barEl.append(seedRowEl, volWrap);
+  /* ...AND THE TAPE IS THE FLEXIBLE CHILD BETWEEN THE GROUPS (2026-09-08,
+     §22). It is appended AFTER the die and BEFORE the room for the reason the
+     strip's own comment gives about markup order: the band has no
+     `justify-content`, no `order` and no template, so whichever nodes sit
+     either side of the `1 1 auto` are at the two ends at every width, for
+     free. Under a left thumb: the transport, the die; then the tape running
+     out to the room at the far end — and on a phone, where there is no room
+     (`@media (pointer: coarse)` in nu.css), out to the end of the bar.
+     THE READOUT IS LAST IN READING ORDER FOR THE SAME REASON IT IS LAST IN
+     THE MARKUP: nothing in it is a target, so nothing is asking for a tab
+     stop before the controls. */
+  barEl.append(seedRowEl, tapeNode(), volWrap);
   nav.append(barEl);
 
   logPanel = $("nu-log");

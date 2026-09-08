@@ -1030,12 +1030,20 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
                /* THE TWO ENDS TRADED ON 2026-09-07 (TABLE.md §20). Paul:
                   *"Sorry hamburger should be on left."* The claim is the same
                   claim — the name and the one ≡ are the two ENDS of the band,
-                  one each, with the tape between them — and only which end is
-                  which has changed. It is read off the MARKUP, still, because
-                  the markup is what moved: ui/eight.js appends `#burger`, the
-                  tape, the name, so reading order, tab order and rendered
-                  order are one order and this check is a check on all three.
-                  (`plate.first` WAS `strip.firstElementChild === b`.) */
+                  one each — and only which end is which has changed. It is
+                  read off the MARKUP, still, because the markup is what moved:
+                  ui/eight.js appends `#burger` then the name, so reading
+                  order, tab order and rendered order are one order and this
+                  check is a check on all three.
+                  (`plate.first` WAS `strip.firstElementChild === b`.)
+                  ...AND THE BAND IS TWO CHILDREN SINCE 2026-09-08 (§22): this
+                  read *"with the tape between them"*, and the tape went back
+                  down to the bar (Paul: *"Move the playback bar to the bottom
+                  bar and expand the genre as header"*). `first` and `last` are
+                  now the SAME two nodes with nothing in the middle, and the
+                  name is the band's own `1 1 auto` — which is what "expand"
+                  means and is why nothing here had to change but this
+                  paragraph. */
                last: strip && strip.lastElementChild === b,
                inMenu: !!document.querySelector('#nu-menu [data-k="toptab-Where"]'),
                inBar: !!document.querySelector('#nu-bar [data-k="toptab-Where"]'),
@@ -1123,14 +1131,22 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       await page.evaluate(() => window.__eightUp());
       await page.waitForTimeout(200);
       const tape = await page.evaluate(async () => {
-        /* THE TAPE IS THE TOP STRIP'S SINCE 2026-09-06 (TABLE.md §18). Paul:
-           *"You could put the playback bar to the right of the genre on top
-           top if you want."* It is a READOUT and not a control, so it stands
-           with identity and navigation; the bar is controls and only controls,
-           which is where the room and the die went. Everything else this check
-           asserts is unchanged, because the component is unchanged: the same
-           node, the same `paintTape`, the same budget. */
-        const el = document.querySelector("#nu-topstrip > .nu-tape");
+        /* THE TAPE WAS THE TOP STRIP'S FROM 2026-09-06 (TABLE.md §18) AND
+           IS THE BAR'S AGAIN FROM 2026-09-08 (§22). Paul: *"Move the playback
+           bar to the bottom bar and expand the genre as header."* §18's reason
+           for taking it up was a measurement — the strip had a dead gap and
+           the bar was tight — and both halves have changed: the gear went, the
+           room fader is off a phone entirely, and the strip's gap is the
+           record's NAME now. The law goes back to its simpler wording: the top
+           strip is identity and navigation; the bottom bar is the transport,
+           the controls AND the readout that says what they did. A tape is
+           where the ▶ that moves it is.
+           EVERYTHING ELSE THIS CHECK ASSERTS IS UNCHANGED, because the
+           component is unchanged: the same node, the same `paintTape`, the
+           same one `.nu-count`, the same repaint budget. That is the sentence
+           §18 wrote about this move in the other direction, and it has now
+           survived the move twice. */
+        const el = document.querySelector("#nu-bar > .nu-tape");
         const say = el && el.querySelector(".nu-tapesay");
         const fill = el && el.querySelector(".nu-tapefill");
         const cnt = el && el.querySelector(".nu-count");
@@ -1166,29 +1182,31 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         return { there: true, bars, bpm, rest, end, nSay, nFill, repeats,
                  said: saidSeq.length,
                  counts: document.querySelectorAll(".nu-count").length,
-                 /* AND IT STANDS BETWEEN THE ≡ AND THE NAME — the gap the
-                    strip held empty at every width (191px at 390, 121 at
-                    320). "Last" was the bar's law; "between" is the strip's,
-                    and "between" is the half of this that did NOT change on
-                    2026-09-07 when the two ends traded (TABLE.md §20, Paul:
-                    *"Sorry hamburger should be on left."*). The tape is still
-                    the middle child of three and still the only flexible one,
-                    which is WHY the two nodes either side of it are at the two
-                    ends; all that moved is which of them is `k[0]`. */
-                 last: (() => { const st = document.getElementById("nu-topstrip");
-                   const k = [...st.children];
-                   return k.length === 3 && k[1] === el &&
-                          k[0].id === "burger"; })(),
+                 /* AND IT STANDS BETWEEN THE DIE AND THE ROOM, which is the
+                    same claim this check has always made in its strongest
+                    form: the tape is the band's ONE flexible child, so
+                    whatever sits either side of it is at the two ends, at
+                    every width, for free. ("Last" was the bar's law to
+                    2026-09-06; "between" was the strip's from then to
+                    2026-09-08; it is the bar's again, and it is the clause
+                    that has outlived every move.) The room is `display: none`
+                    on a coarse pointer (§22) and is still a CHILD, so the
+                    markup order is four wherever this driver runs. */
+                 last: (() => { const bar = document.getElementById("nu-bar");
+                   const k = [...bar.children];
+                   return k.length === 4 && k[2] === el &&
+                          k[0].className === "nu-bartp" &&
+                          k[1].className === "nu-seedrow"; })(),
                  fits: el.getBoundingClientRect().right <=
                        document.documentElement.clientWidth + 0.5 &&
                        say.scrollWidth <= say.clientWidth + 1 };
       });
-      if (!tape.there) fail("A6n " + width + " · there is no tape in the strip");
+      if (!tape.there) fail("A6n " + width + " · there is no tape in the bar");
       else {
         is(/\d+ bars?$/.test(tape.rest.say) && tape.rest.pct === 0 &&
            tape.counts === 1 && tape.last && tape.fits,
-          "A6n " + width + " · the tape stands between the record's name and "
-          + "the ≡ in the top strip, it says how "
+          "A6n " + width + " · the tape stands between the die and the room "
+          + "in the bottom bar, it says how "
           + "long the record is at rest with no fill, it holds the ONE "
           + ".nu-count on the page, and it fits — " + JSON.stringify(tape.rest)
           + " counts " + tape.counts + " fits " + tape.fits);
@@ -1361,6 +1379,20 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
           + "the sheet its own column head opens, one tap from rest; the `+` "
           + "at the head of the axis fires the one the band has not got — "
           + JSON.stringify(r));
+        /* ...AND THE COLUMN'S SHEET IS SHUT BEFORE THE ROW'S IS REACHED FOR
+           (2026-09-08, TABLE.md §22). A sheet is a CARD now, so while one is
+           open nothing behind it is pressable — which is the whole of what
+           `aria-modal` and a scrim promise, and it is the behaviour this gate
+           met as a 30-second timeout: *"`<b class="nu-modalname">…</b>` from
+           `<div class="nu-modalroot">…</div>` subtree intercepts pointer
+           events"*, 60 retries, on a row head under the card the block above
+           had just opened. The accordion let a hand reach past an open sheet
+           to another head; a modal does not, and a person shuts the one they
+           are in before opening the next. So does this. Escape is used and
+           not the ×, because it is the one door that needs no node found
+           first. */
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(350);
         const rowHead = await page.$('#pan-band th.nu-srowh button[data-k^="trow|"]');
         if (rowHead) {
           const rowId = await page.evaluate((h) => h.dataset.k.slice(5), rowHead);
@@ -1397,8 +1429,16 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
              2026-09-05 only because a hire USED to land on the new player and
              replace this sheet with a column's (TABLE.md §13e deletes that
              landing). A gate that opens a door closes it. */
+          /* ...AND IT SHUTS IT WITH ESCAPE SINCE 2026-09-08 (TABLE.md §22).
+             The paragraph above is unchanged in its argument — a gate that
+             opens a door closes it — and only in its HAND: the sheet is a
+             card now, so a press aimed at the row head behind it is
+             intercepted by the scrim (measured: *"`<b class=
+             "nu-modalname">…</b>` … intercepts pointer events"*, 59 retries,
+             a 30-second timeout). Escape is the door that needs no node found
+             first, and it is one of the four §22 gives the card. */
           if (await page.evaluate((h) => h.getAttribute("aria-expanded") === "true",
-                                  rowHead)) await rowHead.click();
+                                  rowHead)) await page.keyboard.press("Escape");
           await page.waitForTimeout(400);
         } else skip(width + " · no section row head for A6l");
       } else skip(width + " · no player column head for A6l");

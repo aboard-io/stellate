@@ -5,22 +5,37 @@
 // chips. Double-tap or Enter edits in place; Escape cancels; Delete clears back
 // to inherit."*
 //
-// ===== WHERE THE FORMULA BAR IS, AND WHY IT IS NOT FLOATING ============
+// ===== WHERE THE FORMULA BAR IS, AND WHY IT IS A CARD (2026-09-08) =====
+// Paul: *"Instead of expanding sections in the editor and inserting them below
+// the selected point just make them modals with easy dismissal."* TABLE.md §22.
+//
 // A spreadsheet's formula bar is a strip above the grid because a spreadsheet's
-// cell is one value. A cell here is a VECTOR of up to eighteen fields, and this
-// page has two standing laws about where that many words may go:
-//   · MENUS NEVER SCROLL INSIDE THEMSELVES (nukernel design language,
-//     2026-08-16: "Don't make me scroll INSIDE a popup, vertical space is cheap
-//     and abundant") — so the bar opens to its full height and pushes the page
-//     down;
-//   · CELL MENUS INSERT BELOW THE ROW (accordion, one open), never a floating
-//     popup that covers the column you are editing.
-// So the bar's BODY is a `<tr class="nu-wopen">` under the selected row, which
-// is where every sheet on this surface has opened since wave 2b and what
-// test/table.browser.js `sheetRows()` reads. What is ABOVE the grid is the
-// bar's HEAD (grid.ts `.nu-formula`): the ADDRESS of the selection, undo/redo,
-// and the two axis offers. Head and body are one control — the head names the
-// cell, the body is its vector — and no field is drawn twice.
+// cell is one value. A cell here is a VECTOR of up to eighteen fields, and that
+// diagnosis has not changed — what changed is the answer.
+//
+// WHAT THIS FILE SAID UNTIL 2026-09-08, kept because a gate and a stylesheet
+// still carry its vocabulary: "this page has two standing laws about where that
+// many words may go: · MENUS NEVER SCROLL INSIDE THEMSELVES (nukernel design
+// language, 2026-08-16: 'Don't make me scroll INSIDE a popup, vertical space is
+// cheap and abundant') — so the bar opens to its full height and pushes the
+// page down; · CELL MENUS INSERT BELOW THE ROW (accordion, one open), never a
+// floating popup that covers the column you are editing. So the bar's BODY is a
+// `<tr class="nu-wopen">` under the selected row."
+//
+// THE SECOND LAW IS REVERSED AND THE FIRST IS BENT, ON ONE MEASUREMENT: the
+// eighteen-field vector opened a row 779.4px tall on an 844px phone. "Pushes
+// the page down" meant "puts the record off the screen", and "vertical space is
+// cheap and abundant" is a claim about a scrolling DOCUMENT, not about a phone.
+// The body is a `.nu-modalcard` now — one card, one open, dismissed by its ×,
+// by Escape, by a press on the scrim — and it is the one scroller in the
+// arrangement, so the grid behind it holds still instead of being shoved.
+// WHAT IS UNCHANGED IS EVERYTHING THIS FILE ACTUALLY BUILDS. `sheetBody` emits
+// the same `.nu-vsheet` with the same rows, the same pickers, the same
+// `data-k`s and the same one-owner rule about which widget a vocabulary gets;
+// grid.ts `openSheet` is the only line that moved. The HEAD is `cellHead` (the
+// ADDRESS of the selection, undo/redo, copy/paste) and it is the card's first
+// line. Head and body are one control — the head names the cell, the body is
+// its vector — and no field is drawn twice.
 //
 // ===== ONE OWNER FOR WHICH WIDGET A VOCABULARY GETS ====================
 // TABLE.md 9b: *"Dropdowns: the native picker on touch, the typed combo on

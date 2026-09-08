@@ -20,23 +20,36 @@
 // address. Every `data-k` the gates read is minted in src/table/model.ts off a
 // key the document or avail.js already owns (`tcell|<voice>|<section>`,
 // `trow|<id>`, `tcol|<name>`, `material.cell|…`, `tcellvec|<key>|<vi>|<si>`,
-// `trow-dup|…`, `tcol-add|line`, `tcorner`, `tfoot|perf`…), the open sheet is
-// still a `<tr class="nu-wopen">` under the row it belongs to, and the classes
+// `trow-dup|…`, `tcol-add|line`, `tcorner`, `tfoot|perf`…), and the classes
 // nu.css and test/table.browser.js read are the same ones. T4-T8 are read
 // against the rendered page and stayed green through the swap; that is the
-// whole argument for a strangler and it is why the grid went first.
+// whole argument for a strangler and it is why the grid went first. (This
+// paragraph read "…the open sheet is still a `<tr class="nu-wopen">` under
+// the row it belongs to" until 2026-09-08. It is a card now; see below.)
 //
-// ===== WHY THE SHEET IS STILL AN INSERTED ROW ==========================
-// 9a says "the FORMULA BAR above the grid". A spreadsheet's formula bar holds
-// ONE value; a cell here is a vector of up to eighteen fields, and two standing
-// laws of this page decide where that many words may go — MENUS NEVER SCROLL
-// INSIDE THEMSELVES, and CELL MENUS INSERT BELOW THE ROW (never a popup over
-// the column you are editing). So the bar is drawn in two parts that are one
-// control: its HEAD is `.nu-formula` above the pane (the ADDRESS of the
-// selection, undo/redo, copy/paste, and the two axis offers), and its BODY is
-// the vector, in the accordion, under the row the cell is in. No field is drawn
-// twice. On a phone the head is sticky to the BOTTOM of the pane, which is
-// 9a's "the formula bar is the bottom sheet" in this page's own language.
+// ===== WHY THE SHEET IS A CARD AND NOT AN INSERTED ROW (2026-09-08) ====
+// Paul: *"Instead of expanding sections in the editor and inserting them below
+// the selected point just make them modals with easy dismissal."*
+//
+// WHAT THIS PARAGRAPH SAID, AND IT WAS RIGHT ABOUT THE PROBLEM: "9a says 'the
+// FORMULA BAR above the grid'. A spreadsheet's formula bar holds ONE value; a
+// cell here is a vector of up to eighteen fields, and two standing laws of
+// this page decide where that many words may go — MENUS NEVER SCROLL INSIDE
+// THEMSELVES, and CELL MENUS INSERT BELOW THE ROW (never a popup over the
+// column you are editing)." The diagnosis stands: a cell IS a vector of
+// eighteen fields and that is too many words for a strip.
+// WHERE IT WENT WRONG IS THE SECOND LAW, AND THE MEASUREMENT IS §22's: an
+// eighteen-field vector under a row is a `<tr>` **779.4px tall** at 390 x 844
+// — the whole glass — inserted BETWEEN the row you tapped and the ten rows
+// under it. The law was written to keep the cell you are editing on the
+// screen and it took the entire record off it instead. A surface that size is
+// a modal whether or not it is spelt as one; spelling it as one lets it be
+// dismissed like one and lets the document behind it hold still.
+// SO THE BAR IS ONE CONTROL IN TWO PARTS STILL, and the two parts are both in
+// the card: the HEAD is `cellHead` (the ADDRESS of the selection, undo/redo,
+// copy/paste) and the BODY is the vector. No field is drawn twice. The card
+// carries the sheet's NAME in its own header, which is what replaces "you can
+// see the row it came from".
 //
 // ===== NO CLOCK, NO SECOND STATE =======================================
 // The component installs no rAF and subscribes to nothing: `paint()` is a
@@ -120,6 +133,15 @@ const OWNER = (): OpenOwner | null =>
   (globalThis as unknown as { NuOpen?: OpenOwner }).NuOpen || null;
 /** the name this surface is known by to the one owner. */
 const SHEETNAME = "sheet";
+/* HOW FAR DOWN THE OPEN CARD IS SCROLLED, AND WHICH SHEET THAT IS ABOUT. Module
+   scope for `RO` and `OUT`'s own reason: ui/eight.js throws this panel away and
+   builds it again on every write, so anything that must outlive a rebuild
+   cannot live on the instance. See `keepCardScroll`. */
+let CARDTOP = 0;
+let CARDTOPAT: string | null = null;
+/* ...and the capture-phase reader that keeps it honest when a scroll and a
+   write land in the same frame. See `armCardScroll`. */
+let CAP: ((e: Event) => void) | null = null;
 let STICK: (() => void) | null = null;
 /* ---- IS THE GRID SHOWING? (2026-09-05, TABLE.md §13f, Paul: *"Sections
    should collapse when I touch it."*) The SECTIONS label is a disclosure now:
@@ -385,7 +407,91 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     return n;
   };
 
-  const draw = () => { render(view(), host); stick(); };
+  const draw = () => {
+    MODAL = null;                       // the walk below is what fills it
+    render(view(), host);
+    const root = host.querySelector(".nu-modalroot");
+    if (root) render(modal(), root as HTMLElement);
+    keepCardScroll();
+    landFocus();
+    stick();
+  };
+  /* ---- WHERE THE CARD WAS SCROLLED TO, KEPT ACROSS THE REBUILD --------
+     (2026-09-08, TABLE.md §22.) Paul's own law about this surface is *"Don't
+     dismiss things when I tap them to change values"*, and §13's is *"a tap
+     moves nothing"*. A card that jumped back to its top every time a chip was
+     tapped would break both — and it did, measured: test/table.browser.js
+     T12n reported `tops: [0, 707, 0]` before a write and `now: [0, 0, 0]`
+     after it. 707px of an eighteen-field sheet, thrown away by a tap on a
+     word inside it.
+     WHY IT NEEDS KEEPING AT ALL, WHICH IS THE HALF THE ACCORDION GOT FOR
+     FREE: the scroller used to be `.nu-pane`, and ui/eight.js rebuilds this
+     whole panel on every write — the pane survived because the pane has its
+     own keeper. The card's scroller is `.nu-modalbody`, which is BORN with
+     each rebuild, so its position has to be remembered somewhere that outlives
+     the instance. `SCROLLX` in src/lozenge/field.ts keeps a track's sideways
+     position for exactly this reason and in exactly this shape.
+     IT IS KEYED BY WHICH SHEET IS OPEN, so opening a DIFFERENT sheet starts at
+     the top (a new surface, read from its first line) while a write inside the
+     one you are in does not move. `onscroll` and not `addEventListener`, so
+     the handler is one however many times this runs. */
+  /* ...AND A SCROLL SET BEFORE THE CONTENT IS THERE IS CLAMPED, which is the
+     second half of this and was measured rather than guessed. Restoring 564
+     landed on 328, every time. The card's `scrollHeight` at the moment lit
+     commits is **924**; one frame later, when the sheet's seated widgets have
+     drawn themselves, it is **1470**. `scrollTop = 564` against a 924-tall
+     scroller is 564 clamped to `924 - 596`, and nothing ever put it back.
+     SO A SHORT LANDING IS RETRIED ONCE, ON THE NEXT FRAME, and only a short
+     one: if the first write took, there is no second. The retry re-reads the
+     body (the panel may have been rebuilt under it again) and gives up if the
+     open sheet has changed, so it can never drag a NEW sheet's scroll to an
+     old sheet's position. */
+  const putCardTop = (body: HTMLElement, want: number): void => {
+    body.scrollTop = want;
+    if (body.scrollTop >= want - 1) return;          // it took
+    requestAnimationFrame(() => {
+      if (CARDTOPAT !== OPEN || !host.isConnected) return;
+      const b2 = host.querySelector(".nu-modalbody") as HTMLElement | null;
+      if (b2 && b2.scrollTop < want) b2.scrollTop = want;
+    });
+  };
+  const keepCardScroll = (): void => {
+    const body = host.querySelector(".nu-modalbody") as HTMLElement | null;
+    if (!body) return;
+    if (CARDTOPAT === OPEN && CARDTOP > 0 && body.scrollTop !== CARDTOP)
+      putCardTop(body, CARDTOP);
+    else if (CARDTOPAT !== OPEN) { CARDTOP = 0; CARDTOPAT = OPEN; }
+    body.onscroll = () => { CARDTOP = body.scrollTop; CARDTOPAT = OPEN; };
+  };
+  /* ...AND THE `scroll` EVENT IS TOO LATE ON ITS OWN, WHICH IS MEASURED.
+     `onscroll` above is the ordinary path and it works for an ordinary hand:
+     you scroll, the event fires a frame later, the position is kept, you tap.
+     It does NOT work when the scroll and the write land in the same frame —
+     `scrollIntoView()` followed immediately by a press — because a scroll
+     event is delivered asynchronously and the write has already rebuilt the
+     panel by the time it would have arrived. test/table.browser.js T12n does
+     exactly that and reported `tops: [0, 707, 0]` -> `now: [0, 0, 0]`: 707px
+     of sheet thrown away, with the keeper installed.
+     SO THE POSITION IS ALSO TAKEN AT THE MOMENT OF THE PRESS, in the CAPTURE
+     phase, before any control's own handler can run. `click` as well as
+     `pointerdown`, and that is not belt-and-braces: `HTMLElement.click()`
+     dispatches a click and no pointer events at all, so a capture listener on
+     `pointerdown` alone reads nothing from a synthetic press — and every
+     surface on this page can be driven that way.
+     ONE LISTENER PAIR FOR THE LIFE OF THE PAGE, re-armed on every rebuild,
+     which is `armOutside`'s own arrangement and for its own reason: the
+     keeper must belong to the grid that is on the glass. */
+  const armCardScroll = (): void => {
+    if (CAP) { document.removeEventListener("pointerdown", CAP, true);
+               document.removeEventListener("click", CAP, true); }
+    CAP = () => {
+      if (!OPEN || !host.isConnected) return;
+      const body = host.querySelector(".nu-modalbody") as HTMLElement | null;
+      if (body) { CARDTOP = body.scrollTop; CARDTOPAT = OPEN; }
+    };
+    document.addEventListener("pointerdown", CAP, true);
+    document.addEventListener("click", CAP, true);
+  };
   /* ...AND `stick()` RUNS AGAIN WHEN THE PANE CHANGES WIDTH, which a redraw
      does not cover: a rotation or a resized window moves `--panew` and every
      frozen offset, and nothing on this page redraws for either. ONE observer,
@@ -516,9 +622,28 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        AND NOTHING IN `<tfoot>` EVER. This walk has only ever read `thead > tr`
        and it says so here rather than in a comment three files away: a master
        strip belongs at the bottom of a desk, not pinned over it. */
-    const spOpen = rows.findIndex((r) => r.classList.contains("nu-spopen"));
-    const cellOpen = !!t.querySelector("tbody > tr.nu-cellopen");
-    const owner = spOpen > 0 ? spOpen - 1 : -1;
+    /* ===== AND THE TWO SHEET BRANCHES ARE GONE WITH THE ACCORDION =======
+       (2026-09-08, §22.) The three-clause law above is kept whole because it
+       is the argument for the ONE clause that is left, and because the two it
+       has retired have to be findable by anyone who reads a gate that still
+       names them. They read:
+
+         · `const spOpen = rows.findIndex(r => r.classList.contains("nu-spopen"))`
+           and `const owner = spOpen > 0 ? spOpen - 1 : -1` — the OWNER row of
+           an open head sheet, pinned at 0 as that sheet's header;
+         · `const cellOpen = !!t.querySelector("tbody > tr.nu-cellopen")` —
+           a cell sheet is open, so NOTHING in the head pins.
+
+       BOTH ARE UNREACHABLE NOW AND NOT MERELY UNUSED: a sheet is a card
+       outside the table, so no `<tr>` in this document can carry either class
+       and both expressions are a `querySelector` that can only answer null.
+       Dead code that reads like live law is worse than no law, so it is a
+       tombstone and the walk keeps one branch.
+       AND THE LAW ITSELF IS SIMPLER FOR IT, which is the round's own dividend:
+       *"the grid's column heads while a section row is under them, and never
+       both"* — there is no second thing to be `both` WITH. The one-pin
+       guarantee §13 was written to make is now structural rather than
+       arithmetic: the card is not in the scrollport at all. */
     const last = rows.length - 1;
     /* ...AND THE LAST VISIBLE ROW IS ONLY A PIN WHEN IT IS THE COLUMN HEADS
        WITH A BODY UNDER THEM (§13f, and §15a). It read *"with the grid folded
@@ -529,9 +654,8 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        both halves of what it has always meant: the heads, AND the body they
        head being on the glass. */
     const lastRow = last >= 0 ? rows[last]! : null;
-    const heads = GRIDOPEN && !!lastRow && !lastRow.dataset.special &&
-      !lastRow.classList.contains("nu-spopen");
-    const pinned = cellOpen ? -1 : (owner >= 0 ? owner : (heads ? last : -1));
+    const heads = GRIDOPEN && !!lastRow && !lastRow.dataset.special;
+    const pinned = heads ? last : -1;
     /* ...AND EVERY ROW IS WRITTEN, INCLUDING THE FOLDED ONES (2026-09-05,
        §13f). `nu.css` pins every `thead th` at `inset-block-start: 0` and this
        walk's job is to say which row keeps it — so a row left with NO inline
@@ -666,9 +790,154 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      rather than collapsing into the pane: `min-block-size: 0` on the child is
      what turns the wrap's height cap into a scroller (§11c), and a wrap with
      one child is still the box that owns the cap. */
+  /* ===== AND THE SHEET IS A MODAL FROM 2026-09-08 (TABLE.md §22) ========
+     Paul: *"Instead of expanding sections in the editor and inserting them
+     below the selected point just make them modals with easy dismissal."*
+
+     THIS REVERSES A FOUNDING LAW OF THIS SURFACE, and the law is written down
+     rather than quietly deleted, because it was RIGHT about the thing it was
+     measuring. It read, at the head of src/table/sheet.ts and at DESIGN.md
+     component 4: *"CELL MENUS INSERT BELOW THE ROW (accordion, one open),
+     never a floating popup that covers the column you are editing"*, and its
+     reason was that a popup hides the cell whose value you are choosing.
+     WHAT IT COST, MEASURED, WHICH IS WHY IT IS BEING REVERSED: on Kingston
+     1969 at 390 x 844, tapping the first cell of the first section opened a
+     `<tr>` **779.4px tall** — the whole glass, less the two bands — and it
+     opened it BELOW the row, so the ten rows under it were pushed 779px down
+     and the grid a hand had just been reading was gone. The law bought "you
+     can still see the cell you tapped" and paid for it with "you can no
+     longer see the record". At the size these vectors grew to (eighteen
+     fields), the accordion IS a full-screen surface; it was simply one that
+     lied about its shape and shoved the document around on the way in.
+     SO IT IS A MODAL, AND THE OLD LAW'S ONE GOOD CLAUSE SURVIVES INSIDE IT:
+     the card carries the sheet's NAME in its header — `Intro 1 x stab` — so
+     the address you are editing is on the glass exactly as the cell under the
+     row used to be, and it is a WORD rather than a position.
+     THE OTHER STANDING LAW IS THE ONE THAT BENDS: *"Don't make me scroll
+     INSIDE a popup, vertical space is cheap and abundant"* (2026-08-16).
+     Vertical space is abundant in a DOCUMENT and it is exactly 844px on a
+     phone; a card pinned between the two fixed bands has 720 of them and an
+     eighteen-field vector does not fit. The card scrolls, and it is the ONE
+     scroller in this arrangement — the page behind it does not move while it
+     is open, which is what the accordion could never promise.
+     EASY DISMISSAL IS FOUR DOORS, and they are the four `shutSheet` already
+     had: the ×, Escape, a tap outside (`armOutside`, whose "outside" is now
+     the scrim), and the owner's own closer. Nothing new opens or closes a
+     sheet; what changed is where the sheet stands.
+
+     THE CARD IS A SECOND lit ROOT, AND THAT IS A MEASUREMENT RATHER THAN A
+     STYLE. `MODAL` is filled by `openSheet` during the walk — the six places
+     that used to emit a `<tr>` hand their sheet up instead — and the first
+     draft put the card in the SAME template, after the pane
+     (`html`...${pane(S)}...${modal(S)}``), on the assumption that lit
+     evaluates its expressions left to right. It does, and the card was still
+     empty, every time: `tbody` renders its rows through `repeat()`, which is
+     a DIRECTIVE, so `bodyRow` — and therefore `openSheet` — does not run when
+     the template is CONSTRUCTED, it runs when lit COMMITS it. `MODAL` was
+     read one whole render before it was written. (Measured: the cell reported
+     `aria-expanded="true"` and there was no `.nu-modalcard` in the document.)
+     SO `draw()` IS TWO PASSES AND THE SECOND ONE IS THE CARD. The first pass
+     renders the table and leaves an empty `.nu-modalroot` behind it; the walk
+     fills `MODAL` on its way through; the second pass renders the card into
+     that root, by which time the answer exists. `MODAL` is cleared before the
+     first pass, so a draw with nothing open renders `nothing` into the root
+     and the card is gone.
+     THE ROOT IS INSIDE THE HOST, not bolted to `<body>`. It is an ordinary
+     element of the first template, so lit owns its life: it cannot leak one
+     per rebuild (ui/eight.js throws this panel away and builds it again on
+     every op), it goes when the panel goes, and the card stays INSIDE `#app`
+     where the frozen-half law can see it. Its own children are lit's second
+     part and the first pass never touches them, because there is no binding
+     inside that div for the first pass to update. */
   const view = (): TemplateResult => {
     const S = shapeOf(A);
-    return html`<div class="nu-sheetwrap">${pane(S)}</div>`;
+    return html`<div class="nu-sheetwrap">${pane(S)}</div>
+      <div class="nu-modalroot"></div>`;
+  };
+
+  /* WHAT IS OPEN, AS A THING TO DRAW RATHER THAN AS A ROW ALREADY DRAWN.
+     One slot: `OPEN` is one key and this surface has always had exactly one
+     sheet on it (`test/oneopen.js` is the gate), so a second assignment in
+     one build would be the bug, not a stack. */
+  let MODAL: { fields: Field[]; name: string;
+               cls: string | null; head: TemplateResult | null } | null = null;
+
+  /* ---- THE CARD ------------------------------------------------------
+     A SCRIM AND A CARD, AND THE SCRIM IS A DISMISS. The root takes the
+     pointer so a press on the dark falls to `shutSheet` — `armOutside` does
+     the same job at the document level and is kept as the belt, because it is
+     also what closes the sheet when a press lands on the page's own chrome.
+     `aria-modal` AND `role="dialog"` ARE ON THE CARD, NOT THE SCRIM, which is
+     what the two attributes mean: the dialog is the box with the content in
+     it. The card's accessible name is the sheet's own name — the same string
+     the header prints — so a screen reader announces `Intro 1 x stab` on
+     arrival and never a nameless dialog.
+     THE HEADER IS THE SHEET'S NAME AND ITS ×, which is the shape `sheetHead`
+     already gives every full-page sheet on this box (ui/eight.js): a name at
+     the start, a close at the end. One arrangement for "a surface you are
+     inside of", wherever it opens.
+     ...AND ON A CELL SHEET THE NAME IS `cellHead`, which is the round's one
+     real join. A cell's sheet arrives with a head already — the ADDRESS of
+     the selection plus undo · redo · copy · paste (§13a.6) — and its address
+     is the same sentence a title bar would print. Drawn in both places the
+     card said `bass 1 × stab` twice, once as a title and once four pixels
+     under it. So the head IS the title when there is one: the formula bar and
+     the way out are one line, `data-k="taddr"` keeps its home in
+     test/table-inventory.json, and the four verbs are OUTSIDE the scroller —
+     undo is on the glass at every scroll position of an eighteen-field
+     vector, which it never was in the accordion.
+     THE DIALOG'S ACCESSIBLE NAME IS `M.name` EITHER WAY, so a screen reader
+     hears `bass 1 × stab` on arrival whether or not that string is also
+     printed as a title. A name a machine reads and a word an eye reads are
+     the same fact here and it has one owner: the `name` the caller passed. */
+  const modal = (): TemplateResult | typeof nothing => {
+    const M = MODAL;
+    if (!M) return nothing;
+    /* THE SECOND CLASS IS THE CALLER'S OWN, AND THERE IS NOT ALWAYS ONE.
+       `nu-cellopen` and `nu-spopen` — the two the accordion's rows wore, and
+       the two eight gates address a sheet BY KIND with — arrive here as
+       `is-cellopen` and `is-spopen`; the other four sheets pass no class and
+       get none, rather than an invented one no rule draws and no gate reads. */
+    return html`<div class=${M.cls ? "nu-modal " + M.cls : "nu-modal"}
+        @pointerdown=${(e: PointerEvent) => {
+          if (e.target !== e.currentTarget) return;
+          e.preventDefault(); shutSheet(); }}
+      ><div class="nu-modalcard" role="dialog" aria-modal="true"
+          tabindex="-1"
+          aria-label=${M.name}
+          @keydown=${(e: KeyboardEvent) => {
+            /* TAB IS HELD INSIDE THE CARD, which is the other half of what
+               `aria-modal` promises. The attribute tells a screen reader the
+               rest of the page is inert; nothing tells a TAB key, so without
+               this the third press walks out of the dialog and into a grid
+               nobody can see under the veil. The wrap is the smallest honest
+               one: the card's own focusables, first and last, and the two
+               edges sent to each other. */
+            if (e.key === "Tab") { holdTab(e); return; }
+            if (e.key !== "Escape") return;
+            /* THE PANE'S OWN Escape LADDER IS NOT REACHABLE FROM HERE — the
+               card is outside `.nu-pane`, so `onKey` never sees this key —
+               and its first rung is restated rather than duplicated: an open
+               FIELD closes back to the sheet, and a sheet with nothing open
+               inside it closes. Everything below that rung (the selection,
+               the anchor) belongs to the grid and cannot be reached while a
+               card is over it. */
+            e.stopPropagation();
+            if (OPENFIELD) { OPENFIELD = null; draw(); return; }
+            shutSheet(); }}
+        ><div class="nu-modalhead">
+          ${M.head ?? html`<b class="nu-modalname">${M.name}</b>`}
+          <button type="button" class="nu-modalx" data-k="tsheet-x"
+            aria-label=${t("sheet.close", { name: M.name })}
+            @click=${() => shutSheet()}>${t("sheet.close.mark")}</button>
+        </div>
+        <div class="nu-modalbody">
+          ${sheetBody(M.fields, M.name, OPENFIELD,
+                      (k) => { OPENFIELD = k; draw(); },
+                      () => { /* the write ends in changed() -> draw() */ })}
+        </div>
+      </div>
+    </div>`;
   };
 
   /* ---- THE CELL SHEET'S FIRST LINE (§13a.6) ---------------------------
@@ -785,14 +1054,20 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      special row DOES have a row of its own, three rows up: tapping TIME opened
      an editor under TIME, RULES and PHRASES and the column heads, four rows
      away from the word that opened it. DESIGN.md §2.3 says a special row's
-     *"expanded = its sheet"* and §2.4 says a sheet is *"in flow (never a
-     modal)"*, so the sheet is this row's own next line and nothing else may
+     *"expanded = its sheet"* and §2.4 said a sheet is *"in flow (never a
+     modal)"*, so the sheet was this row's own next line and nothing could
      stand between them; §2.3's other clause — a row *"pins under the rows
-     ABOVE it"* — then says which rows keep their pins while it is open: the
-     ones above the tapped row do, and the ones below it are rows the editor
-     has pushed down, exactly as a section's sheet pushes the grid down. So the
-     open sheet is a `<tr class="nu-wopen nu-spopen">` of the `<thead>`,
-     immediately after its own row, and `stick()` releases the pins below it. */
+     ABOVE it"* — then said which rows kept their pins while it was open. The
+     open sheet was a `<tr class="nu-wopen nu-spopen">` of the `<thead>`,
+     immediately after its own row, and `stick()` released the pins below it.
+     §2.4'S PARENTHESIS IS REVERSED ON 2026-09-08 (§22, and DESIGN.md is
+     amended with it): a sheet IS a modal. What this paragraph was arguing for
+     — *"the sheet is DIRECTLY UNDER the word that opened it"*, against an
+     orphan four rows away — is satisfied better by a card than it ever was by
+     a row: a card is under nothing and beside nothing, and it prints the name
+     of what it belongs to at its own top edge. The distance between the word
+     you pressed and the editor it opened is now zero at every width, which is
+     the number that complaint was about. */
   /* ---- THE RECORD IS ONE ROW (2026-09-06, TABLE.md §14) --------------
      THE REDESIGN'S FIRST SENTENCE (docs/REDESIGN-SCOPE.md, off the Coach
      House walkthrough): *"The page is sorted by age, not by scope."* Seven
@@ -946,8 +1221,11 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
           </div>
         </th>
       </tr>`);
-      if (open)
-        out.push(openRow(S, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen"));
+      /* AND THE SHEET IS HANDED UP RATHER THAN PUSHED ON (2026-09-08, §22).
+         `openSheet` returns `nothing` — it registers the card — so there is
+         no row to append here and the call stands alone. The `if` is what
+         says WHICH of the seven is open, and that is unchanged. */
+      if (open) openSheet(S, sheetFor(sc.key, sc.sheet), sc.word, "nu-spopen");
     }
     return out;
   };
@@ -1281,9 +1559,11 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
        phrases"* — which is what an orphan sheet says when its row is three
        rows above the body. */
     if (OPEN.indexOf("col|") === 0 && !S.across)
-      return openRow(S, sheetFor(OPEN, () => colSheetOf(OPEN!.slice(4))), OPEN.slice(4));
+      return openSheet(S, sheetFor(OPEN, () => colSheetOf(OPEN!.slice(4))),
+                       OPEN.slice(4));
     if (OPEN.indexOf("row|") === 0 && S.across)
-      return openRow(S, sheetFor(OPEN, () => rowSheetOf(OPEN!.slice(4))), OPEN.slice(4));
+      return openSheet(S, sheetFor(OPEN, () => rowSheetOf(OPEN!.slice(4))),
+                       secNameOf(OPEN.slice(4)));
     return nothing;
   };
 
@@ -1299,15 +1579,30 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       ${repeat(cols, (c) => c, (c) => bodyCell(S, rid, c))}
       <td class="nu-addcell"></td>
     </tr>
-    ${OPEN === openKey ? openRow(S, sheetFor(openKey,
-        () => S.across ? colSheetOf(rid) : rowSheetOf(rid)), rid) : nothing}
+    ${/* AND THE NAME IS A NAME (2026-09-08, §22). It read `rid`, which is a
+          VOICE's name when the table faces voices and a SECTION's ID when it
+          does not — `s0`. That was invisible while the sheet was a row and
+          the string was only an `aria-label` on a body nobody named; a card
+          prints it, and a card headed `s0` is the raw model on the glass.
+          `A.secName` is the same reader `cellHead` and every row head use. */
+      nothing}
+    ${OPEN === openKey ? openSheet(S, sheetFor(openKey,
+        () => S.across ? colSheetOf(rid) : rowSheetOf(rid)),
+        rowName(S, rid)) : nothing}
     ${cols.map((c) => {
       const key = S.across ? "cell|" + c + "|" + rid : "cell|" + rid + "|" + c;
       return OPEN === key
-        ? openRow(S, sheetFor(key, () => cellSheetOf(S, rid, c)),
-                  t("cell.sheet.name",
-                    { name: S.across ? rid : c,
-                      section: S.across ? c : rid }),
+        /* AND ITS NAME IS THE ADDRESS THE HEAD PRINTS (2026-09-08, §22).
+           It read `t("cell.sheet.name", { name, section })` with `section`
+           the raw id — `stab · s0` — which was an `aria-label` nobody had a
+           way to hear against the row it belonged to. The card announces it
+           on arrival, so it says what `cellHead` says: `Intro 1 × stab`, one
+           sentence out of `bar.address`, with the section's own name. One
+           key for one address; `cell.sheet.name` has no caller left. */
+        ? openSheet(S, sheetFor(key, () => cellSheetOf(S, rid, c)),
+                  t("bar.address",
+                    { section: secNameOf(S.across ? c : rid),
+                      player: S.across ? rid : c }),
                   "nu-cellopen", cellHead(S))
         : nothing; })}`;
   };
@@ -1571,7 +1866,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       <td class="nu-addcell"></td>
     </tr>
     ${cols.map((c) => OPEN === "mix|" + c
-      ? openRow(S, sheetFor(OPEN!, () => wrapOps(mixSheet(A, c))), c)
+      ? openSheet(S, sheetFor(OPEN!, () => wrapOps(mixSheet(A, c))), c)
       : nothing)}`;
   };
 
@@ -1612,15 +1907,47 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
      `footCell`'s own click, which set `OPENFIELD` to an address the sheet it
      opened did not contain.) */
 
-  /* ---- THE OPEN ROW, WHICH IS THE FORMULA BAR'S BODY ------------------ */
-  const openRow = (S: Shape, fields: Field[], name: string,
-                   cls?: string, head?: TemplateResult): TemplateResult =>
-    html`<tr class=${cls ? "nu-wopen " + cls : "nu-wopen"}
-      ><td colspan=${nCols(S)}>${head ?? nothing}${
-      sheetBody(fields, name, OPENFIELD,
-                (k) => { OPENFIELD = k; draw(); },
-                () => { /* the write ends in changed() -> draw(); nothing here */ })
-    }</td></tr>`;
+  /* ---- THE OPEN SHEET, WHICH IS NOW A CARD AND NOT A ROW --------------
+     IT READ, TO 2026-09-08: `openRow`, returning
+     `<tr class="nu-wopen"><td colspan=...>` with the head and the body inside
+     it — the accordion, and the shape `test/table.browser.js sheetRows()` had
+     read since wave 2b. §22 makes it a modal, and this is the seam: the six
+     call sites are UNCHANGED in every argument they pass, and what the
+     function does with them is hand them up to `view()` instead of drawing
+     them where it stands.
+     IT RETURNS `nothing` SO THE CALL SITES STAY WHERE THEY ARE. Each of the
+     six knows something the card does not — which shape, which fields, which
+     name, whether there is a head — and each knows it at the point in the
+     table walk where that row would have gone. Moving that knowledge into one
+     `switch` over `OPEN` would be a second reader of six different contexts;
+     leaving the calls in place and emptying the return is one line of change
+     per site and none at all in the walk.
+     `nCols(S)` IS NO LONGER ASKED and the SHAPE is `_S`. `nCols` sized the
+     `colspan` and nothing else here; a card has no columns to span, and the
+     shape was the only thing that needed one. The parameter STAYS, unread, so
+     the six call sites keep the signature they were written against and the
+     day a card wants to know which way the table faces there is nowhere new
+     to put it. `nCols` itself is still the head's (§15a's folded-table
+     arithmetic) and is untouched. */
+  const openSheet = (_S: Shape, fields: Field[], name: string,
+                     cls?: string, head?: TemplateResult): typeof nothing => {
+    MODAL = { fields, name, cls: cls ? "is-" + cls.replace(/^nu-/, "") : null,
+              head: head ?? null };
+    return nothing;
+  };
+
+  /* A SECTION'S NAME FROM ITS ID, AND A ROW'S NAME FROM ITS ROW (§22). Both
+     exist because a card PRINTS the string the sheet was opened under and a
+     `<tr>` never did. `A.secName(i)` is the one owner of what a section is
+     called in prose; these two only find the index for it. A section that has
+     gone out from under an open sheet falls back to its id, which is the same
+     answer every other reader on this surface gives to a stale address. */
+  const secNameOf = (sid: string): string => {
+    const i = A.doc().form.sections.findIndex((x) => x.id === sid);
+    return i < 0 ? sid : A.secName(i);
+  };
+  const rowName = (S: Shape, rid: string): string =>
+    S.across ? rid : secNameOf(rid);
 
   /* ---- the three sheets, each with its ops on its first line ---------- */
   const rowSheetOf = (sid: string): Field[] => {
@@ -1875,7 +2202,13 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const inSpecial = !!tg && (!!tg.closest(".nu-sprow") ||
       !!tg.closest(".nu-mixrow") || !!tg.closest(".nu-masterrow") ||
       !!tg.closest(".nu-prodrow") ||
-      (SPECIAL(OPEN) && !!tg.closest(".nu-wopen")));
+      /* (IT READ `SPECIAL(OPEN) && tg.closest(".nu-wopen")` TO 2026-09-08.
+         A special row's sheet is a card outside `.nu-pane` from §22, so this
+         handler — which is the PANE's `keydown` — cannot be reached from
+         inside one at all, and the clause it needed the class for is
+         answered by geometry. The card runs its own Escape, and nothing else
+         it holds is a key this ladder wants.) */
+      false);
     if (inSpecial && e.key !== "Escape") return;
     if (meta && (e.key === "z" || e.key === "Z")) {
       e.preventDefault(); if (e.shiftKey) U.redo(); else U.undo(); return; }
@@ -1970,13 +2303,89 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
       if (!OPEN) return;
       const t = e.target as HTMLElement | null;
       if (!t || !t.closest) return;
-      if (t.closest(".nu-wopen")) return;              // inside the sheet
+      /* INSIDE THE SHEET IS INSIDE THE CARD (2026-09-08, §22). It read
+         `.nu-wopen`, the accordion row; the sheet is a `.nu-modalcard` now
+         and the SCRIM around it is what "outside" means — a press on the dark
+         reaches this listener with no card in its ancestry and closes.
+         The card's own root also closes on a direct press (see `modal`), and
+         the two are not a duplicate: that one is the DIALOG saying how it is
+         dismissed, this one is the page's standing closer, which also fires
+         for a press on the chrome behind the scrim on a build where the scrim
+         does not cover it. `shutSheet` is idempotent (`if (!OPEN) return`), so
+         both arriving for one press is one close. */
+      if (t.closest(".nu-modalcard")) return;          // inside the sheet
       if (t.closest("button, a, input, select, textarea, [role=slider], label"))
         return;                                        // a control decides for itself
       if (!host.isConnected) return;
       shutSheet();
     };
     document.addEventListener("pointerdown", OUT, true);
+  }
+
+  /* ---- WHERE THE FOCUS GOES, AND WHERE IT COMES BACK TO ---------------
+     (2026-09-08, TABLE.md §22.) A card that opens over the page and leaves
+     the caret behind it is a dialog only to an eye. Two rules and no more:
+
+       · WHEN A CARD ARRIVES the focus goes to it. `tabindex="-1"` makes the
+         card itself the landing, not its first control — a screen reader then
+         reads the dialog's name (`aria-label`, the address) before it reads
+         `undo`, which is the order a person needs.
+       · WHEN IT GOES the focus goes back to whatever had it — which is the
+         cell or the head that was pressed to open it, so the grid's own
+         keyboard picks up exactly where it was.
+
+     IT FIRES ON THE TRANSITION AND NEVER ON A DRAW. `draw()` runs on every
+     write in this table — a chip tapped inside the card is a redraw — and a
+     `focus()` per draw would take the caret off the control being used, once
+     a keystroke. `CARDAT` is the key the card last stood for, so the compare
+     is against WHICH sheet is open and not against whether one is: tapping
+     straight from one cell's card to another's re-lands the focus (a new
+     dialog, a new name to hear) and does not overwrite where it came from.
+     `preventScroll` because the card is `position: fixed` and the pane behind
+     it is a scroller: focusing a fixed box must never move a scroll a hand
+     did not move. */
+  let CARDAT: string | null = null;
+  let CAMEFROM: HTMLElement | null = null;
+  function landFocus(): void {
+    const at = MODAL ? OPEN : null;
+    if (at === CARDAT) return;
+    if (at) {
+      if (!CARDAT) CAMEFROM = (document.activeElement as HTMLElement) || null;
+      const card = host.querySelector(".nu-modalcard") as HTMLElement | null;
+      if (card) card.focus({ preventScroll: true });
+    } else if (CAMEFROM && CAMEFROM.isConnected) {
+      CAMEFROM.focus({ preventScroll: true }); CAMEFROM = null;
+    } else {
+      /* ...AND THE PANE CATCHES IT WHEN THE CELL IS GONE. An op inside the
+         card can replace the very node that opened it — `fill across the row`
+         rewrites the row, measured, and the caret came back to `<body>` — and
+         a keyboard stranded on the document has lost the grid's arrows, its
+         Tab and its Escape. The pane is `tabindex="0"` and owns all three, so
+         it is the honest place to land when the cell is not there any more. */
+      const pn = host.querySelector(".nu-pane") as HTMLElement | null;
+      if (pn) pn.focus({ preventScroll: true });
+      CAMEFROM = null;
+    }
+    CARDAT = at;
+  }
+  /** TAB, WRAPPED AT THE CARD'S TWO EDGES. `:not([disabled])` matters here
+   *  more than it usually does — a cell sheet's ops bar greys `undo`, `redo`
+   *  and `paste` at rest (§4, no silent grey), and a wrap that counted them
+   *  would send Shift-Tab to a control that cannot take it. */
+  const TABBABLE = 'a[href], button:not([disabled]),' +
+    ' input:not([disabled]), select:not([disabled]),' +
+    ' textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function holdTab(e: KeyboardEvent): void {
+    const card = host.querySelector(".nu-modalcard") as HTMLElement | null;
+    if (!card) return;
+    const all = Array.from(card.querySelectorAll(TABBABLE)) as HTMLElement[];
+    if (!all.length) {
+      e.preventDefault(); card.focus({ preventScroll: true }); return; }
+    const first = all[0]!, last = all[all.length - 1]!;
+    const on = document.activeElement;
+    if (e.shiftKey && (on === first || on === card)) {
+      e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && on === last) { e.preventDefault(); first.focus(); }
   }
 
   /** THE ONE WAY THIS COMPONENT SHUTS ITS SHEET, and every door uses it: the
@@ -2022,6 +2431,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
   reindex();
   armResize(paneEl);
   armOutside();
+  armCardScroll();
   /* AND THE SHEET REGISTERS WITH THE ONE OWNER (2026-09-06, §18) — re-armed
      on every rebuild for `armOutside`'s own reason: the closer must belong to
      the grid that is on the glass, not to one three writes ago. It is a

@@ -706,7 +706,27 @@ export function lozengeField(spec: LozSpec): HTMLElement {
       const was = SCROLLX.get(key);
       if (was != null) { track.scrollLeft = was; return; }
       const col = host.querySelector("nu-colhead.is-standing") as HTMLElement | null;
-      const x = col ? Math.max(0, col.offsetLeft - 8) : 0;
+      /* IT IS READ OFF THE RECTS AND NOT OFF `offsetLeft` (2026-09-08,
+         TABLE.md §22). It was `Math.max(0, col.offsetLeft - 8)`, and
+         `offsetLeft` is measured against the nearest POSITIONED ancestor —
+         which was `.nu-vsheet` while a sheet was `position: sticky` inside an
+         accordion row, and is the modal's own fixed box now that a sheet is a
+         card. Those two are not the same origin, so the standing column landed
+         **4.4px short**: measured on Kingston 1969 at 390, the pill's left
+         edge at 7.8 against the track's 12.2, and test/table.browser.js T19d
+         (*"the record's own instrument is on the glass without hunting"*) went
+         red at all three widths.
+         THE RECTS ARE THE SAME ARITHMETIC WITH NO ORIGIN TO GET WRONG: how far
+         the column's left edge is from the TRACK's left edge, added to where
+         the track already stands. It is right in an accordion row, in a card,
+         and in whatever this field is put inside next — which is the property
+         `offsetLeft` never had. The 8px lead-in is unchanged. */
+      let x = 0;
+      if (col) {
+        const tr = track.getBoundingClientRect();
+        const cr = col.getBoundingClientRect();
+        x = Math.max(0, track.scrollLeft + (cr.left - tr.left) - 8);
+      }
       track.scrollLeft = x;
       SCROLLX.set(key, x);
     } catch (e) { /* no layout yet: the first column stands, which is honest */ }

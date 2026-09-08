@@ -95,7 +95,7 @@ const GLASS = () => {
   const out = [];
   if (vis(document.getElementById("nu-menu"))) out.push("menu");
   if (vis(document.getElementById("nu-log"))) out.push("log");
-  if ([...document.querySelectorAll("#pan-band .nu-wopen")].some(vis))
+  if ([...document.querySelectorAll("#pan-band .nu-modalcard")].some(vis))
     out.push("sheet");
   return out;
 };

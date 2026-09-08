@@ -811,7 +811,20 @@ export function mount(parent, ctx) {
                                className: "nu-iconbtn" });
   clear.dataset.k = "atlas-clear";
   clear.setAttribute("aria-label", t("atlas.find.clear"));
-  clear.append(el("span", "\u2715"));
+  /* THE MARK IS SET AND NOT `el`-ED, AND THAT IS A BUG BEING FIXED
+     (2026-09-08). This read `clear.append(el("span", "\u2715"))`, and `el` in
+     this file is `(t, a) => Object.assign(document.createElement(t), a || {})`
+     — its second argument is a PROPERTY BAG, not a text node. `Object.assign`
+     over a string assigns its indexed characters onto the element and returns
+     an EMPTY span, so the clear has been a blank square since the day it
+     landed: Paul, 2026-09-08, *"the 'clear text' button is now on the right
+     with no label, but it should be an (x) on the inside of the button."*
+     There was no label because there was no glyph.
+     `\u00d7` AND NOT `\u2715`: U+00D7 MULTIPLICATION SIGN is Latin-1 and is in
+     every font this page can be given, which is the argument ui/glyph.js makes
+     about this exact sign for the page's other × (*"`close` IS × AND NOT ✕ OR
+     ✖"*). One mark for "close this", wherever it is drawn. */
+  clear.textContent = "\u00d7";
   clear.hidden = true;
   const showClear = () => { clear.hidden = !qEl.value; };
   clear.addEventListener("click", () => {
@@ -823,6 +836,22 @@ export function mount(parent, ctx) {
     qEl.value = ""; showClear(); filter();
   });
   find.append(qEl, clear);
+  /* ===== AND THE FIELD IS INSIDE THE LIST, 2026-09-08 ==================
+     Paul: *"The genre list should be 100% wide with no left or right borders.
+     The 'Find a genre' should be integrated into it."*
+
+     IT WAS A STRIP ABOVE THE BOX and it is the box's own HEAD now — the first
+     child of `#atlasIndex`, sticky at the top of the scrollport, so it stays
+     under a thumb through 502 rows instead of scrolling away at row nine. Two
+     plates with a gap between them read as a filter and a list; one plate with
+     a field across its top reads as a list you can type into, which is what it
+     is.
+     THE ORDER INSIDE THE BOX IS THE READING ORDER: the field, the rows, then
+     the empty answer. `insertBefore` and not `append`, because `#atlasNone`
+     and the rows are already in there — this moves one node rather than
+     rebuilding a box whose contents three other functions hold references
+     into. */
+  idx.insertBefore(find, idx.firstChild);
   /* ===== THE GLOBE IS THE HEAD OF THE PICKER (2026-09-06) ===============
      Paul: *"Get rid of 'where' and the line above and the output that goes
      '33000 BC · 1 record within ten years · Hohle Fels'; leave the close icon.
@@ -838,7 +867,7 @@ export function mount(parent, ctx) {
      does not destroy: it is index.html's own visually-hidden <h2>, and it is
      what names this sheet to a screen reader now that the visible word in the
      sheet's header is deleted. */
-  parent.append(wrap, say, find, idx);
+  parent.append(wrap, say, idx);
   /* THE TWO LISTENERS, AND NEITHER IS DEBOUNCED. `filter()` is a fold-free
      `indexOf` over 479 strings already folded at build; measured on the gate's
      own chromium at 390x844 it is under 2 ms, which is inside one frame — so

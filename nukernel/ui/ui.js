@@ -1402,11 +1402,11 @@ var NuIndex = class extends NuEl {
         <input class="nu-elixq" type="search" .value=${q}
           aria-label=${t3("atlas.find.aria")}
           @input=${(e4) => this.type(e4)}>
-        <button type="button" class="nu-elixclear"
+        <button type="button" class="nu-elixclear" ?hidden=${!q}
           aria-label=${t3("atlas.find.clear")}
           @click=${() => {
       this.query = "";
-    }}>\u2715</button>
+    }}>\u00d7</button>
       </div>
       <ul class="nu-elixlist" aria-label=${nameOf(this, "") || A}
         >${all.map((r4) => b2`<li class="nu-elixli" data-k=${r4.k}

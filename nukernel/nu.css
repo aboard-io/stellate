@@ -3468,9 +3468,29 @@ table.nu-trims{ color: var(--ink); }
    under your finger and stops there, with the globe it feeds still on screen
    above it. `overscroll-behavior: contain` is what stops the flick that ends
    at the bottom of the list from carrying on down the page. */
-#atlasIndex{ margin-block-start: var(--s4); max-block-size: min(60vh, 560px);
+/* ---- AND IT IS THE WHOLE WIDTH OF THE GLASS (2026-09-08, TABLE.md §23) --
+   Paul: *"The genre list should be 100% wide with no left or right borders."*
+
+   FULL BLEED, THE WAY `.nu-bar` ALREADY DOES IT (:112) — cancel the panel's
+   gutter and do NOT re-pay it, because the rows pay their own. `.nu-pan` is
+   `padding-inline: var(--s4)` (12.8px measured), so a negative margin of that
+   on each side puts the box's edges ON the screen's edges; `100vw` is refused
+   for the reason it is refused everywhere in this file — vw includes the
+   scrollbar gutter, and a sideways scroll on the body is the one thing this
+   sheet exists to prevent.
+   THE SIDE BORDERS COME OFF WITH THE GUTTER, and that is the same decision
+   said twice: a rule down the left of a box whose left edge is the screen is
+   a line drawn 0px from nothing. What is KEPT is the block borders — a rule
+   above and below — because those are what still say where the catalogue
+   starts and stops in a scrolling column. `border-radius` goes too: a corner
+   is a thing a box has, and this one has run out of box to have it on.
+   MEASURED: 364.4px at x 12.8 -> 390 at x 0 on a 390 phone, 320 at 0 on a
+   320, with `documentElement.scrollWidth === innerWidth` at both. */
+#atlasIndex{ margin-block-start: var(--s4);
+  margin-inline: calc(-1 * var(--s4)); max-block-size: min(60vh, 560px);
   overflow-y: auto; overscroll-behavior: contain;
-  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  border-block: var(--bw) solid var(--ink);
+  border-inline: 0; border-radius: 0;
   background: var(--panel); }
 .nu-ix{ list-style: none; margin: 0; padding: 0; }
 /* ===== THE ROW IS THE <li>, AND THE BUTTON IS A PLATE UNDER IT ==========
@@ -5813,16 +5833,176 @@ table.nu-trims{ color: var(--ink); }
 .nu-cellword[aria-expanded="true"]{ background: var(--hand-tint);
   box-shadow: inset 0 0 0 var(--bw-hard) var(--hand); }
 
-/* ---- THE STRIP OF WORDS: an accordion row, never a popup ---------------
-   Paul: *"tappable grids that change options."* The row you tapped grows one
-   `<tr>` underneath holding every word that cell could say. It is a real table
-   row, so the grid is still a grid with the stylesheet off and a screen reader
-   reads the words immediately after the cell that asked for them.
-   IT NEVER SCROLLS INSIDE ITSELF, which is this page's standing law about
-   menus. The chips WRAP and the row gets taller; the pane the grid stands in
-   is the one scroller and it already was. `position: sticky` on the cell would
-   have been the popup by another name and is refused for the same reason. */
+/* ---- THE STRIP OF WORDS: a card, from 2026-09-08 (TABLE.md §22) --------
+   Paul: *"Instead of expanding sections in the editor and inserting them below
+   the selected point just make them modals with easy dismissal."*
+
+   WHAT STOOD HERE, kept whole because it is the argument the accordion won
+   and because two of its three claims are still the sheet's:
+     "THE STRIP OF WORDS: an accordion row, never a popup. Paul: *'tappable
+      grids that change options.'* The row you tapped grows one `<tr>`
+      underneath holding every word that cell could say. It is a real table
+      row, so the grid is still a grid with the stylesheet off and a screen
+      reader reads the words immediately after the cell that asked for them.
+      IT NEVER SCROLLS INSIDE ITSELF, which is this page's standing law about
+      menus. The chips WRAP and the row gets taller; the pane the grid stands
+      in is the one scroller and it already was. `position: sticky` on the
+      cell would have been the popup by another name and is refused for the
+      same reason."
+   AND ITS TWO RULES STAY, BECAUSE THE ACCORDION HAS ONE USER LEFT. The TABLE
+   does not build `.nu-wopen` any more — src/table/grid.ts `openSheet` hands
+   its sheet up to a card instead of drawing a row — but `ui/wordgrid.js`
+   still does (`insertOpen`), and its one live instance is the mix board's
+   `trimgrid` (ui/engineer.js). §22 is about the EDITOR, which is what Paul
+   was holding; the board's own small grid is a different surface and is not
+   swept along by a sentence that was not about it. So these rules describe
+   exactly one grid now instead of two, and the day the board's grid moves
+   they go with it.
+   WHAT THE MEASUREMENT WAS: 779.4px of `<tr>` on an 844px phone, inserted
+   between the row you tapped and every row below it. "The row gets taller"
+   was true and was the problem.
+   WHAT SURVIVES: the sheet is still a real, readable block with the
+   stylesheet off (a `<div>` after the table rather than a `<tr>` inside it —
+   reading order still puts it after the grid it belongs to), the chips still
+   WRAP rather than scroll sideways, and the surface still has exactly ONE
+   scroller. The scroller is the CARD now instead of the pane, which is the
+   half of the old law that had to give: an eighteen-field vector does not fit
+   in the 720px a phone has between the two fixed bands, and "vertical space
+   is cheap and abundant" was a claim about a document, not about a phone. */
 .nu-wopen > td{ padding: var(--s2) 0; }
+
+/* ---- THE SCRIM, WHICH IS THE DISMISS ---------------------------------
+   A full-bleed veil at `--scrim` — the token's own words are *"a scrim is a
+   depth and not a colour"*, which is exactly this — and a press on it closes
+   the card (src/table/grid.ts `modal`, and `armOutside` as the belt).
+   IT IS z 57, WHICH IS UNDER BOTH FIXED BANDS AND THAT IS THE DECISION.
+   `.nu-topstrip` and `.nu-bar` are 58, so they paint OVER the veil and stay
+   live while a sheet is open: the record's name is still readable, and ▶ is
+   still under a thumb. That is `#play`'s oldest law on this page — *"a
+   permanent play button"*, the one mark on the screen in every state — and a
+   modal that took the transport away would be the first surface here to break
+   it. The hamburger's plate is 59 and the tooltip 60, so both still open over
+   a card, which is the order they had over an accordion row.
+   THE PADDING IS THE TWO BANDS, so the CARD is inset out from under them
+   while the veil is not: `--top-h` at the head, `--bar-h` at the foot (which
+   already carries the safe area), and `--s2` of air on every side. */
+.nu-modal{ position: fixed; z-index: 57; inset: 0;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  align-items: stretch;
+  padding: calc(var(--top-h) + var(--s2)) var(--s2)
+           calc(var(--bar-h) + var(--s2));
+  background: var(--scrim); }
+/* (`touch-action: none` STOOD ON THIS RULE FOR AN HOUR AND IS REFUSED. It was
+   there to stop a drag on the dark scrolling the grid behind it, and the grid
+   was never reachable from here: `.nu-modal` is a child of `.nu-modalroot`,
+   which is a SIBLING of `.nu-sheetwrap` — `.nu-pane` is not an ancestor of
+   the scrim, so a gesture that starts on the veil has no scroller of the
+   record to chain into. (Measured: a wheel over the scrim leaves the pane at
+   scrollTop 0.) What the declaration WOULD have risked is the card: the
+   sheet's own `.nu-sheettrack` is a horizontal scroller (§19) and
+   `.nu-modalbody` a vertical one, `touch-action` is intersected up the
+   ancestor chain, and the exact stopping rule — at the scroll container that
+   handles the gesture — is the kind of clause that is right in the spec and
+   wrong in one engine. A property that can only break the two scrollers it is
+   not aimed at, to prevent a scroll that cannot happen, is not a property
+   this page needs.) */
+/* ---- THE CARD --------------------------------------------------------
+   BOTTOM-ANCHORED ON A PHONE (`justify-content: flex-end` above), because the
+   two things a hand does with an open sheet — read its first line, and shut
+   it — are then both inside a thumb's arc, and because a card that grows
+   UPWARD from the foot never moves the words already under the eye when it
+   gets taller. It is centred on a wide screen (below), where there is no
+   thumb and a card pinned to the bottom edge of a 900px window is a strip.
+   IT IS THE ONE SCROLLER AND IT SAYS SO IN ONE DECLARATION. `max-block-size:
+   100%` against the flex parent (which is the viewport less the two bands)
+   plus `overflow: auto` — so a four-field sheet is four fields tall and an
+   eighteen-field vector scrolls INSIDE the card while the record behind it
+   holds perfectly still. That last clause is the whole dividend of the round:
+   the accordion could not promise it, because its scroller was the page.
+   THE PLATE IS THE PAGE'S OWN — panel ground, ink border, the hard shadow
+   this box draws under anything that has arrived on top of something else. */
+/* AND IT NEVER TAKES THE WHOLE BOX, WHICH IS WHAT MAKES "TAP OUTSIDE" REAL.
+   MEASURED on the first build: an eighteen-field cell vector is 785px of
+   content, `max-block-size: 100%` gave the card 738.4 of the 744 available,
+   and the 5.6px left was the horizontal padding — there was no scrim on the
+   glass to press. A dismissal you cannot aim at is not a dismissal. `88%`
+   leaves **89px** of veil above the card at 390 x 844, which is two thumbs
+   wide, and it costs a long sheet 89px of a scroller it was going to scroll
+   anyway. A SHORT sheet is unaffected: the cap is a ceiling, and a four-field
+   sheet is four fields tall. */
+/* AND IT WEARS NO FOCUS RING, WHICH IS THE ONE EXCEPTION THIS PAGE'S
+   `:focus-visible` RULE IS ALLOWED. The card is `tabindex="-1"`: it is never
+   in the tab order and the only thing that ever focuses it is `landFocus`,
+   which lands a hand there so a screen reader reads the dialog's NAME before
+   its first control. Chromium matches `:focus-visible` on that script focus,
+   so the page's own indicator drew a 2px `--hand` ring around the WHOLE CARD
+   the instant it opened — measured, on the TIME sheet: a green box around
+   649.8 x 378.8 of editor, saying "this container is the thing you are on",
+   which is not what a focus ring means anywhere else on this page.
+   NOTHING IS LOST BY TAKING IT OFF. A keyboard cannot reach this element to
+   need it; `holdTab` sends every real press to a real control, and those keep
+   their rings. */
+.nu-modalcard:focus, .nu-modalcard:focus-visible{ outline: none; }
+.nu-modalcard{ display: flex; flex-direction: column;
+  min-block-size: 0; max-block-size: 88%; overflow: hidden;
+  background: var(--panel); color: var(--ink);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow); }
+/* ---- ITS HEADER: THE NAME AT THE START, THE × AT THE END --------------
+   The same arrangement `.nu-sheethead` gives every full-page sheet on this box
+   (ui/eight.js `sheetHead`): one line, a name, a way out. One shape for "a
+   surface you are inside of", wherever it opens.
+   IT DOES NOT SCROLL WITH THE BODY. The header is outside the scroller (the
+   body below owns the overflow), so the × is on the glass at every scroll
+   position of an eighteen-field vector — which is what "easy dismissal" has
+   to mean on the sheet that is actually long enough to need it. */
+/* `align-items: flex-start` AND NOT `center`, WHICH IS A MEASUREMENT. On a
+   cell sheet the header IS `.nu-cellhead` (address · undo · redo · copy ·
+   paste), and at 390 that wraps to two lines — so a centred × floated in the
+   middle of an 88px header, level with nothing. At the start it is level with
+   the address, which is the line it belongs to and the corner a hand looks in
+   for a close. On the one-line header of the other five sheets the two rules
+   draw the same picture. */
+.nu-modalhead{ flex: 0 0 auto; display: flex; flex-direction: row;
+  align-items: flex-start; gap: var(--s2);
+  padding: var(--s1) var(--s1) var(--s1) var(--s3);
+  border-block-end: var(--bw) solid var(--rule); }
+.nu-modalname{ flex: 1 1 auto; min-inline-size: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: var(--fw-label) var(--t2, .82rem)/1.2 var(--sans, inherit); }
+/* THE × IS A TARGET AND WEARS THE FLOOR, and it is the one control in this
+   card that is not the sheet's — so it is a plain mark on the header's own
+   ground rather than a plate, exactly as the genre header up in the strip is.
+   Its accessible name says WHICH sheet it closes (`sheet.close`). */
+.nu-modalx{ flex: 0 0 auto;
+  min-inline-size: var(--tap); min-block-size: var(--tap);
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  color: var(--ink); font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.nu-modalx:hover{ background: var(--flag-tint); }
+/* ---- AND THE BODY IS WHAT SCROLLS ------------------------------------
+   `min-block-size: 0` is what turns the card's height cap into a scroller on
+   a flex child — the same declaration `.nu-sheetwrap` makes about the pane
+   (§11c), for the same reason, and the one people leave out. */
+.nu-modalbody{ flex: 1 1 auto; min-block-size: 0; overflow: auto;
+  /* AND THE SCROLL STOPS AT THE CARD'S OWN EDGES. `overscroll-behavior:
+     contain` is what keeps a flick past the end of an eighteen-field sheet
+     from handing the rest of the gesture to whatever is behind — the same
+     declaration `.nu-pane` makes about the same problem one surface up. It is
+     the ONE scroll property this card needs; see the tombstone on `.nu-modal`
+     for the `touch-action` that was tried here and taken out. */
+  overscroll-behavior: contain;
+  padding: var(--s2);
+  display: flex; flex-direction: column; gap: var(--s2); }
+/* ---- A CARD IN THE MIDDLE, ON A SCREEN WITH NO THUMB ------------------
+   700px is this page's own desk/pocket line (`.nu-pan`, and every other rule
+   that has had to draw it). Above it the card is centred and capped: 44rem is
+   about 700px, which is two of `.nu-vsheet`'s 20rem columns plus its gaps, so
+   a wide sheet lays out in two columns and a card three columns wide — a
+   1,280px sheet with fields a metre apart — never happens. */
+@media (min-width: 700px) {
+  .nu-modal{ justify-content: center; align-items: center; }
+  .nu-modalcard{ inline-size: min(100%, 44rem); }
+}
 /* 3px OF GAP AND OF PADDING (2026-09-05) — the same 3px `.nu-trims` spends
    between its own cells (`border-spacing: 3px`), which is the minimum the
    cell-row language allows: a strip of words and the grid above it are the
@@ -5933,6 +6113,23 @@ table.nu-trims{ color: var(--ink); }
   position: sticky; inset-inline-start: 0;
   inline-size: min(100%, calc(100vw - var(--gl) - var(--gr)
                               - 2 * var(--s4))); }
+/* ---- ...AND NONE OF THAT APPLIES INSIDE A CARD (2026-09-08, §22) ------
+   Every word of the argument above is a fact about a sheet standing in a
+   table that scrolls sideways, which is what the accordion was and what
+   `ui/wordgrid.js`'s rows still are. A card does not stand in the pane: it is
+   `position: fixed`, its own box is already capped at the screen (and at 44rem
+   on a desk), and there is no sideways scroll under it to ride — so the sticky
+   and the 100vw arithmetic are two declarations fighting a scroll that is not
+   there. Inside the card the sheet is simply the card's width.
+   THE OVERRIDE IS HERE AND NOT A SECOND `.nu-vsheet`, because the sheet is
+   ONE component with one set of rows, one grid and one type scale; what
+   differs is the box it was handed, and that is exactly what a scoped
+   override is for.
+   WHAT THE ARGUMENT WAS PROTECTING IS UNCHANGED AND IS STRUCTURAL IN A CARD:
+   §6 ¶A — *"every op in §5 … reachable by tap at 320px"* — cannot be broken
+   by a horizontal scroll the card does not have. */
+.nu-modalbody > .nu-vsheet{ position: static; inline-size: 100%;
+  padding: 0; background: none; border: 0; border-radius: 0; }
 .nu-wopen > td{ position: relative; }
 /* AN OPS BAR, A SEATED WIDGET AND AN OPEN STRIP TAKE THE WHOLE SHEET. */
 .nu-vsheet > .nu-sheetops,
@@ -6269,9 +6466,19 @@ table.nu-trims{ color: var(--ink); }
    "bottom sheet". Its two children, `.nu-fadr` and `.nu-fops`, are unchanged
    and are read by the same gates.) */
 .nu-cellhead{ display: flex; flex-wrap: wrap; align-items: center;
-  gap: var(--s2); padding-block: var(--s2);
-  border-block-end: var(--bw) solid var(--rule);
-  margin-block-end: var(--s2); }
+  gap: var(--s2); }
+/* ...AND IT IS THE CARD'S TITLE BAR FROM 2026-09-08 (TABLE.md §22). Three
+   declarations came OFF this rule — `padding-block: var(--s2)`,
+   `border-block-end` and `margin-block-end` — because all three drew the seam
+   between this line and the sheet under it, and `.nu-modalhead` draws that
+   seam now, once, for whichever of the six sheets is open. A head that kept
+   its own rule under a header that has one is two lines where the eye needs
+   none.
+   IT IS THE HEADER'S `1 1 auto`, so the address takes the band and the × sits
+   at the end of it — the same two ends `.nu-modalname` has on the other five
+   sheets. `min-inline-size: 0` is what lets the address ellipsise instead of
+   pushing the × off a phone. */
+.nu-modalhead > .nu-cellhead{ flex: 1 1 auto; min-inline-size: 0; }
 /* THE ADDER COLUMN IS AN EDGE, NOT A PLAYER. Under `table-layout: fixed` a
    `<col>` with no width takes an equal share, so the empty cell after the last
    player was as wide as a player — measured 1,280: a 100px column of nothing.
@@ -7444,8 +7651,42 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    same job by being there. An auto margin beside a flexible child eats the
    free space the flexible child was asked to take, and the tape would have
    been squeezed to its own min-content.) */
-.nu-topstrip > button[data-k="toptab-Where"]{ flex: 0 1 auto;
-  min-inline-size: var(--tap); }
+/* ---- AND THE NAME IS THE HEADER (2026-09-08, TABLE.md §22) -----------
+   Paul: *"Move the playback bar to the bottom bar and expand the genre as
+   header but don't put a border around it."*
+
+   TWO DECLARATIONS AND A SUBTRACTION. `1 1 auto` where the paragraph above
+   argued `0 1 auto`: that argument was made when the TAPE was the strip's
+   flexible child and the name was one of the two things it pushed to the
+   ends, and a name sized to its own word was right beside a readout that
+   wanted the rest. The tape is the bar's from today, so there is no second
+   claimant and no dead gap to leave — the name takes the band.
+   AND `0 1 auto`'s OTHER HALF IS UNCHANGED: `min-inline-size: 0` on the face
+   (below) is what still ellipsises `Gregorian chant` rather than pushing the
+   ≡ off a phone, and the 44px floor at `.nu-topstrip button` still stops the
+   shrink going under a thumb.
+   THE PLATE COMES OFF, WHICH IS NOT A RESTYLE BUT A CHANGE OF KIND. A border,
+   a ground and a hard shadow are what this page draws around a TARGET; a
+   header is a thing you READ. The button is still a button — it still opens
+   Where, still wears `aria-pressed`, still takes a tab stop and a thumb — and
+   what it stops claiming is that it is a plate sitting ON the band. The
+   band's own ground shows through, so the strip reads as one surface with a
+   name on it instead of a chip floating at one end of a bar.
+   `background: none` AND NOT `transparent`: the base `button` rule sets
+   `background`, and the shorthand is what has to be answered. */
+.nu-topstrip > button[data-k="toptab-Where"]{ flex: 1 1 auto;
+  min-inline-size: var(--tap);
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  padding-inline: 0; }
+/* ...AND WHEN IT IS THE OPEN VIEW IT SAYS SO IN INK, NOT IN A BOX. `aria-
+   pressed="true"` painted this button with the page's fill because it was a
+   plate; a header with no plate has nowhere to put a fill that would not
+   repaint the whole band, so the pressed state is the ACCENT on the word —
+   the same channel every other name on this page uses to say "you are here".
+   The `.nu-sub2` rule below (`--on-fill`) was written for the filled plate
+   and is answered here for the same reason. */
+.nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"]{
+  background: none; color: var(--accent, var(--ink)); }
 .nu-topstrip > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0;
   justify-content: flex-start; text-align: start; }
 /* ---- THE NAME IS A NAME AGAIN (2026-09-06, TABLE.md §18) --------------
@@ -7477,7 +7718,7 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   color: var(--dim); font-size: var(--t1, .72rem); line-height: 1.15;
   font-weight: 500; }
 .nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"] .nu-sub2{
-  color: var(--on-fill); opacity: .8; }
+  color: var(--dim); opacity: 1; }
 /* ---- AND THE TAPE TAKES THE GAP (2026-09-06, TABLE.md §18) -----------
    Paul: *"You could put the playback bar to the right of the genre on top top
    if you want."* The tape is a READOUT and not a control, so it belongs with
@@ -7492,9 +7733,15 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    free. That is why the ≡ moving to the left cost this block nothing but the
    direction of its comments — the order it draws is the order ui/eight.js
    appends, and there is nowhere else that fact is written down. */
-.nu-topstrip > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
-  display: flex; flex-direction: column; justify-content: center;
-  gap: var(--s1); }
+/* (`.nu-topstrip > .nu-tape` STOOD HERE, 2026-09-06 to 2026-09-08. The tape
+   went back down to the bar — Paul: *"Move the playback bar to the bottom
+   bar"* — and the box rule went with it, one band down, unchanged in every
+   declaration. The two paragraphs above are kept because they are the
+   argument that put it here and the measurement that paid for it; what
+   retired them is written at `.nu-bar > .nu-tape` and at `stripEl.append` in
+   ui/eight.js. The clause about the flexible child doing all the placing is
+   the one that OUTLIVED the move: the strip is two children now and the NAME
+   is the `1 1 auto`, so the ≡ is still at the start edge for free.) */
 .nu-topstrip > #burger{ flex: 0 0 auto; }
 /* ---- WHILE THE PLATE IS OPEN THE STRIP IS ITS ≡ AND NOTHING ELSE ------
    (2026-09-07, TABLE.md §20.) Paul: *"The hamburger menu should open higher
@@ -7984,8 +8231,48 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    one group under a left thumb and the room as its own thing at the other end,
    and the air the two departed marks left is between them rather than trailing
    off the end of the row. */
-.nu-bar > .nu-vs-wide{ flex: 0 0 auto; inline-size: 112px;
-  margin-inline-start: auto; }
+/* (`margin-inline-start: auto` CAME OFF THIS RULE ON 2026-09-08, and the
+   paragraph above keeps its arithmetic because the arithmetic is still true.
+   The TAPE is the bar's `1 1 auto` from today (below), and a flexible child
+   between the groups does the auto margin's whole job by being there — the
+   same sentence `.nu-topstrip` wrote when the tape arrived on IT and its own
+   auto margin came off. An auto margin beside a flexible child eats the free
+   space that child was asked to take.) */
+.nu-bar > .nu-vs-wide{ flex: 0 0 auto; inline-size: 112px; }
+/* ---- AND THERE IS NO ROOM FADER UNDER A THUMB (2026-09-08, §22) -------
+   Paul: *"Just get rid of the volume control on mobile if it can't work.
+   Leave it on desktop."*
+
+   IT CANNOT WORK, AND THE REASON IS IN THE ENGINE RATHER THAN IN THIS FILE.
+   A phone gets the WAV-FIRST route (engine/faust/live/live.js: `isMobile ||
+   isSafari` -> a real <audio> playing rendered segments), and that route has
+   no live output graph to hang a gain on. It says so itself, in as many
+   words: *"element.volume is kept for engines that honor it (immediate) and
+   the bake covers the one that does not: iOS returns 1 from a volume write"*
+   — so on the platform this rule is written for, the level rides `mvol` into
+   the next bar FED to the worker and lands when the segments already in the
+   queue have played out. Seconds, not frames. A fader you drag and hear
+   nothing from is not a slow fader, it is a control that lies about being
+   one, and the honest thing is not to draw it.
+   WHAT A THUMB USES INSTEAD is the phone's own hardware volume, which is
+   always there, is never seconds late, and is the control a person reaches
+   for on a phone anyway.
+   `(pointer: coarse)` IS THE PREDICATE AND IT IS THE PAGE'S OWN. It is what
+   `src/menus/pick.ts coarse()` already means by *"is there a thumb on this
+   screen"* — the one owner of that question — so this rule does not open a
+   second definition of mobile beside it. It is not the same question as the
+   engine's UA test, and the difference is a touch-screen laptop: it keeps the
+   desktop's instant fader in the ENGINE and loses it from the BAR. That trade
+   is taken on purpose, because the alternative is asking the engine a
+   question it cannot answer until the first press of play.
+   THE CONTROL IS STILL IN THE DOCUMENT. `display: none` takes it off the
+   glass and out of the accessibility tree; it does not delete `#vol`, so the
+   store, the restore, `nukernel/desk-gate.js`'s min/max read and the board's
+   own `#vol2` (the same 0..100 value, ui/engineer.js `listening`) are all
+   exactly as they were. One store, one fewer view of it. */
+@media (pointer: coarse) {
+  .nu-bar > .nu-vs-wide{ display: none; }
+}
 /* ---- THE ROOM, LYING DOWN (2026-09-06, TABLE.md §18) ------------------
    The same chassis the mix board and the gutter have used since 2026-08-27
    (`ui/engineer.js vchassis`), turned ninety degrees: the <input> is still the
@@ -8028,10 +8315,30 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    track with a hair between them — so the tape costs the row no height.
    NOTHING IN IT IS A TARGET. It is a readout: no `--tap` floor, no ground, no
    border, and its accessible name is the whole sentence (`tape.aria`). */
-/* (`.nu-bar > .nu-tape` STOOD HERE — the tape is the top strip's since
-   2026-09-06, §18, and its box rule went up with it. The four rules below are
-   the tape's OWN parts and are unscoped on purpose: they describe a readout,
-   not a place.) */
+/* ---- AND THE TAPE IS BACK IN THE BAR (2026-09-08, TABLE.md §22) -------
+   Paul: *"Move the playback bar to the bottom bar."* The line this replaces
+   read: "(`.nu-bar > .nu-tape` STOOD HERE — the tape is the top strip's since
+   2026-09-06, §18, and its box rule went up with it.)" It is the same four
+   declarations that went up, come back down, because the tape's BOX has never
+   depended on which band it stands in: a column, centred, its two lines a
+   `--s1` apart, and `min-inline-size: 0` so the words ellipsise rather than
+   push the room off the end.
+   IT IS THE ROW'S ONE `1 1 auto` and therefore the row's whole placer: the
+   transport and the die are `0 0 auto` at the start, the room `0 0 auto` at
+   the end (and absent under a thumb), so the tape is what holds them apart.
+   MEASURED ON THE RENDERED BAR, at the three widths this page is argued at:
+   **242.6px of tape at 390** and **184 at 320**, both with no room fader
+   (`(pointer: coarse)`), and **1,015 at 1280** with the fader at the end. The
+   390 figure is a hair under the 249.9 the tape had in the strip and stands on
+   the band the ▶ that moves it is on, which is the trade said in one line.
+   `.nu-bartp` renders 91.2 and the seed row 45 at every width, so the tape is
+   simply what is left.
+   THE FOUR RULES BELOW ARE THE TAPE'S OWN PARTS and stay unscoped on purpose:
+   they describe a readout, not a place — which is the sentence that let this
+   box rule travel twice without them moving once. */
+.nu-bar > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: var(--s1); }
 .nu-tapeline{ display: flex; flex-direction: row; align-items: baseline;
   justify-content: flex-end; gap: var(--s2); min-inline-size: 0; }
 .nu-tapesay{ font: var(--num-fw) var(--t1)/1 var(--mono, monospace);
@@ -9270,23 +9577,83 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
       attributes.) */
 .nu-ixli[hidden]{ display: none !important; }
 
-/* 2 · THE FIELD TAKES THE SLACK, AND SINCE 2026-09-06 IT IS THE WHOLE ROW.
-      `min-inline-size: 0`
-      is the flex-child law this sheet applies everywhere a text control sits
-      in a row: without it an <input>'s intrinsic width is its `size`
-      attribute and the row overflows at 320. */
-#atlasFind{ margin-block-start: var(--s4); }
-#atlasQ{ flex: 1 1 9ch; min-inline-size: 0; block-size: var(--tap); }
-/* THE CLEAR IS A TAP SQUARE AT THE FIELD'S END (2026-09-06). It is the page's
-   own control and not the platform's: `type="search"` draws a ✕ on desktop
-   Chrome and NOTHING on iOS Safari, which is the device this box is for. It
-   is `hidden` until there is something to clear, so the strip is one field
-   wide at rest and the field never has to make room for an inert square. */
-#atlasClear{ flex: 0 0 auto; inline-size: var(--tap); block-size: var(--tap);
-  display: grid; place-items: center; padding: 0;
-  background: var(--panel); color: var(--dim);
-  border: var(--bw) solid var(--line); border-radius: var(--r1); }
-#atlasClear:hover{ color: var(--ink); background: var(--flag-tint); }
+/* 2 · THE FIELD IS THE LIST'S OWN HEAD (2026-09-08, TABLE.md §23) --------
+      Paul: *"The 'Find a genre' should be integrated into it and the 'clear
+      text' button is now on the right with no label, but it should be an (x)
+      on the inside of the button."*
+
+      WHAT STOOD HERE, and its one surviving clause: "THE FIELD TAKES THE
+      SLACK, AND SINCE 2026-09-06 IT IS THE WHOLE ROW. `min-inline-size: 0` is
+      the flex-child law this sheet applies everywhere a text control sits in a
+      row: without it an <input>'s intrinsic width is its `size` attribute and
+      the row overflows at 320." That law is untouched and is why the field
+      still carries `min-inline-size: 0` below.
+      WHAT CHANGED IS WHERE THE ROW IS. It was `#atlasFind`, a `.nu-row` with
+      `margin-block-start: var(--s4)` standing ABOVE the list; it is the first
+      child of `#atlasIndex` now (ui/atlas.js `insertBefore`), STICKY at the
+      top of the scrollport. Two plates with a gap between them read as a
+      filter and a list; one plate with a field across its top reads as a list
+      you can type into.
+      STICKY AND NOT STATIC, because the box scrolls 502 rows: a search field
+      that leaves the screen at row nine is a search field you have to scroll
+      back to. It is the only pinned thing inside this box, so the one-band law
+      §13 wrote about the table's own head is not in question here.
+      IT PAYS THE GUTTER THE BOX STOPPED PAYING, AND IT PAYS THE ROWS'. The
+      list is full-bleed now (`#atlasIndex` above), so only its EDGES moved:
+      `.nu-ixli` has carried `padding-inline: var(--s4)` since it was written,
+      and the head takes the same `--s4` so the field's left edge stands on the
+      same line as every year in the column under it. That is what makes the
+      two read as one object rather than as a field parked on a list.
+      (`var(--gl)`/`var(--gr)` WERE TRIED FIRST AND ARE WRONG HERE: `--gl` is
+      `0px` — *"the views run to the glass"* — so the field went edge to edge
+      and its text touched the screen while the rows stayed inset. The gutter
+      this box owes is the PANEL's `--s4`, which is what it was inside before
+      it went full-bleed.) */
+#atlasFind{ position: sticky; inset-block-start: 0; z-index: 1;
+  margin-block-start: 0; padding: var(--s1) var(--s4);
+  background: var(--panel);
+  border-block-end: var(--bw) solid var(--rule); }
+/* THE FIELD IS THE WHOLE HEAD, and the × rides INSIDE it (below), so the only
+   thing this rule has to do is leave a thumb's worth of room at the end for a
+   mark that is drawn over the text. */
+#atlasQ{ flex: 1 1 auto; min-inline-size: 0; block-size: var(--tap);
+  padding-inline-end: var(--s5); }
+/* ---- THE CLEAR IS AN × INSIDE THE FIELD (2026-09-08) ------------------
+   Paul: *"the 'clear text' button is now on the right with no label, but it
+   should be an (x) on the inside of the button."*
+
+   IT WAS A SEPARATE SQUARE BESIDE THE FIELD — its own plate, its own border,
+   its own 44px of the row — and it was EMPTY, which is the "no label" in that
+   sentence: ui/atlas.js built its glyph with `el("span", "\u2715")`, and `el`'s
+   second argument is a property bag, so `Object.assign(span, "✕")` returned a
+   blank span. The mark is on the button itself now and the button is INSIDE
+   the field's box: absolutely positioned at its inline end, over the text,
+   which is where every search control on every platform puts it and what "on
+   the inside" means.
+   NO PLATE OF ITS OWN. A border and a ground around a mark that sits inside
+   another control's border draws a box inside a box; the target is still the
+   full `--tap` square (it is a hit area, not a picture), and what says it is
+   pressable is the mark going from `--dim` to `--ink` under a hand.
+   IT IS STILL `hidden` UNTIL THERE IS SOMETHING TO CLEAR, which is the 
+   2026-09-06 clause worth keeping whole: a control that is always present and
+   inert half the time is the silent grey this page legislates against. */
+/* THE MARK AND THE TARGET ARE DIFFERENT SIZES, and the reason is written at
+   `.nu-elixclear` in the design system, which is the same control: a `--tap`
+   hit area overhanging left over the text, its glyph pushed to the box's end
+   so what is DRAWN sits in the field's `--s5` of end padding. The app is not
+   walked by D5's spacing ramp (that gate reads `#gal`), and it obeys it
+   anyway — one control, one construction, or the two drift the first time
+   either is touched. */
+#atlasClear{ position: absolute; inset-block-start: 50%;
+  inset-inline-end: var(--s4); transform: translateY(-50%);
+  inline-size: var(--tap); block-size: var(--tap);
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 var(--s2);
+  background: none; color: var(--dim);
+  border: 0; border-radius: 0;
+  font: 1.25rem/1 var(--sym, var(--sans, inherit)); cursor: pointer; }
+#atlasClear:hover{ color: var(--ink); background: none; }
+#atlasClear[hidden]{ display: none; }
 /* 3 · THE COUNT AND THE ERA CHIPS ARE DELETED (2026-09-06) --------------
       Paul: *"Get rid of the buttons for eras like 'the old Stone Age' those
       all go."* and *"Get rid of 'All 479 records'."* `#atlasJump` (the
@@ -9801,25 +10168,80 @@ nu-menu-row{ display: block; inline-size: 100%; min-inline-size: 0; }
    law): a `role="status"` taken out of the tree and put back does not
    announce. So it is empty at rest, an empty one has NO BOX, and it is never
    `display: none`. */
+/* ---- IT IS ONE BOX WITH A FIELD ACROSS ITS TOP (2026-09-08, §23) ------
+   Paul: *"The genre list should be 100% wide with no left or right borders.
+   The 'Find a genre' should be integrated into it and the 'clear text' button
+   … should be an (x) on the inside of the button. These should be in the
+   design system."*
+
+   THE ELEMENT IS THE BOX, so the box's rules are on the host: full width, a
+   rule ABOVE and BELOW and none down the sides, no corner (a corner is a thing
+   a box has, and a box whose sides are the glass has run out of box to have
+   one on), and its own scrollport — which is what makes the head below a
+   sticky head rather than a decoration. The app's `#atlasIndex` says the same
+   four things in the same order, and the day either moves the other is one
+   grep away.
+   THE HEIGHT IS THE APP'S OWN `min(60vh, 560px)`, so twelve gallery rows and
+   502 app rows are read through the same window. */
 nu-index{ display: block; inline-size: 100%;
-  min-inline-size: 0; max-inline-size: 100%; }
-.nu-elixfind{ display: flex; align-items: center; gap: var(--s2);
-  padding-block-end: var(--s2); }
+  min-inline-size: 0; max-inline-size: 100%;
+  max-block-size: min(60vh, 560px);
+  overflow-y: auto; overscroll-behavior: contain;
+  border-block: var(--bw) solid var(--ink); border-inline: 0;
+  background: var(--panel); }
+/* THE FIELD IS THE HEAD, PINNED. A search that leaves the screen at row nine
+   is a search you have to scroll back to; it is the only pinned thing inside
+   this box, so there is no second band for it to argue with. `position:
+   relative` comes free with `sticky` and is what the × below is placed
+   against. */
+.nu-elixfind{ position: sticky; inset-block-start: 0; z-index: 1;
+  display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s1) var(--s4);
+  background: var(--panel);
+  border-block-end: var(--bw) solid var(--rule); }
+/* ---- AND THE ROOM IT LEAVES IS ON THE RAMP (2026-09-08) ---------------
+   `padding-inline-end: var(--tap)` STOOD HERE FOR AN HOUR and D5 refused it
+   at all three widths: *"every one of 3358 rendered spacing values is on the
+   five-step ramp (1 off: input.nu-elixq padding-inline-end 44.0)"*. The gate
+   is right and the law is right — 44px is a THUMB, and a thumb is not air.
+   THE MARK AND THE TARGET ARE DIFFERENT SIZES, which is the way out and is an
+   idiom this page already has (`.nu-vs-wide .nu-vs-track::before` expands a
+   4px trough to a 32px grab). The button keeps its full `--tap` box, so the
+   hit area is a thumb and overhangs LEFT over the text; its glyph is pushed to
+   the box's own end (`justify-content: flex-end` plus `--s2`), so what is
+   DRAWN sits in the field's end padding. The field therefore has to clear the
+   mark and not the target, and `--s5` — a block, the ramp's own top step — is
+   what clears it. MEASURED on the rendered app at 390: the field's right edge
+   is at 377.2 with 22.4px of end padding, so its text stops at 354.8; the
+   mark's own box ends at 367, between the two. The glyph stands in the
+   padding, the text never reaches it, and the target is 44 x 44. */
 .nu-elixq{ flex: 1 1 auto; min-inline-size: 0; min-block-size: var(--tap);
-  padding-block: var(--s1); padding-inline: var(--s2);
+  padding-block: var(--s1);
+  padding-inline: var(--s2) var(--s5);
   font: var(--fw-body) var(--t2)/1.2 var(--sans);
   color: var(--value); background: var(--well);
   border: var(--bw) solid var(--rule); border-radius: var(--r1); }
 .nu-elixq:focus-visible{ outline: var(--bw-hard) solid var(--lamp);
   outline-offset: calc(-1 * var(--bw-hard)); }
-.nu-elixclear{ flex: 0 0 auto;
-  inline-size: var(--tap); min-block-size: var(--tap);
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 0; background: transparent;
-  border: var(--bw) solid var(--rule); border-radius: var(--r1);
-  color: var(--legend-dim); font-family: var(--sym); cursor: pointer;
-  -webkit-tap-highlight-color: transparent; }
-.nu-elixclear:hover{ border-color: var(--armed); color: var(--armed); }
+/* ---- THE CLEAR IS AN × INSIDE THE FIELD -------------------------------
+   It was a separate plate BESIDE the field — its own border, its own ground,
+   its own 44px of the row. It sits INSIDE the field's box now, absolutely
+   placed at the inline end and drawn over the text, which is where every
+   search control on every platform puts it and what "on the inside" means.
+   NO PLATE OF ITS OWN: a border and a ground around a mark that stands inside
+   another control's border draws a box inside a box. The TARGET is still the
+   full `--tap` square — it is a hit area, not a picture — and what says it is
+   pressable is the mark going from `--legend-dim` to `--armed` under a hand. */
+.nu-elixclear{ position: absolute; inset-block-start: 50%;
+  inset-inline-end: var(--s4); transform: translateY(-50%);
+  inline-size: var(--tap); block-size: var(--tap);
+  display: inline-flex; align-items: center; justify-content: flex-end;
+  padding: 0 var(--s2); background: none;
+  border: 0; border-radius: 0;
+  color: var(--legend-dim); font: 1.25rem/1 var(--sym, var(--sans));
+  cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.nu-elixclear:hover{ color: var(--armed); }
+.nu-elixclear[hidden]{ display: none; }
 .nu-elixlist{ list-style: none; margin: 0; padding: 0; display: block; }
 .nu-elixli{ display: block; }
 /* `[hidden]` IS SAID EXPLICITLY because the rule above sets `display` and

@@ -620,7 +620,12 @@ function lozengeField(spec) {
         return;
       }
       const col = host.querySelector("nu-colhead.is-standing");
-      const x2 = col ? Math.max(0, col.offsetLeft - 8) : 0;
+      let x2 = 0;
+      if (col) {
+        const tr = track.getBoundingClientRect();
+        const cr = col.getBoundingClientRect();
+        x2 = Math.max(0, track.scrollLeft + (cr.left - tr.left) - 8);
+      }
       track.scrollLeft = x2;
       SCROLLX.set(key, x2);
     } catch (e4) {

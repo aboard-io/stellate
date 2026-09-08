@@ -248,7 +248,13 @@ export const TABLE: Table = {
   /* ===== A CELL, AND THE CELL SHEET (grid.ts bodyCell, model.ts) ======== */
   "cell.aria": "{name} · {section}: {value}",
   "cell.aria.mark": "{name} · {section}: {value} ({mark})",
-  "cell.sheet.name": "{name} · {section}",
+  /* (`cell.sheet.name` — `"{name} · {section}"` — STOOD HERE to 2026-09-08.
+     It named the cell sheet with the PLAYER first and the section's raw ID
+     second (`stab · s0`), which was a string only a screen reader ever met.
+     §22 puts the sheet in a card that PRINTS its name, so the cell sheet is
+     opened under `bar.address` instead — the same `{section} × {player}`
+     sentence `cellHead` has always shown, with the section's own name in it.
+     One address, one key.) */
   "cell.ops": "this cell",
   "cell.sheet.plays": "{name} plays · {section}",
   "cell.sheet.variation": "{name} variation · {section}",
@@ -367,4 +373,30 @@ export const TABLE: Table = {
   "sheet.spin.next": "{name} — the word after",
   "sheet.many": "{n} settings in this one",
   "sheet.noOwner.why": "Not available here",
+
+  /* ===== THE CARD'S HEADER (2026-09-08, TABLE.md §22) ===================
+     Paul: *"Instead of expanding sections in the editor and inserting them
+     below the selected point just make them modals with easy dismissal."*
+     The sheet opens as a card now and a card has a header: the sheet's own
+     NAME, which it already had (`cell.sheet.name` and the six callers of
+     `openSheet` supply it), and a way out.
+     THE × IS A MARK IN THE CATALOGUE AND NOT A CHARACTER IN THE SOURCE, for
+     the reason ui/glyph.js states about this exact sign: *"`close` IS × AND
+     NOT ✕ OR ✖: U+00D7 MULTIPLICATION SIGN is Latin-1"* — it renders in every
+     font this page can be given. It is the same mark the page's other × wears
+     (`GLYPH.act.close`), and it is here rather than imported because
+     src/table may not pull ui/glyph.js in (grid.ts:297 — *"ui/glyph.js here
+     would compile a thousand lines of marks into ui/table.js"*).
+     THE ACCESSIBLE NAME NAMES WHAT IT CLOSES. A dialog with one control
+     called "Close" tells a screen reader nothing about which of nine sheets
+     is going away.
+     ...AND IT SAYS THE WORD `sheet`, WHICH IS NOT PADDING. `act.closeTab.aria`
+     is already `Close {name}` and test/copy.test.js C4 refused the duplicate
+     within the minute — rightly, because the two are not the same sentence
+     said twice, they are two different objects with one name: a TAB is a view
+     you are leaving and a SHEET is an editor over the record you stay in.
+     Naming the kind is what tells them apart when a screen reader reads only
+     the control. */
+  "sheet.close.mark": "\u00d7",
+  "sheet.close": "Close the {name} sheet",
 };

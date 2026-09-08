@@ -147,13 +147,33 @@ export class NuIndex extends NuEl {
     const all = parseRows(this.rows);
     const shown = all.filter((r) => this.hit(r));
     const q = this.query || "";
+    /* ===== THE FIELD IS THE LIST'S OWN HEAD (2026-09-08, TABLE.md §23) ===
+       Paul: *"The genre list should be 100% wide with no left or right
+       borders. The 'Find a genre' should be integrated into it and the 'clear
+       text' button is now on the right with no label, but it should be an (x)
+       on the inside of the button. These should be in the design system."*
+
+       THE MARKUP DID NOT MOVE AND DID NOT NEED TO: the find was already the
+       element's first child, so "integrated into it" is a stylesheet change
+       here (`.nu-elixfind` is a sticky head inside the element's own
+       scrollport) and a two-line move in ui/atlas.js, where the strip stood
+       OUTSIDE `#atlasIndex`. What changes in this file is the two things the
+       markup does own.
+       ONE: THE CLEAR IS ONLY THERE WHEN THERE IS SOMETHING TO CLEAR, which is
+       the app's own rule (`showClear`) and this element did not have it — a
+       control that is always present and inert half the time is the silent
+       grey this page legislates against.
+       TWO: `\u00d7` AND NOT `\u2715`. U+00D7 MULTIPLICATION SIGN is Latin-1 and
+       renders in every font this page can be given; ui/glyph.js makes exactly
+       this argument about exactly this sign (*"`close` IS × AND NOT ✕ OR ✖"*).
+       One mark for "clear this", in the app and here. */
     return html`<div class="nu-elixfind">
         <input class="nu-elixq" type="search" .value=${q}
           aria-label=${t("atlas.find.aria")}
           @input=${(e: Event) => this.type(e)}>
-        <button type="button" class="nu-elixclear"
+        <button type="button" class="nu-elixclear" ?hidden=${!q}
           aria-label=${t("atlas.find.clear")}
-          @click=${() => { this.query = ""; }}>\u2715</button>
+          @click=${() => { this.query = ""; }}>\u00d7</button>
       </div>
       <ul class="nu-elixlist" aria-label=${nameOf(this, "") || nothing}
         >${all.map((r) => html`<li class="nu-elixli" data-k=${r.k}

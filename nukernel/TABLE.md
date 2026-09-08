@@ -5874,3 +5874,293 @@ And one check had gone vacuous without failing: `test/selects.js`'s
 reads `.nu-elcount` and `[label]` now. It was reported by the round that broke
 it rather than found later, which is the only reason it was repaired the same
 day; a passing check is not evidence that it is still asking anything.
+
+### 22 · The bar takes the tape, the strip takes the name, and a sheet becomes a card (2026-09-08)
+
+Three sentences, in the order they were given:
+
+> *"Just get rid of the volume control on mobile if it can't work. Leave it on
+> desktop."*
+> *"Move the playback bar to the bottom bar and expand the genre as header but
+> don't put a border around it."*
+> *"Instead of expanding sections in the editor and inserting them below the
+> selected point just make them modals with easy dismissal."*
+
+Two of the three reverse a law this file wrote, and both reversals are of the
+same kind: **a rule that was right about a measurement, kept after the
+measurement changed.**
+
+#### 22a · The room fader is not drawn where it cannot work
+
+The first sentence has a condition in it — *"if it can't work"* — and the
+condition is met, in the engine rather than in the UI. A phone gets the
+WAV-FIRST route (`engine/faust/live/live.js`: `isMobile || isSafari` → a real
+`<audio>` playing rendered segments), and that route has **no live output graph
+to hang a gain on.** It says so in its own comment:
+
+> *"element.volume is kept for engines that honor it (immediate) and the bake
+> covers the one that does not: iOS returns 1 from a volume write … so on that
+> platform the fader was a no-op."*
+
+So on a phone the level rides `mvol` into the next bar **fed** to the worker and
+is heard when the segments already queued have played out. Seconds, not frames.
+A fader you drag and hear nothing from is not a slow fader; it is a control
+lying about being one, and the honest thing is not to draw it.
+
+**`(pointer: coarse)` is the predicate, and it is the page's own.** It is what
+`src/menus/pick.ts coarse()` already means by *"is there a thumb on this
+screen"* — the one owner of that question — so nothing here opens a second
+definition of "mobile" beside it. It is deliberately NOT the engine's UA test,
+and the difference is a touch-screen laptop: it keeps the desktop's instant
+fader in the ENGINE and loses it from the BAR. That trade is taken because the
+alternative is asking the engine a question it cannot answer until the first
+press of ▶.
+
+**Nothing is deleted.** `display: none` takes the control off the glass and out
+of the accessibility tree; `#vol` is still in the document, so the store, the
+restore from `localStorage`, `nukernel/desk-gate.js`'s min/max read and the mix
+board's `#vol2` (the same 0..100 value) are exactly as they were. One store,
+one fewer view of it. What a thumb uses instead is the phone's own hardware
+volume — never seconds late, and the control a person reaches for on a phone
+anyway.
+
+#### 22b · The tape goes back to the bar, and the name becomes the header
+
+§18 moved the tape UP to the top strip on 2026-09-06 and sharpened §16's law to
+justify it: *"the strip is identity, status and navigation; the bar is controls
+and only controls."* Its reason was a measurement — the strip had a dead gap
+(191px at 390, 121 at 320) and the bar was tight.
+
+**The measurement has changed on both sides.** The bar is not tight: the gear
+went on 2026-09-07 and the room fader is off a phone entirely (22a), so the foot
+is two 44px marks, the die, and air. And the strip's gap is not dead any more —
+it is the RECORD'S NAME, which is what *"expand the genre as header"* spends it
+on. So the law goes back to its simpler first wording:
+
+> **THE TOP STRIP IS IDENTITY AND NAVIGATION; THE BOTTOM BAR IS THE TRANSPORT —
+> the controls AND the readout that says what they did.**
+
+A tape is where the ▶ that moves it is.
+
+**Measured on the rendered bar**, at the three widths this page is argued at:
+**242.6px of tape at 390** and **184 at 320**, both with no room fader, and
+**1,015 at 1280** with the fader at the end. The 390 figure is a hair under the
+249.9 the tape had in the strip. `.nu-bartp` renders 91.2 and the seed row 45 at
+every width, so the tape is simply what is left. `margin-inline-start: auto`
+comes off the room in the same edit: the tape is the row's `1 1 auto` and a
+flexible child between the groups does the auto margin's whole job by being
+there — the same sentence `.nu-topstrip` wrote when the tape arrived on IT.
+
+**The name expands and drops its plate.** `flex: 1 1 auto` where the strip's
+own comment argued `0 1 auto`, because that argument was made when the tape was
+the flexible child and the name was one of two things it pushed to the ends;
+there is no second claimant now. The plate — border, ground, hard shadow —
+comes off, and that is **not a restyle but a change of kind**: a border is what
+this page draws around a TARGET and a header is a thing you READ. The button is
+still a button (it still opens Where, still wears `aria-pressed`, still takes a
+tab stop and a thumb); what it stops claiming is that it is a chip floating at
+one end of a band. Its pressed state moves from a fill to the accent on the
+word, because a header with no plate has nowhere to put a fill that would not
+repaint the whole band. Measured: the name is **340.4px at 390** and 275 at 320,
+against the 84.9 it had.
+
+#### 22c · A sheet is a card
+
+**THE LAW THIS REVERSES**, at the head of `src/table/sheet.ts` and in DESIGN.md
+component 4: *"CELL MENUS INSERT BELOW THE ROW (accordion, one open), never a
+floating popup that covers the column you are editing"*, and *"in flow (never a
+modal)"*. Its reason was that a popup hides the cell whose value you are
+choosing.
+
+**THE MEASUREMENT THAT REVERSES IT.** On Kingston 1969 at 390 × 844, tapping
+the first cell of the first section opened a `<tr>` **779.4px tall** — the whole
+glass, less the two bands — and opened it BELOW the row, so the ten rows under
+it were pushed 779px down and the grid a hand had just been reading was gone.
+The law bought *"you can still see the cell you tapped"* and paid for it with
+*"you can no longer see the record"*. At the size these vectors grew to
+(eighteen fields), **the accordion IS a full-screen surface**; it was simply one
+that lied about its shape and shoved the document around on the way in.
+
+**WHAT THE OLD LAW PROTECTED IS KEPT, AS A WORD RATHER THAN AS A POSITION.**
+The card prints the sheet's name at its own top edge — `Intro 1 × stab`, `time`,
+`rules` — so which row you are editing is on the glass, and the distance
+between the mark you pressed and the editor it opened is **zero at every
+width**, which is the number §13f's *"when I click time and rules they show up
+under phrases"* was ever actually about.
+
+**THE LAW THAT BENDS**, said out loud: *"Don't make me scroll INSIDE a popup,
+vertical space is cheap and abundant"* (2026-08-16). Vertical space is abundant
+in a DOCUMENT and it is exactly 844px on a phone; a card between the two fixed
+bands has 720 of them and an eighteen-field vector does not fit. The card
+scrolls — **and it is the one thing that does**, which is the round's dividend:
+the record behind it holds perfectly still, where the accordion shoved it.
+
+**EASY DISMISSAL IS FOUR DOORS, AND THEY ARE THE FOUR `shutSheet` ALREADY HAD:**
+the ×, Escape, a press on the scrim, and the owner's own closer. Nothing new
+opens or closes a sheet.
+
+##### What it cost to build, and the three things it measured
+
+1. **The card is a second `lit` root, and that is a measurement.** The first
+   draft put it in the same template after the pane, on the assumption that lit
+   evaluates its expressions left to right. It does, and the card was empty
+   every time: `tbody` renders through `repeat()`, which is a **directive**, so
+   `bodyRow` — and therefore `openSheet` — runs when lit COMMITS the template,
+   not when it constructs it. `MODAL` was read one whole render before it was
+   written. (Measured: the cell reported `aria-expanded="true"` and there was no
+   `.nu-modalcard` in the document.) `draw()` is two passes now: the table, then
+   the card, into a `.nu-modalroot` the first pass leaves behind. The root is
+   INSIDE the host, so lit owns its life and it cannot leak one per rebuild.
+2. **A dismissal you cannot aim at is not a dismissal.** `max-block-size: 100%`
+   gave the card 738.4 of the 744 available and left 5.6px of scrim on the
+   glass. `88%` leaves **89px of veil** above the card at 390 × 844 — two thumbs
+   — and costs a long sheet 89px of a scroller it was going to scroll anyway. A
+   short sheet is unaffected: the cap is a ceiling.
+3. **The name was never a name.** The row sheet was opened under `rid`, which is
+   a section's raw ID, and the cell sheet under `cell.sheet.name` —
+   `stab · s0`. Invisible while the string was only an `aria-label` on a body
+   nobody could point at; a card PRINTS it, and a card headed `s0` is the raw
+   model on the glass. Both go through `A.secName` now, and the cell sheet is
+   opened under `bar.address` — the same `{section} × {player}` sentence
+   `cellHead` has always shown. `cell.sheet.name` has no caller left and is
+   tombstoned.
+
+##### Where the card puts the focus, and where it does not put the transport
+
+Focus lands on the CARD (`tabindex="-1"`), not on its first control, so a screen
+reader hears the dialog's name — the address — before it hears `undo`. Tab is
+held inside the card, because `aria-modal` tells a screen reader the rest of the
+page is inert and tells a TAB key nothing. On close the focus goes back to
+whatever had it; when an op inside the card replaced that node (`fill across the
+row` rewrites the row — measured, the caret came back to `<body>`) it lands on
+the pane instead, which owns the grid's arrows, its Tab and its Escape. It fires
+on the OPEN/CLOSE transition and never on a draw: `draw()` runs on every write
+in this table, and a `focus()` per draw would take the caret off the control
+being used once a keystroke.
+
+**The scrim is z 57, which is UNDER both fixed bands, and that is a decision.**
+`.nu-topstrip` and `.nu-bar` are 58, so they paint over the veil and stay live:
+the record's name is readable and ▶ is under a thumb while a sheet is open. That
+is `#play`'s oldest law here — *"a permanent play button"*, the one mark on the
+screen in every state — and a modal that took the transport away would be the
+first surface on this page to break it.
+
+##### What did NOT move
+
+`sheetBody` emits the same `.nu-vsheet` with the same rows, the same pickers,
+the same `data-k`s and the same one-owner rule about which widget a vocabulary
+gets. All six `openSheet` call sites pass exactly the arguments `openRow` took;
+what changed is that the function hands its sheet UP instead of drawing it where
+it stands. `data-k="taddr"` keeps the home `test/table-inventory.json` files it
+under — it is the card's title bar now, which puts undo OUTSIDE the scroller,
+on the glass at every scroll position of an eighteen-field vector, which it
+never was in the accordion.
+
+**And `ui/wordgrid.js` still opens the old accordion row.** Its one live
+instance is the mix board's `trimgrid`; §22 is about the EDITOR, which is what
+Paul was holding, and a sentence that was not about the board's own small grid
+does not sweep it along. So `.nu-wopen > td`'s two rules describe exactly one
+grid now instead of two, and the day that grid moves they go with it.
+
+##### And `stick()` is one branch shorter
+
+The three-clause law §13a wrote — *"the grid's column heads while a section row
+is under them and no sheet is open, OR the owner row of the open sheet. Never
+both."* — has nothing left to be `both` WITH. Two of its three clauses are
+`querySelector`s that can now only answer null (`tbody > tr.nu-cellopen`,
+`thead tr.nu-spopen`), so they are tombstoned rather than left to read like live
+law. **The one-pin guarantee §13 was written to make is structural now rather
+than arithmetic:** the card is not in the scrollport at all.
+
+### 23 · The genre list is one box (2026-09-08)
+
+> *"The genre list should be 100% wide with no left or right borders. The 'Find
+> a genre' should be integrated into it and the 'clear text' button is now on
+> the right with no label, but it should be an (x) on the inside of the button.
+> These should be in the design system."*
+
+Four asks, and the third one is a bug report wearing a design note.
+
+#### 23a · Full bleed, and the side borders go with the gutter
+
+`#atlasIndex` stood inside `.nu-pan`'s 12.8px gutter with a border on all four
+sides: **364.4px at x 12.8** on a 390 phone. It is `margin-inline: calc(-1 *
+var(--s4))` now — full bleed the way `.nu-bar` has done it since :112, cancel
+the gutter and let the CONTENTS re-pay it — so the box measures **390 at x 0**,
+and `documentElement.scrollWidth === innerWidth` at 320 and 390 both.
+
+**`100vw` IS REFUSED** for the reason it is refused everywhere in this
+stylesheet: vw includes the scrollbar gutter, and a sideways scroll on the body
+is the one thing the sheet exists to prevent.
+
+**THE SIDE BORDERS COME OFF WITH THE GUTTER, AND SO DOES THE CORNER.** A rule
+down the left of a box whose left edge *is* the screen is a line drawn 0px from
+nothing; a corner is a thing a box has, and this one has run out of box to have
+one on. What is KEPT is `border-block` — a rule above and below — which is what
+still says where the catalogue starts and stops in a scrolling column.
+
+**NOTHING INSIDE MOVED.** `.nu-ixli` has carried `padding-inline: var(--s4)`
+since it was written, so only the box's EDGES travelled; the words are where
+they were.
+
+#### 23b · The search is the list's head
+
+It was `#atlasFind`, a `.nu-row` above the box with its own plate and an `--s4`
+margin between the two. It is the first child of `#atlasIndex` now
+(`insertBefore`, because `#atlasNone` and the rows are already in there and
+three other functions hold references into that box), **sticky at the top of the
+scrollport**.
+
+Two plates with a gap between them read as *a filter and a list*. One plate with
+a field across its top reads as *a list you can type into*, which is what it is.
+
+**STICKY AND NOT STATIC**, because the box scrolls 502 rows: a search field that
+leaves the screen at row nine is a search field you have to scroll back to. It
+is the only pinned thing inside this box, so §13's one-band law has nothing to
+argue with here. Its inline padding is the rows' own `--s4`, so the field's left
+edge stands on the same line as every year in the column under it — which is
+what makes the two read as one object rather than as a field parked on a list.
+
+#### 23c · The × had never rendered
+
+Paul's *"on the right with no label"* is not a design preference, it is the
+symptom. `ui/atlas.js` built the mark as:
+
+    clear.append(el("span", "✕"));
+
+and `el` in that file is `(t, a) => Object.assign(document.createElement(t), a
+|| {})` — its second argument is a **property bag**, not a text node.
+`Object.assign(span, "✕")` assigns the string's indexed characters onto the
+element and hands back an **empty span**. A blank square has been shipping at
+the end of that field since the day the control landed, and nothing failed:
+there is no gate that reads a control's ink.
+
+The mark is on the button itself now (`textContent`), and it is **`×` and
+not `✕`** — U+00D7 MULTIPLICATION SIGN is Latin-1 and renders in every font
+this page can be given, which is the argument `ui/glyph.js` already makes about
+this exact sign for the page's other × (*"`close` IS × AND NOT ✕ OR ✖"*). One
+mark for "close this", wherever it is drawn.
+
+**AND IT MOVED INSIDE THE FIELD.** It was a separate plate BESIDE the input —
+its own border, its own ground, its own 44px of the row. It is absolutely placed
+at the input's inline end now, drawn over the text, which is where every search
+control on every platform puts it and what *"on the inside"* means. **No plate
+of its own**: a border and a ground around a mark that stands inside another
+control's border draws a box inside a box. The TARGET is still the full `--tap`
+square — it is a hit area, not a picture — and what says it is pressable is the
+mark going from `--dim` to `--ink` under a hand. It is still `hidden` until
+there is something to clear, which is the 2026-09-06 clause worth keeping whole.
+
+#### 23d · "These should be in the design system"
+
+`<nu-index>` already existed (`src/ui/atlas.ts`, 2026-09-07) and already had the
+find as its first child — so *"integrated into it"* cost this element a
+stylesheet change and nothing else, while it cost the app a two-line move. What
+the element DID need was the two things its markup owns: the × is `×` and it
+is `?hidden=${!q}`, which is the app's `showClear` rule the element never had.
+
+Its host now carries the same four declarations `#atlasIndex` does, in the same
+order, in the same stylesheet — full width, `border-block` only, no radius, its
+own scrollport at `min(60vh, 560px)` — so the gallery's twelve rows and the
+app's 502 are read through the same window and the day either moves the other is
+one grep away. DESIGN.md component 25 is the contract.
