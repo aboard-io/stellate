@@ -1767,8 +1767,24 @@ export function mount(parent, ctx) {
        MEASURED after, on the rendered page: 298 -> 342 at 390, 241 -> 276 at
        320, 523 -> 565 at 1280 — and the sentence and the index below it are
        still on the glass at all three. */
-    const h = Math.min(Math.round(w * 0.94),
-                       Math.round((window.innerHeight || 800) * 0.67));
+    /* ...AND SINCE 2026-09-08 THE BOX IS THE BOX, WHEN IT HAS ONE. Paul:
+       *"Make the globe reach 100% top to bottom."* Explore is two fixed halves
+       now (nu.css "EXPLORE IS TWO FIXED HALVES"), so the wrap is given a real
+       block size by the grid and the ratio above is answering a question
+       nobody is asking any more: the column IS the height, and the earth
+       should fill it.
+       THE OLD RULE IS KEPT FOR THE HOSTS THAT STILL NEED IT and is not a
+       fallback in the apologetic sense — a wrap with no height of its own is a
+       globe standing in a scrolling document, which is exactly the case those
+       two constants were measured for (the design gallery mounts one). So:
+       take the box when the box has been sized, and size yourself when it has
+       not. `clientHeight` and not `getBoundingClientRect().height` for the same
+       reason `clientWidth` is used one line up — it is the CONTENT box, so a
+       border or a scrollbar cannot make the earth chase its own container. */
+    const boxH = wrap.clientHeight || 0;
+    const h = boxH > 0 ? boxH
+                       : Math.min(Math.round(w * 0.94),
+                                  Math.round((window.innerHeight || 800) * 0.67));
     if (w === lastW && h === lastH) return false;
     lastW = w; lastH = h;
     globe.fit(w, h);

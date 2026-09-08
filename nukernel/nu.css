@@ -9071,6 +9071,76 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
                                           - var(--bar-h) - var(--s2)); }
 
 /* ======================================================================
+   EXPLORE IS TWO FIXED HALVES, STACKED (2026-09-08)
+   ======================================================================
+   Paul: *"Make the genres plus search take up half the explore screen and the
+   globe the other half. Make the globe reach 100% top to bottom. Keep those
+   sizes fixed."* Then, on seeing the first cut side by side: *"BTW when I say
+   split in two I mean stacked top to bottom."*
+
+   SO IT IS TWO BANDS AND NOT TWO COLUMNS, at every width. The globe takes the
+   top half and fills it top to bottom; the search and the 510-row index take
+   the bottom half and scroll inside it. (The side-by-side version stood here
+   for one round. It was wrong twice over: it read "half the screen" as a
+   vertical cut, and on a 390px phone it made halves of 187px — an earth the
+   size of a thumbnail beside names clipped to two words.)
+
+   IT WAS A SCROLLING DOCUMENT AND IT IS A SPLIT NOW, which is the point of the
+   ask. The globe was a full-width block with the index BELOW it, so the two
+   things this view is for could never be on the glass at once: you spun the
+   earth, scrolled past it to read a name, and the earth was gone. Measured
+   before, at 1280x900: the globe 1280x603 and the index starting at y=673,
+   with 73px of it visible.
+
+   "KEEP THOSE SIZES FIXED" IS THE WHOLE SECOND SENTENCE. The panel is exactly
+   the glass between the two bands — `100dvh` less the strip, the bar and the
+   gap, the same arithmetic `[data-sheet]` already did as a floor, stated as a
+   HEIGHT — it hides its own overflow, and the rows are `1fr 1fr` of a box that
+   cannot grow. Neither half can push the other; the only scroll left on this
+   screen is the index's own, inside its half.
+
+   AND THE GLOBE FILLS ITS HALF, which is not CSS: ui/atlas.js `refit()` sized
+   the earth as `min(width * 0.94, viewport * 0.67)`, a ratio written for a
+   globe standing in a long scrolling page. It takes its own box's height now
+   when the box has one, and keeps the ratio where it does not. See the note
+   there. */
+.nu-pan[data-sheet]#atlas{
+  block-size: calc(100dvh - var(--top-h) - var(--bar-h) - var(--s2));
+  min-block-size: 0;
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--s2);
+  overflow: hidden;
+  padding-block: 0;
+}
+/* The globe is the top band, full width, filling its half top to bottom. Its
+   own overflow is gone with the scroll it belonged to: the map is drawn to fit
+   this box, so there is nothing to pan to. */
+#atlas[data-sheet] > #atlasWrap{
+  grid-row: 1;
+  margin-inline: calc(-1 * var(--s4));
+  min-block-size: 0; block-size: 100%;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+/* …and the index is the bottom band and owns the only scroll on the screen.
+   The search stays stuck to the top of ITS half rather than to a page that no
+   longer scrolls. */
+#atlas[data-sheet] > #atlasIndex{
+  grid-row: 2;
+  margin-block-start: 0;
+  min-block-size: 0; block-size: 100%;
+  overflow-y: auto; overscroll-behavior: contain;
+  /* AND A ROW SCROLLED TO LANDS BELOW THE SEARCH, NOT BEHIND IT. The index
+     puts the current record on the glass by `scrollIntoView`, and the search
+     is `position: sticky` at the top of this box — so without a scroll padding
+     the row it just found sits UNDER the bar, half of its name showing. One
+     `--tap`, which is the bar's own height. */
+  scroll-padding-block-start: var(--tap);
+}
+
+/* ======================================================================
    THE DESIGN PASS (2026-09-05) — DESIGN.md §1–§2, TABLE.md §11's restyle
    ======================================================================
    Paul, after the AUX spike: *"keep our stuff but make it less chunky and

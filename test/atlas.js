@@ -267,10 +267,17 @@ function g18() {
      the whole precondition; a round that adds a control under the globe makes
      it truer and a round that takes one away makes it false, and neither is a
      defect in who owns a swipe. */
-  const SHORT_H = 460;
+  /* (`SHORT_H = 460` AND `shortPage()` STOOD HERE, 2026-08-28 to 2026-09-08,
+     with four paragraphs measuring how much room a swipe needed to scroll
+     into. They are deleted with the scroll: Explore is two fixed bands and the
+     panel is exactly the viewport, so there is no height at which this page
+     scrolls and no stage to set. `tallPage()` survives because G20's pinch
+     still restores the viewport the rest of the file measures at. The argument
+     they carried — "if this fails again, MEASURE THE PANEL FIRST" — is the
+     right instinct and it is what caught this: the panel is the glass now.
+     `setH` stays: G20's pinch still needs to put the viewport back.) */
   const setH = async (h) => { await p.setViewportSize({ width: 390, height: h });
     await p.waitForTimeout(250); };
-  const shortPage = () => setH(SHORT_H);
   const tallPage = () => setH(844);
   /* AND THE SWIPE HAS TO START WITH SOMEWHERE TO GO. `bring()` is
      `scrollIntoView({ block: "center" })`, which on a one-panel page lands on
@@ -1319,8 +1326,24 @@ function g18() {
   check(off === 0, "G17 · OFF SCREEN: the loop is cancelled mid-glide — " + off +
     " rAF calls in 1.5 s with the section scrolled away");
 
-  /* ---- G13 A SWIPE ON THE MAP STILL SCROLLS THE PAGE ------------------ */
-  await shortPage();
+  /* ---- G13 A SWIPE ON THE MAP IS THE GLOBE'S OR NOBODY'S -------------- */
+  /* ===== THE PAGE DOES NOT SCROLL ON THIS SCREEN ANY MORE (2026-09-08) ===
+     Paul: *"Make the genres plus search take up half the explore screen and the
+     globe the other half … Keep those sizes fixed."* Explore is two fixed
+     bands now (nu.css "EXPLORE IS TWO FIXED HALVES, STACKED"): the panel is
+     exactly the glass between the two chrome bands, it hides its overflow, and
+     the ONLY scroll left on the screen is the index's own, inside its half.
+
+     SO THE THREE CHECKS BELOW ASSERT THE OTHER HALF OF THE SAME LAW. What they
+     were written to protect is "the globe does not steal a gesture that is not
+     its own" — measured the day a vertical swipe on the Kingston dot composed a
+     reggae record — and that claim is untouched: a vertical drag still turns
+     the earth 0.000 degrees and still composes nothing. What is gone is the
+     other clause, "…and the PAGE takes it instead", because there is no page
+     scroll to take it. Where scrolling went is asserted directly now: the
+     INDEX scrolls, in its own half, on its own swipe.
+     TRANSLATED, NOT LOOSENED — and it is strictly more than was asserted
+     before, because "the page moved" never proved the LIST could move. */
   await bringLow();
   const ta = await p.evaluate(() =>
     getComputedStyle(document.getElementById("atlasMap")).touchAction);
@@ -1330,7 +1353,10 @@ function g18() {
   const vBefore = await p.evaluate(() => ({ y: window.scrollY,
     lat: +document.getElementById("atlasMap").dataset.lat,
     lon: +document.getElementById("atlasMap").dataset.lon }));
-  await touch("touchStart", [{ x: c2.x, y: c2.y - 120 }]);   // ABOVE — see SHORT_H
+  // ABOVE THE CENTRE, and it is inside the band: the globe's half is 366px at
+  // 390x844, its centre y=227, so this starts at 107 — on the earth, which is
+  // the only place a drag on the globe can start.
+  await touch("touchStart", [{ x: c2.x, y: c2.y - 120 }]);
   for (let i = 1; i <= 12; i++) {
     await touch("touchMove", [{ x: c2.x, y: c2.y - 120 - i * 24 }]);
     await p.waitForTimeout(16);
@@ -1340,8 +1366,30 @@ function g18() {
   const vAfter = await p.evaluate(() => ({ y: window.scrollY,
     lat: +document.getElementById("atlasMap").dataset.lat,
     lon: +document.getElementById("atlasMap").dataset.lon }));
-  check(vAfter.y - vBefore.y > 100,
-    "G13 · a real VERTICAL swipe scrolls the page (" + vBefore.y + " -> " + vAfter.y + " px)");
+  check(vAfter.y === vBefore.y,
+    "G13 · a real VERTICAL swipe moves the page NOT AT ALL, because this screen " +
+    "has no page scroll left to take (" + vBefore.y + " -> " + vAfter.y + " px)");
+  /* ...AND THE SCROLL THAT DOES EXIST IS THE INDEX'S, PROVEN BY MOVING IT.
+     The bottom half is the only scrollable box on the screen, so this is where
+     "a vertical swipe reaches something" now lives — asserted on the artifact,
+     with a real touch stream, the same way the page scroll was. */
+  const listMoved = await (async () => {
+    const box = await p.evaluate(() => { const i = document.getElementById("atlasIndex");
+      i.scrollTop = 0; const r = i.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height * 0.7, was: i.scrollTop }; });
+    await touch("touchStart", [{ x: box.x, y: box.y }]);
+    for (let i = 1; i <= 12; i++) {
+      await touch("touchMove", [{ x: box.x, y: box.y - i * 18 }]);
+      await p.waitForTimeout(16);
+    }
+    await touch("touchEnd", []);
+    await p.waitForTimeout(500);
+    const now = await p.evaluate(() => document.getElementById("atlasIndex").scrollTop);
+    return { was: box.was, now };
+  })();
+  check(listMoved.now - listMoved.was > 40,
+    "G13 · …and the INDEX is where scrolling lives now: its own vertical swipe " +
+    "moved it " + listMoved.was + " -> " + listMoved.now + " px, inside its half");
   check(Math.abs(vAfter.lat - vBefore.lat) < 0.001 && Math.abs(vAfter.lon - vBefore.lon) < 0.001,
     "G13 · …and the globe does not move at all — the 8px axis lock, because pan-y alone does " +
     "NOT stop the browser handing us the pointermoves (lat " + vBefore.lat + " -> " +
@@ -1512,8 +1560,10 @@ function g18() {
        question and not this block's, so it is written down here rather than
        hidden again by the geometry that was hiding it.
 
-       THE NEAR-VERTICAL PAIR assert `scrolled > 100`, which on a one-panel
-       Where tab needs the short page and a start ABOVE the centre — SHORT_H. */
+       THE NEAR-VERTICAL PAIR asserted `scrolled > 100` until 2026-09-08 and
+       asserts `scrolled === 0` now: the panel is the viewport, nothing on this
+       screen scrolls but the index, and the claim that was always doing the
+       work is the 0.000 degrees. */
   const straight = async (deg, len, low) => {
     if (low) await bringLow();
     else { await p.evaluate(() => window.scrollTo(0, 0));
@@ -1568,14 +1618,17 @@ function g18() {
   check(!badDiag.length, "G21 · a STRAIGHT diagonal drag turns the globe and does not "
     + "scroll the page, at " + diag.map((d) => d.deg + " deg: " + d.turned.toFixed(1)
     + " deg turned / " + d.scrolled + " px scrolled").join(", "));
-  await shortPage();
   const vert = [];
   for (const deg of [80, 90]) vert.push(await straight(deg, 260, true));
-  const badVert = vert.filter((v) => !(v.scrolled > 100 && v.turned < 0.001));
-  check(!badVert.length, "G21 · …AND A NEAR-VERTICAL SWIPE STILL SCROLLS THE PAGE, at "
-    + vert.map((v) => v.deg + " deg: " + v.scrolled + " px scrolled / "
-    + v.turned.toFixed(3) + " deg turned").join(", "));
-  await tallPage();
+  const badVert = vert.filter((v) => !(v.scrolled === 0 && v.turned < 0.001));
+  /* THE LOCK IS THE WHOLE CLAIM NOW. It read "…AND STILL SCROLLS THE PAGE",
+     which was the lock's consequence on a scrolling document; on two fixed
+     bands the consequence is that NOTHING moves, and the assertion that
+     matters — the earth turned 0.000 degrees on a near-vertical drag — is the
+     one that was always doing the work. */
+  check(!badVert.length, "G21 · …AND A NEAR-VERTICAL SWIPE TURNS NOTHING AND MOVES "
+    + "NOTHING, at " + vert.map((v) => v.deg + " deg: " + v.turned.toFixed(3)
+    + " deg turned / " + v.scrolled + " px scrolled").join(", "));
 
   /* ---- G19 THE PILE RESOLVES ----------------------------------------- */
   /* At the whole earth the European marks pile up. The rule is nearest year,
@@ -1647,7 +1700,6 @@ function g18() {
     JSON.stringify(one.title) + ", nearest to 1969 is " + (near69 || {}).want + ")");
 
   /* ---- G16 A SCROLL THAT BEGINS ON A DOT IS NOT A TAP ----------------- */
-  await shortPage();
   /* The bug this pins, measured 2026-08-24 before the fix: slider at 1969, one
      vertical touch swipe beginning on the Kingston dot, and the box composed a
      reggae record — #title "Rome 600" -> "Kingston 1969", the page from y=192 to
@@ -1669,8 +1721,15 @@ function g18() {
   await p.waitForTimeout(1600);
   const s1 = await p.evaluate(() => ({ y: window.scrollY,
     title: window.__nuName() }));
-  check(s1.y - s0.y > 100, "G16 · a real vertical touch swipe BEGINNING on the Kingston mark " +
-    "scrolls the page (" + s0.y + " -> " + s1.y + " px)");
+  /* THE PAGE CLAUSE IS GONE AND THE BUG IT PINS IS NOT. What this caught was a
+     PICK firing on pointerdown — one vertical swipe from the Kingston dot and
+     the box had composed a reggae record. That is the check below, and it is
+     the one that always mattered; "and the page scrolled" was how a scrolling
+     document showed the gesture had gone somewhere else. There is nowhere else
+     now, so what is asserted is that the swipe moved nothing at all. */
+  check(s1.y === s0.y, "G16 · a real vertical touch swipe BEGINNING on the Kingston mark " +
+    "moves the page not at all — there is no page scroll on this screen (" +
+    s0.y + " -> " + s1.y + " px)");
   check(s1.title === s0.title, "G16 · …and composes nothing: #title is still " +
     JSON.stringify(s1.title));
   await bring();
