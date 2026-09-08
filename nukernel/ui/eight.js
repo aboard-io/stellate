@@ -410,7 +410,7 @@ import { songDurSec, voicing, setVoicing } from "../audio/plan.js";
    NOUN now — `burger.log` / `burger.menuLog`, picked by `tn` — and a plural
    chosen by an `if` in ui/glyph.js cannot be taught a second language's rest.
    ui/glyph.js still exports it and nothing calls it.) */
-import { GLYPH, kindGlyph, cellMark, recordMark, icon, paintIcon,
+import { GLYPH, kindGlyph, cellMark, recordMark, icon, paintIcon, drawGlyph,
          wireSay } from "./glyph.js";
 // THE ? MARK AND THE PAGE IT OPENS (2026-08-30, Paul: "add a ? Icon above the
 // log icon that fully explains every aspect of a genre"). The whole explainer
@@ -14779,6 +14779,50 @@ function chromeRow() {
      row says `Set seed`; a `SET SEED` heading over a `SET SEED` row is the
      word twice, which is exactly what it drew for an hour. The other two
      headings stand because their blocks are six rows and eight. */
+  /* ===== THE ROOM'S LIGHT (2026-09-08) ==================================
+     Paul: *"The light/dark mode should be working now. It's still in dark mode
+     for me."*
+
+     THE THEME EXISTED AND THE APP COULD NOT REACH IT. `:root[data-theme=
+     "light"]` is a written design (tokens.css, "THE PANEL IN DAYLIGHT") and
+     the only control that ever set it was the ☀ in the design gallery
+     (ui/ui.js `chrome`) — a page Paul does not work in. So the switch is a row
+     of the plate now, beside the seed and under no heading for the same reason
+     the seed has none: the block is one row and the row says what it is.
+     IT IS A HAND'S SETTING, REMEMBERED — `nukernel.theme.v1`, applied in the
+     head before the first paint (index.html) so the page never flashes the
+     deck on its way to daylight. There is deliberately no `prefers-color-
+     scheme`: tokens.css's own argument is that a machine looks the same in
+     every room and the second theme is "reached by a hand, not by a system
+     setting", so what is honoured is the last press and nothing else.
+     THE ROW SAYS WHAT PRESSING IT DOES, which is this page's law for every
+     toggle it draws — `Daylight` while the deck is up, `The deck` while it is
+     not. */
+  const themeLine = el("div", null, "nu-menuseed");
+  const themeBtn = mkBtn("themeswitch");
+  const lightNow = () => {
+    try { return document.documentElement.getAttribute("data-theme") === "light"; }
+    catch (e) { return false; }
+  };
+  const paintTheme = () => {
+    const on = lightNow();
+    paintIcon(themeBtn, { glyph: on ? "◐" : "☀",
+                          word: _t(on ? "burger.dark" : "burger.light"),
+                          say: _t(on ? "burger.dark.say" : "burger.light.say") });
+  };
+  themeBtn.addEventListener("click", () => {
+    const on = lightNow();
+    try {
+      if (on) document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", "light");
+    } catch (e) {}
+    try { localStorage.setItem("nukernel.theme.v1", on ? "deck" : "light"); }
+    catch (e) { /* a private window refuses the write; the room still changed */ }
+    paintTheme();
+  });
+  paintTheme();
+  themeLine.append(themeBtn);
+  menuBox.append(themeLine);
   const seedLine = el("div", null, "nu-menuseed");
   seedMenuBtn = mkBtn("seedmenu");
   /* AND IT IS SPELLED LIKE EVERY OTHER ROW OF THE PLATE (2026-09-07, §20): the
@@ -14856,7 +14900,18 @@ function chromeRow() {
      rows of the plate above; its door and its box are deleted, and the
      tombstone that argues it is beside `playBtn`'s listener.) */
   const tp = el("div", null, "nu-bartp");
-  tp.append(voicingBtn, playBtn);
+  /* ===== PLAY IS FIRST, AND IT IS TWICE THE TARGET (2026-09-08) ==========
+     Paul: *"Put the play button on the bottom left and make it 2x wide for
+     fitt's law, then the other buttons."*
+
+     IT WAS SECOND, BEHIND THE VOICING MARK — one 44px square in a row of 44px
+     squares, indistinguishable by size from the settings beside it, and the
+     one control in the band a hand reaches for constantly. Fitts is the
+     argument and it is the right one: the corner of the screen is the cheapest
+     place a thumb can hit, and doubling the width halves the time again. The
+     ORDER is changed here, in the DOM, and not with a CSS `order`, so the tab
+     order and the reading order move with the picture (nu.css widens it). */
+  tp.append(playBtn, voicingBtn);
   barEl.append(tp);
   /* ===== THE DIE COMES BACK, AND THE ROOM COMES WITH IT (2026-09-06, §18) =
      Paul: *"Move the dice back into the bottom. Leave them with the hamburger
@@ -17117,7 +17172,12 @@ say();
 (() => {
   const a = GLYPH.act.seed;
   const box = el("span", null, "nu-ic");
-  const g = el("span", a.g, "nu-g");
+  /* THE DIE IS DRAWN, NOT TYPED (2026-09-08) — `drawGlyph` is ui/glyph.js's
+     one owner of that fork and this button is hand-painted, so it has to ask
+     for the same thing `paintIcon` asks for or the bar would print the marker
+     string. See `paintDie` below for the swap this face makes while a reseed
+     is pending. */
+  const g = drawGlyph(a.g);
   g.setAttribute("aria-hidden", "true");
   box.append(g, el("span", a.w, "nu-vh"));
   /* THE `while` LOOP THAT STOOD HERE IS GONE, 2026-08-29, and its absence is
@@ -17346,8 +17406,23 @@ const paintDie = () => {
   const g = rewriteBtn.querySelector(".nu-g");
   const waiting = seedLeft != null;
   if (g) {
-    const face = waiting ? String(seedLeft) : GLYPH.act.seed.g;
-    if (g.textContent !== face) g.textContent = face;
+    /* TWO FACES, AND ONE OF THEM IS NOW GEOMETRY. While a reseed is pending
+       this mark counts the beats down as a NUMBER; at rest it is the die,
+       which is drawn (ui/glyph.js `drawGlyph`) and therefore a node rather
+       than a string. `data-face` is the same guard `paintIcon` uses: the node
+       is rebuilt only when the face actually changes, so the countdown does
+       not re-draw the die sixteen times a bar. */
+    const face = waiting ? String(seedLeft) : "die";
+    if (g.dataset.face !== face) {
+      g.dataset.face = face;
+      g.textContent = "";
+      if (waiting) g.textContent = String(seedLeft);
+      else { const drawn = drawGlyph(GLYPH.act.seed.g);
+             g.className = drawn.className;
+             while (drawn.firstChild) g.append(drawn.firstChild); }
+      if (!waiting) g.classList.add("nu-g");
+      else g.className = "nu-g";
+    }
     if (waiting) g.setAttribute("data-live", "pending");
     else g.removeAttribute("data-live");
   }

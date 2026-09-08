@@ -379,6 +379,16 @@ export const SHEETS: Table = {
      view nor a fact about the record, so it is a block of its own and the
      heading says what the block is about in the same voice as the other two. */
   "burger.play": "How it plays",
+  /* THE ROOM'S LIGHT, 2026-09-08. Paul: *"The light/dark mode should be
+     working now. It's still in dark mode for me."* One row, and its word is
+     the STATE IT WILL GIVE YOU rather than the state you are in — the same
+     way every other toggle on this page names what pressing it does. The
+     ☀/◐ marks follow, and tokens.css's own name for the two rooms is what
+     they are called: the DECK, and the panel in DAYLIGHT. */
+  "burger.light": "Daylight",
+  "burger.dark": "The deck",
+  "burger.light.say": "Read the panel in daylight — a lighter room",
+  "burger.dark.say": "Back to the deck — the committed dark panel",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",

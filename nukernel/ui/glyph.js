@@ -295,7 +295,7 @@ export const GLYPH = {
                s: t("glyph.act.play.say") },
     stop:    { g: "■", w: t("glyph.act.stop"),
                s: t("act.stop") },
-    rewrite: { g: "⚄", w: t("glyph.act.rewrite"),
+    rewrite: { g: "svg:die", w: t("glyph.act.rewrite"),
                s: t("glyph.act.rewrite.say") },
     take:    { g: "↻", w: t("noun.take"),
                s: t("glyph.act.take.say") },
@@ -350,7 +350,7 @@ export const GLYPH = {
        name, in the table where the page's names live; the sentence is the
        explainer the die carries as `data-say`, and it named a slider that no
        longer exists. */
-    seed:    { g: "⚄", w: t("noun.seed"),
+    seed:    { g: "svg:die", w: t("noun.seed"),
                s: t("glyph.act.rewrite.say") },
     /* THE EDIT MARKS (2026-09-08, TABLE.md §24) — measured against this
        page's own font before they were chosen; src/copy/glyph.ts carries the
@@ -927,6 +927,60 @@ export function icon(opts) {
    `removeAttribute` on both, so a level repainted in place (`paintTray`'s
    short-circuit) cannot leave a stale refusal on a button that is live again
    because the tempo moved. */
+/* ===== A GLYPH MAY BE DRAWN INSTEAD OF TYPED (2026-09-08) ===============
+   Paul: *"The die is small and off-center so maybe you need an SVG from
+   somewhere."*
+
+   HE IS DESCRIBING FONT METRICS AND HE IS RIGHT. `⚄` (U+2684) is a character,
+   so its size and its baseline are whatever the family that has it decides —
+   on this deck it draws about two-thirds the height of the marks beside it and
+   sits low, because a die face is a SYMBOL glyph designed to sit in running
+   text among letters. No amount of `font-size` fixes the second half of that:
+   a nudged baseline is a nudge that is wrong on the next machine.
+
+   SO ONE MARK IS DRAWN. A glyph whose value begins `svg:` is built here as
+   real geometry — a 1em box, centred by construction, inheriting
+   `currentColor` — and every other mark in the page is untouched, still one
+   string in the table above. The call sites do not change: they pass `g.g`
+   through as they always have, and this is the one owner of icon spelling
+   (this file's own claim), so the fork belongs here and nowhere else.
+   THE FIVE PIPS ARE THE FIVE PIPS. `⚄` is a five, the take's own face since
+   the mark was chosen, and the drawing keeps it rather than quietly becoming
+   a six. */
+const SVGNS = "http://www.w3.org/2000/svg";
+const svgEl = (name, attrs) => {
+  const n = document.createElementNS(SVGNS, name);
+  for (const k in attrs) n.setAttribute(k, String(attrs[k]));
+  return n;
+};
+const DRAWN = {
+  /* a five-face: the square, then the four corners and the centre. Stroked in
+     `currentColor` so a pressed mark's ink follows the fill like every other
+     glyph, and sized in `em` so it grows with the row's own type. */
+  die: () => {
+    const svg = svgEl("svg", { viewBox: "0 0 24 24", width: "1.15em",
+                               height: "1.15em", fill: "none",
+                               stroke: "currentColor", "stroke-width": 1.6,
+                               "stroke-linejoin": "round" });
+    svg.append(svgEl("rect", { x: 3.2, y: 3.2, width: 17.6, height: 17.6,
+                               rx: 3.6 }));
+    for (const [cx, cy] of [[8.4, 8.4], [15.6, 8.4], [12, 12],
+                            [8.4, 15.6], [15.6, 15.6]])
+      svg.append(svgEl("circle", { cx, cy, r: 1.55, fill: "currentColor",
+                                   stroke: "none" }));
+    return svg;
+  },
+};
+export function drawGlyph(glyph) {
+  const g = String(glyph == null ? "" : glyph);
+  if (g.slice(0, 4) === "svg:") {
+    const make = DRAWN[g.slice(4)];
+    if (make) { const box = el("span", null, "nu-g nu-g-drawn");
+                box.append(make()); return box; }
+  }
+  return el("span", g, "nu-g");
+}
+
 export function paintIcon(b, opts) {
   const word = opts.word == null ? "" : String(opts.word);
   const want = opts.on ? "MARK" : "SPAN";
@@ -984,7 +1038,7 @@ export function paintIcon(b, opts) {
   b.dataset.face = sig;
   b.textContent = "";
   const box = el(opts.on ? "mark" : "span", null, "nu-ic");
-  const g = el("span", opts.glyph, "nu-g");
+  const g = drawGlyph(opts.glyph);
   g.setAttribute("aria-hidden", "true");
   box.append(g);
   if (opts.num != null) box.append(el("span", String(opts.num), "nu-n"));

@@ -90,6 +90,28 @@
      to stay literal to be worth anything, so the noise goes rather than the
      check. -->
 <link rel="icon" href="data:,">
+<!-- ===== THE ROOM'S LIGHT, BEFORE THE FIRST PAINT (2026-09-08) =========
+     Paul: "The light/dark mode should be working now. It's still in dark mode
+     for me."
+
+     THE LIGHT THEME EXISTED AND NOTHING IN THIS APP COULD REACH IT.
+     `:root[data-theme="light"]` is a written design — tokens.css §"THE PANEL
+     IN DAYLIGHT" — and the ONLY control that set it was in the design gallery
+     (ui/ui.js `chrome`, the ☀ button on /design). The app had no row for it,
+     so a hand on this page had no way to ask, which is exactly the report.
+     IT IS A HAND'S CHOICE AND NOT THE SYSTEM'S, which is tokens.css's own
+     argument and it is kept: "the Stellate is a machine, and a machine looks
+     the same in every room… reached by a hand, not by a system setting." So
+     there is no `prefers-color-scheme` here either — what is remembered is
+     what a hand pressed, and a fresh page is the deck.
+     AND IT IS HERE, IN THE HEAD, BECAUSE OF THE FLASH. Applied from a module
+     the page would paint the deck first and repaint light a beat later, which
+     is the one thing a theme switch must not do. Four lines, no dependency,
+     inside a try because a private window's localStorage throws on read. -->
+<script>
+  try { if (localStorage.getItem("nukernel.theme.v1") === "light")
+    document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+</script>
 </head>
 <body>
 

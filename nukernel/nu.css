@@ -3341,7 +3341,22 @@ table.nu-trims{ color: var(--ink); }
    never fires: measured scrollWidth - clientWidth === 0 at 320 / 375 / 390 /
    430 / 760 / 1280. If a future view ever does overflow, the scroll is at the
    element and never at the body (this file's own third failure mode). */
-#atlasWrap{ overflow-x: auto; }
+/* ---- THE EARTH RUNS TO THE GLASS (2026-09-08) -------------------------
+   Paul: *"See if you can get the map to 100% width and height right now it has
+   padding we don't need."*
+
+   THE PADDING IS THE PANEL'S, NOT THE MAP'S. `#atlas` is a `.nu-pan` and pays
+   `--s4` down both sides so its TEXT does not smash into the nav (2026-09-01);
+   the globe is not text, and a picture of the earth inset by 12.8px on a
+   390px phone spends 26px of the one view whose whole job is to be looked at.
+   MEASURED before: the map 364.4px wide inside a 390px page.
+   SO IT CANCELS THE INSET, the way `#atlasIndex` does two screens down and for
+   the same reason — one negative margin either side, no new layout — and its
+   own `--s4` of block padding goes with it. What is NOT cancelled is the list
+   under it: the years stay inset, because a column of text at the glass is the
+   defect the panel's padding was added to fix. */
+#atlasWrap{ overflow-x: auto;
+  margin-inline: calc(-1 * var(--s4)); }
 
 /* THE GLOBE IS A TAP SURFACE, so it makes the same promise the pointer handler
    does. `pan-y` gives a VERTICAL swipe to the page (test/atlas.js G13) and the
@@ -4493,6 +4508,13 @@ table.nu-trims{ color: var(--ink); }
   position: relative; pointer-events: none; }
 .nu-g{ font-size: 1.2rem; line-height: 1; letter-spacing: -.02em;
   font-family: var(--sym); }
+/* A DRAWN GLYPH IS A BOX, NOT A LETTER (2026-09-08, ui/glyph.js `drawGlyph`).
+   It carries no baseline of its own, so it is centred by the flex it sits in
+   and nothing else — which is the whole point of drawing it: `⚄` sat small and
+   low because a symbol font decided where a die belongs among letters. */
+.nu-g-drawn{ display: inline-flex; align-items: center; justify-content: center;
+  line-height: 0; }
+.nu-g-drawn > svg{ display: block; }
 /* THE NUMBER, AND IT IS THE ONLY TEXT THAT SHOWS. Paul: "more symbol plus the
    number 2." Smaller than the mark and bolder than the page, so it reads as an
    index on a picture rather than as a word beside one. Tabular figures because
@@ -8463,6 +8485,18 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    it is inside the tape, below.) */
 .nu-bar > .nu-bartp{ flex: 0 0 auto; display: flex; flex-direction: row;
   align-items: center; gap: var(--s1); }
+/* PLAY IS TWICE THE TARGET (2026-09-08). Paul: *"Put the play button on the
+   bottom left and make it 2x wide for fitt's law, then the other buttons."*
+   ui/eight.js puts it first in the row and this gives it the width: `--tap`
+   is the floor for every isolated control and this is the one control that
+   earns two of them. It is a WIDTH and not a height — the band is `--bar-h`
+   and nothing in it may grow taller — so what doubles is the axis a thumb
+   travelling along the foot of the screen actually crosses.
+   AT 320 IT IS STILL AFFORDABLE: the row's budget there is the ≡ (44), this
+   (88), the voicing (44), the die (44), undo and redo (88) and the room —
+   which is why the tape's floor and the 1px seams below 380 were measured in
+   the first place. */
+.nu-bar > .nu-bartp > #play{ min-inline-size: calc(var(--tap) * 2); }
 /* ---- THE DIE AND THE ROOM, IN THE BAR (2026-09-06, TABLE.md §18) ------
    Paul: *"Move the dice back into the bottom"* and *"…integrate them into the
    bar with only a pop-up."* The arithmetic, measured on the rendered page at
@@ -10085,15 +10119,54 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
       and its text touched the screen while the rows stayed inset. The gutter
       this box owes is the PANEL's `--s4`, which is what it was inside before
       it went full-bleed.) */
+/* ---- AND IT IS A LIGHT STRIP WITH NO EDGES (2026-09-08) ---------------
+   Paul: *"Make the search bar a light color and get rid of all borders, just
+   make it 100% and keep the text aligned with the dates below. Light color
+   with dark search term and dismiss button."*
+
+   THREE THINGS GO: the head's own bottom rule, the field's border, and the
+   field's corner. What is left is a BAND OF LIGHT across the top of the list —
+   the one place on this page a hand types — and a band needs no frame to say
+   where it is. MEASURED at 390: the field was 364.4px inside a 390px head with
+   a 1px border and a 6px radius; it is the full 390 now.
+   THE COLOUR IS THE PAGE'S OWN PAIR, REVERSED — `--legend` as the ground and
+   `--ground` as the ink, which are the two tokens every skin already defines
+   against each other. So this strip is light on the phosphor skin and DARK on
+   `skins/paper.css` without a second declaration: it inverts with the room
+   instead of being painted white here (§20's skin law, and the reason the
+   round before this one could prove it with one file).
+   THE TEXT STANDS ON THE YEARS. `.nu-ixli` pays `--s3` at this width (its own
+   rule, and the measurement: every year in the column starts 8.8px in), so the
+   field pays exactly that and no more — its caret and the dates under it are
+   on one line. The head keeps `--s1` of block padding and spends NO inline
+   padding at all: the field is the head. */
 #atlasFind{ position: sticky; inset-block-start: 0; z-index: 1;
-  margin-block-start: 0; padding: var(--s1) var(--s4);
-  background: var(--panel);
-  border-block-end: var(--bw) solid var(--rule); }
+  margin-block-start: 0; padding: var(--s1) 0;
+  background: var(--legend);
+  border-block-end: 0; }
 /* THE FIELD IS THE WHOLE HEAD, and the × rides INSIDE it (below), so the only
    thing this rule has to do is leave a thumb's worth of room at the end for a
    mark that is drawn over the text. */
 #atlasQ{ flex: 1 1 auto; min-inline-size: 0; block-size: var(--tap);
-  padding-inline-end: var(--s5); }
+  inline-size: 100%;
+  padding-inline: var(--s3) var(--s5);
+  background: var(--legend); color: var(--ground);
+  border: 0; border-radius: 0; box-shadow: none; }
+#atlasQ::placeholder{ color: color-mix(in oklab, var(--ground) 55%, var(--legend)); }
+#atlasQ:focus-visible{ outline: var(--bw-hard) solid var(--ground);
+  outline-offset: calc(-1 * var(--bw-hard)); }
+/* ONE ×, AND IT IS OURS. Paul: *"The 'dismiss search text' icon has an x in a
+   circle and another x right after that. Keep the one in the circle."* The
+   field is `type="search"`, so the PLATFORM draws a clear mark of its own —
+   a circled × on Safari, a bare one on Chrome — beside the button this page
+   draws for the platforms that draw nothing (iOS Safari draws nothing, which
+   is why `#atlasClear` exists at all). Two marks, one job. The platform's is
+   removed and ours takes the circle: a ring in the field's own ink, so the
+   control looks the same on every device instead of looking like whatever the
+   browser felt like. */
+#atlasQ::-webkit-search-cancel-button,
+#atlasQ::-webkit-search-decoration{ -webkit-appearance: none; appearance: none;
+  display: none; }
 /* ---- THE CLEAR IS AN × INSIDE THE FIELD (2026-09-08) ------------------
    Paul: *"the 'clear text' button is now on the right with no label, but it
    should be an (x) on the inside of the button."*
@@ -10125,10 +10198,18 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   inline-size: var(--tap); block-size: var(--tap);
   display: flex; align-items: center; justify-content: flex-end;
   padding: 0 var(--s2);
-  background: none; color: var(--dim);
+  background: none; color: var(--ground);
   border: 0; border-radius: 0;
   font: 1.25rem/1 var(--sym, var(--sans, inherit)); cursor: pointer; }
-#atlasClear:hover{ color: var(--ink); background: none; }
+/* THE RING IS ON THE MARK AND NOT ON THE TARGET — the target is the `--tap`
+   square above, which stays invisible; what is drawn is a 24px circle round
+   the ×, in the strip's own ink. */
+#atlasClear::before{ content: "\2715"; display: flex;
+  align-items: center; justify-content: center;
+  inline-size: 24px; block-size: 24px; font-size: .78em;
+  border: var(--bw) solid currentColor; border-radius: var(--r-pill); }
+#atlasClear > *{ display: none; }
+#atlasClear:hover{ color: var(--ground); background: none; opacity: .7; }
 #atlasClear[hidden]{ display: none; }
 /* 3 · THE COUNT AND THE ERA CHIPS ARE DELETED (2026-09-06) --------------
       Paul: *"Get rid of the buttons for eras like 'the old Stone Age' those
