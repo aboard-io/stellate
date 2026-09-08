@@ -551,8 +551,8 @@
                         // column as its default — TABLE.md §1, and this
                         // closure is where a cell override reaches the kernel
                         // (kernel.js:1523 `for (let b = g.entry(v); …)`).
-                        /* ===== AND IT MAY NOT PUT A PLAYER PAST THE END OF
-                           THE SECTION (2026-09-08) =========================
+                        /* ===== A CHAIR THAT SOUNDS NOWHERE IS SEATED ANYWAY
+                           (2026-09-08) ======================================
                            Paul, of a record he had built: *"Look at this and
                            tell me why I can't hear the overdrive guitar."*
 
@@ -567,31 +567,48 @@
                            the desk showed its fader, and the record was silent.
                            THE UNITS ARE THE TRAP AND THEY ARE BOTH RIGHT.
                            `entry` counts in CELLS (`barsOf` — "what the entry
-                           slider counts a cell in"), and this record's cells
-                           are two bars long while its sections are two bars
-                           long: one cell IS the whole section, so an entry of 1
-                           is an entry at the end. On the catalogue's own rows a
-                           cell is one bar and a section is eight, which is why
-                           this never showed up — and precompose has clamped its
-                           own side "to the shortest one for exactly that
-                           reason" since 2026-09-03. The document path had no
-                           such clamp, and a hand can type an entry the
-                           catalogue never would.
-                           SO THE CLAMP IS HERE, at the one door a cell override
-                           reaches the kernel through, and it is the honest
-                           bound: a chair may enter on any cell of its section
-                           except the one after the last. A negative entry (the
-                           pickup channel, §9 of the 2026-09-05 review) is left
-                           alone — that is a chair entering EARLY, which the
-                           lead-in channel carries on purpose. */
+                           slider counts a cell in") and this record's cells are
+                           two bars while its sections are two bars: one cell IS
+                           the whole section, so an entry of 1 is an entry at
+                           the end. On the catalogue's own rows a cell is one
+                           bar and a section is eight, which is why this has
+                           never shown up, and precompose has clamped its own
+                           side "to the shortest one for exactly that reason"
+                           since 2026-09-03. The document path had no clamp, and
+                           a hand can type an entry the catalogue never would —
+                           `ui/eight.js addVoice` gives every new line
+                           `entry: last + 1` on purpose.
+
+                           AND THE CLAMP IS THE NARROW ONE, WHICH TOOK A
+                           MEASUREMENT TO FIND. The first build clamped every
+                           section to the cells it can hold, and that is too
+                           much: measured over the whole catalogue at seed 1, it
+                           bit 1,972 of 27,413 chair-section pairs — every
+                           fugue's answering organs entering TOGETHER in its
+                           two-bar sections instead of waiting, which is the one
+                           thing a fugue may not do. A staggered entry that does
+                           not fit a short section and does fit the long ones is
+                           not a bug; it is a canon.
+                           WHAT IS A BUG IS A CHAIR THAT FITS NOWHERE. So the
+                           question is asked of the WHOLE record: if some
+                           section can hold this chair's entry, every section
+                           keeps it exactly as written; if NO section can, the
+                           chair is silent from end to end — a player on the
+                           table, with material, a fader and an instrument,
+                           making no sound at all — and it is seated at the last
+                           cell its section can hold. A negative entry is left
+                           alone in both cases: that is the pickup channel, and
+                           a chair entering EARLY is a thing this box does on
+                           purpose. */
                         entry: (v) => {
                           const want = resolve(doc, si, LIX[v], "entry", GENRES);
-                          const secBars = Math.max(1,
-                            ((doc.form && doc.form.sections && doc.form.sections[si]
-                              && doc.form.sections[si].bars) | 0) || 1);
+                          if (!(want > 0)) return want;
                           const cell = Math.max(1, barsOf(doc) | 0);
-                          const last = Math.max(0, Math.floor(secBars / cell) - 1);
-                          return want > last ? last : want;
+                          const roomIn = (s2) => Math.max(0,
+                            Math.floor(Math.max(1, (s2 && s2.bars | 0) || 1) / cell) - 1);
+                          const secs = (doc.form && doc.form.sections) || [];
+                          for (const s2 of secs) if (want <= roomIn(s2)) return want;
+                          return roomIn(secs[si]);
                         },
                         // THE CHAIR'S OWN PART REACHES THE KERNEL (2026-08-28).
                         // This handed over `realize` and nothing else, so the
