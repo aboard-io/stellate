@@ -16498,7 +16498,41 @@ function landRecord() {
     displaced(DOC); return null;
   }
   const had = readDoc();
-  if (RECORDISH(had).length) return null;
+  /* ===== AND A FIRST VISIT OPENS ON A RECORD, NOT ON THE BLANK (2026-09-08) =
+     Paul, on the live site, an hour after the launch: *"The edit page is now
+     totally blank and nothing works. HELP"*
+
+     IT WAS NOT BLANK BY ACCIDENT AND IT WAS NOT BROKEN. The box boots on
+     `genreToDocument("silence", 1)` — Paul's own *"Add a 'silence' genre at the
+     top of the genre list. This is a blank state."* — and `silence` has no
+     voices, so the table it draws is a section, a `+` and nothing else. Every
+     visit until today had a SESSION to land on top of it, which is why nobody
+     saw the blank state: `localStorage` belongs to the ORIGIN, and moving the
+     box from test.stellate.app to stellate.app gave everyone, Paul included, a
+     brand-new origin with nothing saved in it. The first thing the launch did
+     was hand its author an empty table.
+
+     SO THE BLANK STATE STAYS A PLACE YOU CAN GO AND STOPS BEING WHERE YOU
+     ARRIVE. It is still the first row of the genre list, still what `rewrite`
+     can land on, still the document this module initialises with — what
+     changes is only the case where NOTHING else claimed the boot: no link, no
+     spent recipe, no session. That is a first visit, and a first visit gets
+     the record this page already SAYS it is on. `TERMS` is the shipped fixture
+     and `ATLAS.showing(DOC.basis)` above has always pointed the map at it, so
+     until now the globe read "Rome 600" over a table that read "Silence" —
+     one surface disagreeing with the other about what record was open. Now
+     they agree, which is the smaller of the two bugs this fixes.
+     IT IS THE FIXTURE AND NOT A FAVOURITE, deliberately: three gates load
+     `TERMS` by name, the atlas already opens on it, and a boot record chosen
+     for taste is a boot record somebody has to defend. If a livelier front
+     door is wanted, that is one word in one place — here. */
+  if (RECORDISH(had).length) {
+    try {
+      if (TERMS && TERMS.basis && TERMS.basis !== DOC.basis)
+        adoptArrival(NuPrecompose.genreToDocument(TERMS.basis, DOC.seed || 1));
+    } catch (e) { /* the blank state is still a working page; leave it */ }
+    return null;
+  }
   try { NuDocument.normalize(had); } catch (e) { return null; }
   adoptArrival(had);
   return null;

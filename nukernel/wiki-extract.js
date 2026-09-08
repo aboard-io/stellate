@@ -273,7 +273,7 @@ const ASK = {
   disco:      { q: "Disco", why: "New York 1977; unambiguous." },
   funk:       { q: "Funk", why: "Cincinnati 1967 is James Brown at King; the generic article, and this row is the table's funk parent." },
   rnb:        { q: "Contemporary R&B", why: "Philadelphia 1994, the nineties production this row is written from. NOT Rhythm and blues, which is the 1940s music `blues` and `funk` already cover." },
-  gospel:     { q: "Black gospel music", why: "Chicago 1932 is Thomas Dorsey at Pilgrim Baptist, which is precisely this article's subject; Gospel music is the wider umbrella including white Southern gospel, and the parents here (blues .75) say which one this is." },
+  gospel:     { q: "Black gospel music", as: "Gospel", why: "PLATE 2026-09-08. Paul: *\"Rename 'Black Gospel music' to 'Gospel'.\"* The ARTICLE is unchanged and the paragraph below still argues it — Chicago 1932 is Dorsey at Pilgrim Baptist and that is this article's subject, not the wider umbrella. What changes is the word this table PRINTS, which is what `as` is for: a genre list is a list of names a musician uses, and the name for this music, in the row where it sits between `blues` and `soul`, is Gospel. Chicago 1932 is Thomas Dorsey at Pilgrim Baptist, which is precisely this article's subject; Gospel music is the wider umbrella including white Southern gospel, and the parents here (blues .75) say which one this is." },
   reggae:     { q: "Reggae", why: "Kingston 1969; unambiguous." },
   dub:        { q: "Dub music", why: "Kingston 1973 is King Tubby; `Dub` alone is film dubbing." },
   ska:        { q: "Ska", why: "Kingston 1962, the first wave — which is what parents mento/blues/jazz/calypso describe, not 2 Tone." },
