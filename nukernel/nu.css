@@ -4009,10 +4009,31 @@ table.nu-trims{ color: var(--ink); }
    same wave), so on a phone this is a swipe on the table rather than a
    document that scrolls sideways — the page's standing answer for a table
    wider than its column, and the reason the pane went back on. */
-.nu-bench{ inline-size: 100%; min-inline-size: 426px; table-layout: fixed; }
-.nu-bench th:first-child{ inline-size: 34px; }
-.nu-bench td.nu-kindTd{ inline-size: 118px; }
-.nu-bench td.nu-velTd{ inline-size: 72px; }
+/* ---- AND IT IS THE WIDTH OF THE BOX IT IS IN (2026-09-08) -------------
+   Paul: *"the motif has a border on the right but buttons jut out over that —
+   why don't you just make the editor 100% inside its bounding box."*
+
+   THE FLOOR WAS 426px AND THE BOX IS 354. `min-inline-size: 426px` is the sum
+   of the five columns at their written widths, so inside a phone's motif sheet
+   the table stood 72px wider than the pane and the last column's marks were cut
+   by the card's own right border — a button sliced down the middle reads as a
+   control sticking OUT of the sheet, which is exactly what it looks like.
+   The pane's sideways swipe was the answer the last wave gave, and it is the
+   wrong one HERE: the instrument picker scrolls sideways because it is a table
+   of 149 rows against 17 columns (§19d), while this is five columns of one
+   step and every one of them can give a few pixels.
+   SO EVERY COLUMN GIVES: the count 34 -> 22 (it holds `a`, `e`, `&`, `4`), the
+   kind 118 -> 92 and the marks 112 -> 100 (their buttons 36 -> 30, which is the
+   same face both columns wear and keeps them reading as one control), the
+   weight 72 -> 60 under 620px and its own 120 above. MEASURED at 320, 390 and
+   1280 with a motif open: the table is exactly the pane's width at all three,
+   nothing crosses its right edge, and the pane no longer scrolls at all.
+   THE BLOCK SIZE IS UNTOUCHED — 40px marks in a 52px row, the tap floor this
+   editor has always kept, and the axis a thumb misses on. */
+.nu-bench{ inline-size: 100%; min-inline-size: 0; table-layout: fixed; }
+.nu-bench th:first-child{ inline-size: 22px; }
+.nu-bench td.nu-kindTd{ inline-size: 92px; }
+.nu-bench td.nu-velTd{ inline-size: 60px; }
 @media (min-width: 620px){ .nu-bench td.nu-velTd{ inline-size: 120px; } }
 /* ---- THE MARK COLUMN (2026-09-05, the review's items 6+7) -----------------
    Three cycling buttons per step — accent, articulation, accidental — in one
@@ -4021,8 +4042,8 @@ table.nu-trims{ color: var(--ink); }
    thumb finds the same target size it already knows. The table's floor goes
    314 -> 426 with it, which is a swipe inside the pane it has been in since
    wave 4 and not a page that scrolls sideways. */
-.nu-bench td.nu-markTd{ inline-size: 112px; white-space: nowrap; }
-.nu-mkb{ inline-size: 36px; block-size: 40px; padding: 0; min-height: 0;
+.nu-bench td.nu-markTd{ inline-size: 100px; white-space: nowrap; }
+.nu-mkb{ inline-size: 30px; block-size: 40px; padding: 0; min-height: 0;
   margin-inline-end: 2px; vertical-align: middle;
   border: var(--bw) solid var(--rule-strong); border-radius: var(--r2);
   background: var(--panel); color: var(--faint); cursor: pointer;
@@ -4068,13 +4089,28 @@ table.nu-trims{ color: var(--ink); }
    46px of content by 8px. Measured before and after: `.nu-pit` 40px,
    `.nu-velA` 40px, `.nu-bench td` 52px, at 390 and at 1280.
 
-   THE TOUCH LAW IS UNTOUCHED — `touch-action` on the control and only the
-   control, the pointer captured on pointerdown, the native input inside the
-   keyboard channel. (It reads `none` on both bars, not `pan-y`. That is a
-   BEHAVIOUR fact, not a paint one, and this wave does not move it.) */
+   THE TOUCH LAW IS ON THE CONTROL — `touch-action` on the control and only
+   the control, the pointer captured on pointerdown, the native input inside
+   the keyboard channel.
+   ...AND IT IS `pan-y` NOW, WHICH THE LAST WAVE DEFERRED IN WRITING ("it reads
+   `none` on both bars, not `pan-y`… this wave does not move it"). Paul,
+   2026-09-08: *"when I'm inside a motif editing it my vertical scroll no
+   longer works."* MEASURED with a motif open at 390: SIXTY-FOUR of these bars
+   — 32 pitch, 32 weight — declare `touch-action: none`, at 40px tall in a 52px
+   row, so they cover nearly the whole of a sheet that is 2,618px long inside a
+   596px window. A finger that lands anywhere on the note grid is a finger the
+   browser has been told not to pan with.
+   `none` WAS ALWAYS TOO MUCH FOR THESE TWO. Both are HORIZONTAL — `cursor:
+   ew-resize`, and `benchPitch`/`benchVel` read `e.clientX` against the bar's
+   own rect and nothing else — so the vertical axis carries no value to lose.
+   `pan-y` gives the browser back the one gesture the editor needs and keeps
+   the one the control uses: a sideways drag still sets the degree, a tap still
+   lands on a detent, the pointer is still captured, and a finger dragged DOWN
+   scrolls the sheet it is standing on. (The `.nu-vs` fader and the pads keep
+   `none`: they are not inside a long scroller.) */
 .nu-pit, .nu-velA{ position: relative; display: block;
   block-size: var(--sl-line); min-inline-size: 0;
-  touch-action: none; cursor: ew-resize; }
+  touch-action: pan-y; cursor: ew-resize; }
 /* the trough, laid down: `--sl-trough` ACROSS, centred in the line */
 .nu-pb, .nu-vab{ position: absolute; inset-inline: 0; display: block;
   inset-block: calc((var(--sl-line) - var(--sl-trough)) / 2);
@@ -8632,7 +8668,13 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    THE FOUR RULES BELOW ARE THE TAPE'S OWN PARTS and stay unscoped on purpose:
    they describe a readout, not a place — which is the sentence that let this
    box rule travel twice without them moving once. */
-.nu-bar > .nu-tape{ flex: 1 1 auto; min-inline-size: 0;
+/* AND IT STANDS THE FULL HEIGHT OF THE BAND (2026-09-08). The bar is
+   `align-items: center`, so the tape was as tall as its own words — MEASURED
+   11.5px inside a 50.4px bar, which is why the ground below could only ever be
+   a stripe. `align-self: stretch` is the one declaration that makes the
+   readout's box the band's box; the words stay centred in it by this rule's
+   own `justify-content`. */
+.nu-bar > .nu-tape{ flex: 1 1 auto; min-inline-size: 0; align-self: stretch;
   display: flex; flex-direction: column; justify-content: center;
   gap: var(--s1); }
 .nu-tapeline{ display: flex; flex-direction: row; align-items: baseline;
@@ -8647,10 +8689,38 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    to keep honest instead of two. */
 .nu-tape .nu-count{ flex: 0 0 auto; flex-direction: row;
   align-items: baseline; gap: var(--s1); padding-block: 0; }
-.nu-tapetrack{ block-size: 4px; inline-size: 100%; min-inline-size: 0;
-  background: var(--well); border-radius: var(--r2); overflow: hidden; }
+/* ---- THE TAPE IS THE HEIGHT OF THE BAR (2026-09-08) -------------------
+   Paul: *"Make the play bar 100%… full height I guess I meant, it's just a
+   little orange bar."*
+
+   IT WAS A 4px TRACK UNDER THE READOUT, which is a progress bar drawn as a
+   footnote to itself: at 1280 the tape is 917px of width and was spending FOUR
+   PIXELS of the bar's 44 on the one thing in the band that moves. Measured on
+   the rendered page — `.nu-tape` 917.3 × 44, `.nu-tapetrack` 917.3 × 4.
+   SO THE TRACK IS THE TAPE'S OWN GROUND, inset behind the line rather than
+   stacked under it: `position: absolute` over the tape's whole box, the words
+   and the countdown drawn ON it. Where a record is is now a REGION of the bar
+   filling up, which is what a hand reads at a glance from across a room, and
+   the 4px sliver is gone rather than doubled.
+   THE READOUT MUST SURVIVE THE FILL, so the fill is the tint and not the
+   colour, with the sounding edge kept solid: `--clock-tint` behind the text
+   (the same token `mark` uses to highlight a word without hiding it) and a
+   2px `--clock` rule at the playhead. Nothing here is orange any more than the
+   rest of the band is — `--clock` is the skin's, and `skins/paper.css` swaps
+   it with everything else (§20's skin law).
+   THE PARTS STAY UNSCOPED, which is this block's own sentence: they describe a
+   readout, not a place, and the tape has already travelled twice without
+   them. */
+.nu-tape{ position: relative; }
+.nu-tapetrack{ position: absolute; inset: 0; inline-size: 100%;
+  min-inline-size: 0; background: var(--well); border-radius: var(--r2);
+  overflow: hidden; pointer-events: none; }
 .nu-tapefill{ display: block; block-size: 100%; inline-size: 0;
-  background: var(--clock); }
+  background: var(--clock-tint);
+  border-inline-end: 2px solid var(--clock); }
+/* …AND THE WORDS RIDE OVER IT. Both children of the tape are lifted out of the
+   ground's stacking order; the track is the only thing behind them. */
+.nu-tapeline, .nu-tape .nu-count{ position: relative; z-index: 1; }
 /* ---- AND AT 320 THE ROW SPENDS ITS AIR RATHER THAN A MARK (2026-09-05) --
    The ≡ joined the bar as its last button (TABLE.md §13a.1) and MEASURED at
    320 x 844 the row wanted 334.4px of a 320px screen: seven marks at the 44px
@@ -8717,6 +8787,28 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   border-inline-start: var(--bw) solid var(--rule); }
 .nu-bar button[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill);
   border-color: var(--hand); }
+/* ---- AND A MARK WITH NOTHING TO DO LOOKS LIKE IT (2026-09-08) ---------
+   Paul: *"don't give me redo available unless I'd used undo."*
+
+   IT WAS ALREADY REFUSED AND IT DID NOT SAY SO. `paintEdit` (ui/eight.js) has
+   set `aria-disabled="true"` on `#tredo` since the day it was built and the
+   stack is right — `DocUndo.canRedo` is `fwd.length > 0`, and `fwd` is filled
+   by an undo and emptied by every op — so the button was announcing "refused"
+   to a screen reader and NOTHING to an eye. Measured on the rendered bar, at
+   390 and at 1280: `#tundo` and `#tredo` at rest read `aria-disabled true`
+   with `opacity: 1` and the identical colour to the live marks.
+   THE REASON IS THAT THE TREATMENT WAS CLASS-SCOPED. §15's grey is written for
+   `.nu-elbtn[aria-disabled]`, `.nu-elseg`, `.nu-elcell`, `.nu-elmenurow` — and
+   the bar's marks are bare `<button>`s (`mkBtn`), so not one of those rules
+   could reach them. This is the same treatment, in the same tokens, said for
+   the band that had been missed: dimmed and dashed, never `disabled`, so the
+   tap still lands and `data-why` still answers.
+   IT IS THE WHOLE BAR AND NOT THE TWO MARKS, because every mark in this band
+   that can be refused deserves the same answer. */
+.nu-bar button[aria-disabled="true"]{
+  border-style: dashed; border-color: var(--legend-faint);
+  color: var(--legend-faint); background: transparent; opacity: .55; }
+.nu-bar button[aria-disabled="true"]:hover{ background: transparent; }
 /* THE GENRE PLATE READS AS TWO LINES, the wiki name over the place and year,
    which is exactly what it read as in the gutter's foot — the same
    `.nu-vh` + `.nu-sub2` pair, the same one writer (`nameRecord`), turned from

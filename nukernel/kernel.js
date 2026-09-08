@@ -1576,7 +1576,46 @@
       const lane = String.fromCharCode(97 + (v % 26));
       const barOf = e => Math.floor((e.t * rate) / N);
       const stepOf = e => ((Math.round(e.t * rate) % N) + N) % N;
-      const die = (e, salt) => perfDice(g, barOf(e), stepOf(e), lane, salt);
+      /* ===== AN ORNAMENT BELONGS TO THE FIGURE, NOT TO THE BAR NUMBER =====
+         (2026-09-08.) Paul: *"Our melodies are now a little all over the place
+         and it's hard to catch simple motifs. You can see it in Iranian pop."*
+
+         THE DIE READ `barOf(e)` — the bar's serial number in the section — so
+         the SAME figure, played four times, was graced on its first note in
+         bar 1, approached in bar 2, left plain in bar 3 and graced somewhere
+         else in bar 4. Every repetition arrived wearing different clothes, and
+         a motif is known by COMING BACK: an ear that never hears the same
+         gesture twice has nothing to hold on to. Measured on the page's own
+         render (tools/melody-fit.js, five records × two readings): 9.9% of the
+         notes in a lead lane share a step with another note of the same line —
+         which is what a lead-in note IS, quantized — and Tehran 1974, the
+         record Paul named, carries the sixteenth-highest ornament rate in the
+         catalogue (`grace .45 · approach .3`, 133 rows declare a policy).
+
+         SO THE DIE READS THE BAR'S PLACE IN A TWO-BAR CYCLE. Two, not one,
+         and not the section: a cell is one bar or two (document.js toPhrase,
+         precompose's CELL_BAR_CEILING), so `% 2` ornaments a two-bar figure
+         identically every time round and gives a one-bar figure a matched
+         PAIR of bars — a flourish and its answer, which is what a hand does
+         and is still a thing you can catch. `% 1` would be the same flourish
+         for ever, which is a machine, not a player.
+
+         AND A BAR TAKES TWO ORNAMENTS AT MOST. The rate was a per-note chance
+         with no ceiling, so density decided everything: a bar of four notes
+         got one or two and a bar of sixteen got six, and the busiest bar in a
+         phrase — the one carrying the tune — was the one buried. iranpop's
+         record measured 329 added notes over 3,201 (about two a bar a lane),
+         so the cap trims the dense tail and leaves the median bar alone.
+         THE BUDGET IS SHARED WITH THE PASSING TONES below, because they add
+         notes to the same bar for the same ear.
+
+         `perfDice` is still a pure hash of WHERE, so a seed still renders the
+         same flourishes for ever; what changed is WHICH where. */
+      const ORNCYCLE = 2, ORNMAX = 2;
+      const die = (e, salt) => perfDice(g, barOf(e) % ORNCYCLE, stepOf(e), lane, salt);
+      const spent = new Map();
+      const room = e => (spent.get(barOf(e)) || 0) < ORNMAX;
+      const spend = e => { const b = barOf(e); spent.set(b, (spent.get(b) || 0) + 1); };
       // ONE ORNAMENT PER NOTE, ASKED IN ONE ORDER. A note that has already been
       // rolled is not also graced: the order below IS the precedence, it never
       // varies, and that is what keeps two runs identical.
@@ -1589,8 +1628,10 @@
         // meter it is the quarter it always was
         const beats = Math.max(1, g.meter ? pulseIn(g) : N / 4);
         const strong = stepOf(e) % beats === 0;
+        if (!room(e)) continue;                    // this bar has had its two
         if (o.roll && e.dur * rate >= 1.5 && die(e, ORNSALT.roll) < o.roll) {
-          if (ratchet(list, k, die(e, ORNSALT.roll + 1) < 0.5 ? 2 : 3)) { touched = true; continue; }
+          if (ratchet(list, k, die(e, ORNSALT.roll + 1) < 0.5 ? 2 : 3)) {
+            spend(e); touched = true; continue; }
         }
         const prev = k > 0 ? list[k - 1] : null;
         const dir = prev && prev.n > e.n ? 1 : -1;
@@ -1602,15 +1643,17 @@
         // the bar's own alphabet — §9 of the unit gate carves out exactly this
         // and nothing else. A grace is the alphabet's own neighbour, anywhere.
         if (o.approach && strong && die(e, ORNSALT.approach) < o.approach) {
-          if (leadIn(list, k, e.n + dir, len, "approach", 2, t0)) { touched = true; continue; }
+          if (leadIn(list, k, e.n + dir, len, "approach", 2, t0)) {
+            spend(e); touched = true; continue; }
         }
         if (o.grace && die(e, ORNSALT.grace) < o.grace) {
           if (leadIn(list, k, ornStep(e.n, dir, pcsAt(barOf(e))), len, "grace", 2, t0)) {
-            touched = true; continue;
+            spend(e); touched = true; continue;
           }
         }
         if (o.flam && die(e, ORNSALT.flam) < o.flam) {
-          if (leadIn(list, k, e.n, len * 0.6, "flam", 3, t0)) { touched = true; continue; }
+          if (leadIn(list, k, e.n, len * 0.6, "flam", 3, t0)) {
+            spend(e); touched = true; continue; }
         }
       }
       // PASSING TONES, a second walk because they are the one move that is
@@ -1625,6 +1668,7 @@
         const gap = Math.abs(b2.n - a.n);
         if (gap < 3 || gap > 5) continue;
         if (a.dur * rate < 0.7) continue;          // nowhere to put it
+        if (!room(a)) continue;                    // the bar's two, shared
         if (die(a, ORNSALT.pass) >= o.pass) continue;
         const dir = b2.n > a.n ? 1 : -1;
         // ALWAYS the alphabet's own step, never a semitone: a chromatic filler
@@ -1639,6 +1683,7 @@
                                 acc: 0, sld: 0,
                                 vel: Math.max(1, (a.vel == null ? 5 : a.vel) - 1),
                                 orn: "pass" });
+        spend(a);
         touched = true;
       }
     }
@@ -1695,7 +1740,42 @@
   // the addend alone, for the adapter that has to undo it (document.js
   // toGenre, whose chairs are already seated and whose `reg` is final).
   const partLean = (part) => ((PARTS[part] || {}).ctr || 0) / 12;
-  const regOf = (g, v) => g.reg(v) + (g.part ? partLean(partOf(g, v)) : 0);
+  /* ===== AND A CHAIR IS SEATED WITHIN AN OCTAVE OF THE ROOM ==============
+     (2026-09-08.) Paul: *"Our melodies are now a little all over the place."*
+     Measured, on the page's own `pageScore()` — the fold WITH the register
+     home in it, which is what the ⤓ button hands Live and what the engine
+     plays: Kingston 1969's `lead` sounds at a MEAN of 83.9 (E6) with a top of
+     105 (A7), over a vocal sitting at 61. Tehran 1974 has a lane spanning 38
+     to 88 — FOUR OCTAVES in one instrument.
+
+     THE REGISTER TABLE IS AN INDEX FUNCTION AND THE CAST OUTGREW IT. `reg` is
+     per-VOICE-NUMBER, and the commonest spellings in the catalogue are
+     `{kind:"id"}` (18 rows — voice v sits v octaves up), `{kind:"neg"}` and
+     `{kind:"minus",n:1}` (84 rows, the same downwards). They were written when
+     a row named two or three instruments; the composer now seats seven to
+     thirteen, so voice 8 of an `id` row is asked to play EIGHT OCTAVES above
+     centre. Counted over the catalogue at nine voices: 169 of 502 rows seat
+     some chair more than an octave off, and the extremes are ±8.
+     IT IS THE SUM THAT IS CLAMPED, and that is the part worth arguing. The
+     table is not the only lean: `PARTS.lead` says `ctr: 12` ("up top, sings")
+     and it is added on top, so Kingston's organ — a `lead` on a row whose
+     table already answered 1 — was seated at TWO octaves, `ctr` 84, and that
+     is the 83.9 mean measured above. Clamping only the table would have left
+     that record exactly where it was. The part's lean still DECIDES inside the
+     window: a lead on a `0` row still sits an octave over a riff on the same
+     row, which is what the table means.
+     WHY ±1: an ensemble occupies about three octaves. The bass is not in this
+     sum at all — it has its own `bassReg` and its own floor — so what is being
+     bounded is the melodic band, and `ctr` 48…72 with a fold either side of it
+     is where instruments and voices live. ±2 keeps a centre of 84 legal, which
+     is the number this round measured and called wrong.
+     THIS IS THE ONE PLACE, which is `regOf`'s own reason for existing: the
+     chair a document PRINTS (precompose seats it through this same call) and
+     the centre the fold uses are one number, so a clamp here cannot make the
+     page show one register and play another. */
+  const REGWIN = 1;
+  const seat = (r) => (r > REGWIN ? REGWIN : r < -REGWIN ? -REGWIN : r);
+  const regOf = (g, v) => seat(g.reg(v) + (g.part ? partLean(partOf(g, v)) : 0));
 
   // ---- BAR SCHEDULE: the SIXTH type -----------------------------------------
   // `g.period` is a per-bar operator word — entry s of the cycle applies on

@@ -593,12 +593,20 @@
     const fleet = (env || {}).fleet || [];
     const syn = (doc.sound && doc.sound.synth) || (GENRES[doc.basis] || {}).synth || null;
     const out = [];
-    // NATIVE means synthesised here and now, by a Faust model in
-    // engine/faust/dsp — as against every other entry, which is a recording of
-    // an instrument being played. The wording is ui/eight.js's own.
+    /* NATIVE means synthesised here and now, by a Faust model in
+       engine/faust/dsp — as against every other entry, which is a recording of
+       an instrument being played. The wording is ui/eight.js's own.
+       THE WORD IS THE GROUP'S AND NOT THE INSTRUMENT'S (2026-09-08). Paul:
+       *"You can get rid of the word 'native' inside the instruments themselves,
+       when you list them."* Every one of these carries `group: "native"` and
+       the picker draws that group as a heading with its own column, so the
+       prefix said it twice — "native · native moog, native karplus, native
+       oberheim" — and spent the width of the word on every row of the one
+       family whose rows are already under its name. The GROUP is untouched,
+       which is where the distinction is made and where a reader looks for it. */
     if (syn) out.push({ value: "synth", group: "native",
-                        label: "native " + syn.dsp + " (the record's)" });
-    for (const n of fleet) out.push({ value: n, group: "native", label: "native " + n });
+                        label: syn.dsp + " (the record's)" });
+    for (const n of fleet) out.push({ value: n, group: "native", label: n });
     const fam = new Map();
     for (const n of Object.keys(INSTRCHOICES)) {
       const k = NI.familyOf(n) || "other";
