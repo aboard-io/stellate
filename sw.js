@@ -156,6 +156,18 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;            // same-origin only
   if (url.pathname.startsWith("/gc/")) return;           // analytics beacons: network-only, never cached
+  /* THE ARCHIVE IS NOT OURS AND WE DO NOT CACHE IT (2026-09-08, LAUNCH.md §2).
+     Paul: *"Could we do stellate.app/old instead?"* — so the old star-map app
+     is a PATH on this origin rather than a name of its own, which puts it
+     inside this worker's scope (`/`) for the first time. Two apps, one origin,
+     and both of them name their caches `stellate-app-<VERSION>`: without this
+     line the box's worker would cache the whole archive under the box's key,
+     and each app's `activate` would go on evicting the other's shell forever.
+     Network-only, so the archive behaves exactly as it did when it was the
+     site — minus offline, which an archive does not need and which nginx
+     removes at the other end by serving a self-unregistering worker at
+     `/old/sw.js`. INERT UNTIL THE SWITCH: there is no `/old/` yet. */
+  if (url.pathname === "/old" || url.pathname.startsWith("/old/")) return;
   if (isMedia(url.pathname)) {
     e.respondWith((async () => {
       const cache = await caches.open(MEDIA_CACHE);

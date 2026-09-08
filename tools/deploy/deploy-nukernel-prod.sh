@@ -24,7 +24,7 @@
 #       project has made (see sw.js, "THE DEPLOY HAS TO REACH THE EAR").
 #       `--same-version` overrides it for a re-ship of identical bytes.
 #   4 · THE DESTINATION IS A PROD ROOT AND IS NOT THE ARCHIVE. `/srv/stellate`
-#       holds the OLD site, which old.stellate.app serves and which this branch
+#       holds the OLD site, which `stellate.app/old` serves and which this branch
 #       must never overwrite — the deploy rsyncs WITHOUT `--delete` (the tree is
 #       pruned), so writing into it would interleave two sites permanently.
 #
@@ -63,7 +63,7 @@ fi
 # ---- GUARD 4 · never the archive, never a staging root --------------------
 case "$DEST" in
   */srv/stellate/|*/srv/stellate)
-    echo "refusing: $DEST is the ARCHIVE (old.stellate.app) and must not be written." >&2
+    echo "refusing: $DEST is the ARCHIVE (stellate.app/old) and must not be written." >&2
     exit 2 ;;
   *stellate-test*)
     echo "refusing: $DEST is staging. Use deploy-nukernel-staging.sh." >&2
@@ -162,7 +162,7 @@ chk "robots"          "$SITE/robots.txt"          "Sitemap:"
 chk "sitemap"         "$SITE/sitemap.xml"         "<urlset"
 chk "feed"            "$SITE/feed.xml"            "<rss"
 chk "manifest"        "$SITE/manifest.webmanifest" "start_url"
-chk "the archive"     "https://old.stellate.app/" "-"
+chk "the archive"     "$SITE/old/"                "-"
 rm -f /tmp/.nuhdr
 if [ "$fail" != "0" ]; then
   echo "SMOKE FAILED. The site may be half-right — roll back by pointing the" >&2

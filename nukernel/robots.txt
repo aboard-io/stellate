@@ -22,7 +22,7 @@
 #   /feed.json               /feed-archive.json
 #
 # The old star-map version of this project — the one that was here until
-# September 2026 — is still running, unchanged, at https://old.stellate.app/.
+# September 2026 — is still running, unchanged, at https://stellate.app/old/.
 
 User-agent: *
 Allow: /

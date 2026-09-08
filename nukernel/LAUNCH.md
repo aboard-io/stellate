@@ -50,7 +50,7 @@ staging by symlink; the new prod root will share it the same way.
 **The new app gets its own web root and prod's vhost points at it.**
 
 ```
-/srv/stellate       the OLD tree, byte-for-byte untouched   → old.stellate.app
+/srv/stellate       the OLD tree, byte-for-byte untouched   → stellate.app/old
   └ found/          the shared media, where it already is
 /srv/stellate-nu    the NEW tree, deployed from this branch → stellate.app
   └ found → /srv/stellate/found      (symlink, exactly as staging does it)
@@ -65,9 +65,9 @@ deploy over `/srv/stellate`":
    goes back and prod is the old site again, in the time a reload takes. A file
    move is not reversible at that speed and is not atomic while it runs.
 2. **Nothing moves on disk.** 786 MB stays where it is, the staging symlink
-   keeps resolving, and `old.stellate.app` serves the exact bytes prod is
-   serving today — which is the whole promise of "the old version is still
-   there".
+   keeps resolving, and `/old/` serves the exact bytes prod is serving today —
+   which is the whole promise of "the old version is still there". It is reached
+   by one more symlink, `/srv/stellate-nu/old` (§2).
 3. **The two trees are never mixed.** The nukernel deploy rsyncs **without
    `--delete`** on purpose (the tree is pruned and the server holds files the
    branch does not). Deploying it *over* `/srv/stellate` would leave the old
@@ -79,42 +79,76 @@ Disk cost: the new root is ~80 MB (staging's size). 20 GB free.
 
 ---
 
-## 2 · `old.stellate.app`
+## 2 · The archive lives at `stellate.app/old`
 
-Three motions, none of which touch prod:
+Paul, 2026-09-08: *"Could we do stellate.app/old instead?"* **Yes, and it is the
+better shape.** No DNS record, no second certificate to renew, no second name to
+explain — and one thing a subdomain cannot do at all, below.
+
+**It needs no copy and no edit.** A symlink is the whole of it:
 
 ```bash
-# 1 · DNS (from this laptop; doctl is authenticated)
-doctl compute domain records create stellate.app \
-  --record-type A --record-name old --record-data 159.89.38.37 --record-ttl 1800
-
-# 2 · TLS, once the record resolves
-ssh root@stellate.app 'certbot certonly --nginx -d old.stellate.app'
-
-# 3 · the vhost: /etc/nginx/sites-available/stellate-old
+ln -s /srv/stellate /srv/stellate-nu/old
 ```
 
-The vhost is **the prod vhost with three edits**: `server_name old.stellate.app`,
-its own certificate, and `X-Robots-Tag: noindex, nofollow` on every response.
-Everything else — the isolation snippet, the `found/` immutable block, the
-`engine/faust/dist/` no-cache block, the dx7 presets block — is copied
-unchanged, because the old app needs exactly the headers it needs today.
+`/old/how.html` resolves to `/srv/stellate/how.html`, `/old/found/x.mp3` to the
+shared media, and the archive tree stays byte-for-byte what it is.
 
-**Why noindex.** Two sites serving the same catalogue under two names is a
-duplicate-content problem and, worse, a chance that the thing someone finds in
-a search is the version we retired. The old site stays reachable by every link
-that already exists; it just stops competing.
+**MEASURED, because "relative paths" is a claim and not a fact.** The old app
+was stood up under a sub-path locally — a worktree of `main` behind a server
+sending the same COOP/COEP headers prod sends — and loaded at
+`/old/index.html`: **zero console errors, zero 4xx, `crossOriginIsolated: true`,
+the star map drawn and labelled.** It uses not one absolute path in its HTML or
+its JS (it has always also been served at `aboardresearch.com/projects/…`, which
+is why), so nothing in the frozen tree has to change for this.
 
-**No `/stats` and no `/gc/count` proxy on the old vhost** — counting the
-archive's traffic into the live site's numbers would corrupt them. `/gc/count`
-returns 204 there, the way staging does.
+**The thing a subdomain could not do: the visitor's own saved state survives.**
+The old app keeps its settings under `vaporwave-*` keys in `localStorage`, and
+localStorage belongs to the ORIGIN. At `old.stellate.app` every one of those
+would have been orphaned the moment we switched — the archive would open blank
+for the people who used it most. At `stellate.app/old` the archive reads exactly
+what it wrote. (The two apps' keys do not collide: `vaporwave-*` against
+`nukernel.*`.)
 
-**Verify before going on:** `old.stellate.app` loads the star map, plays sound
-(that is `SharedArrayBuffer`, so the isolation headers are proven), a
-`found/samples/…` file returns 200 with `Cache-Control: immutable`, and
-`curl -I` shows `X-Robots-Tag`.
+### The one real conflict, and it is the service worker
 
----
+Both trees ship a worker that names its caches the same way — `stellate-app-<VERSION>`
+plus `stellate-media-v1` — and each one's `activate` deletes every
+`stellate-app-*` cache that is not its own. On two origins that is fine. On ONE
+origin it is a loop: open the box, it evicts the archive's shell; open the
+archive, it evicts the box's. Nobody loses data, and everybody re-downloads
+everything, forever.
+
+Two lines fix it, both OUTSIDE the frozen tree:
+
+1. **The archive installs no worker.** nginx serves the self-unregistering
+   four-liner at `/old/sw.js` — the same one `test.stellate.app` already uses
+   and for the same reason. The old app registers `sw.js` RELATIVELY
+   (`serviceWorker.register("sw.js")`), so that is the exact file it asks for,
+   and any worker a visitor already has at that scope tears itself down on the
+   next update check. An archive does not need to work offline.
+2. **Our worker does not touch `/old/`.** A path guard at the top of the fetch
+   handler in `sw.js`: a request under `/old/` is not ours, so it goes to the
+   network and never enters our cache. Without this the box's worker — scope
+   `/` — would happily cache the whole archive under our key.
+
+Neither of these is a change to `/srv/stellate`. The archive stays frozen, which
+is the whole point of an archive.
+
+### What else changes, all of it in our favour
+
+- **Old links stay same-origin.** `/how.html` → `/old/how.html` is a redirect
+  inside one site, not a hop to another name.
+- **One analytics property.** `/old/*` counts as paths in the same GoatCounter
+  site, so how much the archive is actually used becomes a number we have,
+  rather than a second dashboard nobody opens.
+- **Indexing.** `X-Robots-Tag: noindex, nofollow` on the `/old/` location, for
+  the reason a subdomain would have needed it: two addresses serving two
+  versions of one project should not compete for the same search.
+- **One caveat, and it is cosmetic.** The archive's `index.html` carries an
+  ABSOLUTE `og:image` and `canonical` pointing at `https://stellate.app/`, so an
+  unfurl of an `/old/` link shows the new site's card. Fixing it means editing
+  the frozen tree; D6 says don't dress the archive up, so it stays.
 
 ## 3 · The prod vhost after the switch
 
@@ -129,12 +163,24 @@ Four changes to `/etc/nginx/sites-enabled/stellate`, and only four:
 
    ```nginx
    location / { try_files $uri $uri/ @old; }
-   location @old { return 301 https://old.stellate.app$request_uri; }
+   location @old { return 301 /old$request_uri; }
+
+   location /old/     { alias /srv/stellate/;  # the archive, frozen
+                        include /etc/nginx/snippets/stellate-isolation.conf;
+                        add_header X-Robots-Tag "noindex, nofollow" always;
+                        add_header Cache-Control "no-cache"; }
+   location = /old/sw.js { default_type text/javascript;
+                        add_header Cache-Control "no-store";
+                        return 200 "<the self-unregistering worker>"; }
+   location /nukernel/ { return 301 https://stellate.app/$is_args$args; }
    ```
 
    A path the new site has is served; a path only the old site has is handed to
-   the old site with its query string intact. Hash fragments are never sent to
-   a server, so a `#at=…&y=…` share link is untouched by this either way.
+   the archive with its query string intact, on the same origin. Hash fragments
+   are never sent to a server, so a `#at=…&y=…` share link is untouched by this
+   either way. (`alias` and not a symlink under the root would work too — the
+   symlink in §2 is simpler and matches what staging already does with
+   `found/`.)
 3. **`/found/` needs no change at all** — the symlink means plain `root`
    resolution reaches the shared tree, which is the same trick and the same
    comment staging carries.
@@ -179,7 +225,7 @@ prod today:
 
 | | today | after the switch, if nothing is decided |
 |---|---|---|
-| `robots.txt` | invites crawlers, names the sitemap | 301s to old.stellate.app — **wrong**, a robots.txt must be on its own host |
+| `robots.txt` | invites crawlers, names the sitemap | would 301 to `/old/robots.txt` — **wrong**, a host's robots.txt is the one at its root |
 | `sitemap.xml` | the old site's pages | 301s away |
 | `feed.xml` / `feed.json` (+ archives) | generated from git log on every prod deploy by `tools/build/gen-feed.js`, which lives on **main** and not on this branch | 301 to the old host; subscribers keep getting the archive, never anything new |
 | `manifest.webmanifest` | the PWA install | 301s away; an installed PWA still opens `stellate.app/` and gets the new app |
@@ -233,7 +279,7 @@ that was the part of "no icon" that was costing something.
 A row at the foot of the plate, under `HOW IT PLAYS`, beside `Daylight`,
 `Set seed` and the log:
 
-> **⧉ The old Stellate** — opens `old.stellate.app` in a new tab.
+> **⧉ The old Stellate** — opens `/old/` in a new tab.
 
 Three constraints the implementation has to respect, all of them written into
 gates already:
@@ -255,9 +301,10 @@ Lit element), the glyph in the same catalogue as the others. Gates to re-run:
 `test/gutter.js` (the plate's inventory, T2/T3/T9/T10/T12) and
 `test/table.browser.js` T13a.
 
-**Build it and ship it to staging BEFORE the switch**, pointing at
-`old.stellate.app` — the row can be verified there the day the DNS record
-exists, and then the launch deploy carries a link that has already been proven.
+**Build it and ship it to staging BEFORE the switch.** The target is a plain
+`/old/` — a path on whatever host the page is served from — so it can be built
+and gated now and needs nothing to exist first. On staging it will 404 until
+`/old/` is wired, which is honest: the row is proven by the launch, not before.
 
 ---
 
@@ -278,9 +325,9 @@ Three things that are true afterwards and should be said out loud:
 
 1. **The old site's files leave `main`'s tip.** This branch pruned the root —
    `app/`, `assets/`, `index.html`, `daw.html`, `docs/` and `.github/` are not
-   in it. They are in the history and on `legacy`, and `old.stellate.app` is
-   served from a tree on disk, not from a branch — so nothing on the live site
-   depends on this. But a `git checkout main` after the rename will not contain
+   in it. They are in the history and on `legacy`, and `/old/` is served from a
+   tree on disk, not from a branch — so nothing on the live site depends on
+   this. But a `git checkout main` after the rename will not contain
    the old app, and anyone rebuilding the archive must check out `legacy`.
 2. **CI disappears with it.** `.github/workflows/verify.yml` is on main and not
    on this branch. Decide: port it (it will need this branch's gate list, which
@@ -311,11 +358,13 @@ The rename buys nothing at launch time and, done first, it changes what
 Each step verifies before the next one starts. Steps 1–4 are invisible to
 anyone visiting stellate.app.
 
-**1 · The archive gets its door.**
-`doctl` A record → `certbot certonly --nginx -d old.stellate.app` → write
-`/etc/nginx/sites-available/stellate-old` (§2) → `nginx -t` → reload → enable.
-*Verify:* the star map loads, it makes sound, `/found/` is immutable, the
-response carries `X-Robots-Tag: noindex`.
+**1 · The archive gets its door — and it is a path, so there is no waiting.**
+No DNS, no certificate. `ln -s /srv/stellate /srv/stellate-nu/old`, the three
+`location` blocks in §3, `nginx -t`, reload.
+*Verify:* `/old/` draws the star map and makes sound (that is
+`SharedArrayBuffer`, so the isolation headers are proven through the alias),
+`/old/found/…` is 200 and immutable, `/old/sw.js` is the unregistering worker
+and not the archive's, and the response carries `X-Robots-Tag: noindex`.
 
 **2 · The new root exists but nothing points at it.**
 ```bash
@@ -344,7 +393,7 @@ correct, because nothing has switched yet.
 `@old` fallback, `nginx -t`, `systemctl reload nginx`.
 *Verify, in this order:* `stellate.app` serves the box · **reload a second
 time** (the service-worker handover, §3) · sound plays (isolation headers) ·
-`/found/samples/…` 200 immutable · `/how.html` 301s to old.stellate.app ·
+`/found/samples/…` 200 immutable · `/how.html` 301s to `/old/how.html` ·
 `/gc/count` still counts · `curl -I https://stellate.app/sw.js` shows v329.
 
 **6 · Watch, with the rollback one line away.** §8.
@@ -355,10 +404,10 @@ time** (the service-worker handover, §3) · sound plays (isolation headers) ·
 
 ## 8 · Rollback
 
-**The switch:** put `root /srv/stellate;` back, remove the `@old` fallback,
-`nginx -t && systemctl reload nginx`. The old site is prod again, byte-for-byte,
-because it was never modified. `old.stellate.app` can stay up alongside it; it
-costs nothing and is a second door to the same tree.
+**The switch:** put `root /srv/stellate;` back and drop the four location
+blocks, `nginx -t && systemctl reload nginx`. The old site is prod again,
+byte-for-byte, because it was never modified — the archive was only ever
+reached through a symlink and a header.
 
 **The workers, which are the only asymmetry.** A visitor who took the new
 `sw.js` in the meantime has `stellate-app-v329` installed on this origin. After
@@ -389,8 +438,8 @@ vhost in thirty seconds.
 ## 10 · Still to do before the switch
 
 1. **The hamburger link** (§5) — build it, gate it, ship it to staging.
-2. **`old.stellate.app`** (§2) — DNS, cert, vhost. Nothing else can be
-   rehearsed until the name resolves.
+2. **`/old/`** (§2) — one symlink, three location blocks, no DNS and no
+   certificate.
 3. **The new root** (§7 step 2) and a prod deploy into it, unswitched.
 4. **The switch** (§7 step 5), then the branches (§6).
 
