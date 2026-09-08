@@ -7066,7 +7066,17 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               "the field's own address on the word, a step each side, the " +
               "position printed — " + JSON.stringify([sp, stepped]));
 
-            /* ---- T19d · THE INSTRUMENT PICKER IS A TABLE -------------- */
+            /* ---- T19d · THE INSTRUMENT PICKER IS A GRID OF CARDS ------
+               TRANSLATED, NOT LOOSENED (2026-09-08). Paul: *"Use the motif
+               selector for the main instrument selector too please — it's just
+               a dropdown."* This gate asked for the §19 answer — a lozenge
+               TABLE of 17 columns, one instrument per line, scrolling sideways
+               in its own track — and that control is gone, replaced by the card
+               grid §24 built for the motifs. What the gate was DEFENDING has
+               not changed and is asked here unchanged: every instrument on the
+               glass with nothing folded away, every family named, the record's
+               own instrument visible without hunting, and no sideways scroll of
+               the page. Only the shape it is asked of moved. */
             const ik = "sound.instrument|" + lineV;
             await openField(ik);
             await z.waitForTimeout(700);
@@ -7075,71 +7085,59 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                 '#pan-band .nu-sheetrow [data-k="' + k + '"]');
               const row = btn && btn.closest(".nu-sheetrow");
               const f = row && row.nextElementSibling;
-              if (!f || !f.classList.contains("nu-lzfield")) return null;
-              const tk = f.querySelector(".nu-eltrack");
-              const secs = [...f.querySelectorAll("nu-colhead.nu-lzcluster")];
-              const opts = [...f.querySelectorAll(".nu-lz")];
-              const drawn = opts.filter((o) => {
+              const grid = f && f.querySelector(".nu-mogrid");
+              if (!grid) return null;
+              const cards = [...grid.querySelectorAll(".nu-mopick")];
+              const drawn = cards.filter((o) => {
                 const r = o.getBoundingClientRect();
                 return r.width > 0 && r.height > 0; });
-              /* ONE WORD PER LINE PER COLUMN: inside a column every option
-                 shares one left edge and each has its own row band. */
-              let perLine = true;
-              for (const sec of secs) {
-                const o = [...sec.querySelectorAll(".nu-lz")]
-                  .map((e) => e.getBoundingClientRect());
-                for (let i = 1; i < o.length; i++)
-                  if (Math.abs(o[i].left - o[0].left) > 2 ||
-                      o[i].top < o[i - 1].bottom - 1) perLine = false;
-              }
-              const hot = f.querySelector('.nu-lz[aria-pressed="true"]');
+              const fams = [...new Set(cards
+                .map((c) => (c.querySelector(".nu-moprov") || {}).textContent)
+                .filter(Boolean))];
+              const hot = grid.querySelector('.nu-mopick[aria-pressed="true"]');
               const hr = hot ? hot.getBoundingClientRect() : null;
-              const tr2 = tk ? tk.getBoundingClientRect() : null;
-              return { h: Math.round(f.getBoundingClientRect().height),
-                table: f.dataset.table, excl: f.dataset.exclusive,
-                track: !!tk, cols: secs.length,
-                families: [...new Set(secs.map((e) => e.dataset.cluster))]
-                  .filter(Boolean),
-                total: opts.length, drawn: drawn.length, perLine,
-                trackW: tk ? Math.round(tk.scrollWidth) : null,
-                trackC: tk ? Math.round(tk.clientWidth) : null,
-                hot: hot ? hot.textContent.trim() : null,
-                hotIn: !!(hr && tr2 && hr.width > 0 &&
-                          hr.left >= tr2.left - 2 && hr.right <= tr2.right + 2),
+              const fr = f.getBoundingClientRect();
+              /* A CARD IS A TARGET AND OWES THE FLOOR. The grid's own cell is
+                 `min-block-size: var(--tap)`, and a picker whose options are
+                 under a thumb is the defect §19 built the table to fix. */
+              const short = cards.filter((c) =>
+                c.getBoundingClientRect().height < 43.5).length;
+              return { grid: true, cards: cards.length, drawn: drawn.length,
+                families: fams, fams: fams.length, short,
+                h: Math.round(fr.height),
+                select: !!f.querySelector("select"),
+                hot: hot ? (hot.querySelector(".nu-moname") || hot).textContent.trim() : null,
+                hotIn: !!(hr && hr.width > 0 && hr.height > 0),
                 page: document.documentElement.scrollWidth >
                       document.documentElement.clientWidth ||
                       document.body.scrollWidth > document.body.clientWidth };
             }, ik);
-            check(!!pick && pick.table === "true" && pick.track &&
-                  pick.cols >= 3 && pick.perLine && pick.h <= 844,
-              "T19d " + at + " · the instrument picker is a TABLE that scrolls " +
-              "sideways — " + (pick ? pick.cols : 0) + " columns, one " +
-              "instrument per line, " + (pick ? pick.h : "?") + "px tall " +
-              "(707px and zero instruments drawn, before) — " +
-              JSON.stringify(pick));
-            check(!!pick && pick.drawn === pick.total && pick.total > 100 &&
-                  pick.families.length >= 8,
+            check(!!pick && pick.grid && !pick.select && pick.cards > 100 &&
+                  pick.short === 0,
+              "T19d " + at + " · the instrument picker is a GRID OF CARDS and " +
+              "not a wheel — " + (pick ? pick.cards : 0) + " cards, none under " +
+              "the 44px floor, no <select> anywhere in the field — " +
+              JSON.stringify(pick && { cards: pick.cards, short: pick.short,
+                                       select: pick.select, h: pick.h }));
+            check(!!pick && pick.drawn === pick.cards && pick.fams >= 8,
               "T19d " + at + " · …and EVERY family is reachable with nothing " +
               "folded away: " + (pick ? pick.drawn : 0) + " of " +
-              (pick ? pick.total : 0) + " instruments drawn across " +
-              (pick ? pick.families.length : 0) + " families " +
+              (pick ? pick.cards : 0) + " instruments drawn across " +
+              (pick ? pick.fams : 0) + " families " +
               JSON.stringify(pick && pick.families));
             /* A RECORD STANDING ON A WORD ITS OWN VOCABULARY DOES NOT HOLD
-               HAS NO PILL TO BRING INTO VIEW, and that is §15's own recorded
-               case rather than a hole in this one: the Silence record's fresh
-               `line 1` names `synth`, and `avail.js instrOptions` offers that
-               word only where the record or its basis declares a native
-               model. The field's HEAD one row above still prints it. So the
-               claim is asked where there is an answer to ask it of, and
-               REPORTED where there is not. */
-            check(!!pick && (pick.hot == null || pick.hotIn) &&
-                  pick.trackW > pick.trackC && !pick.page,
+               HAS NO CARD TO LIGHT, and that is §15's own recorded case rather
+               than a hole in this one: the Silence record's fresh `line 1`
+               names `synth`, and `avail.js instrOptions` offers that word only
+               where the record or its basis declares a native model. The
+               field's HEAD one row above still prints it. So the claim is asked
+               where there is an answer to ask it of, and REPORTED where there
+               is not. */
+            check(!!pick && (pick.hot == null || pick.hotIn) && !pick.page,
               "T19d " + at + " · …the record's own instrument is on the glass " +
               "without hunting (" + (pick && pick.hot != null ? pick.hot
                 : "standing on a word this vocabulary does not hold — the " +
-                  "field's head carries it") + "), the TRACK is " +
-              (pick ? pick.trackW : "?") + "px wide in a " +
-              (pick ? pick.trackC : "?") + "px port, and the PAGE does not " +
+                  "field's head carries it") + "), and the PAGE does not " +
               "scroll sideways at all");
 
             /* ---- T19e · AN EXCLUSIVE SET LOOKS EXCLUSIVE -------------- */

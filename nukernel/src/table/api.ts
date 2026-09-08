@@ -60,6 +60,13 @@ export interface StripField {
    *  else, and the field draws without them (no `+` card, no ✎) rather than
    *  throwing, which is what makes the gallery and a fixture safe. */
   api?: { newMotif?(): string | null; editMotif?(name: string): void } | null;
+  /** THE CARD GRID, ASKED FOR OUTRIGHT (2026-09-08). Paul: *"Use the motif
+   *  selector for the main instrument selector too please — it's just a
+   *  dropdown."* `pickerFor`'s picture test cannot answer for a field whose
+   *  options have no picture to carry, and "long vocabulary" is not the test
+   *  either (a 22-word scale wants its wheel). So a field that wants every
+   *  option on the glass at once says so, and exactly one does. */
+  cards?: boolean;
   /** A CONTINUOUS NUMBER, AND IT GETS A SLIDER (2026-09-05). Paul: *"When you
    *  redesign think sliders and other UI for data entry."* A field that
    *  declares this is a NUMBER on a range — a register, a bar count, an entry

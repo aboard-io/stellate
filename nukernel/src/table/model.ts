@@ -745,8 +745,40 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
      and loses nothing — same field, same address, same vocabulary. */
   const ik = v.kind === "bass" ? "sound.bassinstrument"
            : v.kind === "drums" ? "sound.drumkit" : "sound.instrument";
-  instr.push(shField(A, ik, { voice: v.name },
-                 v.kind === "drums" ? t("col.machine") : t("noun.instrument")));
+  /* ===== AND IT IS THE CARD GRID, NOT A WHEEL (2026-09-08) ==============
+     Paul: *"Use the motif selector for the main instrument selector too
+     please — it's just a dropdown."*
+
+     THE INSTRUMENT IS THE ROW A HAND OPENS A CHAIR TO REACH — this file says
+     so four paragraphs up, which is why it is FIRST — and it was the platform's
+     own wheel: one value visible at a time, 149 of them, on the question of
+     what the record sounds like. The card grid §24 built for the motifs is the
+     control that question wants: every option on the glass at once, a
+     thumb-sized target on each, and the family printed under the name where a
+     motif prints its provenance. `cards` is the opt-in and `sheet.ts` does the
+     rest; it is asked for HERE, on the chair's own instrument row, and nowhere
+     else — `cast.part`'s seven words and `form.role`'s ten are still chips,
+     and a 22-word scale still earns its wheel. */
+  const ifield = shField(A, ik, { voice: v.name },
+                 v.kind === "drums" ? t("col.machine") : t("noun.instrument"));
+  if (ifield && (ifield as StripField).options &&
+      ((ifield as StripField).options || []).length > CHIPMAX) {
+    (ifield as StripField).cards = true;
+    /* THE FAMILY IS THE CARD'S SECOND LINE. `instrOptions` already groups the
+       149 by family (avail.js: native · bowed · brass · dirty · guitar · keys
+       · lead · mallet · organ · pad · reed · strings · vox) and `wCell` carries
+       that through as `g` — the field this Choice has had since 2026-09-05 for
+       exactly this reason. The grid draws `prov` under the name, so the
+       grouping a `<select>` showed as an `<optgroup>` heading survives the
+       change of control instead of being thrown away with it. */
+    (ifield as StripField).options = ((ifield as StripField).options || [])
+      .map((o) => (o.g ? { ...o, prov: String(o.g) } : o));
+    /* AND THE WHEEL'S OWN NODE COMES OFF, or `pickerFor` rule 1 ("a caller's
+       own widget wins") would hand the built combo back and the cards would
+       never draw. Same field, same address, one control. */
+    (ifield as StripField).node = null;
+  }
+  instr.push(ifield);
   if (v.kind === "line") instr.push(shField(A, "cast.part", { voice: v.name }, t("col.plays")));
   /* IS THERE A DRUMMER AT ALL — `cast.on`. avail.js `f["voice.on"]` is read off
      it and greys all sixty-eight kit words when it is false, so deleting this
@@ -787,8 +819,28 @@ export function colSheet(A: TableAPI, vi: number): Field[] {
      with its own view and its own asks (COMPOSER.md §5.1), and this is a row
      coming off a sheet, not a feature being removed. The day a chair sheet has
      something to DO with a file, the door is where it was.) */
-  if (v.kind === "line")
-    instr.push(shField(A, "cast.material", { voice: v.name }, t("col.material")));
+  if (v.kind === "line") {
+    /* ===== THE DEFAULT MOTIF IS PICKED THE WAY EVERY OTHER MOTIF IS
+       (2026-09-08) ======================================================
+       Paul: *"Let me pick a default motif."*
+
+       HE COULD ALREADY SET ONE AND COULD NOT SEE IT. `cast.material` IS the
+       default — avail.js's own words, "the voice's material is its DEFAULT
+       cell: what it reads in every section that does not say otherwise", read
+       and written through the `""` key. What it lacked was the PICTURE: §24
+       gave the per-section row (`material.cell`) previews and provenance and
+       routed it to the card grid, and this row — the same vocabulary, one
+       scope out — kept falling through to a list of names, because
+       `pickerFor` decides on the DATA and this field's options carried none.
+       So it carries them now, off the same two readers the per-section row
+       uses. One control for one question, at both scopes. */
+    const mat = shField(A, "cast.material", { voice: v.name }, t("col.material"));
+    if (mat && (mat as StripField).options)
+      (mat as StripField).options = ((mat as StripField).options || []).map(
+        (o) => (o.v === "" || o.v == null ? o : { ...o,
+          pv: A.previewOf(String(o.v)), prov: A.provWord(String(o.v)) }));
+    instr.push(mat);
+  }
   if (v.kind === "bass")
     instr.push(shField(A, "cast.bassStyle", { voice: v.name }, t("col.bassStyle")));
   /* ---- THE ENVELOPE, DRAWN (2026-09-05, TABLE.md §11) ------------------

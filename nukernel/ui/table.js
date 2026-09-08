@@ -993,12 +993,18 @@ function colSheet(A2, vi) {
   const instr = [], env = [], tone = [], mix = [];
   f2.push({ kind: "ops", label: t4("col.ops"), ops: colOps(A2, vi, v3) });
   const ik = v3.kind === "bass" ? "sound.bassinstrument" : v3.kind === "drums" ? "sound.drumkit" : "sound.instrument";
-  instr.push(shField(
+  const ifield = shField(
     A2,
     ik,
     { voice: v3.name },
     v3.kind === "drums" ? t4("col.machine") : t4("noun.instrument")
-  ));
+  );
+  if (ifield && ifield.options && (ifield.options || []).length > CHIPMAX) {
+    ifield.cards = true;
+    ifield.options = (ifield.options || []).map((o4) => o4.g ? { ...o4, prov: String(o4.g) } : o4);
+    ifield.node = null;
+  }
+  instr.push(ifield);
   if (v3.kind === "line") instr.push(shField(A2, "cast.part", { voice: v3.name }, t4("col.plays")));
   if (v3.kind === "drums") {
     const on = A2.castOf(vi, "on") !== false;
@@ -1018,8 +1024,18 @@ function colSheet(A2, vi) {
       set: (x2) => A2.putCast(vi, "on", !!x2)
     });
   }
-  if (v3.kind === "line")
-    instr.push(shField(A2, "cast.material", { voice: v3.name }, t4("col.material")));
+  if (v3.kind === "line") {
+    const mat = shField(A2, "cast.material", { voice: v3.name }, t4("col.material"));
+    if (mat && mat.options)
+      mat.options = (mat.options || []).map(
+        (o4) => o4.v === "" || o4.v == null ? o4 : {
+          ...o4,
+          pv: A2.previewOf(String(o4.v)),
+          prov: A2.provWord(String(o4.v))
+        }
+      );
+    instr.push(mat);
+  }
   if (v3.kind === "bass")
     instr.push(shField(A2, "cast.bassStyle", { voice: v3.name }, t4("col.bassStyle")));
   const curve = A2.voiceEnv(v3.name);
@@ -1548,6 +1564,7 @@ function clustersOf(f2) {
 }
 function pickerFor2(f2) {
   if ((f2.options || []).some((o4) => o4.pv)) return "motifs";
+  if (f2.cards) return "motifs";
   if (f2.multi && LOZ()) return "lozenge";
   if (f2.node) return "combo";
   if (f2.num) return "slider";

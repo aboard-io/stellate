@@ -148,6 +148,21 @@ export function pickerFor(f: StripField): Picker {
    *      it is drawn, and false of a row that merely happens to be called
    *      something. */
   if ((f.options || []).some((o) => (o as { pv?: unknown }).pv)) return "motifs";
+  /* 0b · …AND A FIELD MAY ASK FOR THE CARD GRID OUTRIGHT (2026-09-08).
+   *      Paul: *"Use the motif selector for the main instrument selector too
+   *      please — it's just a dropdown."*
+   *      THE PICTURE TEST ABOVE CANNOT ANSWER FOR HIM. An instrument has no
+   *      phrase to draw, so `pv` is empty for every option and the rule below
+   *      sends 149 words to the platform's wheel — a control that shows one
+   *      value at a time, on the row where a hand is choosing what the record
+   *      SOUNDS like. The grid is the right control for the same reason it was
+   *      right for the motifs: every option on the glass at once, a thumb-sized
+   *      target on each, and the family printed under the name where a motif
+   *      prints its provenance.
+   *      IT IS AN OPT-IN AND NOT A GUESS, because "long vocabulary" is not the
+   *      test either — `alphabet.scale` has 22 words and wants its wheel. A
+   *      field that wants cards says `cards`, and one field says it. */
+  if (f.cards) return "motifs";
   if (f.multi && LOZ()) return "lozenge";
   // 1 · A CALLER'S OWN WIDGET WINS. `model.ts` hands the long vocabularies a
   //     built control (`A.combo`, which is `ui/menus.js` `menuEl` — so on a
