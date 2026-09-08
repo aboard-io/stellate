@@ -51,6 +51,15 @@ export interface StripField {
   groups?: { word: string; vals: string[] }[];
   /** a caller-built control — the typed combo, for the five MENUS keys. */
   node?: HTMLElement | null;
+  /** THE TWO MOTIF DOORS, CARRIED ON THE FIELD (2026-09-08, TABLE.md §24).
+   *  `sheet.ts` draws and does not reach: it has never held a `TableAPI` and
+   *  should not start, because a widget that can call anything is a widget
+   *  nobody can reason about. So the ONE field that needs to mint and to
+   *  navigate carries exactly those two functions and nothing else — the same
+   *  shape `node` uses to hand over a caller's control. Absent everywhere
+   *  else, and the field draws without them (no `+` card, no ✎) rather than
+   *  throwing, which is what makes the gallery and a fixture safe. */
+  api?: { newMotif?(): string | null; editMotif?(name: string): void } | null;
   /** A CONTINUOUS NUMBER, AND IT GETS A SLIDER (2026-09-05). Paul: *"When you
    *  redesign think sliders and other UI for data entry."* A field that
    *  declares this is a NUMBER on a range — a register, a bar count, an entry
@@ -300,6 +309,19 @@ export interface TableAPI {
   lampFor(name: string): HTMLElement;
   previewOf(name: string): Node | null;
   provWord(name: string): string | null;
+  /* ===== THE TWO DOORS A VISUAL MOTIF FIELD NEEDS (2026-09-08, §24) =====
+     Paul: *"The motif selector should be visual and let me see motifs and make
+     new motifs and assign multiple motifs and click to edit motifs."*
+     BOTH ALREADY EXISTED IN ui/eight.js AND NEITHER WAS REACHABLE FROM HERE.
+     `addCell(kind)` mints a motif with a free name (*"a name is an identity …
+     a second `beat` would make `cellOf` answer for whichever came first"*) and
+     `openMotifRow(name)` walks the bank to that motif's own editor. The field
+     below calls them; it does not reimplement either, which is why a motif
+     made from a cell card is the same object as one made from the bank. */
+  /** Mint a motif and answer its name — the caller assigns it. */
+  newMotif?(): string | null;
+  /** Open a motif in the bank's own editor. */
+  editMotif?(name: string): void;
 
   cellWord(i: number, vi: number): string;
   /** THE TABLE'S MARKS (2026-09-05). Paul: *"When you redesign use more icons.

@@ -11733,6 +11733,18 @@ function tableAPI() {
       return c ? preview(c) : null; },
     provWord: (name) => { try {
       return NuDocument.provWord(NuDocument.provOf(DOC, name)); } catch (e) { return null; } },
+    /* ---- THE TWO MOTIF DOORS (2026-09-08, TABLE.md §24) ---------------
+       Paul: *"let me see motifs and make new motifs and … click to edit
+       motifs."* Both are functions this file already had and neither was on
+       the seam. `addCell("line")` is the SAME minting the bank's own `+` uses
+       — the free-name rule included — and `openMotifRow` is the same walk
+       `__eightMotif` makes, so a motif made or opened from a cell card is the
+       bank's motif and not a second kind of thing.
+       THE MINT IS AN OP, so Ctrl-Z takes it back like every other write: it
+       goes through `changed()` the way the bank's does. */
+    newMotif: () => { try { const n = addCell("line"); changed(); return n; }
+                      catch (e) { return null; } },
+    editMotif: (name) => { try { openMotifRow(name); } catch (e) {} },
 
     /* ---- the three tiers, read and written through wave 1's owner ---- */
     cellWord: (i, vi) => tableCellWord(i, vi),

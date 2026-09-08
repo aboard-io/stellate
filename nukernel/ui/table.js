@@ -1140,6 +1140,14 @@ function cellSheet(A2, i5, vi) {
     phrase.push({
       key: w2.key,
       label: t4("special.phrases.word"),
+      /* THE TWO DOORS THE VISUAL FIELD NEEDS (2026-09-08, §24), carried
+         on the field because sheet.ts draws and does not reach. */
+      api: {
+        newMotif: () => A2.newMotif ? A2.newMotif() : null,
+        editMotif: (n3) => {
+          if (A2.editMotif) A2.editMotif(n3);
+        }
+      },
       word: w2.derived ? A2.cellWord(i5, vi) : w2.label,
       value: w2.value == null ? "" : String(w2.value),
       derived: w2.derived,
@@ -1536,6 +1544,7 @@ function clustersOf(f2) {
   return [...by].map(([word, vals]) => ({ word, vals }));
 }
 function pickerFor2(f2) {
+  if ((f2.options || []).some((o4) => o4.pv)) return "motifs";
   if (f2.multi && LOZ()) return "lozenge";
   if (f2.node) return "combo";
   if (f2.num) return "slider";
@@ -1757,6 +1766,56 @@ function manyMark(n3) {
   return n3 > 1 ? b`<small class="nu-many" aria-label=${t4("sheet.many", { n: n3 })}
     >${n3}</small>` : A;
 }
+function motifRow(sf, write, clearBack) {
+  const cur = sf.value == null ? "" : String(sf.value);
+  const opts = sf.options || [];
+  const api = sf.api;
+  const card = (o4) => {
+    const v3 = String(o4.v == null ? "" : o4.v);
+    const on = v3 === cur;
+    const pv = o4.pv;
+    const prov = o4.prov;
+    const why = o4.off ? o4.why || "" : "";
+    return b`<div class=${e3({ "nu-mocard": true, "is-on": on })}>
+      <button type="button" class="nu-mopick" data-k=${sf.key + "|" + v3}
+        aria-pressed=${String(on)}
+        aria-disabled=${o2(why ? "true" : void 0)}
+        data-why=${o2(why || void 0)}
+        aria-label=${why ? t4("sheet.refused", { name: String(o4.w ?? v3), why }) : prov ? t4(
+      "sheet.chip.prov",
+      { name: String(o4.w ?? v3), prov }
+    ) : String(o4.w ?? v3)}
+        @click=${() => {
+      if (why) return;
+      write(v3);
+    }}
+        ><span class="nu-mopv" aria-hidden="true">${pv ? pv : A}</span
+        ><span class="nu-moname">${o4.w == null ? v3 : o4.w}</span
+        >${prov ? b`<small class="nu-moprov">${prov}</small>` : A}</button>
+      ${v3 && api && api.editMotif ? b`<button type="button" class="nu-moedit" data-k=${"motifedit|" + v3}
+            aria-label=${t4("motif.edit", { name: String(o4.w ?? v3) })}
+            @click=${() => api.editMotif(v3)}
+            ><span class="nu-g" aria-hidden="true">\u270e</span
+            ><span class="nu-vh">${t4("motif.edit.word")}</span></button>` : A}
+    </div>`;
+  };
+  return b`<div class="nu-sheetrow nu-morow">
+    <b class="nu-sheetlab">${sf.label}</b>
+    <div class="nu-mogrid">
+      ${opts.map(card)}
+      ${api && api.newMotif ? b`<button type="button" class="nu-mocard nu-monew" data-k="motif-new"
+            aria-label=${t4("motif.new")}
+            @click=${() => {
+    const n3 = api.newMotif();
+    if (n3) write(n3);
+  }}
+            ><span class="nu-g" aria-hidden="true">+</span
+            ><span class="nu-moname">${t4("motif.new.word")}</span></button>` : A}
+    </div>
+    ${clearBack}
+    ${subOf(sf) ? b`<small class="nu-sheetsub">${subOf(sf)}</small>` : A}
+  </div>`;
+}
 function spinRow(sf, write, clearBack) {
   const opts = sf.options || [];
   const cur = sf.value == null ? "" : String(sf.value);
@@ -1901,6 +1960,7 @@ function fieldRow(f2, openField, setOpenField, after) {
     after();
   }}>${t4("act.clear")}</button>` : A;
   if (pick === "spinner") return spinRow(sf, write, clearBack);
+  if (pick === "motifs") return motifRow(sf, write, clearBack);
   if (pick === "combo")
     return b`<div class="nu-sheetrow">
       <b class="nu-sheetlab">${sf.label}</b>${sf.node}${clearBack}

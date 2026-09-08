@@ -397,6 +397,15 @@ export const TABLE: Table = {
      you are leaving and a SHEET is an editor over the record you stay in.
      Naming the kind is what tells them apart when a screen reader reads only
      the control. */
+  /* ===== THE MOTIF FIELD'S THREE WORDS (2026-09-08, TABLE.md §24) =======
+     Paul: *"let me see motifs and make new motifs and … click to edit
+     motifs."* The `see` half needs no copy — it is a picture and a name the
+     bank already owns. These are the two GESTURES, plus the word the ✎ carries
+     for a screen reader and for a page with no stylesheet. */
+  "motif.new": "Make a new motif and use it here",
+  "motif.new.word": "new",
+  "motif.edit": "Edit {name}",
+  "motif.edit.word": "edit",
   "sheet.close.mark": "\u00d7",
   "sheet.close": "Close the {name} sheet",
 };

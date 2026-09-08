@@ -6158,6 +6158,68 @@ table.nu-trims{ color: var(--ink); }
    with the CSS on sees a mark alone. The `--tap` floor is on both axes because
    a picture is a smaller target than a word and this is where that would be
    felt first. */
+/* ===== THE MOTIF FIELD (2026-09-08, TABLE.md §24) ======================
+   Paul: *"The motif selector should be visual and let me see motifs and make
+   new motifs and assign multiple motifs and click to edit motifs."*
+
+   A GRID OF PICTURES, WRAPPING, NEVER A TRACK. The card is `auto-fill` at a
+   `9ch` minimum, so a phone gets three across and a desk gets as many as fit —
+   and it WRAPS rather than scrolling sideways, because §24 has just taken the
+   sideways axis off this sheet and a field that reintroduced one would be the
+   same complaint one level down.
+   THE PICTURE IS THE POINT AND IT IS GIVEN THE ROOM. `ui/preview.js` draws an
+   `<svg>` of the phrase itself — one bar per step, height by velocity — and it
+   gets a fixed band at the top of each card so twelve motifs read as twelve
+   SHAPES in a row before a single name is read, which is the sentence that
+   file was written under. A motif with no picture (the absent detent) leaves
+   the band empty rather than collapsing, so the names stay on one line. */
+.nu-morow{ flex-direction: column; align-items: stretch; }
+.nu-mogrid{ display: grid; gap: var(--s2);
+  grid-template-columns: repeat(auto-fill, minmax(9ch, 1fr));
+  inline-size: 100%; }
+/* A CARD IS THE TARGET AND THE ✎ RIDES IN ITS CORNER. `position: relative` on
+   the card is what the pencil is placed against; the pick button underneath it
+   is the whole card, so the 44px floor belongs to the thing a thumb aims at
+   and the pencil is a second, smaller target ON it rather than a slice out of
+   it. */
+.nu-mocard{ position: relative; display: block; min-block-size: var(--tap); }
+.nu-mopick{ inline-size: 100%; min-block-size: var(--tap);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px;
+  padding: var(--s1) var(--s2);
+  background: var(--well); color: var(--ink);
+  border: var(--bw) solid var(--rule); border-radius: var(--r2);
+  font: var(--btn-fw) var(--t2)/1.2 var(--sans, inherit); cursor: pointer; }
+.nu-mopick[aria-pressed="true"]{ background: var(--hand); color: var(--on-fill);
+  border-color: var(--hand); }
+.nu-mopick[aria-disabled="true"]{ opacity: .55; cursor: default; }
+.nu-mopv{ display: block; min-block-size: 1.2em; line-height: 0; }
+.nu-moname{ display: block; max-inline-size: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-moprov{ display: block; color: var(--dim); font-size: var(--t1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-mopick[aria-pressed="true"] .nu-moprov{ color: var(--on-fill); opacity: .8; }
+/* THE PENCIL IS A CORNER MARK. It is `--tap` in BLOCK size and narrower in
+   line size on purpose: a 44px square in the corner of a 9ch card would cover
+   the picture it is about, and the vertical is the axis a thumb misses on. */
+.nu-moedit{ position: absolute; inset-block-start: 0; inset-inline-end: 0;
+  min-block-size: var(--tap); inline-size: 2.2em;
+  display: flex; align-items: flex-start; justify-content: flex-end;
+  padding: 2px 3px 0 0;
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  color: var(--dim); font-size: .9rem; line-height: 1; cursor: pointer; }
+.nu-moedit:hover{ color: var(--ink); }
+/* THE `+` CARD IS A CARD, so the grid does not have to know it is different —
+   the only thing it lacks is a picture, and it says its word instead. */
+.nu-monew{ display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px; min-block-size: var(--tap);
+  padding: var(--s1) var(--s2);
+  background: none; color: var(--dim);
+  border: var(--bw) dashed var(--rule); border-radius: var(--r2);
+  font: var(--btn-fw) var(--t2)/1.2 var(--sans, inherit); cursor: pointer; }
+.nu-monew:hover{ color: var(--ink); border-color: var(--ink); }
+.nu-monew > .nu-g{ font-size: 1.1rem; line-height: 1; }
+
 .nu-opbtn.is-mark{ inline-size: var(--tap); min-inline-size: var(--tap);
   min-block-size: var(--tap); padding: 0;
   display: inline-flex; align-items: center; justify-content: center; }

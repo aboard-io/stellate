@@ -927,6 +927,10 @@ export function cellSheet(A: TableAPI, i: number, vi: number): Field[] {
        value is drawn quiet", not an em dash. `cellWord` is the same reader the
        grid's own cell uses, so the sheet and the cell can never disagree. */
     phrase.push({ key: w.key, label: t("special.phrases.word"),
+             /* THE TWO DOORS THE VISUAL FIELD NEEDS (2026-09-08, §24), carried
+                on the field because sheet.ts draws and does not reach. */
+             api: { newMotif: () => (A.newMotif ? A.newMotif() : null),
+                    editMotif: (n: string) => { if (A.editMotif) A.editMotif(n); } },
              word: w.derived ? A.cellWord(i, vi) : w.label,
              value: w.value == null ? "" : String(w.value),
              derived: w.derived, options, set: (x: string) => w.set(x),

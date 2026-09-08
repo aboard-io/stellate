@@ -58,7 +58,8 @@ import type { Field, StripField, TextField, Choice } from "./api.js";
 import { pickerFor as pick } from "../menus/pick.js";
 import { t, fmt } from "../copy/global.js";
 
-export type Picker = "combo" | "chips" | "native" | "slider" | "lozenge" | "spinner";
+export type Picker = "combo" | "chips" | "native" | "slider" | "lozenge"
+                   | "spinner" | "motifs";
 
 /* THE RULE IS NOT THIS FILE'S ANY MORE, 2026-09-06. It was written here first
    and it was right here first — chips <= 8, the native picker on a coarse
@@ -127,6 +128,26 @@ export function pickerFor(f: StripField): Picker {
    *     field is a lozenge field wherever the component is on the page. With
    *     no `NuLozenge` at all it falls through and is drawn single, which is
    *     the shape it had before this round rather than a broken control. */
+  /* 0a · A FIELD WHOSE OPTIONS CARRY PICTURES IS A MOTIF FIELD (2026-09-08,
+   *      TABLE.md §24). Paul: *"The motif selector should be visual and let me
+   *      see motifs and make new motifs and assign multiple motifs and click
+   *      to edit motifs."*
+   *      IT WAS FALLING THROUGH TO THE NATIVE WHEEL, and every rule below was
+   *      right to send it there: a coarse pointer with more than eight words
+   *      earns the phone's own picker (rule 2 of src/menus/pick.ts). The thing
+   *      none of them could know is that these options are not WORDS. Every
+   *      motif option carries `pv` — an inline `<svg>` of the actual phrase,
+   *      one bar per step, height by velocity (ui/preview.js) — built so that
+   *      *"two motifs in a list are told apart by SHAPE before either name is
+   *      read"*. A `<select>` can hold no picture at all, so the one control
+   *      the page has for telling motifs apart was drawing them as a list of
+   *      names, and the standing answer as `—`.
+   *      THE TEST IS THE PICTURE AND NOT THE NAME `motifs`. A field is a motif
+   *      field when its options actually carry previews — which is a fact
+   *      about the data, true of the cell sheet's `material.cell` row wherever
+   *      it is drawn, and false of a row that merely happens to be called
+   *      something. */
+  if ((f.options || []).some((o) => (o as { pv?: unknown }).pv)) return "motifs";
   if (f.multi && LOZ()) return "lozenge";
   // 1 · A CALLER'S OWN WIDGET WINS. `model.ts` hands the long vocabularies a
   //     built control (`A.combo`, which is `ui/menus.js` `menuEl` — so on a
@@ -593,6 +614,88 @@ function manyMark(n: number): TemplateResult | typeof nothing {
    on the WORD, which is what T7 and `test/table-inventory.json` read, and the
    two steps take `prev|<key>` and `next|<key>` — the same shape `clear|<key>`
    and `num|<key>` already take. */
+/* ===== THE MOTIF FIELD: PICTURES, NOT A DROPDOWN (2026-09-08, §24) ======
+   Paul: *"The motif selector should be visual and let me see motifs and make
+   new motifs and assign multiple motifs and click to edit motifs."*
+
+   FOUR ASKS, AND THIS DRAWS THREE OF THEM. Assigning SEVERAL motifs to one
+   cell is a question about the MODEL — whether a cell plays them in sequence
+   across its bars or layered at once — and `material.cell` holds one name, so
+   it is not a widget change and is not guessed at here. The three that are
+   about the glass are built:
+
+     · SEE THEM. Every motif is a card carrying `ui/preview.js`'s own `<svg>`
+       — one bar per step of the actual phrase, height by velocity — with its
+       name under it and its provenance (`from this genre`, `yours`) under
+       that. That picture already existed and had nowhere to be drawn: the
+       native wheel this field fell into can hold no markup, so the page's one
+       control for telling motifs apart showed a list of names.
+     · MAKE ONE. The last card is the `+`, and it does what the bank's own `+`
+       does — `A.newMotif()` is `addCell("line")`, the free-name rule included
+       — and then ASSIGNS what it made, because a hand that asked for a new
+       motif here asked for it for THIS cell.
+     · EDIT ONE. Each card carries a ✎ that opens that motif in the bank's own
+       editor (`A.editMotif`, which is `openMotifRow`). It is a separate target
+       and not a second meaning for the card, because the card's own meaning is
+       ASSIGN — a control where one tap sometimes writes and sometimes
+       navigates is the thing this page has spent every round deleting.
+
+   THE ABSENT DETENT KEEPS ITS PLACE. The first option is the column's own
+   answer (`—`, no motif of this cell's own) and it is a card like the others
+   with no picture, because "inherit" is a real choice and hiding it would make
+   clear-back the only way to say it. */
+function motifRow(sf: StripField, write: (v: string) => void,
+                  clearBack: TemplateResult | typeof nothing): TemplateResult {
+  const cur = sf.value == null ? "" : String(sf.value);
+  const opts = sf.options || [];
+  const api = (sf as { api?: { newMotif?(): string | null;
+                               editMotif?(n: string): void } }).api;
+  const card = (o: Choice) => {
+    const v = String(o.v == null ? "" : o.v);
+    const on = v === cur;
+    const pv = (o as { pv?: Node }).pv;
+    const prov = (o as { prov?: string }).prov;
+    const why = (o as { off?: boolean; why?: string }).off
+      ? ((o as { why?: string }).why || "") : "";
+    return html`<div class=${classMap({ "nu-mocard": true, "is-on": on })}>
+      <button type="button" class="nu-mopick" data-k=${sf.key + "|" + v}
+        aria-pressed=${String(on)}
+        aria-disabled=${ifDefined(why ? "true" : undefined)}
+        data-why=${ifDefined(why || undefined)}
+        aria-label=${why ? t("sheet.refused", { name: String(o.w ?? v), why })
+                         : (prov ? t("sheet.chip.prov",
+                                     { name: String(o.w ?? v), prov })
+                                 : String(o.w ?? v))}
+        @click=${() => { if (why) return; write(v); }}
+        ><span class="nu-mopv" aria-hidden="true">${pv ? pv : nothing}</span
+        ><span class="nu-moname">${o.w == null ? v : o.w}</span
+        >${prov ? html`<small class="nu-moprov">${prov}</small>` : nothing}</button>
+      ${v && api && api.editMotif
+        ? html`<button type="button" class="nu-moedit" data-k=${"motifedit|" + v}
+            aria-label=${t("motif.edit", { name: String(o.w ?? v) })}
+            @click=${() => api.editMotif!(v)}
+            ><span class="nu-g" aria-hidden="true">\u270e</span
+            ><span class="nu-vh">${t("motif.edit.word")}</span></button>`
+        : nothing}
+    </div>`;
+  };
+  return html`<div class="nu-sheetrow nu-morow">
+    <b class="nu-sheetlab">${sf.label}</b>
+    <div class="nu-mogrid">
+      ${opts.map(card)}
+      ${api && api.newMotif
+        ? html`<button type="button" class="nu-mocard nu-monew" data-k="motif-new"
+            aria-label=${t("motif.new")}
+            @click=${() => { const n = api.newMotif!(); if (n) write(n); }}
+            ><span class="nu-g" aria-hidden="true">+</span
+            ><span class="nu-moname">${t("motif.new.word")}</span></button>`
+        : nothing}
+    </div>
+    ${clearBack}
+    ${subOf(sf) ? html`<small class="nu-sheetsub">${subOf(sf)}</small>` : nothing}
+  </div>`;
+}
+
 function spinRow(sf: StripField, write: (v: string) => void,
                  clearBack: TemplateResult | typeof nothing): TemplateResult {
   const opts = sf.options || [];
@@ -741,6 +844,8 @@ function fieldRow(f: Field, openField: string | null,
     : nothing;
   /* A STATE THE ROW STEPS THROUGH (2026-09-07, §19) — see `spinRow`. */
   if (pick === "spinner") return spinRow(sf, write, clearBack);
+  /* THE MOTIFS, AS PICTURES (2026-09-08, §24) — see `motifRow`. */
+  if (pick === "motifs") return motifRow(sf, write, clearBack);
   if (pick === "combo")
     /* THE SUB IS DRAWN HERE TOO, 2026-09-06. It was on the `native` branch and
        on the chips branch and not on this one, so a field whose vocabulary is
