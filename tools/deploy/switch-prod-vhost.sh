@@ -148,18 +148,33 @@ PY
 # ---- the smoke, over the wire ---------------------------------------------
 echo "== smoke =="
 fail=0
-chk() {
-  local label="$1" url="$2" want="$3" hdr="${4:-}"
-  local out
-  out="$(curl -fsS -D /tmp/.swhdr --max-time 25 "$url" 2>/dev/null || true)"
-  if [ -z "$out" ]; then echo "   FAIL $label ($(head -1 /tmp/.swhdr 2>/dev/null | tr -d '\r'))"; fail=1; return; fi
-  if [ "$want" != "-" ] && ! printf '%s' "$out" | grep -q "$want"; then
-    echo "   FAIL $label — body has no '$want'"; fail=1; return; fi
-  if [ -n "$hdr" ] && ! grep -qi "$hdr" /tmp/.swhdr; then
-    echo "   FAIL $label — no header '$hdr'"; fail=1; return; fi
-  echo "   ok   $label"
+# A CHECK THAT FIRES INTO A GRACEFUL RELOAD LIES (2026-09-08, measured at the
+# launch). `systemctl reload nginx` keeps the OLD workers alive until their
+# in-flight requests finish, so a smoke test a second later can be answered by
+# the configuration that is being replaced — three checks went red at the
+# switch and every one of them was green by hand a minute afterwards. So each
+# check RETRIES: three attempts, two seconds apart, and it only fails if the
+# answer is still wrong when the old workers are gone. A retry is not a
+# loosening — a check that passes on the third read passed.
+chk() { # chk <label> <url> <grep-pattern|-> [header-pattern]
+  local label="$1" url="$2" body="$3" hdr="${4:-}"
+  local out ok=0 i
+  for i in 1 2 3; do
+    out="$(curl -fsS -D /tmp/.swhdr --max-time 20 "$url" 2>/dev/null || true)"
+    ok=1
+    [ -z "$out" ] && ok=0
+    if [ "$ok" = "1" ] && [ "$body" != "-" ] && ! printf '%s' "$out" | grep -q "$body"; then ok=0; fi
+    if [ "$ok" = "1" ] && [ -n "$hdr" ] && ! grep -qi "$hdr" /tmp/.swhdr; then ok=0; fi
+    [ "$ok" = "1" ] && break
+    sleep 2
+  done
+  if [ "$ok" = "1" ]; then echo "   ok   $label"; else
+    echo "   FAIL $label ($(head -1 /tmp/.swhdr 2>/dev/null | tr -d '\r'))"; fail=1; fi
 }
-chk "the box at the root"   "$SITE/"                     "nu-topstrip"  "Cross-Origin-Opener-Policy"
+# `id="nu-log"` and NOT `nu-topstrip`: the strip is built by ui/eight.js at
+# runtime and is not a literal in the served HTML, so the old check could only
+# ever fail. The log div IS in index.html, which is what a smoke test may read.
+chk "the box at the root"   "$SITE/"                     'id="nu-log"'  "Cross-Origin-Opener-Policy"
 chk "the worker"            "$SITE/sw.js"                "stellate-app-"
 chk "the archive at /old"   "$SITE/old/"                 "STELLATE"     "X-Robots-Tag"
 chk "the archive's worker"  "$SITE/old/sw.js"            "unregister"

@@ -164,19 +164,30 @@ if [ "$SMOKE" != "1" ]; then
 fi
 echo "== smoke =="
 fail=0
+# A CHECK THAT FIRES INTO A GRACEFUL RELOAD LIES (2026-09-08, measured at the
+# launch). `systemctl reload nginx` keeps the OLD workers alive until their
+# in-flight requests finish, so a smoke test a second later can be answered by
+# the configuration that is being replaced — three checks went red at the
+# switch and every one of them was green by hand a minute afterwards. So each
+# check RETRIES: three attempts, two seconds apart, and it only fails if the
+# answer is still wrong when the old workers are gone. A retry is not a
+# loosening — a check that passes on the third read passed.
 chk() { # chk <label> <url> <grep-pattern|-> [header-pattern]
   local label="$1" url="$2" body="$3" hdr="${4:-}"
-  local out code
-  out="$(curl -fsS -D /tmp/.nuhdr --max-time 20 "$url" 2>/dev/null || true)"
-  code="$(head -1 /tmp/.nuhdr 2>/dev/null | tr -d '\r')"
-  if [ -z "$out" ]; then echo "   FAIL $label — no body ($code)"; fail=1; return; fi
-  if [ "$body" != "-" ] && ! printf '%s' "$out" | grep -q "$body"; then
-    echo "   FAIL $label — body does not carry '$body' ($code)"; fail=1; return; fi
-  if [ -n "$hdr" ] && ! grep -qi "$hdr" /tmp/.nuhdr; then
-    echo "   FAIL $label — no header '$hdr'"; fail=1; return; fi
-  echo "   ok   $label"
+  local out ok=0 i
+  for i in 1 2 3; do
+    out="$(curl -fsS -D /tmp/.nuhdr --max-time 20 "$url" 2>/dev/null || true)"
+    ok=1
+    [ -z "$out" ] && ok=0
+    if [ "$ok" = "1" ] && [ "$body" != "-" ] && ! printf '%s' "$out" | grep -q "$body"; then ok=0; fi
+    if [ "$ok" = "1" ] && [ -n "$hdr" ] && ! grep -qi "$hdr" /tmp/.nuhdr; then ok=0; fi
+    [ "$ok" = "1" ] && break
+    sleep 2
+  done
+  if [ "$ok" = "1" ]; then echo "   ok   $label"; else
+    echo "   FAIL $label ($(head -1 /tmp/.nuhdr 2>/dev/null | tr -d '\r'))"; fail=1; fi
 }
-chk "the page"        "$SITE/"                    "nu-topstrip" "Cross-Origin-Opener-Policy"
+chk "the page"        "$SITE/"                    'id="nu-log"' "Cross-Origin-Opener-Policy"
 chk "the worker"      "$SITE/sw.js"               "$VER"
 chk "isolation"       "$SITE/nu.css"              "-"           "Cross-Origin-Embedder-Policy"
 chk "robots"          "$SITE/robots.txt"          "Sitemap:"
