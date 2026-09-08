@@ -1187,16 +1187,6 @@
       "why": "§13a.6 (2026-09-05): the open CELL sheet's first line names the cell a hand is on. It was `.nu-formula`'s head above the pane — 105.8px at 390, standing whether or not a cell was selected."
     },
     {
-      "reach": "tundo",
-      "open": "tcell|<voice>|<section>",
-      "why": "§13a.6: UNDO at the document level, Cmd/Ctrl-Z, for every op — mandatory; it stands where the change was made, on the open cell's first line."
-    },
-    {
-      "reach": "tredo",
-      "open": "tcell|<voice>|<section>",
-      "why": "§13a.6: …and REDO beside it"
-    },
-    {
       "reach": "tcopy",
       "open": "tcell|<voice>|<section>",
       "why": "§13a.6: copy a cell's vector"
@@ -1298,9 +1288,10 @@
         "k": "vol",
         "was": "the vertical room fader at the foot of the play fold",
         "home": "bar",
-        "field": "the bar's own control since 2026-09-06 (§18) — the same chassis and the same touch law, lying down — and 112px WIDE AT EVERY WIDTH since 2026-09-07 (§20, Paul: \"Make volume less wide\"; it was the row's flexible child and measured 1,036px at 1280)",
+        "field": "the bar's own control since 2026-09-06 (§18) — the same chassis and the same touch law, lying down — and 112px WIDE AT EVERY WIDTH since 2026-09-07 (§20, Paul: \"Make volume less wide\"; it was the row's flexible child and measured 1,036px at 1280)  ...AND IT IS NOT DRAWN ON A NARROW GLASS SINCE 2026-09-08 (TABLE.md §24). Two rules take it off: `(pointer: coarse)`, because the WAV-first engine route cannot move the level in time and a fader you drag and hear nothing from is a control lying about being one; and `max-width: 459px`, because with undo and redo in the bar the fixed children come to 259.4 and the room's 112 leaves the tape under its own 70px floor below 441. `wide: 460` is this row saying so — the control is reachable where it is drawn, and where it is not drawn the mix board's own monitor is one tap away.",
         "reach": "vol",
-        "floor": 40
+        "floor": 40,
+        "wide": 460
       },
       {
         "k": "toptab-Band",
@@ -1388,6 +1379,20 @@
         "field": "SET SEED — a mark and a title-case name like every other row of the plate (2026-09-07, §20), and the ONE door left to the typed field: it closes the plate and calls openSeedEdit(), which puts the keyboard in `#seedin` where the die stands. It carries the seed in its ACCESSIBLE NAME; the plate prints no number of its own, because the LOG's count is the one trailing number in it",
         "reach": "seedmenu",
         "menu": true
+      },
+      {
+        "k": "tundo",
+        "was": "the open cell sheet's first line, beside the address",
+        "home": "bar",
+        "field": "UNDO at the document level, Cmd/Ctrl-Z, for every op — moved to the BAR on 2026-09-08 (TABLE.md §24) and therefore out of the table's own list and into the chrome's. Paul: *\"We can move undo, redo to the bottom nav and make them global.\"* They were the first line of the open CELL sheet, which is why they were filed as controls the table holds — and a document-wide stack whose BUTTON exists only while a cell is open is the page giving two different answers to one question. The bar is the one band on the screen in every state, which is what a document-wide stack needs. THE NAME DID NOT MOVE: they are `tundo` and `tredo`, the addresses this file has always filed, and they press the SAME `undoStack` singleton the grid presses — no bridge and no second stack. What moved is the HOME, which is the one thing a row is edited for, and it is why the table's own walk (scoped to `#pan-band`) could no longer see them.",
+        "reach": "tundo"
+      },
+      {
+        "k": "tredo",
+        "was": "the open cell sheet's first line, beside undo",
+        "home": "bar",
+        "field": "…and REDO beside it — moved to the BAR on 2026-09-08 (TABLE.md §24) and therefore out of the table's own list and into the chrome's. Paul: *\"We can move undo, redo to the bottom nav and make them global.\"* They were the first line of the open CELL sheet, which is why they were filed as controls the table holds — and a document-wide stack whose BUTTON exists only while a cell is open is the page giving two different answers to one question. The bar is the one band on the screen in every state, which is what a document-wide stack needs. THE NAME DID NOT MOVE: they are `tundo` and `tredo`, the addresses this file has always filed, and they press the SAME `undoStack` singleton the grid presses — no bridge and no second stack. What moved is the HOME, which is the one thing a row is edited for, and it is why the table's own walk (scoped to `#pan-band`) could no longer see them.",
+        "reach": "tredo"
       }
     ],
     "retired": "TWO CONTROLS OF THE GUTTER ARE RETIRED RATHER THAN MOVED AND EACH SAYS WHY. `trayup` (the ↑) went on 2026-09-02 with the tree that made it unnecessary and its absence is asserted by test/shell.js A6j. The nine `toptab-` rows of the stripe's root level are not a control at all any more: `Where` is the bar's plate, `Band` is the page, and the other four are the hamburger's, which is every one of them accounted for. ...AND TWO MORE ON 2026-09-07 (TABLE.md §20). `playops` (the ⚙) and `seedval` (the number) are DELETED and not moved: Paul, \"Bottom bar: get rid of gear and move those functions into the menu\" and \"Get rid of seed number too\". Nothing is lost — the gear's two controls are rows of the plate above (one tap from the open plate, which is T7's own <= 2 from rest), and the seed's two jobs are the die's accessible name (reading it) and `seedmenu` (typing it). `.nu-seedwait` goes with them, into the die's own face; it was never a control and took no tap."

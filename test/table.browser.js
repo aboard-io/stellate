@@ -823,7 +823,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       const r = el.getBoundingClientRect();
       return { w: Math.round(r.width), h: Math.round(r.height) };
     }, c.reach);
-    if (!box || (!box.w && !box.h)) missing.push(c.k + " -> " + c.reach);
+    /* A CONTROL A NARROW GLASS DOES NOT DRAW (2026-09-08, TABLE.md §24). The
+       room fader is off the bar under (pointer: coarse) — the WAV-first route
+       cannot move the level in time — and off it below 460px, because with
+       undo and redo in the bar the fixed children come to 259.4 and the
+       room's 112 would leave the tape under its own 70px floor. A row that
+       says `wide` is not claiming to be reachable at 320; it is claiming to be
+       reachable WHERE IT IS DRAWN, and this walk runs at 320.
+       IT IS A PROPERTY OF THE ROW AND NOT A HOLE IN THE CHECK: the row says
+       which glass it lives on, so a control that quietly stopped being drawn
+       at a width it DOES claim still fails here. */
+    if (c.wide && 320 < c.wide) { /* not drawn at this width, by declaration */ }
+    else if (!box || (!box.w && !box.h)) missing.push(c.k + " -> " + c.reach);
     else if (box.h < (c.floor || 44))
       small.push(c.reach + " " + box.w + "x" + box.h +
                  (c.floor ? " (floor " + c.floor + ")" : ""));
@@ -7209,8 +7220,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                 await z.waitForTimeout(400);
                 const mk = "material.cell|" + bv + "|" + bsid;
                 const row = await z.evaluate((k) => {
+                  /* THE MOTIF FIELD IS A CARD GRID SINCE 2026-09-08 (§24), so
+                     there is no control at the bare key — each motif is its
+                     own card at <field>|<value>. Same lookup T8f needed, and
+                     the same claim: is the bass's motif question DRAWN, with
+                     its caption. */
                   const b = document.querySelector(
-                    '#pan-band .nu-sheetrow [data-k="' + k + '"]');
+                    '#pan-band .nu-sheetrow [data-k="' + k + '"]') ||
+                    document.querySelector(
+                      '#pan-band .nu-mopick[data-k^="' + k + '|"]');
                   if (!b) return null;
                   const r = b.closest(".nu-sheetrow");
                   return { there: true, tag: b.tagName,
