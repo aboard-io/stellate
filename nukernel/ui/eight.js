@@ -16315,9 +16315,26 @@ let arriving = false;
    have opened on by itself; a PRESENT one wins over that, which is the point
    (a shared link that showed the recipient their own song would be a link that
    does nothing, silently). */
+/* ...AND A `?` OPENS THE SAME DOOR AS A `#` (2026-09-08, LAUNCH.md D2).
+   THE SITEMAP IS THE REASON AND IT IS A GOOD ONE. This box is one HTML page
+   whose content is 510 records, and the only address that named one was a
+   FRAGMENT — which no crawler reads: `stellate.app/#at=Leipzig&y=1725` and
+   `stellate.app/` are the same URL to every search engine there is, so a
+   sitemap of five hundred fragment links is five hundred lines describing one
+   page. A query string is a different URL to a crawler and the same record to
+   this parser, so the catalogue becomes five hundred addressable pages for the
+   cost of the two lines below. (The old site had this by accident — its links
+   were `?genre=…&seed=…` — and lost it when the box moved to fragments.)
+   THE FRAGMENT STAYS THE CANONICAL FORM. Everything this page WRITES is a
+   fragment (`writeLink`), a shared link is a fragment, and a `?` arrival is
+   rewritten to one on landing — so there is still exactly one address shape in
+   circulation and the sitemap is the only thing that speaks the other. The
+   search string is read ONLY when the fragment carries nothing, so a link with
+   both is the fragment's, which is the half a hand actually typed. */
 function readLink() {
   let h = "";
   try { h = String(location.hash || "").replace(/^#/, ""); } catch (e) { return null; }
+  if (!h) { try { h = String(location.search || "").replace(/^\?/, ""); } catch (e) { h = ""; } }
   if (!h) return null;
   let q;
   try { q = new URLSearchParams(h); } catch (e) { return null; }
@@ -18537,6 +18554,16 @@ warmup();
    has, the globe is fitted, the record is landed, and only then does the tab
    move — one extra panel build, at boot, only for a link that asked for one. */
 const LINK = readLink();
+/* AND AN ARRIVAL BY `?` BECOMES AN ADDRESS BY `#`, ONCE, BEFORE ANYTHING ELSE
+   READS THE BAR. `replaceState` and never `pushState`: a crawler's URL landing
+   in the visitor's history as a separate entry would put a Back button between
+   them and the page they just opened. After this line the address is the one
+   shape this page writes, `writeLink` owns it as it always did, and nothing
+   downstream has to know which door the record came in by. */
+if (LINK) { try {
+  if (!String(location.hash || "").replace(/^#/, "") && location.search)
+    history.replaceState(null, "", location.pathname + "#" + location.search.replace(/^\?/, ""));
+} catch (e) {} }
 const LINKTAB = LINK ? tabFromWire(LINK.t) : null;
 const LINKSUB = LINK ? LINK.sub : null;
 chromeRow();

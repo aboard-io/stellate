@@ -55,3 +55,17 @@ tools/genre-qa/*.db
 
 # the remix tool writes demo rows here; they are derived, not catalogue
 tools/remix-out/
+
+# THE OPEN-WEB LAYER for the box at stellate.app — DERIVED, never committed.
+# tools/build/gen-feed.js reads the git log and writes the four feeds;
+# tools/build/gen-sitemap.js reads nukernel/genres.js and writes the sitemap.
+# The recipes are committed, the artifacts are not (the one rule), and the
+# deploy regenerates all five just before the rsync so the shipped feed can
+# carry the very commit being deployed. Both are idempotent: nothing in the
+# bytes comes from the clock, so a rebuild with nothing new produces the same
+# file and the rsync stays quiet.
+/nukernel/feed.xml
+/nukernel/feed.json
+/nukernel/feed-archive.xml
+/nukernel/feed-archive.json
+/nukernel/sitemap.xml

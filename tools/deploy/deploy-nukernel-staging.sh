@@ -78,6 +78,15 @@ if [ "${1:-}" = "--bump" ]; then
   exit 0
 fi
 
+# THE FEEDS AND THE SITEMAP ARE GENERATED ON THE WAY OUT THE DOOR, here as well
+# as in the prod script — because a staging site that does not carry them is a
+# rehearsal of a different deploy. They are DERIVED (git log + the catalogue),
+# gitignored, and idempotent: nothing in the bytes comes from the clock, so a
+# rebuild with nothing new leaves the rsync quiet.
+echo "== feeds + sitemap =="
+node "$REPO/tools/build/gen-feed.js"
+node "$REPO/tools/build/gen-sitemap.js"
+
 # THE SOURCE IS A CLEAN WORKTREE OF HEAD. `git worktree add --detach` gives a
 # tree with no index, no stash and nothing uncommitted, which is the only tree
 # a deploy may be taken from; it is removed on the way out whatever happens.
@@ -86,6 +95,11 @@ cleanup() { git -C "$REPO" worktree remove --force "$TMP/tree" >/dev/null 2>&1 |
             rm -rf "$TMP"; }
 trap cleanup EXIT
 git -C "$REPO" worktree add --detach "$TMP/tree" HEAD >/dev/null
+# …and the five generated files are copied INTO it, because they are gitignored
+# and a worktree of HEAD does not contain them.
+for f in feed.xml feed.json feed-archive.xml feed-archive.json sitemap.xml; do
+  [ -f "$REPO/nukernel/$f" ] && cp "$REPO/nukernel/$f" "$TMP/tree/nukernel/$f"
+done
 
 echo "deploying $(git -C "$REPO" rev-parse --short HEAD) · sw.js $(grep -oE 'v[0-9]+' "$TMP/tree/sw.js" | head -1) -> $DEST"
 cd "$TMP/tree"
