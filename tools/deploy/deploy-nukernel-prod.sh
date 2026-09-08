@@ -43,11 +43,17 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEST="${DEST:-root@stellate.app:/srv/stellate-nu/}"
 SITE="${SITE:-https://stellate.app}"
 SW="$REPO/sw.js"
-YES=0; SAMEVER=0
+YES=0; SAMEVER=0; SMOKE=1
 for a in "$@"; do
   case "$a" in
     --yes-prod)     YES=1 ;;
     --same-version) SAMEVER=1 ;;
+    # THE LAUNCH DEPLOY ONLY. Before the switch the vhost still points at the
+    # archive, so smoking $SITE would test the OLD site and fail on every
+    # check — a red that means nothing. Deploy with --no-smoke, switch the
+    # root, then run this script again with --same-version: the rsync is a
+    # no-op and the smoke is the real one. Never use it for an ordinary deploy.
+    --no-smoke)     SMOKE=0 ;;
     *) echo "unknown argument: $a" >&2; exit 2 ;;
   esac
 done
@@ -128,8 +134,16 @@ EXCLUDES=(--exclude '.git' --exclude 'node_modules' --exclude '*.wav'
           --exclude 'package.json' --exclude 'package-lock.json'
           --exclude 'tsconfig.json' --exclude 'serve.sh' --exclude 'verify.sh')
 
-rsync -a --delay-updates "${EXCLUDES[@]}" --exclude 'nukernel/genres/' \
-  nukernel engine vendor sw.js "$DEST"
+# ONE FRONT DOOR ON PROD, WHICH IS THE DIFFERENCE FROM STAGING (LAUNCH.md §10).
+# The staging script also ships `nukernel` as a DIRECTORY, so the tree is served
+# twice — at /nukernel/ and, its contents, at the root. That is history (the
+# root became the front door after a deploy refreshed only /nukernel/ and Paul
+# opened the site to the previous evening's build) and it costs the whole app
+# twice over, a 2.5 MB genres.js included. Here the root is the only door and
+# the vhost 301s /nukernel/ to it, carrying $is_args$args so a ?at= link
+# survives the hop and a fragment survives by itself.
+rsync -a --delay-updates "${EXCLUDES[@]}" \
+  engine vendor sw.js "$DEST"
 
 rsync -aR --delay-updates \
   tools/theory.js tools/genealogy.js \
@@ -141,6 +155,13 @@ rsync -a --delay-updates "${EXCLUDES[@]}" --exclude 'genres/' \
   nukernel/ "$DEST"
 
 # ---- THE SMOKE TEST, over the wire, against the real name -----------------
+if [ "$SMOKE" != "1" ]; then
+  echo "== smoke skipped (--no-smoke) =="
+  echo "done. files are in $DEST · commit $HEADSHA · worker $VER"
+  echo "Nothing points at them yet. Switch the vhost root, then re-run with"
+  echo "--yes-prod --same-version to deploy nothing and smoke everything."
+  exit 0
+fi
 echo "== smoke =="
 fail=0
 chk() { # chk <label> <url> <grep-pattern|-> [header-pattern]
