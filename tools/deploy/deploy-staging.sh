@@ -32,6 +32,29 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 HOST="${1:-root@stellate.app}"
 ROOT=/srv/stellate-test
+
+# ===========================================================================
+# THE STAGING GUARD (2026-09-08, added from the nukernel branch).
+#
+# `/srv/stellate-test` IS THE MUSIC BOX'S STAGING ROOT NOW. This script rsyncs
+# with `--delete --delete-excluded`, which makes the server match THIS
+# checkout — so one run of it from this branch does not "deploy staging", it
+# REPLACES the other project's staging site and deletes every file this tree
+# does not have. There is no undo.
+#
+# The archive does not need a staging site: it is frozen. If it ever does,
+# give it its own root rather than borrowing this one.
+# ===========================================================================
+STAGE_OK=0
+for a in "$@"; do [ "$a" = "--yes-replace-staging" ] && STAGE_OK=1; done
+if [ "$STAGE_OK" != "1" ]; then
+  echo "refusing: /srv/stellate-test belongs to the nukernel branch (the music box)." >&2
+  echo "  Running this would DELETE that staging site and replace it with this tree." >&2
+  echo "  Its own deploy is tools/deploy/deploy-nukernel-staging.sh, on that branch." >&2
+  echo "  If you really mean to take the root over, pass --yes-replace-staging." >&2
+  exit 2
+fi
+set -- "${@/--yes-replace-staging/}"
 SITE=https://test.stellate.app
 
 echo "== rsync -> $ROOT (media shared with prod, not copied) =="

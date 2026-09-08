@@ -17,6 +17,42 @@ cd "$(dirname "$0")/../.."
 HOST="${1:-root@stellate.app}"
 ROOT=/srv/stellate
 
+# ===========================================================================
+# THE ARCHIVE GUARD (2026-09-08, added from the nukernel branch; see that
+# branch's nukernel/LAUNCH.md).
+#
+# THIS TREE IS NO LONGER THE SITE AT stellate.app. The music box on the
+# `nukernel` branch takes that name; THIS app — the star map — moves to
+# old.stellate.app, served from the same `/srv/stellate` this script writes to.
+# The script is therefore still correct and still the way to update the
+# archive; what changed is what a run of it MEANS, and nothing in the file
+# said so.
+#
+# WHY A GUARD AND NOT A COMMENT. Three failure modes, all of them quiet:
+#   1 · A hand that wants to update stellate.app runs this, sees "done", and
+#       has updated a site nobody is looking at while the live one is
+#       untouched — so they run it again, harder.
+#   2 · `--delete --delete-excluded` means the SERVER is made to match this
+#       checkout. `found/` is protected by a filter and excluded, which is what
+#       keeps 786 MB of shared media alive — that media is now shared with the
+#       LIVE site and with staging, so a change to those two lines stops being
+#       a mistake about this app and becomes an outage for all three.
+#   3 · There is no undo. The rsync deletes on the receiver.
+#
+# So: the word is typed, once, and the script says what it is about to change.
+# ===========================================================================
+ARCHIVE_OK=0
+for a in "$@"; do [ "$a" = "--yes-archive" ] && ARCHIVE_OK=1; done
+if [ "$ARCHIVE_OK" != "1" ]; then
+  echo "refusing: this deploys the ARCHIVE (old.stellate.app), not stellate.app." >&2
+  echo "  stellate.app is the nukernel branch now:" >&2
+  echo "    git checkout main && tools/deploy/deploy-nukernel-prod.sh --yes-prod" >&2
+  echo "  To update the archive on purpose, re-run with --yes-archive." >&2
+  exit 2
+fi
+# The flag is consumed here so the positional HOST argument below still works.
+set -- "${@/--yes-archive/}"
+
 # THE RELEASE FEED is generated HERE, on the way out the door (docs/HOSTING.md
 # "The open-web layer" §2): git log -> RSS 2.0 + JSON Feed with a playable link
 # per entry. It runs before the rsync so the deploy publishes notes that include
