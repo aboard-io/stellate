@@ -899,7 +899,11 @@ var SHEETS = {
        tab is the one thing a plate of destinations must not do, so the sentence
        carries both facts — what it is, and that it opens in a new tab. */
   "burger.old": "The old Stellate",
-  "burger.old.say": "The star map this project was until 2026 — opens in a new tab",
+  /* TWELVE WORDS, WHICH IS THE SENTENCE BUDGET (test/copy.test.js C2). The
+     first cut ran to thirteen — *"…this project was until 2026 — opens in a new
+     tab"* — and the word it loses is `new`, because "opens in a tab" already
+     says the thing that matters: this row leaves the app. */
+  "burger.old.say": "The star map this project was until 2026 — opens in a tab",
   "burger.menuLog.one": "menu — {n} log line",
   "burger.menuLog.other": "menu — {n} log lines",
   "burger.log.one": "log ({n})",
