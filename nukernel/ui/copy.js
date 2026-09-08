@@ -1832,7 +1832,25 @@ var SHELL = {
   "crate.noFile.why": "This file cannot be loaded here",
   "crate.noFile.aria": "{name} — this file cannot be loaded here",
   /* the word grid's corner and its empty cell */
-  "grid.corner": "Section"
+  "grid.corner": "Section",
+  /* ===== THE TWO MODES, NAMED (2026-09-08, TABLE.md §25) ================
+       Paul: *"I don't think people will know there's a song editor so put two
+       tabs at the top: Explore and Edit."*
+  
+       THE PAGE HAS ALWAYS HAD TWO MODES AND NEVER SAID SO. You arrive on a
+       globe and a catalogue; the table is the other thing, and the only marks
+       that led to it were the record's own name (a toggle nobody could know was
+       one) and a row inside the hamburger. A door you have to already know about
+       is not a door.
+       `Explore` AND `Edit` ARE THE WORDS AND NOT `Where` AND `Band`. Those two
+       are the VIEW names — the addresses `toptab-Where` and `toptab-Band`, which
+       do not move — and they name what a thing IS. These name what you are
+       DOING, which is the only question a first-time hand is asking at the top
+       of the screen. */
+  "tab.explore": "Explore",
+  "tab.explore.say": "The globe and the catalogue — find a record",
+  "tab.edit": "Edit",
+  "tab.edit.say": "The song editor — sections, players and every cell"
 };
 
 // nukernel/src/copy/ui.ts

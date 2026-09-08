@@ -7842,8 +7842,47 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    the same channel every other name on this page uses to say "you are here".
    The `.nu-sub2` rule below (`--on-fill`) was written for the filled plate
    and is answered here for the same reason. */
+/* `--hand` AND NOT `var(--accent, …)`, WHICH WAS A FALLBACK TO NOTHING
+   (2026-09-08). Both pressed rules were written `var(--accent, var(--ink))`
+   and there IS no `--accent` in tokens.css — so every one of them resolved to
+   plain ink and the pressed state was invisible. On a two-tab band that is not
+   a cosmetic miss: it is a mode switch that never says which mode you are in,
+   which is the "declared but never arriving" shape this box keeps a memory
+   note about, shipped in the very round that adds the tabs.
+   `--hand` is the page's own answer and its comment says so — *"you set it, it
+   is selected, it is focused"* — which is exactly what a tab you are on is. */
 .nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"]{
-  background: none; color: var(--accent, var(--ink)); }
+  background: none; color: var(--hand); }
+/* ===== AND THE OTHER MODE IS A TAB BESIDE IT (2026-09-08, TABLE.md §25) =
+   Paul: *"I don't think people will know there's a song editor so put two tabs
+   at the top: Explore and Edit."*
+
+   THE WORD HAS TO BE ON THE GLASS, WHICH IS THE WHOLE ASK. `paintIcon` puts
+   every mark's word in a `.nu-vh` — clipped, for a screen reader and a page
+   with no stylesheet — and the first build of this tab therefore drew a bare
+   `☰` 44px wide. A picture nobody can name is exactly the door Paul is saying
+   people do not find, so `Edit` is revealed the same way the record's name is
+   revealed on the plate beside it: one rule, un-clipping the span this page
+   already puts there.
+   IT IS `0 0 auto` AND EXPLORE IS `1 1 auto`, so the two do not compete: the
+   mode you are LEAVING is a word and a mark, and the mode you are IN carries
+   the record. Measured at 320 with the name at its longest: Explore 230px,
+   Edit 74, the ≡ 44 — nothing wraps and nothing is under a thumb.
+   NO PLATE, for §22c's reason: a border is what this page draws around a
+   TARGET and the strip is a band of marks. The pressed state is the accent on
+   the word, which is the same channel the plate beside it uses. */
+.nu-topstrip > button[data-k="toptab-Band"]{ flex: 0 0 auto;
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  padding-inline: var(--s2); }
+.nu-topstrip > button[data-k="toptab-Band"] .nu-ic{
+  display: flex; flex-direction: row; align-items: center; gap: var(--s1); }
+.nu-topstrip > button[data-k="toptab-Band"] .nu-vh{
+  position: static; inline-size: auto; block-size: auto;
+  clip: auto; clip-path: none; margin: 0; padding: 0; white-space: nowrap;
+  font-size: var(--t2, .82rem); font-weight: var(--fw-label); }
+.nu-topstrip > button[data-k="toptab-Band"][aria-pressed="true"]{
+  background: none; color: var(--hand); }
+.nu-topstrip > button[data-k="toptab-Band"]:hover{ background: var(--flag-tint); }
 .nu-topstrip > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0;
   justify-content: flex-start; text-align: start; }
 /* ---- THE NAME IS A NAME AGAIN (2026-09-06, TABLE.md §18) --------------

@@ -14309,6 +14309,32 @@ const whereBtn = icon({ k: "toptab-Where", glyph: GLYPH.tab.Where.g,
 whereBtn.setAttribute("aria-controls", "atlas");
 whereBtn.addEventListener("click", () =>
   showTab(openTab === "Where" ? "Band" : "Where"));
+/* ===== AND THE OTHER MODE HAS A MARK NOW (2026-09-08, TABLE.md §25) =====
+   Paul: *"I don't think people will know there's a song editor so put two tabs
+   at the top: Explore and Edit."*
+
+   THE PAGE HAS ALWAYS HAD TWO MODES AND NEVER SAID SO. It opens on a globe and
+   a catalogue, and the TABLE — the thing this whole file is about — was
+   reachable by exactly two marks: the record's own name, which is a toggle
+   nobody could know was one, and a row inside the hamburger. A door you have
+   to already know about is not a door, and that is the whole of the sentence.
+   THIS IS NOT §16 REVERSED. That round moved a NINE-TAB strip into one
+   hamburger and the reason holds: nine tabs at the top is a navigation bar
+   competing with the record. Two is not nine — it is the one binary this page
+   actually has (find a record / work on one), and every other view stays
+   exactly where §16 put it. The hamburger still lists all six.
+   THE ADDRESS IS `toptab-Band`, WHICH ALREADY EXISTS — it is the row in the
+   plate — so this is the same "one view, two doors" the genre plate has been
+   since 2026-09-06 (`toptab-Where` is in the strip AND in the list; shell.js
+   A6d asserts both). Two doors, one `showTab`, no second owner.
+   IT IS NOT A TOGGLE, and that is the asymmetry between the pair: pressing
+   Explore twice comes back to the table because Explore OPENS something over
+   it, and Edit IS the table — the thing under everything. There is nowhere for
+   a second press to go, so it does nothing, which is what a tab you are
+   already on should do. */
+const editBtn = icon({ k: "toptab-Band", glyph: GLYPH.tab.Band.g,
+                       word: _t("tab.edit"), say: _t("tab.edit.say") });
+editBtn.addEventListener("click", () => showTab("Band"));
 /* ...AND THE ROW'S OWN `label` STANDS BETWEEN THE ARTICLE AND THE KEY
    (2026-09-02). The rule was "the wiki title, else the key", and the probe of
    that morning found where it breaks: *"The blank state's plate says the key:
@@ -14347,9 +14373,31 @@ function nameRecord() {
              || _t("burger.app");
   const sub = g.label && g.label !== word ? g.label : null;
   const isOpen = openTab === "Where";
-  paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word, sub,
-                        say: GLYPH.tab.Where.s, on: isOpen });
+  /* ===== THE WORD IS `Explore` AND THE RECORD IS THE SUB (2026-09-08, §25) =
+     Paul: *"put two tabs at the top: Explore and Edit."*
+
+     THE PLATE'S TWO LINES DID NOT CHANGE SHAPE, only which fact is on which.
+     It drew the genre over its place-and-year (`Reggae` / `Kingston 1969`);
+     it draws the MODE over the whole record (`Explore` / `Reggae · Kingston
+     1969`). Same component, same `paintIcon`, same one painter.
+     THE NAME IS STILL ON THE GLASS AT EVERY MOMENT, which is what *"the record
+     names the page"* has always required — it moves from the first line to the
+     second, and it GAINS the place and year that used to be a separate line
+     under it. What it loses is size, and what it buys is a first-time hand
+     knowing there is an editor. §24's *"expand the genre as header"* was
+     asking for the name not to be a chip floating on a band, and it still is
+     not: it is the wide, flexible child of the strip.
+     AND `aria-label` IS STILL THE RECORD, not the word `Explore`: a screen
+     reader on this button needs to hear which record it is about. */
+  const full = sub ? word + " \u00b7 " + sub : word;
+  paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word: _t("tab.explore"),
+                        sub: full, say: _t("tab.explore.say"), on: isOpen });
+  whereBtn.setAttribute("aria-label", full);
   whereBtn.setAttribute("aria-expanded", String(isOpen));
+  if (editBtn) paintIcon(editBtn, { glyph: GLYPH.tab.Band.g,
+                                    word: _t("tab.edit"),
+                                    say: _t("tab.edit.say"),
+                                    on: openTab === "Band" });
 }
 
 /* ===== THE TAPE — WHERE THE PLAYHEAD IS, AND WHAT IS LEFT ==============
@@ -14577,7 +14625,12 @@ function chromeRow() {
      measurement; the measurement changed, so the sharpening comes out.
      THE STRIP IS TWO CHILDREN NOW, so the placing that was the tape's is the
      NAME's: `#burger` at the start, the plate as the `1 1 auto` beside it. */
-  stripEl.append(menuBtn, whereBtn);
+  /* ...AND THE BAND IS THREE CHILDREN FROM 2026-09-08 (§25): the door to
+     everywhere else, then the two modes. `#burger` is still first for §20's
+     reason (*"Sorry hamburger should be on left"*), Explore is the flexible
+     child and therefore the one that places the other two, and Edit is the
+     last mark at the end where a right thumb rests. */
+  stripEl.append(menuBtn, whereBtn, editBtn);
   nav.append(stripEl);
   nameRecord();
 
@@ -14917,6 +14970,12 @@ function chromeRow() {
 let paintEdit = () => {};
 function paintChrome() {
   paintEdit();
+  /* ...AND THE TWO MODE TABS FOLLOW THE TAB (2026-09-08, §25). `nameRecord` is
+     the one painter of both marks and it runs on a document swap; the TAB can
+     move without the document moving (the ≡, the ×, Escape), so the pressed
+     state has to be repainted here too — which is what this function is for
+     and how every other mark in the chrome already stays honest. */
+  nameRecord();
   /* THE CURRENT VIEW IS `aria-current`, AND IT IS THE ONE CHANNEL THAT SAYS SO
      (2026-09-06, docs/NAV.md: *"The current view is marked in the list"*). It
      was `on:` — `paintIcon`'s `aria-pressed` plus a `<mark>` — and with six
