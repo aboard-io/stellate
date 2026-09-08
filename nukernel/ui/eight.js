@@ -15917,7 +15917,7 @@ function applySub(want) {
    the reading is a fact about the record and a link that only sometimes
    carried it would be a link whose meaning depended on how many times the
    sender had pressed rewrite. */
-function linkFrag() {
+function linkFrag(full) {
   const st = ATLAS && ATLAS.link ? ATLAS.link() : null;
   const p = [];
   if (st && st.at) p.push("at=" + encodeURIComponent(st.at));
@@ -15947,8 +15947,27 @@ function linkFrag() {
      readable by a person; it is compared against the live document's own text
      rather than trusted, so a fragment can never claim to carry a record it
      does not. `packLink` fills the cache and asks for one more write. */
+  /* ===== AND `d=` IS THE SHARE LINK'S ONLY, 2026-09-08 (TABLE.md §24) ====
+     Paul: *"Save song status in local storage and give me a share link option
+     instead of putting all state in the URL."*
+
+     THE RECORD WAS BEING WRITTEN INTO THE ADDRESS BAR ON EVERY EDIT — a
+     deflated, base64url'd copy of the whole document, appended by this line
+     and pushed through `history.replaceState` on a 400ms debounce. On Kingston
+     1969 that is kilobytes of `d=` in the URL, rewritten every time a slider
+     moves, and the thing it was insuring against — losing the song on a reload
+     — is already insured: `ui/state.js` has kept the record in
+     `nukernel.song.v1` since wave C, and `readDoc()` is what the boot restores
+     from. The URL was a SECOND copy of the session, and the noisier one.
+     SO THE ADDRESS BAR CARRIES WHAT A PERSON CAN READ — the place, the year,
+     the seed, the view, the sentences — and the RECORD rides only in the link
+     you ask for. `full` is false for the address and true for `shareUrl`,
+     which is what `#sharelink` prints and what a person pastes into a message.
+     NOTHING ABOUT RECEIVING A LINK CHANGES. `readLink` still reads `d=`, the
+     boot still prefers it over the recipe, and a link sent yesterday still
+     opens: this is a change to what we WRITE, not to what we accept. */
   const json = docJSON();
-  if (json != null && json === linkPack.json && linkPack.wire)
+  if (full && json != null && json === linkPack.json && linkPack.wire)
     p.push("d=" + linkPack.wire);
   return "#" + p.join("&");
 }
@@ -15958,7 +15977,7 @@ function linkFrag() {
    tree at a sub-path, and a URL that assumed the root would 404 for everyone
    but the developer. */
 function shareUrl() {
-  return location.origin + location.pathname + location.search + linkFrag();
+  return location.origin + location.pathname + location.search + linkFrag(true);
 }
 /* ONE WRITER. `replaceState` can throw — a sandboxed frame, a `file://` page
    in some builds, a browser that has decided this page has called it too often
@@ -15966,13 +15985,105 @@ function shareUrl() {
    down, so it is swallowed. The visible copy of the URL (the Export tab's
    field) is refreshed on the same line, so the field and the bar can never
    disagree. */
+/* ===== AND THE BACK BUTTON WALKS THE STATES (2026-09-08, TABLE.md §24) ==
+   Paul: *"Updates to the app should change URL state and back button should
+   take me back through states."*
+
+   EVERY WRITE WAS A `replaceState`, so the address was always current and the
+   history was always one entry long: a hand that opened Kingston 1969, then
+   Detroit 1982, then pressed back left the page entirely. The fix is not
+   "push instead of replace" — that would put an entry in the history for every
+   slider move, and a back button that takes six presses to leave a knob is
+   worse than one that does nothing.
+   SO THE FRAGMENT IS SPLIT INTO WHAT IS A PLACE AND WHAT IS A DETAIL. The
+   COARSE part — the record you are on and the view you are in (`at`, `y`, `t`)
+   — is a state a person would name, and a change to it PUSHES. Everything else
+   — the seed, the sentences, the record's own thousand edits — REPLACES the
+   entry you are standing on, which is what `replaceState` is for and what it
+   has been doing correctly all along.
+   `lastCoarse` IS THE COMPARISON AND IT IS A STRING, so "did the place
+   change" is one `!==` and cannot drift from what is actually in the address:
+   it is built by the same `linkFrag` the bar gets, filtered to the three keys.
+   The first write after a boot always replaces — a boot is not navigation, and
+   pushing there would put an empty entry behind the record a link opened on. */
+function coarseOf(frag) {
+  try {
+    const q = new URLSearchParams(String(frag || "").replace(/^#/, ""));
+    return ["at", "y", "s", "t"].map((k) => k + "=" + (q.get(k) || "")).join("&");
+  } catch (e) { return ""; }
+}
+let lastCoarse = null;
 function writeLink() {
   clearTimeout(linkTimer); linkTimer = 0;
   const frag = linkFrag();
-  try { history.replaceState(history.state, "", frag); } catch (e) { /* throttled */ }
+  const c = coarseOf(frag);
+  const push = lastCoarse != null && c !== lastCoarse;
+  lastCoarse = c;
+  try {
+    if (push) history.pushState({ nu: c }, "", frag);
+    else history.replaceState(history.state, "", frag);
+  } catch (e) { /* throttled */ }
   const f = $("sharelink");
   if (f) f.value = shareUrl();
 }
+/* ...AND GOING BACK APPLIES WHAT IT LANDED ON, through the two doors a hand
+   already uses. `ATLAS.open` is the same function a tap on the globe calls and
+   `showTab` is the same one the hamburger calls — no second restore path, and
+   nothing here can land a record the page could not have landed itself.
+   IT IS GUARDED BY `arriving`, which is the switch wave C wrote for exactly
+   this shape: the box arriving is not a hand, so the restore does not itself
+   write a new history entry and cannot start a loop between the two.
+   A RECORD IS ONLY RE-OPENED WHEN IT ACTUALLY CHANGED. `popstate` fires for a
+   back that only moved the view, and re-composing the same anchor would throw
+   the hand's edits away — which is the one thing a back button must not do to
+   a state it is returning TO. */
+function goBackTo(frag) {
+  const L = (function () {
+    try { return new URLSearchParams(String(frag || "").replace(/^#/, "")); }
+    catch (e) { return null; } })();
+  if (!L) return;
+  arriving = true;
+  try {
+    /* ===== THE SEED IS RESTORED AFTER THE RECORD, NOT BESIDE IT =========
+       (2026-09-08, and it is a measured bug rather than a precaution.)
+       `ATLAS.open` is ASYNC — it composes — and `ATLAS.setReading` re-picks
+       `ctx.doc().basis`, which is *the record that is still on the page*. Fired
+       one line after `open`, it therefore re-composed the record we were
+       LEAVING at the restored seed, and landed it after `open`'s answer: the
+       back button reported success and left the wrong song on the page.
+       Measured exactly: `open`'s own completion callback saw `reggae`, and two
+       seconds later `__eightDoc().basis` was `minneapolissound` again.
+       SO THE SEED RIDES `open`'s `done`, which is the callback that exists for
+       this — the record lands, and only then does the reading move onto it.
+       When the record has NOT changed there is nothing to wait for and the
+       seed is applied straight away. */
+    const at = L.get("at"), y = L.get("y");
+    const sw = L.get("s");
+    const seedBack = () => {
+      if (sw == null || !ATLAS || !ATLAS.setReading || !ATLAS.reading) return;
+      const n = Number(sw);
+      if (Number.isFinite(n) && n !== Number(ATLAS.reading())) ATLAS.setReading(n);
+    };
+    let opened = false;
+    if (at && y != null && ATLAS && ATLAS.open) {
+      const here = coarseOf(linkFrag());
+      if (here !== coarseOf(frag)) {
+        opened = ATLAS.open({ at, y }, seedBack, null) === true;
+      }
+    }
+    if (!opened) seedBack();
+    const tb = tabFromWire(L.get("t"));
+    if (tb && tb !== openTab) showTab(tb);
+  } catch (e) { /* a fragment a stranger typed is not a reason to stop */ }
+  lastCoarse = coarseOf(frag);
+  setTimeout(() => { arriving = false; }, 0);
+}
+try {
+  window.addEventListener("popstate", () => {
+    let h = ""; try { h = String(location.hash || ""); } catch (e) { return; }
+    goBackTo(h);
+  });
+} catch (e) { /* no history in this host: the page is simply not navigable */ }
 /* ...AND NOTHING IS WRITTEN UNTIL A HAND HAS MOVED SOMETHING (2026-09-02).
    Paul: *"Boot up every new session with a new seed unless there's a seed in
    the URL."*
