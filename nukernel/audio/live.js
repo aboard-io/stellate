@@ -506,6 +506,23 @@ export function health() {
     healedSec: (g("__healed", null) || { sec: 0 }).sec,
     heals: (g("__healed", null) || { heals: 0 }).heals,
     clicks: cm ? cm.clicks : null,
+    /* ...AND THE TWO FIELDS THAT SAY WHICH KIND OF NOISE IT IS (2026-09-08).
+       `clicks` alone cannot answer the question a hand asks. The DSP counts a
+       click as any sample-to-sample jump over the threshold, and its own header
+       says so: *"ordinary program clears it, program edges (303/break onsets)
+       can beat it — the logged metadata is how we tell a real glitch from an
+       edgy transient."* That metadata was in the engine and stopped at this
+       line. Measured on Kingston 1969: 74 clicks in three minutes with ZERO
+       starvation episodes, which could be a broken render or could be a snare.
+         gaps      a DROPOUT — 128 consecutive near-zero samples while the
+                   recent RMS was loud. This is the one that cannot be music:
+                   silence inside a loud programme is a starved render path.
+         peakjump  how BIG the worst discontinuity was. A transient sits just
+                   over the 0.5 bar; a torn buffer is near 2.
+       Both are monotonic counters in the DSP, so a reader takes deltas exactly
+       as it already does for `clicks`. */
+    gaps: cm ? cm.gaps : null,
+    peakjump: cm ? cm.peakjump : null,
     // WHETHER THE DETECTOR IS EVEN LOOKING. `rms` is a bargraph of the signal
     // the DSP itself sees, so 0 means the readback is dead, not that the music
     // is quiet, and `clicks: 0` off a dead readback is a gate reading a
