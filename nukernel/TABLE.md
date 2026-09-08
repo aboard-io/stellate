@@ -6422,3 +6422,43 @@ the bare key matched nothing).
 a CONTIGUOUS run of grouped chunks and an ops row carries no group. Invisible
 on the glass now that subjects stack, and fatal to a check that read
 `tracks[0].children`.
+
+### 25 · Two tabs, and the chrome that follows them (2026-09-08)
+
+Paul: *"Also make two tabs at the top: Explore and Edit; I'm worried people
+will never click away from the globe."*
+
+**The globe was the whole front door.** The table was one swipe away and
+nothing on the glass said so, so the box read as a toy that plays a place
+rather than an instrument you can open. Two words on the strip fix that, and
+they cost nothing else: `toptab-Where` and `toptab-Band` are the two views that
+already existed, named.
+
+Then three notes about how they are drawn, each of which turned out to be a
+different bug wearing the same coat.
+
+**A tab is underlined, not filled.** Paul: *"Don't put a box around Edit on the
+top."* The round that added Edit gave it the page's own button — edge, ground,
+corner — because a bare word in a strip of chrome had read as chrome. The edge
+was the wrong half of that fix; the right half was standing it next to the
+name, which it already does. Both tabs now take the accent on the word and a
+2px rule beneath, drawn by one pair of rules that differ in nothing but their
+`data-k`.
+
+**The × was never painted; it was hovered.** Paul: *"When the hamburger is
+expanded, the X has a background color."* Nothing in the page fills that mark.
+`.nu-topstrip > #burger:hover` fills it, and a touch screen has no pointer to
+move away — the tap that opens the plate leaves the button hovered, so the ≡
+becomes an × ALREADY LIT, reporting a state ("this is on") that the plate
+filling the screen behind it already reports. Measured on a touch viewport:
+`background: rgb(48,68,56)`, held. `@media (hover: hover)` is the whole cure,
+and **every `:hover` ground in this strip should take that guard as it is
+touched** — a mouse keeps its tint, a finger gets a plain mark.
+
+**The second × was a text node.** Paul: *"There are still two close buttons in
+the search bar."* v317 hid the platform's cancel control and drew our own ring
+with `#atlasClear::before`, then hid the button's old glyph with `#atlasClear >
+*{ display: none }` — which matched no element, because `ui/atlas.js` sets that
+✕ with `textContent` and says so in its own comment. A rule that selects
+children cannot reach a text node; `font-size: 0` on the button can, and the
+ring takes an absolute size because an em of nothing is nothing. One ×.

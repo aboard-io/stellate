@@ -7955,8 +7955,14 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    note about, shipped in the very round that adds the tabs.
    `--hand` is the page's own answer and its comment says so — *"you set it, it
    is selected, it is focused"* — which is exactly what a tab you are on is. */
+/* ...AND THE TAB YOU ARE ON IS UNDERLINED, NOT FILLED (2026-09-08). Paul, of
+   the other one: *"Don't put a box around Edit on the top."* A tint IS a box
+   once it has a corner on it, and both tabs had the same one, so both lose it:
+   the word takes the accent and the rule under it takes the accent, which is
+   how a tab has said "you are here" since tabs. The pair is still drawn by one
+   pair of rules — they differ in nothing but their data-k. */
 .nu-topstrip > button[data-k="toptab-Where"][aria-pressed="true"]{
-  background: var(--hand-tint); color: var(--hand);
+  background: none; color: var(--hand);
   border-block-end-color: var(--hand); }
 /* ===== AND THE OTHER MODE IS A TAB BESIDE IT (2026-09-08, TABLE.md §25) =
    Paul: *"I don't think people will know there's a song editor so put two tabs
@@ -7988,11 +7994,19 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    immediately after the name. It keeps its `0 0 auto` — a button is its own
    width — and the free space now falls after it, which is why the two read as
    a pair with the room to their right rather than as two ends of a bar. */
+/* ...AND IT IS NOT A BOX (2026-09-08). Paul: *"Don't put a box around Edit on
+   the top."* The round before this gave it the page's own button — an edge, a
+   ground and a corner — because it had been drawn like the header beside it and
+   read as chrome. The edge was the wrong half of that fix: what it needed was
+   to stand next to the name rather than at the far end of the band, and it
+   does. So it wears what the tab beside it wears — the word, the accent when it
+   is the open view, and the rule under it — and the two read as a pair because
+   they are drawn as a pair. */
 .nu-topstrip > button[data-k="toptab-Band"]{ flex: 0 0 auto;
   margin-inline-start: var(--s2);
-  background: var(--panel); color: var(--ink);
-  border: var(--bw) solid var(--rule-strong); border-radius: var(--r2);
-  box-shadow: none;
+  background: none; color: var(--ink);
+  border: 0; border-radius: 0; box-shadow: none;
+  border-block-end: 2px solid transparent;
   padding-inline: var(--s3); }
 .nu-topstrip > button[data-k="toptab-Band"] .nu-ic{
   display: flex; flex-direction: row; align-items: center; gap: var(--s1); }
@@ -8001,10 +8015,11 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   clip: auto; clip-path: none; margin: 0; padding: 0; white-space: nowrap;
   font-size: var(--t2, .82rem); font-weight: var(--fw-label); }
 .nu-topstrip > button[data-k="toptab-Band"][aria-pressed="true"]{
-  background: var(--hand); color: var(--on-fill); border-color: var(--hand); }
-.nu-topstrip > button[data-k="toptab-Band"]:hover{ background: var(--flag-tint); }
-.nu-topstrip > button[data-k="toptab-Band"][aria-pressed="true"]:hover{
-  background: var(--hand-hot, var(--hand)); }
+  background: none; color: var(--hand);
+  border-block-end-color: var(--hand); }
+@media (hover: hover){
+  .nu-topstrip > button[data-k="toptab-Band"]:hover{ background: var(--flag-tint); }
+}
 .nu-topstrip > button[data-k="toptab-Where"] .nu-ic{ min-inline-size: 0;
   justify-content: flex-start; text-align: start; }
 /* ---- THE NAME IS A NAME AGAIN (2026-09-06, TABLE.md §18) --------------
@@ -8110,7 +8125,24 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    band already draws without a box around it. */
 .nu-topstrip > #burger{ background: none; border: 0; border-radius: 0;
   box-shadow: none; }
-.nu-topstrip > #burger:hover{ background: var(--flag-tint); }
+/* ---- AND ON A PHONE IT KEEPS NO GROUND (2026-09-08) ------------------
+   Paul: *"When the hamburger is expanded, the X has a background color. It
+   doesn't need one; just a plain X is fine."*
+
+   IT IS STICKY HOVER, NOT A STATE. Nothing paints the × — the ground is this
+   line, the ordinary pointer-over tint, and a touch screen has no pointer to
+   move away: the tap that opens the plate leaves the button hovered until
+   something else is touched, so the ≡ becomes an × ALREADY LIT, and the light
+   reads as "this thing is on" when the only thing that is on is the plate
+   filling the screen behind it. Measured: after a real `tap()` on a touch
+   viewport the burger computes `background: rgb(48,68,56)` and holds it.
+   `@media (hover: hover)` is the whole cure — a mouse still gets the tint it
+   is owed, a finger gets a plain mark. The two tabs beside it take the same
+   guard for the same reason, and every :hover in this strip should join them
+   as it is touched. */
+@media (hover: hover){
+  .nu-topstrip > #burger:hover{ background: var(--flag-tint); }
+}
 /* ---- ...AND SO IS EVERY × (2026-09-08, §22c) -------------------------
    The second half of Paul's sentence. `.nu-sheethead > button` had already
    taken the ground and the shadow off the sheet's close, and left a 1px
@@ -8281,9 +8313,33 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 #nu-menu button{ min-block-size: var(--tap); inline-size: 100%;
   justify-content: flex-start; text-align: start;
   background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+/* ...AND EVERY ROW IN THE PLATE STEPS THE SAME (2026-09-08). Paul: *"the
+   spacing between some menu items is off."* Measured at 390x844, top to
+   bottom: 44 · 44 · 44 · 44 · 44 · 44 · 44 · 44 — then 47 · 53 · 52. The last
+   three rows are the odd ones and for two reasons, both of them structural
+   rather than typed: `Daylight` and `Set seed` each sit ALONE inside a
+   `.nu-menuseed` wrapper, so `button + button` never matched and they took no
+   hairline, and the wrapper carried a `--s2` skirt of its own; `logger` is a
+   direct child of the plate and was in no group at all. A hand reads that as
+   three rows drifting apart at the bottom of a list whose top is perfectly
+   even, which is exactly what it is.
+   SO THE RULE ASKS WHERE A ROW STANDS, NOT WHOSE CHILD IT IS: a row that
+   follows another row takes the line, whether the two are siblings in a group,
+   one-per-wrapper, or the plate's own children. Same hairline, same 44, one
+   list. */
 #nu-menu .nu-menugroup > button + button,
-#nu-menu .nu-menuseed > button + button{
+#nu-menu .nu-menuseed > button,
+#nu-menu > button:not(:first-child){
   border-block-start: var(--bw) solid var(--rule); }
+#nu-menu .nu-menuseed > button{ display: block; }
+/* ...AND THE PLATE ITSELF ADDS NOTHING BETWEEN THEM. `<nu-plate>` brings a
+   `row-gap` of `--s1` (3.2px measured), which falls between the plate's DIRECT
+   children and not between siblings inside a group — so eight grouped rows
+   stepped 44 while the three that stand on their own stepped 47. The air a
+   plate owes is between its GROUPS, and the headings and their own padding
+   already give it; this line only removes the air it was adding between rows
+   that a hand reads as one list. Measured after: 44 the whole way down. */
+#nu-menu{ row-gap: 0; }
 #nu-menu button:hover{ background: var(--flag-tint); }
 /* THE VIEW YOU ARE ON IS `aria-current` AND NOT `aria-pressed` (2026-09-06,
    docs/NAV.md: *"The current view is marked in the list"*). With six views one
@@ -8473,7 +8529,11 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-menusub{ display: block; padding: 0 var(--s3) var(--s1);
   font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
   text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
-.nu-menuseed{ display: block; padding-block-end: var(--s2); }
+/* (ITS `padding-block-end: var(--s2)` CAME OFF 2026-09-08 — see "EVERY ROW IN
+   THE PLATE STEPS THE SAME". The skirt was the seed row's when the row was a
+   field with a heading over it; it is a plain row now and a row's spacing is
+   the row's.) */
+.nu-menuseed{ display: block; }
 /* ---- FOUR GROUPS, AND THE HEADINGS STICK (2026-09-06, TABLE.md §18) ---
    Paul: *"I expected that to live in the hamburger and for the hamburger to be
    nicely organized."* The plate holds seventeen rows now — six views, the
@@ -10331,11 +10391,19 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 /* THE RING IS ON THE MARK AND NOT ON THE TARGET — the target is the `--tap`
    square above, which stays invisible; what is drawn is a 24px circle round
    the ×, in the strip's own ink. */
+/* THE BUTTON'S OWN MARK IS A TEXT NODE, WHICH IS WHY THERE WERE TWO
+   (2026-09-08). Paul: *"There are still two close buttons in the search bar."*
+   ui/atlas.js sets the ✕ with `textContent` — deliberately, and its own comment
+   says why ("THE MARK IS SET AND NOT `el`-ED, AND THAT IS A BUG BEING FIXED")
+   — so `#atlasClear > *{ display: none }` matched no element and hid nothing:
+   the ring drawn by `::before` landed BESIDE the character the button already
+   said. `font-size: 0` is what reaches a text node, and the ring takes an
+   absolute size because an `em` of nothing is nothing. */
+#atlasClear{ font-size: 0; }
 #atlasClear::before{ content: "\2715"; display: flex;
   align-items: center; justify-content: center;
-  inline-size: 24px; block-size: 24px; font-size: .78em;
+  inline-size: 24px; block-size: 24px; font-size: 12px; line-height: 1;
   border: var(--bw) solid currentColor; border-radius: var(--r-pill); }
-#atlasClear > *{ display: none; }
 #atlasClear:hover{ color: var(--ground); background: none; opacity: .7; }
 #atlasClear[hidden]{ display: none; }
 /* 3 · THE COUNT AND THE ERA CHIPS ARE DELETED (2026-09-06) --------------

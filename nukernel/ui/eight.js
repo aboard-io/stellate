@@ -14054,9 +14054,32 @@ function menuRow(k, key, id, word, aria) {
    buttons when the plate opens, and nothing at all on the glass. */
 function paintMenuFaces() {
   if (!recordGroup) return;
-  let list = [];
-  try { list = tableGrid && tableGrid.scopeMenu ? tableGrid.scopeMenu() : []; }
-  catch (e) { list = []; }
+  const ask = () => { try {
+      return tableGrid && tableGrid.scopeMenu ? tableGrid.scopeMenu() : [];
+    } catch (e) { return []; } };
+  let list = ask();
+  /* ...AND IF THE TABLE HAS NEVER BEEN BUILT, IT IS BUILT NOW (2026-09-08).
+     Paul: *"'The Record' options no longer show up at all in the hamburger
+     menu."*
+
+     THE EIGHT ARE THE GRID'S, AND THE GRID IS THE BAND TAB'S. `draw()` marks
+     every buildable tab stale and builds exactly ONE — the tab you are looking
+     at — so a page that OPENS anywhere but the table (`#t=where`, `#t=export`,
+     a share link, a reload on the globe) has no `tableGrid`, `scopeMenu()`
+     answers with nothing, and this function returned early leaving the group
+     empty. It stayed empty for as long as you never visited the table, which
+     is exactly the hand this round put on the globe: §25 added the Explore tab
+     *"because people will never click away from the globe"*, and the plate
+     they open instead was missing its first eight rows.
+     MEASURED, on staging, at 390x844: landing on `#t=where`, `#t=export` and
+     `#t=score` each gave `recordRows: 0`; a plain load gave 8.
+     `buildTab("Band")` is the same call `showTab` makes and it builds into the
+     HOST, which is `data-off` and `inert` while another tab is open — no
+     switch, no scroll, nothing on the glass. It costs the table's build once,
+     at the moment a hand opens the plate, and that build was going to happen
+     on the next row you tapped anyway. THE LIST IS STILL NEVER RESTATED HERE:
+     the rows come from `scopeMenu()` either way. */
+  if (!list.length) { try { buildTab("Band"); } catch (e) {} list = ask(); }
   if (!list.length) return;
   const sig = list.map((x) => x.key).join(",");
   if (sig !== recordGroup.dataset.sig) {
@@ -14420,12 +14443,19 @@ function nameRecord() {
      knowing there is an editor. §24's *"expand the genre as header"* was
      asking for the name not to be a chip floating on a band, and it still is
      not: it is the wide, flexible child of the strip.
-     AND `aria-label` IS STILL THE RECORD, not the word `Explore`: a screen
-     reader on this button needs to hear which record it is about. */
+     AND `aria-label` IS THE WORD AND THEN THE RECORD. It was the record alone
+     — *"a screen reader on this button needs to hear which record it is
+     about"* — and test/gutter.js T10 caught the cost the next time it ran:
+     this page's law is that the visible word IS THE HEAD of the accessible
+     name, and a button reading `Explore` that announces itself as `Silence` is
+     the one kind of mismatch that law exists for. A hand hears the control
+     first and the subject second, which is the order the glass draws them in:
+     `Explore \u2014 Reggae \u00b7 Kingston 1969`. Nothing is lost; the record
+     is still spoken. */
   const full = sub ? word + " \u00b7 " + sub : word;
   paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word: _t("tab.explore"),
                         sub: full, say: _t("tab.explore.say"), on: isOpen });
-  whereBtn.setAttribute("aria-label", full);
+  whereBtn.setAttribute("aria-label", _t("tab.explore") + " \u2014 " + full);
   whereBtn.setAttribute("aria-expanded", String(isOpen));
   if (editBtn) paintIcon(editBtn, { glyph: GLYPH.act.edit.g,
                                     word: _t("tab.edit"),
@@ -15026,8 +15056,13 @@ function chromeRow() {
                  b.removeAttribute("title"); }
       else { b.setAttribute("aria-disabled", "true"); b.dataset.why = none;
              b.title = none;
+             /* THE NAME IS THE MARK'S OWN WORD AND THEN THE REASON, not the
+                say-line and then the reason. Same law T10 holds every mark in
+                this band to: what a screen reader hears first has to be what
+                the glass says, and the glass says `undo`. The say-line is not
+                lost — it is the `title` and the `data-why` a tap opens. */
              b.setAttribute("aria-label", _t("sheet.refused",
-               { name: word.s, why: none })); }
+               { name: word.w, why: none })); }
     }
   };
   undoBtn.addEventListener("click", () => { const U = stackNow();

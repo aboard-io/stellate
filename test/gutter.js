@@ -234,8 +234,14 @@ function standUpServer() {
      the rect has height, its bottom is inside the viewport, and its top is not
      above it.
 
-     AND #play IS THE LAST CHILD OF `.nu-bartp`. "At the right-hand end, under
-     a thumb" is a geometry claim and the geometry is DOM order — `.nu-bartp`
+     AND #play IS THE FIRST CHILD OF `.nu-bartp` SINCE 2026-09-08. Paul: *"Make
+     the play bar 100%"* — the round that widened it also put it at the head of
+     the row, because the widest mark on the band is the one a thumb goes to
+     first and a row that starts with it needs no aim. THE CLAIM DID NOT
+     WEAKEN, IT TURNED ROUND: "at one END of the row, and DOM order is the
+     geometry" is the same fact about the same `flex-direction: row` with no
+     `order` and no `margin: auto`. "At the right-hand end, under a thumb" was
+     the geometry claim, and the geometry is DOM order — `.nu-bartp`
      is a plain `flex-direction: row` with no `order` and no `margin: auto`, so
      what is last is at the end. Asserted as a fact about the tree rather than
      as a pixel, because a pixel would pass on a row that had been re-ordered
@@ -252,13 +258,13 @@ function standUpServer() {
       if (!(r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight + 1))
         offscreen.push([name, +r.top.toFixed(1), +r.bottom.toFixed(1)]);
       const tp = document.querySelector("#nu-bar .nu-bartp");
-      if (!tp || tp.lastElementChild !== b) notLast.push(name);
+      if (!tp || tp.firstElementChild !== b) notLast.push(name);
     }
     window.__eightUp();
     await new Promise((r) => setTimeout(r, 120));
     return { seen, missing, offscreen, notLast,
              last: (() => { const f = document.querySelector("#nu-bar .nu-bartp");
-               return f && f.lastElementChild ? f.lastElementChild.id : null; })() };
+               return f && f.firstElementChild ? f.firstElementChild.id : null; })() };
   });
   /* `t2.tabs === 9` STOOD HERE AND HAD BEEN RED SINCE 2026-09-01 — it counted
      the root's `toptab-` buttons against a literal nine while `TABS` had grown
@@ -302,10 +308,10 @@ function standUpServer() {
      `__eightTabs()` and nothing is typed twice. */
   const wantRows = t2n.tabs.map((n) => "toptab-" + n);
   check(!t2.missing.length && !t2.offscreen.length && !t2.notLast.length,
-    "T2 · #play is the last child of #nu-bar .nu-bartp AND on the screen in " +
+    "T2 · #play is the first child of #nu-bar .nu-bartp AND on the screen in " +
     "every state this page has (" + JSON.stringify(t2.seen) + " — missing " +
     JSON.stringify(t2.missing) + ", off-screen " + JSON.stringify(t2.offscreen) +
-    ", not last " + JSON.stringify(t2.notLast) + ")");
+    ", not first " + JSON.stringify(t2.notLast) + ")");
   /* ...AND THE SEED CAME BACK DOWN, 2026-09-06 (TABLE.md §18). Paul: *"Move
      the dice back into the bottom. Leave them with the hamburger too."* So the
      ROW is the bar's again — the same node, with `#rewrite`, `#seedval` and
@@ -320,7 +326,7 @@ function standUpServer() {
     "T2 · …the record's name is the TOP STRIP's plate, the hamburger is ALL " +
     "of TABS, the seed ROW is in the bar with a DOOR to it in the plate: " +
     JSON.stringify(t2n.rows) +
-    " for tabs " + JSON.stringify(t2n.tabs) + ", last in the bar " +
+    " for tabs " + JSON.stringify(t2n.tabs) + ", first in the bar " +
     JSON.stringify(t2.last));
   /* AND THE STRIPE'S THREE PROBES ARE GONE, ASSERTED — because "we deleted it"
      is a claim about the rendered page like any other, and a `__eightTray` that
@@ -516,13 +522,22 @@ function standUpServer() {
      into the menu"*), the seed NUMBER is gone (*"Get rid of seed number too"*)
      and so is `.nu-seedwait` (*"replace the die icon with the countdown"*).
      Three marks left the bar in one round and not one arrived. */
+  /* ...AND ONE THING ARRIVED ON 2026-09-08 (§24), the first in four rounds:
+     `.nu-baredit`, the undo/redo pair. Paul: *"don't give me redo available
+     unless I'd used undo"* — a control that reports whether there is anything
+     to take back has to be ON the band, not two taps inside a plate, and §24's
+     ruling is that these two are CHROME and not table: they belong to the page
+     the way ▶ does. Their addresses are `tundo`/`tredo` (§24g: a control that
+     MOVES keeps its name), and they are asserted as a GROUP here so that a
+     third mark sneaking into the pair fails.
+     AND `.nu-bartp` READS play THEN voicing, for the reason T2 gives above. */
   check(JSON.stringify(t3.bar) ===
-          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-tape",
+          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-baredit", "nu-tape",
                           "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t3.seed) ===
           JSON.stringify(["rewrite", "seedin"]) &&
         JSON.stringify(t3.bartp) ===
-          JSON.stringify(["voicing", "play"]),
+          JSON.stringify(["play", "voicing"]),
     "T3 · …and the bar holds exactly what it holds and no ninth thing: " +
     JSON.stringify({ bar: t3.bar, seed: t3.seed, bartp: t3.bartp,
                      fold: t3.opts }));
@@ -557,6 +572,11 @@ function standUpServer() {
      check reads `vr.right ≈ pr.left` where it read `vr.bottom ≈ pr.top`. The
      ask is unchanged and the axis is the page's; asserting "above" here would
      be asserting the gutter.
+     THE PAIR SWAPPED ON 2026-09-08, AND THE CHECK TURNED WITH IT. Paul:
+     *"Make the play bar 100%"* — ▶ is the head of the row now (T2), so
+     `#voicing` is what stands directly AFTER it rather than before. Every
+     clause is the same clause read the other way round: same parent, same row,
+     nothing between them, and the gap is still the row's own token.
      THE GAP IS THE ROW'S OWN AND IS MEASURED RATHER THAN ASSUMED. `.nu-bartp`
      declares `gap: var(--s1)`, so the two rects do not touch the way a column's
      stacked marks did; what is asserted is that nothing stands BETWEEN them
@@ -574,10 +594,10 @@ function standUpServer() {
     const vr = v.getBoundingClientRect(), pr = pl.getBoundingClientRect();
     return { inBar: !!v.closest("#nu-bar .nu-bartp"),
              inFold: !!(box && box.contains(v)),
-             nextIsPlay: v.nextElementSibling === pl,
+             nextIsPlay: v.previousElementSibling === pl,
              sameParent: v.parentElement === pl.parentElement,
-             gap: +(pr.left - vr.right).toFixed(1),
-             before: vr.right <= pr.left + 0.5,
+             gap: +(vr.left - pr.right).toFixed(1),
+             before: vr.left >= pr.right - 0.5,
              sameRow: Math.abs(vr.top - pr.top) <= 1,
              tall: +vr.height.toFixed(1),
              word: (v.querySelector(".nu-vh") || {}).textContent,
@@ -586,8 +606,8 @@ function standUpServer() {
   check(t3c.inBar && !t3c.inFold && t3c.nextIsPlay && t3c.sameParent &&
         t3c.before && t3c.sameRow && t3c.gap >= 0 && t3c.gap <= 16,
     "T3c · #voicing is out of the fold and stands directly beside #play — the " +
-    "next sibling in the same .nu-bartp, on the same row, its trailing edge " +
-    "one row gap from the play mark (" + JSON.stringify(t3c) + ")");
+    "NEXT sibling after it in the same .nu-bartp, on the same row, its leading " +
+    "edge one row gap from the play mark (" + JSON.stringify(t3c) + ")");
   const t3cModes = await (async () => {
     const seen = [];
     for (let i = 0; i < 6; i++) {
@@ -1067,10 +1087,19 @@ function standUpServer() {
      auto margin beside a flexible child eats the space that child was asked to
      take. This array is still asserted as MARKUP and not as rendered x, for
      the reason the paragraph above gives. */
+  /* ...AND THE STRIP IS THREE SINCE 2026-09-08 (TABLE.md §25). Paul: *"Also
+     make two tabs at the top: Explore and Edit; I'm worried people will never
+     click away from the globe."* The record's name IS the Explore tab — the
+     same `toptab-Where` node, still the band's flexible child, still wearing
+     no plate — and `toptab-Band` joins it at the end as the other view. The
+     array grows by one and the law it asserts does not move: ONE order, the
+     order it reads, tabs and draws in, in `stripEl.append` and not in an
+     `order`. TRANSLATED AND NOT LOOSENED — this is still an exact array, so a
+     fourth child, or these three in another order, still fails. */
   check(JSON.stringify(t9.stripKids) ===
-          JSON.stringify(["burger", "toptab-Where"]) &&
+          JSON.stringify(["burger", "toptab-Where", "toptab-Band"]) &&
         JSON.stringify(t9.kids) ===
-          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-tape",
+          JSON.stringify(["nu-bartp", "nu-seedrow", "nu-baredit", "nu-tape",
                           "nu-vs nu-vs-wide"]) &&
         JSON.stringify(t9.seed) === JSON.stringify(["rewrite", "seedin"]) &&
         t9.num === 0 && !t9.inFold && t9.gone < 0,
@@ -2193,6 +2222,48 @@ function standUpServer() {
     " s record, and it is playing again (" + album.last.playing + ")");
   await p.evaluate(() => window.__eightPlayMode("loop"));
   await quiet();
+
+  /* ===== T12 · THE PLATE IS WHOLE FROM WHEREVER THE PAGE OPENED ==========
+     (2026-09-08.) Paul: *"'The Record' options no longer show up at all in the
+     hamburger menu."*
+
+     THE EIGHT ARE BUILT FROM A PANEL THAT MAY NEVER HAVE BEEN BUILT.
+     `paintMenuFaces` reads `tableGrid.scopeMenu()`, and `draw()` builds
+     exactly one tab — the open one — so every load that opens somewhere OTHER
+     than the table left the group empty and left it empty until a hand
+     happened to visit the table. Every check in this file above this one
+     opens on the table, which is why none of them could see it.
+     SO THIS ONE ARRIVES THE WAY A SHARE LINK DOES. A second context, a `#t=`
+     that names a view, and the only question asked is how many rows the plate
+     holds — plus the two things the fix must NOT do, which are switch the tab
+     under you or move the page. */
+  {
+    const octx = await b.newContext({ viewport: { width: 390, height: 844 },
+                                      hasTouch: true, isMobile: true });
+    const bad = [];
+    for (const t of ["where", "export", "score"]) {
+      const o = await octx.newPage();
+      await o.goto(PAGE + "#at=Kingston&y=1969&s=1&t=" + t, { waitUntil: "load" });
+      await o.waitForTimeout(2600);
+      const was = await o.evaluate(() => ({
+        tab: window.__eightTabNow ? window.__eightTabNow() : null, y: window.scrollY }));
+      await o.evaluate(() => window.__eightMenuOpen(true));
+      await o.waitForTimeout(700);
+      const got = await o.evaluate(() => {
+        const g = document.querySelector("#nu-menu .nu-menugroup");
+        return { rows: g ? g.querySelectorAll("button").length : -1,
+                 tab: window.__eightTabNow ? window.__eightTabNow() : null,
+                 y: window.scrollY }; });
+      if (!(got.rows === 8 && got.tab === was.tab && got.y === was.y))
+        bad.push([t, was, got]);
+      await o.close();
+    }
+    await octx.close();
+    check(!bad.length,
+      "T12 · the record's eight rows are in the plate however the page was " +
+      "opened, and asking for them neither switches the tab nor moves the " +
+      "page " + JSON.stringify(bad));
+  }
 
   check(!errs.length,
     "T· zero pageerrors / console errors " + JSON.stringify(errs.slice(0, 3)));
