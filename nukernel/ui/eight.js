@@ -14860,7 +14860,15 @@ function chromeRow() {
      THEY GREY WHEN THERE IS NOTHING, AND SAY WHY — `data-why`, the joined
      accessible name, §4's no-silent-grey — and they are painted by
      `paintChrome`, which already runs on every draw. */
-  const undoBtn = mkBtn("tundo-bar"), redoBtn = mkBtn("tredo-bar");
+  /* THE IDS DO NOT MOVE, which is this file's own law about exactly this and
+     which the first build of these two broke. They were minted as
+     `tundo-bar`/`tredo-bar` and test/table.browser.js T13l said so within the
+     run: *"LOST ["tundo","tredo"]"* — the inventory files those two addresses
+     and T7 requires them reachable in ≤ 2 taps from rest. A control that MOVES
+     keeps its name; only its place changes. The cell sheet no longer emits
+     either, so there is exactly one `tundo` on the page and it is this one. */
+  const undoBtn = mkBtn("tundo"), redoBtn = mkBtn("tredo");
+  undoBtn.dataset.k = "tundo"; redoBtn.dataset.k = "tredo";
   const editRow = el("div", null, "nu-baredit");
   editRow.append(undoBtn, redoBtn);
   const stackNow = () => { try { return undoStack(tableAPI()); } catch (e) { return null; } };

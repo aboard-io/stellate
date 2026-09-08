@@ -5057,8 +5057,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                       check is about is which band a readout stands on and
                       where in it — `!!document.querySelector(".nu-tape")`
                       would pass on a tape anywhere at all. */
-                   tapeInBar: !!(bar && bar.children[2] &&
-                     bar.children[2].classList.contains("nu-tape")),
+                   /* THE TAPE IS THE BAR'S FOURTH CHILD SINCE 2026-09-08
+                      (§24): the edit pair stands between the die and it, so
+                      the row is transport · die · undo/redo · tape · room.
+                      Read as a POSITION still, for §22's own reason — a bare
+                      `querySelector(".nu-tape")` would pass on a tape
+                      anywhere at all. */
+                   tapeInBar: !!(bar && bar.children[3] &&
+                     bar.children[3].classList.contains("nu-tape")),
                    tapeInStrip: !!(strip &&
                      strip.querySelector(":scope > .nu-tape")),
                    forms: document.querySelectorAll(".nu-formula").length };
@@ -5138,7 +5144,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
            and the `#reading` inside it) and *"replace the die icon with the
            countdown"* (`.nu-seedwait`). What is left is the voicing, ▶, the
            die, and the room as the last child. */
-        const wantBar = ["voicing", "play", "rewrite"];
+        /* ...AND UNDO AND REDO JOINED IT ON 2026-09-08 (TABLE.md §24). Paul:
+           *"We can move undo, redo to the bottom nav and make them global."*
+           The bar was the transport and nothing else; it is the transport AND
+           the two edits that are about the record as a whole, which is the one
+           amendment §16's law has taken that is not a readout. They keep the
+           addresses the inventory files (`tundo`, `tredo`) — a control that
+           moves keeps its name — so T13l below finds them where it always
+           looked, in the bar rather than in an open cell sheet. */
+        const wantBar = ["voicing", "play", "rewrite", "tundo", "tredo"];
         check(chrome.boxes.length === 2 &&
               chrome.boxes[0].id === "nu-topstrip" &&
               chrome.boxes[1].id === "nu-bar" &&
@@ -6821,8 +6835,15 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
               const tr = document.querySelector("#pan-band .nu-modalcard");
               if (!tr) return null;
               const vs = tr.querySelector(".nu-vsheet");
-              const tk = tr.querySelector(".nu-sheettrack");
-              const cols = tk ? [...tk.children] : [];
+              /* EVERY TRACK'S CHILDREN, NOT THE FIRST TRACK'S (2026-09-08,
+                 §24). A track wraps a RUN of consecutive grouped chunks, and
+                 `MAKE IT` — which carries no group — now stands between the
+                 instrument and the rest, so the four subjects are split across
+                 two tracks. That is invisible on the glass (both stack) and
+                 fatal to a check that read `tracks[0].children`. */
+              const tks = [...tr.querySelectorAll(".nu-sheettrack")];
+              const tk = tks[0];
+              const cols = tks.flatMap((x) => [...x.children]);
               const box = (e) => { const r = e.getBoundingClientRect();
                 return { w: Math.round(r.width), h: Math.round(r.height),
                          x: Math.round(r.left), y: Math.round(r.top) }; };
@@ -6831,7 +6852,8 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                 return r.height > 0 && r.top < innerHeight && r.bottom > 0; });
               return { h: Math.round(tr.getBoundingClientRect().height),
                 table: vs ? vs.dataset.table : null,
-                tracks: tr.querySelectorAll(".nu-sheettrack").length,
+                tracks: tks.length,
+                sideways: tks.reduce((a, x) => a + (x.scrollWidth - x.clientWidth), 0),
                 cols: cols.map((c) => ({ g: c.dataset.group, ...box(c) })),
                 trackH: tk ? Math.round(tk.getBoundingClientRect().height) : null,
                 rows: tr.querySelectorAll(".nu-sheetrow").length,
@@ -6849,16 +6871,37 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                     next: !!e.querySelector('[data-k^="next|"]'),
                     h: row ? Math.round(row.getBoundingClientRect().height) : null };
                 }) }; });
-            const sideCols = sheet ? sheet.cols.filter((c, i, a) =>
-              i > 0 && c.x > a[i - 1].x + 4) : [];
-            check(!!sheet && sheet.table === "true" && sheet.tracks === 1 &&
-                  sheet.cols.length >= 3 && sideCols.length >= 1 &&
-                  sheet.trackH <= 844,
-              "T19a " + at + " · the chair sheet is a TABLE of subject columns " +
-              "side by side — " + (sheet ? sheet.cols.length : 0) + " columns, " +
-              (sheet ? sheet.trackH : "?") + "px of track against a 844px " +
-              "phone, sheet " + (sheet ? sheet.h : "?") + "px (was 1,537 at " +
-              "390 / 1,738 at 320) — " + JSON.stringify(sheet && sheet.cols));
+            /* ===== THE SUBJECTS STACK SINCE 2026-09-08 (TABLE.md §24) =====
+               Paul: *"The two column thing is a disaster it should be one
+               column scrolling."*
+
+               THIS ASSERTED §19's OWN LAW — *"a TABLE of subject columns side
+               by side"*, `cols.length >= 3 && sideCols.length >= 1` — and §19
+               was also Paul's ask (*"it can also go horizontally wider than the
+               screen"*). What columns cost is what "disaster" names: a card is
+               378px and a subject column is 22ch, so two fit, and the reading
+               order zigzags down-left, up-right, down-left with the third and
+               fourth subjects off the edge.
+               WHAT §19 WAS ACTUALLY FOR IS KEPT AND IS STILL ASSERTED: the
+               settings are DIFFERENTIATED — still `data-table`, still ≥ 3
+               named subjects, each with its own heading. What changes is the
+               AXIS, so `sideCols` becomes its opposite: every subject after
+               the first shares the first one's x and stands below it, and the
+               tracks scroll sideways by ZERO. That last clause is new work
+               this check did not do before — the old law could not ask it,
+               because sideways scroll was the point. */
+            const stacked = sheet ? sheet.cols.filter((c, i, a) =>
+              i > 0 && Math.abs(c.x - a[0].x) <= 2 && c.y > a[i - 1].y) : [];
+            check(!!sheet && sheet.table === "true" &&
+                  sheet.cols.length >= 3 &&
+                  stacked.length === sheet.cols.length - 1 &&
+                  sheet.sideways === 0,
+              "T19a " + at + " · the chair sheet is a COLUMN of subjects, one " +
+              "under the next — " + (sheet ? sheet.cols.length : 0) +
+              " subjects in " + (sheet ? sheet.tracks : "?") + " track(s), " +
+              (sheet ? stacked.length : 0) + " of them stacked on the first's " +
+              "x, " + (sheet ? sheet.sideways : "?") + "px of sideways scroll " +
+              "— " + JSON.stringify(sheet && sheet.cols));
             check(!!sheet && sheet.visible > 4,
               "T19a " + at + " · …and more settings are on the glass at rest " +
               "than the FOUR the stack showed: " +
@@ -7067,6 +7110,28 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                    shapes are driven here, because which widget a vocabulary
                    earns is not what this check is about. */
                 const picked = await z.evaluate((k) => {
+                  /* ===== THE MOTIF FIELD IS CARDS SINCE 2026-09-08 (§24) ===
+                     Paul: *"The motif selector should be visual."* This looked
+                     for ONE control at `material.cell|<voice>|<section>` — a
+                     `<select>`, or a head that opens a strip. The field is a
+                     GRID now: one button per motif, each carrying its own
+                     `<field>|<value>` address, so the bare key matches nothing
+                     and this returned null at every width. The claim is
+                     untouched — a bass cell names its own motif and the
+                     RENDERED bass moves for it — and only the hand changes.
+                     THE FIRST BRANCH, because a card grid answers to no
+                     `aria-expanded` and has no strip to open. */
+                  const cards = [...document.querySelectorAll(
+                    '#pan-band .nu-mopick[data-k^="' + k + '|"]')]
+                    .filter((x) => x.getAttribute("aria-pressed") !== "true" &&
+                                   x.getAttribute("aria-disabled") !== "true" &&
+                                   x.dataset.k.slice(k.length + 1));
+                  if (cards.length) {
+                    const c0 = cards[0];
+                    const v = c0.dataset.k.slice(k.length + 1);
+                    c0.click();
+                    return v;
+                  }
                   const b = document.querySelector(
                     '#pan-band .nu-sheetrow [data-k="' + k + '"]');
                   if (!b) return null;

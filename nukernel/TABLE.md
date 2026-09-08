@@ -6248,3 +6248,177 @@ the RECORD and reaches the ear through the recompile, exactly like every other
 written number on this page. It works on a phone, it is not late, and taking it
 away would delete real control over the mix. Only the room is refused, and only
 because it is the one value the WAV-first route cannot move in time.
+
+### 24 · Sorted by what you came for (2026-09-08)
+
+Ten sentences, and two of them reverse a law this file wrote.
+
+> *"We can move undo, redo to the bottom nav and make them global. Use icons
+> for copy paste."*
+> *"This cell—the basic operations should be icons. The main thing is motif
+> selection and operations on motifs. Those should be up top."*
+> *"The motif selector should be visual and let me see motifs and make new
+> motifs and assign multiple motifs and click to edit motifs."*
+> *"The two column thing is a disaster it should be one column scrolling."*
+> *"The same is true of instrument selection. Icons, then actually select the
+> instrument, then the rest in one column in priority order."*
+> *"Updates to the app should change URL state and back button should take me
+> back through states."*
+> *"Save song status in local storage and give me a share link option instead
+> of putting all state in the URL."*
+> *"The playing bar is blocky in the sections and the header row is thicker
+> than the rest. The orange is a strange highlight color."*
+> *"I don't really need to know about individual samples in an instrument I
+> can't do anything with them so remove that."*
+> *"What else can be taken away consolidated or simplified?"*
+
+#### 24a · The two reversals, and why both sentences were right
+
+**§19 → one column.** §19 was told *"we need to make it smaller and it can also
+go horizontally wider than the screen"* and it fixed DIFFERENTIATION: settings
+in one undifferentiated stack with no way to see which four are about the
+envelope. What columns cost is what *disaster* names — a card is 378px and a
+subject column is 22ch, so exactly TWO fit, and a two-column grid on a narrow
+glass is **a reading order that zigzags**: MOTIF beside VARIATION, then
+ARTICULATION under MOTIF while RAMP LIMIT sits under VARIATION, with the third
+and fourth subjects off the right edge and no sign they are there.
+`flex-direction: column` is the whole change; the subjects keep their headings
+and their rules, which is the differentiation §19 was actually asked for.
+
+**§16 → undo and redo in the bar.** *"The bottom is what you hear"*, and §22
+already bent it for the TAPE — a readout of what the transport did is the
+transport's. Undo is not that; it is an EDIT. What makes it right anyway is
+Paul's own word: **global**. The two were the first line of the open CELL
+sheet — a document-wide stack whose BUTTON existed only while a cell was open,
+which is the page giving two different answers to one question. `undoStack` is
+a singleton and ui/eight.js already imported it, so the marks press the stack
+the grid presses: no bridge, no copy. Budget at 320: 89 + 44 + 89 + 4 leaves
+**86px of tape** against the 70 its own note names as the floor.
+
+#### 24b · Marks, and the rule for which ops get one
+
+Seven, each **measured against this page's own font** rather than assumed:
+render U+FFFF, take its width as this font's tofu (60px at 100px type), refuse
+any candidate that matches. All seven differ. Every one keeps its word in a
+`.nu-vh` — the belt the × did not have until §23 found it had never rendered.
+
+`Op.mark` is optional and most ops do not take one: *a sentence has no honest
+picture.* `Add bass` and `Add drums` differ by their NOUN, and three identical
+`+` marks would be three buttons a hand cannot tell apart — the disease, not
+the cure. They also carry refusals (`refuse.haveBass`) that only a word wears
+legibly. What became marks are the gestures a spreadsheet already draws:
+clear · fill right · fill down · copy · paste · solo · move · deal · remove.
+
+#### 24c · The motif field is pictures
+
+It was falling through to the phone's own wheel, and every rule that sent it
+there was right — a coarse pointer with more than eight words earns the native
+picker. What none of them could know is that these options **are not words**.
+Every motif option already carried `pv`, an inline `<svg>` of the actual phrase
+(one bar per step, height by velocity) built by ui/preview.js so that *"two
+motifs in a list are told apart by SHAPE before either name is read"*. A
+`<select>` can hold no markup, so the page's one control for telling motifs
+apart drew a list of names and a standing answer of `—`.
+
+**The test is the picture and not the name.** A field is a motif field when its
+options actually carry previews — a fact about the data, true wherever the row
+is drawn and false of a row that merely happens to be called something.
+
+Three of the four asks are built: SEE (cards), MAKE (`+` calls the bank's own
+`addCell` and assigns what it made), EDIT (a ✎ per card, a separate target
+because the card's meaning is ASSIGN and a control that sometimes writes and
+sometimes navigates is what this page keeps deleting). **ASSIGNING SEVERAL IS
+NOT GUESSED AT**: `material.cell` holds ONE name, so whether a cell plays
+several in sequence across its bars or layered at once is a question about the
+MODEL. Asked rather than assumed.
+
+`sheet.ts` DRAWS AND DOES NOT REACH — it has never held a `TableAPI` and does
+not start now. The one field that must mint and navigate carries exactly those
+two functions on itself, the same shape `node` uses.
+
+#### 24d · The grid's three complaints had three different causes
+
+**"Blocky" was `border-spacing`.** The lit row was painted on every `<th>` AND
+every `<td>` — two rules, each correct alone — and `.nu-trims` sets
+`border-spacing: 3px`, so the cells cannot touch. A playing section drew as
+five or ten SEPARATE rectangles with a gap between each. Not the height, not
+the brightness: **the gaps.** The paint moves to the `<tr>`, the one box in a
+table that has no gaps in it.
+
+**The orange was two things.** `--lit` was `--clock` at **85%** — a near-full
+alarm red used as a resting GROUND for a whole row, with `--ink` asked to read
+on top of it; it is 22% now, `--clock-tint`'s own strength. And
+`[data-live]{ color: var(--clock) }` painted the ATTRIBUTE rather than the
+STATE, so all thirteen section numbers stood in playhead red at rest — a
+highlight highlighting everything, with no colour left to say which row was
+sounding. It is `:has(mark)` now, and no JavaScript changed.
+
+**The header is not taller, it is heavier**: 53.3px against a body row's 64.5,
+with a 3px bar of the player's hue under every column head across a grid whose
+rows have no rules between them at all. The bar is `--bw-hard`. The hue is
+untouched — *"--v0..3 = which player"* is a claim about the COLOUR and never
+about how many pixels of it there are.
+
+#### 24e · The record leaves the address bar
+
+It was being written into the URL on every edit — a deflated, base64url'd copy
+of the whole document, on a 400ms debounce. The thing it insured against is
+already insured: `ui/state.js` has kept the song in `nukernel.song.v1` since
+wave C. The URL was a SECOND copy of the session, and the noisier one. Measured
+on Kingston 1969: **the address bar is 36 characters** against a share link of
+**2,671**, with **63,273 bytes** of song in localStorage. Receiving a link is
+unchanged — `readLink` still reads `d=` and a link sent yesterday still opens.
+This is a change to what we WRITE.
+
+And the history splits into PLACES and DETAILS: the record, the reading and the
+view push; everything else replaces the entry you are standing on. "Push
+instead of replace" would have been an entry per slider move, and a back button
+that takes six presses to leave a knob.
+
+**The seed fighting the record is a measured bug, not a precaution.**
+`ATLAS.open` is async — it composes — and `ATLAS.setReading` re-picks
+`ctx.doc().basis`, which is *the record still on the page*. Fired one line
+after `open`, it re-composed the record being LEFT at the restored seed and
+landed it afterwards: **the back button reported success and left the wrong
+song up.** Open's own callback saw `reggae`; two seconds later the basis was
+`minneapolissound`. The seed rides `open`'s `done` now.
+
+#### 24f · What was taken away
+
+1. **The duplicated copy/paste.** `tcell-copy|…` sat in the cell's op bar while
+   `tcopy` sat in the card's head four pixels above, doing the same two things
+   to the same cell — the words `copy` and `paste` appeared twice, in two rows,
+   one under the other.
+2. **The sample crate row.** A chair sheet is a list of DECISIONS and every
+   other row in it is one; the crate named FILES, and the control that swaps
+   them is the INSTRUMENT row one line above. Nothing is deleted but the row —
+   `A.hasCrate`/`A.voiceCrate` stay on the seam and ui/samples.js is untouched.
+3. **The permanent orange** (24d).
+4. **`MAKE IT`'s 33 chips ahead of the instrument** — moved, not deleted: about
+   250px of adjectives between the icons and the one row that changes what you
+   hear.
+
+**Proposed and NOT done, because it wants a decision:** `variation` and
+`motifs` are two controls answering one question — which phrase this cell
+plays, and how it is bent. Now that motifs are cards, the variation chain could
+ride ON the assigned card rather than as a separate row two subjects away.
+
+#### 24g · What the gates caught, including one real bug
+
+**The ids moved and should not have.** The bar's marks were minted as
+`tundo-bar`/`tredo-bar` and T13l said so on the first run — `LOST
+["tundo","tredo"]`. This file's own law is that a control which MOVES keeps its
+name; the inventory files those two addresses and T7 requires them within two
+taps. Fixed at the source.
+
+Three others were gates asserting laws §24 reverses, each translated rather
+than loosened: T13a (the bar's inventory, and the tape is its fourth child
+now), T19a (*"subject columns side by side"* → stacked on one x, with **zero
+sideways scroll**, a clause the old law could not ask), T19f (the motif field
+is a card grid where each motif carries its own `<field>|<value>` address, so
+the bare key matched nothing).
+
+**And `MAKE IT` after the instrument splits the track**, because a track wraps
+a CONTIGUOUS run of grouped chunks and an ops row carries no group. Invisible
+on the glass now that subjects stack, and fatal to a check that read
+`tracks[0].children`.
