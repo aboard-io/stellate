@@ -1,0 +1,217 @@
+{
+  "note": "HEAVY PROG — Toronto 1975. Rush, Fly by Night and Caress of Steel: both\ncut at Toronto Sound Studios with Terry Brown producing — Fly by Night in\nJanuary 1975 and released the 15th of February, Caress of Steel in July\nand released the 24th of September — Anthem in Canada, Mercury elsewhere.\nNeil Peart's first two records with the band, and the last two before the\nside-long suite. THE LABEL NAMES THE ROOM AND THE YEAR AND THE ROW IS THE ERA, which\nruns back through the 1974 debut and stops dead at February 1976.\n\nPaul, 2026-09-08: \"Can you please add multiple versions of Rush, for each\nera.\" Five rows, and this is the one before the band became a prog band.\n\nTHE ARTICLE ITSELF DATES THIS ROW, which is the rarest kind of evidence\nthis table gets and is why the link is not an argument but a quotation.\n`Hard rock`, the ZIM's own article, in its own words: \"From outside the\nUnited Kingdom and the United States, the Canadian trio Rush released\nthree distinctively hard rock albums in 1974-75 (Rush, Fly by Night and\nCaress of Steel) before moving toward a more progressive sound with the\n1976 album 2112.\" That sentence draws BOTH of this row's borders — what it\nis and where it ends — and the row's whole content is on this side of it.\n\nWHAT IT HAS THAT NO OTHER PROG ROW IN THIS TABLE HAS: NO KEYBOARD. Grep\nthe chain. `progrock` (Isle of Wight 1970) seats a rock organ and a grand\npiano. `studioprog` (St John's Wood 1973) is a studio. `bleakprog` (London\n1976) and `stadiumprog` (London 1987) both seat a warm pad. `suiteprog`\n(Toronto 1976), the row directly after this one, seats a polysynth. This\nrow seats an overdrive guitar, a voice and a second guitar, over a picked\nbass and a dry kit, and that absence is its first claim rather than an\noversight — a three-piece band with nothing to hide behind is a different\nmusic from a three-piece band with a Mellotron, and the whole reason the\nera ends is that they went and got one.\n\nAND THE SECOND CLAIM IS THE REGISTER, DECLARED AS A `throat`. `throat:\ncountertenor` — the one word out of `fields.js THROATS` that names a man\nsinging above his own guitar player, which is the single fact every\nlistener reports first about this band and which no row in this table had\never stated. It is a `const` on purpose: `precompose.seatThroat` DROPS a\nthroat word for a chair that is not a person, so the two guitar chairs\ntake nothing and the word reaches only the voice. The chain measures the\nregister coming down — this row and `suiteprog` are countertenor, and\n`newwaveprog` (1981), `synthprog` (1984) and `modernprog` (2012) are\ntenor, which is a claim about thirty-seven years of singing that the table\ncan now hold as data.\n\nTHE THIRD IS THE ALPHABET. `scale: SCALES.blues` over `mode:\nMODES.aeolian`, and it is the only row in the whole prog chain that says\nit: `progrock` takes SCALES.major, `bleakprog` and `studioprog` take\nMODES.dorian, `stadiumprog` MODES.ionian. A blue third and a blue fifth\nover a minor mode is what \"blues-schooled riffs\" means when it is written\ndown instead of asserted, and it is what makes this row sound like the\n1966 rows it comes from rather than like the 1970 row it is filed beside.\n\nTHE DYNAMIC FIGURE: `backbeat`, AND THE SHARE WITH `progrock` IS CONCEDED\nRATHER THAN DODGED, the way `stadiumprog` conceded `arch` with `aor`.\nFIGURES calls it \"leans on two and four ... the single most consequential\nfact about American popular music after 1945\". A riff band leans where the\nsnare is; reaching for an unusual figure to make the row look distinct\nwould be inventing evidence. The distinction is elsewhere and it is in\neleven fields, which is the honest place for it.\n\nLINEAGE. `bluesrock` 0.25 (West Hampstead 1966) — the largest debt and the\none the scale field says out loud. `heavymetal` 0.20 (Workington 1969) —\nthe weight and the tempo. `progrock` 0.15 (Isle of Wight 1970) — the\nambition, already audible in the long tracks and not yet in the form.\n`psychrock` 0.10 (San Francisco 1966) — the extended instrumental middle.\nSum 0.70; the residue 0.30 is the register and the trio, which is to say\nthe two things nobody in the table above could have handed down.\n\nCOMPILED, seed 1: 35 bars, 11 sections, 1,207 EVENTS. 794 notes across the\nline voices carrying 222 accents, alphabet [5,6,7,8], and the accents land\nat steps 4 and 20 — the second and fourth quarter of the bar, forty-five\nof each, which is `backbeat` doing precisely what its own FIGURES entry\npromises and is the check that the figure reached the notes rather than\njust the row. FIT r2 0.623, RESIDUE 0.217 — ABOVE the catalogue median of\n0.165, and reported that way round on purpose. `stadiumprog`'s note\nreports its own 0.115 as the machine saying \"not much was invented here\";\nthis is the same machine saying the opposite, and it agrees with the\ndeclared residue of 0.30. `progrock` (r2 0.636, residue 0.202) sits in the\nsame place for the same reason: a row whose parents are all at least five\nyears older than it is mostly not its parents.",
+  "label": "Toronto 1975",
+  "near": "heavymetal",
+  "plan": "song",
+  "bpm": 138,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "bluesrock": 0.25,
+    "heavymetal": 0.2,
+    "progrock": 0.15,
+    "psychrock": 0.1
+  },
+  "instr": [
+    "overdrive_guitar",
+    "solo_vox",
+    "crunch_guitar"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 8
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "countertenor"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    5,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.4,
+    "atk": 0.004,
+    "rel": 0.45,
+    "gain": 0.26,
+    "verb": 0.22
+  },
+  "fx": [
+    "crunch"
+  ],
+  "fxAmt": {
+    "crunch": "half"
+  },
+  "words": [
+    "the riff, one bar long, said twelve times",
+    "the voice, above the guitar, all night",
+    "the second guitar, the octave, the harmony line"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[keep(0, 3, 6, 10)], [keep(0, 3, 6, 10)], [keep(0, 3, 6, 10), transpose(5)], [keep(0, 3, 6, 10), invert(3)]][s % 4]\n                    : v === 1 ? [[], [rotate(2)], [drop(2)], [fill(1)]][s % 4]\n                    : [keep(0, 3, 6, 10), transpose(12)])"
+  },
+  "dyn": "backbeat",
+  "family": "band"
+}

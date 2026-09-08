@@ -58,7 +58,7 @@ const PEAK_MAX = 0.89;   // a lift may take the loudest sample this far and no f
    table is a no-op: `trimOf` answers 1 for every key, and every record renders
    byte-identically to the day before this file existed. */
 /* ===== TRIM TABLE — GENERATED, DO NOT EDIT ===== */
-// 506 rows — [the loudest second of the record's busiest
+// 511 rows — [the loudest second of the record's busiest
 // section in dBFS, the peak of that press] — measured 2026-09-08 with `node tools/levels.js
 // --bars 4 --seed 1 --write`. Re-derive after any change to the
 // engine, the desk or the catalogue: these are facts about a render.
@@ -268,6 +268,7 @@ export const MEASURED = {
   hardingfele: [-42.1, 0.038],
   heartlandrock: [-21.5, 0.476],
   heavymetal: [-24.6, 0.331],
+  heavyprog: [-20.9, 0.398],
   highlife: [-29.0, 0.388],
   hinrg: [-21.3, 0.446],
   hiphopsoul: [-27.2, 0.312],
@@ -356,6 +357,7 @@ export const MEASURED = {
   minimalism: [-19.8, 0.557],
   minneapolissound: [-22.3, 0.406],
   modaljazz: [-28.3, 0.306],
+  modernprog: [-15.5, 0.531],
   modinha: [-20.5, 0.540],
   motorik: [-20.6, 0.401],
   mountaincountry: [-19.9, 0.549],
@@ -376,6 +378,7 @@ export const MEASURED = {
   newpop: [-26.0, 0.252],
   newsfanfare: [-28.4, 0.392],
   newwave: [-27.2, 0.280],
+  newwaveprog: [-22.7, 0.440],
   nhacvang: [-20.6, 0.544],
   nocturne: [-25.6, 0.346],
   noirhop: [-33.9, 0.162],
@@ -508,6 +511,7 @@ export const MEASURED = {
   sticheron: [-21.9, 0.265],
   stringquartet: [-40.8, 0.038],
   studioprog: [-28.3, 0.280],
+  suiteprog: [-21.0, 0.374],
   suspensescore: [-32.7, 0.095],
   sweetband: [-26.4, 0.224],
   swing: [-29.2, 0.216],
@@ -516,6 +520,7 @@ export const MEASURED = {
   symphony: [-30.0, 0.121],
   synthduo: [-22.3, 0.396],
   synthpop: [-22.5, 0.327],
+  synthprog: [-22.6, 0.395],
   synthsoul: [-21.5, 0.631],
   synthwave: [-28.7, 0.225],
   tango: [-27.3, 0.338],

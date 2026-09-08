@@ -1,0 +1,209 @@
+{
+  "note": "NEW WAVE PROG — Morin Heights 1981. Rush, Moving Pictures: Le Studio,\nMorin Heights, Quebec, October and November 1980, Terry Brown producing,\nAnthem and Mercury, released the 12th of February 1981. THE LABEL NAMES\nTHE ROOM AND THE ERA RUNS BACK ONE RECORD, to Permanent Waves, cut in the\nsame room in the autumn of 1979 — which is the point of the era rather\nthan a footnote: this is the pair where the twenty-minute side stopped\nand a prog band learned to write four minutes.\n\nTHE ODD METER MOVED FROM THE PASSAGE INTO THE HOOK, AND THAT IS THE WHOLE\nROW. `suiteprog` (Toronto 1976) REFUSES a meter on the ground that its\nsevens are passages inside a twenty-minute piece and this box's meter is\na song fact. Five years later the same band wrote a seven that you can\nwhistle and put it where the chorus goes, and a song fact is exactly what\nit is — so this row says `meter: \"7/8\"` and means it for every bar. That\nis the difference between the two rows stated in one field, and it is\nalso why there are two rows rather than one.\n\nWHAT IT HAS THAT `progmetal` (San Francisco 1988) DOES NOT, since that is\nthe other `7/8` row in the table and the near neighbour this had to argue\npast. `progmetal` is 145 bpm, `plan: \"arc\"`, two voices, `nobass`, no\n`bassStyle` at all, a ride-driven kit and no `fx`. This row is 130,\n`plan: \"song\"` — a three-minute record with a chorus in it — three\nvoices, a picked bass on `sixteenths` (the busiest bass in the whole prog\nchain; `heavyprog` and `suiteprog` walk in eighths and `bleakprog` sits\non a pedal), and `maxHold: 1`, which is the lowest number in the chain\nand is the reggae-inflected chop said as data: NOTHING on this record is\nheld. Seven beats and nothing held is a different music from seven beats\nand everything held, and the two rows are three years and one continent\napart.\n\n`seqArp: \"arpup\"` AND NO PAD, WHICH IS THE OTHER HALF OF THE SAME CLAIM.\nThe polysynth chair `realize`s as a LINE, not as a pad — the Oberheim on\nthis record arpeggiates, it does not wash — so all three seated chairs\nare lines and the row seats no pad at all. That is what separates it from\n`synthprog` (Morin Heights 1984) three years later in the same room,\nwhere the guitar becomes the pad and the synth takes the tune. One room,\ntwo rows, and the arrow between them is which chair is holding still.\n\nTHE DYNAMIC FIGURE: `syncope`. FIGURES: \"the weight is off the beat.\nFunk, afrobeat and ska are all one idea said three ways: the beat is\nwhere the weight is NOT.\" The off-beat guitar on this record is a ska\nupstroke played by a prog band and the figure is the ska one, chosen for\nthe reason FIGURES gives rather than for novelty — it reads metrical\nstrength rather than a list of legal steps, which is what a seven-beat\nbar needs, since a table of positions written for four would miss every\naccent in it.\n\nMODE `mixo`, AND IT IS THE ONLY MAJOR-SIDE ROW IN THIS FIVE. The flat\nseventh over a major triad is what the era's own hooks are built from and\nit puts this row on the other side of the chain from `heavyprog`\n(aeolian, blues), `suiteprog` (dorian) and `modernprog` (phrygian).\n\nLINEAGE. `suiteprog` 0.30 (Toronto 1976) — the same band and the meter it\nlearned there, minus the twenty minutes. `newwave` 0.15 (London 1979) —\nthe length, the dryness and the idea that a record could stop. `reggae`\n0.15 (Kingston 1969) — the upstroke, and it is claimed at the same weight\nas new wave rather than lower, because it is audible in the guitar part\nbefore it is audible anywhere else. `progrock` 0.10 (Isle of Wight 1970)\n— still the grandparent. Sum 0.70; the residue 0.30 is the seven-beat\nhook, which nobody above wrote.\n\nCOMPILED, seed 1: 35 bars, 11 sections, 1,578 EVENTS — THE BUSIEST OF THE\nFIVE and of the whole prog chain (`suiteprog` 1,511, `modernprog` 1,225,\n`stadiumprog` 1,215, `heavyprog` 1,207, `synthprog` 1,006, `bleakprog`\n636). That is `bassStyle: \"sixteenths\"` and `maxHold: 1` together: a\nrecord where nothing is held has to keep playing. 781 line notes carrying\n313 ACCENTS, the most in the chain by a distance, at steps 18, 4 and 1 —\nwhich are off the beat, which is the whole figure.\n  AND THE ALPHABET IS [5, 8] — TWO LEVELS, WHICH IS THE MOST INTERESTING\nNUMBER IN THIS ROW AND IS REPORTED BECAUSE IT WAS NOT EXPECTED. `syncope`\noffers three (`[5, 9, 8][S(i, N)]` — a quarter gives way at 5, an \"and\"\ntakes 9, a sixteenth between them takes 8) and this record reaches only\ntwo of them: every note it writes is either ON a quarter or on a\nsixteenth between quarters, and NOT ONE lands on the eighth-note \"and\".\nIn a bar of seven eighths that is not a bug, it is the count — the\nrow's own `keep(2, 6, 10)` chop and its `arpup` sixteenths simply do not\nput anything there — but it is a fact about this record that no prose\nwould have found, and if a later hand wants the 9 in the alphabet the\nplace to get it is the word, not the figure. FIT r2 0.869, RESIDUE 0.120,\nunder the catalogue median of 0.165.",
+  "label": "Morin Heights 1981",
+  "near": "newwave",
+  "plan": "song",
+  "bpm": 130,
+  "bars": 8,
+  "voices": 3,
+  "meter": "7/8",
+  "seqArp": "arpup",
+  "parents": {
+    "suiteprog": 0.3,
+    "newwave": 0.15,
+    "reggae": 0.15,
+    "progrock": 0.1
+  },
+  "instr": [
+    "clean_guitar",
+    "solo_vox",
+    "polysynth"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "tenor"
+  },
+  "part": [
+    "stab",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    6,
+    6,
+    3,
+    3,
+    6,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.1,
+    "atk": 0.005,
+    "rel": 0.5,
+    "gain": 0.23,
+    "verb": 0.35
+  },
+  "fx": [
+    "flanger",
+    "echo"
+  ],
+  "fxAmt": {
+    "flanger": "half"
+  },
+  "words": [
+    "the guitar, on the off-beat, never on the beat",
+    "the voice, the hook, seven beats long",
+    "the arpeggio, up, the whole record"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[keep(2, 6, 10)], [keep(2, 6, 10)], [keep(2, 6, 10), transpose(5)], [keep(2, 6, 10)]][s % 4]\n                    : v === 1 ? [[], [rotate(2)], [invert(3)], [drop(2)]][s % 4]\n                    : [[fill(2)], [fill(2), transpose(7)], [spread(2)], [fill(2)]][s % 4])"
+  },
+  "dyn": "syncope",
+  "family": "band"
+}

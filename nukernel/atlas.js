@@ -309,6 +309,18 @@
     "Manila": [14.60, 120.98], "Matanzas": [23.04, -81.58], "Mazatlán": [23.25, -106.41],
     "Memphis": [35.15, -90.05], "Mexico City": [19.43, -99.13],
     "Miami": [25.76, -80.19], "Milan": [45.46, 9.19],
+    /* MORIN HEIGHTS joined 2026-09-08 with the Rush round, and it is the
+       smallest place on this globe: a village of some 4,000 in the Laurentians
+       north-west of Montreal, on the map because Le Studio was there and two
+       of the five Rush rows (`newwaveprog` 1981, `synthprog` 1984) were made
+       in it. THE DISTANCE TO MONTREAL IS 68 km, which is the tightest North
+       American pair this table has, and it is declared rather than discovered:
+       G10's floor is asserted at the BRITAIN arc (11 degrees) and these two
+       sit at North America's 64, where the gate measures them apart. No WITHIN
+       row — Morin-Heights is a municipality in the Laurentides, not a district
+       of Montreal, and the studio's whole point was that it was NOT in a city.
+       The place is the room, which is this table's own rule for a label. */
+    "Morin Heights": [45.90, -74.24],
     /* MINNEAPOLIS joined 2026-09-03 with `minneapolissound` (Prince, 1999),
        and unlike Asbury Park a year of rounds ago there is nothing to declare:
        at the North America arc its nearest neighbours in this table are
@@ -595,6 +607,16 @@
     "Tokyo": [35.68, 139.65],
     "Toronto": [43.65, -79.38], "Tulsa": [36.15, -95.99],
     "Tralles": [37.85, 27.84],
+    /* UNIVERSAL CITY joined 2026-09-08, and it is a REPAIR rather than a new
+       round: `chasetheme` (Universal City 1982) has carried that label since
+       the TV synth round and the place was never added, so the row had no dot
+       and `atlas.gate.js` G3 had been red about it. Found while baking the
+       Rush round's five and fixed here because a genre nobody can find on the
+       globe is the same defect as a genre with no link. The lot is an
+       unincorporated enclave in the Cahuenga Pass, 13 km from downtown Los
+       Angeles, so it takes a WITHIN row below on the South Central precedent
+       rather than a bare dot. */
+    "Universal City": [34.14, -118.35],
     "Ugarit": [35.60, 35.78], "Ur": [30.96, 46.10],
     "Oxyrhynchus": [28.53, 30.66],
     "Valledupar": [10.46, -73.25],
@@ -771,6 +793,7 @@
     // Park does.
     "Brooklyn": "New York",         // a borough of the city
     "South Central": "Los Angeles", // a district of the city
+    "Universal City": "Los Angeles", // the studio lot in the Cahuenga Pass
     // ...and the 2026-09-07 round's four, each argued at its coordinate above.
     // ST JOHN'S WOOD is direct containment (NW8) and a sibling of the other
     // three London districts; ASTON TIRROLD takes Sutton Courtenay's own
@@ -948,6 +971,11 @@
     bleakprog:      { place: "London", year: 1976 },
     rockopera:      { place: "Provence", year: 1979 },
     stadiumprog:    { place: "London", year: 1987 },
+    heavyprog:      { place: "Toronto", year: 1975 },
+    suiteprog:      { place: "Toronto", year: 1976 },
+    newwaveprog:    { place: "Morin Heights", year: 1981 },
+    synthprog:      { place: "Morin Heights", year: 1984 },
+    modernprog:     { place: "Toronto", year: 2012 },
     grebo:          { place: "Stourbridge", year: 1990 },
     melodictechno:  { place: "Kent", year: 1991 },
     bleeptechno:    { place: "Sheffield", year: 1989 },
@@ -1178,6 +1206,8 @@
     triphop:        { place: "Bristol", year: 1991 },
     chopped:        { place: "Houston", year: 1995 },
     synthwave:      { place: "Paris", year: 2010 },
+    outrun:         { place: "Tokyo", year: 1986 },
+    retrohorrorsynth: { place: "Austin", year: 2016 },
     footwork:       { place: "Chicago", year: 2013 },
     gqom:           { place: "Durban", year: 2016 },
     hohlefels:      { place: "Hohle Fels", year: -33000 },
@@ -1263,6 +1293,7 @@
     spyscore:       { place: "London", year: 1962 },
     horrorsynth:    { place: "Los Angeles", year: 1978 },
     copshowsynth:   { place: "Miami", year: 1984 },
+    chasetheme:     { place: "Universal City", year: 1982 },
     sitcom:         { place: "Los Angeles", year: 1983 },
     sitcomsting:    { place: "Los Angeles", year: 1989 },
     spaceopera:     { place: "Los Angeles", year: 1979 },

@@ -1,0 +1,225 @@
+{
+  "note": "SYNTH PROG — Morin Heights 1984. Rush, Grace Under Pressure: Le Studio,\nMorin Heights, Quebec, November 1983 to March 1984, Peter Henderson\nco-producing after Terry Brown, Anthem and Mercury, released the 12th of\nApril 1984. THE LABEL SAYS 1984 AND THE BRIEF SAID 1985, AND THE CHANGE\nIS A CORRECTION RATHER THAN A PREFERENCE. The era offered was \"Power\nWindows / Grace Under Pressure\" at Le Studio; Power Windows (1985) was\nnot cut at Le Studio at all — it was made at The Manor in Oxfordshire and\nat AIR Montserrat and mixed at Sarm East in London — and a label in this\ntable is a ROOM and a YEAR. Grace Under Pressure is the record that is\nboth, so it is the anchor, and the row runs forward through Power Windows\n(1985) to Hold Your Fire (1987), which is the same idea of a band and the\nsame rack.\n\nTWO ROWS IN ONE ROOM, WHICH THIS TABLE HAS DONE BEFORE AND SAYS SO.\n`newwaveprog` is Morin Heights 1981 and this is Morin Heights 1984 —\n`studioprog`'s note makes the same move about Abbey Road Studio 3 (\"the\nsame room as `englishpsych` six years earlier, which is why one dot\ncarries two records\"). A room is not a genre; what makes these two rows\nrather than one is three years and an inverted band.\n\nINVERTED IS THE WORD AND IT IS A `realize` CLOSURE. `newwaveprog` seats\nthree LINES and no pad: the guitar chops, the voice sings, the Oberheim\narpeggiates. This row's third chair — the guitar — `realize`s as `pad`,\nand the polysynth takes the riff. That is \"synth-led, guitar as texture\"\nwritten where the box can read it rather than asserted in prose, and it\nis one field. `artic: \"legato\"` and `maxHold: 4` are the rest of it,\nagainst `staccato` and `maxHold: 1` three years earlier: the same three\npeople, and nothing is chopped any more and everything is held.\n\n`drumkit: \"electronic\"` IS NOT A PRODUCTION CHOICE, IT IS WHAT THE\nDRUMMER BOUGHT. The Simmons pads are on the record and in every\nphotograph of the kit from this era, so the gated crack on two and four\nis an INSTRUMENT here and not an effect on a snare — which is the whole\ndifference between this row's kit and `stadiumprog`'s `power`. It is also\nthe only `electronic` kit in the prog chain.\n\n`mode: MODES.lydian`, AND IT IS THE ONE FIELD IN THIS ROW THAT IS A\nJUDGEMENT. The raised fourth over a major triad is the suspended,\nunresolved colour this era's writing keeps landing on, and it separates\nthe row from `stadiumprog`'s ionian, `newwaveprog`'s mixolydian and the\ntwo minor rows either side of the chain. It is a claim about a harmonic\nhabit rather than a transcription of a chart, and it is written here as\none so a later hand can argue with it.\n\nAND IT STAYS `family: \"band\"`, WHICH IS THE POINT AGAINST `stadiumprog`.\nThe London 1987 row is `family: \"studio\"` and argues for it honestly —\nWaters gone, session players in the chairs, a hand editing a machine.\nThis record is three people who bought synthesisers and played them\nthemselves; there are no session players on it. A machine-heavy record\nmade by a band is a different thing from a machine-heavy record made by a\nproduction, and `family` is the field that knows the difference, so it\nsays `band` and the `dyn` figure it stamps is the honest one.\n\nTHE DYNAMIC FIGURE: `swell`. FIGURES: \"a crescendo across the whole bar\ninto the next downbeat ... it gives a bar as many levels as it has notes\n(4 through 9 on a six-note bar) rather than three.\" A record whose middle\nis a held polysynth and a guitar realized as a pad has nowhere to put its\nweight except in the way the bar arrives, and the figure is the one that\nwidens the alphabet — which is measurable and is measured below.\n\nLINEAGE. `newwaveprog` 0.35 (Morin Heights 1981) — much the largest, and\nthe arrow points straight through it. `synthpop` 0.15 (Basildon 1981) —\nthe machines and the way they are voiced. `newwave` 0.10 (London 1979) —\nstill the song length. `aor` 0.10 (Los Angeles 1982) — the chorused\nclean bass, the wide reverb and the record aimed at a car radio. Sum\n0.70; the residue 0.30 is a trio playing all of it live, which nobody\nabove is doing.\n\nCOMPILED, seed 1: 36 bars, 11 sections, 1,006 EVENTS — THE SPARSEST OF THE\nFIVE, which is what \"the guitar is a pad and everything is held\" ought to\nlook like on a note count and is the second time this chain has had the\ncompiled record agree with the prose without anybody arranging it.\n`newwaveprog`, the same band three years earlier in the same room, writes\n1,578 over one fewer bar; `maxHold: 4` against `maxHold: 1` is most of the\ndifference and `realize: pad` on the third chair is the rest.\n  THE ALPHABET IS [4, 5, 6, 7, 8, 9] — SIX LEVELS, THE WIDEST IN THE WHOLE\nPROG CHAIN and the widest of these five by two (`heavyprog` and\n`stadiumprog` reach four, `bleakprog` and `progmetal` three, `suiteprog`\nthree). That is `swell` delivering exactly what FIGURES says it is for:\n\"it is the figure that actually widens the alphabet, because it gives a\nbar as many levels as it has notes rather than three.\" A row picked for a\nreason and the reason showing up in the measurement is the only kind of\nevidence this table accepts. 709 line notes, 132 accents at steps 0 and 16\n— 56 of each, the bar's own arrival, which is where a swell was aimed.\nFIT r2 0.757, RESIDUE 0.153 — just under the catalogue median of 0.165,\nwhich is the machine putting this row where the prose does: mostly its\n1981 parent, with a rack.",
+  "label": "Morin Heights 1984",
+  "near": "aor",
+  "plan": "song",
+  "bpm": 124,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "newwaveprog": 0.35,
+    "synthpop": 0.15,
+    "newwave": 0.1,
+    "aor": 0.1
+  },
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "clean_guitar"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 4
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "tenor"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    1,
+    1,
+    5,
+    5,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.lydian"
+  },
+  "scale": {
+    "$src": "MODES.lydian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3000,
+    "q": 1.1,
+    "atk": 0.02,
+    "rel": 1.3,
+    "gain": 0.22,
+    "verb": 0.5
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "fxAmt": {
+    "chorus": "deep"
+  },
+  "words": [
+    "the voice, lower than it was, the lyric on the front",
+    "the synthesiser, the riff, where the guitar used to be",
+    "the guitar, chorused, holding a chord for four bars"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [drop(2)], [rotate(3)], [fill(1)]][s % 4]\n                    : v === 1 ? [[keep(0, 4, 8, 12)], [keep(0, 4, 8, 12), transpose(5)], [keep(0, 4, 8, 12), invert(2)], [keep(0, 4, 8, 12)]][s % 4]\n                    : [keep(0)])"
+  },
+  "dyn": "swell",
+  "family": "band"
+}

@@ -1,0 +1,232 @@
+{
+  "note": "MODERN PROG — Toronto 2012. Rush, Clockwork Angels: Revolution\nRecording, Toronto, with sessions at Blackbird in Nashville, Nick\nRaskulinecz co-producing, Anthem and Roadrunner, released the 12th of\nJune 2012. Twelve songs and one story, thirty-eight years after the first\nrecord and the last one there was. The 2012-13 tour carried a string\nensemble on stage, which is the third chair here.\n\nDRIER AND LOWER THAN 1976, AND BOTH HALVES ARE NUMBERS RATHER THAN\nADJECTIVES. `tone.verb: 0.18` against `suiteprog`'s 0.40 — the driest\nvalue in the whole prog chain, under `heavyprog`'s 0.22, `newwaveprog`'s\n0.35, `bleakprog`'s 0.60. `tone.cut: 1600` against `suiteprog`'s 2200 and\n`synthprog`'s 3000 — the darkest filter in the chain by six hundred\nhertz. AND THE THIRD NUMBER IS THE REGISTER: `reg` puts chair 0 at -1,\nwhich makes this the ONLY row in the prog chain whose lead chair sits\nBELOW its own home octave (`progrock` +1 on the third chair, `heavyprog`\n+1 on the voice, `bleakprog` +1/-1, `stadiumprog` +1, `suiteprog` +1).\nDetuned guitars are a fact about 2012 and this is what one looks like in\na table that has no tuning field.\n\nWHAT IT HAS THAT `suiteprog` DOES NOT, which is the row it is most at\nrisk of being a copy of, since both are heavy guitar trios playing a\nstory. `voices: 3` against 4 and no polysynth at all — the keyboard that\narrived in 1976 and took the record over in 1984 is GONE, and its chair\nis a string section instead, which is an arranger's chair rather than a\nplayer's. `mode: MODES.phrygian` against dorian: the flat second is the\none interval this band had never built a record on, and it is what makes\n2012 sound like 2012 rather than like a reissue. `bars: 12` against 16 —\nlong, but no longer a side; the story is told across twelve songs here\nand inside one piece there. `bpm: 144` against 128, the fastest row in\nthe chain. `dyn: \"anacrusis\"` against `terraced`: FIGURES calls it \"the\npickup crescendos into the bar ... the tail of the bar is not the end of\nthis bar, it is the run-up to the next one\", which is what a\nRaskulinecz-produced riff record does and is the opposite of a suite that\nsteps down a level per movement.\n\nTHE LINK IS `Progressive metal` AND THE ARTICLE ARGUES THE ROW FOR US.\nIts own text: \"Canadian trio Rush is widely recognized as bridging the\ngap between hard rock, English progressive rock, and pure heavy metal.\"\nThat sentence is this row's parents list in prose — `heavyprog`,\n`suiteprog` and the metal weight — and it is why the link is the fusion\narticle rather than `Hard rock` (which `heavyprog` holds, and which dates\nitself to 1974-75 in the same breath) or `Progressive rock` (which three\nrows hold already). `progmetal` (San Francisco 1988) is the other holder\nand is a declared parent here: twenty-four years and one hemisphere\napart, and the article names both.\n\nLINEAGE. `suiteprog` 0.30 (Toronto 1976) — the form and the story, come\nback round. `heavyprog` 0.20 (Toronto 1975) — the riff and the trio, come\nback round harder. `progmetal` 0.15 (San Francisco 1988) — the weight,\nthe gain and the modern low end, which this band did not have in 1976 and\ntook from the wing it had helped start. `synthprog` 0.10 (Morin Heights\n1984) — the arranger's ear, which is what puts strings on a rock record\nrather than an organ. Sum 0.75; the residue 0.25 is thirty-seven years of\nthe same three people, which is not an inheritance from anybody.\n\nCOMPILED, seed 1: 44 bars, 8 sections, 1,225 EVENTS, and the shape of it is\nthe argument. 450 notes across the line voices — THE FEWEST OF THE FIVE\n— over the second-longest span, which is ten line notes a bar across\nthree chairs: a band playing a riff rather than a tune, and the exact\ninverse of `newwaveprog` (781 notes over 35 bars). 96 accents, alphabet\n[5,6,7,8,9], 39 each at steps 0 and 16 — `anacrusis` keeps its accent on\nthe downbeat and spends its levels on the three notes before it, which is\nwhy the alphabet is five wide on a record whose melody is this sparse.\nFIT r2 0.877, RESIDUE 0.120, under the catalogue median of 0.165 — the\nmachine agreeing that a record which sounds like a band coming back round\nto itself is, measurably, largely made of its own earlier rows.",
+  "label": "Toronto 2012",
+  "near": "suiteprog",
+  "plan": "arc",
+  "bpm": 144,
+  "bars": 12,
+  "voices": 3,
+  "parents": {
+    "suiteprog": 0.3,
+    "heavyprog": 0.2,
+    "progmetal": 0.15,
+    "synthprog": 0.1
+  },
+  "instr": [
+    "distortion_guitar",
+    "solo_vox",
+    "strings"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 8
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "throat": {
+    "kind": "const",
+    "n": "tenor"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    6,
+    1
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      6,
+      0,
+      0,
+      0,
+      8,
+      0,
+      9,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 1.6,
+    "atk": 0.003,
+    "rel": 0.35,
+    "gain": 0.25,
+    "verb": 0.18
+  },
+  "fx": [
+    "crunch"
+  ],
+  "fxAmt": {
+    "crunch": "deep"
+  },
+  "words": [
+    "the riff, an octave down, dry, no room on it",
+    "the voice, tenor now, telling the story straight",
+    "the strings, the arrangement, over the top of all of it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[keep(0, 2, 6, 8, 12)], [keep(0, 2, 6, 8, 12), transpose(1)], [keep(0, 2, 6, 8, 12), invert(2)], [keep(0, 2, 6, 8, 12), rotate(2)]][s % 4]\n                    : v === 1 ? [[], [drop(3)], [rotate(4)], [fill(1)]][s % 4]\n                    : [keep(0), transpose(12)])"
+  },
+  "dyn": "anacrusis",
+  "family": "band"
+}

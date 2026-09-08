@@ -13893,6 +13893,667 @@
       family: "studio",
     },
 
+    // HEAVY PROG — Toronto 1975. Rush, Fly by Night and Caress of Steel: both
+    // cut at Toronto Sound Studios with Terry Brown producing — Fly by Night in
+    // January 1975 and released the 15th of February, Caress of Steel in July
+    // and released the 24th of September — Anthem in Canada, Mercury elsewhere.
+    // Neil Peart's first two records with the band, and the last two before the
+    // side-long suite. THE LABEL NAMES THE ROOM AND THE YEAR AND THE ROW IS THE ERA, which
+    // runs back through the 1974 debut and stops dead at February 1976.
+    //
+    // Paul, 2026-09-08: "Can you please add multiple versions of Rush, for each
+    // era." Five rows, and this is the one before the band became a prog band.
+    //
+    // THE ARTICLE ITSELF DATES THIS ROW, which is the rarest kind of evidence
+    // this table gets and is why the link is not an argument but a quotation.
+    // `Hard rock`, the ZIM's own article, in its own words: "From outside the
+    // United Kingdom and the United States, the Canadian trio Rush released
+    // three distinctively hard rock albums in 1974-75 (Rush, Fly by Night and
+    // Caress of Steel) before moving toward a more progressive sound with the
+    // 1976 album 2112." That sentence draws BOTH of this row's borders — what it
+    // is and where it ends — and the row's whole content is on this side of it.
+    //
+    // WHAT IT HAS THAT NO OTHER PROG ROW IN THIS TABLE HAS: NO KEYBOARD. Grep
+    // the chain. `progrock` (Isle of Wight 1970) seats a rock organ and a grand
+    // piano. `studioprog` (St John's Wood 1973) is a studio. `bleakprog` (London
+    // 1976) and `stadiumprog` (London 1987) both seat a warm pad. `suiteprog`
+    // (Toronto 1976), the row directly after this one, seats a polysynth. This
+    // row seats an overdrive guitar, a voice and a second guitar, over a picked
+    // bass and a dry kit, and that absence is its first claim rather than an
+    // oversight — a three-piece band with nothing to hide behind is a different
+    // music from a three-piece band with a Mellotron, and the whole reason the
+    // era ends is that they went and got one.
+    //
+    // AND THE SECOND CLAIM IS THE REGISTER, DECLARED AS A `throat`. `throat:
+    // countertenor` — the one word out of `fields.js THROATS` that names a man
+    // singing above his own guitar player, which is the single fact every
+    // listener reports first about this band and which no row in this table had
+    // ever stated. It is a `const` on purpose: `precompose.seatThroat` DROPS a
+    // throat word for a chair that is not a person, so the two guitar chairs
+    // take nothing and the word reaches only the voice. The chain measures the
+    // register coming down — this row and `suiteprog` are countertenor, and
+    // `newwaveprog` (1981), `synthprog` (1984) and `modernprog` (2012) are
+    // tenor, which is a claim about thirty-seven years of singing that the table
+    // can now hold as data.
+    //
+    // THE THIRD IS THE ALPHABET. `scale: SCALES.blues` over `mode:
+    // MODES.aeolian`, and it is the only row in the whole prog chain that says
+    // it: `progrock` takes SCALES.major, `bleakprog` and `studioprog` take
+    // MODES.dorian, `stadiumprog` MODES.ionian. A blue third and a blue fifth
+    // over a minor mode is what "blues-schooled riffs" means when it is written
+    // down instead of asserted, and it is what makes this row sound like the
+    // 1966 rows it comes from rather than like the 1970 row it is filed beside.
+    //
+    // THE DYNAMIC FIGURE: `backbeat`, AND THE SHARE WITH `progrock` IS CONCEDED
+    // RATHER THAN DODGED, the way `stadiumprog` conceded `arch` with `aor`.
+    // FIGURES calls it "leans on two and four ... the single most consequential
+    // fact about American popular music after 1945". A riff band leans where the
+    // snare is; reaching for an unusual figure to make the row look distinct
+    // would be inventing evidence. The distinction is elsewhere and it is in
+    // eleven fields, which is the honest place for it.
+    //
+    // LINEAGE. `bluesrock` 0.25 (West Hampstead 1966) — the largest debt and the
+    // one the scale field says out loud. `heavymetal` 0.20 (Workington 1969) —
+    // the weight and the tempo. `progrock` 0.15 (Isle of Wight 1970) — the
+    // ambition, already audible in the long tracks and not yet in the form.
+    // `psychrock` 0.10 (San Francisco 1966) — the extended instrumental middle.
+    // Sum 0.70; the residue 0.30 is the register and the trio, which is to say
+    // the two things nobody in the table above could have handed down.
+    //
+    // COMPILED, seed 1: 35 bars, 11 sections, 1,207 EVENTS. 794 notes across the
+    // line voices carrying 222 accents, alphabet [5,6,7,8], and the accents land
+    // at steps 4 and 20 — the second and fourth quarter of the bar, forty-five
+    // of each, which is `backbeat` doing precisely what its own FIGURES entry
+    // promises and is the check that the figure reached the notes rather than
+    // just the row. FIT r2 0.623, RESIDUE 0.217 — ABOVE the catalogue median of
+    // 0.165, and reported that way round on purpose. `stadiumprog`'s note
+    // reports its own 0.115 as the machine saying "not much was invented here";
+    // this is the same machine saying the opposite, and it agrees with the
+    // declared residue of 0.30. `progrock` (r2 0.636, residue 0.202) sits in the
+    // same place for the same reason: a row whose parents are all at least five
+    // years older than it is mostly not its parents.
+    heavyprog: {
+      label: "Toronto 1975",
+      near: "heavymetal",
+      plan: "song",
+      bpm: 138,
+      bars: 8,
+      voices: 3,
+      parents: { bluesrock: 0.25, heavymetal: 0.2, progrock: 0.15, psychrock: 0.1 },
+      instr: ["overdrive_guitar", "solo_vox", "crunch_guitar"],
+      bassInstr: "picked_bass",
+      drumkit: "acoustic",
+      entry: v => (v === 0 ? 0 : v === 1 ? 4 : 8),
+      reg: v => (v === 1 ? 1 : 0),
+      realize: () => "line",
+      throat: () => "countertenor",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 0, 0, 3, 0, 0, 5, 6],
+      mode: MODES.aeolian,
+      scale: SCALES.blues,
+      harmony: "modal",
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 2000,
+        q: 1.4,
+        atk: 0.004,
+        rel: 0.45,
+        gain: 0.26,
+        verb: 0.22
+      },
+      fx: ["crunch"],
+      fxAmt: { crunch: "half" },
+      words: [
+        "the riff, one bar long, said twelve times",
+        "the voice, above the guitar, all night",
+        "the second guitar, the octave, the harmony line"
+      ],
+      word: (v, s) => (v === 0 ? [[keep(0, 3, 6, 10)], [keep(0, 3, 6, 10)], [keep(0, 3, 6, 10), transpose(5)], [keep(0, 3, 6, 10), invert(3)]][s % 4]
+                    : v === 1 ? [[], [rotate(2)], [drop(2)], [fill(1)]][s % 4]
+                    : [keep(0, 3, 6, 10), transpose(12)]),
+      dyn: "backbeat",
+      family: "band",
+    },
+
+    // SUITE PROG — Toronto 1976. Rush, 2112: Toronto Sound Studios, February
+    // 1976, Terry Brown producing, Anthem and Mercury, released the 1st of
+    // April. Side one is one piece in seven titled movements running just
+    // over twenty minutes, with a story, a narrator and a Roman numeral
+    // on each section; side two is five songs. THE ROW IS SIDE ONE.
+    //
+    // WHAT SEPARATES IT FROM `heavyprog`, WHICH IS THE ROW ELEVEN MONTHS BEFORE
+    // IT AND THE ONE THIS ROW HAD TO EARN ITS PLACE AGAINST. Not the band, not
+    // the room, not the producer, not the tempo family and not the guitar
+    // sound: the FORM. `bars: 16`, where `heavyprog` runs 8, `progrock` runs 8,
+    // `stadiumprog` runs 8 and `bleakprog` — the longest row in the prog chain
+    // until today — runs 12. Sixteen bars of root cycle is a movement rather
+    // than a verse, and it is the only field in this box that can say "a side"
+    // without lying about anything else. `plan: "arc"` where `heavyprog` is
+    // `song`, `voices: 4` where every other row in this chain seats three, and
+    // staggered entries (0, 4, 8, 12) so that the chairs ARRIVE across the
+    // first four bars instead of counting in together. A suite is a thing that
+    // begins several times.
+    //
+    // AND IT REFUSES A METER, WHICH IS THE PARAGRAPH THIS ROW EXISTS FOR. The
+    // era offered was "alternating odd and even meters", and 2112 does exactly
+    // that — the Overture and the Grand Finale flip between sevens and fours,
+    // and "Temples of Syrinx" is square. The refusal is on a law, not on taste:
+    // `fields.js` says of this family that "a record counts in three or it does
+    // not, and a section that changed meter mid-way would be a different
+    // feature", so a meter in this box is a SONG fact. Declaring `7/8` here
+    // would make every bar of a twenty-minute piece count in seven, which is
+    // not what the record does and is not even what its odd bars do. The odd
+    // meter is a PASSAGE and the box has no passage-meter, so the row says
+    // nothing and the note says why. `newwaveprog` (Morin Heights 1981) takes
+    // `7/8` five years later, and it takes it honestly, because by then the odd
+    // meter had moved out of the passage and into the hook.
+    //
+    // THE DYNAMIC FIGURE IS THE MOVEMENT SCHEME: `terraced`. FIGURES calls it
+    // "the figure is restated a level down ... it is the one figure in this
+    // table that reads `b` — the terrace is a fact about WHICH BAR, not about
+    // which note", written for a concerto grosso alternating tutti and
+    // concertino. That is a seven-movement suite's own device said in one word,
+    // and it is the field that carries the row's whole argument down to the
+    // note level: I. Overture loud, II. The Temples of Syrinx a level under it,
+    // III. Discovery under that. No other row in the prog chain takes it —
+    // `progrock` and `heavyprog` are `backbeat`, `bleakprog` `agogic`,
+    // `stadiumprog` `arch`.
+    //
+    // THE LINK IS THE PARENT ARTICLE OF A SECTION, AND THAT IS A RULE THIS FILE
+    // ALREADY HAD. `Symphonic prog` is the name for exactly this music and it
+    // is not an article: the ZIM serves it as a meta-refresh stub pointing at
+    // `Progressive rock#Symphonic rock`, and `wiki-extract.js` has refused a
+    // section since the Melodic techno case. So the link is `Progressive rock`,
+    // which `progrock` (Isle of Wight 1970) and `studioprog` (St John's Wood
+    // 1973) also hold — the third row on one article, and the alternative was a
+    // worse link rather than a better one.
+    //
+    // LINEAGE. `heavyprog` 0.35 (Toronto 1975) — the same three people eleven
+    // months earlier, and much the largest debt: the riff language, the
+    // register and the amp are all carried over whole. `progrock` 0.20 (Isle of
+    // Wight 1970) — the side-long form as a form, which is the thing that was
+    // gone out and got. `studioprog` 0.10 (St John's Wood 1973) — the
+    // narrative record with a synthesiser on it. `classical` 0.10 (Vienna 1785)
+    // — the overture-and-movements plan, claimed at a tenth because a rock band
+    // reading the shape off a sleeve is not the same as inheriting a practice.
+    // Sum 0.75; the residue 0.25 is the story, which no ancestor supplied.
+    //
+    // COMPILED, seed 1: 49 BARS, 8 sections, 1,511 EVENTS — THE LONGEST RECORD
+    // IN THE PROG CHAIN, against `modernprog`'s 44, `bleakprog`'s 41,
+    // `stadiumprog`'s 36 and `progrock`'s 27. That is the `bars: 16` argument
+    // arriving at the score, and it is the one number this row is for. 486 notes
+    // across the line voices — FEWER than `heavyprog`'s 794 over fourteen fewer
+    // bars — which is what a suite looks like counted: the density is in the kit
+    // and the bass, and the melody chairs are entering, stating and waiting.
+    // 56 accents only, alphabet [4,6,8], 41 of them at step 0, and the low count
+    // is `terraced` being read correctly rather than a fault: its accent is
+    // `j === 0 && b % 2 === 0`, so a terrace marks a MOVEMENT and not a beat,
+    // and this row therefore carries the fewest accents of the five. FIT r2
+    // 0.879, RESIDUE 0.114 — the best fit of the five and comfortably under the
+    // catalogue median of 0.165, which is the machine agreeing that this record
+    // is very largely `heavyprog` plus a form.
+    suiteprog: {
+      label: "Toronto 1976",
+      near: "progrock",
+      plan: "arc",
+      bpm: 128,
+      bars: 16,
+      voices: 4,
+      parents: { heavyprog: 0.35, progrock: 0.2, studioprog: 0.1, classical: 0.1 },
+      instr: ["overdrive_guitar", "solo_vox", "polysynth", "crunch_guitar"],
+      bassInstr: "picked_bass",
+      drumkit: "room",
+      entry: v => [0, 8, 4, 12][v],
+      reg: v => (v === 1 ? 1 : v === 2 ? 1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      throat: () => "countertenor",
+      part: ["riff", "lead", "pad", "counter"],
+      roots: [0, 0, 5, 5, 3, 3, 6, 6, 0, 0, 4, 4, 5, 6, 0, 0],
+      mode: MODES.dorian,
+      scale: MODES.dorian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "normal",
+      maxHold: 3,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        r: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 6, 0, 0, 7, 0, 8, 0, 0, 0, 0, 0, 6, 0],
+        s: [0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        r: [6, 0, 4, 0, 5, 0, 4, 0, 6, 0, 4, 0, 5, 0, 4, 0]
+      },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.3, atk: 0.006, rel: 0.9, gain: 0.24, verb: 0.4 },
+      fx: ["crunch", "echo"],
+      fxAmt: { crunch: "half" },
+      words: [
+        "the overture, the riff that comes back at the end",
+        "the narrator, one movement in seven",
+        "the synthesiser, the temple, one chord a bar",
+        "the second guitar, the fanfare, answering"
+      ],
+      word: (v, s) => (v === 0 ? [[], [transpose(5)], [invert(4)], [reverse()], [split(2)], [], [rotate(6)], []][s % 8]
+                    : v === 1 ? [[drop(2)], [fill(1)], [rotate(3)], [drop(4)]][s % 4]
+                    : v === 2 ? [keep(0)]
+                    : [[spread(2)], [transpose(7)], [spread(2), invert(2)], [transpose(12)]][s % 4]),
+      dyn: "terraced",
+      family: "band",
+    },
+
+    // NEW WAVE PROG — Morin Heights 1981. Rush, Moving Pictures: Le Studio,
+    // Morin Heights, Quebec, October and November 1980, Terry Brown producing,
+    // Anthem and Mercury, released the 12th of February 1981. THE LABEL NAMES
+    // THE ROOM AND THE ERA RUNS BACK ONE RECORD, to Permanent Waves, cut in the
+    // same room in the autumn of 1979 — which is the point of the era rather
+    // than a footnote: this is the pair where the twenty-minute side stopped
+    // and a prog band learned to write four minutes.
+    //
+    // THE ODD METER MOVED FROM THE PASSAGE INTO THE HOOK, AND THAT IS THE WHOLE
+    // ROW. `suiteprog` (Toronto 1976) REFUSES a meter on the ground that its
+    // sevens are passages inside a twenty-minute piece and this box's meter is
+    // a song fact. Five years later the same band wrote a seven that you can
+    // whistle and put it where the chorus goes, and a song fact is exactly what
+    // it is — so this row says `meter: "7/8"` and means it for every bar. That
+    // is the difference between the two rows stated in one field, and it is
+    // also why there are two rows rather than one.
+    //
+    // WHAT IT HAS THAT `progmetal` (San Francisco 1988) DOES NOT, since that is
+    // the other `7/8` row in the table and the near neighbour this had to argue
+    // past. `progmetal` is 145 bpm, `plan: "arc"`, two voices, `nobass`, no
+    // `bassStyle` at all, a ride-driven kit and no `fx`. This row is 130,
+    // `plan: "song"` — a three-minute record with a chorus in it — three
+    // voices, a picked bass on `sixteenths` (the busiest bass in the whole prog
+    // chain; `heavyprog` and `suiteprog` walk in eighths and `bleakprog` sits
+    // on a pedal), and `maxHold: 1`, which is the lowest number in the chain
+    // and is the reggae-inflected chop said as data: NOTHING on this record is
+    // held. Seven beats and nothing held is a different music from seven beats
+    // and everything held, and the two rows are three years and one continent
+    // apart.
+    //
+    // `seqArp: "arpup"` AND NO PAD, WHICH IS THE OTHER HALF OF THE SAME CLAIM.
+    // The polysynth chair `realize`s as a LINE, not as a pad — the Oberheim on
+    // this record arpeggiates, it does not wash — so all three seated chairs
+    // are lines and the row seats no pad at all. That is what separates it from
+    // `synthprog` (Morin Heights 1984) three years later in the same room,
+    // where the guitar becomes the pad and the synth takes the tune. One room,
+    // two rows, and the arrow between them is which chair is holding still.
+    //
+    // THE DYNAMIC FIGURE: `syncope`. FIGURES: "the weight is off the beat.
+    // Funk, afrobeat and ska are all one idea said three ways: the beat is
+    // where the weight is NOT." The off-beat guitar on this record is a ska
+    // upstroke played by a prog band and the figure is the ska one, chosen for
+    // the reason FIGURES gives rather than for novelty — it reads metrical
+    // strength rather than a list of legal steps, which is what a seven-beat
+    // bar needs, since a table of positions written for four would miss every
+    // accent in it.
+    //
+    // MODE `mixo`, AND IT IS THE ONLY MAJOR-SIDE ROW IN THIS FIVE. The flat
+    // seventh over a major triad is what the era's own hooks are built from and
+    // it puts this row on the other side of the chain from `heavyprog`
+    // (aeolian, blues), `suiteprog` (dorian) and `modernprog` (phrygian).
+    //
+    // LINEAGE. `suiteprog` 0.30 (Toronto 1976) — the same band and the meter it
+    // learned there, minus the twenty minutes. `newwave` 0.15 (London 1979) —
+    // the length, the dryness and the idea that a record could stop. `reggae`
+    // 0.15 (Kingston 1969) — the upstroke, and it is claimed at the same weight
+    // as new wave rather than lower, because it is audible in the guitar part
+    // before it is audible anywhere else. `progrock` 0.10 (Isle of Wight 1970)
+    // — still the grandparent. Sum 0.70; the residue 0.30 is the seven-beat
+    // hook, which nobody above wrote.
+    //
+    // COMPILED, seed 1: 35 bars, 11 sections, 1,578 EVENTS — THE BUSIEST OF THE
+    // FIVE and of the whole prog chain (`suiteprog` 1,511, `modernprog` 1,225,
+    // `stadiumprog` 1,215, `heavyprog` 1,207, `synthprog` 1,006, `bleakprog`
+    // 636). That is `bassStyle: "sixteenths"` and `maxHold: 1` together: a
+    // record where nothing is held has to keep playing. 781 line notes carrying
+    // 313 ACCENTS, the most in the chain by a distance, at steps 18, 4 and 1 —
+    // which are off the beat, which is the whole figure.
+    //   AND THE ALPHABET IS [5, 8] — TWO LEVELS, WHICH IS THE MOST INTERESTING
+    // NUMBER IN THIS ROW AND IS REPORTED BECAUSE IT WAS NOT EXPECTED. `syncope`
+    // offers three (`[5, 9, 8][S(i, N)]` — a quarter gives way at 5, an "and"
+    // takes 9, a sixteenth between them takes 8) and this record reaches only
+    // two of them: every note it writes is either ON a quarter or on a
+    // sixteenth between quarters, and NOT ONE lands on the eighth-note "and".
+    // In a bar of seven eighths that is not a bug, it is the count — the
+    // row's own `keep(2, 6, 10)` chop and its `arpup` sixteenths simply do not
+    // put anything there — but it is a fact about this record that no prose
+    // would have found, and if a later hand wants the 9 in the alphabet the
+    // place to get it is the word, not the figure. FIT r2 0.869, RESIDUE 0.120,
+    // under the catalogue median of 0.165.
+    newwaveprog: {
+      label: "Morin Heights 1981",
+      near: "newwave",
+      plan: "song",
+      bpm: 130,
+      bars: 8,
+      voices: 3,
+      meter: "7/8",
+      seqArp: "arpup",
+      parents: { suiteprog: 0.3, newwave: 0.15, reggae: 0.15, progrock: 0.1 },
+      instr: ["clean_guitar", "solo_vox", "polysynth"],
+      bassInstr: "picked_bass",
+      drumkit: "power",
+      entry: v => (v === 0 ? 2 : v === 1 ? 0 : 4),
+      reg: v => (v === 0 ? 0 : 1),
+      realize: () => "line",
+      throat: () => "tenor",
+      part: ["stab", "lead", "counter"],
+      roots: [0, 0, 6, 6, 3, 3, 6, 0],
+      mode: MODES.mixo,
+      scale: MODES.mixo,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "staccato",
+      maxHold: 1,
+      bassStyle: "sixteenths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 0, 0, 0, 0, 7, 0, 8, 0, 0, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 8, 0, 0, 0],
+        h: [6, 0, 4, 0, 6, 0, 4, 0, 6, 0, 4, 0, 5, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 2600,
+        q: 1.1,
+        atk: 0.005,
+        rel: 0.5,
+        gain: 0.23,
+        verb: 0.35
+      },
+      fx: ["flanger", "echo"],
+      fxAmt: { flanger: "half" },
+      words: [
+        "the guitar, on the off-beat, never on the beat",
+        "the voice, the hook, seven beats long",
+        "the arpeggio, up, the whole record"
+      ],
+      word: (v, s) => (v === 0 ? [[keep(2, 6, 10)], [keep(2, 6, 10)], [keep(2, 6, 10), transpose(5)], [keep(2, 6, 10)]][s % 4]
+                    : v === 1 ? [[], [rotate(2)], [invert(3)], [drop(2)]][s % 4]
+                    : [[fill(2)], [fill(2), transpose(7)], [spread(2)], [fill(2)]][s % 4]),
+      dyn: "syncope",
+      family: "band",
+    },
+
+    // SYNTH PROG — Morin Heights 1984. Rush, Grace Under Pressure: Le Studio,
+    // Morin Heights, Quebec, November 1983 to March 1984, Peter Henderson
+    // co-producing after Terry Brown, Anthem and Mercury, released the 12th of
+    // April 1984. THE LABEL SAYS 1984 AND THE BRIEF SAID 1985, AND THE CHANGE
+    // IS A CORRECTION RATHER THAN A PREFERENCE. The era offered was "Power
+    // Windows / Grace Under Pressure" at Le Studio; Power Windows (1985) was
+    // not cut at Le Studio at all — it was made at The Manor in Oxfordshire and
+    // at AIR Montserrat and mixed at Sarm East in London — and a label in this
+    // table is a ROOM and a YEAR. Grace Under Pressure is the record that is
+    // both, so it is the anchor, and the row runs forward through Power Windows
+    // (1985) to Hold Your Fire (1987), which is the same idea of a band and the
+    // same rack.
+    //
+    // TWO ROWS IN ONE ROOM, WHICH THIS TABLE HAS DONE BEFORE AND SAYS SO.
+    // `newwaveprog` is Morin Heights 1981 and this is Morin Heights 1984 —
+    // `studioprog`'s note makes the same move about Abbey Road Studio 3 ("the
+    // same room as `englishpsych` six years earlier, which is why one dot
+    // carries two records"). A room is not a genre; what makes these two rows
+    // rather than one is three years and an inverted band.
+    //
+    // INVERTED IS THE WORD AND IT IS A `realize` CLOSURE. `newwaveprog` seats
+    // three LINES and no pad: the guitar chops, the voice sings, the Oberheim
+    // arpeggiates. This row's third chair — the guitar — `realize`s as `pad`,
+    // and the polysynth takes the riff. That is "synth-led, guitar as texture"
+    // written where the box can read it rather than asserted in prose, and it
+    // is one field. `artic: "legato"` and `maxHold: 4` are the rest of it,
+    // against `staccato` and `maxHold: 1` three years earlier: the same three
+    // people, and nothing is chopped any more and everything is held.
+    //
+    // `drumkit: "electronic"` IS NOT A PRODUCTION CHOICE, IT IS WHAT THE
+    // DRUMMER BOUGHT. The Simmons pads are on the record and in every
+    // photograph of the kit from this era, so the gated crack on two and four
+    // is an INSTRUMENT here and not an effect on a snare — which is the whole
+    // difference between this row's kit and `stadiumprog`'s `power`. It is also
+    // the only `electronic` kit in the prog chain.
+    //
+    // `mode: MODES.lydian`, AND IT IS THE ONE FIELD IN THIS ROW THAT IS A
+    // JUDGEMENT. The raised fourth over a major triad is the suspended,
+    // unresolved colour this era's writing keeps landing on, and it separates
+    // the row from `stadiumprog`'s ionian, `newwaveprog`'s mixolydian and the
+    // two minor rows either side of the chain. It is a claim about a harmonic
+    // habit rather than a transcription of a chart, and it is written here as
+    // one so a later hand can argue with it.
+    //
+    // AND IT STAYS `family: "band"`, WHICH IS THE POINT AGAINST `stadiumprog`.
+    // The London 1987 row is `family: "studio"` and argues for it honestly —
+    // Waters gone, session players in the chairs, a hand editing a machine.
+    // This record is three people who bought synthesisers and played them
+    // themselves; there are no session players on it. A machine-heavy record
+    // made by a band is a different thing from a machine-heavy record made by a
+    // production, and `family` is the field that knows the difference, so it
+    // says `band` and the `dyn` figure it stamps is the honest one.
+    //
+    // THE DYNAMIC FIGURE: `swell`. FIGURES: "a crescendo across the whole bar
+    // into the next downbeat ... it gives a bar as many levels as it has notes
+    // (4 through 9 on a six-note bar) rather than three." A record whose middle
+    // is a held polysynth and a guitar realized as a pad has nowhere to put its
+    // weight except in the way the bar arrives, and the figure is the one that
+    // widens the alphabet — which is measurable and is measured below.
+    //
+    // LINEAGE. `newwaveprog` 0.35 (Morin Heights 1981) — much the largest, and
+    // the arrow points straight through it. `synthpop` 0.15 (Basildon 1981) —
+    // the machines and the way they are voiced. `newwave` 0.10 (London 1979) —
+    // still the song length. `aor` 0.10 (Los Angeles 1982) — the chorused
+    // clean bass, the wide reverb and the record aimed at a car radio. Sum
+    // 0.70; the residue 0.30 is a trio playing all of it live, which nobody
+    // above is doing.
+    //
+    // COMPILED, seed 1: 36 bars, 11 sections, 1,006 EVENTS — THE SPARSEST OF THE
+    // FIVE, which is what "the guitar is a pad and everything is held" ought to
+    // look like on a note count and is the second time this chain has had the
+    // compiled record agree with the prose without anybody arranging it.
+    // `newwaveprog`, the same band three years earlier in the same room, writes
+    // 1,578 over one fewer bar; `maxHold: 4` against `maxHold: 1` is most of the
+    // difference and `realize: pad` on the third chair is the rest.
+    //   THE ALPHABET IS [4, 5, 6, 7, 8, 9] — SIX LEVELS, THE WIDEST IN THE WHOLE
+    // PROG CHAIN and the widest of these five by two (`heavyprog` and
+    // `stadiumprog` reach four, `bleakprog` and `progmetal` three, `suiteprog`
+    // three). That is `swell` delivering exactly what FIGURES says it is for:
+    // "it is the figure that actually widens the alphabet, because it gives a
+    // bar as many levels as it has notes rather than three." A row picked for a
+    // reason and the reason showing up in the measurement is the only kind of
+    // evidence this table accepts. 709 line notes, 132 accents at steps 0 and 16
+    // — 56 of each, the bar's own arrival, which is where a swell was aimed.
+    // FIT r2 0.757, RESIDUE 0.153 — just under the catalogue median of 0.165,
+    // which is the machine putting this row where the prose does: mostly its
+    // 1981 parent, with a rack.
+    synthprog: {
+      label: "Morin Heights 1984",
+      near: "aor",
+      plan: "song",
+      bpm: 124,
+      bars: 8,
+      voices: 3,
+      parents: { newwaveprog: 0.35, synthpop: 0.15, newwave: 0.1, aor: 0.1 },
+      instr: ["solo_vox", "polysynth", "clean_guitar"],
+      bassInstr: "finger_bass",
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 4 : v === 1 ? 0 : 0),
+      reg: v => (v === 1 ? 1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      throat: () => "tenor",
+      part: ["lead", "riff", "pad"],
+      roots: [0, 0, 1, 1, 5, 5, 4, 4],
+      mode: MODES.lydian,
+      scale: MODES.lydian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "eighths",
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        k: [8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 6, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0]
+      },
+      tone: { wave: "sawtooth", cut: 3000, q: 1.1, atk: 0.02, rel: 1.3, gain: 0.22, verb: 0.5 },
+      fx: ["chorus", "echo"],
+      fxAmt: { chorus: "deep" },
+      words: [
+        "the voice, lower than it was, the lyric on the front",
+        "the synthesiser, the riff, where the guitar used to be",
+        "the guitar, chorused, holding a chord for four bars"
+      ],
+      word: (v, s) => (v === 0 ? [[], [drop(2)], [rotate(3)], [fill(1)]][s % 4]
+                    : v === 1 ? [[keep(0, 4, 8, 12)], [keep(0, 4, 8, 12), transpose(5)], [keep(0, 4, 8, 12), invert(2)], [keep(0, 4, 8, 12)]][s % 4]
+                    : [keep(0)]),
+      dyn: "swell",
+      family: "band",
+    },
+
+    // MODERN PROG — Toronto 2012. Rush, Clockwork Angels: Revolution
+    // Recording, Toronto, with sessions at Blackbird in Nashville, Nick
+    // Raskulinecz co-producing, Anthem and Roadrunner, released the 12th of
+    // June 2012. Twelve songs and one story, thirty-eight years after the first
+    // record and the last one there was. The 2012-13 tour carried a string
+    // ensemble on stage, which is the third chair here.
+    //
+    // DRIER AND LOWER THAN 1976, AND BOTH HALVES ARE NUMBERS RATHER THAN
+    // ADJECTIVES. `tone.verb: 0.18` against `suiteprog`'s 0.40 — the driest
+    // value in the whole prog chain, under `heavyprog`'s 0.22, `newwaveprog`'s
+    // 0.35, `bleakprog`'s 0.60. `tone.cut: 1600` against `suiteprog`'s 2200 and
+    // `synthprog`'s 3000 — the darkest filter in the chain by six hundred
+    // hertz. AND THE THIRD NUMBER IS THE REGISTER: `reg` puts chair 0 at -1,
+    // which makes this the ONLY row in the prog chain whose lead chair sits
+    // BELOW its own home octave (`progrock` +1 on the third chair, `heavyprog`
+    // +1 on the voice, `bleakprog` +1/-1, `stadiumprog` +1, `suiteprog` +1).
+    // Detuned guitars are a fact about 2012 and this is what one looks like in
+    // a table that has no tuning field.
+    //
+    // WHAT IT HAS THAT `suiteprog` DOES NOT, which is the row it is most at
+    // risk of being a copy of, since both are heavy guitar trios playing a
+    // story. `voices: 3` against 4 and no polysynth at all — the keyboard that
+    // arrived in 1976 and took the record over in 1984 is GONE, and its chair
+    // is a string section instead, which is an arranger's chair rather than a
+    // player's. `mode: MODES.phrygian` against dorian: the flat second is the
+    // one interval this band had never built a record on, and it is what makes
+    // 2012 sound like 2012 rather than like a reissue. `bars: 12` against 16 —
+    // long, but no longer a side; the story is told across twelve songs here
+    // and inside one piece there. `bpm: 144` against 128, the fastest row in
+    // the chain. `dyn: "anacrusis"` against `terraced`: FIGURES calls it "the
+    // pickup crescendos into the bar ... the tail of the bar is not the end of
+    // this bar, it is the run-up to the next one", which is what a
+    // Raskulinecz-produced riff record does and is the opposite of a suite that
+    // steps down a level per movement.
+    //
+    // THE LINK IS `Progressive metal` AND THE ARTICLE ARGUES THE ROW FOR US.
+    // Its own text: "Canadian trio Rush is widely recognized as bridging the
+    // gap between hard rock, English progressive rock, and pure heavy metal."
+    // That sentence is this row's parents list in prose — `heavyprog`,
+    // `suiteprog` and the metal weight — and it is why the link is the fusion
+    // article rather than `Hard rock` (which `heavyprog` holds, and which dates
+    // itself to 1974-75 in the same breath) or `Progressive rock` (which three
+    // rows hold already). `progmetal` (San Francisco 1988) is the other holder
+    // and is a declared parent here: twenty-four years and one hemisphere
+    // apart, and the article names both.
+    //
+    // LINEAGE. `suiteprog` 0.30 (Toronto 1976) — the form and the story, come
+    // back round. `heavyprog` 0.20 (Toronto 1975) — the riff and the trio, come
+    // back round harder. `progmetal` 0.15 (San Francisco 1988) — the weight,
+    // the gain and the modern low end, which this band did not have in 1976 and
+    // took from the wing it had helped start. `synthprog` 0.10 (Morin Heights
+    // 1984) — the arranger's ear, which is what puts strings on a rock record
+    // rather than an organ. Sum 0.75; the residue 0.25 is thirty-seven years of
+    // the same three people, which is not an inheritance from anybody.
+    //
+    // COMPILED, seed 1: 44 bars, 8 sections, 1,225 EVENTS, and the shape of it is
+    // the argument. 450 notes across the line voices — THE FEWEST OF THE FIVE
+    // — over the second-longest span, which is ten line notes a bar across
+    // three chairs: a band playing a riff rather than a tune, and the exact
+    // inverse of `newwaveprog` (781 notes over 35 bars). 96 accents, alphabet
+    // [5,6,7,8,9], 39 each at steps 0 and 16 — `anacrusis` keeps its accent on
+    // the downbeat and spends its levels on the three notes before it, which is
+    // why the alphabet is five wide on a record whose melody is this sparse.
+    // FIT r2 0.877, RESIDUE 0.120, under the catalogue median of 0.165 — the
+    // machine agreeing that a record which sounds like a band coming back round
+    // to itself is, measurably, largely made of its own earlier rows.
+    modernprog: {
+      label: "Toronto 2012",
+      near: "suiteprog",
+      plan: "arc",
+      bpm: 144,
+      bars: 12,
+      voices: 3,
+      parents: { suiteprog: 0.3, heavyprog: 0.2, progmetal: 0.15, synthprog: 0.1 },
+      instr: ["distortion_guitar", "solo_vox", "strings"],
+      bassInstr: "picked_bass",
+      drumkit: "power",
+      entry: v => (v === 0 ? 0 : v === 1 ? 4 : 8),
+      reg: v => (v === 0 ? -1 : v === 1 ? 0 : 1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      throat: () => "tenor",
+      part: ["riff", "lead", "pad"],
+      roots: [0, 0, 0, 1, 0, 0, 3, 3, 0, 0, 6, 1],
+      mode: MODES.phrygian,
+      scale: MODES.phrygian,
+      diatonic: true,
+      harmony: "cycle",
+      artic: "staccato",
+      maxHold: 2,
+      bassStyle: "octaves",
+      kit: {
+        k: [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        s: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        h: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      },
+      kitVel: {
+        k: [9, 0, 6, 0, 0, 0, 8, 0, 9, 0, 0, 0, 6, 0, 0, 0],
+        s: [0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0],
+        h: [6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0, 6, 0, 5, 0]
+      },
+      tone: {
+        wave: "sawtooth",
+        cut: 1600,
+        q: 1.6,
+        atk: 0.003,
+        rel: 0.35,
+        gain: 0.25,
+        verb: 0.18
+      },
+      fx: ["crunch"],
+      fxAmt: { crunch: "deep" },
+      words: [
+        "the riff, an octave down, dry, no room on it",
+        "the voice, tenor now, telling the story straight",
+        "the strings, the arrangement, over the top of all of it"
+      ],
+      word: (v, s) => (v === 0 ? [[keep(0, 2, 6, 8, 12)], [keep(0, 2, 6, 8, 12), transpose(1)], [keep(0, 2, 6, 8, 12), invert(2)], [keep(0, 2, 6, 8, 12), rotate(2)]][s % 4]
+                    : v === 1 ? [[], [drop(3)], [rotate(4)], [fill(1)]][s % 4]
+                    : [keep(0), transpose(12)]),
+      dyn: "anacrusis",
+      family: "band",
+    },
+
     // GREBO [Ned's Atomic Dustbin]. THE JOKE IS LITERAL: two bass voices,
     // not one doubled — `voices:3` puts a fuzzed guitar riff over TWO
     // independent basslines a fifth apart in register, one pulsing the root
