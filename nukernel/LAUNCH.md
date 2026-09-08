@@ -4,23 +4,52 @@ Paul, 2026-09-08: *"figure out how to launch this to stellate.app but turn the
 old version into old.stellate.app and then add a link to that in the hamburger
 menu, make that plan and then we'll do the switch. maybe the current main
 becomes the legacy branch and this one becomes main. but figure it out."*
+Then: *"Could we do stellate.app/old instead?"* Then: *"Okay finish it."*
 
-**Nothing on the server has been touched.** This is the plan and the runbook,
-and the switch is a separate word from Paul. Every number below was measured on
-the droplet or in this tree today, and the commands are the ones that were
-actually run to measure them.
+## IT IS DONE — 2026-09-08, 21:40 UTC
 
-**What HAS been done, in the tree** (Paul, 2026-09-08: *"we want to keep all the
-robots and have a new sitemap, new feeds, and manifest, and add analytics using
-the same system. Don't publish markdown. Erase and clean all of that up. Add the
-guard and make things secure. Don't bother saying the old one is old."*): the
-analytics beacon, `robots.txt`, `manifest.webmanifest` and the icons; the
-sitemap and feed generators; the deploy excludes that stop publishing the source;
-the guards on all four deploy scripts, on both branches. §4 and §9 record each
-one. Everything in §7 that touches nginx, DNS or the live site is still ahead of
-us.
+**stellate.app is the music box.** **stellate.app/old is the star map, unchanged.**
+The switch was `tools/deploy/switch-prod-vhost.sh --yes-switch`: two `root`
+lines and five location blocks, with a backup taken first and an automatic
+restore if `nginx -t` had failed. It did not fail.
+
+Verified on the live site, in a real browser and over the wire:
+
+| | |
+|---|---|
+| the box at the root | boots, strip and bar drawn, `crossOriginIsolated: true`, the beacon in the page, **zero page errors, zero 4xx** |
+| the archive at `/old` | the star map, drawn, isolated through the symlink, `X-Robots-Tag: noindex` |
+| service workers | exactly ONE on the origin — ours, at `/sw.js`. The archive registers none. |
+| the hamburger row | tapped with a real touch click; opened `stellate.app/old` in a new tab |
+| old links | `/how.html` → `/old/how.html` 200 · `/app/main.js` → 200 · `/assets/og-card.png` → 200 |
+| the old door | `/nukernel/index.html` → `/` 200 |
+| a sitemap link | `/?at=Kingston&y=1969&s=1&t=band` 200 |
+| shared media | `/found/…` 200, `immutable` |
+| the open-web layer | robots · sitemap (500 records) · feed · feed-archive · manifest, all 200 and all ours |
+| analytics | `/gc/count` 200 — counting, for the first time on this app |
+
+**Two paths 404 and did so before the switch as well:** `/ca.html` and `/daw`.
+Neither file has ever been on the prod disk (`/srv/stellate/ca.html`,
+`daw.html`, `fugue.html` are all absent) — they were staging-only doors. The
+launch did not take them away.
+
+**Branches, as asked.** `legacy` = 63edeba, the star map's tree with the deploy
+guards on it, pushed. `main` fast-forwarded 9c2f327 → 0c08c2c, no force, and is
+this branch now. GitHub's default branch did not have to move.
+
+**Rollback, if it is ever wanted:** `tools/deploy/switch-prod-vhost.sh --rollback`.
+`/srv/stellate` was never written by any of this, which is what makes it total.
+
+**What the launch taught, and it is in both deploy scripts now:** a smoke test
+that fires into a graceful reload LIES. `systemctl reload nginx` keeps the old
+workers alive until their in-flight requests finish, so three checks went red at
+the switch and every one of them was green by hand a minute later. Both smoke
+functions retry three times now. And one check could only ever have failed: it
+asserted the root contains `nu-topstrip`, which `ui/eight.js` builds at runtime
+and which is not in the served HTML at all.
 
 ---
+
 
 ## 0 · What is true today, measured
 
