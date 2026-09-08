@@ -6860,13 +6860,28 @@ table.nu-trims{ color: var(--ink); }
    distance of a finger, and it is what `markForm` has always written.
    (The colours are id-scoped, down beside the ground they have to beat: see
    `#pan-band .nu-wordgrid tbody tr.is-playing` below.) */
-/* `--lit` IS 22% AND WAS 85% (2026-09-08, §24). Paul: *"The orange is a
-   strange highlight color."* 85% of `--clock` is a near-full alarm red laid
-   down as a resting GROUND for a whole row, with `--ink` asked to read on top
-   of it. 22% is `--clock-tint`'s own strength, which is the number this page
-   already uses everywhere the clock has to be visible UNDER type rather than
-   instead of it. Same token, same row, same law; one number. */
-.nu-sheetgrid tbody tr.is-playing{ --lit: color-mix(in srgb, var(--clock) 22%, var(--panel)); }
+/* `--lit` IS 65% AND WAS 85%, AND FOR AN HOUR IT WAS 22% (2026-09-08, §24).
+   Paul: *"The orange is a strange highlight color."*
+
+   22% WAS WRONG AND THE GATE SAID SO. `--clock-tint`'s own strength is the
+   number this page uses where the clock must be visible UNDER type, and
+   reaching for it here looked right — but DESIGN.md component 11 puts a FLOOR
+   on this particular ground: the playing section is lit *"≥ 3:1 against a
+   resting row"*, which is Paul's other sentence about it (*"Really light up
+   the sections as you move through them"*) written as a number.
+   COMPUTED AGAINST `--ground` (22,25,26), which is what a resting row is:
+     22% -> 1.55:1     50% -> 2.50     65% -> 3.25 ✔
+     40% -> 2.10       60% -> 2.98     85% -> 4.53 (what it was)
+   So 22% was a third of the light the law requires. 65% is the calmest value
+   that clears it, and it is 20 points quieter than the 85% Paul was looking
+   at when he called it strange.
+   AND THE STRENGTH WAS NEVER THE WHOLE COMPLAINT, which is why this can come
+   back up without undoing the round: what made the old row shout was that it
+   was SEGMENTED (five separate rectangles, `border-spacing`) and that every
+   section number on the page stood in the same red at rest. Both are fixed
+   above and in the `[data-live]` rule; this one number is the part that had a
+   law under it. */
+.nu-sheetgrid tbody tr.is-playing{ --lit: color-mix(in srgb, var(--clock) 65%, var(--panel)); }
 .nu-sheetgrid tbody tr.is-playing > th .nu-srowname{ font-weight: var(--fw-block); }
 
 /* ===== A FOLDED GRID (2026-09-05, TABLE.md §13f) =======================
@@ -8466,6 +8481,36 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    store, the restore, `nukernel/desk-gate.js`'s min/max read and the board's
    own `#vol2` (the same 0..100 value, ui/engineer.js `listening`) are all
    exactly as they were. One store, one fewer view of it. */
+/* ---- AND THERE IS NO ROOM ON A NARROW GLASS EITHER (2026-09-08, §24) --
+   MEASURED, and it is a regression this round introduced: with undo and redo
+   in the bar, a 320px FINE-pointer page put the room fader at x=229 with a
+   width of 112 — `r=341` against a 320px viewport, so 21px of it hung off the
+   screen and the page could scroll sideways. The coarse rule below never fired
+   there (a desktop at 320 is a fine pointer), and the budget the edit pair was
+   argued against assumed the fader was absent.
+   320 IS THE NUMBER BECAUSE THE ARITHMETIC IS: content 312, less two 44px
+   transport marks and a seam (89), the die (44), the edit pair and its seam
+   (89), four seams (4) — 226 spent before the tape has a pixel. 112 more does
+   not fit and never did; what changed is that there are now two more marks
+   ahead of it.
+   IT IS THE ROOM THAT GOES AND NOT THE TAPE, for §22's own reason: the fader
+   is a control with a hardware equivalent on every machine that has one, and
+   the tape is the only thing on the page that says how much record is left.
+   AND THE BREAKPOINT IS 460 AND NOT 380, WHICH IS ALSO MEASURED. 380 stopped
+   the overflow and left the tape 27px wide at 390 on a mouse — under the 70px
+   its own note names as the floor (*"a track under 70px cannot show a bar of
+   an 88-bar record moving"*), which is a readout that is present and useless.
+   THE SUM: the bar's fixed children are the transport (91.2), the die (45),
+   the edit pair (91.2) and four 8px gaps (32) = 259.4. Add the room's 112 and
+   371.4 is spent, so the tape reaches its 70px floor at 441.4 and clears it at
+   460. Below that the room is not drawn and the tape takes what the fader
+   would have — 130px at 390.
+   A NARROW DESKTOP STILL HAS A ROOM: `.nu-listen` on the mix board is hidden
+   only under `(pointer: coarse)`, so a fine pointer in a small window keeps
+   the monitor one tap away. Nothing loses the control; the BAR loses it. */
+@media (max-width: 459px) {
+  .nu-bar > .nu-vs-wide{ display: none; }
+}
 @media (pointer: coarse) {
   .nu-bar > .nu-vs-wide{ display: none; }
   /* ...AND THE BOARD'S OWN MONITOR GOES WITH IT (2026-09-08). The paragraph

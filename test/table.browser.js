@@ -417,8 +417,10 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
        empty list. */
     const chipsOfField = (k) => p.evaluate((key) => {
       const f = document.querySelector('#pan-band [data-k="' + key + '"]');
-      if (!f) return [];
-      if (f.getAttribute("aria-expanded") !== "true") f.click();
+      const cards = document.querySelectorAll(
+        '#pan-band .nu-mopick[data-k^="' + key + '|"]');
+      if (!f && !cards.length) return [];
+      if (f && f.getAttribute("aria-expanded") !== "true") f.click();
       /* `.nu-lz` IS THE FOURTH WIDGET (2026-09-05, DESIGN.md component 16). A
          vocabulary that knows its own kinds opens as a LOZENGE FIELD rather
          than a strip of chips, and it mints the same `<field>|<value>`
@@ -426,7 +428,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          gate nor the driver has to know which one a field earned. Read only
          `.nu-wchip` and a converted field reports NO OPTIONS, which is the
          silent no-op test/lib-combo.js's own header was written about. */
-      return [...document.querySelectorAll("#pan-band .nu-wchip, #pan-band .nu-lz")]
+      /* ...AND `.nu-mopick` SINCE 2026-09-08 (TABLE.md §24). Paul: *"The
+         motif selector should be visual."* `material.cell` is a GRID OF
+         PICTURES now — one card per motif, each minting the same
+         `<field>|<value>` address a chip and a lozenge do — so this reads a
+         third class for the same reason it already read a second: ONE ADDRESS,
+         THREE WIDGETS, and neither this gate nor the driver has to know which
+         one a field earned. Reading only the old two reported `0 of 0 tapped`
+         about a field whose options were all on the glass, which is the exact
+         silent no-op the paragraph above was written about.
+         AND THE HEAD IS OPTIONAL NOW. A card grid is ALWAYS open — there is no
+         head at the bare key to press — so a missing `[data-k=<key>]` is not
+         "no such field" any more; it is a field that needs no opening. */
+      return [...document.querySelectorAll(
+          "#pan-band .nu-wchip, #pan-band .nu-lz, #pan-band .nu-mopick")]
         .map((c) => c.dataset.k).filter((x) => x && x.indexOf(key + "|") === 0);
     }, k);
     const press = (k) => p.evaluate((key) => {
@@ -1030,13 +1045,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           out.push(k + "|" + v);
         return out; }
       const f = document.querySelector('#pan-band [data-k="' + k + '"]');
-      if (!f) return [];
+      /* A CARD GRID HAS NO HEAD AT THE BARE KEY (2026-09-08, §24) — it is
+         always open — so a missing head is not "no such field". */
+      if (!f && !document.querySelector(
+            '#pan-band .nu-mopick[data-k^="' + k + '|"]')) return [];
       /* IDEMPOTENT, because the head is a TOGGLE and a strip survives its own
          write now — see `chipsOfField` above for the measurement. Blind, this
          line shut the strip it was asked to read: T6e's clear-back never found
          its chip ({"level":"+6"} left standing) and T6f's walk reported "NONE
          OF 4 MOVED IT" about four words it had never actually pressed. */
-      if (f.getAttribute("aria-expanded") !== "true") f.click();
+      if (f && f.getAttribute("aria-expanded") !== "true") f.click();
       /* ...AND `.nu-lz` FOR THE SAME REASON `chipsOfField` reads it (above):
          one address, two widgets. MEASURED the hour the lozenge landed: T8c
          said "none of 0 moved it" about a `does` vocabulary whose words were
@@ -1047,7 +1065,20 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          click, so its reason was reachable only through a screen reader. It is
          still a word this walk may not press — pressing one writes nothing and
          would be counted here as a word that does not move the sound. */
-      return [...document.querySelectorAll("#pan-band .nu-wchip, #pan-band .nu-lz")]
+      /* ...AND `.nu-mopick` SINCE 2026-09-08 (TABLE.md §24). Paul: *"The
+         motif selector should be visual."* `material.cell` is a GRID OF
+         PICTURES now — one card per motif, each minting the same
+         `<field>|<value>` address a chip and a lozenge do — so this reads a
+         third class for the same reason it already read a second: ONE ADDRESS,
+         THREE WIDGETS, and neither this gate nor the driver has to know which
+         one a field earned. Reading only the old two reported `0 of 0 tapped`
+         about a field whose options were all on the glass, which is the exact
+         silent no-op the paragraph above was written about.
+         AND THE HEAD IS OPTIONAL NOW. A card grid is ALWAYS open — there is no
+         head at the bare key to press — so a missing `[data-k=<key>]` is not
+         "no such field" any more; it is a field that needs no opening. */
+      return [...document.querySelectorAll(
+          "#pan-band .nu-wchip, #pan-band .nu-lz, #pan-band .nu-mopick")]
         .filter((c) => !c.disabled && c.getAttribute("aria-disabled") !== "true" &&
                        (c.dataset.k || "").split("|").pop() !== "")
         .map((c) => c.dataset.k);
@@ -1677,7 +1708,14 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     await openCell("tcell|" + bassV2.name + "|" + secId);
     const bw = await p.evaluate((args) => { const [n, sid] = args;
       const k = "material.cell|" + n + "|" + sid;
-      const row = document.querySelector('#pan-band [data-k="' + k + '"]');
+      /* THE PICKER IS A GRID OF CARDS SINCE 2026-09-08 (TABLE.md §24), so
+         there is no single control at the bare key — each motif is its own
+         card at `<field>|<value>`. The question this check asks is unchanged
+         and is not about a widget: is the bass's motifs question OFFERED, with
+         its caption, and NOT drawn refused. A card answers all three. */
+      const row = document.querySelector('#pan-band [data-k="' + k + '"]') ||
+                  document.querySelector(
+                    '#pan-band .nu-mopick[data-k^="' + k + '|"]');
       const line = row ? row.closest(".nu-sheetrow") : null;
       return { row: !!row,
         sub: line ? ((line.querySelector(".nu-sheetsub") || {}).textContent
@@ -2102,16 +2140,35 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       " -> " + JSON.stringify(w2) + ")");
 
     /* 9i · UNDO AND REDO, AT THE DOCUMENT LEVEL, FOR EVERY OP. §9a: "mandatory:
-       spreadsheet users expect it and the page has only the producer's undo." */
-    await barTap("tundo");
+       spreadsheet users expect it and the page has only the producer's undo."
+
+       ...AND THEY ARE IN THE BAR SINCE 2026-09-08 (TABLE.md §24). Paul: *"We
+       can move undo, redo to the bottom nav and make them global."* Both the
+       press and the measurement were scoped to `#pan-band`, and the bar is
+       `#nu-chrome`'s — outside it — so this read `null (0px)` for a control
+       that is on the glass at 44x44. `barTap` opened a CELL SHEET first,
+       which is where the two used to live.
+       THE CHECK GETS STRONGER FOR THE MOVE, and that is the point of the
+       round rather than a consolation: undo is pressed here with NO SHEET
+       OPEN, which is what "global" means and is a thing the old arrangement
+       could not have been asked. The claim — the clear comes back, and the
+       target is a thumb — is unchanged. */
+    const pressGlobal = (k) => p.evaluate((key) => {
+      const b = document.querySelector('[data-k="' + key + '"]');
+      if (!b) return "missing"; b.click(); return "ok"; }, k);
+    await p.keyboard.press("Escape");            // no sheet: undo is global
+    await p.waitForTimeout(300);
+    await pressGlobal("tundo");
+    await p.waitForTimeout(420);
     const undoTall = await p.evaluate(() => { const b =
-      document.querySelector('#pan-band [data-k="tundo"]');
+      document.querySelector('[data-k="tundo"]');
       return b ? Math.round(b.getBoundingClientRect().height) : 0; });
     const w3 = await written();
     check(w3 === w1 && undoTall >= 44,
       "T9i undo takes the clear back, at 44px — " + JSON.stringify(w3) +
       " (" + undoTall + "px)");
-    await barTap("tredo");
+    await pressGlobal("tredo");
+    await p.waitForTimeout(420);
     const w4 = await written();
     check(w4 === w2, "T9j …and redo puts it forward again — " + JSON.stringify(w4));
 
@@ -2471,7 +2528,12 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
                  page: document.documentElement.scrollWidth -
                        document.documentElement.clientWidth,
                  shorts, offs }; });
-      const want5 = ["taddr", "tundo", "tredo", "tcopy", "tpaste"];
+      /* THREE SINCE 2026-09-08 (TABLE.md §24). Undo and redo left this line
+         for the bottom bar — Paul: *"move undo, redo to the bottom nav and
+         make them global"* — keeping their addresses, which T7 checks for in
+         the bar. What is left on the cell's title bar is the ADDRESS and the
+         cell's own two verbs, as marks. */
+      const want5 = ["taddr", "tcopy", "tpaste"];
       /* `- 24` IS THE HEADER'S OWN AIR AND NOTHING ELSE: its inline padding
          (`--s3` at the start, `--s1` at the end) plus the one `--s2` gap
          between the head and the ×, which come to 22.4 at every width this
@@ -3657,8 +3719,24 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
           const tr = document.querySelector("#pan-band tbody tr.is-playing");
           const rest = [...document.querySelectorAll("#pan-band tbody tr[data-row]")]
             .find((x) => !x.classList.contains("is-playing"));
-          const bg = (e) => { const c = e && e.querySelector("th");
-            return c ? getComputedStyle(c).backgroundColor : null; };
+          /* THE GROUND A ROW ACTUALLY HAS, WHICH IS NOT ALWAYS ITS CELL'S
+             (2026-09-08, TABLE.md §24). The lit row's paint moved to the
+             `<tr>` — `border-spacing: 3px` meant a per-cell tint drew as
+             separate rectangles with gaps, which is Paul's *"blocky"* — so the
+             cells are transparent and the BAND is behind them. Reading the
+             `<th>` alone came back `rgba(0,0,0,0)` and the arithmetic below
+             computed 1.19:1 for a row that is plainly lit.
+             SO IT WALKS UP FOR THE FIRST REAL GROUND, which is what a browser
+             composites and therefore what an eye sees. That is a better
+             question than the one it asked before — a cell painted by its row
+             and a cell painted by itself look identical and should measure
+             identical — and the ≥3:1 floor below is unchanged and still bites:
+             it caught `--lit` at 22% (1.55:1) in this very round. */
+          const bg = (e) => { let c = e && e.querySelector("th");
+            while (c) { const v = getComputedStyle(c).backgroundColor;
+              if (v && !/rgba\(0, 0, 0, 0\)|transparent/.test(v)) return v;
+              c = c.parentElement; }
+            return null; };
           return { lamp: window.__lampSeq.slice(), rows: window.__rowSeq.slice(),
                    max: window.__rowMax, on: bg(tr), off: bg(rest) };
         });
@@ -4097,7 +4175,18 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
         /* the four a state or a category earns */
         if (el.getAttribute("aria-pressed") === "true") continue;
         if (el.classList.contains("nu-vpaint")) continue;
-        if (el.closest(".nu-strip, #rack, .nu-plate, .nu-env")) continue;
+        /* ...AND THE TWO DESIGN.md NAMED ON 2026-09-08 (TABLE.md §24). The
+           exclusion list is how this probe READS the law — *"a plate is only
+           where DESIGN.md names one"* — so a component that gets named there
+           gets named here, and one that does not still counts.
+           `.nu-modalcard` is component 4, the sheet as a card: *"a scrim and a
+           plate"*, in as many words. `.nu-mogrid`'s cards are component 26,
+           the motif field: sixteen targets, and a border is what this page
+           draws around a target. Both are plates ON PURPOSE and both are
+           written down; what this check still catches is a plate nobody
+           declared. */
+        if (el.closest(".nu-strip, #rack, .nu-plate, .nu-env, " +
+                       ".nu-modalcard, .nu-mogrid")) continue;
         plates++; who.push("plate " + el.tagName + "." + el.className);
       }
       return { plates, thick, who: who.slice(0, 6) };

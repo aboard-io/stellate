@@ -486,7 +486,18 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
          address as `data-k`, so it is surveyed by the same key every other
          widget on this page answers to, and the checks below can ask "is this
          fact drawn AT ALL, and in which of the three" instead of naming a tag. */
-      cells: q(".nu-wcell[data-k]").map((c) => ({ key: c.dataset.k,
+      /* ...AND A MOTIF CARD IS A CELL TOO (2026-09-08, TABLE.md §24). Paul:
+         *"The motif selector should be visual."* `material.cell` is drawn as a
+         GRID OF PICTURES now — one card per motif, each carrying the phrase's
+         own `<svg>` and the same `<field>|<value>` address a `.nu-wcell`
+         carries — so the survey looks for `.nu-mopick` beside `.nu-wcell`.
+         THE CLASS MOVED AND THE CLAIM DID NOT. 1a's own quotation is Paul's
+         *"tappable grids that change options rather than dropdowns"*, and a
+         card grid is more that than the strip it replaced, not less: what the
+         check is for is that this control is NOT a dropdown, and reading only
+         the old class would have failed it for becoming a better grid. */
+      cells: q(".nu-wcell[data-k], .nu-mopick[data-k]").map((c) => ({
+        key: c.dataset.k,
         k: bare(c.dataset.k), inApp: !!c.closest("#app") })),
     };
   });
