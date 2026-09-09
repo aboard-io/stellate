@@ -1624,6 +1624,32 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
     const u0 = await unit();
     await tap("tcol|" + bassV.name);
     const picked = await p.evaluate((n) => {
+      /* ...AND SINCE 2026-09-08 THE INSTRUMENT IS A CARD GRID (TABLE.md §24).
+         Paul: *"Use the motif selector for the main instrument selector too
+         please — it's just a dropdown."* So the first place to look is the
+         grid `sheet.ts` draws at `data-k="<field>"` with a `.nu-mopick` per
+         option at `<field>|<value>` — the same address shape T19f already
+         reads for the motifs. The claim is untouched: press an option that is
+         not the one showing, and the field reaches the sound. What moved is
+         the CONTROL, so what moves here is where the hand looks for it.
+         The `<select>` path below stays for every chair whose instrument is
+         still a wheel, and the SHEETS fallback after it stays for the four
+         vocabularies that are combos. */
+      /* THE GRID'S ADDRESS CARRIES THE VOICE — `sound.bassinstrument|bass`,
+         which is `sheet.ts`'s `sf.key` and the same `<field>|<voice>` shape
+         every other control in this sheet uses. Measured on Kingston 1969, in
+         the bass's own column sheet. A prefix match, so a rename of the voice
+         does not need a rename here. */
+      const grid = document.querySelector('#pan-band .nu-mogrid[data-k^="sound.bassinstrument"]');
+      if (grid) {
+        const picks = [...grid.querySelectorAll(".nu-mopick")];
+        const on = grid.querySelector('.nu-mopick[aria-pressed="true"]');
+        const other = picks.find((b) => b !== on && !b.hasAttribute("aria-disabled"));
+        if (!other) return null;
+        const val = String(other.dataset.k || "").split("|").slice(1).join("|");
+        other.click();
+        return val || "card";
+      }
       const host = document.querySelector('#pan-band [data-sel="sel|sound.bassinstrument|' + n + '"], ' +
                                           '#pan-band [data-k="sel|sound.bassinstrument|' + n + '"]');
       if (!host) return null;
@@ -4928,19 +4954,51 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
       /* ---- the instrument picker, in a chair's sheet (147 words, 13 clusters) */
       const PD = await q.evaluate(() => window.__eightDoc());
       const pv = ((PD.voices || []).find((v) => v.kind !== "drums") || (PD.voices || [])[0] || {}).name;
+      /* ===== THE INSTRUMENT PICKER IS A CARD GRID SINCE 2026-09-08 =========
+         Paul: *"Use the motif selector for the main instrument selector too
+         please — it's just a dropdown."* So it is no longer a LOZENGE field,
+         and the three helpers above — `pfield`, `pmeasure`, `pjump` — are all
+         `.nu-lzfield`'s: pills, their pairwise overlap, and the ▾ on a chassis.
+         None of that is a claim about a grid of cards, and pointing them at one
+         measured `null` four times over, which is what this reported.
+
+         SO THE LOZENGE CLAUSE IS RETIRED FOR THIS SURFACE AND THE SCROLL CLAUSE
+         IS KEPT, because the scroll clause is the one Paul asked for — *"when I
+         click the instrument selector it shouldn't move at all"* — and it is
+         MORE at risk on cards, not less: the grid places its own scroll (
+         src/table/grid.ts `placeGrids`) and the sheet keeps its own (
+         `keepCardScroll`). What is asserted: press a card that is not the one
+         showing, and the document's instrument becomes that card's value while
+         every scrollport on the page stays exactly where it was. */
       let jinstr = null;
       if (pv) {
         await ptap("tcol|" + pv);
-        const irow = await q.evaluate(() => {
-          const o = document.querySelector("#pan-band .nu-modalcard");
-          if (!o) return null;
-          const r = [...o.querySelectorAll(".nu-sheetrow")].find((x) =>
-            ((x.querySelector(".nu-sheetlab") || {}).textContent || "").trim() === "instrument");
-          const c = r && r.querySelector(".nu-wcell");
-          return c ? c.dataset.k : null; });
-        if (irow) { await pfield(irow);
-          surfaces.push(["the instrument picker", await pmeasure(irow)]);
-          jinstr = await pjump(irow); }
+        jinstr = await q.evaluate(() => {
+          const grid = document.querySelector('#pan-band .nu-mogrid[data-k^="sound.instrument"]');
+          if (!grid) return { missing: "no instrument grid" };
+          const ports = [...document.querySelectorAll("*")].filter((e) =>
+            e.scrollHeight - e.clientHeight > 4 &&
+            /auto|scroll/.test(getComputedStyle(e).overflowY));
+          ports.push(document.scrollingElement);
+          const tops = ports.map((e) => e.scrollTop);
+          const on = grid.querySelector('.nu-mopick[aria-pressed="true"]');
+          const other = [...grid.querySelectorAll(".nu-mopick")]
+            .find((b) => b !== on && !b.hasAttribute("aria-disabled"));
+          if (!other) return { missing: "one card only" };
+          const want = String(other.dataset.k || "").split("|").slice(1).join("|");
+          other.click();
+          return { tops, want,
+                   now: ports.map((e) => e.scrollTop),
+                   open: !!document.querySelector('#pan-band .nu-mogrid[data-k^="sound.instrument"]') };
+        });
+        if (jinstr && jinstr.want) {
+          await q.waitForTimeout(600);
+          jinstr.landed = await q.evaluate((n) => {
+            const D = window.__eightDoc();
+            const v = (D.voices || []).find((x) => x.name === n) || {};
+            return String(v.instr || v.instrument || "");
+          }, pv);
+        }
         await ptap("tcol|" + pv);
       }
 
@@ -5005,14 +5063,16 @@ const KITGROUPS = ["kick", "snare", "hats", "toms & fills", "dynamics", "feel"];
          asserting it away would be asserting that the sheet must not answer.
          What is still asked of it: the scroll does not move, the field stays
          open, and the word a thumb pressed is the one standing. */
-      for (const [name, j, rect] of [["the mode picker", jmode, true],
-                                     ["the instrument picker", jinstr, false]]) {
-        check(!!j && JSON.stringify(j.tops) === JSON.stringify(j.now) &&
-              (!rect || JSON.stringify(j.box) === JSON.stringify(j.after)) &&
-              j.open && j.hot === "true",
-          "T12n …and a tap on " + name + " at " + W + " WRITES AND MOVES " +
-          (rect ? "NOTHING" : "NO SCROLLPORT") + " — " + JSON.stringify(j));
-      }
+      check(!!jmode && JSON.stringify(jmode.tops) === JSON.stringify(jmode.now) &&
+            JSON.stringify(jmode.box) === JSON.stringify(jmode.after) &&
+            jmode.open && jmode.hot === "true",
+        "T12n …and a tap on the mode picker at " + W + " WRITES AND MOVES " +
+        "NOTHING — " + JSON.stringify(jmode));
+      check(!!jinstr && !jinstr.missing &&
+            JSON.stringify(jinstr.tops) === JSON.stringify(jinstr.now) &&
+            jinstr.open && jinstr.landed === jinstr.want,
+        "T12n …and a card pressed in the instrument grid at " + W + " WRITES " +
+        "AND MOVES NO SCROLLPORT — " + JSON.stringify(jinstr));
       await pctx.close();
     }
   }

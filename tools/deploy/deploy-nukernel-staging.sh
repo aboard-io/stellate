@@ -102,13 +102,21 @@ for f in feed.xml feed.json feed-archive.xml feed-archive.json sitemap.xml; do
 done
 
 echo "deploying $(git -C "$REPO" rev-parse --short HEAD) · sw.js $(grep -oE 'v[0-9]+' "$TMP/tree/sw.js" | head -1) -> $DEST"
-# AND THE COMMENTS COME OUT OF THE HTML ON THE WAY THROUGH (2026-09-08). Paul,
-# on the live site: *"The HTML page is FULL Of claude-generated nonsense
-# comments!!!!"* — 49.2 KB of index.html's 53.8 is argument, which is right for
-# whoever opens the FILE and wrong in front of somebody who chose View Source on
-# a public page. It runs on the WORKTREE, never the repo: the source keeps every
-# word, and what ships is the markup.
-node "$REPO/tools/build/strip-html-comments.js" "$TMP/tree/nukernel"
+# AND THE COMMENTS COME OUT OF THE HTML, THE CSS AND THE JS ON THE WAY THROUGH
+# (2026-09-08, widened 2026-09-09). Paul: *"The HTML page is FULL Of
+# claude-generated nonsense comments!!!!"* and then *"It's time to get rid of
+# the markdown, the comments, and tidy things up for future dev."*
+# THE NUMBERS: index.html 53.8 -> 3.2 KB, nu.css 719 -> 152, ui/eight.js 1081 ->
+# 321. Over four megabytes of argument that every visitor downloads and no
+# visitor can act on. HTML goes through this repo's own stripper and CSS/JS
+# through esbuild — a real parse, because a `//` in a string and a backtick in a
+# comment are not something a regex may be trusted with (this file has broken a
+# template literal twice by trying).
+# IT RUNS ON THE WORKTREE, NEVER THE REPO: the source keeps every word — that is
+# what a future developer needs, and it is where today's tier demotion and the
+# `line` part both came from — and what ships is the machine.
+node "$REPO/tools/build/strip-comments.js" "$TMP/tree/nukernel"
+node "$REPO/tools/build/strip-comments.js" "$TMP/tree/engine"
 cd "$TMP/tree"
 # A DEPLOY MUST NOT BE VISIBLE HALF-DONE (2026-09-06). Paul, mid-round:
 #   "Nothings loading it's just a blank screen" ... then "It's back".

@@ -9297,13 +9297,28 @@ td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   border-color: transparent; background: none; opacity: .75;
   color: var(--dim); }
 #pan-band .nu-clearback{ margin-inline-start: auto; }
-#pan-band .nu-sheetops .nu-opbtn.is-mark{
-  inline-size: auto; min-inline-size: var(--tap);
-  padding-inline: .6ch; gap: .5ch; }
-#pan-band .nu-sheetops .nu-opbtn.is-mark > .nu-vh{
-  position: static; inline-size: auto; block-size: auto;
-  clip: auto; clip-path: none; white-space: nowrap;
-  overflow: visible; margin: 0; }
+/* ...AND THE WORDS COST A SETTING AT 320, SO THEY WAIT FOR THE ROOM
+   (2026-09-09). test/table.browser.js T19a is the law that a sheet shows more
+   settings AT REST than the stack it replaced — *"4 of 12"*, on all three
+   records — and T8b and T12n went with it, because the picker they reach for
+   had been pushed off the glass. MEASURED at 320: with the words, the player's
+   bar is 143px tall and FOUR settings are on the glass; as marks, 94px and
+   FIVE. One setting, and it is this rule that spends it.
+   BOTH ASKS SURVIVE THE BREAKPOINT. Paul's *"what does that do"* is about a
+   sheet a hand is reading, and above 700px there is room for the word to be
+   there while the settings stay; below it the mark stands alone, which is what
+   it did before and what the tap floor was built for. 700px is this
+   stylesheet's most-used line already (three rules) and the one the Explore
+   split uses, so this adds no new geometry to the page's vocabulary. */
+@media (min-width: 700px){
+  #pan-band .nu-sheetops .nu-opbtn.is-mark{
+    inline-size: auto; min-inline-size: var(--tap);
+    padding-inline: .6ch; gap: .5ch; }
+  #pan-band .nu-sheetops .nu-opbtn.is-mark > .nu-vh{
+    position: static; inline-size: auto; block-size: auto;
+    clip: auto; clip-path: none; white-space: nowrap;
+    overflow: visible; margin: 0; }
+}
 #pan-band .nu-vsheet .nu-sheetrow{ border-block-end: 0; }
 #pan-band .nu-vsheet .nu-sheetrow + .nu-sheetrow{
   border-block-start: var(--bw) solid var(--rule); border-block-end: 0; }

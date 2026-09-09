@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* strip-html-comments.js — THE COMMENTS STAY IN THE SOURCE AND STOP BEING THE
- * PAGE. Rewrites every .html file under a directory IN PLACE, removing HTML
+/* strip-comments.js — THE COMMENTS STAY IN THE SOURCE AND STOP BEING THE PAGE.
+ * Rewrites every .html, .css and .js file under a directory IN PLACE, removing
  * comments and nothing else.
  * ==========================================================================
  * Paul, on the live site: *"The HTML page is FULL Of claude-generated nonsense
@@ -36,7 +36,23 @@
  * bytes it removes are ones nobody can act on, and every other byte is
  * somebody's layout.
  *
- *   node tools/build/strip-html-comments.js <dir> [--dry]
+ * CSS AND JS GO THROUGH A PARSER, NOT A REGEX (2026-09-09). Paul, after the
+ * launch: *"It's time to get rid of the markdown, the comments, and tidy things
+ * up for future dev."* The comments are 80% of nu.css and 76% of ui/eight.js —
+ * 1.4 MB of argument that every visitor downloads and no visitor can act on —
+ * and this is where they stop being shipped. esbuild TRANSFORMS each file (it
+ * is already this repo's bundler, `tools/ui/build.js`) with `legalComments:
+ * "none"` and no minification: a real parse, so a `//` inside a string, a `/*`
+ * inside a regex literal and a backtick inside a comment are all handled by
+ * something that knows what they are. A regex could not, and this file has
+ * broken a template literal twice by trying.
+ * MEASURED: nu.css 719 -> 152 KB, ui/eight.js 1081 -> 321 KB.
+ * IT NEVER RUNS ON THE REPO. Both deploy scripts call it on the detached
+ * worktree they are about to rsync, so what ships is thin and what is committed
+ * still argues for itself — which is the half of "tidy for future dev" that a
+ * future developer actually needs.
+ *
+ *   node tools/build/strip-comments.js <dir> [--dry]
  */
 "use strict";
 const fs = require("fs");
@@ -100,14 +116,36 @@ const files = [];
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) { if (e.name !== ".git" && e.name !== "node_modules") walk(p); }
-    else if (/\.html$/i.test(e.name)) files.push(p);
+    else if (/\.(html|css|js)$/i.test(e.name)) files.push(p);
   }
 })(ROOT);
 
 let saved = 0, touched = 0;
+let esbuild = null;
+try { esbuild = require("esbuild"); }
+catch (e) { console.error("strip-comments: esbuild not found — .css/.js left whole"); }
+
 for (const f of files) {
   const was = fs.readFileSync(f, "utf8");
-  const now = strip(was);
+  let now;
+  if (/\.html$/i.test(f)) now = strip(was);
+  else if (!esbuild) continue;
+  else {
+    /* A FILE THAT WILL NOT PARSE IS LEFT EXACTLY AS IT IS. The deploy must not
+       be the thing that discovers a syntax error, and a stripper that "fixed"
+       one would be worse: the bytes that ship would stop being the bytes that
+       were tested. */
+    try {
+      now = esbuild.transformSync(was, {
+        loader: /\.css$/i.test(f) ? "css" : "js",
+        legalComments: "none", minify: false, target: "esnext",
+      }).code;
+    } catch (err) {
+      console.error("strip-comments: " + f + " left whole (" +
+                    String(err.message || err).split("\n")[0] + ")");
+      continue;
+    }
+  }
   if (now === was) continue;
   touched++; saved += was.length - now.length;
   if (!DRY) fs.writeFileSync(f, now);
