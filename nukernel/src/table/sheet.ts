@@ -709,7 +709,7 @@ function motifRow(sf: StripField, write: (v: string) => void,
       ${opts.map(card)}
       ${api && api.newMotif
         ? html`<button type="button" class="nu-mocard nu-monew" data-k="motif-new"
-            aria-label=${t("motif.new")}
+            aria-label=${t("motif.new.say")}
             @click=${() => { const n = api.newMotif!(); if (n) write(n); }}
             ><span class="nu-g" aria-hidden="true">+</span
             ><span class="nu-moname">${t("motif.new.word")}</span></button>`

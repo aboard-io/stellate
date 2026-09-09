@@ -165,8 +165,17 @@ var TABLE = {
   "bar.addrRange.other": "{addr} · {n} cells",
   "bar.undo": "↶ undo",
   "bar.redo": "↷ redo",
-  "bar.copy": "copy",
-  "bar.paste": "paste",
+  /* (`bar.copy` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `glyph.act.copy`, which is the owner: the glyph catalogue owns the words that ride on marks, and copy is a mark on
+     this bar like any other.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
+  /* (`bar.paste` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `glyph.act.paste`, which is the owner: the same reason as `bar.copy` one line up.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
   /* a grey button says why it is grey (DESIGN.md §2.14, "no silent grey"). */
   "bar.undo.none": "Nothing to undo",
   "bar.redo.none": "Nothing to redo",
@@ -516,7 +525,13 @@ var TABLE = {
      motifs."* The `see` half needs no copy — it is a picture and a name the
      bank already owns. These are the two GESTURES, plus the word the ✎ carries
      for a screen reader and for a page with no stylesheet. */
-  "motif.new": "Make a new motif and use it here",
+  /* `.say` AND NOT A BARE KEY (2026-09-09). test/copy.test.js C2 reported this
+     at eight words against a SIX-word budget, and the budget was right about
+     the kind and wrong about the string: a key is judged a sentence only when a
+     segment begins with aria/say/why/title/alt/help, and this is the accessible
+     sentence for the + card — `motif.new.word` ("new") is its face. The words
+     do not change; the key stops claiming to be a face. */
+  "motif.new.say": "Make a new motif and use it here",
   "motif.new.word": "new",
   "motif.edit": "Edit {name}",
   "motif.edit.word": "edit",
@@ -635,7 +650,13 @@ var SHEETS = {
   "bank.listEmpty": "No motifs yet — add one",
   /* a name and the row's own readout (its length, and who plays it) */
   "bank.item.aria": "{name} — {value}",
-  "bank.item.edit": "Edit {name}",
+  /* (`bank.item.edit` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `motif.edit`, which is the owner: a motif's own block owns the two gestures and the two
+     words that go with them (`motif.new.say`, `motif.new.word`, `motif.edit`,
+     `motif.edit.word`), and the bank is where a motif is edited.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
   "bank.playedBy": "played by {names}",
   "bank.nobody": "Nobody plays this yet",
   "bank.pointed": "Pointed at {name}",
@@ -1926,7 +1947,12 @@ var UI = {
      blurbs are keyed `.help` for the same reason `bar.play.aria` is keyed
      `.aria`: the suffix is what says which budget a string is held to. */
   "ui.gal.title": "Design system",
-  "ui.gal.daylight": "Daylight",
+  /* (`ui.gal.daylight` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `burger.light`, which is the owner: the app's own row owns the word; the design gallery
+     had the toggle first and the app has it now, so the gallery defers.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
   "ui.gal.palette": "The palette",
   "ui.gal.palette.help": "A panel and a screen. Only a lamp is saturated.",
   "ui.gal.grounds": "Grounds",

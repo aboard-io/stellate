@@ -392,7 +392,14 @@
      now read this line, which is what makes the gate's question answerable.
      The NUMBERS are still kernel.js's: `okMeter` validates, `meterRow`
      counts, and nothing here knows what a 7 over an 8 is worth. */
-  const METERSIGS = Object.freeze(["2/4", "5/4", "7/8", "12/8"]);
+  /* 7/4 JOINS THEM (2026-09-09). test/rules.test.js R2b — *"every value the
+     catalogue declares is a value its rule offers"* — reported
+     `studioprog/meter = "7/4"` as a STRANGER, and the stranger was this list:
+     `K.okMeter("7/4")` is true, the engine has always rendered it, and the row
+     that declares it is St John's Wood 1973, where the seven is the whole point
+     of the record's most famous side. A menu short by one value is a hand told
+     it may not ask for something the box does. */
+  const METERSIGS = Object.freeze(["2/4", "5/4", "7/4", "7/8", "12/8"]);
   /* ...AND THE PACE, WHICH IS THE FOURTH OF THIS FAMILY AND THE ONLY ONE THAT
      IS A BOX FIELD (2026-09-02, the composer round). Paul, B7: *"Tap tempo,
      the tempo editor appears, same for key. The tempo editor does not reflect
@@ -1747,7 +1754,15 @@
   // PART — a per-layer role assignment (kernel PARTS). "auto" means the
   // genre's own per-voice scheme; anything else makes every voice of that
   // layer the named part.
-  const PARTCHOICES = { auto: "auto", lead: "lead", riff: "riff",
+  /* `line` IS A PART AND WAS MISSING FROM ITS OWN MENU (2026-09-09). R2b again:
+     `grunge/part holds "line"`, twice. `line` is not a stranger — it is the
+     ENGINE'S OWN DEFAULT, the word `kernel.js partOf` returns for a chair with
+     no part that does not realize as a pad, and it has an entry in `PARTS`
+     beside the other six. So a row that says `line` is naming the thing the box
+     would have done anyway, and the only surface that disagreed was this list.
+     It sits after `auto` because that is what it is nearest to: auto is "let
+     the row decide", line is "decided: the plain one". */
+  const PARTCHOICES = { auto: "auto", line: "line", lead: "lead", riff: "riff",
                         counter: "counter", pad: "pad", stab: "stab",
                         drone: "drone" };
 

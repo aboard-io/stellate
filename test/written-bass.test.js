@@ -153,7 +153,33 @@ function bassSig(Doc, P, GENRES, a) {
 console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
             "names a bass cell\n");
 {
-  const FREEZE = JSON.parse(fs.readFileSync(R("test/fixtures/bass-pre-waveD.json"), "utf8"));
+  /* ===== THE FREEZE IS DATED, AND IT IS RE-BAKED WHEN IT STOPS SPEAKING ===
+     (2026-09-09.) W1 reported `41 of 509 anchors` and it was right twice over:
+     the freeze was pinned before wave D, and 468 rows have changed their bass
+     INPUTS since — every genre round between then and now, the dynamics flood,
+     the walls-down rounds, the five Rush rows. Each of those rows fell into
+     `reargued` and stopped being compared, until the pin spoke for 41 records
+     and the gate had no teeth left for the 468.
+
+     WHAT WAS NOT WRONG, AND THIS IS THE WHOLE REASON A RE-BAKE IS HONEST HERE:
+     W1a and W1b were GREEN on every row the freeze still covered — same number
+     of bass notes, same time, pitch, velocity, accent and slide. The ENGINE had
+     not drifted at all. What had gone stale was a copy of the catalogue, which
+     is the exact failure GENRES.md §1 names: *"a copy of the catalogue goes
+     stale silently."*
+
+     SO IT IS RE-BAKED AND IT IS DATED IN ITS OWN NAME. A pin called
+     `pre-waveD` that no longer means "before wave D" is worse than no pin. The
+     new one says the day it was taken; `--bake` writes it from the same three
+     functions the comparison reads, so the shapes cannot disagree; and from
+     today the gate speaks for all 509 records again — the next round that moves
+     one note of bass in one row will be caught, which is the whole job.
+     RE-BAKING CANNOT RECOVER THE PAST and this note is where that is admitted:
+     what those 468 rows sounded like before their inputs moved is not in this
+     repository any more, and no assertion here can pretend otherwise. */
+  const FREEZEPATH = R("test/fixtures/bass-2026-09-09.json");
+  const FREEZE = fs.existsSync(FREEZEPATH)
+    ? JSON.parse(fs.readFileSync(FREEZEPATH, "utf8")) : {};
   /* ...AND THE ROWS THE ENGINE ITSELF RE-ARGUED (2026-09-07, the engine
      audit, E3). `reargued` above is for a row whose INPUTS moved; this is the
      other half of the same distinction, and it had never come up before:
@@ -202,6 +228,31 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
            (g.bassStyle === "walk" || g.bassStyle === "octaves" ||
             g.bassStyle === "fifths"); };
   const RELABELLED = { bleeptechno: "Sheffield 1989" };
+  /* `--bake` WRITES THE PIN THE REST OF THIS FUNCTION READS, in the same pass
+     and out of the same `bassSig` / `scoreOf` / `bassOf` the comparison uses,
+     because a baker that computed the shape its own way would be a second
+     definition of what a frozen row IS. */
+  if (process.argv.includes("--bake")) {
+    const out = {};
+    for (const a of P.anchors()) {
+      let sc, sig;
+      try { sig = h(bassSig(D, P, GENRES, a));
+            sc = D.scoreOf(P.genreToDocument(a, 1), GENRES, []); } catch (e) { continue; }
+      const ev = bassOf(sc), shape = [], cnt = new Map();
+      let k = 0;
+      ev.forEach((e) => {
+        shape.push([Math.round(e.t * 1e6), e.n, e.vel, e.acc ? 1 : 0, e.sld ? 1 : 0]);
+        if (Number.isFinite(e.dur)) {
+          const d = Math.round(e.dur * 1e6); cnt.set(d, (cnt.get(d) || 0) + 1);
+        } else k++;
+      });
+      out[a] = { sig, n: ev.length, h: h(JSON.stringify(shape)), k,
+                 dsorted: [...cnt.entries()].sort((x, y) => x[0] - y[0]) };
+    }
+    fs.writeFileSync(FREEZEPATH, JSON.stringify(out, null, 0) + "\n");
+    console.log("baked " + Object.keys(out).length + " rows -> " + FREEZEPATH);
+    process.exit(0);
+  }
   const relabelled = [];
   const badShape = [], badDur = [], badCount = [], stillNan = [];
   const minted = [], reargued = [], regridded = [];
@@ -223,8 +274,14 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
        just as much as one nobody has touched. */
     ev.forEach((e, i) => { if (!Number.isFinite(e.dur)) stillNan.push(a + "#" + i); });
     if (sig !== want.sig) { reargued.push(a); continue; }
-    if (REGRID(a)) { regridded.push(a); continue; }   // E3, see REGRID above
-    if (RELABELLED[a]) { relabelled.push(a); continue; }   // see REGRID above
+    /* (THE `REGRID` AND `RELABELLED` SKIPS STOOD HERE and are deleted with the
+       pin they belonged to, 2026-09-09. Both were waivers for rows whose bass
+       had legitimately moved SINCE THE PRE-WAVE-D FREEZE — the density words
+       reaching a grid, and one label a round corrected. The pin is today's, so
+       those moves are IN it: excusing them now would be excusing a row from
+       being compared with itself. Their two lists stay above, unused by this
+       loop, because W1z still asserts the relabelling premise and a list that
+       is still true is worth keeping true.) */
     anchors++;
     events += ev.length;
     const shape = [], cnt = new Map();
@@ -280,7 +337,7 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
      MOST of the catalogue" — is three quarters of it, and every row it stopped
      speaking for is named in one of the two buckets above, with the round that
      took it. */
-  ok(anchors > 340,
+  ok(anchors > 500,
      "W1 the freeze still speaks for most of the catalogue (" + anchors +
      " of " + (anchors + minted.length + reargued.length + regridded.length) +
      " anchors)",
@@ -294,9 +351,16 @@ console.log("\nW1/W2 — every anchor in the catalogue, none of which " +
   ok(stillNan.length === 0,
      "W2 not one bass note in the catalogue carries a NaN duration",
      stillNan.length + " still do, first: " + stillNan.slice(0, 6).join(", "));
-  ok(healed > 30000,
-     "W2b the freeze remembers how many were broken (" + healed + " of " + events + ")",
-     String(healed));
+  /* (`W2b the freeze remembers how many were broken` STOOD HERE, and it is
+     retired rather than re-fitted, 2026-09-09. It asserted that the pin still
+     remembered the 2,644 bass notes that carried `dur: NaN` before wave D
+     repaired them — a claim about a REPAIR, pinned against the stream from
+     before it. Today's pin is taken from a stream where that repair has long
+     landed: `k` is zero on all 510 rows, which is not the check passing, it is
+     the check having no subject. What survives is W2, one line up, which asks
+     the question that still means something — *"not one bass note in the
+     catalogue carries a NaN duration"* — of every anchor, every run. A gate
+     that cannot fail should not be able to pass.) */
   ok(badDur.length === 0,
      "W1c every duration the old stream already had is still there, in the same counts",
      badDur.slice(0, 8).join(", "));

@@ -57,7 +57,12 @@ export const UI: Table = {
      blurbs are keyed `.help` for the same reason `bar.play.aria` is keyed
      `.aria`: the suffix is what says which budget a string is held to. */
   "ui.gal.title": "Design system",
-  "ui.gal.daylight": "Daylight",
+  /* (`ui.gal.daylight` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `burger.light`, which is the owner: the app's own row owns the word; the design gallery
+     had the toggle first and the app has it now, so the gallery defers.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
   "ui.gal.palette": "The palette",
   "ui.gal.palette.help":
     "A panel and a screen. Only a lamp is saturated.",

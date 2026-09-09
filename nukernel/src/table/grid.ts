@@ -1057,10 +1057,10 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
               WHAT IS LEFT ON THIS LINE IS THE CELL'S OWN TWO, as marks — Paul:
               *"Use icons for copy paste."* They keep `tcopy` and `tpaste`,
               which is where test/table-inventory.json files them. */ nothing}
-        ${barMark("tcopy", "\u29c9", t("bar.copy"), t("act.copy"), !!at,
+        ${barMark("tcopy", "\u29c9", t("glyph.act.copy"), t("act.copy"), !!at,
                   t("bar.noSel"),
                   () => { if (!SEL) return; CLIP = { ...SEL }; draw(); })}
-        ${barMark("tpaste", "\u2398", t("bar.paste"), t("act.paste"),
+        ${barMark("tpaste", "\u2398", t("glyph.act.paste"), t("act.paste"),
                   !!at && !!CLIP,
                   !at ? t("bar.noSel") : t("bar.paste.none"),
                   () => pasteHere(S))}
@@ -2250,7 +2250,7 @@ export function bandTable(host: HTMLElement, A: TableAPI): Grid {
     const fi = doc.form.sections.findIndex((s) => s.id === CLIP!.sec);
     const fv = doc.voices.findIndex((v) => v.name === CLIP!.voice);
     if (fi < 0 || fv < 0) return;
-    op(t("bar.paste"), () => A.copyCellTo(fi, fv, i, vi));
+    op(t("glyph.act.paste"), () => A.copyCellTo(fi, fv, i, vi));
   }
   function pasteHere(S: Shape): void {
     const at = S.at();

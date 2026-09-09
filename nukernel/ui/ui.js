@@ -2415,7 +2415,7 @@ function chrome(host) {
   const h1 = el("h1", "dg-title", t3("ui.gal.title"));
   bar.appendChild(h1);
   const btn = document.createElement("nu-button");
-  btn.setAttribute("label", t3("ui.gal.daylight"));
+  btn.setAttribute("label", t3("burger.light"));
   btn.setAttribute("mark", "☀");
   btn.id = "dg-theme";
   btn.addEventListener("nu-press", () => {

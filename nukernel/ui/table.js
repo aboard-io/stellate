@@ -1824,7 +1824,7 @@ function motifRow(sf, write, clearBack) {
     <div class="nu-mogrid" data-k=${sf.key}>
       ${opts.map(card)}
       ${api && api.newMotif ? b`<button type="button" class="nu-mocard nu-monew" data-k="motif-new"
-            aria-label=${t4("motif.new")}
+            aria-label=${t4("motif.new.say")}
             @click=${() => {
     const n3 = api.newMotif();
     if (n3) write(n3);
@@ -2884,7 +2884,7 @@ function bandTable(host, A2) {
         ${barMark(
       "tcopy",
       "⧉",
-      t4("bar.copy"),
+      t4("glyph.act.copy"),
       t4("act.copy"),
       !!at,
       t4("bar.noSel"),
@@ -2897,7 +2897,7 @@ function bandTable(host, A2) {
         ${barMark(
       "tpaste",
       "⎘",
-      t4("bar.paste"),
+      t4("glyph.act.paste"),
       t4("act.paste"),
       !!at && !!CLIP,
       !at ? t4("bar.noSel") : t4("bar.paste.none"),
@@ -3524,7 +3524,7 @@ function bandTable(host, A2) {
     const fi = doc.form.sections.findIndex((s3) => s3.id === CLIP.sec);
     const fv = doc.voices.findIndex((v3) => v3.name === CLIP.voice);
     if (fi < 0 || fv < 0) return;
-    op(t4("bar.paste"), () => A2.copyCellTo(fi, fv, i5, vi));
+    op(t4("glyph.act.paste"), () => A2.copyCellTo(fi, fv, i5, vi));
   }
   function pasteHere(S2) {
     const at = S2.at();

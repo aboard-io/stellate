@@ -130,7 +130,13 @@ export const SHEETS: Table = {
   "bank.listEmpty": "No motifs yet — add one",
   /* a name and the row's own readout (its length, and who plays it) */
   "bank.item.aria": "{name} — {value}",
-  "bank.item.edit": "Edit {name}",
+  /* (`bank.item.edit` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `motif.edit`, which is the owner: a motif's own block owns the two gestures and the two
+     words that go with them (`motif.new.say`, `motif.new.word`, `motif.edit`,
+     `motif.edit.word`), and the bank is where a motif is edited.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
   "bank.playedBy": "played by {names}",
   "bank.nobody": "Nobody plays this yet",
   "bank.pointed": "Pointed at {name}",

@@ -5771,7 +5771,7 @@ function motifBank(box) {
     op.className = "nu-bankopen";
     op.dataset.k = "motifopen|" + name;
     op.append(el("span", _t("act.open")));
-    op.setAttribute("aria-label", _t("bank.item.edit", { name }));
+    op.setAttribute("aria-label", _t("motif.edit", { name }));
     op.addEventListener("click", () => { motifTab = name; push(); draw(); });
     head.append(op);
     row.append(head);

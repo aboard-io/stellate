@@ -34,8 +34,17 @@ export const TABLE: Table = {
   "bar.addrRange.other": "{addr} · {n} cells",
   "bar.undo": "↶ undo",
   "bar.redo": "↷ redo",
-  "bar.copy": "copy",
-  "bar.paste": "paste",
+  /* (`bar.copy` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `glyph.act.copy`, which is the owner: the glyph catalogue owns the words that ride on marks, and copy is a mark on
+     this bar like any other.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
+  /* (`bar.paste` STOOD HERE and is deleted, 2026-09-09. test/copy.test.js C4 — *"no two
+     keys mean the same thing"* — caught it holding the identical string as
+     `glyph.act.paste`, which is the owner: the same reason as `bar.copy` one line up.
+     The callers point at that key now. One string, one owner, one place to
+     change it the day the word changes.) */
   /* a grey button says why it is grey (DESIGN.md §2.14, "no silent grey"). */
   "bar.undo.none": "Nothing to undo",
   "bar.redo.none": "Nothing to redo",
@@ -402,7 +411,13 @@ export const TABLE: Table = {
      motifs."* The `see` half needs no copy — it is a picture and a name the
      bank already owns. These are the two GESTURES, plus the word the ✎ carries
      for a screen reader and for a page with no stylesheet. */
-  "motif.new": "Make a new motif and use it here",
+  /* `.say` AND NOT A BARE KEY (2026-09-09). test/copy.test.js C2 reported this
+     at eight words against a SIX-word budget, and the budget was right about
+     the kind and wrong about the string: a key is judged a sentence only when a
+     segment begins with aria/say/why/title/alt/help, and this is the accessible
+     sentence for the + card — `motif.new.word` ("new") is its face. The words
+     do not change; the key stops claiming to be a face. */
+  "motif.new.say": "Make a new motif and use it here",
   "motif.new.word": "new",
   "motif.edit": "Edit {name}",
   "motif.edit.word": "edit",

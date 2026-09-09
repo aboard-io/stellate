@@ -38786,9 +38786,12 @@
     //     the offbeat open: the arcade's own idea of a rock beat;
     //   · `tone.cut 3200`, the brightest filter in the synth family, because a
     //     cabinet speaker had no bottom end to lose.
+    //
+    // FAMILY, BECAUSE WITHOUT ONE THIS ROW RENDERS FLAT FOREVER (2026-09-09). test/hand.test.js §1 is the law that every anchor resolves its per-note dynamics — its own DYNAMICS row, its FAMILY's fallback row, or a dated debt — and this row was added in the TV-synth round declaring neither. It reaches nothing, silently: no dynamics, a flat record, and no gate would have said so if §1 did not exist. `studio` is what every neighbour declares (synthwave, copshowsynth, horrorsynth, technopop) and it is the right one for the same reason they do: this is a made record, built at a desk, not a room with a band in it.
     outrun: {
       instrumental: true,
       label: "Tokyo 1986",
+      family: "studio",
       voices: 3,
       bars: 8,
       near: "italodisco",
@@ -38857,9 +38860,12 @@
     //     that arrived after the note and stays after it has gone;
     //   · `maxHold: 4` and `artic: legato`, the opposite of 1978's staccato
     //     pulse: the revival sustains where the original stabbed.
+    //
+    // FAMILY, BECAUSE WITHOUT ONE THIS ROW RENDERS FLAT FOREVER (2026-09-09). test/hand.test.js §1 is the law that every anchor resolves its per-note dynamics — its own DYNAMICS row, its FAMILY's fallback row, or a dated debt — and this row was added in the TV-synth round declaring neither. It reaches nothing, silently: no dynamics, a flat record, and no gate would have said so if §1 did not exist. `studio` is what every neighbour declares (synthwave, copshowsynth, horrorsynth, technopop) and it is the right one for the same reason they do: this is a made record, built at a desk, not a room with a band in it.
     retrohorrorsynth: {
       instrumental: true,
       label: "Austin 2016",
+      family: "studio",
       voices: 3,
       bars: 8,
       near: "horrorsynth",
@@ -46188,9 +46194,12 @@
     // vocabulary; `electro` (New York 1982) is the same year's drum programming.
     // The residue is the arrangement: nothing above it writes a sixty-second
     // piece whose job is to end.
+    //
+    // FAMILY, BECAUSE WITHOUT ONE THIS ROW RENDERS FLAT FOREVER (2026-09-09). test/hand.test.js §1 is the law that every anchor resolves its per-note dynamics — its own DYNAMICS row, its FAMILY's fallback row, or a dated debt — and this row was added in the TV-synth round declaring neither. It reaches nothing, silently: no dynamics, a flat record, and no gate would have said so if §1 did not exist. `studio` is what every neighbour declares (synthwave, copshowsynth, horrorsynth, technopop) and it is the right one for the same reason they do: this is a made record, built at a desk, not a room with a band in it.
     chasetheme: {
       instrumental: true,
       label: "Universal City 1982",
+      family: "studio",
       voices: 3,
       bars: 8,
       near: "copshowsynth",

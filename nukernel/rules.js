@@ -845,7 +845,22 @@
        The three questions below are ASKABLE's own, and their words are read
        out of `askable.js` rather than said twice: that file's `ask` IS the
        sentence a musician answers. */
-    { field: "stress", axis: "Performance", head: "field.push", rederive: "compose",
+    /* RENDER, AND IT IS THE SAME DEMOTION `phrase` TOOK (2026-09-09).
+       test/rules.test.js R6 measures a tier instead of believing it — compose
+       the record with the value applied, and see whether the DOCUMENT moves —
+       and it reports `stress` claiming "compose" and measuring "render".
+       THE CLAIM WAS TRUE WHEN IT WAS WRITTEN AND STOPPED BEING TRUE ELSEWHERE.
+       `phrase`'s own note two rules down says stress "earns it (`grooveOf`
+       reads stress and can move `time.groove`)" — and precompose.js:2475 is the
+       tombstone for exactly that: the `push` rung read `stress` and the tempo,
+       the `funk` rung read `touch.v`, and both "went out with the rewrite …
+       nothing derives them any more". So the compose stage has not read either
+       of these since; the sentence here was left behind by a change in another
+       file, which is the failure mode R6 exists to catch.
+       WHAT IT BUYS: a hand moving the push or the touch no longer restarts the
+       band. The sound still changes — the RENDER reads both — and it changes
+       without the record being written again at the same seed. */
+    { field: "stress", axis: "Performance", head: "field.push", rederive: "render",
       say: (g) => [w(T("field.push") + " "), val(numWord(g.stress), g.stress),
                    w(" \u2014 " + nearWord("stress", g.stress))],
       read: (g) => g.stress,
@@ -868,7 +883,22 @@
       edit: { kind: "number", min: 0, max: 1, step: 0.01, detents: () => askOpts("phrase") },
       write: (r, v) => writeAt(r, "phrase", v == null ? null : Math.max(0, Math.min(1, +v))) },
 
-    { field: "touch", axis: "Performance", head: "rule.headTouch", rederive: "compose",
+    /* RENDER, AND IT IS THE SAME DEMOTION `phrase` TOOK (2026-09-09).
+       test/rules.test.js R6 measures a tier instead of believing it — compose
+       the record with the value applied, and see whether the DOCUMENT moves —
+       and it reports `touch` claiming "compose" and measuring "render".
+       THE CLAIM WAS TRUE WHEN IT WAS WRITTEN AND STOPPED BEING TRUE ELSEWHERE.
+       `phrase`'s own note two rules down says stress "earns it (`grooveOf`
+       reads stress and can move `time.groove`)" — and precompose.js:2475 is the
+       tombstone for exactly that: the `push` rung read `stress` and the tempo,
+       the `funk` rung read `touch.v`, and both "went out with the rewrite …
+       nothing derives them any more". So the compose stage has not read either
+       of these since; the sentence here was left behind by a change in another
+       file, which is the failure mode R6 exists to catch.
+       WHAT IT BUYS: a hand moving the push or the touch no longer restarts the
+       band. The sound still changes — the RENDER reads both — and it changes
+       without the record being written again at the same seed. */
+    { field: "touch", axis: "Performance", head: "rule.headTouch", rederive: "render",
       say: (g) => { const t = g.touch || {};
         return t.t == null && t.v == null
           ? [w(T("rule.headTouch") + " "), val(T("rule.machineHand"), null)]
