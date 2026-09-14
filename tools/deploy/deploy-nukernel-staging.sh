@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# deploy-nukernel-staging.sh — the nukernel branch onto test.stellate.app
+# deploy-nukernel-staging.sh — the nukernel branch onto staging
+#
+# Staging moved with the site (2026-09-14): it is /srv/stellate-test on the
+# stellate.exe.xyz VM, served at https://stellate.exe.xyz:8100/ to people with
+# access to the VM, and the workspace runs this as `scripts/deploy stellate
+# --stage`. "test.stellate.app" below is its old name on the droplet.
 #
 # THIS SCRIPT EXISTS SO THE DEPLOY STOPS BEING AN INCANTATION. Until today the
 # only record of how to ship this tree was a memory note and a paragraph in
@@ -46,7 +51,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DEST="${DEST:-root@stellate.app:/srv/stellate-test/}"
+DEST="${DEST:-stellate.exe.xyz:/srv/stellate-test/}"
 SW="$REPO/sw.js"
 
 # ---- THE GUARD (2026-09-08, LAUNCH.md §6) ---------------------------------
@@ -62,7 +67,7 @@ SW="$REPO/sw.js"
 case "$DEST" in
   *stellate-test*|*/srv/stellate-nu-preview/*) ;;
   *) echo "refusing: DEST=$DEST is not a staging root." >&2
-     echo "  This script writes to test.stellate.app only." >&2
+     echo "  This script writes to staging only." >&2
      echo "  For the live site use tools/deploy/deploy-nukernel-prod.sh." >&2
      exit 2 ;;
 esac
@@ -212,5 +217,5 @@ rsync -a --delay-updates \
   --exclude 'genres/' \
   nukernel/ "$DEST"
 
-echo "done. https://test.stellate.app/nukernel/index.html"
+echo "done. https://stellate.exe.xyz:8100/"
 echo "(a deploy lands one reload later: the service worker swaps on the next load.)"
