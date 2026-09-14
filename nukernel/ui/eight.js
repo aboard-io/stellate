@@ -15514,9 +15514,20 @@ function showTab(name) {
      anything. */
   if (name === "Where" && ATLAS) {
     const gk = DOC.basis;
+    /* A BOOT THAT OPENS ON WHERE IS STILL THE BOX ARRIVING two frames later
+       (2026-09-14). `showing()` ends in the atlas's `moved()`, and by the time
+       these frames run `booted` is already true, so a first visit wrote
+       `#at=…&s=…&t=where` into the bar with no hand anywhere — and a reload of
+       that address is a recipe link, which saves a session, which turns the
+       stranger into a returning box. The switch is read NOW, when the tab was
+       asked for, and held across the deferred call. */
+    const boot = !booted || arriving;
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      const was = arriving;
+      if (boot) arriving = true;
       try { if (ATLAS && openTab === "Where") ATLAS.showing(gk); }
       catch (e) { /* an atlas that has not mounted */ }
+      finally { arriving = was; }
     }));
   }
   /* AND THE ADDRESS SAYS WHICH TAB YOU ARE ON (`#t=mix`), so a link opens on
@@ -16558,12 +16569,29 @@ function landRecord() {
      IT IS THE FIXTURE AND NOT A FAVOURITE, deliberately: three gates load
      `TERMS` by name, the atlas already opens on it, and a boot record chosen
      for taste is a boot record somebody has to defend. If a livelier front
-     door is wanted, that is one word in one place — here. */
+     door is wanted, that is one word in one place — here.
+     ===== AND A FIRST VISIT OPENS ON THE GLOBE, NOT THE TABLE (2026-09-14) ==
+     Paul: *"New visitors to Stellate should land on the globe browser not the
+     empty editor."* The record above is still adopted, so Edit holds it and
+     the globe and the table still agree; what a stranger SEES first is Explore,
+     the place you find a record, rather than an editor they have no reason to
+     know how to use. A link that named a tab still wins, and a returning box
+     with a session still opens on its table.
+     SO THE FIXTURE IS LANDED BUT NOT SAVED, which is why this is not
+     `adoptArrival`. That writes the slot, and a slot is what makes the next
+     boot a return: measured, a stranger who looked at the globe and left came
+     back to the table the second time. Nothing is written until a hand does
+     something (`push`'s own `booted` rule), and then the session is theirs. */
   if (RECORDISH(had).length) {
     try {
-      if (TERMS && TERMS.basis && TERMS.basis !== DOC.basis)
-        adoptArrival(NuPrecompose.genreToDocument(TERMS.basis, DOC.seed || 1));
+      if (TERMS && TERMS.basis && TERMS.basis !== DOC.basis) {
+        arriving = true;
+        try { CTX.setDocument(NuPrecompose.genreToDocument(TERMS.basis, DOC.seed || 1)); }
+        finally { arriving = false; }
+      }
     } catch (e) { /* the blank state is still a working page; leave it */ }
+    showTab(LINKTAB || "Where");
+    if (LINKSUB) applySub(LINKSUB);
     return null;
   }
   try { NuDocument.normalize(had); } catch (e) { return null; }
