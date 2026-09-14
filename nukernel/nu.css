@@ -11397,3 +11397,75 @@ nu-globe[empty] .nu-elyear{ font-size: var(--t4); }
    pixel when the ring lands on it. */
 nu-value[selected] .nu-elval{ outline: var(--bw-hard) solid var(--lamp);
   outline-offset: var(--s1); color: var(--value); }
+
+/* ===== THE MOTIF, EDITED WHERE IT IS DRAWN (2026-09-14) =====================
+   Paul: "I'd expect to see the motifs as sheet music or drum patterns and then
+   I can just click on them to edit them." ui/motifedit.js draws and wires all
+   of it; these are its looks.
+
+   THE STAFF. Every notehead and rest is a target: a note is selected by a tap
+   and moved by a vertical drag (`touch-action: none` on the heads, so the drag
+   is the note's and not the page's), a rest is written on by a tap. abcjs
+   draws in currentColor, so the selected note is simply the hand's colour. */
+/* abcjs lays the staff lines, beams and bar lines OVER the heads (measured: a
+   tap on a head landed on `.abcjs-staff`), so nothing in an editing staff takes
+   a pointer but a note or a rest — and each takes it across its whole box, so a
+   sixteenth's head is not a 7px target. */
+.nu-editstaff *{ pointer-events: none; }
+.nu-editstaff .abcjs-note, .nu-editstaff .abcjs-rest{
+  pointer-events: all; pointer-events: bounding-box; }
+.nu-editstaff .abcjs-note *, .nu-editstaff .abcjs-rest *{ pointer-events: all; }
+.nu-editstaff .abcjs-note{ cursor: grab; touch-action: none; }
+.nu-editstaff .abcjs-note:hover{ color: var(--lamp-hot, var(--hand)); }
+.nu-editstaff .abcjs-note.nu-sel{ color: var(--hand); }
+.nu-editstaff .abcjs-rest{ cursor: pointer; }
+.nu-editstaff .abcjs-rest:hover{ color: var(--hand); }
+#staff:focus{ outline: none; }
+#staff:focus-visible{ outline: var(--bw) solid var(--hand); outline-offset: 2px; }
+
+/* THE SELECTED NOTE'S ROW, under the staves: what it is, then its changes in
+   small groups that wrap on a phone. Idle, it says how to begin. */
+.nu-notebar{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s2); margin-block: var(--s2); padding: var(--s2);
+  border: var(--bw) solid var(--rule); }
+.nu-notelab{ flex: 1 1 100%; color: var(--ink); font-variant-numeric: tabular-nums; }
+.nu-notebar.is-idle .nu-notelab{ color: var(--dim); }
+.nu-nbg{ display: inline-flex; gap: 2px; }
+.nu-nbb{ min-inline-size: var(--tap); min-block-size: var(--tap);
+  padding-inline: var(--s2); font-size: 1.05em; }
+.nu-nbb[aria-pressed="true"]{ background: var(--hand-tint); color: var(--hand); }
+.nu-nbvel{ font-style: italic; font-weight: 700; font-family: Georgia, serif; }
+
+/* THE DRUM PATTERN: a lane per row, the steps across, the beat ruled. On a
+   phone the pattern scrolls sideways inside its own box, never the page. */
+.nu-dpwrap{ max-inline-size: 100%; overflow-x: auto; margin-block: var(--s2); }
+.nu-drumpat{ border-collapse: collapse; }
+.nu-drumpat th, .nu-drumpat td{ padding: 1px; text-align: center; }
+.nu-drumpat .nu-dplane{ text-align: end; padding-inline-end: var(--s2);
+  white-space: nowrap; color: var(--dim); font-weight: 400; }
+.nu-drumpat .nu-dpcount{ color: var(--faint); font-weight: 400;
+  font-size: .8em; inline-size: 28px; }
+.nu-drumpat .nu-dpcount.nu-dpbeat{ color: var(--ink); }
+.nu-drumpat td.nu-dpbeat, .nu-drumpat th.nu-dpbeat{
+  border-inline-start: var(--bw) solid var(--rule); }
+.nu-dp{ display: block; inline-size: 28px; block-size: 28px; min-block-size: 0;
+  padding: 0; border: var(--bw) solid var(--rule); background: transparent; }
+.nu-dp.is-ghost{ background: var(--q1); }
+.nu-dp.is-hit{ background: var(--q3); }
+.nu-dp.is-acc{ background: var(--q4); }
+@media (min-width: 900px){ .nu-dp{ inline-size: 32px; block-size: 32px; } }
+
+/* THE BANK'S PICTURES: the engraving of a line motif, a dot-pattern of a drum
+   motif, and either is the button that opens it. */
+.nu-bankpic{ display: block; inline-size: 100%; padding: 0; text-align: start;
+  background: var(--panel); border: var(--bw) solid var(--rule); cursor: pointer;
+  color: var(--ink); }
+.nu-bankpic:hover{ border-color: var(--hand); }
+.nu-bankpic svg{ display: block; inline-size: 100%; block-size: auto; }
+.nu-bankstaff{ display: block; inline-size: 100%; min-block-size: 60px; }
+.nu-dthumb{ display: grid; grid-template-columns: repeat(var(--dt-cols, 16), 1fr);
+  gap: 2px; padding: var(--s2); }
+.nu-dthumb i{ display: block; block-size: 8px; background: var(--grey2, var(--rule)); }
+.nu-dthumb i.is-ghost{ background: var(--q2); }
+.nu-dthumb i.is-on{ background: var(--q3); }
+.nu-dthumb i.is-acc{ background: var(--q4); }

@@ -763,6 +763,14 @@ function engrave(phrase, opts = {}) {
   // resets at each barline exactly as a reader's does.
   const out = [];
   const glyphs = [];                          // pitched glyph -> toNotes index
+  /* ...AND WHERE EACH GLYPH AND EACH REST STANDS, in steps (2026-09-14).
+     The motif editor is the engraving itself: a tap on a notehead or a rest
+     has to name the step it is, and `.abcjs-note` / `.abcjs-rest` come out of
+     abcjs in exactly the order these arrays are filled, so glyph g starts at
+     `glyphAt[g]` and rest r covers `rests[r]`. Present in every engraving and
+     read by nobody else. */
+  const glyphAt = [];
+  const rests = [];
   let cur = "", accState = {}, pos = 0, ni = -1;
   /* THE OPEN SLUR. A slur is a pair of parentheses round the notes it covers,
      so it is state and not a decoration: `slurOpen` says one is running, and
@@ -834,6 +842,7 @@ function engrave(phrase, opts = {}) {
           first = false;
           push(lead + name + durStr(p) + tie);
           glyphs.push(ni);                    // every tied piece is this note's
+          glyphAt.push(pos);
           advance(p);
         });
         remain -= chunk;
@@ -848,7 +857,10 @@ function engrave(phrase, opts = {}) {
       while (run > 0) {
         const room = spb - (pos % spb);
         const chunk = Math.min(run, room);
-        for (const p of pieces(chunk)) { push("z" + durStr(p)); advance(p); }
+        for (const p of pieces(chunk)) {
+          rests.push({ at: pos, len: p });
+          push("z" + durStr(p)); advance(p);
+        }
         run -= chunk;
       }
       i = j;
@@ -890,7 +902,7 @@ function engrave(phrase, opts = {}) {
   // `bars` and `clef` ride out with the rest so a SCORE can be assembled from
   // several of these without re-folding anything: toScore takes each part's
   // bars, puts them under a `V:` line, and shares one head between them.
-  return { abc, glyphs, notes, n, spb, ottava: ott, wide, bars: out, clef };
+  return { abc, glyphs, glyphAt, rests, notes, n, spb, ottava: ott, wide, bars: out, clef };
 }
 
 /* ---------- THE SCORE: EVERY VOICE AT ONCE, BARRED TOGETHER ---------------

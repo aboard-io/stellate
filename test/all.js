@@ -269,6 +269,12 @@ const GATES = [
      the rendered bars, the desk's compiled lanes, the composed channel and
      the paced clock. Still `kind: "node"` — none of the three touches a DOM
      or an AudioContext — and still one process. */
+  /* THE MOTIF EDITOR'S ARITHMETIC (2026-09-14): what a tap, a drag and the
+     selected note's buttons do to a cell's play/deg/vel/marks vectors. Pure. */
+  { name: "motifedit", wave: 1, kind: "node",
+    argv: ["test/motifedit.test.js"],
+    need: ["test/motifedit.test.js"],
+    covers: ["test/motifedit.test.js", "nukernel/ui/motifedit.js"] },
   { name: "table", wave: 1, kind: "node",
     argv: ["test/table.test.js"],
     need: ["test/table.test.js"],
@@ -960,9 +966,12 @@ const GATES = [
      others take. COMPOSER.md §4 assigns this fix to wave 1a; it is done here
      because this round had to run both gates and could not run them honestly
      otherwise. Said out loud so 1a finds it done rather than doing it twice. */
-  { name: "bench",      wave: 2, kind: "browser", url: { env: "MOTIF_URL" },
-    argv: ["test/bench.test.js"], need: ["test/bench.test.js"],
-    covers: ["test/bench.test.js"] },
+  /* THE STAFF IS THE MOTIF EDITOR (2026-09-14). This row was `bench`
+     (test/bench.test.js), the gate for the sixteen-row step table the staff
+     editor replaced; see test/motifstaff.browser.js for what it asserts now. */
+  { name: "motif-staff", wave: 2, kind: "browser", url: { env: "MOTIF_URL" },
+    argv: ["test/motifstaff.browser.js"], need: ["test/motifstaff.browser.js"],
+    covers: ["test/motifstaff.browser.js", "nukernel/ui/motifedit.js"] },
   { name: "text-diet",  wave: 2, kind: "browser", url: { env: "PAGE" },
     argv: ["test/text-diet.test.js"], need: ["test/text-diet.test.js"],
     covers: ["test/text-diet.test.js"] },
