@@ -1,0 +1,12 @@
+[Unit]
+Description=GoatCounter
+After=network.target
+
+[Service]
+User=goatcounter
+ExecStart=/usr/local/bin/goatcounter serve -listen 127.0.0.1:8081 -tls none -base-path /stats -db sqlite3+/var/lib/goatcounter/goatcounter.sqlite3
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
