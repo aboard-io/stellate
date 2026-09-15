@@ -310,12 +310,7 @@ import { wordGrid } from "./wordgrid.js";
    because two thumbnail builders is how the roster's picture and the tray's
    picture stop being the same picture. */
 import { preview } from "./preview.js";
-/* THE MOTIF EDITED WHERE IT IS DRAWN (2026-09-14). Paul: *"I'd expect to see
-   the motifs as sheet music or drum patterns and then I can just click on them
-   to edit them."* ui/motifedit.js owns the gestures and the arithmetic on a
-   cell; this file hands it the document, the redraw and the words. */
-import { wireStaff, paintSelection, noteBar, drumPattern, drumThumb,
-         writeNote, likeAt, nudgePitch } from "./motifedit.js";
+import { drumThumb } from "./motifthumb.js";
 // THE ENGINEER (inside a voice's own sheet) and THE BOARD (at the foot of the
 // page). Two surfaces because they are two things: `engineer` is per-voice
 // sound, `mount` is the console. `paintBoard` repaints the automation meters
@@ -5735,11 +5730,14 @@ function motifBank(box) {
     // one: a `<svg>` of the cell's steps, sixteen bars tall, no text.
     /* THE PICTURE IS THE MOTIF AND THE WAY INTO IT (2026-09-14). Paul: *"I'd
        expect to see the motifs as sheet music or drum patterns and then I can
-       just click on them to edit them."* It was ui/preview.js's strip of bars,
-       beside an `open` button. A line motif is engraved now, every measure on
-       one line in the register of the first voice that reads it, and a drum
-       motif is its pattern; the whole picture is a button that opens the motif,
-       the same act as `open`. */
+       just click on them."* It was ui/preview.js's strip of bars beside `open`.
+       A line motif is engraved now, every measure on one line in the register
+       of the first voice that reads it; a drum motif is its pattern
+       (ui/motifthumb.js); and the whole picture is a button that opens the
+       motif, the same act as `open`. (A staff editor replaced the bench inside
+       an open motif for a day on the motif-notation branch; Paul, 2026-09-15:
+       "Wait I miss the old motif editor!!!" The editor stayed as it was and
+       only this picture was kept.) */
     const pic = document.createElement("button");
     pic.type = "button";
     pic.className = "nu-bankpic";
@@ -6290,7 +6288,7 @@ function engrave(host, cut, opts, then) {
       staffwidth: Math.max(180, host.clientWidth - 8) }); }
     catch (err) { return; }
     engraves++;
-    if (then) then(eng);
+    if (then) then();
   }).catch(() => {});
 }
 
@@ -6345,9 +6343,6 @@ function reEngraveWritten(name) {
    the bank changed underneath you, and `data-k="motiftab-3"` would restore focus
    to a button that is now a different button. A name does neither. */
 let motifTab = null;
-/* THE SELECTED NOTE in the open motif, as its start step — page state, like
-   `motifTab`, and forgotten when a different motif is opened. */
-let motifSel = null, motifSelCell = null;
 // THE MOTIFS, WHICH IS NOW EXACTLY THE CELLS. This said "WHICH IS NOT THE SAME
 // LIST AS THE CELLS. A drum cell is a lane grid with its own editor at the foot
 // of this axis (drumGrid) and hookGrid refuses one; it has never had a block
@@ -7133,54 +7128,11 @@ function motifs(parent, deck, si) {
     // re-engrave THIS and rebuild nothing (see `written`, `edited`)
     const wreg = { hosts: [], opts };
     written.set(name, wreg);
-    /* THE STAFF IS THE EDITOR (2026-09-14). Every engraved measure is wired
-       after it lands (`wireStaff`), and wired again after every re-engrave,
-       because `reEngraveWritten` calls this same `then`: a tap on a note selects
-       it, a drag moves it through the scale, a tap on a rest writes a note that
-       fills the rest. The selected note's changes are the row under the staves
-       (`noteBar`); the sixteen-row step table that stood under them is gone. */
-    if (motifSelCell !== name) { motifSel = null; motifSelCell = name; }
-    const SPB0 = scoreSPB();
-    const cellNow = () => DOC.material.cells[name];
-    const change = () => { edited(name); nb.refresh(); };
-    const staffApi = {
-      selected: () => motifSel,
-      pick: (at) => {
-        motifSel = motifSel === at ? null : at;
-        paintSelection(parent, motifSel);
-        nb.refresh();
-        try { parent.focus({ preventScroll: true }); } catch (e) {}
-      },
-      rest: (at, len) => {
-        const H2 = cellNow();
-        if (!H2 || !writeNote(H2, at, len, likeAt(H2, at))) return;
-        motifSel = at;
-        change();
-      },
-      drag: (at, steps) => {
-        const H2 = cellNow();
-        motifSel = at;
-        if (H2 && nudgePitch(H2, at, steps)) change();
-        else { reEngraveWritten(name); nb.refresh(); }
-      },
-    };
-    const nb = noteBar({
-      cell: cellNow,
-      selected: () => motifSel,
-      select: (at) => { motifSel = at; paintSelection(parent, at); },
-      commit: () => edited(name),
-      degName: (d) => benchEnv().degName(d),
-      spb: SPB0, pulse: K.pulseIn(DOC.time),
-      marks: MARKS, alts: ALTS, say: (k) => _t(k),
-    });
-    parent.tabIndex = 0;
-    parent.addEventListener("keydown", nb.key);
-    nb.el.addEventListener("keydown", nb.key);
     for (let m = 0; m < bars; m++) {
       const host = el("div");
       staffRoom(host, name, m);         // …and the written staff's own room
       const wrap = el("p"); wrap.append(host); parent.append(wrap);
-      const then = (eng) => {
+      const then = () => {
         restoreAnchor();                 // the page just grew by one staff
         // ...AND THE NEXT REDRAW STARTS AT THIS HEIGHT. Paul, 2026-08-25: "When
         // I click tabs the page jumps around. It's endemic." abcjs engraves on a
@@ -7206,7 +7158,6 @@ function motifs(parent, deck, si) {
         const px = Math.ceil(((host.querySelector("svg") || host)
                               .getBoundingClientRect()).height);
         staffBox.set(staffKey(name, m), px);  // …so the NEXT redraw starts here
-        wireStaff(host, eng, m * SPB0, staffApi);
       };
       wreg.hosts.push({ host, then });
       engrave(host, barSlice(ph, m), opts, then);
@@ -7230,12 +7181,9 @@ function motifs(parent, deck, si) {
     // a time, and wrong here, where each cell is its own maker. Left set,
     // cell 2's header cells would overwrite cell 1's and the playhead would
     // light the wrong grid.
-    deck.append(nb.el);
     readBy(deck, name);
     hookCells.__grid = null;
-    // `true` last: no step table — the staff above is the editor now; only
-    // hookGrid's measure buttons are drawn.
-    hookGrid(deck, name, hookCells, null, null, true, true);
+    hookGrid(deck, name, hookCells, null, null, true);
     if (readers.length > 1) forkRow(deck, name, readers);
   }
 }
@@ -8129,7 +8077,7 @@ function loopStrip(voice) {
    bars long — a shipped semantics this page simply had no way to ask for. One
    block of sixteen columns per measure. */
 let gridSeq = 0;
-function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons, tableOff) {
+function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
   // this maker's own header cells, registered once so the playhead can find
   // them however many makers the page is showing
   let mine = hostCells && hostCells.__grid;
@@ -8348,7 +8296,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons, tabl
   // (THE `benchRefusal` LINE STOOD HERE, above the rows it governed. Deleted
   //  2026-08-28 with the control itself — see its tombstone above. Nothing
   //  prints above the rows now: the grid begins at step 1.)
-  if (!tableOff) for (let bar = 0; bar < bars; bar++) {
+  for (let bar = 0; bar < bars; bar++) {
     if (only != null && bar !== only) continue;
     const t = el("table");
     /* ---------- THE TUNE RUNS DOWN THE PAGE (Paul, 2026-08-25) --------------
@@ -8734,27 +8682,168 @@ function drumGrid(parent, cellName) {
   const H = cellName ? DOC.material.cells[cellName] : null;
   if (!H || H.kind !== "drum") return;
   const lanes = H.lanes || {};
-  /* A DRUM PATTERN, THE WAY ONE IS WRITTEN (2026-09-14). Paul: *"I'd expect to
-     see the motifs as sheet music or drum patterns and then I can just click
-     on them to edit them."* A lane per row and the steps across, the beat
-     ruled, a tap per step (ui/motifedit.js `drumPattern`). It ran DOWN the
-     column from 2026-08-25 so a twelve-lane kit fit a 224px phone deck without
-     abbreviating a lane's word; across, a phone scrolls the pattern sideways
-     inside its own box (`.nu-dpwrap`, nu.css), which is how a drum machine
-     reads on one. The header cells are still `countCell`s in `stepCell`, so the
-     playhead lights the sounding step as it always did. The 0..9 lane
-     vocabulary is untouched: laneV7/laneV9 translate at this edge. */
-  const t = drumPattern({
-    lanes, laneName,
-    sidecar: (k) => !!SIDECAR[k[0]],
-    spb: scoreSPB(), pulse: K.pulseIn(DOC.time),
-    head: (i) => { const th = countCell(COUNT[i % COUNT.length]); stepCell.push(th); return th; },
-    v7: laneV7, v9: laneV9,
-    edited: () => edited(cellName),
-  });
-  const wrap = el("div", null, "nu-dpwrap");
-  wrap.append(t);
-  parent.append(wrap);
+  const laneKeys = Object.keys(lanes);
+  const t = el("table");
+  // (cellpadding/cellspacing came off 2026-08-24. They were here because they
+  //  were "the last sanctioned way to make a table compact without writing a
+  //  rule", and nu.css writes the rule now: border-collapse plus a 2px pad.)
+  // A SIDECAR IS NOT A HIT. `?k` is how often the kick sounds, `~r` is how far
+  // behind the grid the ride sits, `!p` is a grace note before the perc —
+  // kernel.js:2304 skips them in the lane loop and reads each one WITH its lane.
+  // Drawn as their numbers and never as checkboxes, because there is no sense in
+  // which "the ride is four ninths late" is ticked: a checkbox here wrote 1 over
+  // the 4 and the swing came off the record. Read-only until somebody designs a
+  // control for a ninth of a step; round-tripped exactly. (It used to be a whole
+  // ROW that was skipped; it is a whole COLUMN now, and the test is the same
+  // one character.)
+  /* THE COLUMN SAYS THE DRUM'S NAME (2026-09-03). Paul: *"in the drum editor,
+     fully label the names of the parts of the kits."* It said `k`, `s`, `h`
+     with the word hidden in a `title` — which is a legend you have to hover to
+     read, on a page whose own law is that a cell's value names it, and on a
+     touch surface where there is no hover at all. The word is the face now and
+     THE LETTER IS THE KEY: `data-lane` carries it for a gate and for the
+     `data-k` every cell in the column already spells with it.
+
+     IT RUNS DOWN THE COLUMN because the grid is rotated (Paul, 2026-08-25:
+     *"Rotate the drum kits and motif editors to be vertical"*) and a lane is a
+     36px COLUMN. "closed hat" set across one is either three characters and an
+     ellipsis or a column three times as wide, and a twelve-lane kit at 320px
+     has no room for either — measured on the rendered page: 34 + 12 x 36 =
+     454px against the 224px deck a 320px phone leaves. Set vertically it costs
+     the header row its height (86px for a word, 132px for a sidecar's phrase,
+     both measured) and the table not one pixel of width, and nothing is
+     abbreviated at any viewport from 320 to 1280. (nu.css `.nu-lanehead`.) */
+  const head = el("tr");
+  head.append(el("th", ""));
+  for (const lane of laneKeys) {
+    const lh = el("th");                  // the WORD; `data-lane` is the letter
+    lh.dataset.lane = lane;
+    lh.className = "nu-lanehead" + (SIDECAR[lane[0]] ? " nu-hint" : "");
+    lh.append(el("span", laneName(lane)));
+    head.append(lh);
+  }
+  t.append(head);
+  /* THE LANES ARE THE COLUMNS AND THE STEPS ARE THE ROWS, AND THE STEP AXIS
+     IS THE BAR (2026-09-05, the any-meter round). The drum round made the lane
+     axis data-driven — twelve letters off `laneKeys` — and left this one a
+     literal sixteen, so a 7/8 record drew sixteen rows over a fourteen-place
+     kit and the last two were the empty cells the guard below draws. It reads
+     the record's own bar now, and the heavy rule falls on the felt beat. */
+  const DSPB = scoreSPB(), DPUL = K.pulseIn(DOC.time);
+  for (let i = 0; i < DSPB; i++) {
+    const tr = el("tr");
+    // WHERE THE BEAT FALLS, AS A RULE AND NOT AS A TINT — the same beat-wide
+    // rule the motif grid draws, for the same reason and out of the same class.
+    if (i % DPUL === 0) tr.className = "nu-beat";
+    const th = countCell(COUNT[i % COUNT.length]);
+    stepCell.push(th);
+    tr.append(th);
+    for (const lane of laneKeys) {
+      const arr = lanes[lane] || [];
+      // A LANE SHORTER THAN THE COUNT GETS AN EMPTY CELL RATHER THAN A BOX.
+      // Every kit in the shipped catalog is sixteen long, so this is a
+      // hand-written record's path — and the old shape drew one cell per array
+      // element under a fixed sixteen-column header, which for a short lane was
+      // a ragged row and for a long one was columns nothing named. Absent is
+      // absent: an empty cell says the lane has nothing to say at this step.
+      if (i >= arr.length) { tr.append(el("td", "")); continue; }
+      const on2 = arr[i];
+      if (SIDECAR[lane[0]]) {
+        const td = el("td", on2 ? String(on2) : "");
+        td.className = "nu-hint";
+        tr.append(td);
+        continue;
+      }
+      /* THE CELL IS A VELOCITY, 0..7, WORN ON ITS FACE (2026-08-27, replacing
+         the checkbox — composer.html's kit: "every cell is a chunky button
+         that carries a velocity per step; the fill's width is the level, the
+         number prints at the cell's edge"). The DOCUMENT keeps its 0..9 lane
+         vocabulary untouched; laneV7/laneV9 (the one mapping, stated at V7/V9)
+         translate at this edge, and this surface never writes the deferring
+         `1`. Tap cycles rest → ghost(1) → hit(4) → accent(7) → rest; a
+         sideways drag (pointer-captured) writes any of the eight.
+         `touch-action: pan-y` (nu.css .nu-kc): sideways is the value,
+         vertical is still the page.
+         (The old change-handler's argument survives it: a lane step is a
+         LEVEL in a drum cell and nothing on the page reads it but this cell —
+         no staff is engraved from the kit and no sheet is gated on one — so
+         the only thing to say afterwards is what the cell is now worth, which
+         its face and label carry.) */
+      const td = el("td", null, "nu-kcTd");
+      const c = document.createElement("button");
+      c.type = "button"; c.className = "nu-kc";
+      c.dataset.k = "kit" + lane + i;
+      const kf = el("i", null, "nu-kf"), kn2 = el("b", null, "nu-kn2");
+      c.append(kf, kn2);
+      const paintKc = () => {
+        const dv = arr[i] | 0, v = laneV7(dv);
+        c.dataset.v = v;
+        kf.style.display = v ? "" : "none";
+        kn2.style.display = v ? "" : "none";
+        kf.style.inlineSize = "calc(8px + (100% - 20px) * " + (v / 7).toFixed(3) + ")";
+        kf.classList.toggle("gh", v === 1);
+        kf.classList.toggle("acc", v >= 7);
+        kn2.textContent = String(v);
+        const say = laneName(lane) + " step " + (i + 1) +
+          (v ? ", level " + v + (v === 1 ? " ghost" : v >= 7 ? " accent" : "")
+             : ", rest");
+        c.setAttribute("aria-label", say); c.title = say;
+      };
+      // tap cycle: rest -> ghost(1) -> hit(4) -> accent(7) -> rest
+      const cycKit = (v) => (v === 0 ? 1 : v <= 1 ? 4 : v <= 4 ? 7 : 0);
+      c.addEventListener("click", () => {
+        if (c._dragged) { c._dragged = false; return; }   // a drag is not a tap
+        arr[i] = laneV9(cycKit(laneV7(arr[i] | 0)));
+        paintKc(); edited(cellName);
+      });
+      // the touch law: capture on the cell, value against its own rect
+      let kMoved = false, kX0 = 0, kDirty = false;
+      c.addEventListener("pointerdown", (e) => {
+        kMoved = false; kX0 = e.clientX; kDirty = false;
+        try { c.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      c.addEventListener("pointermove", (e) => {
+        if (!c.hasPointerCapture || !c.hasPointerCapture(e.pointerId)) return;
+        if (!kMoved && Math.abs(e.clientX - kX0) < 6) return;
+        kMoved = true; c._dragged = true;
+        const r = c.getBoundingClientRect();
+        const v = Math.max(0, Math.min(7,
+          Math.round((e.clientX - r.left) / (r.width || 1) * 7)));
+        if (laneV7(arr[i] | 0) !== v) { arr[i] = laneV9(v); paintKc(); kDirty = true; }
+      });
+      c.addEventListener("pointerup", () => {
+        if (kDirty) edited(cellName);
+        kDirty = false;
+      });
+      paintKc();
+      td.append(c); tr.append(td);
+    }
+    t.append(tr);
+  }
+  stepGrid(parent, t);              // sixteen ROWS: no pane, and nothing to swipe
+  /* ...UNLESS THE KIT REALLY IS WIDER THAN THE COLUMN (2026-09-03, and it is a
+     MEASUREMENT and not a lane count).
+
+     `stepGrid`'s own argument for taking no pane is that the rotated grid
+     cannot overflow — "the widest kit the catalog can draw is 272px, inside
+     the 366px column" — and half of that arithmetic was wrong before this
+     round and is wrong in nu.css too: MEASURED at 320x844 on the deployed
+     page, the deck a step grid sits in is 224px, not 296. So jazz's seven
+     columns (286px) already spilled the page sideways on a small phone, and
+     a twelve-lane kit is 454px, which spills it on every phone.
+
+     A5c bans a pane around a grid that FITS, because that is the container
+     Paul reported catching his gestures ("it snaps left even though I'm not
+     done editing"). It does not ban one around a grid that genuinely cannot
+     fit — A5 asks for exactly that of every other table on the page — so the
+     rule this draws by is the one both assertions share: a pane if and only if
+     the table is wider than the box it is in. Asked of the browser, after the
+     table is on the page and full, which is the only way to know.
+     (`pane()` MOVES the table into the scroller `stepGrid` already appended —
+     the bench does the same two calls in the same order.) */
+  const host = t.parentElement;
+  if (host && host.clientWidth && t.scrollWidth > host.clientWidth + 1)
+    pane(parent, t);
   laneAdd(parent, cellName, lanes);
 }
 
