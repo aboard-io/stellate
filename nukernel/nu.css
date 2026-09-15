@@ -6129,10 +6129,16 @@ table.nu-trims{ color: var(--ink); }
    44rem and 88% it was a 700 x 650 window onto 2,400px of editor. So the card
    holding `.nu-motifsheet` is as tall as the band between the head and the
    bar, and on a screen with room it is wide: 72rem, less 2rem of veil each
-   side so "tap outside" still has somewhere to land. On a phone the width was
-   always the screen's; it is simply the full 88% tall rather than
-   content-sized. */
-.nu-modalcard:has(.nu-motifsheet){ block-size: 88%; }
+   side so "tap outside" still has somewhere to land. On a phone, below. */
+/* ...AND ON A PHONE IT IS THE WHOLE BAND (2026-09-15, looked at on a 390 x 664
+   phone: the card was 379 x 491 and the bench scrolled in 370px of it). The
+   card fills everything between the head and the transport bar — the bar stays,
+   so a motif can be played while it is edited — and it is shut with its × or
+   Escape. The 12% of veil a tap-outside needs is the one thing given up, on the
+   one sheet that is an editor rather than a handful of fields. */
+@media (max-width: 699.98px) {
+  .nu-modalcard:has(.nu-motifsheet){ block-size: 100%; max-block-size: 100%; }
+}
 @media (min-width: 700px) {
   .nu-modalcard:has(.nu-motifsheet){ block-size: 100%; max-block-size: 100%;
     inline-size: min(calc(100% - 4rem), 72rem); }
