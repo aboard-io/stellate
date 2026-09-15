@@ -4051,7 +4051,20 @@ table.nu-trims{ color: var(--ink); }
    editor has always kept, and the axis a thumb misses on. */
 .nu-bench{ inline-size: 100%; min-inline-size: 0; table-layout: fixed; }
 .nu-bench th:first-child{ inline-size: 22px; }
-.nu-bench td.nu-kindTd{ inline-size: 92px; }
+/* THE KIND COLUMN HOLDS ITS THREE SEGMENTS (2026-09-15). Paul: "The interval
+   sliders are jumbled over the basic duration picker." It was 92px against a
+   control of 3 x 36px = 108 + its frame, so the rest segment ran 21px under the
+   pitch bar at every width, and at 320 the pitch cell was 10px wide. The column
+   is now the control's own width plus the cell's padding, the segments are
+   30px under 620px — the face `.nu-mkb` beside them already wears — and the
+   table keeps a 350px floor there so the pitch bar is never squeezed to
+   nothing: below that the bench swipes inside its pane. */
+.nu-bench td.nu-kindTd{ inline-size: calc(3 * 36px + 10px); }
+@media (max-width: 619.98px) {
+  .nu-bench td.nu-kindTd{ inline-size: calc(3 * 30px + 10px); }
+  .nu-bench .nu-segb{ inline-size: 30px; }
+  .nu-bench{ min-inline-size: 350px; }
+}
 .nu-bench td.nu-velTd{ inline-size: 60px; }
 @media (min-width: 620px){ .nu-bench td.nu-velTd{ inline-size: 120px; } }
 /* ---- THE MARK COLUMN (2026-09-05, the review's items 6+7) -----------------
