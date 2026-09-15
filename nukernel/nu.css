@@ -6123,6 +6123,20 @@ table.nu-trims{ color: var(--ink); }
   .nu-modal{ justify-content: center; align-items: center; }
   .nu-modalcard{ inline-size: min(100%, 44rem); }
 }
+/* ...EXCEPT THE MOTIFS SHEET, WHICH TAKES THE ROOM (2026-09-15). Paul: "The
+   motif editor is smushed since you put it in a modal." A motif is a bench of
+   sixteen rows a measure under its staves, not a sheet of fields, and inside
+   44rem and 88% it was a 700 x 650 window onto 2,400px of editor. So the card
+   holding `.nu-motifsheet` is as tall as the band between the head and the
+   bar, and on a screen with room it is wide: 72rem, less 2rem of veil each
+   side so "tap outside" still has somewhere to land. On a phone the width was
+   always the screen's; it is simply the full 88% tall rather than
+   content-sized. */
+.nu-modalcard:has(.nu-motifsheet){ block-size: 88%; }
+@media (min-width: 700px) {
+  .nu-modalcard:has(.nu-motifsheet){ block-size: 100%; max-block-size: 100%;
+    inline-size: min(calc(100% - 4rem), 72rem); }
+}
 /* 3px OF GAP AND OF PADDING (2026-09-05) — the same 3px `.nu-trims` spends
    between its own cells (`border-spacing: 3px`), which is the minimum the
    cell-row language allows: a strip of words and the grid above it are the
