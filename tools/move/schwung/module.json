@@ -1,0 +1,13 @@
+{
+    "id": "stellate",
+    "name": "Stellate",
+    "version": "0.6.5",
+    "author": "Aboard",
+    "description": "Song starter: scroll the genre list (oldest to newest), pick a seed, press the jog wheel, and the whole song lands in your Set list as clips on fitting Move instruments.",
+    "component_type": "tool",
+    "tool_config": {
+        "interactive": true,
+        "skip_file_browser": true,
+        "overtake": true
+    }
+}

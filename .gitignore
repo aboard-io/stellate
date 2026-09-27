@@ -69,3 +69,15 @@ tools/remix-out/
 /nukernel/feed-archive.xml
 /nukernel/feed-archive.json
 /nukernel/sitemap.xml
+
+# THE MOVE SLICE, by the one rule above: the recipe is committed, the artifacts are not.
+# tools/move/schwung/build.js writes both of these from things that ARE committed —
+# genre-names.js is lifted out of nukernel/wiki.js, dist/ is that plus nukernel bundled for
+# QuickJS — so a checkout rebuilds them byte for byte and neither belongs in the log.
+tools/move/schwung/genre-names.js
+tools/move/schwung/dist/
+tools/move/schwung/core.min.js
+# what the bisectors and diagnose.sh pull off a device: someone's Set list, their logs, their
+# Track Presets. Derived, and not ours to commit.
+tools/move/work/
+tools/move/diag/

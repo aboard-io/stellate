@@ -583,6 +583,28 @@ const GATES = [
      families, and the one kind of record whose exactness IS its identity, so a
      day when the exporter starts inventing a feel fails here in seconds rather
      than in Live. The pair costs one more export. */
+  /* MOVE. The same shape as the `ableton` row below and for the same reason, with one
+     difference worth stating: gate 4 here is a MACHINE. als-gate.js has to end at "Gate 4
+     Live. Paul's machine", because nothing in a repo can drive Live; Move's SongRenderer
+     answers "will the application open this" over D-Bus in about five seconds, so the Move
+     row can prove the thing the Ableton row can only ask for. When no Move is on the
+     network gate 4 SKIPS and the rest still run, which is why this row is safe here.
+
+     WHY A SWEEP AND NOT JUST ONE EXPORT. The bug this row exists to prevent was not in one
+     genre: Move refuses a Set whose clip sounds one pitch twice at once, and 475 of the 509
+     genres produced at least one such clip, so every Set ever made was refused and the
+     structural checks of the day all passed. One genre proves the plumbing; `--sweep` is
+     what would have caught THAT. The full sweep is 1018 Sets and 16 minutes, so the row
+     takes every 32nd genre and MOVE.md names the by-hand run. */
+  { name: "move",       wave: 2, kind: "node", steps: [
+      ["tools/move/export-move.js", "--genre", "acid", "--out", "@TMP@/acid"],
+      ["tools/move/move-gate.js", "@TMP@/acid", "--genre", "acid", "--seed", "7"],
+      ["tools/move/export-move.js", "--genre", "waltz", "--out", "@TMP@/waltz"],
+      ["tools/move/move-gate.js", "@TMP@/waltz", "--genre", "waltz", "--seed", "7"],
+      ["tools/move/move-gate.js", "--sweep", "--every", "32", "--seeds", "7,42"]],
+    need: ["tools/move/export-move.js", "tools/move/move-gate.js", "tools/move/donor/Song.abl"],
+    covers: ["tools/move/export-move.js", "tools/move/move-gate.js",
+             "tools/move/nukernel-node.mjs", "nukernel/export/move.js"] },
   { name: "ableton",    wave: 2, kind: "node", steps: [
       ["tools/ableton/export-als.js", "--genre", "boombap", "--out", "@TMP@/n.als"],
       ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"],
