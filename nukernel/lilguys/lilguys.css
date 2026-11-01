@@ -1,0 +1,115 @@
+/* THE LILGUYS PAGE — the FM-1's screen grown up: a dark stage, the four, and
+   under them whatever you opened. Nothing else. */
+:root {
+  --bg: #0e0e14; --head: #242430; --ink: #ececf0; --mid: #8c8c9c; --dim: #343440;
+  --c0: #ff7a54; --c1: #b080ff; --c2: #54d6be; --c3: #ffd24a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
+button, select, input { font: inherit; color: inherit; }
+button { background: var(--head); border: 1px solid var(--dim); border-radius: 8px;
+  padding: 6px 12px; cursor: pointer; min-height: 36px; }
+button:hover { border-color: var(--mid); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+select, input[type=text], input[type=search] { background: var(--head); border: 1px solid var(--dim);
+  border-radius: 8px; padding: 6px 10px; min-height: 36px; }
+
+header.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  padding: 10px 16px; background: var(--head); position: sticky; top: 0; z-index: 5; }
+header.bar h1 { font-size: 17px; margin: 0 6px 0 0; letter-spacing: .02em; }
+header.bar .genre { display: flex; gap: 6px; align-items: center; min-width: 0; }
+header.bar .genre input { width: min(46vw, 260px); }
+#play { min-width: 84px; font-weight: 700; }
+.tempo { display: flex; align-items: center; gap: 8px; }
+.tempo input[type=range] { width: 160px; accent-color: var(--c3); }
+.tempo output { font-variant-numeric: tabular-nums; min-width: 9ch; }
+.tempo .orig { color: var(--mid); font-size: 13px; }
+#status { color: var(--mid); font-size: 13px; margin-left: auto; }
+
+/* the stage */
+#stage { position: relative; max-width: 1100px; margin: 0 auto; padding: 14px 12px 6px; }
+#banner { height: 30px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 6px; color: var(--mid); font-weight: 600; letter-spacing: .04em; }
+#banner .sec { color: var(--ink); text-transform: uppercase; }
+#banner .dots span { display: inline-block; width: 8px; height: 8px; margin-left: 6px;
+  background: var(--dim); border-radius: 2px; }
+#banner .dots span.on { background: var(--ink); }
+#banner.flash .sec { color: var(--c3); }
+.band { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.member { appearance: none; background: transparent; border: 2px solid transparent;
+  border-radius: 14px; padding: 6px 4px 10px; cursor: pointer; display: flex;
+  flex-direction: column; align-items: center; gap: 2px; min-height: 0; }
+.member:hover { background: #16161f; }
+.member[aria-pressed="true"] { background: var(--head); border-color: var(--mc); }
+.member canvas { width: 100%; max-width: 240px; aspect-ratio: 60 / 64;
+  image-rendering: pixelated; image-rendering: crisp-edges; }
+.member .who { font-weight: 700; letter-spacing: .06em; font-size: 13px; color: var(--mc); }
+.member .what { font-size: 12px; color: var(--mid); min-height: 1.3em; text-transform: uppercase; letter-spacing: .05em; }
+.member .inst { font-size: 12px; color: var(--mid); }
+.member.out .who { opacity: .55; }
+.member .mine { font-size: 11px; color: var(--bg); background: var(--mc); border-radius: 6px;
+  padding: 0 6px; visibility: hidden; }
+.member.yours .mine { visibility: visible; }
+
+/* the drawer: one member's motif */
+#drawer { max-width: 1100px; margin: 8px auto 0; padding: 0 12px 16px; }
+#drawer[hidden] { display: none; }
+.drawer-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 0; }
+.drawer-head h2 { margin: 0; font-size: 16px; color: var(--mc); }
+.drawer-head .hint { color: var(--mid); font-size: 13px; flex-basis: 100%; }
+.drawer-head label { display: flex; gap: 6px; align-items: center; color: var(--mid); font-size: 14px; }
+.drawer-head .grow { flex: 1; }
+
+.roll { overflow: auto; max-height: 360px; border: 1px solid var(--dim); border-radius: 10px;
+  background: #101018; touch-action: none; user-select: none; -webkit-user-select: none; }
+.roll-grid { position: relative; }
+.roll-row { position: absolute; left: 0; background: #12121a; border-top: 1px solid #191922; }
+.roll-row.in { background: #191924; }
+.roll-row.black { background: #0d0d13; }
+.roll-row.tonic { background: #22222f; }
+.roll-label { position: sticky; left: 0; display: inline-block; height: 100%; font-size: 11px;
+  line-height: 18px; padding-left: 6px; color: var(--mid); background: inherit; z-index: 2;
+  border-right: 1px solid var(--dim); }
+.roll-row.in .roll-label { color: var(--ink); }
+.roll-row.tonic .roll-label { color: var(--c3); font-weight: 700; }
+.roll-v { position: absolute; top: 0; width: 1px; background: #1c1c27; pointer-events: none; }
+.roll-v.beat { background: #2c2c3a; }
+.roll-v.bar { background: #5a5a70; width: 2px; }
+.roll-note { position: absolute; background: var(--c); border-radius: 4px; cursor: grab;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); z-index: 3; }
+.roll-note.acc { outline: 2px solid #fff; outline-offset: -2px; }
+.roll-edge { position: absolute; right: 0; top: 0; bottom: 0; width: 9px; cursor: ew-resize; }
+.roll-head { position: absolute; top: 0; width: 2px; background: #fff; opacity: .7; z-index: 4;
+  pointer-events: none; transition: transform 40ms linear; }
+
+/* the play-along staff */
+#sheet { max-width: 1100px; margin: 4px auto 0; padding: 0 12px 30px; }
+#sheet[hidden] { display: none; }
+.sheet-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 0; }
+.sheet-head h2 { margin: 0; font-size: 16px; }
+.sheet-head .grow { flex: 1; }
+.sheet-head label { display: flex; gap: 6px; align-items: center; color: var(--mid); font-size: 14px; }
+#staff { width: 100%; height: 210px; border-radius: 10px; display: block; }
+#staff.grand { height: 280px; }
+.legend { color: var(--mid); font-size: 13px; margin: 8px 2px 0; }
+
+.help { max-width: 1100px; margin: 0 auto; padding: 4px 18px 40px; color: var(--mid); font-size: 14px; }
+.help b { color: var(--ink); }
+@media (max-width: 640px) {
+  .band { gap: 4px; }
+  .member .inst { display: none; }
+  .tempo input[type=range] { width: 110px; }
+}
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+#motifTabs { display: flex; gap: 6px; flex-wrap: wrap; }
+#motifTabs button[aria-selected="true"] { background: var(--mc); color: var(--bg); border-color: var(--mc); }
+@media (max-width: 640px) {
+  header.bar { position: static; padding: 8px 10px; gap: 8px; }
+  header.bar h1 { flex-basis: 100%; font-size: 15px; }
+  header.bar .genre input { width: 52vw; }
+  #status { margin-left: 0; flex-basis: 100%; }
+  #stage { padding-top: 6px; }
+}
+.loop { display: flex; gap: 6px; align-items: center; color: var(--mid); font-size: 14px; }

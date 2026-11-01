@@ -1032,6 +1032,20 @@ export function passAt(now) {
    no audit is ABSENT from the map rather than reported as 0, because 0 is a
    claim of silence about a voice nobody measured. */
 
+/* WHERE THE EAR IS IN THE WHOLE SONG, IN BEATS (2026-11-01, the lilguys page).
+   A pure reader like the two below: the sounding bar's own downbeat on the
+   timeline (`beat0`, which compile() writes) plus how far the engine's clock is
+   past that downbeat at the bar's own seconds-per-beat. Beats do not move when
+   the tempo does — a slower bar is the same beats at a larger `spb` — so a
+   staff drawn in beats stays under the playhead through a tempo change. -1
+   while stopped or before the first bar is heard. */
+export function songBeatNow() {
+  if (!playing || !curBar) return -1;
+  const bar = timeline()[curBar.n];
+  if (!bar || bar.beat0 == null) return -1;
+  return bar.beat0 + Math.max(0, (nowSec() - curBar.when) / curBar.spb);
+}
+
 // The sounding bar's plan, so a reader never has to recompute `barOfSerial`
 // (module-private) or duplicate `barBase`. null while stopped.
 export const barPlanNow = () => (curBar ? barPlan(curBar.n) : null);

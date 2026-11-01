@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stellate Lilguys</title>
+<meta name="description" content="A band of four. Click one to write its motifs; read along and play with them.">
+<meta name="robots" content="noindex">
+<!-- THE LILGUYS PAGE (2026-11-01). The FM-1 firmware's one-page band
+     (aboard-io/stellate-lilguys, STELLATE.md) brought back to the web, on the
+     web app's own composer and engine: pick a genre and four play; click one
+     and its motifs open in a piano roll; open the staff and its part scrolls
+     past a playhead, with that member muted so you can play it yourself.
+     The classic scripts below are index.html's, in index.html's order (the
+     ui/deps.js contract: every global it reads must exist before a module
+     runs). Nothing here is index.html's UI: ui/eight.js is not loaded. -->
+<link rel="stylesheet" href="lilguys/lilguys.css">
+</head>
+<body>
+<header class="bar">
+  <h1>Stellate Lilguys</h1>
+  <div class="genre">
+    <label for="genre" class="vh">Genre</label>
+    <input id="genre" type="search" list="genres" placeholder="a genre…" autocomplete="off" spellcheck="false">
+    <datalist id="genres"></datalist>
+    <button id="dice" title="a genre at random, a new song">new song</button>
+  </div>
+  <button id="play" disabled>play</button>
+  <div class="tempo">
+    <label for="tempo">tempo</label>
+    <input id="tempo" type="range" min="40" max="220" step="1" value="120">
+    <output id="tempoOut" for="tempo">120 BPM</output>
+    <button id="tempoBack" class="orig" title="the genre's own tempo">genre's</button>
+  </div>
+  <label class="loop"><input type="checkbox" id="loopSec"> loop this section</label>
+  <span id="status" role="status" aria-live="polite">loading…</span>
+</header>
+
+<main>
+  <section id="stage" aria-label="the band">
+    <div id="banner"><span class="sec"></span><span class="where"></span><span class="dots"></span></div>
+    <div class="band" id="band"></div>
+  </section>
+
+  <section id="drawer" hidden aria-label="motifs">
+    <div class="drawer-head">
+      <h2 id="drawerTitle"></h2>
+      <div id="motifTabs" role="tablist"></div>
+      <span class="grow"></span>
+      <label><input type="checkbox" id="mine"> I'll play this part (mute it)</label>
+      <button id="closeDrawer">close</button>
+      <p class="hint" id="drawerHint"></p>
+    </div>
+    <div id="roll"></div>
+  </section>
+
+  <section id="sheet" hidden aria-label="play along">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Play along</h2>
+    </div>
+    <canvas id="staff"></canvas>
+    <p class="legend" id="legend"></p>
+  </section>
+
+  <p class="help">
+    <b>Click a member</b> to open its motifs: the short phrases the band builds the song from.
+    Tap the grid to put a note, drag sideways to hold it, drag a note to move it, tap it to take it away;
+    the band plays your change a few seconds later. <b>I'll play this part</b> mutes the member and
+    scrolls its part past the line, as it is actually played (sections develop the motif), so you can
+    play it on your own instrument. Slow the <b>tempo</b> down to learn it.
+  </p>
+</main>
+
+<script src="../engine/registry-data.js"></script>
+<script src="../engine/faust/voices/sampler.js"></script>
+<script src="../engine/faust/voices/found-player.js"></script>
+<script src="../engine/theory.js"></script>
+<script src="kernel.js"></script>
+<script src="genres.js"></script>
+<script src="wiki.js"></script>
+<script src="askable.js"></script>
+<script src="fields.js"></script>
+<script src="song.js"></script>
+<script src="instruments.js"></script>
+<script src="compose.js"></script>
+<script src="presets.js"></script>
+<script src="songs.js"></script>
+<script src="document.js"></script>
+<script src="desk-doc.js"></script>
+<script src="avail.js"></script>
+<script src="gates.js"></script>
+<script src="knobs.js"></script>
+<script src="chair.js"></script>
+<script src="ideas-kit.js"></script>
+<script src="rules.js"></script>
+<script src="precompose.js"></script>
+<script src="bass-kit.js"></script>
+<script src="atlas.js"></script>
+<script src="producer.js"></script>
+<script src="atlas-land.js"></script>
+<script type="module" src="lilguys/app.js"></script>
+</body>
+</html>
