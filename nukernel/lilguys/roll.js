@@ -113,7 +113,9 @@ export class Roll {
       this.onAudition(row);
       this.render();
     }
-    this.el.setPointerCapture?.(e.pointerId);
+    // (capture is a nicety — moves and the release are heard on window anyway —
+    // and it throws when the pointer is already gone: a tap must not depend on it)
+    try { this.el.setPointerCapture(e.pointerId); } catch (err) { /* moves still reach window */ }
   }
 
   move(e) {

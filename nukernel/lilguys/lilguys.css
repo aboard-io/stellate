@@ -113,3 +113,68 @@ header.bar .genre input { width: min(46vw, 260px); }
   #stage { padding-top: 6px; }
 }
 .loop { display: flex; gap: 6px; align-items: center; color: var(--mid); font-size: 14px; }
+
+/* ===== READ: sight reading, the whole screen (a phone held sideways first) ===== */
+#rail[hidden], #ropts[hidden], #turn[hidden] { display: none; }
+body.reading { height: 100vh; height: 100dvh; overflow: hidden; display: grid;
+  grid-template-columns: auto 1fr; overscroll-behavior: none; }
+body.reading header.bar, body.reading #drawer, body.reading .help,
+body.reading .sheet-head, body.reading .legend, body.reading .member .inst,
+body.reading .member .mine { display: none; }
+body.reading main { grid-column: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  padding-right: env(safe-area-inset-right); }
+#rail { grid-column: 1; grid-row: 1; display: grid; grid-template-columns: 1fr 1fr; align-content: start;
+  gap: 6px; width: 140px; padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom))
+  max(8px, env(safe-area-inset-left)); box-sizing: content-box; background: var(--head); overflow-y: auto; }
+#rail button { min-height: 44px; padding: 4px 6px; font-size: 14px; touch-action: manipulation; }
+#rail .big { grid-column: 1 / -1; min-height: 56px; font-size: 18px; font-weight: 700; }
+#rail output { grid-column: 1 / -1; text-align: center; font-variant-numeric: tabular-nums; font-size: 15px;
+  padding: 2px 0; color: var(--ink); }
+#rail .part { color: var(--mc); font-weight: 700; }
+body.reading #stage { padding: 4px 8px 0; max-width: none; margin: 0; flex: none; }
+body.reading #banner { height: 20px; font-size: 12px; }
+body.reading .band { gap: 4px; }
+body.reading .member { flex-direction: row; padding: 0 4px; gap: 6px; border-width: 1px; border-radius: 8px;
+  justify-content: center; cursor: default; }
+body.reading .member canvas { width: 38px; max-width: 38px; }
+body.reading .member .who { font-size: 11px; }
+body.reading .member .what { font-size: 10px; min-height: 0; }
+body.reading #sheet { flex: 1; min-height: 0; max-width: none; margin: 0; padding: 4px 6px max(4px, env(safe-area-inset-bottom)); display: flex; }
+body.reading #staff, body.reading #staff.grand { height: 100%; flex: 1; border-radius: 8px; }
+#ropts { position: fixed; z-index: 20; left: calc(160px + env(safe-area-inset-left)); top: 10px;
+  background: var(--head); border: 1px solid var(--dim); border-radius: 12px; padding: 10px 14px;
+  display: grid; gap: 8px; max-width: min(420px, 70vw); box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+#ropts fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: 12px; flex-wrap: wrap; }
+#ropts legend { color: var(--mid); font-size: 13px; padding: 0; margin-bottom: 4px; }
+#ropts label { display: flex; gap: 6px; align-items: center; min-height: 32px; }
+#ropts .sync input { width: 150px; }
+#ropts .small { color: var(--mid); font-size: 12px; margin: 0; }
+#turn { position: fixed; inset: 0; z-index: 30; background: rgba(14,14,20,.96); display: flex;
+  flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 24px; }
+#turn p { font-size: 18px; margin: 0; }
+@media (orientation: portrait) {
+  body.reading { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  body.reading main { grid-column: 1; grid-row: 2; }
+  #rail { grid-template-columns: repeat(4, 1fr); width: auto; box-sizing: border-box; }
+  #rail .big, #rail output { grid-column: auto; }
+  #ropts { left: 10px; top: 120px; }
+}
+@media (max-height: 420px) and (orientation: landscape) {
+  /* a phone sideways: every pixel of height to the staff */
+  body.reading #banner { display: none; }
+  body.reading .member .what { display: none; }
+}
+/* the strip never sets the page's width: on a phone upright, four words like
+   "STICKSIDE" side by side were wider than the screen, and Safari zoomed the
+   whole page out to fit them */
+body.reading { overflow-x: hidden; }
+body.reading .band { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.reading .member { min-width: 0; overflow: hidden; }
+body.reading .member .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.reading .member .what { display: none; }
+#rail button { min-width: 0; }
+@media (orientation: portrait) and (max-width: 700px) {
+  body.reading .member canvas { width: 30px; max-width: 30px; }
+  body.reading .member .who { font-size: 10px; }
+  body.reading #staff { min-height: 220px; }
+}

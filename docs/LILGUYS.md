@@ -42,6 +42,95 @@ own shown beside it). **Loop this section** loops the section that is sounding.
 Rubato is switched off on this page: a tempo map is lovely to listen to and
 hard to play along with.
 
+## Read: sight reading, on a phone held sideways
+
+**read along** (or `R`) gives the whole screen to the staff. Built for an
+iPhone in landscape: the band shrinks to a strip along the top, a rail of
+thumb-sized buttons runs down the notch side (done, play, slower / faster in
+fives with the BPM and its percentage of the genre's, whose part, new piece,
+options), and the staff takes the rest, scaled to the room. The line sits at
+16% of the width, so most of the screen is music still to come.
+
+- **Look ahead: 1, 2 or 4 bars.** That many bars fit between the line and
+  the right edge on any screen. Fewer bars means bigger spacing and less to
+  read ahead. More bars is the harder exercise.
+- **New piece** keeps the genre and the part and rolls a new seed: music you
+  have not seen, which is the point of sight reading.
+- **Tapping a character** reads that member's part instead.
+- **Options:** note names beside the heads (training wheels), chord symbols
+  over the bars (from `document.js chordsIn`, spelled for the key), and
+  whether the part is muted (you play it) or heard (you learn it). There's
+  also the line-vs-sound nudge.
+- **The clock** is the engine's, less the output latency the AudioContext
+  reports, less the nudge. Bluetooth headphones are 150–250 ms behind what the
+  engine thinks it is playing, and the phone's media route is late by its own
+  poll. Without the correction the note under the line is a note already gone.
+  Options are kept in `localStorage` (`lilguys.read.v1`).
+- **The screen stays awake** while reading (Screen Wake Lock, iOS 16.4+). A
+  phone held upright gets a "turn your phone sideways" card, which can be
+  dismissed. Added to the home screen, the page runs without Safari's bars
+  (`apple-mobile-web-app-capable`), which in landscape take a third of the
+  height.
+
+## The fuzzer
+
+`nukernel/lilguys/fuzz.js` is the firmware's fuzzer (`web/emu/stellate_fuzz.mjs`
+in stellate-lilguys) brought into the page. The page is a graph:
+
+- **The state** is what a hand would say it is doing: `PLAY`/`STOP`, plus
+  `BAND`/`EDIT-drums`/`EDIT-pitched`/`READ`, plus `MINE`, plus `LOOP`.
+- **The operations** are what a hand can do from that state, and only those.
+  The fuzzer never clicks a control the layout hides.
+- **A walk** takes operations at random, half the time one not yet taken from
+  where it stands, so it is coverage-guided.
+- **After every step** it asks `check()`, the page's own invariants (the
+  firmware's `web_st_check`): the band is at most four and each member is the
+  right kind; every cell is well formed; every voice reads a cell that exists;
+  at most one member is muted, and it is the one the page says; the engine's
+  tempo, the record's and the slider agree; the loop box and the loop agree;
+  bars and notes are in order; the open roll shows exactly the cell it edits;
+  the drawer, staff and rail are shown when and only when they should be; and
+  a stopped page has a stopped clock.
+- **Now and then it runs a property**, an experiment with a known answer:
+  - `roll-twice`: a step tapped twice leaves the cell as it was.
+  - `mute-cuts`: muting cuts exactly one chair in the events the engine is
+    handed, and unmuting restores them.
+  - `stop-stops`: stopping stops the clock.
+  - `plays-on`: play makes sound within 20 s, and the beat then moves.
+  - `read-keeps`: entering and leaving Read changes no motif.
+  - `genre-clean`: a new genre is a clean start.
+  - `staff-shows`: the staff holds the part it is titled with, at the spacing
+    asked.
+- **A failure** is shrunk by delta debugging to the fewest operations that
+  fail the same way, and printed as a replay. Each walk starts from the page's
+  own fresh state (`reset`), and the page's `Math.random` is drawn from the
+  walk's seed, so a replay needs no reload and rolls the same genres.
+
+That is what lets it run on a real phone, where no harness reaches. Open
+`lilguys.html#fuzz&walks=6&ops=60&seed=1` and a report appears in the corner,
+with any replay selectable to copy.
+
+`test/lilguys-fuzz.browser.js` runs the same walks headless on two devices: a
+laptop, and an iPhone (touch, 3x) that is turned round mid-walk (the one
+operation a page cannot do to itself). It counts console errors, writes the
+graph as JSON and DOT, and replays:
+
+```
+node test/lilguys-fuzz.browser.js 8 70 11 --device both
+node test/lilguys-fuzz.browser.js replay '[{"op":"member","m":1}, ...]' --seed 3 --device iphone
+node test/all.js --only lilguys-fuzz        # the gate: 4 walks of 50 per device
+```
+
+What it found while it was being written:
+
+- `setPointerCapture` throws when the pointer is already gone, which took a
+  tap down with it. The roll hears moves on `window` anyway.
+- The keyboard shortcuts assumed every key event has an element target.
+
+A bug planted to test the fuzzer (unmuting not unmuting) was caught two ways:
+by `mute-cuts`, shrunk to one operation, and by the invariant "2 members
+muted".
+
 ## How it hangs together
 
 | File | What |
@@ -50,7 +139,9 @@ hard to play along with.
 | `nukernel/lilguys/app.js` | the document cut to four (`trimBand`), the compile (`push`, ui/eight.js's minus the producer), motifs ↔ cells, mute, tempo, the frame loop |
 | `nukernel/lilguys/sprites.js` | the four characters (canvas, 60×64 logical, pixelated) |
 | `nukernel/lilguys/roll.js` | a generic piano roll (rows × steps, never rebuilt by the clock) |
-| `nukernel/lilguys/staff.js` | the scrolling staff |
+| `nukernel/lilguys/staff.js` | the scrolling staff (sized to the room; look-ahead spacing, names, chords) |
+| `nukernel/lilguys/fuzz.js` | the fuzzer: walks, invariants' caller, properties, shrinking, the in-page report |
+| `test/lilguys-fuzz.browser.js` | the fuzzer headless on a laptop and a turning iPhone; the `lilguys-fuzz` gate |
 | `nukernel/audio/live.js` `songBeatNow()` | the one addition to shared code: a read-only, where-is-the-ear-in-beats reader for the scroll |
 
 The band of four: the document's tune (`export/move.js leadOf`), the line voice

@@ -6,6 +6,13 @@
 <title>Stellate Lilguys</title>
 <meta name="description" content="A band of four. Click one to write its motifs; read along and play with them.">
 <meta name="robots" content="noindex">
+<!-- held sideways on an iPhone, added to the home screen: no browser bars, the
+     whole screen for the staff (Safari's own landscape bars eat a third of it) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lilguys">
+<meta name="theme-color" content="#0e0e14">
 <!-- THE LILGUYS PAGE (2026-11-01). The FM-1 firmware's one-page band
      (aboard-io/stellate-lilguys, STELLATE.md) brought back to the web, on the
      web app's own composer and engine: pick a genre and four play; click one
@@ -32,9 +39,38 @@
     <output id="tempoOut" for="tempo">120 BPM</output>
     <button id="tempoBack" class="orig" title="the genre's own tempo">genre's</button>
   </div>
+  <button id="readBtn" title="the part on a staff, the whole screen: sight reading (R)">read along</button>
   <label class="loop"><input type="checkbox" id="loopSec"> loop this section</label>
   <span id="status" role="status" aria-live="polite">loading…</span>
 </header>
+
+<aside id="rail" hidden aria-label="reading controls">
+  <button id="rExit">done</button>
+  <button id="rPlay" class="big">play</button>
+  <button id="rSlower">slower</button>
+  <output id="rBpm" aria-live="polite"></output>
+  <button id="rFaster">faster</button>
+  <button id="rPart" class="part" title="whose part you read">lead</button>
+  <button id="rNew" title="the same genre, music you have not seen">new piece</button>
+  <button id="rOpts" aria-controls="ropts">options</button>
+</aside>
+<div id="ropts" hidden role="dialog" aria-label="reading options">
+  <fieldset><legend>look ahead</legend>
+    <label><input type="radio" name="ahead" value="1"> 1 bar</label>
+    <label><input type="radio" name="ahead" value="2"> 2 bars</label>
+    <label><input type="radio" name="ahead" value="4"> 4 bars</label>
+  </fieldset>
+  <label><input type="checkbox" id="oNames"> note names</label>
+  <label><input type="checkbox" id="oChords"> chord symbols</label>
+  <label><input type="checkbox" id="oMute"> mute the part (you play it)</label>
+  <label class="sync">line vs sound <input type="range" id="oSync" min="-300" max="300" step="10"> <output id="oSyncOut">0 ms</output></label>
+  <p class="small">If the notes cross the line before you hear them, slide right; after, slide left.
+    Bluetooth headphones usually want about +150 ms.</p>
+</div>
+<div id="turn" hidden role="dialog" aria-label="turn your phone">
+  <p><b>Turn your phone sideways</b><br>to read: the staff wants the long side.</p>
+  <button id="turnOk">read it upright anyway</button>
+</div>
 
 <main>
   <section id="stage" aria-label="the band">

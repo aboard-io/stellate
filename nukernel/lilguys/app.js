@@ -17,7 +17,7 @@
 import { GENRES, MODES, NuDocument, NuDeskDoc, NuPrecompose, NuSong, NuWiki } from "../ui/deps.js";
 import { adoptSong, SONG, putPhrase, commit, setBpm, setSwing, setMeter, setGroove,
          setBasis, setMaster, setBuses, setRubato, setLoopOnly, loopOnly, on, bpm } from "../ui/state.js";
-import { startAt, stop, playing, warmup, songBeatNow, getPosition } from "../audio/live.js";
+import { startAt, stop, playing, warmup, songBeatNow, getPosition, engineHandle } from "../audio/live.js";
 import * as plan from "../audio/plan.js";
 import { scoreOf } from "../export/score.js";
 import { SYNTH_NAMES } from "../audio/to-engine.js";
@@ -26,6 +26,8 @@ import { Roll } from "./roll.js";
 import { Staff, keySig } from "./staff.js";
 
 const $ = (id) => document.getElementById(id);
+// asked before the first genre rewrites the address
+const FUZZ = /(^|[#&])fuzz\b/.test(location.hash) ? new URLSearchParams(location.hash.slice(1)) : null;
 const GK = "lab.lilguys.";
 const K = window.NuKernel;
 const NAMES = ["DRUMS", "BASS", "KEYS", "LEAD"];
@@ -126,12 +128,50 @@ function rescore() {
     // the bars: each timeline bar's downbeat, its section's name on the first
     const bars = TL.map((b, i) => ({ n: i + 1, beat: b.beat0, beats: b.barSteps / 4,
       si: b.si, label: b.first ? roleWord(b.si) : "" }));
+    chordsOnto(bars);
     SCORE = { boxes: sc.boxes, parts, bars };
     paintStaffData();
   } catch (e) {
     console.warn("lilguys: score failed", e);
     SCORE = null;
   }
+}
+// THE CHANGES OVER THE BARS: document.js chordsIn names each bar's chord by
+// its root and pitch classes; a chord symbol is what a reader wants of it.
+const PCN = { s: ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"],
+              f: ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"] };
+function chordSymbol(c) {
+  if (!c || c.rootPc == null || !Array.isArray(c.pcs)) return "";
+  const r = c.rootPc, iv = new Set(c.pcs.map((p) => ((p - r) % 12 + 12) % 12));
+  const minor = iv.has(3) && !iv.has(4), dim = minor && iv.has(6) && !iv.has(7), aug = iv.has(4) && iv.has(8) && !iv.has(7);
+  const sus = !iv.has(3) && !iv.has(4) ? (iv.has(5) ? "sus4" : iv.has(2) ? "sus2" : "5") : "";
+  const sev = iv.has(11) ? "maj7" : iv.has(10) ? "7" : dim && iv.has(9) ? "7" : "";
+  let q = dim ? (sev === "7" && iv.has(9) ? "°7" : sev === "7" ? "m7♭5" : "°") : aug ? "+" : minor ? "m" + (sev === "maj7" ? "(maj7)" : sev) : sev;
+  if (sus) q = (sev === "7" ? "7" : "") + sus;
+  const name = (sigOf() < 0 ? PCN.f : PCN.s)[r];
+  const bass = c.bassPc != null && c.bassPc !== r ? "/" + (sigOf() < 0 ? PCN.f : PCN.s)[c.bassPc] : "";
+  return name + q + bass;
+}
+function chordsOnto(bars) {
+  try {
+    const all = NuDocument.chordsIn(DOC, GENRES).chords;
+    const per = (NuDocument.barsOf ? NuDocument.barsOf(DOC) : 1) || 1;
+    const bar0 = [];                    // each section's first bar, in the song's own count
+    let acc = 0;
+    DOC.form.sections.forEach((s, i) => { bar0[i] = acc; acc += s.bars * per; });
+    const at = new Map();
+    for (const c of all) { const a = at.get(c.bar) || []; a.push(c); at.set(c.bar, a); }
+    let last = "";
+    const seen = new Map();             // section -> bars of it met so far (the timeline may loop one)
+    for (const b of bars) {
+      const k = seen.get(b.si) || 0; seen.set(b.si, k + 1);
+      const cs = (at.get(bar0[b.si] + k) || []).sort((x, y) => x.from - y.from);
+      const one = chordSymbol(cs[0]), two = chordSymbol(cs[1]);
+      b.chord = one && one !== last ? one : "";
+      b.chord2 = two && two !== (one || last) ? two : "";
+      last = two || one || last;
+    }
+  } catch (e) { /* no chords is a staff without symbols, not an error */ }
 }
 const roleWord = (si) => {
   const s = DOC.form.sections[si];
@@ -140,6 +180,29 @@ const roleWord = (si) => {
   const many = DOC.form.sections.filter((x) => x.role === s.role).length;
   return (s.secname || s.role || "section") + (many > 1 ? " " + same : "");
 };
+
+/* ---------- the clock the eye reads ----------
+   songBeatNow() is the engine's clock, which runs ahead of what the ear gets by
+   the output's own latency — tens of milliseconds on a laptop, 150 to 250 on
+   Bluetooth headphones — and on a phone's media route by however late its poll
+   is. For reading along that is the difference between a note under the line
+   and a note already gone, so the eye's clock is the engine's, less the
+   latency the context reports, less the reader's own nudge (SYNC). */
+const prefs = Object.assign({ ahead: 2, names: false, chords: true, sync: 0, mute: true },
+  (() => { try { return JSON.parse(localStorage.getItem("lilguys.read.v1")) || {}; } catch (e) { return {}; } })());
+const savePrefs = () => { try { localStorage.setItem("lilguys.read.v1", JSON.stringify(prefs)); } catch (e) {} };
+function latencySec() {
+  try {
+    const ctx = engineHandle() && engineHandle().ctx;
+    const l = ctx ? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) : 0;
+    return Number.isFinite(l) ? Math.min(0.5, l) : 0;
+  } catch (e) { return 0; }
+}
+function beatNow() {
+  const b = songBeatNow();
+  if (b < 0) return -1;
+  return Math.max(0, b - (latencySec() + prefs.sync / 1000) * bpm / 60);
+}
 
 /* ---------- the members: who they are, what they look like ---------- */
 function lookOf(m) {
@@ -192,7 +255,10 @@ function buildBand() {
     b.setAttribute("aria-pressed", "false");
     b.innerHTML = `<canvas width="60" height="64"></canvas><span class="who"></span>
       <span class="inst"></span><span class="what"></span><span class="mine">YOU PLAY THIS</span>`;
-    b.addEventListener("click", () => select(SEL === m ? -1 : m));
+    b.addEventListener("click", () => {
+      if (READ) { if (members[m]) { PART = m; applyReadPart(); } return; }   // reading: whose part
+      select(SEL === m ? -1 : m);
+    });
     host.appendChild(b);
     cards.push({ el: b, cv: b.querySelector("canvas"), blink: performance.now() + 1500 + m * 700 });
   }
@@ -247,7 +313,7 @@ function sectionAtBeat(b) {
 }
 
 function frame(t) {
-  const now = playing ? songBeatNow() : -1;
+  const now = playing ? beatNow() : -1;
   const bi = now >= 0 ? sectionAtBeat(now) : -1;
   const bar = bi >= 0 ? SCORE.bars[bi] : null;
   const si = bar ? bar.si : -1;
@@ -312,7 +378,10 @@ function frame(t) {
   // the roll's playhead: where the member's motif is, in the cell it reads now
   if (SEL >= 0 && roll && now >= 0 && bar) rollHead(now, bar, si);
   else if (roll) roll.setPlayhead(-1);
-  if (!$("sheet").hidden && staff) staff.draw(now >= 0 ? now : staffRest);
+  if (!$("sheet").hidden && staff) {
+    staff.options({ waiting: playing && now < 0 ? "the band is getting ready…" : "" });
+    staff.draw(now >= 0 ? now : staffRest);
+  }
   requestAnimationFrame(frame);
 }
 
@@ -527,7 +596,7 @@ function rollHead(now, bar, si) {
 }
 
 /* ---------- mute: "I'll play this part" ---------- */
-function setMine(m, yes) {
+function setMine(m, yes, quiet) {
   for (let k = 0; k < 4; k++) {
     const v = members[k];
     if (!v) continue;
@@ -541,14 +610,16 @@ function setMine(m, yes) {
   push(false);
   refreshCards();
   showSheet();
+  if (quiet) return;
   if (yes) say(`${whoOf(m).toLowerCase()} is muted — the part is yours${playing ? " (from a few seconds on)" : ""}`);
   else say("everyone plays");
 }
 
 /* ---------- the staff ---------- */
 let staff = null, staffRest = -0.001;
+const shownPart = () => (READ ? PART : MINE >= 0 ? MINE : SEL);
 function showSheet() {
-  const m = MINE >= 0 ? MINE : SEL;
+  const m = shownPart();
   const sheet = $("sheet");
   if (m < 0 || !members[m]) { sheet.hidden = true; return; }
   sheet.hidden = false;
@@ -559,7 +630,7 @@ function showSheet() {
 }
 function paintStaffData() {
   if (!staff || !SCORE) return;
-  const m = MINE >= 0 ? MINE : SEL;
+  const m = shownPart();
   if (m < 0) return;
   const notes = SCORE.parts[m].map((n) => ({ beat: n.beat, dur: n.dur, midi: n.midi }));
   let clef = "treble";
@@ -573,6 +644,7 @@ function paintStaffData() {
   $("staff").classList.toggle("grand", clef === "grand");
   staff.set({ notes, bars: SCORE.bars, sig: m === 0 ? 0 : sigOf(), color: COL[m], clef, drumLanes: drumPos });
   const A = DOC.alphabet || {};
+  if (READ) paintRail();
   $("legend").textContent = m === 0
     ? "Drums: the kick under the staff, the snare in the middle, cymbals as crosses above."
     : `Key of ${degName(0)} ${A.mode || ""} · ${Math.round(bpm)} BPM · the note under the line is the one sounding; the pale bar is how long it is held.`;
@@ -591,6 +663,206 @@ function drumPos(n) {
   if (k === 45 || k === 47) return { pos: 2, x: false };
   if (k === 41 || k === 43) return { pos: 5, x: false };
   return { pos: 4, x: true };
+}
+
+/* ---------- READ: the staff, the whole screen, for sight reading ----------
+   Built for a phone held sideways: the band shrinks to a strip along the top,
+   a rail of thumb-sized buttons sits down one side (the notch's, where the
+   music cannot use the room anyway), and the staff takes everything else, the
+   line well to the left so most of the width is music still to come. "New
+   piece" keeps the genre and the part and rolls the dice: reading practice
+   wants music you have not seen. */
+let READ = false, PART = 3, wake = null;
+function firstPart(pref) {
+  for (const m of [pref, 3, 2, 1, 0]) if (m >= 0 && members[m]) return m;
+  return -1;
+}
+async function holdScreen(on) {   // keep the phone awake while you read (Screen Wake Lock, iOS 16.4+)
+  try {
+    if (on && !wake && navigator.wakeLock && document.visibilityState === "visible") {
+      wake = await navigator.wakeLock.request("screen");
+      wake.addEventListener("release", () => { wake = null; });
+    } else if (!on && wake) { const w = wake; wake = null; await w.release(); }
+  } catch (e) { wake = null; }
+}
+function applyReadPart() {
+  // muting is the reader's choice: play it yourself, or hear it while you learn it
+  if (prefs.mute) setMine(PART, true, true);
+  else if (MINE >= 0) setMine(MINE, false, true);
+  showSheet();
+}
+function enterRead(part) {
+  PART = firstPart(part != null ? part : MINE >= 0 ? MINE : SEL >= 0 ? SEL : 3);
+  if (PART < 0) { say("nobody in this band to read"); return; }
+  READ = true;
+  document.body.classList.add("reading");
+  $("rail").hidden = false;
+  staff.options({ head: 0.16, ahead: prefs.ahead, names: prefs.names, chords: prefs.chords });
+  applyReadPart();
+  turnHint();
+  holdScreen(true);
+  window.scrollTo(0, 0);
+}
+function exitRead() {
+  READ = false;
+  document.body.classList.remove("reading");
+  $("rail").hidden = true;
+  $("ropts").hidden = true;
+  $("turn").hidden = true;
+  staff.options({ head: 0.28, ahead: null, names: prefs.names, chords: prefs.chords });
+  holdScreen(false);
+  refreshCards();
+  showSheet();
+}
+function paintRail() {
+  if (!DOC) return;
+  $("rPlay").textContent = playing ? "stop" : "play";
+  $("rPlay").setAttribute("aria-pressed", String(!!playing));
+  const v = Math.round(DOC.time.bpm), pct = Math.round(100 * v / GENRE_BPM);
+  $("rBpm").textContent = `${v}` + (pct !== 100 ? ` · ${pct}%` : "");
+  $("rPart").textContent = PART >= 0 ? whoOf(PART).toLowerCase() : "part";
+  $("rPart").style.setProperty("--mc", COL[Math.max(0, PART)]);
+}
+// a phone held upright: the staff would be four bars of a postage stamp
+const portraitPhone = () => matchMedia("(orientation: portrait) and (max-width: 700px)").matches;
+let turnDismissed = false;
+function turnHint() { $("turn").hidden = !(READ && portraitPhone() && !turnDismissed); }
+function nudgeTempo(d) { setTempo(DOC.time.bpm + d); paintRail(); }
+function newPiece() {
+  const keep = PART;
+  loadGenre(GENRE, 1 + Math.floor(Math.random() * 65535)).then(() => {
+    if (!READ) return;
+    PART = firstPart(keep);
+    applyReadPart();
+    say(`a new piece in ${titleOf(GENRE)} — first time through: read it`);
+  });
+}
+function cyclePart() {
+  for (let k = 1; k <= 4; k++) {
+    const m = (PART + k) % 4;
+    if (members[m]) { PART = m; applyReadPart(); return; }
+  }
+}
+function wireRead() {
+  $("readBtn").addEventListener("click", () => (READ ? exitRead() : enterRead()));
+  $("rExit").addEventListener("click", exitRead);
+  $("rPlay").addEventListener("click", () => $("play").click());
+  $("rSlower").addEventListener("click", () => nudgeTempo(-5));
+  $("rFaster").addEventListener("click", () => nudgeTempo(+5));
+  $("rNew").addEventListener("click", newPiece);
+  $("rPart").addEventListener("click", cyclePart);
+  $("rOpts").addEventListener("click", () => { $("ropts").hidden = !$("ropts").hidden; });
+  $("turnOk").addEventListener("click", () => { turnDismissed = true; turnHint(); });
+  const ro = $("ropts");
+  ro.querySelectorAll("input[name=ahead]").forEach((r) => { r.checked = +r.value === prefs.ahead; });
+  $("oNames").checked = prefs.names; $("oChords").checked = prefs.chords; $("oMute").checked = prefs.mute;
+  $("oSync").value = prefs.sync; $("oSyncOut").textContent = `${prefs.sync} ms`;
+  ro.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t.name === "ahead") prefs.ahead = +t.value;
+    if (t.id === "oNames") prefs.names = t.checked;
+    if (t.id === "oChords") prefs.chords = t.checked;
+    if (t.id === "oMute") { prefs.mute = t.checked; if (READ) applyReadPart(); }
+    savePrefs();
+    staff.options({ ahead: READ ? prefs.ahead : null, names: prefs.names, chords: prefs.chords });
+  });
+  $("oSync").addEventListener("input", (e) => {
+    prefs.sync = +e.target.value; $("oSyncOut").textContent = `${prefs.sync} ms`; savePrefs();
+  });
+  addEventListener("resize", turnHint);
+  addEventListener("orientationchange", turnHint);
+  document.addEventListener("visibilitychange", () => { if (READ && document.visibilityState === "visible") holdScreen(true); });
+}
+
+// the reading options back to these (the fuzzer's fresh start), boxes and staff with them
+function resetPrefs(p) {
+  Object.assign(prefs, p);
+  document.querySelectorAll("#ropts input[name=ahead]").forEach((r) => { r.checked = +r.value === prefs.ahead; });
+  $("oNames").checked = prefs.names; $("oChords").checked = prefs.chords; $("oMute").checked = prefs.mute;
+  $("oSync").value = prefs.sync; $("oSyncOut").textContent = `${prefs.sync} ms`;
+  $("ropts").hidden = true; turnDismissed = false;
+  staff.options({ ahead: READ ? prefs.ahead : null, names: prefs.names, chords: prefs.chords });
+}
+
+/* ---------- the invariants, from inside (the firmware's web_st_check) ----------
+   What must be true of the page after anything a hand can do, asked of the
+   page's own state rather than of its pixels. Null when all hold; else the
+   first that does not, in words. lilguys/fuzz.js asks after every step. */
+function check() {
+  if (!DOC) return "no document";
+  const secs = DOC.form.sections;
+  if (DOC.voices.length > 4) return `the band is ${DOC.voices.length}, not four`;
+  for (let m = 0; m < 4; m++) {
+    const v = members[m];
+    if (v && !DOC.voices.includes(v)) return `member ${m} is not a voice of the document`;
+    if (v && m === 0 && v.kind !== "drums") return "the drummer is not the drums";
+    if (v && m === 1 && v.kind !== "bass") return "the bassist is not the bass";
+    if (v && m >= 2 && v.kind !== "line") return `member ${m} is not a line`;
+  }
+  for (const [name, c] of Object.entries(DOC.material.cells)) {
+    if (c.kind === "drum") {
+      const ls = Object.entries(c.lanes || {});
+      if (!ls.length) return `drum cell ${name} has no lanes`;
+      for (const [k, a] of ls) {
+        if (!Array.isArray(a) || !a.length) return `drum cell ${name} lane ${k} is empty`;
+        if (a.some((x) => !(x >= 0 && x <= 9))) return `drum cell ${name} lane ${k} has a level out of 0..9`;
+      }
+    } else {
+      const L = c.deg && c.deg.length;
+      if (!L) return `cell ${name} has no steps`;
+      for (const f of ["play", "vel", "acc"]) if (c[f] && c[f].length !== L) return `cell ${name}: ${f} is ${c[f].length} steps, deg ${L}`;
+      if (c.play.some((x) => x !== "n" && x !== "h" && x !== "r")) return `cell ${name} plays something not n/h/r`;
+      if (c.deg.some((d) => !Number.isInteger(d) || d < -28 || d > 35)) return `cell ${name} has a degree out of reach`;
+    }
+  }
+  for (const v of DOC.voices) for (const sc of secs) {
+    const n = NuDocument.materialAt(v, sc.id);
+    if (n && v.kind !== "bass" && !DOC.material.cells[n]) return `${v.name} reads ${n} in ${sc.id}: no such cell`;
+  }
+  for (let i = 0; i < secs.length; i++) if (!GENRES[GK + i]) return `section ${i} has no compiled genre`;
+  if (SONG.length !== secs.length) return `the song is ${SONG.length} boxes for ${secs.length} sections`;
+  const muted = members.map((v, m) => (v && v.desk && v.desk.mute ? m : -1)).filter((m) => m >= 0);
+  if (muted.length > 1) return `${muted.length} members muted`;
+  if ((muted[0] ?? -1) !== MINE) return `muted ${muted[0] ?? "none"} but the page says ${MINE}`;
+  if (Math.round(bpm) !== Math.round(DOC.time.bpm)) return `the engine's tempo ${bpm} is not the record's ${DOC.time.bpm}`;
+  if (+$("tempo").value !== Math.round(DOC.time.bpm)) return `the tempo slider says ${$("tempo").value}, the record ${DOC.time.bpm}`;
+  if ($("loopSec").checked !== (loopOnly != null)) return "the loop box and the loop disagree";
+  if (SCORE) {
+    for (let i = 1; i < SCORE.bars.length; i++) if (!(SCORE.bars[i].beat > SCORE.bars[i - 1].beat)) return `bar ${i} does not come after bar ${i - 1}`;
+    for (let m = 0; m < 4; m++) for (let i = 1; i < SCORE.parts[m].length; i++)
+      if (SCORE.parts[m][i].beat < SCORE.parts[m][i - 1].beat) return `member ${m}'s notes are out of order`;
+  }
+  // the page shows what it says it shows
+  if ($("drawer").hidden !== (SEL < 0)) return `the drawer is ${$("drawer").hidden ? "shut" : "open"} with member ${SEL} chosen`;
+  if (SEL >= 0 && !members[SEL]) return `member ${SEL} is chosen and is not in the band`;
+  if (SEL >= 0 && CELL && DOC.material.cells[CELL]) {
+    const want = JSON.stringify(cellNotes(DOC.material.cells[CELL]));
+    const have = JSON.stringify(roll.notes.map((n) => [n.at, n.len, n.row]).sort(cmp3));
+    if (want !== have) return `the roll shows ${have.slice(0, 60)}, the cell ${CELL} holds ${want.slice(0, 60)}`;
+  }
+  const part = shownPart();
+  if ($("sheet").hidden !== !(part >= 0 && members[part])) return `the staff is ${$("sheet").hidden ? "hidden" : "shown"} for part ${part}`;
+  if (READ !== document.body.classList.contains("reading")) return "reading, and the page is not (or the reverse)";
+  if (READ && $("rail").hidden) return "reading without the rail";
+  if ($("play").textContent !== (playing ? "stop" : "play")) return `the play button says ${$("play").textContent} while ${playing ? "playing" : "stopped"}`;
+  if (!playing && songBeatNow() !== -1) return "stopped, and the clock still runs";
+  return null;
+}
+const cmp3 = (a, b) => a[0] - b[0] || (typeof a[2] === "string" ? String(a[2]).localeCompare(b[2]) : a[2] - b[2]) || a[1] - b[1];
+// a cell's notes as the roll would show them: [at, len, row]
+function cellNotes(c) {
+  const out = [];
+  if (c.kind === "drum") {
+    for (const [k, a] of Object.entries(c.lanes)) if (/^[a-z]$/.test(k)) a.forEach((x, i) => { if (x) out.push([i, 1, k]); });
+    return out.sort(cmp3);
+  }
+  for (let i = 0; i < c.deg.length; i++) {
+    if (c.play[i] !== "n") continue;
+    let len = 1;
+    while (i + len < c.deg.length && c.play[i + len] === "h") len++;
+    out.push([i, len, c.deg[i] | 0]);
+  }
+  return out.sort(cmp3);
 }
 
 /* ---------- the transport and the tempo ---------- */
@@ -628,6 +900,7 @@ async function loadGenre(gk, seed) {
   history.replaceState(null, "", `#g=${encodeURIComponent(gk)}&s=${seed}`);
   buildBand();
   select(-1);
+  if (READ) { PART = firstPart(PART); applyReadPart(); }
   lastSec = -2;
   say(`${titleOf(gk)}: ${members.filter(Boolean).length} play. Click one to open its motifs.`);
   warmup();
@@ -664,7 +937,9 @@ async function boot() {
     say("starting the band… (the engine fills its buffer first)");
     startAt(loopOnly != null ? loopOnly : 0);
   });
+  wireRead();
   on("transport:state", ({ playing: p }) => {
+    if (READ) { paintRail(); holdScreen(true); }
     $("play").textContent = p ? "stop" : "play";
     $("play").setAttribute("aria-pressed", String(!!p));
     if (!p) { staffRest = -0.001; lastSec = -2; }
@@ -698,14 +973,27 @@ async function boot() {
   });
   // the keyboard: space plays, 1-4 open a member
   window.addEventListener("keydown", (e) => {
-    if (e.target.closest("input, select, textarea")) return;
+    const t = e.target;
+    if (t && t.closest && t.closest("input, select, textarea")) return;
     if (e.code === "Space") { e.preventDefault(); $("play").click(); }
-    else if (/^Digit[1-4]$/.test(e.code)) select(+e.code.slice(5) - 1);
-    else if (e.code === "Escape") select(-1);
+    else if (/^Digit[1-4]$/.test(e.code)) { if (READ) { PART = firstPart(+e.code.slice(5) - 1); applyReadPart(); } else select(+e.code.slice(5) - 1); }
+    else if (e.code === "Escape") { if (READ) exitRead(); else select(-1); }
+    else if (e.code === "KeyR") READ ? exitRead() : enterRead();
   });
   requestAnimationFrame(frame);
+  // #fuzz: the fuzzer, run in this page (on a phone, where no harness reaches)
+  if (FUZZ) import("./fuzz.js").then((F) => F.runInPage(window.__lil, {
+    walks: +FUZZ.get("walks") || 6, ops: +FUZZ.get("ops") || 60, seed: +FUZZ.get("seed") || 1 }));
 }
 
-window.__lil = { get DOC() { return DOC; }, get SCORE() { return SCORE; }, members: () => members, plan,
-  loadGenre, select, setMine, setTempo, songBeatNow, getPosition };
+// THE PAGE'S OWN HANDLE, for the gates and the fuzzer (lilguys/fuzz.js): what
+// it holds, the invariants, and the few doors a hand cannot reach by clicking.
+window.__lil = {
+  get DOC() { return DOC; }, get SCORE() { return SCORE; }, get GENRE() { return GENRE; },
+  get SEL() { return SEL; }, get MINE() { return MINE; }, get READ() { return READ; }, get PART() { return PART; },
+  get CELL() { return CELL; }, get playing() { return playing; }, get bpm() { return bpm; },
+  get loop() { return loopOnly; }, get anchors() { return ANCHORS; },
+  members: () => members, plan, roll: () => roll, staff: () => staff, cellNotes, cellsOf,
+  check, resetPrefs, loadGenre, select, setMine, setTempo, enterRead, exitRead, songBeatNow, beatNow, getPosition, prefs,
+};
 boot().catch((e) => { console.error(e); say("could not start: " + (e && e.message || e)); });
