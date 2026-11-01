@@ -116,7 +116,7 @@ export const OPS = [
   ["key", 4, () => true, (r) => ({ op: "key", code: pick(r, ["Space", "Digit1", "Digit2", "Digit3", "Digit4", "Escape", "KeyR"]) })],
   ["wait", 6, () => true, (r) => ({ op: "wait", ms: 150 + Math.floor(r() * (r() < 0.8 ? 1500 : 6000)) })],
   ["rotate", 2, (L) => !!L.rotate, (r) => ({ op: "rotate", to: pick(r, ["landscape", "portrait", "desktop"]) })],
-  ["prop", 7, () => true, (r) => ({ op: "prop", p: pick(r, ["roll-twice", "mute-cuts", "stop-stops", "plays-on", "read-keeps", "genre-clean", "staff-shows"]), x: r(), y: r() })],
+  ["prop", 7, () => true, (r) => ({ op: "prop", p: pick(r, ["roll-twice", "mute-cuts", "stop-stops", "plays-on", "read-keeps", "genre-clean", "staff-shows", "song-keeps", "link-keeps"]), x: r(), y: r() })],
 ];
 
 async function apply(L, o) {
@@ -269,6 +269,36 @@ async function prop(L, o) {
       await L.loadGenre(g, 1 + Math.floor(o.y * 999)); await frame();
       if (L.GENRE !== g) return `genre-clean: asked for ${g}, got ${L.GENRE}`;
       if (L.SEL !== -1 || L.MINE !== -1 || L.loop != null) return `genre-clean: a new genre kept sel ${L.SEL}, mine ${L.MINE}, loop ${L.loop}`;
+      return null;
+    }
+    case "song-keeps": {
+      // what is saved rebuilds what is playing: the genre and seed generated
+      // again, the edits laid on, and every voice reads the same motifs, every
+      // motif it reads holds the same notes, at the same tempo and the same mute
+      const st = L.songState();
+      const doc = window.NuPrecompose.genreToDocument(st.g, st.s);
+      L.trimBand(doc);
+      const e = {}; for (const k of ["t", "c", "m", "p"]) if (st[k] != null) e[k] = st[k];
+      const p = L.applyEdits(doc, JSON.parse(JSON.stringify(e)));
+      const D = L.DOC;
+      if (Math.round(doc.time.bpm) !== Math.round(D.time.bpm)) return `song-keeps: tempo ${doc.time.bpm} rebuilt, ${D.time.bpm} playing`;
+      if (p !== L.MINE) return `song-keeps: part ${p} rebuilt, ${L.MINE} muted`;
+      for (const v of D.voices) {
+        const w = doc.voices.find((x) => x.name === v.name);
+        if (!w) return `song-keeps: ${v.name} is missing from the rebuilt band`;
+        for (const sc of D.form.sections) {
+          const a = window.NuDocument.materialAt(v, sc.id), b = window.NuDocument.materialAt(w, sc.id);
+          if (a !== b) return `song-keeps: ${v.name} reads ${a} in ${sc.id}, rebuilt ${b}`;
+          if (a && JSON.stringify(L.cellNotes(D.material.cells[a])) !== JSON.stringify(L.cellNotes(doc.material.cells[a])))
+            return `song-keeps: motif ${a} rebuilt with different notes`;
+        }
+      }
+      return null;
+    }
+    case "link-keeps": {
+      const st = L.songState();
+      const back = await L.unpack(await L.pack(st));
+      if (JSON.stringify(back) !== JSON.stringify(st)) return "link-keeps: the link does not unpack to the song it was packed from";
       return null;
     }
     case "staff-shows": {

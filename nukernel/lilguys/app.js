@@ -63,7 +63,7 @@ function trimBand(doc) {
   const drums = doc.voices.find((v) => v.kind === "drums") || null;
   // the harmony voice first: document.js reads the first line for the chords
   doc.voices = [keys, lead, bass, drums].filter(Boolean);
-  members = [drums, bass, keys, lead];
+  return [drums, bass, keys, lead];
 }
 
 const NATIVE = SYNTH_NAMES();
@@ -109,21 +109,26 @@ function rescore() {
     if (!TL.length) { SCORE = null; return; }
     const sc = scoreOf({ timeline: TL, cast: plan.cast(), seats: plan.seats(),
                          sections: SONG, addr: plan.addrOf, bpm, grid: true });
-    const seats = plan.seats();
     const parts = [[], [], [], []];
-    const instrOfMember = members.map((v) => (v && v.instrument) || null);
-    for (const box of sc.boxes) for (const lane of box.lanes) {
-      let m = -1;
-      if (lane.chair === "drums" || lane.name === "drums") m = 0;
-      else if (lane.chair === "bass" || lane.name === "bass") m = 1;
-      else {
-        const seat = seats[+String(lane.name).replace(/^v/, "")];
-        const ins = (seat && seat.instr) || lane.instr;
-        m = ins && ins === instrOfMember[3] && ins !== instrOfMember[2] ? 3
-          : ins && ins === instrOfMember[2] ? 2
-          : seat && (seat.chair === "lead" || seat.part === "lead") ? 3 : 2;
+    // WHO PLAYED IT: the section's own address (unit -> desk chair) and the
+    // desk's chair -> voice, the same road the mute takes. Not the instrument
+    // and not the lane's label: in ragtime one honky-tonk unit is the lead in
+    // the intro and the riff in the verse, and both guesses gave the lead's
+    // notes to the keys (the fuzzer's mute-cuts found it).
+    const chanVoice = new Map(NuDeskDoc.channelVoicesOf(DOC, GENRES).map((c) => [c.key, c.voice]));
+    for (const box of sc.boxes) {
+      const A = plan.addrOf(box.si) || {};
+      for (const lane of box.lanes) {
+        let m = -1;
+        if (lane.name === "drums" || A[lane.name] === "drums") m = 0;
+        else {
+          const v = chanVoice.get(A[lane.name]);
+          m = v ? members.indexOf(v) : -1;
+          if (m < 0) m = lane.chair === "bass" ? 1 : -1;
+        }
+        if (m < 0) continue;                 // a layer with no chair of its own
+        for (const n of lane.notes) parts[m].push({ ...n, beat: n.beat + box.beat0 });
       }
-      for (const n of lane.notes) parts[m].push({ ...n, beat: n.beat + box.beat0 });
     }
     parts.forEach((p) => p.sort((a, b) => a.beat - b.beat));
     // the bars: each timeline bar's downbeat, its section's name on the first
@@ -516,6 +521,7 @@ function writeCell(m, notes) {
     // a line of nothing still has to be a cell: one rest is fine
   }
   push(false);
+  persist();
   say(`${whoOf(m).toLowerCase()}: ${name} changed — the band plays it ${playing ? "in a few seconds" : "when you press play"}`);
   if (SEL === m) { renderTabs(m); openCell(m, name); }
 }
@@ -606,6 +612,7 @@ function setMine(m, yes, quiet) {
   }
   MINE = yes ? m : -1;
   push(false);
+  persist();
   refreshCards();
   showSheet();
   if (quiet) return;
@@ -848,6 +855,164 @@ function cellNotes(c) {
   return out.sort(cmp3);
 }
 
+/* ---------- SAVING AND SHARING ----------
+   The song is its genre and seed — genreToDocument is a pure function of the
+   two (kernel.js: "the dice are a function, not a stream") — plus what you
+   changed: the motifs you wrote, which motif each member reads, the tempo, and
+   whose part is yours. Only that is kept, so it fits in the address: every
+   change rewrites the link, a reload comes back to it, and copying the link
+   shares the song. The last song is also kept in this browser, for a visit
+   with no link at all.
+
+   A link is somebody else's data. Everything read from one is checked before
+   it touches the document: an unknown genre is refused, a motif that is not
+   the shape of a cell is dropped, numbers are clamped, and a member can only
+   read a motif that exists. */
+let BASE = null;
+const STORE = "lilguys.song.v1";
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+function songState() {
+  const st = { g: GENRE, s: SEED };
+  if (!DOC || !BASE) return st;
+  if (Math.round(DOC.time.bpm) !== Math.round(BASE.time.bpm)) st.t = Math.round(DOC.time.bpm);
+  // a cell is kept when it differs from the generated one, or is new and somebody reads it
+  const read = new Set();
+  for (const v of DOC.voices) for (const sc of DOC.form.sections) { const n = NuDocument.materialAt(v, sc.id); if (n) read.add(n); }
+  const c = {};
+  for (const [k, cell] of Object.entries(DOC.material.cells)) {
+    const b = BASE.material.cells[k];
+    if (b ? !same(cell, b) : read.has(k)) c[k] = cell;
+  }
+  if (Object.keys(c).length) st.c = c;
+  const m = {};
+  for (const v of DOC.voices) {
+    const b = BASE.voices.find((x) => x.name === v.name);
+    if (b && !same(v.material ?? null, b.material ?? null)) m[v.name] = v.material ?? null;
+  }
+  if (Object.keys(m).length) st.m = m;
+  if (MINE >= 0) st.p = MINE;
+  return st;
+}
+
+// a cell from a link, made safe: its shape, or nothing
+function cleanCell(c) {
+  if (!c || typeof c !== "object") return null;
+  if (c.kind === "drum") {
+    const lanes = {};
+    for (const [k, a] of Object.entries(c.lanes || {})) {
+      if (!/^[a-z]$/.test(k) || !Array.isArray(a) || !a.length || a.length > 128) continue;
+      lanes[k] = a.map((x) => Math.max(0, Math.min(9, Math.round(+x) || 0)));
+    }
+    return Object.keys(lanes).length ? { kind: "drum", lanes } : null;
+  }
+  const L = Array.isArray(c.deg) ? c.deg.length : 0;
+  if (!L || L > 256 || !Array.isArray(c.play) || c.play.length !== L) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(c)) {
+    if (k === "kind") out.kind = "line";
+    else if (k === "play") out.play = v.map((x) => (x === "n" || x === "h" ? x : "r"));
+    else if (k === "deg") out.deg = v.map((d) => Math.max(-28, Math.min(35, Math.round(+d) || 0)));
+    else if (Array.isArray(v) && v.length === L && v.every((x) => typeof x === "number" && Number.isFinite(x))) out[k] = v.slice();
+    else if (typeof v === "number" && Number.isFinite(v)) out[k] = v;
+  }
+  out.kind = "line";
+  return out;
+}
+
+// the edits onto a freshly generated, trimmed document; returns whose part is yours (or -1)
+function applyEdits(doc, e) {
+  if (!e || typeof e !== "object") return -1;
+  if (e.t != null && Number.isFinite(+e.t)) doc.time.bpm = Math.max(40, Math.min(220, Math.round(+e.t)));
+  if (e.c && typeof e.c === "object")
+    for (const [k, c] of Object.entries(e.c)) {
+      // (a name is a name: never one that reaches an object's machinery)
+      const ok = typeof k === "string" && k.length <= 80 && !/^(__proto__|constructor|prototype)$/.test(k) ? cleanCell(c) : null;
+      if (ok) doc.material.cells[k] = ok;
+    }
+  const known = (n) => typeof n === "string" && !!doc.material.cells[n];
+  if (e.m && typeof e.m === "object")
+    for (const [name, mat] of Object.entries(e.m)) {
+      const v = doc.voices.find((x) => x.name === name);
+      if (!v) continue;
+      if (mat == null) { if (v.kind === "bass") delete v.material; continue; }
+      if (typeof mat === "string") { if (known(mat)) v.material = mat; continue; }
+      if (typeof mat === "object") {
+        const out = {};
+        for (const [sid, n] of Object.entries(mat)) if (known(n) && typeof sid === "string") out[sid] = n;
+        if (Object.keys(out).length) v.material = out;
+      }
+    }
+  return Number.isInteger(e.p) && e.p >= 0 && e.p < 4 ? e.p : -1;
+}
+
+// the link's own spelling: deflated JSON in base64url (plain base64url JSON where a browser cannot deflate)
+const b64u = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (ch) => ch.charCodeAt(0));
+async function pack(obj) {
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream === "function") {
+    const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+    return "z" + b64u(z);
+  }
+  return "j" + b64u(raw);
+}
+async function unpack(str) {
+  try {
+    const kind = str[0], bytes = unb64u(str.slice(1));
+    if (bytes.length > 200000) return null;
+    let raw = bytes;
+    if (kind === "z") raw = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+    else if (kind !== "j") return null;
+    return JSON.parse(new TextDecoder().decode(raw));
+  } catch (e) { return null; }
+}
+const editsOf = (st) => { const e = {}; for (const k of ["t", "c", "m", "p"]) if (st[k] != null) e[k] = st[k]; return e; };
+async function linkOf(st) {
+  const e = editsOf(st);
+  return `#g=${encodeURIComponent(st.g)}&s=${st.s}` + (Object.keys(e).length ? "&e=" + (await pack(e)) : "");
+}
+
+let persistTimer = 0, persistGen = 0;
+function persist(now) {
+  clearTimeout(persistTimer);
+  const go = async () => {
+    const my = ++persistGen;
+    const st = songState();
+    try { localStorage.setItem(STORE, JSON.stringify(st)); } catch (e) { /* a private window: the link still holds it */ }
+    const link = await linkOf(st);
+    if (my === persistGen && !FUZZ) history.replaceState(null, "", link);
+  };
+  if (now) go(); else persistTimer = setTimeout(go, 250);
+}
+
+// what the page opens on: the link if it has one, else the last song in this browser
+async function startingSong() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const g = h.get("g");
+  if (g && ANCHORS.includes(g)) {
+    const s = Math.max(1, Math.min(65535, +h.get("s") || 1));
+    const e = h.get("e") ? await unpack(h.get("e")) : null;
+    return { g, s, e, bad: !!h.get("e") && !e };
+  }
+  try {
+    const st = JSON.parse(localStorage.getItem(STORE));
+    if (st && ANCHORS.includes(st.g)) return { g: st.g, s: Math.max(1, Math.min(65535, +st.s || 1)), e: editsOf(st) };
+  } catch (e) { /* nothing kept */ }
+  return { g: ANCHORS.includes("funk") ? "funk" : ANCHORS[1], s: 1, e: null };
+}
+
+async function share() {
+  persist(true);
+  await new Promise((r) => setTimeout(r, 30));
+  const url = location.origin + location.pathname + (await linkOf(songState()));
+  try {
+    if (navigator.share && matchMedia("(pointer: coarse)").matches) { await navigator.share({ title: document.title, url }); return; }
+    await navigator.clipboard.writeText(url);
+    say("link copied: it opens this song, your motifs and all");
+  } catch (e) { say("copy this link: " + url); }
+}
+
 /* ---------- the transport and the tempo ---------- */
 function say(text) { $("status").textContent = text; }
 const titleOf = (gk) => {
@@ -864,29 +1029,33 @@ function setTempo(v, quiet) {
   $("tempoOut").textContent = `${v} BPM` + (pct !== 100 ? ` (${pct}%)` : "");
   if (quiet) return;
   push(false);
+  persist();
   if (playing) say(`tempo ${v} — the band takes it in a few seconds`);
 }
 
-async function loadGenre(gk, seed) {
+async function loadGenre(gk, seed, edits = null) {
   const was = playing;
   if (was) stop();
   GENRE = gk; SEED = seed;
   DOC = NuPrecompose.genreToDocument(gk, seed);
-  trimBand(DOC);
+  members = trimBand(DOC);
+  BASE = JSON.parse(JSON.stringify(DOC));        // what the edits are measured against
   GENRE_BPM = DOC.time.bpm;
+  const mine = edits ? applyEdits(DOC, edits) : -1;
   MINE = -1;
   setLoopOnly(null); $("loopSec").checked = false;
-  setTempo(GENRE_BPM, true);
+  setTempo(DOC.time.bpm, true);
   push(true);
+  if (mine >= 0 && members[mine]) setMine(mine, true, true);
   $("genre").value = titleOf(gk);
   document.title = `${titleOf(gk)} — Stellate Lilguys`;
-  history.replaceState(null, "", `#g=${encodeURIComponent(gk)}&s=${seed}`);
   buildBand();
   select(-1);
   if (READ) { PART = firstPart(PART); applyReadPart(); }
   lastSec = -2;
   say(`${titleOf(gk)}: ${members.filter(Boolean).length} play. Click one to open its motifs.`);
   warmup();
+  persist(true);
   if (was) startAt(0);
 }
 
@@ -911,9 +1080,9 @@ async function boot() {
   genreList();
   say("warming the engine…");
   await plan.warmEngine();
-  const h = new URLSearchParams(location.hash.slice(1));
-  const gk = h.get("g") && GENRES[h.get("g")] ? h.get("g") : (ANCHORS.includes("funk") ? "funk" : ANCHORS[1]);
-  await loadGenre(gk, +h.get("s") || 1);
+  const first = await startingSong();
+  await loadGenre(first.g, first.s, first.e);
+  if (first.bad) say("that link's edits could not be read; here is the song without them");
   $("play").disabled = false;
   $("play").addEventListener("click", () => {
     if (playing) { stop(); return; }
@@ -943,6 +1112,8 @@ async function boot() {
   $("tempo").addEventListener("input", (e) => setTempo(+e.target.value, true));
   $("tempo").addEventListener("change", (e) => setTempo(+e.target.value));
   $("tempoBack").addEventListener("click", () => setTempo(GENRE_BPM));
+  $("share").addEventListener("click", share);
+  $("rShare").addEventListener("click", share);
   $("closeDrawer").addEventListener("click", () => select(-1));
   $("mine").addEventListener("change", (e) => { if (SEL >= 0) setMine(SEL, e.target.checked); });
   $("loopSec").addEventListener("change", (e) => {
@@ -977,6 +1148,6 @@ window.__lil = {
   get CELL() { return CELL; }, get playing() { return playing; }, get bpm() { return bpm; },
   get loop() { return loopOnly; }, get anchors() { return ANCHORS; },
   members: () => members, plan, roll: () => roll, staff: () => staff, cellNotes, cellsOf,
-  check, resetPrefs, loadGenre, select, setMine, setTempo, enterRead, exitRead, songBeatNow, beatNow, getPosition, prefs,
+  check, resetPrefs, songState, applyEdits, pack, unpack, linkOf, trimBand, loadGenre, select, setMine, setTempo, enterRead, exitRead, songBeatNow, beatNow, getPosition, prefs,
 };
 boot().catch((e) => { console.error(e); say("could not start: " + (e && e.message || e)); });

@@ -55,6 +55,55 @@ own shown beside it). **Loop this section** loops the section that is sounding.
 Rubato is switched off on this page: a tempo map is lovely to listen to and
 hard to play along with.
 
+## Saving and sharing
+
+The song is its genre and seed (`genreToDocument` is a pure function of the
+two), plus what you changed. Only the changes are kept:
+- motifs you edited, and new ones a member reads (a written bass line, a
+  motif copied so it could be edited)
+- which motif each member reads, where that moved
+- the tempo, if it isn't the genre's
+- whose part is yours
+
+That is small enough for the address. Every change rewrites the link as
+`#g=<genre>&s=<seed>&e=<edits>`, where the edits are deflated JSON in base64url
+(plain base64url JSON where a browser has no `CompressionStream`). A reload
+comes back to the song, and **share** copies the link (on a phone, the share
+sheet). A typical edited song is about 200 characters. The last song is also
+kept in `localStorage` (`lilguys.song.v1`) for a visit with no link.
+
+A link is someone else's data, so everything read from one is checked first:
+- an unknown genre is refused, and the page opens the last song instead
+- a motif that isn't the shape of a cell is dropped, and its numbers are
+  clamped
+- a member may only read a motif that exists
+- the tempo is held to 40–220
+- names like `__proto__` are refused
+- a link whose edits cannot be read opens the song without them, and says so
+
+The fuzzer checks both directions:
+- `song-keeps`: what is saved, regenerated and re-edited, is the song that is
+  playing, motif for motif.
+- `link-keeps`: packing and unpacking the link changes nothing.
+
+A planted restore bug (edited motifs ignored) was caught by `song-keeps`,
+shrunk to three operations.
+
+Running it for this round turned up two older faults, both fixed:
+- **Notes were given to the wrong member.** The score was attributed by
+  instrument, but one unit can play two voices: in ragtime one honky-tonk piano
+  is the lead in the intro and the riff in the verse. The lead's notes were
+  drawn on the keys' staff and sung by the keys' character. The page now
+  attributes through the section's own address (`plan.addrOf(si)`) and the
+  desk's chair-to-voice map (`NuDeskDoc.channelVoicesOf`), the same road the
+  mute takes. Found by `mute-cuts`.
+- **A muted part's pickup still sounded.** `audio/desk.js deskAmp` gave a
+  voice not seated in a section no part at all, so a bass pickup played from
+  the intro into the verse even with the bass muted: 2 of funk's 428 bass
+  notes, on every page. A stranger now obeys its own chair's mute, and nothing
+  else of that chair's. Across ten genres, every member's mute now cuts
+  exactly its own chair, and the score assigns every note it holds.
+
 ## Read: sight reading, on a phone held sideways
 
 **read along** (or `R`) gives the whole screen to the staff. Built for an
@@ -106,7 +155,7 @@ in stellate-lilguys) brought into the page. The page is a graph:
   bars and notes are in order; the open roll shows exactly the cell it edits;
   the drawer, staff and rail are shown when and only when they should be; and
   a stopped page has a stopped clock.
-- **Now and then it runs a property**, an experiment with a known answer:
+- **Now and then it runs a property**, an experiment with a known answer (nine of them):
   - `roll-twice`: a step tapped twice leaves the cell as it was.
   - `mute-cuts`: muting cuts exactly one chair in the events the engine is
     handed, and unmuting restores them.
@@ -116,6 +165,7 @@ in stellate-lilguys) brought into the page. The page is a graph:
   - `genre-clean`: a new genre is a clean start.
   - `staff-shows`: the engraving holds the part it is titled with, one
     notehead group per onset per staff, at the look-ahead asked.
+  - `song-keeps` and `link-keeps`: see Saving and sharing, above.
 - **A failure** is shrunk by delta debugging to the fewest operations that
   fail the same way, and printed as a replay. Each walk starts from the page's
   own fresh state (`reset`), and the page's `Math.random` is drawn from the
@@ -149,8 +199,14 @@ shared engine, open:
   start/stop churn.
 - The clock can hold at a bar's downbeat. The engine announces bars ahead of
   the sound; `plays-on` now waits that out, up to 4 s.
-- Once, on classical, the clock went backwards nine beats mid-song with no
-  loop or seek. Not yet explained.
+- The clock has gone backwards twice with no loop or seek: classical 28 →
+  18.69 mid-song, and opera seria 72 → 0.44 just after play. The first reading
+  was an exact downbeat both times. It never reproduces in a fresh page, even
+  replaying the same steps, so it depends on engines started and stopped
+  earlier in the page. The likeliest cause is the one `audio/live.js` names: a
+  stale engine whose stop did not take, still calling `onBar` against another
+  engine's clock. A run with every `onBar` tagged by engine did not
+  reproduce it, so this is unconfirmed.
 
 A bug planted to test the fuzzer (unmuting not unmuting) was caught two ways:
 by `mute-cuts`, shrunk to one operation, and by the invariant "2 members
