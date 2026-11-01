@@ -63,8 +63,8 @@
   <label><input type="checkbox" id="oNames"> note names</label>
   <label><input type="checkbox" id="oChords"> chord symbols</label>
   <label><input type="checkbox" id="oMute"> mute the part (you play it)</label>
-  <label class="sync">line vs sound <input type="range" id="oSync" min="-300" max="300" step="10"> <output id="oSyncOut">0 ms</output></label>
-  <p class="small">If the notes cross the line before you hear them, slide right; after, slide left.
+  <label class="sync">red vs sound <input type="range" id="oSync" min="-300" max="300" step="10"> <output id="oSyncOut">0 ms</output></label>
+  <p class="small">If a note turns red before you hear it, slide right; after, slide left.
     Bluetooth headphones usually want about +150 ms.</p>
 </div>
 <div id="turn" hidden role="dialog" aria-label="turn your phone">
@@ -94,7 +94,7 @@
     <div class="sheet-head">
       <h2 id="sheetTitle">Play along</h2>
     </div>
-    <canvas id="staff"></canvas>
+    <div id="staff" role="img" aria-label="the part, engraved, moving with the music"></div>
     <p class="legend" id="legend"></p>
   </section>
 
@@ -102,7 +102,8 @@
     <b>Click a member</b> to open its motifs: the short phrases the band builds the song from.
     Tap the grid to put a note, drag sideways to hold it, drag a note to move it, tap it to take it away;
     the band plays your change a few seconds later. <b>I'll play this part</b> mutes the member and
-    scrolls its part past the line, as it is actually played (sections develop the motif), so you can
+    engraves its part as it is actually played (sections develop the motif), moving with the music,
+    the sounding note in red, so you can
     play it on your own instrument. Slow the <b>tempo</b> down to learn it.
   </p>
 </main>

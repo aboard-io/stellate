@@ -240,11 +240,16 @@ async function prop(L, o) {
         await sleep(100);
       }
       if (!L.playing) return null;
-      const b0 = L.songBeatNow(); await sleep(1200);
+      // The engine may announce a bar before it sounds (its lookahead), and the
+      // clock holds at that bar's downbeat until the sound arrives: a stall at
+      // a downbeat is waited out, up to four seconds. Backwards is never
+      // waited out (a looped section coming round aside).
+      const b0 = L.songBeatNow();
+      let b1 = b0;
+      for (let t = 0; t < 4000 && L.playing && b1 === b0; t += 400) { await sleep(400); b1 = L.songBeatNow(); }
       if (!L.playing) return null;
-      const b1 = L.songBeatNow();
-      // (a looped section comes round: forward is forward modulo the loop)
-      if (!(b1 > b0) && !(L.loop != null && b1 < b0)) return `plays-on: the beat did not move (${b0.toFixed(2)} -> ${b1.toFixed(2)})`;
+      if (b1 < b0 && L.loop == null) return `plays-on: the beat went backwards (${b0.toFixed(2)} -> ${b1.toFixed(2)})`;
+      if (b1 === b0) return `plays-on: the beat did not move in 4 s (${b0.toFixed(2)})`;
       return null;
     }
     case "read-keeps": {
@@ -267,21 +272,43 @@ async function prop(L, o) {
       return null;
     }
     case "staff-shows": {
+      // the engraving holds the part it is titled with: one glyph group per
+      // onset per staff (a chord is one stem), at the look-ahead asked for
       const S = L.staff(), part = L.READ ? L.PART : L.MINE >= 0 ? L.MINE : L.SEL;
       if (part < 0 || $("sheet").hidden || !L.SCORE) return null;
-      await frame();
-      const want = new Set(L.SCORE.parts[part].map((n) => n.midi + "@" + Math.round(n.beat * 48))).size;
-      if (S.notes.length !== want) return `staff-shows: the staff holds ${S.notes.length} notes, member ${part} plays ${want}`;
-      if (L.READ && S.opts.ahead !== L.prefs.ahead) return `staff-shows: look-ahead ${S.opts.ahead}, asked ${L.prefs.ahead}`;
-      if (L.READ && S.ppb) {
-        const W = S.W, head = Math.round(W * S.opts.head), bpb = (S.bars[0] && S.bars[0].beats) || 4;
-        const want2 = Math.max(26, Math.min(140, (W - head - 12) / (S.opts.ahead * bpb)));
-        if (Math.abs(S.ppb - want2) > 0.5) return `staff-shows: ${S.ppb.toFixed(1)} px a beat, ${want2.toFixed(1)} asked`;
+      for (let i = 0; i < 60 && !S.ready; i++) await sleep(50);
+      if (!S.ready) return `staff-shows: member ${part}'s part was never engraved`;
+      const grand = S.data.clef === "grand", T = S.T, keys = new Set();
+      for (const n of L.SCORE.parts[part]) {
+        const st = Math.round(n.beat * 4);
+        if (st >= 0 && st < T) keys.add((grand && n.midi < 60 ? 1 : 0) + ":" + st);
       }
+      if (S.drawnNotes !== keys.size) return `staff-shows: ${S.drawnNotes} notes engraved, member ${part} starts ${keys.size}`;
+      if (S.notes.length && !S.svg.querySelector(".abcjs-note")) return "staff-shows: notes, and no notehead on the paper";
+      if (L.READ && S.opts.ahead !== L.prefs.ahead) return `staff-shows: look-ahead ${S.opts.ahead}, asked ${L.prefs.ahead}`;
       return null;
     }
   }
   return null;
+}
+
+/* ---------- what a failure says ----------
+   An error event, or a rejection whose reason is one (a worker's onerror
+   handed to a promise), stringifies as "[object ErrorEvent]" — a failure
+   nobody can act on. Say where it came from instead. */
+export function describe(x) {
+  if (x == null) return String(x);
+  if (typeof x === "string") return x;
+  const parts = [];
+  const kind = x.constructor && x.constructor.name;
+  if (kind && kind !== "Object") parts.push(kind);
+  if (x.message) parts.push(x.message);
+  if (x.filename) parts.push(`@${String(x.filename).replace(location.origin, "")}:${x.lineno || 0}`);
+  const t = x.target || x.srcElement;
+  if (t && t !== window) parts.push("from " + (t.src || t.url || t.tagName || (t.constructor && t.constructor.name) || "?"));
+  if (x.error && x.error.stack) parts.push(String(x.error.stack).split("\n").slice(0, 2).join(" ← "));
+  if (x.stack && !x.error) parts.push(String(x.stack).split("\n").slice(0, 2).join(" ← "));
+  return parts.join(" ") || String(x);
 }
 
 /* ---------- a fresh record ---------- */
@@ -399,8 +426,8 @@ export async function runInPage(L, opts) {
     "background:#0e0e14ee;color:#ececf0;border:1px solid #ffd24a;border-radius:10px;padding:10px 12px;font:12px/1.4 ui-monospace,monospace";
   document.body.appendChild(box);
   const errors = [];
-  addEventListener("error", (e) => errors.push(String(e.message || e)));
-  addEventListener("unhandledrejection", (e) => errors.push(String(e.reason && e.reason.message || e.reason)));
+  addEventListener("error", (e) => errors.push(describe(e)));
+  addEventListener("unhandledrejection", (e) => errors.push("unhandled rejection: " + describe(e.reason)));
   let line = "";
   const paint = (extra) => { box.innerHTML = `<b>fuzzing this page</b> — ${opts.walks} walks of ${opts.ops}, seed ${opts.seed}<br>${line}${extra || ""}`; };
   paint("starting…");

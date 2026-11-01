@@ -23,7 +23,8 @@ import { scoreOf } from "../export/score.js";
 import { SYNTH_NAMES } from "../audio/to-engine.js";
 import { drawSprite, quaver, zee, COL, BG, INK, MID, LOOK, BASS, mix } from "./sprites.js";
 import { Roll } from "./roll.js";
-import { Staff, keySig } from "./staff.js";
+import { Staff } from "./staff.js";
+import { chordName } from "../ui/paper.js";
 
 const $ = (id) => document.getElementById(id);
 // asked before the first genre rewrites the address
@@ -136,21 +137,13 @@ function rescore() {
     SCORE = null;
   }
 }
-// THE CHANGES OVER THE BARS: document.js chordsIn names each bar's chord by
-// its root and pitch classes; a chord symbol is what a reader wants of it.
-const PCN = { s: ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"],
-              f: ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"] };
+// THE CHANGES OVER THE BARS: document.js chordsIn says which degree and
+// quality each bar is on; ui/paper.js chordName (the band score's own speller)
+// says what a copyist writes for it.
 function chordSymbol(c) {
-  if (!c || c.rootPc == null || !Array.isArray(c.pcs)) return "";
-  const r = c.rootPc, iv = new Set(c.pcs.map((p) => ((p - r) % 12 + 12) % 12));
-  const minor = iv.has(3) && !iv.has(4), dim = minor && iv.has(6) && !iv.has(7), aug = iv.has(4) && iv.has(8) && !iv.has(7);
-  const sus = !iv.has(3) && !iv.has(4) ? (iv.has(5) ? "sus4" : iv.has(2) ? "sus2" : "5") : "";
-  const sev = iv.has(11) ? "maj7" : iv.has(10) ? "7" : dim && iv.has(9) ? "7" : "";
-  let q = dim ? (sev === "7" && iv.has(9) ? "°7" : sev === "7" ? "m7♭5" : "°") : aug ? "+" : minor ? "m" + (sev === "maj7" ? "(maj7)" : sev) : sev;
-  if (sus) q = (sev === "7" ? "7" : "") + sus;
-  const name = (sigOf() < 0 ? PCN.f : PCN.s)[r];
-  const bass = c.bassPc != null && c.bassPc !== r ? "/" + (sigOf() < 0 ? PCN.f : PCN.s)[c.bassPc] : "";
-  return name + q + bass;
+  if (!c || c.deg == null) return "";
+  const A = DOC.alphabet || {};
+  try { return chordName(c.deg | 0, c.q || "triad", A.key | 0, MODES[A.mode] || MODES.aeolian); } catch (e) { return ""; }
 }
 function chordsOnto(bars) {
   try {
@@ -185,7 +178,7 @@ const roleWord = (si) => {
    songBeatNow() is the engine's clock, which runs ahead of what the ear gets by
    the output's own latency — tens of milliseconds on a laptop, 150 to 250 on
    Bluetooth headphones — and on a phone's media route by however late its poll
-   is. For reading along that is the difference between a note under the line
+   is. For reading along that is the difference between a red note
    and a note already gone, so the eye's clock is the engine's, less the
    latency the context reports, less the reader's own nudge (SYNC). */
 const prefs = Object.assign({ ahead: 2, names: false, chords: true, sync: 0, mute: true },
@@ -379,7 +372,8 @@ function frame(t) {
   if (SEL >= 0 && roll && now >= 0 && bar) rollHead(now, bar, si);
   else if (roll) roll.setPlayhead(-1);
   if (!$("sheet").hidden && staff) {
-    staff.options({ waiting: playing && now < 0 ? "the band is getting ready…" : "" });
+    const w = playing && now < 0 ? "the band is getting ready…" : "";
+    if (w !== staff.opts.waiting) staff.options({ waiting: w });
     staff.draw(now >= 0 ? now : staffRest);
   }
   requestAnimationFrame(frame);
@@ -423,6 +417,10 @@ function modeSteps() {
   return MODES[A.mode] || MODES.ionian || [0, 2, 4, 5, 7, 9, 11];
 }
 const tonicPc = () => (((DOC.alphabet && DOC.alphabet.key) || 0) % 12 + 12) % 12;
+// sharps (+) or flats (-) by the relative major's pitch class: only which way
+// the roll's labels spell (the staff's signature is ui/abc.js's own)
+const SIG_OF_MAJOR = [0, -5, 2, -3, 4, -1, 6, 1, -4, 3, -2, 5];
+const keySig = (pc, off) => SIG_OF_MAJOR[(((pc + off) % 12) + 12) % 12];
 const MODE_TO_MAJOR = { ionian: 0, dorian: -2, phrygian: -4, lydian: -5, mixolydian: -7, aeolian: -9, locrian: -11 };
 function sigOf() {
   const A = DOC.alphabet || {};
@@ -642,29 +640,14 @@ function paintStaffData() {
     clef = m === 1 ? "bass" : lo < 53 && hi > 67 ? "grand" : med < 57 ? "bass" : "treble";
   }
   $("staff").classList.toggle("grand", clef === "grand");
-  staff.set({ notes, bars: SCORE.bars, sig: m === 0 ? 0 : sigOf(), color: COL[m], clef, drumLanes: drumPos });
-  const A = DOC.alphabet || {};
+  const A0 = DOC.alphabet || {};
+  staff.set({ notes, bars: SCORE.bars, key: A0.key | 0, mode: MODES[A0.mode] || MODES.aeolian,
+              meter: DOC.time.meter || null, clef });
   if (READ) paintRail();
   $("legend").textContent = m === 0
-    ? "Drums: the kick under the staff, the snare in the middle, cymbals as crosses above."
-    : `Key of ${degName(0)} ${A.mode || ""} · ${Math.round(bpm)} BPM · the note under the line is the one sounding; the pale bar is how long it is held.`;
+    ? "Drums: the kick in the bottom space, the snare in the third, cymbals as crosses above; the red notes are sounding."
+    : `Key of ${degName(0)} ${A0.mode || ""} · ${Math.round(bpm)} BPM · the red note is the one sounding.`;
 }
-// a drum's place on the staff (half-spaces from the top line) and whether it is a cross
-function drumPos(n) {
-  const k = n.midi;
-  if (k === 35 || k === 36) return { pos: 7, x: false };
-  if (k === 38 || k === 40) return { pos: 3, x: false };
-  if (k === 37 || k === 39) return { pos: 3, x: true };
-  if (k === 42 || k === 46) return { pos: -1, x: true };
-  if (k === 44) return { pos: 9, x: true };
-  if (k === 49 || k === 57 || k === 55 || k === 52) return { pos: -2, x: true };
-  if (k === 51 || k === 59 || k === 53) return { pos: 0, x: true };
-  if (k === 48 || k === 50) return { pos: 1, x: false };
-  if (k === 45 || k === 47) return { pos: 2, x: false };
-  if (k === 41 || k === 43) return { pos: 5, x: false };
-  return { pos: 4, x: true };
-}
-
 /* ---------- READ: the staff, the whole screen, for sight reading ----------
    Built for a phone held sideways: the band shrinks to a strip along the top,
    a rail of thumb-sized buttons sits down one side (the notch's, where the

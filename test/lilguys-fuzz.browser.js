@@ -95,7 +95,7 @@ async function device(browser, base, name) {
       const steps = await page.evaluate(async ({ ops, seed }) => {
         const F = await import("./lilguys/fuzz.js");
         const errors = [], out = [];
-        addEventListener("error", (e) => errors.push(String(e.message)));
+        addEventListener("error", (e) => errors.push(F.describe(e)));
         await F.walk(window.__lil, { seed, given: ops, errors,
           onStep: (i, o, to, fail) => out.push(`${JSON.stringify(o)} -> ${to}${fail ? "   FAIL " + fail : ""}`) });
         return out;
@@ -112,8 +112,8 @@ async function device(browser, base, name) {
       const res = await page.evaluate(async (o) => {
         const F = await import("./lilguys/fuzz.js");
         const errors = [];
-        addEventListener("error", (e) => errors.push(String(e.message)));
-        addEventListener("unhandledrejection", (e) => errors.push(String(e.reason && e.reason.message || e.reason)));
+        addEventListener("error", (e) => errors.push(F.describe(e)));
+        addEventListener("unhandledrejection", (e) => errors.push("unhandled rejection: " + F.describe(e.reason)));
         const r = await F.run(window.__lil, { ...o, errors });
         r.dot = F.dot(r);
         return r;

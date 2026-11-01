@@ -178,3 +178,16 @@ body.reading .member .what { display: none; }
   body.reading .member .who { font-size: 10px; }
   body.reading #staff { min-height: 220px; }
 }
+
+/* THE ENGRAVED STAFF (ui/abc.js toScore -> vendored abcjs): one picture of the
+   whole part, moved by a transform; the clef and key pinned at the left */
+.staff { position: relative; overflow: hidden; background: #fbf8f0; color: #1d1a22; }
+.staff .paper { position: absolute; left: 0; top: 0; }
+.staff .paper svg { display: block; will-change: transform; }
+.staff .gutter { position: absolute; left: 0; top: 0; bottom: 0; overflow: hidden; background: #fbf8f0;
+  z-index: 2; box-shadow: 8px 0 10px -8px rgba(0,0,0,.25); }
+.staff .gutter svg { display: block; transform-origin: 0 0; }
+.staff .wait { position: absolute; left: 30%; bottom: 6px; margin: 0; color: #7a2e8a; font-weight: 600; z-index: 3; }
+.staff .lil-name { font: 600 9px system-ui, sans-serif; fill: #6a5f8a; }
+.staff .abcjs-annotation { fill: #7a2e8a; }
+.staff .abcjs-chord { fill: #1f5f8a; }

@@ -30,12 +30,25 @@ time you put a note in it.
 before the engine sees them) and scrolls its part — as actually played, after
 the sections developed it — under a fixed playhead.
 
-**The staff** is drawn in beats, proportionally (a beat is always the same
-width), so the note under the line is the note sounding at any tempo. Clef by
-range (treble, bass, grand for a wide keyboard part, a percussion staff for the
-drums), key signature from the mode's relative major, accidentals against it,
-ledger lines, open heads for halves and wholes, one stem per chord, flags, and
-a pale bar for how long each note is held.
+**The staff is the band score's engraving.** The part is folded into the
+phrase shape `ui/abc.js toScore` reads (the same fold as `ui/eight.js`
+`recordParts`/`scoreParts`), and the vendored abcjs draws it: real spelling,
+beams, ties, rests and an octave decided once per staff (`ottavaFor`). It also
+gets a clef by who is playing (treble, bass, a grand staff for a wide keyboard
+part, the percussion staff with `SCOREHEAD` noteheads for drums), a thin double
+bar at each section's end, and the section's name and chord symbols inked on
+(`inkChords`).
+
+The whole song is one engraving, moved the way the band score moves it (Paul,
+2026-08-26: "scroll at a steady speed BUT highlight notes in red. Get rid of
+the playhead"). The speed is steady within each section, and the sounding
+notehead is painted red; there is no line. The clef and key stay pinned at the
+left, and "now" sits a fifth of the way past them, so a held note's red head
+stays in sight. The helpers this needed (`SCOREHEAD`, `chordName`,
+`inkChords`, `paperGeom`, `indexVoices`, `loadStaffLib`) moved out of
+`ui/eight.js` into `ui/paper.js`, byte for byte, and both pages import them.
+The band score was checked identical before and after the move (1,593
+noteheads, 57 chord symbols on Kingston 1969).
 
 **Tempo** is the record's real tempo (40–220 BPM, the percentage of the genre's
 own shown beside it). **Loop this section** loops the section that is sounding.
@@ -51,9 +64,11 @@ fives with the BPM and its percentage of the genre's, whose part, new piece,
 options), and the staff takes the rest, scaled to the room. The line sits at
 16% of the width, so most of the screen is music still to come.
 
-- **Look ahead: 1, 2 or 4 bars.** That many bars fit between the line and
-  the right edge on any screen. Fewer bars means bigger spacing and less to
-  read ahead. More bars is the harder exercise.
+- **Look ahead: 1, 2 or 4 bars.** That many bars fit between "now" and the
+  right edge on any screen: it sets the width abcjs is asked to engrave at,
+  never tighter than the notes can stand. Fewer bars means bigger spacing and
+  less to read ahead. More bars is the harder exercise. Turning the phone
+  round re-engraves for the new room.
 - **New piece** keeps the genre and the part and rolls a new seed: music you
   have not seen, which is the point of sight reading.
 - **Tapping a character** reads that member's part instead.
@@ -99,8 +114,8 @@ in stellate-lilguys) brought into the page. The page is a graph:
   - `plays-on`: play makes sound within 20 s, and the beat then moves.
   - `read-keeps`: entering and leaving Read changes no motif.
   - `genre-clean`: a new genre is a clean start.
-  - `staff-shows`: the staff holds the part it is titled with, at the spacing
-    asked.
+  - `staff-shows`: the engraving holds the part it is titled with, one
+    notehead group per onset per staff, at the look-ahead asked.
 - **A failure** is shrunk by delta debugging to the fewest operations that
   fail the same way, and printed as a replay. Each walk starts from the page's
   own fresh state (`reset`), and the page's `Math.random` is drawn from the
@@ -127,6 +142,16 @@ What it found while it was being written:
   tap down with it. The roll hears moves on `window` anyway.
 - The keyboard shortcuts assumed every key event has an element target.
 
+A larger run (six walks of sixty per device) reported three things in the
+shared engine, open:
+- The Faust library's audio-worklet node rethrows processor errors
+  (`faustwasm` `onprocessorerror = (e) => { throw e; }`), seen twice under
+  start/stop churn.
+- The clock can hold at a bar's downbeat. The engine announces bars ahead of
+  the sound; `plays-on` now waits that out, up to 4 s.
+- Once, on classical, the clock went backwards nine beats mid-song with no
+  loop or seek. Not yet explained.
+
 A bug planted to test the fuzzer (unmuting not unmuting) was caught two ways:
 by `mute-cuts`, shrunk to one operation, and by the invariant "2 members
 muted".
@@ -139,7 +164,8 @@ muted".
 | `nukernel/lilguys/app.js` | the document cut to four (`trimBand`), the compile (`push`, ui/eight.js's minus the producer), motifs ↔ cells, mute, tempo, the frame loop |
 | `nukernel/lilguys/sprites.js` | the four characters (canvas, 60×64 logical, pixelated) |
 | `nukernel/lilguys/roll.js` | a generic piano roll (rows × steps, never rebuilt by the clock) |
-| `nukernel/lilguys/staff.js` | the scrolling staff (sized to the room; look-ahead spacing, names, chords) |
+| `nukernel/lilguys/staff.js` | the part folded for `toScore`, engraved by abcjs, moved at a steady speed per section, red where it sounds |
+| `nukernel/ui/paper.js` | the band score's engraving helpers, moved out of `ui/eight.js` and shared |
 | `nukernel/lilguys/fuzz.js` | the fuzzer: walks, invariants' caller, properties, shrinking, the in-page report |
 | `test/lilguys-fuzz.browser.js` | the fuzzer headless on a laptop and a turning iPhone; the `lilguys-fuzz` gate |
 | `nukernel/audio/live.js` `songBeatNow()` | the one addition to shared code: a read-only, where-is-the-ear-in-beats reader for the scroll |
