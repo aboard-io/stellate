@@ -26,12 +26,23 @@ import { Roll } from "./roll.js";
 import { Judge, Listener } from "./listen.js";
 import { Staff } from "./staff.js";
 import { chordName } from "../ui/paper.js";
-import { icon, wordIcon } from "./icons.js";
+import { icon, wordIcon, edgeIcon } from "./icons.js";
 
 const $ = (id) => document.getElementById(id);
 // asked before the first genre rewrites the address
 const FUZZ = /(^|[#&])fuzz\b/.test(location.hash) ? new URLSearchParams(location.hash.slice(1)) : null;
 const GK = "lab.lilguys.";
+// SAFARI'S OUTPUT, ON TRIAL (Paul, 2026-11-02: "the audio is getting staticky
+// after a few minutes", Safari on headphones). Safari plays the engine through
+// a hidden <audio> element (live.js canMediaEl), whose clock drifts from the
+// AudioContext's; the engine carries two cures, both opt-in. The page's address
+// picks one: ?out=classic (straight to the speakers, no element) or
+// ?out=recycle (a fresh element every 45 s). Absent: what the engine does.
+{
+  const out = new URLSearchParams(location.search).get("out");
+  if (out === "classic") window.__nuOutOpts = { forceClassicOut: true };
+  else if (out === "recycle") window.__nuOutOpts = { elRecycleSec: 45 };
+}
 const K = window.NuKernel;
 const NAMES = ["DRUMS", "BASS", "KEYS", "LEAD"];
 
@@ -313,25 +324,38 @@ function chordSymbol(c) {
 }
 function chordsOnto(bars) {
   try {
-    const all = NuDocument.chordsIn(DOC, GENRES).chords;
-    const per = (NuDocument.barsOf ? NuDocument.barsOf(DOC) : 1) || 1;
-    const bar0 = [];                    // each section's first bar, in the song's own count
-    let acc = 0;
-    DOC.form.sections.forEach((s, i) => { bar0[i] = acc; acc += s.bars * per; });
-    const at = new Map();
-    for (const c of all) { const a = at.get(c.bar) || []; a.push(c); at.set(c.bar, a); }
+    const all = NuDocument.chordsIn(DOC, GENRES).chords.filter((c) => c.deg != null).sort((x, y) => x.from - y.from);
+    // each section's chords from its first, a bar at a time, by when they
+    // sound (chordsIn's `bar` counts phrase bars — see secChordObjs)
+    const t0 = new Map();
+    for (const c of all) if (!t0.has(c.sec)) t0.set(c.sec, c.from);
+    const spb = Math.round(stepsPerBar()) || 16;
+    const at = (si, step) => all.find((c) => c.sec === si && c.from <= step + 1e-6 && step + 1e-6 < c.to);
     let last = "";
     const seen = new Map();             // section -> bars of it met so far (the timeline may loop one)
     for (const b of bars) {
       const k = seen.get(b.si) || 0; seen.set(b.si, k + 1);
-      const cs = (at.get(bar0[b.si] + k) || []).sort((x, y) => x.from - y.from);
-      const one = chordSymbol(cs[0]), two = chordSymbol(cs[1]);
+      if (!t0.has(b.si)) { b.chord = ""; b.chord2 = ""; continue; }
+      const s0 = t0.get(b.si) + k * spb;
+      const c1 = at(b.si, s0), c2 = at(b.si, s0 + spb / 2);
+      const one = chordSymbol(c1), two = c2 && c2 !== c1 ? chordSymbol(c2) : "";
       b.chord = one && one !== last ? one : "";
       b.chord2 = two && two !== (one || last) ? two : "";
       last = two || one || last;
     }
   } catch (e) { /* no chords is a staff without symbols, not an error */ }
 }
+// A SECTION'S CHORDS, bar by bar: [[deg, ...chords in the bar], ...] (document.js chordsIn)
+// (each chord says its own section, `sec`, and its bar in the song: a section's
+// bars are counted from its first, not from section lengths — those are in
+// phrases, not bars)
+let chordMemo = { score: null, by: new Map() };
+function secChords(si) {
+  if (chordMemo.score !== SCORE) chordMemo = { score: SCORE, by: new Map() };
+  if (!chordMemo.by.has(si)) chordMemo.by.set(si, secChordsNow(si));
+  return chordMemo.by.get(si);
+}
+function secChordsNow(si) { return secChordObjs(si).map((c) => [c.d]); }
 const roleWord = (si) => {
   const s = DOC.form.sections[si];
   if (!s) return "";
@@ -416,72 +440,65 @@ function buildBand() {
   host.replaceChildren();
   cards.length = 0;
   for (let m = 0; m < 4; m++) {
-    // A TRACK (2026-11-02, Paul: "four piano rolls scrolling left to right. On
-    // the left is the lilguy and a dropdown for instrument, plus a volume
-    // control … mute/solo"; then "abletonesque clips stacked"): the member and
-    // its strip on the left, the song across as one clip a section.
-    const tr = document.createElement("div");
-    tr.className = "track";
-    tr.style.setProperty("--mc", COL[m]);
-    tr.innerHTML = `<div class="thead"><button class="member" aria-pressed="false"><canvas width="60" height="64"></canvas><span class="who"></span>
-        <span class="inst"></span><span class="what"></span><span class="mine">YOU PLAY THIS</span></button>
-      <div class="tctl"><select class="tinstr" aria-label="instrument"></select>
-        <div class="trow"><input class="tvol" type="range" min="-24" max="12" step="1" value="0" aria-label="volume" title="volume (double-click: back to 0 dB)">
-        <button class="tm" aria-pressed="false" title="mute">M</button><button class="ts" aria-pressed="false" title="solo">S</button></div></div></div>
-      <div class="lanewrap"><canvas class="lane" aria-label="the song's clips"></canvas><div class="clipicons" aria-hidden="true"></div></div>`;
-    const b = tr.querySelector(".member");
-    b.style.setProperty("--mc", COL[m]);
+    // A MEMBER IS A BUTTON WITH ITS LILGUY IN IT (2026-11-02, Paul: "I have the
+    // four buttons (drums, bass, etc) and the lilguys are IN the buttons. I
+    // click a button and the edit view appears"). Under it its mute, its solo,
+    // and an eye: whether its notes show through the phrase you are editing.
+    const card = document.createElement("div");
+    card.className = "mcard";
+    card.style.setProperty("--mc", COL[m]);
+    card.innerHTML = `<button class="member" aria-pressed="false"><canvas width="60" height="64"></canvas><span class="who"></span></button>
+      <div class="mctl"><button class="tm icon" aria-pressed="false" aria-label="mute">${icon("volume-x")}</button>
+        <button class="ts icon" aria-pressed="false" aria-label="solo">${icon("headphones")}</button>
+        <button class="te icon" aria-pressed="true" aria-label="show its notes while editing another">${icon("eye")}</button></div>`;
+    const b = card.querySelector(".member");
     b.addEventListener("click", () => {
       if (READ) { if (members[m]) { PART = m; applyReadPart(); } return; }   // reading: whose part
       select(SEL === m ? -1 : m);
     });
-    const c = { el: b, cv: b.querySelector("canvas"), blink: performance.now() + 1500 + m * 700, track: tr,
-      sel: tr.querySelector(".tinstr"), vol: tr.querySelector(".tvol"), mb: tr.querySelector(".tm"),
-      sb: tr.querySelector(".ts"), lane: tr.querySelector(".lane"), icons: tr.querySelector(".clipicons") };
-    c.sel.addEventListener("change", (e) => setInstr(m, e.target.value));
-    let volT = 0;
-    c.vol.addEventListener("input", (e) => { clearTimeout(volT); const v = +e.target.value; volT = setTimeout(() => setDesk(m, "fader", v), 180); });
-    c.vol.addEventListener("dblclick", () => { c.vol.value = 0; setDesk(m, "fader", 0); });
+    const c = { el: b, cv: b.querySelector("canvas"), blink: performance.now() + 1500 + m * 700, track: card,
+      mb: card.querySelector(".tm"), sb: card.querySelector(".ts"), eb: card.querySelector(".te") };
     c.mb.addEventListener("click", () => {
       if (MINE === m) { setMine(m, false); return; }
       setDesk(m, "mute", !deskOf(m).mute);
     });
     c.sb.addEventListener("click", () => setDesk(m, "solo", !deskOf(m).solo));
-    c.lane.addEventListener("click", (e) => {
-      if (!members[m] || READ) return;
-      const si = secAtX(c.lane, e);
-      if (si >= 0) select(m, si);
-    });
-    host.appendChild(tr);
+    c.eb.addEventListener("click", () => { SHOWN[m] = !SHOWN[m]; shadeKey = ""; refreshCards(); });
+    host.appendChild(card);
     cards.push(c);
   }
-  for (let m = 0; m < 4; m++) fillInstr(m);
   refreshCards();
 }
+const SHOWN = [true, true, true, true];     // whose notes show through the phrase open
 function refreshCards() {
   cards.forEach((c, m) => {
     const v = members[m];
     c.el.querySelector(".who").textContent = whoOf(m);
-    c.el.querySelector(".inst").textContent = v ? pretty(instrumentOf(m)) : "not in this band";
     c.el.setAttribute("aria-pressed", String(SEL === m));
     c.el.classList.toggle("yours", MINE === m);
     c.el.classList.toggle("out", !v);
-    c.el.setAttribute("aria-label", `${whoOf(m)}${v ? ", " + pretty(instrumentOf(m)) : ", not in this band"}. Open its motifs.`);
+    c.el.title = v ? pretty(instrumentOf(m)) : "";
+    c.el.setAttribute("aria-label", `${whoOf(m)}${v ? ", " + pretty(instrumentOf(m)) : ""}`);
     const d = deskOf(m);
     c.track.classList.toggle("absent", !v);
     c.track.classList.toggle("sel", SEL === m);
     c.track.classList.toggle("cut", !!v && cutOf(m));
-    for (const el of [c.sel, c.vol, c.mb, c.sb]) el.disabled = !v;
-    // a synth voice (or a seat two members share) cannot be gated: its M and S land a runway late, and say so
+    for (const el of [c.mb, c.sb, c.eb]) el.disabled = !v;
+    // a synth voice (or a seat two members share) cannot be gated: its M and S land a runway late
     const late = !!v && !GATEABLE.has(m);
     c.track.classList.toggle("late", late);
-    c.mb.title = late ? "mute — a synth voice: takes a few seconds (it is rendered ahead)" : "mute";
-    c.sb.title = late ? "solo — a synth voice: its own cut takes a few seconds" : "solo";
     c.mb.setAttribute("aria-pressed", String(!!d.mute));
     c.sb.setAttribute("aria-pressed", String(!!d.solo));
-    if (document.activeElement !== c.vol) c.vol.value = d.fader || 0;
-    c.vol.title = `volume ${d.fader > 0 ? "+" : ""}${d.fader || 0} dB (double-click: back to 0)`;
+    c.eb.setAttribute("aria-pressed", String(SHOWN[m]));
+    c.eb.innerHTML = icon(SHOWN[m] ? "eye" : "eye-off");
+    c.eb.hidden = SEL < 0 || SEL === m;
   });
+  document.body.classList.toggle("editing", SEL >= 0);
+  if (SEL >= 0 && members[SEL]) {
+    const d = deskOf(SEL);
+    if (document.activeElement !== $("vol")) $("vol").value = d.fader || 0;
+    $("vol").title = `${d.fader > 0 ? "+" : ""}${d.fader || 0} dB`;
+  }
   drawLanes();
 }
 
@@ -551,78 +568,384 @@ function phraseWord(m, si) {
   const many = cellsOf(m).length > 1;
   return many && HOOKY.includes(DOC.form.sections[si].role) && name !== NuDocument.materialAt(v, "") ? "chorus" : "main";
 }
-function drawRuler() {
-  const cv = $("ruler");
-  if (!cv || READ) return;
-  const { cx, w, h } = fitCanvas(cv), end = songEnd();
-  cx.clearRect(0, 0, w, h);
-  if (!end) return;
-  cx.font = "600 10px system-ui, sans-serif"; cx.textBaseline = "middle";
-  for (const sp of spans()) {
-    const x0 = sp.b0 / end * w, x1 = sp.b1 / end * w, role = DOC.form.sections[sp.si].role;
-    cx.fillStyle = HOOKY.includes(role) ? "#3a3628" : sp.si % 2 ? "#1c1c26" : "#22222e";
-    cx.fillRect(x0, 0, x1 - x0 - 1, h);
-    cx.fillStyle = HOOKY.includes(role) ? "#ffd24a" : "#8c8c9c";
-    cx.save(); cx.beginPath(); cx.rect(x0, 0, x1 - x0 - 2, h); cx.clip();
-    cx.fillText(roleWord(sp.si).toUpperCase(), x0 + 4, h / 2);
-    cx.restore();
-  }
+/* ---------- THE SONG, ALONG THE BOTTOM (2026-11-02, Paul: "Along the bottom is
+   the song structure. Everything is editable and movable. Chord progressions
+   can be tweaked. THEN each individual invocation can pick a phrase and up to
+   five transformations … songs are made of small phrases getting switched in
+   and out.") ----------
+   A block a section, as wide as its bars: its name (tap: play from here; drag
+   the grip: move it), its chords as roman numerals (tap one to change it),
+   then a row a member — the phrase it reads there (a letter: tap to switch),
+   what it plays there in miniature (tap: open it), and its transformations as
+   icons (tap one off; + for another, five at most). No words. */
+let FOCUS = -1;                 // the section the editor is looking at
+const SRC = new Map();          // a copied section's id -> the generated section it copies (for the link)
+const srcOf = (id) => SRC.get(id) || id;
+const MAXW = 5;                 // transformations an invocation may stack
+function secBars(si) {
+  const n = SCORE ? SCORE.bars.filter((b) => b.si === si).length : 0;
+  return n || (DOC.form.sections[si] || {}).bars || 1;
 }
 function drawLanes() {
-  if (!cards.length || !SCORE || READ) return;
-  drawRuler();
-  const end = songEnd(), S = spans();
-  cards.forEach((c, m) => {
-    const { cx, w, h } = fitCanvas(c.lane);
-    cx.clearRect(0, 0, w, h);
-    const v = members[m];
-    if (!v || !end) { c.icons.innerHTML = ""; return; }
-    const notes = SCORE.parts[m] || [];
-    const icons = [];
-    cx.globalAlpha = cutOf(m) ? 0.35 : 1;
-    cx.font = "600 10px system-ui, sans-serif"; cx.textBaseline = "top";
-    for (const sp of S) {
-      const x0 = sp.b0 / end * w + 1, x1 = sp.b1 / end * w - 1;
-      const word0 = wordOf(m, sp.si);
-      const inSec = notes.filter((n) => n.beat >= sp.b0 && n.beat < sp.b1);
-      // the notes decide, not the word: a member whose word says "out" can still
-      // play there, and one whose word says it plays can rest
-      const out = !inSec.length, word = out ? "rests" : isOut(word0) ? "" : word0;
-      const pw = phraseWord(m, sp.si);
-      const open = SEL === m && CELL && NuDocument.materialAt(v, secId(sp.si)) === CELL;
-      // a dark clip in the member's colour (sprites.js mix takes a percent), so the notes read on it
-      cx.fillStyle = out ? "#14141c" : pw === "chorus" ? mix(COL[m], BG, 72) : mix(COL[m], BG, 82);
-      cx.fillRect(x0, 1, x1 - x0, h - 2);
-      if (open) { cx.strokeStyle = "#ececf0"; cx.lineWidth = 1.5; cx.strokeRect(x0 + 0.75, 1.75, x1 - x0 - 1.5, h - 3.5); }
-      if (out) { cx.fillStyle = "#5a5a6a"; cx.fillText("rests", x0 + 4, 3); continue; }
-      // the notes as played in this section — a piano roll in miniature
-      // the notes as played in this section — a piano roll in miniature, scaled
-      // to this clip's own range so a two-note bass figure still has a shape
-      let clo = 127, chi = 0;
-      for (const n of inSec) { clo = Math.min(clo, n.midi); chi = Math.max(chi, n.midi); }
-      const crange = Math.max(5, chi - clo), mid = (clo + chi) / 2;
-      const top = 15, bot = h - 4, nh = Math.max(2, Math.min(4, (bot - top) / (crange + 1)));
-      cx.fillStyle = mix(COL[m], "#ffffff", 25);
-      for (const n of inSec) {
-        const x = n.beat / end * w, nw = Math.max(1.5, n.dur / end * w - 0.5);
-        const y = (top + bot) / 2 - (n.midi - mid) / crange * (bot - top - nh);
-        cx.fillRect(x, y - nh / 2, Math.min(nw, x1 - x), nh);
-      }
-      cx.save(); cx.beginPath(); cx.rect(x0, 0, x1 - x0 - 2, h); cx.clip();
-      cx.fillStyle = "#ececf0";
-      cx.fillText(pw, x0 + 4, 3);
-      cx.restore();
-      // the section's transformations, as icons on the clip
-      // (the section's own chain, not wordOf's: that fills an empty one in with
-      // a placeholder — "groove", "plays" — which is no transformation)
-      const ws = devChain(m, secId(sp.si)).filter((x) => !OUT.test(x));
-      if (ws.length) icons.push(`<span class="ci" style="left:${(x0 / w * 100).toFixed(3)}%;max-width:${((x1 - x0) / w * 100).toFixed(3)}%">`
-        + ws.map((x) => { const ic = wordIcon(kindOf(m), x); return icon(ic.name, x) + (ic.badge ? `<b>${ic.badge}</b>` : ""); }).join("") + `</span>`);
+  const host = $("secs");
+  if (!host || !DOC || READ) return;
+  const keep = host.scrollLeft;
+  host.replaceChildren();
+  const secs = DOC.form.sections, S = spans();
+  secs.forEach((sc, si) => {
+    if (sc.id === COUNT_ID) return;
+    const bars = secBars(si);
+    const el = document.createElement("div");
+    el.className = "sec" + (si === FOCUS && SEL >= 0 ? " focus" : "");
+    el.dataset.si = si;
+    el.style.flexGrow = bars;
+    el.style.minWidth = Math.max(104, bars * 30) + "px";
+    // the chords: a numeral a bar, a repeat dimmed
+    const ch = secChordObjs(si);
+    const chords = ch.map((c, k) => `<button class="ch${k && ch[k - 1] && c && ch[k - 1].d === c.d && ch[k - 1].q === c.q ? " same" : ""}" data-k="${k}" title="bar ${k + 1}">${c ? roman(c.d, c.q) : "·"}</button>`).join("");
+    let rows = "";
+    for (let m = 0; m < 4; m++) {
+      const v = members[m];
+      if (!v) { rows += `<div class="inv none" data-m="${m}"></div>`; continue; }
+      const dev = (v.development || {})[sc.id];
+      const out = isOut(dev);
+      const name = NuDocument.materialAt(v, sc.id);
+      const L = name && DOC.material.cells[name] ? letterOf(m, name) : "~";
+      const ws = devChain(m, sc.id).filter((x) => !OUT.test(x));
+      const eg = (f) => (m === 0 && sc[f] ? `<button class="tw on edge" data-e="${f}" data-v="${sc[f]}" title="${edgeLabel(f, sc[f])}">${icon(edgeIcon(sc[f]))}<b>${f === "intro" ? "›" : "‹"}</b></button>` : "");
+      const tws = out ? "" : eg("intro") + ws.map((w) => { const ic = wordIcon(kindOf(m), w); return `<button class="tw on" data-w="${w.replace(/"/g, "&quot;")}" title="${w}">${icon(ic.name)}${ic.badge ? `<b>${ic.badge}</b>` : ""}</button>`; }).join("") + eg("outro")
+        + (ws.length < MAXW ? `<button class="tw add" title="add">${icon("plus")}</button>` : "");
+      rows += `<div class="inv${SEL === m ? " sel" : ""}${out ? " out" : ""}${cutOf(m) ? " cut" : ""}" data-m="${m}" style="--mc:${COL[m]}">`
+        + `<button class="pl" title="phrase">${out ? icon("volume-x") : L}</button>`
+        + `<canvas class="pv"></canvas><div class="tws">${tws}</div></div>`;
     }
-    cx.globalAlpha = 1;
-    c.icons.innerHTML = icons.join("");
-    c.icons.classList.toggle("cut", cutOf(m));
+    el.innerHTML = `<div class="shead" draggable="true"><span class="grip">${icon("grip-vertical")}</span>`
+      + `<button class="sname">${roleWord(si)}</button><span class="sact">`
+      + `<button class="icon" data-a="less" title="a bar less">${icon("minus")}</button><button class="icon" data-a="more" title="a bar more">${icon("plus")}</button>`
+      + `<button class="icon" data-a="dup" title="copy">${icon("copy")}</button><button class="icon" data-a="del" title="remove">${icon("trash-2")}</button></span></div>`
+      + `<div class="schords">${chords}</div>${rows}<div class="sbar"></div>`;
+    wireSec(el, si);
+    host.appendChild(el);
+    // each preview: what that member plays in this section, from the score
+    const sp = S.find((x) => x.si === si);
+    el.querySelectorAll(".inv[data-m]").forEach((row) => {
+      const m = +row.dataset.m, cv = row.querySelector(".pv");
+      if (cv && sp) drawPreview(cv, m, sp.b0, sp.b1);
+    });
   });
+  const add = document.createElement("button");
+  add.className = "icon addsec"; add.title = "another section"; add.innerHTML = icon("plus");
+  add.addEventListener("click", () => { const last = secs.map((x, i) => i).filter((i) => secs[i].id !== COUNT_ID).pop(); if (last != null) dupSection(last); });
+  host.appendChild(add);
+  host.scrollLeft = keep;
+  litAt = -2;
+}
+function drawPreview(cv, m, b0, b1) {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(10, Math.round(r.width || 60)), h = Math.max(8, Math.round(r.height || 18));
+  cv.width = w * dpr; cv.height = h * dpr;
+  const cx = cv.getContext("2d");
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const notes = (SCORE && SCORE.parts[m] || []).filter((n) => n.beat >= b0 && n.beat < b1);
+  if (!notes.length) return;
+  let lo = 127, hi = 0;
+  for (const n of notes) { lo = Math.min(lo, n.midi); hi = Math.max(hi, n.midi); }
+  const rng = Math.max(5, hi - lo), mid = (lo + hi) / 2, nh = Math.max(1.5, Math.min(3, h / (rng + 1)));
+  cx.fillStyle = COL[m];
+  cx.globalAlpha = cutOf(m) ? 0.35 : 0.95;
+  for (const n of notes) {
+    const x = (n.beat - b0) / (b1 - b0) * w, nw = Math.max(1.2, n.dur / (b1 - b0) * w - 0.4);
+    const y = h / 2 - (n.midi - mid) / rng * (h - nh - 2);
+    cx.fillRect(x, y - nh / 2, nw, nh);
+  }
+}
+function wireSec(el, si) {
+  const sc = DOC.form.sections[si];
+  el.querySelector(".sname").addEventListener("click", () => {
+    FOCUS = si; shadeKey = "";
+    if (loopOnly != null) { setLoopOnly(si); push(false); }
+    startAt(si);
+    drawLanes();
+  });
+  el.querySelectorAll(".sact [data-a]").forEach((b) => b.addEventListener("click", () => {
+    const a = b.dataset.a;
+    if (a === "dup") dupSection(si);
+    else if (a === "del") delSection(si);
+    else setBars(si, secBars(si) + (a === "more" ? 1 : -1));
+  }));
+  el.querySelectorAll(".ch").forEach((b) => b.addEventListener("click", () => openChordMenu(si, +b.dataset.k, b)));
+  el.querySelectorAll(".inv[data-m]").forEach((row) => {
+    const m = +row.dataset.m;
+    if (!members[m]) return;
+    row.querySelector(".pl").addEventListener("click", (e) => openPhraseMenu(m, si, e.currentTarget));
+    row.querySelector(".pv").addEventListener("click", () => select(m, si));
+    row.querySelectorAll(".tw[data-w]").forEach((b) => b.addEventListener("click", () => {
+      setDev(m, sc.id, devChain(m, sc.id).filter((x) => x !== b.dataset.w));
+    }));
+    row.querySelectorAll(".tw.edge").forEach((b) => b.addEventListener("click", () => setEdge(sc, b.dataset.e, null)));
+    const add = row.querySelector(".tw.add");
+    if (add) add.addEventListener("click", (e) => openWordMenu(m, sc.id, e.currentTarget));
+  });
+  // MOVED BY ITS GRIP: dragged onto another block, it goes before it
+  const head = el.querySelector(".shead");
+  head.addEventListener("dragstart", (e) => { dragSec = si; el.classList.add("dragging"); try { e.dataTransfer.setData("text/plain", String(si)); e.dataTransfer.effectAllowed = "move"; } catch (err) {} });
+  head.addEventListener("dragend", () => { dragSec = -1; el.classList.remove("dragging"); document.querySelectorAll(".sec.over").forEach((x) => x.classList.remove("over", "after")); });
+  el.addEventListener("dragover", (e) => {
+    if (dragSec < 0 || dragSec === si) return;
+    e.preventDefault();
+    const r = el.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+    el.classList.add("over"); el.classList.toggle("after", after);
+  });
+  el.addEventListener("dragleave", () => el.classList.remove("over", "after"));
+  el.addEventListener("drop", (e) => {
+    if (dragSec < 0 || dragSec === si) return;
+    e.preventDefault();
+    const after = el.classList.contains("after");
+    el.classList.remove("over", "after");
+    moveSection(dragSec, after ? si + 1 : si);
+  });
+}
+let dragSec = -1;
+
+/* ---------- ROMAN NUMERALS (Paul, 2026-11-02: "use roman numeral notation for
+   chord changes"): the degree in the key's own mode — upper case where the
+   mode makes it major, lower where minor, ° diminished, + augmented — and the
+   chord's own seventh after it. ---------- */
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+function roman(d, q) {
+  const st = modeSteps(), n = st.length, i = ((d % n) + n) % n;
+  const third = ((st[(i + 2) % n] - st[i]) % 12 + 12) % 12, fifth = ((st[(i + 4) % n] - st[i]) % 12 + 12) % 12;
+  let r = ROMAN[i] || String(i + 1);
+  if (q === "dom7") return r + "7";
+  if (third === 3) r = r.toLowerCase();
+  if (fifth === 6) r += "°"; else if (fifth === 8) r += "+";
+  if (q === "7" || q === "maj7" || q === "m7") r += "7";
+  else if (q && q !== "triad") r += "<sup>" + String(q).replace(/[^\w#b]/g, "").slice(0, 4) + "</sup>";
+  return r;
+}
+// THE SECTION'S CHORDS, A BAR EACH, as they SOUND: { d, q } for each of the
+// section's real bars. document.js chordsIn times each chord in steps (from,
+// to), and that timing is the truth — its `bar` counts the document's phrase
+// bars (a two-bar cell makes a "bar" two bars long), so a chart read by `bar`
+// put a chord on every bar where the band changes every other one. A section
+// is read from its first chord on, a bar at a time.
+function secChordObjs(si) {
+  if (chordMemo.score !== SCORE) chordMemo = { score: SCORE, by: new Map() };
+  const k = "o" + si;
+  if (!chordMemo.by.has(k)) chordMemo.by.set(k, secChordObjsNow(si));
+  return chordMemo.by.get(k);
+}
+function secChordObjsNow(si) {
+  let all = [];
+  try { all = NuDocument.chordsIn(DOC, GENRES).chords.filter((c) => c.sec === si && c.deg != null); } catch (e) { return []; }
+  if (!all.length) return [];
+  all.sort((x, y) => x.from - y.from);
+  const t0 = all[0].from, spb = Math.round(stepsPerBar()) || 16, n = secBars(si), out = [];
+  for (let j = 0; j < n; j++) {
+    const at = t0 + j * spb + 1e-6;
+    const c = all.find((x) => x.from <= at && at < x.to) || all.filter((x) => x.from <= at).pop() || all[0];
+    out.push({ d: c.deg | 0, q: c.q || null });
+  }
+  return out;
+}
+// a chart a bar written as the document holds one: an entry per phrase bar
+// (barsOf: a two-bar cell, two bars), split evenly into its bars' chords where
+// they differ (kernel.js: "unstated chords split the bar evenly")
+function writeChart(sc, perBar) {
+  const per = Math.max(1, (NuDocument.barsOf ? NuDocument.barsOf(DOC) : 1) | 0);
+  const obj = (c) => ({ d: c.d, ...(c.q ? { q: c.q } : {}) });
+  const prog = [];
+  for (let u = 0; u * per < perBar.length; u++) {
+    const part = [];
+    for (let i = 0; i < per; i++) part.push(perBar[Math.min(perBar.length - 1, u * per + i)]);
+    prog.push(part.every((c) => c.d === part[0].d && (c.q || null) === (part[0].q || null)) ? obj(part[0]) : part.map(obj));
+  }
+  sc.prog = prog;
+}
+function openChordMenu(si, k, anchor) {
+  const menu = $("wordMenu"), cur = secChordObjs(si)[k] || { d: 0 };
+  const n = modeSteps().length;
+  menu.className = "wordmenu chords";
+  menu.innerHTML = Array.from({ length: n }, (_, d) => `<button role="menuitem" data-d="${d}" class="${cur.d === d ? "on" : ""}">${roman(d, cur.d === d ? cur.q : null)}</button>`).join("")
+    + `<button role="menuitem" data-q="7" class="${cur.q === "7" || cur.q === "dom7" ? "on" : ""}" title="seventh">7</button>`;
+  placeMenu(menu, anchor);
+  menu.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    menu.hidden = true;
+    if (b.dataset.q) setChord(si, k, cur.d, cur.q === "7" || cur.q === "dom7" ? null : "7");
+    else setChord(si, k, +b.dataset.d, cur.q && cur.q !== "dom7" ? cur.q : null);
+  }));
+}
+function placeMenu(menu, anchor) {
+  const r = anchor.getBoundingClientRect();
+  menu.hidden = false;
+  const below = r.bottom + 4 + menu.offsetHeight < innerHeight;
+  menu.style.left = Math.max(8, Math.min(innerWidth - menu.offsetWidth - 8, r.left)) + "px";
+  menu.style.top = Math.max(8, below ? r.bottom + 4 : r.top - menu.offsetHeight - 4) + "px";
+}
+// A BAR'S CHORD, CHANGED: the section takes its own chart (section.prog, a
+// chord a bar), and the band FOLLOWS a chart (alphabet.harmony "cycle") —
+// a modal genre that had nothing to follow starts following yours.
+function setChord(si, k, d, q) {
+  const sc = DOC.form.sections[si];
+  const bars = secChordObjs(si);
+  const n = secBars(si);
+  const chart = Array.from({ length: n }, (_, i) => ({ ...(bars[i] || bars[bars.length - 1] || { d: 0 }) }));
+  chart[k] = { d, q: q || null };
+  writeChart(sc, chart);
+  if (DOC.alphabet.harmony !== "cycle") DOC.alphabet.harmony = "cycle";
+  push(false); persist(); drawLanes();
+  hearAt({ what: `${roleWord(si)} ${k + 1}: ${roman(d, q).replace(/<[^>]+>/g, "")}`, si });
+}
+
+/* ---------- THE STRUCTURE, MOVED (copy, remove, move, a bar more or less) ----------
+   A section is a row of the document (form.sections) and everything a member
+   does there is keyed by its id (development[sid], a material map's [sid]), so
+   a move is only the order changing, a copy is a new id carrying the
+   original's words and phrases, and a removal drops the id everywhere. The
+   count-in (when there is one) stays last. */
+function structureChanged(what, si) {
+  setLoopOnly(null); $("loopSec").checked = false;
+  syncCount();
+  push(false); persist(); shadeKey = "";
+  drawLanes();
+  if (si != null) hearAt({ what, si });
+}
+function freshId() {
+  const ids = new Set(DOC.form.sections.map((x) => x.id));
+  let k = DOC.form.sections.length;
+  while (ids.has("s" + k)) k++;
+  return "s" + k;
+}
+function dupSection(si) {
+  const secs = DOC.form.sections, sc = secs[si];
+  if (!sc || sc.id === COUNT_ID || secs.length >= 40) return;
+  const id = freshId(), copy = JSON.parse(JSON.stringify(sc));
+  copy.id = id;
+  SRC.set(id, srcOf(sc.id));
+  for (const v of DOC.voices) {
+    if (v.development && v.development[sc.id] != null) v.development[id] = v.development[sc.id];
+    if (v.material && typeof v.material === "object") { const n = NuDocument.materialAt(v, sc.id); if (n) v.material[id] = n; }
+  }
+  secs.splice(si + 1, 0, copy);
+  if (FOCUS > si) FOCUS++;
+  structureChanged(`${roleWord(si + 1)}`, si + 1);
+}
+function delSection(si) {
+  const secs = DOC.form.sections, sc = secs[si];
+  if (!sc || sc.id === COUNT_ID || secs.filter((x) => x.id !== COUNT_ID).length <= 1) return;
+  if (playing) stop();
+  secs.splice(si, 1);
+  for (const v of DOC.voices) {
+    if (v.development) delete v.development[sc.id];
+    if (v.material && typeof v.material === "object") delete v.material[sc.id];
+  }
+  FOCUS = FOCUS === si ? -1 : FOCUS > si ? FOCUS - 1 : FOCUS;
+  structureChanged("");
+}
+function moveSection(from, to) {
+  const secs = DOC.form.sections;
+  const last = secs.findIndex((x) => x.id === COUNT_ID);
+  const lim = last < 0 ? secs.length : last;
+  to = Math.max(0, Math.min(lim, to));
+  if (to === from || to === from + 1) return;
+  const [sc] = secs.splice(from, 1);
+  const at = to > from ? to - 1 : to;
+  secs.splice(at, 0, sc);
+  if (FOCUS === from) FOCUS = at;
+  structureChanged(roleWord(at), at);
+}
+function setBars(si, n) {
+  const sc = DOC.form.sections[si];
+  n = Math.max(1, Math.min(16, n | 0));
+  if (!sc || n === secBars(si)) return;
+  const per = secBars(si) / Math.max(1, sc.bars);     // bars a document "bar" is here (1 on every page so far)
+  sc.bars = Math.max(1, Math.round(n / (per || 1)));
+  if (Array.isArray(sc.prog)) {
+    const was = secChordObjs(si);
+    if (was.length) writeChart(sc, Array.from({ length: n }, (_, i) => was[Math.min(i, was.length - 1)]));
+  }
+  structureChanged(`${roleWord(si)}: ${n}`, si);
+}
+
+/* ---------- THE PHRASES A MEMBER HAS (a bank: A, B, C …) ----------
+   What it reads anywhere, in the order first met, plus any it made here; a
+   section's invocation picks one, or rests. A new phrase starts as a copy of
+   the one open, and the section in focus takes it. */
+const BANK = [[], [], [], []];
+function phrasesOf(m) {
+  if (!members[m]) return [];
+  for (const c of cellsOf(m)) if (!BANK[m].includes(c.name)) BANK[m].push(c.name);
+  return BANK[m].filter((n) => DOC.material.cells[n]);
+}
+function letterOf(m, name) {
+  const i = phrasesOf(m).indexOf(name);
+  return i < 0 ? "~" : String.fromCharCode(65 + (i % 26));
+}
+function setPhraseAt(m, si, name) {
+  const v = members[m], sc = DOC.form.sections[si];
+  if (!v || !sc) return;
+  if (name === null) {                     // a rest
+    const w = devWords(m).find((o) => OUT.test(o.value) && !o.disabled);
+    if (w) setDev(m, sc.id, [w.value]);
+    return;
+  }
+  if (m === 1 && pendingBass && name === CELL) pendingBass = false;
+  const def = NuDocument.materialAt(v, sc.id);
+  if (typeof v.material !== "object" || v.material == null) v.material = { "": typeof v.material === "string" ? v.material : name };
+  v.material[sc.id] = name;
+  if (def === undefined && !v.material[""]) v.material[""] = name;
+  if (isOut((v.development || {})[sc.id])) v.development[sc.id] = ABSENT(m);
+  push(false); persist();
+  if (SEL === m && FOCUS === si && CELL !== name) openCell(m, name); else drawLanes();
+  hearAt({ what: `${roleWord(si)}: ${letterOf(m, name)}`, m, si });
+}
+function newPhrase(m) {
+  const v = members[m], src = CELL && DOC.material.cells[CELL];
+  if (!v || !src) return;
+  let k = phrasesOf(m).length, nn;
+  do { nn = `${v.name}.${String.fromCharCode(97 + (k % 26))}${k >= 26 ? k : ""}`; k++; } while (DOC.material.cells[nn]);
+  DOC.material.cells[nn] = JSON.parse(JSON.stringify(src));
+  BANK[m].push(nn);
+  const si = FOCUS >= 0 ? FOCUS : DOC.form.sections.findIndex((sc) => NuDocument.materialAt(v, sc.id) === CELL);
+  if (si >= 0) { FOCUS = si; setPhraseAt(m, si, nn); }
+  openCell(m, nn);
+}
+function openPhraseMenu(m, si, anchor) {
+  const menu = $("wordMenu"), cur = NuDocument.materialAt(members[m], DOC.form.sections[si].id);
+  const out = isOut((members[m].development || {})[DOC.form.sections[si].id]);
+  const names = phrasesOf(m);
+  menu.className = "wordmenu phrasemenu";
+  menu.style.setProperty("--mc", COL[m]);
+  menu.innerHTML = names.map((n) => `<button role="menuitem" data-n="${n}" class="${n === cur && !out ? "on" : ""}"><b>${letterOf(m, n)}</b><canvas></canvas></button>`).join("")
+    + `<button role="menuitem" data-rest="1" class="${out ? "on" : ""}" title="rest">${icon("volume-x")}</button>`;
+  placeMenu(menu, anchor);
+  menu.querySelectorAll("button[data-n]").forEach((b) => drawCell(b.querySelector("canvas"), DOC.material.cells[b.dataset.n], COL[m]));
+  menu.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    menu.hidden = true;
+    setPhraseAt(m, si, b.dataset.rest ? null : b.dataset.n);
+  }));
+}
+// a cell drawn small: its notes as written
+function drawCell(cv, c, color) {
+  if (!cv || !c) return;
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 56, h = cv.clientHeight || 22;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const cx = cv.getContext("2d");
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx.fillStyle = color;
+  const ns = cellNotes(c);
+  if (!ns.length) return;
+  const L = c.kind === "drum" ? Math.max(...Object.values(c.lanes).map((a) => a.length), 16) : c.deg.length;
+  if (c.kind === "drum") {
+    const rows = DRUM_ROWS.map(([k]) => k).filter((k) => c.lanes[k] && c.lanes[k].some(Boolean));
+    const rh = h / Math.max(1, rows.length);
+    for (const [at, , k] of ns) { const r = rows.indexOf(k); if (r >= 0) cx.fillRect(at / L * w, r * rh + 1, Math.max(1.5, w / L - 0.5), Math.max(1.5, rh - 2)); }
+    return;
+  }
+  let lo = 99, hi = -99;
+  for (const [, , d] of ns) { lo = Math.min(lo, d); hi = Math.max(hi, d); }
+  const rng = Math.max(4, hi - lo), nh = Math.max(1.5, Math.min(3, h / (rng + 2)));
+  for (const [at, len, d] of ns) cx.fillRect(at / L * w, h - nh - (d - lo) / rng * (h - nh - 1) - 0.5, Math.max(1.5, len / L * w - 0.6), nh);
 }
 const OUT = /^(out|nodrums|nobass|tacet|rest|silent)$/;
 // a section's word may be a chain ("busy + octaves", songs.js CHAINSEP): out if any link is
@@ -724,7 +1047,6 @@ function frame(t) {
     if (!pose.mood) { const z = t % 1800; zee(cx, 46 + z / 300, 18 - z / 90, z >= 900, MID); }
     if (pose.mood === 2 && on && !wasOn[m]) floats.push({ m, x: 8 + Math.random() * 40, born: t });
     wasOn[m] = on;
-    c.el.querySelector(".what").textContent = !v || si < 0 ? "" : isOut(w) ? "lays out" : w;
   });
   // the notes floating up, each over its own member
   for (let i = floats.length - 1; i >= 0; i--) {
@@ -733,24 +1055,21 @@ function frame(t) {
     const cx = cards[f.m].cv.getContext("2d");
     quaver(cx, f.x + ((age / 120 | 0) % 2), 24 - age / 40, mix(COL[f.m], BG, age / 10));
   }
-  // the zoom's own lilguy, and the countdown to hearing the change
-  if (SEL >= 0 && !$("drawer").hidden && cards[SEL]) {
-    const zc = $("zSprite").getContext("2d");
-    zc.clearRect(0, 0, 60, 64);
-    zc.drawImage(cards[SEL].cv, 0, 0);
-    if (t - hearPainted > 250) { hearPainted = t; paintHear(); }
-    litSec(si, bar ? (now - bar.beat) : 0);
-  }
-  // the arrangement's playhead, through the ruler and every lane
-  const ph = $("playhead"), end = songEnd();
-  if (now >= 0 && end && !READ && cards.length) {
-    // measured against the arrangement (the lane sits in its own positioned
-    // wrapper, so its offsetLeft no longer counts the track's head)
-    const lr = cards[0].lane.getBoundingClientRect(), ar = $("arr").getBoundingClientRect();
-    const x = lr.left - ar.left + Math.min(1, now / end) * lr.width;
+  // the countdown to hearing a change
+  if (SEL >= 0 && !$("drawer").hidden && t - hearPainted > 250) { hearPainted = t; paintHear(); }
+  // the song's playhead, through the block playing, and that block lit
+  const ph = $("playhead");
+  const blk = si >= 0 && !READ ? document.querySelector(`#secs .sec[data-si="${si}"]`) : null;
+  if (now >= 0 && blk && bar) {
+    const first = SCORE.bars.findIndex((x) => x.si === si);
+    let beats = 0, done = 0;
+    for (let i = first; i < SCORE.bars.length && SCORE.bars[i].si === si; i++) { beats += SCORE.bars[i].beats; if (i < bi) done += SCORE.bars[i].beats; }
+    const p = beats ? Math.min(1, (done + now - bar.beat) / beats) : 0;
+    const br = blk.getBoundingClientRect(), sr = $("song").getBoundingClientRect();
     ph.hidden = false;
-    ph.style.transform = `translateX(${x.toFixed(1)}px)`;
-  } else ph.hidden = true;
+    ph.style.transform = `translateX(${(br.left - sr.left + p * br.width).toFixed(1)}px)`;
+    litSec(si, bi - first);
+  } else { ph.hidden = true; litSec(-1, 0); }
   // the roll's playhead: where the member's motif is, in the cell it reads now
   if (SEL >= 0 && roll && now >= 0 && bar) rollHead(now, bar, si);
   else if (roll) roll.setPlayhead(-1);
@@ -794,6 +1113,8 @@ function ownCell(m, name) {
   if (typeof v.material === "string") v.material = nn;
   else for (const key of Object.keys(v.material)) if (v.material[key] === name) v.material[key] = nn;
   if (CELL === name) CELL = nn;
+  const bi = BANK[m].indexOf(name);
+  if (bi >= 0) BANK[m][bi] = nn; else BANK[m].push(nn);
   return nn;
 }
 
@@ -879,16 +1200,42 @@ function openCell(m, name) {
     roll.set({ rows, notes, steps, beat, bar, color: COL[m], drum: false });
     roll.scrollToRow(Math.round((lo + hi) / 2));
   }
-  [...$("motifTabs").children].forEach((b) => b.setAttribute("aria-selected", String(b.dataset.cell === name && +b.dataset.m === m)));
-  // WHICH ONE THIS IS, said once, large: whose, which, and where it is heard
-  const secs = (cellsOf(m).find((c) => c.name === name) || { secs: [] }).secs;
-  const shared = DOC.voices.filter((v) => v !== members[m] && DOC.form.sections.some((sc) => NuDocument.materialAt(v, sc.id) === name));
-  $("drawerTitle").innerHTML = `${whoOf(m)} <span class="ph">${phraseLabel(m, name)} phrase</span> <span class="ins">${pretty(instrumentOf(m))}</span>`;
-  $("zWhere").textContent = secs.length
-    ? `heard in ${secs.length} section${secs.length > 1 ? "s" : ""}: ${secs.map((i) => roleWord(i)).join(", ")}` + (shared.length ? ` · also read by ${shared.map((v) => whoOf(members.indexOf(v))).join(", ").toLowerCase()} (it gets its own copy when you edit)` : "")
-    : "not read yet — the bass follows the chords until you change a note";
-  renderSecs(m);
+  renderTabs();
+  shadeKey = "";
+  paintPoly(m);
   drawLanes();
+}
+
+/* ---------- MONO OR CHORDS (Paul, 2026-11-02: "how do I switch to poly, like the
+   pad mode?") ----------
+   A phrase is one line — the engine keeps one note per step — but a member can
+   PLAY it as chords: `stab` sounds the whole chord on each of the phrase's
+   notes (you write the rhythm; the band voices the harmony, kernel.js
+   chordLock), `pad` holds one chord a bar from the phrase's first note. The
+   member's part (avail.js cast.part), so it holds in every section. The keys
+   and the lead only: the bass is a line and the drummer a kit. */
+const CHORDPART = new Set(["stab", "pad"]);
+function paintPoly(m) {
+  const el = $("tPoly"), v = members[m];
+  el.hidden = !(v && v.kind === "line");
+  if (el.hidden) return;
+  const part = partOf(v), on = CHORDPART.has(part) ? part : "mono";
+  [...el.children].forEach((b) => b.setAttribute("aria-checked", String(b.dataset.p === on)));
+}
+function setPoly(m, want) {
+  const v = members[m];
+  if (!v || v.kind !== "line") return;
+  const b = BASE && BASE.voices.find((x) => x.name === v.name);
+  const orig = (b && b.cast && b.cast.part) || "line";
+  // back to one line: the member's own part, or a riff if it was born a chord part
+  const part = want === "mono" ? (CHORDPART.has(orig) ? "riff" : orig) : want;
+  if (part === partOf(v)) return;
+  window.NuAvail.SHEETS["cast.part"].set(DOC, { voice: v.name }, part);
+  push(false);
+  persist();
+  paintPoly(m);
+  drawLanes();
+  hearAt({ what: `${whoOf(m).toLowerCase()} ${want === "mono" ? "plays one line" : want === "pad" ? "holds a chord a bar" : "plays chords"}`, m });
 }
 
 /* ---------- THE SECTIONS AND THEIR TRANSFORMATIONS (Paul, 2026-11-02: "give every
@@ -913,83 +1260,71 @@ function setDev(m, sid, words) {
   const v = members[m];
   if (!v.development) v.development = {};
   const w = m === 1 ? words.slice(-1) : words;
-  v.development[sid] = w.length ? w.join(CHAINSEP) : ABSENT(m);
+  v.development[sid] = w.length ? w.slice(0, MAXW).join(CHAINSEP) : ABSENT(m);
   push(false);
   persist();
-  renderSecs(m);
+  shadeKey = "";
   drawLanes();
   const si = DOC.form.sections.findIndex((x) => x.id === sid);
   hearAt({ what: `${roleWord(si)}: ${w.length ? w.join(" + ") : "as written"}`, m, si });
 }
-function renderSecs(m) {
-  const host = $("zSecs");
-  host.replaceChildren();
-  litAt = -2; shadeKey = ""; shadeHover = -1;
-  if (m < 0 || !members[m]) return;
-  const all = devWords(m), label = new Map(all.map((o) => [o.value, o.label]));
-  DOC.form.sections.forEach((sc, si) => {
-    if (sc.id === COUNT_ID) return;
-    const reads = NuDocument.materialAt(members[m], sc.id);
-    const col = document.createElement("div");
-    col.className = "zsec" + (reads && reads === CELL ? " this" : "") + (isOut((members[m].development || {})[sc.id]) ? " out" : "");
-    col.style.setProperty("--mc", COL[m]);
-    col.dataset.si = si;
-    const on = devChain(m, sc.id), key = m + "|" + sc.id;
-    const off = (OFFW.get(key) || []).filter((w) => !on.includes(w));
-    const btn = (w, lit) => {
-      const ic = wordIcon(kindOf(m), w);
-      return `<button class="tw${lit ? " on" : ""}" data-w="${w.replace(/"/g, "&quot;")}" title="${(label.get(w) || w).replace(/"/g, "&quot;")} — ${lit ? "on: tap to turn off" : "off: tap to turn on"}">${icon(ic.name)}${ic.badge ? `<b>${ic.badge}</b>` : ""}</button>`;
-    };
-    col.innerHTML = `<button class="zname" title="${reads && reads !== CELL ? "reads another phrase: open it" : "this section"}">${roleWord(si)}</button>`
-      + `<div class="tws">${on.map((w) => btn(w, true)).join("")}${off.map((w) => btn(w, false)).join("")}`
-      + `<button class="tw add" title="add a transformation to ${roleWord(si)}">${icon("plus")}</button></div>`;
-    col.querySelector(".zname").addEventListener("click", () => { if (reads && reads !== CELL && DOC.material.cells[reads]) openCell(m, reads); });
-    col.querySelectorAll(".tw[data-w]").forEach((b) => b.addEventListener("click", () => {
-      const w = b.dataset.w, cur = devChain(m, sc.id);
-      if (cur.includes(w)) { OFFW.set(key, [...new Set([...(OFFW.get(key) || []), w])]); setDev(m, sc.id, cur.filter((x) => x !== w)); }
-      else setDev(m, sc.id, m === 1 ? [w] : [...cur, w]);
-    }));
-    col.querySelector(".tw.add").addEventListener("click", (e) => openWordMenu(m, sc.id, e.currentTarget));
-    col.addEventListener("mouseenter", () => { shadeHover = si; });
-    col.addEventListener("mouseleave", () => { if (shadeHover === si) shadeHover = -1; });
-    host.appendChild(col);
-  });
+const OFFE = new Map();      // "sid|intro" -> the edge turned off this visit, kept on the column, dim
+function edgeLabel(f, w) {
+  try { return (window.NuAvail.SHEETS["form." + f].values().find((o) => o.value === w) || {}).label || w; } catch (e) { return w; }
 }
-// THE SECTION PLAYING, LIT (Paul, 2026-11-02: "when I'm editing a phrase light
-// up the current song section below"): its column rings and fills left to
-// right as the section goes by, and the row scrolls to keep it in view
-let litAt = -2;
-function litSec(si, inBar) {
-  const host = $("zSecs");
+function setEdge(sc, f, w) {
+  if (!w && sc[f]) OFFE.set(sc.id + "|" + f, sc[f]);
+  sc[f] = w || null;
+  push(false);
+  persist();
+  drawLanes();
+  const si = DOC.form.sections.indexOf(sc);
+  hearAt({ what: `${roleWord(si)}: ${w ? (f === "intro" ? "comes in with " : "goes out with ") + edgeLabel(f, w) : "no " + f}`, m: 0, si });
+}
+let litAt = -2, litBar = -1;
+function litSec(si, k) {
+  const host = $("secs");
   if (si !== litAt) {
-    litAt = si;
-    host.querySelectorAll(".zsec.now").forEach((c) => c.classList.remove("now"));
-    const col = si >= 0 ? host.querySelector(`.zsec[data-si="${si}"]`) : null;
+    litAt = si; litBar = -1;
+    host.querySelectorAll(".sec.now").forEach((c) => c.classList.remove("now"));
+    const col = si >= 0 ? host.querySelector(`.sec[data-si="${si}"]`) : null;
     if (col) {
       col.classList.add("now");
-      const l = col.offsetLeft - host.offsetLeft, r = l + col.offsetWidth;
-      if (l < host.scrollLeft || r > host.scrollLeft + host.clientWidth) host.scrollLeft = Math.max(0, l - (host.clientWidth - col.offsetWidth) / 2);
+      const l = col.offsetLeft, r = l + col.offsetWidth;
+      if (l < host.scrollLeft || r > host.scrollLeft + host.clientWidth) host.scrollLeft = Math.max(0, l - 40);
     }
   }
-  const col = si >= 0 ? host.querySelector(".zsec.now") : null;
+  if (k === litBar) return;
+  litBar = k;
+  const col = si >= 0 ? host.querySelector(".sec.now") : null;
   if (!col) return;
-  const bars = SCORE.bars, first = bars.findIndex((b) => b.si === si);
-  let beats = 0, done = 0;
-  for (let i = first; i < bars.length && bars[i].si === si; i++) beats += bars[i].beats;
-  const bi = sectionAtBeat(beatNow());
-  for (let i = first; i < bi; i++) done += bars[i].beats;
-  col.style.setProperty("--p", beats ? Math.min(1, (done + inBar) / beats) : 0);
+  // the chord sounding: the bar's numeral
+  col.querySelectorAll(".ch").forEach((c) => c.classList.toggle("on", +c.dataset.k === k));
 }
 function openWordMenu(m, sid, anchor) {
   const menu = $("wordMenu"), cur = devChain(m, sid);
-  menu.innerHTML = devWords(m).map((o) => {
-    const ic = wordIcon(kindOf(m), o.value);
-    return `<button role="menuitem" data-w="${o.value.replace(/"/g, "&quot;")}" class="${cur.includes(o.value) ? "on" : ""}"${o.disabled ? ` disabled title="${(o.why || "").replace(/"/g, "&quot;")}"` : ""}>${icon(ic.name)}${ic.badge ? `<b>${ic.badge}</b>` : ""}<span>${o.label}</span></button>`;
-  }).join("");
-  const r = anchor.getBoundingClientRect();
-  menu.hidden = false;
-  menu.style.left = Math.max(8, Math.min(innerWidth - menu.offsetWidth - 8, r.left)) + "px";
-  menu.style.top = Math.max(8, Math.min(innerHeight - menu.offsetHeight - 8, r.bottom + 4)) + "px";
+  const sc = DOC.form.sections.find((x) => x.id === sid);
+  // the drummer's menu also has the section's way in and out
+  const edgeItems = (f) => {
+    let vals = [];
+    try { vals = window.NuAvail.SHEETS["form." + f].values().filter((o) => o.value); } catch (e) { return ""; }
+    return `<hr>` + vals.map((o) =>
+      `<button role="menuitem" data-e="${f}" data-v="${o.value}" class="${sc && sc[f] === o.value ? "on" : ""}" title="${o.label}">${icon(edgeIcon(o.value))}<b>${f === "intro" ? "›" : "‹"}</b></button>`).join("");
+  };
+  // AN ICON A WORD, the word its tooltip; five on is the most (the rest grey)
+  const full = cur.filter((x) => !OUT.test(x)).length >= MAXW;
+  menu.className = "wordmenu icons";
+  menu.style.setProperty("--mc", COL[m]);
+  menu.innerHTML = devWords(m).filter((o) => o.value && o.value !== "as written").map((o) => {
+    const ic = wordIcon(kindOf(m), o.value), on = cur.includes(o.value);
+    const off = o.disabled || (full && !on);
+    return `<button role="menuitem" data-w="${o.value.replace(/"/g, "&quot;")}" class="${on ? "on" : ""}"${off ? " disabled" : ""} title="${(o.label + (o.disabled && o.why ? " — " + o.why : "")).replace(/"/g, "&quot;")}">${icon(ic.name)}${ic.badge ? `<b>${ic.badge}</b>` : ""}</button>`;
+  }).join("") + (m === 0 && sc ? edgeItems("intro") + edgeItems("outro") : "");
+  menu.querySelectorAll("button[data-e]").forEach((b) => b.addEventListener("click", () => {
+    menu.hidden = true;
+    setEdge(sc, b.dataset.e, sc[b.dataset.e] === b.dataset.v ? null : b.dataset.v);
+  }));
+  placeMenu(menu, anchor);
   menu.querySelectorAll("button[data-w]").forEach((b) => b.addEventListener("click", () => {
     const w = b.dataset.w, c = devChain(m, sid);
     menu.hidden = true;
@@ -1021,22 +1356,26 @@ function hearAt({ what, m = -1, cell = null, si = null }) {
 }
 function paintHear() {
   const el = $("zHear"), jump = $("zJump");
-  if (!HEAR) { el.textContent = ""; jump.hidden = true; return; }
+  if (!HEAR) { el.innerHTML = ""; jump.hidden = true; return; }
   const now = playing ? beatNow() : -1;
-  if (HEAR.at == null) { el.textContent = `${HEAR.what} — not heard anywhere yet`; jump.hidden = true; return; }
-  const where = roleWord(HEAR.sec);
+  el.title = HEAR.what;
+  if (HEAR.at == null) { el.innerHTML = `${icon("ear")} ${icon("x")}`; jump.hidden = true; return; }
+  const where = `<b>${roleWord(HEAR.sec)}</b>`;
   if (!playing) {
-    el.innerHTML = `${icon("ear")} ${HEAR.what} — press play to hear it in <b>${where}</b>`;
-    jump.hidden = false; jump.innerHTML = `${icon("play")} play ${where}`;
+    el.innerHTML = `${icon("ear")} ${where}`;
+    jump.hidden = false; jump.innerHTML = icon("play");
   } else if (now >= 0 && now < HEAR.at) {
     const sec = Math.max(0, (HEAR.at - now) * 60 / bpm);
-    el.innerHTML = `${icon("clock")} ${HEAR.what} — you'll hear it in <b>${Math.ceil(sec)} s</b> (${where})`;
-    jump.hidden = false; jump.innerHTML = `${icon("play")} hear it now`;
+    el.innerHTML = `${icon("clock")} <b class="n">${Math.ceil(sec)}</b> ${where}`;
+    jump.hidden = false; jump.innerHTML = icon("play");
   } else if (now >= HEAR.at) {
-    el.innerHTML = `${icon("ear")} ${HEAR.what} — <b>playing now</b> (${where})`;
+    el.innerHTML = `${icon("ear")} ${where}`;
+    el.classList.add("now");
     jump.hidden = true;
-    if (now > HEAR.at + 16) HEAR = null;
+    if (now > HEAR.at + 16) { HEAR = null; el.classList.remove("now"); }
+    return;
   }
+  el.classList.remove("now");
 }
 
 function writeCell(m, notes) {
@@ -1075,7 +1414,7 @@ function writeCell(m, notes) {
   }
   push(false);
   persist();
-  hearAt({ what: `${whoOf(m).toLowerCase()}'s ${phraseLabel(m, name)} phrase`, m, cell: name });
+  hearAt({ what: `${whoOf(m).toLowerCase()} ${letterOf(m, name)}`, m, cell: name });
   if (SEL === m) { renderTabs(m); openCell(m, name); }
 }
 
@@ -1092,45 +1431,58 @@ function phraseLabel(m, name) {
 function renderTabs() {
   const host = $("motifTabs");
   host.replaceChildren();
-  for (let m = 0; m < 4; m++) {
-    if (!members[m]) continue;
-    const list = cellsOf(m).length ? cellsOf(m) : m === 1 ? [{ name: "bassline", secs: [] }] : [];
-    for (const { name, secs } of list) {
-      const b = document.createElement("button");
-      b.dataset.cell = name; b.dataset.m = m;
-      b.setAttribute("role", "tab");
-      b.style.setProperty("--mc", COL[m]);
-      b.innerHTML = `<span class="who">${whoOf(m)}</span> ${phraseLabel(m, name)}`;
-      b.title = secs.length ? `${whoOf(m).toLowerCase()}'s ${phraseLabel(m, name)} phrase — heard in ${secs.map((i) => roleWord(i)).join(", ")}`
-                            : "the bass's own line: it follows the chords until you change a note";
-      b.addEventListener("click", () => { if (SEL !== m) select(m, secs[0]); else openCell(m, name); });
-      host.appendChild(b);
-    }
+  const m = SEL;
+  if (m < 0 || !members[m]) return;
+  host.style.setProperty("--mc", COL[m]);
+  const names = phrasesOf(m);
+  if (m === 1 && pendingBass && CELL && !names.includes(CELL)) names.unshift(CELL);
+  for (const name of names) {
+    const b = document.createElement("button");
+    b.dataset.cell = name; b.dataset.m = m;
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", String(name === CELL));
+    b.className = "pcard";
+    const secs = (cellsOf(m).find((c) => c.name === name) || { secs: [] }).secs;
+    b.title = secs.map((i) => roleWord(i)).join(" · ");
+    b.innerHTML = `<b>${letterOf(m, name)}</b><canvas></canvas><i style="--n:${secs.length}"></i>`;
+    b.addEventListener("click", () => openCell(m, name));
+    host.appendChild(b);
+    drawCell(b.querySelector("canvas"), DOC.material.cells[name], name === CELL ? "#0e0e14" : COL[m]);
+  }
+  if (CELL && DOC.material.cells[CELL]) {
+    const add = document.createElement("button");
+    add.className = "pcard add"; add.title = "a new phrase (a copy of this one)";
+    add.innerHTML = icon("plus");
+    add.addEventListener("click", () => newPhrase(m));
+    host.appendChild(add);
   }
 }
 
 function select(m, atSi) {
   SEL = m;
-  refreshCards();
   const drawer = $("drawer");
   if (m < 0 || !members[m]) {
     drawer.hidden = true;
-    if (m >= 0) say(`${NAMES[m].toLowerCase()} sits this genre out`);
-    SEL = m >= 0 && !members[m] ? -1 : SEL;
+    SEL = -1;
     refreshCards();
     showSheet();
     return;
   }
   drawer.hidden = false;
   drawer.style.setProperty("--mc", COL[m]);
+  document.body.style.setProperty("--mc", COL[m]);
   $("mine").checked = MINE === m;
+  fillInstr(m);
   const cells = cellsOf(m);
-  $("drawerHint").textContent = m === 0
-    ? "A lane a drum. Shift-tap a hit to accent it."
-    : m === 1 && !cells.length
-      ? "The line the bass plays now (its first verse), in steps over each chord. Change a note and it plays yours."
-      : "Rows are steps over the chord (1 = its root): the band moves the phrase onto every chord.";
-  renderTabs();
+  let si = atSi;
+  if (si == null) {
+    const now = playing ? songBeatNow() : -1;
+    const bi = now >= 0 ? sectionAtBeat(now) : -1;
+    // stopped: the section chosen before, else the first this member plays in
+    const plays = (i) => secId(i) !== COUNT_ID && !isOut((members[m].development || {})[secId(i)]) && SCORE && SCORE.parts[m].some((n) => SCORE.bars.some((b) => b.si === i && n.beat >= b.beat && n.beat < b.beat + b.beats));
+    si = bi >= 0 ? SCORE.bars[bi].si : FOCUS >= 0 ? FOCUS : Math.max(0, DOC.form.sections.findIndex((x, i) => plays(i)));
+  }
+  FOCUS = si;
   if (m === 1 && !cells.length) {
     // the bass's own line, written out: what it plays, as a cell it does not
     // read until the first edit (so opening it changes nothing you hear)
@@ -1138,20 +1490,15 @@ function select(m, atSi) {
     if (!DOC.material.cells[name]) DOC.material.cells[name] = seedBass(Math.round(stepsPerBar()) * 2 || 32);
     CELL = name;
     pendingBass = true;
+    refreshCards();
     openCell(m, name);
   } else {
     pendingBass = false;
-    let si = atSi;
-    if (si == null) {
-      const now = playing ? songBeatNow() : -1;
-      const bi = now >= 0 ? sectionAtBeat(now) : -1;
-      si = bi >= 0 ? SCORE.bars[bi].si : 0;
-    }
-    const cur = cells.find((c) => c.secs.includes(si)) || cells[0];
-    openCell(m, cur.name);
+    const here = NuDocument.materialAt(members[m], secId(si));
+    const cur = (here && DOC.material.cells[here]) ? here : (cells[0] || {}).name;
+    refreshCards();
+    if (cur) openCell(m, cur);
   }
-  drawLanes();
-  $("drawerHint").title = $("drawerHint").textContent;
   showSheet();
 }
 let pendingBass = false;
@@ -1165,14 +1512,8 @@ let pendingBass = false;
    step; the octave chosen so the line's most frequent degree sits in 0..n-1,
    which makes the root 1 and keeps the contour. */
 function chordDegAt(si, k) {
-  try {
-    const all = NuDocument.chordsIn(DOC, GENRES).chords;
-    const per = (NuDocument.barsOf ? NuDocument.barsOf(DOC) : 1) || 1;
-    let bar0 = 0;
-    for (let i = 0; i < si; i++) bar0 += DOC.form.sections[i].bars * per;
-    const cs = all.filter((c) => c.bar === bar0 + k).sort((x, y) => x.from - y.from);
-    return cs.length && cs[0].deg != null ? cs[0].deg | 0 : 0;
-  } catch (e) { return 0; }
+  const bar = secChords(si)[k];
+  return bar && bar.length ? bar[0] : 0;
 }
 // a sounding pitch as a degree of the key (octaves counted; off the mode: the nearest step)
 function degOfMidi(midi) {
@@ -1223,8 +1564,8 @@ function instrOptions(doc, v) {
   catch (e) { return null; }
 }
 function fillInstr(m) {
-  if (!cards[m]) return;
-  const sel = cards[m].sel, v = members[m];
+  if (m !== SEL) return;
+  const sel = $("instr"), v = members[m];
   sel.replaceChildren();
   const r = v && instrOptions(DOC, v);
   sel.disabled = !r || !r.options.length;
@@ -1251,9 +1592,8 @@ function setInstr(m, value) {
   window.NuAvail.SHEETS[sheetOf(v)].set(DOC, { voice: v.name }, value);
   push(false);
   persist();
-  for (let k = 0; k < 4; k++) fillInstr(k);      // a kit or a pool choice can grey another's options
+  fillInstr(SEL);      // a kit or a pool choice can grey another's options
   refreshCards();
-  if (SEL === m) $("drawerTitle").textContent = `${whoOf(m)} · ${pretty(instrumentOf(m))}`;
   // no restart: the engine seats it at the next bar it renders, and the rest of the band plays on
   say(`${whoOf(m).toLowerCase()} plays ${pretty(instrumentOf(m)).toLowerCase()}`);
   if (!$("drawer").hidden) hearAt({ what: `${whoOf(m).toLowerCase()} on ${pretty(instrumentOf(m)).toLowerCase()}`, m });
@@ -1293,7 +1633,8 @@ function setTonal(sheet, value) {
   push(false);
   persist();
   fillTonal();
-  if (SEL >= 0 && CELL) openCell(SEL, CELL);       // the rows' names are steps; the roll redraws with the song
+  if (SEL >= 0 && CELL) openCell(SEL, CELL);
+  drawLanes();       // the rows' names are steps; the roll redraws with the song
   const A = DOC.alphabet || {};
   say(`in ${degName(0)} ${A.mode || ""}${A.scale ? " (" + A.scale + ")" : ""}`);
   hearAt({ what: `the key, ${degName(0)} ${A.mode || ""}` });
@@ -1343,9 +1684,13 @@ function heardIn(m, si, rep, L) {
     if (nt.beat >= s1 - 0.01) break;
     const at = (nt.beat - s0) * 4, len = Math.max(m === 0 ? 0.6 : 0.5, nt.dur * 4);
     if (m === 0) { const row = GM_ROW[nt.midi]; if (row) out.push({ at, len: Math.min(len, 1), row }); continue; }
+    // where it SOUNDS in the key: the kernel moves a line onto each chord by
+    // its own rule (by degrees or by semitones, folded the nearer way, long
+    // notes nudged onto chord tones), so the shadow does not undo it — the
+    // section's chords are written under it instead (renderSecs)
     let k = 0;
     while (k + 1 < bars.length && bars[k + 1].beat <= nt.beat + 0.01) k++;
-    out.push({ at, len, row: degOfMidi(nt.midi) - chordDegAt(si, k) });
+    out.push({ at, len, row: degOfMidi(nt.midi), home: chordDegAt(si, k) % modeSteps().length === 0 });
   }
   return out;
 }
@@ -1355,7 +1700,10 @@ function shadeShift(m, c, L) {
   const n = modeSteps().length, plain = DOC.form.sections.findIndex((sc) =>
     NuDocument.materialAt(members[m], sc.id) === CELL && !devChain(m, sc.id).length && !isOut((members[m].development || {})[sc.id]));
   const votes = new Map();
-  for (const g of plain >= 0 ? heardIn(m, plain, 0, L) : []) {
+  // ...counted on the tonic's bars only: there the line sits where it is written
+  const heard = plain >= 0 ? heardIn(m, plain, 0, L) : [];
+  const home = heard.filter((g) => g.home);
+  for (const g of home.length ? home : heard) {
     const i = Math.round(g.at);
     if (Math.abs(g.at - i) > 0.4 || c.play[i] !== "n") continue;
     const d = Math.round((g.row - (c.deg[i] | 0)) / n) * n;
@@ -1373,30 +1721,54 @@ function paintShadow(now, si) {
   if (SEL < 0 || !CELL || !SCORE || !roll || !members[SEL]) { el.textContent = ""; return; }
   const m = SEL, c = DOC.material.cells[CELL];
   if (!c) return;
-  const L = phraseLen(c), reads = (i) => NuDocument.materialAt(members[m], secId(i)) === CELL;
+  const L = phraseLen(c), reads = (i) => i >= 0 && NuDocument.materialAt(members[m], secId(i)) === CELL;
+  // which bars: the section playing while it reads this phrase; else the one
+  // chosen below; else the first that plays it
   let at = -1, rep = 0;
-  if (shadeHover >= 0 && reads(shadeHover)) at = shadeHover;
-  else if (now >= 0 && si >= 0 && reads(si)) {
+  if (now >= 0 && si >= 0 && reads(si)) {
     at = si;
     const first = SCORE.bars.find((x) => x.si === si);
     rep = Math.max(0, Math.floor(((now - first.beat) * 4 + 0.01) / L));
-  } else {
+  } else if (reads(FOCUS) || (FOCUS >= 0 && pendingBass)) at = FOCUS;
+  else {
     const secs = DOC.form.sections.map((sc, i) => i).filter((i) => secId(i) !== COUNT_ID && reads(i));
     const plays = secs.filter((i) => !isOut((members[m].development || {})[secId(i)]) && heardIn(m, i, 0, L).length);
-    at = plays.find((i) => devChain(m, secId(i)).length) ?? plays[0] ?? secs[0] ?? -1;
+    at = plays[0] ?? secs[0] ?? -1;
   }
-  const key = [m, CELL, at, rep, L].join("|");
+  const key = [m, CELL, at, rep, L, SHOWN.join("")].join("|");
   if (key === shadeKey && shadeScore === SCORE) return;
   shadeKey = key; shadeScore = SCORE;
-  $("zSecs").querySelectorAll(".zsec").forEach((col) => col.classList.toggle("shown", +col.dataset.si === at));
-  if (at < 0) { roll.setShadow([]); el.textContent = ""; return; }
+  document.querySelectorAll("#secs .sec").forEach((col) => col.classList.toggle("shown", +col.dataset.si === at));
+  if (at < 0) { roll.setShadow([]); roll.setLayers([]); roll.setRhythm([]); el.innerHTML = ""; return; }
   const shift = shadeShift(m, c, L);
-  const notes = heardIn(m, at, rep, L).map((g) => (m === 0 ? g : { ...g, row: g.row - shift }));
-  roll.setShadow(notes);
+  const mine = heardIn(m, at, rep, L).map((g) => (m === 0 ? g : { ...g, row: g.row - shift }));
+  roll.setShadow(mine);
+  // THE REST OF THE BAND IN THE SAME BARS: a pitched member's notes outlined
+  // in its colour, folded by octaves to sit by this phrase; the drums (and,
+  // under the drums, everybody) as ticks along the top — the rhythm to answer
+  const layers = [], rhythm = [];
+  const mid = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+  const myRows = mine.length ? mine.map((g) => g.row) : roll.notes.map((n) => n.row);
+  const n7 = modeSteps().length;
+  for (let k = 0; k < 4; k++) {
+    if (k === m || !members[k] || !SHOWN[k]) continue;
+    const hs = heardIn(k, at, rep, L);
+    if (!hs.length) continue;
+    if (k === 0 || m === 0) {
+      const bars = SCORE.bars.filter((b) => b.si === at), s0 = bars.length ? bars[0].beat + rep * L / 4 : 0;
+      const vel = new Map((SCORE.parts[k] || []).filter((nt) => nt.beat >= s0 - 0.01 && nt.beat < s0 + L / 4).map((nt) => [Math.round((nt.beat - s0) * 4 * 100), nt.vel]));
+      rhythm.push({ color: COL[k], hits: hs.map((g) => ({ at: g.at, v: k === 0 ? (g.row === "k" ? 1 : g.row === "s" || g.row === "c" ? 0.75 : 0.35) : Math.min(1, (vel.get(Math.round(g.at * 100)) || 90) / 127) })) });
+      continue;
+    }
+    const d = Number.isFinite(mid(myRows)) && myRows.length ? Math.round((mid(myRows) - mid(hs.map((g) => g.row - shift))) / n7) * n7 : 0;
+    layers.push({ color: COL[k], notes: hs.map((g) => ({ at: g.at, len: g.len, row: g.row - shift + d })) });
+  }
+  roll.setRhythm(rhythm);
+  roll.setLayers(layers);
   const ws = devChain(m, secId(at)).filter((x) => !OUT.test(x));
   const reps = Math.round(SCORE.bars.filter((b) => b.si === at).reduce((x, b) => x + b.beats, 0) * 4 / L);
-  el.innerHTML = `<i></i>${notes.length ? "heard in" : "silent in"} <b>${roleWord(at)}</b>${reps > 1 ? ` (${rep + 1} of ${reps})` : ""}`
-    + (ws.length ? ` · ${ws.map((x) => { const ic = wordIcon(kindOf(m), x); return icon(ic.name) + " " + x; }).join(" + ")}` : " · as written");
+  el.innerHTML = `<i></i><b>${roleWord(at)}</b>${reps > 1 ? `<span class="rep">${rep + 1}/${reps}</span>` : ""}`
+    + ws.map((x) => icon(wordIcon(kindOf(m), x).name, x)).join("");
 }
 
 /* ---------- mute: "I'll play this part" ---------- */
@@ -1719,7 +2091,7 @@ function check() {
   if ($("sheet").hidden !== !(part >= 0 && members[part])) return `the staff is ${$("sheet").hidden ? "hidden" : "shown"} for part ${part}`;
   if (READ !== document.body.classList.contains("reading")) return "reading, and the page is not (or the reverse)";
   if (READ && $("rail").hidden) return "reading without the rail";
-  if ($("play").textContent !== (playing ? "stop" : "play")) return `the play button says ${$("play").textContent} while ${playing ? "playing" : "stopped"}`;
+  if ($("play").getAttribute("aria-pressed") !== String(!!playing)) return `the play button says ${$("play").getAttribute("aria-pressed")} while ${playing ? "playing" : "stopped"}`;
   if (!playing && songBeatNow() !== -1) return "stopped, and the clock still runs";
   if (!playing && hasCount() !== (prefs.countIn && MINE >= 0 && loopOnly == null))
     return `stopped with ${hasCount() ? "a" : "no"} count-in (count ${prefs.countIn}, mine ${MINE}, loop ${loopOnly})`;
@@ -1790,6 +2162,14 @@ function songState() {
     if (b && (v.instrument || "") !== (b.instrument || "")) ins[v.name] = v.instrument || "";
   }
   if (Object.keys(ins).length) st.i = ins;
+  // what a member plays the phrase as (a line, chords, a pad), where you changed it
+  const pk = {};
+  for (const v of DOC.voices) {
+    const b = BASE.voices.find((x) => x.name === v.name);
+    // (the test song recasts its keys, so there every part is written down)
+    if (b && v.kind === "line" && (TEST || partOf(v) !== partOf(b))) pk[v.name] = partOf(v);
+  }
+  if (Object.keys(pk).length) st.k = pk;
   // the strip's three hand controls, where they differ from the genre's own strip
   const dk = {}, three = (d) => ({ mute: !!(d && d.mute), solo: !!(d && d.solo), fader: (d && d.fader) || 0 });
   for (const v of DOC.voices) {
@@ -1803,15 +2183,30 @@ function songState() {
     const b = BASE.voices.find((x) => x.name === v.name);
     if (!b) continue;
     for (const sc of DOC.form.sections) {
-      const a = (v.development || {})[sc.id] || "", o = (b.development || {})[sc.id] || "";
+      const a = (v.development || {})[sc.id] || "", o = (b.development || {})[srcOf(sc.id)] || "";
       if (a !== o) (dv[v.name] || (dv[v.name] = {}))[sc.id] = a;
     }
   }
   if (Object.keys(dv).length) st.v = dv;
+  // THE STRUCTURE, where you moved, copied or removed sections: the order of
+  // ids, each with the generated section it is (or copies)
+  const live = DOC.form.sections.filter((x) => x.id !== COUNT_ID);
+  if (!same(live.map((x) => x.id), BASE.form.sections.map((x) => x.id))) st.o = live.map((x) => [x.id, srcOf(x.id)]);
+  // a section's way in and out, its chords and its length, where you changed them
+  const fe = {}, put = (sc, f, v) => { (fe[sc.id] || (fe[sc.id] = {}))[f] = v; };
+  live.forEach((sc) => {
+    const b = BASE.form.sections.find((x) => x.id === srcOf(sc.id));
+    if (!b) return;
+    for (const f of ["intro", "outro"]) if ((sc[f] || null) !== (b[f] || null)) put(sc, f, sc[f] || null);
+    if (!same(sc.prog || null, b.prog || null)) put(sc, "prog", sc.prog || null);
+    if (sc.bars !== b.bars) put(sc, "bars", sc.bars);
+  });
+  if (Object.keys(fe).length) st.f = fe;
   // and the key, the mode and the scale
   const A = DOC.alphabet || {}, B = BASE.alphabet || {};
   const al = {};
   for (const k of ["key", "mode", "scale"]) if ((A[k] ?? null) !== (B[k] ?? null)) al[k] = A[k] ?? null;
+  if ((A.harmony ?? null) !== (B.harmony ?? null)) al.harmony = A.harmony ?? null;
   if (Object.keys(al).length) st.a = al;
   if (MINE >= 0) st.p = MINE;
   if (TEST) st.x = 1;
@@ -1882,6 +2277,33 @@ function testify(doc) {
 function applyEdits(doc, e) {
   if (!e || typeof e !== "object") return -1;
   if (e.x === 1) testify(doc);
+  // the structure: each id a copy of a generated section, in this order (the
+  // words and phrases it carries come with it; the keys below may change them)
+  if (Array.isArray(e.o)) {
+    const secs = doc.form.sections, by = new Map(secs.map((x) => [x.id, x])), out = [], seen = new Set();
+    for (const it of e.o.slice(0, 40)) {
+      if (!Array.isArray(it) || typeof it[0] !== "string" || !/^s\d{1,3}$/.test(it[0]) || seen.has(it[0])) continue;
+      const b = by.get(it[1]);
+      if (!b) continue;
+      seen.add(it[0]);
+      out.push({ ...JSON.parse(JSON.stringify(b)), id: it[0] });
+      if (it[0] !== it[1]) {
+        SRC.set(it[0], it[1]);
+        for (const v of doc.voices) {
+          if (v.development && v.development[it[1]] != null) v.development[it[0]] = v.development[it[1]];
+          if (v.material && typeof v.material === "object") { const n = NuDocument.materialAt(v, it[1]); if (n) v.material[it[0]] = n; }
+        }
+      }
+    }
+    if (out.length) {
+      const gone = secs.filter((x) => !seen.has(x.id)).map((x) => x.id);
+      secs.length = 0; secs.push(...out);
+      for (const v of doc.voices) for (const id of gone) {
+        if (v.development) delete v.development[id];
+        if (v.material && typeof v.material === "object") delete v.material[id];
+      }
+    }
+  }
   if (e.t != null && Number.isFinite(+e.t)) doc.time.bpm = Math.max(40, Math.min(220, Math.round(+e.t)));
   if (e.c && typeof e.c === "object")
     for (const [k, c] of Object.entries(e.c)) {
@@ -1909,6 +2331,16 @@ function applyEdits(doc, e) {
       const r = v && typeof val === "string" ? instrOptions(doc, v) : null;
       if (r && r.options.some((o) => o.value === val && !o.disabled)) window.NuAvail.SHEETS[sheetOf(v)].set(doc, { voice: name }, val);
     }
+  // a part from a link: one the part menu offers
+  if (e.k && typeof e.k === "object")
+    for (const [name, part] of Object.entries(e.k)) {
+      const v = doc.voices.find((x) => x.name === name);
+      if (!v || v.kind !== "line" || typeof part !== "string") continue;
+      try {
+        const r = window.NuAvail.optionsFor(doc, { voice: name }, "cast.part", window.NuGates, INSTR_ENV);
+        if (r.options.some((o) => o.value === part && !o.disabled)) window.NuAvail.SHEETS["cast.part"].set(doc, { voice: name }, part);
+      } catch (err) { /* a part the menu will not say is no part */ }
+    }
   // a strip from a link: mute, solo and a fader in range, nothing else
   if (e.d && typeof e.d === "object")
     for (const [name, d] of Object.entries(e.d)) {
@@ -1920,6 +2352,31 @@ function applyEdits(doc, e) {
       const f = d ? Math.round(+d.fader) : 0;
       if (Number.isFinite(f) && f) o.fader = Math.max(-24, Math.min(12, f)); else delete o.fader;
       if (Object.keys(o).length) v.desk = o; else delete v.desk;
+    }
+  // a section's way in and out: a word its own sheet offers, or none
+  if (e.f && typeof e.f === "object")
+    for (const [sid, fs] of Object.entries(e.f)) {
+      const sc = doc.form.sections.find((x) => x.id === sid);
+      if (!sc || !fs || typeof fs !== "object") continue;
+      for (const f of ["intro", "outro"]) {
+        if (!(f in fs)) continue;
+        let ok = [];
+        try { ok = window.NuAvail.SHEETS["form." + f].values().map((o) => o.value); } catch (err) { continue; }
+        if (fs[f] == null || fs[f] === "") sc[f] = null;
+        else if (typeof fs[f] === "string" && ok.includes(fs[f])) sc[f] = fs[f];
+      }
+      // a chart: a chord a bar, a degree and maybe a seventh
+      if ("prog" in fs) {
+        const p = fs.prog;
+        if (p == null) delete sc.prog;
+        else {
+          const one = (c) => c && !Array.isArray(c) && Number.isInteger(c.d) && c.d >= -12 && c.d <= 12 && (c.q == null || (typeof c.q === "string" && /^[a-z0-9#]{1,8}$/i.test(c.q)));
+          const cl = (c) => ({ d: c.d, ...(c.q ? { q: c.q } : {}) });
+          if (Array.isArray(p) && p.length && p.length <= 28 && p.every((b) => one(b) || (Array.isArray(b) && b.length && b.length <= 8 && b.every(one))))
+            sc.prog = p.map((b) => (Array.isArray(b) ? b.map(cl) : cl(b)));
+        }
+      }
+      if (Number.isInteger(fs.bars) && fs.bars >= 1 && fs.bars <= 16) sc.bars = fs.bars;
     }
   // a section's transformations: words the voice's own development menu offers, nothing else
   if (e.v && typeof e.v === "object")
@@ -1946,6 +2403,7 @@ function applyEdits(doc, e) {
         if (opts.some((o) => String(o.value) === val && !o.disabled)) window.NuAvail.SHEETS[sheet].set(doc, {}, val);
       } catch (err) { /* a menu that will not answer keeps the genre's own */ }
     }
+  if (e.a && (e.a.harmony === "cycle" || e.a.harmony === null)) { if (e.a.harmony) doc.alphabet.harmony = "cycle"; }
   return Number.isInteger(e.p) && e.p >= 0 && e.p < 4 ? e.p : -1;
 }
 
@@ -1970,7 +2428,7 @@ async function unpack(str) {
     return JSON.parse(new TextDecoder().decode(raw));
   } catch (e) { return null; }
 }
-const editsOf = (st) => { const e = {}; for (const k of ["x", "t", "c", "m", "i", "d", "v", "a", "p"]) if (st[k] != null) e[k] = st[k]; return e; };
+const editsOf = (st) => { const e = {}; for (const k of ["x", "o", "t", "c", "m", "i", "k", "d", "v", "f", "a", "p"]) if (st[k] != null) e[k] = st[k]; return e; };
 async function linkOf(st) {
   const e = editsOf(st);
   return `#g=${encodeURIComponent(st.g)}&s=${st.s}` + (Object.keys(e).length ? "&e=" + (await pack(e)) : "");
@@ -2030,7 +2488,7 @@ function setTempo(v, quiet) {
   DOC.time.bpm = v;
   $("tempo").value = v;
   const pct = Math.round(100 * v / GENRE_BPM);
-  $("tempoOut").textContent = `${v} BPM` + (pct !== 100 ? ` (${pct}%)` : "");
+  $("tempoOut").textContent = `${v}`;
   if (quiet) return;
   push(false);
   persist();
@@ -2109,6 +2567,7 @@ async function loadGenre(gk, seed, edits = null) {
   BASE = JSON.parse(JSON.stringify(DOC));        // what the edits are measured against
   GENRE_BPM = DOC.time.bpm;
   TEST = !!(edits && edits.x === 1);
+  SRC.clear();
   const mine = edits ? applyEdits(DOC, edits) : -1;
   MINE = -1;
   setLoopOnly(null); $("loopSec").checked = false;
@@ -2118,12 +2577,14 @@ async function loadGenre(gk, seed, edits = null) {
   $("genre").value = titleOf(gk);
   fillTonal();
   HEAR = null; OFFW.clear();
+  for (const b of BANK) b.length = 0;
+  FOCUS = -1;
   document.title = `${titleOf(gk)} — Stellate Lilguys`;
   buildBand();
   select(-1);
   if (READ) { PART = firstPart(PART); applyReadPart(); }
   lastSec = -2;
-  say(`${titleOf(gk)}: ${members.filter(Boolean).length} play. Click one to open its motifs.`);
+  say("");
   warmup();
   persist(true);
   if (was) startAt(0);
@@ -2165,8 +2626,9 @@ async function boot() {
     if (p && judge) { judgedTo = -1; }
     if (p) applyGates();
     if (READ) { paintRail(); holdScreen(true); }
-    $("play").textContent = p ? "stop" : "play";
+    $("play").innerHTML = icon(p ? "square" : "play");
     $("play").setAttribute("aria-pressed", String(!!p));
+    $("play").setAttribute("aria-label", p ? "stop" : "play");
     if (!p) { staffRest = -0.001; lastSec = -2; if (syncCount()) push(false); }
   });
   on("status", (d) => { if (d && d.text && /filling|starting|engine|dropout/i.test(d.text)) say(d.text); });
@@ -2193,15 +2655,39 @@ async function boot() {
   $("closeDrawer").addEventListener("click", () => select(-1));
   $("closeDrawer").innerHTML = icon("x");
   $("tDraw").innerHTML = icon("pencil"); $("tSplit").innerHTML = icon("scissors");
-  $("tClear").innerHTML = `${icon("eraser")}<span>clear</span>`;
+  $("tClear").innerHTML = icon("eraser");
+  // the header, in icons
+  $("play").innerHTML = icon("play"); $("dice").innerHTML = icon("dices"); $("tempoBack").innerHTML = icon("rotate-ccw");
+  $("share").innerHTML = icon("share-2"); $("readBtn").innerHTML = icon("book-open"); $("loopIcon").innerHTML = icon("repeat");
+  $("volIcon").innerHTML = icon("volume-1"); $("mineIcon").innerHTML = icon("keyboard");
+  const PI = { mono: "minus", stab: "layers", pad: "rectangle-horizontal" };
+  $("tPoly").querySelectorAll("[data-p]").forEach((b) => { b.innerHTML = icon(PI[b.dataset.p]); });
+  $("instr").addEventListener("change", (e) => { if (SEL >= 0) setInstr(SEL, e.target.value); });
+  let volT = 0;
+  $("vol").addEventListener("input", (e) => { clearTimeout(volT); const v = +e.target.value; volT = setTimeout(() => { if (SEL >= 0) setDesk(SEL, "fader", v); }, 180); });
+  $("vol").addEventListener("dblclick", () => { $("vol").value = 0; if (SEL >= 0) setDesk(SEL, "fader", 0); });
   $("tClear").addEventListener("click", () => { if (SEL >= 0 && roll.notes.length) roll.clearAll(); });
   const tool = (t) => { roll.setTool(t); $("tDraw").setAttribute("aria-checked", String(t === "draw")); $("tSplit").setAttribute("aria-checked", String(t === "split")); };
   $("tDraw").addEventListener("click", () => tool("draw"));
   $("tSplit").addEventListener("click", () => tool("split"));
   window.__tool = tool;
-  $("drawer").addEventListener("click", (e) => { if (e.target === $("drawer")) select(-1); });     // the backdrop
+  $("tPoly").addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (b && SEL >= 0) setPoly(SEL, b.dataset.p); });
+  // THE GRID: a tap puts in a note this long (in steps; a step is a sixteenth),
+  // remembered on this browser
+  const GRIDS = [[1, "1/16"], [2, "1/8"], [4, "1/4"], [8, "1/2"]];
+  let g0 = 1;
+  try { g0 = +localStorage.getItem("lilguys.grid") || 1; } catch (e) {}
+  const grid = (n) => {
+    roll.setSnap(n);
+    [...$("tGrid").children].forEach((b) => b.setAttribute("aria-checked", String(+b.dataset.g === n)));
+    try { localStorage.setItem("lilguys.grid", String(n)); } catch (e) {}
+  };
+  $("tGrid").innerHTML = GRIDS.map(([n, l]) => `<button role="radio" data-g="${n}" aria-checked="false" title="${l} notes: a tap puts one in, a drag draws them, moves and stretches land on the ${l} grid (G steps through them)">${l}</button>`).join("");
+  $("tGrid").addEventListener("click", (e) => { const b = e.target.closest("[data-g]"); if (b) grid(+b.dataset.g); });
+  grid(GRIDS.some((x) => x[0] === g0) ? g0 : 1);
+  window.__grid = () => { const i = GRIDS.findIndex((x) => x[0] === roll.snap); grid(GRIDS[(i + 1) % GRIDS.length][0]); };
   $("zJump").addEventListener("click", () => { if (HEAR && HEAR.sec != null) { if (loopOnly != null) { setLoopOnly(HEAR.sec); push(false); } startAt(HEAR.sec); } });
-  document.addEventListener("pointerdown", (e) => { if (!$("wordMenu").hidden && !e.target.closest("#wordMenu, .tw.add")) $("wordMenu").hidden = true; });
+  document.addEventListener("pointerdown", (e) => { if (!$("wordMenu").hidden && !e.target.closest("#wordMenu, .tw.add, .ch, .pl")) $("wordMenu").hidden = true; });
   for (const [id, sheet] of TONAL) $(id).addEventListener("change", (e) => setTonal(sheet, e.target.value));
   $("mine").addEventListener("change", (e) => { if (SEL >= 0) setMine(SEL, e.target.checked); });
   $("loopSec").addEventListener("change", (e) => {
@@ -2223,17 +2709,11 @@ async function boot() {
     else if ((e.code === "ArrowLeft" || e.code === "ArrowRight") && !READ) { e.preventDefault(); flip(e.code === "ArrowRight" ? 1 : -1); }
     else if (e.code === "Escape") { if (!$("wordMenu").hidden) $("wordMenu").hidden = true; else if (READ) exitRead(); else select(-1); }
     else if (e.code === "KeyD" && SEL >= 0 && !READ) window.__tool("draw");
+    else if (e.code === "KeyG" && SEL >= 0 && !READ) window.__grid();
     else if (e.code === "KeyS" && SEL >= 0 && !READ) window.__tool("split");
     else if (e.code === "KeyR") READ ? exitRead() : enterRead();
   });
-  $("ruler").addEventListener("click", (e) => {
-    const si = secAtX($("ruler"), e);
-    if (si < 0) return;
-    if (loopOnly != null) { setLoopOnly(si); push(false); }
-    say(`${playing ? "going to" : "starting at"} ${roleWord(si)}`);
-    startAt(si);
-  });
-  if (window.ResizeObserver) new ResizeObserver(() => drawLanes()).observe($("arr"));
+  if (window.ResizeObserver) { let rT = 0; new ResizeObserver(() => { clearTimeout(rT); rT = setTimeout(drawLanes, 120); }).observe($("song")); }
   requestAnimationFrame(frame);
   // #fuzz: the fuzzer, run in this page (on a phone, where no harness reaches)
   if (FUZZ) import("./fuzz.js").then((F) => F.runInPage(window.__lil, {

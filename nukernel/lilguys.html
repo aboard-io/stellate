@@ -25,29 +25,30 @@
 </head>
 <body>
 <header class="bar">
-  <h1>Stellate Lilguys</h1>
+  <h1 class="vh">Stellate Lilguys</h1>
   <div class="genre">
     <label for="genre" class="vh">Genre</label>
-    <input id="genre" type="search" list="genres" placeholder="a genre…" autocomplete="off" spellcheck="false">
+    <input id="genre" type="search" list="genres" autocomplete="off" spellcheck="false">
     <datalist id="genres"></datalist>
-    <button id="dice" title="a genre at random, a new song">new song</button>
+    <button id="dice" class="icon" title="a new song" aria-label="a new song"></button>
   </div>
-  <button id="play" disabled>play</button>
+  <button id="play" class="icon play" disabled aria-label="play" aria-pressed="false"></button>
   <div class="tempo">
-    <label for="tempo">tempo</label>
+    <label for="tempo" class="vh">tempo</label>
     <input id="tempo" type="range" min="40" max="220" step="1" value="120">
-    <output id="tempoOut" for="tempo">120 BPM</output>
-    <button id="tempoBack" class="orig" title="the genre's own tempo">genre's</button>
+    <output id="tempoOut" for="tempo">120</output>
+    <button id="tempoBack" class="icon orig" title="the genre's own tempo" aria-label="the genre's own tempo"></button>
   </div>
-  <div class="tonal" title="the song's key, mode and scale: the band moves everything with them">
+  <div class="tonal" title="key · mode · scale">
     <label class="vh" for="key">key</label><select id="key"></select>
     <label class="vh" for="mode">mode</label><select id="mode"></select>
     <label class="vh" for="scale">scale</label><select id="scale"></select>
   </div>
-  <button id="share" title="a link to this song, your motifs and all">share</button>
-  <button id="readBtn" title="the part on a staff, the whole screen: sight reading (R)">read along</button>
-  <label class="loop"><input type="checkbox" id="loopSec"> loop this section</label>
-  <span id="status" role="status" aria-live="polite">loading…</span>
+  <label class="loop icon" title="loop this section"><input type="checkbox" id="loopSec"><span id="loopIcon"></span></label>
+  <span class="grow"></span>
+  <span id="status" role="status" aria-live="polite"></span>
+  <button id="share" class="icon" title="a link to this song" aria-label="share"></button>
+  <button id="readBtn" class="icon" title="read along (R)" aria-label="read along"></button>
 </header>
 
 <aside id="rail" hidden aria-label="reading controls">
@@ -83,47 +84,53 @@
 </div>
 
 <main>
+  <!-- THE BAND (2026-11-02, Paul: "the four buttons … the lilguys are IN the
+       buttons. I click a button and the edit view appears"). -->
   <section id="stage" aria-label="the band">
     <div id="banner"><span class="sec"></span><span class="where"></span><span class="dots"></span></div>
-    <div class="arr" id="arr">
-      <div class="ruler-row"><div class="corner" id="corner"></div><canvas id="ruler" aria-label="the song, section by section: click one to go there"></canvas></div>
-      <div class="band" id="band"></div>
-      <div id="playhead" hidden></div>
-    </div>
+    <nav class="band" id="band"></nav>
   </section>
 
-  <!-- THE PHRASE, ZOOMED (2026-11-02): a clip clicked opens its phrase over the
-       arrangement — which one, where it is heard, the tool, the section's
-       transformations, and when you will hear what you changed. -->
-  <section id="drawer" class="zoom" hidden role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
-    <div class="zcard">
-      <header class="zhead">
-        <canvas id="zSprite" width="60" height="64" aria-hidden="true"></canvas>
-        <div class="zwho"><h2 id="drawerTitle"></h2><p id="zWhere"></p></div>
-        <label class="zmine"><input type="checkbox" id="mine"> I'll play this part</label>
-        <button id="closeDrawer" class="icon" aria-label="close (Esc)"></button>
-      </header>
-      <nav id="motifTabs" role="tablist" aria-label="every phrase in the song"></nav>
-      <div class="ztools">
-        <div class="seg" role="radiogroup" aria-label="tool">
-          <button id="tDraw" class="icon" role="radio" aria-checked="true" title="pencil: tap a note in, drag to draw a line, tap a note to take it away (D)"></button>
-          <button id="tSplit" class="icon" role="radio" aria-checked="false" title="scissors: tap a held note to break it up on the grid (S)"></button>
-        </div>
-        <button id="tClear" class="icon" title="clear: take every note out of this phrase"></button>
-        <span class="mono" id="tMono" title="a melodic phrase is one line: a note moved or stretched over another takes its place (the engine keeps one note per step)">mono</span>
-        <span id="zShadow" class="shade" title="the dashed shadow under the phrase: what the band plays from it there, transformations and all (hover a section below to see it there)"></span>
-        <span class="grow"></span>
-        <span id="zHear" class="hear" aria-live="polite"></span>
-        <button id="zJump" class="hearnow" hidden></button>
-      </div>
-      <div id="roll"></div>
-      <div id="zSecs" class="zsecs" aria-label="this member's sections and their transformations"></div>
-      <p class="hint" id="drawerHint"></p>
+  <!-- ONE MEMBER'S PHRASES: the bank across the top, the one open under it,
+       and the rest of the band drawn faintly through it -->
+  <section id="drawer" class="editor" hidden aria-label="phrases">
+    <div class="ehead">
+      <div id="motifTabs" class="phrases" role="tablist" aria-label="this member's phrases"></div>
+      <span class="grow"></span>
+      <label class="vh" for="instr">instrument</label><select id="instr"></select>
+      <label class="vol" title="volume"><span id="volIcon"></span><input id="vol" type="range" min="-24" max="12" step="1" value="0" aria-label="volume"></label>
+      <label class="zmine icon" title="I'll play this part"><input type="checkbox" id="mine"><span id="mineIcon"></span></label>
+      <button id="closeDrawer" class="icon" aria-label="close (Esc)"></button>
     </div>
+    <div class="ztools">
+      <div class="seg" role="radiogroup" aria-label="tool">
+        <button id="tDraw" class="icon" role="radio" aria-checked="true" title="pencil (D)"></button>
+        <button id="tSplit" class="icon" role="radio" aria-checked="false" title="scissors (S)"></button>
+      </div>
+      <div class="seg grid" id="tGrid" role="radiogroup" aria-label="grid"></div>
+      <button id="tClear" class="icon" title="clear"></button>
+      <div class="seg" id="tPoly" role="radiogroup" aria-label="one line or chords">
+        <button data-p="mono" class="icon" role="radio" aria-checked="true" title="one line"></button>
+        <button data-p="stab" class="icon" role="radio" aria-checked="false" title="chords on every note"></button>
+        <button data-p="pad" class="icon" role="radio" aria-checked="false" title="a held chord a bar"></button>
+      </div>
+      <span class="grow"></span>
+      <span id="zShadow" class="shade" aria-live="polite"></span>
+      <span id="zHear" class="hear" aria-live="polite"></span>
+      <button id="zJump" class="icon hearnow" hidden></button>
+    </div>
+    <div id="roll"></div>
   </section>
   <div id="wordMenu" class="wordmenu" hidden role="menu"></div>
 
-  <section id="sheet" hidden aria-label="play along">
+  <!-- THE SONG, along the bottom: a block a section — its chords, then each
+       member's phrase and transformations there. Drag to move. -->
+  <section id="song" class="song" aria-label="the song">
+    <div class="secs" id="secs"></div>
+    <div id="playhead" hidden></div>
+  </section>
+
+<section id="sheet" hidden aria-label="play along">
     <div class="sheet-head">
       <h2 id="sheetTitle">Play along</h2>
       <button class="listen" id="listen" title="play along on a MIDI keyboard and see how it went">listen to my keyboard</button>

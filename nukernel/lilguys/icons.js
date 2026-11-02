@@ -1,4 +1,4 @@
-// THE LILGUYS PAGE'S ICONS — Lucide (lucide-static@0.460.0), the 85 this page draws, copied
+// THE LILGUYS PAGE'S ICONS — Lucide (lucide-static@0.460.0), the icons this page draws, copied
 // out of the package as each icon's inner SVG. Generated, not typed: the word -> icon tables
 // below are this page's, the drawings are Lucide's. Their licence, which has to ride with them:
 //
@@ -103,7 +103,21 @@ const SVG = {
 "waves": "<path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\" /> <path d=\"M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\" /> <path d=\"M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\" />",
 "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />",
 "zap": "<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />",
-"zap-off": "<path d=\"M10.513 4.856 13.12 2.17a.5.5 0 0 1 .86.46l-1.377 4.317\" /> <path d=\"M15.656 10H20a1 1 0 0 1 .78 1.63l-1.72 1.773\" /> <path d=\"M16.273 16.273 10.88 21.83a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14H4a1 1 0 0 1-.78-1.63l4.507-4.643\" /> <path d=\"m2 2 20 20\" />"
+"zap-off": "<path d=\"M10.513 4.856 13.12 2.17a.5.5 0 0 1 .86.46l-1.377 4.317\" /> <path d=\"M15.656 10H20a1 1 0 0 1 .78 1.63l-1.72 1.773\" /> <path d=\"M16.273 16.273 10.88 21.83a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14H4a1 1 0 0 1-.78-1.63l4.507-4.643\" /> <path d=\"m2 2 20 20\" />",
+"square": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" />",
+"share-2": "<circle cx=\"18\" cy=\"5\" r=\"3\" /> <circle cx=\"6\" cy=\"12\" r=\"3\" /> <circle cx=\"18\" cy=\"19\" r=\"3\" /> <line x1=\"8.59\" x2=\"15.42\" y1=\"13.51\" y2=\"17.49\" /> <line x1=\"15.41\" x2=\"8.59\" y1=\"6.51\" y2=\"10.49\" />",
+"book-open": "<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />",
+"rotate-ccw": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" />",
+"eye": "<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />",
+"eye-off": "<path d=\"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49\" /> <path d=\"M14.084 14.158a3 3 0 0 1-4.242-4.242\" /> <path d=\"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143\" /> <path d=\"m2 2 20 20\" />",
+"headphones": "<path d=\"M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3\" />",
+"keyboard": "<path d=\"M10 8h.01\" /> <path d=\"M12 12h.01\" /> <path d=\"M14 8h.01\" /> <path d=\"M16 12h.01\" /> <path d=\"M18 8h.01\" /> <path d=\"M6 8h.01\" /> <path d=\"M7 16h10\" /> <path d=\"M8 12h.01\" /> <rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" />",
+"grip-vertical": "<circle cx=\"9\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"5\" r=\"1\" /> <circle cx=\"9\" cy=\"19\" r=\"1\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <circle cx=\"15\" cy=\"19\" r=\"1\" />",
+"trash-2": "<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />",
+"layers": "<path d=\"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z\" /> <path d=\"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65\" /> <path d=\"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65\" />",
+"rectangle-horizontal": "<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\" />",
+"gauge": "<path d=\"m12 14 4-4\" /> <path d=\"M3.34 19a10 10 0 1 1 17.32 0\" />",
+"list-music": "<path d=\"M21 15V6\" /> <path d=\"M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z\" /> <path d=\"M12 12H3\" /> <path d=\"M16 6H3\" /> <path d=\"M12 18H3\" />",
 };
 
 // an icon as an inline <svg>, sized by CSS (1em) and drawn in currentColor
@@ -120,6 +134,12 @@ const LINE = {"as written": "file-music", "the head only": "arrow-left-to-line",
 const KIT = {"nodrums": "volume-x", "nokick": "circle-off", "nohats": "x", "snareonly": "target", "shift": "move-right", "halftime": "turtle", "doubletime": "rabbit", "busy": "grip", "sparse": "ellipsis", "four": "footprints", "offbeat": "audio-lines", "swap": "arrow-left-right", "roll": "waves", "ride": "bell", "tomtime": "drum", "pedal": "footprints", "opens": "circle-dashed", "shuffle": "shuffle", "crash": "zap", "crashback": "zap-off", "backbeat": "hand", "onthree": "clock-3", "stickside": "slash", "claps": "hand-metal", "ghosts": "ghost", "flams": "flame", "drags": "move-horizontal", "kickdoubles": "copy", "tomfill": "drum", "tomrun": "activity", "tomroll": "waves", "linear": "git-commit-horizontal", "accents": "chevrons-up", "crescendo": "trending-up", "soft": "feather", "loud": "megaphone", "humanize": "fingerprint", "tight": "cpu", "maybe": "circle-help", "chaos": "dices", "disco": "disc-3", "stomp": "footprints", "tresillo": "triangle", "clave": "key-round", "amen": "church", "motorik": "car-front", "blast": "bomb"};
 const KITOP = {"rot": "rotate-cw", "thin": "minus", "dens": "plus", "half": "turtle", "dbl": "rabbit", "roll": "waves", "disp": "clock-arrow-down"};
 const BASS = {"nobass": "volume-x", "walk": "footprints", "octaves": "arrow-up-down", "fifths": "chevrons-up", "pedal": "anchor", "eighths": "music-2", "sixteenths": "music-4", "reese": "waves", "wobble": "activity"};
+// A SECTION'S EDGES, the way it comes in and goes out (avail.js form.intro / form.outro)
+const EDGE = {"hit": "zap", "count": "clock-3", "solo": "music-2", "kit": "drum", "swell": "trending-up", "cold": "circle-off", "fade": "trending-up",
+  "padin": "waves", "bassin": "anchor", "riser": "chevrons-up", "stabs": "slash",
+  "fill": "drum", "roll": "waves", "crash": "zap", "break": "volume-x", "tail": "volume-x", "cut": "slash", "tomfill": "drum",
+  "hatrun": "activity", "hush": "feather", "doubles": "rabbit"};
+export const edgeIcon = (word) => EDGE[word] || "circle-help";
 export const DRUMLETTER = { k: "K", s: "S", h: "H" };
 // { name, badge } for a word of a kind ("line" | "drums" | "bass")
 export function wordIcon(kind, word) {

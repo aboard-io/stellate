@@ -300,7 +300,7 @@ async function prop(L, o) {
       const doc = window.NuPrecompose.genreToDocument(st.g, st.s);
       L.trimBand(doc);
       L.twoPhrases(doc);
-      const e = {}; for (const k of ["x", "t", "c", "m", "i", "d", "v", "a", "p"]) if (st[k] != null) e[k] = st[k];
+      const e = {}; for (const k of ["x", "o", "t", "c", "m", "i", "k", "d", "v", "f", "a", "p"]) if (st[k] != null) e[k] = st[k];
       const p = L.applyEdits(doc, JSON.parse(JSON.stringify(e)));
       const D = L.DOC;
       if (Math.round(doc.time.bpm) !== Math.round(D.time.bpm)) return `song-keeps: tempo ${doc.time.bpm} rebuilt, ${D.time.bpm} playing`;

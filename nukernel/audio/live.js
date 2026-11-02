@@ -917,6 +917,9 @@ async function open(FL, forceMedia) {
       masterVol: vol / 100,
       mediaMeta,
       ...(forceMedia ? { wavOut: true } : {}),
+      // a page's own output choice (present-only; the lilguys page's Safari
+      // trial: ?out=classic / ?out=recycle). Nothing sets it by default.
+      ...(W.__nuOutOpts && typeof W.__nuOutOpts === "object" ? W.__nuOutOpts : {}),
     });
     st.route = handle.outputRoute || (forceMedia ? "media" : "ring");
   } catch (e) {
