@@ -191,3 +191,8 @@ body.reading .member .what { display: none; }
 .staff .lil-name { font: 600 9px system-ui, sans-serif; fill: #6a5f8a; }
 .staff .abcjs-annotation { fill: #7a2e8a; }
 .staff .abcjs-chord { fill: #1f5f8a; }
+.staff .lil-hit { fill: #1f8a4c; }
+.staff .lil-miss { fill: #e08a1e; }
+.tally { font-variant-numeric: tabular-nums; }
+#rail output.tally { font-size: 13px; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#rail output.tally:empty { display: none; }

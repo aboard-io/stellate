@@ -1,0 +1,1 @@
+{ "//": "a module-type marker (the nukernel/ui/package.json pattern), so node can import these files for the judge test; the browser never reads it", "name": "nukernel-lilguys", "private": true, "type": "module" }

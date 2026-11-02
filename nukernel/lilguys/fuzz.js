@@ -111,11 +111,13 @@ export const OPS = [
   ["dice", 1, (L) => !L.READ, () => ({ op: "dice" })],
   ["read", 4, (L) => !L.READ, () => ({ op: "read" })],
   ["rail", 14, (L) => L.READ, (r) => ({ op: "rail", b: pick(r, ["rSlower", "rFaster", "rFaster", "rPart", "rNew", "rOpts", "rExit"]) })],
-  ["read-opt", 5, (L) => L.READ, (r) => ({ op: "read-opt", o: pick(r, ["ahead1", "ahead2", "ahead4", "oNames", "oChords", "oMute", "sync"]), v: Math.round(r() * 60 - 30) * 10 })],
+  ["read-opt", 5, (L) => L.READ, (r) => ({ op: "read-opt", o: pick(r, ["ahead1", "ahead2", "ahead4", "oNames", "oChords", "oMute", "oCount", "sync"]), v: Math.round(r() * 60 - 30) * 10 })],
   ["read-member", 3, (L) => L.READ, (r) => ({ op: "member", m: Math.floor(r() * 4) })],
   ["key", 4, () => true, (r) => ({ op: "key", code: pick(r, ["Space", "Digit1", "Digit2", "Digit3", "Digit4", "Escape", "KeyR"]) })],
   ["wait", 6, () => true, (r) => ({ op: "wait", ms: 150 + Math.floor(r() * (r() < 0.8 ? 1500 : 6000)) })],
   ["rotate", 2, (L) => !!L.rotate, (r) => ({ op: "rotate", to: pick(r, ["landscape", "portrait", "desktop"]) })],
+  ["listen", 2, () => true, () => ({ op: "listen" })],
+  ["midi", 6, (L) => !!L.judge, (r) => ({ op: "midi", n: 36 + Math.floor(r() * 48) })],
   ["prop", 7, () => true, (r) => ({ op: "prop", p: pick(r, ["roll-twice", "mute-cuts", "stop-stops", "plays-on", "read-keeps", "genre-clean", "staff-shows", "song-keeps", "link-keeps"]), x: r(), y: r() })],
 ];
 
@@ -157,6 +159,8 @@ async function apply(L, o) {
       return null;
     }
     case "key": key(o.code); return null;
+    case "listen": L.listenForTest(); return null;
+    case "midi": L.hear(o.n, performance.now()); return null;
     case "wait": await sleep(o.ms); return null;
     case "rotate": if (L.rotate) await L.rotate(o.to); return null;
     case "prop": return prop(L, o);
@@ -169,6 +173,8 @@ async function settleGenre(L) { for (let i = 0; i < 40 && !L.SCORE; i++) await s
 function chairCounts(L) {                      // events the engine is handed, per desk chair
   const P = L.plan, TL = P.timeline(), out = {};
   for (let n = 0; n < TL.length; n++) {
+    // (the count-in's clicks come and go with the mute: they are not a chair's music)
+    if ((L.DOC.form.sections[TL[n].si] || {}).id === "count") continue;
     const bp = P.barPlan(n); if (!bp) continue;
     const A = P.addrOf(TL[n].si);
     for (const e of bp.ev.pitched) { const k = A[e.voice] || e.voice; out[k] = (out[k] || 0) + 1; }
@@ -248,7 +254,10 @@ async function prop(L, o) {
       let b1 = b0;
       for (let t = 0; t < 4000 && L.playing && b1 === b0; t += 400) { await sleep(400); b1 = L.songBeatNow(); }
       if (!L.playing) return null;
-      if (b1 < b0 && L.loop == null) return `plays-on: the beat went backwards (${b0.toFixed(2)} -> ${b1.toFixed(2)})`;
+      // (the song coming round to its top — through a count-in, or not — is not backwards)
+      const bars = L.SCORE ? L.SCORE.bars : [], end = bars.length ? bars[bars.length - 1].beat + bars[bars.length - 1].beats : 0;
+      const cameRound = b0 >= end - 8 && b1 < 8;
+      if (b1 < b0 && L.loop == null && !cameRound) return `plays-on: the beat went backwards (${b0.toFixed(2)} -> ${b1.toFixed(2)})`;
       if (b1 === b0) return `plays-on: the beat did not move in 4 s (${b0.toFixed(2)})`;
       return null;
     }
@@ -342,7 +351,7 @@ export function describe(x) {
 }
 
 /* ---------- a fresh record ---------- */
-const PREFS0 = { ahead: 2, names: false, chords: true, sync: 0, mute: true };
+const PREFS0 = { ahead: 2, names: false, chords: true, sync: 0, mute: true, countIn: true };
 export async function reset(L, seed) {
   if (L.playing) click($("play"));
   if (L.READ) L.exitRead();

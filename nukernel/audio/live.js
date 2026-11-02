@@ -726,7 +726,12 @@ async function prerender() {
   } catch (e) { /* a failed idle warm is silence, not an error — the gesture keeps its own bounded open */ }
 }
 
-export async function startAt(boxIndex) {
+/* `bar` (present-only): start on that timeline bar rather than the box's first
+   (2026-11-01, the lilguys page). A reader who slows the tempo mid-song wants
+   to go on from the bar they are in, at the new speed, now — not hear the old
+   tempo for another runway — and a restart from the box's top would throw
+   them back to the start of the chorus. Absent, every start is the one it was. */
+export async function startAt(boxIndex, bar = null) {
   gestureUnlock();
   for (const fn of gestureFns) { try { fn(); } catch (e) {} }
   if (playing) { setPendingStart(boxIndex); announceJump(boxIndex); return; }
@@ -753,7 +758,7 @@ export async function startAt(boxIndex) {
   // DIFFERENT start bar is honestly wrong audio and is discarded instead.
   if (pre) {
     compile();   // idempotent on an unchanged document; keeps barCount/firstBarOfBox honest
-    const at0 = firstBarOfBox(boxIndex);
+    const at0 = bar != null ? bar : firstBarOfBox(boxIndex);
     const wantBase = at0 < 0 ? 0 : at0;
     if (pre.handle && wantBase === pre.barBase) {
       const h = pre.handle, statusOn = pre.statusOn;
@@ -791,7 +796,7 @@ export async function startAt(boxIndex) {
     emit("status", { text: "nothing to play — click a genre to fill a box first", sticky: true });
     return;
   }
-  const at = firstBarOfBox(boxIndex);
+  const at = bar != null ? bar : firstBarOfBox(boxIndex);
   barBase = at < 0 ? 0 : at;
   playing = true; playingSec = -1; lastBar = -1;
   emit("transport:state", { playing });

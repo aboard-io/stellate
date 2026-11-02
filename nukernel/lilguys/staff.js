@@ -45,6 +45,29 @@ export class Staff {
     this.notes = []; this.bars = []; this.data = null;
     this.ready = false; this.token = 0; this.lit = []; this.size = "";
     this.engraves = 0;
+    this.marks = new Map();        // step -> "hit" | "miss": what you played, kept across engravings
+  }
+
+  // what you played, on the notes themselves: green for a note you hit,
+  // orange for one that went by unplayed (red stays "sounding")
+  mark(beat, kind) {
+    const step = Math.round(beat * 4);
+    this.marks.set(step, kind);
+    if (this.ready) this.paintMark(step, kind);
+  }
+  clearMarks() {
+    this.marks.clear();
+    if (this.svg) this.svg.querySelectorAll(".lil-hit, .lil-miss").forEach((e) => e.classList.remove("lil-hit", "lil-miss"));
+  }
+  paintMark(step, kind) {
+    this.voices.forEach((v, vi) => {
+      const n = step < v.byStep.length ? v.byStep[step] : -1;
+      if (n < 0 || v.notes[n].at !== step) return;
+      for (const g of v.byNote[n] || []) {
+        const el = this.els[vi][g];
+        if (el) { el.classList.remove("lil-hit", "lil-miss"); el.classList.add(kind === "hit" ? "lil-hit" : "lil-miss"); }
+      }
+    });
   }
 
   options(o) {
@@ -182,6 +205,7 @@ export class Staff {
       svg.querySelectorAll(".abcjs-staff-extra, .abcjs-bracket").forEach((e) => { e.style.visibility = "hidden"; });
       this.lit = [];
       this.ready = true;
+      for (const [step, kind] of this.marks) this.paintMark(step, kind);
     }).catch((e) => console.warn("lilguys staff: engraving failed", e));
   }
 
@@ -243,7 +267,7 @@ export class Staff {
     if (size !== this.size && r.width > 0) {   // turned round, or the room changed: engrave for the new room
       this.size = size; clearTimeout(this.re); this.re = setTimeout(() => this.engrave(), 120);
     }
-    const step = Math.max(0, now) * 4;
+    const step = now * 4;                     // (before the song — a count-in — is to the left of bar 1)
     // "NOW" IS NEVER UNDER THE PINNED CLEF: the red note has to be seen
     // and a held note's head stays in sight while it rings: clear of the margin by a fifth of what is left
     const headX = Math.max(r.width * this.opts.head, (this.gutterW || 0) + 0.2 * (r.width - (this.gutterW || 0)));
@@ -254,7 +278,7 @@ export class Staff {
     for (const e of this.lit) e.style.fill = "";
     this.lit = [];
     if (now < 0) return;
-    const s = Math.floor(step);
+    const s = Math.floor(Math.max(0, step));
     this.voices.forEach((v, vi) => {
       const n = s < v.byStep.length ? v.byStep[s] : -1;
       if (n < 0) return;

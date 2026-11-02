@@ -51,6 +51,7 @@
   <button id="rSlower">slower</button>
   <output id="rBpm" aria-live="polite"></output>
   <button id="rFaster">faster</button>
+  <output id="rTally" class="tally"></output>
   <button id="rPart" class="part" title="whose part you read">lead</button>
   <button id="rNew" title="the same genre, music you have not seen">new piece</button>
   <button id="rOpts" aria-controls="ropts">options</button>
@@ -65,6 +66,8 @@
   <label><input type="checkbox" id="oNames"> note names</label>
   <label><input type="checkbox" id="oChords"> chord symbols</label>
   <label><input type="checkbox" id="oMute"> mute the part (you play it)</label>
+  <button class="listen" id="oListen">listen to my keyboard</button>
+  <label><input type="checkbox" id="oCount"> count me in (a bar of clicks before the song)</label>
   <label class="sync">red vs sound <input type="range" id="oSync" min="-300" max="300" step="10"> <output id="oSyncOut">0 ms</output></label>
   <p class="small">If a note turns red before you hear it, slide right; after, slide left.
     Bluetooth headphones usually want about +150 ms.</p>
@@ -95,6 +98,8 @@
   <section id="sheet" hidden aria-label="play along">
     <div class="sheet-head">
       <h2 id="sheetTitle">Play along</h2>
+      <button class="listen" id="listen" title="play along on a MIDI keyboard and see how it went">listen to my keyboard</button>
+      <span class="tally" id="tally" aria-live="polite"></span>
     </div>
     <div id="staff" role="img" aria-label="the part, engraved, moving with the music"></div>
     <p class="legend" id="legend"></p>

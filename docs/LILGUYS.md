@@ -136,6 +136,61 @@ options), and the staff takes the rest, scaled to the room. The line sits at
   (`apple-mobile-web-app-capable`), which in landscape take a third of the
   height.
 
+## Changes land now, a count-in, and listening to what you play
+
+**A tempo or a mute, while playing, restarts the band from the bar that is
+sounding.** `audio/live.js` `startAt` now takes a `bar`, present-only; every
+existing caller is unchanged. Measured: from 99 to 60 BPM, the band is back
+in 1.4 s (a 0.35 s debounce for quick taps, then about a second of silence),
+from the bar that was playing, at 60. Before, the old tempo ran on for the
+engine's runway, several seconds. Motif edits keep the runway, because a
+restart per tapped note would be a stutter.
+
+**The count-in** is `kernel.js`'s own: `intro: "count"`, four rim clicks, the
+last accented (three in 3/4), played by the engine on its own clock.
+- It is a one-bar section at the **end** of the song, and play starts on it,
+  then wraps into bar 1.
+- At the front it moved every bar one along, and the engine's dice are keyed
+  on bar position. Measured, 1–3 drum bars per song came out different, so you
+  would have been practising another song. At the end, every bar's events are
+  identical across six genres.
+- When the song comes round, you are counted back in.
+- Every pitched voice sits it out, so nobody leads in to it.
+- It is there when a part is yours (muted) and "count me in" is on (the
+  default), and it is added or removed only while stopped.
+- A section loop gets no count.
+- During it the staff shows bar 1 waiting just past "now", with "count-in: 1 2
+  3 4".
+
+**Listening** (`lilguys/listen.js`): "listen to my keyboard" takes a MIDI
+keyboard's notes (Web MIDI, Chrome or Edge; iOS Safari has none, and the page
+says so) and judges each against the part, on the eye's own latency-corrected
+clock.
+- A hit is the right pitch class within ±120 ms, octave-free because the
+  staff may be written an octave from where you play. For drums, any key on
+  time is a stroke.
+- A note that passes unplayed is a miss. A note that matches nothing is an
+  extra.
+- Hits turn green and misses orange (red stays "sounding"). A chord is green
+  only if every tone was hit.
+- The tally reads "48 right · 12 missed · 0 extra (80%)", or "80% · 48/60" in
+  the rail.
+- The judge rewinds when the clock goes back (a loop, a restart) and is made
+  again with the part.
+
+Measured with a simulated player on jazz piano:
+- A perfect player scores 71/71.
+- A player a semitone off scores 14 right. Jazz voicings hold adjacent tones
+  (D and C♯ in Dmaj7), so a wrong note can be another chord tone.
+- A player 300 ms late misses most notes.
+
+`Judge` is pure and imports in node (`nukernel/lilguys/package.json` is the
+module marker, as in `ui/`).
+
+The fuzzer also turns listening on and plays random MIDI notes. The page's
+`check()` holds the tally to the part (hits + misses + open = notes) and the
+count-in to its rule (at the end, only when wanted, never mid-song).
+
 ## The fuzzer
 
 `nukernel/lilguys/fuzz.js` is the firmware's fuzzer (`web/emu/stellate_fuzz.mjs`
@@ -199,7 +254,9 @@ shared engine, open:
   start/stop churn.
 - The clock can hold at a bar's downbeat. The engine announces bars ahead of
   the sound; `plays-on` now waits that out, up to 4 s.
-- The clock has gone backwards twice with no loop or seek: classical 28 →
+- The clock has gone backwards three times with no loop or seek (the third
+  on the emulated iPhone, after "slower" was pressed before the first
+  sound): classical 28 →
   18.69 mid-song, and opera seria 72 → 0.44 just after play. The first reading
   was an exact downbeat both times. It never reproduces in a fresh page, even
   replaying the same steps, so it depends on engines started and stopped
@@ -223,6 +280,7 @@ muted".
 | `nukernel/lilguys/staff.js` | the part folded for `toScore`, engraved by abcjs, moved at a steady speed per section, red where it sounds |
 | `nukernel/ui/paper.js` | the band score's engraving helpers, moved out of `ui/eight.js` and shared |
 | `nukernel/lilguys/fuzz.js` | the fuzzer: walks, invariants' caller, properties, shrinking, the in-page report |
+| `nukernel/lilguys/listen.js` | the judge (pure) and the Web MIDI listener |
 | `test/lilguys-fuzz.browser.js` | the fuzzer headless on a laptop and a turning iPhone; the `lilguys-fuzz` gate |
 | `nukernel/audio/live.js` `songBeatNow()` | the one addition to shared code: a read-only, where-is-the-ear-in-beats reader for the scroll |
 

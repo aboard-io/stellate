@@ -23,6 +23,7 @@ import { scoreOf } from "../export/score.js";
 import { SYNTH_NAMES } from "../audio/to-engine.js";
 import { drawSprite, quaver, zee, COL, BG, INK, MID, LOOK, BASS, mix } from "./sprites.js";
 import { Roll } from "./roll.js";
+import { Judge, Listener } from "./listen.js";
 import { Staff } from "./staff.js";
 import { chordName } from "../ui/paper.js";
 
@@ -116,7 +117,9 @@ function rescore() {
     // the intro and the riff in the verse, and both guesses gave the lead's
     // notes to the keys (the fuzzer's mute-cuts found it).
     const chanVoice = new Map(NuDeskDoc.channelVoicesOf(DOC, GENRES).map((c) => [c.key, c.voice]));
+    const cs = hasCount() ? countSi() : -1;
     for (const box of sc.boxes) {
+      if (box.si === cs) continue;
       const A = plan.addrOf(box.si) || {};
       for (const lane of box.lanes) {
         let m = -1;
@@ -132,7 +135,7 @@ function rescore() {
     }
     parts.forEach((p) => p.sort((a, b) => a.beat - b.beat));
     // the bars: each timeline bar's downbeat, its section's name on the first
-    const bars = TL.map((b, i) => ({ n: i + 1, beat: b.beat0, beats: b.barSteps / 4,
+    const bars = TL.filter((b) => b.si !== cs).map((b, i) => ({ n: i + 1, beat: b.beat0, beats: b.barSteps / 4,
       si: b.si, label: b.first ? roleWord(b.si) : "" }));
     chordsOnto(bars);
     SCORE = { boxes: sc.boxes, parts, bars };
@@ -174,6 +177,7 @@ function chordsOnto(bars) {
 const roleWord = (si) => {
   const s = DOC.form.sections[si];
   if (!s) return "";
+  if (s.id === "count") return "count-in";
   const same = DOC.form.sections.slice(0, si + 1).filter((x) => x.role === s.role).length;
   const many = DOC.form.sections.filter((x) => x.role === s.role).length;
   return (s.secname || s.role || "section") + (many > 1 ? " " + same : "");
@@ -186,7 +190,7 @@ const roleWord = (si) => {
    is. For reading along that is the difference between a red note
    and a note already gone, so the eye's clock is the engine's, less the
    latency the context reports, less the reader's own nudge (SYNC). */
-const prefs = Object.assign({ ahead: 2, names: false, chords: true, sync: 0, mute: true },
+const prefs = Object.assign({ ahead: 2, names: false, chords: true, sync: 0, mute: true, countIn: true },
   (() => { try { return JSON.parse(localStorage.getItem("lilguys.read.v1")) || {}; } catch (e) { return {}; } })());
 const savePrefs = () => { try { localStorage.setItem("lilguys.read.v1", JSON.stringify(prefs)); } catch (e) {} };
 function latencySec() {
@@ -196,10 +200,17 @@ function latencySec() {
     return Number.isFinite(l) ? Math.min(0.5, l) : 0;
   } catch (e) { return 0; }
 }
+let COUNTING = null;     // during the count-in: its beat, 0.. (null otherwise)
 function beatNow() {
   const b = songBeatNow();
+  COUNTING = null;
   if (b < 0) return -1;
-  return Math.max(0, b - (latencySec() + prefs.sync / 1000) * bpm / 60);
+  const v = Math.max(0, b - (latencySec() + prefs.sync / 1000) * bpm / 60);
+  const c = countSpan();
+  // (decided on the engine's own clock: the latency taken off would put the
+  // count's first instant a hair into the song's last bar, for one frame)
+  if (c && b >= c.beat0 - 1e-6) { COUNTING = Math.max(0, Math.min(c.beats, v - c.beat0)); return -1; }   // not the song yet
+  return v;
 }
 
 /* ---------- the members: who they are, what they look like ---------- */
@@ -280,6 +291,7 @@ function wordOf(m, si) {
   const v = members[m];
   if (!v) return "out";
   const sid = secId(si), dev = v.development || {};
+  if (sid === COUNT_ID) return m === 0 ? "counts in" : "ready";
   const w = dev[sid];
   if (m === 0) return w || "groove";
   if (m === 1) return w || (v.cast && v.cast.style) || "plays";
@@ -330,6 +342,11 @@ function frame(t) {
     const dots = $("banner").querySelector(".dots");
     if (dots.childElementCount !== beats) dots.innerHTML = "<span></span>".repeat(beats);
     [...dots.children].forEach((d, k) => d.classList.toggle("on", k === cur));
+  } else if (COUNTING != null) {
+    $("banner").querySelector(".where").textContent = "count-in";
+    const c = countSpan(), beats = c ? Math.round(c.beats) : 4, dots = $("banner").querySelector(".dots");
+    if (dots.childElementCount !== beats) dots.innerHTML = "<span></span>".repeat(beats);
+    [...dots.children].forEach((d, k) => d.classList.toggle("on", k === Math.floor(COUNTING)));
   } else {
     $("banner").querySelector(".where").textContent = playing ? "starting…" : "press play";
     $("banner").querySelector(".dots").innerHTML = "";
@@ -377,8 +394,10 @@ function frame(t) {
   if (SEL >= 0 && roll && now >= 0 && bar) rollHead(now, bar, si);
   else if (roll) roll.setPlayhead(-1);
   if (!$("sheet").hidden && staff) {
-    const w = playing && now < 0 ? "the band is getting ready…" : "";
+    const w = !playing || now >= 0 ? "" : COUNTING != null ? `count-in: ${Math.floor(COUNTING) + 1}` : "the band is getting ready…";
     if (w !== staff.opts.waiting) staff.options({ waiting: w });
+    judgeFrame(now);
+    if (COUNTING != null && now < 0) { const c = countSpan(); staff.draw(-(c ? c.beats - COUNTING : 0)); }
     staff.draw(now >= 0 ? now : staffRest);
   }
   requestAnimationFrame(frame);
@@ -391,6 +410,7 @@ function cellsOf(m) {
   if (!v) return [];
   const used = new Map();     // cell name -> [section indexes]
   DOC.form.sections.forEach((s, i) => {
+    if (s.id === COUNT_ID) return;
     const name = NuDocument.materialAt(v, s.id);
     if (!name || !DOC.material.cells[name]) return;
     if (!used.has(name)) used.set(name, []);
@@ -611,12 +631,14 @@ function setMine(m, yes, quiet) {
     if (!v.desk) delete v.desk;
   }
   MINE = yes ? m : -1;
+  syncCount();
   push(false);
   persist();
   refreshCards();
   showSheet();
   if (quiet) return;
-  if (yes) say(`${whoOf(m).toLowerCase()} is muted — the part is yours${playing ? " (from a few seconds on)" : ""}`);
+  if (playing) restartHere();
+  if (yes) say(`${whoOf(m).toLowerCase()} is muted — the part is yours`);
   else say("everyone plays");
 }
 
@@ -651,6 +673,7 @@ function paintStaffData() {
   staff.set({ notes, bars: SCORE.bars, key: A0.key | 0, mode: MODES[A0.mode] || MODES.aeolian,
               meter: DOC.time.meter || null, clef });
   if (READ) paintRail();
+  if (LISTEN) makeJudge();
   $("legend").textContent = m === 0
     ? "Drums: the kick in the bottom space, the snare in the third, cymbals as crosses above; the red notes are sounding."
     : `Key of ${degName(0)} ${A0.mode || ""} · ${Math.round(bpm)} BPM · the red note is the one sounding.`;
@@ -677,8 +700,10 @@ async function holdScreen(on) {   // keep the phone awake while you read (Screen
 }
 function applyReadPart() {
   // muting is the reader's choice: play it yourself, or hear it while you learn it
+  const was = MINE;
   if (prefs.mute) setMine(PART, true, true);
   else if (MINE >= 0) setMine(MINE, false, true);
+  if (playing && MINE !== was) restartHere();
   showSheet();
 }
 function enterRead(part) {
@@ -746,6 +771,7 @@ function wireRead() {
   const ro = $("ropts");
   ro.querySelectorAll("input[name=ahead]").forEach((r) => { r.checked = +r.value === prefs.ahead; });
   $("oNames").checked = prefs.names; $("oChords").checked = prefs.chords; $("oMute").checked = prefs.mute;
+  $("oCount").checked = prefs.countIn;
   $("oSync").value = prefs.sync; $("oSyncOut").textContent = `${prefs.sync} ms`;
   ro.addEventListener("change", (e) => {
     const t = e.target;
@@ -753,6 +779,7 @@ function wireRead() {
     if (t.id === "oNames") prefs.names = t.checked;
     if (t.id === "oChords") prefs.chords = t.checked;
     if (t.id === "oMute") { prefs.mute = t.checked; if (READ) applyReadPart(); }
+    if (t.id === "oCount") { prefs.countIn = t.checked; if (syncCount()) push(false); }
     savePrefs();
     staff.options({ ahead: READ ? prefs.ahead : null, names: prefs.names, chords: prefs.chords });
   });
@@ -769,9 +796,82 @@ function resetPrefs(p) {
   Object.assign(prefs, p);
   document.querySelectorAll("#ropts input[name=ahead]").forEach((r) => { r.checked = +r.value === prefs.ahead; });
   $("oNames").checked = prefs.names; $("oChords").checked = prefs.chords; $("oMute").checked = prefs.mute;
+  $("oCount").checked = prefs.countIn;
   $("oSync").value = prefs.sync; $("oSyncOut").textContent = `${prefs.sync} ms`;
   $("ropts").hidden = true; turnDismissed = false;
   staff.options({ ahead: READ ? prefs.ahead : null, names: prefs.names, chords: prefs.chords });
+}
+
+/* ---------- LISTENING: what you play, against the part (lilguys/listen.js) ----
+   A MIDI keyboard's notes are judged against the part on the staff, on the
+   eye's own clock (beatNow: latency and the reader's nudge already taken
+   off), so you are judged against what you hear. A hit turns its note green,
+   a note gone by unplayed turns orange, and a tally keeps count. The judge is
+   made again whenever the part is (a new part, a new piece, an edit) and
+   rewinds when the clock does (a loop coming round, a restart from a bar). */
+let LISTEN = false, judge = null, listener = null, judgedTo = -1;
+const winBeats = () => Math.max(0.06, 0.12 * bpm / 60);     // ±120 ms, in beats
+function makeJudge() {
+  judge = null; judgedTo = -1;
+  if (staff) staff.clearMarks();
+  const m = shownPart();
+  if (LISTEN && SCORE && m >= 0 && members[m]) {
+    const seen = new Set();
+    const notes = SCORE.parts[m].filter((n) => { const k = n.midi + "@" + Math.round(n.beat * 4); if (seen.has(k)) return false; seen.add(k); return true; });
+    judge = new Judge(notes, { drums: m === 0 });
+  }
+  paintTally();
+}
+function paintTally() {
+  const t = !LISTEN ? "" : !judge ? "listening…"
+    : judge.total + judge.extra === 0 ? "listening: play along"
+    : `${judge.hits} right · ${judge.misses} missed · ${judge.extra} extra` +
+      (judge.total ? ` (${Math.round(100 * judge.hits / judge.total)}%)` : "");
+  $("tally").textContent = t;
+  // the rail is 140 px on a phone held sideways: the short form, or it pushes the buttons off the screen
+  $("rTally").textContent = !LISTEN ? "" : !judge || judge.total + judge.extra === 0 ? "listening"
+    : `${judge.total ? Math.round(100 * judge.hits / judge.total) + "% · " : ""}${judge.hits}/${judge.total}` + (judge.extra ? ` +${judge.extra}` : "");
+  $("rTally").title = t;
+}
+function judgeFrame(now) {
+  if (!judge || now < 0 || !playing) return;
+  if (judgedTo >= 0 && now < judgedTo - 0.5) {          // the clock went back: a loop, a restart
+    judge.rewind(now);
+    for (const [step] of [...staff.marks]) if (step / 4 >= now - 1e-6) staff.marks.delete(step);
+    staff.clearMarks(); for (const n of judge.notes) if (n.state) staff.mark(n.beat, n.state === 1 ? "hit" : "miss");
+  }
+  judgedTo = now;
+  const missed = judge.sweep(now, winBeats());
+  if (missed.length) { for (const n of missed) staff.mark(n.beat, "miss"); paintTally(); }
+}
+// a note you played: `ts` is when it happened (performance.now's clock)
+function hear(midi, ts) {
+  if (!judge || !playing) return null;
+  const now = beatNow();
+  if (now < 0) return null;
+  const beat = now - Math.max(0, performance.now() - ts) / 1000 * bpm / 60;
+  const n = judge.hear(midi, beat, winBeats());
+  if (n) staff.mark(n.beat, "hit");
+  paintTally();
+  return n;
+}
+async function toggleListen() {
+  const btns = [$("listen"), $("oListen")];
+  if (LISTEN) {
+    LISTEN = false; if (listener) listener.disable();
+    btns.forEach((b) => { b.textContent = "listen to my keyboard"; b.setAttribute("aria-pressed", "false"); });
+    makeJudge(); say("stopped listening");
+    return;
+  }
+  if (!Listener.supported) { say("this browser has no MIDI (Safari on iPhone and iPad doesn't): Chrome or Edge on a computer can listen to your keyboard"); return; }
+  try {
+    listener = listener || new Listener((midi, ts) => hear(midi, ts));
+    const ins = await listener.enable();
+    LISTEN = true;
+    btns.forEach((b) => { b.textContent = "stop listening"; b.setAttribute("aria-pressed", "true"); });
+    makeJudge();
+    say(ins.length ? `listening to ${ins.join(", ")}: play along` : "listening, but no MIDI keyboard is plugged in yet");
+  } catch (e) { say("could not listen to MIDI: " + (e && e.message || e)); }
 }
 
 /* ---------- the invariants, from inside (the firmware's web_st_check) ----------
@@ -836,6 +936,14 @@ function check() {
   if (READ && $("rail").hidden) return "reading without the rail";
   if ($("play").textContent !== (playing ? "stop" : "play")) return `the play button says ${$("play").textContent} while ${playing ? "playing" : "stopped"}`;
   if (!playing && songBeatNow() !== -1) return "stopped, and the clock still runs";
+  if (!playing && hasCount() !== (prefs.countIn && MINE >= 0 && loopOnly == null))
+    return `stopped with ${hasCount() ? "a" : "no"} count-in (count ${prefs.countIn}, mine ${MINE}, loop ${loopOnly})`;
+  if (DOC.form.sections.slice(0, -1).some((sc) => sc.id === COUNT_ID)) return "a count-in somewhere but the end";
+  if (judge) {
+    const open = judge.notes.filter((n) => n.state === 0).length;
+    if (judge.hits < 0 || judge.misses < 0 || judge.extra < 0) return "the tally went below zero";
+    if (judge.hits + judge.misses + open !== judge.notes.length) return `the tally counts ${judge.hits}+${judge.misses}+${open} of ${judge.notes.length} notes`;
+  }
   return null;
 }
 const cmp3 = (a, b) => a[0] - b[0] || (typeof a[2] === "string" ? String(a[2]).localeCompare(b[2]) : a[2] - b[2]) || a[1] - b[1];
@@ -1030,7 +1138,69 @@ function setTempo(v, quiet) {
   if (quiet) return;
   push(false);
   persist();
-  if (playing) say(`tempo ${v} — the band takes it in a few seconds`);
+  if (playing) { say(`tempo ${v} — from this bar`); restartHere(); }
+}
+
+/* THE COUNT-IN. kernel.js has one, as a section intro: `intro: "count"` is
+   four rim clicks and nothing else, the last accented (three in three-four).
+   So a count is a one-bar section played by the engine on the engine's own
+   clock: a click scheduled beside it would land wherever this device's start
+   latency put it.
+
+   IT GOES AT THE END, AND PLAY STARTS ON IT. Put at the front it moved every
+   bar of the song one along, and the engine's dice are keyed on where they
+   are asked (kernel.js: "a pure hash of WHERE it was asked") — measured, one
+   to three drum bars of every song came out different, so you would have been
+   practising another song. At the end it moves nothing (measured over six
+   genres: every bar's events identical), the walk wraps from it into bar 1 the
+   way it always wraps, and when the song comes round you are counted back in.
+   Every pitched voice is `out` for it, so nobody leads into a count.
+
+   It is there when you are playing a part yourself (somebody muted) and asked
+   to be counted in; put in or taken out only while the band is stopped; and a
+   section loop counts nothing. */
+const COUNT_ID = "count";
+const countSi = () => (DOC ? DOC.form.sections.length - 1 : -1);
+const hasCount = () => !!DOC && (DOC.form.sections[DOC.form.sections.length - 1] || {}).id === COUNT_ID;
+function syncCount() {
+  if (!DOC || playing) return false;
+  const want = prefs.countIn && MINE >= 0 && loopOnly == null;
+  if (want === hasCount()) return false;
+  if (want) {
+    DOC.form.sections.push({ id: COUNT_ID, role: "intro", bars: 1, intro: "count", secname: "count-in" });
+    for (const v of DOC.voices) if (v.kind !== "drums") (v.development || (v.development = {}))[COUNT_ID] = v.kind === "bass" ? "nobass" : "out";
+  } else {
+    DOC.form.sections.pop();
+    for (const v of DOC.voices) if (v.development) delete v.development[COUNT_ID];
+  }
+  return true;
+}
+// where the count is, on the engine's clock: its first beat, and how many it has
+function countSpan() {
+  if (!hasCount()) return null;
+  const TL = plan.timeline(), cs = countSi();
+  const bar = TL.find((b) => b.si === cs);
+  return bar && bar.beat0 != null ? { beat0: bar.beat0, beats: bar.barSteps / 4 } : null;
+}
+
+/* NOW, NOT A RUNWAY LATER. The engine renders seconds ahead of the ear, so a
+   tempo or a mute fed through it is heard seconds late — long enough that a
+   reader who slowed down is still sight-reading at the old speed. A change to
+   either, while playing, starts the band again from the bar that is sounding
+   (live.js startAt's `bar`): a gap of a fraction of a second, then the new
+   tempo or the new mute. Debounced, so three taps on "faster" are one restart.
+   Motif edits keep the runway: a restart per tapped note would be a stutter. */
+let restartTimer = 0;
+function restartHere() {
+  clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    if (!playing || !SCORE) return;
+    const now = beatNow();
+    const bi = now >= 0 ? sectionAtBeat(now) : -1;
+    if (bi < 0) return;
+    stop();
+    startAt(SCORE.bars[bi].si, bi);
+  }, 350);
 }
 
 async function loadGenre(gk, seed, edits = null) {
@@ -1086,15 +1256,17 @@ async function boot() {
   $("play").disabled = false;
   $("play").addEventListener("click", () => {
     if (playing) { stop(); return; }
-    say("starting the band… (the engine fills its buffer first)");
-    startAt(loopOnly != null ? loopOnly : 0);
+    if (syncCount()) push(false);
+    say(hasCount() ? "counting you in…" : "starting the band… (the engine fills its buffer first)");
+    startAt(loopOnly != null ? loopOnly : hasCount() ? countSi() : 0);
   });
   wireRead();
   on("transport:state", ({ playing: p }) => {
+    if (p && judge) { judgedTo = -1; }
     if (READ) { paintRail(); holdScreen(true); }
     $("play").textContent = p ? "stop" : "play";
     $("play").setAttribute("aria-pressed", String(!!p));
-    if (!p) { staffRest = -0.001; lastSec = -2; }
+    if (!p) { staffRest = -0.001; lastSec = -2; if (syncCount()) push(false); }
   });
   on("status", (d) => { if (d && d.text && /filling|starting|engine|dropout/i.test(d.text)) say(d.text); });
   on("pos", () => { if (/starting|filling/.test($("status").textContent)) say(`${titleOf(GENRE)} — playing`); });
@@ -1113,14 +1285,18 @@ async function boot() {
   $("tempo").addEventListener("change", (e) => setTempo(+e.target.value));
   $("tempoBack").addEventListener("click", () => setTempo(GENRE_BPM));
   $("share").addEventListener("click", share);
+  $("listen").addEventListener("click", toggleListen);
+  $("oListen").addEventListener("click", toggleListen);
+  if (!Listener.supported) [$("listen"), $("oListen")].forEach((b) => { b.title = "no MIDI in this browser: Chrome or Edge on a computer can listen"; });
   $("rShare").addEventListener("click", share);
   $("closeDrawer").addEventListener("click", () => select(-1));
   $("mine").addEventListener("change", (e) => { if (SEL >= 0) setMine(SEL, e.target.checked); });
   $("loopSec").addEventListener("change", (e) => {
-    const now = playing ? songBeatNow() : -1;
+    const now = playing ? beatNow() : -1;
     const bi = now >= 0 ? sectionAtBeat(now) : -1;
     const si = bi >= 0 ? SCORE.bars[bi].si : 0;
     setLoopOnly(e.target.checked ? si : null);
+    syncCount();
     push(false);
     say(e.target.checked ? `looping ${roleWord(si)}` : "the whole song again");
     if (playing) { stop(); startAt(e.target.checked ? si : si); }
@@ -1148,6 +1324,7 @@ window.__lil = {
   get CELL() { return CELL; }, get playing() { return playing; }, get bpm() { return bpm; },
   get loop() { return loopOnly; }, get anchors() { return ANCHORS; },
   members: () => members, plan, roll: () => roll, staff: () => staff, cellNotes, cellsOf,
-  check, resetPrefs, songState, applyEdits, pack, unpack, linkOf, trimBand, loadGenre, select, setMine, setTempo, enterRead, exitRead, songBeatNow, beatNow, getPosition, prefs,
+  check, push, resetPrefs, hear, get judge() { return judge; },
+  listenForTest: () => { LISTEN = true; makeJudge(); }, songState, applyEdits, pack, unpack, linkOf, trimBand, loadGenre, select, setMine, setTempo, enterRead, exitRead, songBeatNow, beatNow, getPosition, prefs,
 };
 boot().catch((e) => { console.error(e); say("could not start: " + (e && e.message || e)); });
