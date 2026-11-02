@@ -41,7 +41,7 @@ export class Staff {
     this.gutter = document.createElement("div"); this.gutter.className = "gutter";
     this.wait = document.createElement("p"); this.wait.className = "wait"; this.wait.hidden = true;
     host.replaceChildren(this.paper, this.gutter, this.wait);
-    this.opts = { head: 0.28, ahead: null, names: false, chords: true, waiting: "" };
+    this.opts = { head: 0.4, ahead: null, names: false, chords: true, waiting: "" };
     this.notes = []; this.bars = []; this.data = null;
     this.ready = false; this.token = 0; this.lit = []; this.size = "";
     this.engraves = 0;
@@ -175,7 +175,7 @@ export class Staff {
       };
       let s = fit(svg);
       if (this.opts.ahead && r.width > 0) {
-        const gw = (geom.x0 - 2) * s, head = Math.max(r.width * this.opts.head, gw + 0.2 * (r.width - gw));
+        const gw = (geom.x0 - 2) * s, head = Math.max(r.width * this.opts.head, gw + 0.3 * (r.width - gw));
         const want = (r.width - head - 8) / this.opts.ahead / s;   // svg units a bar
         // never tighter than the notes can stand: past that, fewer bars show than asked
         const per = Math.max(want, built.dense * 14, 60);
@@ -269,8 +269,8 @@ export class Staff {
     }
     const step = now * 4;                     // (before the song — a count-in — is to the left of bar 1)
     // "NOW" IS NEVER UNDER THE PINNED CLEF: the red note has to be seen
-    // and a held note's head stays in sight while it rings: clear of the margin by a fifth of what is left
-    const headX = Math.max(r.width * this.opts.head, (this.gutterW || 0) + 0.2 * (r.width - (this.gutterW || 0)));
+    // and a held note's head stays in sight while it rings: clear of the margin by three tenths of what is left, and near the middle (Paul, 2026-11-02: "it keeps hiding behind the clef")
+    const headX = Math.max(r.width * this.opts.head, (this.gutterW || 0) + 0.3 * (r.width - (this.gutterW || 0)));
     this.headX = headX;
     const x = this.paperAt(step) * this.s;
     this.paper.style.transform = `translate(${(headX - x).toFixed(1)}px, ${this.top.toFixed(1)}px) scale(${this.s})`;

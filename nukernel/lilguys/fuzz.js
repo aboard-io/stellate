@@ -58,8 +58,8 @@ function pointer(type, target, x, y, shift) {
 // a point on the roll's grid: step s, row index ri (the roll scrolls; its own
 // arithmetic is off the grid's rectangle, so the point needs no scrolling to)
 function rollPoint(L, s, ri) {
-  const g = L.roll().grid.getBoundingClientRect();
-  return { x: g.left + 46 + (s + 0.5) * 34, y: g.top + (ri + 0.5) * 18 };
+  const R = L.roll(), g = R.grid.getBoundingClientRect();
+  return { x: g.left + 46 + (s + 0.5) * (R.cellW || 34), y: g.top + (ri + 0.5) * 18 };
 }
 function tapRoll(L, s, ri, shift) {
   const R = L.roll(), p = rollPoint(L, s, ri);
@@ -221,6 +221,18 @@ async function prop(L, o) {
       const all = chairCounts(L);
       L.setMine(m, true, true);
       const cut = chairCounts(L);
+      // A MEMBER THE UNIT GATE CAN CUT is cut there, at once, and the score keeps
+      // its notes (app.js "MUTE AND SOLO, NOW"): every unit it owns shut, every
+      // other open, and the band's events as they were
+      if (L.gateable(m)) {
+        const W = L.wantGates(), mine = L.unitsOf(m);
+        const shut = Object.keys(W).filter((k) => W[k] === 0);
+        L.setMine(m, false, true);
+        if (was >= 0) L.setMine(was, true, true);
+        if (!mine.length || shut.sort().join() !== mine.sort().join()) return `mute-cuts: gating member ${m} shut [${shut}], it owns [${mine}]`;
+        if (!sameCounts(all, cut)) return `mute-cuts: gating member ${m} changed the score`;
+        return null;
+      }
       const gone = Object.keys(all).filter((k) => all[k] && !cut[k]);
       const moved = Object.keys(all).filter((k) => cut[k] && cut[k] !== all[k]);
       L.setMine(m, false, true);
@@ -287,7 +299,8 @@ async function prop(L, o) {
       const st = L.songState();
       const doc = window.NuPrecompose.genreToDocument(st.g, st.s);
       L.trimBand(doc);
-      const e = {}; for (const k of ["t", "c", "m", "p"]) if (st[k] != null) e[k] = st[k];
+      L.twoPhrases(doc);
+      const e = {}; for (const k of ["x", "t", "c", "m", "i", "d", "v", "a", "p"]) if (st[k] != null) e[k] = st[k];
       const p = L.applyEdits(doc, JSON.parse(JSON.stringify(e)));
       const D = L.DOC;
       if (Math.round(doc.time.bpm) !== Math.round(D.time.bpm)) return `song-keeps: tempo ${doc.time.bpm} rebuilt, ${D.time.bpm} playing`;
@@ -295,6 +308,7 @@ async function prop(L, o) {
       for (const v of D.voices) {
         const w = doc.voices.find((x) => x.name === v.name);
         if (!w) return `song-keeps: ${v.name} is missing from the rebuilt band`;
+        if ((v.instrument || "") !== (w.instrument || "")) return `song-keeps: ${v.name} plays ${v.instrument}, rebuilt ${w.instrument}`;
         for (const sc of D.form.sections) {
           const a = window.NuDocument.materialAt(v, sc.id), b = window.NuDocument.materialAt(w, sc.id);
           if (a !== b) return `song-keeps: ${v.name} reads ${a} in ${sc.id}, rebuilt ${b}`;

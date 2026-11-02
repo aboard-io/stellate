@@ -984,6 +984,27 @@
     // the declared chain rebuilds the routing; the OLD chain is torn down on
     // a delay so in-flight note tails drain through it (no click).
     const samplerPlayers = new Map();   // key -> { sig, player, chain|null }
+    // THE UNIT GATE (2026-11-02, the lilguys page: "mute and solo … should be
+    // instant"). Every edit reaches the engine through the walk, a runway ahead
+    // of the ear, so a mute written into the score is heard seconds late. A
+    // sampled unit is played HERE, on main-thread nodes, so it can be cut now:
+    // each unit's player feeds its destinations through one unity gain per
+    // destination (dry, rev, del, pp — the sends too, or a muted voice would
+    // still be heard as its own echo), and gateUnit(key, open) ramps those to 0
+    // or 1 in ~5 ms. Remembered per key, so a player built later starts in the
+    // state it was asked for. Unity and never touched = byte-identical audio;
+    // nothing in the engine calls it — a page that wants instant mutes does.
+    const unitGate = new Map();         // key -> gain, 0 = shut (absent = 1, open)
+    const gateDests = (key, d) => {
+      const out = {}, made = new Map();
+      for (const [k, node] of Object.entries(d)) {
+        if (!node) { out[k] = node; continue; }
+        let g = made.get(node);
+        if (!g) { g = ctx.createGain(); g.gain.value = unitGate.has(key) ? unitGate.get(key) : 1; g.connect(node); made.set(node, g); }
+        out[k] = g;
+      }
+      return { dests: out, gates: [...made.values()] };
+    };
     function teardownSamplerChain(ent) {
       if (!ent) return;
       // F4 (2026-08-27): the player now owns ONE long-lived channel strip per
@@ -999,6 +1020,7 @@
       // `if (ent.chain)` half would leak two nodes per unrouted voice per
       // record change, which is the ring-buffer leak's shape at a smaller size.
       if (ent.meter) { try { ent.meter.an.disconnect(); } catch (e) {} try { ent.meter.g.disconnect(); } catch (e) {} ent.meter = null; }
+      if (ent.gates) { for (const g of ent.gates) { try { g.disconnect(); } catch (e) {} } ent.gates = null; }
       if (!ent.chain) return;
       for (const o of ent.chain.ch.oscs) { try { o.stop(); } catch (e) {} }
       for (const n of ent.chain.ch.nodes) { try { n.disconnect(); } catch (e) {} }
@@ -1086,7 +1108,8 @@
         // shared buses with ONLY its dry re-pointed through its own meter.
         if (!chain) dests = { dry: tapInto(foundDests.dry), rev: foundDests.rev,
                               del: foundDests.del, pp: foundDests.pp };
-        ent = { sig, player: SP.SamplerLive(ctx, dests), chain, meter };
+        const gd = gateDests(key, dests);
+        ent = { sig, player: SP.SamplerLive(ctx, gd.dests), chain, meter, gates: gd.gates };
         samplerPlayers.set(key, ent);
       }
       return ent;
@@ -2529,6 +2552,17 @@
       prepare(targetState) { try { ensureWorker(cur ? (cur.ring ^ 1) : 1); } catch (e) {} },
       // USER MASTER VOLUME — smooth (click-free) ride of the post-analyser gain.
       setMasterVol(v) { try { userGain.gain.setTargetAtTime(Math.max(0, Math.min(4, +v || 0)), ctx.currentTime, 0.02); } catch (e) {} },
+      // THE UNIT GATE (see unitGate above): cut or open one sampled unit now.
+      // Answers whether the key is a sampled unit this engine plays here — a
+      // Faust-modelled unit renders in the worker and has no gate (false).
+      // `open` is true / false, or a gain (0..4) — a page's fader rides the same gate.
+      gateUnit(key, open) {
+        const v = open === true ? 1 : typeof open === "number" && Number.isFinite(open) ? Math.max(0, Math.min(4, open)) : 0;
+        unitGate.set(key, v);
+        const ent = samplerPlayers.get(key);
+        if (ent && ent.gates) for (const g of ent.gates) { try { g.gain.setTargetAtTime(v, ctx.currentTime, 0.005); } catch (e) { g.gain.value = v; } }
+        return !!ent;
+      },
       // VAPOR — now BAKED into the render (rides mobile + desktop, lands over time). Store the
       // amount; the next fed bar carries it into the stream (see postFeed). The live-graph node
       // stays at bypass, so this no longer touches it.
@@ -4118,6 +4152,7 @@
       // element with no WebAudio graph to hang a filter on (the same reason vapor had
       // to be baked into the segments). Declared so callers can set it unconditionally.
       setTop() {},
+      gateUnit() { return false; },   // no main-thread sampled units on this route: nothing to gate
       // DUCK — also a no-op here, and for once that is the right behaviour rather than
       // a limitation: this route plays PRE-RENDERED segments, so a font swap does not
       // reach the audio already in the queue. There is no seam at this end to cover.

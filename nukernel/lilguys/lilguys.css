@@ -79,10 +79,12 @@ header.bar .genre input { width: min(46vw, 260px); }
 .roll-v.bar { background: #5a5a70; width: 2px; }
 .roll-note { position: absolute; background: var(--c); border-radius: 4px; cursor: grab;
   box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); z-index: 3; }
+.roll-ghost { position: absolute; z-index: 1; pointer-events: none; border-radius: 4px;
+  background: color-mix(in srgb, var(--c) 22%, transparent); border: 1px dashed color-mix(in srgb, var(--c) 70%, transparent); }
 .roll-note.acc { outline: 2px solid #fff; outline-offset: -2px; }
 .roll-edge { position: absolute; right: 0; top: 0; bottom: 0; width: 9px; cursor: ew-resize; }
 .roll-head { position: absolute; top: 0; width: 2px; background: #fff; opacity: .7; z-index: 4;
-  pointer-events: none; transition: transform 40ms linear; }
+  pointer-events: none; }
 
 /* the play-along staff */
 #sheet { max-width: 1100px; margin: 4px auto 0; padding: 0 12px 30px; }
@@ -196,3 +198,184 @@ body.reading .member .what { display: none; }
 .tally { font-variant-numeric: tabular-nums; }
 #rail output.tally { font-size: 13px; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #rail output.tally:empty { display: none; }
+
+/* THE BAND SMALL, THE PANELS STILL (2026-11-02): the four are a strip, not the
+   page, and flipping from one member to the next moves nothing on screen. Every
+   box under the band has a height of its own (the roll, the staff, each head
+   row one line) so a drummer's lanes, a grand staff or a long hint cannot push
+   the next thing down. */
+#stage { padding-top: 8px; }
+.band { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 520px; margin: 0 auto; gap: 6px; }
+.member { padding: 4px 2px 6px; border-radius: 10px; min-width: 0; }
+.member canvas { width: 56px; max-width: 56px; }
+.member .who, .member .what, .member .inst { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.member .who { font-size: 12px; }
+.member .what, .member .inst { font-size: 11px; }
+
+.drawer-head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "title mine close" "tabs tabs tabs" "hint hint hint"; gap: 6px 12px; }
+.drawer-head h2 { grid-area: title; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-head .grow { display: none; }
+.drawer-head label { grid-area: mine; white-space: nowrap; }
+#closeDrawer { grid-area: close; }
+#motifTabs { grid-area: tabs; flex-wrap: nowrap; overflow-x: auto; min-height: 36px; scrollbar-width: thin; }
+#motifTabs button { flex: none; }
+.drawer-head .hint { grid-area: hint; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roll { height: 210px; max-height: none; }
+#drawer .drawer-head, #sheet .sheet-head { padding: 6px 0; }
+#drawer { padding-bottom: 6px; }
+
+.sheet-head { flex-wrap: nowrap; }
+.sheet-head h2 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#staff, #staff.grand { height: 220px; }
+.legend { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) {
+  .member canvas { width: 44px; max-width: 44px; }
+  .roll { height: 200px; }
+  .drawer-head label { font-size: 13px; }
+  .drawer-head { grid-template-areas: "title title close" "mine mine mine" "tabs tabs tabs" "hint hint hint"; }
+}
+
+/* THE ARRANGEMENT (2026-11-02): "abletonesque clips stacked". A ruler of the
+   sections, then a track a member — its strip on the left (the lilguy, the
+   instrument, volume, M, S), the song across as one clip a section, each clip
+   the notes that section plays in miniature. One playhead through all of it. */
+body:not(.reading) #banner { display: none; }
+#stage { max-width: 1100px; }
+.arr { --hw: 230px; position: relative; }
+.arr .band { display: block; max-width: none; margin: 0; }
+.ruler-row { display: grid; grid-template-columns: var(--hw) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 24px; overflow: hidden; }
+#ruler { width: 100%; height: 100%; min-height: 0; display: block; cursor: pointer; border-radius: 4px; }
+/* the rows are pinned: a canvas sized from its own box would otherwise grow the row it sits in */
+.track { display: grid; grid-template-columns: var(--hw) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 60px; margin-top: 3px; overflow: hidden; }
+.thead { display: flex; gap: 6px; align-items: center; padding: 2px 6px 2px 2px; background: #16161f;
+  border-radius: 8px 0 0 8px; border-left: 3px solid var(--mc); min-width: 0; }
+.track.sel .thead { background: var(--head); }
+.thead .member { flex: none; width: 58px; padding: 1px 0 2px; border-width: 1px; border-radius: 8px; gap: 0; }
+.thead .member canvas { width: 34px; max-width: 34px; }
+.thead .member .who { font-size: 9px; }
+.thead .member .inst, .thead .member .what, .thead .member .mine { display: none; }
+.tctl { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.tinstr { min-height: 24px; padding: 1px 4px; font-size: 12px; width: 100%; border-radius: 6px; }
+.trow { display: flex; gap: 4px; align-items: center; }
+.tvol { flex: 1; min-width: 0; accent-color: var(--mc); height: 18px; }
+.tm, .ts { min-height: 22px; padding: 0 7px; font-size: 11px; font-weight: 700; border-radius: 5px; }
+.tm[aria-pressed="true"] { background: #ff7a54; color: var(--bg); border-color: #ff7a54; }
+.ts[aria-pressed="true"] { background: #ffd24a; color: var(--bg); border-color: #ffd24a; }
+.lane { width: 100%; height: 100%; min-height: 0; display: block; cursor: pointer; background: #101018; border-radius: 0 8px 8px 0; }
+.track.absent .lane { cursor: default; }
+.track.absent .thead { opacity: .5; }
+#playhead { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #fff; opacity: .85;
+  pointer-events: none; z-index: 3; box-shadow: 0 0 6px rgba(255,255,255,.5); }
+#playhead[hidden] { display: none; }
+@media (max-width: 640px) {
+  .arr { --hw: 128px; }
+  .thead .member { width: 40px; }
+  .thead .member canvas { width: 28px; max-width: 28px; }
+  .thead .member .who { display: none; }
+  .tinstr { font-size: 11px; }
+  .tm, .ts { padding: 0 5px; }
+}
+/* reading: the four are a strip again, and nothing else of the tracks shows */
+body.reading .ruler-row, body.reading .lane, body.reading .tctl, body.reading #playhead { display: none; }
+body.reading .arr .band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+body.reading .track { display: block; height: auto; margin: 0; }
+body.reading .thead { background: none; border: 0; padding: 0; }
+body.reading .thead .member { width: 100%; }
+body.reading .thead .member .who { display: block; font-size: 11px; }
+.track.late .tm, .track.late .ts { border-style: dashed; }
+
+/* ===== THE ZOOM (2026-11-02): a clip clicked opens its phrase over everything ===== */
+.lucide { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex: none; }
+.tonal { display: flex; gap: 4px; }
+.tonal select { min-height: 32px; padding: 4px 6px; max-width: 150px; }
+#drawer.zoom { position: fixed; inset: 0; z-index: 40; max-width: none; margin: 0; padding: 24px;
+  background: rgba(8, 8, 12, .72); display: flex; align-items: center; justify-content: center; }
+#drawer.zoom[hidden] { display: none; }
+.zcard { width: min(1180px, 100%); max-height: 100%; overflow: auto; background: #14141c; border: 1px solid var(--dim);
+  border-top: 4px solid var(--mc); border-radius: 14px; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6); animation: zin .16s ease-out; }
+@keyframes zin { from { transform: scale(.94); opacity: .3; } to { transform: none; opacity: 1; } }
+.zhead { display: flex; align-items: center; gap: 12px; }
+#zSprite { width: 46px; height: 49px; image-rendering: pixelated; flex: none; }
+.zwho { flex: 1; min-width: 0; }
+.zwho h2 { margin: 0; font-size: 20px; color: var(--mc); letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zwho h2 .ph { color: var(--ink); text-transform: uppercase; }
+.zwho h2 .ins { color: var(--mid); font-size: 14px; font-weight: 500; margin-left: 6px; }
+#zWhere { margin: 2px 0 0; color: var(--mid); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zmine { display: flex; gap: 6px; align-items: center; color: var(--mid); font-size: 13px; white-space: nowrap; }
+button.icon { display: inline-flex; align-items: center; justify-content: center; font-size: 18px; padding: 6px 10px; }
+#motifTabs { display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; scrollbar-width: thin; }
+#motifTabs button { flex: none; font-size: 13px; padding: 4px 10px; min-height: 30px; border-color: color-mix(in srgb, var(--mc) 40%, transparent); }
+#motifTabs button .who { color: var(--mc); font-weight: 700; font-size: 11px; letter-spacing: .05em; }
+#motifTabs button[aria-selected="true"] { background: var(--mc); color: var(--bg); border-color: var(--mc); }
+#motifTabs button[aria-selected="true"] .who { color: var(--bg); }
+.ztools { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.seg { display: inline-flex; border: 1px solid var(--dim); border-radius: 9px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; min-height: 34px; }
+.seg button[aria-checked="true"] { background: var(--mc); color: var(--bg); }
+.mono { font-size: 12px; color: var(--mid); border: 1px solid var(--dim); border-radius: 6px; padding: 2px 8px; text-transform: uppercase; letter-spacing: .06em; }
+.ztools .grow { flex: 1; }
+.hear { font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hear b { color: var(--mc); }
+.hearnow { display: inline-flex; gap: 6px; align-items: center; background: var(--mc); color: var(--bg); border-color: var(--mc); font-weight: 700; white-space: nowrap; }
+#drawer .roll { height: 300px; }
+.roll[data-tool="split"] .roll-note.held { cursor: crosshair; }
+.zsecs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.zsec { flex: 1 0 86px; min-width: 86px; border: 1px solid var(--dim); border-radius: 8px; padding: 4px; background: #101018; display: flex; flex-direction: column; gap: 4px; }
+.zsec.this { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 14%, #101018); }
+.zsec.out { opacity: .55; }
+.zsec.shown { outline: 1px dashed var(--mc); outline-offset: 2px; }
+.shade { font-size: 12px; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+.shade i { display: inline-block; width: 18px; height: 10px; vertical-align: -1px; margin-right: 4px; border-radius: 3px;
+  border: 1px dashed var(--mid); background: color-mix(in srgb, var(--mid) 22%, transparent); }
+.shade b { color: var(--ink); }
+.zsec { position: relative; }
+.zsec.now { border-color: #fff; box-shadow: 0 0 0 1px #fff, 0 0 12px color-mix(in srgb, var(--mc) 60%, transparent); opacity: 1; }
+.zsec.now::before { content: ""; position: absolute; inset: 0 auto 0 0; border-radius: 8px 0 0 8px;
+  width: calc(var(--p, 0) * 100%); background: color-mix(in srgb, #fff 8%, transparent); pointer-events: none; }
+.zsec.now::after { content: ""; position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px;
+  left: calc(var(--p, 0) * 100%); background: #fff; box-shadow: 0 0 6px #fff; pointer-events: none; }
+.zsec.now .zname { color: #fff; }
+.zsec.now .zname::before { content: "▶ "; }
+.zsec .zname { min-height: 22px; padding: 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  background: none; border: 0; color: var(--mid); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zsec.this .zname { color: var(--mc); }
+.tws { display: flex; flex-wrap: wrap; gap: 3px; }
+.tw { min-height: 26px; min-width: 26px; padding: 0 4px; font-size: 15px; display: inline-flex; align-items: center; gap: 1px; border-radius: 6px;
+  color: var(--mid); background: transparent; border: 1px dashed var(--dim); }
+.tw.on { color: var(--bg); background: var(--mc); border: 1px solid var(--mc); }
+.tw b, .wordmenu b, .ci b { font-size: 9px; font-weight: 800; }
+.tw.add { border-style: solid; color: var(--mid); }
+#drawerHint { margin: 0; color: var(--mid); font-size: 12px; }
+.wordmenu { position: fixed; z-index: 60; width: min(420px, 92vw); max-height: 60vh; overflow: auto; background: var(--head);
+  border: 1px solid var(--dim); border-radius: 12px; padding: 6px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+.wordmenu[hidden] { display: none; }
+.wordmenu button { display: flex; gap: 6px; align-items: center; justify-content: flex-start; font-size: 13px; min-height: 30px; padding: 2px 8px; text-align: left; }
+.wordmenu button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wordmenu button.on { background: var(--ink); color: var(--bg); }
+.wordmenu .lucide { font-size: 16px; }
+/* the clips carry their transformations as icons */
+.lanewrap { position: relative; min-width: 0; min-height: 0; }
+.clipicons { position: absolute; inset: 0; pointer-events: none; }
+.clipicons.cut { opacity: .35; }
+.ci { position: absolute; bottom: 3px; padding-left: 4px; display: flex; gap: 2px; overflow: hidden; color: #ececf0; font-size: 12px; white-space: nowrap; }
+.ci .lucide { filter: drop-shadow(0 0 2px #000); }
+@media (max-width: 640px) {
+  #drawer.zoom { padding: 6px; }
+  .zcard { padding: 10px; }
+  .zmine { display: none; }
+  .tonal select { max-width: 92px; }
+  .hear { white-space: normal; }
+  #drawer .roll { height: 240px; }
+}
+body.reading .lanewrap { display: none; }
+
+/* THE WHOLE WIDTH (2026-11-02): the arrangement is the page, edge to edge */
+#stage { max-width: none; margin: 0; padding: 8px 12px 6px; }
+.arr { --hw: 250px; }
+#drawer.zoom { padding: 16px; }
+.zcard { width: 100%; }
+#tClear { gap: 6px; font-size: 14px; }
+#tClear span { font-size: 13px; }

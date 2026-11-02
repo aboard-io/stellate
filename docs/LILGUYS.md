@@ -16,6 +16,49 @@ through sections they sit out, watch a soloist, and float a quaver when they
 play their motif as written. The word under each is its development word for
 the section (`as written`, `walk`, `busy`, `lays out` …).
 
+**The arrangement (2026-11-02).** A ruler of the sections (click one to go
+there), then a track a member: on the left the lilguy, its instrument, a
+volume fader and M / S (the part strip's own `fader`, `mute`, `solo` on
+`voice.desk`); across, the song as a clip a section, each drawing the notes
+that section plays and labelled with its phrase (main / chorus) and its
+development word. One playhead runs through all of it. Click a clip to open its
+phrase in the roll below. None of these controls stop the band: a change is
+pushed like a motif edit and lands at the next bar the engine has not rendered
+(its runway, a few seconds), where the page used to stop and restart.
+
+**The phrase, zoomed.** A clip clicked opens its phrase in a modal over the
+arrangement (Esc or the backdrop closes it): whose and which phrase in the
+title, where it is heard under it, a tab for every source phrase in the song,
+the tool, and the member's sections. The tool is a pencil (tap a note in, drag
+to draw a line of notes, tap a note out, drag a note or its right edge) and
+scissors (a held note broken into steps; alt-tap with the pencil does the
+same). A melodic phrase is MONO — a note moved or stretched over another takes
+its place — because a cell holds one note a step; the kit's lanes stack. Under
+the roll, a column a section: lit where it reads this phrase, an icon (Lucide,
+`lilguys/icons.js`) for each transformation it applies, each a toggle, and +
+for the development menu. A line tells you when the change will be heard (the
+runway, then the next section that plays it) and offers to go there.
+
+**Key, mode, scale** sit in the bar (avail.js `alphabet.key / .mode / .scale`);
+every phrase is in steps, so the band moves with them. The link keeps them,
+and each section's transformations, beside everything else.
+
+**Rows are intervals.** The roll's rows are steps over the chord (`1` its root,
+`♭3`, `5` …, `'` an octave up), because the kernel moves a line onto each
+chord's root and reads a written bass degree over the chord. **The bass opens
+on its own line**: what it plays in the first verse, spelled the same way, and
+it starts reading that cell only at the first edit.
+
+**Two phrases a member, at most.** The composer hands a member up to five
+separate cells (funk's keys: counter, pad, hook, answer, climb), none tied to
+another. On load (`app.js twoPhrases`, before the edits' baseline is taken, so
+a link still replays) each member keeps a **main** phrase — what it plays in
+the first verse (counting sections instead crowned 4-note `sparse` fills) —
+and, if the first chorus (a dance form's drop) read something else, that as
+its **chorus** phrase. Every
+other section reads one of the two, and the section's development word (busy,
+walk, backwards …) is the variation.
+
 **Click one: its motifs, in a piano roll.** One tab per cell the member reads
 across the song (a lead may read `topline` in the verses and `answer` in the
 chorus). Pitched rows are the song's scale, named in its key; the drummer's are
@@ -62,6 +105,9 @@ two), plus what you changed. Only the changes are kept:
 - motifs you edited, and new ones a member reads (a written bass line, a
   motif copied so it could be edited)
 - which motif each member reads, where that moved
+- the instrument each member plays, where you changed it (the menu in a
+  member's panel is the main app's own: avail.js `sound.drumkit`,
+  `sound.bassinstrument`, `sound.instrument`, greyed options and all)
 - the tempo, if it isn't the genre's
 - whose part is yours
 
