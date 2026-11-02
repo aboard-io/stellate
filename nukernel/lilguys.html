@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stellate Lilguys</title>
+<meta name="description" content="A band of four. Click one to write its motifs; read along and play with them.">
+<meta name="robots" content="noindex">
+<!-- held sideways on an iPhone, added to the home screen: no browser bars, the
+     whole screen for the staff (Safari's own landscape bars eat a third of it) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lilguys">
+<meta name="theme-color" content="#0e0e14">
+<!-- THE LILGUYS PAGE (2026-11-01). The FM-1 firmware's one-page band
+     (aboard-io/stellate-lilguys, STELLATE.md) brought back to the web, on the
+     web app's own composer and engine: pick a genre and four play; click one
+     and its motifs open in a piano roll; open the staff and its part scrolls
+     past a playhead, with that member muted so you can play it yourself.
+     The classic scripts below are index.html's, in index.html's order (the
+     ui/deps.js contract: every global it reads must exist before a module
+     runs). Nothing here is index.html's UI: ui/eight.js is not loaded. -->
+<link rel="stylesheet" href="lilguys/lilguys.css">
+</head>
+<body>
+<header class="bar">
+  <h1 class="vh">Stellate Lilguys</h1>
+  <div class="genre">
+    <label for="genre" class="vh">Genre</label>
+    <input id="genre" type="search" list="genres" autocomplete="off" spellcheck="false">
+    <datalist id="genres"></datalist>
+    <button id="dice" class="icon" title="a new song" aria-label="a new song"></button>
+  </div>
+  <button id="play" class="icon play" disabled aria-label="play" aria-pressed="false"></button>
+  <div class="tempo">
+    <label for="tempo" class="vh">tempo</label>
+    <input id="tempo" type="range" min="40" max="220" step="1" value="120">
+    <output id="tempoOut" for="tempo">120</output>
+    <button id="tempoBack" class="icon orig" title="the genre's own tempo" aria-label="the genre's own tempo"></button>
+  </div>
+  <div class="tonal" title="key · mode · scale">
+    <label class="vh" for="key">key</label><select id="key"></select>
+    <label class="vh" for="mode">mode</label><select id="mode"></select>
+    <label class="vh" for="scale">scale</label><select id="scale"></select>
+  </div>
+  <label class="loop icon" title="loop this section"><input type="checkbox" id="loopSec"><span id="loopIcon"></span></label>
+  <span class="grow"></span>
+  <span id="status" role="status" aria-live="polite"></span>
+  <button id="share" class="icon" title="a link to this song" aria-label="share"></button>
+  <button id="readBtn" class="icon" title="read along (R)" aria-label="read along"></button>
+</header>
+
+<aside id="rail" hidden aria-label="reading controls">
+  <button id="rExit">done</button>
+  <button id="rPlay" class="big">play</button>
+  <button id="rSlower">slower</button>
+  <output id="rBpm" aria-live="polite"></output>
+  <button id="rFaster">faster</button>
+  <output id="rTally" class="tally"></output>
+  <button id="rPart" class="part" title="whose part you read">lead</button>
+  <button id="rNew" title="the same genre, music you have not seen">new piece</button>
+  <button id="rOpts" aria-controls="ropts">options</button>
+  <button id="rShare" title="a link to this song, your motifs and all">share</button>
+</aside>
+<div id="ropts" hidden role="dialog" aria-label="reading options">
+  <fieldset><legend>look ahead</legend>
+    <label><input type="radio" name="ahead" value="1"> 1 bar</label>
+    <label><input type="radio" name="ahead" value="2"> 2 bars</label>
+    <label><input type="radio" name="ahead" value="4"> 4 bars</label>
+  </fieldset>
+  <label><input type="checkbox" id="oNames"> note names</label>
+  <label><input type="checkbox" id="oChords"> chord symbols</label>
+  <label><input type="checkbox" id="oMute"> mute the part (you play it)</label>
+  <button class="listen" id="oListen">listen to my keyboard</button>
+  <label><input type="checkbox" id="oCount"> count me in (a bar of clicks before the song)</label>
+  <label class="sync">red vs sound <input type="range" id="oSync" min="-300" max="300" step="10"> <output id="oSyncOut">0 ms</output></label>
+  <p class="small">If a note turns red before you hear it, slide right; after, slide left.
+    Bluetooth headphones usually want about +150 ms.</p>
+</div>
+<div id="turn" hidden role="dialog" aria-label="turn your phone">
+  <p><b>Turn your phone sideways</b><br>to read: the staff wants the long side.</p>
+  <button id="turnOk">read it upright anyway</button>
+</div>
+
+<main>
+  <!-- THE BAND (2026-11-02, Paul: "the four buttons … the lilguys are IN the
+       buttons. I click a button and the edit view appears"). -->
+  <section id="stage" aria-label="the band">
+    <div id="banner"><span class="sec"></span><span class="where"></span><span class="dots"></span></div>
+    <nav class="band" id="band"></nav>
+  </section>
+
+  <!-- ONE MEMBER'S PHRASES: the bank across the top, the one open under it,
+       and the rest of the band drawn faintly through it -->
+  <section id="drawer" class="editor" hidden aria-label="phrases">
+    <div class="ehead">
+      <div id="motifTabs" class="phrases" role="tablist" aria-label="this member's phrases"></div>
+      <span class="grow"></span>
+      <label class="vh" for="instr">instrument</label><select id="instr"></select>
+      <label class="vol" title="volume"><span id="volIcon"></span><input id="vol" type="range" min="-24" max="12" step="1" value="0" aria-label="volume"></label>
+      <label class="zmine icon" title="I'll play this part"><input type="checkbox" id="mine"><span id="mineIcon"></span></label>
+      <button id="closeDrawer" class="icon" aria-label="close (Esc)"></button>
+    </div>
+    <div class="ztools">
+      <div class="seg" role="radiogroup" aria-label="tool">
+        <button id="tDraw" class="icon" role="radio" aria-checked="true" title="pencil (D)"></button>
+        <button id="tSplit" class="icon" role="radio" aria-checked="false" title="scissors (S)"></button>
+      </div>
+      <div class="seg grid" id="tGrid" role="radiogroup" aria-label="grid"></div>
+      <button id="tClear" class="icon" title="clear"></button>
+      <div class="seg" id="tPoly" role="radiogroup" aria-label="one line or chords">
+        <button data-p="mono" class="icon" role="radio" aria-checked="true" title="one line"></button>
+        <button data-p="stab" class="icon" role="radio" aria-checked="false" title="chords on every note"></button>
+        <button data-p="pad" class="icon" role="radio" aria-checked="false" title="a held chord a bar"></button>
+      </div>
+      <span class="grow"></span>
+      <span id="zShadow" class="shade" aria-live="polite"></span>
+      <span id="zHear" class="hear" aria-live="polite"></span>
+      <button id="zJump" class="icon hearnow" hidden></button>
+    </div>
+    <div id="roll"></div>
+  </section>
+  <div id="wordMenu" class="wordmenu" hidden role="menu"></div>
+
+  <!-- THE SONG, along the bottom: a block a section — its chords, then each
+       member's phrase and transformations there. Drag to move. -->
+  <section id="song" class="song" aria-label="the song">
+    <div class="secs" id="secs"></div>
+    <div id="playhead" hidden></div>
+  </section>
+
+<section id="sheet" hidden aria-label="play along">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Play along</h2>
+      <button class="listen" id="listen" title="play along on a MIDI keyboard and see how it went">listen to my keyboard</button>
+      <span class="tally" id="tally" aria-live="polite"></span>
+    </div>
+    <div id="staff" role="img" aria-label="the part, engraved, moving with the music"></div>
+    <p class="legend" id="legend"></p>
+  </section>
+
+</main>
+
+<script src="../engine/registry-data.js"></script>
+<script src="../engine/faust/voices/sampler.js"></script>
+<script src="../engine/faust/voices/found-player.js"></script>
+<script src="../engine/theory.js"></script>
+<script src="kernel.js"></script>
+<script src="genres.js"></script>
+<script src="wiki.js"></script>
+<script src="askable.js"></script>
+<script src="fields.js"></script>
+<script src="song.js"></script>
+<script src="instruments.js"></script>
+<script src="compose.js"></script>
+<script src="presets.js"></script>
+<script src="songs.js"></script>
+<script src="document.js"></script>
+<script src="desk-doc.js"></script>
+<script src="avail.js"></script>
+<script src="gates.js"></script>
+<script src="knobs.js"></script>
+<script src="chair.js"></script>
+<script src="ideas-kit.js"></script>
+<script src="rules.js"></script>
+<script src="precompose.js"></script>
+<script src="bass-kit.js"></script>
+<script src="atlas.js"></script>
+<script src="producer.js"></script>
+<script src="atlas-land.js"></script>
+<script type="module" src="lilguys/app.js"></script>
+</body>
+</html>

@@ -660,6 +660,19 @@ const GATES = [
      sheets.js:33 — and every claim in it is now marked with which page owns
      it. Measured 2026-08-25: 28 checks on index.html, 29 on the harness,
      ~6s each. */
+  /* THE LILGUYS PAGE, FUZZED (2026-11-01). The firmware's graph-walking
+     fuzzer brought into the page (nukernel/lilguys/fuzz.js): walks of what a
+     hand can do from where it is, the page's own invariants after every step,
+     seven properties, failures shrunk to a replay. Two devices — a laptop and
+     an iPhone turned round mid-walk. Four walks of fifty per device here; the
+     file takes bigger numbers on its command line, and the page runs the same
+     walks on a real phone at lilguys.html#fuzz. */
+  { name: "lilguys-fuzz", wave: 3, kind: "browser",
+    url: { flag: "--page", path: "nukernel/lilguys.html" },
+    argv: ["test/lilguys-fuzz.browser.js", "4", "50", "1"],
+    need: ["test/lilguys-fuzz.browser.js", "nukernel/lilguys.html"],
+    covers: ["test/lilguys-fuzz.browser.js", "nukernel/lilguys.html",
+             "nukernel/audio/live.js"] },
   { name: "sheets-tier", wave: 2, kind: "browser",
     url: { flag: "--page", path: "test/fixtures/sheets-harness.html" },
     argv: ["test/sheets.js"],

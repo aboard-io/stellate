@@ -1302,6 +1302,14 @@ export function deskAmp(sec, addr, boxBeatOf) {
     const a = addr[key];
     const p = a ? P[a] : null;
     if (p && p.gain === 0) return 0;
+    // ...BUT A STRANGER STILL OBEYS ITS OWN MUTE (2026-11-01). The address
+    // names the stranger's own chair (a pickup's unit answers to `bass` in the
+    // box before the bass enters), and only this box's roster leaves it out of
+    // `P`. So a muted bass's pickup into the verse kept sounding from the intro:
+    // measured on funk, 2 of its 428 notes, through every mute on every page.
+    // The chair's own entry is read for its mute and nothing else: no level,
+    // no solo, nothing that could reach a part that is not its own.
+    if (!p && a && sec.parts && sec.parts[a] && resolvePartMix(sec.parts[a]).mute) return 0;
     if (!lvl) return 1;
     const v = laneAt(lvl, boxBeatOf(beat));
     return v == null ? 1 : Math.max(0, v);

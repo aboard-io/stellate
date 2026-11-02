@@ -726,7 +726,12 @@ async function prerender() {
   } catch (e) { /* a failed idle warm is silence, not an error — the gesture keeps its own bounded open */ }
 }
 
-export async function startAt(boxIndex) {
+/* `bar` (present-only): start on that timeline bar rather than the box's first
+   (2026-11-01, the lilguys page). A reader who slows the tempo mid-song wants
+   to go on from the bar they are in, at the new speed, now — not hear the old
+   tempo for another runway — and a restart from the box's top would throw
+   them back to the start of the chorus. Absent, every start is the one it was. */
+export async function startAt(boxIndex, bar = null) {
   gestureUnlock();
   for (const fn of gestureFns) { try { fn(); } catch (e) {} }
   if (playing) { setPendingStart(boxIndex); announceJump(boxIndex); return; }
@@ -753,7 +758,7 @@ export async function startAt(boxIndex) {
   // DIFFERENT start bar is honestly wrong audio and is discarded instead.
   if (pre) {
     compile();   // idempotent on an unchanged document; keeps barCount/firstBarOfBox honest
-    const at0 = firstBarOfBox(boxIndex);
+    const at0 = bar != null ? bar : firstBarOfBox(boxIndex);
     const wantBase = at0 < 0 ? 0 : at0;
     if (pre.handle && wantBase === pre.barBase) {
       const h = pre.handle, statusOn = pre.statusOn;
@@ -791,7 +796,7 @@ export async function startAt(boxIndex) {
     emit("status", { text: "nothing to play — click a genre to fill a box first", sticky: true });
     return;
   }
-  const at = firstBarOfBox(boxIndex);
+  const at = bar != null ? bar : firstBarOfBox(boxIndex);
   barBase = at < 0 ? 0 : at;
   playing = true; playingSec = -1; lastBar = -1;
   emit("transport:state", { playing });
@@ -912,6 +917,9 @@ async function open(FL, forceMedia) {
       masterVol: vol / 100,
       mediaMeta,
       ...(forceMedia ? { wavOut: true } : {}),
+      // a page's own output choice (present-only; the lilguys page's Safari
+      // trial: ?out=classic / ?out=recycle). Nothing sets it by default.
+      ...(W.__nuOutOpts && typeof W.__nuOutOpts === "object" ? W.__nuOutOpts : {}),
     });
     st.route = handle.outputRoute || (forceMedia ? "media" : "ring");
   } catch (e) {
@@ -1031,6 +1039,20 @@ export function passAt(now) {
    `voiceLevels` is the MEASUREMENT and nothing else: a chair with no tap and
    no audit is ABSENT from the map rather than reported as 0, because 0 is a
    claim of silence about a voice nobody measured. */
+
+/* WHERE THE EAR IS IN THE WHOLE SONG, IN BEATS (2026-11-01, the lilguys page).
+   A pure reader like the two below: the sounding bar's own downbeat on the
+   timeline (`beat0`, which compile() writes) plus how far the engine's clock is
+   past that downbeat at the bar's own seconds-per-beat. Beats do not move when
+   the tempo does — a slower bar is the same beats at a larger `spb` — so a
+   staff drawn in beats stays under the playhead through a tempo change. -1
+   while stopped or before the first bar is heard. */
+export function songBeatNow() {
+  if (!playing || !curBar) return -1;
+  const bar = timeline()[curBar.n];
+  if (!bar || bar.beat0 == null) return -1;
+  return bar.beat0 + Math.max(0, (nowSec() - curBar.when) / curBar.spb);
+}
 
 // The sounding bar's plan, so a reader never has to recompute `barOfSerial`
 // (module-private) or duplicate `barBase`. null while stopped.
