@@ -2904,7 +2904,16 @@
     // heard-lag = render backlog (FEED_CAP_MP3) + appended-ahead (FWD_CAP): keep the
     // sum tight — it is ALSO the steering/UI latency (8+14 s reads on device as a
     // scheduler that is simply off). Cushion still >=5s for pocket CPU dips.
-    const KEEP_BEHIND = 12, FWD_CAP = 10, FEED_CAP_MP3 = 5;
+    /* ...AND A HOST THAT STEERS NOTHING MAY ASK FOR A DEEP ONE (2026-11-23, the embed
+       branch; Paul: "Feels like we need more buffer into the aac"). The 5 s / 10 s
+       below are what a hand on the page can bear between a gesture and its sound. A
+       radio has no hand on it, and on an iPhone (Safari 27) a page behind another app
+       gets its audio into the element at well under real time — measured: the element's
+       clock moved 17 s of 27 away, starving within 5 s of the 5-10 s it had. So
+       opts.feedCapSec / opts.fwdCapSec let the host trade steering latency (and, on a
+       phone, how late a move of the volume is heard — it is baked into the render) for
+       the seconds a hidden page can live on. Absent, the numbers are the old ones. */
+    const KEEP_BEHIND = 12, FWD_CAP = opts.fwdCapSec > 0 ? opts.fwdCapSec : 10, FEED_CAP_MP3 = opts.feedCapSec > 0 ? opts.feedCapSec : 5;
 
     // AudioContext for DECODE ONLY (44100 so decoded PCM is 1:1 with the render rate).
     const AC = root.AudioContext || root.webkitAudioContext;
@@ -3385,6 +3394,10 @@
     let msOpened = false, codecFinalized = false;                 // v4: source open / codec committed
     let pendingInit = null, initAppended = false, appendingInit = false;   // v4: fMP4 init segment (ftyp+moov)
     let mmsWants = !isMMS;                 // plain MSE: append proactively; MMS: only when asked
+    const MMS_STARVE_SEC = 4; let mmsStarveAppends = 0;   // …unless the element is starving (tryAppend)
+    // THE PUMP'S OWN LEDGER (2026-11-23): why an append did not happen, and how long one takes to
+    // finish — read by nukernel/embed/heartbeat.js through __wavState().pump.
+    const pumpLedger = { appends: 0, removes: 0, lastAt: 0, lastMs: 0, maxMs: 0, pendingSince: 0, bailUpdating: 0, bailCap: 0, bailEmpty: 0, throws: 0, lastThrow: "" };
     const appendQ = [];                   // Uint8Array media chunks (mp3 frames | fMP4 fragments) awaiting appendBuffer
     let appendedChunks = 0, appendedSec = 0, receivedPcmSec = 0, pcmPendingSec = 0;
     let retryTimer = 0, mp3FirstAppend = false, mp3Waiting = 0;
@@ -3709,6 +3722,7 @@
     }
     function codecTypeStr() { return codec === "aac" ? T_AAC : codec === "opus" ? T_OPUS : T_MP3; }
     function onUpdateEnd() {
+      if (pumpLedger.pendingSince) { pumpLedger.lastMs = Math.round(now() - pumpLedger.pendingSince); pumpLedger.maxMs = Math.max(pumpLedger.maxMs, pumpLedger.lastMs); pumpLedger.pendingSince = 0; }
       if (appendingInit) { appendingInit = false; initAppended = true; pendingInit = null; }
       if (!evictBehind()) tryAppend();
     }
@@ -3740,29 +3754,73 @@
       try { if (srcBuf && srcBuf.buffered.length) return srcBuf.buffered.end(srcBuf.buffered.length - 1) - (mp3El.currentTime || 0); } catch (e) {}
       return 0;
     }
+    /* THE EVICTION THAT ATE THE PUMP (2026-11-23, the embed branch). Measured on Paul's
+       iPhone, Safari 27.0.1, with the pump's ledger printed every five seconds
+       (nukernel/embed/heartbeat.js). About half a minute into a record the element's
+       buffered ranges read `[13.7-14.0, 21.6-40.2]`: a `remove()` had left a 0.3 s
+       SLIVER at the front that no later remove clears. This function took
+       `buffered.start(0)` as where the played tail begins, so from that moment
+       `keepFrom > start + 1` was true for ever — and it is called from EVERY updateend,
+       including the updateend of its own remove, with `if (!evictBehind()) tryAppend()`.
+       So: remove, updateend, remove, updateend … the SourceBuffer permanently
+       `updating`, tryAppend bailing on it dozens of times a beat (the ledger's
+       bailUpdating: 4, 14, 27, 37, 46, 55, 66, 77), and three encoded chunks — ten
+       seconds of audio — queued beside an element with nothing ahead of it. That is the
+       stutter, the "gives up for ten seconds", and the frozen-clock demotion to segAB
+       that followed. It was read at first as the phone starving a hidden page; the
+       ledger shows it beginning before the page was ever hidden.
+       TWO CHANGES, EITHER OF WHICH BREAKS THE LOOP:
+         · it asks at most once in EVICT_EVERY_MS, so an updateend it caused cannot
+           call it again — whatever a UA leaves behind, the pump gets its turn;
+         · it measures the tail from the range the playhead is IN, not from range 0,
+           and removes from 0, so a sliver neither triggers it nor survives it. */
+    const EVICT_EVERY_MS = 4000; let lastEvictAt = -1e9;
     function evictBehind() {
       if (!srcBuf || srcBuf.updating) return false;
+      if (now() - lastEvictAt < EVICT_EVERY_MS) return false;
       try {
-        if (!srcBuf.buffered.length) return false;
-        const start = srcBuf.buffered.start(0), keepFrom = Math.max(0, (mp3El.currentTime || 0) - KEEP_BEHIND);
-        if (keepFrom > start + 1) { srcBuf.remove(start, keepFrom); return true; }   // fires another updateend
+        const B = srcBuf.buffered, ct = mp3El.currentTime || 0;
+        if (!B.length) return false;
+        let start = B.start(0);
+        for (let i = 0; i < B.length; i++) if (B.start(i) <= ct + 0.25 && B.end(i) >= ct) { start = B.start(i); break; }
+        const keepFrom = Math.max(0, ct - KEEP_BEHIND);
+        if (keepFrom > start + 1) { lastEvictAt = now(); srcBuf.remove(0, keepFrom); pumpLedger.removes++; pumpLedger.pendingSince = now(); return true; }   // fires another updateend
       } catch (e) {}
       return false;
     }
     function tryAppend() {
+      if (srcBuf && srcBuf.updating) pumpLedger.bailUpdating++;
       if (abort || !sbOpen || !srcBuf || srcBuf.updating) return;
-      if (isMMS && !mmsWants) return;
+      /* A STARVING ELEMENT IS FED WHETHER OR NOT THE SOURCE ASKED (2026-11-23,
+         the embed branch). Measured on Paul's iPhone, Safari 27.0.1, the tab
+         left for another app (nukernel/embed/heartbeat.js): the render worker
+         never stopped, the page's timers were only slowed to one a second, the
+         element was never paused — and it ran dry 5-8 s after the page was
+         hidden with EIGHT SECONDS of rendered audio still held on this side
+         (readyState 2, nothing buffered ahead, runway 8.0), and stayed dry
+         after the page was shown again. A ManagedMediaSource says when it
+         wants data (`startstreaming`/`endstreaming`), and this pump obeyed it
+         to the letter: no appetite, no append. A hidden page's source loses
+         its appetite and — on this Safari — does not find it again while the
+         element starves. The appetite is advice about POWER, not permission;
+         an element with under MMS_STARVE_SEC ahead is past the point where
+         saving power is the question. Counted, so a log can say it happened. */
+      if (isMMS && !mmsWants) {
+        if (!mp3FirstAppend || bufferedAhead() >= MMS_STARVE_SEC) return;
+        mmsStarveAppends++;
+      }
       // fMP4: the init segment (ftyp+moov) MUST land before any media fragment.
       if (isFmp4 && pendingInit && !initAppended) {
         try { srcBuf.appendBuffer(pendingInit); appendingInit = true; }
         catch (err) { onMseFault("append init: " + (err && err.message || err)); }   // step down before segAB
         return;
       }
-      if (!appendQ.length) return;
-      if (bufferedAhead() > FWD_CAP) { scheduleRetry(); return; }   // bound the forward buffer (all routes)
+      if (!appendQ.length) { pumpLedger.bailEmpty++; return; }
+      if (bufferedAhead() > FWD_CAP) { pumpLedger.bailCap++; scheduleRetry(); return; }   // bound the forward buffer (all routes)
       const bytes = appendQ[0];
       try {
         srcBuf.appendBuffer(bytes); appendQ.shift(); appendedChunks++;
+        pumpLedger.appends++; pumpLedger.lastAt = now(); pumpLedger.pendingSince = now();
         if (!mp3FirstAppend) {
           mp3FirstAppend = true; mark("firstAppend");
           if (woFirstAppend) { clearTimeout(woFirstAppend); woFirstAppend = 0; }
@@ -3771,6 +3829,7 @@
           msPlaying();
         }
       } catch (err) {
+        pumpLedger.throws++; pumpLedger.lastThrow = String(err && (err.name + ": " + err.message) || err).slice(0, 80);
         if (err && err.name === "QuotaExceededError") { evictBehind(); scheduleRetry(); }
         else if (!mp3FirstAppend) { onMseFault("appendBuffer: " + (err && err.message || err)); }   // pre-first-append fault → step down
         else { errors.push("appendBuffer: " + (err && err.message || err)); appendQ.shift(); }      // mid-stream transient → log + skip
@@ -3794,6 +3853,14 @@
       let lastCt = -1, lastMove = now();
       woFrozen = setInterval(() => {
         if (abort || demoted || !useMp3 || !mp3El) return;
+        /* ...AND THE PUMP IS POKED FROM HERE, because nothing else would. Every
+           other call to tryAppend is an EVENT — a chunk arriving, an append
+           ending, the source asking — and a starved element produces none of
+           them: its clock is frozen, so the runway ledger (received − played)
+           stays over FEED_CAP_MP3, the feed is held, no chunk arrives, and
+           what is already queued waits for an event that cannot come. That is
+           the wedge measured above after the page was shown again. */
+        tryAppend();
         const ct = mp3El.currentTime || 0;
         if (ct > lastCt + 1e-3) { lastCt = ct; lastMove = now(); return; }
         if (now() - lastMove <= WD_FROZEN_MS) return;
@@ -4201,6 +4268,9 @@
           let bufStart = 0, bufEnd = 0; try { if (srcBuf && srcBuf.buffered.length) { bufStart = srcBuf.buffered.start(0); bufEnd = srcBuf.buffered.end(srcBuf.buffered.length - 1); } } catch (e) {}
           return { receivedSegs, playedSegs: appendedChunks, playCursor: appendedChunks, singleEl: true, curGen,
             zeroPlayable: mp3Waiting, aheadSec: aheadSec(), outputRoute: outRoute, demoted, demoteReason,
+            mmsWants: isMMS ? mmsWants : null, mmsStreaming: (isMMS && mediaSrc) ? mediaSrc.streaming : null,
+            appendQ: appendQ.length, mmsStarveAppends,
+            pump: Object.assign({}, pumpLedger, { updating: !!(srcBuf && srcBuf.updating), sinceLastAppendMs: pumpLedger.lastAt ? Math.round(now() - pumpLedger.lastAt) : null, pendingMs: pumpLedger.pendingSince ? Math.round(now() - pumpLedger.pendingSince) : 0, sbAhead: +bufferedAhead().toFixed(2), msState: mediaSrc ? mediaSrc.readyState : null }),
             currentTime: mp3El ? (mp3El.currentTime || 0) : 0, bufferedSec: Math.max(0, bufEnd - bufStart),
             bufferedStart: bufStart, bufferedEnd: bufEnd,
             // LURCH METER (device): we appended appendedSec seconds of encoded stream; in

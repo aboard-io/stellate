@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stellate — slow ambient, embedded</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="embed/embed.css">
+</head>
+<body>
+<!-- THE EMBED, ON A PAGE OF ITS OWN (2026-11-23). Everything a host page gets
+     from nukernel/embed/index.js and nothing else: one button, one fader, and
+     the engine's own sentence. It exists so the radio can be heard on a phone
+     with no host around it — if it cuts out HERE it is the box's; if only in
+     the host, it is the host's. No inline script or style, so it can be served
+     under a strict Content-Security-Policy as it is. -->
+<main>
+  <h1>Stellate</h1>
+  <p class="sub">slow ambient, one record after another</p>
+  <button id="play" type="button" aria-pressed="false">Play</button>
+  <label class="vol">Volume <input id="vol" type="range" min="0" max="100" step="1" value="60"></label>
+  <p id="what" aria-live="polite"></p>
+  <p id="engine" class="small"></p>
+  <pre id="log" class="small"></pre>
+</main>
+<script type="module" src="embed/page.js?v=7"></script>
+</body>
+</html>
