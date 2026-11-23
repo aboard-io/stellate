@@ -3754,12 +3754,37 @@
       try { if (srcBuf && srcBuf.buffered.length) return srcBuf.buffered.end(srcBuf.buffered.length - 1) - (mp3El.currentTime || 0); } catch (e) {}
       return 0;
     }
+    /* THE EVICTION THAT ATE THE PUMP (2026-11-23, the embed branch). Measured on Paul's
+       iPhone, Safari 27.0.1, with the pump's ledger printed every five seconds
+       (nukernel/embed/heartbeat.js). About half a minute into a record the element's
+       buffered ranges read `[13.7-14.0, 21.6-40.2]`: a `remove()` had left a 0.3 s
+       SLIVER at the front that no later remove clears. This function took
+       `buffered.start(0)` as where the played tail begins, so from that moment
+       `keepFrom > start + 1` was true for ever — and it is called from EVERY updateend,
+       including the updateend of its own remove, with `if (!evictBehind()) tryAppend()`.
+       So: remove, updateend, remove, updateend … the SourceBuffer permanently
+       `updating`, tryAppend bailing on it dozens of times a beat (the ledger's
+       bailUpdating: 4, 14, 27, 37, 46, 55, 66, 77), and three encoded chunks — ten
+       seconds of audio — queued beside an element with nothing ahead of it. That is the
+       stutter, the "gives up for ten seconds", and the frozen-clock demotion to segAB
+       that followed. It was read at first as the phone starving a hidden page; the
+       ledger shows it beginning before the page was ever hidden.
+       TWO CHANGES, EITHER OF WHICH BREAKS THE LOOP:
+         · it asks at most once in EVICT_EVERY_MS, so an updateend it caused cannot
+           call it again — whatever a UA leaves behind, the pump gets its turn;
+         · it measures the tail from the range the playhead is IN, not from range 0,
+           and removes from 0, so a sliver neither triggers it nor survives it. */
+    const EVICT_EVERY_MS = 4000; let lastEvictAt = -1e9;
     function evictBehind() {
       if (!srcBuf || srcBuf.updating) return false;
+      if (now() - lastEvictAt < EVICT_EVERY_MS) return false;
       try {
-        if (!srcBuf.buffered.length) return false;
-        const start = srcBuf.buffered.start(0), keepFrom = Math.max(0, (mp3El.currentTime || 0) - KEEP_BEHIND);
-        if (keepFrom > start + 1) { srcBuf.remove(start, keepFrom); pumpLedger.removes++; pumpLedger.pendingSince = now(); return true; }   // fires another updateend
+        const B = srcBuf.buffered, ct = mp3El.currentTime || 0;
+        if (!B.length) return false;
+        let start = B.start(0);
+        for (let i = 0; i < B.length; i++) if (B.start(i) <= ct + 0.25 && B.end(i) >= ct) { start = B.start(i); break; }
+        const keepFrom = Math.max(0, ct - KEEP_BEHIND);
+        if (keepFrom > start + 1) { lastEvictAt = now(); srcBuf.remove(0, keepFrom); pumpLedger.removes++; pumpLedger.pendingSince = now(); return true; }   // fires another updateend
       } catch (e) {}
       return false;
     }
