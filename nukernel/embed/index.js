@@ -25,7 +25,7 @@
 //   beat(pos)  the playhead as it moves; went(on): the engine stopped or
 //              started by itself (the lock screen); hidden(): the page is
 //              hidden; log(line); sampled: the sampled instruments shipped;
-//              bufferSec: seconds kept ahead on the media route (30)
+//              bufferSec: seconds kept ahead on the media route (the engine's own, 5-10, unless given)
 //
 // THE SCRIPTS, IN THE BOX'S OWN ORDER (nukernel/index.html, less its wiki,
 // avail, gates, atlas and producer — none of which a radio asks). They are
@@ -44,8 +44,8 @@ export const CLASSIC = [
   "engine/csd-engine.js", "engine/genre-kernel.js",
   "engine/faust/voices/state-engine.js", "engine/faust/live/live.js",
 ];
-/** How many seconds of sound the media route keeps ahead of the element. */
-export const BUFFER_SEC = 30;
+/** How many seconds of sound the media route keeps ahead of the element: 0 is the engine's own (5-10 s). */
+export const BUFFER_SEC = 0;
 const SITE = new URL("../../", import.meta.url).href;
 const came = new Set();
 const script = (src) => came.has(src) ? Promise.resolve() : new Promise((ok, no) => {
@@ -84,11 +84,20 @@ async function boot(o) {
      FEED_CAP_MP3, and nukernel/embed/heartbeat.js for how that was seen). The
      buffer is what the page lives on while it is away. Its price is said
      there too: on a phone a move of the volume is heard this much later. */
+  /* ...AND IT IS OFF UNLESS ASKED FOR, SINCE THE SAME AFTERNOON. With 30 s asked
+     for, Paul's iPhone never got going: the element sat at t=0 for the three
+     seconds the engine's frozen-clock watchdog allows after the first append
+     (a render that deep, all at once, on a phone), the AAC route was demoted
+     to segAB, and segAB there plays seventeen seconds and rests seventeen. And
+     the starving it was meant to cover turned out not to be the phone's doing
+     at all (engine/faust/live/live.js THE EVICTION THAT ATE THE PUMP). So the
+     default is the engine's own depth; a host may still ask (o.bufferSec),
+     and a deep buffer wants a slower fill before it is the default again. */
   const bufferSec = o.bufferSec > 0 ? o.bufferSec : BUFFER_SEC;
   if (FL && !FL.__embedRoute) {
     const open = FL.exploreLive.bind(FL);
     FL.exploreLive = (g, s, opts) => open(g, s, Object.assign({}, opts,
-      self.crossOriginIsolated ? {} : { wavOut: true }, { feedCapSec: bufferSec, fwdCapSec: bufferSec + 15 }));
+      self.crossOriginIsolated ? {} : { wavOut: true }, bufferSec > 0 ? { feedCapSec: bufferSec, fwdCapSec: bufferSec + 15 } : {}));
     FL.__embedRoute = true;
   }
   /* THE BACKGROUND WAV IS NOT ASKED FOR. On the ring, a hidden Safari tab asks
