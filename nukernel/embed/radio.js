@@ -45,7 +45,7 @@ import { partOf, planAt, slowRecord } from "./slow.js";
 
 export const PASSES = 2, FADE_MS = 2000, PAUSE_MS = 1000, WATCH_MS = 8000,
   WARM_MS = 8000, HEAR_MS = 6000, STEPS = 50, DIP = 0.3, DIP_MS = 3000,
-  RISE_MS = 4000, LAND_MS = 20000;
+  RISE_MS = 4000, LAND_MS = 20000, LAND_BAKED_MS = 6000;
 /** How loud the engine is asked to play for a volume 0..1: v^1.5, so the lower
  *  half of a slider is usable. */
 export const gainOf = (v) => Math.max(0, Math.min(1, v)) ** 1.5;
@@ -100,7 +100,17 @@ export function makeRadio(o) {
       if (t !== turn) return;
       sounding = true; lastPos = clock.now();
       log((swap ? "swap " : "start ") + genre + " bpm=" + bpm + " route=" + route());
-      await within(new Promise((ok) => { heard = ok; }), swap ? LAND_MS : HEAR_MS);
+      /* ...BUT WHERE THE LEVEL IS BAKED INTO THE RENDER, THE RISE CANNOT WAIT TO
+         HEAR IT. On the media routes the master level rides each rendered bar
+         (engine/faust/live/live.js BAKED MASTER VOLUME), and the element plays
+         a deep buffer behind the render (./index.js BUFFER_SEC): the dip, the
+         new record and the rise are all written into the same stream in that
+         order, and heard together half a minute later. Waiting there for the
+         first bar to be HEARD would write half a minute of the new record at
+         the dip's level. So off the ring the rise waits only for the next bar
+         line to have been rendered. */
+      const ring = /^(direct|ring)$/.test(route());
+      await within(new Promise((ok) => { heard = ok; }), !swap ? HEAR_MS : ring ? LAND_MS : LAND_BAKED_MS);
       heard = null; landing = -1;
       if (t === turn) await fade(1, t, swap ? RISE_MS : FADE_MS);
     } finally { if (t === turn) busy = false; }

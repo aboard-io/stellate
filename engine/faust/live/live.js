@@ -2904,7 +2904,16 @@
     // heard-lag = render backlog (FEED_CAP_MP3) + appended-ahead (FWD_CAP): keep the
     // sum tight — it is ALSO the steering/UI latency (8+14 s reads on device as a
     // scheduler that is simply off). Cushion still >=5s for pocket CPU dips.
-    const KEEP_BEHIND = 12, FWD_CAP = 10, FEED_CAP_MP3 = 5;
+    /* ...AND A HOST THAT STEERS NOTHING MAY ASK FOR A DEEP ONE (2026-11-23, the embed
+       branch; Paul: "Feels like we need more buffer into the aac"). The 5 s / 10 s
+       below are what a hand on the page can bear between a gesture and its sound. A
+       radio has no hand on it, and on an iPhone (Safari 27) a page behind another app
+       gets its audio into the element at well under real time — measured: the element's
+       clock moved 17 s of 27 away, starving within 5 s of the 5-10 s it had. So
+       opts.feedCapSec / opts.fwdCapSec let the host trade steering latency (and, on a
+       phone, how late a move of the volume is heard — it is baked into the render) for
+       the seconds a hidden page can live on. Absent, the numbers are the old ones. */
+    const KEEP_BEHIND = 12, FWD_CAP = opts.fwdCapSec > 0 ? opts.fwdCapSec : 10, FEED_CAP_MP3 = opts.feedCapSec > 0 ? opts.feedCapSec : 5;
 
     // AudioContext for DECODE ONLY (44100 so decoded PCM is 1:1 with the render rate).
     const AC = root.AudioContext || root.webkitAudioContext;

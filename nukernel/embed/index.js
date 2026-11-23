@@ -24,7 +24,8 @@
 //   shape(doc, plan)       default ./slow.js slowRecord
 //   beat(pos)  the playhead as it moves; went(on): the engine stopped or
 //              started by itself (the lock screen); hidden(): the page is
-//              hidden; log(line); sampled: the sampled instruments shipped
+//              hidden; log(line); sampled: the sampled instruments shipped;
+//              bufferSec: seconds kept ahead on the media route (30)
 //
 // THE SCRIPTS, IN THE BOX'S OWN ORDER (nukernel/index.html, less its wiki,
 // avail, gates, atlas and producer — none of which a radio asks). They are
@@ -43,6 +44,8 @@ export const CLASSIC = [
   "engine/csd-engine.js", "engine/genre-kernel.js",
   "engine/faust/voices/state-engine.js", "engine/faust/live/live.js",
 ];
+/** How many seconds of sound the media route keeps ahead of the element. */
+export const BUFFER_SEC = 30;
 const SITE = new URL("../../", import.meta.url).href;
 const came = new Set();
 const script = (src) => came.has(src) ? Promise.resolve() : new Promise((ok, no) => {
@@ -75,9 +78,17 @@ async function boot(o) {
      demotes itself to the media route. Asking for the media route at the door
      skips the failure. Only the route is chosen here, never a bar. */
   const FL = w.FaustLive;
-  if (FL && !self.crossOriginIsolated && !FL.__embedRoute) {
+  /* AND A DEEP BUFFER ON THE MEDIA ROUTE (o.bufferSec, default BUFFER_SEC). A
+     radio is steered by nobody, and a phone's page behind another app gets
+     audio into its element slower than it plays (the engine's own note at
+     FEED_CAP_MP3, and nukernel/embed/heartbeat.js for how that was seen). The
+     buffer is what the page lives on while it is away. Its price is said
+     there too: on a phone a move of the volume is heard this much later. */
+  const bufferSec = o.bufferSec > 0 ? o.bufferSec : BUFFER_SEC;
+  if (FL && !FL.__embedRoute) {
     const open = FL.exploreLive.bind(FL);
-    FL.exploreLive = (g, s, opts) => open(g, s, Object.assign({}, opts, { wavOut: true }));
+    FL.exploreLive = (g, s, opts) => open(g, s, Object.assign({}, opts,
+      self.crossOriginIsolated ? {} : { wavOut: true }, { feedCapSec: bufferSec, fwdCapSec: bufferSec + 15 }));
     FL.__embedRoute = true;
   }
   /* THE BACKGROUND WAV IS NOT ASKED FOR. On the ring, a hidden Safari tab asks
