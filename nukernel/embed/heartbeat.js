@@ -47,11 +47,16 @@ export function startHeartbeat(say, engine) {
              ahead: e ? ahead(e) : null, runway: typeof g.runway === "number" ? g.runway : null, route: g.route || "",
              // the append pump's own ledger (engine/faust/live/live.js __wavState): what was appended, what waits,
              // whether the managed source is asking, and how often it was fed without asking
-             wav: g.wav ? { app: g.wav.appendedSec, q: g.wav.appendQ, wants: g.wav.mmsWants, streaming: g.wav.mmsStreaming, starve: g.wav.mmsStarveAppends } : null };
+             wav: g.wav ? { app: g.wav.appendedSec, q: g.wav.appendQ, wants: g.wav.mmsWants, streaming: g.wav.mmsStreaming, starve: g.wav.mmsStarveAppends, pump: g.wav.pump || null } : null,
+             // every buffered range of the element (a hole ahead of its clock is a stall no buffer shows), and the engine's last errors
+             ranges: e ? (() => { const r = []; try { for (let i = 0; i < e.buffered.length; i++) r.push(e.buffered.start(i).toFixed(1) + "-" + e.buffered.end(i).toFixed(1)); } catch (x) {} return r.join(","); })() : "",
+             errs: Array.isArray(g.errors) ? g.errors.slice(-2).join(" | ").slice(0, 160) : "" };
   };
   const fmt = (s) => "el " + (s.time == null ? "none" : (s.paused ? "paused" : "playing") + " t=" + s.time.toFixed(1) + " rs=" + s.rs + " ahead=" + s.ahead.toFixed(1))
     + (s.runway == null ? "" : " runway=" + s.runway.toFixed(1)) + (s.route ? " " + s.route : "")
-    + (s.wav ? " appended=" + s.wav.app + " queued=" + s.wav.q + " wants=" + s.wav.wants + " streaming=" + s.wav.streaming + " fedUnasked=" + s.wav.starve : "");
+    + (s.wav ? " encoded=" + s.wav.app + " queued=" + s.wav.q + " wants=" + s.wav.wants + " streaming=" + s.wav.streaming + " fedUnasked=" + s.wav.starve : "")
+    + (s.wav && s.wav.pump ? " pump{" + (() => { const p = s.wav.pump; return "appends=" + p.appends + " removes=" + p.removes + " updating=" + p.updating + " pendingMs=" + p.pendingMs + " lastMs=" + p.lastMs + " maxMs=" + p.maxMs + " sinceLast=" + p.sinceLastAppendMs + " bails upd/cap/empty=" + p.bailUpdating + "/" + p.bailCap + "/" + p.bailEmpty + " throws=" + p.throws + (p.lastThrow ? "(" + p.lastThrow + ")" : "") + " sbAhead=" + p.sbAhead + " ms=" + p.msState; })() + "}" : "")
+    + (s.ranges ? " buf=[" + s.ranges + "]" : "") + (s.errs ? " errs=" + s.errs : "");
 
   let worker = null;
   try { worker = new Worker(new URL("./heartbeat-worker.js", import.meta.url)); } catch (x) { say("heartbeat: no worker (" + x.message + ")"); }

@@ -3386,6 +3386,9 @@
     let pendingInit = null, initAppended = false, appendingInit = false;   // v4: fMP4 init segment (ftyp+moov)
     let mmsWants = !isMMS;                 // plain MSE: append proactively; MMS: only when asked
     const MMS_STARVE_SEC = 4; let mmsStarveAppends = 0;   // …unless the element is starving (tryAppend)
+    // THE PUMP'S OWN LEDGER (2026-11-23): why an append did not happen, and how long one takes to
+    // finish — read by nukernel/embed/heartbeat.js through __wavState().pump.
+    const pumpLedger = { appends: 0, removes: 0, lastAt: 0, lastMs: 0, maxMs: 0, pendingSince: 0, bailUpdating: 0, bailCap: 0, bailEmpty: 0, throws: 0, lastThrow: "" };
     const appendQ = [];                   // Uint8Array media chunks (mp3 frames | fMP4 fragments) awaiting appendBuffer
     let appendedChunks = 0, appendedSec = 0, receivedPcmSec = 0, pcmPendingSec = 0;
     let retryTimer = 0, mp3FirstAppend = false, mp3Waiting = 0;
@@ -3710,6 +3713,7 @@
     }
     function codecTypeStr() { return codec === "aac" ? T_AAC : codec === "opus" ? T_OPUS : T_MP3; }
     function onUpdateEnd() {
+      if (pumpLedger.pendingSince) { pumpLedger.lastMs = Math.round(now() - pumpLedger.pendingSince); pumpLedger.maxMs = Math.max(pumpLedger.maxMs, pumpLedger.lastMs); pumpLedger.pendingSince = 0; }
       if (appendingInit) { appendingInit = false; initAppended = true; pendingInit = null; }
       if (!evictBehind()) tryAppend();
     }
@@ -3746,11 +3750,12 @@
       try {
         if (!srcBuf.buffered.length) return false;
         const start = srcBuf.buffered.start(0), keepFrom = Math.max(0, (mp3El.currentTime || 0) - KEEP_BEHIND);
-        if (keepFrom > start + 1) { srcBuf.remove(start, keepFrom); return true; }   // fires another updateend
+        if (keepFrom > start + 1) { srcBuf.remove(start, keepFrom); pumpLedger.removes++; pumpLedger.pendingSince = now(); return true; }   // fires another updateend
       } catch (e) {}
       return false;
     }
     function tryAppend() {
+      if (srcBuf && srcBuf.updating) pumpLedger.bailUpdating++;
       if (abort || !sbOpen || !srcBuf || srcBuf.updating) return;
       /* A STARVING ELEMENT IS FED WHETHER OR NOT THE SOURCE ASKED (2026-11-23,
          the embed branch). Measured on Paul's iPhone, Safari 27.0.1, the tab
@@ -3776,11 +3781,12 @@
         catch (err) { onMseFault("append init: " + (err && err.message || err)); }   // step down before segAB
         return;
       }
-      if (!appendQ.length) return;
-      if (bufferedAhead() > FWD_CAP) { scheduleRetry(); return; }   // bound the forward buffer (all routes)
+      if (!appendQ.length) { pumpLedger.bailEmpty++; return; }
+      if (bufferedAhead() > FWD_CAP) { pumpLedger.bailCap++; scheduleRetry(); return; }   // bound the forward buffer (all routes)
       const bytes = appendQ[0];
       try {
         srcBuf.appendBuffer(bytes); appendQ.shift(); appendedChunks++;
+        pumpLedger.appends++; pumpLedger.lastAt = now(); pumpLedger.pendingSince = now();
         if (!mp3FirstAppend) {
           mp3FirstAppend = true; mark("firstAppend");
           if (woFirstAppend) { clearTimeout(woFirstAppend); woFirstAppend = 0; }
@@ -3789,6 +3795,7 @@
           msPlaying();
         }
       } catch (err) {
+        pumpLedger.throws++; pumpLedger.lastThrow = String(err && (err.name + ": " + err.message) || err).slice(0, 80);
         if (err && err.name === "QuotaExceededError") { evictBehind(); scheduleRetry(); }
         else if (!mp3FirstAppend) { onMseFault("appendBuffer: " + (err && err.message || err)); }   // pre-first-append fault → step down
         else { errors.push("appendBuffer: " + (err && err.message || err)); appendQ.shift(); }      // mid-stream transient → log + skip
@@ -4229,6 +4236,7 @@
             zeroPlayable: mp3Waiting, aheadSec: aheadSec(), outputRoute: outRoute, demoted, demoteReason,
             mmsWants: isMMS ? mmsWants : null, mmsStreaming: (isMMS && mediaSrc) ? mediaSrc.streaming : null,
             appendQ: appendQ.length, mmsStarveAppends,
+            pump: Object.assign({}, pumpLedger, { updating: !!(srcBuf && srcBuf.updating), sinceLastAppendMs: pumpLedger.lastAt ? Math.round(now() - pumpLedger.lastAt) : null, pendingMs: pumpLedger.pendingSince ? Math.round(now() - pumpLedger.pendingSince) : 0, sbAhead: +bufferedAhead().toFixed(2), msState: mediaSrc ? mediaSrc.readyState : null }),
             currentTime: mp3El ? (mp3El.currentTime || 0) : 0, bufferedSec: Math.max(0, bufEnd - bufStart),
             bufferedStart: bufStart, bufferedEnd: bufEnd,
             // LURCH METER (device): we appended appendedSec seconds of encoded stream; in
