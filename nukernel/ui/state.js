@@ -16,6 +16,21 @@ import { NuSong, GENRES, blank, emptyBox, DEFAULT, masterIsDefault,
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
+/* WHERE THIS FILE KEEPS THINGS, WHEN THE BOX IS EMBEDDED (2026-11-23,
+   nukernel/embed/). A page that embeds the box shares its origin's
+   localStorage with it, so `nukernel.vol.v1` and the rest would sit among the
+   host's own keys — and a host that clears or migrates its storage would be
+   clearing the box's. The host may hand over a store of its own
+   (`window.__stellateStore`: getItem/setItem/removeItem) before this module
+   loads; absent, this is the page's localStorage, exactly as before.
+   Reading `localStorage` can itself throw (a sandboxed frame, some private
+   modes); every use below already sits in a try, so a missing store is left
+   missing and throws THERE, where it is caught. */
+const localStorage = (() => {
+  try {
+    return (typeof window !== "undefined" && window.__stellateStore) || globalThis.localStorage;
+  } catch (e) { return undefined; }
+})();
 /* ---------- the store ---------- */
 // Exported as live bindings: importers see every reassignment. Mutation from
 // outside goes through the setters below, because a module cannot assign to

@@ -180,6 +180,17 @@ const GATES = [
   { name: "document",   wave: 1, kind: "node",
     argv: ["test/document.test.js"],
     need: ["test/document.test.js"], covers: ["test/document.test.js"] },
+  /* THE EMBEDDED RADIO (2026-11-23, nukernel/embed/). Paul: "create a branch
+     of stellate that can just be embedded and use that in a web page … Adjust
+     stellate to play slow ambient." Wave 1 and `kind: "node"`: slow ambient as
+     a profile of the real composer, and an hour of the album on a fake clock —
+     the engine started once, every later record put UNDER it, the transport
+     followed rather than second-guessed. The engine binding (embed/stellate.js)
+     and the page are not covered here; nukernel/embed.html is heard by hand. */
+  { name: "embed", wave: 1, kind: "node",
+    argv: ["test/embed.test.js"],
+    need: ["test/embed.test.js"],
+    covers: ["test/embed.test.js", "nukernel/embed/radio.js", "nukernel/embed/slow.js"] },
   /* WHO IS IN THE ROOM (2026-08-30, "make sure that voices are there, not
      misplaced, and appropriate to region and era, and that vocals aren't
      there when they're supposed to be instrumentals"). Five laws over every

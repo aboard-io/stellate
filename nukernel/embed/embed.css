@@ -1,0 +1,10 @@
+/* nukernel/embed.html — the embed's own page. Small on purpose. */
+html { color-scheme: dark; background: #0b0d12; color: #dfe3ea; font: 16px/1.5 system-ui, sans-serif; }
+main { max-width: 34rem; margin: 0 auto; padding: 2rem 1.25rem; }
+h1 { font-weight: 500; margin: 0; }
+.sub { margin: 0 0 1.5rem; opacity: .7; }
+button { font: inherit; min-width: 8rem; min-height: 3rem; border-radius: 1.5rem; border: 1px solid #5b6680; background: #161a24; color: inherit; }
+button[aria-pressed="true"] { background: #dfe3ea; color: #0b0d12; }
+.vol { display: block; margin: 1.25rem 0; }
+.vol input { width: 100%; }
+.small { font-size: .8rem; opacity: .7; white-space: pre-wrap; overflow-wrap: anywhere; }
