@@ -44,10 +44,14 @@ export function startHeartbeat(say, engine) {
   const snap = () => {
     const e = el(), g = (() => { try { return engine() || {}; } catch (x) { return {}; } })();
     return { t: Date.now(), time: e ? e.currentTime : null, paused: e ? e.paused : null, rs: e ? e.readyState : null,
-             ahead: e ? ahead(e) : null, runway: typeof g.runway === "number" ? g.runway : null, route: g.route || "" };
+             ahead: e ? ahead(e) : null, runway: typeof g.runway === "number" ? g.runway : null, route: g.route || "",
+             // the append pump's own ledger (engine/faust/live/live.js __wavState): what was appended, what waits,
+             // whether the managed source is asking, and how often it was fed without asking
+             wav: g.wav ? { app: g.wav.appendedSec, q: g.wav.appendQ, wants: g.wav.mmsWants, streaming: g.wav.mmsStreaming, starve: g.wav.mmsStarveAppends } : null };
   };
   const fmt = (s) => "el " + (s.time == null ? "none" : (s.paused ? "paused" : "playing") + " t=" + s.time.toFixed(1) + " rs=" + s.rs + " ahead=" + s.ahead.toFixed(1))
-    + (s.runway == null ? "" : " runway=" + s.runway.toFixed(1)) + (s.route ? " " + s.route : "");
+    + (s.runway == null ? "" : " runway=" + s.runway.toFixed(1)) + (s.route ? " " + s.route : "")
+    + (s.wav ? " appended=" + s.wav.app + " queued=" + s.wav.q + " wants=" + s.wav.wants + " streaming=" + s.wav.streaming + " fedUnasked=" + s.wav.starve : "");
 
   let worker = null;
   try { worker = new Worker(new URL("./heartbeat-worker.js", import.meta.url)); } catch (x) { say("heartbeat: no worker (" + x.message + ")"); }
@@ -72,8 +76,8 @@ export function startHeartbeat(say, engine) {
     if (hiddenAt && !ranDryAt && lastSample && s.time != null && lastSample.time != null && s.time - lastSample.time < 0.02) ranDryAt = lastSample.t;
     lastSample = s;
   }, 250);
-  // a line every ten seconds while shown, so the log has a "before"
-  setInterval(() => { if (!document.hidden) say("beat " + fmt(snap())); }, 10000);
+  // a line every five seconds, shown or hidden (a hidden page's timers still run, slowly)
+  setInterval(() => { say((document.hidden ? "beat(hidden) " : "beat ") + fmt(snap())); }, 5000);
 
   const within = (list, a, b) => list.filter((g) => g.at + g.ms > a && g.at < b);
   const tell = (name, list, a) => list.length

@@ -3385,6 +3385,7 @@
     let msOpened = false, codecFinalized = false;                 // v4: source open / codec committed
     let pendingInit = null, initAppended = false, appendingInit = false;   // v4: fMP4 init segment (ftyp+moov)
     let mmsWants = !isMMS;                 // plain MSE: append proactively; MMS: only when asked
+    const MMS_STARVE_SEC = 4; let mmsStarveAppends = 0;   // …unless the element is starving (tryAppend)
     const appendQ = [];                   // Uint8Array media chunks (mp3 frames | fMP4 fragments) awaiting appendBuffer
     let appendedChunks = 0, appendedSec = 0, receivedPcmSec = 0, pcmPendingSec = 0;
     let retryTimer = 0, mp3FirstAppend = false, mp3Waiting = 0;
@@ -3751,7 +3752,24 @@
     }
     function tryAppend() {
       if (abort || !sbOpen || !srcBuf || srcBuf.updating) return;
-      if (isMMS && !mmsWants) return;
+      /* A STARVING ELEMENT IS FED WHETHER OR NOT THE SOURCE ASKED (2026-11-23,
+         the embed branch). Measured on Paul's iPhone, Safari 27.0.1, the tab
+         left for another app (nukernel/embed/heartbeat.js): the render worker
+         never stopped, the page's timers were only slowed to one a second, the
+         element was never paused — and it ran dry 5-8 s after the page was
+         hidden with EIGHT SECONDS of rendered audio still held on this side
+         (readyState 2, nothing buffered ahead, runway 8.0), and stayed dry
+         after the page was shown again. A ManagedMediaSource says when it
+         wants data (`startstreaming`/`endstreaming`), and this pump obeyed it
+         to the letter: no appetite, no append. A hidden page's source loses
+         its appetite and — on this Safari — does not find it again while the
+         element starves. The appetite is advice about POWER, not permission;
+         an element with under MMS_STARVE_SEC ahead is past the point where
+         saving power is the question. Counted, so a log can say it happened. */
+      if (isMMS && !mmsWants) {
+        if (!mp3FirstAppend || bufferedAhead() >= MMS_STARVE_SEC) return;
+        mmsStarveAppends++;
+      }
       // fMP4: the init segment (ftyp+moov) MUST land before any media fragment.
       if (isFmp4 && pendingInit && !initAppended) {
         try { srcBuf.appendBuffer(pendingInit); appendingInit = true; }
@@ -3794,6 +3812,14 @@
       let lastCt = -1, lastMove = now();
       woFrozen = setInterval(() => {
         if (abort || demoted || !useMp3 || !mp3El) return;
+        /* ...AND THE PUMP IS POKED FROM HERE, because nothing else would. Every
+           other call to tryAppend is an EVENT — a chunk arriving, an append
+           ending, the source asking — and a starved element produces none of
+           them: its clock is frozen, so the runway ledger (received − played)
+           stays over FEED_CAP_MP3, the feed is held, no chunk arrives, and
+           what is already queued waits for an event that cannot come. That is
+           the wedge measured above after the page was shown again. */
+        tryAppend();
         const ct = mp3El.currentTime || 0;
         if (ct > lastCt + 1e-3) { lastCt = ct; lastMove = now(); return; }
         if (now() - lastMove <= WD_FROZEN_MS) return;
@@ -4201,6 +4227,8 @@
           let bufStart = 0, bufEnd = 0; try { if (srcBuf && srcBuf.buffered.length) { bufStart = srcBuf.buffered.start(0); bufEnd = srcBuf.buffered.end(srcBuf.buffered.length - 1); } } catch (e) {}
           return { receivedSegs, playedSegs: appendedChunks, playCursor: appendedChunks, singleEl: true, curGen,
             zeroPlayable: mp3Waiting, aheadSec: aheadSec(), outputRoute: outRoute, demoted, demoteReason,
+            mmsWants: isMMS ? mmsWants : null, mmsStreaming: (isMMS && mediaSrc) ? mediaSrc.streaming : null,
+            appendQ: appendQ.length, mmsStarveAppends,
             currentTime: mp3El ? (mp3El.currentTime || 0) : 0, bufferedSec: Math.max(0, bufEnd - bufStart),
             bufferedStart: bufStart, bufferedEnd: bufEnd,
             // LURCH METER (device): we appended appendedSec seconds of encoded stream; in

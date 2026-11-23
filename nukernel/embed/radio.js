@@ -26,9 +26,10 @@
 // and play are audio/live.js's mediaSession handlers, and the engine can give
 // up by itself; `transport:state` says either. The radio follows: stopped by
 // the engine, it is off and says so (`went(false)`), and the host's next touch
-// starts it — nothing here restarts an engine outside a touch except the one
-// watchdog below, which is for a transport that says it is playing and has
-// sent no position for WATCH_MS while the page is shown.
+// starts it. The one watchdog below is for a transport that says it is playing
+// and has sent no position for WATCH_MS while the page is shown: on the ring it
+// stops and starts the engine; on a phone's media routes, where a start outside
+// a touch is refused, it stops and the radio is off.
 //
 // THE DIP. The sound drops to DIP of its level before a record goes in, and
 // rises when the new record's first bar is HEARD (`pos` at bar 0, at a serial
@@ -109,8 +110,19 @@ export function makeRadio(o) {
     // a hidden page hears no positions and may start no sound: wait to be shown
     if (o.hidden && o.hidden()) lastPos = clock.now();
     if (!busy && clock.now() - lastPos > WATCH_MS) {
-      log("watchdog " + genre + " route=" + route());
-      next(false, true);
+      const r = route();
+      log("watchdog " + genre + " route=" + r);
+      /* ...AND ON A PHONE IT DOES NOT RESTART, IT SAYS SO. Measured on Paul's
+         iPhone the day this was written (heartbeat.js): the element starved
+         behind another app, the watchdog fired when the page came back, did
+         its stop-and-start — and the new element sat at `paused t=0` for
+         ever, because a start outside a touch is exactly what a phone
+         refuses. The radio then said it was playing over silence. So a
+         restart is only tried where it can work (the ring, which needs no
+         element); on the media routes the radio stops, is OFF, and says so
+         (`went(false)`), and the next touch starts it. */
+      if (r === "direct" || r === "ring") next(false, true);
+      else { live = false; busy = false; pausing = false; ++turn; stop(); level(0); if (o.went) o.went(false); }
     }
     clock.after(1000, watch);
   }

@@ -22,8 +22,10 @@
 //   E5  the transport is the engine's: stopped by itself (the lock screen),
 //       the radio is off, says so, and nothing restarts it; a play after it
 //       starts a record.
-//   E6  the watchdog stops and starts only a transport that is silent while
-//       the page is shown; never a hidden one.
+//   E6  the watchdog, for a transport silent while the page is shown: a
+//       stop-and-start on the ring; on a phone's media routes, where a start
+//       outside a touch is refused, the radio stops and is OFF; never while
+//       hidden.
 //   E7  pause fades and stops; play inside the fade brings the record back.
 //   E8  the touch is taken synchronously: `touch()` before anything is awaited.
 "use strict";
@@ -195,15 +197,26 @@ const test = (name, fn) => tests.push([name, fn]);
     r.pause();
   });
 
-  test("E6 the watchdog, and never while hidden", async () => {
+  test("E6 the watchdog: a restart on the ring, off on a phone's routes, never while hidden", async () => {
     const stall = 40000;
     { const { clock, run } = fakeClock(), { S, log } = fakeBox(clock, { stallAt: stall }), lines = [];
+      S.report = () => ({ route: "direct" });
       const r = makeRadio({ S, clock, seed: 2, part: () => "day", log: (l) => lines.push(l) });
       r.play(0.5); await run(stall + WATCH_MS + FADE_MS + 7000);
       assert.equal(lines.filter((l) => l.startsWith("watchdog")).length, 1, lines.join("\n"));
       assert.equal(log.puts.length, 2); assert.equal(log.stops.length, 1); assert.equal(log.adoptedWhilePlaying, 0);
       const s = log.stops[0] - stall;
       assert.ok(s >= WATCH_MS && s <= WATCH_MS + 1000 + FADE_MS + 1, "stopped " + s + " ms after the stall");
+      r.pause(); }
+    { const { clock, run } = fakeClock(), { S, log } = fakeBox(clock, { stallAt: stall }), lines = [], went = [];
+      S.report = () => ({ route: "mms-aac" });
+      const r = makeRadio({ S, clock, seed: 2, part: () => "day", went: (on) => went.push(on), log: (l) => lines.push(l) });
+      r.play(0.5); await run(stall + 10 * WATCH_MS);
+      assert.equal(lines.filter((l) => l.startsWith("watchdog")).length, 1, "once, then it is off");
+      assert.deepEqual(went, [false]); assert.equal(r.playing(), false);
+      assert.equal(log.starts.length, 1, "no start outside a touch"); assert.equal(log.stops.length, 1); assert.equal(log.puts.length, 1);
+      r.play(0.5); await run(stall + 10 * WATCH_MS + 5000);
+      assert.equal(log.starts.length, 2, "the next touch starts it"); assert.equal(r.playing(), true);
       r.pause(); }
     { const { clock, run } = fakeClock(), { S, log } = fakeBox(clock, { stallAt: stall }), lines = [];
       const r = makeRadio({ S, clock, seed: 2, part: () => "day", hidden: () => true, log: (l) => lines.push(l) });
