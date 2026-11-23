@@ -47,10 +47,20 @@ export const CLASSIC = [
 /** How many seconds of sound the media route keeps ahead of the element: 0 is the engine's own (5-10 s). */
 export const BUFFER_SEC = 0;
 const SITE = new URL("../../", import.meta.url).href;
+/* WHERE A SCRIPT IS, IN EITHER LAYOUT (2026-11-23, found the hour this page first
+   went to stellate.app: every script came back as the front page's HTML). In
+   the repository — and in a host that vendors it whole — the box is
+   /nukernel/ beside /engine/. The published site copies nukernel/* to the
+   ROOT, so there the same files are /kernel.js beside /engine/. The engine is
+   under the site root in both (`../../` from here stops at the root when there
+   is nothing above it, exactly as audio/plan.js's ROOTDIR does); the box's own
+   scripts are found from THIS file's folder, which is beside them in both. */
+const BOX = new URL("../", import.meta.url).href;
+const where = (src) => src.startsWith("nukernel/") ? BOX + src.slice("nukernel/".length) : SITE + src;
 const came = new Set();
 const script = (src) => came.has(src) ? Promise.resolve() : new Promise((ok, no) => {
   const s = document.createElement("script");
-  s.src = SITE + src; s.async = false;
+  s.src = where(src); s.async = false;
   s.onload = () => { came.add(src); ok(); };
   s.onerror = () => { s.remove(); no(new Error("stellate: " + src)); };
   document.head.append(s);
