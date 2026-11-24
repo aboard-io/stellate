@@ -64,18 +64,23 @@ export function planAt(seed, n, part, prev) {
 }
 
 /** The composer's record, made slow ambient (in place, and returned). `plan`
- *  may move the key (`key`, semitones) and seat instruments on the first line
- *  voices (`seats`); both are optional. */
+ *  may move the key (`key`, semitones) or set it (`home`), slow it further
+ *  (`bpm`, a lower cap than SLOW) and seat instruments on the first line
+ *  voices (`seats`); all are optional. */
 export function slowRecord(doc, plan) {
   const p = plan || {};
   doc.voices = doc.voices.filter((v) => v.kind !== "drums" && v.kind !== "kit");
-  const key = doc.alphabet.key + (p.key || 0);
+  // `home` (a key, -6..6) puts every record in that one key, so the dip
+  // between two records never sounds two keys at once; else `key` moves it
+  const key = typeof p.home === "number" ? p.home : doc.alphabet.key + (p.key || 0);
   doc.alphabet.key = key > 6 ? key - 12 : key < -6 ? key + 12 : key;
   const seats = p.seats || [];
   let i = 0, u = 0;
   for (const v of doc.voices) if (v.kind === "line" && i < seats.length) v.instrument = seats[i++];
   for (const v of doc.voices)
     if (v.instrument && SINGS.test(v.instrument)) v.instrument = UNSUNG[u++ % UNSUNG.length];
-  if (doc.time && doc.time.bpm > SLOW) doc.time.bpm = SLOW;
+  // `bpm` asks for slower still than SLOW (never faster)
+  const cap = p.bpm > 0 ? Math.min(SLOW, p.bpm) : SLOW;
+  if (doc.time && doc.time.bpm > cap) doc.time.bpm = cap;
   return doc;
 }

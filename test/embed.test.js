@@ -123,6 +123,16 @@ const test = (name, fn) => tests.push([name, fn]);
     for (const rows of Object.values(slow.PARTS)) for (const g of rows) assert.ok(slow.GENRES.includes(g));
   });
 
+  test("E1b a host may set one key for every record, and slow them further", () => {
+    for (const g of slow.GENRES) for (const seed of [3, 99]) {
+      const doc = slow.slowRecord(P.genreToDocument(g, seed), { home: 2, bpm: 52 });
+      assert.equal(doc.alphabet.key, 2, g + ": in the home key");
+      assert.ok(doc.time.bpm <= 52, g + ": " + doc.time.bpm + " bpm");
+      const fast = slow.slowRecord(P.genreToDocument(g, seed), { bpm: 200 });
+      assert.ok(fast.time.bpm <= slow.SLOW, g + ": never faster than SLOW");
+    }
+  });
+
   test("E2 the plan is a function of where it is asked", () => {
     for (const part of Object.keys(slow.PARTS)) {
       let prev;
