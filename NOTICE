@@ -165,6 +165,14 @@ vendor/abcjs/LICENSE. Used by the band page to engrave a record's theme as a
 staff: nukernel/ui/abc.js compiles the phrase to ABC and the vendored build
 draws the SVG.
 
+## Lucide icons — copied (ISC)
+
+nukernel/lilguys/icons.js — 85 icons from Lucide (lucide-static 0.460.0,
+lucide.dev), ISC, Copyright (c) Lucide Contributors 2022, portions Copyright
+(c) Cole Bemis 2013-2022 as part of Feather (MIT); the licence text rides in
+that file's header. Used by the lilguys page to give every transformation an
+icon.
+
 ## GoatCounter count.js — vendored (ISC)
 
 `vendor/goatcounter/count.js` is GoatCounter's browser counter (v4), © Martin

@@ -248,6 +248,8 @@ import { startAt, stop, playing, warmup, getPosition, passAt,
 import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 // ...AND THE SAME COMPILER ASSEMBLING A WHOLE SYSTEM. `toScore` is the score
 // block's half of ui/abc.js: several parts under one head, barred together.
+import { SCOREHEAD, chordName, inkChords, paperGeom, indexVoices, loadStaffLib }
+  from "./paper.js";   // the score's engraving helpers, shared with lilguys.html (ui/paper.js)
 import { toEngraving, toScore, toNotes, ottavaFor, noteNameOf,
          metsOf } from "./abc.js";
 import { mountVideo } from "./video.js";
@@ -2595,10 +2597,6 @@ function chordGrid(parent, sid) {
 // mark the vendored abcjs honours (measured 2026-08-25; the ABC `%%map` drum
 // maps it does NOT). Lanes that share a place share it deliberately: a rim
 // click and a clap are played where the snare is written.
-const SCOREHEAD = { k: "F", s: "c", p: "c", c: "c",
-                    t: "e", m: "d", l: "A",
-                    h: "!style=x!g", o: "!style=x!g", f: "!style=x!D",
-                    r: "!style=x!f", x: "!style=x!a" };
 // THE MEASURE IS THE RECORD'S OWN, read off the kernel's METERS table.
 // REVERSED 2026-08-30, the five-walls follow-up. This was `const SCORE_SPB =
 // 16` and its comment ruled: *"SIXTEEN STEPS TO A MEASURE … Not `stepsIn(g)`:
@@ -3365,23 +3363,6 @@ function scoreDyn() {
    the third is the CHORD's and not the mode's — measured on `countryrockT`,
    whose II7 in ionian was printed `Dm7` by the mode-derived rule while the
    pad sounded D F# A C. The staff was naming a chord nobody played. */
-function chordName(d, q, key, mode) {
-  const md = mode && mode.length ? mode : K.MODE;
-  const at = (i) => md[((i % md.length) + md.length) % md.length] +
-                    12 * Math.floor(i / md.length);
-  const root = at(d), third = at(d + 2), fifth = at(d + 4);
-  const t = ((third - root) % 12 + 12) % 12, f = ((fifth - root) % 12 + 12) % 12;
-  const name = noteNameOf(root + key, key, md);
-  const mark = K.QMARK[q] == null ? String(q || "") : K.QMARK[q];
-  if (K.QFIX[q]) return name + mark;
-  let qual = "";
-  if (q === "sus4") qual = "sus4";
-  else if (t === 3 && f === 6) qual = "dim";
-  else if (t === 4 && f === 8) qual = "aug";
-  else if (t === 3) qual = "m";
-  const tail = q === "sus4" ? "" : mark;
-  return name + qual + (qual === "dim" || qual === "aug" ? "" : tail);
-}
 /** One chord name per bar, or null when the record declares no changes. */
 function scoreChords(bars) {
   const A = DOC.alphabet || {};
@@ -3466,29 +3447,6 @@ function scoreMets(secBar) {
    as informative, it is noise. Only where the chord CHANGES, for the same
    reason. Same surgery as the dynamics: prefixed to an existing token, so
    stripping the labels back out returns the bare string byte for byte. */
-function inkChords(abc, names, totalBars) {
-  if (!names) return abc;
-  const lines = abc.split("\n");
-  const vi = lines.findIndex((l) => /^V:V1(\s|$)/.test(l));
-  if (vi < 0) return abc;
-  let mi = vi + 1;
-  while (mi < lines.length && /^K:/.test(lines[mi])) mi++;
-  if (mi >= lines.length || /^V:/.test(lines[mi])) return abc;
-  const bits = lines[mi].split(/( \|{1,2} )/);
-  if ((bits.length + 1) / 2 !== totalBars) return abc;      // refuse to mis-label
-  let close = "";
-  const cm = / \|\]$/.exec(bits[bits.length - 1]);
-  if (cm) { close = cm[0]; bits[bits.length - 1] = bits[bits.length - 1].slice(0, cm.index); }
-  let prev = null;
-  for (let b = 0; b < totalBars; b++) {
-    const n = names[b];
-    if (!n || n === prev) continue;
-    prev = n;
-    bits[2 * b] = '"' + n + '"' + bits[2 * b];
-  }
-  lines[mi] = bits.join("") + close;
-  return lines.join("\n");
-}
 
 /* EVERY STAFF, NOT JUST THE TOP ONE (2026-08-31). Paul: "We never got the
    crescendo/descrescendos or ppp..fff markings ... Or we got VERY FEW of
@@ -3627,59 +3585,6 @@ function buildScore() {
    110-140ms of main thread against a `renderAbc` of 23ms for the same system.
    `tune.engraver.staffgroups[0]` carries the same numbers in plain JavaScript,
    computed during the render that already happened. */
-function paperGeom(tune) {
-  const g = tune && tune.engraver && tune.engraver.staffgroups &&
-            tune.engraver.staffgroups[0];
-  if (!g || !(g.w > 0)) return null;
-  // WHERE A MOMENT IS, IN PAPER. Every voice of a system shares one x for one
-  // musical instant (that is what barring through MEANS), so the map is built
-  // by walking each voice's children and summing their durations — abcjs's own
-  // `duration` is in whole notes, so a sixteenth is 0.0625 and our step is
-  // `1 / scoreSPB()`. The staff-extras (clef, meter) are skipped: they sit in
-  // the left margin at time zero and their x would put the first note's
-  // instant in the gutter. A NOTE BEATS A BARLINE at the same instant — the
-  // barline is drawn a notehead's width to the left of the downbeat it
-  // precedes, and it is the note that sounds.
-  const at = new Map();
-  for (const v of g.voices || []) {
-    let t = 0;
-    for (const c of v.children || []) {
-      const extra = /staff-extra/.test(c.type || "");
-      if (!extra && c.x != null) {
-        const k = Math.round(t * 1e4);
-        const bar = /bar/.test(c.type || "");
-        const had = at.get(k);
-        if (had == null || (had.bar && !bar)) at.set(k, { x: c.x, bar });
-      }
-      t += c.duration || 0;
-    }
-  }
-  const map = [...at.entries()].map(([k, v]) => [k / 1e4, v.x])
-                               .sort((a, b) => a[0] - b[0]);
-  if (!map.length) return null;
-  const staffs = g.staffs || [];
-  /* WHERE THE PAPER STOPS BEING TIME. Everything left of the first note — the
-     voice names, the clef, the key signature, the meter — is a LEFT MARGIN,
-     and it is the one thing on this surface that has width without duration.
-     Measured 2026-08-25 at 390px on a seven-voice reggae: 171px of it, which
-     is a bar and a bit. It is cropped off here and drawn ONCE in the box's own
-     gutter, out of this same engraving (`gutterFrom`) — which on a picture
-     that is one system long is the only clef a reader will see after the first
-     four bars have gone past. */
-  const x0 = Math.max(0, map[0][1] - 6);
-  // …and where the STAFF starts, which is the same margin with the voice
-  // names taken off it. The gutter needs both: see `gutterFrom`.
-  /* …AND WHERE EACH STAFF SITS, which is the fact a motif label under a PART
-     is hung off. `topLine` / `bottomLine` are abcjs's own numbers for the
-     outer two lines of staff i, in the same user units as `w` and the map, and
-     they are exact: measured against the rendered `path.abcjs-staff` bounding
-     boxes at 390px on 2026-08-27, 41.94/72.94 against 41.6/73.3 — the same two
-     lines, read without asking the page for a layout. */
-  return { w: g.w, x0, sx: Math.max(0, (g.startx || 0) - 2),
-           y0: (staffs[0] || {}).absoluteY || 0, map,
-           ys: staffs.map((s) => ({ top: +s.topLine || 0,
-                                    bottom: +s.bottomLine || 0 })) };
-}
 // WHERE AN INSTANT IS ON THE PAPER, in the box's own pixels: linear between
 // the instants abcjs laid out, which is exact at every one of them, and out to
 // the closing barline past the last. Asked in one place, because the steady
@@ -3814,7 +3719,7 @@ function scoreRender() {
     // a rebuild of this block makes a new host, and the SVG is a value that
     // outlives it. The numbers are taken again because the BOX may have moved
     // even though the music did not.
-    if (!scoreVoices.length) scoreVoices = indexVoices(built.voices);
+    if (!scoreVoices.length) scoreVoices = indexVoices(built.voices, scoreSteps);
     if (scoreSvg.parentNode !== scorePaper) scorePaper.replaceChildren(scoreSvg);
     scoreEls = null;
     fitPaper();
@@ -3923,7 +3828,7 @@ function engraveScore(built) {
     scoreW = g.w; scoreX0 = g.x0; scoreSX = g.sx || 0;
     scoreMap = g.map;
     scoreStaffY = g.ys || [];
-    scoreVoices = indexVoices(built.voices);
+    scoreVoices = indexVoices(built.voices, scoreSteps);
     // THE CURTAINS, HUNG WHILE THE PICTURE IS OFF THE PAGE. `scoreS` is not
     // decided until `fitPaper` and the chunk spans are measured in box pixels,
     // so the grouping happens here and the spans are taken again down there.
@@ -4097,18 +4002,6 @@ function curtain(x) {
 
    Both are arrays of small integers over the record, which is tens of
    kilobytes and is thrown away with the picture. */
-function indexVoices(voices) {
-  return voices.map((v) => {
-    const byStep = new Int32Array(Math.max(1, scoreSteps)).fill(-1);
-    v.notes.forEach((nt, i) => {
-      const end = Math.min(scoreSteps, nt.at + Math.max(1, nt.len));
-      for (let s = Math.max(0, nt.at); s < end; s++) byStep[s] = i;
-    });
-    const byNote = [];
-    v.glyphs.forEach((ni, g) => { (byNote[ni] || (byNote[ni] = [])).push(g); });
-    return { name: v.name, notes: v.notes, glyphs: v.glyphs, byStep, byNote };
-  });
-}
 
 /* THE MARGIN, DRAWN ONCE AND PINNED, AND IT MATTERS MORE THAN IT DID. On a
    picture that is one system long, the clef and the key are drawn exactly
@@ -5428,19 +5321,6 @@ const engOpts = (chair) => ({
   mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
   reg: (chair || {}).reg | 0,
 });
-let abcLib = null;
-function loadStaffLib() {
-  if (window.ABCJS) return Promise.resolve(window.ABCJS);
-  if (!abcLib) abcLib = new Promise((ok, no) => {
-    const sc = document.createElement("script");
-    sc.src = new URL("../../vendor/abcjs/abcjs-basic-min.js", import.meta.url).href;
-    sc.async = true;
-    sc.onload = () => ok(window.ABCJS);
-    sc.onerror = () => { abcLib = null; sc.remove(); no(new Error("abcjs did not arrive")); };
-    document.head.append(sc);
-  });
-  return abcLib;
-}
 // (`voicePhrase(voice, si, g)` stood here — `K.word(phrase(materialAt(voice,
 //  SECID(si))), g.word(...))`, the DEVELOPED phrase, "compiled the way the
 //  engine compiles it". It fed the composed staff and nothing else, and it went
